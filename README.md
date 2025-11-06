@@ -66,10 +66,24 @@ Traditional intranets are complex, expensive, and often separate from your exist
 
 ---
 
-## Requirements
+## Installation
+
+### For Administrators
+
+**New to IntraVox?** Check out the comprehensive [Administrator Guide](ADMINISTRATOR_GUIDE.md) for:
+- Complete installation instructions
+- Service account setup
+- Multi-language configuration
+- Architecture overview
+- Security features
+- Troubleshooting guide
+- Advanced configuration options
+
+### Requirements
 
 - Nextcloud 28 or higher
-- Basic familiarity with Nextcloud
+- PHP 8.0 or higher
+- Service account "intravox"
 
 ---
 
@@ -79,9 +93,11 @@ Traditional intranets are complex, expensive, and often separate from your exist
 
 Visit the IntraVox page in your Nextcloud and start creating! The interface is intuitive and self-explanatory.
 
-### For Administrators
+### For Technical Support
 
-See the [Administrator Guide](ADMINISTRATOR_GUIDE.md) for installation instructions, architecture details, and advanced configuration.
+- **Installation & Setup**: See the [Administrator Guide](ADMINISTRATOR_GUIDE.md)
+- **Issues & Bugs**: [GitHub Issues](https://github.com/shalution/IntraVox/issues)
+- **Contact**: rik@shalution.nl
 
 ---
 
