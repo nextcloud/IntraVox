@@ -1,0 +1,113 @@
+# IntraVox - Transform Your Nextcloud into a Powerful Intranet
+
+**Create beautiful, collaborative pages in Nextcloud with the simplicity of modern content management.**
+
+IntraVox brings SharePoint-style pages to Nextcloud, empowering your team to build engaging intranets, knowledge bases, and collaborative workspaces—all within your secure Nextcloud environment.
+
+![IntraVox Logo](img/app.svg)
+
+---
+
+## Why IntraVox?
+
+Traditional intranets are complex, expensive, and often separate from your existing tools. IntraVox changes that by seamlessly integrating rich content pages directly into Nextcloud, where your team already works.
+
+### Build Pages That Inspire
+
+- **Visual Drag-and-Drop Editor** - No coding required. Simply drag widgets where you want them
+- **Flexible Grid System** - Create professional layouts with 1-5 columns and unlimited rows
+- **Rich Content Types** - Text, headings, images, links, files, and spacers
+- **Real-Time Collaboration** - Everyone sees updates instantly
+- **Beautiful & Responsive** - Looks great on desktop, tablet, and mobile
+
+### Perfect For
+
+- **Company Intranets** - Create your digital workplace with news, resources, and team information
+- **Knowledge Bases** - Build comprehensive documentation that's easy to navigate and update
+- **Team Wikis** - Collaborate on shared knowledge with your colleagues
+- **Project Hubs** - Centralize project information, resources, and updates
+- **Department Portals** - Give each team their own space to share information
+
+---
+
+## Get Started in Minutes
+
+### For Users
+
+1. **Click IntraVox** in your Nextcloud navigation bar
+2. **Create Your First Page** - Click "+ New Page" and give it a title
+3. **Add Content** - Click "Edit" and start adding widgets:
+   - 📝 **Text** - Rich text with Markdown support (bold, italic, lists, and more)
+   - 📌 **Headings** - Structure your content with H1-H6 headers
+   - 🖼️ **Images** - Upload and display beautiful visuals (300px, 500px, 800px, or full width)
+   - 🔗 **Links** - Add quick links to important resources
+   - 📄 **Files** - Embed documents for easy access
+   - ➖ **Dividers** - Separate content sections visually
+
+4. **Organize Your Layout** - Drag widgets between columns and rows to create the perfect structure
+5. **Save & Share** - Your page is instantly available to everyone with access!
+
+### What Makes IntraVox Special?
+
+**Truly Collaborative** - Unlike personal pages, IntraVox uses shared folders so everyone on your team sees the same content, in real-time.
+
+**Beautifully Integrated** - No need to learn a new system. IntraVox lives right in your Nextcloud interface.
+
+**Secure by Design** - Built with enterprise-grade security. All content is validated, sanitized, and stored safely.
+
+**Markdown Support** - Write naturally with Markdown formatting in text widgets:
+- **Bold** and *italic* text
+- Bullet and numbered lists
+- Links and images
+- Code blocks
+- And more!
+
+---
+
+## Requirements
+
+- Nextcloud 28 or higher
+- Basic familiarity with Nextcloud
+
+---
+
+## Need Help?
+
+### For End Users
+
+Visit the IntraVox page in your Nextcloud and start creating! The interface is intuitive and self-explanatory.
+
+### For Administrators
+
+See the [Administrator Guide](ADMINISTRATOR_GUIDE.md) for installation instructions, architecture details, and advanced configuration.
+
+---
+
+## Contributing
+
+We welcome contributions! If you have ideas, found a bug, or want to contribute code, please:
+
+1. Open an issue on GitHub
+2. Submit a pull request
+3. Share your feedback
+
+---
+
+## Support & Contact
+
+**Developed by:** Rik Dekker - [Shalution](https://shalution.nl)
+**Email:** rik@shalution.nl
+**License:** AGPL-3.0
+
+---
+
+## Acknowledgments
+
+IntraVox is built with love using:
+- **Nextcloud** - The world's most popular open-source content collaboration platform
+- **Vue.js** - The progressive JavaScript framework
+- **SortableJS** - Beautiful drag-and-drop functionality
+
+---
+
+**Ready to transform your Nextcloud into a powerful collaborative workspace? [Get Started with IntraVox](#get-started-in-minutes)**
