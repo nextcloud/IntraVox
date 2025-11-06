@@ -51,6 +51,8 @@ Traditional intranets are complex, expensive, and often separate from your exist
 
 **Truly Collaborative** - Unlike personal pages, IntraVox uses shared folders so everyone on your team sees the same content, in real-time.
 
+**Multi-Language Support** - Automatically shows content in each user's preferred language (Dutch, English, German, French supported out of the box).
+
 **Beautifully Integrated** - No need to learn a new system. IntraVox lives right in your Nextcloud interface.
 
 **Secure by Design** - Built with enterprise-grade security. All content is validated, sanitized, and stored safely.

@@ -10,10 +10,12 @@ This guide provides technical documentation for system administrators who need t
 - [Architecture Overview](#architecture-overview)
 - [Security Features](#security-features)
 - [Storage Structure](#storage-structure)
+  - [Multi-Language Support](#multi-language-support)
 - [API Documentation](#api-documentation)
 - [Development](#development)
 - [Troubleshooting](#troubleshooting)
 - [Advanced Configuration](#advanced-configuration)
+  - [Adding Support for Additional Languages](#adding-support-for-additional-languages)
 
 ---
 
@@ -24,7 +26,7 @@ This guide provides technical documentation for system administrators who need t
 - **Nextcloud**: 28 or higher
 - **PHP**: 8.0 or higher
 - **Node.js**: 16+ and npm (for building frontend)
-- **Nextcloud Apps**: GroupFolders app must be installed and enabled
+- **Service Account**: A dedicated user account named "intravox"
 
 ### Installation Steps
 
@@ -61,46 +63,52 @@ cd /path/to/nextcloud
 php occ app:enable intravox
 ```
 
-#### 5. Setup GroupFolder (Recommended)
+#### 5. Create Service Account
 
-Run the setup command to automatically configure the IntraVox groupfolder:
+IntraVox uses a dedicated service account named "intravox" to store shared content:
+
+```bash
+# Create the intravox service account
+php occ user:add intravox
+
+# Set a secure password when prompted
+```
+
+**Important:** This service account should NOT be used for regular login. It serves only as the owner of the shared IntraVox folder.
+
+#### 6. Setup Shared Folder and Permissions
+
+Run the setup command to automatically configure the IntraVox shared folder:
 
 ```bash
 php occ intravox:setup
 ```
 
 This command will:
-- Create a groupfolder named "IntraVox" (system folder, not linked to any user)
-- Grant the admin group full access (read, write, share, delete)
-- Create a default homepage (home.json)
-- Create subdirectories (images/, documents/)
-- Configure the app to use this groupfolder
+- Create a folder "IntraVox" in the intravox user's home directory
+- Create language subfolders (nl/, en/, de/, fr/) for multi-language support
+- Create a default homepage (home.json) in each language folder
+- Create subdirectories (images/, files/) for each language
+- Share the folder with "IntraVox Admins" group (full permissions)
+- Share the folder with "IntraVox Users" group (read-only permissions)
 
-**Important Notes:**
-- The groupfolder is a **system folder**, not linked to any user account
-- IntraVox finds the groupfolder by name ("IntraVox"), not by ID
-- This makes the installation portable across different servers
-- Only groups you explicitly add will have access
+**Access Control:**
+- **IntraVox Admins** group: Full access (read, write, delete, share)
+- **IntraVox Users** group: Read-only access
+- Users must be added to these groups to access IntraVox content
 
-#### 6. Configure User Access (Optional)
-
-By default, only the admin group has access. To give other users access:
-
+**Creating the required groups:**
 ```bash
-# Add a group to the IntraVox groupfolder
-php occ groupfolders:group <folder_id> <group_id> <permissions>
+# Create the admin group
+php occ group:add "IntraVox Admins"
 
-# Example: Give "IntraVox users" group read/write access (permission 31 = full access)
-php occ groupfolders:group 4 "IntraVox users" 31
+# Create the users group
+php occ group:add "IntraVox Users"
+
+# Add users to groups
+php occ group:adduser "IntraVox Admins" admin
+php occ group:adduser "IntraVox Users" johndoe
 ```
-
-**Permission values:**
-- 1 = Read
-- 2 = Update
-- 4 = Create
-- 8 = Delete
-- 16 = Share
-- 31 = All permissions
 
 ---
 
@@ -118,7 +126,8 @@ php occ groupfolders:group 4 "IntraVox users" 31
 **Backend:**
 - PHP 8.0+
 - Nextcloud App Framework
-- GroupFolders API
+- Nextcloud Files API
+- Nextcloud Sharing API
 - OCC Commands
 
 ### Project Structure
@@ -141,8 +150,8 @@ intravox/
 │   │   └── ApiController.php       # REST API endpoints
 │   │
 │   └── Service/
-│       ├── PageService.php         # Business logic, validation, security
-│       └── SetupService.php        # GroupFolder setup logic
+│       ├── PageService.php         # Business logic, validation, security, multi-language
+│       └── SetupService.php        # Shared folder setup and sharing logic
 │
 ├── src/                            # Vue.js frontend source
 │   ├── main.js                     # Application entry point
@@ -206,11 +215,11 @@ User Action → Vue Component → API Call (Axios)
                                     ↓
                             ApiController.php
                                     ↓
-                            PageService.php (validation + security)
+                            PageService.php (validation + security + language detection)
                                     ↓
-                            GroupFolders API
+                            Nextcloud Files API
                                     ↓
-                        IntraVox/pages/*.json (storage)
+                    intravox user's home/IntraVox/{language}/*.json (storage)
                                     ↓
                             Response → Vue Component → UI Update
 ```
@@ -246,8 +255,12 @@ IntraVox is built with a **security-first** approach:
 
 ### Access Control
 
-- GroupFolders provide built-in ACL (Access Control Lists)
-- Administrators control which groups have access
+- Service account "intravox" owns the shared folder
+- Nextcloud sharing system provides access control
+- Two predefined groups control access:
+  - **IntraVox Admins**: Full permissions (read, write, delete, share)
+  - **IntraVox Users**: Read-only permissions
+- Administrators add users to these groups to grant access
 - Users only see content they're authorized to access
 - No direct file system access from the frontend
 
@@ -262,25 +275,63 @@ IntraVox is built with a **security-first** approach:
 
 ## Storage Structure
 
-IntraVox uses a **GroupFolder** for shared storage:
+IntraVox uses a **service account's shared folder** for storage, with built-in **multi-language support**:
 
 ```
-Nextcloud GroupFolders/
-└── IntraVox/                       # System folder (not linked to user)
-    ├── home.json                   # Default homepage
-    ├── about-us.json              # Example page
-    ├── team-wiki.json             # Example page
+intravox user's home/
+└── IntraVox/                       # Shared folder (owned by intravox user)
+    ├── nl/                         # Dutch content
+    │   ├── home.json              # Dutch homepage
+    │   ├── images/                # Dutch images
+    │   ├── files/                 # Dutch files
+    │   └── about-us/              # Example page folder
+    │       ├── about-us.json      # Page content
+    │       ├── images/            # Page-specific images
+    │       └── files/             # Page-specific files
     │
-    ├── images/                     # Uploaded images
-    │   ├── img_1234567890.jpg
-    │   ├── img_0987654321.png
-    │   └── company-logo.webp
+    ├── en/                         # English content
+    │   ├── home.json              # English homepage
+    │   ├── images/                # English images
+    │   ├── files/                 # English files
+    │   └── team-wiki/             # Example page folder
+    │       ├── team-wiki.json     # Page content
+    │       ├── images/            # Page-specific images
+    │       └── files/             # Page-specific files
     │
-    └── documents/                  # Uploaded files
-        ├── policy.pdf
-        ├── handbook.docx
-        └── presentation.pptx
+    ├── de/                         # German content
+    │   └── ...                    # Same structure
+    │
+    └── fr/                         # French content
+        └── ...                    # Same structure
 ```
+
+### Multi-Language Support
+
+IntraVox automatically detects each user's language preference and shows content from the appropriate language folder:
+
+**Supported Languages:**
+- `nl` - Dutch
+- `en` - English (default)
+- `de` - German
+- `fr` - French
+
+**How It Works:**
+1. User's language preference is read from Nextcloud settings (`core` → `lang`)
+2. IntraVox extracts the language code (e.g., `nl_NL` → `nl`)
+3. Content is loaded from the corresponding language folder
+4. If a language folder doesn't exist, it falls back to English (`en`)
+
+**Creating Content for Multiple Languages:**
+- Each language has its own independent content structure
+- Pages must be created separately for each language
+- The setup command automatically creates all language folders
+- To add content for a specific language, users with that language preference simply create pages normally
+
+**Example:**
+- A Dutch user sees content from `/IntraVox/nl/`
+- An English user sees content from `/IntraVox/en/`
+- A German user sees content from `/IntraVox/de/`
+- A French user sees content from `/IntraVox/fr/`
 
 ### Page JSON Structure
 
@@ -495,31 +546,33 @@ This script:
 2. Verify app is enabled: `php occ app:list`
 3. Check `appinfo/info.xml` for correct `<navigations>` entry
 
-### GroupFolder Not Found
+### Shared Folder Not Found
 
-**Problem:** "GroupFolder 'IntraVox' not found" error.
+**Problem:** "IntraVox folder not accessible" error.
 
 **Solution:**
-1. Verify GroupFolders app is enabled: `php occ app:enable groupfolders`
+1. Verify intravox service account exists: `php occ user:list`
 2. Run setup command: `php occ intravox:setup`
-3. Check groupfolder exists: `php occ groupfolders:list`
+3. Check folder exists: Navigate to intravox user's files
+4. Verify folder is shared with required groups
 
 ### Pages Not Saving
 
 **Problem:** Changes don't persist after saving.
 
 **Solution:**
-1. Check folder permissions: GroupFolder must be writable
-2. Verify group membership: User must be in a group with write access
-3. Check PHP error log for permission issues
-4. Ensure `IntraVox/` folder exists
+1. Verify user is in "IntraVox Admins" group: `php occ group:list`
+2. Check folder permissions: Shared folder must be writable for admins
+3. Verify share permissions: `php occ share:list intravox`
+4. Check PHP error log for permission issues
+5. Ensure language folder exists (e.g., `/IntraVox/en/`)
 
 ### Images Not Displaying
 
 **Problem:** Uploaded images don't show on the page.
 
 **Solution:**
-1. Verify `IntraVox/images/` folder exists
+1. Verify language-specific images folder exists (e.g., `/IntraVox/en/images/`)
 2. Check file permissions
 3. Verify image file was uploaded successfully
 4. Check browser console for 404 errors
@@ -538,41 +591,73 @@ This script:
 
 ## Advanced Configuration
 
-### Custom GroupFolder Name
+### Adding Support for Additional Languages
 
-If you want to use a different groupfolder name:
+To add support for more languages beyond the default (nl, en, de, fr):
 
 1. Edit `lib/Service/PageService.php`:
 ```php
-private const GROUPFOLDER_NAME = 'YourCustomName';
+private const SUPPORTED_LANGUAGES = ['nl', 'en', 'de', 'fr', 'es', 'it']; // Add your languages
 ```
 
-2. Run setup: `php occ intravox:setup`
+2. Edit `lib/Service/SetupService.php` and add the same languages:
+```php
+private const SUPPORTED_LANGUAGES = ['nl', 'en', 'de', 'fr', 'es', 'it'];
+```
+
+3. Run setup to create the new language folders: `php occ intravox:setup`
+
+### Customizing Group Names
+
+By default, IntraVox uses "IntraVox Admins" and "IntraVox Users" groups. To use different group names:
+
+1. Create your custom groups:
+```bash
+php occ group:add "Your Admin Group"
+php occ group:add "Your User Group"
+```
+
+2. Edit `lib/Service/SetupService.php` and modify the share methods, or manually share the folder:
+```bash
+# Share with full permissions
+php occ share:create --type=group --sharedWith="Your Admin Group" --path="/intravox/files/IntraVox" --permissions=31
+
+# Share with read-only permissions
+php occ share:create --type=group --sharedWith="Your User Group" --path="/intravox/files/IntraVox" --permissions=1
+```
 
 ### Multi-Instance Setup
 
 IntraVox supports multiple Nextcloud instances sharing the same codebase:
 
 1. Install IntraVox on each instance
-2. Run `php occ intravox:setup` on each
-3. Each instance gets its own `IntraVox` groupfolder
-4. Content is **not** shared between instances
+2. Create the "intravox" service account on each: `php occ user:add intravox`
+3. Run `php occ intravox:setup` on each
+4. Each instance gets its own independent content
+5. Content is **not** shared between instances
 
 ### Backup Strategy
 
 **Important files to backup:**
-- `Nextcloud GroupFolders/IntraVox/*.json` - All page data
-- `Nextcloud GroupFolders/IntraVox/images/` - Uploaded images
-- `Nextcloud GroupFolders/IntraVox/documents/` - Uploaded files
+- `intravox user home/IntraVox/{language}/*.json` - All page data for each language
+- `intravox user home/IntraVox/{language}/images/` - Uploaded images
+- `intravox user home/IntraVox/{language}/files/` - Uploaded files
+- Page-specific folders: `intravox user home/IntraVox/{language}/{pageid}/`
 
 **Backup command:**
 ```bash
-# Using Nextcloud's backup tools
-php occ files:scan --path="/IntraVox"
+# Scan files to ensure filecache is up to date
+php occ files:scan --path="intravox/files/IntraVox"
 
-# Manual backup
-tar -czf intravox-backup-$(date +%Y%m%d).tar.gz /path/to/nextcloud/data/__groupfolders/IntraVox/
+# Manual backup (find the actual data directory path)
+DATA_DIR=$(php occ config:system:get datadirectory)
+tar -czf intravox-backup-$(date +%Y%m%d).tar.gz $DATA_DIR/intravox/files/IntraVox/
 ```
+
+**Restore procedure:**
+1. Extract backup to intravox user's IntraVox folder
+2. Run `php occ files:scan --path="intravox/files/IntraVox"` to update filecache
+3. Verify permissions are correct
 
 ### Performance Optimization
 
@@ -582,9 +667,10 @@ tar -czf intravox-backup-$(date +%Y%m%d).tar.gz /path/to/nextcloud/data/__groupf
 - Vue components use efficient rendering
 
 **Backend:**
-- JSON files are cached by Nextcloud
-- GroupFolders provide efficient file access
+- JSON files are cached by Nextcloud's file system
+- Nextcloud Files API provides efficient access
 - API responses are minimal (no unnecessary data)
+- Language-based folder separation improves performance for large deployments
 
 ---
 
