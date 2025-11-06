@@ -23,7 +23,7 @@ This guide provides technical documentation for system administrators who need t
 
 ### System Requirements
 
-- **Nextcloud**: 28 or higher
+- **Nextcloud**: 32 or higher
 - **PHP**: 8.0 or higher
 - **Node.js**: 16+ and npm (for building frontend)
 - **Service Account**: A dedicated user account named "intravox"

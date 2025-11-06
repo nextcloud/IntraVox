@@ -81,7 +81,7 @@ Traditional intranets are complex, expensive, and often separate from your exist
 
 ### Requirements
 
-- Nextcloud 28 or higher
+- Nextcloud 32 or higher
 - PHP 8.0 or higher
 - Service account "intravox"
 
