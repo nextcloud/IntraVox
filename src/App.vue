@@ -55,14 +55,6 @@
           {{ t('Edit') }}
         </NcButton>
         <template v-else>
-          <NcButton @click="saveAndExitEditMode"
-                    type="primary"
-                    :aria-label="t('Save changes')">
-            <template #icon>
-              <ContentSave :size="20" />
-            </template>
-            {{ t('Save') }}
-          </NcButton>
           <NcButton @click="cancelEditMode"
                     type="secondary"
                     :aria-label="t('Cancel editing')">
@@ -70,6 +62,14 @@
               <Close :size="20" />
             </template>
             {{ t('Cancel') }}
+          </NcButton>
+          <NcButton @click="saveAndExitEditMode"
+                    type="primary"
+                    :aria-label="t('Save changes')">
+            <template #icon>
+              <ContentSave :size="20" />
+            </template>
+            {{ t('Save') }}
           </NcButton>
         </template>
       </div>
