@@ -13,6 +13,38 @@
         />
       </div>
       <div class="header-right">
+        <!-- Edit Navigation Button (leftmost) -->
+        <NcButton v-if="canEditNavigation"
+                  @click="showNavigationEditor = true"
+                  type="secondary"
+                  :aria-label="t('Edit navigation')">
+          <template #icon>
+            <Cog :size="20" />
+          </template>
+          {{ t('Edit Navigation') }}
+        </NcButton>
+
+        <!-- Pages Button -->
+        <NcButton @click="showPageList"
+                  type="secondary"
+                  :aria-label="t('Show page list')">
+          <template #icon>
+            <ViewList :size="20" />
+          </template>
+          {{ t('Pages') }}
+        </NcButton>
+
+        <!-- New Page Button -->
+        <NcButton @click="createNewPage"
+                  type="secondary"
+                  :aria-label="t('Create new page')">
+          <template #icon>
+            <Plus :size="20" />
+          </template>
+          {{ t('New Page') }}
+        </NcButton>
+
+        <!-- Edit/Save/Cancel Buttons (rightmost) -->
         <NcButton v-if="!isEditMode"
                   @click="startEditMode"
                   type="primary"
@@ -40,22 +72,6 @@
             {{ t('Cancel') }}
           </NcButton>
         </template>
-        <NcButton @click="showPageList"
-                  type="secondary"
-                  :aria-label="t('Show page list')">
-          <template #icon>
-            <ViewList :size="20" />
-          </template>
-          {{ t('Pages') }}
-        </NcButton>
-        <NcButton @click="createNewPage"
-                  type="secondary"
-                  :aria-label="t('Create new page')">
-          <template #icon>
-            <Plus :size="20" />
-          </template>
-          {{ t('New Page') }}
-        </NcButton>
       </div>
     </div>
 
@@ -63,9 +79,7 @@
     <div class="intravox-nav-bar">
       <Navigation :items="navigation.items"
                   :type="navigation.type"
-                  :can-edit="canEditNavigation"
-                  @navigate="navigateToItem"
-                  @edit="showNavigationEditor = true" />
+                  @navigate="navigateToItem" />
     </div>
 
     <div v-if="loading" class="loading">
@@ -123,6 +137,7 @@ import ContentSave from 'vue-material-design-icons/ContentSave.vue';
 import Close from 'vue-material-design-icons/Close.vue';
 import ViewList from 'vue-material-design-icons/ViewList.vue';
 import Plus from 'vue-material-design-icons/Plus.vue';
+import Cog from 'vue-material-design-icons/Cog.vue';
 import PageViewer from './components/PageViewer.vue';
 import PageEditor from './components/PageEditor.vue';
 import PageListModal from './components/PageListModal.vue';
@@ -139,6 +154,7 @@ export default {
     Close,
     ViewList,
     Plus,
+    Cog,
     PageViewer,
     PageEditor,
     PageListModal,

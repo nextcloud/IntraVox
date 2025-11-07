@@ -121,34 +121,19 @@
       </template>
     </div>
 
-    <!-- Edit Navigation Button (only for users with permissions) -->
-    <NcButton v-if="canEdit"
-              @click="$emit('edit')"
-              type="tertiary"
-              :aria-label="t('Edit navigation')"
-              class="nav-edit-btn">
-      <template #icon>
-        <Cog :size="20" />
-      </template>
-      {{ t('Edit Navigation') }}
-    </NcButton>
   </nav>
 </template>
 
 <script>
 import { translate as t } from '@nextcloud/l10n';
-import { NcButton } from '@nextcloud/vue';
 import ChevronDown from 'vue-material-design-icons/ChevronDown.vue';
 import ChevronRight from 'vue-material-design-icons/ChevronRight.vue';
-import Cog from 'vue-material-design-icons/Cog.vue';
 
 export default {
   name: 'Navigation',
   components: {
-    NcButton,
     ChevronDown,
-    ChevronRight,
-    Cog
+    ChevronRight
   },
   props: {
     items: {
@@ -159,13 +144,9 @@ export default {
       type: String,
       default: 'dropdown',
       validator: (value) => ['dropdown', 'megamenu'].includes(value)
-    },
-    canEdit: {
-      type: Boolean,
-      default: false
     }
   },
-  emits: ['navigate', 'edit'],
+  emits: ['navigate'],
   data() {
     return {
       activeMegaMenu: null,
@@ -478,10 +459,5 @@ export default {
 .megamenu-list-item:hover {
   background-color: var(--color-background-hover);
   color: var(--color-main-text);
-}
-
-/* Edit button */
-.nav-edit-btn {
-  margin-left: auto;
 }
 </style>
