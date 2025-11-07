@@ -349,6 +349,7 @@ export default {
   margin: 20px 0;
   border: none;
   border-top: 1px solid var(--color-border);
+  height: 0;
 }
 
 /* Unknown Widget */
