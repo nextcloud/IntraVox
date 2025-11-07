@@ -559,6 +559,14 @@ export default {
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
+/* Divider widget in edit mode - reduce padding to prevent double-line effect */
+.widget-wrapper:has(.widget-divider) {
+  padding: 0;
+  border: none;
+  background: transparent;
+  margin-bottom: 5px;
+}
+
 .widget-controls {
   position: absolute;
   top: 5px;

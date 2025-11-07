@@ -183,11 +183,15 @@ export default {
         style.height = 'auto';
         style.maxWidth = '100%'; // Don't overflow container
       } else {
-        // Full width - natural aspect ratio
+        // Full width - natural aspect ratio with cropping
         style.width = '100%';
         style.height = 'auto';
         style.maxHeight = '500px';
         style.objectFit = 'cover';
+
+        // Set vertical position for cropping
+        const position = this.widget.objectPosition || 'center';
+        style.objectPosition = `center ${position}`;
       }
 
       return style;

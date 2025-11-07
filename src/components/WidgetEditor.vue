@@ -165,6 +165,36 @@
             />
             <p class="size-hint">{{ t('Height will automatically adjust to maintain aspect ratio') }}</p>
           </div>
+          <div v-if="!localWidget.width || localWidget.width === null" class="form-group">
+            <label>{{ t('Vertical position:') }}</label>
+            <div class="position-presets">
+              <button
+                type="button"
+                :class="{ active: !localWidget.objectPosition || localWidget.objectPosition === 'center' }"
+                @click="setObjectPosition('center')"
+                class="size-preset-btn"
+              >
+                {{ t('Center') }}
+              </button>
+              <button
+                type="button"
+                :class="{ active: localWidget.objectPosition === 'top' }"
+                @click="setObjectPosition('top')"
+                class="size-preset-btn"
+              >
+                {{ t('Top') }}
+              </button>
+              <button
+                type="button"
+                :class="{ active: localWidget.objectPosition === 'bottom' }"
+                @click="setObjectPosition('bottom')"
+                class="size-preset-btn"
+              >
+                {{ t('Bottom') }}
+              </button>
+            </div>
+            <p class="size-hint">{{ t('Choose which part of the image is visible when cropped') }}</p>
+          </div>
         </div>
 
         <!-- Link Widget -->
@@ -371,6 +401,9 @@ export default {
       if (this.localWidget.height !== undefined) {
         delete this.localWidget.height;
       }
+    },
+    setObjectPosition(position) {
+      this.localWidget.objectPosition = position;
     }
   }
 };
