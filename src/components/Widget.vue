@@ -67,6 +67,7 @@
 import { translate as t } from '@nextcloud/l10n';
 import { generateUrl } from '@nextcloud/router';
 import DOMPurify from 'dompurify';
+import { marked } from 'marked';
 import InlineTextEditor from './InlineTextEditor.vue';
 
 export default {
@@ -117,12 +118,47 @@ export default {
     t(key, vars = {}) {
       return t('intravox', key, vars);
     },
-    sanitizeHtml(html) {
-      // Configure DOMPurify to allow common formatting tags
+    sanitizeHtml(content) {
+      if (!content) return '';
+
+      // First, convert Markdown to HTML
+      let html = content;
+
+      // Check if content contains Markdown syntax
+      if (this.isMarkdown(content)) {
+        try {
+          html = marked(content, {
+            breaks: true, // Convert line breaks to <br>
+            gfm: true // GitHub Flavored Markdown
+          });
+        } catch (err) {
+          console.error('Markdown parsing error:', err);
+          // Fallback to original content if parsing fails
+          html = content;
+        }
+      }
+
+      // Then sanitize the HTML
       return DOMPurify.sanitize(html, {
-        ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 's', 'ul', 'ol', 'li', 'a', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'],
-        ALLOWED_ATTR: ['href', 'target', 'rel']
+        ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 's', 'ul', 'ol', 'li', 'a', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'code', 'pre', 'hr'],
+        ALLOWED_ATTR: ['href', 'target', 'rel', 'class']
       });
+    },
+    isMarkdown(content) {
+      // Simple heuristic to detect Markdown syntax
+      const markdownPatterns = [
+        /\*\*.*?\*\*/,  // Bold
+        /\*.*?\*/,      // Italic
+        /^#{1,6}\s/m,   // Headings
+        /^[-*+]\s/m,    // Lists
+        /^\d+\.\s/m,    // Numbered lists
+        /^>\s/m,        // Blockquotes
+        /\[.*?\]\(.*?\)/, // Links
+        /^---$/m,       // Horizontal rules
+        /`.*?`/         // Inline code
+      ];
+
+      return markdownPatterns.some(pattern => pattern.test(content));
     },
     onBlur() {
       // No need to save here anymore - watcher handles it

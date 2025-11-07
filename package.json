@@ -30,6 +30,7 @@
     "@vue/compiler-sfc": "^3.5.22",
     "cancelable-promise": "^4.3.1",
     "dompurify": "^3.3.0",
+    "marked": "^17.0.0",
     "sortablejs": "^1.15.6",
     "vue": "^3.5.22",
     "vue-loader": "^17.4.2",
