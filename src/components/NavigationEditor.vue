@@ -4,6 +4,9 @@
            size="large"
            class="navigation-editor-modal">
     <div class="navigation-editor">
+      <!-- Hidden element to capture autofocus -->
+      <input type="text" style="position: absolute; opacity: 0; pointer-events: none;" autofocus />
+
       <!-- Actions at top with type selector on left -->
       <div class="modal-actions-top">
         <div class="type-selector-left">
