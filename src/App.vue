@@ -474,8 +474,9 @@ export default {
 
 .intravox-content {
   padding: 20px;
-  max-width: 1400px;
+  max-width: min(1600px, 95vw);
   margin: 0 auto;
+  width: 100%;
 }
 
 .loading, .error {
