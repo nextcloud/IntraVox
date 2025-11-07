@@ -1,0 +1,287 @@
+# English translations for IntraVox
+# Copyright (C) 2025
+# This file is distributed under the same license as the IntraVox package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: IntraVox\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-01-05 12:00+0000\n"
+"PO-Revision-Date: 2025-01-05 12:00+0000\n"
+"Last-Translator: \n"
+"Language-Team: English\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+# App.vue
+msgid "Edit"
+msgstr "Edit"
+
+msgid "Edit page"
+msgstr "Edit page"
+
+msgid "Save"
+msgstr "Save"
+
+msgid "Save changes"
+msgstr "Save changes"
+
+msgid "Cancel"
+msgstr "Cancel"
+
+msgid "Cancel editing"
+msgstr "Cancel editing"
+
+msgid "Pages"
+msgstr "Pages"
+
+msgid "Show page list"
+msgstr "Show page list"
+
+msgid "New Page"
+msgstr "New Page"
+
+msgid "Create new page"
+msgstr "Create new page"
+
+msgid "Loading..."
+msgstr "Loading..."
+
+msgid "No pages found. Please run the setup command first."
+msgstr "No pages found. Please run the setup command first."
+
+msgid "Could not load pages: {error}"
+msgstr "Could not load pages: {error}"
+
+msgid "Could not load page: {error}"
+msgstr "Could not load page: {error}"
+
+msgid "Changes cancelled"
+msgstr "Changes cancelled"
+
+msgid "Page saved"
+msgstr "Page saved"
+
+msgid "Could not save page: {error}"
+msgstr "Could not save page: {error}"
+
+msgid "Title for the new page:"
+msgstr "Title for the new page:"
+
+msgid "Invalid page title"
+msgstr "Invalid page title"
+
+msgid "Page created"
+msgstr "Page created"
+
+msgid "Could not create page: {error}"
+msgstr "Could not create page: {error}"
+
+msgid "Are you sure you want to delete this page?"
+msgstr "Are you sure you want to delete this page?"
+
+msgid "Page deleted"
+msgstr "Page deleted"
+
+msgid "Could not delete page: {error}"
+msgstr "Could not delete page: {error}"
+
+# PageEditor.vue
+msgid "Columns:"
+msgstr "Columns:"
+
+msgid "Add Row"
+msgstr "Add Row"
+
+msgid "Add Widget"
+msgstr "Add Widget"
+
+msgid "Delete row"
+msgstr "Delete row"
+
+msgid "Column {column}"
+msgstr "Column {column}"
+
+msgid "Edit widget"
+msgstr "Edit widget"
+
+msgid "Delete widget"
+msgstr "Delete widget"
+
+msgid "Are you sure you want to delete this row?"
+msgstr "Are you sure you want to delete this row?"
+
+msgid "New text widget"
+msgstr "New text widget"
+
+msgid "New heading"
+msgstr "New heading"
+
+msgid "Link text"
+msgstr "Link text"
+
+msgid "File"
+msgstr "File"
+
+msgid "Are you sure you want to delete this widget?"
+msgstr "Are you sure you want to delete this widget?"
+
+# WidgetEditor.vue
+msgid "Edit widget"
+msgstr "Edit widget"
+
+msgid "Text:"
+msgstr "Text:"
+
+msgid "Text formatting"
+msgstr "Text formatting"
+
+msgid "Bold (Ctrl+B)"
+msgstr "Bold (Ctrl+B)"
+
+msgid "Italic (Ctrl+I)"
+msgstr "Italic (Ctrl+I)"
+
+msgid "Underline (Ctrl+U)"
+msgstr "Underline (Ctrl+U)"
+
+msgid "Strikethrough"
+msgstr "Strikethrough"
+
+msgid "Unordered list"
+msgstr "Unordered list"
+
+msgid "Ordered list"
+msgstr "Ordered list"
+
+msgid "Quote"
+msgstr "Quote"
+
+msgid "Code block"
+msgstr "Code block"
+
+msgid "Insert link"
+msgstr "Insert link"
+
+msgid "Insert image"
+msgstr "Insert image"
+
+msgid "Insert table"
+msgstr "Insert table"
+
+msgid "Enter text... (Markdown supported: **bold**, *italic*, etc.)"
+msgstr "Enter text... (Markdown supported: **bold**, *italic*, etc.)"
+
+msgid "Preview:"
+msgstr "Preview:"
+
+msgid "Heading:"
+msgstr "Heading:"
+
+msgid "Enter your heading..."
+msgstr "Enter your heading..."
+
+msgid "Level:"
+msgstr "Level:"
+
+msgid "H1 - Largest"
+msgstr "H1 - Largest"
+
+msgid "H2"
+msgstr "H2"
+
+msgid "H3"
+msgstr "H3"
+
+msgid "H4"
+msgstr "H4"
+
+msgid "H5"
+msgstr "H5"
+
+msgid "H6 - Smallest"
+msgstr "H6 - Smallest"
+
+msgid "Upload image:"
+msgstr "Upload image:"
+
+msgid "Alt text:"
+msgstr "Alt text:"
+
+msgid "Description of the image..."
+msgstr "Description of the image..."
+
+msgid "Link text:"
+msgstr "Link text:"
+
+msgid "Click here"
+msgstr "Click here"
+
+msgid "URL:"
+msgstr "URL:"
+
+msgid "File name:"
+msgstr "File name:"
+
+msgid "File path (in IntraVox folder):"
+msgstr "File path (in IntraVox folder):"
+
+msgid "Height (pixels):"
+msgstr "Height (pixels):"
+
+# PageListModal.vue
+msgid "All pages"
+msgstr "All pages"
+
+msgid "No pages created yet."
+msgstr "No pages created yet."
+
+msgid "Delete"
+msgstr "Delete"
+
+# WidgetPicker.vue
+msgid "Add widget"
+msgstr "Add widget"
+
+msgid "Text"
+msgstr "Text"
+
+msgid "Add text to your page"
+msgstr "Add text to your page"
+
+msgid "Heading"
+msgstr "Heading"
+
+msgid "Add a heading"
+msgstr "Add a heading"
+
+msgid "Image"
+msgstr "Image"
+
+msgid "Add an image"
+msgstr "Add an image"
+
+msgid "Link"
+msgstr "Link"
+
+msgid "Add a link"
+msgstr "Add a link"
+
+msgid "Add a file"
+msgstr "Add a file"
+
+msgid "Spacer"
+msgstr "Spacer"
+
+msgid "Add empty space"
+msgstr "Add empty space"
+
+# Errors
+msgid "Error: {message}"
+msgstr "Error: {message}"
+
+msgid "Success: {message}"
+msgstr "Success: {message}"

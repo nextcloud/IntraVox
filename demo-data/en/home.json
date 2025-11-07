@@ -1,0 +1,129 @@
+{
+  "id": "home",
+  "title": "Welcome to IntraVox - Your Modern Intranet Platform",
+  "layout": {
+    "columns": 2,
+    "rows": [
+      {
+        "widgets": [
+          {
+            "type": "heading",
+            "content": "Welcome to IntraVox",
+            "level": 1,
+            "column": 1,
+            "order": 1
+          },
+          {
+            "type": "heading",
+            "content": "The ultimate intranet platform for modern organizations",
+            "level": 3,
+            "column": 1,
+            "order": 2
+          },
+          {
+            "type": "text",
+            "content": "<p>IntraVox transforms how your team collaborates, communicates, and shares information. With an intuitive interface and powerful features, IntraVox provides everything you need for a successful digital workplace.</p>",
+            "column": 1,
+            "order": 3
+          }
+        ]
+      },
+      {
+        "widgets": [
+          {
+            "type": "heading",
+            "content": "Key Features",
+            "level": 2,
+            "column": 1,
+            "order": 1
+          },
+          {
+            "type": "text",
+            "content": "<p><strong>Flexible Page Editor</strong></p><p>Create and manage beautiful pages with our user-friendly drag-and-drop editor. Add text, images, lists, and more without technical knowledge.</p>",
+            "column": 1,
+            "order": 2
+          },
+          {
+            "type": "text",
+            "content": "<p><strong>Multi-language Support</strong></p><p>IntraVox supports multiple languages out-of-the-box. Switch seamlessly between Dutch, English, German, and French.</p>",
+            "column": 1,
+            "order": 3
+          },
+          {
+            "type": "text",
+            "content": "<p><strong>Team Folder Integration</strong></p><p>Built-in integration with Nextcloud Team Folders ensures secure and organized file storage with granular access control.</p>",
+            "column": 1,
+            "order": 4
+          },
+          {
+            "type": "text",
+            "content": "<p><strong>Advanced Navigation</strong></p><p>Choose between dropdown and megamenu navigation styles. Organize content up to 3 levels deep for optimal user experience.</p>",
+            "column": 2,
+            "order": 2
+          },
+          {
+            "type": "text",
+            "content": "<p><strong>Real-time Editing</strong></p><p>Changes are automatically saved and immediately visible to your team. No complex publication workflows needed.</p>",
+            "column": 2,
+            "order": 3
+          },
+          {
+            "type": "text",
+            "content": "<p><strong>Responsive Design</strong></p><p>Your intranet looks perfect on any device - desktop, tablet, or mobile.</p>",
+            "column": 2,
+            "order": 4
+          }
+        ]
+      },
+      {
+        "widgets": [
+          {
+            "type": "heading",
+            "content": "How It Works",
+            "level": 2,
+            "column": 1,
+            "order": 1
+          },
+          {
+            "type": "text",
+            "content": "<ol><li>Create pages with the intuitive editor</li><li>Organize content with widgets and layouts</li><li>Configure navigation to your needs</li><li>Share knowledge and communicate effectively</li></ol>",
+            "column": 1,
+            "order": 2
+          },
+          {
+            "type": "heading",
+            "content": "Get Started",
+            "level": 2,
+            "column": 2,
+            "order": 1
+          },
+          {
+            "type": "text",
+            "content": "<p>Click the \"Edit\" button in the top right to modify this page. Use \"+ New Page\" to add more content. The possibilities are endless!</p>",
+            "column": 2,
+            "order": 2
+          }
+        ]
+      },
+      {
+        "widgets": [
+          {
+            "type": "heading",
+            "content": "Technology",
+            "level": 2,
+            "column": 1,
+            "order": 1
+          },
+          {
+            "type": "text",
+            "content": "<p><em>Built on Nextcloud with Vue.js for a modern, secure, and scalable experience.</em></p>",
+            "column": 1,
+            "order": 2
+          }
+        ]
+      }
+    ]
+  },
+  "created": 1762522830,
+  "modified": 1762522830
+}

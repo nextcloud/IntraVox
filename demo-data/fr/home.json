@@ -1,0 +1,129 @@
+{
+  "id": "home",
+  "title": "Bienvenue sur IntraVox - Votre Plateforme Intranet Moderne",
+  "layout": {
+    "columns": 2,
+    "rows": [
+      {
+        "widgets": [
+          {
+            "type": "heading",
+            "content": "Bienvenue sur IntraVox",
+            "level": 1,
+            "column": 1,
+            "order": 1
+          },
+          {
+            "type": "heading",
+            "content": "La plateforme intranet ultime pour les organisations modernes",
+            "level": 3,
+            "column": 1,
+            "order": 2
+          },
+          {
+            "type": "text",
+            "content": "<p>IntraVox transforme la façon dont votre équipe collabore, communique et partage des informations. Avec une interface intuitive et des fonctionnalités puissantes, IntraVox fournit tout ce dont vous avez besoin pour un espace de travail numérique réussi.</p>",
+            "column": 1,
+            "order": 3
+          }
+        ]
+      },
+      {
+        "widgets": [
+          {
+            "type": "heading",
+            "content": "Fonctionnalités Clés",
+            "level": 2,
+            "column": 1,
+            "order": 1
+          },
+          {
+            "type": "text",
+            "content": "<p><strong>Éditeur de Page Flexible</strong></p><p>Créez et gérez de belles pages avec notre éditeur glisser-déposer convivial. Ajoutez du texte, des images, des listes et plus encore sans connaissances techniques.</p>",
+            "column": 1,
+            "order": 2
+          },
+          {
+            "type": "text",
+            "content": "<p><strong>Support Multilingue</strong></p><p>IntraVox prend en charge plusieurs langues dès le départ. Basculez en toute transparence entre le néerlandais, l'anglais, l'allemand et le français.</p>",
+            "column": 1,
+            "order": 3
+          },
+          {
+            "type": "text",
+            "content": "<p><strong>Intégration de Dossier d'Équipe</strong></p><p>L'intégration intégrée avec les dossiers d'équipe Nextcloud garantit un stockage de fichiers sécurisé et organisé avec un contrôle d'accès granulaire.</p>",
+            "column": 1,
+            "order": 4
+          },
+          {
+            "type": "text",
+            "content": "<p><strong>Navigation Avancée</strong></p><p>Choisissez entre les styles de navigation déroulante et mégamenu. Organisez le contenu jusqu'à 3 niveaux de profondeur pour une expérience utilisateur optimale.</p>",
+            "column": 2,
+            "order": 2
+          },
+          {
+            "type": "text",
+            "content": "<p><strong>Édition en Temps Réel</strong></p><p>Les modifications sont automatiquement enregistrées et immédiatement visibles pour votre équipe. Aucun flux de publication complexe requis.</p>",
+            "column": 2,
+            "order": 3
+          },
+          {
+            "type": "text",
+            "content": "<p><strong>Design Responsive</strong></p><p>Votre intranet s'affiche parfaitement sur n'importe quel appareil - bureau, tablette ou mobile.</p>",
+            "column": 2,
+            "order": 4
+          }
+        ]
+      },
+      {
+        "widgets": [
+          {
+            "type": "heading",
+            "content": "Comment Ça Marche",
+            "level": 2,
+            "column": 1,
+            "order": 1
+          },
+          {
+            "type": "text",
+            "content": "<ol><li>Créez des pages avec l'éditeur intuitif</li><li>Organisez le contenu avec des widgets et des mises en page</li><li>Configurez la navigation selon vos besoins</li><li>Partagez les connaissances et communiquez efficacement</li></ol>",
+            "column": 1,
+            "order": 2
+          },
+          {
+            "type": "heading",
+            "content": "Commencer",
+            "level": 2,
+            "column": 2,
+            "order": 1
+          },
+          {
+            "type": "text",
+            "content": "<p>Cliquez sur le bouton \"Modifier\" en haut à droite pour modifier cette page. Utilisez \"+ Nouvelle Page\" pour ajouter plus de contenu. Les possibilités sont infinies!</p>",
+            "column": 2,
+            "order": 2
+          }
+        ]
+      },
+      {
+        "widgets": [
+          {
+            "type": "heading",
+            "content": "Technologie",
+            "level": 2,
+            "column": 1,
+            "order": 1
+          },
+          {
+            "type": "text",
+            "content": "<p><em>Construit sur Nextcloud avec Vue.js pour une expérience moderne, sécurisée et évolutive.</em></p>",
+            "column": 1,
+            "order": 2
+          }
+        ]
+      }
+    ]
+  },
+  "created": 1762522830,
+  "modified": 1762522830
+}

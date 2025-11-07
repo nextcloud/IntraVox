@@ -1,0 +1,129 @@
+{
+  "id": "home",
+  "title": "Welkom bij IntraVox - Uw Moderne Intranet Platform",
+  "layout": {
+    "columns": 2,
+    "rows": [
+      {
+        "widgets": [
+          {
+            "type": "heading",
+            "content": "Welkom bij IntraVox",
+            "level": 1,
+            "column": 1,
+            "order": 1
+          },
+          {
+            "type": "heading",
+            "content": "Het ultieme intranet platform voor moderne organisaties",
+            "level": 3,
+            "column": 1,
+            "order": 2
+          },
+          {
+            "type": "text",
+            "content": "<p>IntraVox transformeert hoe uw team samenwerkt, communiceert en informatie deelt. Met een intuïtieve interface en krachtige functies biedt IntraVox alles wat u nodig heeft voor een succesvol digitaal werkplein.</p>",
+            "column": 1,
+            "order": 3
+          }
+        ]
+      },
+      {
+        "widgets": [
+          {
+            "type": "heading",
+            "content": "Belangrijkste Functies",
+            "level": 2,
+            "column": 1,
+            "order": 1
+          },
+          {
+            "type": "text",
+            "content": "<p><strong>Flexibele Pagina Editor</strong></p><p>Creëer en beheer prachtige pagina's met onze gebruiksvriendelijke drag-and-drop editor. Voeg tekst, afbeeldingen, lijsten en meer toe zonder technische kennis.</p>",
+            "column": 1,
+            "order": 2
+          },
+          {
+            "type": "text",
+            "content": "<p><strong>Meertalige Ondersteuning</strong></p><p>IntraVox ondersteunt meerdere talen out-of-the-box. Schakel naadloos tussen Nederlands, Engels, Duits en Frans.</p>",
+            "column": 1,
+            "order": 3
+          },
+          {
+            "type": "text",
+            "content": "<p><strong>Team Folder Integratie</strong></p><p>Ingebouwde integratie met Nextcloud Team Folders zorgt voor veilige en georganiseerde bestandsopslag met granulaire toegangscontrole.</p>",
+            "column": 1,
+            "order": 4
+          },
+          {
+            "type": "text",
+            "content": "<p><strong>Geavanceerde Navigatie</strong></p><p>Kies tussen dropdown en megamenu navigatie stijlen. Organiseer content in tot 3 niveaus voor optimale gebruikerservaring.</p>",
+            "column": 2,
+            "order": 2
+          },
+          {
+            "type": "text",
+            "content": "<p><strong>Real-time Bewerking</strong></p><p>Wijzigingen worden direct opgeslagen en zijn meteen zichtbaar voor uw team. Geen complexe publicatie workflows nodig.</p>",
+            "column": 2,
+            "order": 3
+          },
+          {
+            "type": "text",
+            "content": "<p><strong>Responsive Design</strong></p><p>Uw intranet ziet er perfect uit op elk apparaat - desktop, tablet of mobiel.</p>",
+            "column": 2,
+            "order": 4
+          }
+        ]
+      },
+      {
+        "widgets": [
+          {
+            "type": "heading",
+            "content": "Hoe Het Werkt",
+            "level": 2,
+            "column": 1,
+            "order": 1
+          },
+          {
+            "type": "text",
+            "content": "<ol><li>Maak pagina's aan met de intuïtieve editor</li><li>Organiseer content met widgets en layouts</li><li>Configureer navigatie naar uw wensen</li><li>Deel kennis en communiceer effectief</li></ol>",
+            "column": 1,
+            "order": 2
+          },
+          {
+            "type": "heading",
+            "content": "Aan de Slag",
+            "level": 2,
+            "column": 2,
+            "order": 1
+          },
+          {
+            "type": "text",
+            "content": "<p>Klik op de \"Bewerken\" knop rechtsboven om deze pagina aan te passen. Gebruik \"+ Nieuwe Pagina\" om meer content toe te voegen. De mogelijkheden zijn eindeloos!</p>",
+            "column": 2,
+            "order": 2
+          }
+        ]
+      },
+      {
+        "widgets": [
+          {
+            "type": "heading",
+            "content": "Technologie",
+            "level": 2,
+            "column": 1,
+            "order": 1
+          },
+          {
+            "type": "text",
+            "content": "<p><em>Gebouwd op Nextcloud met Vue.js voor een moderne, veilige en schaalbare ervaring.</em></p>",
+            "column": 1,
+            "order": 2
+          }
+        ]
+      }
+    ]
+  },
+  "created": 1762522830,
+  "modified": 1762522830
+}
