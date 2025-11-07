@@ -83,7 +83,84 @@ Traditional intranets are complex, expensive, and often separate from your exist
 
 - Nextcloud 32 or higher
 - PHP 8.0 or higher
-- Service account "intravox"
+- GroupFolders app installed and enabled
+
+### Quick Installation
+
+1. **Install from App Store** (recommended)
+   - Navigate to Apps in Nextcloud
+   - Search for "IntraVox"
+   - Click Install
+
+2. **Manual Installation**
+   ```bash
+   cd /path/to/nextcloud/apps
+   git clone https://github.com/shalution/IntraVox.git intravox
+   cd intravox
+   npm install
+   npm run build
+   ```
+
+3. **Enable the App**
+   ```bash
+   php occ app:enable intravox
+   ```
+
+4. **Run Setup**
+   ```bash
+   php occ intravox:setup
+   ```
+
+This will automatically:
+- Create the IntraVox groupfolder
+- Set up the required groups (IntraVox Admins and IntraVox Users)
+- Create default demo content in all supported languages
+- Configure permissions properly
+
+### How It Works
+
+IntraVox uses Nextcloud's GroupFolders feature to store all content:
+- **Automatic Setup** - The setup command creates a shared groupfolder named "IntraVox"
+- **ID-Independent** - The app automatically finds the IntraVox folder, regardless of its internal ID
+- **Resilient** - If multiple IntraVox folders exist, it uses the most recent one
+- **No Manual Configuration** - Just run the setup command and you're ready to go
+
+The app stores pages as JSON files in a language-specific folder structure:
+```
+IntraVox/
+├── nl/
+│   ├── home.json
+│   └── navigation.json
+├── en/
+│   ├── home.json
+│   └── navigation.json
+├── de/
+└── fr/
+```
+
+### Technical Details
+
+**Groupfolder Discovery**
+
+IntraVox automatically finds the correct IntraVox groupfolder using an intelligent discovery mechanism:
+
+1. **Searches all groupfolders** - Uses the Nextcloud GroupFolders API to list all available groupfolders
+2. **Filters by name** - Looks for folders with mount point "IntraVox"
+3. **Selects the highest ID** - If multiple IntraVox folders exist, uses the most recent one (highest ID)
+4. **Works everywhere** - This logic is used both during setup and at runtime for API calls
+
+This approach ensures the app works reliably:
+- No hardcoded folder IDs
+- Survives reinstallations
+- Works across different Nextcloud instances
+- Handles edge cases gracefully
+
+**Object Type Compatibility**
+
+The app handles different versions of the GroupFolders API:
+- Supports `FolderDefinitionWithMappings` objects (Nextcloud 32+)
+- Falls back to array access for older versions
+- Uses property access (`mountPoint`) with method fallback (`getMountPoint()`)
 
 ---
 
