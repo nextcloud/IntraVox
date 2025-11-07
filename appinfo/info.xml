@@ -38,7 +38,7 @@ Built with Vue 3 and modern web technologies for a smooth, secure experience.
     </dependencies>
     <navigations>
         <navigation>
-            <name>Intranet</name>
+            <name>IntraVox</name>
             <route>intravox.page.index</route>
         </navigation>
     </navigations>
