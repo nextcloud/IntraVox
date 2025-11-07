@@ -183,9 +183,10 @@ export default {
         style.height = 'auto';
         style.maxWidth = '100%'; // Don't overflow container
       } else {
-        // Full width - use existing CSS
+        // Full width - natural aspect ratio
         style.width = '100%';
-        style.height = '300px';
+        style.height = 'auto';
+        style.maxHeight = '500px';
         style.objectFit = 'cover';
       }
 
@@ -258,7 +259,7 @@ export default {
 
 /* Heading Widget */
 .widget-heading {
-  margin: 0 0 15px 0;
+  margin: 0 0 10px 0;
   color: var(--color-main-text);
   font-weight: 600;
 }
@@ -346,7 +347,7 @@ export default {
 /* Divider Widget */
 .widget-divider {
   width: 100%;
-  margin: 20px 0;
+  margin: 15px 0;
   border: none;
   border-top: 1px solid var(--color-border);
   height: 0;

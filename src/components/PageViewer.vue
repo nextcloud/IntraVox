@@ -58,12 +58,12 @@ export default {
 }
 
 .page-row {
-  margin-bottom: 20px;
+  margin-bottom: 30px;
 }
 
 .page-grid {
   display: grid;
-  gap: 20px;
+  gap: 15px;
   width: 100%;
 }
 
