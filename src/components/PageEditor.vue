@@ -59,6 +59,14 @@
             <template #item="{ element: widget }">
               <div class="widget-wrapper" :class="{ 'editing': focusedWidgetId === widget.id }">
                 <div class="widget-controls">
+                  <NcButton v-if="needsEditButton(widget.type)"
+                            @click="editWidget(widget, rowIndex)"
+                            type="secondary"
+                            :aria-label="t('Edit widget')">
+                    <template #icon>
+                      <Pencil :size="20" />
+                    </template>
+                  </NcButton>
                   <NcButton @click="deleteWidget(rowIndex, widget.id)"
                             type="error"
                             :aria-label="t('Delete widget')">
@@ -184,6 +192,10 @@ export default {
   methods: {
     t(key, vars = {}) {
       return t('intravox', key, vars);
+    },
+    needsEditButton(widgetType) {
+      // Show edit button for widgets that aren't inline-editable
+      return ['image', 'link', 'file', 'heading'].includes(widgetType);
     },
     initializeWidgetIds() {
       // Assign unique IDs to all widgets if they don't have one
