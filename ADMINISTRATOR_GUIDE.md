@@ -26,7 +26,7 @@ This guide provides technical documentation for system administrators who need t
 - **Nextcloud**: 32 or higher
 - **PHP**: 8.0 or higher
 - **Node.js**: 16+ and npm (for building frontend)
-- **Service Account**: A dedicated user account named "intravox"
+- **GroupFolders App**: Required for shared storage
 
 ### Installation Steps
 
@@ -63,52 +63,57 @@ cd /path/to/nextcloud
 php occ app:enable intravox
 ```
 
-#### 5. Create Service Account
+#### 5. Install GroupFolders App
 
-IntraVox uses a dedicated service account named "intravox" to store shared content:
+IntraVox requires the GroupFolders app to be installed and enabled:
 
 ```bash
-# Create the intravox service account
-php occ user:add intravox
-
-# Set a secure password when prompted
+# Install from Nextcloud app store or enable if already installed
+php occ app:enable groupfolders
 ```
 
-**Important:** This service account should NOT be used for regular login. It serves only as the owner of the shared IntraVox folder.
+#### 6. Setup GroupFolder and Permissions
 
-#### 6. Setup Shared Folder and Permissions
-
-Run the setup command to automatically configure the IntraVox shared folder:
+Run the setup command to automatically configure IntraVox:
 
 ```bash
 php occ intravox:setup
 ```
 
 This command will:
-- Create a folder "IntraVox" in the intravox user's home directory
+- Create a GroupFolder named "IntraVox" (or find existing one)
+- Create required groups: "IntraVox Admins" and "IntraVox Users"
+- Configure folder permissions:
+  - IntraVox Admins: Full access (read, write, delete, share)
+  - IntraVox Users: Read-only access
 - Create language subfolders (nl/, en/, de/, fr/) for multi-language support
 - Create a default homepage (home.json) in each language folder
 - Create subdirectories (images/, files/) for each language
-- Share the folder with "IntraVox Admins" group (full permissions)
-- Share the folder with "IntraVox Users" group (read-only permissions)
+- Create default navigation structure
 
 **Access Control:**
-- **IntraVox Admins** group: Full access (read, write, delete, share)
-- **IntraVox Users** group: Read-only access
-- Users must be added to these groups to access IntraVox content
+- **IntraVox Admins** group: Full permissions to create and edit pages
+- **IntraVox Users** group: Read-only access to view pages
+- Users must be added to one of these groups to access IntraVox content
 
-**Creating the required groups:**
+**Managing users in groups:**
 ```bash
-# Create the admin group
-php occ group:add "IntraVox Admins"
+# Add user to admin group (can edit pages)
+php occ group:adduser "IntraVox Admins" username
 
-# Create the users group
-php occ group:add "IntraVox Users"
+# Add user to users group (read-only access)
+php occ group:adduser "IntraVox Users" username
 
-# Add users to groups
-php occ group:adduser "IntraVox Admins" admin
-php occ group:adduser "IntraVox Users" johndoe
+# Remove user from group
+php occ group:removeuser "IntraVox Admins" username
 ```
+
+**How It Works:**
+IntraVox automatically discovers the IntraVox GroupFolder using an intelligent search mechanism:
+1. Searches all available GroupFolders
+2. Finds the folder with mount point "IntraVox"
+3. If multiple exist, uses the most recent one (highest ID)
+4. No hardcoded folder IDs - works reliably across installations
 
 ---
 
@@ -126,8 +131,8 @@ php occ group:adduser "IntraVox Users" johndoe
 **Backend:**
 - PHP 8.0+
 - Nextcloud App Framework
+- Nextcloud GroupFolders API
 - Nextcloud Files API
-- Nextcloud Sharing API
 - OCC Commands
 
 ### Project Structure
@@ -143,7 +148,10 @@ intravox/
 │   │   └── Application.php         # App initialization
 │   │
 │   ├── Command/
-│   │   └── SetupCommand.php        # OCC command: php occ intravox:setup
+│   │   ├── SetupCommand.php        # OCC command: php occ intravox:setup
+│   │   ├── MigrateToLanguageStructureCommand.php  # Migration command
+│   │   ├── CreateLanguageHomepagesCommand.php     # Create language homepages
+│   │   └── CopyNavigationCommand.php              # Copy navigation between languages
 │   │
 │   ├── Controller/
 │   │   ├── PageController.php      # Main page rendering
@@ -151,7 +159,8 @@ intravox/
 │   │
 │   └── Service/
 │       ├── PageService.php         # Business logic, validation, security, multi-language
-│       └── SetupService.php        # Shared folder setup and sharing logic
+│       ├── SetupService.php        # GroupFolder setup and permission management
+│       └── NavigationService.php   # Navigation management (dropdown/megamenu)
 │
 ├── src/                            # Vue.js frontend source
 │   ├── main.js                     # Application entry point
@@ -161,9 +170,13 @@ intravox/
 │       ├── PageViewer.vue          # Read-only page display
 │       ├── PageEditor.vue          # Drag-and-drop page editor
 │       ├── Widget.vue              # Widget renderer (displays widgets)
+│       ├── InlineTextEditor.vue    # Inline text editing with Markdown toolbar
 │       ├── WidgetPicker.vue        # Widget type selector modal
 │       ├── WidgetEditor.vue        # Widget configuration modal
-│       └── PageListModal.vue       # Page navigation modal
+│       ├── PageListModal.vue       # Page navigation modal
+│       ├── NewPageModal.vue        # Create new page modal
+│       ├── Navigation.vue          # Navigation bar (dropdown/megamenu)
+│       └── NavigationEditor.vue    # Navigation editor modal
 │
 ├── css/
 │   └── main.css                    # Global styles and overrides
@@ -188,24 +201,37 @@ intravox/
 ```
 App.vue (Root)
 │
-├─ PageListModal (Navigation)
+├─ Navigation - Navigation bar with dropdown/megamenu
+│
+├─ NavigationEditor - Edit navigation structure
+│
+├─ PageListModal - Browse all pages
+│
+├─ NewPageModal - Create new page
 │
 ├─ PageViewer (Display Mode)
 │  └─ Widget (x N) - Renders individual widgets
+│     ├─ Text (with Markdown rendering)
+│     ├─ Heading (H1-H6)
+│     ├─ Image (with positioning support)
+│     ├─ Link
+│     ├─ File
+│     └─ Divider
 │
 └─ PageEditor (Edit Mode)
-   ├─ Draggable Rows/Columns
+   ├─ Draggable Rows/Columns (vuedraggable)
    │  └─ Widget (x N) - Each with edit/delete controls
+   │     └─ InlineTextEditor - Inline editing for text widgets
    │
-   ├─ WidgetPicker - Select widget type
+   ├─ WidgetPicker - Select widget type to add
    │
    └─ WidgetEditor - Configure widget properties
       ├─ Text Editor (with Markdown toolbar)
-      ├─ Image Upload (with size presets)
+      ├─ Image Upload (with size presets and vertical positioning)
       ├─ Heading Configuration (H1-H6)
-      ├─ Link Editor
+      ├─ Link Editor (internal pages or external URLs)
       ├─ File Upload
-      └─ Divider
+      └─ Divider (visual separator)
 ```
 
 ### Data Flow
@@ -217,9 +243,11 @@ User Action → Vue Component → API Call (Axios)
                                     ↓
                             PageService.php (validation + security + language detection)
                                     ↓
-                            Nextcloud Files API
+                            NavigationService.php (for navigation operations)
                                     ↓
-                    intravox user's home/IntraVox/{language}/*.json (storage)
+                            Nextcloud Files API + GroupFolders API
+                                    ↓
+                    GroupFolder: IntraVox/{language}/*.json (storage)
                                     ↓
                             Response → Vue Component → UI Update
 ```
@@ -255,14 +283,15 @@ IntraVox is built with a **security-first** approach:
 
 ### Access Control
 
-- Service account "intravox" owns the shared folder
-- Nextcloud sharing system provides access control
+- GroupFolder "IntraVox" provides shared storage
+- Nextcloud GroupFolders system provides access control
 - Two predefined groups control access:
-  - **IntraVox Admins**: Full permissions (read, write, delete, share)
-  - **IntraVox Users**: Read-only permissions
+  - **IntraVox Admins**: Full permissions (read, write, delete, share) - Can create and edit pages
+  - **IntraVox Users**: Read-only permissions - Can only view pages
 - Administrators add users to these groups to grant access
 - Users only see content they're authorized to access
 - No direct file system access from the frontend
+- Permission checks are enforced at the GroupFolder level
 
 ### API Security
 
@@ -275,11 +304,10 @@ IntraVox is built with a **security-first** approach:
 
 ## Storage Structure
 
-IntraVox uses a **service account's shared folder** for storage, with built-in **multi-language support**:
+IntraVox uses a **GroupFolder** for storage, with built-in **multi-language support**:
 
 ```
-intravox user's home/
-└── IntraVox/                       # Shared folder (owned by intravox user)
+GroupFolder: IntraVox/              # Shared GroupFolder accessible to all authorized users
     ├── nl/                         # Dutch content
     │   ├── home.json              # Dutch homepage
     │   ├── images/                # Dutch images
@@ -380,12 +408,12 @@ IntraVox automatically detects each user's language preference and shows content
 
 | Type | Properties | Description |
 |------|-----------|-------------|
-| `text` | `content` | Rich text with Markdown support |
+| `text` | `content` | Rich text with Markdown support (bold, italic, lists, links, code) |
 | `heading` | `content`, `level` (1-6) | Page headings (H1-H6) |
-| `image` | `src`, `alt`, `width` | Images with aspect ratio preservation |
-| `link` | `url`, `text` | External or internal links |
+| `image` | `src`, `alt`, `width`, `objectPosition` | Images with size presets (300px/500px/800px/full) and vertical positioning (top/center/bottom) |
+| `link` | `url`, `text` | Links to internal pages or external websites |
 | `file` | `path`, `name` | Embedded file downloads |
-| `divider` | - | Visual separator / spacer |
+| `divider` | - | Visual separator / horizontal rule |
 
 ---
 
@@ -639,25 +667,30 @@ IntraVox supports multiple Nextcloud instances sharing the same codebase:
 ### Backup Strategy
 
 **Important files to backup:**
-- `intravox user home/IntraVox/{language}/*.json` - All page data for each language
-- `intravox user home/IntraVox/{language}/images/` - Uploaded images
-- `intravox user home/IntraVox/{language}/files/` - Uploaded files
-- Page-specific folders: `intravox user home/IntraVox/{language}/{pageid}/`
+- GroupFolder `IntraVox/{language}/*.json` - All page data for each language
+- GroupFolder `IntraVox/{language}/navigation.json` - Navigation structure
+- GroupFolder `IntraVox/{language}/images/` - Uploaded images
+- GroupFolder `IntraVox/{language}/files/` - Uploaded files
+- Page-specific folders: `IntraVox/{language}/{pageid}/`
 
 **Backup command:**
 ```bash
+# Find the GroupFolder mount point
+GROUPFOLDER_ID=$(php occ groupfolders:list | grep IntraVox | grep -oP '^\d+')
+
 # Scan files to ensure filecache is up to date
-php occ files:scan --path="intravox/files/IntraVox"
+php occ groupfolders:scan $GROUPFOLDER_ID
 
 # Manual backup (find the actual data directory path)
 DATA_DIR=$(php occ config:system:get datadirectory)
-tar -czf intravox-backup-$(date +%Y%m%d).tar.gz $DATA_DIR/intravox/files/IntraVox/
+GROUPFOLDER_PATH="$DATA_DIR/__groupfolders/$GROUPFOLDER_ID"
+tar -czf intravox-backup-$(date +%Y%m%d).tar.gz $GROUPFOLDER_PATH
 ```
 
 **Restore procedure:**
-1. Extract backup to intravox user's IntraVox folder
-2. Run `php occ files:scan --path="intravox/files/IntraVox"` to update filecache
-3. Verify permissions are correct
+1. Extract backup to GroupFolder location
+2. Run `php occ groupfolders:scan $GROUPFOLDER_ID` to update filecache
+3. Verify permissions are correct via GroupFolders admin interface
 
 ### Performance Optimization
 
