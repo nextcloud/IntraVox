@@ -1,0 +1,32 @@
+# Node modules
+node_modules/
+
+# Build output
+js/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Temp files
+*.tmp
+.cache/
+
+# Demo and test data
+demo-data/
+demo-data.tar.gz
+upload-navigation.html
+
+# Deployment scripts (sensitive)
+cleanup-old-backups.sh

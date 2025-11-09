@@ -1,0 +1,287 @@
+# German translations for IntraVox
+# Copyright (C) 2025
+# This file is distributed under the same license as the IntraVox package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: IntraVox\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-01-05 12:00+0000\n"
+"PO-Revision-Date: 2025-01-05 12:00+0000\n"
+"Last-Translator: \n"
+"Language-Team: German\n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+# App.vue
+msgid "Edit"
+msgstr "Bearbeiten"
+
+msgid "Edit page"
+msgstr "Seite bearbeiten"
+
+msgid "Save"
+msgstr "Speichern"
+
+msgid "Save changes"
+msgstr "Änderungen speichern"
+
+msgid "Cancel"
+msgstr "Abbrechen"
+
+msgid "Cancel editing"
+msgstr "Bearbeitung abbrechen"
+
+msgid "Pages"
+msgstr "Seiten"
+
+msgid "Show page list"
+msgstr "Seitenliste anzeigen"
+
+msgid "New Page"
+msgstr "Neue Seite"
+
+msgid "Create new page"
+msgstr "Neue Seite erstellen"
+
+msgid "Loading..."
+msgstr "Laden..."
+
+msgid "No pages found. Please run the setup command first."
+msgstr "Keine Seiten gefunden. Bitte führen Sie zuerst den Setup-Befehl aus."
+
+msgid "Could not load pages: {error}"
+msgstr "Seiten konnten nicht geladen werden: {error}"
+
+msgid "Could not load page: {error}"
+msgstr "Seite konnte nicht geladen werden: {error}"
+
+msgid "Changes cancelled"
+msgstr "Änderungen abgebrochen"
+
+msgid "Page saved"
+msgstr "Seite gespeichert"
+
+msgid "Could not save page: {error}"
+msgstr "Seite konnte nicht gespeichert werden: {error}"
+
+msgid "Title for the new page:"
+msgstr "Titel für die neue Seite:"
+
+msgid "Invalid page title"
+msgstr "Ungültiger Seitentitel"
+
+msgid "Page created"
+msgstr "Seite erstellt"
+
+msgid "Could not create page: {error}"
+msgstr "Seite konnte nicht erstellt werden: {error}"
+
+msgid "Are you sure you want to delete this page?"
+msgstr "Möchten Sie diese Seite wirklich löschen?"
+
+msgid "Page deleted"
+msgstr "Seite gelöscht"
+
+msgid "Could not delete page: {error}"
+msgstr "Seite konnte nicht gelöscht werden: {error}"
+
+# PageEditor.vue
+msgid "Columns:"
+msgstr "Spalten:"
+
+msgid "Add Row"
+msgstr "Zeile hinzufügen"
+
+msgid "Add Widget"
+msgstr "Widget hinzufügen"
+
+msgid "Delete row"
+msgstr "Zeile löschen"
+
+msgid "Column {column}"
+msgstr "Spalte {column}"
+
+msgid "Edit widget"
+msgstr "Widget bearbeiten"
+
+msgid "Delete widget"
+msgstr "Widget löschen"
+
+msgid "Are you sure you want to delete this row?"
+msgstr "Möchten Sie diese Zeile wirklich löschen?"
+
+msgid "New text widget"
+msgstr "Neues Text-Widget"
+
+msgid "New heading"
+msgstr "Neue Überschrift"
+
+msgid "Link text"
+msgstr "Link-Text"
+
+msgid "File"
+msgstr "Datei"
+
+msgid "Are you sure you want to delete this widget?"
+msgstr "Möchten Sie dieses Widget wirklich löschen?"
+
+# WidgetEditor.vue
+msgid "Edit widget"
+msgstr "Widget bearbeiten"
+
+msgid "Text:"
+msgstr "Text:"
+
+msgid "Text formatting"
+msgstr "Textformatierung"
+
+msgid "Bold (Ctrl+B)"
+msgstr "Fett (Strg+B)"
+
+msgid "Italic (Ctrl+I)"
+msgstr "Kursiv (Strg+I)"
+
+msgid "Underline (Ctrl+U)"
+msgstr "Unterstrichen (Strg+U)"
+
+msgid "Strikethrough"
+msgstr "Durchgestrichen"
+
+msgid "Unordered list"
+msgstr "Aufzählungsliste"
+
+msgid "Ordered list"
+msgstr "Nummerierte Liste"
+
+msgid "Quote"
+msgstr "Zitat"
+
+msgid "Code block"
+msgstr "Codeblock"
+
+msgid "Insert link"
+msgstr "Link einfügen"
+
+msgid "Insert image"
+msgstr "Bild einfügen"
+
+msgid "Insert table"
+msgstr "Tabelle einfügen"
+
+msgid "Enter text... (Markdown supported: **bold**, *italic*, etc.)"
+msgstr "Text eingeben... (Markdown unterstützt: **fett**, *kursiv*, etc.)"
+
+msgid "Preview:"
+msgstr "Vorschau:"
+
+msgid "Heading:"
+msgstr "Überschrift:"
+
+msgid "Enter your heading..."
+msgstr "Geben Sie Ihre Überschrift ein..."
+
+msgid "Level:"
+msgstr "Ebene:"
+
+msgid "H1 - Largest"
+msgstr "H1 - Größte"
+
+msgid "H2"
+msgstr "H2"
+
+msgid "H3"
+msgstr "H3"
+
+msgid "H4"
+msgstr "H4"
+
+msgid "H5"
+msgstr "H5"
+
+msgid "H6 - Smallest"
+msgstr "H6 - Kleinste"
+
+msgid "Upload image:"
+msgstr "Bild hochladen:"
+
+msgid "Alt text:"
+msgstr "Alt-Text:"
+
+msgid "Description of the image..."
+msgstr "Beschreibung des Bildes..."
+
+msgid "Link text:"
+msgstr "Link-Text:"
+
+msgid "Click here"
+msgstr "Hier klicken"
+
+msgid "URL:"
+msgstr "URL:"
+
+msgid "File name:"
+msgstr "Dateiname:"
+
+msgid "File path (in IntraVox folder):"
+msgstr "Dateipfad (im IntraVox-Ordner):"
+
+msgid "Height (pixels):"
+msgstr "Höhe (Pixel):"
+
+# PageListModal.vue
+msgid "All pages"
+msgstr "Alle Seiten"
+
+msgid "No pages created yet."
+msgstr "Noch keine Seiten erstellt."
+
+msgid "Delete"
+msgstr "Löschen"
+
+# WidgetPicker.vue
+msgid "Add widget"
+msgstr "Widget hinzufügen"
+
+msgid "Text"
+msgstr "Text"
+
+msgid "Add text to your page"
+msgstr "Fügen Sie Text zu Ihrer Seite hinzu"
+
+msgid "Heading"
+msgstr "Überschrift"
+
+msgid "Add a heading"
+msgstr "Fügen Sie eine Überschrift hinzu"
+
+msgid "Image"
+msgstr "Bild"
+
+msgid "Add an image"
+msgstr "Fügen Sie ein Bild hinzu"
+
+msgid "Link"
+msgstr "Link"
+
+msgid "Add a link"
+msgstr "Fügen Sie einen Link hinzu"
+
+msgid "Add a file"
+msgstr "Fügen Sie eine Datei hinzu"
+
+msgid "Spacer"
+msgstr "Abstandhalter"
+
+msgid "Add empty space"
+msgstr "Fügen Sie leeren Platz hinzu"
+
+# Errors
+msgid "Error: {message}"
+msgstr "Fehler: {message}"
+
+msgid "Success: {message}"
+msgstr "Erfolg: {message}"
