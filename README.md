@@ -1,6 +1,6 @@
 # IntraVox - Transform Your Nextcloud into a Powerful Intranet
 
-> **⚠️ PROTOTYPE - NO OFFICIAL RELEASE YET**: IntraVox is currently a prototype in active development. There is no official release available yet. The application is being built and tested, with features and functionality changing rapidly. This is not production-ready software. Use at your own risk for testing and development purposes only.
+> **⚠️ PROTOTYPE - NO CODE AVAILABLE YET**: IntraVox is currently a prototype in active development. **No installable code or release is available yet.** This repository currently serves as a showcase of the planned functionality. The application is being built and tested privately. Check back later for updates on availability.
 
 **Create beautiful, collaborative pages in Nextcloud with the simplicity of modern content management.**
 
