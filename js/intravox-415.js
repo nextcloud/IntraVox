@@ -1,1 +1,0 @@
-"use strict";(self.webpackChunknextcloud_intravox=self.webpackChunknextcloud_intravox||[]).push([[415],{1415:(e,t,u)=>{u.r(t),u.d(t,{default:()=>a.N});var a=u(6508)}}]);
