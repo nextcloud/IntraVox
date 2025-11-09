@@ -1,5 +1,7 @@
 # IntraVox - Transform Your Nextcloud into a Powerful Intranet
 
+> **⚠️ Development Notice**: IntraVox is currently in heavy development. Features and functionality are being actively improved and expanded. While fully functional, you may encounter changes between updates as we continue to enhance the platform.
+
 **Create beautiful, collaborative pages in Nextcloud with the simplicity of modern content management.**
 
 IntraVox brings SharePoint-style pages to Nextcloud, empowering your team to build engaging intranets, knowledge bases, and collaborative workspaces—all within your secure Nextcloud environment.
@@ -8,9 +10,13 @@ IntraVox brings SharePoint-style pages to Nextcloud, empowering your team to bui
 
 *Beautiful, professional pages with drag-and-drop editing and smart navigation*
 
-![IntraVox Editor](img/Intravox%20edit.png)
+![Edit Pages with Drag-and-Drop](img/Edit%20page.gif)
 
-*Powerful visual editor with flexible layouts and real-time collaboration*
+*Powerful visual editor with flexible layouts and intuitive drag-and-drop widget management*
+
+![Fully Responsive Design](img/Responsive.gif)
+
+*Seamless experience across desktop, tablet, and mobile devices*
 
 ---
 
@@ -22,10 +28,8 @@ Traditional intranets are complex, expensive, and often separate from your exist
 
 - **Visual Drag-and-Drop Editor** - No coding required. Simply drag widgets where you want them
 - **Flexible Grid System** - Create professional layouts with 1-5 columns and unlimited rows
-- **Rich Content Types** - Text with Markdown, headings (H1-H6), images with positioning, links, files, and dividers
-- **Smart Navigation** - Create dropdown menus or megamenus to organize your pages
-- **Real-Time Updates** - Changes are saved immediately and visible to everyone
-- **Multi-Language Support** - Automatic content localization for Dutch, English, German, and French
+- **Rich Content Types** - Text, headings, images, links, files, and spacers
+- **Real-Time Collaboration** - Everyone sees updates instantly
 - **Beautiful & Responsive** - Looks great on desktop, tablet, and mobile
 
 ### Perfect For
@@ -45,43 +49,31 @@ Traditional intranets are complex, expensive, and often separate from your exist
 1. **Click IntraVox** in your Nextcloud navigation bar
 2. **Create Your First Page** - Click "+ New Page" and give it a title
 3. **Add Content** - Click "Edit" and start adding widgets:
-   - 📝 **Text** - Rich text with Markdown support (bold, italic, lists, links, code blocks, and more)
+   - 📝 **Text** - Rich text with Markdown support (bold, italic, lists, and more)
    - 📌 **Headings** - Structure your content with H1-H6 headers
-   - 🖼️ **Images** - Upload and display beautiful visuals with flexible sizing:
-     - Small (300px), Medium (500px), Large (800px), or Full width
-     - Full-width images support vertical positioning (Top/Center/Bottom) for perfect cropping
-     - Upload images to the images folder or use external URLs
-   - 🔗 **Links** - Add quick links to pages, websites, and resources
-   - 📄 **Files** - Embed documents and media files for easy access
+   - 🖼️ **Images** - Upload and display beautiful visuals (300px, 500px, 800px, or full width)
+   - 🔗 **Links** - Add quick links to important resources
+   - 📄 **Files** - Embed documents for easy access
    - ➖ **Dividers** - Separate content sections visually
 
 4. **Organize Your Layout** - Drag widgets between columns and rows to create the perfect structure
-5. **Customize Navigation** - Click "Edit Navigation" to create dropdown menus or megamenus for easy page access
-6. **Save & Share** - Your page is instantly available to everyone with access!
+5. **Save & Share** - Your page is instantly available to everyone with access!
 
 ### What Makes IntraVox Special?
 
-**Truly Collaborative** - IntraVox uses Nextcloud GroupFolders so everyone on your team sees the same content, in real-time. Changes are saved immediately and visible to all users.
+**Truly Collaborative** - Unlike personal pages, IntraVox uses shared folders so everyone on your team sees the same content, in real-time.
 
-**Smart Navigation System** - Create custom navigation structures with two modes:
-- **Dropdown Navigation** - Classic dropdown menus with submenus and external links
-- **Megamenu Navigation** - Modern multi-column layouts with categories for easier browsing
+**Multi-Language Support** - Automatically shows content in each user's preferred language (Dutch, English, German, French supported out of the box).
 
-**Multi-Language Support** - Automatically shows content in each user's preferred language (Dutch, English, German, French supported out of the box). Each language has its own content and navigation structure.
+**Beautifully Integrated** - No need to learn a new system. IntraVox lives right in your Nextcloud interface.
 
-**Beautifully Integrated** - No need to learn a new system. IntraVox lives right in your Nextcloud interface with a navigation button in the top bar.
+**Secure by Design** - Built with enterprise-grade security. All content is validated, sanitized, and stored safely.
 
-**Secure by Design** - Built with enterprise-grade security:
-- All content is validated and sanitized (HTML, Markdown, and JSON)
-- Permission-based access control via Nextcloud groups
-- No code injection risks - content is stored as pure JSON
-
-**Powerful Markdown Support** - Write naturally with full Markdown formatting in text widgets:
+**Markdown Support** - Write naturally with Markdown formatting in text widgets:
 - **Bold** and *italic* text
 - Bullet and numbered lists
-- Links with `[text](url)` syntax
-- Code blocks with syntax highlighting
-- Blockquotes and horizontal rules
+- Links and images
+- Code blocks
 - And more!
 
 ---
