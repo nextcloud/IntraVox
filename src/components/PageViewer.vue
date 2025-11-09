@@ -7,10 +7,10 @@
     >
       <div
         class="page-grid"
-        :style="{ gridTemplateColumns: `repeat(${row.columns || page.layout.columns}, 1fr)` }"
+        :style="{ gridTemplateColumns: `repeat(${row.columns || page.layout.columns || 1}, 1fr)` }"
       >
         <div
-          v-for="column in (row.columns || page.layout.columns)"
+          v-for="column in (row.columns || page.layout.columns || 1)"
           :key="column"
           class="page-column"
         >
@@ -44,6 +44,8 @@ export default {
   methods: {
     getWidgetsForColumn(row, column) {
       if (!row.widgets) return [];
+
+      // Filter widgets by column and sort by order
       return row.widgets
         .filter(w => w.column === column)
         .sort((a, b) => a.order - b.order);

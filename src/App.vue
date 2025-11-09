@@ -123,6 +123,15 @@
       @close="showNavigationEditor = false"
       @save="saveNavigation"
     />
+
+    <!-- Footer - Temporarily disabled for debugging -->
+    <!-- <Footer
+      v-if="!loading && !error"
+      :footer-content="footerContent"
+      :can-edit="canEditFooter"
+      :is-home-page="currentPage?.id === 'home'"
+      @save="handleFooterSave"
+    /> -->
   </div>
 </template>
 
@@ -144,6 +153,7 @@ import PageListModal from './components/PageListModal.vue';
 import NewPageModal from './components/NewPageModal.vue';
 import Navigation from './components/Navigation.vue';
 import NavigationEditor from './components/NavigationEditor.vue';
+// import Footer from './components/Footer.vue'; // Temporarily disabled
 
 export default {
   name: 'App',
@@ -160,7 +170,8 @@ export default {
     PageListModal,
     NewPageModal,
     Navigation,
-    NavigationEditor
+    NavigationEditor,
+    // Footer // Temporarily disabled
   },
   data() {
     return {
@@ -179,12 +190,18 @@ export default {
       },
       canEditNavigation: false,
       showNavigationEditor: false,
-      currentLanguage: document.documentElement.lang || 'en'
+      currentLanguage: document.documentElement.lang || 'en',
+      footerContent: '',
+      canEditFooter: false
     };
   },
   mounted() {
     this.loadPages();
     this.loadNavigation();
+    // this.loadFooter(); // Temporarily disabled
+
+    // Handle browser back/forward buttons
+    window.addEventListener('popstate', this.handlePopState);
 
     // Poll for language changes (Nextcloud reloads the page, but we check after navigation)
     this.languageCheckInterval = setInterval(() => {
@@ -212,6 +229,7 @@ export default {
     });
   },
   beforeUnmount() {
+    window.removeEventListener('popstate', this.handlePopState);
     if (this.languageCheckInterval) {
       clearInterval(this.languageCheckInterval);
     }
@@ -233,9 +251,25 @@ export default {
         console.log('IntraVox: Pages loaded:', this.pages);
 
         if (this.pages.length > 0) {
-          const homePage = this.pages.find(p => p.id === 'home') || this.pages[0];
-          console.log('IntraVox: Loading home page:', homePage.id);
-          await this.selectPage(homePage.id);
+          // Check if there's a page ID in the URL
+          const pageIdFromUrl = this.getPageIdFromUrl();
+          let targetPage = null;
+
+          if (pageIdFromUrl) {
+            // Try to find the page from URL
+            targetPage = this.pages.find(p => p.id === pageIdFromUrl);
+            if (!targetPage) {
+              console.warn(`IntraVox: Page '${pageIdFromUrl}' from URL not found`);
+            }
+          }
+
+          // Fallback to home page if no valid page from URL
+          if (!targetPage) {
+            targetPage = this.pages.find(p => p.id === 'home') || this.pages[0];
+          }
+
+          console.log('IntraVox: Loading page:', targetPage.id);
+          await this.selectPage(targetPage.id, false); // false = don't update URL on initial load
         } else {
           console.warn('IntraVox: No pages found!');
           this.error = this.t('No pages found. Please run the setup command first.');
@@ -247,7 +281,7 @@ export default {
         this.loading = false;
       }
     },
-    async selectPage(pageId) {
+    async selectPage(pageId, updateUrl = true) {
       try {
         console.log('IntraVox: Selecting page:', pageId);
         this.loading = true;
@@ -256,6 +290,11 @@ export default {
         this.currentPage = response.data;
         this.isEditMode = false;
         this.showPages = false;
+
+        // Update URL if requested (performance: only when user navigates, not on initial load)
+        if (updateUrl) {
+          this.updateUrl(pageId);
+        }
       } catch (err) {
         console.error('IntraVox: Error selecting page:', err);
         showError(this.t('Could not load page: {error}', { error: err.message }));
@@ -408,6 +447,34 @@ export default {
         showError(this.t('Could not save navigation: {error}', { error: err.message }));
       }
     },
+    async loadFooter() {
+      try {
+        console.log('IntraVox: Loading footer...');
+        const response = await axios.get(generateUrl('/apps/intravox/api/footer'));
+        console.log('IntraVox: Footer response:', response.data);
+        this.footerContent = response.data.content;
+        this.canEditFooter = response.data.canEdit;
+        console.log('IntraVox: Footer loaded, canEdit:', this.canEditFooter);
+      } catch (err) {
+        console.error('IntraVox: Could not load footer:', err);
+        this.footerContent = '';
+        this.canEditFooter = false;
+      }
+    },
+    async handleFooterSave(content) {
+      try {
+        console.log('IntraVox: Saving footer...', content);
+        const response = await axios.post(generateUrl('/apps/intravox/api/footer'), {
+          content: content
+        });
+        console.log('IntraVox: Footer saved successfully', response.data);
+        this.footerContent = response.data.content;
+        showSuccess(this.t('Footer saved'));
+      } catch (err) {
+        console.error('IntraVox: Could not save footer:', err);
+        showError(this.t('Could not save footer: {error}', { error: err.message }));
+      }
+    },
     navigateToItem(item) {
       if (item.pageId) {
         this.selectPage(item.pageId);
@@ -424,8 +491,53 @@ export default {
       // Reload navigation and pages for the new language
       this.loadNavigation();
       this.loadPages();
+      // this.loadFooter(); // Temporarily disabled
       // Force Vue to re-render all translated strings
       this.$forceUpdate();
+    },
+    getPageIdFromUrl() {
+      // Extract page ID from URL path
+      // Expected format: /apps/intravox/{language}/{pageId}
+      const path = window.location.pathname;
+      const parts = path.split('/').filter(p => p); // Remove empty parts
+
+      // Find 'intravox' in the path and get the page ID (skip language)
+      const intravoxIndex = parts.indexOf('intravox');
+      if (intravoxIndex !== -1 && intravoxIndex < parts.length - 2) {
+        // Language is at intravoxIndex + 1, pageId is at intravoxIndex + 2
+        return parts[intravoxIndex + 2];
+      }
+
+      return null;
+    },
+    updateUrl(pageId) {
+      // Update browser URL without reloading the page
+      // Format: /apps/intravox/{language}/{pageId}
+      const language = this.currentLanguage || document.documentElement.lang || 'en';
+      const newUrl = generateUrl(`/apps/intravox/${language}/${pageId}`);
+      const currentPath = window.location.pathname + window.location.search + window.location.hash;
+
+      // Only update if URL actually changed (performance)
+      if (currentPath !== newUrl) {
+        window.history.pushState({ pageId, language }, '', newUrl);
+        console.log('IntraVox: Updated URL to:', newUrl);
+      }
+    },
+    handlePopState(event) {
+      // Handle browser back/forward buttons
+      const pageId = this.getPageIdFromUrl();
+      console.log('IntraVox: Popstate event, page ID from URL:', pageId);
+
+      if (pageId && this.currentPage?.id !== pageId) {
+        // Load the page from URL (don't update URL again to avoid loop)
+        this.selectPage(pageId, false);
+      } else if (!pageId) {
+        // No page ID in URL, go to home page
+        const homePage = this.pages.find(p => p.id === 'home') || this.pages[0];
+        if (homePage && this.currentPage?.id !== homePage.id) {
+          this.selectPage(homePage.id, false);
+        }
+      }
     }
   }
 };
@@ -489,9 +601,11 @@ export default {
 
 .intravox-content {
   padding: 20px;
+  padding-bottom: 60px; /* Extra space at bottom */
   max-width: min(1600px, 95vw);
   margin: 0 auto;
   width: 100%;
+  min-height: calc(100vh - 200px); /* Ensure content takes up space */
 }
 
 .loading, .error {

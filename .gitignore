@@ -22,6 +22,7 @@ npm-debug.log*
 # Temp files
 *.tmp
 .cache/
+*.bak
 
 # Demo and test data
 demo-data/

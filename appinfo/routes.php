@@ -21,5 +21,9 @@ return [
         // API routes for navigation
         ['name' => 'navigation#get', 'url' => '/api/navigation', 'verb' => 'GET'],
         ['name' => 'navigation#save', 'url' => '/api/navigation', 'verb' => 'POST'],
+
+        // API routes for footer
+        ['name' => 'footer#get', 'url' => '/api/footer', 'verb' => 'GET'],
+        ['name' => 'footer#save', 'url' => '/api/footer', 'verb' => 'POST'],
     ],
 ];
