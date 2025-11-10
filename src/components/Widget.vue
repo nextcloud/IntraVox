@@ -54,6 +54,7 @@
     <div
       v-else-if="widget.type === 'divider'"
       class="widget-divider"
+      :style="getDividerStyle()"
     ></div>
 
     <!-- Unknown Widget Type -->
@@ -87,6 +88,10 @@ export default {
     editable: {
       type: Boolean,
       default: false
+    },
+    rowBackgroundColor: {
+      type: String,
+      default: ''
     }
   },
   emits: ['update', 'focus', 'blur'],
@@ -195,6 +200,19 @@ export default {
       }
 
       return style;
+    },
+    getDividerStyle() {
+      const style = {};
+
+      // If row has a dark primary background, use light divider
+      // Otherwise use primary color divider
+      if (this.rowBackgroundColor === 'var(--color-primary-element)') {
+        style.background = 'var(--color-primary-element-light)';
+      } else {
+        style.background = 'var(--color-primary-element)';
+      }
+
+      return style;
     }
   }
 };
@@ -267,6 +285,24 @@ export default {
   color: var(--color-primary);
   text-decoration: underline;
 }
+
+.widget-text :deep(h1),
+.widget-text :deep(h2),
+.widget-text :deep(h3),
+.widget-text :deep(h4),
+.widget-text :deep(h5),
+.widget-text :deep(h6) {
+  margin: 0.5em 0 !important;
+  font-weight: 600 !important;
+  color: inherit !important;
+}
+
+.widget-text :deep(h1) { font-size: 32px !important; }
+.widget-text :deep(h2) { font-size: 28px !important; }
+.widget-text :deep(h3) { font-size: 24px !important; }
+.widget-text :deep(h4) { font-size: 20px !important; }
+.widget-text :deep(h5) { font-size: 18px !important; }
+.widget-text :deep(h6) { font-size: 16px !important; }
 
 /* Heading Widget */
 .widget-heading {
@@ -359,7 +395,6 @@ export default {
 .widget-divider {
   width: 100%;
   height: 2px;
-  background: var(--color-primary-element);
   margin: 16px 0;
   border: none;
 }

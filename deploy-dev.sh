@@ -84,6 +84,10 @@ ssh -i "$SSH_KEY" "${REMOTE_USER}@${REMOTE_HOST}" << EOF
     # Navigate to apps directory
     cd $REMOTE_PATH
 
+    # Clean up old backups (keep only last 5)
+    echo "  🧹 Cleaning up old backups..."
+    sudo ls -t /tmp/${APP_NAME}.backup.* 2>/dev/null | tail -n +6 | xargs -r sudo rm -rf
+
     # Backup existing installation if present
     if [ -d "$APP_NAME" ]; then
         echo "  💾 Backing up existing installation..."

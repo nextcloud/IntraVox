@@ -264,6 +264,11 @@ export default {
         this.editor.chain().focus().setHeading({ level }).run();
       }
       this.showHeadingMenu = false;
+
+      // Force update after a small delay to ensure TipTap has processed the command
+      setTimeout(() => {
+        this.$emit('update:modelValue', this.editor.getHTML());
+      }, 10);
     },
     showLinkModalHandler() {
       const { from, to } = this.editor.state.selection;
@@ -369,8 +374,8 @@ export default {
 /* Floating Toolbar */
 .text-menubar {
   position: sticky;
-  top: 50px;
-  z-index: 100;
+  top: 0;
+  z-index: 1000;
   display: flex;
   align-items: center;
   gap: 4px;
@@ -378,7 +383,7 @@ export default {
   background: var(--color-main-background);
   border: 1px solid var(--color-border);
   border-radius: var(--border-radius);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   margin-bottom: 8px;
 }
 
@@ -530,6 +535,17 @@ export default {
 
 .is-focused .editor-content :deep(.ProseMirror) {
   background: transparent;
+}
+
+/* Text Selection */
+.editor-content :deep(.ProseMirror ::selection) {
+  background: var(--color-primary-element-light);
+  color: var(--color-main-text);
+}
+
+.editor-content :deep(.ProseMirror ::-moz-selection) {
+  background: var(--color-primary-element-light);
+  color: var(--color-main-text);
 }
 
 /* Placeholder */

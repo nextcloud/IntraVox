@@ -21,6 +21,7 @@
             :widget="widget"
             :page-id="page.id"
             :editable="false"
+            :row-background-color="row.backgroundColor || ''"
           />
         </div>
       </div>
@@ -80,7 +81,7 @@ export default {
 
 .page-row {
   margin-bottom: 30px;
-  padding: 10px;
+  padding: 24px;
   border-radius: var(--border-radius-large);
 }
 

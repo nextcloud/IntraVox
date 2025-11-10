@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.5] - 2025-11-10 - Readable page IDs
+
+### Changed
+- **Page ID System**: Complete overhaul of page identification
+  - Page IDs are now generated from the page title (e.g., "Welcome" → "welcome")
+  - Folder names in Files app are now human-readable instead of technical IDs
+  - URLs are clean and readable (e.g., `/apps/intravox#/welcome` instead of `/apps/intravox#/page-m8x9k2l-abc1234`)
+  - Duplicate titles automatically get numbered suffixes (e.g., "test", "test-2", "test-3")
+  - Internal uniqueId field preserved for future reference system features
+
+### Fixed
+- **File Visibility**: New pages now immediately visible in Nextcloud Files app
+  - Added automatic file cache scanning after page creation
+  - No more need to manually refresh Files app to see new folders
+- **Page Saving**: Resolved 400 Bad Request errors when saving pages
+  - Improved error handling with detailed error messages
+  - Better validation and sanitization of page data
+
+### Technical
+- Added slug generation from titles with support for diacritics
+- Automatic duplicate detection and counter system
+- Enhanced backend error handling for better debugging
+- File scanner integration for immediate cache updates
+
 ## [0.2.4] - 2025-11-10 - Row colors
 
 ### Changed

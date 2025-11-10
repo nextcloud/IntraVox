@@ -304,21 +304,38 @@ export default {
     createNewPage() {
       this.showNewPageModal = true;
     },
+    generateSlug(title) {
+      // Convert title to URL-friendly slug
+      return title.toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+    },
+    generateUniqueId() {
+      // Generate a unique ID using timestamp + random string for internal references
+      const timestamp = Date.now().toString(36);
+      const randomStr = Math.random().toString(36).substring(2, 9);
+      return `page-${timestamp}-${randomStr}`;
+    },
     async handleCreatePage(title) {
       if (!title) return;
 
-      const id = title.toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-+|-+$/g, '');
+      // Generate slug from title for folder name (readable)
+      const slug = this.generateSlug(title);
 
-      if (!id) {
+      if (!slug) {
         showError(this.t('Invalid page title'));
         return;
       }
 
+      // Generate unique ID for internal references
+      const uniqueId = this.generateUniqueId();
+
       try {
         const newPage = {
-          id: id,
+          id: slug, // Use slug as the page ID (folder name)
+          uniqueId: uniqueId, // Store unique ID for internal references
           title: title,
           layout: {
             columns: 1,
@@ -326,6 +343,7 @@ export default {
               {
                 widgets: [
                   {
+                    id: 'widget-1',
                     type: 'heading',
                     content: title,
                     level: 1,
@@ -341,7 +359,7 @@ export default {
         await axios.post(generateUrl('/apps/intravox/api/pages'), newPage);
         showSuccess(this.t('Page created'));
         await this.loadPages();
-        await this.selectPage(id);
+        await this.selectPage(slug);
       } catch (err) {
         showError(this.t('Could not create page: {error}', { error: err.message }));
       }
@@ -480,12 +498,36 @@ export default {
   padding: 20px;
   background: var(--color-main-background);
   border-bottom: 1px solid var(--color-border);
+  gap: 20px;
+}
+
+.header-left {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.header-right {
+  flex: 0 0 auto;
+  margin-left: auto;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+/* When screen is narrow, move actions next to title */
+@media (max-width: 1200px) {
+  .header-right {
+    margin-left: 0;
+  }
 }
 
 .header-left h1 {
   margin: 0;
   font-size: 24px;
   color: var(--color-main-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .page-title-input {
@@ -504,12 +546,6 @@ export default {
 .page-title-input:focus {
   outline: none;
   border-color: var(--color-primary);
-}
-
-.header-right {
-  display: flex;
-  gap: 10px;
-  align-items: center;
 }
 
 .intravox-content {

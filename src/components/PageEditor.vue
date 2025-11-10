@@ -92,7 +92,7 @@
                     </template>
                   </NcButton>
                 </div>
-                <Widget :widget="widget" :page-id="page.id" :editable="true" @update="updateWidget($event, rowIndex)" @focus="focusedWidgetId = widget.id" @blur="focusedWidgetId = null" />
+                <Widget :widget="widget" :page-id="page.id" :editable="true" :row-background-color="row.backgroundColor || ''" @update="updateWidget($event, rowIndex)" @focus="focusedWidgetId = widget.id" @blur="focusedWidgetId = null" />
               </div>
             </template>
           </draggable>
@@ -473,6 +473,8 @@ export default {
         row.widgets[index] = updatedWidget;
         // Reinitialize column arrays to reflect the updated widget
         this.initializeColumnArrays();
+        // Manually emit update to ensure parent receives the change
+        this.$emit('update', this.localPage);
       }
     },
     deleteWidget(rowIndex, widgetId) {
@@ -560,7 +562,7 @@ export default {
 .page-row {
   margin-bottom: 20px;
   position: relative;
-  padding: 10px;
+  padding: 24px;
   border: 2px dashed transparent;
   border-radius: var(--border-radius-large);
 }

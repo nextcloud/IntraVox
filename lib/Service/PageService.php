@@ -242,13 +242,21 @@ class PageService {
 
         $data['id'] = $this->sanitizeId($data['id']);
 
-        // Check if ID already exists anywhere in the tree
-        if ($this->pageIdExists($data['id'])) {
-            throw new \InvalidArgumentException('Page ID already exists: ' . $data['id']);
+        // If ID already exists, append a number to make it unique
+        $originalId = $data['id'];
+        $counter = 2;
+        while ($this->pageIdExists($data['id'])) {
+            $data['id'] = $originalId . '-' . $counter;
+            $counter++;
         }
 
         $data['created'] = time();
         $data['modified'] = time();
+
+        // Preserve uniqueId if provided (for internal references)
+        if (isset($data['uniqueId'])) {
+            $data['uniqueId'] = $data['uniqueId'];
+        }
 
         $validatedData = $this->validateAndSanitizePage($data);
 
@@ -276,17 +284,41 @@ class PageService {
             }
         } else {
             // Create folder for page
-            $pageFolder = $folder->newFolder($pageId);
+            try {
+                $pageFolder = $folder->newFolder($pageId);
+            } catch (\Exception $e) {
+                throw new \InvalidArgumentException('Failed to create page folder: ' . $e->getMessage());
+            }
 
             // Create {pageId}.json inside the folder
-            $file = $pageFolder->newFile($pageId . '.json');
-            $file->putContent(json_encode($validatedData, JSON_PRETTY_PRINT));
+            try {
+                $file = $pageFolder->newFile($pageId . '.json');
+                $file->putContent(json_encode($validatedData, JSON_PRETTY_PRINT));
+            } catch (\Exception $e) {
+                throw new \InvalidArgumentException('Failed to create page file: ' . $e->getMessage());
+            }
 
             // Create images subfolder
-            $pageFolder->newFolder('images');
+            try {
+                $pageFolder->newFolder('images');
+            } catch (\Exception $e) {
+                // Images folder might already exist, that's okay
+            }
 
             // Create files subfolder
-            $pageFolder->newFolder('files');
+            try {
+                $pageFolder->newFolder('files');
+            } catch (\Exception $e) {
+                // Files folder might already exist, that's okay
+            }
+
+            // Force Nextcloud to update the file cache so the folder is visible in Files app
+            try {
+                $scanner = $pageFolder->getStorage()->getScanner();
+                $scanner->scan($pageFolder->getInternalPath());
+            } catch (\Exception $e) {
+                // If scanning fails, that's okay - the folder still exists
+            }
         }
 
         return $validatedData;
@@ -296,25 +328,51 @@ class PageService {
      * Update an existing page
      */
     public function updatePage(string $id, array $data): array {
-        $id = $this->sanitizeId($id);
-        $result = $this->findPageById($this->getLanguageFolder(), $id);
-
-        if ($result === null) {
-            throw new \Exception('Page not found');
+        try {
+            $id = $this->sanitizeId($id);
+        } catch (\Exception $e) {
+            throw new \InvalidArgumentException('Failed to sanitize page ID: ' . $e->getMessage());
         }
 
-        $file = $result['file'];
-        $existingContent = $file->getContent();
-        $existingData = json_decode($existingContent, true);
+        try {
+            $result = $this->findPageById($this->getLanguageFolder(), $id);
+        } catch (\Exception $e) {
+            throw new \InvalidArgumentException('Failed to find page by ID: ' . $e->getMessage());
+        }
+
+        if ($result === null) {
+            throw new \InvalidArgumentException('Page not found: ' . $id);
+        }
+
+        try {
+            $file = $result['file'];
+            $existingContent = $file->getContent();
+            $existingData = json_decode($existingContent, true);
+        } catch (\Exception $e) {
+            throw new \InvalidArgumentException('Failed to read existing page data: ' . $e->getMessage());
+        }
 
         // Preserve creation time and ID
         $data['id'] = $id;
         $data['created'] = $existingData['created'] ?? time();
         $data['modified'] = time();
 
-        $validatedData = $this->validateAndSanitizePage($data);
+        try {
+            $validatedData = $this->validateAndSanitizePage($data);
+        } catch (\Exception $e) {
+            throw new \InvalidArgumentException('Page validation failed: ' . $e->getMessage());
+        }
 
-        $file->putContent(json_encode($validatedData, JSON_PRETTY_PRINT));
+        try {
+            // Update the file - Nextcloud will automatically create a version
+            // if versioning is enabled for the storage
+            $file->putContent(json_encode($validatedData, JSON_PRETTY_PRINT));
+
+            // Touch the file to trigger Nextcloud's version system
+            $file->touch();
+        } catch (\Exception $e) {
+            throw new \InvalidArgumentException('Failed to write updated page data: ' . $e->getMessage());
+        }
 
         return $validatedData;
     }
@@ -466,6 +524,11 @@ class PageService {
             ]
         ];
 
+        // Preserve uniqueId if provided (for internal references)
+        if (isset($data['uniqueId'])) {
+            $sanitized['uniqueId'] = $data['uniqueId'];
+        }
+
         if (isset($data['layout']['rows']) && is_array($data['layout']['rows'])) {
             foreach ($data['layout']['rows'] as $row) {
                 if (isset($row['widgets']) && is_array($row['widgets'])) {
@@ -560,7 +623,7 @@ class PageService {
      */
     private function sanitizeHtml(string $html): string {
         // Define allowed tags and attributes
-        $allowedTags = '<p><br><strong><em><u><s><ul><ol><li><a>';
+        $allowedTags = '<p><br><strong><em><u><s><ul><ol><li><a><h1><h2><h3><h4><h5><h6>';
 
         // Strip all tags except allowed ones
         $cleaned = strip_tags($html, $allowedTags);
