@@ -13,47 +13,16 @@
         />
       </div>
       <div class="header-right">
-        <!-- Edit Navigation Button (leftmost) -->
-        <NcButton v-if="canEditNavigation"
-                  @click="showNavigationEditor = true"
-                  type="secondary"
-                  :aria-label="t('Edit navigation')">
-          <template #icon>
-            <Cog :size="20" />
-          </template>
-          {{ t('Edit Navigation') }}
-        </NcButton>
+        <!-- Page Actions Menu (3-dot menu) -->
+        <PageActionsMenu v-if="!isEditMode"
+                         :is-edit-mode="isEditMode"
+                         :permissions="pagePermissions"
+                         @edit-navigation="showNavigationEditor = true"
+                         @show-pages="showPageList"
+                         @create-page="createNewPage"
+                         @start-edit="startEditMode" />
 
-        <!-- Pages Button -->
-        <NcButton @click="showPageList"
-                  type="secondary"
-                  :aria-label="t('Show page list')">
-          <template #icon>
-            <ViewList :size="20" />
-          </template>
-          {{ t('Pages') }}
-        </NcButton>
-
-        <!-- New Page Button -->
-        <NcButton @click="createNewPage"
-                  type="secondary"
-                  :aria-label="t('Create new page')">
-          <template #icon>
-            <Plus :size="20" />
-          </template>
-          {{ t('New Page') }}
-        </NcButton>
-
-        <!-- Edit/Save/Cancel Buttons (rightmost) -->
-        <NcButton v-if="!isEditMode"
-                  @click="startEditMode"
-                  type="primary"
-                  :aria-label="t('Edit page')">
-          <template #icon>
-            <Pencil :size="20" />
-          </template>
-          {{ t('Edit') }}
-        </NcButton>
+        <!-- Edit Mode Actions (Save/Cancel) -->
         <template v-else>
           <NcButton @click="cancelEditMode"
                     type="secondary"
@@ -124,14 +93,14 @@
       @save="saveNavigation"
     />
 
-    <!-- Footer - Temporarily disabled for debugging -->
-    <!-- <Footer
+    <!-- Footer -->
+    <Footer
       v-if="!loading && !error"
       :footer-content="footerContent"
       :can-edit="canEditFooter"
       :is-home-page="currentPage?.id === 'home'"
       @save="handleFooterSave"
-    /> -->
+    />
   </div>
 </template>
 
@@ -141,37 +110,31 @@ import { generateUrl } from '@nextcloud/router';
 import { translate as t } from '@nextcloud/l10n';
 import { showSuccess, showError } from '@nextcloud/dialogs';
 import { NcButton } from '@nextcloud/vue';
-import Pencil from 'vue-material-design-icons/Pencil.vue';
 import ContentSave from 'vue-material-design-icons/ContentSave.vue';
 import Close from 'vue-material-design-icons/Close.vue';
-import ViewList from 'vue-material-design-icons/ViewList.vue';
-import Plus from 'vue-material-design-icons/Plus.vue';
-import Cog from 'vue-material-design-icons/Cog.vue';
 import PageViewer from './components/PageViewer.vue';
 import PageEditor from './components/PageEditor.vue';
 import PageListModal from './components/PageListModal.vue';
 import NewPageModal from './components/NewPageModal.vue';
 import Navigation from './components/Navigation.vue';
 import NavigationEditor from './components/NavigationEditor.vue';
-// import Footer from './components/Footer.vue'; // Temporarily disabled
+import Footer from './components/Footer.vue';
+import PageActionsMenu from './components/PageActionsMenu.vue';
 
 export default {
   name: 'App',
   components: {
     NcButton,
-    Pencil,
     ContentSave,
     Close,
-    ViewList,
-    Plus,
-    Cog,
     PageViewer,
     PageEditor,
     PageListModal,
     NewPageModal,
     Navigation,
     NavigationEditor,
-    // Footer // Temporarily disabled
+    Footer,
+    PageActionsMenu
   },
   data() {
     return {
@@ -195,13 +158,28 @@ export default {
       canEditFooter: false
     };
   },
+  computed: {
+    /**
+     * Page permissions based on current user's roles
+     * This can be extended to support different user roles:
+     * - admin: all permissions
+     * - editor: can edit pages, create pages, view pages
+     * - viewer: can only view pages
+     */
+    pagePermissions() {
+      return {
+        editNavigation: this.canEditNavigation,
+        viewPages: true,  // Everyone can view pages
+        createPage: this.canEditNavigation,  // For now, same as nav edit permission
+        editPage: this.canEditNavigation,    // For now, same as nav edit permission
+        deletePage: this.canEditNavigation   // For now, same as nav edit permission
+      };
+    }
+  },
   mounted() {
     this.loadPages();
     this.loadNavigation();
-    // this.loadFooter(); // Temporarily disabled
-
-    // Handle browser back/forward buttons
-    window.addEventListener('popstate', this.handlePopState);
+    this.loadFooter();
 
     // Poll for language changes (Nextcloud reloads the page, but we check after navigation)
     this.languageCheckInterval = setInterval(() => {
@@ -229,7 +207,6 @@ export default {
     });
   },
   beforeUnmount() {
-    window.removeEventListener('popstate', this.handlePopState);
     if (this.languageCheckInterval) {
       clearInterval(this.languageCheckInterval);
     }
@@ -251,25 +228,10 @@ export default {
         console.log('IntraVox: Pages loaded:', this.pages);
 
         if (this.pages.length > 0) {
-          // Check if there's a page ID in the URL
-          const pageIdFromUrl = this.getPageIdFromUrl();
-          let targetPage = null;
-
-          if (pageIdFromUrl) {
-            // Try to find the page from URL
-            targetPage = this.pages.find(p => p.id === pageIdFromUrl);
-            if (!targetPage) {
-              console.warn(`IntraVox: Page '${pageIdFromUrl}' from URL not found`);
-            }
-          }
-
-          // Fallback to home page if no valid page from URL
-          if (!targetPage) {
-            targetPage = this.pages.find(p => p.id === 'home') || this.pages[0];
-          }
-
+          // Load home page by default
+          const targetPage = this.pages.find(p => p.id === 'home') || this.pages[0];
           console.log('IntraVox: Loading page:', targetPage.id);
-          await this.selectPage(targetPage.id, false); // false = don't update URL on initial load
+          await this.selectPage(targetPage.id);
         } else {
           console.warn('IntraVox: No pages found!');
           this.error = this.t('No pages found. Please run the setup command first.');
@@ -281,7 +243,7 @@ export default {
         this.loading = false;
       }
     },
-    async selectPage(pageId, updateUrl = true) {
+    async selectPage(pageId) {
       try {
         console.log('IntraVox: Selecting page:', pageId);
         this.loading = true;
@@ -290,11 +252,6 @@ export default {
         this.currentPage = response.data;
         this.isEditMode = false;
         this.showPages = false;
-
-        // Update URL if requested (performance: only when user navigates, not on initial load)
-        if (updateUrl) {
-          this.updateUrl(pageId);
-        }
       } catch (err) {
         console.error('IntraVox: Error selecting page:', err);
         showError(this.t('Could not load page: {error}', { error: err.message }));
@@ -495,50 +452,6 @@ export default {
       // Force Vue to re-render all translated strings
       this.$forceUpdate();
     },
-    getPageIdFromUrl() {
-      // Extract page ID from URL path
-      // Expected format: /apps/intravox/{language}/{pageId}
-      const path = window.location.pathname;
-      const parts = path.split('/').filter(p => p); // Remove empty parts
-
-      // Find 'intravox' in the path and get the page ID (skip language)
-      const intravoxIndex = parts.indexOf('intravox');
-      if (intravoxIndex !== -1 && intravoxIndex < parts.length - 2) {
-        // Language is at intravoxIndex + 1, pageId is at intravoxIndex + 2
-        return parts[intravoxIndex + 2];
-      }
-
-      return null;
-    },
-    updateUrl(pageId) {
-      // Update browser URL without reloading the page
-      // Format: /apps/intravox/{language}/{pageId}
-      const language = this.currentLanguage || document.documentElement.lang || 'en';
-      const newUrl = generateUrl(`/apps/intravox/${language}/${pageId}`);
-      const currentPath = window.location.pathname + window.location.search + window.location.hash;
-
-      // Only update if URL actually changed (performance)
-      if (currentPath !== newUrl) {
-        window.history.pushState({ pageId, language }, '', newUrl);
-        console.log('IntraVox: Updated URL to:', newUrl);
-      }
-    },
-    handlePopState(event) {
-      // Handle browser back/forward buttons
-      const pageId = this.getPageIdFromUrl();
-      console.log('IntraVox: Popstate event, page ID from URL:', pageId);
-
-      if (pageId && this.currentPage?.id !== pageId) {
-        // Load the page from URL (don't update URL again to avoid loop)
-        this.selectPage(pageId, false);
-      } else if (!pageId) {
-        // No page ID in URL, go to home page
-        const homePage = this.pages.find(p => p.id === 'home') || this.pages[0];
-        if (homePage && this.currentPage?.id !== homePage.id) {
-          this.selectPage(homePage.id, false);
-        }
-      }
-    }
   }
 };
 </script>

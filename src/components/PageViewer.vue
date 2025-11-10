@@ -4,13 +4,14 @@
       v-for="(row, rowIndex) in page.layout.rows"
       :key="rowIndex"
       class="page-row"
+      :style="{ backgroundColor: row.backgroundColor }"
     >
       <div
         class="page-grid"
-        :style="{ gridTemplateColumns: `repeat(${row.columns || page.layout.columns || 1}, 1fr)` }"
+        :style="{ gridTemplateColumns: `repeat(${(row.columns || page.layout.columns) ?? 1}, 1fr)` }"
       >
         <div
-          v-for="column in (row.columns || page.layout.columns || 1)"
+          v-for="column in ((row.columns || page.layout.columns) ?? 1)"
           :key="column"
           class="page-column"
         >
@@ -61,6 +62,8 @@ export default {
 
 .page-row {
   margin-bottom: 30px;
+  padding: 10px;
+  border-radius: 3px;
 }
 
 .page-grid {

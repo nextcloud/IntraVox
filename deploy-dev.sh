@@ -114,8 +114,9 @@ ssh -i "$SSH_KEY" "${REMOTE_USER}@${REMOTE_HOST}" << EOF
     set -e
     cd /var/www/nextcloud
 
-    # Enable app (will also trigger any necessary setup)
-    echo "  🔌 Enabling app..."
+    # Disable and re-enable app to clear route cache
+    echo "  🔄 Refreshing app..."
+    sudo -u www-data php occ app:disable $APP_NAME || true
     sudo -u www-data php occ app:enable $APP_NAME || true
 
     # Run setup command

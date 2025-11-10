@@ -33,6 +33,11 @@ class PageController extends Controller {
         $csp->addAllowedScriptDomain('\'unsafe-eval\'');
         $response->setContentSecurityPolicy($csp);
 
+        // Disable caching for development
+        $response->addHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        $response->addHeader('Pragma', 'no-cache');
+        $response->addHeader('Expires', '0');
+
         return $response;
     }
 
@@ -41,6 +46,27 @@ class PageController extends Controller {
      * @NoCSRFRequired
      */
     public function show(string $id): TemplateResponse {
+        Util::addScript('intravox', 'intravox-main');
+        Util::addStyle('intravox', 'main');
+
+        $response = new TemplateResponse('intravox', 'main');
+
+        // Set CSP to allow Vue.js to work
+        $csp = new ContentSecurityPolicy();
+        $csp->addAllowedScriptDomain('\'self\'');
+        $csp->addAllowedScriptDomain('\'unsafe-eval\'');
+        $response->setContentSecurityPolicy($csp);
+
+        return $response;
+    }
+
+    /**
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     */
+    public function languagePage(string $language, string $pageId): TemplateResponse {
+        // This route handles URLs like /en/home
+        // Return the same template as index - Vue.js will handle routing client-side
         Util::addScript('intravox', 'intravox-main');
         Util::addStyle('intravox', 'main');
 

@@ -59,7 +59,7 @@ class FooterService {
         $language = $this->getUserLanguage();
 
         try {
-            $groupFolder = $this->setupService->getGroupFolder();
+            $groupFolder = $this->setupService->getSharedFolder();
             $languageFolder = $groupFolder->get($language);
 
             // Try to get footer.json
@@ -100,14 +100,13 @@ class FooterService {
         $language = $this->getUserLanguage();
 
         try {
-            $groupFolder = $this->setupService->getGroupFolder();
+            $groupFolder = $this->setupService->getSharedFolder();
             $languageFolder = $groupFolder->get($language);
 
-            // Sanitize content
-            $sanitizedContent = htmlspecialchars($content, ENT_QUOTES, 'UTF-8');
-
+            // Content is already sanitized by DOMPurify in the frontend
+            // Store as-is like text widgets do
             $data = [
-                'content' => $sanitizedContent,
+                'content' => $content,
                 'modified' => time(),
                 'modifiedBy' => $this->userId
             ];
@@ -122,7 +121,7 @@ class FooterService {
             }
 
             return [
-                'content' => $sanitizedContent,
+                'content' => $content,
                 'language' => $language,
                 'canEdit' => true
             ];

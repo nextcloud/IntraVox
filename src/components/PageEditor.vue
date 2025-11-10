@@ -15,6 +15,7 @@
       v-for="(row, rowIndex) in localPage.layout.rows"
       :key="rowIndex"
       class="page-row editable"
+      :style="{ backgroundColor: row.backgroundColor }"
     >
       <div class="row-controls">
         <label style="margin-right: 8px;">{{ t('Row columns:') }}</label>
@@ -28,6 +29,22 @@
         >
           {{ n }}
         </button>
+
+        <!-- Background Color Picker -->
+        <NcActions style="margin-left: 8px;">
+          <template #icon>
+            <Palette :size="20" />
+          </template>
+          <NcActionButton v-for="color in backgroundColors"
+                          :key="color.value"
+                          @click="setRowBackgroundColor(rowIndex, color.value)">
+            <template #icon>
+              <div class="color-preview" :style="{ background: color.cssVar }"></div>
+            </template>
+            {{ color.label }}
+          </NcActionButton>
+        </NcActions>
+
         <NcButton @click="deleteRow(rowIndex)"
                   type="error"
                   :aria-label="t('Delete row')"
@@ -40,10 +57,10 @@
 
       <div
         class="page-grid"
-        :style="{ gridTemplateColumns: `repeat(${row.columns || localPage.layout.columns}, 1fr)` }"
+        :style="{ gridTemplateColumns: `repeat(${(row.columns || localPage.layout.columns) ?? 1}, 1fr)` }"
       >
         <div
-          v-for="column in (row.columns || localPage.layout.columns)"
+          v-for="column in ((row.columns || localPage.layout.columns) ?? 1)"
           :key="`${rowIndex}-${column}`"
           class="page-column droppable"
         >
@@ -129,11 +146,12 @@
 <script>
 import draggable from 'vuedraggable';
 import { translate as t } from '@nextcloud/l10n';
-import { NcButton, NcDialog } from '@nextcloud/vue';
+import { NcButton, NcDialog, NcActions, NcActionButton } from '@nextcloud/vue';
 import Plus from 'vue-material-design-icons/Plus.vue';
 import TableRowPlusAfter from 'vue-material-design-icons/TableRowPlusAfter.vue';
 import Pencil from 'vue-material-design-icons/Pencil.vue';
 import Delete from 'vue-material-design-icons/Delete.vue';
+import Palette from 'vue-material-design-icons/Palette.vue';
 import Widget from './Widget.vue';
 import WidgetPicker from './WidgetPicker.vue';
 import WidgetEditor from './WidgetEditor.vue';
@@ -144,10 +162,13 @@ export default {
     draggable,
     NcButton,
     NcDialog,
+    NcActions,
+    NcActionButton,
     Plus,
     TableRowPlusAfter,
     Pencil,
     Delete,
+    Palette,
     Widget,
     WidgetPicker,
     WidgetEditor
@@ -175,6 +196,47 @@ export default {
       deleteCallback: null,
       focusedWidgetId: null
     };
+  },
+  computed: {
+    backgroundColors() {
+      return [
+        {
+          label: this.t('Default (transparent)'),
+          value: '',
+          cssVar: 'transparent'
+        },
+        {
+          label: this.t('Light background'),
+          value: 'var(--color-background-hover)',
+          cssVar: 'var(--color-background-hover)'
+        },
+        {
+          label: this.t('Dark background'),
+          value: 'var(--color-background-dark)',
+          cssVar: 'var(--color-background-dark)'
+        },
+        {
+          label: this.t('Primary light'),
+          value: 'var(--color-primary-element-light)',
+          cssVar: 'var(--color-primary-element-light)'
+        },
+        {
+          label: this.t('Primary'),
+          value: 'var(--color-primary-element)',
+          cssVar: 'var(--color-primary-element)'
+        },
+        {
+          label: this.t('Subtle'),
+          value: 'var(--color-main-background)',
+          cssVar: 'var(--color-main-background)'
+        },
+        {
+          label: this.t('Contrast'),
+          value: 'var(--color-background-darker)',
+          cssVar: 'var(--color-background-darker)'
+        }
+      ];
+    }
   },
   mounted() {
     // Ensure all widgets have unique IDs
@@ -211,7 +273,7 @@ export default {
       // Create reactive arrays for each column in each row
       const newArrays = {};
       this.localPage.layout.rows.forEach((row, rowIndex) => {
-        const rowColumns = row.columns || this.localPage.layout.columns;
+        const rowColumns = (row.columns || this.localPage.layout.columns) ?? 1;
         for (let col = 1; col <= rowColumns; col++) {
           const key = `${rowIndex}-${col}`;
           newArrays[key] = row.widgets.filter(w => w.column === col);
@@ -232,7 +294,7 @@ export default {
         // Rebuild ALL rows' widgets from column arrays to handle cross-row drags
         this.localPage.layout.rows.forEach((row, rIndex) => {
           const allWidgets = [];
-          const rowColumns = row.columns || this.localPage.layout.columns;
+          const rowColumns = (row.columns || this.localPage.layout.columns) ?? 1;
 
           for (let col = 1; col <= rowColumns; col++) {
             const key = `${rIndex}-${col}`;
@@ -271,7 +333,7 @@ export default {
     },
     setRowColumns(rowIndex, n) {
       const row = this.localPage.layout.rows[rowIndex];
-      const oldColumns = row.columns || this.localPage.layout.columns;
+      const oldColumns = (row.columns || this.localPage.layout.columns) ?? 1;
 
       // Set row-specific column count
       row.columns = n;
@@ -287,9 +349,19 @@ export default {
 
       this.initializeColumnArrays();
     },
+    setRowBackgroundColor(rowIndex, color) {
+      // Set the backgroundColor property
+      const row = this.localPage.layout.rows[rowIndex];
+      row.backgroundColor = color;
+
+      // Force Vue to detect the change by creating a new array reference
+      this.localPage.layout.rows = [...this.localPage.layout.rows];
+    },
     addRow() {
       this.localPage.layout.rows.push({
-        widgets: []
+        columns: 1,
+        widgets: [],
+        backgroundColor: ''
       });
       this.initializeColumnArrays();
     },
@@ -599,5 +671,12 @@ export default {
 
 .column-add-widget .add-widget-btn {
   width: 100%;
+}
+
+.color-preview {
+  width: 20px;
+  height: 20px;
+  border-radius: 3px;
+  border: 1px solid var(--color-border);
 }
 </style>

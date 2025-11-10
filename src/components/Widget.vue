@@ -51,10 +51,10 @@
     </div>
 
     <!-- Divider Widget -->
-    <hr
-      v-else-if="widget.type === 'divider' || widget.type === 'spacer'"
+    <div
+      v-else-if="widget.type === 'divider'"
       class="widget-divider"
-    />
+    ></div>
 
     <!-- Unknown Widget Type -->
     <div v-else class="widget-unknown">
@@ -351,10 +351,10 @@ export default {
 /* Divider Widget */
 .widget-divider {
   width: 100%;
-  margin: 15px 0;
+  height: 2px;
+  background: var(--color-primary-element);
+  margin: 16px 0;
   border: none;
-  border-top: 1px solid var(--color-border);
-  height: 0;
 }
 
 /* Unknown Widget */

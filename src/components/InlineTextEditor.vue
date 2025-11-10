@@ -84,7 +84,7 @@
       <span class="menubar-divider"></span>
       <button
         type="button"
-        @mousedown.prevent="showLinkModal = true"
+        @mousedown.prevent="showLinkModalHandler"
         :class="{ 'is-active': editor.isActive('link') }"
         :title="t('Insert link')"
         class="menubar-button"
@@ -99,15 +99,28 @@
     <!-- Link Modal -->
     <NcModal v-if="showLinkModal" @close="closeLinkModal" :name="t('Insert link')" size="normal">
       <div class="link-modal-content">
-        <label for="link-url">{{ t('URL:') }}</label>
-        <input
-          id="link-url"
-          v-model="linkUrl"
-          type="url"
-          :placeholder="t('https://example.com')"
-          class="link-input"
-          @keyup.enter="applyLink"
-        />
+        <div class="form-group">
+          <label for="link-text">{{ t('Text:') }}</label>
+          <input
+            id="link-text"
+            v-model="linkText"
+            type="text"
+            :placeholder="t('Link text')"
+            class="link-input"
+            @keyup.enter="applyLink"
+          />
+        </div>
+        <div class="form-group">
+          <label for="link-url">{{ t('URL:') }}</label>
+          <input
+            id="link-url"
+            v-model="linkUrl"
+            type="url"
+            :placeholder="t('https://example.com')"
+            class="link-input"
+            @keyup.enter="applyLink"
+          />
+        </div>
         <div class="modal-buttons">
           <NcButton @click="closeLinkModal" type="secondary">
             {{ t('Cancel') }}
@@ -162,6 +175,7 @@ export default {
       showToolbar: true,
       showLinkModal: false,
       linkUrl: '',
+      linkText: '',
       showHeadingMenu: false
     };
   },
@@ -252,13 +266,18 @@ export default {
       this.showHeadingMenu = false;
     },
     showLinkModalHandler() {
+      const { from, to } = this.editor.state.selection;
+      const selectedText = this.editor.state.doc.textBetween(from, to, ' ');
+
       const previousUrl = this.editor.getAttributes('link').href;
       this.linkUrl = previousUrl || '';
+      this.linkText = selectedText || '';
       this.showLinkModal = true;
     },
     closeLinkModal() {
       this.showLinkModal = false;
       this.linkUrl = '';
+      this.linkText = '';
       this.editor.chain().focus().run();
     },
     applyLink() {
@@ -267,12 +286,55 @@ export default {
         return;
       }
 
-      this.editor
-        .chain()
-        .focus()
-        .extendMarkRange('link')
-        .setLink({ href: this.linkUrl })
-        .run();
+      // Use linkText if provided, otherwise use URL
+      const displayText = this.linkText || this.linkUrl;
+
+      // Get current selection
+      const { from, to } = this.editor.state.selection;
+
+      // If no text is selected or we want to replace it, insert new link
+      if (from === to) {
+        // Insert new link at cursor position
+        this.editor
+          .chain()
+          .focus()
+          .insertContent({
+            type: 'text',
+            marks: [
+              {
+                type: 'link',
+                attrs: {
+                  href: this.linkUrl,
+                  target: '_blank',
+                  rel: 'noopener noreferrer'
+                }
+              }
+            ],
+            text: displayText
+          })
+          .run();
+      } else {
+        // Replace selected text with link
+        this.editor
+          .chain()
+          .focus()
+          .deleteSelection()
+          .insertContent({
+            type: 'text',
+            marks: [
+              {
+                type: 'link',
+                attrs: {
+                  href: this.linkUrl,
+                  target: '_blank',
+                  rel: 'noopener noreferrer'
+                }
+              }
+            ],
+            text: displayText
+          })
+          .run();
+      }
 
       this.closeLinkModal();
     },
@@ -414,10 +476,15 @@ export default {
   gap: 16px;
 }
 
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .link-modal-content label {
   font-weight: 600;
   color: var(--color-main-text);
-  margin-bottom: -8px;
 }
 
 .link-input {

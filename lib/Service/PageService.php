@@ -9,7 +9,7 @@ use OCP\IUserSession;
 use OCP\IConfig;
 
 class PageService {
-    private const ALLOWED_WIDGET_TYPES = ['text', 'heading', 'image', 'link', 'file', 'spacer'];
+    private const ALLOWED_WIDGET_TYPES = ['text', 'heading', 'image', 'link', 'file', 'divider'];
     private const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
     private const MAX_IMAGE_SIZE = 5242880; // 5MB
     private const MAX_COLUMNS = 5;
@@ -461,7 +461,7 @@ class PageService {
             'created' => $data['created'] ?? time(),
             'modified' => $data['modified'] ?? time(),
             'layout' => [
-                'columns' => $this->validateColumns($data['layout']['columns'] ?? 1),
+                'columns' => 1, // Default to 1 column
                 'rows' => []
             ]
         ];
@@ -478,8 +478,20 @@ class PageService {
                         }
                     }
 
+                    $sanitizedRow = ['widgets' => $sanitizedWidgets];
+
+                    // Preserve row-specific column count if set
+                    if (isset($row['columns'])) {
+                        $sanitizedRow['columns'] = $this->validateColumns($row['columns']);
+                    }
+
+                    // Preserve row background color if set
+                    if (isset($row['backgroundColor'])) {
+                        $sanitizedRow['backgroundColor'] = $this->sanitizeBackgroundColor($row['backgroundColor']);
+                    }
+
                     if (!empty($sanitizedWidgets)) {
-                        $sanitized['layout']['rows'][] = ['widgets' => $sanitizedWidgets];
+                        $sanitized['layout']['rows'][] = $sanitizedRow;
                     }
                 }
             }
@@ -528,8 +540,8 @@ class PageService {
                 $sanitized['name'] = $this->sanitizeText($widget['name'] ?? '');
                 break;
 
-            case 'spacer':
-                $sanitized['height'] = max(10, min((int)($widget['height'] ?? 20), 200));
+            case 'divider':
+                // Divider has no additional properties
                 break;
         }
 
@@ -593,6 +605,33 @@ class PageService {
      */
     private function validateColumns(int $columns): int {
         return max(1, min($columns, self::MAX_COLUMNS));
+    }
+
+    /**
+     * Sanitize background color (only allow theme CSS variables or empty string)
+     */
+    private function sanitizeBackgroundColor(string $color): string {
+        // Empty string is allowed (transparent/default)
+        if (empty($color)) {
+            return '';
+        }
+
+        // Only allow Nextcloud theme CSS variables
+        $allowedColors = [
+            'var(--color-background-hover)',
+            'var(--color-background-dark)',
+            'var(--color-primary-element-light)',
+            'var(--color-primary-element)',
+            'var(--color-main-background)',
+            'var(--color-background-darker)'
+        ];
+
+        if (in_array($color, $allowedColors)) {
+            return $color;
+        }
+
+        // Invalid color, return empty (default)
+        return '';
     }
 
     /**
