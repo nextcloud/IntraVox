@@ -172,6 +172,7 @@ export default {
 
 .footer-content :deep(p) {
   margin: 0.5em 0;
+  color: inherit !important;
 }
 
 .footer-content :deep(a) {
@@ -181,6 +182,16 @@ export default {
 
 .footer-content :deep(a:hover) {
   text-decoration: underline;
+}
+
+.footer-content :deep(strong),
+.footer-content :deep(em),
+.footer-content :deep(u),
+.footer-content :deep(s),
+.footer-content :deep(ul),
+.footer-content :deep(ol),
+.footer-content :deep(li) {
+  color: inherit !important;
 }
 
 .footer-editor {

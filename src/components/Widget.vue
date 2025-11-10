@@ -208,12 +208,13 @@ export default {
 /* Text Widget */
 .widget-text {
   width: 100%;
-  color: var(--color-main-text);
+  color: inherit;
   line-height: 1.5;
 }
 
 .widget-text :deep(p) {
   margin: 0 0 0.5em 0;
+  color: inherit !important;
 }
 
 .widget-text :deep(p:last-child) {
@@ -225,6 +226,7 @@ export default {
   padding-left: 1.5em;
   margin: 0.5em 0;
   list-style-position: outside;
+  color: inherit !important;
 }
 
 .widget-text :deep(ul) {
@@ -237,23 +239,28 @@ export default {
 
 .widget-text :deep(li) {
   margin: 0.25em 0;
+  color: inherit !important;
   display: list-item;
 }
 
 .widget-text :deep(strong) {
   font-weight: bold;
+  color: inherit !important;
 }
 
 .widget-text :deep(em) {
   font-style: italic;
+  color: inherit !important;
 }
 
 .widget-text :deep(u) {
   text-decoration: underline;
+  color: inherit !important;
 }
 
 .widget-text :deep(s) {
   text-decoration: line-through;
+  color: inherit !important;
 }
 
 .widget-text :deep(a) {
@@ -264,7 +271,7 @@ export default {
 /* Heading Widget */
 .widget-heading {
   margin: 0 0 10px 0;
-  color: var(--color-main-text);
+  color: inherit;
   font-weight: 600;
 }
 
@@ -332,7 +339,7 @@ export default {
   display: flex;
   align-items: center;
   gap: 10px;
-  color: var(--color-main-text);
+  color: inherit;
   text-decoration: none;
 }
 

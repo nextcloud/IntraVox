@@ -7,11 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.4] - 2025-11-10 - Row colors
+
 ### Changed
+- **Row Background Colors**: Simplified color palette to 4 essential theme colors
+  - Removed semantic colors (Success, Warning, Error, Info)
+  - Kept: Default (transparent), Primary (dark green), Primary light, Light background
+  - All colors automatically adapt to Nextcloud theme changes
 - **Design System**: Updated all components to use Nextcloud CSS variables
   - Replaced hardcoded `border-radius: 3px` with `var(--border-radius-large)`
-  - Ensures compatibility with future Nextcloud theme changes
+  - All backgrounds in edit mode now transparent to show row colors
   - Consistent styling across all IntraVox components
+
+### Fixed
+- **Text Color Contrast**: Complete overhaul of text color inheritance
+  - All text widgets and headings now inherit theme colors from row background
+  - White text automatically applied on dark backgrounds (Primary)
+  - Dark text automatically applied on light backgrounds (Primary light, Light background)
+  - Fixed InlineTextEditor headings (H1-H6) to inherit colors
+  - All text elements (paragraphs, lists, formatting) use `inherit !important` to override inline styles
+  - Transparent backgrounds throughout edit mode for proper color visibility
+  - Proper contrast maintained according to Nextcloud design guidelines
 
 ## [0.2.2] - 2025-11-10 - Footer
 

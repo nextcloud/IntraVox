@@ -618,12 +618,9 @@ class PageService {
 
         // Only allow Nextcloud theme CSS variables
         $allowedColors = [
-            'var(--color-background-hover)',
-            'var(--color-background-dark)',
-            'var(--color-primary-element-light)',
             'var(--color-primary-element)',
-            'var(--color-main-background)',
-            'var(--color-background-darker)'
+            'var(--color-primary-element-light)',
+            'var(--color-background-hover)'
         ];
 
         if (in_array($color, $allowedColors)) {

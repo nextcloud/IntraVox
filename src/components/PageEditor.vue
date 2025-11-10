@@ -15,7 +15,7 @@
       v-for="(row, rowIndex) in localPage.layout.rows"
       :key="rowIndex"
       class="page-row editable"
-      :style="{ backgroundColor: row.backgroundColor }"
+      :style="getRowStyle(row)"
     >
       <div class="row-controls">
         <label style="margin-right: 8px;">{{ t('Row columns:') }}</label>
@@ -206,14 +206,9 @@ export default {
           cssVar: 'transparent'
         },
         {
-          label: this.t('Light background'),
-          value: 'var(--color-background-hover)',
-          cssVar: 'var(--color-background-hover)'
-        },
-        {
-          label: this.t('Dark background'),
-          value: 'var(--color-background-dark)',
-          cssVar: 'var(--color-background-dark)'
+          label: this.t('Primary'),
+          value: 'var(--color-primary-element)',
+          cssVar: 'var(--color-primary-element)'
         },
         {
           label: this.t('Primary light'),
@@ -221,19 +216,9 @@ export default {
           cssVar: 'var(--color-primary-element-light)'
         },
         {
-          label: this.t('Primary'),
-          value: 'var(--color-primary-element)',
-          cssVar: 'var(--color-primary-element)'
-        },
-        {
-          label: this.t('Subtle'),
-          value: 'var(--color-main-background)',
-          cssVar: 'var(--color-main-background)'
-        },
-        {
-          label: this.t('Contrast'),
-          value: 'var(--color-background-darker)',
-          cssVar: 'var(--color-background-darker)'
+          label: this.t('Light background'),
+          value: 'var(--color-background-hover)',
+          cssVar: 'var(--color-background-hover)'
         }
       ];
     }
@@ -254,6 +239,24 @@ export default {
   methods: {
     t(key, vars = {}) {
       return t('intravox', key, vars);
+    },
+    getRowStyle(row) {
+      const style = {};
+
+      if (row.backgroundColor) {
+        style.backgroundColor = row.backgroundColor;
+
+        // Set text color based on background color
+        // Only Primary (dark green) needs white text
+        if (row.backgroundColor === 'var(--color-primary-element)') {
+          style.color = 'var(--color-primary-element-text)';
+        } else {
+          // Light backgrounds: use default dark text
+          style.color = 'var(--color-main-text)';
+        }
+      }
+
+      return style;
     },
     needsEditButton(widgetType) {
       // Show edit button for widgets that aren't inline-editable
@@ -564,7 +567,6 @@ export default {
 
 .page-row.editable {
   border-color: var(--color-border);
-  background: var(--color-background-hover);
 }
 
 .row-controls {
@@ -572,7 +574,7 @@ export default {
   align-items: center;
   margin-bottom: 10px;
   padding: 8px;
-  background: var(--color-main-background);
+  background: transparent;
   border-radius: var(--border-radius-large);
   border: 1px solid var(--color-border);
 }
@@ -588,7 +590,7 @@ export default {
   padding: 10px;
   border: 2px dashed var(--color-border);
   border-radius: var(--border-radius-large);
-  background: var(--color-main-background);
+  background: transparent;
   position: relative;
 }
 
@@ -596,7 +598,7 @@ export default {
   position: absolute;
   top: -10px;
   left: 10px;
-  background: var(--color-main-background);
+  background: transparent;
   padding: 2px 8px;
   font-size: 12px;
   color: var(--color-text-maxcontrast);
@@ -614,7 +616,7 @@ export default {
 
 .page-column.droppable:hover {
   border-color: var(--color-primary);
-  background: var(--color-background-hover);
+  background: transparent;
 }
 
 .widget-wrapper {
@@ -623,7 +625,7 @@ export default {
   padding: 10px;
   border: 1px solid var(--color-border);
   border-radius: var(--border-radius-large);
-  background: var(--color-main-background);
+  background: transparent;
   cursor: move;
 }
 

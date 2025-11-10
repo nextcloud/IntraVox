@@ -363,6 +363,7 @@ export default {
   position: relative;
   width: 100%;
   display: block;
+  background: transparent;
 }
 
 /* Floating Toolbar */
@@ -512,6 +513,7 @@ export default {
 .editor-content {
   width: 100%;
   display: block;
+  background: transparent;
 }
 
 .editor-content :deep(.ProseMirror) {
@@ -522,10 +524,12 @@ export default {
   transition: background-color 0.2s ease;
   width: 100%;
   box-sizing: border-box;
+  color: inherit;
+  background: transparent;
 }
 
 .is-focused .editor-content :deep(.ProseMirror) {
-  background: var(--color-background-hover);
+  background: transparent;
 }
 
 /* Placeholder */
@@ -541,6 +545,7 @@ export default {
 .editor-content :deep(.ProseMirror p) {
   margin: 0 0 0.5em 0;
   width: 100%;
+  color: inherit !important;
 }
 
 .editor-content :deep(.ProseMirror p:last-child) {
@@ -555,7 +560,7 @@ export default {
 .editor-content :deep(.ProseMirror h6) {
   margin: 0.5em 0;
   font-weight: 600;
-  color: var(--color-main-text);
+  color: inherit !important;
 }
 
 .editor-content :deep(.ProseMirror h1) { font-size: 32px; }
@@ -571,6 +576,7 @@ export default {
   margin: 0.5em 0;
   width: 100%;
   list-style-position: outside;
+  color: inherit !important;
 }
 
 .editor-content :deep(.ProseMirror ul) {
@@ -584,22 +590,27 @@ export default {
 .editor-content :deep(.ProseMirror li) {
   margin: 0.25em 0;
   display: list-item;
+  color: inherit !important;
 }
 
 .editor-content :deep(.ProseMirror strong) {
   font-weight: bold;
+  color: inherit !important;
 }
 
 .editor-content :deep(.ProseMirror em) {
   font-style: italic;
+  color: inherit !important;
 }
 
 .editor-content :deep(.ProseMirror u) {
   text-decoration: underline;
+  color: inherit !important;
 }
 
 .editor-content :deep(.ProseMirror s) {
   text-decoration: line-through;
+  color: inherit !important;
 }
 
 .editor-content :deep(.ProseMirror a) {

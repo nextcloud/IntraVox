@@ -4,7 +4,7 @@
       v-for="(row, rowIndex) in page.layout.rows"
       :key="rowIndex"
       class="page-row"
-      :style="{ backgroundColor: row.backgroundColor }"
+      :style="getRowStyle(row)"
     >
       <div
         class="page-grid"
@@ -50,6 +50,24 @@ export default {
       return row.widgets
         .filter(w => w.column === column)
         .sort((a, b) => a.order - b.order);
+    },
+    getRowStyle(row) {
+      const style = {};
+
+      if (row.backgroundColor) {
+        style.backgroundColor = row.backgroundColor;
+
+        // Set text color based on background color
+        // Only Primary (dark green) needs white text
+        if (row.backgroundColor === 'var(--color-primary-element)') {
+          style.color = 'var(--color-primary-element-text)';
+        } else {
+          // Light backgrounds: use default dark text
+          style.color = 'var(--color-main-text)';
+        }
+      }
+
+      return style;
     }
   }
 };
