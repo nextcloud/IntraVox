@@ -513,7 +513,7 @@ export default {
   align-items: center;
   padding: 15px;
   background: var(--color-background-dark);
-  border-radius: 3px;
+  border-radius: var(--border-radius-large);
   margin-bottom: 20px;
 }
 
@@ -532,7 +532,7 @@ export default {
   width: 35px;
   height: 35px;
   border: 2px solid var(--color-border);
-  border-radius: 3px;
+  border-radius: var(--border-radius-large);
   background: var(--color-main-background);
   cursor: pointer;
   font-weight: bold;
@@ -559,7 +559,7 @@ export default {
   position: relative;
   padding: 10px;
   border: 2px dashed transparent;
-  border-radius: 3px;
+  border-radius: var(--border-radius-large);
 }
 
 .page-row.editable {
@@ -573,7 +573,7 @@ export default {
   margin-bottom: 10px;
   padding: 8px;
   background: var(--color-main-background);
-  border-radius: 3px;
+  border-radius: var(--border-radius-large);
   border: 1px solid var(--color-border);
 }
 
@@ -587,7 +587,7 @@ export default {
   min-height: 100px;
   padding: 10px;
   border: 2px dashed var(--color-border);
-  border-radius: 3px;
+  border-radius: var(--border-radius-large);
   background: var(--color-main-background);
   position: relative;
 }
@@ -600,7 +600,7 @@ export default {
   padding: 2px 8px;
   font-size: 12px;
   color: var(--color-text-maxcontrast);
-  border-radius: 3px;
+  border-radius: var(--border-radius-large);
 }
 
 .widget-drop-zone {
@@ -622,7 +622,7 @@ export default {
   margin-bottom: 15px;
   padding: 10px;
   border: 1px solid var(--color-border);
-  border-radius: 3px;
+  border-radius: var(--border-radius-large);
   background: var(--color-main-background);
   cursor: move;
 }
@@ -676,7 +676,7 @@ export default {
 .color-preview {
   width: 20px;
   height: 20px;
-  border-radius: 3px;
+  border-radius: var(--border-radius-large);
   border: 1px solid var(--color-border);
 }
 </style>

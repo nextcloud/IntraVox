@@ -82,7 +82,7 @@ export default {
   color: var(--color-main-text);
   background: var(--color-main-background);
   border: 2px solid var(--color-border-dark);
-  border-radius: 3px;
+  border-radius: var(--border-radius-large);
   box-sizing: border-box;
 }
 

@@ -7,11 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-- **Release Management Scripts**: Automated release and rollback tools
-  - `create-release.sh`: Create releases with Gitea API integration and artifact uploads
-  - `rollback.sh`: Safe rollback to previous releases
-  - `RELEASE.md`: Comprehensive release management documentation
+### Changed
+- **Design System**: Updated all components to use Nextcloud CSS variables
+  - Replaced hardcoded `border-radius: 3px` with `var(--border-radius-large)`
+  - Ensures compatibility with future Nextcloud theme changes
+  - Consistent styling across all IntraVox components
 
 ## [0.2.2] - 2025-11-10 - Footer
 

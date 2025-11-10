@@ -283,7 +283,7 @@ export default {
 .widget-image img {
   max-width: 100%;
   height: auto;
-  border-radius: 3px;
+  border-radius: var(--border-radius-large);
   display: block;
 }
 
@@ -291,7 +291,7 @@ export default {
   padding: 40px;
   background: var(--color-background-dark);
   border: 2px dashed var(--color-border);
-  border-radius: 3px;
+  border-radius: var(--border-radius-large);
   text-align: center;
   color: var(--color-text-maxcontrast);
 }
@@ -301,7 +301,7 @@ export default {
   padding: 12px;
   background: var(--color-background-hover);
   border-left: 3px solid var(--color-primary);
-  border-radius: 3px;
+  border-radius: var(--border-radius-large);
 }
 
 .widget-link a {
@@ -325,7 +325,7 @@ export default {
 .widget-file {
   padding: 12px;
   background: var(--color-background-hover);
-  border-radius: 3px;
+  border-radius: var(--border-radius-large);
 }
 
 .file-link {
@@ -362,7 +362,7 @@ export default {
   padding: 20px;
   background: var(--color-error);
   color: white;
-  border-radius: 3px;
+  border-radius: var(--border-radius-large);
   text-align: center;
 }
 </style>

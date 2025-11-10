@@ -494,7 +494,7 @@ export default {
 .image-preview img {
   max-width: 100%;
   height: auto;
-  border-radius: 3px;
+  border-radius: var(--border-radius-large);
   border: 1px solid var(--color-border);
 }
 
@@ -525,7 +525,7 @@ export default {
   padding: 6px 12px;
   background: var(--color-main-background);
   border: 1px solid var(--color-border);
-  border-radius: 3px;
+  border-radius: var(--border-radius-large);
   color: var(--color-main-text);
   cursor: pointer;
   font-size: 14px;

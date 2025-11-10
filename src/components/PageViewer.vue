@@ -63,7 +63,7 @@ export default {
 .page-row {
   margin-bottom: 30px;
   padding: 10px;
-  border-radius: 3px;
+  border-radius: var(--border-radius-large);
 }
 
 .page-grid {
