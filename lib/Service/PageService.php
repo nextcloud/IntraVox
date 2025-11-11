@@ -275,13 +275,6 @@ class PageService {
             } catch (NotFoundException $e) {
                 $folder->newFolder('images');
             }
-
-            // Create files folder for home if it doesn't exist
-            try {
-                $folder->get('files');
-            } catch (NotFoundException $e) {
-                $folder->newFolder('files');
-            }
         } else {
             // Create folder for page
             try {
@@ -303,13 +296,6 @@ class PageService {
                 $pageFolder->newFolder('images');
             } catch (\Exception $e) {
                 // Images folder might already exist, that's okay
-            }
-
-            // Create files subfolder
-            try {
-                $pageFolder->newFolder('files');
-            } catch (\Exception $e) {
-                // Files folder might already exist, that's okay
             }
 
             // Force Nextcloud to update the file cache so the folder is visible in Files app

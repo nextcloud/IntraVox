@@ -313,10 +313,9 @@ export default {
         .replace(/^-+|-+$/g, '');
     },
     generateUniqueId() {
-      // Generate a unique ID using timestamp + random string for internal references
-      const timestamp = Date.now().toString(36);
-      const randomStr = Math.random().toString(36).substring(2, 9);
-      return `page-${timestamp}-${randomStr}`;
+      // Generate a UUID v4 for guaranteed uniqueness across servers
+      // This ensures no conflicts during migrations or multi-server scenarios
+      return `page-${crypto.randomUUID()}`;
     },
     async handleCreatePage(title) {
       if (!title) return;
@@ -360,6 +359,8 @@ export default {
         showSuccess(this.t('Page created'));
         await this.loadPages();
         await this.selectPage(slug);
+        // Open the new page in edit mode
+        this.isEditMode = true;
       } catch (err) {
         showError(this.t('Could not create page: {error}', { error: err.message }));
       }

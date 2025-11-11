@@ -421,7 +421,7 @@ export default {
 
       switch (type) {
         case 'text':
-          widget.content = this.t('New text widget');
+          widget.content = '';
           break;
         case 'heading':
           widget.content = this.t('New heading');

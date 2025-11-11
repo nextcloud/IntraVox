@@ -145,6 +145,7 @@ import Underline from '@tiptap/extension-underline';
 import Link from '@tiptap/extension-link';
 import Placeholder from '@tiptap/extension-placeholder';
 import { NcModal, NcButton } from '@nextcloud/vue';
+import { markdownToHtml, htmlToMarkdown, cleanMarkdown } from '../utils/markdownSerializer.js';
 
 export default {
   name: 'InlineTextEditor',
@@ -180,8 +181,11 @@ export default {
     };
   },
   mounted() {
+    // Convert markdown to HTML for TipTap
+    const htmlContent = markdownToHtml(this.modelValue);
+
     this.editor = new Editor({
-      content: this.modelValue,
+      content: htmlContent,
       editable: this.editable,
       extensions: [
         StarterKit,
@@ -198,7 +202,10 @@ export default {
         })
       ],
       onUpdate: () => {
-        this.$emit('update:modelValue', this.editor.getHTML());
+        // Convert HTML back to markdown before emitting
+        const html = this.editor.getHTML();
+        const markdown = cleanMarkdown(htmlToMarkdown(html));
+        this.$emit('update:modelValue', markdown);
       },
       onFocus: () => {
         this.isFocused = true;
@@ -221,9 +228,13 @@ export default {
   },
   watch: {
     modelValue(newValue) {
-      const isSame = this.editor.getHTML() === newValue;
-      if (!isSame) {
-        this.editor.commands.setContent(newValue, false);
+      // Convert markdown to HTML for comparison and update
+      const htmlContent = markdownToHtml(newValue);
+      const currentHtml = this.editor.getHTML();
+
+      // Only update if content actually changed
+      if (currentHtml !== htmlContent) {
+        this.editor.commands.setContent(htmlContent, false);
       }
     },
     editable(newValue) {
@@ -267,7 +278,9 @@ export default {
 
       // Force update after a small delay to ensure TipTap has processed the command
       setTimeout(() => {
-        this.$emit('update:modelValue', this.editor.getHTML());
+        const html = this.editor.getHTML();
+        const markdown = cleanMarkdown(htmlToMarkdown(html));
+        this.$emit('update:modelValue', markdown);
       }, 10);
     },
     showLinkModalHandler() {
@@ -637,5 +650,115 @@ export default {
 
 .editor-content :deep(.ProseMirror a:hover) {
   text-decoration: none;
+}
+
+/* Blockquote */
+.editor-content :deep(.ProseMirror blockquote) {
+  border-left: 4px solid var(--color-primary-element);
+  padding-left: 1em;
+  margin: 1em 0;
+  color: inherit !important;
+  font-style: italic;
+}
+
+/* Code */
+.editor-content :deep(.ProseMirror code) {
+  background: var(--color-background-dark);
+  padding: 2px 6px;
+  border-radius: var(--border-radius);
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.9em;
+  color: inherit !important;
+}
+
+/* Code Block */
+.editor-content :deep(.ProseMirror pre) {
+  background: var(--color-background-dark);
+  padding: 12px;
+  border-radius: var(--border-radius-large);
+  overflow-x: auto;
+  margin: 1em 0;
+}
+
+.editor-content :deep(.ProseMirror pre code) {
+  background: transparent;
+  padding: 0;
+  font-family: 'Courier New', Courier, monospace;
+  color: inherit !important;
+}
+
+/* Table */
+.editor-content :deep(.ProseMirror table) {
+  border-collapse: collapse;
+  table-layout: fixed;
+  width: 100%;
+  margin: 1em 0;
+  overflow: hidden;
+}
+
+.editor-content :deep(.ProseMirror table td),
+.editor-content :deep(.ProseMirror table th) {
+  min-width: 1em;
+  border: 1px solid var(--color-border);
+  padding: 8px 12px;
+  vertical-align: top;
+  box-sizing: border-box;
+  position: relative;
+  color: inherit !important;
+}
+
+.editor-content :deep(.ProseMirror table th) {
+  font-weight: 600;
+  text-align: left;
+  background: var(--color-background-hover);
+}
+
+.editor-content :deep(.ProseMirror table .selectedCell) {
+  background: var(--color-primary-element-light);
+}
+
+.editor-content :deep(.ProseMirror table .column-resize-handle) {
+  position: absolute;
+  right: -2px;
+  top: 0;
+  bottom: -2px;
+  width: 4px;
+  background-color: var(--color-primary-element);
+  pointer-events: none;
+}
+
+/* Task List */
+.editor-content :deep(.ProseMirror ul[data-type="taskList"]) {
+  list-style: none;
+  padding-left: 0;
+}
+
+.editor-content :deep(.ProseMirror ul[data-type="taskList"] li) {
+  display: flex;
+  align-items: flex-start;
+  color: inherit !important;
+}
+
+.editor-content :deep(.ProseMirror ul[data-type="taskList"] li > label) {
+  flex: 0 0 auto;
+  margin-right: 0.5em;
+  user-select: none;
+}
+
+.editor-content :deep(.ProseMirror ul[data-type="taskList"] li > div) {
+  flex: 1 1 auto;
+}
+
+.editor-content :deep(.ProseMirror ul[data-type="taskList"] input[type="checkbox"]) {
+  cursor: pointer;
+  width: 1.2em;
+  height: 1.2em;
+}
+
+/* Horizontal Rule */
+.editor-content :deep(.ProseMirror hr) {
+  border: none;
+  border-top: 2px solid var(--color-border);
+  margin: 2em 0;
 }
 </style>

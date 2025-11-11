@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.6] - 2025-11-11 - Markdown storage & UX improvements
+
+### Added
+- **Markdown Storage**: Content is now stored as markdown in JSON files
+  - Created `markdownSerializer.js` utility for bidirectional markdown/HTML conversion
+  - Editor displays WYSIWYG while storing clean markdown
+  - Compatible with Nextcloud Text for viewing/editing markdown files
+  - Support for tables, code blocks, task lists in markdown (view-only)
+- **UUID v4 for Page IDs**: Upgraded uniqueId generation from timestamp+random to crypto.randomUUID()
+  - Guarantees uniqueness across server migrations
+  - Prevents conflicts when merging IntraVox installations
+  - 340 undecillion possible combinations for true uniqueness
+
+### Changed
+- **New Page Creation**: Pages now open automatically in edit mode after creation
+- **Empty Text Widgets**: New text widgets start empty instead of showing "New text widget" placeholder
+- **Files Folder Removal**: Removed automatic "files" folder creation (only images folder is created)
+
+### Fixed
+- **Markdown Display**: Text editor no longer shows raw markdown syntax (`**bold**`, `*italic*`)
+  - All formatting must be done via toolbar buttons
+  - Clean WYSIWYG experience for end users
+
+### Technical
+- Added `marked` and `dompurify` packages for safe markdown rendering
+- Markdown serializer with support for: headings, bold, italic, underline, strikethrough, lists, links, tables, code blocks
+- TipTap extensions preserved for backward compatibility with existing markdown content
+
 ## [0.2.5] - 2025-11-10 - Readable page IDs
 
 ### Changed

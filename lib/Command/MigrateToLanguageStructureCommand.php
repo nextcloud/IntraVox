@@ -161,10 +161,9 @@ class MigrateToLanguageStructureCommand extends Command {
                     $output->writeln("  ⚠ {$lang}/ folder already exists");
                 } catch (NotFoundException $e) {
                     $langFolder = $intraVoxFolder->newFolder($lang);
-                    // Create images and files subdirectories
+                    // Create images subdirectory
                     $langFolder->newFolder('images');
-                    $langFolder->newFolder('files');
-                    $output->writeln("  ✓ Created {$lang}/ folder with subdirectories");
+                    $output->writeln("  ✓ Created {$lang}/ folder with images subdirectory");
                 }
             }
 

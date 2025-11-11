@@ -53,9 +53,8 @@ class CreateLanguageHomepagesCommand extends Command {
                     $output->writeln("  <comment>Creating {$lang} folder...</comment>");
                     $langFolder = $intraVoxFolder->newFolder($lang);
 
-                    // Create subdirectories
+                    // Create images subdirectory
                     $langFolder->newFolder('images');
-                    $langFolder->newFolder('files');
                 }
 
                 // Check if home.json already exists
