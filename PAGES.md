@@ -1,0 +1,264 @@
+# Pages in IntraVox
+
+This document describes how pages are created, saved, edited, and stored in IntraVox.
+
+## Page Lifecycle
+
+### Creating a New Page
+
+When a user creates a new page in IntraVox:
+
+1. **User Input**: The user provides a page title through the "New Page" dialog
+2. **Slug Generation**: The title is converted to a URL-friendly slug (e.g., "Welcome Page" → "welcome-page")
+   - Diacritics are preserved and converted to URL-safe characters
+   - Spaces become hyphens
+   - Special characters are removed
+   - Duplicate slugs automatically get numbered suffixes (e.g., "test", "test-2", "test-3")
+3. **Unique ID Assignment**: A UUID v4 is generated using `crypto.randomUUID()` for the page's `uniqueId` field
+   - Format: `page-xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx`
+   - Guarantees uniqueness across server migrations and multi-server scenarios
+   - 340 undecillion possible combinations prevent conflicts
+4. **Auto Edit Mode**: The new page automatically opens in edit mode for immediate content creation
+5. **File System Creation**: A dedicated folder structure is created (see Folder Structure section)
+
+### Editing a Page
+
+Pages can be edited through the IntraVox interface:
+
+1. **Edit Mode Activation**: Users click the "Edit Page" button or are automatically placed in edit mode after creating a page
+2. **WYSIWYG Editor**: Content is edited using a TipTap-based rich text editor
+   - Users see formatted content (bold, italic, headings, lists, etc.)
+   - All formatting is done via toolbar buttons
+   - No raw markdown syntax is visible to users
+3. **Real-time Changes**: Edits are held in memory until explicitly saved
+4. **Widget Management**: Users can add, remove, and rearrange widgets using drag-and-drop
+5. **Layout Control**: Users can modify the grid layout, add/remove rows, and set background colors
+
+### Saving a Page
+
+When a user saves a page:
+
+1. **Markdown Conversion**: HTML content from the TipTap editor is converted to markdown format
+   - Uses `htmlToMarkdown()` utility function
+   - Preserves formatting: headings, bold, italic, underline, strikethrough, lists, links
+   - Cleans up excessive whitespace and normalizes line breaks
+2. **JSON Structure**: Page data is serialized to JSON format containing:
+   - Page metadata (id, uniqueId, title, language)
+   - Layout structure (rows, columns, background colors)
+   - Widget content (stored as markdown in the `content` field)
+3. **File Write**: JSON is written to `<page-slug>/page.json` in the language-specific folder
+4. **File Cache Update**: Nextcloud's file scanner updates the cache for immediate visibility in Files app
+5. **Version History**: Due to groupfolders limitations, version history is not currently accessible (see Version History Behavior section below)
+
+### Version History Behavior
+
+**Version history is now available in IntraVox 0.2.7+** through a dedicated Page Details sidebar.
+
+#### Accessing Version History
+
+1. **Open Page Details**: Click the information icon (ℹ️) in the page header
+2. **View Versions**: The sidebar displays all saved versions with timestamps
+3. **Restore Version**: Click "Restore" next to any version to revert the page
+
+#### How It Works
+
+- **Automatic Creation**: Versions are created automatically each time you save a page
+- **Programmatic Access**: IntraVox accesses versions directly via the Nextcloud filesystem API
+- **Bypasses UI Limitations**: While versions aren't visible in the Files app, they're fully accessible within IntraVox
+- **Safe Restoration**: Restoring a version creates a new version of the current state before applying changes
+
+#### Files App Limitations
+
+**Important Note**: Due to limitations in Nextcloud's Groupfolders app, file versioning is **not visible in the Files app**:
+
+- **Groupfolders Limitation**: The groupfolders app only shows versions to the user who created them
+- **System User Problem**: IntraVox saves pages using a system account (`www-data`), making versions invisible to regular users in Files app
+- **Backend Storage**: Versions ARE created and stored, but the Files app UI filters them out
+- **GitHub Issue**: This is a documented limitation in the [Nextcloud groupfolders repository](https://github.com/nextcloud/groupfolders/issues/50)
+
+**Solution**: Use IntraVox's built-in Page Details sidebar to access and restore versions instead of the Files app.
+
+**Technical Details**:
+- Versions are stored in `__groupfolders/versions/{folderId}/{languagePath}/{timestamp}`
+- IntraVox uses direct filesystem access via `IRootFolder` to bypass UI filters
+- Nextcloud's standard versioning works for regular user files
+- Version expiry can be triggered via `occ groupfolders:expire` command
+
+## Folder Structure
+
+IntraVox uses a hierarchical folder structure within Nextcloud Files for organizing pages:
+
+### Root Structure
+
+```
+IntraVox/
+├── nl/                 # Dutch pages
+├── en/                 # English pages
+├── de/                 # German pages
+└── fr/                 # French pages
+```
+
+### Language-Specific Folders
+
+Each language has its own folder containing all pages for that language. This enables:
+
+- Language-specific content and navigation
+- Clean separation between translations
+- Easy content management per language
+
+### Page Folders
+
+Within each language folder, each page has its own dedicated folder:
+
+```
+IntraVox/
+└── nl/
+    ├── welcome/
+    │   ├── page.json           # Page structure and content
+    │   └── images/             # Page-specific images folder
+    │       ├── header-logo.png
+    │       └── team-photo.jpg
+    ├── about-us/
+    │   ├── page.json
+    │   └── images/
+    └── contact/
+        ├── page.json
+        └── images/
+```
+
+### Folder Creation
+
+When a new page is created:
+
+1. **Language Folder**: Created during IntraVox setup (if not already exists)
+2. **Page Folder**: Created using the page slug (e.g., `/nl/welcome/`)
+3. **Images Subfolder**: Automatically created inside the page folder (e.g., `/nl/welcome/images/`)
+4. **No Files Folder**: Since version 0.2.6, the "files" subfolder is no longer created (only images)
+
+### Benefits of This Structure
+
+1. **Human-Readable**: Folder names match page titles (slugified)
+2. **Easy Navigation**: Users can browse pages through Nextcloud Files app
+3. **Clean URLs**: URLs reflect the folder structure (e.g., `/apps/intravox#/welcome`)
+4. **Asset Organization**: Each page has its own images folder for isolated asset management
+5. **Version Control Friendly**: Clear folder structure works well with backup and sync tools
+6. **Migration Safe**: UUID v4 uniqueIds prevent conflicts when merging IntraVox installations
+
+## Content Storage Format
+
+### JSON Structure
+
+Pages are stored as JSON files with the following structure:
+
+```json
+{
+  "id": "welcome",
+  "uniqueId": "page-550e8400-e29b-41d4-a716-446655440000",
+  "title": "Welcome",
+  "language": "nl",
+  "layout": {
+    "columns": 2,
+    "rows": [
+      {
+        "columns": 1,
+        "backgroundColor": "var(--color-primary-element)",
+        "widgets": [
+          {
+            "type": "text",
+            "column": 1,
+            "order": 0,
+            "content": "# Welcome to IntraVox\n\nThis is **markdown** content."
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+### Markdown in JSON
+
+Content within widgets is stored as markdown:
+
+- **Storage Format**: Clean, readable markdown text
+- **Display Format**: Converted to HTML and rendered as WYSIWYG
+- **Supported Syntax**: Headings, bold, italic, underline, strikethrough, lists, links
+- **Extended Features**: Tables, code blocks, task lists, blockquotes, horizontal rules (view-only, toolbar buttons removed)
+
+### Why Markdown?
+
+1. **Nextcloud Compatibility**: Can be viewed/edited with Nextcloud Text app
+2. **Human-Readable**: Easy to read in raw format
+3. **Version Control**: Clean diffs in version history
+4. **Future-Proof**: Standard format, easily portable
+5. **Lightweight**: Smaller file sizes compared to HTML
+
+## Image Handling
+
+### Upload Process
+
+1. **Image Selection**: User uploads image via image widget
+2. **File Storage**: Image saved to `<page-folder>/images/<filename>`
+3. **Widget Reference**: Widget stores only the filename (not full path)
+4. **Serving**: Images served via IntraVox API: `/apps/intravox/api/pages/{pageId}/images/{filename}`
+
+### Image Widget Properties
+
+- **Filename**: Original filename preserved
+- **Display Options**: Size (cover, contain, auto), alignment, object position
+- **Responsive**: CSS handles responsive sizing
+- **Security**: Images served only for pages user has access to
+
+## File Management Integration
+
+IntraVox integrates seamlessly with Nextcloud Files:
+
+1. **Immediate Visibility**: File cache scanner ensures new pages appear instantly in Files app
+2. **Standard File Operations**: Users can move, copy, delete page folders via Files app (not recommended)
+3. **Version History**: Accessible via IntraVox Page Details sidebar (see Version History Behavior section)
+4. **Sharing**: Page folders can be shared using standard Nextcloud sharing features (advanced use case)
+5. **Search**: Page content is indexed and searchable through Nextcloud's full-text search
+
+## Technical Implementation
+
+### Key Files
+
+- **`lib/Service/PageService.php`**: Backend service handling page CRUD operations and version management
+- **`lib/Service/SetupService.php`**: Groupfolder management and version path resolution
+- **`lib/Controller/ApiController.php`**: API endpoints for pages, images, and versions
+- **`src/App.vue`**: Frontend page creation and slug generation
+- **`src/components/PageDetailsSidebar.vue`**: Version history sidebar interface
+- **`src/utils/markdownSerializer.js`**: Bidirectional markdown ↔ HTML conversion
+- **`src/components/InlineTextEditor.vue`**: WYSIWYG editor with markdown storage
+- **`src/components/Widget.vue`**: Widget rendering with markdown display
+
+### Security Measures
+
+1. **Content Sanitization**: DOMPurify sanitizes HTML output from markdown
+2. **Allowed Tags**: Whitelist of safe HTML tags for rendering
+3. **Background Color Validation**: Only whitelisted CSS variables allowed for row backgrounds
+4. **Path Validation**: Prevents directory traversal in file operations
+5. **Access Control**: Nextcloud's permission system enforces page access rights
+
+## Migration Considerations
+
+### Upgrading from Older Versions
+
+- **Pre-0.2.5**: Pages used technical IDs; migration command creates slug-based folders
+- **Pre-0.2.6**: Content stored as HTML; markdown storage preserves existing content compatibility
+
+### Server Migrations
+
+UUID v4 `uniqueId` field ensures:
+
+- No conflicts when merging multiple IntraVox installations
+- Safe migrations between Nextcloud servers
+- Future support for cross-page references and links
+
+### Backup and Restore
+
+Standard Nextcloud backup procedures apply:
+
+1. **Full Backup**: Include entire `IntraVox/` folder in data directory
+2. **Database Backup**: Include IntraVox tables (if any metadata stored)
+3. **Restore**: Copy folder structure back and trigger file scanner

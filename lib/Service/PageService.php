@@ -7,6 +7,8 @@ use OCP\Files\IRootFolder;
 use OCP\Files\NotFoundException;
 use OCP\IUserSession;
 use OCP\IConfig;
+use OCP\IDBConnection;
+use Psr\Log\LoggerInterface;
 
 class PageService {
     private const ALLOWED_WIDGET_TYPES = ['text', 'heading', 'image', 'link', 'file', 'divider'];
@@ -21,18 +23,24 @@ class PageService {
     private string $userId;
     private SetupService $setupService;
     private IConfig $config;
+    private IDBConnection $db;
+    private LoggerInterface $logger;
 
     public function __construct(
         IRootFolder $rootFolder,
         IUserSession $userSession,
         SetupService $setupService,
         IConfig $config,
+        IDBConnection $db,
+        LoggerInterface $logger,
         ?string $userId
     ) {
         $this->rootFolder = $rootFolder;
         $this->userSession = $userSession;
         $this->setupService = $setupService;
         $this->config = $config;
+        $this->db = $db;
+        $this->logger = $logger;
         $this->userId = $userId ?? '';
     }
 
@@ -320,7 +328,14 @@ class PageService {
             throw new \InvalidArgumentException('Failed to sanitize page ID: ' . $e->getMessage());
         }
 
+        // Get the current user
+        $user = $this->userSession->getUser();
+        if (!$user) {
+            throw new \InvalidArgumentException('No user in session');
+        }
+
         try {
+            // First find via root to get the path
             $result = $this->findPageById($this->getLanguageFolder(), $id);
         } catch (\Exception $e) {
             throw new \InvalidArgumentException('Failed to find page by ID: ' . $e->getMessage());
@@ -330,8 +345,10 @@ class PageService {
             throw new \InvalidArgumentException('Page not found: ' . $id);
         }
 
+        // Get the file
+        $file = $result['file'];
+
         try {
-            $file = $result['file'];
             $existingContent = $file->getContent();
             $existingData = json_decode($existingContent, true);
         } catch (\Exception $e) {
@@ -350,17 +367,84 @@ class PageService {
         }
 
         try {
-            // Update the file - Nextcloud will automatically create a version
-            // if versioning is enabled for the storage
+            // Manually create a version before updating
+            // This is necessary because Nextcloud's automatic versioning doesn't work
+            // when files are accessed via rootFolder instead of user mounts
+            $this->createManualVersion($file, $user);
+
+            // Update the file
             $file->putContent(json_encode($validatedData, JSON_PRETTY_PRINT));
 
-            // Touch the file to trigger Nextcloud's version system
-            $file->touch();
+            $this->logger->info('[updatePage] File updated successfully', [
+                'pageId' => $id,
+                'fileId' => $file->getId()
+            ]);
         } catch (\Exception $e) {
             throw new \InvalidArgumentException('Failed to write updated page data: ' . $e->getMessage());
         }
 
         return $validatedData;
+    }
+
+    /**
+     * Manually create a version of a file
+     * This is needed because Nextcloud's automatic versioning doesn't trigger
+     * when we access files via rootFolder
+     */
+    private function createManualVersion(\OCP\Files\File $file, \OCP\IUser $user): void {
+        try {
+            $groupFolderId = $this->setupService->getGroupFolderId();
+            $groupfolderFileId = $file->getId();
+
+            $this->logger->info('[createManualVersion] Creating version', [
+                'groupfolderFileId' => $groupfolderFileId,
+                'userId' => $user->getUID()
+            ]);
+
+            // Find the user mount fileId where versions should be stored
+            $versionFileId = $this->findVersionFileId($groupFolderId, $groupfolderFileId, $file->getInternalPath());
+
+            // If no user mount fileId exists yet, use the groupfolder fileId
+            // This will happen for new pages that haven't been accessed via Files app yet
+            if (!$versionFileId) {
+                $versionFileId = $groupfolderFileId;
+                $this->logger->info('[createManualVersion] No user mount fileId found, using groupfolder fileId', [
+                    'versionFileId' => $versionFileId
+                ]);
+            }
+
+            // Get current file content to save as version
+            $currentContent = $file->getContent();
+            $timestamp = time();
+
+            // Create version directory if it doesn't exist
+            $versionDir = "/var/www/nextcloud/data/__groupfolders/{$groupFolderId}/versions/{$versionFileId}";
+            if (!is_dir($versionDir)) {
+                mkdir($versionDir, 0755, true);
+                chown($versionDir, 'www-data');
+                chgrp($versionDir, 'www-data');
+            }
+
+            // Save version file
+            $versionFile = "{$versionDir}/{$timestamp}";
+            file_put_contents($versionFile, $currentContent);
+            chown($versionFile, 'www-data');
+            chgrp($versionFile, 'www-data');
+            chmod($versionFile, 0644);
+
+            $this->logger->info('[createManualVersion] Version created', [
+                'groupfolderFileId' => $groupfolderFileId,
+                'versionFileId' => $versionFileId,
+                'timestamp' => $timestamp,
+                'versionFile' => $versionFile
+            ]);
+        } catch (\Exception $e) {
+            // Log but don't throw - versioning failure shouldn't block saves
+            $this->logger->warning('[createManualVersion] Failed to create version', [
+                'error' => $e->getMessage(),
+                'fileId' => $file->getId()
+            ]);
+        }
     }
 
     /**
@@ -687,5 +771,378 @@ class PageService {
         // Return as-is since we already sanitized on input
         // The frontend will handle the escaped content properly
         return $data;
+    }
+
+    /**
+     * Get all versions of a page
+     * @throws \Exception if page not found or version directory cannot be accessed
+     */
+    public function getPageVersions(string $pageId): array {
+        // First find the page via user path to verify it exists
+        $result = $this->findPageById($this->getLanguageFolder(), $pageId);
+
+        if (!$result) {
+            throw new \Exception('Page not found: ' . $pageId);
+        }
+
+        $file = $result['file'];
+        $fileId = $file->getId();
+        $versions = [];
+
+        try {
+            $groupFolderId = $this->setupService->getGroupFolderId();
+
+            $this->logger->info('[getPageVersions] Looking for versions', [
+                'pageId' => $pageId,
+                'fileId' => $fileId,
+                'groupFolderId' => $groupFolderId
+            ]);
+
+            // The problem: when files are accessed via __groupfolders path, they have one fileId (e.g., 421)
+            // But when the same file is accessed via user mount (files/...), it has a different fileId (e.g., 763)
+            // Versions are stored using the user mount fileId, so we need to find it
+            $versionFileId = $this->findVersionFileId($groupFolderId, $fileId, $file->getInternalPath());
+
+            if (!$versionFileId) {
+                $this->logger->info('[getPageVersions] No version fileId found', [
+                    'groupfolderFileId' => $fileId
+                ]);
+                return [];
+            }
+
+            $this->logger->info('[getPageVersions] Found version fileId', [
+                'groupfolderFileId' => $fileId,
+                'versionFileId' => $versionFileId
+            ]);
+
+            // Read versions directly from filesystem using the version fileId
+            $versionDir = "/var/www/nextcloud/data/__groupfolders/{$groupFolderId}/versions/{$versionFileId}";
+
+            if (!is_dir($versionDir)) {
+                $this->logger->info('[getPageVersions] No versions directory', [
+                    'versionDir' => $versionDir
+                ]);
+                return [];
+            }
+
+            // List all version files
+            $versionFiles = scandir($versionDir);
+
+            foreach ($versionFiles as $versionFile) {
+                if ($versionFile === '.' || $versionFile === '..') {
+                    continue;
+                }
+
+                $timestamp = (int)$versionFile;
+                $versionPath = "{$versionDir}/{$versionFile}";
+
+                if (!is_file($versionPath)) {
+                    continue;
+                }
+
+                $size = filesize($versionPath);
+
+                $versions[] = [
+                    'timestamp' => $timestamp,
+                    'date' => date('Y-m-d H:i:s', $timestamp),
+                    'size' => $size,
+                    'relativeDate' => $this->getRelativeTime($timestamp)
+                ];
+            }
+
+            // Sort newest first
+            usort($versions, fn($a, $b) => $b['timestamp'] <=> $a['timestamp']);
+
+            $this->logger->info('[getPageVersions] Returning versions', [
+                'count' => count($versions),
+                'versionFileId' => $versionFileId
+            ]);
+
+            return $versions;
+        } catch (\Exception $e) {
+            $this->logger->error('[getPageVersions] Failed to retrieve versions', [
+                'error' => $e->getMessage(),
+                'pageId' => $pageId
+            ]);
+            throw new \Exception('Failed to retrieve versions: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Find the fileId used for versioning
+     *
+     * When files are accessed via __groupfolders path, they have one fileId.
+     * But versions are stored using the user mount fileId (files/... path).
+     * This method queries the database to find the user mount fileId that corresponds
+     * to the same file path.
+     */
+    private function findVersionFileId(int $groupFolderId, int $groupfolderFileId, string $internalPath): ?int {
+        // First try the groupfolder fileId itself
+        $baseVersionDir = "/var/www/nextcloud/data/__groupfolders/{$groupFolderId}/versions";
+        if (is_dir("{$baseVersionDir}/{$groupfolderFileId}")) {
+            $this->logger->info('[findVersionFileId] Found versions under groupfolder fileId', [
+                'fileId' => $groupfolderFileId
+            ]);
+            return $groupfolderFileId;
+        }
+
+        // Query database to find user mount fileId based on path
+        // The groupfolder path is: __groupfolders/{folderId}/files/{lang}/{page}/{page}.json
+        // The user mount path is: files/{lang}/{page}/{page}.json
+        // We need to extract the relative path and match it
+        try {
+            $qb = $this->db->getQueryBuilder();
+
+            // Get the groupfolder file info first
+            $qb->select('path', 'storage')
+                ->from('filecache')
+                ->where($qb->expr()->eq('fileid', $qb->createNamedParameter($groupfolderFileId)));
+
+            $result = $qb->executeQuery();
+            $groupfolderFile = $result->fetch();
+            $result->closeCursor();
+
+            if (!$groupfolderFile) {
+                $this->logger->warning('[findVersionFileId] Groupfolder file not found in database', [
+                    'fileId' => $groupfolderFileId
+                ]);
+                return null;
+            }
+
+            // Extract the relative path after "files/"
+            // e.g., "__groupfolders/4/files/en/home.json" -> "en/home.json"
+            $groupfolderPath = $groupfolderFile['path'];
+            $this->logger->info('[findVersionFileId] Groupfolder path', [
+                'path' => $groupfolderPath
+            ]);
+
+            if (preg_match('#__groupfolders/\d+/files/(.+)$#', $groupfolderPath, $matches)) {
+                $relativePath = $matches[1];
+                $this->logger->info('[findVersionFileId] Extracted relative path', [
+                    'relativePath' => $relativePath
+                ]);
+
+                // Now find the user mount fileId with path "files/{relativePath}"
+                $userPath = "files/{$relativePath}";
+
+                $qb = $this->db->getQueryBuilder();
+                $qb->select('fileid', 'storage')
+                    ->from('filecache')
+                    ->where($qb->expr()->eq('path', $qb->createNamedParameter($userPath)))
+                    ->orderBy('fileid', 'DESC') // Get the most recent one
+                    ->setMaxResults(1);
+
+                $result = $qb->executeQuery();
+                $userFile = $result->fetch();
+                $result->closeCursor();
+
+                if ($userFile) {
+                    $userFileId = (int)$userFile['fileid'];
+
+                    // Verify this fileId has a versions directory
+                    if (is_dir("{$baseVersionDir}/{$userFileId}")) {
+                        $this->logger->info('[findVersionFileId] Found user mount fileId with versions', [
+                            'groupfolderFileId' => $groupfolderFileId,
+                            'userFileId' => $userFileId,
+                            'path' => $userPath
+                        ]);
+                        return $userFileId;
+                    } else {
+                        $this->logger->info('[findVersionFileId] Found user mount fileId but no versions directory', [
+                            'userFileId' => $userFileId,
+                            'path' => $userPath
+                        ]);
+                    }
+                }
+            }
+
+            $this->logger->warning('[findVersionFileId] Could not find user mount fileId', [
+                'groupfolderFileId' => $groupfolderFileId,
+                'groupfolderPath' => $groupfolderPath
+            ]);
+            return null;
+
+        } catch (\Exception $e) {
+            $this->logger->error('[findVersionFileId] Database query failed', [
+                'error' => $e->getMessage(),
+                'groupfolderFileId' => $groupfolderFileId
+            ]);
+            return null;
+        }
+    }
+
+    /**
+     * Find a file by its ID within a folder
+     */
+    private function findFileByIdInFolder(\OCP\Files\Folder $folder, int $fileId): ?\OCP\Files\File {
+        try {
+            $files = $folder->getDirectoryListing();
+            foreach ($files as $item) {
+                if ($item->getId() === $fileId && $item instanceof \OCP\Files\File) {
+                    return $item;
+                }
+                if ($item instanceof \OCP\Files\Folder) {
+                    $found = $this->findFileByIdInFolder($item, $fileId);
+                    if ($found) {
+                        return $found;
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            $this->logger->error('[findFileByIdInFolder] Error searching folder', [
+                'error' => $e->getMessage()
+            ]);
+        }
+        return null;
+    }
+
+    /**
+     * Restore a specific version of a page
+     * @throws \Exception if page or version not found
+     */
+    public function restorePageVersion(string $pageId, int $timestamp): array {
+        $result = $this->findPageById($this->getLanguageFolder(), $pageId);
+
+        if (!$result) {
+            throw new \Exception('Page not found: ' . $pageId);
+        }
+
+        $file = $result['file'];
+        $user = $this->userSession->getUser();
+
+        if (!$user) {
+            throw new \Exception('No user in session');
+        }
+
+        try {
+            $groupFolderId = $this->setupService->getGroupFolderId();
+            $fileId = $file->getId();
+
+            $this->logger->info('[restorePageVersion] Restoring version', [
+                'pageId' => $pageId,
+                'timestamp' => $timestamp,
+                'fileId' => $fileId
+            ]);
+
+            // Find the version fileId (may differ from groupfolder fileId)
+            $versionFileId = $this->findVersionFileId($groupFolderId, $fileId, $file->getInternalPath());
+
+            if (!$versionFileId) {
+                throw new \Exception('No versions found for this file');
+            }
+
+            // Read version content from filesystem using version fileId
+            $versionFile = "/var/www/nextcloud/data/__groupfolders/{$groupFolderId}/versions/{$versionFileId}/{$timestamp}";
+
+            if (!file_exists($versionFile)) {
+                throw new \Exception('Version file not found');
+            }
+
+            // Create a new version of current state before restoring
+            $this->createManualVersion($file, $user);
+
+            // Read version content
+            $restoredContent = file_get_contents($versionFile);
+            $restoredData = json_decode($restoredContent, true);
+
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                throw new \Exception('Restored version contains invalid JSON data');
+            }
+
+            // Validate the restored data
+            $validatedData = $this->validateAndSanitizePage($restoredData);
+
+            // Write restored content to file
+            $file->putContent(json_encode($validatedData, JSON_PRETTY_PRINT));
+
+            $this->logger->info('[restorePageVersion] Version restored successfully', [
+                'pageId' => $pageId,
+                'timestamp' => $timestamp,
+                'versionFileId' => $versionFileId
+            ]);
+
+            return $validatedData;
+        } catch (\Exception $e) {
+            $this->logger->error('[restorePageVersion] Failed to restore version', [
+                'error' => $e->getMessage(),
+                'pageId' => $pageId,
+                'timestamp' => $timestamp
+            ]);
+            throw new \Exception('Failed to restore version: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Get human-readable relative time
+     */
+    private function getRelativeTime(int $timestamp): string {
+        $diff = time() - $timestamp;
+
+        if ($diff < 60) {
+            return 'just now';
+        } elseif ($diff < 3600) {
+            $minutes = floor($diff / 60);
+            return $minutes . ' minute' . ($minutes > 1 ? 's' : '') . ' ago';
+        } elseif ($diff < 86400) {
+            $hours = floor($diff / 3600);
+            return $hours . ' hour' . ($hours > 1 ? 's' : '') . ' ago';
+        } elseif ($diff < 2592000) {
+            $days = floor($diff / 86400);
+            return $days . ' day' . ($days > 1 ? 's' : '') . ' ago';
+        } elseif ($diff < 31536000) {
+            $months = floor($diff / 2592000);
+            return $months . ' month' . ($months > 1 ? 's' : '') . ' ago';
+        } else {
+            $years = floor($diff / 31536000);
+            return $years . ' year' . ($years > 1 ? 's' : '') . ' ago';
+        }
+    }
+
+    /**
+     * Create a version before updating a file
+     * Uses groupfolders versioning system directly via file storage
+     */
+    private function createVersionBeforeUpdate(\OCP\Files\File $file): void {
+        try {
+            // Get the storage from the file itself - this preserves the groupfolder storage context
+            $storage = $file->getStorage();
+            $this->logger->info('[createVersionBeforeUpdate] Storage info', [
+                'fileId' => $file->getId(),
+                'storageClass' => get_class($storage),
+                'internalPath' => $file->getInternalPath()
+            ]);
+
+            // Check if this is a groupfolder storage
+            if (!($storage instanceof \OCA\GroupFolders\Mount\GroupFolderStorage)) {
+                $this->logger->warning('[createVersionBeforeUpdate] Not a GroupFolder storage, skipping versioning', [
+                    'storageClass' => get_class($storage)
+                ]);
+                return;
+            }
+
+            // Get the VersionsBackend
+            $versionsBackend = \OC::$server->get(\OCA\GroupFolders\Versions\VersionsBackend::class);
+
+            // Get the current user
+            $user = $this->userSession->getUser();
+            if (!$user) {
+                throw new \Exception('No user in session');
+            }
+
+            // Call createVersion directly with the file that has the correct storage
+            $versionsBackend->createVersion($user, $file);
+
+            $this->logger->info('[createVersionBeforeUpdate] Version created successfully', [
+                'fileId' => $file->getId(),
+                'userId' => $user->getUID()
+            ]);
+        } catch (\Exception $e) {
+            $this->logger->warning('[createVersionBeforeUpdate] Failed to create version', [
+                'error' => $e->getMessage(),
+                'fileId' => $file->getId(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            // Don't throw - versioning failure shouldn't prevent saves
+        }
     }
 }

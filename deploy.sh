@@ -11,7 +11,7 @@ echo "=============================="
 # Configuration
 APP_NAME="intravox"
 REMOTE_USER="rdekker"
-REMOTE_HOST="145.38.191.124"
+REMOTE_HOST="145.38.191.31"
 REMOTE_PATH="/var/www/nextcloud/apps"
 SSH_KEY="~/.ssh/sur"
 LOCAL_PATH="$(pwd)"

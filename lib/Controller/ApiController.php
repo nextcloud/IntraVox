@@ -9,17 +9,21 @@ use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\Http\StreamResponse;
 use OCP\IRequest;
+use Psr\Log\LoggerInterface;
 
 class ApiController extends Controller {
     private PageService $pageService;
+    private LoggerInterface $logger;
 
     public function __construct(
         string $appName,
         IRequest $request,
-        PageService $pageService
+        PageService $pageService,
+        LoggerInterface $logger
     ) {
         parent::__construct($appName, $request);
         $this->pageService = $pageService;
+        $this->logger = $logger;
     }
 
     /**
@@ -147,6 +151,47 @@ class ApiController extends Controller {
             return new DataResponse(
                 ['error' => $e->getMessage()],
                 Http::STATUS_NOT_FOUND
+            );
+        }
+    }
+
+    /**
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     */
+    public function getPageVersions(string $pageId): DataResponse {
+        $this->logger->info('[ApiController::getPageVersions] Called', ['pageId' => $pageId]);
+
+        try {
+            $versions = $this->pageService->getPageVersions($pageId);
+            $this->logger->info('[ApiController::getPageVersions] Success', [
+                'pageId' => $pageId,
+                'count' => count($versions)
+            ]);
+            return new DataResponse($versions);
+        } catch (\Exception $e) {
+            $this->logger->error('[ApiController::getPageVersions] Error', [
+                'pageId' => $pageId,
+                'error' => $e->getMessage()
+            ]);
+            return new DataResponse(
+                ['error' => $e->getMessage()],
+                Http::STATUS_INTERNAL_SERVER_ERROR
+            );
+        }
+    }
+
+    /**
+     * @NoAdminRequired
+     */
+    public function restorePageVersion(string $pageId, string $timestamp): DataResponse {
+        try {
+            $page = $this->pageService->restorePageVersion($pageId, (int)$timestamp);
+            return new DataResponse($page);
+        } catch (\Exception $e) {
+            return new DataResponse(
+                ['error' => $e->getMessage()],
+                Http::STATUS_INTERNAL_SERVER_ERROR
             );
         }
     }

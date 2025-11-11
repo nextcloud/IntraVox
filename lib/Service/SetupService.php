@@ -482,4 +482,56 @@ class SetupService {
         }
     }
 
+    /**
+     * Get the IntraVox groupfolder ID
+     * @throws \Exception if groupfolder not found
+     */
+    public function getGroupFolderId(): int {
+        try {
+            $this->logger->info('[getGroupFolderId] Getting groupfolder ID');
+
+            // Get groupfolder manager
+            $groupfolderManager = \OC::$server->get(\OCA\GroupFolders\Folder\FolderManager::class);
+
+            // Find IntraVox groupfolder - use the one with highest ID
+            $folders = $groupfolderManager->getAllFolders();
+            $folderId = null;
+            $highestId = 0;
+
+            foreach ($folders as $id => $folderData) {
+                // Handle FolderDefinitionWithMappings object
+                if (is_object($folderData)) {
+                    $mountPoint = property_exists($folderData, 'mountPoint') ? $folderData->mountPoint :
+                                 (method_exists($folderData, 'getMountPoint') ? $folderData->getMountPoint() : null);
+                } else {
+                    $mountPoint = $folderData['mount_point'] ?? null;
+                }
+
+                // Find the IntraVox folder with the highest ID
+                if ($mountPoint === self::GROUPFOLDER_NAME && $id > $highestId) {
+                    $folderId = $id;
+                    $highestId = $id;
+                }
+            }
+
+            if ($folderId === null) {
+                throw new \Exception('IntraVox groupfolder not found');
+            }
+
+            $this->logger->info('[getGroupFolderId] Found groupfolder ID: ' . $folderId);
+            return $folderId;
+
+        } catch (\Exception $e) {
+            $this->logger->error('[getGroupFolderId] Exception: ' . $e->getMessage());
+            throw new \Exception('Failed to get groupfolder ID: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Get the IntraVox groupfolder name
+     */
+    public function getGroupFolderName(): string {
+        return self::GROUPFOLDER_NAME;
+    }
+
 }

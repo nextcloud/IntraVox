@@ -11,6 +11,8 @@ return [
         ['name' => 'api#deletePage', 'url' => '/api/pages/{id}', 'verb' => 'DELETE'],
         ['name' => 'api#uploadImage', 'url' => '/api/pages/{pageId}/images', 'verb' => 'POST'],
         ['name' => 'api#getImage', 'url' => '/api/pages/{pageId}/images/{filename}', 'verb' => 'GET'],
+        ['name' => 'api#getPageVersions', 'url' => '/api/pages/{pageId}/versions', 'verb' => 'GET'],
+        ['name' => 'api#restorePageVersion', 'url' => '/api/pages/{pageId}/versions/{timestamp}', 'verb' => 'POST'],
         ['name' => 'navigation#get', 'url' => '/api/navigation', 'verb' => 'GET'],
         ['name' => 'navigation#save', 'url' => '/api/navigation', 'verb' => 'POST'],
         ['name' => 'footer#get', 'url' => '/api/footer', 'verb' => 'GET'],

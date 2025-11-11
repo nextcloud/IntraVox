@@ -7,6 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.7] - 2025-11-11 - Version History
+
+### Added
+- **Version History**: Complete version tracking system for pages
+  - Page Details sidebar accessible via information icon (ℹ️) in page header
+  - Displays all saved versions with timestamps and relative dates
+  - Versions created automatically on every page save
+  - Restore previous versions with one click
+  - Safe restoration: creates backup of current state before restoring
+- **Database-based FileId Mapping**: Intelligent version file lookup
+  - Queries Nextcloud database to match groupfolder and user mount file IDs
+  - Ensures versions are stored and retrieved from correct locations
+  - Compatible with versions created via both IntraVox and Files app
+  - Per-page version isolation using path-based matching
+
+### Changed
+- **Version Storage**: Manual versioning system for reliable version tracking
+  - Direct filesystem access to bypass Nextcloud groupfolder limitations
+  - Versions stored in standard Nextcloud location: `__groupfolders/{id}/versions/{fileId}/`
+  - Works around groupfolder UI filter that hides system-created versions
+
+### Technical
+- Added `IDBConnection` dependency for database queries
+- Created `findVersionFileId()` method for path-based file ID resolution
+- Implemented `createManualVersion()` for version file creation
+- Added `getPageVersions()` API endpoint for version retrieval
+- Added `restorePageVersion()` API endpoint for version restoration
+- Enhanced logging for version operations debugging
+
+### Documentation
+- Updated `pages.md` with comprehensive Version History section
+- Documented Files app limitations and workarounds
+- Added technical details about version storage and retrieval
+
 ## [0.2.6] - 2025-11-11 - Markdown storage & UX improvements
 
 ### Added

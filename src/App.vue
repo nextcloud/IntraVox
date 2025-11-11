@@ -13,6 +13,16 @@
         />
       </div>
       <div class="header-right">
+        <!-- Details Sidebar Toggle Button -->
+        <NcButton v-if="!isEditMode && currentPage"
+                  type="tertiary"
+                  @click="showDetailsSidebar = !showDetailsSidebar"
+                  :aria-label="t('Show page details')">
+          <template #icon>
+            <Information :size="20" />
+          </template>
+        </NcButton>
+
         <!-- Page Actions Menu (3-dot menu) -->
         <PageActionsMenu v-if="!isEditMode"
                          :is-edit-mode="isEditMode"
@@ -101,6 +111,15 @@
       :is-home-page="currentPage?.id === 'home'"
       @save="handleFooterSave"
     />
+
+    <!-- Page Details Sidebar -->
+    <PageDetailsSidebar
+      v-if="currentPage"
+      :is-open="showDetailsSidebar"
+      :page-id="currentPage.id"
+      @close="showDetailsSidebar = false"
+      @version-restored="handleVersionRestored"
+    />
   </div>
 </template>
 
@@ -112,6 +131,7 @@ import { showSuccess, showError } from '@nextcloud/dialogs';
 import { NcButton } from '@nextcloud/vue';
 import ContentSave from 'vue-material-design-icons/ContentSave.vue';
 import Close from 'vue-material-design-icons/Close.vue';
+import Information from 'vue-material-design-icons/Information.vue';
 import PageViewer from './components/PageViewer.vue';
 import PageEditor from './components/PageEditor.vue';
 import PageListModal from './components/PageListModal.vue';
@@ -120,6 +140,7 @@ import Navigation from './components/Navigation.vue';
 import NavigationEditor from './components/NavigationEditor.vue';
 import Footer from './components/Footer.vue';
 import PageActionsMenu from './components/PageActionsMenu.vue';
+import PageDetailsSidebar from './components/PageDetailsSidebar.vue';
 
 export default {
   name: 'App',
@@ -127,6 +148,7 @@ export default {
     NcButton,
     ContentSave,
     Close,
+    Information,
     PageViewer,
     PageEditor,
     PageListModal,
@@ -134,7 +156,8 @@ export default {
     Navigation,
     NavigationEditor,
     Footer,
-    PageActionsMenu
+    PageActionsMenu,
+    PageDetailsSidebar
   },
   data() {
     return {
@@ -147,6 +170,7 @@ export default {
       error: null,
       showPages: false,
       showNewPageModal: false,
+      showDetailsSidebar: false,
       navigation: {
         type: 'dropdown',
         items: []
@@ -267,13 +291,24 @@ export default {
       console.log('IntraVox: Edit mode started, original state saved');
     },
     async saveAndExitEditMode() {
-      // Update title if changed
-      if (this.editableTitle && this.editableTitle !== this.currentPage?.title) {
-        this.currentPage.title = this.editableTitle;
+      console.log('[saveAndExitEditMode] Called');
+      try {
+        // Update title if changed
+        if (this.editableTitle && this.editableTitle !== this.currentPage?.title) {
+          console.log('[saveAndExitEditMode] Updating title from', this.currentPage?.title, 'to', this.editableTitle);
+          this.currentPage.title = this.editableTitle;
+        }
+
+        console.log('[saveAndExitEditMode] Calling savePage');
+        await this.savePage();
+
+        console.log('[saveAndExitEditMode] Save completed, exiting edit mode');
+        this.isEditMode = false;
+        this.originalPage = null;
+      } catch (err) {
+        console.error('[saveAndExitEditMode] Error:', err);
+        showError(this.t('Failed to save: {error}', { error: err.message }));
       }
-      await this.savePage();
-      this.isEditMode = false;
-      this.originalPage = null;
     },
     cancelEditMode() {
       // Rollback to original state
@@ -286,15 +321,37 @@ export default {
       showSuccess(this.t('Changes cancelled'));
     },
     async savePage() {
+      console.log('[savePage] Starting save operation');
+      console.log('[savePage] Current page:', this.currentPage);
+
+      if (!this.currentPage || !this.currentPage.id) {
+        console.error('[savePage] ERROR: No current page or page ID!');
+        throw new Error('No page to save');
+      }
+
+      const url = generateUrl(`/apps/intravox/api/pages/${this.currentPage.id}`);
+      console.log('[savePage] PUT URL:', url);
+      console.log('[savePage] Payload:', JSON.stringify(this.currentPage, null, 2));
+
       try {
-        await axios.put(
-          generateUrl(`/apps/intravox/api/pages/${this.currentPage.id}`),
-          this.currentPage
-        );
+        console.log('[savePage] Making axios.put request...');
+        const response = await axios.put(url, this.currentPage);
+        console.log('[savePage] Response received:', response);
+        console.log('[savePage] Response status:', response.status);
+        console.log('[savePage] Response data:', response.data);
+
         showSuccess(this.t('Page saved'));
-        // Don't reload pages - just update in place to avoid exit from edit mode
+        console.log('[savePage] Success notification shown');
       } catch (err) {
-        showError(this.t('Could not save page: {error}', { error: err.message }));
+        console.error('[savePage] ERROR caught:', err);
+        console.error('[savePage] Error message:', err.message);
+        console.error('[savePage] Error response:', err.response);
+        console.error('[savePage] Error status:', err.response?.status);
+        console.error('[savePage] Error data:', err.response?.data);
+
+        const errorMsg = err.response?.data?.error || err.message || 'Unknown error';
+        showError(this.t('Could not save page: {error}', { error: errorMsg }));
+        throw err;
       }
     },
     async updatePage(updatedPage) {
@@ -471,6 +528,14 @@ export default {
       // Force Vue to re-render all translated strings
       this.$forceUpdate();
     },
+    async handleVersionRestored(restoredPageData) {
+      // Update current page with restored version
+      this.currentPage = restoredPageData;
+      showSuccess(this.t('Version restored successfully'));
+
+      // Reload pages list to update timestamps
+      await this.loadPages();
+    }
   }
 };
 </script>

@@ -3,7 +3,7 @@
 # Upload navigation test data to Nextcloud server
 # This script sends the navigation JSON via the API
 
-SERVER="https://145.38.191.124"
+SERVER="https://145.38.191.31"
 NAVIGATION_FILE="/tmp/navigation-testdata.json"
 
 echo "📤 Uploading navigation test data to $SERVER..."
