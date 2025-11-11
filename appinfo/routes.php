@@ -21,5 +21,6 @@ return [
         // Page routes
         ['name' => 'page#index', 'url' => '/', 'verb' => 'GET'],
         ['name' => 'page#show', 'url' => '/page/{id}', 'verb' => 'GET'],
+        ['name' => 'page#showByUniqueId', 'url' => '/p/{uniqueId}', 'verb' => 'GET'],
     ],
 ];

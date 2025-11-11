@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.8] - 2025-11-11 - UniqueId URLs & Code Cleanup
+
+### Added
+- **UniqueId-based URLs**: Permanent, collision-free page URLs
+  - All pages now have UUID v4-based uniqueIds for permanent identification
+  - URLs use uniqueId in hash format: `#page-abc-123-...`
+  - New `/p/{uniqueId}` route for shareable links
+  - Automatic uniqueId generation for legacy pages
+  - Migration-safe: no conflicts when merging IntraVox installations
+
+### Changed
+- **Removed Debug Logging**: Cleaned up excessive logging throughout application
+  - Removed all debug `console.log` statements from frontend (App.vue)
+  - Removed debug `info` logging from backend (PageService.php)
+  - Simplified warning/error logging to essentials only
+  - Improved production readiness with cleaner logs
+
+### Fixed
+- Hash-based navigation now works correctly with uniqueId
+- Page selection maintains correct URL state
+- Legacy pages automatically get uniqueId on first load
+
+### Technical
+- `generateUUID()` method in PageService for UUID v4 generation
+- `listPages()` now returns uniqueId field
+- `getPage()` auto-generates uniqueId for legacy pages
+- Hash change handler supports both id and uniqueId lookup
+- Open Graph meta tags added to template (limited functionality in Nextcloud apps)
+
 ## [0.2.7] - 2025-11-11 - Version History
 
 ### Added

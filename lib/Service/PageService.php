@@ -152,8 +152,19 @@ class PageService {
             $data = json_decode($content, true);
 
             if ($data && isset($data['id'], $data['title'])) {
+                // Ensure uniqueId exists
+                if (!isset($data['uniqueId'])) {
+                    $data['uniqueId'] = 'page-' . $this->generateUUID();
+                    try {
+                        $homeFile->putContent(json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+                    } catch (\Exception $e) {
+                        // Failed to add uniqueId - page will work but won't have permanent link
+                    }
+                }
+
                 $pages[] = [
                     'id' => $data['id'],
+                    'uniqueId' => $data['uniqueId'],
                     'title' => $data['title'],
                     'modified' => $data['modified'] ?? $homeFile->getMTime()
                 ];
@@ -200,8 +211,19 @@ class PageService {
                     $data = json_decode($content, true);
 
                     if ($data && isset($data['id'], $data['title'])) {
+                        // Ensure uniqueId exists
+                        if (!isset($data['uniqueId'])) {
+                            $data['uniqueId'] = 'page-' . $this->generateUUID();
+                            try {
+                                $jsonFile->putContent(json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+                            } catch (\Exception $e) {
+                                // Failed to add uniqueId - page will work but won't have permanent link
+                            }
+                        }
+
                         $pages[] = [
                             'id' => $data['id'],
+                            'uniqueId' => $data['uniqueId'],
                             'title' => $data['title'],
                             'modified' => $data['modified'] ?? $jsonFile->getMTime()
                         ];
@@ -235,6 +257,17 @@ class PageService {
 
         if (!$data) {
             throw new \Exception('Invalid page data');
+        }
+
+        // Ensure uniqueId exists for legacy pages
+        if (!isset($data['uniqueId'])) {
+            $data['uniqueId'] = 'page-' . $this->generateUUID();
+            // Save the page with the new uniqueId
+            try {
+                $result['file']->putContent(json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+            } catch (\Exception $e) {
+                // Failed to save uniqueId - page will work but won't have permanent link
+            }
         }
 
         return $this->sanitizePage($data);
@@ -375,10 +408,6 @@ class PageService {
             // Update the file
             $file->putContent(json_encode($validatedData, JSON_PRETTY_PRINT));
 
-            $this->logger->info('[updatePage] File updated successfully', [
-                'pageId' => $id,
-                'fileId' => $file->getId()
-            ]);
         } catch (\Exception $e) {
             throw new \InvalidArgumentException('Failed to write updated page data: ' . $e->getMessage());
         }
@@ -396,11 +425,6 @@ class PageService {
             $groupFolderId = $this->setupService->getGroupFolderId();
             $groupfolderFileId = $file->getId();
 
-            $this->logger->info('[createManualVersion] Creating version', [
-                'groupfolderFileId' => $groupfolderFileId,
-                'userId' => $user->getUID()
-            ]);
-
             // Find the user mount fileId where versions should be stored
             $versionFileId = $this->findVersionFileId($groupFolderId, $groupfolderFileId, $file->getInternalPath());
 
@@ -408,9 +432,6 @@ class PageService {
             // This will happen for new pages that haven't been accessed via Files app yet
             if (!$versionFileId) {
                 $versionFileId = $groupfolderFileId;
-                $this->logger->info('[createManualVersion] No user mount fileId found, using groupfolder fileId', [
-                    'versionFileId' => $versionFileId
-                ]);
             }
 
             // Get current file content to save as version
@@ -431,19 +452,8 @@ class PageService {
             chown($versionFile, 'www-data');
             chgrp($versionFile, 'www-data');
             chmod($versionFile, 0644);
-
-            $this->logger->info('[createManualVersion] Version created', [
-                'groupfolderFileId' => $groupfolderFileId,
-                'versionFileId' => $versionFileId,
-                'timestamp' => $timestamp,
-                'versionFile' => $versionFile
-            ]);
         } catch (\Exception $e) {
-            // Log but don't throw - versioning failure shouldn't block saves
-            $this->logger->warning('[createManualVersion] Failed to create version', [
-                'error' => $e->getMessage(),
-                'fileId' => $file->getId()
-            ]);
+            // Versioning failure shouldn't block saves - silently continue
         }
     }
 
@@ -792,36 +802,19 @@ class PageService {
         try {
             $groupFolderId = $this->setupService->getGroupFolderId();
 
-            $this->logger->info('[getPageVersions] Looking for versions', [
-                'pageId' => $pageId,
-                'fileId' => $fileId,
-                'groupFolderId' => $groupFolderId
-            ]);
-
             // The problem: when files are accessed via __groupfolders path, they have one fileId (e.g., 421)
             // But when the same file is accessed via user mount (files/...), it has a different fileId (e.g., 763)
             // Versions are stored using the user mount fileId, so we need to find it
             $versionFileId = $this->findVersionFileId($groupFolderId, $fileId, $file->getInternalPath());
 
             if (!$versionFileId) {
-                $this->logger->info('[getPageVersions] No version fileId found', [
-                    'groupfolderFileId' => $fileId
-                ]);
                 return [];
             }
-
-            $this->logger->info('[getPageVersions] Found version fileId', [
-                'groupfolderFileId' => $fileId,
-                'versionFileId' => $versionFileId
-            ]);
 
             // Read versions directly from filesystem using the version fileId
             $versionDir = "/var/www/nextcloud/data/__groupfolders/{$groupFolderId}/versions/{$versionFileId}";
 
             if (!is_dir($versionDir)) {
-                $this->logger->info('[getPageVersions] No versions directory', [
-                    'versionDir' => $versionDir
-                ]);
                 return [];
             }
 
@@ -853,11 +846,6 @@ class PageService {
             // Sort newest first
             usort($versions, fn($a, $b) => $b['timestamp'] <=> $a['timestamp']);
 
-            $this->logger->info('[getPageVersions] Returning versions', [
-                'count' => count($versions),
-                'versionFileId' => $versionFileId
-            ]);
-
             return $versions;
         } catch (\Exception $e) {
             $this->logger->error('[getPageVersions] Failed to retrieve versions', [
@@ -880,9 +868,6 @@ class PageService {
         // First try the groupfolder fileId itself
         $baseVersionDir = "/var/www/nextcloud/data/__groupfolders/{$groupFolderId}/versions";
         if (is_dir("{$baseVersionDir}/{$groupfolderFileId}")) {
-            $this->logger->info('[findVersionFileId] Found versions under groupfolder fileId', [
-                'fileId' => $groupfolderFileId
-            ]);
             return $groupfolderFileId;
         }
 
@@ -903,24 +888,15 @@ class PageService {
             $result->closeCursor();
 
             if (!$groupfolderFile) {
-                $this->logger->warning('[findVersionFileId] Groupfolder file not found in database', [
-                    'fileId' => $groupfolderFileId
-                ]);
                 return null;
             }
 
             // Extract the relative path after "files/"
             // e.g., "__groupfolders/4/files/en/home.json" -> "en/home.json"
             $groupfolderPath = $groupfolderFile['path'];
-            $this->logger->info('[findVersionFileId] Groupfolder path', [
-                'path' => $groupfolderPath
-            ]);
 
             if (preg_match('#__groupfolders/\d+/files/(.+)$#', $groupfolderPath, $matches)) {
                 $relativePath = $matches[1];
-                $this->logger->info('[findVersionFileId] Extracted relative path', [
-                    'relativePath' => $relativePath
-                ]);
 
                 // Now find the user mount fileId with path "files/{relativePath}"
                 $userPath = "files/{$relativePath}";
@@ -941,32 +917,14 @@ class PageService {
 
                     // Verify this fileId has a versions directory
                     if (is_dir("{$baseVersionDir}/{$userFileId}")) {
-                        $this->logger->info('[findVersionFileId] Found user mount fileId with versions', [
-                            'groupfolderFileId' => $groupfolderFileId,
-                            'userFileId' => $userFileId,
-                            'path' => $userPath
-                        ]);
                         return $userFileId;
-                    } else {
-                        $this->logger->info('[findVersionFileId] Found user mount fileId but no versions directory', [
-                            'userFileId' => $userFileId,
-                            'path' => $userPath
-                        ]);
                     }
                 }
             }
 
-            $this->logger->warning('[findVersionFileId] Could not find user mount fileId', [
-                'groupfolderFileId' => $groupfolderFileId,
-                'groupfolderPath' => $groupfolderPath
-            ]);
             return null;
 
         } catch (\Exception $e) {
-            $this->logger->error('[findVersionFileId] Database query failed', [
-                'error' => $e->getMessage(),
-                'groupfolderFileId' => $groupfolderFileId
-            ]);
             return null;
         }
     }
@@ -989,9 +947,7 @@ class PageService {
                 }
             }
         } catch (\Exception $e) {
-            $this->logger->error('[findFileByIdInFolder] Error searching folder', [
-                'error' => $e->getMessage()
-            ]);
+            // Error searching folder
         }
         return null;
     }
@@ -1017,12 +973,6 @@ class PageService {
         try {
             $groupFolderId = $this->setupService->getGroupFolderId();
             $fileId = $file->getId();
-
-            $this->logger->info('[restorePageVersion] Restoring version', [
-                'pageId' => $pageId,
-                'timestamp' => $timestamp,
-                'fileId' => $fileId
-            ]);
 
             // Find the version fileId (may differ from groupfolder fileId)
             $versionFileId = $this->findVersionFileId($groupFolderId, $fileId, $file->getInternalPath());
@@ -1054,12 +1004,6 @@ class PageService {
 
             // Write restored content to file
             $file->putContent(json_encode($validatedData, JSON_PRETTY_PRINT));
-
-            $this->logger->info('[restorePageVersion] Version restored successfully', [
-                'pageId' => $pageId,
-                'timestamp' => $timestamp,
-                'versionFileId' => $versionFileId
-            ]);
 
             return $validatedData;
         } catch (\Exception $e) {
@@ -1106,17 +1050,9 @@ class PageService {
         try {
             // Get the storage from the file itself - this preserves the groupfolder storage context
             $storage = $file->getStorage();
-            $this->logger->info('[createVersionBeforeUpdate] Storage info', [
-                'fileId' => $file->getId(),
-                'storageClass' => get_class($storage),
-                'internalPath' => $file->getInternalPath()
-            ]);
 
             // Check if this is a groupfolder storage
             if (!($storage instanceof \OCA\GroupFolders\Mount\GroupFolderStorage)) {
-                $this->logger->warning('[createVersionBeforeUpdate] Not a GroupFolder storage, skipping versioning', [
-                    'storageClass' => get_class($storage)
-                ]);
                 return;
             }
 
@@ -1131,18 +1067,22 @@ class PageService {
 
             // Call createVersion directly with the file that has the correct storage
             $versionsBackend->createVersion($user, $file);
-
-            $this->logger->info('[createVersionBeforeUpdate] Version created successfully', [
-                'fileId' => $file->getId(),
-                'userId' => $user->getUID()
-            ]);
         } catch (\Exception $e) {
-            $this->logger->warning('[createVersionBeforeUpdate] Failed to create version', [
-                'error' => $e->getMessage(),
-                'fileId' => $file->getId(),
-                'trace' => $e->getTraceAsString()
-            ]);
             // Don't throw - versioning failure shouldn't prevent saves
         }
+    }
+
+    /**
+     * Generate a UUID v4
+     */
+    private function generateUUID(): string {
+        $data = random_bytes(16);
+
+        // Set version to 4
+        $data[6] = chr(ord($data[6]) & 0x0f | 0x40);
+        // Set variant to RFC 4122
+        $data[8] = chr(ord($data[8]) & 0x3f | 0x80);
+
+        return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
     }
 }

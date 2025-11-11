@@ -3,18 +3,27 @@ declare(strict_types=1);
 
 namespace OCA\IntraVox\Controller;
 
+use OCA\IntraVox\Service\PageService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\ContentSecurityPolicy;
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\IRequest;
 use OCP\Util;
+use Psr\Log\LoggerInterface;
 
 class PageController extends Controller {
+    private PageService $pageService;
+    private LoggerInterface $logger;
+
     public function __construct(
         string $appName,
-        IRequest $request
+        IRequest $request,
+        PageService $pageService,
+        LoggerInterface $logger
     ) {
         parent::__construct($appName, $request);
+        $this->pageService = $pageService;
+        $this->logger = $logger;
     }
 
     /**
@@ -71,6 +80,53 @@ class PageController extends Controller {
         Util::addStyle('intravox', 'main');
 
         $response = new TemplateResponse('intravox', 'main');
+
+        // Set CSP to allow Vue.js to work
+        $csp = new ContentSecurityPolicy();
+        $csp->addAllowedScriptDomain('\'self\'');
+        $csp->addAllowedScriptDomain('\'unsafe-eval\'');
+        $response->setContentSecurityPolicy($csp);
+
+        return $response;
+    }
+
+    /**
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     * @PublicPage
+     */
+    public function showByUniqueId(string $uniqueId): TemplateResponse {
+        Util::addScript('intravox', 'intravox-main');
+        Util::addStyle('intravox', 'main');
+
+        // Try to load page by uniqueId to get metadata
+        $pageData = null;
+        $pageTitle = 'IntraVox';
+
+        try {
+            // Find page by uniqueId
+            $pages = $this->pageService->listPages();
+            foreach ($pages as $page) {
+                if (isset($page['uniqueId']) && $page['uniqueId'] === $uniqueId) {
+                    // Load full page data
+                    $pageData = $this->pageService->getPage($page['id']);
+                    if ($pageData && isset($pageData['title'])) {
+                        $pageTitle = $pageData['title'] . ' - IntraVox';
+                    }
+                    break;
+                }
+            }
+        } catch (\Exception $e) {
+            // Page not found - silently fall back to default title
+        }
+
+        $response = new TemplateResponse('intravox', 'main', [
+            'pageData' => $pageData,
+            'uniqueId' => $uniqueId
+        ]);
+
+        // Set page title
+        $response->setParams(['pageTitle' => $pageTitle]);
 
         // Set CSP to allow Vue.js to work
         $csp = new ContentSecurityPolicy();

@@ -205,11 +205,13 @@ export default {
     this.loadNavigation();
     this.loadFooter();
 
+    // Setup hash-based navigation
+    window.addEventListener('hashchange', this.handleHashChange);
+
     // Poll for language changes (Nextcloud reloads the page, but we check after navigation)
     this.languageCheckInterval = setInterval(() => {
       const newLanguage = document.documentElement.lang || 'en';
       if (newLanguage !== this.currentLanguage) {
-        console.log(`IntraVox: Language changed from ${this.currentLanguage} to ${newLanguage}`);
         this.currentLanguage = newLanguage;
         this.handleLanguageChange();
       }
@@ -219,7 +221,6 @@ export default {
     this.langObserver = new MutationObserver(() => {
       const newLanguage = document.documentElement.lang || 'en';
       if (newLanguage !== this.currentLanguage) {
-        console.log(`IntraVox: Language changed from ${this.currentLanguage} to ${newLanguage}`);
         this.currentLanguage = newLanguage;
         this.handleLanguageChange();
       }
@@ -231,6 +232,7 @@ export default {
     });
   },
   beforeUnmount() {
+    window.removeEventListener('hashchange', this.handleHashChange);
     if (this.languageCheckInterval) {
       clearInterval(this.languageCheckInterval);
     }
@@ -244,20 +246,47 @@ export default {
     },
     async loadPages() {
       try {
-        console.log('IntraVox: Loading pages...');
         this.loading = true;
         const response = await axios.get(generateUrl('/apps/intravox/api/pages'));
-        console.log('IntraVox: API response:', response);
         this.pages = response.data;
-        console.log('IntraVox: Pages loaded:', this.pages);
 
         if (this.pages.length > 0) {
-          // Load home page by default
-          const targetPage = this.pages.find(p => p.id === 'home') || this.pages[0];
-          console.log('IntraVox: Loading page:', targetPage.id);
-          await this.selectPage(targetPage.id);
+          // Check if we came from a /p/{uniqueId} URL
+          const appElement = document.getElementById('app-intravox');
+          const uniqueIdFromUrl = appElement?.dataset.uniqueId;
+
+          // Check URL hash for page to load
+          const hash = window.location.hash;
+          let targetPage = null;
+          let foundInHash = false;
+
+          // Priority 1: uniqueId from URL path
+          if (uniqueIdFromUrl) {
+            targetPage = this.pages.find(p => p.uniqueId === uniqueIdFromUrl);
+            if (targetPage) {
+              foundInHash = true;
+            }
+          }
+
+          // Priority 2: Hash in URL
+          if (!targetPage && hash) {
+            const pageIdentifier = hash.substring(1); // Remove '#'
+
+            // Try to find page by ID or uniqueId
+            targetPage = this.pages.find(p => p.id === pageIdentifier || p.uniqueId === pageIdentifier);
+            if (targetPage) {
+              foundInHash = true;
+            }
+          }
+
+          // Fall back to home page if no hash or page not found
+          if (!targetPage) {
+            targetPage = this.pages.find(p => p.id === 'home') || this.pages[0];
+          }
+
+          // Only update URL if we didn't find the page in the hash (i.e., we're loading default/home)
+          await this.selectPage(targetPage.id, !foundInHash);
         } else {
-          console.warn('IntraVox: No pages found!');
           this.error = this.t('No pages found. Please run the setup command first.');
         }
       } catch (err) {
@@ -267,15 +296,26 @@ export default {
         this.loading = false;
       }
     },
-    async selectPage(pageId) {
+    async selectPage(pageId, updateUrl = true) {
       try {
-        console.log('IntraVox: Selecting page:', pageId);
         this.loading = true;
         const response = await axios.get(generateUrl(`/apps/intravox/api/pages/${pageId}`));
-        console.log('IntraVox: Page data:', response.data);
         this.currentPage = response.data;
         this.isEditMode = false;
         this.showPages = false;
+
+        // Update URL hash if requested - use uniqueId for permanent links
+        // Fall back to id if uniqueId is not available (legacy pages)
+        if (updateUrl && this.currentPage) {
+          const pageIdentifier = this.currentPage.uniqueId || this.currentPage.id;
+          const newHash = `#${pageIdentifier}`;
+          if (window.location.hash !== newHash) {
+            window.location.hash = newHash;
+          }
+        }
+
+        // Update page title and meta tags for better link previews
+        this.updatePageMetadata();
       } catch (err) {
         console.error('IntraVox: Error selecting page:', err);
         showError(this.t('Could not load page: {error}', { error: err.message }));
@@ -283,26 +323,50 @@ export default {
         this.loading = false;
       }
     },
+    updatePageMetadata() {
+      if (!this.currentPage) return;
+
+      // Update document title
+      document.title = `${this.currentPage.title} - IntraVox`;
+
+      // Update or create Open Graph meta tags for better link previews
+      this.updateMetaTag('og:title', this.currentPage.title);
+      this.updateMetaTag('og:type', 'article');
+      this.updateMetaTag('og:url', window.location.href);
+      this.updateMetaTag('og:site_name', 'IntraVox');
+
+      // Twitter Card tags
+      this.updateMetaTag('twitter:card', 'summary', 'name');
+      this.updateMetaTag('twitter:title', this.currentPage.title, 'name');
+    },
+    updateMetaTag(property, content, attrName = 'property') {
+      // Try to find existing meta tag
+      let meta = document.querySelector(`meta[${attrName}="${property}"]`);
+
+      if (!meta) {
+        // Create new meta tag if it doesn't exist
+        meta = document.createElement('meta');
+        meta.setAttribute(attrName, property);
+        document.head.appendChild(meta);
+      }
+
+      meta.setAttribute('content', content);
+    },
     startEditMode() {
       // Store original state for rollback
       this.originalPage = JSON.parse(JSON.stringify(this.currentPage));
       this.editableTitle = this.currentPage?.title || '';
       this.isEditMode = true;
-      console.log('IntraVox: Edit mode started, original state saved');
     },
     async saveAndExitEditMode() {
-      console.log('[saveAndExitEditMode] Called');
       try {
         // Update title if changed
         if (this.editableTitle && this.editableTitle !== this.currentPage?.title) {
-          console.log('[saveAndExitEditMode] Updating title from', this.currentPage?.title, 'to', this.editableTitle);
           this.currentPage.title = this.editableTitle;
         }
 
-        console.log('[saveAndExitEditMode] Calling savePage');
         await this.savePage();
 
-        console.log('[saveAndExitEditMode] Save completed, exiting edit mode');
         this.isEditMode = false;
         this.originalPage = null;
       } catch (err) {
@@ -314,41 +378,28 @@ export default {
       // Rollback to original state
       if (this.originalPage) {
         this.currentPage = JSON.parse(JSON.stringify(this.originalPage));
-        console.log('IntraVox: Rolled back to original state');
       }
       this.isEditMode = false;
       this.originalPage = null;
       showSuccess(this.t('Changes cancelled'));
     },
     async savePage() {
-      console.log('[savePage] Starting save operation');
-      console.log('[savePage] Current page:', this.currentPage);
-
       if (!this.currentPage || !this.currentPage.id) {
-        console.error('[savePage] ERROR: No current page or page ID!');
         throw new Error('No page to save');
       }
 
+      // Ensure uniqueId exists (for legacy pages that don't have it yet)
+      if (!this.currentPage.uniqueId) {
+        this.currentPage.uniqueId = this.generateUniqueId();
+      }
+
       const url = generateUrl(`/apps/intravox/api/pages/${this.currentPage.id}`);
-      console.log('[savePage] PUT URL:', url);
-      console.log('[savePage] Payload:', JSON.stringify(this.currentPage, null, 2));
 
       try {
-        console.log('[savePage] Making axios.put request...');
-        const response = await axios.put(url, this.currentPage);
-        console.log('[savePage] Response received:', response);
-        console.log('[savePage] Response status:', response.status);
-        console.log('[savePage] Response data:', response.data);
-
+        await axios.put(url, this.currentPage);
         showSuccess(this.t('Page saved'));
-        console.log('[savePage] Success notification shown');
       } catch (err) {
-        console.error('[savePage] ERROR caught:', err);
-        console.error('[savePage] Error message:', err.message);
-        console.error('[savePage] Error response:', err.response);
-        console.error('[savePage] Error status:', err.response?.status);
-        console.error('[savePage] Error data:', err.response?.data);
-
+        console.error('[savePage] Error:', err);
         const errorMsg = err.response?.data?.error || err.message || 'Unknown error';
         showError(this.t('Could not save page: {error}', { error: errorMsg }));
         throw err;
@@ -447,16 +498,9 @@ export default {
     },
     async loadNavigation() {
       try {
-        console.log('IntraVox: Loading navigation...');
-        console.log('IntraVox: Current browser language:', navigator.language);
-        console.log('IntraVox: Current HTML lang:', document.documentElement.lang);
         const response = await axios.get(generateUrl('/apps/intravox/api/navigation'));
-        console.log('IntraVox: Navigation response:', response.data);
-        console.log('IntraVox: Server detected language:', response.data.language);
         this.navigation = response.data.navigation;
         this.canEditNavigation = response.data.canEdit;
-        console.log('IntraVox: Navigation loaded with', this.navigation.items?.length || 0, 'items');
-        console.log('IntraVox: Can edit navigation:', this.canEditNavigation);
       } catch (err) {
         console.error('IntraVox: Could not load navigation:', err);
         // Provide default empty navigation
@@ -469,9 +513,7 @@ export default {
     },
     async saveNavigation(navigation) {
       try {
-        console.log('IntraVox: Saving navigation...', navigation);
         const response = await axios.post(generateUrl('/apps/intravox/api/navigation'), navigation);
-        console.log('IntraVox: Navigation saved successfully', response.data);
         this.navigation = response.data.navigation;
         this.showNavigationEditor = false;
         showSuccess(this.t('Navigation saved'));
@@ -482,12 +524,9 @@ export default {
     },
     async loadFooter() {
       try {
-        console.log('IntraVox: Loading footer...');
         const response = await axios.get(generateUrl('/apps/intravox/api/footer'));
-        console.log('IntraVox: Footer response:', response.data);
         this.footerContent = response.data.content;
         this.canEditFooter = response.data.canEdit;
-        console.log('IntraVox: Footer loaded, canEdit:', this.canEditFooter);
       } catch (err) {
         console.error('IntraVox: Could not load footer:', err);
         this.footerContent = '';
@@ -496,11 +535,9 @@ export default {
     },
     async handleFooterSave(content) {
       try {
-        console.log('IntraVox: Saving footer...', content);
         const response = await axios.post(generateUrl('/apps/intravox/api/footer'), {
           content: content
         });
-        console.log('IntraVox: Footer saved successfully', response.data);
         this.footerContent = response.data.content;
         showSuccess(this.t('Footer saved'));
       } catch (err) {
@@ -520,7 +557,6 @@ export default {
       }
     },
     handleLanguageChange() {
-      console.log('IntraVox: Language changed, reloading navigation and pages...');
       // Reload navigation and pages for the new language
       this.loadNavigation();
       this.loadPages();
@@ -533,8 +569,38 @@ export default {
       this.currentPage = restoredPageData;
       showSuccess(this.t('Version restored successfully'));
 
-      // Reload pages list to update timestamps
-      await this.loadPages();
+      // Reload pages list to update timestamps, but stay on current page
+      const currentPageId = this.currentPage.id;
+      try {
+        const response = await axios.get(generateUrl('/apps/intravox/api/pages'));
+        this.pages = response.data;
+        // Re-select the current page to refresh it without changing the URL
+        await this.selectPage(currentPageId, false);
+      } catch (err) {
+        console.error('IntraVox: Error reloading pages after restore:', err);
+      }
+    },
+    handleHashChange() {
+      // Handle URL hash changes for navigation
+      const hash = window.location.hash;
+      if (!hash || hash === '#') {
+        // No hash, load home page
+        this.selectPage('home', false);
+        return;
+      }
+
+      const pageIdentifier = hash.substring(1); // Remove '#'
+
+      // Find page by ID or uniqueId
+      const targetPage = this.pages.find(p => p.id === pageIdentifier || p.uniqueId === pageIdentifier);
+
+      if (targetPage) {
+        // Don't update URL since we're already responding to a hash change
+        this.selectPage(targetPage.id, false);
+      } else {
+        // Fall back to home
+        this.selectPage('home', true);
+      }
     }
   }
 };
