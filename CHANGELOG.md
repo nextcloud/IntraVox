@@ -7,6 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.9] - 2025-11-12 - Navigation System Rewrite
+
+### Added
+- **Three-Level Navigation**: Complete navigation hierarchy with three levels
+  - Mobile hamburger menu with collapsible levels
+  - Desktop cascading dropdown using NcActions components
+  - Desktop megamenu with grid-based layout
+  - Visual hierarchy through indentation, font size, and font weight
+
+### Changed
+- **Nextcloud-Compliant Styling**: Navigation follows Nextcloud design standards
+  - Removed gradient backgrounds and transform effects
+  - Simple hover states using `--color-background-hover`
+  - Active states using `--color-primary-element-light`
+  - Subtle transitions (0.1s ease) for professional feel
+  - Clean integration with Nextcloud interface
+- **Mobile Navigation Improvements**:
+  - Level 2 items: 32px indentation, 14px font, lighter color
+  - Level 3 items: 56px indentation, 13px font, lightest color
+  - Clear visual distinction between hierarchy levels
+
+### Fixed
+- Navigation menu items now properly display all three levels
+- Mobile menu scope errors resolved with proper template nesting
+- Desktop dropdown menus show submenu items correctly
+- Visual hierarchy clearly distinguishes between navigation levels
+
+### Technical
+- Complete rewrite using Nextcloud Vue 3 components (NcActions, NcActionButton)
+- Two navigation types: 'dropdown' (cascading) and 'megamenu' (grid-based)
+- Proper Vue 3 template patterns with nested v-for loops
+- CSS uses Nextcloud design tokens for consistency
+- Mobile-first responsive design with @media queries
+
 ## [0.2.8] - 2025-11-11 - UniqueId URLs & Code Cleanup
 
 ### Added

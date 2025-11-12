@@ -27,6 +27,16 @@
       {{ t('New Page') }}
     </NcActionButton>
 
+    <!-- Details -->
+    <NcActionButton v-if="!isEditMode"
+                    :close-after-click="true"
+                    @click="$emit('show-details')">
+      <template #icon>
+        <Information :size="20" />
+      </template>
+      {{ t('Details') }}
+    </NcActionButton>
+
     <!-- Edit Page (only when not in edit mode) -->
     <NcActionButton v-if="!isEditMode && canPerformAction('editPage')"
                     @click="$emit('start-edit')">
@@ -45,6 +55,7 @@ import Cog from 'vue-material-design-icons/Cog.vue';
 import ViewList from 'vue-material-design-icons/ViewList.vue';
 import Plus from 'vue-material-design-icons/Plus.vue';
 import Pencil from 'vue-material-design-icons/Pencil.vue';
+import Information from 'vue-material-design-icons/Information.vue';
 
 export default {
   name: 'PageActionsMenu',
@@ -54,7 +65,8 @@ export default {
     Cog,
     ViewList,
     Plus,
-    Pencil
+    Pencil,
+    Information
   },
   props: {
     isEditMode: {
@@ -72,7 +84,7 @@ export default {
       })
     }
   },
-  emits: ['edit-navigation', 'show-pages', 'create-page', 'start-edit'],
+  emits: ['edit-navigation', 'show-pages', 'create-page', 'show-details', 'start-edit'],
   methods: {
     t(key, vars = {}) {
       return t('intravox', key, vars);

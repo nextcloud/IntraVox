@@ -195,4 +195,57 @@ class ApiController extends Controller {
             );
         }
     }
+
+    /**
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     */
+    public function getPageMetadata(string $pageId): DataResponse {
+        try {
+            $metadata = $this->pageService->getPageMetadata($pageId);
+            return new DataResponse($metadata);
+        } catch (\Exception $e) {
+            return new DataResponse(
+                ['error' => $e->getMessage()],
+                Http::STATUS_INTERNAL_SERVER_ERROR
+            );
+        }
+    }
+
+    /**
+     * @NoAdminRequired
+     */
+    public function updatePageMetadata(string $pageId): DataResponse {
+        try {
+            $metadata = $this->request->getParams();
+            $updated = $this->pageService->updatePageMetadata($pageId, $metadata);
+            return new DataResponse($updated);
+        } catch (\Exception $e) {
+            return new DataResponse(
+                ['error' => $e->getMessage()],
+                Http::STATUS_INTERNAL_SERVER_ERROR
+            );
+        }
+    }
+
+    /**
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     */
+    public function getMetaVoxStatus(): DataResponse {
+        try {
+            $appManager = \OC::$server->getAppManager();
+            $installed = $appManager->isInstalled('metavox') && $appManager->isEnabledForUser('metavox');
+
+            return new DataResponse([
+                'installed' => $installed,
+                'enabled' => $installed
+            ]);
+        } catch (\Exception $e) {
+            return new DataResponse(
+                ['installed' => false, 'enabled' => false],
+                Http::STATUS_OK
+            );
+        }
+    }
 }

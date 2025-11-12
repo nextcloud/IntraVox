@@ -183,6 +183,8 @@ export default {
 <style scoped>
 .widget {
   width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 /* Text Widget */
@@ -283,13 +285,17 @@ export default {
 /* Image Widget */
 .widget-image {
   width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .widget-image img {
   max-width: 100%;
+  width: 100%;
   height: auto;
   border-radius: var(--border-radius-large);
   display: block;
+  object-fit: contain;
 }
 
 .widget-image .placeholder {
@@ -368,5 +374,33 @@ export default {
   color: white;
   border-radius: var(--border-radius-large);
   text-align: center;
+}
+
+/* Mobile styles */
+@media (max-width: 768px) {
+  .widget-text :deep(h1) { font-size: 24px !important; }
+  .widget-text :deep(h2) { font-size: 22px !important; }
+  .widget-text :deep(h3) { font-size: 20px !important; }
+  .widget-text :deep(h4) { font-size: 18px !important; }
+  .widget-text :deep(h5) { font-size: 16px !important; }
+  .widget-text :deep(h6) { font-size: 14px !important; }
+
+  .widget-heading h1 { font-size: 24px; }
+  .widget-heading h2 { font-size: 22px; }
+  .widget-heading h3 { font-size: 20px; }
+  .widget-heading h4 { font-size: 18px; }
+  .widget-heading h5 { font-size: 16px; }
+  .widget-heading h6 { font-size: 14px; }
+
+  .widget-text {
+    font-size: 14px;
+  }
+
+  .widget-image img {
+    max-width: 100%;
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+  }
 }
 </style>

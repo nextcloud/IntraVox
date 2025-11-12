@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# IntraVox Deployment Script
+# IntraVox Deployment Script (Optimized)
 # Deploys to Nextcloud test server
 
 set -e
@@ -30,16 +30,27 @@ INCLUDE_ITEMS=(
     "README.md"
 )
 
-echo ""
-echo "📦 Step 1: Building frontend..."
-npm run build
-
-if [ $? -ne 0 ]; then
-    echo "❌ Build failed!"
-    exit 1
+# Check if we should skip build
+SKIP_BUILD=false
+if [ "$1" = "--skip-build" ] || [ "$1" = "-s" ]; then
+    SKIP_BUILD=true
 fi
 
-echo "✅ Build completed"
+if [ "$SKIP_BUILD" = false ]; then
+    echo ""
+    echo "📦 Step 1: Building frontend..."
+    npm run build
+
+    if [ $? -ne 0 ]; then
+        echo "❌ Build failed!"
+        exit 1
+    fi
+
+    echo "✅ Build completed"
+else
+    echo ""
+    echo "⏭️  Step 1: Skipping build (using existing js/)"
+fi
 
 echo ""
 echo "📋 Step 2: Creating deployment package..."
@@ -59,11 +70,16 @@ for item in "${INCLUDE_ITEMS[@]}"; do
     fi
 done
 
-# Create tarball
+# Create tarball with faster compression
 TARBALL="$TEMP_DIR/${APP_NAME}.tar.gz"
 echo "  📦 Creating tarball..."
 cd "$TEMP_DIR"
-tar -czf "$TARBALL" "$APP_NAME"
+# Use pigz for parallel compression if available, otherwise use gzip with low compression
+if command -v pigz &> /dev/null; then
+    tar -cf - "$APP_NAME" | pigz -1 > "$TARBALL"
+else
+    tar -czf "$TARBALL" --fast "$APP_NAME" 2>/dev/null || tar -czf "$TARBALL" "$APP_NAME"
+fi
 
 echo "✅ Deployment package created"
 
@@ -74,79 +90,58 @@ echo "  Path: $REMOTE_PATH/$APP_NAME"
 
 # Upload tarball
 echo "  📤 Uploading package..."
-scp -i "$SSH_KEY" "$TARBALL" "${REMOTE_USER}@${REMOTE_HOST}:/tmp/${APP_NAME}.tar.gz"
+scp -i "$SSH_KEY" -C "$TARBALL" "${REMOTE_USER}@${REMOTE_HOST}:/tmp/${APP_NAME}.tar.gz"
 
-# Extract and setup on server
-echo "  📂 Extracting on server..."
+# Extract and setup on server - COMBINED INTO ONE SSH SESSION
+echo "  📂 Deploying and enabling..."
 ssh -i "$SSH_KEY" "${REMOTE_USER}@${REMOTE_HOST}" << EOF
     set -e
 
     # Navigate to apps directory
     cd $REMOTE_PATH
 
-    # Clean up old backups (keep only last 5)
-    echo "  🧹 Cleaning up old backups..."
-    sudo ls -t /tmp/${APP_NAME}.backup.* 2>/dev/null | tail -n +6 | xargs -r sudo rm -rf
+    # Clean up old backups (keep only last 3 for speed)
+    sudo ls -t /tmp/${APP_NAME}.backup.* 2>/dev/null | tail -n +4 | xargs -r sudo rm -rf 2>/dev/null || true
 
-    # Backup existing installation if present
+    # Quick backup - just rename, don't copy
     if [ -d "$APP_NAME" ]; then
-        echo "  💾 Backing up existing installation..."
         BACKUP_NAME="${APP_NAME}.backup.\$(date +%Y%m%d_%H%M%S)"
-        # Move backup to /tmp instead of apps directory to avoid Nextcloud scanning it
-        sudo mv $APP_NAME "/tmp/\$BACKUP_NAME" || true
-        echo "  📦 Backup saved to /tmp/\$BACKUP_NAME"
+        sudo mv $APP_NAME "/tmp/\$BACKUP_NAME" 2>/dev/null || true
     fi
 
     # Extract new version
-    echo "  📦 Extracting new version..."
     sudo tar -xzf /tmp/${APP_NAME}.tar.gz -C $REMOTE_PATH
 
     # Set permissions
-    echo "  🔐 Setting permissions..."
     sudo chown -R www-data:www-data $REMOTE_PATH/$APP_NAME
     sudo chmod -R 755 $REMOTE_PATH/$APP_NAME
 
-    # Clean up
+    # Clean up tarball
     rm /tmp/${APP_NAME}.tar.gz
 
-    echo "  ✅ Files deployed"
-EOF
-
-echo ""
-echo "🔧 Step 4: Enabling app and running setup..."
-ssh -i "$SSH_KEY" "${REMOTE_USER}@${REMOTE_HOST}" << EOF
-    set -e
+    # Clear caches and refresh app
     cd /var/www/nextcloud
 
+    # Clear Nextcloud caches
+    sudo -u www-data php occ maintenance:repair 2>/dev/null || true
+
     # Disable and re-enable app to clear route cache
-    echo "  🔄 Refreshing app..."
-    sudo -u www-data php occ app:disable $APP_NAME || true
-    sudo -u www-data php occ app:enable $APP_NAME || true
+    sudo -u www-data php occ app:disable $APP_NAME 2>/dev/null || true
+    sudo -u www-data php occ app:enable $APP_NAME 2>/dev/null || true
 
-    # Run setup command
-    echo "  🏗️  Running IntraVox setup..."
-    sudo -u www-data php occ intravox:setup || echo "  ℹ️  Setup will complete on first use"
+    # Restart Apache to clear PHP opcache and Apache cache
+    sudo service apache2 restart
 
-    echo "  ✅ App enabled"
+    echo "  ✅ Deployed, caches cleared, and enabled"
 EOF
 
 # Cleanup local temp files
 rm -rf "$TEMP_DIR"
 
 echo ""
-echo "✅ Deployment completed successfully!"
+echo "✅ Deployment completed!"
 echo ""
-echo "📊 Summary:"
-echo "  • App Name: $APP_NAME"
-echo "  • Server: $REMOTE_HOST"
-echo "  • Status: Deployed and enabled"
+echo "🌐 Access: https://$REMOTE_HOST"
 echo ""
-echo "🌐 Access IntraVox at:"
-echo "  https://$REMOTE_HOST"
-echo ""
-echo "🔧 Setup command (if needed):"
-echo "  ssh ${REMOTE_USER}@${REMOTE_HOST} 'sudo -u www-data php /var/www/html/occ intravox:setup'"
-echo ""
-echo "📝 View logs:"
-echo "  ssh ${REMOTE_USER}@${REMOTE_HOST} 'sudo tail -f /var/www/html/data/nextcloud.log'"
+echo "💡 Quick tip: Use './deploy-dev.sh --skip-build' to skip the build step"
 echo ""

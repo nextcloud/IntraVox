@@ -11,7 +11,7 @@
             :placeholder="t('Enter footer content...')"
             class="footer-editor"
           />
-          <div v-else class="footer-content" v-html="footerContent"></div>
+          <div v-else class="footer-content" v-html="footerHtml"></div>
         </div>
 
         <!-- 3-dot Action Menu (shown when not editing) -->
@@ -55,14 +55,13 @@
 
 <script>
 import { translate as t } from '@nextcloud/l10n';
-import { showSuccess, showError } from '@nextcloud/dialogs';
-import axios from '@nextcloud/axios';
-import { generateUrl } from '@nextcloud/router';
+import { showSuccess } from '@nextcloud/dialogs';
 import { NcButton, NcActions, NcActionButton } from '@nextcloud/vue';
 import Pencil from 'vue-material-design-icons/Pencil.vue';
 import Close from 'vue-material-design-icons/Close.vue';
 import ContentSave from 'vue-material-design-icons/ContentSave.vue';
 import InlineTextEditor from './InlineTextEditor.vue';
+import { markdownToHtml } from '../utils/markdownSerializer.js';
 
 export default {
   name: 'Footer',
@@ -97,6 +96,12 @@ export default {
       originalContent: ''
     };
   },
+  computed: {
+    footerHtml() {
+      // Convert markdown to HTML for display
+      return markdownToHtml(this.footerContent || '');
+    }
+  },
   methods: {
     t(key, vars = {}) {
       return t('intravox', key, vars);
@@ -112,18 +117,11 @@ export default {
       this.originalContent = '';
       showSuccess(this.t('Changes cancelled'));
     },
-    async saveFooter() {
-      try {
-        await axios.post(generateUrl('/apps/intravox/api/footer'), {
-          content: this.editableContent
-        });
-        this.$emit('save', this.editableContent);
-        this.isEditingFooter = false;
-        this.originalContent = '';
-        showSuccess(this.t('Footer saved'));
-      } catch (err) {
-        showError(this.t('Could not save footer: {error}', { error: err.message }));
-      }
+    saveFooter() {
+      // Emit save event to parent - parent will handle API call and notifications
+      this.$emit('save', this.editableContent);
+      this.isEditingFooter = false;
+      this.originalContent = '';
     }
   }
 };
@@ -132,13 +130,17 @@ export default {
 <style scoped>
 .intravox-footer {
   width: 100%;
+  max-width: 100vw;
   background: var(--color-main-background);
+  box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 .footer-wrapper {
   max-width: min(1600px, 95vw);
   margin: 0 auto;
   padding: 0 20px 60px 20px;
+  box-sizing: border-box;
 }
 
 .footer-content-and-actions {
@@ -200,5 +202,29 @@ export default {
   border: 1px solid var(--color-border);
   border-radius: var(--border-radius);
   padding: 12px;
+}
+
+/* Mobile styles */
+@media (max-width: 768px) {
+  .footer-wrapper {
+    padding: 0 8px 40px 8px;
+    max-width: 100%;
+  }
+
+  .footer-content-and-actions {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .footer-actions,
+  .footer-edit-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .footer-content {
+    padding: 12px 8px;
+    font-size: 13px;
+  }
 }
 </style>

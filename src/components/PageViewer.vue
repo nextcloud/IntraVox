@@ -77,21 +77,61 @@ export default {
 <style scoped>
 .page-viewer {
   width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .page-row {
   margin-bottom: 30px;
   padding: 24px;
   border-radius: var(--border-radius-large);
+  box-sizing: border-box;
 }
 
 .page-grid {
   display: grid;
   gap: 15px;
   width: 100%;
+  box-sizing: border-box;
 }
 
 .page-column {
   min-height: 50px;
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+/* Mobile styles */
+@media (max-width: 768px) {
+  .page-viewer {
+    overflow-x: hidden; /* Prevent horizontal scroll */
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .page-row {
+    margin-bottom: 16px;
+    padding: 16px 8px;
+    margin-left: 0;
+    margin-right: 0;
+    border-radius: 0;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .page-grid {
+    gap: 12px;
+    grid-template-columns: 1fr !important; /* Single column on mobile */
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .page-column {
+    overflow-x: hidden; /* Prevent images from overflowing */
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
 }
 </style>

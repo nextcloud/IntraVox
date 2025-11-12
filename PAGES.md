@@ -48,6 +48,53 @@ IntraVox uses uniqueId-based URLs for reliable, permanent page identification:
 - Old URLs using page ID still work (automatic fallback)
 - System seamlessly upgrades legacy pages to new format
 
+### Site Navigation
+
+IntraVox features a comprehensive navigation system with support for three hierarchy levels:
+
+**Navigation Types**:
+1. **Dropdown (Cascading)**: Standard dropdown menus with nested submenus
+   - Uses Nextcloud Vue NcActions components
+   - Supports up to 3 levels of nesting
+   - Click to expand/collapse menu items
+   - Ideal for structured, categorized content
+
+2. **Megamenu (Grid-based)**: Large dropdown with grid layout
+   - Displays all submenu items in a grid
+   - Hover to open, shows all options at once
+   - Best for sites with many navigation items
+   - Visual overview of all sections
+
+**Hierarchy Levels**:
+- **Level 1**: Top-level navigation items (e.g., "About", "Services")
+- **Level 2**: Sub-items under main categories (e.g., "Our Team", "Our History")
+- **Level 3**: Detailed pages under sub-categories (e.g., "CEO", "Board Members")
+
+**Visual Hierarchy**:
+- Different font sizes and weights distinguish levels
+- Indentation on mobile menu (32px for level 2, 56px for level 3)
+- Lighter text colors for deeper levels
+- Collapsible items with chevron indicators
+
+**Mobile Navigation**:
+- Hamburger menu with NcActions component
+- All three levels fully accessible
+- Touch-friendly tap-to-expand interface
+- Visual indentation for clear hierarchy
+
+**Navigation Editor**:
+- Drag-and-drop interface for reordering items
+- Add links to IntraVox pages or external URLs
+- Configure target (same window or new tab)
+- Choose between dropdown and megamenu styles
+- Real-time preview of navigation structure
+
+**Nextcloud Integration**:
+- Follows Nextcloud design standards
+- Uses Nextcloud color variables for theming
+- Consistent with Nextcloud Files and other apps
+- Responsive design for all screen sizes
+
 ### Editing a Page
 
 Pages can be edited through the IntraVox interface:

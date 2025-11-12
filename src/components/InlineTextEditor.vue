@@ -228,13 +228,29 @@ export default {
   },
   watch: {
     modelValue(newValue) {
+      // Skip update if editor is focused (user is typing)
+      if (this.isFocused) {
+        return;
+      }
+
       // Convert markdown to HTML for comparison and update
       const htmlContent = markdownToHtml(newValue);
       const currentHtml = this.editor.getHTML();
 
       // Only update if content actually changed
       if (currentHtml !== htmlContent) {
+        // Save cursor position
+        const { from, to } = this.editor.state.selection;
+
+        // Update content
         this.editor.commands.setContent(htmlContent, false);
+
+        // Restore cursor position if possible
+        try {
+          this.editor.commands.setTextSelection({ from, to });
+        } catch (e) {
+          // If restoration fails (content changed too much), just continue
+        }
       }
     },
     editable(newValue) {

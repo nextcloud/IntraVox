@@ -1085,4 +1085,275 @@ class PageService {
 
         return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
     }
+
+    /**
+     * Get the actual file ID from the database using the groupfolder storage
+     *
+     * This is necessary because $file->getId() may return the user mount file ID
+     * instead of the groupfolder storage file ID that MetaVox needs.
+     *
+     * @param \OCP\Files\File $file The file object
+     * @param \OCP\Files\Folder $folder The parent folder
+     * @return int The actual file ID from the groupfolder storage
+     */
+    private function getFileIdFromDatabase($file, $folder): int {
+        try {
+            $filePath = $file->getPath();
+
+            // Extract groupfolder ID and relative path from the full path
+            // Path format: /__groupfolders/4/files/en/home.json
+            // We need: groupfolderId=4, relPath="files/en/home.json"
+            if (preg_match('#/__groupfolders/(\d+)/(.+)$#', $filePath, $matches)) {
+                $groupfolderId = (int)$matches[1];
+                $relPath = $matches[2];
+
+                // Find the storage ID for this groupfolder
+                $qb = $this->db->getQueryBuilder();
+                $qb->select('storage_id')
+                    ->from('group_folders')
+                    ->where($qb->expr()->eq('folder_id', $qb->createNamedParameter($groupfolderId)));
+
+                $result = $qb->executeQuery();
+                $gfRow = $result->fetch();
+                $result->closeCursor();
+
+                if (!$gfRow || !isset($gfRow['storage_id'])) {
+                    return $file->getId();
+                }
+
+                $storageId = (int)$gfRow['storage_id'];
+
+                // Query filecache for the file in the groupfolder storage
+                $qb2 = $this->db->getQueryBuilder();
+                $qb2->select('fileid')
+                    ->from('filecache')
+                    ->where($qb2->expr()->eq('storage', $qb2->createNamedParameter($storageId)))
+                    ->andWhere($qb2->expr()->eq('path', $qb2->createNamedParameter($relPath)))
+                    ->andWhere($qb2->expr()->eq('name', $qb2->createNamedParameter($file->getName())));
+
+                $result2 = $qb2->executeQuery();
+                $row = $result2->fetch();
+                $result2->closeCursor();
+
+                if ($row && isset($row['fileid'])) {
+                    return (int)$row['fileid'];
+                }
+            }
+
+            // Fallback to file object ID
+            return $file->getId();
+
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to get file ID from database', [
+                'error' => $e->getMessage(),
+                'fileName' => $file->getName()
+            ]);
+            return $file->getId();
+        }
+    }
+
+    /**
+     * Get metadata for a page (file info like in Files app)
+     */
+    public function getPageMetadata(string $pageId): array {
+        $result = $this->findPageById($this->getLanguageFolder(), $pageId);
+
+        if (!$result) {
+            throw new \Exception('Page not found: ' . $pageId);
+        }
+
+        $file = $result['file'];
+        $folder = $result['folder'];
+
+        // Get file stats
+        $mtime = $file->getMTime();
+        $size = $file->getSize();
+        $owner = $file->getOwner()->getUID();
+        $permissions = $file->getPermissions();
+
+        // Get page content for additional metadata
+        $content = $file->getContent();
+        $data = json_decode($content, true);
+
+        // Get the groupfolder storage file ID (needed for MetaVox integration)
+        $actualFileId = $this->getFileIdFromDatabase($file, $folder);
+
+        // Get groupfolder ID and name
+        $groupfolderId = $this->extractGroupfolderId($file->getPath());
+        $mountPoint = $this->getGroupfolderName($groupfolderId);
+
+        // Get parent folder ID for Files app link
+        $parentFolderId = $this->getFolderIdFromDatabase($folder->getPath(), $groupfolderId);
+
+        $metadata = [
+            'size' => $size,
+            'sizeFormatted' => $this->formatBytes($size),
+            'modified' => $mtime,
+            'modifiedFormatted' => date('Y-m-d H:i:s', $mtime),
+            'modifiedRelative' => $this->getRelativeTime($mtime),
+            'owner' => $owner,
+            'path' => $file->getPath(),
+            'mimeType' => $file->getMimeType(),
+            'permissions' => $permissions,
+            'canEdit' => ($permissions & \OCP\Constants::PERMISSION_UPDATE) === \OCP\Constants::PERMISSION_UPDATE,
+            'canDelete' => ($permissions & \OCP\Constants::PERMISSION_DELETE) === \OCP\Constants::PERMISSION_DELETE,
+            'title' => $data['title'] ?? '',
+            'created' => $data['created'] ?? $mtime,
+            'createdFormatted' => date('Y-m-d H:i:s', $data['created'] ?? $mtime),
+            'uniqueId' => $data['uniqueId'] ?? '',
+            'fileId' => $actualFileId,
+            'groupfolderId' => $groupfolderId,
+            'mountPoint' => $mountPoint,
+            'parentFolderId' => $parentFolderId
+        ];
+
+        return $metadata;
+    }
+
+    /**
+     * Update page metadata (title only for now, similar to Files rename)
+     */
+    public function updatePageMetadata(string $pageId, array $metadata): array {
+        $result = $this->findPageById($this->getLanguageFolder(), $pageId);
+
+        if (!$result) {
+            throw new \Exception('Page not found: ' . $pageId);
+        }
+
+        $file = $result['file'];
+
+        // Get current content
+        $content = $file->getContent();
+        $data = json_decode($content, true);
+
+        // Update only allowed fields
+        $changed = false;
+        if (isset($metadata['title']) && $metadata['title'] !== $data['title']) {
+            $data['title'] = $this->sanitizeText($metadata['title']);
+            $data['modified'] = time();
+            $changed = true;
+        }
+
+        // Save if changed
+        if ($changed) {
+            $user = $this->userSession->getUser();
+            if ($user) {
+                $this->createManualVersion($file, $user);
+            }
+            $file->putContent(json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        }
+
+        return $this->getPageMetadata($pageId);
+    }
+
+    /**
+     * Extract groupfolder ID from path
+     */
+    private function extractGroupfolderId(string $path): ?int {
+        if (preg_match('/\/__groupfolders\/(\d+)/', $path, $matches)) {
+            return (int)$matches[1];
+        }
+        return null;
+    }
+
+    /**
+     * Get groupfolder name from groupfolder ID
+     */
+    private function getGroupfolderName(?int $groupfolderId): string {
+        if ($groupfolderId === null) {
+            return 'IntraVox';
+        }
+
+        try {
+            // Query the group_folders table for the mount_point
+            $qb = $this->db->getQueryBuilder();
+            $qb->select('mount_point')
+                ->from('group_folders')
+                ->where($qb->expr()->eq('folder_id', $qb->createNamedParameter($groupfolderId)));
+
+            $result = $qb->executeQuery();
+            $row = $result->fetch();
+            $result->closeCursor();
+
+            if ($row && isset($row['mount_point'])) {
+                return $row['mount_point'];
+            }
+        } catch (\Exception $e) {
+            // Fallback on error
+        }
+
+        return 'IntraVox';
+    }
+
+    /**
+     * Get folder ID from database for Files app link
+     */
+    private function getFolderIdFromDatabase(string $folderPath, ?int $groupfolderId): ?int {
+        if ($groupfolderId === null) {
+            return null;
+        }
+
+        try {
+            // Extract relative path from full path
+            // Path format: /__groupfolders/4/files/en/mission
+            if (preg_match('#/__groupfolders/\d+/(.+)$#', $folderPath, $matches)) {
+                $relPath = $matches[1];
+
+                // Find the storage ID for this groupfolder
+                $qb = $this->db->getQueryBuilder();
+                $qb->select('storage_id')
+                    ->from('group_folders')
+                    ->where($qb->expr()->eq('folder_id', $qb->createNamedParameter($groupfolderId)));
+
+                $result = $qb->executeQuery();
+                $gfRow = $result->fetch();
+                $result->closeCursor();
+
+                if (!$gfRow || !isset($gfRow['storage_id'])) {
+                    return null;
+                }
+
+                $storageId = (int)$gfRow['storage_id'];
+
+                // Query filecache for the folder in the groupfolder storage
+                $qb2 = $this->db->getQueryBuilder();
+                $qb2->select('fileid')
+                    ->from('filecache')
+                    ->where($qb2->expr()->eq('storage', $qb2->createNamedParameter($storageId)))
+                    ->andWhere($qb2->expr()->eq('path', $qb2->createNamedParameter($relPath)));
+
+                $result2 = $qb2->executeQuery();
+                $row = $result2->fetch();
+                $result2->closeCursor();
+
+                if ($row && isset($row['fileid'])) {
+                    return (int)$row['fileid'];
+                }
+            }
+
+            return null;
+
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to get folder ID from database', [
+                'error' => $e->getMessage(),
+                'folderPath' => $folderPath
+            ]);
+            return null;
+        }
+    }
+
+    /**
+     * Format bytes to human readable format
+     */
+    private function formatBytes(int $bytes): string {
+        if ($bytes < 1024) {
+            return $bytes . ' B';
+        } elseif ($bytes < 1048576) {
+            return round($bytes / 1024, 2) . ' KB';
+        } elseif ($bytes < 1073741824) {
+            return round($bytes / 1048576, 2) . ' MB';
+        } else {
+            return round($bytes / 1073741824, 2) . ' GB';
+        }
+    }
 }

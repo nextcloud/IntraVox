@@ -13,16 +13,6 @@
         />
       </div>
       <div class="header-right">
-        <!-- Details Sidebar Toggle Button -->
-        <NcButton v-if="!isEditMode && currentPage"
-                  type="tertiary"
-                  @click="showDetailsSidebar = !showDetailsSidebar"
-                  :aria-label="t('Show page details')">
-          <template #icon>
-            <Information :size="20" />
-          </template>
-        </NcButton>
-
         <!-- Page Actions Menu (3-dot menu) -->
         <PageActionsMenu v-if="!isEditMode"
                          :is-edit-mode="isEditMode"
@@ -30,6 +20,7 @@
                          @edit-navigation="showNavigationEditor = true"
                          @show-pages="showPageList"
                          @create-page="createNewPage"
+                         @show-details="showDetailsSidebar = true"
                          @start-edit="startEditMode" />
 
         <!-- Edit Mode Actions (Save/Cancel) -->
@@ -61,23 +52,36 @@
                   @navigate="navigateToItem" />
     </div>
 
-    <div v-if="loading" class="loading">
-      {{ t('Loading...') }}
-    </div>
+    <!-- Main content area with sidebar -->
+    <div class="app-content-wrapper">
+      <div v-if="loading" class="loading">
+        {{ t('Loading...') }}
+      </div>
 
-    <div v-else-if="error" class="error">
-      {{ error }}
-    </div>
+      <div v-else-if="error" class="error">
+        {{ error }}
+      </div>
 
-    <div v-else class="intravox-content">
-      <PageViewer
-        v-if="!isEditMode && currentPage"
-        :page="currentPage"
-      />
-      <PageEditor
-        v-else-if="isEditMode && currentPage"
-        :page="currentPage"
-        @update="updatePage"
+      <div v-else class="intravox-content">
+        <PageViewer
+          v-if="!isEditMode && currentPage"
+          :page="currentPage"
+        />
+        <PageEditor
+          v-else-if="isEditMode && currentPage"
+          :page="currentPage"
+          @update="updatePage"
+        />
+      </div>
+
+      <!-- Page Details Sidebar (inside content wrapper) -->
+      <PageDetailsSidebar
+        v-if="currentPage && !loading && !error"
+        :is-open="showDetailsSidebar"
+        :page-id="currentPage.id"
+        :page-name="currentPage.title || t('Untitled Page')"
+        @close="showDetailsSidebar = false"
+        @version-restored="handleVersionRestored"
       />
     </div>
 
@@ -112,14 +116,6 @@
       @save="handleFooterSave"
     />
 
-    <!-- Page Details Sidebar -->
-    <PageDetailsSidebar
-      v-if="currentPage"
-      :is-open="showDetailsSidebar"
-      :page-id="currentPage.id"
-      @close="showDetailsSidebar = false"
-      @version-restored="handleVersionRestored"
-    />
   </div>
 </template>
 
@@ -131,7 +127,6 @@ import { showSuccess, showError } from '@nextcloud/dialogs';
 import { NcButton } from '@nextcloud/vue';
 import ContentSave from 'vue-material-design-icons/ContentSave.vue';
 import Close from 'vue-material-design-icons/Close.vue';
-import Information from 'vue-material-design-icons/Information.vue';
 import PageViewer from './components/PageViewer.vue';
 import PageEditor from './components/PageEditor.vue';
 import PageListModal from './components/PageListModal.vue';
@@ -141,6 +136,7 @@ import NavigationEditor from './components/NavigationEditor.vue';
 import Footer from './components/Footer.vue';
 import PageActionsMenu from './components/PageActionsMenu.vue';
 import PageDetailsSidebar from './components/PageDetailsSidebar.vue';
+import './metavox-integration.js'; // Load MetaVox integration
 
 export default {
   name: 'App',
@@ -148,7 +144,6 @@ export default {
     NcButton,
     ContentSave,
     Close,
-    Information,
     PageViewer,
     PageEditor,
     PageListModal,
@@ -609,8 +604,11 @@ export default {
 <style scoped>
 #intravox-app {
   width: 100%;
+  max-width: 100vw;
   min-height: 100vh;
   background: var(--color-main-background);
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 /* Navigation Bar */
@@ -620,6 +618,19 @@ export default {
   min-height: 50px;
   display: flex;
   align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+  position: relative;
+  overflow: visible;
+}
+
+/* App Content Wrapper - contains main content and sidebar */
+.app-content-wrapper {
+  display: flex;
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
 }
 
 /* Header */
@@ -631,6 +642,8 @@ export default {
   background: var(--color-main-background);
   border-bottom: 1px solid var(--color-border);
   gap: 20px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .header-left {
@@ -687,6 +700,9 @@ export default {
   margin: 0 auto;
   width: 100%;
   min-height: calc(100vh - 200px); /* Ensure content takes up space */
+  box-sizing: border-box;
+  flex: 1;
+  overflow-y: auto;
 }
 
 .loading, .error {
@@ -694,9 +710,51 @@ export default {
   text-align: center;
   font-size: 16px;
   color: var(--color-text-maxcontrast);
+  flex: 1;
 }
 
 .error {
   color: var(--color-error);
+}
+
+/* Mobile styles */
+@media (max-width: 768px) {
+  #intravox-app {
+    overflow-x: hidden;
+  }
+
+  .intravox-header {
+    padding: 12px 8px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .intravox-header h1 {
+    font-size: 18px;
+  }
+
+  .intravox-nav-bar {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .intravox-content {
+    padding: 8px;
+    padding-bottom: 40px;
+    max-width: 100%;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .page-title-input {
+    min-width: 0;
+    width: 100%;
+    max-width: 250px;
+    font-size: 18px;
+  }
+
+  .header-right {
+    gap: 4px;
+  }
 }
 </style>

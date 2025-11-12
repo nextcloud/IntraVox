@@ -1,114 +1,147 @@
 <template>
-  <nav class="intravox-navigation" :class="`navigation-${type}`">
-    <!-- Dropdown Navigation (Default) -->
-    <div v-if="type === 'dropdown'" class="navigation-dropdown">
-      <template v-for="item in items" :key="item.id">
-        <!-- Top level item with children -->
-        <div v-if="item.children && item.children.length > 0"
-             class="dropdown-item"
-             @mouseenter="showDropdown(item)"
-             @mouseleave="hideDropdown">
-          <a :href="getItemUrl(item)"
-             :target="item.target || '_self'"
-             @click.prevent="navigateTo(item)"
-             class="dropdown-link">
-            {{ item.title }}
-            <ChevronDown :size="16" class="chevron-icon" />
-          </a>
+  <nav class="intravox-navigation">
+    <!-- Mobile hamburger menu -->
+    <div class="mobile-nav">
+      <NcActions :menu-name="t('Menu')">
+        <template v-for="item in items" :key="item.id">
+          <!-- Top level items with children -->
+          <template v-if="item.children && item.children.length > 0">
+            <NcActionButton @click="toggleMobileItem(item.id)">
+              <template #icon>
+                <ChevronRight v-if="!isMobileItemExpanded(item.id)" :size="20" />
+                <ChevronDown v-else :size="20" />
+              </template>
+              {{ item.title }}
+            </NcActionButton>
 
-          <!-- Dropdown menu -->
-          <div v-if="activeDropdown === item.id"
-               class="dropdown-menu"
-               @mouseenter="keepDropdownOpen"
-               @mouseleave="hideDropdown">
             <!-- Level 2 items -->
-            <template v-for="child in item.children" :key="child.id">
-              <!-- Level 2 with children (Level 3) -->
-              <div v-if="child.children && child.children.length > 0"
-                   class="dropdown-menu-item has-submenu"
-                   @mouseenter="showSubmenu(child)"
-                   @mouseleave="hideSubmenu">
-                <a :href="getItemUrl(child)"
-                   :target="child.target || '_self'"
-                   @click.prevent="navigateTo(child)"
-                   class="dropdown-menu-link">
+            <template v-if="isMobileItemExpanded(item.id)">
+              <template v-for="child in item.children" :key="child.id">
+                <NcActionButton @click="child.children && child.children.length > 0 ? toggleMobileItem(child.id) : handleItemClick(child)"
+                               class="mobile-nav-level-2">
+                  <template #icon>
+                    <ChevronRight v-if="child.children && child.children.length > 0 && !isMobileItemExpanded(child.id)" :size="20" />
+                    <ChevronDown v-else-if="child.children && child.children.length > 0" :size="20" />
+                  </template>
                   {{ child.title }}
-                  <ChevronRight :size="16" class="chevron-right-icon" />
-                </a>
+                </NcActionButton>
 
-                <!-- Level 3 submenu -->
-                <div v-if="activeSubmenu === child.id"
-                     class="dropdown-submenu"
-                     @mouseenter="keepSubmenuOpen"
-                     @mouseleave="hideSubmenu">
-                  <a v-for="grandchild in child.children"
-                     :key="grandchild.id"
-                     :href="getItemUrl(grandchild)"
-                     :target="grandchild.target || '_self'"
-                     @click.prevent="navigateTo(grandchild)"
-                     class="dropdown-submenu-link">
+                <!-- Level 3 items -->
+                <template v-if="child.children && child.children.length > 0 && isMobileItemExpanded(child.id)">
+                  <NcActionButton v-for="grandchild in child.children"
+                                 :key="grandchild.id"
+                                 @click="handleItemClick(grandchild)"
+                                 class="mobile-nav-level-3">
                     {{ grandchild.title }}
-                  </a>
-                </div>
-              </div>
-
-              <!-- Level 2 without children -->
-              <a v-else
-                 :href="getItemUrl(child)"
-                 :target="child.target || '_self'"
-                 @click.prevent="navigateTo(child)"
-                 class="dropdown-menu-link">
-                {{ child.title }}
-              </a>
+                  </NcActionButton>
+                </template>
+              </template>
             </template>
-          </div>
-        </div>
+          </template>
 
-        <!-- Top level without children -->
+          <!-- Top level items without children -->
+          <NcActionButton v-else @click="handleItemClick(item)">
+            {{ item.title }}
+          </NcActionButton>
+        </template>
+      </NcActions>
+    </div>
+
+    <!-- Desktop Navigation - Cascading Dropdown -->
+    <div v-if="type === 'dropdown'" class="desktop-nav desktop-dropdown-nav">
+      <template v-for="item in items" :key="item.id">
+        <!-- Top level with children - use NcActions for dropdown -->
+        <NcActions v-if="item.children && item.children.length > 0"
+                   :menu-name="item.title"
+                   class="nav-dropdown-item">
+          <template #icon>
+            <ChevronDown :size="16" />
+          </template>
+
+          <!-- Level 2 items -->
+          <template v-for="child in item.children" :key="child.id">
+            <!-- Level 2 with children (Level 3) -->
+            <NcActions v-if="child.children && child.children.length > 0"
+                       :menu-name="child.title"
+                       type="tertiary"
+                       class="nav-submenu-item">
+              <template #icon>
+                <ChevronRight :size="16" />
+              </template>
+
+              <!-- Level 3 items -->
+              <NcActionButton v-for="grandchild in child.children"
+                             :key="grandchild.id"
+                             @click="handleItemClick(grandchild)"
+                             :close-after-click="true">
+                {{ grandchild.title }}
+              </NcActionButton>
+            </NcActions>
+
+            <!-- Level 2 without children -->
+            <NcActionButton v-else
+                           @click="handleItemClick(child)"
+                           :close-after-click="true">
+              {{ child.title }}
+            </NcActionButton>
+          </template>
+        </NcActions>
+
+        <!-- Top level without children - regular link -->
         <a v-else
            :href="getItemUrl(item)"
            :target="item.target || '_self'"
-           @click.prevent="navigateTo(item)"
-           class="nav-item-link">
+           @click.prevent="handleItemClick(item)"
+           class="nav-link">
           {{ item.title }}
         </a>
       </template>
     </div>
 
-    <!-- Mega Menu Navigation -->
-    <div v-else-if="type === 'megamenu'" class="navigation-megamenu">
+    <!-- Desktop Navigation - Mega Menu -->
+    <div v-else-if="type === 'megamenu'" class="desktop-nav desktop-megamenu-nav">
       <template v-for="item in items" :key="item.id">
-        <div class="megamenu-item" @mouseenter="showMegaMenu(item)" @mouseleave="hideMegaMenu">
+        <!-- Top level with children -->
+        <div v-if="item.children && item.children.length > 0"
+             class="megamenu-item"
+             @mouseenter="showMegaMenu(item)"
+             @mouseleave="hideMegaMenu">
           <a :href="getItemUrl(item)"
              :target="item.target || '_self'"
-             @click.prevent="navigateTo(item)"
-             class="megamenu-link">
+             @click.prevent="handleItemClick(item)"
+             class="megamenu-trigger">
             {{ item.title }}
-            <ChevronDown v-if="item.children && item.children.length > 0" :size="16" class="chevron-icon" />
+            <ChevronDown :size="16" class="chevron-icon" />
           </a>
 
-          <!-- Mega menu panel -->
-          <div v-if="item.children && item.children.length > 0 && activeMegaMenu === item.id"
-               class="megamenu-panel"
+          <!-- Mega menu dropdown -->
+          <div v-if="activeMegaMenu === item.id"
+               class="megamenu-dropdown"
                @mouseenter="keepMegaMenuOpen"
                @mouseleave="hideMegaMenu">
-            <div class="megamenu-content">
+            <div class="megamenu-grid">
+              <!-- Level 2 columns -->
               <div v-for="child in item.children"
                    :key="child.id"
                    class="megamenu-column">
-                <a :href="getItemUrl(child)"
+                <!-- Column header (Level 2) -->
+                <a v-if="child.pageId || child.url"
+                   :href="getItemUrl(child)"
                    :target="child.target || '_self'"
-                   @click.prevent="navigateTo(child)"
-                   class="megamenu-column-title">
+                   @click.prevent="handleItemClick(child)"
+                   class="megamenu-column-header">
                   {{ child.title }}
                 </a>
+                <div v-else class="megamenu-column-header">
+                  {{ child.title }}
+                </div>
 
                 <!-- Level 3 items -->
                 <ul v-if="child.children && child.children.length > 0" class="megamenu-list">
                   <li v-for="grandchild in child.children" :key="grandchild.id">
                     <a :href="getItemUrl(grandchild)"
                        :target="grandchild.target || '_self'"
-                       @click.prevent="navigateTo(grandchild)"
+                       @click.prevent="handleItemClick(grandchild)"
                        class="megamenu-list-item">
                       {{ grandchild.title }}
                     </a>
@@ -118,20 +151,31 @@
             </div>
           </div>
         </div>
+
+        <!-- Top level without children -->
+        <a v-else
+           :href="getItemUrl(item)"
+           :target="item.target || '_self'"
+           @click.prevent="handleItemClick(item)"
+           class="nav-link">
+          {{ item.title }}
+        </a>
       </template>
     </div>
-
   </nav>
 </template>
 
 <script>
 import { translate as t } from '@nextcloud/l10n';
+import { NcActions, NcActionButton } from '@nextcloud/vue';
 import ChevronDown from 'vue-material-design-icons/ChevronDown.vue';
 import ChevronRight from 'vue-material-design-icons/ChevronRight.vue';
 
 export default {
   name: 'Navigation',
   components: {
+    NcActions,
+    NcActionButton,
     ChevronDown,
     ChevronRight
   },
@@ -149,31 +193,43 @@ export default {
   emits: ['navigate'],
   data() {
     return {
+      // Mobile menu state
+      mobileExpandedItems: [],
+      // Mega menu state
       activeMegaMenu: null,
-      megaMenuTimeout: null,
-      activeDropdown: null,
-      dropdownTimeout: null,
-      activeSubmenu: null,
-      submenuTimeout: null
+      megaMenuTimeout: null
     };
   },
   methods: {
     t(key, vars = {}) {
       return t('intravox', key, vars);
     },
-    navigateTo(item) {
-      this.$emit('navigate', item);
-      this.hideMegaMenu();
-    },
     getItemUrl(item) {
       if (item.url) {
         return item.url;
       }
       if (item.pageId) {
-        return `#page-${item.pageId}`;
+        return `#${item.pageId}`;
       }
       return '#';
     },
+    handleItemClick(item) {
+      this.$emit('navigate', item);
+      this.hideMegaMenu();
+    },
+    // Mobile menu methods
+    toggleMobileItem(itemId) {
+      const index = this.mobileExpandedItems.indexOf(itemId);
+      if (index > -1) {
+        this.mobileExpandedItems.splice(index, 1);
+      } else {
+        this.mobileExpandedItems.push(itemId);
+      }
+    },
+    isMobileItemExpanded(itemId) {
+      return this.mobileExpandedItems.includes(itemId);
+    },
+    // Mega menu methods
     showMegaMenu(item) {
       if (this.megaMenuTimeout) {
         clearTimeout(this.megaMenuTimeout);
@@ -189,40 +245,6 @@ export default {
       this.megaMenuTimeout = setTimeout(() => {
         this.activeMegaMenu = null;
       }, 200);
-    },
-    showDropdown(item) {
-      if (this.dropdownTimeout) {
-        clearTimeout(this.dropdownTimeout);
-      }
-      this.activeDropdown = item.id;
-      this.activeSubmenu = null;
-    },
-    keepDropdownOpen() {
-      if (this.dropdownTimeout) {
-        clearTimeout(this.dropdownTimeout);
-      }
-    },
-    hideDropdown() {
-      this.dropdownTimeout = setTimeout(() => {
-        this.activeDropdown = null;
-        this.activeSubmenu = null;
-      }, 200);
-    },
-    showSubmenu(child) {
-      if (this.submenuTimeout) {
-        clearTimeout(this.submenuTimeout);
-      }
-      this.activeSubmenu = child.id;
-    },
-    keepSubmenuOpen() {
-      if (this.submenuTimeout) {
-        clearTimeout(this.submenuTimeout);
-      }
-    },
-    hideSubmenu() {
-      this.submenuTimeout = setTimeout(() => {
-        this.activeSubmenu = null;
-      }, 200);
     }
   }
 };
@@ -232,162 +254,124 @@ export default {
 .intravox-navigation {
   display: flex;
   align-items: center;
-  gap: 8px;
+  width: 100%;
   padding: 0 16px;
-  min-height: 50px;
 }
 
-/* Dropdown Navigation */
-.navigation-dropdown {
+/* Mobile Navigation */
+.mobile-nav {
+  display: none;
+}
+
+.mobile-nav-level-2 :deep(.action-button__longtext) {
+  padding-left: 32px !important;
+  font-size: 14px !important;
+  color: var(--color-text-maxcontrast) !important;
+  font-weight: 400 !important;
+}
+
+.mobile-nav-level-3 :deep(.action-button__longtext) {
+  padding-left: 56px !important;
+  font-size: 13px !important;
+  color: var(--color-text-maxcontrast) !important;
+  font-weight: 300 !important;
+}
+
+/* Hover effects for mobile items */
+.mobile-nav :deep(.action-button):hover {
+  background-color: var(--color-background-hover) !important;
+}
+
+/* Desktop Navigation */
+.desktop-nav {
   display: flex;
   align-items: center;
   gap: 4px;
   flex: 1;
 }
 
-.nav-item-link {
-  padding: 8px 12px;
-  color: var(--color-main-text);
-  text-decoration: none;
-  border-radius: var(--border-radius);
-  font-weight: 500;
-  white-space: nowrap;
-  transition: background-color 0.1s ease;
+/* Dropdown Navigation with NcActions */
+.desktop-dropdown-nav {
+  gap: 8px;
 }
 
-.nav-item-link:hover {
+.nav-dropdown-item {
+  /* Nextcloud standard styling */
+}
+
+.nav-dropdown-item :deep(.action-item__menutoggle) {
+  font-weight: 600;
+  padding: 10px 16px;
+  border-radius: var(--border-radius-large);
+  transition: background-color 0.1s ease, opacity 0.1s ease;
+}
+
+.nav-dropdown-item :deep(.action-item__menutoggle):hover {
   background-color: var(--color-background-hover);
 }
 
-/* Dropdown item */
-.dropdown-item {
-  position: relative;
-  display: inline-block;
+.nav-dropdown-item :deep(.action-item__menutoggle):active {
+  background-color: var(--color-primary-element-light);
 }
 
-.dropdown-link {
+.nav-submenu-item {
+  /* Nested NcActions for level 3 */
+}
+
+.nav-link {
+  padding: 10px 16px;
+  color: var(--color-main-text);
+  text-decoration: none;
+  border-radius: var(--border-radius-large);
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background-color 0.1s ease, opacity 0.1s ease;
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 8px 12px;
-  color: var(--color-main-text);
-  text-decoration: none;
-  font-weight: 500;
-  white-space: nowrap;
-  border-radius: var(--border-radius);
-  transition: background-color 0.1s ease;
-}
-
-.dropdown-link:hover {
-  background-color: var(--color-background-hover);
-}
-
-.dropdown-link .chevron-icon {
-  transition: transform 0.2s ease;
-}
-
-.dropdown-item:hover .chevron-icon {
-  transform: rotate(180deg);
-}
-
-/* Dropdown menu */
-.dropdown-menu {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  min-width: 220px;
-  margin-top: 4px;
-  background: var(--color-main-background);
-  border: 1px solid var(--color-border);
-  border-radius: var(--border-radius-large);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  z-index: 1000;
-  padding: 8px 0;
-}
-
-.dropdown-menu-item {
   position: relative;
 }
 
-.dropdown-menu-link {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 10px 16px;
-  color: var(--color-main-text);
-  text-decoration: none;
-  font-size: 14px;
-  transition: background-color 0.1s ease;
-}
-
-.dropdown-menu-link:hover {
+.nav-link:hover {
   background-color: var(--color-background-hover);
 }
 
-.chevron-right-icon {
-  color: var(--color-text-maxcontrast);
-}
-
-/* Level 3 submenu */
-.dropdown-submenu {
-  position: absolute;
-  top: 0;
-  left: 100%;
-  min-width: 220px;
-  margin-left: 4px;
-  background: var(--color-main-background);
-  border: 1px solid var(--color-border);
-  border-radius: var(--border-radius-large);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  z-index: 1001;
-  padding: 8px 0;
-}
-
-.dropdown-submenu-link {
-  display: block;
-  padding: 10px 16px;
-  color: var(--color-main-text);
-  text-decoration: none;
-  font-size: 14px;
-  transition: background-color 0.1s ease;
-}
-
-.dropdown-submenu-link:hover {
-  background-color: var(--color-background-hover);
+.nav-link:active {
+  background-color: var(--color-primary-element-light);
 }
 
 /* Mega Menu Navigation */
-.navigation-megamenu {
-  display: flex;
-  align-items: center;
+.desktop-megamenu-nav {
   gap: 0;
-  flex: 1;
-  position: relative;
 }
 
 .megamenu-item {
   position: relative;
 }
 
-.megamenu-link {
+.megamenu-trigger {
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 8px 16px;
+  padding: 10px 16px;
   color: var(--color-main-text);
   text-decoration: none;
-  font-weight: 500;
+  font-weight: 600;
   white-space: nowrap;
-  border-radius: var(--border-radius);
-  transition: background-color 0.1s ease;
+  border-radius: var(--border-radius-large);
+  transition: background-color 0.1s ease, opacity 0.1s ease;
+  position: relative;
 }
 
-.megamenu-link:hover {
+.megamenu-trigger:hover {
   background-color: var(--color-background-hover);
 }
 
-.chevron-icon {
+.megamenu-trigger:active {
+  background-color: var(--color-primary-element-light);
+}
+
+.megamenu-trigger .chevron-icon {
   transition: transform 0.2s ease;
 }
 
@@ -395,46 +379,51 @@ export default {
   transform: rotate(180deg);
 }
 
-.megamenu-panel {
+.megamenu-dropdown {
   position: absolute;
   top: 100%;
   left: 0;
   min-width: 600px;
-  max-width: 800px;
+  max-width: 900px;
   margin-top: 4px;
   background: var(--color-main-background);
   border: 1px solid var(--color-border);
   border-radius: var(--border-radius-large);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px var(--color-box-shadow);
   z-index: 1000;
   padding: 16px;
 }
 
-.megamenu-content {
+.megamenu-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 24px;
 }
 
 .megamenu-column {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
 }
 
-.megamenu-column-title {
+.megamenu-column-header {
   font-weight: 600;
   font-size: 14px;
   color: var(--color-main-text);
+  padding: 8px 8px;
   text-decoration: none;
-  padding: 4px 0;
-  border-bottom: 2px solid var(--color-primary);
-  margin-bottom: 8px;
-  transition: color 0.1s ease;
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: 4px;
+  transition: background-color 0.1s ease;
+  border-radius: var(--border-radius);
 }
 
-.megamenu-column-title:hover {
-  color: var(--color-primary);
+a.megamenu-column-header:hover {
+  background-color: var(--color-background-hover);
+}
+
+a.megamenu-column-header:active {
+  background-color: var(--color-primary-element-light);
 }
 
 .megamenu-list {
@@ -443,21 +432,35 @@ export default {
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 
 .megamenu-list-item {
   display: block;
-  padding: 6px 8px;
-  color: var(--color-text-maxcontrast);
+  padding: 8px 12px;
+  color: var(--color-main-text);
   text-decoration: none;
-  border-radius: var(--border-radius);
   font-size: 13px;
-  transition: all 0.1s ease;
+  border-radius: var(--border-radius);
+  transition: background-color 0.1s ease;
 }
 
 .megamenu-list-item:hover {
   background-color: var(--color-background-hover);
-  color: var(--color-main-text);
+}
+
+.megamenu-list-item:active {
+  background-color: var(--color-primary-element-light);
+}
+
+/* Responsive - Show mobile menu on smaller screens */
+@media (max-width: 768px) {
+  .mobile-nav {
+    display: block;
+  }
+
+  .desktop-nav {
+    display: none !important;
+  }
 }
 </style>
