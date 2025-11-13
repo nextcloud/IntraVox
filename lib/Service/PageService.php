@@ -9,6 +9,7 @@ use OCP\IUserSession;
 use OCP\IConfig;
 use OCP\IDBConnection;
 use Psr\Log\LoggerInterface;
+use OCP\Files\Cache\ICacheEntry;
 
 class PageService {
     private const ALLOWED_WIDGET_TYPES = ['text', 'heading', 'image', 'link', 'file', 'divider'];
@@ -316,6 +317,9 @@ class PageService {
             } catch (NotFoundException $e) {
                 $folder->newFolder('images');
             }
+
+            // Scan the language folder to make home.json visible in Files app
+            $this->scanPageFolder($folder);
         } else {
             // Create folder for page
             try {
@@ -339,16 +343,102 @@ class PageService {
                 // Images folder might already exist, that's okay
             }
 
-            // Force Nextcloud to update the file cache so the folder is visible in Files app
-            try {
-                $scanner = $pageFolder->getStorage()->getScanner();
-                $scanner->scan($pageFolder->getInternalPath());
-            } catch (\Exception $e) {
-                // If scanning fails, that's okay - the folder still exists
-            }
+            // Scan the new page folder to make it immediately visible in Files app
+            // This is a targeted scan of only the new folder, which is very efficient
+            $this->scanPageFolder($pageFolder);
         }
 
         return $validatedData;
+    }
+
+    /**
+     * Scan a page folder to make it immediately visible in Files app
+     * This uses Nextcloud's Scanner to add the folder to the file cache
+     *
+     * @param \OCP\Files\Folder $folder The folder to scan (can be page folder or language folder)
+     */
+    private function scanPageFolder($folder): void {
+        try {
+            $folderPath = $folder->getPath();
+
+            // For groupfolders, run occ files:scan directly
+            if (preg_match('#/__groupfolders/(\d+)/files/([^/]+)/([^/]+)$#', $folderPath, $matches)) {
+                $lang = $matches[2];
+                $pageId = $matches[3];
+
+                $user = $this->userSession->getUser();
+                if (!$user) {
+                    return;
+                }
+
+                $username = $user->getUID();
+                $scanPath = "/{$username}/files/IntraVox/{$lang}/{$pageId}";
+
+                // Execute occ files:scan (already running as www-data via web server)
+                $command = sprintf(
+                    'php /var/www/nextcloud/occ files:scan --path=%s 2>&1',
+                    escapeshellarg($scanPath)
+                );
+
+                exec($command, $output, $returnCode);
+
+                if ($returnCode !== 0) {
+                    $this->logger->warning('Failed to scan page folder', [
+                        'path' => $scanPath,
+                        'exit_code' => $returnCode
+                    ]);
+                }
+
+                return;
+            }
+
+            // Fallback for non-groupfolder paths (shouldn't happen in IntraVox)
+            $storage = $folder->getStorage();
+            $scanner = $storage->getScanner();
+            $cache = $storage->getCache();
+
+            $internalPath = $folder->getInternalPath();
+            if (preg_match('#__groupfolders/\d+/(.+)$#', $internalPath, $matches)) {
+                $scanPath = $matches[1];
+            } else {
+                $scanPath = $internalPath;
+            }
+
+            $scanner->scan($scanPath, true);
+            $cache->correctFolderSize($scanPath, ['recursive' => true]);
+
+        } catch (\Exception $e) {
+            // Log but don't throw - if scanning fails, the page is still created
+            $this->logger->error('Failed to scan page folder', [
+                'path' => $folder->getPath(),
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Propagate cache size changes up the folder tree
+     * This is critical for groupfolders to make new content visible
+     */
+    private function propagateCacheSizes($cache, $internalPath): void {
+        try {
+            // Start from the given path and work up to the root
+            $currentPath = $internalPath;
+
+            while ($currentPath !== '' && $currentPath !== '.') {
+                // Update the size for this folder
+                $cache->correctFolderSize($currentPath);
+
+                // Move to parent folder
+                $parentPath = dirname($currentPath);
+                if ($parentPath === $currentPath || $parentPath === '.') {
+                    break;
+                }
+                $currentPath = $parentPath;
+            }
+        } catch (\Exception $e) {
+            // Silently fail - cache propagation is not critical
+        }
     }
 
     /**
@@ -1354,6 +1444,94 @@ class PageService {
             return round($bytes / 1048576, 2) . ' MB';
         } else {
             return round($bytes / 1073741824, 2) . ' GB';
+        }
+    }
+
+    /**
+     * Check if a page is visible in the Nextcloud file cache
+     * This is useful to determine if a groupfolder page has been indexed
+     *
+     * @param string $pageId The page ID to check
+     * @return array Status information about the page's visibility
+     */
+    public function checkPageCacheStatus(string $pageId): array {
+        try {
+            $folder = $this->getLanguageFolder();
+            $lang = $this->getUserLanguage();
+
+            // For home page, check the JSON file directly
+            if ($pageId === 'home') {
+                try {
+                    $file = $folder->get('home.json');
+                    $storage = $file->getStorage();
+                    $cache = $storage->getCache();
+
+                    // Try to get cache entry using the storage's cache directly
+                    $cacheEntry = $cache->get($file->getInternalPath());
+
+                    return [
+                        'visible' => $cacheEntry !== false,
+                        'inCache' => $cacheEntry !== false,
+                        'fileId' => $cacheEntry !== false ? $cacheEntry->getId() : null,
+                        'path' => $file->getPath(),
+                        'message' => $cacheEntry !== false ? 'Page is visible in Files app' : 'Page created but waiting for indexing'
+                    ];
+                } catch (NotFoundException $e) {
+                    return [
+                        'visible' => false,
+                        'inCache' => false,
+                        'fileId' => null,
+                        'message' => 'Home page file not found'
+                    ];
+                }
+            }
+
+            // For regular pages, check if the page folder exists in cache
+            try {
+                $pageFolder = $folder->get($pageId);
+                $storage = $pageFolder->getStorage();
+                $cache = $storage->getCache();
+
+                // Try to get cache entry using the storage's cache directly
+                $cacheEntry = $cache->get($pageFolder->getInternalPath());
+
+                if ($cacheEntry !== false && $cacheEntry instanceof ICacheEntry) {
+                    return [
+                        'visible' => true,
+                        'inCache' => true,
+                        'folderId' => $cacheEntry->getId(),
+                        'path' => $pageFolder->getPath(),
+                        'message' => 'Page is visible in Files app'
+                    ];
+                } else {
+                    // Folder exists on disk but not in cache
+                    return [
+                        'visible' => false,
+                        'inCache' => false,
+                        'folderId' => null,
+                        'message' => 'Page created but waiting for Nextcloud to index it. This may take 5-15 minutes.'
+                    ];
+                }
+            } catch (NotFoundException $e) {
+                return [
+                    'visible' => false,
+                    'inCache' => false,
+                    'folderId' => null,
+                    'message' => 'Page folder not found'
+                ];
+            }
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to check page cache status', [
+                'error' => $e->getMessage(),
+                'pageId' => $pageId
+            ]);
+
+            return [
+                'visible' => false,
+                'inCache' => false,
+                'error' => $e->getMessage(),
+                'message' => 'Unable to check cache status'
+            ];
         }
     }
 }

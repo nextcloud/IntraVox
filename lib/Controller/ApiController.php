@@ -160,20 +160,10 @@ class ApiController extends Controller {
      * @NoCSRFRequired
      */
     public function getPageVersions(string $pageId): DataResponse {
-        $this->logger->info('[ApiController::getPageVersions] Called', ['pageId' => $pageId]);
-
         try {
             $versions = $this->pageService->getPageVersions($pageId);
-            $this->logger->info('[ApiController::getPageVersions] Success', [
-                'pageId' => $pageId,
-                'count' => count($versions)
-            ]);
             return new DataResponse($versions);
         } catch (\Exception $e) {
-            $this->logger->error('[ApiController::getPageVersions] Error', [
-                'pageId' => $pageId,
-                'error' => $e->getMessage()
-            ]);
             return new DataResponse(
                 ['error' => $e->getMessage()],
                 Http::STATUS_INTERNAL_SERVER_ERROR
@@ -245,6 +235,22 @@ class ApiController extends Controller {
             return new DataResponse(
                 ['installed' => false, 'enabled' => false],
                 Http::STATUS_OK
+            );
+        }
+    }
+
+    /**
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     */
+    public function checkPageCacheStatus(string $pageId): DataResponse {
+        try {
+            $status = $this->pageService->checkPageCacheStatus($pageId);
+            return new DataResponse($status);
+        } catch (\Exception $e) {
+            return new DataResponse(
+                ['error' => $e->getMessage()],
+                Http::STATUS_INTERNAL_SERVER_ERROR
             );
         }
     }

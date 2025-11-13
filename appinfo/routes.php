@@ -15,6 +15,7 @@ return [
         ['name' => 'api#restorePageVersion', 'url' => '/api/pages/{pageId}/versions/{timestamp}', 'verb' => 'POST'],
         ['name' => 'api#getPageMetadata', 'url' => '/api/pages/{pageId}/metadata', 'verb' => 'GET'],
         ['name' => 'api#updatePageMetadata', 'url' => '/api/pages/{pageId}/metadata', 'verb' => 'PUT'],
+        ['name' => 'api#checkPageCacheStatus', 'url' => '/api/page/{pageId}/cache-status', 'verb' => 'GET'],
         ['name' => 'api#getMetaVoxStatus', 'url' => '/api/metavox/status', 'verb' => 'GET'],
         ['name' => 'navigation#get', 'url' => '/api/navigation', 'verb' => 'GET'],
         ['name' => 'navigation#save', 'url' => '/api/navigation', 'verb' => 'POST'],

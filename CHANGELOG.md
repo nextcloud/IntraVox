@@ -7,6 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2025-11-13 - UI Refinements & Dropdown Navigation
+
+### Changed
+- **Dropdown Navigation Redesign**: Replaced NcActions components with custom HTML dropdown
+  - Simplified, clean design matching megamenu styling
+  - Uses Nextcloud design tokens for consistency
+  - Smooth hover transitions (0.1s ease)
+  - Collapsible sections at every level for compact display
+  - ChevronDown/ChevronRight icons for expand/collapse state
+  - Sections collapsed by default, expandable with toggle button
+
+- **Page Row Styling**: Updated border-radius for visual consistency
+  - Changed from `--border-radius` to `--border-radius-large`
+  - Provides more rounded corners for page content rows
+  - Better visual hierarchy and modern appearance
+
+### Removed
+- **Debug Logging Cleanup**: Removed excessive debug logging
+  - Cleaned up PageService.php (scanPageFolder, createPage methods)
+  - Cleaned up ApiController.php (getPageVersions method)
+  - Removed error_log statements for cleaner production logs
+
+- **Page Cache Notification**: Removed post-creation cache status popup
+  - Removed PageCacheNotification component entirely
+  - Cleaner page creation flow without interruptions
+  - Cache status checking still works in background
+
+### Technical
+- Custom dropdown implementation with state management
+  - toggleDropdownSection() for section expand/collapse
+  - isDropdownSectionExpanded() for state checking
+  - activeDropdown and dropdownExpandedSections data properties
+  - Proper mouseenter/mouseleave event handling with timeout
+
 ## [0.2.9] - 2025-11-12 - Navigation System Rewrite
 
 ### Added

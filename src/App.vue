@@ -647,23 +647,16 @@ export default {
 }
 
 .header-left {
-  flex: 0 1 auto;
+  flex: 1 1 auto;
   min-width: 0;
+  overflow: hidden;
 }
 
 .header-right {
   flex: 0 0 auto;
-  margin-left: auto;
   display: flex;
   gap: 10px;
   align-items: center;
-}
-
-/* When screen is narrow, move actions next to title */
-@media (max-width: 1200px) {
-  .header-right {
-    margin-left: 0;
-  }
 }
 
 .header-left h1 {
