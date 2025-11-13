@@ -29,5 +29,8 @@ demo-data/
 demo-data.tar.gz
 upload-navigation.html
 
+# Release tarballs
+intravox-*.tar.gz
+
 # Deployment scripts (sensitive)
 cleanup-old-backups.sh
