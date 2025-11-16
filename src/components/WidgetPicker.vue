@@ -26,6 +26,7 @@ import Text from 'vue-material-design-icons/Text.vue';
 import FormatTitle from 'vue-material-design-icons/FormatTitle.vue';
 import Image from 'vue-material-design-icons/Image.vue';
 import Minus from 'vue-material-design-icons/Minus.vue';
+import ViewGrid from 'vue-material-design-icons/ViewGrid.vue';
 
 export default {
   name: 'WidgetPicker',
@@ -34,7 +35,8 @@ export default {
     Text,
     FormatTitle,
     Image,
-    Minus
+    Minus,
+    ViewGrid
   },
   emits: ['close', 'select'],
   computed: {
@@ -66,6 +68,12 @@ export default {
           name: this.$t('Divider'),
           icon: 'minus',
           description: this.$t('Add a horizontal line')
+        },
+        {
+          type: 'links',
+          name: this.$t('Links'),
+          icon: 'view-grid',
+          description: this.$t('Add a grid of links with icons')
         }
       ];
     }
@@ -76,7 +84,8 @@ export default {
         'text': 'Text',
         'format-title': 'FormatTitle',
         'image': 'Image',
-        'minus': 'Minus'
+        'minus': 'Minus',
+        'view-grid': 'ViewGrid'
       };
       return iconMap[iconName] || 'Text';
     }

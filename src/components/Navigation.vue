@@ -11,7 +11,7 @@
                 <ChevronRight v-if="!isMobileItemExpanded(item.id)" :size="20" />
                 <ChevronDown v-else :size="20" />
               </template>
-              {{ item.title }}
+              {{ decodeHtmlEntities(item.title) }}
             </NcActionButton>
 
             <!-- Level 2 items -->
@@ -23,7 +23,7 @@
                     <ChevronRight v-if="child.children && child.children.length > 0 && !isMobileItemExpanded(child.id)" :size="20" />
                     <ChevronDown v-else-if="child.children && child.children.length > 0" :size="20" />
                   </template>
-                  {{ child.title }}
+                  {{ decodeHtmlEntities(child.title) }}
                 </NcActionButton>
 
                 <!-- Level 3 items -->
@@ -32,7 +32,7 @@
                                  :key="grandchild.id"
                                  @click="handleItemClick(grandchild)"
                                  class="mobile-nav-level-3">
-                    {{ grandchild.title }}
+                    {{ decodeHtmlEntities(grandchild.title) }}
                   </NcActionButton>
                 </template>
               </template>
@@ -41,7 +41,7 @@
 
           <!-- Top level items without children -->
           <NcActionButton v-else @click="handleItemClick(item)">
-            {{ item.title }}
+            {{ decodeHtmlEntities(item.title) }}
           </NcActionButton>
         </template>
       </NcActions>
@@ -59,7 +59,7 @@
              :target="item.target || '_self'"
              @click.prevent="handleItemClick(item)"
              class="dropdown-trigger">
-            {{ item.title }}
+            {{ decodeHtmlEntities(item.title) }}
             <ChevronDown :size="16" class="chevron-icon" />
           </a>
 
@@ -80,12 +80,12 @@
                        :target="child.target || '_self'"
                        @click.prevent="handleItemClick(child)"
                        class="dropdown-section-header">
-                      {{ child.title }}
+                      {{ decodeHtmlEntities(child.title) }}
                     </a>
                     <div v-else
                          class="dropdown-section-header clickable"
                          @click="toggleDropdownSection(child.id)">
-                      {{ child.title }}
+                      {{ decodeHtmlEntities(child.title) }}
                     </div>
                     <button class="dropdown-toggle-btn"
                             @click="toggleDropdownSection(child.id)"
@@ -103,7 +103,7 @@
                        :target="grandchild.target || '_self'"
                        @click.prevent="handleItemClick(grandchild)"
                        class="dropdown-section-item">
-                      {{ grandchild.title }}
+                      {{ decodeHtmlEntities(grandchild.title) }}
                     </a>
                   </div>
                 </div>
@@ -114,7 +114,7 @@
                    :target="child.target || '_self'"
                    @click.prevent="handleItemClick(child)"
                    class="dropdown-item-link">
-                  {{ child.title }}
+                  {{ decodeHtmlEntities(child.title) }}
                 </a>
               </template>
             </div>
@@ -127,7 +127,7 @@
            :target="item.target || '_self'"
            @click.prevent="handleItemClick(item)"
            class="nav-link">
-          {{ item.title }}
+          {{ decodeHtmlEntities(item.title) }}
         </a>
       </template>
     </div>
@@ -144,7 +144,7 @@
              :target="item.target || '_self'"
              @click.prevent="handleItemClick(item)"
              class="megamenu-trigger">
-            {{ item.title }}
+            {{ decodeHtmlEntities(item.title) }}
             <ChevronDown :size="16" class="chevron-icon" />
           </a>
 
@@ -164,10 +164,10 @@
                    :target="child.target || '_self'"
                    @click.prevent="handleItemClick(child)"
                    class="megamenu-column-header">
-                  {{ child.title }}
+                  {{ decodeHtmlEntities(child.title) }}
                 </a>
                 <div v-else class="megamenu-column-header">
-                  {{ child.title }}
+                  {{ decodeHtmlEntities(child.title) }}
                 </div>
 
                 <!-- Level 3 items -->
@@ -177,7 +177,7 @@
                        :target="grandchild.target || '_self'"
                        @click.prevent="handleItemClick(grandchild)"
                        class="megamenu-list-item">
-                      {{ grandchild.title }}
+                      {{ decodeHtmlEntities(grandchild.title) }}
                     </a>
                   </li>
                 </ul>
@@ -192,7 +192,7 @@
            :target="item.target || '_self'"
            @click.prevent="handleItemClick(item)"
            class="nav-link">
-          {{ item.title }}
+          {{ decodeHtmlEntities(item.title) }}
         </a>
       </template>
     </div>
@@ -241,6 +241,12 @@ export default {
   methods: {
     t(key, vars = {}) {
       return t('intravox', key, vars);
+    },
+    decodeHtmlEntities(text) {
+      if (!text) return '';
+      const textarea = document.createElement('textarea');
+      textarea.innerHTML = text;
+      return textarea.value;
     },
     getItemUrl(item) {
       if (item.url) {

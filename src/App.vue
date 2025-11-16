@@ -13,6 +13,17 @@
         />
       </div>
       <div class="header-right">
+        <!-- Edit Page Button (always visible when not in edit mode) -->
+        <NcButton v-if="!isEditMode && pagePermissions.editPage"
+                  @click="startEditMode"
+                  type="secondary"
+                  :aria-label="t('Edit this page')">
+          <template #icon>
+            <Pencil :size="20" />
+          </template>
+          {{ t('Edit Page') }}
+        </NcButton>
+
         <!-- Page Actions Menu (3-dot menu) -->
         <PageActionsMenu v-if="!isEditMode"
                          :is-edit-mode="isEditMode"
@@ -20,8 +31,7 @@
                          @edit-navigation="showNavigationEditor = true"
                          @show-pages="showPageList"
                          @create-page="createNewPage"
-                         @show-details="showDetailsSidebar = true"
-                         @start-edit="startEditMode" />
+                         @show-details="showDetailsSidebar = true" />
 
         <!-- Edit Mode Actions (Save/Cancel) -->
         <template v-else>
@@ -127,6 +137,7 @@ import { showSuccess, showError } from '@nextcloud/dialogs';
 import { NcButton } from '@nextcloud/vue';
 import ContentSave from 'vue-material-design-icons/ContentSave.vue';
 import Close from 'vue-material-design-icons/Close.vue';
+import Pencil from 'vue-material-design-icons/Pencil.vue';
 import PageViewer from './components/PageViewer.vue';
 import PageEditor from './components/PageEditor.vue';
 import PageListModal from './components/PageListModal.vue';
@@ -144,6 +155,7 @@ export default {
     NcButton,
     ContentSave,
     Close,
+    Pencil,
     PageViewer,
     PageEditor,
     PageListModal,
@@ -390,6 +402,9 @@ export default {
 
       const url = generateUrl(`/apps/intravox/api/pages/${this.currentPage.id}`);
 
+      console.log('[App.vue savePage] Saving page:', this.currentPage.id);
+      console.log('[App.vue savePage] Page data:', JSON.stringify(this.currentPage, null, 2));
+
       try {
         await axios.put(url, this.currentPage);
         showSuccess(this.t('Page saved'));
@@ -401,6 +416,7 @@ export default {
       }
     },
     async updatePage(updatedPage) {
+      console.log('[App.vue updatePage] Received updated page:', updatedPage);
       this.currentPage = updatedPage;
       // No auto-save - only save when user clicks Save button
     },

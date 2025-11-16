@@ -12,7 +12,7 @@ use Psr\Log\LoggerInterface;
 use OCP\Files\Cache\ICacheEntry;
 
 class PageService {
-    private const ALLOWED_WIDGET_TYPES = ['text', 'heading', 'image', 'link', 'file', 'divider'];
+    private const ALLOWED_WIDGET_TYPES = ['text', 'heading', 'image', 'links', 'file', 'divider'];
     private const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
     private const MAX_IMAGE_SIZE = 5242880; // 5MB
     private const MAX_COLUMNS = 5;
@@ -763,9 +763,25 @@ class PageService {
                 $sanitized['alt'] = $this->sanitizeText($widget['alt'] ?? '');
                 break;
 
-            case 'link':
-                $sanitized['url'] = $this->sanitizeUrl($widget['url'] ?? '');
-                $sanitized['text'] = $this->sanitizeText($widget['text'] ?? '');
+            case 'links':
+                $sanitized['items'] = [];
+                if (isset($widget['items']) && is_array($widget['items'])) {
+                    foreach ($widget['items'] as $link) {
+                        $sanitizedLink = [];
+                        // Use sanitizeHtml for link text to allow HTML entities and formatting
+                        $sanitizedLink['text'] = $this->sanitizeHtml($link['text'] ?? '');
+                        $sanitizedLink['url'] = $this->sanitizeUrl($link['url'] ?? '');
+                        $sanitizedLink['icon'] = $this->sanitizeText($link['icon'] ?? '');
+                        if (isset($link['backgroundColor'])) {
+                            $sanitizedLink['backgroundColor'] = $this->sanitizeBackgroundColor($link['backgroundColor']);
+                        }
+                        $sanitized['items'][] = $sanitizedLink;
+                    }
+                }
+                $sanitized['columns'] = max(1, min((int)($widget['columns'] ?? 2), 4));
+                if (isset($widget['backgroundColor'])) {
+                    $sanitized['backgroundColor'] = $this->sanitizeBackgroundColor($widget['backgroundColor']);
+                }
                 break;
 
             case 'file':

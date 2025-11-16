@@ -1,15 +1,6 @@
 <template>
   <NcActions>
-    <!-- Edit Navigation -->
-    <NcActionButton v-if="canPerformAction('editNavigation')"
-                    @click="$emit('edit-navigation')">
-      <template #icon>
-        <Cog :size="20" />
-      </template>
-      {{ t('Edit Navigation') }}
-    </NcActionButton>
-
-    <!-- Pages List -->
+    <!-- Pages List (most used) -->
     <NcActionButton v-if="canPerformAction('viewPages')"
                     @click="$emit('show-pages')">
       <template #icon>
@@ -18,7 +9,7 @@
       {{ t('Pages') }}
     </NcActionButton>
 
-    <!-- New Page -->
+    <!-- New Page (second most used) -->
     <NcActionButton v-if="canPerformAction('createPage')"
                     @click="$emit('create-page')">
       <template #icon>
@@ -27,7 +18,7 @@
       {{ t('New Page') }}
     </NcActionButton>
 
-    <!-- Details -->
+    <!-- Details (information about current page) -->
     <NcActionButton v-if="!isEditMode"
                     :close-after-click="true"
                     @click="$emit('show-details')">
@@ -37,13 +28,13 @@
       {{ t('Details') }}
     </NcActionButton>
 
-    <!-- Edit Page (only when not in edit mode) -->
-    <NcActionButton v-if="!isEditMode && canPerformAction('editPage')"
-                    @click="$emit('start-edit')">
+    <!-- Edit Navigation (admin action, less frequently used) -->
+    <NcActionButton v-if="canPerformAction('editNavigation')"
+                    @click="$emit('edit-navigation')">
       <template #icon>
-        <Pencil :size="20" />
+        <Cog :size="20" />
       </template>
-      {{ t('Edit Page') }}
+      {{ t('Edit Navigation') }}
     </NcActionButton>
   </NcActions>
 </template>
@@ -54,7 +45,6 @@ import { NcActions, NcActionButton } from '@nextcloud/vue';
 import Cog from 'vue-material-design-icons/Cog.vue';
 import ViewList from 'vue-material-design-icons/ViewList.vue';
 import Plus from 'vue-material-design-icons/Plus.vue';
-import Pencil from 'vue-material-design-icons/Pencil.vue';
 import Information from 'vue-material-design-icons/Information.vue';
 
 export default {
@@ -65,7 +55,6 @@ export default {
     Cog,
     ViewList,
     Plus,
-    Pencil,
     Information
   },
   props: {
@@ -84,7 +73,7 @@ export default {
       })
     }
   },
-  emits: ['edit-navigation', 'show-pages', 'create-page', 'show-details', 'start-edit'],
+  emits: ['edit-navigation', 'show-pages', 'create-page', 'show-details'],
   methods: {
     t(key, vars = {}) {
       return t('intravox', key, vars);

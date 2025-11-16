@@ -35,12 +35,11 @@
       </div>
     </div>
 
-    <!-- Link Widget -->
-    <div v-else-if="widget.type === 'link'" class="widget-link">
-      <a :href="widget.url" target="_blank" rel="noopener noreferrer">
-        {{ widget.text }}
-      </a>
-    </div>
+    <!-- Links Widget (Grid of Links) -->
+    <LinksWidget
+      v-else-if="widget.type === 'links'"
+      :widget="widget"
+    />
 
     <!-- File Widget -->
     <div v-else-if="widget.type === 'file'" class="widget-file">
@@ -68,12 +67,14 @@
 import { translate as t } from '@nextcloud/l10n';
 import { generateUrl } from '@nextcloud/router';
 import InlineTextEditor from './InlineTextEditor.vue';
+import LinksWidget from './LinksWidget.vue';
 import { markdownToHtml } from '../utils/markdownSerializer.js';
 
 export default {
   name: 'Widget',
   components: {
-    InlineTextEditor
+    InlineTextEditor,
+    LinksWidget
   },
   props: {
     widget: {
@@ -192,6 +193,8 @@ export default {
   width: 100%;
   color: inherit;
   line-height: 1.5;
+  margin-top: 4px;
+  margin-bottom: 4px;
 }
 
 .widget-text :deep(p) {
@@ -270,7 +273,7 @@ export default {
 
 /* Heading Widget */
 .widget-heading {
-  margin: 0 0 10px 0;
+  margin: 8px 0 4px 0;
   color: inherit;
   font-weight: 600;
 }
@@ -287,13 +290,14 @@ export default {
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
+  margin: 12px 0;
 }
 
 .widget-image img {
   max-width: 100%;
   width: 100%;
   height: auto;
-  border-radius: var(--border-radius-large);
+  border-radius: var(--border-radius-container-large);
   display: block;
   object-fit: contain;
 }
@@ -307,36 +311,12 @@ export default {
   color: var(--color-text-maxcontrast);
 }
 
-/* Link Widget */
-.widget-link {
-  padding: 12px;
-  background: var(--color-background-hover);
-  border-left: 3px solid var(--color-primary);
-  border-radius: var(--border-radius-large);
-}
-
-.widget-link a {
-  color: var(--color-primary);
-  text-decoration: none;
-  font-weight: 500;
-  display: inline-flex;
-  align-items: center;
-}
-
-.widget-link a:hover {
-  text-decoration: underline;
-}
-
-.widget-link a::after {
-  content: ' →';
-  margin-left: 5px;
-}
-
 /* File Widget */
 .widget-file {
   padding: 12px;
   background: var(--color-background-hover);
   border-radius: var(--border-radius-large);
+  margin: 12px 0;
 }
 
 .file-link {

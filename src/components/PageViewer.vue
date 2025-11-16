@@ -82,15 +82,15 @@ export default {
 }
 
 .page-row {
-  margin-bottom: 30px;
-  padding: 24px;
-  border-radius: var(--border-radius-large);
+  margin-bottom: 12px;
+  padding: 16px;
+  border-radius: var(--border-radius-container-large);
   box-sizing: border-box;
 }
 
 .page-grid {
   display: grid;
-  gap: 15px;
+  gap: 12px;
   width: 100%;
   box-sizing: border-box;
 }

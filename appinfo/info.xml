@@ -24,7 +24,7 @@
 
 Built with Vue 3 and modern web technologies for a smooth, secure experience.
     ]]></description>
-    <version>0.3.0</version>
+    <version>0.4.0</version>
     <licence>agpl</licence>
     <author mail="rik@shalution.nl">Rik Dekker</author>
     <namespace>IntraVox</namespace>
@@ -47,5 +47,6 @@ Built with Vue 3 and modern web technologies for a smooth, secure experience.
         <command>OCA\IntraVox\Command\MigrateToLanguageStructureCommand</command>
         <command>OCA\IntraVox\Command\CreateLanguageHomepagesCommand</command>
         <command>OCA\IntraVox\Command\CopyNavigationCommand</command>
+        <command>OCA\IntraVox\Command\ImportPagesCommand</command>
     </commands>
 </info>

@@ -197,28 +197,6 @@
           </div>
         </div>
 
-        <!-- Link Widget -->
-        <div v-else-if="localWidget.type === 'link'">
-          <div class="form-group">
-            <label>{{ t('Link text:') }}</label>
-            <input
-              v-model="localWidget.text"
-              type="text"
-              :placeholder="t('Click here')"
-              class="widget-input"
-            />
-          </div>
-          <div class="form-group">
-            <label>{{ t('URL:') }}</label>
-            <input
-              v-model="localWidget.url"
-              type="url"
-              placeholder="https://example.com"
-              class="widget-input"
-            />
-          </div>
-        </div>
-
         <!-- File Widget -->
         <div v-else-if="localWidget.type === 'file'">
           <div class="form-group">

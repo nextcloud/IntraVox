@@ -70,25 +70,30 @@
             :group="{ name: 'widgets', pull: true, put: true }"
             :animation="200"
             item-key="id"
+            handle=".drag-handle"
             @end="onDragEnd(rowIndex, column)"
             class="widget-drop-zone"
           >
             <template #item="{ element: widget }">
               <div class="widget-wrapper" :class="{ 'editing': focusedWidgetId === widget.id }">
-                <div class="widget-controls">
+                <!-- Floating toolbar - appears on hover -->
+                <div class="floating-toolbar">
+                  <div class="drag-handle" :aria-label="t('Drag to reorder')">
+                    <DragVertical :size="16" />
+                  </div>
                   <NcButton v-if="needsEditButton(widget.type)"
                             @click="editWidget(widget, rowIndex)"
                             type="secondary"
                             :aria-label="t('Edit widget')">
                     <template #icon>
-                      <Pencil :size="20" />
+                      <Pencil :size="16" />
                     </template>
                   </NcButton>
                   <NcButton @click="deleteWidget(rowIndex, widget.id)"
                             type="error"
                             :aria-label="t('Delete widget')">
                     <template #icon>
-                      <Delete :size="20" />
+                      <Delete :size="16" />
                     </template>
                   </NcButton>
                 </div>
@@ -117,9 +122,17 @@
 
     <!-- Widget Editor Modal -->
     <WidgetEditor
-      v-if="editingWidget"
+      v-if="editingWidget && editingWidget.type !== 'links'"
       :widget="editingWidget"
       :page-id="page.id"
+      @close="editingWidget = null"
+      @save="saveWidget"
+    />
+
+    <!-- Links Editor Modal -->
+    <LinksEditor
+      v-if="editingWidget && editingWidget.type === 'links'"
+      :widget="editingWidget"
       @close="editingWidget = null"
       @save="saveWidget"
     />
@@ -152,9 +165,11 @@ import TableRowPlusAfter from 'vue-material-design-icons/TableRowPlusAfter.vue';
 import Pencil from 'vue-material-design-icons/Pencil.vue';
 import Delete from 'vue-material-design-icons/Delete.vue';
 import Palette from 'vue-material-design-icons/Palette.vue';
+import DragVertical from 'vue-material-design-icons/DragVertical.vue';
 import Widget from './Widget.vue';
 import WidgetPicker from './WidgetPicker.vue';
 import WidgetEditor from './WidgetEditor.vue';
+import LinksEditor from './LinksEditor.vue';
 
 export default {
   name: 'PageEditor',
@@ -169,9 +184,11 @@ export default {
     Pencil,
     Delete,
     Palette,
+    DragVertical,
     Widget,
     WidgetPicker,
-    WidgetEditor
+    WidgetEditor,
+    LinksEditor
   },
   props: {
     page: {
@@ -260,7 +277,7 @@ export default {
     },
     needsEditButton(widgetType) {
       // Show edit button for widgets that aren't inline-editable
-      return ['image', 'link', 'file', 'heading'].includes(widgetType);
+      return ['image', 'link', 'links', 'file', 'heading'].includes(widgetType);
     },
     initializeWidgetIds() {
       // Assign unique IDs to all widgets if they don't have one
@@ -405,7 +422,7 @@ export default {
       this.showWidgetPicker = false;
 
       // Open editor modal for widgets that need configuration
-      if (widgetType === 'image' || widgetType === 'link' || widgetType === 'file' || widgetType === 'heading') {
+      if (widgetType === 'image' || widgetType === 'links' || widgetType === 'file' || widgetType === 'heading') {
         this.editWidget(newWidget, rowIndex);
       }
 
@@ -435,6 +452,11 @@ export default {
           widget.url = '';
           widget.text = this.t('Link text');
           break;
+        case 'links':
+          widget.items = [];
+          widget.columns = 2;
+          widget.backgroundColor = null;
+          break;
         case 'file':
           widget.path = '';
           widget.name = this.t('File');
@@ -452,13 +474,33 @@ export default {
       this.editingRowIndex = rowIndex;
     },
     saveWidget(updatedWidget) {
+      console.log('[PageEditor saveWidget] Received updated widget:', updatedWidget);
+
       const row = this.localPage.layout.rows[this.editingRowIndex];
       const index = row.widgets.findIndex(w => w.id === this.editingWidget.id);
 
       if (index !== -1) {
-        row.widgets[index] = updatedWidget;
+        // Preserve the id, column, and order from the original widget
+        updatedWidget.id = this.editingWidget.id;
+        updatedWidget.column = this.editingWidget.column;
+        updatedWidget.order = this.editingWidget.order;
+
+        console.log('[PageEditor saveWidget] Updating widget at row', this.editingRowIndex, 'index', index);
+        console.log('[PageEditor saveWidget] Updated widget:', updatedWidget);
+
+        // Use splice to ensure Vue reactivity detects the change
+        row.widgets.splice(index, 1, updatedWidget);
+
         // Reinitialize column arrays to reflect the updated widget
         this.initializeColumnArrays();
+
+        // Force trigger the watcher by creating a deep clone
+        this.localPage = JSON.parse(JSON.stringify(this.localPage));
+
+        console.log('[PageEditor saveWidget] Updated localPage:', this.localPage);
+
+        // Manually emit update to ensure parent receives the change
+        this.$emit('update', this.localPage);
       }
 
       this.editingWidget = null;
@@ -560,9 +602,9 @@ export default {
 }
 
 .page-row {
-  margin-bottom: 20px;
+  margin-bottom: 12px;
   position: relative;
-  padding: 24px;
+  padding: 16px;
   border: 2px dashed transparent;
   border-radius: var(--border-radius-large);
 }
@@ -583,7 +625,7 @@ export default {
 
 .page-grid {
   display: grid;
-  gap: 20px;
+  gap: 12px;
   width: 100%;
 }
 
@@ -625,45 +667,93 @@ export default {
   position: relative;
   margin-bottom: 15px;
   padding: 10px;
-  border: 1px solid var(--color-border);
+  border: 1px solid transparent;
   border-radius: var(--border-radius-large);
   background: transparent;
-  cursor: move;
+  transition: border-color 0.2s ease;
 }
 
 .widget-wrapper:hover {
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  border-color: var(--color-border);
 }
 
-/* Divider widget in edit mode - reduce padding to prevent double-line effect */
+/* Divider widget in edit mode - no padding or border */
 .widget-wrapper:has(.widget-divider) {
   padding: 0;
   border: none;
   background: transparent;
-  margin-bottom: 5px;
+  margin-bottom: 15px;
 }
 
-.widget-controls {
+/* Floating toolbar - Medium/Notion style */
+.floating-toolbar {
   position: absolute;
-  top: 5px;
-  right: 5px;
+  top: -36px; /* Float above widget */
+  right: 0;
   display: flex;
-  gap: 5px;
-  z-index: 1001; /* Higher than text editor toolbar (z-index: 100) */
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  background: var(--color-main-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-large);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 1001;
   opacity: 0;
-  transition: opacity 0.2s ease;
   pointer-events: none;
+  transition: opacity 0.2s ease;
 }
 
-.widget-wrapper:hover .widget-controls {
+.widget-wrapper:hover .floating-toolbar {
   opacity: 1;
   pointer-events: auto;
 }
 
-/* Hide controls when editing (text editor is focused) */
-.widget-wrapper.editing .widget-controls {
+/* Hide toolbar when editing */
+.widget-wrapper.editing .floating-toolbar {
   opacity: 0 !important;
   pointer-events: none !important;
+}
+
+/* Divider widgets - show toolbar below instead of above */
+.widget-wrapper:has(.widget-divider) .floating-toolbar {
+  top: auto;
+  bottom: -36px;
+}
+
+/* Drag handle in floating toolbar */
+.floating-toolbar .drag-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 8px;
+  background: transparent;
+  border: none;
+  border-radius: var(--border-radius);
+  cursor: grab;
+  color: var(--color-text-maxcontrast);
+  transition: all 0.15s ease;
+}
+
+.floating-toolbar .drag-handle:hover {
+  background: var(--color-background-hover);
+  color: var(--color-main-text);
+}
+
+.floating-toolbar .drag-handle:active {
+  cursor: grabbing;
+  background: var(--color-primary-element-light);
+}
+
+/* Compact buttons in toolbar */
+.floating-toolbar :deep(.button-vue) {
+  min-height: 28px !important;
+  min-width: 28px !important;
+}
+
+.floating-toolbar :deep(.button-vue__icon) {
+  height: 16px !important;
+  width: 16px !important;
 }
 
 .column-add-widget {

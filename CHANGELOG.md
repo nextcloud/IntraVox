@@ -7,6 +7,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2025-11-16 - Enhanced UI and Demo Data Improvements
+
+### Added
+- **Links Widget**: New multi-link widget to replace deprecated single Link widget
+  - Grid layout support (1-5 columns)
+  - Material Design icons for each link
+  - Visual link editor with add/remove functionality
+  - Customizable columns per widget instance
+- **Import Pages Command**: New CLI command for bulk page creation
+  - Import multiple pages from JSON files
+  - Specify language and source directory
+  - Automatic page creation with full widget support
+- **Demo Data Scripts**: New helper scripts for demo content management
+  - `add-images-to-pages.sh`: Bulk add images to demo pages
+  - `create-demo-pages.sh`: Generate demo page structure
+  - `deploy-demo-data.sh`: Deploy demo data to server
+  - `download-demo-images.sh`: Download royalty-free demo images
+  - `upload-demo-via-webdav.sh`: Upload demo data via WebDAV
+
+### Changed
+- **Reduced Vertical Spacing**: Significantly improved content density
+  - PageEditor row margin: 20px → 12px, padding: 24px → 16px
+  - PageEditor grid gap: 20px → 12px
+  - PageViewer row margin: 30px → 12px, padding: 24px → 16px
+  - PageViewer grid gap: 15px → 12px
+  - Widget text margins: 12px → 4px (top/bottom)
+  - Widget heading margins: 12px → 8px (top), 4px (bottom)
+  - LinksWidget margins: 12px → 8px
+- **Navigation Character Encoding**: Fixed HTML entity display
+  - Added `decodeHtmlEntities()` method to properly decode HTML entities
+  - Navigation items now display "&" instead of "&amp;"
+  - Applies to all navigation types: mobile, dropdown, and megamenu
+  - All three levels of navigation hierarchy fixed
+
+### Fixed
+- HTML entities in navigation titles now display correctly (e.g., "News & Updates" instead of "News &amp; Updates")
+- Proper spacing between page sections for better readability
+- Widget spacing consistency across all widget types
+
+### Technical
+- Created LinksWidget.vue for rendering multi-link widgets
+- Created LinksEditor.vue for visual link management
+- Added decodeHtmlEntities helper using textarea innerHTML technique
+- Updated all navigation template interpolations with entity decoding
+- Created ImportPagesCommand.php for CLI-based page importing
+
 ## [0.3.0] - 2025-11-13 - UI Refinements & Dropdown Navigation
 
 ### Changed
