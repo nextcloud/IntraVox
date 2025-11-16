@@ -58,7 +58,7 @@ Traditional intranets are complex, expensive, and often separate from your exist
 - 📝 **Text** - Rich text with Markdown support (bold, italic, lists, and more)
 - 📌 **Headings** - Structure content with H1-H6 headers
 - 🖼️ **Images** - Display beautiful visuals (300px, 500px, 800px, or full width)
-- 🔗 **Links** - Quick links to important resources
+- 🔗 **Links** - Multi-link widgets with grid layouts and Material Design icons
 - 📄 **Files** - Embed documents for easy access
 - ➖ **Dividers** - Separate content sections visually
 
@@ -71,6 +71,22 @@ When released, IntraVox will require:
 - Nextcloud 32 or higher
 - PHP 8.0 or higher
 - GroupFolders app installed and enabled
+
+---
+
+## Recent Updates
+
+### Version 0.4.0 (November 16, 2025)
+
+**Enhanced UI and Demo Data Improvements**
+
+- **New Links Widget**: Multi-link widgets with grid layouts (1-5 columns) and Material Design icons
+- **Improved Content Density**: Significantly reduced vertical spacing throughout the application
+- **Fixed Navigation**: HTML entities now display correctly (e.g., "&" instead of "&amp;")
+- **Import Pages Command**: New CLI tool for bulk page creation from JSON files
+- **Demo Data Scripts**: Helper scripts for managing and deploying demo content
+
+For complete release notes, see [CHANGELOG.md](CHANGELOG.md).
 
 ---
 
