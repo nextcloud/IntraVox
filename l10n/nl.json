@@ -159,7 +159,19 @@
     "Italic": "Cursief",
     "Underline": "Onderstrepen",
     "Bullet list": "Opsommingslijst",
-    "Numbered list": "Genummerde lijst"
+    "Numbered list": "Genummerde lijst",
+    "Search pages": "Zoek pagina's",
+    "Search...": "Zoeken...",
+    "Search Results": "Zoekresultaten",
+    "Search Results for \"{query}\"": "Zoekresultaten voor \"{query}\"",
+    "{count} result(s) found": "{count} resultaten gevonden",
+    "Searching...": "Zoeken...",
+    "No results found": "Geen resultaten gevonden",
+    "Try different keywords or check your spelling": "Probeer andere zoektermen of controleer je spelling",
+    "Relevance: {score}": "Relevantie: {score}",
+    "Title": "Titel",
+    "Content": "Inhoud",
+    "Search failed: {error}": "Zoeken mislukt: {error}"
   },
   "pluralForm": "nplurals=2; plural=(n != 1);"
 }

@@ -40,6 +40,7 @@
     "@tiptap/vue-3": "^3.10.2",
     "@vue/compiler-sfc": "^3.5.22",
     "cancelable-promise": "^4.3.1",
+    "diff": "^8.0.2",
     "dompurify": "^3.3.0",
     "marked": "^17.0.0",
     "prosemirror-markdown": "^1.13.2",

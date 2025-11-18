@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace OCA\IntraVox\AppInfo;
 
 use OCA\IntraVox\Command\SetupCommand;
+use OCA\IntraVox\Search\PageSearchProvider;
 use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IBootstrap;
@@ -17,6 +18,9 @@ class Application extends App implements IBootstrap {
     }
 
     public function register(IRegistrationContext $context): void {
+        // Register search provider
+        $context->registerSearchProvider(PageSearchProvider::class);
+
         // Register OCC command
         $context->registerService(SetupCommand::class, function ($c) {
             return new SetupCommand(

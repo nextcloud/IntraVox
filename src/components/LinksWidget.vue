@@ -150,7 +150,7 @@ export default {
 <style scoped>
 .links-widget {
   width: 100%;
-  margin: 8px 0;
+  margin: 12px 0;
 }
 
 .links-grid {

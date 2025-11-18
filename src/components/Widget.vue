@@ -134,8 +134,10 @@ export default {
     },
     getImageUrl(filename) {
       if (!filename) return '';
+      // Remove 'images/' prefix if present (for backwards compatibility)
+      const cleanFilename = filename.replace(/^images\//, '');
       // Images are served via the IntraVox API with pageId
-      return generateUrl(`/apps/intravox/api/pages/${this.pageId}/images/${filename}`);
+      return generateUrl(`/apps/intravox/api/pages/${this.pageId}/images/${cleanFilename}`);
     },
     getFileUrl(filename) {
       if (!filename) return '';
@@ -193,8 +195,8 @@ export default {
   width: 100%;
   color: inherit;
   line-height: 1.5;
-  margin-top: 4px;
-  margin-bottom: 4px;
+  margin-top: 0;
+  margin-bottom: 12px;
 }
 
 .widget-text :deep(p) {
@@ -273,7 +275,7 @@ export default {
 
 /* Heading Widget */
 .widget-heading {
-  margin: 8px 0 4px 0;
+  margin: 16px 0 8px 0;
   color: inherit;
   font-weight: 600;
 }

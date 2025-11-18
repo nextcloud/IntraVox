@@ -609,41 +609,51 @@ a.dropdown-section-header:active,
   background: var(--color-main-background);
   border: 1px solid var(--color-border);
   border-radius: var(--border-radius-large);
-  box-shadow: 0 2px 8px var(--color-box-shadow);
+  box-shadow: 0 4px 16px var(--color-box-shadow);
   z-index: 1000;
-  padding: 16px;
+  padding: 24px;
 }
 
 .megamenu-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0;
+  column-gap: 32px;
 }
 
 .megamenu-column {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 0;
+  padding: 16px 0;
+  border-right: 1px solid var(--color-border);
+  padding-right: 32px;
+}
+
+.megamenu-column:last-child {
+  border-right: none;
+  padding-right: 0;
 }
 
 .megamenu-column-header {
-  font-weight: 600;
-  font-size: 14px;
+  font-weight: 700;
+  font-size: 13px;
   color: var(--color-main-text);
-  padding: 8px 8px;
+  padding: 0 0 12px 0;
   text-decoration: none;
-  border-bottom: 1px solid var(--color-border);
-  margin-bottom: 4px;
-  transition: background-color 0.1s ease;
-  border-radius: var(--border-radius);
+  border-bottom: 2px solid var(--color-primary-element);
+  margin-bottom: 12px;
+  transition: color 0.1s ease;
+  text-transform: none;
+  letter-spacing: normal;
 }
 
 a.megamenu-column-header:hover {
-  background-color: var(--color-background-hover);
+  color: var(--color-primary-element);
 }
 
 a.megamenu-column-header:active {
-  background-color: var(--color-primary-element-light);
+  color: var(--color-primary-element);
 }
 
 .megamenu-list {
@@ -652,25 +662,26 @@ a.megamenu-column-header:active {
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 0;
 }
 
 .megamenu-list-item {
   display: block;
-  padding: 8px 12px;
-  color: var(--color-main-text);
+  padding: 10px 0;
+  color: var(--color-text-maxcontrast);
   text-decoration: none;
-  font-size: 13px;
-  border-radius: var(--border-radius);
-  transition: background-color 0.1s ease;
+  font-size: 14px;
+  font-weight: 400;
+  transition: color 0.1s ease;
+  line-height: 1.4;
 }
 
 .megamenu-list-item:hover {
-  background-color: var(--color-background-hover);
+  color: var(--color-main-text);
 }
 
 .megamenu-list-item:active {
-  background-color: var(--color-primary-element-light);
+  color: var(--color-primary-element);
 }
 
 /* Responsive - Show mobile menu on smaller screens */

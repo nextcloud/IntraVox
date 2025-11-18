@@ -12,6 +12,7 @@
           :placeholder="t('Page title')"
         />
       </div>
+
       <div class="header-right">
         <!-- Edit Page Button (always visible when not in edit mode) -->
         <NcButton v-if="!isEditMode && pagePermissions.editPage"
@@ -74,8 +75,8 @@
 
       <div v-else class="intravox-content">
         <PageViewer
-          v-if="!isEditMode && currentPage"
-          :page="currentPage"
+          v-if="!isEditMode && displayPage"
+          :page="displayPage"
         />
         <PageEditor
           v-else-if="isEditMode && currentPage"
@@ -90,8 +91,10 @@
         :is-open="showDetailsSidebar"
         :page-id="currentPage.id"
         :page-name="currentPage.title || t('Untitled Page')"
-        @close="showDetailsSidebar = false"
+        :initial-tab="sidebarInitialTab"
+        @close="handleCloseSidebar"
         @version-restored="handleVersionRestored"
+        @version-selected="handleVersionSelected"
       />
     </div>
 
@@ -186,7 +189,13 @@ export default {
       showNavigationEditor: false,
       currentLanguage: document.documentElement.lang || 'en',
       footerContent: '',
-      canEditFooter: false
+      canEditFooter: false,
+      // Version preview state
+      selectedVersion: null,
+      versionPage: null,
+      loadingVersion: false,
+      // Sidebar state
+      sidebarInitialTab: 'details-tab'
     };
   },
   computed: {
@@ -205,6 +214,18 @@ export default {
         editPage: this.canEditNavigation,    // For now, same as nav edit permission
         deletePage: this.canEditNavigation   // For now, same as nav edit permission
       };
+    },
+    /**
+     * Returns the page to display - either the version preview or the current page
+     */
+    displayPage() {
+      return this.versionPage || this.currentPage;
+    },
+    /**
+     * Check if we're currently showing a version preview
+     */
+    isShowingVersion() {
+      return this.versionPage !== null;
     }
   },
   mounted() {
@@ -306,6 +327,8 @@ export default {
     async selectPage(pageId, updateUrl = true) {
       try {
         this.loading = true;
+        // Clear version preview when navigating to a different page
+        this.clearVersionPreview();
         const response = await axios.get(generateUrl(`/apps/intravox/api/pages/${pageId}`));
         this.currentPage = response.data;
         this.isEditMode = false;
@@ -587,6 +610,10 @@ export default {
         this.pages = response.data;
         // Re-select the current page to refresh it without changing the URL
         await this.selectPage(currentPageId, false);
+
+        // Open sidebar with Versions tab and auto-select first version
+        this.sidebarInitialTab = 'versions-tab';
+        this.showDetailsSidebar = true;
       } catch (err) {
         console.error('IntraVox: Error reloading pages after restore:', err);
       }
@@ -612,6 +639,57 @@ export default {
         // Fall back to home
         this.selectPage('home', true);
       }
+    },
+    async handleVersionSelected(data) {
+      console.log('[App.vue handleVersionSelected] Version selected:', data);
+
+      const { version, pageId } = data;
+      this.selectedVersion = version;
+      this.loadingVersion = true;
+
+      try {
+        // Fetch the version content
+        const url = generateUrl(`/apps/intravox/api/pages/${pageId}/versions/${version.timestamp}/content`);
+        const response = await axios.get(url);
+
+        console.log('[App.vue handleVersionSelected] Version content:', response.data);
+
+        // Parse the JSON content from the version
+        const versionJson = JSON.parse(response.data.content);
+
+        // Create a page object from the version data
+        this.versionPage = {
+          ...versionJson,
+          id: pageId,
+          // Add a visual indicator that this is a version
+          title: `${versionJson.title || this.currentPage.title} (${this.formatVersionDate(version.timestamp)})`
+        };
+
+        console.log('[App.vue handleVersionSelected] Version page created:', this.versionPage);
+      } catch (err) {
+        console.error('[App.vue handleVersionSelected] Error loading version:', err);
+        showError(this.t('Could not load version: {error}', { error: err.message }));
+        this.selectedVersion = null;
+        this.versionPage = null;
+      } finally {
+        this.loadingVersion = false;
+      }
+    },
+    clearVersionPreview() {
+      console.log('[App.vue clearVersionPreview] Clearing version preview');
+      this.selectedVersion = null;
+      this.versionPage = null;
+    },
+    formatVersionDate(timestamp) {
+      const date = new Date(timestamp * 1000);
+      return date.toLocaleString();
+    },
+    handleCloseSidebar() {
+      this.showDetailsSidebar = false;
+      // Reset to default tab when closing
+      this.sidebarInitialTab = 'details-tab';
+      // Clear version preview when closing sidebar
+      this.clearVersionPreview();
     }
   }
 };

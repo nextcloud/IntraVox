@@ -136,29 +136,101 @@
         <History :size="20" />
       </template>
 
-        <div v-if="loadingVersions" class="loading">
-          {{ t('Loading versions...') }}
-        </div>
+      <!-- Loading State -->
+      <NcEmptyContent v-if="loadingVersions" :name="t('Loading versions...')">
+        <template #icon>
+          <NcLoadingIcon />
+        </template>
+      </NcEmptyContent>
 
-        <div v-else-if="versionError" class="error-message">
+      <!-- Error State -->
+      <NcEmptyContent v-else-if="versionError" :name="t('Failed to load versions')">
+        <template #icon>
+          <AlertCircle :size="64" />
+        </template>
+        <template #description>
           {{ versionError }}
-        </div>
+        </template>
+      </NcEmptyContent>
 
-        <div v-else-if="versions.length === 0" class="empty-state">
-          <p>{{ t('No versions available yet.') }}</p>
-          <p class="hint">{{ t('Versions are created automatically when you save changes to this page.') }}</p>
-        </div>
+      <!-- Empty State -->
+      <NcEmptyContent v-else-if="versions.length === 0" :name="t('No versions yet')">
+        <template #icon>
+          <History :size="64" />
+        </template>
+        <template #description>
+          {{ t('Versions are created automatically when you save changes to this page.') }}
+        </template>
+      </NcEmptyContent>
 
-        <div v-else class="version-list">
-          <div
-            v-for="version in versions"
-            :key="version.timestamp"
-            class="version-item"
-          >
-            <div class="version-info">
-              <div class="version-date">{{ version.relativeDate }}</div>
-              <div class="version-details">{{ version.date }}</div>
+      <!-- Version List -->
+      <div v-else class="version-list">
+        <div
+          v-for="version in versions"
+          :key="version.timestamp"
+          :class="['version-item', { 'version-item--selected': selectedVersion?.timestamp === version.timestamp }]"
+          @click="selectVersion(version)"
+        >
+          <div class="version-info">
+            <!-- Version header with date and author -->
+            <div class="version-header">
+              <span class="version-date">{{ version.relativeDate }}</span>
+              <span v-if="version.author" class="version-author">
+                {{ t('by {author}', { author: version.author }) }}
+              </span>
             </div>
+
+            <!-- Version details (absolute date and size) -->
+            <div class="version-details">
+              {{ version.date }} · {{ formatBytes(version.size) }}
+            </div>
+
+            <!-- Version label (editable) -->
+            <div v-if="editingLabel === version.timestamp" class="version-label-edit" @click.stop>
+              <NcTextField
+                v-model="editableLabel"
+                :label="t('Version label')"
+                :placeholder="t('Add a label to this version')"
+                @keydown.enter="saveVersionLabel(version.timestamp)"
+                @keydown.esc="cancelLabelEdit"
+              />
+              <div class="label-actions">
+                <NcButton
+                  type="primary"
+                  size="small"
+                  @click="saveVersionLabel(version.timestamp)"
+                >
+                  {{ t('Save') }}
+                </NcButton>
+                <NcButton
+                  type="secondary"
+                  size="small"
+                  @click="cancelLabelEdit"
+                >
+                  {{ t('Cancel') }}
+                </NcButton>
+              </div>
+            </div>
+            <div v-else-if="version.label" class="version-label">
+              <Label :size="16" />
+              <span>{{ version.label }}</span>
+            </div>
+          </div>
+
+          <!-- Version actions -->
+          <div class="version-actions" @click.stop>
+            <!-- Add/Edit Label -->
+            <NcButton
+              type="tertiary"
+              @click="startLabelEdit(version)"
+              :aria-label="version.label ? t('Edit label') : t('Add label')"
+            >
+              <template #icon>
+                <Label :size="20" />
+              </template>
+            </NcButton>
+
+            <!-- Restore -->
             <NcButton
               type="secondary"
               @click="confirmRestoreVersion(version.timestamp)"
@@ -172,6 +244,7 @@
             </NcButton>
           </div>
         </div>
+      </div>
     </NcAppSidebarTab>
   </NcAppSidebar>
 
@@ -193,6 +266,7 @@
     ]"
     @close="cancelRestore"
   />
+
 </template>
 
 <script>
@@ -200,10 +274,12 @@ import { translate as t } from '@nextcloud/l10n';
 import { generateUrl } from '@nextcloud/router';
 import axios from '@nextcloud/axios';
 import { showError, showSuccess } from '@nextcloud/dialogs';
-import { NcAppSidebar, NcAppSidebarTab, NcButton, NcDialog } from '@nextcloud/vue';
+import { NcAppSidebar, NcAppSidebarTab, NcButton, NcDialog, NcEmptyContent, NcLoadingIcon, NcTextField } from '@nextcloud/vue';
 import History from 'vue-material-design-icons/History.vue';
 import InformationOutline from 'vue-material-design-icons/InformationOutline.vue';
 import Restore from 'vue-material-design-icons/Restore.vue';
+import Label from 'vue-material-design-icons/Label.vue';
+import AlertCircle from 'vue-material-design-icons/AlertCircle.vue';
 import MetaVoxIcon from './icons/MetaVoxIcon.vue';
 
 export default {
@@ -213,10 +289,15 @@ export default {
     NcAppSidebarTab,
     NcButton,
     NcDialog,
+    NcEmptyContent,
+    NcLoadingIcon,
+    NcTextField,
     History,
     InformationOutline,
     MetaVoxIcon,
-    Restore
+    Restore,
+    Label,
+    AlertCircle
   },
   props: {
     isOpen: {
@@ -230,9 +311,13 @@ export default {
     pageName: {
       type: String,
       default: ''
+    },
+    initialTab: {
+      type: String,
+      default: 'details-tab'
     }
   },
-  emits: ['close', 'version-restored'],
+  emits: ['close', 'version-restored', 'version-selected'],
   data() {
     return {
       activeTab: 'details-tab',
@@ -249,7 +334,11 @@ export default {
       editableTitle: '',
       savingTitle: false,
       metaVoxInstalled: false,
-      loadingMetaVox: false
+      loadingMetaVox: false,
+      selectedVersion: null,
+      editingLabel: null,
+      editableLabel: '',
+      isRestoring: false // Flag to prevent auto-select during restore
     };
   },
   computed: {
@@ -272,6 +361,11 @@ export default {
         this.dispatchMetaVoxUpdate();
       }
     },
+    initialTab(newTab) {
+      if (newTab && newTab !== this.activeTab) {
+        this.activeTab = newTab;
+      }
+    },
     activeTab(newTab) {
       console.log('[PageDetailsSidebar] Active tab changed to:', newTab);
       if (newTab === 'metavox-tab' && this.metaVoxInstalled) {
@@ -280,6 +374,20 @@ export default {
         this.$nextTick(() => {
           this.dispatchMetaVoxUpdate();
         });
+      }
+      // Auto-select first version when versions tab is activated
+      // Only if versions are already loaded and we don't have a selection
+      if (newTab === 'versions-tab' && this.versions.length > 0 && !this.selectedVersion) {
+        console.log('[PageDetailsSidebar] activeTab watcher: auto-selecting first version');
+        this.autoSelectFirstVersion();
+      }
+    },
+    versions(newVersions) {
+      // Auto-select first version if versions tab is active and versions just loaded
+      // BUT skip if we're in the middle of a restore operation OR already have a selection
+      if (this.activeTab === 'versions-tab' && newVersions.length > 0 && !this.isRestoring && !this.selectedVersion) {
+        console.log('[PageDetailsSidebar] versions watcher: auto-selecting first version');
+        this.autoSelectFirstVersion();
       }
     },
     metaVoxInstalled(newValue) {
@@ -431,7 +539,11 @@ export default {
       }
 
       this.restoringVersion = true;
+      this.isRestoring = true; // Prevent auto-select during restore
       this.showRestoreDialog = false;
+
+      // Remember which version we're restoring
+      const restoredTimestamp = this.versionToRestore;
 
       try {
         const url = generateUrl(`/apps/intravox/api/pages/${this.pageId}/versions/${this.versionToRestore}`);
@@ -443,12 +555,29 @@ export default {
         // Reload versions list
         await this.loadVersions();
 
+        // After restore, the restored version should be selected
+        // It will be the second item (index 1) because a new backup was created (index 0)
+        this.$nextTick(() => {
+          const restoredVersion = this.versions.find(v => v.timestamp === restoredTimestamp);
+          if (restoredVersion) {
+            console.log('[PageDetailsSidebar] Selecting restored version:', restoredVersion);
+            this.selectVersion(restoredVersion);
+          } else if (this.versions.length > 1) {
+            // Fallback: select second version (the one that was just restored)
+            console.log('[PageDetailsSidebar] Restored version not found, selecting second version');
+            this.selectVersion(this.versions[1]);
+          }
+          // Reset flag after selection
+          this.isRestoring = false;
+        });
+
         this.versionToRestore = null;
       } catch (error) {
         console.error('Failed to restore version:', error);
         showError(this.t('Failed to restore version: {error}', {
           error: error.response?.data?.error || error.message
         }));
+        this.isRestoring = false; // Reset flag on error too
       } finally {
         this.restoringVersion = false;
       }
@@ -552,7 +681,81 @@ export default {
       window.dispatchEvent(event);
 
       console.log('[PageDetailsSidebar] Dispatched MetaVox update event for page:', this.pageId);
-    }
+    },
+    formatBytes(bytes) {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+    },
+    startLabelEdit(version) {
+      this.editingLabel = version.timestamp;
+      this.editableLabel = version.label || '';
+    },
+    cancelLabelEdit() {
+      this.editingLabel = null;
+      this.editableLabel = '';
+    },
+    async saveVersionLabel(timestamp) {
+      console.log('[PageDetailsSidebar] saveVersionLabel called', { timestamp, label: this.editableLabel });
+
+      if (!this.editableLabel.trim() && !this.versions.find(v => v.timestamp === timestamp)?.label) {
+        // No label to save and no existing label to remove
+        console.log('[PageDetailsSidebar] No label to save, canceling');
+        this.cancelLabelEdit();
+        return;
+      }
+
+      try {
+        const url = generateUrl(`/apps/intravox/api/pages/${this.pageId}/versions/${timestamp}/label`);
+        console.log('[PageDetailsSidebar] Making PUT request to:', url, 'with label:', this.editableLabel.trim());
+
+        await axios.put(url, {
+          label: this.editableLabel.trim()
+        });
+
+        console.log('[PageDetailsSidebar] Label saved successfully');
+
+        // Update local version
+        const version = this.versions.find(v => v.timestamp === timestamp);
+        if (version) {
+          version.label = this.editableLabel.trim() || null;
+        }
+
+        this.cancelLabelEdit();
+        showSuccess(this.t('Version label updated'));
+      } catch (error) {
+        console.error('[PageDetailsSidebar] Failed to update version label:', error);
+        showError(this.t('Failed to update version label: {error}', {
+          error: error.response?.data?.error || error.message
+        }));
+      }
+    },
+    async selectVersion(version) {
+      console.log('[PageDetailsSidebar] selectVersion called', { version, pageId: this.pageId });
+
+      this.selectedVersion = version;
+
+      // Emit event to parent component to show the version preview
+      this.$emit('version-selected', {
+        version,
+        pageId: this.pageId
+      });
+    },
+    autoSelectFirstVersion() {
+      console.log('[PageDetailsSidebar] autoSelectFirstVersion called', {
+        versionsLength: this.versions.length,
+        selectedVersion: this.selectedVersion
+      });
+
+      if (this.versions.length > 0) {
+        this.$nextTick(() => {
+          console.log('[PageDetailsSidebar] Selecting first version:', this.versions[0]);
+          this.selectVersion(this.versions[0]);
+        });
+      }
+    },
   }
 };
 </script>
@@ -593,26 +796,77 @@ export default {
   padding: 12px;
   background: var(--color-background-hover);
   border-radius: var(--border-radius);
-  transition: background 0.2s;
+  transition: background 0.2s, border-color 0.2s;
+  border: 2px solid transparent;
+  cursor: pointer;
 }
 
 .version-item:hover {
   background: var(--color-background-dark);
 }
 
+.version-item--selected {
+  background: var(--color-primary-element-light);
+  border-color: var(--color-primary-element);
+}
+
 .version-info {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.version-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .version-date {
   font-weight: 600;
   font-size: 14px;
-  margin-bottom: 4px;
+}
+
+.version-author {
+  font-size: 12px;
+  color: var(--color-text-maxcontrast);
+  font-style: italic;
 }
 
 .version-details {
   font-size: 12px;
   color: var(--color-text-maxcontrast);
+}
+
+.version-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background: var(--color-background-dark);
+  color: var(--color-main-text);
+  border-radius: var(--border-radius);
+  font-size: 12px;
+  width: fit-content;
+  margin-top: 4px;
+}
+
+.version-label-edit {
+  margin-top: 8px;
+}
+
+.label-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.version-actions {
+  display: flex;
+  gap: 4px;
+  align-items: center;
 }
 
 .coming-soon {
@@ -721,5 +975,190 @@ export default {
 .metavox-container {
   padding: 12px;
   min-height: 200px;
+}
+
+/* Preview dialog */
+.preview-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  gap: 16px;
+  color: var(--color-text-maxcontrast);
+}
+
+.preview-container {
+  display: flex;
+  flex-direction: column;
+  height: 70vh;
+  max-height: 800px;
+}
+
+.preview-header {
+  padding: 20px 20px 16px 20px;
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.preview-header h3 {
+  margin: 0 0 8px 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.preview-meta {
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-text-maxcontrast);
+}
+
+.preview-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+  padding: 0 20px;
+}
+
+.preview-tabs button {
+  padding: 12px 20px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-maxcontrast);
+  transition: all 0.2s;
+}
+
+.preview-tabs button:hover {
+  color: var(--color-main-text);
+  background: var(--color-background-hover);
+}
+
+.preview-tabs button.active {
+  color: var(--color-primary-element);
+  border-bottom-color: var(--color-primary-element);
+}
+
+.preview-content {
+  padding: 20px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.preview-body {
+  line-height: 1.6;
+}
+
+.preview-body :deep(h1),
+.preview-body :deep(h2),
+.preview-body :deep(h3),
+.preview-body :deep(h4),
+.preview-body :deep(h5),
+.preview-body :deep(h6) {
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+}
+
+.preview-body :deep(p) {
+  margin-bottom: 1em;
+}
+
+.preview-body :deep(ul),
+.preview-body :deep(ol) {
+  margin-left: 1.5em;
+  margin-bottom: 1em;
+}
+
+.preview-source pre {
+  background: var(--color-background-dark);
+  padding: 16px;
+  border-radius: var(--border-radius);
+  overflow-x: auto;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+/* Diff viewer */
+.preview-diff {
+  height: 100%;
+}
+
+.diff-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  gap: 16px;
+  color: var(--color-text-maxcontrast);
+}
+
+.diff-error {
+  padding: 20px;
+  text-align: center;
+  color: var(--color-text-maxcontrast);
+}
+
+.diff-viewer {
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  background: var(--color-background-dark);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+}
+
+.diff-viewer > div {
+  display: flex;
+  padding: 2px 8px;
+  border-left: 3px solid transparent;
+}
+
+.diff-prefix {
+  display: inline-block;
+  width: 20px;
+  flex-shrink: 0;
+  font-weight: bold;
+  user-select: none;
+}
+
+.diff-line {
+  flex: 1;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.diff-added {
+  background: rgba(16, 185, 129, 0.15);
+  border-left-color: #10b981;
+}
+
+.diff-added .diff-prefix {
+  color: #10b981;
+}
+
+.diff-removed {
+  background: rgba(239, 68, 68, 0.15);
+  border-left-color: #ef4444;
+}
+
+.diff-removed .diff-prefix {
+  color: #ef4444;
+}
+
+.diff-unchanged {
+  background: transparent;
+}
+
+.diff-unchanged .diff-prefix {
+  color: var(--color-text-maxcontrast);
 }
 </style>

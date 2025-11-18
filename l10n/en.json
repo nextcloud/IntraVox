@@ -159,7 +159,19 @@
     "Italic": "Italic",
     "Underline": "Underline",
     "Bullet list": "Bullet list",
-    "Numbered list": "Numbered list"
+    "Numbered list": "Numbered list",
+    "Search pages": "Search pages",
+    "Search...": "Search...",
+    "Search Results": "Search Results",
+    "Search Results for \"{query}\"": "Search Results for \"{query}\"",
+    "{count} result(s) found": "{count} result(s) found",
+    "Searching...": "Searching...",
+    "No results found": "No results found",
+    "Try different keywords or check your spelling": "Try different keywords or check your spelling",
+    "Relevance: {score}": "Relevance: {score}",
+    "Title": "Title",
+    "Content": "Content",
+    "Search failed: {error}": "Search failed: {error}"
   },
   "pluralForm": "nplurals=2; plural=(n != 1);"
 }

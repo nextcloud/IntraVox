@@ -1,19 +1,8 @@
 <template>
   <div class="page-editor">
-    <!-- Layout Controls -->
-    <div class="editor-toolbar">
-      <NcButton @click="addRow" type="secondary">
-        <template #icon>
-          <TableRowPlusAfter :size="20" />
-        </template>
-        {{ t('Add Row') }}
-      </NcButton>
-    </div>
-
     <!-- Page Grid -->
+    <template v-for="(row, rowIndex) in localPage.layout.rows" :key="rowIndex">
     <div
-      v-for="(row, rowIndex) in localPage.layout.rows"
-      :key="rowIndex"
       class="page-row editable"
       :style="getRowStyle(row)"
     >
@@ -89,6 +78,13 @@
                       <Pencil :size="16" />
                     </template>
                   </NcButton>
+                  <NcButton @click="duplicateWidget(rowIndex, widget)"
+                            type="secondary"
+                            :aria-label="t('Duplicate widget')">
+                    <template #icon>
+                      <ContentDuplicate :size="16" />
+                    </template>
+                  </NcButton>
                   <NcButton @click="deleteWidget(rowIndex, widget.id)"
                             type="error"
                             :aria-label="t('Delete widget')">
@@ -112,6 +108,17 @@
         </div>
       </div>
     </div>
+
+    <!-- Insert Row Button -->
+    <div class="insert-row-container">
+      <NcButton @click="insertRow(rowIndex + 1)" type="secondary" class="insert-row-btn">
+        <template #icon>
+          <TableRowPlusAfter :size="20" />
+        </template>
+        {{ t('Insert Row') }}
+      </NcButton>
+    </div>
+    </template>
 
     <!-- Widget Picker Modal -->
     <WidgetPicker
@@ -164,6 +171,7 @@ import Plus from 'vue-material-design-icons/Plus.vue';
 import TableRowPlusAfter from 'vue-material-design-icons/TableRowPlusAfter.vue';
 import Pencil from 'vue-material-design-icons/Pencil.vue';
 import Delete from 'vue-material-design-icons/Delete.vue';
+import ContentDuplicate from 'vue-material-design-icons/ContentDuplicate.vue';
 import Palette from 'vue-material-design-icons/Palette.vue';
 import DragVertical from 'vue-material-design-icons/DragVertical.vue';
 import Widget from './Widget.vue';
@@ -183,6 +191,7 @@ export default {
     TableRowPlusAfter,
     Pencil,
     Delete,
+    ContentDuplicate,
     Palette,
     DragVertical,
     Widget,
@@ -385,12 +394,23 @@ export default {
       });
       this.initializeColumnArrays();
     },
+    insertRow(index) {
+      // Insert a new row at the specified index
+      this.localPage.layout.rows.splice(index, 0, {
+        columns: 1,
+        widgets: [],
+        backgroundColor: ''
+      });
+      this.initializeColumnArrays();
+    },
     deleteRow(rowIndex) {
       this.showDeleteDialog = true;
       this.deleteDialogTitle = this.t('Delete row');
       this.deleteDialogMessage = this.t('Are you sure you want to delete this row?');
       this.deleteCallback = () => {
         this.localPage.layout.rows.splice(rowIndex, 1);
+        // Reinitialize column arrays to reflect the deleted row
+        this.initializeColumnArrays();
       };
     },
     showWidgetPickerForColumn(rowIndex, column) {
@@ -519,6 +539,37 @@ export default {
         this.$emit('update', this.localPage);
       }
     },
+    duplicateWidget(rowIndex, widget) {
+      const row = this.localPage.layout.rows[rowIndex];
+
+      // Create a deep copy of the widget
+      const duplicatedWidget = JSON.parse(JSON.stringify(widget));
+
+      // Assign a new unique ID
+      duplicatedWidget.id = `widget-${this.nextWidgetId++}`;
+
+      // Insert the duplicated widget right after the original
+      const index = row.widgets.findIndex(w => w.id === widget.id);
+      if (index !== -1) {
+        // Update order for the duplicated widget and all widgets after it
+        duplicatedWidget.order = widget.order + 1;
+
+        // Insert after the original widget
+        row.widgets.splice(index + 1, 0, duplicatedWidget);
+
+        // Update order for all subsequent widgets in the same column
+        row.widgets
+          .filter(w => w.column === widget.column && w.order > widget.order)
+          .forEach(w => {
+            if (w.id !== duplicatedWidget.id) {
+              w.order++;
+            }
+          });
+
+        // Reinitialize column arrays to reflect the new widget
+        this.initializeColumnArrays();
+      }
+    },
     deleteWidget(rowIndex, widgetId) {
       this.showDeleteDialog = true;
       this.deleteDialogTitle = this.t('Delete widget');
@@ -599,6 +650,23 @@ export default {
   width: 28px;
   height: 28px;
   font-size: 12px;
+}
+
+.insert-row-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 8px 0;
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+}
+
+.insert-row-container:hover {
+  opacity: 1;
+}
+
+.insert-row-btn {
+  font-size: 13px;
 }
 
 .page-row {

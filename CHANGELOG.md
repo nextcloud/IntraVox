@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.1] - 2025-01-18 - Nextcloud Unified Search Integration
+
+### Added
+- **Nextcloud Unified Search Integration**: IntraVox pages now searchable via native Nextcloud search (Ctrl+K)
+  - Custom search provider registered with Nextcloud
+  - Appears as "IntraVox Pages" category in unified search
+  - Searches in page titles, headings, and text widget content
+  - Direct navigation to IntraVox pages from search results
+  - Search popup auto-closes on result selection
+  - icon-article displayed for IntraVox pages in search results
+  - High priority ordering: -10 when inside IntraVox, -5 when outside
+- **ROADMAP.md**: Complete product roadmap document
+  - Version 1.0: Foundation Release (MVP) features
+  - Version 2.0: Collaboration & Permissions features
+  - Version 3.0: Enterprise & Integration features
+  - Future considerations and licensing model
+
+### Changed
+- Removed custom search UI components (SearchBar, SearchResults modal)
+- Search now fully integrated with Nextcloud's native search experience
+
+### Fixed
+- Search results now properly link to IntraVox app instead of Files app
+- URL generation includes query parameter to trigger popup closure
+
+### Technical
+- Created PageSearchProvider.php implementing IProvider interface
+- Registered search provider in Application.php bootstrap
+- Real-time search without indexing by parsing JSON page files
+- Scoring system: titles (10), headings (5), page ID (5), content (3)
+- Returns top 20 results sorted by relevance score
+- Minimum query length: 2 characters
+
 ## [0.4.0] - 2025-11-16 - Enhanced UI and Demo Data Improvements
 
 ### Added

@@ -542,6 +542,11 @@ class PageService {
             chown($versionFile, 'www-data');
             chgrp($versionFile, 'www-data');
             chmod($versionFile, 0644);
+
+            // Save version metadata (author)
+            $this->saveVersionMetadata($groupFolderId, $versionFileId, $timestamp, [
+                'author' => $user->getDisplayName()
+            ]);
         } catch (\Exception $e) {
             // Versioning failure shouldn't block saves - silently continue
         }
@@ -941,11 +946,16 @@ class PageService {
 
                 $size = filesize($versionPath);
 
+                // Read version metadata if available
+                $metadata = $this->getVersionMetadata($groupFolderId, $versionFileId, $timestamp);
+
                 $versions[] = [
                     'timestamp' => $timestamp,
                     'date' => date('Y-m-d H:i:s', $timestamp),
                     'size' => $size,
-                    'relativeDate' => $this->getRelativeTime($timestamp)
+                    'relativeDate' => $this->getRelativeTime($timestamp),
+                    'label' => $metadata['label'] ?? null,
+                    'author' => $metadata['author'] ?? null
                 ];
             }
 
@@ -1549,5 +1559,262 @@ class PageService {
                 'message' => 'Unable to check cache status'
             ];
         }
+    }
+
+    /**
+     * Get version metadata (label, author)
+     */
+    private function getVersionMetadata(int $groupFolderId, int $versionFileId, int $timestamp): array {
+        try {
+            $metadataFile = "/var/www/nextcloud/data/__groupfolders/{$groupFolderId}/versions/{$versionFileId}/.metadata/{$timestamp}.json";
+
+            if (!file_exists($metadataFile)) {
+                return [];
+            }
+
+            $content = file_get_contents($metadataFile);
+            return json_decode($content, true) ?: [];
+        } catch (\Exception $e) {
+            return [];
+        }
+    }
+
+    /**
+     * Save version metadata (label, author)
+     */
+    private function saveVersionMetadata(int $groupFolderId, int $versionFileId, int $timestamp, array $metadata): void {
+        try {
+            $metadataDir = "/var/www/nextcloud/data/__groupfolders/{$groupFolderId}/versions/{$versionFileId}/.metadata";
+
+            if (!is_dir($metadataDir)) {
+                mkdir($metadataDir, 0755, true);
+                chown($metadataDir, 'www-data');
+                chgrp($metadataDir, 'www-data');
+            }
+
+            $metadataFile = "{$metadataDir}/{$timestamp}.json";
+
+            // Merge with existing metadata if it exists
+            $existing = [];
+            if (file_exists($metadataFile)) {
+                $content = file_get_contents($metadataFile);
+                $existing = json_decode($content, true) ?: [];
+            }
+
+            $merged = array_merge($existing, $metadata);
+
+            file_put_contents($metadataFile, json_encode($merged, JSON_PRETTY_PRINT));
+            chown($metadataFile, 'www-data');
+            chgrp($metadataFile, 'www-data');
+            chmod($metadataFile, 0644);
+        } catch (\Exception $e) {
+            // Metadata save failure shouldn't block operations
+        }
+    }
+
+    /**
+     * Update version label
+     */
+    public function updateVersionLabel(string $pageId, int $timestamp, ?string $label): void {
+        // Verify page exists
+        $result = $this->findPageById($this->getLanguageFolder(), $pageId);
+
+        if (!$result) {
+            throw new \Exception('Page not found: ' . $pageId);
+        }
+
+        $file = $result['file'];
+        $groupFolderId = $this->setupService->getGroupFolderId();
+        $versionFileId = $this->findVersionFileId($groupFolderId, $file->getId(), $file->getInternalPath());
+
+        if (!$versionFileId) {
+            throw new \Exception('Version storage not found');
+        }
+
+        // Verify version exists
+        $versionFile = "/var/www/nextcloud/data/__groupfolders/{$groupFolderId}/versions/{$versionFileId}/{$timestamp}";
+        if (!file_exists($versionFile)) {
+            throw new \Exception('Version not found');
+        }
+
+        // Update metadata
+        $this->saveVersionMetadata($groupFolderId, $versionFileId, $timestamp, [
+            'label' => $label
+        ]);
+    }
+
+    /**
+     * Get version content for preview
+     */
+    public function getVersionContent(string $pageId, int $timestamp): array {
+        // Verify page exists
+        $result = $this->findPageById($this->getLanguageFolder(), $pageId);
+
+        if (!$result) {
+            throw new \Exception('Page not found: ' . $pageId);
+        }
+
+        $file = $result['file'];
+        $groupFolderId = $this->setupService->getGroupFolderId();
+        $versionFileId = $this->findVersionFileId($groupFolderId, $file->getId(), $file->getInternalPath());
+
+        if (!$versionFileId) {
+            throw new \Exception('Version storage not found');
+        }
+
+        // Read version file
+        $versionFile = "/var/www/nextcloud/data/__groupfolders/{$groupFolderId}/versions/{$versionFileId}/{$timestamp}";
+        if (!file_exists($versionFile)) {
+            throw new \Exception('Version not found');
+        }
+
+        $content = file_get_contents($versionFile);
+
+        // The version file contains the full JSON content of the page
+        // So we return it as-is for both content and rawContent
+        return [
+            'title' => 'Version from ' . date('Y-m-d H:i:s', $timestamp),
+            'content' => $content,
+            'rawContent' => $content
+        ];
+    }
+
+    /**
+     * Get current page content for comparison
+     */
+    public function getCurrentPageContent(string $pageId): array {
+        $result = $this->findPageById($this->getLanguageFolder(), $pageId);
+
+        if (!$result) {
+            throw new \Exception('Page not found: ' . $pageId);
+        }
+
+        $file = $result['file'];
+        $content = $file->getContent();
+
+        return [
+            'title' => $result['page']['name'] ?? 'Untitled',
+            'content' => $content,
+            'rawContent' => $content
+        ];
+    }
+
+    /**
+     * Search pages by query string
+     * Searches in page titles and text widget content
+     */
+    public function searchPages(string $query): array {
+        $results = [];
+        $query = mb_strtolower($query);
+
+        // Get all pages (listPages already gets them recursively from current language folder)
+        $pages = $this->listPages();
+
+        foreach ($pages as $page) {
+            $matches = [];
+            $score = 0;
+
+            // Search in title (higher weight)
+            if (isset($page['title']) && mb_stripos($page['title'], $query) !== false) {
+                $score += 10;
+                $matches[] = [
+                    'type' => 'title',
+                    'text' => $page['title']
+                ];
+            }
+
+            // Search in page ID (medium weight)
+            if (isset($page['id']) && mb_stripos($page['id'], $query) !== false) {
+                $score += 5;
+            }
+
+            // Load page content and search in text widgets
+            try {
+                // Get the full page data to search in content
+                $pageData = $this->getPage($page['id']);
+
+                if ($pageData && isset($pageData['layout']['rows'])) {
+                    foreach ($pageData['layout']['rows'] as $row) {
+                        if (isset($row['widgets'])) {
+                            foreach ($row['widgets'] as $widget) {
+                                // Search in text widgets
+                                if ($widget['type'] === 'text' && isset($widget['content'])) {
+                                    if (mb_stripos($widget['content'], $query) !== false) {
+                                        $score += 3;
+                                        // Extract snippet around match
+                                        $snippet = $this->extractSnippet($widget['content'], $query);
+                                        $matches[] = [
+                                            'type' => 'content',
+                                            'text' => $snippet
+                                        ];
+                                    }
+                                }
+                                // Search in heading widgets
+                                if ($widget['type'] === 'heading' && isset($widget['text'])) {
+                                    if (mb_stripos($widget['text'], $query) !== false) {
+                                        $score += 5;
+                                        $matches[] = [
+                                            'type' => 'heading',
+                                            'text' => $widget['text']
+                                        ];
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (\Exception $e) {
+                // Skip pages that can't be read
+                continue;
+            }
+
+            // If we have matches, add to results
+            if ($score > 0) {
+                $results[] = [
+                    'id' => $page['id'],
+                    'title' => $page['title'] ?? 'Untitled',
+                    'uniqueId' => $page['uniqueId'] ?? null,
+                    'path' => $page['path'] ?? '',
+                    'score' => $score,
+                    'matches' => array_slice($matches, 0, 3), // Limit to 3 matches per page
+                    'matchCount' => count($matches)
+                ];
+            }
+        }
+
+        // Sort by score (highest first)
+        usort($results, function($a, $b) {
+            return $b['score'] - $a['score'];
+        });
+
+        // Limit to top 20 results
+        return array_slice($results, 0, 20);
+    }
+
+    /**
+     * Extract a snippet of text around a search query match
+     */
+    private function extractSnippet(string $text, string $query, int $contextLength = 100): string {
+        // Remove markdown formatting for cleaner snippets
+        $text = strip_tags($text);
+        $text = preg_replace('/[*_~`#]/', '', $text);
+
+        $pos = mb_stripos($text, $query);
+        if ($pos === false) {
+            // Fallback: return beginning of text
+            return mb_substr($text, 0, $contextLength) . '...';
+        }
+
+        // Calculate start position (with some context before)
+        $start = max(0, $pos - (int)($contextLength / 2));
+
+        // Extract snippet
+        $snippet = mb_substr($text, $start, $contextLength);
+
+        // Add ellipsis if needed
+        $prefix = $start > 0 ? '...' : '';
+        $suffix = (mb_strlen($text) > $start + $contextLength) ? '...' : '';
+
+        return $prefix . trim($snippet) . $suffix;
     }
 }

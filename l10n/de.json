@@ -131,7 +131,19 @@
     "Same tab": "Gleicher Tab",
     "New tab": "Neuer Tab",
     "Add sub-item": "Unterelement hinzufügen",
-    "Delete item": "Element löschen"
+    "Delete item": "Element löschen",
+    "Search pages": "Seiten durchsuchen",
+    "Search...": "Suchen...",
+    "Search Results": "Suchergebnisse",
+    "Search Results for \"{query}\"": "Suchergebnisse für \"{query}\"",
+    "{count} result(s) found": "{count} Ergebnisse gefunden",
+    "Searching...": "Suchen...",
+    "No results found": "Keine Ergebnisse gefunden",
+    "Try different keywords or check your spelling": "Versuchen Sie andere Suchbegriffe oder überprüfen Sie die Rechtschreibung",
+    "Relevance: {score}": "Relevanz: {score}",
+    "Title": "Titel",
+    "Content": "Inhalt",
+    "Search failed: {error}": "Suche fehlgeschlagen: {error}"
   },
   "pluralForm": "nplurals=2; plural=(n != 1);"
 }
