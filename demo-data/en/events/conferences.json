@@ -1,0 +1,132 @@
+{
+    "uniqueId": "page-5a9d2c84-f3b1-4e28-9c6f-7d1e3b2a5c8f",
+    "title": "Conferences",
+    "language": "en",
+    "created": 1760945741,
+    "modified": 1763537741,
+    "layout": {
+        "columns": 1,
+        "rows": [
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element)",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "images/conference.jpg",
+                        "alt": "Conference presentation",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Conferences",
+                        "level": 1
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 3,
+                        "content": "Meet us at upcoming tech conferences and events"
+                    }
+                ]
+            },
+            {
+                "columns": 2,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Upcoming Events",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "**Nextcloud Conference 2025**\n📍 Berlin, Germany\n📅 December 10-12, 2025\n\nWe'll be presenting a talk on building modern intranets with Nextcloud. Come say hi at our booth!"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 1,
+                        "content": "Open Source Summit",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 2,
+                        "content": "**FOSDEM 2026**\n📍 Brussels, Belgium\n📅 February 1-2, 2026\n\nJoin us for a workshop on IntraVox development and contribute to open-source!"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Past Speaking Engagements",
+                        "level": 2
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 2,
+                        "columns": 3,
+                        "items": [
+                            {
+                                "title": "Nextcloud Conference 2024",
+                                "text": "Introduction to IntraVox",
+                                "url": "#",
+                                "icon": "account-tie",
+                                "target": "_blank"
+                            },
+                            {
+                                "title": "Vue.js Amsterdam 2024",
+                                "text": "Building enterprise apps with Vue.js",
+                                "url": "#",
+                                "icon": "code-tags",
+                                "target": "_blank"
+                            },
+                            {
+                                "title": "Open Source Summit EU",
+                                "text": "The business of open source",
+                                "url": "#",
+                                "icon": "open-source-initiative",
+                                "target": "_blank"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Want Us at Your Event?",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "We love speaking about open-source software, IntraVox development, and building collaborative tools. [Contact us](#contact) to discuss speaking opportunities!"
+                    }
+                ]
+            }
+        ]
+    }
+}

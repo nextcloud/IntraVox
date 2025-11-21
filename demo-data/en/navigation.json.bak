@@ -1,0 +1,288 @@
+{
+    "type": "megamenu",
+    "items": [
+        {
+            "id": "home",
+            "title": "Home",
+            "pageId": "home",
+            "url": null,
+            "target": null,
+            "children": []
+        },
+        {
+            "id": "about",
+            "title": "About",
+            "pageId": "about",
+            "url": null,
+            "target": null,
+            "children": [
+                {
+                    "id": "team",
+                    "title": "Team",
+                    "pageId": "team",
+                    "url": null,
+                    "target": null,
+                    "children": [
+                        {
+                            "id": "management",
+                            "title": "Management",
+                            "pageId": "management",
+                            "url": null,
+                            "target": null,
+                            "children": []
+                        },
+                        {
+                            "id": "departments",
+                            "title": "Departments",
+                            "pageId": "departments",
+                            "url": null,
+                            "target": null,
+                            "children": []
+                        },
+                        {
+                            "id": "benefits",
+                            "title": "Benefits & Perks",
+                            "pageId": "benefits",
+                            "url": null,
+                            "target": null,
+                            "children": []
+                        },
+                        {
+                            "id": "culture",
+                            "title": "Culture & Values",
+                            "pageId": "culture",
+                            "url": null,
+                            "target": null,
+                            "children": []
+                        }
+                    ]
+                },
+                {
+                    "id": "careers",
+                    "title": "Careers",
+                    "pageId": "careers",
+                    "url": null,
+                    "target": null,
+                    "children": [
+                        {
+                            "id": "open-positions",
+                            "title": "Open Positions",
+                            "pageId": "open-positions",
+                            "url": null,
+                            "target": null,
+                            "children": []
+                        },
+                        {
+                            "id": "internships",
+                            "title": "Internships",
+                            "pageId": "internships",
+                            "url": null,
+                            "target": null,
+                            "children": []
+                        },
+                        {
+                            "id": "application-process",
+                            "title": "Application Process",
+                            "pageId": "application-process",
+                            "url": null,
+                            "target": null,
+                            "children": []
+                        }
+                    ]
+                },
+                {
+                    "id": "contact",
+                    "title": "Contact",
+                    "pageId": "contact",
+                    "url": null,
+                    "target": null,
+                    "children": []
+                }
+            ]
+        },
+        {
+            "id": "news-events",
+            "title": "News & Events",
+            "pageId": null,
+            "url": null,
+            "target": null,
+            "children": [
+                {
+                    "id": "news",
+                    "title": "News",
+                    "pageId": "news",
+                    "url": null,
+                    "target": null,
+                    "children": [
+                        {
+                            "id": "company-blog",
+                            "title": "Company Blog",
+                            "pageId": "company-blog",
+                            "url": null,
+                            "target": null,
+                            "children": []
+                        }
+                    ]
+                },
+                {
+                    "id": "events",
+                    "title": "Events",
+                    "pageId": "events",
+                    "url": null,
+                    "target": null,
+                    "children": [
+                        {
+                            "id": "webinars",
+                            "title": "Webinars",
+                            "pageId": "webinars",
+                            "url": null,
+                            "target": null,
+                            "children": []
+                        },
+                        {
+                            "id": "conferences",
+                            "title": "Conferences",
+                            "pageId": "conferences",
+                            "url": null,
+                            "target": null,
+                            "children": []
+                        }
+                    ]
+                },
+                {
+                    "id": "press",
+                    "title": "Press Releases",
+                    "pageId": "press",
+                    "url": null,
+                    "target": null,
+                    "children": []
+                }
+            ]
+        },
+        {
+            "id": "resources",
+            "title": "Resources",
+            "pageId": null,
+            "url": null,
+            "target": null,
+            "children": [
+                {
+                    "id": "documentation",
+                    "title": "Documentation",
+                    "pageId": "documentation",
+                    "url": null,
+                    "target": null,
+                    "children": [
+                        {
+                            "id": "getting-started",
+                            "title": "Getting Started",
+                            "pageId": "getting-started",
+                            "url": null,
+                            "target": null,
+                            "children": []
+                        },
+                        {
+                            "id": "user-guide",
+                            "title": "User Guide",
+                            "pageId": "user-guide",
+                            "url": null,
+                            "target": null,
+                            "children": []
+                        },
+                        {
+                            "id": "faq",
+                            "title": "FAQ",
+                            "pageId": "faq",
+                            "url": null,
+                            "target": null,
+                            "children": []
+                        }
+                    ]
+                },
+                {
+                    "id": "downloads",
+                    "title": "Downloads",
+                    "pageId": "downloads",
+                    "url": null,
+                    "target": null,
+                    "children": [
+                        {
+                            "id": "release-notes",
+                            "title": "Release Notes",
+                            "pageId": "release-notes",
+                            "url": null,
+                            "target": null,
+                            "children": []
+                        },
+                        {
+                            "id": "previous-versions",
+                            "title": "Previous Versions",
+                            "pageId": "previous-versions",
+                            "url": null,
+                            "target": null,
+                            "children": []
+                        }
+                    ]
+                },
+                {
+                    "id": "support",
+                    "title": "Support",
+                    "pageId": "support",
+                    "url": null,
+                    "target": null,
+                    "children": [
+                        {
+                            "id": "tutorials",
+                            "title": "Tutorials",
+                            "pageId": "tutorials",
+                            "url": null,
+                            "target": null,
+                            "children": []
+                        },
+                        {
+                            "id": "api-reference",
+                            "title": "API Reference",
+                            "pageId": "api-reference",
+                            "url": null,
+                            "target": null,
+                            "children": []
+                        },
+                        {
+                            "id": "community",
+                            "title": "Community",
+                            "pageId": "community",
+                            "url": null,
+                            "target": null,
+                            "children": []
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "external-links",
+            "title": "External",
+            "pageId": null,
+            "url": null,
+            "target": null,
+            "children": [
+                {
+                    "id": "nextcloud",
+                    "title": "Nextcloud",
+                    "pageId": null,
+                    "url": "https://nextcloud.com",
+                    "target": "_blank",
+                    "children": []
+                },
+                {
+                    "id": "github",
+                    "title": "GitHub",
+                    "pageId": null,
+                    "url": "https://github.com",
+                    "target": "_blank",
+                    "children": []
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,129 @@
+{
+    "uniqueId": "page-3e7b5c92-a4d1-4f28-9c6f-8d2e1b3a5c7f",
+    "title": "Company Blog",
+    "language": "en",
+    "created": 1760945741,
+    "modified": 1763537741,
+    "layout": {
+        "columns": 1,
+        "rows": [
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element)",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "images/news-press.jpg",
+                        "alt": "Company blog",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Company Blog",
+                        "level": 1
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 3,
+                        "content": "Stories, insights, and updates from the IntraVox team"
+                    }
+                ]
+            },
+            {
+                "columns": 2,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Latest Post: Building IntraVox 1.0",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "**November 15, 2025** by *Sarah Chen, Lead Developer*\n\nAfter 18 months of development, we're excited to share the journey of building IntraVox 1.0. From the initial concept to our first stable release, here's what we learned along the way..."
+                    },
+                    {
+                        "type": "image",
+                        "column": 2,
+                        "order": 1,
+                        "src": "images/team-collaboration.jpg",
+                        "alt": "Development process",
+                        "objectFit": "cover"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Recent Posts",
+                        "level": 2
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 2,
+                        "columns": 3,
+                        "items": [
+                            {
+                                "title": "Why We Chose Vue.js",
+                                "text": "Technical decisions behind IntraVox frontend",
+                                "url": "#",
+                                "icon": "code-tags",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Open Source Journey",
+                                "text": "Our commitment to the AGPL license",
+                                "url": "#",
+                                "icon": "open-source-initiative",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Remote Work Tips",
+                                "text": "How we collaborate across time zones",
+                                "url": "#",
+                                "icon": "account-multiple",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Design Philosophy",
+                                "text": "Creating intuitive user experiences",
+                                "url": "#",
+                                "icon": "palette",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Community Feedback",
+                                "text": "How user input shapes our roadmap",
+                                "url": "#",
+                                "icon": "forum",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Behind the Scenes",
+                                "text": "A day in the life of the IntraVox team",
+                                "url": "#",
+                                "icon": "account-tie",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+}

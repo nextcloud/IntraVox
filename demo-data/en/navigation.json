@@ -1,0 +1,306 @@
+{
+  "type": "megamenu",
+  "items": [
+    {
+      "title": "Home",
+      "url": null,
+      "target": null,
+      "children": [],
+      "uniqueId": "page-2e8f694e-147e-4793-8949-4732e679ae6b"
+    },
+    {
+      "title": "About",
+      "url": null,
+      "target": null,
+      "children": [
+        {
+          "title": "Team",
+          "url": null,
+          "target": null,
+          "children": [
+            {
+              "title": "Management",
+              "url": null,
+              "target": null,
+              "children": [],
+              "uniqueId": "page-4599fd9f-9f03-46ff-9d0e-cb57f6b48f19"
+            },
+            {
+              "title": "Departments",
+              "url": null,
+              "target": null,
+              "children": [],
+              "uniqueId": "page-76b06618-98c1-4bce-bb3d-29fcf9a109a1"
+            },
+            {
+              "title": "Benefits & Perks",
+              "url": null,
+              "target": null,
+              "children": [],
+              "uniqueId": "page-8a4f2b91-d3e5-4c87-9f12-1e5c8d7a6b3f"
+            },
+            {
+              "title": "Culture & Values",
+              "url": null,
+              "target": null,
+              "children": [],
+              "uniqueId": "page-7c2e9b45-f1a8-4d29-8e3f-2b9c1a7d5e4f"
+            }
+          ],
+          "uniqueId": "page-5d2d48f9-c862-4195-bf8d-f60f00d0f306"
+        },
+        {
+          "title": "Careers",
+          "url": null,
+          "target": null,
+          "children": [
+            {
+              "title": "Open Positions",
+              "url": null,
+              "target": null,
+              "children": [],
+              "uniqueId": "page-9d5e3a72-c4b6-4f18-a9e7-3c8d2f1b6a5e"
+            },
+            {
+              "title": "Internships",
+              "url": null,
+              "target": null,
+              "children": [],
+              "uniqueId": "page-6f8a2d94-b5c3-4e17-9a8f-1d7c3b2e5a4f"
+            },
+            {
+              "title": "Application Process",
+              "url": null,
+              "target": null,
+              "children": [],
+              "uniqueId": "page-4b7c9e21-d5a8-4f32-8c6f-2e9d1a3b5c7f"
+            }
+          ],
+          "uniqueId": "page-c72ef99e-ed6e-4f87-8dbe-3b9b4819f73e"
+        },
+        {
+          "title": "Contact",
+          "url": null,
+          "target": null,
+          "children": [
+            {
+              "title": "Office Locations",
+              "url": null,
+              "target": null,
+              "children": [],
+              "uniqueId": "page-4d8a7f96-e5c3-4f29-9b8f-0e4d3c5e7a8f"
+            },
+            {
+              "title": "Partners",
+              "url": null,
+              "target": null,
+              "children": [],
+              "uniqueId": "page-5e9b8g07-f6d4-4g30-0c9g-1f5e4d6f8b9g"
+            }
+          ],
+          "uniqueId": "page-a879a7e3-2d98-4968-b06e-f19a2eb73d66"
+        }
+      ],
+      "uniqueId": "page-f33c6397-e2f2-4cd9-b58a-e84c20aae882"
+    },
+    {
+      "title": "News & Events",
+      "url": null,
+      "target": null,
+      "children": [
+        {
+          "title": "News",
+          "url": null,
+          "target": null,
+          "children": [
+            {
+              "title": "Company Blog",
+              "url": null,
+              "target": null,
+              "children": [],
+              "uniqueId": "page-3e7b5c92-a4d1-4f28-9c6f-8d2e1b3a5c7f"
+            },
+            {
+              "title": "Product Updates",
+              "url": null,
+              "target": null,
+              "children": [],
+              "uniqueId": "page-6f0c9h18-g7e5-4h41-1d0h-2g6f5e7g9c0h"
+            },
+            {
+              "title": "Case Studies",
+              "url": null,
+              "target": null,
+              "children": [],
+              "uniqueId": "page-7g1d0i29-h8f6-4i52-2e1i-3h7g6f8h0d1i"
+            }
+          ],
+          "uniqueId": "page-e1e356f5-3ea6-489b-929c-d786862ddb6b"
+        },
+        {
+          "title": "Events",
+          "url": null,
+          "target": null,
+          "children": [
+            {
+              "title": "Webinars",
+              "url": null,
+              "target": null,
+              "children": [],
+              "uniqueId": "page-2d8c5a94-b3f1-4e29-8a7f-1c9d2b5e3a6f"
+            },
+            {
+              "title": "Conferences",
+              "url": null,
+              "target": null,
+              "children": [],
+              "uniqueId": "page-5a9d2c84-f3b1-4e28-9c6f-7d1e3b2a5c8f"
+            },
+            {
+              "title": "Meetups",
+              "url": null,
+              "target": null,
+              "children": [],
+              "uniqueId": "page-8h2e1j30-i9g7-4j63-3f2j-4i8h7g9i1e2j"
+            }
+          ],
+          "uniqueId": "page-8558ade2-b8c6-4109-b54f-79a147797cd2"
+        },
+        {
+          "title": "Press Releases",
+          "url": null,
+          "target": null,
+          "children": [],
+          "uniqueId": "page-15d684e7-9c00-4679-9840-c918e4bc2d31"
+        }
+      ]
+    },
+    {
+      "title": "Resources",
+      "url": null,
+      "target": null,
+      "children": [
+        {
+          "title": "Documentation",
+          "url": null,
+          "target": null,
+          "children": [
+            {
+              "title": "Getting Started",
+              "url": null,
+              "target": null,
+              "children": [],
+              "uniqueId": "page-226c037e-8b2e-4912-bb1a-4d3b583f6d48"
+            },
+            {
+              "title": "User Guide",
+              "url": null,
+              "target": null,
+              "children": [],
+              "uniqueId": "page-f981b0d0-242e-44e0-83a9-41aad4a11f6b"
+            },
+            {
+              "title": "FAQ",
+              "url": null,
+              "target": null,
+              "children": [],
+              "uniqueId": "page-d2b68bd1-4afb-4fda-bbce-0ba5ba4ac6e8"
+            },
+            {
+              "title": "Admin Guide",
+              "url": null,
+              "target": null,
+              "children": [],
+              "uniqueId": "page-1a9e4c73-b8d2-4f19-9e6f-3c7d2a5b8f9e"
+            },
+            {
+              "title": "Developer Docs",
+              "url": null,
+              "target": null,
+              "children": [],
+              "uniqueId": "page-2b8f5d94-c3e1-4f28-9a7f-8d2e1b3c5a6f"
+            },
+            {
+              "title": "Video Tutorials",
+              "url": null,
+              "target": null,
+              "children": [],
+              "uniqueId": "page-3c9f6e85-d4f2-4e39-8b8f-9d3e2c4d6a7f"
+            }
+          ],
+          "uniqueId": "page-507de599-7957-4df2-98e6-fdf3df78138d"
+        },
+        {
+          "title": "Downloads",
+          "url": null,
+          "target": null,
+          "children": [
+            {
+              "title": "Release Notes",
+              "url": null,
+              "target": null,
+              "children": [],
+              "uniqueId": "page-8d3c5a94-b2f1-4e28-9a7f-6c1d2b3e5a9f"
+            },
+            {
+              "title": "Previous Versions",
+              "url": null,
+              "target": null,
+              "children": [],
+              "uniqueId": "page-7b5c2d94-a3f1-4e29-8c6f-9d1e2b3a5c7f"
+            }
+          ],
+          "uniqueId": "page-c2839fe9-f220-4fac-8f11-349855885ec6"
+        },
+        {
+          "title": "Support",
+          "url": null,
+          "target": null,
+          "children": [
+            {
+              "title": "Tutorials",
+              "url": null,
+              "target": null,
+              "children": [],
+              "uniqueId": "page-6c9d2a84-f3b1-4e28-9a7f-5d1e3b2c5a8f"
+            },
+            {
+              "title": "API Reference",
+              "url": null,
+              "target": null,
+              "children": [],
+              "uniqueId": "page-5d8c2a94-b3f1-4e28-9c7f-6d1e2b3a5c9f"
+            },
+            {
+              "title": "Community",
+              "url": null,
+              "target": null,
+              "children": [],
+              "uniqueId": "page-4c7d2a94-b3f1-4e28-9c6f-5d1e2b3a5c8f"
+            }
+          ],
+          "uniqueId": "page-a275067d-a6e0-4ff5-930c-ffebd36c5773"
+        }
+      ]
+    },
+    {
+      "title": "External",
+      "url": null,
+      "target": null,
+      "children": [
+        {
+          "title": "Nextcloud",
+          "url": "https://nextcloud.com",
+          "target": "_blank",
+          "children": []
+        },
+        {
+          "title": "GitHub",
+          "url": "https://github.com",
+          "target": "_blank",
+          "children": []
+        }
+      ]
+    }
+  ]
+}

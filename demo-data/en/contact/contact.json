@@ -1,0 +1,82 @@
+{
+    "uniqueId": "page-a879a7e3-2d98-4968-b06e-f19a2eb73d66",
+    "title": "Contact Us",
+    "language": "en",
+    "created": 1760945741,
+    "modified": 1763537741,
+    "layout": {
+        "columns": 1,
+        "rows": [
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Get in Touch",
+                        "level": 1
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "We'd love to hear from you"
+                    }
+                ]
+            },
+            {
+                "columns": 2,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Office",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "**Address:**\nIntraVox HQ\nAmsterdam Science Park\n1098 XH Amsterdam\nNetherlands"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 1,
+                        "content": "Get in Touch",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 2,
+                        "content": "**Email:** info@intravox.example\n**Phone:** +31 (0) 20 123 4567\n**Support:** support@intravox.example"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Business Hours",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Monday - Friday: 9:00 AM - 5:00 PM (CET)\n\nFor urgent support inquiries, please use our 24/7 support portal."
+                    }
+                ]
+            }
+        ]
+    }
+}

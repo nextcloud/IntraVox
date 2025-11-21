@@ -1,0 +1,50 @@
+{
+    "uniqueId": "page-f981b0d0-242e-44e0-83a9-41aad4a11f6b",
+    "title": "User Guide",
+    "language": "en",
+    "created": 1760945741,
+    "modified": 1763537741,
+    "layout": {
+        "columns": 1,
+        "rows": [
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "User Guide",
+                        "level": 1
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Comprehensive guide to all IntraVox features"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Working with Pages",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "### Page Editor\n\nThe IntraVox page editor lets you create professional-looking pages without any technical knowledge.\n\n### Available Widgets\n\n- **Text**: Rich text with Markdown support\n- **Heading**: H1-H6 headings\n- **Image**: Upload and display images\n- **Links**: Grid of clickable links with icons\n- **Divider**: Visual separators between sections"
+                    }
+                ]
+            }
+        ]
+    }
+}
