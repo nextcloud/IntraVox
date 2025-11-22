@@ -1,0 +1,91 @@
+{
+  "uniqueId": "page-b2c3d4e5-f6a7-8901-bcde-f12345678901",
+  "title": "Afdeling",
+  "language": "nl",
+  "created": 1732270000,
+  "modified": 1732270000,
+  "layout": {
+    "columns": 1,
+    "rows": [
+      {
+        "columns": 1,
+        "backgroundColor": "var(--color-background-dark)",
+        "widgets": [
+          {
+            "type": "heading",
+            "column": 1,
+            "order": 1,
+            "content": "Afdelingen",
+            "level": 1
+          },
+          {
+            "type": "text",
+            "column": 1,
+            "order": 2,
+            "content": "Ontdek de verschillende afdelingen binnen onze organisatie en leer meer over hun taken en verantwoordelijkheden."
+          }
+        ]
+      },
+      {
+        "columns": 2,
+        "backgroundColor": "",
+        "widgets": [
+          {
+            "type": "heading",
+            "column": 1,
+            "order": 1,
+            "content": "Onze Teams",
+            "level": 2
+          },
+          {
+            "type": "text",
+            "column": 1,
+            "order": 2,
+            "content": "Elke afdeling speelt een belangrijke rol in het succes van onze organisatie. Van Marketing tot IT, van HR tot Financiën - iedereen draagt bij aan onze gezamenlijke doelen.\n\nOntdek hieronder meer informatie over de verschillende afdelingen en hun specifieke expertise."
+          },
+          {
+            "type": "divider",
+            "column": 1,
+            "order": 3,
+            "style": "solid",
+            "color": "#cccccc",
+            "height": "2px"
+          },
+          {
+            "type": "heading",
+            "column": 1,
+            "order": 4,
+            "content": "Samenwerking",
+            "level": 3
+          },
+          {
+            "type": "text",
+            "column": 1,
+            "order": 5,
+            "content": "Onze afdelingen werken nauw samen om de beste resultaten te behalen voor onze klanten en stakeholders."
+          },
+          {
+            "type": "image",
+            "column": 2,
+            "order": 1,
+            "src": "modern-workspace.jpg",
+            "alt": "Moderne werkplek",
+            "width": "500px",
+            "objectFit": "cover",
+            "objectPosition": "center center"
+          },
+          {
+            "type": "image",
+            "column": 2,
+            "order": 2,
+            "src": "team-group.jpg",
+            "alt": "Team",
+            "width": "500px",
+            "objectFit": "cover",
+            "objectPosition": "center center"
+          }
+        ]
+      }
+    ]
+  }
+}

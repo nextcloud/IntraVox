@@ -1,0 +1,135 @@
+{
+  "uniqueId": "page-a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "title": "Home",
+  "language": "nl",
+  "created": 1732270000,
+  "modified": 1732270000,
+  "layout": {
+    "columns": 1,
+    "rows": [
+      {
+        "columns": 1,
+        "backgroundColor": "var(--color-primary-light)",
+        "widgets": [
+          {
+            "type": "heading",
+            "column": 1,
+            "order": 1,
+            "content": "Welkom bij IntraVox",
+            "level": 1
+          },
+          {
+            "type": "text",
+            "column": 1,
+            "order": 2,
+            "content": "Uw centrale platform voor interne communicatie en samenwerking."
+          }
+        ]
+      },
+      {
+        "columns": 2,
+        "backgroundColor": "",
+        "widgets": [
+          {
+            "type": "image",
+            "column": 1,
+            "order": 1,
+            "src": "hero-office.jpg",
+            "alt": "Kantoor",
+            "width": "800px",
+            "objectFit": "cover",
+            "objectPosition": "center center"
+          },
+          {
+            "type": "heading",
+            "column": 2,
+            "order": 1,
+            "content": "Moderne Werkplek",
+            "level": 2
+          },
+          {
+            "type": "text",
+            "column": 2,
+            "order": 2,
+            "content": "Creëer een moderne digitale werkplek waar teams effectief kunnen samenwerken. Met IntraVox brengt u alle informatie en communicatie samen op één centrale plek."
+          }
+        ]
+      },
+      {
+        "columns": 3,
+        "backgroundColor": "",
+        "widgets": [
+          {
+            "type": "image",
+            "column": 1,
+            "order": 1,
+            "src": "team-hero.jpg",
+            "alt": "Team",
+            "width": "500px",
+            "objectFit": "cover",
+            "objectPosition": "center center"
+          },
+          {
+            "type": "heading",
+            "column": 1,
+            "order": 2,
+            "content": "Teamwork",
+            "level": 3
+          },
+          {
+            "type": "text",
+            "column": 1,
+            "order": 3,
+            "content": "Werk samen met uw team aan projecten en deel kennis."
+          },
+          {
+            "type": "image",
+            "column": 2,
+            "order": 1,
+            "src": "collaboration.jpg",
+            "alt": "Samenwerking",
+            "width": "500px",
+            "objectFit": "cover",
+            "objectPosition": "center center"
+          },
+          {
+            "type": "heading",
+            "column": 2,
+            "order": 2,
+            "content": "Communicatie",
+            "level": 3
+          },
+          {
+            "type": "text",
+            "column": 2,
+            "order": 3,
+            "content": "Blijf op de hoogte van het laatste nieuws en updates."
+          },
+          {
+            "type": "image",
+            "column": 3,
+            "order": 1,
+            "src": "hero-office.jpg",
+            "alt": "Documenten",
+            "width": "500px",
+            "objectFit": "cover",
+            "objectPosition": "center center"
+          },
+          {
+            "type": "heading",
+            "column": 3,
+            "order": 2,
+            "content": "Documentatie",
+            "level": 3
+          },
+          {
+            "type": "text",
+            "column": 3,
+            "order": 3,
+            "content": "Vind snel de informatie die u nodig heeft."
+          }
+        ]
+      }
+    ]
+  }
+}

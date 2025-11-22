@@ -26,8 +26,6 @@ class PageService {
     private IConfig $config;
     private IDBConnection $db;
     private LoggerInterface $logger;
-
-    /** @var array Cache mapping uniqueId => folder path for images */
     private array $pageFolderCache = [];
 
     public function __construct(
@@ -194,10 +192,9 @@ class PageService {
 
     /**
      * Recursively find a page by ID (legacy support - keep for backward compatibility)
-     * Now also supports finding by uniqueId by checking JSON files in subfolders
      */
     private function findPageById($folder, string $id): ?array {
-        // Check root for home.json (supports both 'home' and uniqueId)
+        // Check root for home.json
         if ($id === 'home') {
             try {
                 $file = $folder->get('home.json');
@@ -205,18 +202,6 @@ class PageService {
             } catch (NotFoundException $e) {
                 // Continue searching
             }
-        }
-
-        // Also check if home.json matches the uniqueId
-        try {
-            $homeFile = $folder->get('home.json');
-            $content = $homeFile->getContent();
-            $data = json_decode($content, true);
-            if ($data && isset($data['uniqueId']) && $data['uniqueId'] === $id) {
-                return ['file' => $homeFile, 'folder' => $folder];
-            }
-        } catch (NotFoundException $e) {
-            // No home.json, continue
         }
 
         // Check if there's a folder with this ID
@@ -230,48 +215,9 @@ class PageService {
             // Continue searching
         }
 
-        // Check all JSON files in current folder for uniqueId match
-        foreach ($folder->getDirectoryListing() as $item) {
-            $itemName = $item->getName();
-
-            if ($item->getType() === \OCP\Files\FileInfo::TYPE_FILE &&
-                substr($itemName, -5) === '.json' &&
-                $itemName !== 'navigation.json' &&
-                $itemName !== 'footer.json') {
-                try {
-                    $content = $item->getContent();
-                    $data = json_decode($content, true);
-                    if ($data && isset($data['uniqueId']) && $data['uniqueId'] === $id) {
-                        // Determine the correct folder:
-                        // If there's a matching subfolder (e.g., team folder for team.json),
-                        // return that subfolder. Otherwise return current folder.
-                        $baseName = substr($itemName, 0, -5); // Remove .json extension
-                        try {
-                            $matchingFolder = $folder->get($baseName);
-                            if ($matchingFolder->getType() === \OCP\Files\FileInfo::TYPE_FOLDER) {
-                                return ['file' => $item, 'folder' => $matchingFolder];
-                            }
-                        } catch (NotFoundException $e) {
-                            // No matching folder, use current folder
-                        }
-                        return ['file' => $item, 'folder' => $folder];
-                    }
-                } catch (\Exception $e) {
-                    // Skip invalid files
-                    continue;
-                }
-            }
-        }
-
         // Recursively search subfolders
         foreach ($folder->getDirectoryListing() as $item) {
             if ($item->getType() === \OCP\Files\FileInfo::TYPE_FOLDER) {
-                // Skip image folders and special folders
-                $itemName = $item->getName();
-                if (strpos($itemName, '📷') === 0 || $itemName === 'images' || $itemName === '.nomedia') {
-                    continue;
-                }
-
                 $result = $this->findPageById($item, $id);
                 if ($result !== null) {
                     return $result;
@@ -370,12 +316,12 @@ class PageService {
         $folder = $this->getLanguageFolder();
         $result = null;
 
-        // Save original ID before sanitization to check for uniqueId pattern
+        // Save original ID before sanitization
         $originalId = $id;
 
-        $this->logger->debug('IntraVox: Getting page', ['originalId' => $originalId]);
+        $this->logger->debug('IntraVox: Getting page - originalId', ['originalId' => $originalId]);
 
-        // First try to find by uniqueId (new method) - check BEFORE sanitization
+        // Check for uniqueId pattern BEFORE sanitization
         if (strpos($originalId, 'page-') === 0) {
             $this->logger->debug('IntraVox: Searching by uniqueId', ['uniqueId' => $originalId]);
             $result = $this->findPageByUniqueId($folder, $originalId);
@@ -386,7 +332,7 @@ class PageService {
             }
         }
 
-        // If not found, try legacy id lookup for backward compatibility
+        // Only sanitize for legacy ID fallback
         if ($result === null) {
             $id = $this->sanitizeId($originalId);
             $this->logger->debug('IntraVox: Trying legacy id lookup', ['id' => $id]);
@@ -415,13 +361,17 @@ class PageService {
             }
         }
 
+        // Cache folder location using both uniqueId and pageId for fast image access
+        $pageFolder = $result['folder'];
+        $uniqueId = $data['uniqueId'];
+        $this->pageFolderCache[$uniqueId] = $pageFolder;
+        $this->pageFolderCache[$originalId] = $pageFolder;
+        if (isset($id)) {
+            $this->pageFolderCache[$id] = $pageFolder;
+        }
+
         // Enrich with real-time path data
         $data = $this->enrichWithPathData($data, $result['folder']);
-
-        // Cache the folder for image lookups
-        if (isset($data['uniqueId'])) {
-            $this->pageFolderCache[$data['uniqueId']] = $result['folder'];
-        }
 
         return $this->sanitizePage($data);
     }
@@ -636,11 +586,10 @@ class PageService {
      * Get breadcrumb trail for a page
      *
      * Returns array of breadcrumb items from home to current page
-     * Loads navigation.json directly to avoid dependency injection issues
      */
     public function getBreadcrumb(string $pageId): array {
+        $page = $this->getPage($pageId);
         $breadcrumb = [];
-        $pageTitle = $pageId; // fallback if we can't find in navigation
 
         // Always start with Home
         $breadcrumb[] = [
@@ -651,79 +600,60 @@ class PageService {
             'current' => false
         ];
 
-        // Try to find the path to this page in the navigation structure
-        try {
-            // Load navigation.json directly from filesystem
-            $languageFolder = $this->getLanguageFolder();
-            $navFile = $languageFolder->get('navigation.json');
-            $navContent = $navFile->getContent();
-            $navigation = json_decode($navContent, true);
+        // Parse path to build breadcrumb
+        $pathParts = explode('/', $page['path']);
+        $currentPath = '';
 
-            if ($navigation && isset($navigation['items']) && is_array($navigation['items'])) {
-                $navPath = $this->findNavigationPath($navigation['items'], $pageId);
-
-                if ($navPath && count($navPath) > 0) {
-                    // Add parent pages from navigation
-                    foreach ($navPath as $navItem) {
-                        if (isset($navItem['title']) && isset($navItem['uniqueId'])) {
-                            // If this is the current page, save its title but don't add to breadcrumb yet
-                            if ($navItem['uniqueId'] === $pageId) {
-                                $pageTitle = $navItem['title'];
-                                continue;
-                            }
-
-                            // Add parent page to breadcrumb
-                            $breadcrumb[] = [
-                                'id' => $navItem['uniqueId'],
-                                'title' => $navItem['title'],
-                                'path' => '',
-                                'url' => '#' . $navItem['uniqueId'],
-                                'current' => false
-                            ];
-                        }
-                    }
-                }
+        foreach ($pathParts as $index => $part) {
+            // Skip language folder in breadcrumb display
+            if (in_array($part, self::SUPPORTED_LANGUAGES)) {
+                continue;
             }
-        } catch (\Exception $e) {
-            // If navigation loading fails, just continue with basic breadcrumb
-            // Don't throw error - breadcrumb is not critical
-        }
 
-        // Add current page (not clickable)
-        $breadcrumb[] = [
-            'uniqueId' => $pageId,
-            'title' => $pageTitle,
-            'path' => '',
-            'url' => null,
-            'current' => true
-        ];
+            // Skip 'public' and 'departments' keywords
+            if (in_array($part, ['public', 'departments'])) {
+                continue;
+            }
+
+            $currentPath .= ($currentPath ? '/' : '') . $part;
+
+            // Check if this is the last item (current page)
+            if ($index === count($pathParts) - 1) {
+                // Add current page (not clickable)
+                $breadcrumb[] = [
+                    'uniqueId' => $page['uniqueId'],
+                    'title' => $page['title'],
+                    'path' => $page['path'],
+                    'url' => null,
+                    'current' => true
+                ];
+                break;
+            }
+
+            // Try to load parent page for its title
+            try {
+                $parentPage = $this->getPage($part);
+                $breadcrumb[] = [
+                    'id' => $part,
+                    'title' => $parentPage['title'],
+                    'path' => $parentPage['path'],
+                    'url' => '#' . $part,
+                    'current' => false
+                ];
+            } catch (\Exception $e) {
+                // Parent page not found or error loading it
+                // Use folder name as fallback
+                $breadcrumb[] = [
+                    'id' => $part,
+                    'title' => ucfirst(str_replace('-', ' ', $part)),
+                    'path' => $currentPath,
+                    'url' => '#' . $part,
+                    'current' => false
+                ];
+            }
+        }
 
         return $breadcrumb;
-    }
-
-    /**
-     * Find the path to a page in the navigation tree
-     * Returns an array of navigation items from root to the target page
-     */
-    private function findNavigationPath(array $items, string $targetUniqueId, array $currentPath = []): ?array {
-        foreach ($items as $item) {
-            $newPath = array_merge($currentPath, [$item]);
-
-            // Check if this is the target page
-            if (isset($item['uniqueId']) && $item['uniqueId'] === $targetUniqueId) {
-                return $newPath;
-            }
-
-            // Recursively check children
-            if (isset($item['children']) && is_array($item['children'])) {
-                $result = $this->findNavigationPath($item['children'], $targetUniqueId, $newPath);
-                if ($result !== null) {
-                    return $result;
-                }
-            }
-        }
-
-        return null;
     }
 
     /**
@@ -784,10 +714,10 @@ class PageService {
 
             // Create images folder for home if it doesn't exist
             try {
-                $imagesFolder = $targetFolder->get('images');
+                $imagesFolder = $targetFolder->get('📷 images');
                 $this->createImagesFolderIcon($imagesFolder);
             } catch (NotFoundException $e) {
-                $imagesFolder = $targetFolder->newFolder('images');
+                $imagesFolder = $targetFolder->newFolder('📷 images');
                 $this->createImagesFolderIcon($imagesFolder);
             }
 
@@ -810,13 +740,13 @@ class PageService {
 
             // Create images subfolder
             try {
-                $imagesFolder = $pageFolder->newFolder('images');
+                $imagesFolder = $pageFolder->newFolder('📷 images');
                 // Add a .nomedia file to indicate this is a special folder
                 $this->createImagesFolderIcon($imagesFolder);
             } catch (\Exception $e) {
                 // Images folder might already exist, that's okay
                 try {
-                    $imagesFolder = $pageFolder->get('images');
+                    $imagesFolder = $pageFolder->get('📷 images');
                     $this->createImagesFolderIcon($imagesFolder);
                 } catch (\Exception $ex) {
                     // Couldn't get images folder
@@ -1119,25 +1049,14 @@ class PageService {
 
         $languageFolder = $this->getLanguageFolder();
 
-        // Check if this is home page (home.json in root)
-        $isHomePage = false;
-        try {
-            $homeFile = $languageFolder->get('home.json');
-            $homeContent = json_decode($homeFile->getContent(), true);
-            if (isset($homeContent['uniqueId']) && $homeContent['uniqueId'] === $pageId) {
-                $isHomePage = true;
-            }
-        } catch (NotFoundException $e) {
-            // home.json doesn't exist
-        }
-
         // Get images folder for this page
-        if ($isHomePage || $pageId === 'home') {
-            // Home images are in root/images/
+        // Folder is named "📷 images" in Files but API accepts "images"
+        if ($pageId === 'home') {
+            // Home images are in root/📷 images/
             try {
-                $imagesFolder = $languageFolder->get('images');
+                $imagesFolder = $languageFolder->get('📷 images');
             } catch (NotFoundException $e) {
-                $imagesFolder = $languageFolder->newFolder('images');
+                $imagesFolder = $languageFolder->newFolder('📷 images');
             }
         } else {
             // Find the page folder using findPageById (handles nested pages correctly)
@@ -1150,9 +1069,9 @@ class PageService {
 
             // Get or create images subfolder
             try {
-                $imagesFolder = $pageFolder->get('images');
+                $imagesFolder = $pageFolder->get('📷 images');
             } catch (NotFoundException $e) {
-                $imagesFolder = $pageFolder->newFolder('images');
+                $imagesFolder = $pageFolder->newFolder('📷 images');
             }
         }
 
@@ -1167,21 +1086,18 @@ class PageService {
      * Get an image for a specific page
      */
     public function getImage(string $pageId, string $filename) {
-        $pageId = $this->sanitizeId($pageId);
+        // Save original BEFORE sanitization
+        $originalPageId = $pageId;
         $filename = basename($filename); // Prevent directory traversal
-
-        $this->logger->warning('IntraVox getImage: START', [
-            'pageId' => $pageId,
-            'filename' => $filename,
-            'cacheSize' => count($this->pageFolderCache),
-            'cacheKeys' => array_keys($this->pageFolderCache)
-        ]);
 
         $languageFolder = $this->getLanguageFolder();
 
         try {
-            // Handle home page (both 'home' and the hardcoded home page UUID)
-            if ($pageId === 'home' || $pageId === '2e8f694e-147e-4793-8949-4732e679ae6b') {
+            // Handle home page with original pageId
+            if ($originalPageId === 'home' ||
+                $originalPageId === '2e8f694e-147e-4793-8949-4732e679ae6b' ||
+                $originalPageId === 'page-2e8f694e-147e-4793-8949-4732e679ae6b') {
+
                 $imagesFolder = $languageFolder->get('images');
                 $file = $imagesFolder->get($filename);
 
@@ -1189,7 +1105,10 @@ class PageService {
                     throw new \Exception('Not a file');
                 }
 
+                // Get mime type
                 $mimeType = $file->getMimeType();
+
+                // Create stream response
                 $response = new \OCP\AppFramework\Http\StreamResponse($file->fopen('rb'));
                 $response->addHeader('Content-Type', $mimeType);
                 $response->addHeader('Content-Disposition', 'inline; filename="' . $file->getName() . '"');
@@ -1198,41 +1117,30 @@ class PageService {
                 return $response;
             }
 
-            // For other pages: check cache first
-            // If the page was recently loaded, we know exactly where its folder is
+            // Try cache with BOTH original and sanitized IDs
             $imagesFolder = null;
+            $pageId = $this->sanitizeId($originalPageId);
 
-            if (isset($this->pageFolderCache[$pageId])) {
-                $this->logger->warning('IntraVox getImage: CACHE HIT', ['pageId' => $pageId]);
-                // Cache hit! Get images folder directly from cached page folder
-                try {
-                    $pageFolder = $this->pageFolderCache[$pageId];
-                    $imagesFolder = $pageFolder->get('images');
-                    $this->logger->warning('IntraVox: Images folder found in cache', ['pageId' => $pageId]);
-                } catch (NotFoundException $e) {
-                    // No images folder in the cached location
-                    $this->logger->warning('IntraVox: Cached folder has no images subfolder', ['pageId' => $pageId]);
-                }
-            } else {
-                $this->logger->warning('IntraVox getImage: CACHE MISS', ['pageId' => $pageId]);
+            if (isset($this->pageFolderCache[$originalPageId])) {
+                // Cache hit with original ID (page-abc-123...)
+                $pageFolder = $this->pageFolderCache[$originalPageId];
+                $imagesFolder = $pageFolder->get('images');
+            } else if (isset($this->pageFolderCache[$pageId])) {
+                // Cache hit with sanitized ID (abc-123...)
+                $pageFolder = $this->pageFolderCache[$pageId];
+                $imagesFolder = $pageFolder->get('images');
             }
 
-            // If cache miss, search for the page
+            // If cache miss, search using ORIGINAL pageId
             if ($imagesFolder === null) {
-                $this->logger->warning('IntraVox: Searching for images folder', ['pageId' => $pageId]);
-                $imagesFolder = $this->findImagesFolderForPage($languageFolder, $pageId);
-
-                if ($imagesFolder !== null) {
-                    $this->logger->warning('IntraVox: Images folder found by search', [
-                        'pageId' => $pageId,
-                        'path' => $imagesFolder->getPath()
-                    ]);
-                }
+                $imagesFolder = $this->findImagesFolderForPage(
+                    $languageFolder,
+                    $originalPageId  // Use ORIGINAL with 'page-' prefix
+                );
             }
 
             if ($imagesFolder === null) {
-                $this->logger->error('IntraVox: Images folder NOT FOUND', ['pageId' => $pageId]);
-                throw new \Exception('Images folder not found for page: ' . $pageId);
+                throw new \Exception('Images folder not found for page: ' . $originalPageId);
             }
 
             $file = $imagesFolder->get($filename);
@@ -1250,110 +1158,16 @@ class PageService {
             $response->addHeader('Content-Disposition', 'inline; filename="' . $file->getName() . '"');
             $response->addHeader('Cache-Control', 'public, max-age=31536000');
 
-            $this->logger->warning('IntraVox getImage: SUCCESS', ['pageId' => $pageId, 'filename' => $filename]);
             return $response;
         } catch (NotFoundException $e) {
-            $this->logger->error('IntraVox getImage: NotFoundException', [
-                'pageId' => $pageId,
-                'filename' => $filename,
-                'error' => $e->getMessage()
-            ]);
-            throw new \Exception('Image not found: ' . $e->getMessage());
-        } catch (\Exception $e) {
-            $this->logger->error('IntraVox getImage: Exception', [
-                'pageId' => $pageId,
-                'filename' => $filename,
-                'error' => $e->getMessage()
-            ]);
-            throw new \Exception('Error loading image: ' . $e->getMessage());
+            throw new \Exception('Image not found');
         }
-    }
-
-    /**
-     * Find the images folder for a page by searching for its uniqueId
-     * This is a simple recursive search that looks for the page's folder
-     * WITHOUT reading JSON files to avoid database transaction issues
-     */
-    private function findImagesFolderForPage($folder, string $uniqueId): ?\OCP\Files\Folder {
-        // Check all subdirectories
-        foreach ($folder->getDirectoryListing() as $item) {
-            if ($item->getType() === \OCP\Files\FileInfo::TYPE_FOLDER) {
-                $itemName = $item->getName();
-
-                // Skip special folders
-                if ($itemName === 'images' || strpos($itemName, '📷') === 0 || $itemName === '.nomedia') {
-                    continue;
-                }
-
-                // First, recursively search this folder's subfolders
-                try {
-                    $result = $this->findImagesFolderForPage($item, $uniqueId);
-                    if ($result !== null) {
-                        return $result;
-                    }
-                } catch (\Exception $e) {
-                    // Skip folders we can't access
-                }
-
-                // Then check if THIS folder has the matching page
-                // Check if this folder has an images subfolder
-                try {
-                    $hasImagesFolder = false;
-                    try {
-                        $imagesFolder = $item->get('images');
-                        if ($imagesFolder->getType() === \OCP\Files\FileInfo::TYPE_FOLDER) {
-                            $hasImagesFolder = true;
-                        }
-                    } catch (NotFoundException $e) {
-                        // No images folder
-                    }
-
-                    if (!$hasImagesFolder) {
-                        continue;
-                    }
-
-                    // Now check if there's a JSON file with the matching uniqueId
-                    // We do this by checking all JSON files
-                    $items = $item->getDirectoryListing();
-                    foreach ($items as $subItem) {
-                        // Check JSON files for uniqueId match
-                        if ($subItem->getType() === \OCP\Files\FileInfo::TYPE_FILE &&
-                            substr($subItem->getName(), -5) === '.json' &&
-                            $subItem->getName() !== 'navigation.json' &&
-                            $subItem->getName() !== 'footer.json') {
-
-                            try {
-                                $content = $subItem->getContent();
-                                $data = json_decode($content, true);
-                                if ($data && isset($data['uniqueId']) && $data['uniqueId'] === $uniqueId) {
-                                    // Found it! Return the images folder
-                                    return $imagesFolder;
-                                }
-                            } catch (\Exception $e) {
-                                // Skip files we can't read
-                                continue;
-                            }
-                        }
-                    }
-                } catch (\Exception $e) {
-                    // Skip folders we can't access
-                    continue;
-                }
-            }
-        }
-
-        return null;
     }
 
     /**
      * Sanitize page ID
      */
     private function sanitizeId(string $id): string {
-        // Remove 'page-' prefix if present (for backward compatibility with old URLs)
-        if (strpos($id, 'page-') === 0) {
-            $id = substr($id, 5); // Remove 'page-' prefix
-        }
-
         // Only allow alphanumeric, hyphens, and underscores
         $id = preg_replace('/[^a-zA-Z0-9_-]/', '', $id);
 
@@ -1362,6 +1176,60 @@ class PageService {
         }
 
         return $id;
+    }
+
+    /**
+     * Recursively find images folder for a page by uniqueId
+     */
+    private function findImagesFolderForPage($folder, string $uniqueId): ?\OCP\Files\Folder {
+        // First check if the CURRENT folder contains the page JSON
+        try {
+            $imagesFolder = $folder->get('images');
+            if ($imagesFolder->getType() === \OCP\Files\FileInfo::TYPE_FOLDER) {
+                // Scan JSON files in current folder
+                foreach ($folder->getDirectoryListing() as $item) {
+                    if ($item->getType() === \OCP\Files\FileInfo::TYPE_FILE &&
+                        substr($item->getName(), -5) === '.json' &&
+                        $item->getName() !== 'navigation.json' &&
+                        $item->getName() !== 'footer.json') {
+
+                        $content = $item->getContent();
+                        $data = json_decode($content, true);
+
+                        // Match against uniqueId field
+                        if ($data && isset($data['uniqueId']) &&
+                            $data['uniqueId'] === $uniqueId) {
+
+                            // Found matching page in CURRENT folder!
+                            return $imagesFolder;
+                        }
+                    }
+                }
+            }
+        } catch (\OCP\Files\NotFoundException $e) {
+            // No images folder in current folder, continue searching subfolders
+        }
+
+        // Recursively search subfolders
+        foreach ($folder->getDirectoryListing() as $item) {
+            if ($item->getType() === \OCP\Files\FileInfo::TYPE_FOLDER) {
+                $itemName = $item->getName();
+
+                // Skip special folders to avoid infinite loops
+                if ($itemName === 'images' || strpos($itemName, '📷') === 0 ||
+                    $itemName === '.nomedia') {
+                    continue;
+                }
+
+                // Recurse into subfolder
+                $result = $this->findImagesFolderForPage($item, $uniqueId);
+                if ($result !== null) {
+                    return $result;
+                }
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -2428,8 +2296,50 @@ class PageService {
                 $score += 5;
             }
 
-            // NOTE: Content search disabled for performance
-            // Use SearchIndexService for full-text search instead
+            // Load page content and search in text widgets
+            try {
+                // Skip pages without uniqueId
+                if (!isset($page['uniqueId']) || empty($page['uniqueId'])) {
+                    continue;
+                }
+
+                // Get the full page data to search in content
+                $pageData = $this->getPage($page['uniqueId']);
+
+                if ($pageData && isset($pageData['layout']['rows'])) {
+                    foreach ($pageData['layout']['rows'] as $row) {
+                        if (isset($row['widgets'])) {
+                            foreach ($row['widgets'] as $widget) {
+                                // Search in text widgets
+                                if ($widget['type'] === 'text' && isset($widget['content'])) {
+                                    if (mb_stripos($widget['content'], $query) !== false) {
+                                        $score += 3;
+                                        // Extract snippet around match
+                                        $snippet = $this->extractSnippet($widget['content'], $query);
+                                        $matches[] = [
+                                            'type' => 'content',
+                                            'text' => $snippet
+                                        ];
+                                    }
+                                }
+                                // Search in heading widgets
+                                if ($widget['type'] === 'heading' && isset($widget['text'])) {
+                                    if (mb_stripos($widget['text'], $query) !== false) {
+                                        $score += 5;
+                                        $matches[] = [
+                                            'type' => 'heading',
+                                            'text' => $widget['text']
+                                        ];
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (\Exception $e) {
+                // Skip pages that can't be read
+                continue;
+            }
 
             // If we have matches, add to results
             if ($score > 0) {

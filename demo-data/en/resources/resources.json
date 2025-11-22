@@ -1,0 +1,29 @@
+{
+  "uniqueId": "page-2b3c4d5e-6f7a-8b9c-0d1e-2f3a4b5c6d7e",
+  "title": "Resources",
+  "language": "en",
+  "rows": [
+    {
+      "id": "row-1",
+      "columns": [
+        {
+          "id": "col-1",
+          "span": 12,
+          "widgets": [
+            {
+              "id": "widget-1",
+              "type": "heading",
+              "level": 1,
+              "content": "Resources"
+            },
+            {
+              "id": "widget-2",
+              "type": "text",
+              "content": "Access documentation, downloads, and support resources."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

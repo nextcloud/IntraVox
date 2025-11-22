@@ -1,0 +1,102 @@
+{
+  "uniqueId": "page-c3d4e5f6-a7b8-9012-cdef-123456789012",
+  "title": "Marketing",
+  "language": "nl",
+  "created": 1732270000,
+  "modified": 1732270000,
+  "layout": {
+    "columns": 1,
+    "rows": [
+      {
+        "columns": 1,
+        "backgroundColor": "",
+        "widgets": [
+          {
+            "type": "heading",
+            "column": 1,
+            "order": 1,
+            "content": "Marketing Afdeling",
+            "level": 1
+          }
+        ]
+      },
+      {
+        "columns": 2,
+        "backgroundColor": "",
+        "widgets": [
+          {
+            "type": "heading",
+            "column": 1,
+            "order": 1,
+            "content": "Onze Missie",
+            "level": 2
+          },
+          {
+            "type": "text",
+            "column": 1,
+            "order": 2,
+            "content": "De Marketing afdeling is verantwoordelijk voor het creëren en uitvoeren van marketingstrategieën die onze merk bekendheid vergroten en nieuwe klanten aantrekken.\n\nWe werken aan:\n- **Online marketing** - Social media, SEO, content marketing\n- **Branding** - Merkidentiteit en positionering\n- **Campagnes** - Geïntegreerde marketingcampagnes\n- **Analytics** - Data-gedreven beslissingen"
+          },
+          {
+            "type": "image",
+            "column": 2,
+            "order": 1,
+            "src": "features-showcase.jpg",
+            "alt": "Marketing features",
+            "width": "800px",
+            "objectFit": "cover",
+            "objectPosition": "center center"
+          }
+        ]
+      },
+      {
+        "columns": 1,
+        "backgroundColor": "var(--color-primary-light)",
+        "widgets": [
+          {
+            "type": "heading",
+            "column": 1,
+            "order": 1,
+            "content": "Recente Projecten",
+            "level": 2
+          },
+          {
+            "type": "text",
+            "column": 1,
+            "order": 2,
+            "content": "Bekijk onze nieuwste marketingcampagnes en projecten:"
+          }
+        ]
+      },
+      {
+        "columns": 2,
+        "backgroundColor": "",
+        "widgets": [
+          {
+            "type": "image",
+            "column": 1,
+            "order": 1,
+            "src": "tech-innovation.jpg",
+            "alt": "Innovatie",
+            "width": "800px",
+            "objectFit": "cover",
+            "objectPosition": "center center"
+          },
+          {
+            "type": "heading",
+            "column": 2,
+            "order": 1,
+            "content": "Digitale Transformatie",
+            "level": 3
+          },
+          {
+            "type": "text",
+            "column": 2,
+            "order": 2,
+            "content": "Onze focus ligt op digitale marketing en het benutten van de nieuwste technologieën om onze doelgroep te bereiken.\n\nDoor data-analyse en marketing automation kunnen we gepersonaliseerde campagnes creëren die resultaten opleveren."
+          }
+        ]
+      }
+    ]
+  }
+}
