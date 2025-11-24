@@ -597,6 +597,7 @@ class PageService {
     public function getBreadcrumb(string $pageId): array {
         $page = $this->getPage($pageId);
         $breadcrumb = [];
+        $seenIds = []; // Track IDs we've already added
 
         // Always start with Home
         $breadcrumb[] = [
@@ -606,6 +607,7 @@ class PageService {
             'url' => '#home',
             'current' => false
         ];
+        $seenIds['home'] = true;
 
         // Parse path to build breadcrumb
         $pathParts = explode('/', $page['path']);
@@ -622,41 +624,47 @@ class PageService {
                 continue;
             }
 
+            // Skip if we've already added this ID to the breadcrumb
+            if (isset($seenIds[$part])) {
+                continue;
+            }
+
             $currentPath .= ($currentPath ? '/' : '') . $part;
 
             // Check if this is the last item (current page)
-            if ($index === count($pathParts) - 1) {
-                // Add current page (not clickable)
-                $breadcrumb[] = [
-                    'uniqueId' => $page['uniqueId'],
-                    'title' => $page['title'],
-                    'path' => $page['path'],
-                    'url' => null,
-                    'current' => true
-                ];
-                break;
-            }
+            $isLastItem = ($index === count($pathParts) - 1);
 
-            // Try to load parent page for its title
+            // Try to load page for its title
             try {
-                $parentPage = $this->getPage($part);
+                $pageData = $this->getPage($part);
+
+                // Check uniqueId as well to prevent duplicates
+                $checkId = $pageData['uniqueId'] ?? $part;
+                if (isset($seenIds[$checkId])) {
+                    continue;
+                }
+
                 $breadcrumb[] = [
+                    'uniqueId' => $pageData['uniqueId'],
                     'id' => $part,
-                    'title' => $parentPage['title'],
-                    'path' => $parentPage['path'],
+                    'title' => $pageData['title'],
+                    'path' => $pageData['path'],
                     'url' => '#' . $part,
-                    'current' => false
+                    'current' => $isLastItem
                 ];
+                $seenIds[$part] = true;
+                $seenIds[$checkId] = true;
             } catch (\Exception $e) {
-                // Parent page not found or error loading it
+                // Page not found or error loading it
                 // Use folder name as fallback
                 $breadcrumb[] = [
                     'id' => $part,
                     'title' => ucfirst(str_replace('-', ' ', $part)),
                     'path' => $currentPath,
                     'url' => '#' . $part,
-                    'current' => false
+                    'current' => $isLastItem
                 ];
+                $seenIds[$part] = true;
             }
         }
 

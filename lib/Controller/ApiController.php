@@ -49,6 +49,16 @@ class ApiController extends Controller {
     public function getPage(string $id): DataResponse {
         try {
             $page = $this->pageService->getPage($id);
+
+            // Include breadcrumb in response to reduce API calls
+            try {
+                $breadcrumb = $this->pageService->getBreadcrumb($id);
+                $page['breadcrumb'] = $breadcrumb;
+            } catch (\Exception $e) {
+                // If breadcrumb fails, don't fail the whole request
+                $page['breadcrumb'] = [];
+            }
+
             return new DataResponse($page);
         } catch (\Exception $e) {
             return new DataResponse(
