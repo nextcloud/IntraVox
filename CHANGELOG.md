@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.13] - 2025-11-24 - Folder-Level Permission System
+
+### Added
+- **🔒 Folder-Level Permission Filtering**: Navigation now respects Nextcloud ACLs and groupfolder permissions
+  - Users only see navigation items for pages they have access to
+  - External/custom URL links remain visible to all users
+  - Permission checks use Nextcloud's native permission system
+  - Request-level permission caching to minimize performance impact
+  - Recursive filtering: parent items without accessible children are hidden
+  - Immediate permission enforcement (no stale navigation items)
+
+### Technical Details
+- Added `filterNavigationByPermissions()` to NavigationService
+- Permission checks leverage existing `PageService->getPage()` which respects Nextcloud ACLs
+- Per-request permission cache prevents redundant access checks
+- Zero performance impact for external links (always visible)
+- Admin-only navigation editing already enforced via `canEdit()` method
+
+### Security
+- All page access checks respect groupfolder ACLs
+- Permission changes are enforced immediately on next navigation load
+- No cross-user cache pollution (server-side filtering per request)
+
 ## [0.4.12] - 2025-11-24 - Performance Optimizations & UI Improvements
 
 ### Added
