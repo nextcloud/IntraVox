@@ -64,6 +64,23 @@ Use the `rollback.sh` script to rollback to a previous release:
 ./rollback.sh v0.2.2-Footer
 ```
 
+### Quick Rollback from v0.4.10
+
+If you need to rollback from v0.4.10 (Filesystem Timestamps):
+
+```bash
+# Rollback to previous stable version
+git checkout v0.4.9
+
+# Or manually on server
+cd /var/www/nextcloud/apps
+sudo -u www-data mv intravox intravox.v0.4.10.backup
+# Download and extract v0.4.9 tarball from Gitea
+# Then re-enable app
+```
+
+**Note**: v0.4.10 introduced filesystem timestamps. Rolling back will restore the old behavior where `created` and `modified` fields are stored in JSON files.
+
 ### What the rollback script does
 
 1. ✅ Checks if the tag exists
