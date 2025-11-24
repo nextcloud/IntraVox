@@ -1,180 +1,178 @@
 {
-    "uniqueId": "page-4c7d2a94-b3f1-4e28-9c6f-5d1e2b3a5c8f",
-    "title": "Community",
-    "language": "en",
-    "created": 1760945741,
-    "modified": 1763537741,
-    "layout": {
+  "uniqueId": "page-4c7d2a94-b3f1-4e28-9c6f-5d1e2b3a5c8f",
+  "title": "Community",
+  "language": "en",
+  "layout": {
+    "columns": 1,
+    "rows": [
+      {
         "columns": 1,
-        "rows": [
-            {
-                "columns": 1,
-                "backgroundColor": "var(--color-primary-element)",
-                "widgets": [
-                    {
-                        "type": "image",
-                        "column": 1,
-                        "order": 1,
-                        "src": "images/team-collaboration.jpg",
-                        "alt": "Community collaboration",
-                        "objectFit": "cover"
-                    },
-                    {
-                        "type": "heading",
-                        "column": 1,
-                        "order": 2,
-                        "content": "Community",
-                        "level": 1
-                    },
-                    {
-                        "type": "text",
-                        "column": 1,
-                        "order": 3,
-                        "content": "Join the IntraVox open-source community"
-                    }
-                ]
-            },
-            {
-                "columns": 2,
-                "backgroundColor": "",
-                "widgets": [
-                    {
-                        "type": "heading",
-                        "column": 1,
-                        "order": 1,
-                        "content": "Get Involved",
-                        "level": 2
-                    },
-                    {
-                        "type": "text",
-                        "column": 1,
-                        "order": 2,
-                        "content": "IntraVox is built by the community, for the community. Whether you're a developer, designer, or user, there are many ways to contribute:\n\n• Report bugs and request features\n• Contribute code and documentation\n• Help other users in forums\n• Translate into your language\n• Share your IntraVox stories"
-                    },
-                    {
-                        "type": "heading",
-                        "column": 2,
-                        "order": 1,
-                        "content": "Community Channels",
-                        "level": 2
-                    },
-                    {
-                        "type": "text",
-                        "column": 2,
-                        "order": 2,
-                        "content": "Connect with other IntraVox users:\n\n• **GitHub Discussions** - Q&A and ideas\n• **Forum** - Support and best practices\n• **Chat** - Real-time community chat\n• **Newsletter** - Monthly updates\n• **Social Media** - Follow @intravox"
-                    }
-                ]
-            },
-            {
-                "columns": 1,
-                "backgroundColor": "var(--color-background-hover)",
-                "widgets": [
-                    {
-                        "type": "heading",
-                        "column": 1,
-                        "order": 1,
-                        "content": "Ways to Contribute",
-                        "level": 2
-                    },
-                    {
-                        "type": "links",
-                        "column": 1,
-                        "order": 2,
-                        "columns": 4,
-                        "items": [
-                            {
-                                "title": "Code Contributions",
-                                "text": "Submit pull requests on GitHub",
-                                "url": "#",
-                                "icon": "github",
-                                "target": "_blank"
-                            },
-                            {
-                                "title": "Report Bugs",
-                                "text": "Help us improve by reporting issues",
-                                "url": "#",
-                                "icon": "bug",
-                                "target": "_blank"
-                            },
-                            {
-                                "title": "Documentation",
-                                "text": "Improve guides and tutorials",
-                                "url": "#",
-                                "icon": "book-open",
-                                "target": "_self"
-                            },
-                            {
-                                "title": "Translations",
-                                "text": "Translate IntraVox to your language",
-                                "url": "#",
-                                "icon": "translate",
-                                "target": "_self"
-                            },
-                            {
-                                "title": "Forum Support",
-                                "text": "Answer questions from users",
-                                "url": "#",
-                                "icon": "forum",
-                                "target": "_blank"
-                            },
-                            {
-                                "title": "Spread the Word",
-                                "text": "Blog, tweet, and share IntraVox",
-                                "url": "#",
-                                "icon": "bullhorn",
-                                "target": "_self"
-                            },
-                            {
-                                "title": "Design",
-                                "text": "Help with UI/UX improvements",
-                                "url": "#",
-                                "icon": "palette",
-                                "target": "_self"
-                            },
-                            {
-                                "title": "Testing",
-                                "text": "Test beta releases and provide feedback",
-                                "url": "#",
-                                "icon": "shield-check",
-                                "target": "_self"
-                            }
-                        ]
-                    }
-                ]
-            },
-            {
-                "columns": 2,
-                "backgroundColor": "",
-                "widgets": [
-                    {
-                        "type": "heading",
-                        "column": 1,
-                        "order": 1,
-                        "content": "Code of Conduct",
-                        "level": 2
-                    },
-                    {
-                        "type": "text",
-                        "column": 1,
-                        "order": 2,
-                        "content": "We're committed to providing a **welcoming and inclusive** environment. Please read and follow our [Code of Conduct](#) in all community interactions."
-                    },
-                    {
-                        "type": "heading",
-                        "column": 2,
-                        "order": 1,
-                        "content": "Recognition",
-                        "level": 2
-                    },
-                    {
-                        "type": "text",
-                        "column": 2,
-                        "order": 2,
-                        "content": "All contributors are recognized in our **CONTRIBUTORS.md** file and on our website. We celebrate and appreciate every contribution!"
-                    }
-                ]
-            }
+        "backgroundColor": "var(--color-primary-element)",
+        "widgets": [
+          {
+            "type": "image",
+            "column": 1,
+            "order": 1,
+            "src": "images/team-collaboration.jpg",
+            "alt": "Community collaboration",
+            "objectFit": "cover"
+          },
+          {
+            "type": "heading",
+            "column": 1,
+            "order": 2,
+            "content": "Community",
+            "level": 1
+          },
+          {
+            "type": "text",
+            "column": 1,
+            "order": 3,
+            "content": "Join the IntraVox open-source community"
+          }
         ]
-    }
+      },
+      {
+        "columns": 2,
+        "backgroundColor": "",
+        "widgets": [
+          {
+            "type": "heading",
+            "column": 1,
+            "order": 1,
+            "content": "Get Involved",
+            "level": 2
+          },
+          {
+            "type": "text",
+            "column": 1,
+            "order": 2,
+            "content": "IntraVox is built by the community, for the community. Whether you're a developer, designer, or user, there are many ways to contribute:\n\n• Report bugs and request features\n• Contribute code and documentation\n• Help other users in forums\n• Translate into your language\n• Share your IntraVox stories"
+          },
+          {
+            "type": "heading",
+            "column": 2,
+            "order": 1,
+            "content": "Community Channels",
+            "level": 2
+          },
+          {
+            "type": "text",
+            "column": 2,
+            "order": 2,
+            "content": "Connect with other IntraVox users:\n\n• **GitHub Discussions** - Q&A and ideas\n• **Forum** - Support and best practices\n• **Chat** - Real-time community chat\n• **Newsletter** - Monthly updates\n• **Social Media** - Follow @intravox"
+          }
+        ]
+      },
+      {
+        "columns": 1,
+        "backgroundColor": "var(--color-background-hover)",
+        "widgets": [
+          {
+            "type": "heading",
+            "column": 1,
+            "order": 1,
+            "content": "Ways to Contribute",
+            "level": 2
+          },
+          {
+            "type": "links",
+            "column": 1,
+            "order": 2,
+            "columns": 4,
+            "items": [
+              {
+                "title": "Code Contributions",
+                "text": "Submit pull requests on GitHub",
+                "url": "#",
+                "icon": "github",
+                "target": "_blank"
+              },
+              {
+                "title": "Report Bugs",
+                "text": "Help us improve by reporting issues",
+                "url": "#",
+                "icon": "bug",
+                "target": "_blank"
+              },
+              {
+                "title": "Documentation",
+                "text": "Improve guides and tutorials",
+                "url": "#",
+                "icon": "book-open",
+                "target": "_self"
+              },
+              {
+                "title": "Translations",
+                "text": "Translate IntraVox to your language",
+                "url": "#",
+                "icon": "translate",
+                "target": "_self"
+              },
+              {
+                "title": "Forum Support",
+                "text": "Answer questions from users",
+                "url": "#",
+                "icon": "forum",
+                "target": "_blank"
+              },
+              {
+                "title": "Spread the Word",
+                "text": "Blog, tweet, and share IntraVox",
+                "url": "#",
+                "icon": "bullhorn",
+                "target": "_self"
+              },
+              {
+                "title": "Design",
+                "text": "Help with UI/UX improvements",
+                "url": "#",
+                "icon": "palette",
+                "target": "_self"
+              },
+              {
+                "title": "Testing",
+                "text": "Test beta releases and provide feedback",
+                "url": "#",
+                "icon": "shield-check",
+                "target": "_self"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "columns": 2,
+        "backgroundColor": "",
+        "widgets": [
+          {
+            "type": "heading",
+            "column": 1,
+            "order": 1,
+            "content": "Code of Conduct",
+            "level": 2
+          },
+          {
+            "type": "text",
+            "column": 1,
+            "order": 2,
+            "content": "We're committed to providing a **welcoming and inclusive** environment. Please read and follow our [Code of Conduct](#) in all community interactions."
+          },
+          {
+            "type": "heading",
+            "column": 2,
+            "order": 1,
+            "content": "Recognition",
+            "level": 2
+          },
+          {
+            "type": "text",
+            "column": 2,
+            "order": 2,
+            "content": "All contributors are recognized in our **CONTRIBUTORS.md** file and on our website. We celebrate and appreciate every contribution!"
+          }
+        ]
+      }
+    ]
+  }
 }

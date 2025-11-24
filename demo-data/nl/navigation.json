@@ -17,7 +17,15 @@
           "title": "Marketing",
           "url": null,
           "target": null,
-          "children": [],
+          "children": [
+            {
+              "title": "Marketingcampagnes",
+              "url": null,
+              "target": null,
+              "children": [],
+              "uniqueId": "page-d4e5f6a7-b8c9-0123-def1-234567890123"
+            }
+          ],
           "uniqueId": "page-c3d4e5f6-a7b8-9012-cdef-123456789012"
         }
       ],

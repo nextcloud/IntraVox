@@ -180,11 +180,16 @@ class NavigationService {
 
     /**
      * Check if current user has edit permissions
+     * Uses Nextcloud's permission system to check write access to navigation.json
      */
     public function canEdit(): bool {
         try {
-            $folder = $this->getIntraVoxFolder();
-            return $folder->isUpdateable();
+            $lang = $this->getCurrentLanguage();
+            $languageFolder = $this->getLanguageFolder($lang);
+
+            // Check if the language folder is writable for this user
+            // This respects Nextcloud's ACLs, group permissions, and file locks
+            return $languageFolder->isUpdateable();
         } catch (\Exception $e) {
             return false;
         }

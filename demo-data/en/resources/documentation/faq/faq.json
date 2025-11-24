@@ -1,50 +1,48 @@
 {
-    "uniqueId": "page-d2b68bd1-4afb-4fda-bbce-0ba5ba4ac6e8",
-    "title": "Frequently Asked Questions",
-    "language": "en",
-    "created": 1760945741,
-    "modified": 1763537741,
-    "layout": {
+  "uniqueId": "page-d2b68bd1-4afb-4fda-bbce-0ba5ba4ac6e8",
+  "title": "Frequently Asked Questions",
+  "language": "en",
+  "layout": {
+    "columns": 1,
+    "rows": [
+      {
         "columns": 1,
-        "rows": [
-            {
-                "columns": 1,
-                "backgroundColor": "var(--color-primary-element)",
-                "widgets": [
-                    {
-                        "type": "heading",
-                        "column": 1,
-                        "order": 1,
-                        "content": "FAQ",
-                        "level": 1
-                    },
-                    {
-                        "type": "text",
-                        "column": 1,
-                        "order": 2,
-                        "content": "Find answers to common questions"
-                    }
-                ]
-            },
-            {
-                "columns": 1,
-                "backgroundColor": "",
-                "widgets": [
-                    {
-                        "type": "heading",
-                        "column": 1,
-                        "order": 1,
-                        "content": "Common Questions",
-                        "level": 2
-                    },
-                    {
-                        "type": "text",
-                        "column": 1,
-                        "order": 2,
-                        "content": "**Q: Is IntraVox free?**\nA: Yes! IntraVox is open-source software licensed under AGPL.\n\n**Q: Does it work with Nextcloud Hub?**\nA: Yes, IntraVox is fully compatible with Nextcloud Hub.\n\n**Q: Can I use custom themes?**\nA: IntraVox automatically adapts to your Nextcloud theme."
-                    }
-                ]
-            }
+        "backgroundColor": "var(--color-primary-element)",
+        "widgets": [
+          {
+            "type": "heading",
+            "column": 1,
+            "order": 1,
+            "content": "FAQ",
+            "level": 1
+          },
+          {
+            "type": "text",
+            "column": 1,
+            "order": 2,
+            "content": "Find answers to common questions"
+          }
         ]
-    }
+      },
+      {
+        "columns": 1,
+        "backgroundColor": "",
+        "widgets": [
+          {
+            "type": "heading",
+            "column": 1,
+            "order": 1,
+            "content": "Common Questions",
+            "level": 2
+          },
+          {
+            "type": "text",
+            "column": 1,
+            "order": 2,
+            "content": "**Q: Is IntraVox free?**\nA: Yes! IntraVox is open-source software licensed under AGPL.\n\n**Q: Does it work with Nextcloud Hub?**\nA: Yes, IntraVox is fully compatible with Nextcloud Hub.\n\n**Q: Can I use custom themes?**\nA: IntraVox automatically adapts to your Nextcloud theme."
+          }
+        ]
+      }
+    ]
+  }
 }

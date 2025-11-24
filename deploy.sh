@@ -11,7 +11,7 @@ echo "=============================="
 # Configuration
 APP_NAME="intravox"
 REMOTE_USER="rdekker"
-REMOTE_HOST="145.38.193.69"  # Production server
+REMOTE_HOST="145.38.191.66"  # Production server
 REMOTE_PATH="/var/www/nextcloud/apps"
 SSH_KEY="~/.ssh/sur"
 LOCAL_PATH="$(pwd)"
@@ -55,6 +55,7 @@ if [ -d "intravox-deploy" ]; then
     # Copy built files to main directory
     echo "  📋 Copying built files to main directory..."
     cp -r js/* ../js/
+    cp -r l10n/* ../l10n/
 
     cd ..
 else

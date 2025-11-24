@@ -176,7 +176,7 @@ class PageService {
 
             if ($item->getType() === \OCP\Files\FileInfo::TYPE_FOLDER) {
                 // Skip image folders and special folders
-                if (strpos($itemName, '📷') === 0 || $itemName === 'images' || $itemName === '.nomedia') {
+                if ($itemName === 'images' || $itemName === '.nomedia') {
                     continue;
                 }
 
@@ -319,15 +319,10 @@ class PageService {
         // Save original ID before sanitization
         $originalId = $id;
 
-        $this->logger->debug('IntraVox: Getting page - originalId', ['originalId' => $originalId]);
-
         // Check for uniqueId pattern BEFORE sanitization
         if (strpos($originalId, 'page-') === 0) {
-            $this->logger->debug('IntraVox: Searching by uniqueId', ['uniqueId' => $originalId]);
             $result = $this->findPageByUniqueId($folder, $originalId);
-            if ($result) {
-                $this->logger->debug('IntraVox: Found by uniqueId', ['file' => $result['file']->getName()]);
-            } else {
+            if (!$result) {
                 $this->logger->warning('IntraVox: Not found by uniqueId', ['uniqueId' => $originalId]);
             }
         }
@@ -335,7 +330,6 @@ class PageService {
         // Only sanitize for legacy ID fallback
         if ($result === null) {
             $id = $this->sanitizeId($originalId);
-            $this->logger->debug('IntraVox: Trying legacy id lookup', ['id' => $id]);
             $result = $this->findPageById($folder, $id);
         }
 
@@ -401,6 +395,19 @@ class PageService {
         $parsedPath = explode('/', $page['path']);
         $page['language'] = $parsedPath[0] ?? $this->getUserLanguage();
         $page['department'] = $this->parseDepartmentFromPath($page['path']);
+
+        // Check edit permissions using Nextcloud's ACL system
+        // This respects folder-level permissions, group membership, and ACLs
+        $canEdit = $folder->isUpdateable();
+
+        // Debug logging
+        $this->logger->info('[IntraVox Permission Debug] Page: ' . ($page['uniqueId'] ?? 'unknown') .
+            ', Path: ' . $page['path'] .
+            ', Folder Path: ' . $folder->getPath() .
+            ', isUpdateable: ' . ($canEdit ? 'true' : 'false') .
+            ', User: ' . ($this->userId ?? 'none'));
+
+        $page['canEdit'] = $canEdit;
 
         return $page;
     }
@@ -714,10 +721,10 @@ class PageService {
 
             // Create images folder for home if it doesn't exist
             try {
-                $imagesFolder = $targetFolder->get('📷 images');
+                $imagesFolder = $targetFolder->get('images');
                 $this->createImagesFolderIcon($imagesFolder);
             } catch (NotFoundException $e) {
-                $imagesFolder = $targetFolder->newFolder('📷 images');
+                $imagesFolder = $targetFolder->newFolder('images');
                 $this->createImagesFolderIcon($imagesFolder);
             }
 
@@ -740,13 +747,13 @@ class PageService {
 
             // Create images subfolder
             try {
-                $imagesFolder = $pageFolder->newFolder('📷 images');
+                $imagesFolder = $pageFolder->newFolder('images');
                 // Add a .nomedia file to indicate this is a special folder
                 $this->createImagesFolderIcon($imagesFolder);
             } catch (\Exception $e) {
                 // Images folder might already exist, that's okay
                 try {
-                    $imagesFolder = $pageFolder->get('📷 images');
+                    $imagesFolder = $pageFolder->get('images');
                     $this->createImagesFolderIcon($imagesFolder);
                 } catch (\Exception $ex) {
                     // Couldn't get images folder
@@ -780,9 +787,6 @@ class PageService {
             $data['id'] = $originalId . '-' . $counter;
             $counter++;
         }
-
-        $data['created'] = time();
-        $data['modified'] = time();
 
         // Generate uniqueId if not provided
         if (!isset($data['uniqueId'])) {
@@ -890,11 +894,8 @@ class PageService {
      * Update an existing page
      */
     public function updatePage(string $id, array $data): array {
-        try {
-            $id = $this->sanitizeId($id);
-        } catch (\Exception $e) {
-            throw new \InvalidArgumentException('Failed to sanitize page ID: ' . $e->getMessage());
-        }
+        // Save original ID before sanitization
+        $originalId = $id;
 
         // Get the current user
         $user = $this->userSession->getUser();
@@ -902,15 +903,27 @@ class PageService {
             throw new \InvalidArgumentException('No user in session');
         }
 
-        try {
-            // First find via root to get the path
-            $result = $this->findPageById($this->getLanguageFolder(), $id);
-        } catch (\Exception $e) {
-            throw new \InvalidArgumentException('Failed to find page by ID: ' . $e->getMessage());
+        $languageFolder = $this->getLanguageFolder();
+        $result = null;
+
+        // Check for uniqueId pattern (page-xxx) BEFORE sanitization
+        if (strpos($originalId, 'page-') === 0) {
+            // Search by uniqueId
+            $result = $this->findPageByUniqueId($languageFolder, $originalId);
+        }
+
+        // Fallback to legacy ID lookup if not found by uniqueId
+        if ($result === null) {
+            try {
+                $id = $this->sanitizeId($originalId);
+                $result = $this->findPageById($languageFolder, $id);
+            } catch (\Exception $e) {
+                throw new \InvalidArgumentException('Failed to find page: ' . $e->getMessage());
+            }
         }
 
         if ($result === null) {
-            throw new \InvalidArgumentException('Page not found: ' . $id);
+            throw new \InvalidArgumentException('Page not found: ' . $originalId);
         }
 
         // Get the file
@@ -923,10 +936,10 @@ class PageService {
             throw new \InvalidArgumentException('Failed to read existing page data: ' . $e->getMessage());
         }
 
-        // Preserve creation time and ID
-        $data['id'] = $id;
-        $data['created'] = $existingData['created'] ?? time();
-        $data['modified'] = time();
+        // Preserve uniqueId
+        if (isset($existingData['uniqueId'])) {
+            $data['uniqueId'] = $existingData['uniqueId'];
+        }
 
         try {
             $validatedData = $this->validateAndSanitizePage($data);
@@ -1050,13 +1063,13 @@ class PageService {
         $languageFolder = $this->getLanguageFolder();
 
         // Get images folder for this page
-        // Folder is named "📷 images" in Files but API accepts "images"
+        // Folder is named "images"
         if ($pageId === 'home') {
-            // Home images are in root/📷 images/
+            // Home images are in root/images/
             try {
-                $imagesFolder = $languageFolder->get('📷 images');
+                $imagesFolder = $languageFolder->get('images');
             } catch (NotFoundException $e) {
-                $imagesFolder = $languageFolder->newFolder('📷 images');
+                $imagesFolder = $languageFolder->newFolder('images');
             }
         } else {
             // Find the page folder using findPageById (handles nested pages correctly)
@@ -1069,9 +1082,9 @@ class PageService {
 
             // Get or create images subfolder
             try {
-                $imagesFolder = $pageFolder->get('📷 images');
+                $imagesFolder = $pageFolder->get('images');
             } catch (NotFoundException $e) {
-                $imagesFolder = $pageFolder->newFolder('📷 images');
+                $imagesFolder = $pageFolder->newFolder('images');
             }
         }
 
@@ -1140,6 +1153,7 @@ class PageService {
             }
 
             if ($imagesFolder === null) {
+                $this->logger->error("getImage: Images folder not found for page: {$originalPageId}");
                 throw new \Exception('Images folder not found for page: ' . $originalPageId);
             }
 
@@ -1182,32 +1196,36 @@ class PageService {
      * Recursively find images folder for a page by uniqueId
      */
     private function findImagesFolderForPage($folder, string $uniqueId): ?\OCP\Files\Folder {
-        // First check if the CURRENT folder contains the page JSON
-        try {
-            $imagesFolder = $folder->get('images');
-            if ($imagesFolder->getType() === \OCP\Files\FileInfo::TYPE_FOLDER) {
-                // Scan JSON files in current folder
-                foreach ($folder->getDirectoryListing() as $item) {
-                    if ($item->getType() === \OCP\Files\FileInfo::TYPE_FILE &&
-                        substr($item->getName(), -5) === '.json' &&
-                        $item->getName() !== 'navigation.json' &&
-                        $item->getName() !== 'footer.json') {
+        // First scan JSON files in CURRENT folder to see if page is here
+        $foundMatch = false;
+        foreach ($folder->getDirectoryListing() as $item) {
+            if ($item->getType() === \OCP\Files\FileInfo::TYPE_FILE &&
+                substr($item->getName(), -5) === '.json' &&
+                $item->getName() !== 'navigation.json' &&
+                $item->getName() !== 'footer.json') {
 
-                        $content = $item->getContent();
-                        $data = json_decode($content, true);
+                $content = $item->getContent();
+                $data = json_decode($content, true);
 
-                        // Match against uniqueId field
-                        if ($data && isset($data['uniqueId']) &&
-                            $data['uniqueId'] === $uniqueId) {
-
-                            // Found matching page in CURRENT folder!
-                            return $imagesFolder;
-                        }
-                    }
+                // Match against uniqueId field
+                if ($data && isset($data['uniqueId']) && $data['uniqueId'] === $uniqueId) {
+                    $foundMatch = true;
+                    break;
                 }
             }
-        } catch (\OCP\Files\NotFoundException $e) {
-            // No images folder in current folder, continue searching subfolders
+        }
+
+        // If we found the matching page JSON in this folder, return its images folder
+        if ($foundMatch) {
+            try {
+                $imagesFolder = $folder->get('images');
+                if ($imagesFolder->getType() === \OCP\Files\FileInfo::TYPE_FOLDER) {
+                    return $imagesFolder;
+                }
+            } catch (\OCP\Files\NotFoundException $e) {
+                // Page found but no images folder
+                return null;
+            }
         }
 
         // Recursively search subfolders
@@ -1216,15 +1234,22 @@ class PageService {
                 $itemName = $item->getName();
 
                 // Skip special folders to avoid infinite loops
-                if ($itemName === 'images' || strpos($itemName, '📷') === 0 ||
-                    $itemName === '.nomedia') {
+                if ($itemName === 'images' || $itemName === '.nomedia') {
                     continue;
                 }
 
-                // Recurse into subfolder
-                $result = $this->findImagesFolderForPage($item, $uniqueId);
-                if ($result !== null) {
-                    return $result;
+                // Recurse into subfolder - wrap in try-catch to handle stale cache entries
+                try {
+                    $result = $this->findImagesFolderForPage($item, $uniqueId);
+                    if ($result !== null) {
+                        return $result;
+                    }
+                } catch (\OCP\Files\NotFoundException $e) {
+                    // This subfolder doesn't actually exist (stale cache entry) - skip it
+                    continue;
+                } catch (\Exception $e) {
+                    $this->logger->error("findImagesFolderForPage: Error accessing subfolder {$itemName}: {$e->getMessage()}");
+                    continue;
                 }
             }
         }
@@ -1239,8 +1264,6 @@ class PageService {
         $sanitized = [
             'id' => $this->sanitizeId($data['id']),
             'title' => $this->sanitizeText($data['title']),
-            'created' => $data['created'] ?? time(),
-            'modified' => $data['modified'] ?? time(),
             'layout' => [
                 'columns' => 1, // Default to 1 column
                 'rows' => []
@@ -1447,77 +1470,10 @@ class PageService {
      * @throws \Exception if page not found or version directory cannot be accessed
      */
     public function getPageVersions(string $pageId): array {
-        // First find the page via user path to verify it exists
-        $result = $this->findPageById($this->getLanguageFolder(), $pageId);
-
-        if (!$result) {
-            throw new \Exception('Page not found: ' . $pageId);
-        }
-
-        $file = $result['file'];
-        $fileId = $file->getId();
-        $versions = [];
-
-        try {
-            $groupFolderId = $this->setupService->getGroupFolderId();
-
-            // The problem: when files are accessed via __groupfolders path, they have one fileId (e.g., 421)
-            // But when the same file is accessed via user mount (files/...), it has a different fileId (e.g., 763)
-            // Versions are stored using the user mount fileId, so we need to find it
-            $versionFileId = $this->findVersionFileId($groupFolderId, $fileId, $file->getInternalPath());
-
-            if (!$versionFileId) {
-                return [];
-            }
-
-            // Read versions directly from filesystem using the version fileId
-            $versionDir = "/var/www/nextcloud/data/__groupfolders/{$groupFolderId}/versions/{$versionFileId}";
-
-            if (!is_dir($versionDir)) {
-                return [];
-            }
-
-            // List all version files
-            $versionFiles = scandir($versionDir);
-
-            foreach ($versionFiles as $versionFile) {
-                if ($versionFile === '.' || $versionFile === '..') {
-                    continue;
-                }
-
-                $timestamp = (int)$versionFile;
-                $versionPath = "{$versionDir}/{$versionFile}";
-
-                if (!is_file($versionPath)) {
-                    continue;
-                }
-
-                $size = filesize($versionPath);
-
-                // Read version metadata if available
-                $metadata = $this->getVersionMetadata($groupFolderId, $versionFileId, $timestamp);
-
-                $versions[] = [
-                    'timestamp' => $timestamp,
-                    'date' => date('Y-m-d H:i:s', $timestamp),
-                    'size' => $size,
-                    'relativeDate' => $this->getRelativeTime($timestamp),
-                    'label' => $metadata['label'] ?? null,
-                    'author' => $metadata['author'] ?? null
-                ];
-            }
-
-            // Sort newest first
-            usort($versions, fn($a, $b) => $b['timestamp'] <=> $a['timestamp']);
-
-            return $versions;
-        } catch (\Exception $e) {
-            $this->logger->error('[getPageVersions] Failed to retrieve versions', [
-                'error' => $e->getMessage(),
-                'pageId' => $pageId
-            ]);
-            throw new \Exception('Failed to retrieve versions: ' . $e->getMessage());
-        }
+        // Temporarily disabled due to Nextcloud 32 "dirty table reads" limitations
+        // Version history requires file system queries that cannot be wrapped in transactions
+        // This will be re-enabled when Nextcloud provides proper transaction support for file operations
+        return [];
     }
 
     /**
@@ -1817,78 +1773,68 @@ class PageService {
     }
 
     /**
-     * Get metadata for a page (file info like in Files app)
+     * Get metadata for a page (simplified version using already loaded page data)
      */
     public function getPageMetadata(string $pageId): array {
-        $result = $this->findPageById($this->getLanguageFolder(), $pageId);
+        $folder = $this->getLanguageFolder();
+        $result = null;
 
-        if (!$result) {
-            throw new \Exception('Page not found: ' . $pageId);
+        // Save original ID before sanitization
+        $originalId = $pageId;
+
+        // Check for uniqueId pattern BEFORE sanitization
+        if (strpos($originalId, 'page-') === 0) {
+            $result = $this->findPageByUniqueId($folder, $originalId);
+            if (!$result) {
+                $this->logger->warning('IntraVox: Metadata not found by uniqueId', ['uniqueId' => $originalId]);
+            }
+        }
+
+        // Only sanitize for legacy ID fallback
+        if ($result === null) {
+            $pageId = $this->sanitizeId($originalId);
+            $result = $this->findPageById($folder, $pageId);
+        }
+
+        if ($result === null) {
+            throw new \Exception('Page not found: ' . $originalId);
         }
 
         $file = $result['file'];
         $folder = $result['folder'];
 
-        // Get file stats
+        // Get filesystem timestamps
         $mtime = $file->getMTime();
-        $size = $file->getSize();
-        $owner = $file->getOwner()->getUID();
-        $permissions = $file->getPermissions();
+        // Use mtime for created as well - filesystem creation time is not reliably available
+        $ctime = $mtime;
 
-        // Get page content for additional metadata
+        // Get page content for other metadata
         $content = $file->getContent();
         $data = json_decode($content, true);
 
-        // Get the groupfolder storage file ID (needed for MetaVox integration)
-        $actualFileId = $this->getFileIdFromDatabase($file, $folder);
+        // Enrich with path data
+        $data = $this->enrichWithPathData($data, $folder);
 
-        // Get groupfolder ID and name
-        $groupfolderId = $this->extractGroupfolderId($file->getPath());
-        $mountPoint = $this->getGroupfolderName($groupfolderId);
+        // Format path to show full Nextcloud path starting with /IntraVox/
+        $displayPath = isset($data['path']) ? '/IntraVox/' . $data['path'] : '';
 
-        // Get parent folder ID for Files app link
-        $parentFolderId = $this->getFolderIdFromDatabase($folder->getPath(), $groupfolderId);
-
-        // Get path-related metadata using enrichWithPathData
-        $pathData = [];
-        $pathData['id'] = $pageId;
-        $pathData = $this->enrichWithPathData($pathData, $folder);
-
-        // Check if page has children
-        $hasChildren = $this->hasChildren($pageId);
-
-        // Determine page type
-        $pageType = $this->determinePageType($pathData['path'] ?? '', $hasChildren);
-
+        // Return metadata using filesystem timestamps
         $metadata = [
-            'size' => $size,
-            'sizeFormatted' => $this->formatBytes($size),
+            'title' => $data['title'] ?? 'Untitled',
+            'uniqueId' => $data['uniqueId'] ?? '',
+            'language' => $data['language'] ?? $this->getUserLanguage(),
+            'created' => $ctime,
+            'createdFormatted' => date('Y-m-d H:i:s', $ctime),
             'modified' => $mtime,
             'modifiedFormatted' => date('Y-m-d H:i:s', $mtime),
             'modifiedRelative' => $this->getRelativeTime($mtime),
-            'owner' => $owner,
-            'path' => $file->getPath(),
-            'mimeType' => $file->getMimeType(),
-            'permissions' => $permissions,
-            'canEdit' => ($permissions & \OCP\Constants::PERMISSION_UPDATE) === \OCP\Constants::PERMISSION_UPDATE,
-            'canDelete' => ($permissions & \OCP\Constants::PERMISSION_DELETE) === \OCP\Constants::PERMISSION_DELETE,
-            'title' => $data['title'] ?? '',
-            'created' => $data['created'] ?? $mtime,
-            'createdFormatted' => date('Y-m-d H:i:s', $data['created'] ?? $mtime),
-            'uniqueId' => $data['uniqueId'] ?? '',
-            'fileId' => $actualFileId,
-            'groupfolderId' => $groupfolderId,
-            'mountPoint' => $mountPoint,
-            'parentFolderId' => $parentFolderId,
-            // Add path-related data
-            'depth' => $pathData['depth'] ?? null,
-            'parentId' => $pathData['parentId'] ?? null,
-            'parentPath' => $pathData['parentPath'] ?? null,
-            'department' => $pathData['department'] ?? null,
-            'relativePath' => $pathData['path'] ?? null,
-            // Add structure data
-            'hasChildren' => $hasChildren,
-            'type' => $pageType,
+            // Path-related data (already in page)
+            'path' => $displayPath,
+            'depth' => $data['depth'] ?? 0,
+            'parentId' => $data['parentId'] ?? null,
+            'parentPath' => $data['parentPath'] ?? null,
+            'department' => $data['department'] ?? null,
+            'canEdit' => $data['canEdit'] ?? false,
         ];
 
         return $metadata;
@@ -1898,10 +1844,25 @@ class PageService {
      * Update page metadata (title only for now, similar to Files rename)
      */
     public function updatePageMetadata(string $pageId, array $metadata): array {
-        $result = $this->findPageById($this->getLanguageFolder(), $pageId);
+        $folder = $this->getLanguageFolder();
+        $result = null;
 
-        if (!$result) {
-            throw new \Exception('Page not found: ' . $pageId);
+        // Save original ID before sanitization
+        $originalId = $pageId;
+
+        // Check for uniqueId pattern BEFORE sanitization
+        if (strpos($originalId, 'page-') === 0) {
+            $result = $this->findPageByUniqueId($folder, $originalId);
+        }
+
+        // Only sanitize for legacy ID fallback
+        if ($result === null) {
+            $pageId = $this->sanitizeId($originalId);
+            $result = $this->findPageById($folder, $pageId);
+        }
+
+        if ($result === null) {
+            throw new \Exception('Page not found: ' . $originalId);
         }
 
         $file = $result['file'];
@@ -1914,7 +1875,6 @@ class PageService {
         $changed = false;
         if (isset($metadata['title']) && $metadata['title'] !== $data['title']) {
             $data['title'] = $this->sanitizeText($metadata['title']);
-            $data['modified'] = time();
             $changed = true;
         }
 

@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace OCA\IntraVox\Search;
 
 use OCA\IntraVox\Service\PageService;
-use OCA\IntraVox\Service\SearchIndexService;
 use OCP\IL10N;
 use OCP\IURLGenerator;
 use OCP\IUser;
@@ -15,18 +14,15 @@ use OCP\Search\SearchResultEntry;
 
 class PageSearchProvider implements IProvider {
     private PageService $pageService;
-    private SearchIndexService $searchIndexService;
     private IL10N $l10n;
     private IURLGenerator $urlGenerator;
 
     public function __construct(
         PageService $pageService,
-        SearchIndexService $searchIndexService,
         IL10N $l10n,
         IURLGenerator $urlGenerator
     ) {
         $this->pageService = $pageService;
-        $this->searchIndexService = $searchIndexService;
         $this->l10n = $l10n;
         $this->urlGenerator = $urlGenerator;
     }
@@ -60,14 +56,7 @@ class PageSearchProvider implements IProvider {
         }
 
         try {
-            // Use fast database-backed search index
-            $results = $this->searchIndexService->search($term, 'en', 20);
-
-            // If index is empty, fall back to direct file search
-            if (empty($results)) {
-                $results = $this->pageService->searchPages($term);
-            }
-
+            $results = $this->pageService->searchPages($term);
             $entries = [];
 
             foreach ($results as $result) {
@@ -85,8 +74,8 @@ class PageSearchProvider implements IProvider {
                 // Get first match for subline
                 $subline = '';
                 $thumbnailUrl = '';
-                // Use a document/page icon with good contrast
-                $icon = 'icon-file';
+                // Use article icon for IntraVox pages
+                $icon = 'icon-article';
 
                 if (!empty($result['matches'])) {
                     $firstMatch = $result['matches'][0];
@@ -105,7 +94,7 @@ class PageSearchProvider implements IProvider {
                     $subline,
                     $url,
                     $icon,
-                    false // not rounded - use square icon for pages
+                    true // rounded icon
                 );
 
                 $entries[] = $entry;

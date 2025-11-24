@@ -4,9 +4,9 @@
 
 IntraVox heeft verschillende deployment scripts voor verschillende omgevingen:
 
-- **deploy-dev.sh** - Deploy naar development server (145.38.191.66)
-- **deploy.sh** - Deploy naar production server (145.38.193.69)
-- **deploy-demo-data.sh** - Deploy demo data naar development server
+- **deploy.sh** - Deploy naar production server (145.38.191.66)
+- **deploy-nl-demo.sh** - Deploy Nederlandse demo data naar production server
+- **deploy-demo-data.sh** - Deploy Engelse demo data naar production server
 
 ## Prerequisites
 
@@ -14,12 +14,12 @@ IntraVox heeft verschillende deployment scripts voor verschillende omgevingen:
 - SSH toegang tot de server met key `~/.ssh/sur`
 - Toegang tot de Nextcloud server
 
-## Development Deployment
+## Production Deployment
 
 ### 1. Deploy de applicatie
 
 ```bash
-./deploy-dev.sh
+./deploy.sh
 ```
 
 Dit script:
@@ -27,32 +27,31 @@ Dit script:
 2. Installeert npm dependencies indien nodig
 3. Kopieert de gebouwde bestanden naar de `js/` directory
 4. Maakt een deployment package
-5. Upload en installeert het package op de development server
+5. Upload en installeert het package op de production server (145.38.191.66)
 6. Enabled de IntraVox app
 
-### 2. Deploy demo data (optioneel)
+### 2. Deploy Nederlandse demo data (optioneel)
+
+```bash
+./deploy-nl-demo.sh
+```
+
+Dit script:
+1. Kopieert Nederlandse demo data naar de server
+2. Zet de juiste file permissions
+3. Runt het import command (`intravox:import --language=nl`)
+4. Deploy geneste folder structuren (afdeling/marketing/marketingcampagnes)
+5. Scant de groupfolder om nieuwe files te registreren
+
+**Belangrijk**: Demo data overschrijft bestaande content!
+
+### 3. Deploy Engelse demo data (optioneel)
 
 ```bash
 ./deploy-demo-data.sh
 ```
 
-Dit script:
-1. Kopieert demo data naar de server
-2. Zet de juiste file permissions
-3. Runt het import command (`intravox:import`)
-4. Scant de groupfolder om nieuwe files te registreren
-
-**Belangrijk**: Demo data overschrijft bestaande content!
-
-## Production Deployment
-
-Voor production deployment:
-
-```bash
-./deploy.sh
-```
-
-**Let op**: Dit deploy naar de production server (145.38.193.69)!
+Zelfde als Nederlandse versie maar voor Engels (`--language=en`).
 
 ## Frontend Development
 
@@ -114,8 +113,7 @@ find /tmp/intravox-deploy/demo-data -type d -exec chmod 755 {} \;
 
 ## Server URLs
 
-- **Development**: https://intravoxdev.hvanextcloudpoc.src.surf-hosted.nl
-- **Production**: https://145.38.193.69
+- **Production**: https://intravoxdev.hvanextcloudpoc.src.surf-hosted.nl (145.38.191.66)
 
 ## File Structure
 

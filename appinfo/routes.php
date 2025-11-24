@@ -4,18 +4,13 @@ declare(strict_types=1);
 return [
     'routes' => [
         // API routes MUST come first to avoid conflicts with language routes
-        // MORE SPECIFIC routes must come BEFORE general routes to match correctly
         ['name' => 'api#listPages', 'url' => '/api/pages', 'verb' => 'GET'],
-        ['name' => 'api#createPage', 'url' => '/api/pages', 'verb' => 'POST'],
-
-        // Image routes MUST come before getPage to avoid {id} matching the entire path
-        ['name' => 'api#uploadImage', 'url' => '/api/pages/{pageId}/images', 'verb' => 'POST'],
-        ['name' => 'api#getImage', 'url' => '/api/pages/{pageId}/images/{filename}', 'verb' => 'GET'],
-
-        // General page routes
         ['name' => 'api#getPage', 'url' => '/api/pages/{id}', 'verb' => 'GET'],
+        ['name' => 'api#createPage', 'url' => '/api/pages', 'verb' => 'POST'],
         ['name' => 'api#updatePage', 'url' => '/api/pages/{id}', 'verb' => 'PUT'],
         ['name' => 'api#deletePage', 'url' => '/api/pages/{id}', 'verb' => 'DELETE'],
+        ['name' => 'api#uploadImage', 'url' => '/api/pages/{pageId}/images', 'verb' => 'POST'],
+        ['name' => 'api#getImage', 'url' => '/api/pages/{pageId}/images/{filename}', 'verb' => 'GET'],
         ['name' => 'api#getPageVersions', 'url' => '/api/pages/{pageId}/versions', 'verb' => 'GET'],
         ['name' => 'api#restorePageVersion', 'url' => '/api/pages/{pageId}/versions/{timestamp}', 'verb' => 'POST'],
         ['name' => 'api#updateVersionLabel', 'url' => '/api/pages/{pageId}/versions/{timestamp}/label', 'verb' => 'PUT'],

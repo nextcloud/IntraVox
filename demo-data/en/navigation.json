@@ -9,7 +9,7 @@
       "uniqueId": "page-2e8f694e-147e-4793-8949-4732e679ae6b"
     },
     {
-      "title": "Company",
+      "title": "About",
       "url": null,
       "target": null,
       "children": [
@@ -31,15 +31,7 @@
               "target": null,
               "children": [],
               "uniqueId": "page-76b06618-98c1-4bce-bb3d-29fcf9a109a1"
-            }
-          ],
-          "uniqueId": "page-5d2d48f9-c862-4195-bf8d-f60f00d0f306"
-        },
-        {
-          "title": "Culture",
-          "url": null,
-          "target": null,
-          "children": [
+            },
             {
               "title": "Benefits & Perks",
               "url": null,
@@ -55,68 +47,133 @@
               "uniqueId": "page-7c2e9b45-f1a8-4d29-8e3f-2b9c1a7d5e4f"
             }
           ],
-          "uniqueId": "page-9a1b2c3d-4e5f-6a7b-8c9d-0e1f2a3b4c5d"
+          "uniqueId": "page-5d2d48f9-c862-4195-bf8d-f60f00d0f306"
+        },
+        {
+          "title": "Careers",
+          "url": null,
+          "target": null,
+          "children": [
+            {
+              "title": "Open Positions",
+              "url": null,
+              "target": null,
+              "children": [],
+              "uniqueId": "page-9d5e3a72-c4b6-4f18-a9e7-3c8d2f1b6a5e"
+            },
+            {
+              "title": "Internships",
+              "url": null,
+              "target": null,
+              "children": [],
+              "uniqueId": "page-6f8a2d94-b5c3-4e17-9a8f-1d7c3b2e5a4f"
+            },
+            {
+              "title": "Application Process",
+              "url": null,
+              "target": null,
+              "children": [],
+              "uniqueId": "page-4b7c9e21-d5a8-4f32-8c6f-2e9d1a3b5c7f"
+            }
+          ],
+          "uniqueId": "page-c72ef99e-ed6e-4f87-8dbe-3b9b4819f73e"
+        },
+        {
+          "title": "Contact",
+          "url": null,
+          "target": null,
+          "children": [
+            {
+              "title": "Office Locations",
+              "url": null,
+              "target": null,
+              "children": [],
+              "uniqueId": "page-4d8a7f96-e5c3-4f29-9b8f-0e4d3c5e7a8f"
+            },
+            {
+              "title": "Partners",
+              "url": null,
+              "target": null,
+              "children": [],
+              "uniqueId": "page-5e9b8g07-f6d4-4g30-0c9g-1f5e4d6f8b9g"
+            }
+          ],
+          "uniqueId": "page-a879a7e3-2d98-4968-b06e-f19a2eb73d66"
         }
       ],
-      "uniqueId": "page-1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d"
+      "uniqueId": "page-f33c6397-e2f2-4cd9-b58a-e84c20aae882"
     },
     {
-      "title": "News",
+      "title": "News & Events",
       "url": null,
       "target": null,
       "children": [
         {
-          "title": "Company Blog",
+          "title": "News",
           "url": null,
           "target": null,
-          "children": [],
-          "uniqueId": "page-3e7b5c92-a4d1-4f28-9c6f-8d2e1b3a5c7f"
+          "children": [
+            {
+              "title": "Company Blog",
+              "url": null,
+              "target": null,
+              "children": [],
+              "uniqueId": "page-3e7b5c92-a4d1-4f28-9c6f-8d2e1b3a5c7f"
+            },
+            {
+              "title": "Product Updates",
+              "url": null,
+              "target": null,
+              "children": [],
+              "uniqueId": "page-6f0c9h18-g7e5-4h41-1d0h-2g6f5e7g9c0h"
+            },
+            {
+              "title": "Case Studies",
+              "url": null,
+              "target": null,
+              "children": [],
+              "uniqueId": "page-7g1d0i29-h8f6-4i52-2e1i-3h7g6f8h0d1i"
+            }
+          ],
+          "uniqueId": "page-e1e356f5-3ea6-489b-929c-d786862ddb6b"
         },
         {
-          "title": "Product Updates",
+          "title": "Events",
           "url": null,
           "target": null,
-          "children": [],
-          "uniqueId": "page-6f0c9h18-g7e5-4h41-1d0h-2g6f5e7g9c0h"
+          "children": [
+            {
+              "title": "Webinars",
+              "url": null,
+              "target": null,
+              "children": [],
+              "uniqueId": "page-2d8c5a94-b3f1-4e29-8a7f-1c9d2b5e3a6f"
+            },
+            {
+              "title": "Conferences",
+              "url": null,
+              "target": null,
+              "children": [],
+              "uniqueId": "page-5a9d2c84-f3b1-4e28-9c6f-7d1e3b2a5c8f"
+            },
+            {
+              "title": "Meetups",
+              "url": null,
+              "target": null,
+              "children": [],
+              "uniqueId": "page-8h2e1j30-i9g7-4j63-3f2j-4i8h7g9i1e2j"
+            }
+          ],
+          "uniqueId": "page-8558ade2-b8c6-4109-b54f-79a147797cd2"
         },
         {
-          "title": "Case Studies",
+          "title": "Press Releases",
           "url": null,
           "target": null,
           "children": [],
-          "uniqueId": "page-7g1d0i29-h8f6-4i52-2e1i-3h7g6f8h0d1i"
+          "uniqueId": "page-15d684e7-9c00-4679-9840-c918e4bc2d31"
         }
-      ],
-      "uniqueId": "page-e1e356f5-3ea6-489b-929c-d786862ddb6b"
-    },
-    {
-      "title": "Events",
-      "url": null,
-      "target": null,
-      "children": [
-        {
-          "title": "Webinars",
-          "url": null,
-          "target": null,
-          "children": [],
-          "uniqueId": "page-2d8c5a94-b3f1-4e29-8a7f-1c9d2b5e3a6f"
-        },
-        {
-          "title": "Conferences",
-          "url": null,
-          "target": null,
-          "children": [],
-          "uniqueId": "page-5a9d2c84-f3b1-4e28-9c6f-7d1e3b2a5c8f"
-        },
-        {
-          "title": "Meetups",
-          "url": null,
-          "target": null,
-          "children": [],
-          "uniqueId": "page-8h2e1j30-i9g7-4j63-3f2j-4i8h7g9i1e2j"
-        }
-      ],
-      "uniqueId": "page-8558ade2-b8c6-4109-b54f-79a147797cd2"
+      ]
     },
     {
       "title": "Resources",
@@ -224,15 +281,7 @@
           ],
           "uniqueId": "page-a275067d-a6e0-4ff5-930c-ffebd36c5773"
         }
-      ],
-      "uniqueId": "page-2b3c4d5e-6f7a-8b9c-0d1e-2f3a4b5c6d7e"
-    },
-    {
-      "title": "Press Releases",
-      "url": null,
-      "target": null,
-      "children": [],
-      "uniqueId": "page-15d684e7-9c00-4679-9840-c918e4bc2d31"
+      ]
     },
     {
       "title": "External",

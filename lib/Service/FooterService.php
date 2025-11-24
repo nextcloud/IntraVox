@@ -132,6 +132,7 @@ class FooterService {
 
     /**
      * Check if current user can edit footer
+     * Uses Nextcloud's permission system to check write access to footer.json
      */
     private function canEditFooter(): bool {
         if (!$this->userId) {
@@ -143,10 +144,17 @@ class FooterService {
             return false;
         }
 
-        // Check if user is in IntraVox Admins group
-        $groupManager = \OC::$server->getGroupManager();
-        $adminGroup = $groupManager->get('IntraVox Admins');
+        try {
+            $language = $this->getUserLanguage();
+            $groupFolder = $this->setupService->getSharedFolder();
+            $languageFolder = $groupFolder->get($language);
 
-        return $adminGroup && $adminGroup->inGroup($user);
+            // Check if the language folder is writable for this user
+            // This respects Nextcloud's ACLs, group permissions, and file locks
+            return $languageFolder->isUpdateable();
+        } catch (\Exception $e) {
+            // If we can't access the folder, user can't edit
+            return false;
+        }
     }
 }

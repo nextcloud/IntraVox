@@ -1,81 +1,79 @@
 {
-    "uniqueId": "page-507de599-7957-4df2-98e6-fdf3df78138d",
-    "title": "Documentation",
-    "language": "en",
-    "created": 1760945741,
-    "modified": 1763537741,
-    "layout": {
+  "uniqueId": "page-507de599-7957-4df2-98e6-fdf3df78138d",
+  "title": "Documentation",
+  "language": "en",
+  "layout": {
+    "columns": 1,
+    "rows": [
+      {
         "columns": 1,
-        "rows": [
-            {
-                "columns": 1,
-                "backgroundColor": "var(--color-primary-element)",
-                "widgets": [
-                    {
-                        "type": "image",
-                        "column": 1,
-                        "order": 1,
-                        "src": "images/documentation.jpg",
-                        "alt": "Documentation",
-                        "objectFit": "cover"
-                    },
-                    {
-                        "type": "heading",
-                        "column": 1,
-                        "order": 2,
-                        "content": "Documentation",
-                        "level": 1
-                    },
-                    {
-                        "type": "text",
-                        "column": 1,
-                        "order": 3,
-                        "content": "Everything you need to know about using IntraVox"
-                    }
-                ]
-            },
-            {
-                "columns": 1,
-                "backgroundColor": "",
-                "widgets": [
-                    {
-                        "type": "heading",
-                        "column": 1,
-                        "order": 1,
-                        "content": "Get Started",
-                        "level": 2
-                    },
-                    {
-                        "type": "links",
-                        "column": 1,
-                        "order": 2,
-                        "columns": 3,
-                        "items": [
-                            {
-                                "title": "Getting Started",
-                                "text": "Quick start guide for new users",
-                                "url": "#documentation/getting-started",
-                                "icon": "rocket-launch",
-                                "target": "_self"
-                            },
-                            {
-                                "title": "User Guide",
-                                "text": "Complete guide to using IntraVox",
-                                "url": "#documentation/user-guide",
-                                "icon": "book-open",
-                                "target": "_self"
-                            },
-                            {
-                                "title": "FAQ",
-                                "text": "Frequently asked questions",
-                                "url": "#documentation/faq",
-                                "icon": "help-circle",
-                                "target": "_self"
-                            }
-                        ]
-                    }
-                ]
-            }
+        "backgroundColor": "var(--color-primary-element)",
+        "widgets": [
+          {
+            "type": "image",
+            "column": 1,
+            "order": 1,
+            "src": "images/documentation.jpg",
+            "alt": "Documentation",
+            "objectFit": "cover"
+          },
+          {
+            "type": "heading",
+            "column": 1,
+            "order": 2,
+            "content": "Documentation",
+            "level": 1
+          },
+          {
+            "type": "text",
+            "column": 1,
+            "order": 3,
+            "content": "Everything you need to know about using IntraVox"
+          }
         ]
-    }
+      },
+      {
+        "columns": 1,
+        "backgroundColor": "",
+        "widgets": [
+          {
+            "type": "heading",
+            "column": 1,
+            "order": 1,
+            "content": "Get Started",
+            "level": 2
+          },
+          {
+            "type": "links",
+            "column": 1,
+            "order": 2,
+            "columns": 3,
+            "items": [
+              {
+                "title": "Getting Started",
+                "text": "Quick start guide for new users",
+                "url": "#documentation/getting-started",
+                "icon": "rocket-launch",
+                "target": "_self"
+              },
+              {
+                "title": "User Guide",
+                "text": "Complete guide to using IntraVox",
+                "url": "#documentation/user-guide",
+                "icon": "book-open",
+                "target": "_self"
+              },
+              {
+                "title": "FAQ",
+                "text": "Frequently asked questions",
+                "url": "#documentation/faq",
+                "icon": "help-circle",
+                "target": "_self"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
 }

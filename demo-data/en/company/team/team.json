@@ -1,80 +1,78 @@
 {
-    "uniqueId": "page-5d2d48f9-c862-4195-bf8d-f60f00d0f306",
-    "title": "Our Team",
-    "language": "en",
-    "created": 1760945741,
-    "modified": 1763537741,
-    "layout": {
+  "uniqueId": "page-5d2d48f9-c862-4195-bf8d-f60f00d0f306",
+  "title": "Our Team",
+  "language": "en",
+  "layout": {
+    "columns": 1,
+    "rows": [
+      {
         "columns": 1,
-        "rows": [
-            {
-                "columns": 1,
-                "backgroundColor": "var(--color-primary-element)",
-                "widgets": [
-                    {
-                        "type": "image",
-                        "column": 1,
-                        "order": 1,
-                        "src": "images/team-collaboration.jpg",
-                        "alt": "Team collaboration",
-                        "objectFit": "cover"
-                    },
-                    {
-                        "type": "heading",
-                        "column": 1,
-                        "order": 2,
-                        "content": "Our Team",
-                        "level": 1
-                    },
-                    {
-                        "type": "text",
-                        "column": 1,
-                        "order": 3,
-                        "content": "Meet the people behind IntraVox"
-                    }
-                ]
-            },
-            {
-                "columns": 1,
-                "backgroundColor": "",
-                "widgets": [
-                    {
-                        "type": "heading",
-                        "column": 1,
-                        "order": 1,
-                        "content": "Who We Are",
-                        "level": 2
-                    },
-                    {
-                        "type": "text",
-                        "column": 1,
-                        "order": 2,
-                        "content": "We're a passionate team of developers, designers, and open-source enthusiasts dedicated to building better collaboration tools for everyone."
-                    },
-                    {
-                        "type": "links",
-                        "column": 1,
-                        "order": 3,
-                        "columns": 2,
-                        "items": [
-                            {
-                                "title": "Management",
-                                "text": "Meet our leadership team",
-                                "url": "#team/management",
-                                "icon": "account-tie",
-                                "target": "_self"
-                            },
-                            {
-                                "title": "Departments",
-                                "text": "Explore our teams and departments",
-                                "url": "#team/departments",
-                                "icon": "office-building",
-                                "target": "_self"
-                            }
-                        ]
-                    }
-                ]
-            }
+        "backgroundColor": "var(--color-primary-element)",
+        "widgets": [
+          {
+            "type": "image",
+            "column": 1,
+            "order": 1,
+            "src": "images/team-collaboration.jpg",
+            "alt": "Team collaboration",
+            "objectFit": "cover"
+          },
+          {
+            "type": "heading",
+            "column": 1,
+            "order": 2,
+            "content": "Our Team",
+            "level": 1
+          },
+          {
+            "type": "text",
+            "column": 1,
+            "order": 3,
+            "content": "Meet the people behind IntraVox"
+          }
         ]
-    }
+      },
+      {
+        "columns": 1,
+        "backgroundColor": "",
+        "widgets": [
+          {
+            "type": "heading",
+            "column": 1,
+            "order": 1,
+            "content": "Who We Are",
+            "level": 2
+          },
+          {
+            "type": "text",
+            "column": 1,
+            "order": 2,
+            "content": "We're a passionate team of developers, designers, and open-source enthusiasts dedicated to building better collaboration tools for everyone."
+          },
+          {
+            "type": "links",
+            "column": 1,
+            "order": 3,
+            "columns": 2,
+            "items": [
+              {
+                "title": "Management",
+                "text": "Meet our leadership team",
+                "url": "#team/management",
+                "icon": "account-tie",
+                "target": "_self"
+              },
+              {
+                "title": "Departments",
+                "text": "Explore our teams and departments",
+                "url": "#team/departments",
+                "icon": "office-building",
+                "target": "_self"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
 }

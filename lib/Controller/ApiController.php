@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace OCA\IntraVox\Controller;
 
 use OCA\IntraVox\Service\PageService;
-use OCA\IntraVox\Service\SearchIndexService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\DataResponse;
@@ -14,19 +13,16 @@ use Psr\Log\LoggerInterface;
 
 class ApiController extends Controller {
     private PageService $pageService;
-    private SearchIndexService $searchIndexService;
     private LoggerInterface $logger;
 
     public function __construct(
         string $appName,
         IRequest $request,
         PageService $pageService,
-        SearchIndexService $searchIndexService,
         LoggerInterface $logger
     ) {
         parent::__construct($appName, $request);
         $this->pageService = $pageService;
-        $this->searchIndexService = $searchIndexService;
         $this->logger = $logger;
     }
 
@@ -74,12 +70,6 @@ class ApiController extends Controller {
             unset($data['parentPath']); // Remove from data array to avoid storing it
 
             $page = $this->pageService->createPage($data, $parentPath);
-
-            // Update search index
-            if (isset($page['uniqueId'])) {
-                $this->searchIndexService->indexPage($page['uniqueId'], 'en');
-            }
-
             return new DataResponse($page, Http::STATUS_CREATED);
         } catch (\InvalidArgumentException $e) {
             return new DataResponse(
@@ -101,12 +91,6 @@ class ApiController extends Controller {
         try {
             $data = $this->request->getParams();
             $page = $this->pageService->updatePage($id, $data);
-
-            // Update search index
-            if (isset($page['uniqueId'])) {
-                $this->searchIndexService->indexPage($page['uniqueId'], 'en');
-            }
-
             return new DataResponse($page);
         } catch (\InvalidArgumentException $e) {
             return new DataResponse(
@@ -127,10 +111,6 @@ class ApiController extends Controller {
     public function deletePage(string $id): DataResponse {
         try {
             $this->pageService->deletePage($id);
-
-            // Remove from search index
-            $this->searchIndexService->removeFromIndex($id);
-
             return new DataResponse(['success' => true]);
         } catch (\Exception $e) {
             return new DataResponse(
@@ -170,21 +150,9 @@ class ApiController extends Controller {
      * @NoCSRFRequired
      */
     public function getImage(string $pageId, string $filename) {
-        $this->logger->warning('IntraVox ApiController getImage: CALLED', [
-            'pageId' => $pageId,
-            'filename' => $filename,
-            'url' => $this->request->getRequestUri()
-        ]);
-
         try {
-            $result = $this->pageService->getImage($pageId, $filename);
-            $this->logger->warning('IntraVox ApiController getImage: SUCCESS');
-            return $result;
+            return $this->pageService->getImage($pageId, $filename);
         } catch (\Exception $e) {
-            $this->logger->error('IntraVox ApiController getImage: ERROR', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
             return new DataResponse(
                 ['error' => $e->getMessage()],
                 Http::STATUS_NOT_FOUND

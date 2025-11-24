@@ -1,0 +1,120 @@
+{
+    "uniqueId": "page-c2839fe9-f220-4fac-8f11-349855885ec6",
+    "title": "Downloads",
+    "language": "en",
+    "created": 1760945741,
+    "modified": 1763537741,
+    "layout": {
+        "columns": 1,
+        "rows": [
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element)",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "images/downloads.jpg",
+                        "alt": "Downloads",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Downloads",
+                        "level": 1
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 3,
+                        "content": "Get the latest version of IntraVox"
+                    }
+                ]
+            },
+            {
+                "columns": 2,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Nextcloud App Store",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "**Recommended**\n\nInstall IntraVox directly from your Nextcloud instance via the App Store. One-click installation with automatic updates."
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 3,
+                        "columns": 1,
+                        "items": [
+                            {
+                                "title": "Install from App Store",
+                                "text": "One-click installation with automatic updates",
+                                "url": "https://apps.nextcloud.com",
+                                "icon": "download",
+                                "target": "_blank"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 1,
+                        "content": "GitHub",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 2,
+                        "content": "**For Developers**\n\nGet the source code, report issues, or contribute to the project on GitHub."
+                    },
+                    {
+                        "type": "links",
+                        "column": 2,
+                        "order": 3,
+                        "columns": 1,
+                        "items": [
+                            {
+                                "title": "View on GitHub",
+                                "text": "Source code, issues, and contributions",
+                                "url": "https://github.com",
+                                "icon": "github",
+                                "target": "_blank"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Latest Release",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "**IntraVox 1.0.0** - November 2025\n\nStable release with full feature set. Compatible with Nextcloud 28+"
+                    }
+                ]
+            }
+        ]
+    }
+}

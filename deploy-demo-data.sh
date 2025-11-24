@@ -32,4 +32,8 @@ echo "🔄 Scanning groupfolder to register new files..."
 ssh -i ${SSH_KEY} ${USER}@${SERVER} \
     "cd ${NEXTCLOUD_PATH} && sudo -u www-data php occ groupfolders:scan 1"
 
+echo "🔍 Indexing files for search..."
+ssh -i ${SSH_KEY} ${USER}@${SERVER} \
+    "cd ${NEXTCLOUD_PATH} && sudo -u www-data php occ files:scan --path='/__groupfolders/1/files/en'"
+
 echo "✅ Demo data deployed successfully!"

@@ -7,6 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.10] - 2025-11-23 - Filesystem Timestamps & Metadata Improvements
+
+### Changed
+- **🔄 BREAKING: Filesystem Timestamps**: Removed manual timestamp management from JSON files
+  - `created` and `modified` fields removed from all page JSON files
+  - Page metadata now uses filesystem timestamps (`getMTime()`) directly
+  - Demo data updated: 31 JSON files cleaned (no more manual timestamps)
+  - More reliable and consistent timestamp tracking
+  - Reduces JSON file size and maintenance overhead
+
+### Fixed
+- **Metadata API**: Fixed `getPageMetadata()` to properly handle uniqueId-based lookups
+  - Now uses `findPageByUniqueId()` for modern pages (IDs starting with `page-`)
+  - Falls back to legacy `findPageById()` for backward compatibility
+  - Fixes 500 errors in Details sidebar panel
+- **Update Metadata**: Fixed `updatePageMetadata()` with same uniqueId handling
+- **Details Panel**: Now correctly loads page metadata using filesystem timestamps
+
+### Technical
+- Modified `PageService.php`:
+  - `getPageMetadata()`: Uses `$file->getMTime()` for both created and modified
+  - `createPage()`: Removed manual timestamp setting
+  - `updatePage()`: Removed manual timestamp updates
+  - `updatePageMetadata()`: Removed `modified` timestamp updates
+  - `validateAndSanitizePage()`: Removed timestamp fields from validation
+  - `listPages()`: Always uses filesystem `getMTime()` instead of JSON field
+- Updated deployment script (`deploy.sh`) to copy `l10n` translations
+- Version bumped to 0.4.10
+
+### Migration Notes
+- Existing installations: No action required - filesystem timestamps are used automatically
+- Old JSON files with `created`/`modified` fields: Still work (fields are ignored)
+- New pages: Will not have timestamp fields in JSON (cleaner structure)
+
 ## [0.4.5] - 2025-11-18 - Visual Folder Distinction & Navigation Fixes
 
 ### Added

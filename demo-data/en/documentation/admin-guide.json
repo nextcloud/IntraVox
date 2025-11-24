@@ -1,0 +1,136 @@
+{
+    "uniqueId": "page-1a9e4c73-b8d2-4f19-9e6f-3c7d2a5b8f9e",
+    "title": "Admin Guide",
+    "language": "en",
+    "created": 1760945741,
+    "modified": 1763537741,
+    "layout": {
+        "columns": 1,
+        "rows": [
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element)",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "images/tech-innovation.jpg",
+                        "alt": "Admin Guide",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Administrator Guide",
+                        "level": 1
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 3,
+                        "content": "Complete guide for system administrators"
+                    }
+                ]
+            },
+            {
+                "columns": 2,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "images/secure-platform.jpg",
+                        "alt": "System configuration",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Installation & Setup",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 3,
+                        "content": "### Server Requirements\n• PHP 8.0 or higher\n• Nextcloud 28+\n• PostgreSQL or MySQL\n• 512MB RAM minimum\n\n### Installation Steps\n1. Download from App Store\n2. Enable the app\n3. Configure permissions\n4. Set up groupfolders"
+                    },
+                    {
+                        "type": "image",
+                        "column": 2,
+                        "order": 1,
+                        "src": "images/documentation.jpg",
+                        "alt": "Configuration",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 2,
+                        "content": "Configuration",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 3,
+                        "content": "### Access Control\nConfigure user permissions and roles:\n• Admin users\n• Editor users\n• Viewer users\n\n### Performance Tuning\n• Enable caching\n• Optimize database\n• Configure CDN"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Admin Tasks",
+                        "level": 2
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 2,
+                        "columns": 4,
+                        "items": [
+                            {
+                                "title": "User Management",
+                                "text": "Add and manage users",
+                                "url": "#",
+                                "icon": "account-multiple",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Backup & Restore",
+                                "text": "Data protection strategies",
+                                "url": "#",
+                                "icon": "archive",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Security Settings",
+                                "text": "Configure security options",
+                                "url": "#",
+                                "icon": "shield-check",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Monitoring",
+                                "text": "System health and logs",
+                                "url": "#",
+                                "icon": "chart-line",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+}
