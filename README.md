@@ -74,22 +74,22 @@ Traditional intranets are complex, expensive, and often separate from your exist
 
 ## Recent Updates
 
-### Version 0.4.5 (November 18, 2025)
+### Version 0.5.0 (November 29, 2025)
 
-**Visual Folder Distinction and Navigation Improvements**
+**Navigation & Links Improvements**
 
-- **Visual Images Folders**: Images folders now use 📷 emoji prefix for easy distinction from page folders in Files app
-- **Nested Page Support**: Full support for creating and managing nested page hierarchies
-- **Navigation Improvements**: Automatic parent path creation when adding pages to navigation
-- **Enhanced Stability**: Fixed navigation issues with root-level pages
+- **LinksWidget Fix**: Link names now save correctly when adding new links
+- **Navigation Links**: Fixed broken navigation links after editing (standardized on uniqueId)
+- **Simplified Page Creation**: Removed "Add to navigation" option from new page modal
+- **Code Cleanup**: Removed unused search indexing code
 
-### Version 0.4.0 (November 16, 2025)
+### Version 0.4.13 (November 24, 2025)
 
-**Enhanced UI and Demo Data Improvements**
+**Folder-Level Permission System**
 
-- **New Links Widget**: Multi-link widgets with grid layouts (1-5 columns) and Material Design icons
-- **Improved Content Density**: Significantly reduced vertical spacing throughout the application
-- **Fixed Navigation**: HTML entities now display correctly (e.g., "&" instead of "&amp;")
+- **Permission Filtering**: Navigation now respects Nextcloud ACLs and groupfolder permissions
+- **Performance**: Request-level permission caching for minimal impact
+- **Security**: Immediate permission enforcement on navigation load
 
 For complete release notes, see [CHANGELOG.md](CHANGELOG.md).
 

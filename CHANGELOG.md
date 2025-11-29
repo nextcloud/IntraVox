@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2025-11-29 - Navigation & Links Improvements
+
+### Fixed
+- **LinksWidget**: Link names now save correctly when adding new links
+  - Changed from `title` to `text` property for consistency with demo data
+  - Backwards compatible: existing links with `title` are automatically migrated
+- **Navigation Links**: Fixed broken navigation links after editing
+  - Standardized on `uniqueId` throughout the codebase
+  - Legacy `pageId` automatically converted to `uniqueId`
+  - Both frontend and backend now use consistent identifier
+
+### Changed
+- **New Page Modal**: Removed "Add to navigation" option
+  - Simplifies page creation workflow
+  - Navigation items should be managed via Navigation Editor
+- **Code Cleanup**: Removed unused search indexing code
+  - Removed `SearchIndexService.php`
+  - Removed `ReindexSearchCommand.php`
+  - Removed database migration for search index
+
+### Technical
+- NavigationService: Added `normalizeNavigationItems()` for legacy data migration
+- NavigationItem.vue: Uses `uniqueId` instead of `pageId`
+- Navigation.vue: `getItemUrl()` and `getItemKey()` use `uniqueId`
+- LinksEditor.vue: `addLink()` creates items with `text` property
+- Consolidated deployment scripts
+
 ## [0.4.13] - 2025-11-24 - Folder-Level Permission System
 
 ### Added
