@@ -597,7 +597,6 @@ class PageService {
     public function getBreadcrumb(string $pageId): array {
         $page = $this->getPage($pageId);
         $breadcrumb = [];
-        $seenIds = []; // Track IDs we've already added
 
         // Always start with Home
         $breadcrumb[] = [
@@ -607,7 +606,6 @@ class PageService {
             'url' => '#home',
             'current' => false
         ];
-        $seenIds['home'] = true;
 
         // Parse path to build breadcrumb
         $pathParts = explode('/', $page['path']);
@@ -624,47 +622,41 @@ class PageService {
                 continue;
             }
 
-            // Skip if we've already added this ID to the breadcrumb
-            if (isset($seenIds[$part])) {
-                continue;
-            }
-
             $currentPath .= ($currentPath ? '/' : '') . $part;
 
             // Check if this is the last item (current page)
-            $isLastItem = ($index === count($pathParts) - 1);
-
-            // Try to load page for its title
-            try {
-                $pageData = $this->getPage($part);
-
-                // Check uniqueId as well to prevent duplicates
-                $checkId = $pageData['uniqueId'] ?? $part;
-                if (isset($seenIds[$checkId])) {
-                    continue;
-                }
-
+            if ($index === count($pathParts) - 1) {
+                // Add current page (not clickable)
                 $breadcrumb[] = [
-                    'uniqueId' => $pageData['uniqueId'],
-                    'id' => $part,
-                    'title' => $pageData['title'],
-                    'path' => $pageData['path'],
-                    'url' => '#' . $part,
-                    'current' => $isLastItem
+                    'uniqueId' => $page['uniqueId'],
+                    'title' => $page['title'],
+                    'path' => $page['path'],
+                    'url' => null,
+                    'current' => true
                 ];
-                $seenIds[$part] = true;
-                $seenIds[$checkId] = true;
+                break;
+            }
+
+            // Try to load parent page for its title
+            try {
+                $parentPage = $this->getPage($part);
+                $breadcrumb[] = [
+                    'id' => $part,
+                    'title' => $parentPage['title'],
+                    'path' => $parentPage['path'],
+                    'url' => '#' . $part,
+                    'current' => false
+                ];
             } catch (\Exception $e) {
-                // Page not found or error loading it
+                // Parent page not found or error loading it
                 // Use folder name as fallback
                 $breadcrumb[] = [
                     'id' => $part,
                     'title' => ucfirst(str_replace('-', ' ', $part)),
                     'path' => $currentPath,
                     'url' => '#' . $part,
-                    'current' => $isLastItem
+                    'current' => false
                 ];
-                $seenIds[$part] = true;
             }
         }
 
@@ -1784,28 +1776,22 @@ class PageService {
      * Get metadata for a page (simplified version using already loaded page data)
      */
     public function getPageMetadata(string $pageId): array {
+        // Get page and file info
         $folder = $this->getLanguageFolder();
         $result = null;
 
-        // Save original ID before sanitization
-        $originalId = $pageId;
-
-        // Check for uniqueId pattern BEFORE sanitization
-        if (strpos($originalId, 'page-') === 0) {
-            $result = $this->findPageByUniqueId($folder, $originalId);
-            if (!$result) {
-                $this->logger->warning('IntraVox: Metadata not found by uniqueId', ['uniqueId' => $originalId]);
-            }
+        // Check for uniqueId pattern (page-xxxx)
+        if (strpos($pageId, 'page-') === 0) {
+            $result = $this->findPageByUniqueId($folder, $pageId);
         }
 
-        // Only sanitize for legacy ID fallback
+        // Fall back to legacy ID lookup
         if ($result === null) {
-            $pageId = $this->sanitizeId($originalId);
-            $result = $this->findPageById($folder, $pageId);
+            $result = $this->findPageById($folder, $this->sanitizeId($pageId));
         }
 
-        if ($result === null) {
-            throw new \Exception('Page not found: ' . $originalId);
+        if (!$result) {
+            throw new \Exception('Page not found: ' . $pageId);
         }
 
         $file = $result['file'];
@@ -1813,8 +1799,7 @@ class PageService {
 
         // Get filesystem timestamps
         $mtime = $file->getMTime();
-        // Use mtime for created as well - filesystem creation time is not reliably available
-        $ctime = $mtime;
+        $ctime = $file->getCreationTime();
 
         // Get page content for other metadata
         $content = $file->getContent();
@@ -1855,22 +1840,18 @@ class PageService {
         $folder = $this->getLanguageFolder();
         $result = null;
 
-        // Save original ID before sanitization
-        $originalId = $pageId;
-
-        // Check for uniqueId pattern BEFORE sanitization
-        if (strpos($originalId, 'page-') === 0) {
-            $result = $this->findPageByUniqueId($folder, $originalId);
+        // Check for uniqueId pattern (page-xxxx)
+        if (strpos($pageId, 'page-') === 0) {
+            $result = $this->findPageByUniqueId($folder, $pageId);
         }
 
-        // Only sanitize for legacy ID fallback
+        // Fall back to legacy ID lookup
         if ($result === null) {
-            $pageId = $this->sanitizeId($originalId);
-            $result = $this->findPageById($folder, $pageId);
+            $result = $this->findPageById($folder, $this->sanitizeId($pageId));
         }
 
-        if ($result === null) {
-            throw new \Exception('Page not found: ' . $originalId);
+        if (!$result) {
+            throw new \Exception('Page not found: ' . $pageId);
         }
 
         $file = $result['file'];

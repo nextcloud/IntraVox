@@ -165,105 +165,10 @@ class ImportPagesCommand extends Command {
             }
         }
 
-        // Import page folders
-        $entries = scandir($sourcePath);
-        foreach ($entries as $entry) {
-            if ($entry === '.' || $entry === '..' || $entry === 'images') {
-                continue;
-            }
-
-            $entryPath = $sourcePath . '/' . $entry;
-            if (!is_dir($entryPath)) {
-                continue;
-            }
-
-            // This is a page folder
-            $pageId = $entry;
-            $pageJsonPath = $entryPath . '/' . $pageId . '.json';
-
-            if (!file_exists($pageJsonPath)) {
-                $output->writeln("<comment>Skipping {$pageId}: no JSON file found</comment>");
-                continue;
-            }
-
-            // Create page folder in target
-            try {
-                if (!$languageFolder->nodeExists($pageId)) {
-                    $pageFolder = $languageFolder->newFolder($pageId);
-                    $output->writeln("<info>Created folder: {$pageId}/</info>");
-                } else {
-                    $pageFolder = $languageFolder->get($pageId);
-                }
-
-                // Create images subfolder
-                if (!$pageFolder->nodeExists('images')) {
-                    $pageFolder->newFolder('images');
-                    $output->writeln("<info>Created folder: {$pageId}/images/</info>");
-                }
-
-                // Import page JSON
-                $jsonContent = file_get_contents($pageJsonPath);
-                if ($jsonContent === false) {
-                    $output->writeln("<error>Failed to read {$pageJsonPath}</error>");
-                    $errors++;
-                    continue;
-                }
-
-                $pageData = json_decode($jsonContent, true);
-                if ($pageData === null) {
-                    $output->writeln("<error>Invalid JSON in {$pageJsonPath}</error>");
-                    $errors++;
-                    continue;
-                }
-
-                // Ensure uniqueId exists
-                if (!isset($pageData['uniqueId'])) {
-                    $pageData['uniqueId'] = 'page-' . bin2hex(random_bytes(8));
-                    $jsonContent = json_encode($pageData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-                    $output->writeln("<comment>Added uniqueId: {$pageData['uniqueId']}</comment>");
-                }
-
-                $jsonFileName = $pageId . '.json';
-                if ($pageFolder->nodeExists($jsonFileName)) {
-                    $jsonFile = $pageFolder->get($jsonFileName);
-                    $jsonFile->putContent($jsonContent);
-                    $output->writeln("<info>Updated: {$pageId}/{$jsonFileName}</info>");
-                } else {
-                    $pageFolder->newFile($jsonFileName, $jsonContent);
-                    $output->writeln("<info>Created: {$pageId}/{$jsonFileName}</info>");
-                }
-
-                // Import images if they exist
-                $imagesSourcePath = $entryPath . '/images';
-                if (is_dir($imagesSourcePath)) {
-                    $imageFiles = scandir($imagesSourcePath);
-                    foreach ($imageFiles as $imageFile) {
-                        if ($imageFile === '.' || $imageFile === '..') {
-                            continue;
-                        }
-
-                        $imageSourcePath = $imagesSourcePath . '/' . $imageFile;
-                        if (is_file($imageSourcePath)) {
-                            $imagesFolder = $pageFolder->get('images');
-                            $imageContent = file_get_contents($imageSourcePath);
-
-                            if ($imagesFolder->nodeExists($imageFile)) {
-                                $imgFile = $imagesFolder->get($imageFile);
-                                $imgFile->putContent($imageContent);
-                            } else {
-                                $imagesFolder->newFile($imageFile, $imageContent);
-                            }
-                            $output->writeln("<info>  Image: {$pageId}/images/{$imageFile}</info>");
-                        }
-                    }
-                }
-
-                $imported++;
-            } catch (\Exception $e) {
-                $output->writeln("<error>Failed to import {$pageId}: {$e->getMessage()}</error>");
-                $errors++;
-            }
-        }
+        // Import page folders recursively
+        $result = $this->importPageFolders($sourcePath, $languageFolder, '', $output);
+        $imported += $result['imported'];
+        $errors += $result['errors'];
 
         $output->writeln("");
         $output->writeln("<info>Import complete!</info>");
@@ -303,5 +208,129 @@ class ImportPagesCommand extends Command {
             $output->writeln("<error>Failed to import {$filename}: {$e->getMessage()}</error>");
             return false;
         }
+    }
+
+    /**
+     * Recursively import page folders and their subfolders
+     *
+     * @param string $sourcePath Source directory path
+     * @param \OCP\Files\Folder $targetFolder Target folder in Nextcloud
+     * @param string $relativePath Current relative path (for nested folders)
+     * @param OutputInterface $output Console output
+     * @return array Array with 'imported' and 'errors' counts
+     */
+    private function importPageFolders($sourcePath, $targetFolder, $relativePath, OutputInterface $output): array {
+        $imported = 0;
+        $errors = 0;
+
+        $entries = scandir($sourcePath);
+        foreach ($entries as $entry) {
+            if ($entry === '.' || $entry === '..' || $entry === 'images') {
+                continue;
+            }
+
+            $entryPath = $sourcePath . '/' . $entry;
+            if (!is_dir($entryPath)) {
+                continue;
+            }
+
+            // This is a page folder
+            $pageId = $entry;
+            $pageJsonPath = $entryPath . '/' . $pageId . '.json';
+
+            if (!file_exists($pageJsonPath)) {
+                // No JSON file, skip this directory
+                continue;
+            }
+
+            // Build the display path for output
+            $displayPath = $relativePath ? $relativePath . '/' . $pageId : $pageId;
+
+            // Create page folder in target
+            try {
+                if (!$targetFolder->nodeExists($pageId)) {
+                    $pageFolder = $targetFolder->newFolder($pageId);
+                    $output->writeln("<info>Created folder: {$displayPath}/</info>");
+                } else {
+                    $pageFolder = $targetFolder->get($pageId);
+                }
+
+                // Create images subfolder
+                if (!$pageFolder->nodeExists('images')) {
+                    $pageFolder->newFolder('images');
+                    $output->writeln("<info>Created folder: {$displayPath}/images/</info>");
+                }
+
+                // Import page JSON
+                $jsonContent = file_get_contents($pageJsonPath);
+                if ($jsonContent === false) {
+                    $output->writeln("<error>Failed to read {$pageJsonPath}</error>");
+                    $errors++;
+                    continue;
+                }
+
+                $pageData = json_decode($jsonContent, true);
+                if ($pageData === null) {
+                    $output->writeln("<error>Invalid JSON in {$pageJsonPath}</error>");
+                    $errors++;
+                    continue;
+                }
+
+                // Ensure uniqueId exists
+                if (!isset($pageData['uniqueId'])) {
+                    $pageData['uniqueId'] = 'page-' . bin2hex(random_bytes(8));
+                    $jsonContent = json_encode($pageData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+                    $output->writeln("<comment>Added uniqueId: {$pageData['uniqueId']}</comment>");
+                }
+
+                $jsonFileName = $pageId . '.json';
+                if ($pageFolder->nodeExists($jsonFileName)) {
+                    $jsonFile = $pageFolder->get($jsonFileName);
+                    $jsonFile->putContent($jsonContent);
+                    $output->writeln("<info>Updated: {$displayPath}/{$jsonFileName}</info>");
+                } else {
+                    $pageFolder->newFile($jsonFileName, $jsonContent);
+                    $output->writeln("<info>Created: {$displayPath}/{$jsonFileName}</info>");
+                }
+
+                // Import images if they exist
+                $imagesSourcePath = $entryPath . '/images';
+                if (is_dir($imagesSourcePath)) {
+                    $imageFiles = scandir($imagesSourcePath);
+                    foreach ($imageFiles as $imageFile) {
+                        if ($imageFile === '.' || $imageFile === '..') {
+                            continue;
+                        }
+
+                        $imageSourcePath = $imagesSourcePath . '/' . $imageFile;
+                        if (is_file($imageSourcePath)) {
+                            $imagesFolder = $pageFolder->get('images');
+                            $imageContent = file_get_contents($imageSourcePath);
+
+                            if ($imagesFolder->nodeExists($imageFile)) {
+                                $imgFile = $imagesFolder->get($imageFile);
+                                $imgFile->putContent($imageContent);
+                            } else {
+                                $imagesFolder->newFile($imageFile, $imageContent);
+                            }
+                            $output->writeln("<info>  Image: {$displayPath}/images/{$imageFile}</info>");
+                        }
+                    }
+                }
+
+                $imported++;
+
+                // Recursively import subfolders
+                $subResult = $this->importPageFolders($entryPath, $pageFolder, $displayPath, $output);
+                $imported += $subResult['imported'];
+                $errors += $subResult['errors'];
+
+            } catch (\Exception $e) {
+                $output->writeln("<error>Failed to import {$displayPath}: {$e->getMessage()}</error>");
+                $errors++;
+            }
+        }
+
+        return ['imported' => $imported, 'errors' => $errors];
     }
 }

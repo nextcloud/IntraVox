@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # Upload demo content to server
-SERVER="rdekker@145.38.191.31"
+SERVER="rdekker@145.38.195.41"
 SSH_KEY="~/.ssh/sur"
-REMOTE_PATH="/var/www/nextcloud/data/__groupfolders/4/files/en"
+REMOTE_PATH="/var/www/nextcloud/data/__groupfolders/1/files/en"
 
 echo "🚀 Uploading IntraVox Demo Content"
 echo "=================================="
@@ -44,5 +44,5 @@ echo ""
 echo "✅ Demo content uploaded successfully!"
 echo ""
 echo "🌐 Access your demo intranet at:"
-echo "   https://145.38.191.31/apps/intravox"
+echo "   https://145.38.195.41/apps/intravox"
 echo ""

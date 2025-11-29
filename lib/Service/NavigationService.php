@@ -16,8 +16,6 @@ class NavigationService {
     private SetupService $setupService;
     private IL10N $l10n;
     private string $userId;
-    private PageService $pageService;
-    private array $permissionCache = [];
     private const SUPPORTED_LANGUAGES = ['nl', 'en', 'de', 'fr'];
 
     public function __construct(
@@ -25,14 +23,12 @@ class NavigationService {
         IUserSession $userSession,
         SetupService $setupService,
         IL10N $l10n,
-        PageService $pageService,
         ?string $userId
     ) {
         $this->rootFolder = $rootFolder;
         $this->userSession = $userSession;
         $this->setupService = $setupService;
         $this->l10n = $l10n;
-        $this->pageService = $pageService;
         $this->userId = $userId ?? '';
     }
 
@@ -51,8 +47,10 @@ class NavigationService {
                 $navigation = json_decode($content, true);
 
                 if (json_last_error() === JSON_ERROR_NONE && is_array($navigation)) {
-                    // Filter navigation based on user permissions
-                    $navigation = $this->filterNavigationByPermissions($navigation);
+                    // Normalize navigation items to ensure pageId is set (not uniqueId)
+                    if (isset($navigation['items']) && is_array($navigation['items'])) {
+                        $navigation['items'] = $this->normalizeNavigationItems($navigation['items']);
+                    }
                     return $navigation;
                 }
             }
@@ -65,6 +63,32 @@ class NavigationService {
         } catch (\Exception $e) {
             throw new \Exception('Failed to get navigation: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Normalize navigation items to use uniqueId consistently
+     */
+    private function normalizeNavigationItems(array $items): array {
+        $normalized = [];
+        foreach ($items as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+
+            // Convert legacy pageId to uniqueId
+            if (!isset($item['uniqueId']) && isset($item['pageId'])) {
+                $item['uniqueId'] = $item['pageId'];
+                unset($item['pageId']);
+            }
+
+            // Recursively normalize children
+            if (isset($item['children']) && is_array($item['children'])) {
+                $item['children'] = $this->normalizeNavigationItems($item['children']);
+            }
+
+            $normalized[] = $item;
+        }
+        return $normalized;
     }
 
     /**
@@ -125,10 +149,13 @@ class NavigationService {
                 continue;
             }
 
+            // Use uniqueId consistently (support legacy pageId for backwards compatibility)
+            $uniqueId = $item['uniqueId'] ?? $item['pageId'] ?? null;
+
             $validatedItem = [
                 'id' => $item['id'] ?? uniqid('nav_'),
                 'title' => htmlspecialchars($item['title'] ?? '', ENT_QUOTES | ENT_HTML5, 'UTF-8'),
-                'pageId' => $item['pageId'] ?? null,
+                'uniqueId' => $uniqueId,
                 'url' => isset($item['url']) ? filter_var($item['url'], FILTER_SANITIZE_URL) : null,
                 'target' => in_array($item['target'] ?? '', ['_blank', '_self']) ? $item['target'] : null,
                 'children' => []
@@ -197,93 +224,6 @@ class NavigationService {
             // This respects Nextcloud's ACLs, group permissions, and file locks
             return $languageFolder->isUpdateable();
         } catch (\Exception $e) {
-            return false;
-        }
-    }
-
-    /**
-     * Filter navigation items based on user permissions
-     * Only shows items the user has access to
-     */
-    private function filterNavigationByPermissions(array $navigation): array {
-        if (!isset($navigation['items']) || !is_array($navigation['items'])) {
-            return $navigation;
-        }
-
-        // Clear permission cache for this request
-        $this->permissionCache = [];
-
-        // Filter items recursively
-        $navigation['items'] = $this->filterNavigationItems($navigation['items']);
-
-        return $navigation;
-    }
-
-    /**
-     * Recursively filter navigation items based on permissions
-     */
-    private function filterNavigationItems(array $items): array {
-        $filtered = [];
-
-        foreach ($items as $item) {
-            // External URLs are always visible
-            if (isset($item['url']) && !empty($item['url'])) {
-                // Keep the item, but still filter children if any
-                if (isset($item['children']) && is_array($item['children'])) {
-                    $item['children'] = $this->filterNavigationItems($item['children']);
-                }
-                $filtered[] = $item;
-                continue;
-            }
-
-            // For page links, check if user has access
-            if (isset($item['pageId']) && !empty($item['pageId'])) {
-                if ($this->userCanAccessPage($item['pageId'])) {
-                    // User has access, keep the item and filter children
-                    if (isset($item['children']) && is_array($item['children'])) {
-                        $item['children'] = $this->filterNavigationItems($item['children']);
-                    }
-                    $filtered[] = $item;
-                }
-                // If no access, skip this item entirely (don't add to filtered)
-                continue;
-            }
-
-            // Items without pageId or url (like category headers) are kept if they have accessible children
-            if (isset($item['children']) && is_array($item['children'])) {
-                $filteredChildren = $this->filterNavigationItems($item['children']);
-                if (!empty($filteredChildren)) {
-                    $item['children'] = $filteredChildren;
-                    $filtered[] = $item;
-                }
-                // If no accessible children, skip this item
-            }
-        }
-
-        return $filtered;
-    }
-
-    /**
-     * Check if user can access a specific page
-     * Uses Nextcloud's native permission system
-     */
-    private function userCanAccessPage(string $pageId): bool {
-        // Check cache first to avoid repeated permission checks
-        if (isset($this->permissionCache[$pageId])) {
-            return $this->permissionCache[$pageId];
-        }
-
-        try {
-            // Try to get the page - this will throw an exception if user doesn't have access
-            // PageService->getPage() respects Nextcloud's ACLs and groupfolder permissions
-            $this->pageService->getPage($pageId);
-
-            // If we got here, user has access
-            $this->permissionCache[$pageId] = true;
-            return true;
-        } catch (\Exception $e) {
-            // User doesn't have access (NotFoundException or NotPermittedException)
-            $this->permissionCache[$pageId] = false;
             return false;
         }
     }
