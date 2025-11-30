@@ -1,20 +1,22 @@
 # IntraVox Nested Pages - Technical Specification
 
+> **Status:** ARCHIVED - See [NESTED_PAGES.md](../../NESTED_PAGES.md) for consolidated specification
+
 ## Overview
 
-Dit document beschrijft de technische implementatie van nested pages, breadcrumbs, depth limiting en page moving functionaliteit.
+This document describes the technical implementation of nested pages, breadcrumbs, depth limiting, and page moving functionality.
 
 ---
 
 ## 1. Parent Tracking
 
-### Vraag: Hoe weet een pagina wie de parent is?
+### Question: How does a page know who the parent is?
 
-**Antwoord: Twee methoden - Folder Path (leading) + Parent ID in JSON (backup)**
+**Answer: Two methods - Folder Path (leading) + Parent ID in JSON (backup)**
 
-### Methode 1: Folder Path (Primary - Source of Truth)
+### Method 1: Folder Path (Primary - Source of Truth)
 
-De **folder structuur in Nextcloud is de primaire bron** voor parent/child relaties:
+The **folder structure in Nextcloud is the primary source** for parent/child relationships:
 
 ```
 nl/
@@ -28,16 +30,16 @@ nl/
                     └── page.json  # Parent: 2024
 ```
 
-**Voordelen:**
-- ✅ Folder structuur = Single Source of Truth
-- ✅ Geen sync issues tussen filesystem en metadata
-- ✅ Makkelijk te debuggen (zie folder structuur in Files app)
-- ✅ Page verplaatsen = folder verplaatsen (atomisch)
-- ✅ Geen orphaned pages (parent verdwijnt = child verdwijnt ook)
+**Advantages:**
+- ✅ Folder structure = Single Source of Truth
+- ✅ No sync issues between filesystem and metadata
+- ✅ Easy to debug (see folder structure in Files app)
+- ✅ Moving page = moving folder (atomic)
+- ✅ No orphaned pages (parent disappears = child disappears too)
 
-### Methode 2: Parent ID in JSON (Secondary - For Performance)
+### Method 2: Parent ID in JSON (Secondary - For Performance)
 
-Elke `page.json` bevat metadata over zijn locatie:
+Each `page.json` contains metadata about its location:
 
 ```json
 {
@@ -69,19 +71,19 @@ Elke `page.json` bevat metadata over zijn locatie:
 | `department` | string | Department name (null if public) | `marketing` |
 | `language` | string | Language code | `nl` |
 
-**Voordelen:**
-- ✅ Snelle lookup zonder filesystem scan
-- ✅ Kan breadcrumb data uit JSON halen zonder parent page te laden
-- ✅ Makkelijk filteren/zoeken op depth/department
+**Advantages:**
+- ✅ Fast lookup without filesystem scan
+- ✅ Can get breadcrumb data from JSON without loading parent page
+- ✅ Easy to filter/search by depth/department
 
-**Gebruik:**
-- Folder path = Leading voor bepalen parent/child relaties
+**Usage:**
+- Folder path = Leading for determining parent/child relationships
 - JSON metadata = Caching/performance optimization
-- Bij discrepantie: folder path wint, JSON wordt geüpdatet
+- On discrepancy: folder path wins, JSON gets updated
 
 ---
 
-## 2. Breadcrumb (Kruimelpad)
+## 2. Breadcrumb Navigation
 
 ### UI Design
 
@@ -90,9 +92,9 @@ Home > Marketing > Campaigns > 2024 > Q1 Campaign
 ```
 
 **Components:**
-- Eerste item altijd "Home" (link naar homepage)
-- Tussenliggende items zijn clickable links
-- Laatste item (current page) is niet clickable, bold
+- First item always "Home" (link to homepage)
+- Intermediate items are clickable links
+- Last item (current page) is not clickable, bold
 
 ### Implementation
 
@@ -255,7 +257,7 @@ export default {
 
 ### Performance Optimization
 
-**Problem:** Loading alle parent pages voor breadcrumb kan traag zijn.
+**Problem:** Loading all parent pages for breadcrumb can be slow.
 
 **Solution:** Cache breadcrumb data in page metadata:
 
@@ -274,11 +276,11 @@ export default {
 ```
 
 **Update strategy:**
-- Breadcrumb cache wordt geüpdatet wanneer:
-  1. Page wordt aangemaakt
-  2. Page wordt verplaatst
-  3. Parent page title wordt gewijzigd
-- Bij parent title change: update alle child pages (recursive)
+- Breadcrumb cache is updated when:
+  1. Page is created
+  2. Page is moved
+  3. Parent page title is changed
+- On parent title change: update all child pages (recursive)
 
 ---
 
@@ -286,7 +288,7 @@ export default {
 
 ### Requirement
 
-Maximale diepte onder department: **2 extra niveaus**
+Maximum depth under department: **2 extra levels**
 
 ```
 ✅ Allowed:
@@ -416,36 +418,36 @@ export default {
 
 ---
 
-## 4. Page Moving (Verplaatsen)
+## 4. Page Moving
 
 ### Requirement
 
-Pagina's kunnen verplaatst worden naar andere parent pages, met:
-- Validatie van depth limit
-- Update van alle metadata
-- Update van child pages (recursive)
-- Preserveren van page content
+Pages can be moved to other parent pages, with:
+- Depth limit validation
+- Update of all metadata
+- Update of child pages (recursive)
+- Preservation of page content
 
 ### Move Operation Flow
 
 ```
 1. Validate:
-   - Doel parent bestaat
-   - Depth limit niet overschreden na move
-   - Geen circular reference (page wordt niet child van zichzelf)
-   - User heeft write permissions op beide locaties
+   - Target parent exists
+   - Depth limit not exceeded after move
+   - No circular reference (page doesn't become child of itself)
+   - User has write permissions on both locations
 
 2. Move folder:
-   - Gebruik Nextcloud Files API om folder te verplaatsen
-   - Atomische operatie (alles of niets)
+   - Use Nextcloud Files API to move folder
+   - Atomic operation (all or nothing)
 
 3. Update metadata:
-   - Update page.json van verplaatste page
-   - Update alle child pages recursive
+   - Update page.json of moved page
+   - Update all child pages recursive
    - Update breadcrumb cache
 
 4. Update navigation:
-   - Als page in navigation zit, update path
+   - If page is in navigation, update path
 ```
 
 ### Implementation
@@ -678,14 +680,14 @@ export default {
 
 ## 5. Performance & Overhead
 
-### Vraag: Geeft het veel overhead om bij laden metadata bij te werken?
+### Question: Is there significant overhead when updating metadata on load?
 
-**Antwoord: Nee, minimale overhead met slim design**
+**Answer: No, minimal overhead with smart design**
 
 ### Strategy: Lazy Update
 
 ```php
-// Update metadata alleen wanneer nodig
+// Update metadata only when needed
 public function getPage(string $pageId): array {
     $page = $this->loadPageFromFile($pageId);
 
@@ -735,15 +737,15 @@ private function refreshMetadata(array $page): array {
 | List pages | 50ms | 52ms | +2ms (4%) |
 | Move page | 100ms | 120ms | +20ms (20%) |
 
-**Conclusie:**
-- ✅ Page load: minimale overhead (+1ms)
-- ✅ Breadcrumb: **sneller** door caching (-9ms)
-- ✅ Metadata refresh: alleen bij discrepantie
-- ✅ Move operatie: acceptable overhead (+20ms)
+**Conclusion:**
+- ✅ Page load: minimal overhead (+1ms)
+- ✅ Breadcrumb: **faster** due to caching (-9ms)
+- ✅ Metadata refresh: only on discrepancy
+- ✅ Move operation: acceptable overhead (+20ms)
 
 ### Optimization: Batch Updates
 
-Bij move van page met veel children:
+When moving a page with many children:
 
 ```php
 public function movePage(string $pageId, ?string $newParentPath): array {
@@ -770,9 +772,9 @@ public function movePage(string $pageId, ?string $newParentPath): array {
 
 ## 6. Migration Plan
 
-### Bestaande Installaties
+### Existing Installations
 
-Voor bestaande IntraVox installaties zonder nested structuur:
+For existing IntraVox installations without nested structure:
 
 ```php
 // Command: MigrateToNestedStructure
@@ -806,13 +808,13 @@ public function execute(InputInterface $input, OutputInterface $output): int {
 
 ## 7. Summary & Recommendations
 
-### Aanbevolen Aanpak
+### Recommended Approach
 
 1. **✅ Parent tracking:** Folder path = leading, JSON metadata = caching
 2. **✅ Breadcrumb:** Cache in JSON, rebuild on move/create
-3. **✅ Depth limit:** 2 levels onder department, 3 onder public
+3. **✅ Depth limit:** 2 levels under department, 3 under public
 4. **✅ Move operation:** Atomic folder move + metadata update
-5. **✅ Performance:** Lazy metadata refresh, minimale overhead
+5. **✅ Performance:** Lazy metadata refresh, minimal overhead
 
 ### Implementation Priority
 
@@ -842,4 +844,6 @@ public function execute(InputInterface $input, OutputInterface $output): int {
 
 ---
 
-**Next Step:** Akkoord op deze technical spec, dan kan ik beginnen met implementatie?
+**Document Version:** 1.1
+**Last Updated:** 2025-11-30
+**Status:** Archived - Superseded by NESTED_PAGES.md

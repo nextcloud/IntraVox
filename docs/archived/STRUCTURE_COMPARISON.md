@@ -1,40 +1,42 @@
 # IntraVox Folder Structure Comparison: Department-First vs Language-First
 
+> **Status:** ARCHIVED - Decision made, see [DECISIONS.md](../DECISIONS.md) ADR-001
+
 ## Executive Summary
 
-Na onderzoek van Nextcloud groupfolders ACL blijkt dat **beide structuren werken**, maar met belangrijke verschillen in beheer en complexiteit.
+After investigating Nextcloud groupfolders ACL, **both structures work**, but with important differences in management and complexity.
 
-**Aanbeveling:** Language-First structuur is praktischer voor IntraVox omdat:
-1. ✅ Minder ACL rules nodig (1x per department in plaats van per taal)
-2. ✅ Eenvoudiger beheer bij toevoegen nieuwe talen
-3. ✅ Natuurlijker voor meertalige organisaties
-4. ✅ Consistent met huidige IntraVox structuur
+**Recommendation:** Language-First structure is more practical for IntraVox because:
+1. ✅ Fewer ACL rules needed (1x per department instead of per language)
+2. ✅ Simpler management when adding new languages
+3. ✅ More natural for multilingual organizations
+4. ✅ Consistent with current IntraVox structure
 
 ---
 
-## Hoe Groupfolders ACL Precies Werkt
+## How Groupfolders ACL Works
 
 ### Inheritance Rules
 ```
-✅ Permissions worden standaard geërfd van parent naar child
-✅ Child folders kunnen parent permissions overriden
-✅ "Allow" overwint altijd "Deny" bij conflicten
-⚠️  Root groupfolder permissions kunnen NIET overschreven worden
-⚠️  User-specific permissions worden soms niet correct geërfd (bug)
-✅ Group permissions worden wel correct geërfd
+✅ Permissions are inherited by default from parent to child
+✅ Child folders can override parent permissions
+✅ "Allow" always wins over "Deny" in conflicts
+⚠️  Root groupfolder permissions CANNOT be overridden
+⚠️  User-specific permissions are sometimes not correctly inherited (bug)
+✅ Group permissions ARE correctly inherited
 ```
 
-### Implicatie voor IntraVox
-- **Group-based permissions werken betrouwbaar** (Marketing Team, HR Team, etc.)
-- **User-specific permissions vermijden** (bekende bug in groupfolders)
-- **Root groupfolder permissions zijn leidend** - alle IntraVox Users krijgen standaard toegang op root
-- **Subfolders kunnen restrictieve permissions toevoegen** - department folders kunnen toegang beperken
+### Implications for IntraVox
+- **Group-based permissions work reliably** (Marketing Team, HR Team, etc.)
+- **Avoid user-specific permissions** (known bug in groupfolders)
+- **Root groupfolder permissions are leading** - all IntraVox Users get default access at root
+- **Subfolders can add restrictive permissions** - department folders can restrict access
 
 ---
 
-## Option A: Department-First (Eerder Voorstel)
+## Option A: Department-First (Earlier Proposal)
 
-### Structuur
+### Structure
 ```
 IntraVox/                           # Root: IntraVox Users = Read
 ├── public/                         # Public = Read for all
@@ -59,35 +61,35 @@ IntraVox/                           # Root: IntraVox Users = Read
         └── en/
 ```
 
-### ACL Configuratie
+### ACL Configuration
 ```bash
-# Voor ELKE taal folder moet je aparte ACL regel maken
+# For EACH language folder you must create a separate ACL rule
 occ groupfolders:permissions <id> --group "Marketing Team" \
     --path "/departments/marketing/nl" +read +write +create +delete
 
 occ groupfolders:permissions <id> --group "Marketing Team" \
     --path "/departments/marketing/en" +read +write +create +delete
 
-# Bij toevoegen van nieuwe taal (bijv. 'de'):
+# When adding a new language (e.g., 'de'):
 occ groupfolders:permissions <id> --group "Marketing Team" \
     --path "/departments/marketing/de" +read +write +create +delete
 ```
 
-### Nadelen
-❌ **ACL duplication**: Voor elke taal moet je dezelfde regel opnieuw instellen
-❌ **Nieuwe taal = veel werk**: Bij toevoegen van 'de' moet je voor ALLE departments ACL's toevoegen
-❌ **Complexer beheer**: Meer ACL rules = meer kans op fouten
-❌ **Inconsistentie risico**: Vergeet je één taal, dan klopt toegang niet
+### Disadvantages
+❌ **ACL duplication**: For each language you must set up the same rule again
+❌ **New language = lots of work**: Adding 'de' requires adding ACLs for ALL departments
+❌ **More complex management**: More ACL rules = more chance of errors
+❌ **Inconsistency risk**: Forget one language and access is incorrect
 
-### Voordelen
-✅ **Cross-language content makkelijker**: Images/files kunnen gedeeld worden op department niveau
-✅ **Department als primaire eenheid**: Logisch voor organisaties die per department denken
+### Advantages
+✅ **Cross-language content easier**: Images/files can be shared at department level
+✅ **Department as primary unit**: Logical for organizations that think per department
 
 ---
 
-## Option B: Language-First (Nieuwe Aanbeveling)
+## Option B: Language-First (New Recommendation)
 
-### Structuur
+### Structure
 ```
 IntraVox/                           # Root: IntraVox Users = Read
 ├── nl/
@@ -116,7 +118,7 @@ IntraVox/                           # Root: IntraVox Users = Read
 │       ├── hr/
 │       └── it/
 │
-├── de/                             # Nieuwe taal toevoegen = gewoon nieuwe folder
+├── de/                             # Adding new language = just a new folder
 │   ├── public/
 │   └── departments/
 │       ├── marketing/
@@ -129,9 +131,9 @@ IntraVox/                           # Root: IntraVox Users = Read
     └── public/
 ```
 
-### ACL Configuratie
+### ACL Configuration
 ```bash
-# Per department ÉÉN keer instellen (werkt voor alle talen!)
+# Per department set up ONCE (works for all languages!)
 occ groupfolders:permissions <id> --group "Marketing Team" \
     --path "/nl/departments/marketing" +read +write +create +delete
 
@@ -149,28 +151,28 @@ occ groupfolders:permissions <id> --group "IntraVox Users" \
     --path "/en/public" +read -write -create -delete
 ```
 
-### Voordelen
-✅ **Minder ACL rules**: Per taal één regel per department (niet per taal-folder)
-✅ **Nieuwe taal toevoegen is simpel**: Kopieer structuur, voeg ACL rules toe
-✅ **Overzichtelijker**: Taal als eerste niveau = natuurlijke organisatie
-✅ **Consistent met huidige IntraVox**: Taal is al top-level in huidige structuur
-✅ **Meertalige organisaties**: Taal-first is natuurlijker voor internationale bedrijven
-✅ **Betere isolatie**: Nederlandse en Engelse content volledig gescheiden
+### Advantages
+✅ **Fewer ACL rules**: One rule per department per language (not per language-folder)
+✅ **Adding new language is simple**: Copy structure, add ACL rules
+✅ **More organized**: Language as first level = natural organization
+✅ **Consistent with current IntraVox**: Language is already top-level in current structure
+✅ **Multilingual organizations**: Language-first is more natural for international companies
+✅ **Better isolation**: Dutch and English content completely separated
 
-### Nadelen
-❌ **Cross-language images moeten apart**: Images folder op root niveau nodig
-❌ **Iets meer ACL rules totaal**: Maar veel eenvoudiger te beheren
+### Disadvantages
+❌ **Cross-language images must be separate**: Images folder needed at root level
+❌ **Slightly more ACL rules total**: But much easier to manage
 
 ---
 
-## Praktisch Voorbeeld: Marketing Team Toegang
+## Practical Example: Marketing Team Access
 
 ### Scenario
-Marketing Team moet toegang krijgen tot hun departement in Nederlands, Engels en Duits.
+Marketing Team needs access to their department in Dutch, English, and German.
 
 ### Option A (Department-First)
 ```bash
-# 3 regels nodig (per taal één)
+# 3 rules needed (one per language)
 occ groupfolders:permissions 1 --group "Marketing Team" \
     --path "/departments/marketing/nl" +read +write +create +delete
 
@@ -183,7 +185,7 @@ occ groupfolders:permissions 1 --group "Marketing Team" \
 
 ### Option B (Language-First)
 ```bash
-# Ook 3 regels, maar logischer gegroepeerd per taal
+# Also 3 rules, but more logically grouped per language
 occ groupfolders:permissions 1 --group "Marketing Team" \
     --path "/nl/departments/marketing" +read +write +create +delete
 
@@ -194,24 +196,24 @@ occ groupfolders:permissions 1 --group "Marketing Team" \
     --path "/de/departments/marketing" +read +write +create +delete
 ```
 
-**Beide even veel regels, maar Option B is overzichtelijker bij beheer.**
+**Same number of rules for both, but Option B is clearer for management.**
 
 ---
 
-## Nieuwe Taal Toevoegen
+## Adding a New Language
 
 ### Scenario
-Organisatie wil Frans (fr) toevoegen voor alle departments.
+Organization wants to add French (fr) for all departments.
 
 ### Option A (Department-First)
 ```bash
-# Voor ELKE department moet je subfolder maken + ACL instellen
+# For EACH department you must create subfolder + set ACL
 mkdir IntraVox/departments/marketing/fr
 mkdir IntraVox/departments/hr/fr
 mkdir IntraVox/departments/it/fr
 mkdir IntraVox/departments/finance/fr
 
-# Dan voor elk department ACL regel toevoegen
+# Then add ACL rule for each department
 occ groupfolders:permissions 1 --group "Marketing Team" \
     --path "/departments/marketing/fr" +read +write +create +delete
 occ groupfolders:permissions 1 --group "HR Team" \
@@ -223,11 +225,11 @@ occ groupfolders:permissions 1 --group "IT Team" \
 
 ### Option B (Language-First)
 ```bash
-# Kopieer structuur één keer
+# Copy structure once
 mkdir -p IntraVox/fr/public
 mkdir -p IntraVox/fr/departments/{marketing,hr,it,finance}
 
-# ACL rules toevoegen (simpel script)
+# Add ACL rules (simple script)
 for dept in marketing hr it finance; do
     occ groupfolders:permissions 1 --group "$(get_team_for_dept $dept)" \
         --path "/fr/departments/$dept" +read +write +create +delete
@@ -238,13 +240,13 @@ occ groupfolders:permissions 1 --group "IntraVox Users" \
     --path "/fr/public" +read -write
 ```
 
-**Option B is veel makkelijker te automatiseren en te onderhouden.**
+**Option B is much easier to automate and maintain.**
 
 ---
 
-## Impact op IntraVox Code
+## Impact on IntraVox Code
 
-### URL Structuur
+### URL Structure
 
 #### Option A
 ```
@@ -258,9 +260,9 @@ occ groupfolders:permissions 1 --group "IntraVox Users" \
 /apps/intravox?page=nl/public/home#home
 ```
 
-**Option B heeft taal vooraan = consistenter met huidige URL structuur**
+**Option B has language first = more consistent with current URL structure**
 
-### Backend Code Aanpassingen
+### Backend Code Changes
 
 #### PageService.php
 ```php
@@ -271,23 +273,23 @@ $basePath = "departments/{$department}/{$language}";
 $basePath = "{$language}/departments/{$department}";
 ```
 
-**Beide even complex om te implementeren.**
+**Both equally complex to implement.**
 
 ### Frontend Navigation
 
 #### Option A
 ```javascript
-// Language switcher moet page path herschrijven
+// Language switcher must rewrite page path
 // departments/marketing/nl/campaigns -> departments/marketing/en/campaigns
 ```
 
 #### Option B
 ```javascript
-// Language switcher simpeler: vervang eerste path segment
+// Language switcher simpler: replace first path segment
 // nl/departments/marketing/campaigns -> en/departments/marketing/campaigns
 ```
 
-**Option B heeft eenvoudigere language switching.**
+**Option B has simpler language switching.**
 
 ---
 
@@ -303,39 +305,39 @@ nl/
                 └── q1/     # Inherits RW from 2024
 ```
 
-**Resultaat:** Inheritance werkt perfect in beide structuren! ✅
+**Result:** Inheritance works perfectly in both structures! ✅
 
 ### Test Case: Cross-Department Access
 ```
-# Marketing Team lid krijgt tijdelijk toegang tot HR folder
+# Marketing Team member temporarily gets access to HR folder
 occ groupfolders:permissions 1 --user "john@example.com" \
     --path "/nl/departments/hr" +read -write
 ```
 
-**⚠️ Waarschuwing:** User-specific permissions hebben bekend inheritance probleem.
-**Oplossing:** Werk alleen met groepen, niet met individuele users.
+**⚠️ Warning:** User-specific permissions have known inheritance issues.
+**Solution:** Only work with groups, not individual users.
 
 ---
 
-## Performance Overwegingen
+## Performance Considerations
 
 ### ACL Rule Lookup
-- **Option A**: Bij page load moet Nextcloud 1 ACL rule checken (department level)
-- **Option B**: Bij page load moet Nextcloud 1 ACL rule checken (department level)
+- **Option A**: On page load Nextcloud must check 1 ACL rule (department level)
+- **Option B**: On page load Nextcloud must check 1 ACL rule (department level)
 
-**Geen verschil in performance.** ⚖️
+**No difference in performance.** ⚖️
 
 ### Page Scanning
 - **Option A**: Scan per department (cross-language)
 - **Option B**: Scan per language (cross-department)
 
-**Geen significant verschil.** ⚖️
+**No significant difference.** ⚖️
 
 ---
 
-## Migratie van Huidige Structuur
+## Migration from Current Structure
 
-### Huidige Structuur
+### Current Structure
 ```
 IntraVox/
 ├── nl/
@@ -348,18 +350,18 @@ IntraVox/
     └── images/
 ```
 
-### Migratie naar Option A (Department-First)
+### Migration to Option A (Department-First)
 ```bash
-# Alle pages moeten verplaatst worden
+# All pages must be moved
 mv IntraVox/nl/home IntraVox/public/nl/home
 mv IntraVox/nl/about IntraVox/public/nl/about
 mv IntraVox/en/home IntraVox/public/en/home
 mv IntraVox/en/about IntraVox/public/en/about
 ```
 
-### Migratie naar Option B (Language-First)
+### Migration to Option B (Language-First)
 ```bash
-# Alleen public subfolder toevoegen
+# Only add public subfolder
 mkdir IntraVox/nl/public
 mkdir IntraVox/en/public
 mv IntraVox/nl/home IntraVox/nl/public/home
@@ -367,44 +369,44 @@ mv IntraVox/nl/about IntraVox/nl/public/about
 mv IntraVox/en/home IntraVox/en/public/home
 mv IntraVox/en/about IntraVox/en/public/about
 
-# departments folder toevoegen (leeg)
+# Add departments folder (empty)
 mkdir IntraVox/nl/departments
 mkdir IntraVox/en/departments
 ```
 
-**Option B heeft kleinere migratie impact.** ✅
+**Option B has smaller migration impact.** ✅
 
 ---
 
-## Finale Aanbeveling: Option B (Language-First)
+## Final Recommendation: Option B (Language-First)
 
-### Waarom Language-First Beter Is
+### Why Language-First Is Better
 
-1. **✅ Consistent met huidige structuur**
-   - Taal is al top-level in IntraVox
-   - Minimale breaking changes
+1. **✅ Consistent with current structure**
+   - Language is already top-level in IntraVox
+   - Minimal breaking changes
 
-2. **✅ Eenvoudiger beheer**
-   - Nieuwe taal = simpel nieuwe folder + standaard ACL script
-   - Overzichtelijker voor admins
+2. **✅ Simpler management**
+   - New language = simple new folder + standard ACL script
+   - Clearer for admins
 
-3. **✅ Natuurlijker voor meertalige organisaties**
-   - Taal-first matcht hoe organisaties denken
-   - Nederlandse afdeling vs Engelse afdeling vs Duitse afdeling
+3. **✅ More natural for multilingual organizations**
+   - Language-first matches how organizations think
+   - Dutch department vs English department vs German department
 
-4. **✅ Betere isolatie**
-   - Content per taal volledig gescheiden
-   - Makkelijker om taal-specifieke settings toe te passen
+4. **✅ Better isolation**
+   - Content per language completely separated
+   - Easier to apply language-specific settings
 
-5. **✅ Simplere language switching**
-   - URL herstructureren is eenvoudiger
-   - Minder code complexity
+5. **✅ Simpler language switching**
+   - URL restructuring is easier
+   - Less code complexity
 
-6. **✅ Groupfolders ACL werkt perfect**
-   - Getest en bevestigd dat inheritance werkt
-   - Geen bekende issues met deze structuur
+6. **✅ Groupfolders ACL works perfectly**
+   - Tested and confirmed that inheritance works
+   - No known issues with this structure
 
-### Aanbevolen Finale Structuur
+### Recommended Final Structure
 
 ```
 IntraVox/                           # Root groupfolder
@@ -497,13 +499,19 @@ echo "ACL configuration complete!"
 
 ## Next Steps
 
-1. ✅ **Approval**: Akkoord op Language-First structuur
-2. ⏭️ **Technical Spec**: Gedetailleerde technische specificatie maken
-3. ⏭️ **Phase 1**: Backend implementatie (nested pages, department support)
-4. ⏭️ **Phase 2**: Frontend implementatie (tree navigation, department selector)
-5. ⏭️ **Phase 3**: ACL integration en OCC commands
-6. ⏭️ **Phase 4**: Migration tool voor bestaande installaties
+1. ✅ **Approval**: Agreement on Language-First structure
+2. ⏭️ **Technical Spec**: Create detailed technical specification
+3. ⏭️ **Phase 1**: Backend implementation (nested pages, department support)
+4. ⏭️ **Phase 2**: Frontend implementation (tree navigation, department selector)
+5. ⏭️ **Phase 3**: ACL integration and OCC commands
+6. ⏭️ **Phase 4**: Migration tool for existing installations
 
 ---
 
-**Conclusie:** Language-First (Option B) is de beste keuze voor IntraVox omdat het praktischer, eenvoudiger te beheren, en consistenter is met de huidige architectuur.
+**Conclusion:** Language-First (Option B) is the best choice for IntraVox because it is more practical, easier to manage, and more consistent with the current architecture.
+
+---
+
+**Document Version:** 1.0
+**Last Updated:** 2025-11-30
+**Status:** Archived - Decision implemented

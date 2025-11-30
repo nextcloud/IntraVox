@@ -1,5 +1,7 @@
 # IntraVox Nested Pages & Permissions Proposal
 
+> **Status:** ARCHIVED - See [NESTED_PAGES.md](../../NESTED_PAGES.md) for consolidated specification
+
 ## Executive Summary
 
 This proposal outlines a new folder structure for IntraVox that supports:
@@ -88,7 +90,7 @@ occ groupfolders:permissions <folder_id> --group "IntraVox Users" \
 
 ## Proposed New Structure
 
-### Option A: Department-First Structure (Recommended)
+### Option A: Department-First Structure (NOT Recommended)
 
 ```
 IntraVox/                           # Groupfolder root
@@ -127,45 +129,7 @@ IntraVox/                           # Groupfolder root
 │   │   │   ├── team/
 │   │   │   └── guidelines/
 │   │   └── images/                 # Department-specific images
-│   │
-│   ├── hr/
-│   │   ├── nl/
-│   │   │   ├── policies/
-│   │   │   │   └── page.json
-│   │   │   ├── onboarding/
-│   │   │   │   ├── page.json
-│   │   │   │   ├── day-1/          # Nested structure
-│   │   │   │   │   └── page.json
-│   │   │   │   └── week-1/
-│   │   │   │       └── page.json
-│   │   │   └── benefits/
-│   │   │       └── page.json
-│   │   ├── en/
-│   │   └── images/
-│   │
-│   ├── it/
-│   │   ├── nl/
-│   │   │   ├── documentation/
-│   │   │   │   └── page.json
-│   │   │   ├── kb/                 # Knowledge base
-│   │   │   │   ├── page.json
-│   │   │   │   ├── windows/
-│   │   │   │   │   └── page.json
-│   │   │   │   ├── macos/
-│   │   │   │   │   └── page.json
-│   │   │   │   └── linux/
-│   │   │   │       └── page.json
-│   │   │   └── procedures/
-│   │   │       └── page.json
-│   │   ├── en/
-│   │   └── images/
-│   │
-│   └── finance/
-│       ├── nl/
-│       ├── en/
-│       └── images/
-│
-└── l10n/                           # Translation files
+...
 ```
 
 ### Permissions Matrix
@@ -323,7 +287,7 @@ occ intravox:migrate:nested
 
 ---
 
-## Alternative: Option B - Language-First Structure
+## Alternative: Option B - Language-First Structure (RECOMMENDED)
 
 ```
 IntraVox/
@@ -351,7 +315,7 @@ IntraVox/
 - Harder to manage cross-language department permissions
 - More complex department isolation
 
-**Verdict:** Not recommended. Option A (Department-First) is cleaner for permissions.
+**Verdict:** **Recommended.** See [STRUCTURE_COMPARISON.md](STRUCTURE_COMPARISON.md) for detailed analysis.
 
 ---
 
@@ -402,31 +366,6 @@ IntraVox/
 
 ---
 
-## Timeline Estimate
-
-### Phase 1: Backend (2-3 weeks)
-- Week 1: Nested page storage and scanning
-- Week 2: Department service and ACL integration
-- Week 3: Testing and refinement
-
-### Phase 2: Frontend (2-3 weeks)
-- Week 1: Page tree navigation
-- Week 2: Department selector and creation flow
-- Week 3: URL routing and breadcrumbs
-
-### Phase 3: Permissions (1-2 weeks)
-- Week 1: OCC commands and permission checking
-- Week 2: Frontend integration and testing
-
-### Phase 4: Migration (1 week)
-- Migration command development
-- Testing on demo data
-- Documentation
-
-**Total estimate: 6-9 weeks** for complete implementation
-
----
-
 ## Open Questions
 
 1. **Cross-department sharing**: Should pages be shareable across departments?
@@ -448,7 +387,7 @@ IntraVox/
 
 ## Recommendation
 
-**Proceed with Option A (Department-First Structure)** because:
+**Proceed with Option B (Language-First Structure)** because:
 
 1. ✅ Clean permission model using Nextcloud ACL
 2. ✅ Natural department isolation
@@ -474,6 +413,6 @@ IntraVox/
 
 ---
 
-**Document Version:** 1.0
-**Date:** 2025-01-18
-**Author:** IntraVox Development Team
+**Document Version:** 1.1
+**Last Updated:** 2025-11-30
+**Status:** Archived - Superseded by NESTED_PAGES.md

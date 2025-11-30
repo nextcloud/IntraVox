@@ -2,154 +2,164 @@
 
 ## Overview
 
-IntraVox heeft verschillende deployment scripts voor verschillende omgevingen:
+IntraVox uses several deployment scripts for different purposes:
 
-- **deploy.sh** - Deploy naar production server (145.38.191.66)
-- **deploy-nl-demo.sh** - Deploy Nederlandse demo data naar production server
-- **deploy-demo-data.sh** - Deploy Engelse demo data naar production server
+| Script | Purpose |
+|--------|---------|
+| `deploy.sh` | Deploy application to production server |
+| `deploy-demo-data.sh` | Deploy demo data (supports multiple languages) |
 
 ## Prerequisites
 
-- Node.js en npm geïnstalleerd
-- SSH toegang tot de server met key `~/.ssh/sur`
-- Toegang tot de Nextcloud server
+- Node.js 18+ and npm installed
+- SSH access to server with key `~/.ssh/sur`
+- Write access to Nextcloud apps directory
 
-## Production Deployment
+## Quick Start
 
-### 1. Deploy de applicatie
+### Deploy Application
 
 ```bash
 ./deploy.sh
 ```
 
-Dit script:
-1. Build de frontend vanuit `intravox-deploy/` directory
-2. Installeert npm dependencies indien nodig
-3. Kopieert de gebouwde bestanden naar de `js/` directory
-4. Maakt een deployment package
-5. Upload en installeert het package op de production server (145.38.191.66)
-6. Enabled de IntraVox app
+This will:
+1. Build the frontend (`npm run build`)
+2. Create deployment package
+3. Upload to server via rsync
+4. Install app in Nextcloud
+5. Set correct permissions
 
-### 2. Deploy Nederlandse demo data (optioneel)
-
-```bash
-./deploy-nl-demo.sh
-```
-
-Dit script:
-1. Kopieert Nederlandse demo data naar de server
-2. Zet de juiste file permissions
-3. Runt het import command (`intravox:import --language=nl`)
-4. Deploy geneste folder structuren (afdeling/marketing/marketingcampagnes)
-5. Scant de groupfolder om nieuwe files te registreren
-
-**Belangrijk**: Demo data overschrijft bestaande content!
-
-### 3. Deploy Engelse demo data (optioneel)
+### Deploy Demo Data
 
 ```bash
-./deploy-demo-data.sh
+# Deploy Dutch demo data
+./deploy-demo-data.sh nl
+
+# Deploy English demo data
+./deploy-demo-data.sh en
 ```
 
-Zelfde als Nederlandse versie maar voor Engels (`--language=en`).
+**Warning:** Demo data will overwrite existing content!
 
-## Frontend Development
+---
 
-De frontend code staat in de `intravox-deploy/` directory. Dit is een aparte directory met:
-- Vue 3 componenten in `src/`
-- Webpack build configuratie
-- Eigen `package.json` met dependencies
+## Build Process
 
-### Build proces
+IntraVox uses Webpack to build the Vue 3 frontend.
 
-De deploy scripts:
-1. Gaan naar `intravox-deploy/` directory
-2. Installeren dependencies indien nodig (`npm install`)
-3. Runnen `npm run build`
-4. Kopiëren de gebouwde JS bestanden naar `../js/`
-
-Dit zorgt ervoor dat de laatste frontend code altijd wordt gedeployd.
-
-### Handmatig builden
-
-Als je alleen de frontend wilt builden zonder te deployen:
+### Manual Build
 
 ```bash
-cd intravox-deploy
-npm install  # Alleen eerste keer nodig
-npm run build
-cp -r js/* ../js/
+npm install        # First time only
+npm run build      # Build to js/ directory
 ```
+
+### Build Output
+
+The build creates files in `js/`:
+- `intravox-main.js` - Main application bundle
+- Chunk files for code splitting
+
+---
+
+## Server Configuration
+
+### Production Server
+
+- **Host:** 145.38.195.41
+- **App Path:** `/var/www/html/apps/intravox`
+- **Data Path:** Groupfolder via Nextcloud
+
+### SSH Access
+
+```bash
+ssh rdekker@145.38.195.41
+```
+
+---
 
 ## Troubleshooting
 
-### Build errors
+### Build Errors
 
-Als je build errors krijgt:
+Clean rebuild:
 ```bash
-cd intravox-deploy
 rm -rf node_modules package-lock.json
 npm install
 npm run build
 ```
 
-### Permission errors op server
+### Permission Errors
 
-Als files niet leesbaar zijn:
+Fix server permissions:
 ```bash
-ssh -i ~/.ssh/sur rdekker@145.38.191.66
-sudo chown -R www-data:www-data /var/www/nextcloud/apps/intravox
-sudo chmod -R 755 /var/www/nextcloud/apps/intravox
+ssh rdekker@145.38.195.41 "sudo chown -R www-data:www-data /var/www/html/apps/intravox"
 ```
 
-### Demo data permission errors
+### App Not Showing
 
-Als de import command faalt:
+Re-enable the app:
 ```bash
-ssh -i ~/.ssh/sur rdekker@145.38.191.66
-find /tmp/intravox-deploy/demo-data -type f -exec chmod 644 {} \;
-find /tmp/intravox-deploy/demo-data -type d -exec chmod 755 {} \;
+ssh rdekker@145.38.195.41 "sudo -u www-data php /var/www/html/occ app:enable intravox"
 ```
 
-## Server URLs
+### Cache Issues
 
-- **Production**: https://intravoxdev.hvanextcloudpoc.src.surf-hosted.nl (145.38.191.66)
+Clear Nextcloud cache:
+```bash
+ssh rdekker@145.38.195.41 "sudo -u www-data php /var/www/html/occ maintenance:repair"
+```
+
+---
 
 ## File Structure
 
 ```
 IntraVox/
-├── intravox-deploy/          # Frontend development directory
-│   ├── src/                  # Vue 3 source files
-│   │   ├── components/       # Vue components
-│   │   └── App.vue          # Main app component
-│   ├── js/                   # Built JavaScript files
-│   ├── package.json          # Frontend dependencies
-│   └── webpack.config.js     # Webpack configuration
-├── js/                       # Deployed JavaScript (copied from intravox-deploy/js/)
-├── lib/                      # PHP backend
-├── demo-data/               # Demo data files
-│   └── en/                  # English demo data
-│       ├── home.json
-│       ├── navigation.json
-│       ├── footer.json
-│       ├── images/          # Root images
-│       └── [page-folders]/  # Page-specific folders
-├── deploy-dev.sh            # Development deployment script
-├── deploy.sh                # Production deployment script
-└── deploy-demo-data.sh      # Demo data deployment script
+├── src/                    # Vue 3 source files
+│   ├── components/         # Vue components
+│   └── App.vue            # Main component
+├── js/                     # Built JavaScript
+├── lib/                    # PHP backend
+│   ├── Controller/        # API controllers
+│   └── Service/           # Business logic
+├── appinfo/               # Nextcloud app metadata
+├── demo-data/             # Demo content
+│   ├── nl/               # Dutch demo data
+│   └── en/               # English demo data
+├── deploy.sh              # Main deployment script
+└── package.json           # Dependencies
 ```
 
-## Key Changes (uniqueId Migration)
+---
 
-IntraVox gebruikt nu overal `uniqueId` in plaats van `id`:
+## Demo Data Structure
 
-### Frontend (Vue components)
-- `page.id` → `page.uniqueId`
-- Updated in: PageEditor.vue, PageViewer.vue, PageListModal.vue
+Each language folder contains:
 
-### Backend (PHP)
-- API stuurt alleen `uniqueId`, geen backwards compatibility met `id`
-- Home page wordt gedetecteerd via uniqueId in home.json
+```
+demo-data/{lang}/
+├── home.json              # Home page content
+├── navigation.json        # Navigation structure
+├── footer.json            # Footer content
+├── manifest.json          # Page import order
+├── images/                # Shared images
+└── {page-folders}/        # Individual page folders
+    ├── page.json          # Page content
+    └── images/            # Page-specific images
+```
 
-Dit zorgt voor consistentie en voorkomt `undefined` errors in image URLs.
+---
+
+## Version Management
+
+- Version defined in `appinfo/info.xml` and `package.json`
+- Use `npm run build` which syncs versions automatically
+- Tag releases with `git tag v0.x.x`
+
+See `RELEASE.md` for detailed release procedures.
+
+---
+
+**Last Updated:** 2025-11-30
