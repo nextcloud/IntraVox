@@ -1,0 +1,227 @@
+{
+    "uniqueId": "page-7ab0a297-f808-4398-ac16-019c7de97e20",
+    "title": "Tips & Tricks",
+    "language": "nl",
+    "layout": {
+        "columns": 1,
+        "rows": [
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element)",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "tips.jpg",
+                        "alt": "Tips & Tricks",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Tips & Tricks",
+                        "level": 1
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 3,
+                        "content": "Word een IntraVox power user met deze handige tips."
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Productiviteit Tips",
+                        "level": 2
+                    }
+                ]
+            },
+            {
+                "columns": 2,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Markdown Shortcuts",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Gebruik Markdown voor snelle opmaak:\n- `**vet**` voor **vet**\n- `*cursief*` voor *cursief*\n- `- item` voor lijsten\n- `| col |` voor tabellen"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 1,
+                        "content": "Widget Dupliceren",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 2,
+                        "content": "Bespaar tijd door widgets te dupliceren:\n1. Hover over een widget\n2. Klik op het kopieer icoon\n3. De widget wordt direct gedupliceerd\n4. Pas de inhoud aan"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "var(--color-border)",
+                        "height": "2px"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Design Tips",
+                        "level": 2
+                    }
+                ]
+            },
+            {
+                "columns": 3,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Kleurgebruik",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Gebruik achtergrondkleuren strategisch:\n- **Primair**: Voor belangrijke secties\n- **Light**: Voor subtiele accenten\n- **Hover**: Voor afwisselende secties"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 1,
+                        "content": "Witruimte",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 2,
+                        "content": "Gebruik spacers en dividers:\n- Spacer voor ademruimte\n- Divider om secties te scheiden\n- Combineer voor professionele look"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 3,
+                        "order": 1,
+                        "content": "Consistentie",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 3,
+                        "order": 2,
+                        "content": "Houd uw design consistent:\n- Dezelfde heading levels\n- Vergelijkbare kolomindelingen\n- Herkenbare kleurpatronen"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element-light)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Pro Tips",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "**Tip 1:** Gebruik de links widget met iconen om snelle navigatie te maken.\n\n**Tip 2:** Combineer een header rij met primaire achtergrondkleur voor impactvolle pagina headers.\n\n**Tip 3:** Gebruik 3 kolommen voor feature overzichten en 2 kolommen voor vergelijkingen.\n\n**Tip 4:** Voeg altijd alt-tekst toe aan afbeeldingen voor toegankelijkheid."
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "transparent",
+                        "height": "20px"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 1,
+                        "columns": 2,
+                        "items": [
+                            {
+                                "title": "Handleidingen",
+                                "text": "Meer gedetailleerde instructies",
+                                "url": "#handleidingen",
+                                "icon": "book-open",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Terug naar Docs",
+                                "text": "Documentatie overzicht",
+                                "url": "#documentatie",
+                                "icon": "arrow-left",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ],
+        "sideColumns": {
+            "left": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            },
+            "right": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            }
+        }
+    }
+}

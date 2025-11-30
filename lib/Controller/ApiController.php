@@ -49,6 +49,15 @@ class ApiController extends Controller {
     public function getPage(string $id): DataResponse {
         try {
             $page = $this->pageService->getPage($id);
+
+            // Add breadcrumb to page response
+            try {
+                $page['breadcrumb'] = $this->pageService->getBreadcrumb($id);
+            } catch (\Exception $e) {
+                // Breadcrumb failed, but page is still valid
+                $page['breadcrumb'] = [];
+            }
+
             return new DataResponse($page);
         } catch (\Exception $e) {
             return new DataResponse(
@@ -126,8 +135,13 @@ class ApiController extends Controller {
     public function uploadImage(string $pageId): DataResponse {
         try {
             $file = $this->request->getUploadedFile('image');
+
             if (!$file) {
                 throw new \InvalidArgumentException('No image provided');
+            }
+
+            if (empty($file['tmp_name'])) {
+                throw new \InvalidArgumentException('File upload failed - tmp_name is empty. Upload error: ' . ($file['error'] ?? 'unknown'));
             }
 
             $filename = $this->pageService->uploadImage($pageId, $file);
@@ -198,20 +212,9 @@ class ApiController extends Controller {
     public function updateVersionLabel(string $pageId, string $timestamp): DataResponse {
         try {
             $label = $this->request->getParam('label');
-            $this->logger->info('Updating version label', [
-                'pageId' => $pageId,
-                'timestamp' => $timestamp,
-                'label' => $label
-            ]);
             $this->pageService->updateVersionLabel($pageId, (int)$timestamp, $label);
             return new DataResponse(['success' => true]);
         } catch (\Exception $e) {
-            $this->logger->error('Failed to update version label', [
-                'pageId' => $pageId,
-                'timestamp' => $timestamp,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
             return new DataResponse(
                 ['error' => $e->getMessage()],
                 Http::STATUS_INTERNAL_SERVER_ERROR
@@ -360,6 +363,27 @@ class ApiController extends Controller {
             return new DataResponse(
                 ['error' => $e->getMessage()],
                 Http::STATUS_NOT_FOUND
+            );
+        }
+    }
+
+    /**
+     * Get the full page tree structure
+     * Used for the "View structure" modal to show all accessible pages
+     *
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     */
+    public function getPageTree(?string $currentPageId = null): DataResponse {
+        try {
+            $tree = $this->pageService->getPageTree($currentPageId);
+            return new DataResponse([
+                'tree' => $tree
+            ]);
+        } catch (\Exception $e) {
+            return new DataResponse(
+                ['error' => $e->getMessage()],
+                Http::STATUS_INTERNAL_SERVER_ERROR
             );
         }
     }

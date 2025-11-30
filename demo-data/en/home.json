@@ -15,7 +15,7 @@
                         "type": "image",
                         "column": 1,
                         "order": 1,
-                        "src": "images/team-hero.jpg",
+                        "src": "team-hero.jpg",
                         "alt": "The IntraVox team",
                         "objectFit": "cover"
                     },
@@ -61,7 +61,7 @@
                         "type": "image",
                         "column": 1,
                         "order": 1,
-                        "src": "images/features-showcase.jpg",
+                        "src": "features-showcase.jpg",
                         "alt": "Feature showcase",
                         "objectFit": "cover"
                     },
@@ -75,7 +75,7 @@
                         "type": "image",
                         "column": 2,
                         "order": 1,
-                        "src": "images/collaboration.jpg",
+                        "src": "collaboration.jpg",
                         "alt": "Team collaboration",
                         "objectFit": "cover"
                     },
@@ -89,7 +89,7 @@
                         "type": "image",
                         "column": 3,
                         "order": 1,
-                        "src": "images/open-source.jpg",
+                        "src": "open-source.jpg",
                         "alt": "Open source freedom",
                         "objectFit": "cover"
                     },
@@ -142,7 +142,7 @@
                         "type": "image",
                         "column": 1,
                         "order": 1,
-                        "src": "images/modern-workspace.jpg",
+                        "src": "modern-workspace.jpg",
                         "alt": "Modern digital workspace",
                         "objectFit": "cover"
                     },
@@ -163,7 +163,7 @@
                         "type": "image",
                         "column": 2,
                         "order": 1,
-                        "src": "images/secure-platform.jpg",
+                        "src": "secure-platform.jpg",
                         "alt": "Secure collaboration platform",
                         "objectFit": "cover"
                     },
@@ -253,7 +253,7 @@
                         "type": "image",
                         "column": 1,
                         "order": 1,
-                        "src": "images/collaboration.jpg",
+                        "src": "collaboration.jpg",
                         "alt": "Team collaboration",
                         "objectFit": "cover"
                     },
@@ -280,7 +280,7 @@
                         "type": "image",
                         "column": 1,
                         "order": 1,
-                        "src": "images/open-source.jpg",
+                        "src": "open-source.jpg",
                         "alt": "Open source community",
                         "objectFit": "cover"
                     },

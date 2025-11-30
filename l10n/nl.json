@@ -199,7 +199,16 @@
     "Failed to update title: {error}": "Kan titel niet bijwerken: {error}",
     "Edit footer": "Voettekst bewerken",
     "Enter footer content...": "Voer voettekst in...",
-    "Page details and history": "Pagina details en geschiedenis"
+    "Page details and history": "Pagina details en geschiedenis",
+    "Page structure": "Paginastructuur",
+    "Loading page structure...": "Paginastructuur laden...",
+    "Could not load page structure: {error}": "Kon paginastructuur niet laden: {error}",
+    "No pages found.": "Geen pagina's gevonden.",
+    "Expand": "Uitklappen",
+    "Collapse": "Inklappen",
+    "Current": "Huidig",
+    "IntraVox Pages": "IntraVox Pagina's",
+    "IntraVox Page": "IntraVox Pagina"
   },
   "pluralForm": "nplurals=2; plural=(n != 1);"
 }

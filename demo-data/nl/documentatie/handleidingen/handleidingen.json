@@ -1,0 +1,215 @@
+{
+    "uniqueId": "page-143913ea-8b59-4b44-a565-b19ad3f1e1ac",
+    "title": "Handleidingen",
+    "language": "nl",
+    "layout": {
+        "columns": 1,
+        "rows": [
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element)",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "tutorial.jpg",
+                        "alt": "Handleidingen",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Handleidingen",
+                        "level": 1
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 3,
+                        "content": "Stap-voor-stap instructies voor alle IntraVox functies."
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Basis Handleidingen",
+                        "level": 2
+                    }
+                ]
+            },
+            {
+                "columns": 2,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Pagina's Maken",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "**Nieuwe pagina aanmaken:**\n1. Klik op 'Nieuwe Pagina' in de zijbalk\n2. Voer een titel in\n3. Klik 'Aanmaken'\n4. Begin met het toevoegen van widgets\n\n**Tip:** Gebruik beschrijvende titels voor betere vindbaarheid."
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 1,
+                        "content": "Widgets Toevoegen",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 2,
+                        "content": "**Widget toevoegen:**\n1. Klik op 'Widget Toevoegen' in een rij\n2. Kies het widget type\n3. Configureer de widget inhoud\n4. Klik 'Opslaan'\n\n**Beschikbare widgets:** Tekst, Heading, Image, Links, Divider, Spacer"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "var(--color-border)",
+                        "height": "2px"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Gevorderde Handleidingen",
+                        "level": 2
+                    }
+                ]
+            },
+            {
+                "columns": 2,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Navigatie Instellen",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "**Menu bewerken:**\n1. Klik op 'Navigatie Bewerken'\n2. Kies menu type (Mega Menu of Dropdown)\n3. Voeg items toe met 'Item Toevoegen'\n4. Sleep items om te ordenen\n5. Klik 'Opslaan'\n\n**Sub-items:** Maak geneste menu's voor complexe structuren."
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 1,
+                        "content": "Layout Aanpassen",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 2,
+                        "content": "**Kolommen instellen:**\n- 1-4 kolommen per rij\n- Zijkolommen links/rechts\n- Achtergrondkleuren per rij\n\n**Header rij:**\nVoeg een header rij toe voor pagina breed banner effect met achtergrondkleur."
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element-light)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Video Tutorials",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Bekijk onze video handleidingen voor een visuele uitleg van alle functies."
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 3,
+                        "columns": 3,
+                        "items": [
+                            {
+                                "title": "YouTube Kanaal",
+                                "text": "Alle video tutorials",
+                                "url": "https://www.youtube.com/@Nextcloud",
+                                "icon": "youtube",
+                                "target": "_blank"
+                            },
+                            {
+                                "title": "Nextcloud Docs",
+                                "text": "Officiële documentatie",
+                                "url": "https://docs.nextcloud.com",
+                                "icon": "book-open",
+                                "target": "_blank"
+                            },
+                            {
+                                "title": "Terug naar Docs",
+                                "text": "Documentatie overzicht",
+                                "url": "#documentatie",
+                                "icon": "arrow-left",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "transparent",
+                        "height": "20px"
+                    }
+                ]
+            }
+        ],
+        "sideColumns": {
+            "left": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            },
+            "right": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            }
+        }
+    }
+}

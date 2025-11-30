@@ -70,12 +70,6 @@
           </div>
         </div>
 
-        <!-- Created -->
-        <div class="metadata-row">
-          <label class="metadata-label">{{ t('Created') }}</label>
-          <div class="metadata-value">{{ metadata.createdFormatted }}</div>
-        </div>
-
         <!-- Path -->
         <div class="metadata-row">
           <label class="metadata-label">{{ t('Location') }}</label>
@@ -96,28 +90,6 @@
             <span v-if="metadata.hasChildren" class="metadata-hint">
               {{ t('(has child pages)') }}
             </span>
-          </div>
-        </div>
-
-        <!-- Depth (if available) -->
-        <div v-if="metadata.depth !== undefined" class="metadata-row">
-          <label class="metadata-label">{{ t('Nesting Level') }}</label>
-          <div class="metadata-value">
-            {{ metadata.depth }}
-            <span v-if="metadata.department" class="metadata-hint">
-              {{ t('(Department: {dept}, Max: {max})', { dept: metadata.department, max: getDepartmentMaxDepth() }) }}
-            </span>
-            <span v-else class="metadata-hint">
-              {{ t('(Public page, Max: 3)') }}
-            </span>
-          </div>
-        </div>
-
-        <!-- Parent Page (if available) -->
-        <div v-if="metadata.parentId" class="metadata-row">
-          <label class="metadata-label">{{ t('Parent Page') }}</label>
-          <div class="metadata-value">
-            {{ metadata.parentId }}
           </div>
         </div>
 
@@ -400,9 +372,7 @@ export default {
       }
     },
     activeTab(newTab) {
-      console.log('[PageDetailsSidebar] Active tab changed to:', newTab);
       if (newTab === 'metavox-tab' && this.metaVoxInstalled) {
-        console.log('[PageDetailsSidebar] MetaVox tab activated, dispatching update...');
         // Use nextTick to ensure the container ref is available
         this.$nextTick(() => {
           this.dispatchMetaVoxUpdate();
@@ -411,7 +381,6 @@ export default {
       // Auto-select first version when versions tab is activated
       // Only if versions are already loaded and we don't have a selection
       if (newTab === 'versions-tab' && this.versions.length > 0 && !this.selectedVersion) {
-        console.log('[PageDetailsSidebar] activeTab watcher: auto-selecting first version');
         this.autoSelectFirstVersion();
       }
     },
@@ -419,12 +388,10 @@ export default {
       // Auto-select first version if versions tab is active and versions just loaded
       // BUT skip if we're in the middle of a restore operation OR already have a selection
       if (this.activeTab === 'versions-tab' && newVersions.length > 0 && !this.isRestoring && !this.selectedVersion) {
-        console.log('[PageDetailsSidebar] versions watcher: auto-selecting first version');
         this.autoSelectFirstVersion();
       }
     },
     metaVoxInstalled(newValue) {
-      console.log('[PageDetailsSidebar] MetaVox installed status changed to:', newValue);
       // If MetaVox just became available and the tab is already active, dispatch update
       if (newValue && this.activeTab === 'metavox-tab') {
         this.$nextTick(() => {
@@ -523,44 +490,25 @@ export default {
       return generateUrl('/apps/files/?dir={dir}', { dir: folderPath });
     },
     onTabChange(newTabId) {
-      console.log('[PageDetailsSidebar] onTabChange called with:', newTabId);
       // This is a more reliable way to detect tab changes
       if (newTabId === 'metavox-tab' && this.metaVoxInstalled) {
-        console.log('[PageDetailsSidebar] MetaVox tab activated via event, dispatching update...');
         this.$nextTick(() => {
           this.dispatchMetaVoxUpdate();
         });
       }
     },
     async loadVersions() {
-      console.log('[PageDetailsSidebar] loadVersions called', {
-        pageId: this.pageId,
-        isOpen: this.isOpen
-      });
-
       this.loadingVersions = true;
       this.versionError = null;
 
       try {
         const url = generateUrl(`/apps/intravox/api/pages/${this.pageId}/versions`);
-        console.log('[PageDetailsSidebar] Making API call to:', url);
-
         const response = await axios.get(url);
-        console.log('[PageDetailsSidebar] API response:', response.data);
-
         this.versions = response.data;
-        console.log('[PageDetailsSidebar] Versions set:', this.versions);
       } catch (error) {
-        console.error('[PageDetailsSidebar] Failed to load versions:', error);
-        console.error('[PageDetailsSidebar] Error details:', {
-          message: error.message,
-          response: error.response,
-          status: error.response?.status
-        });
         this.versionError = error.response?.data?.error || this.t('Failed to load version history');
       } finally {
         this.loadingVersions = false;
-        console.log('[PageDetailsSidebar] loadVersions finished');
       }
     },
     confirmRestoreVersion(timestamp) {
@@ -598,11 +546,9 @@ export default {
         this.$nextTick(() => {
           const restoredVersion = this.versions.find(v => v.timestamp === restoredTimestamp);
           if (restoredVersion) {
-            console.log('[PageDetailsSidebar] Selecting restored version:', restoredVersion);
             this.selectVersion(restoredVersion);
           } else if (this.versions.length > 1) {
             // Fallback: select second version (the one that was just restored)
-            console.log('[PageDetailsSidebar] Restored version not found, selecting second version');
             this.selectVersion(this.versions[1]);
           }
           // Reset flag after selection
@@ -685,29 +631,19 @@ export default {
         const response = await axios.get(url);
         this.metaVoxInstalled = response.data.installed === true;
       } catch (error) {
-        console.log('MetaVox check failed, assuming not installed:', error);
         this.metaVoxInstalled = false;
       }
     },
     dispatchMetaVoxUpdate() {
-      console.log('[PageDetailsSidebar] dispatchMetaVoxUpdate called', {
-        metaVoxInstalled: this.metaVoxInstalled,
-        hasContainer: !!this.$refs.metavoxContainer,
-        pageId: this.pageId
-      });
-
       if (!this.metaVoxInstalled) {
-        console.log('[PageDetailsSidebar] MetaVox not installed, skipping dispatch');
         return;
       }
 
       if (!this.$refs.metavoxContainer) {
-        console.log('[PageDetailsSidebar] MetaVox container ref not available yet');
         return;
       }
 
       // Dispatch custom event for MetaVox to listen to
-      // Similar to how Files app works
       const event = new CustomEvent('intravox:metavox:update', {
         detail: {
           pageId: this.pageId,
@@ -717,8 +653,6 @@ export default {
         }
       });
       window.dispatchEvent(event);
-
-      console.log('[PageDetailsSidebar] Dispatched MetaVox update event for page:', this.pageId);
     },
     formatBytes(bytes) {
       if (bytes === 0) return '0 Bytes';
@@ -736,24 +670,17 @@ export default {
       this.editableLabel = '';
     },
     async saveVersionLabel(timestamp) {
-      console.log('[PageDetailsSidebar] saveVersionLabel called', { timestamp, label: this.editableLabel });
-
       if (!this.editableLabel.trim() && !this.versions.find(v => v.timestamp === timestamp)?.label) {
         // No label to save and no existing label to remove
-        console.log('[PageDetailsSidebar] No label to save, canceling');
         this.cancelLabelEdit();
         return;
       }
 
       try {
         const url = generateUrl(`/apps/intravox/api/pages/${this.pageId}/versions/${timestamp}/label`);
-        console.log('[PageDetailsSidebar] Making PUT request to:', url, 'with label:', this.editableLabel.trim());
-
         await axios.put(url, {
           label: this.editableLabel.trim()
         });
-
-        console.log('[PageDetailsSidebar] Label saved successfully');
 
         // Update local version
         const version = this.versions.find(v => v.timestamp === timestamp);
@@ -764,15 +691,12 @@ export default {
         this.cancelLabelEdit();
         showSuccess(this.t('Version label updated'));
       } catch (error) {
-        console.error('[PageDetailsSidebar] Failed to update version label:', error);
         showError(this.t('Failed to update version label: {error}', {
           error: error.response?.data?.error || error.message
         }));
       }
     },
     async selectVersion(version) {
-      console.log('[PageDetailsSidebar] selectVersion called', { version, pageId: this.pageId });
-
       this.selectedVersion = version;
 
       // Emit event to parent component to show the version preview
@@ -794,14 +718,8 @@ export default {
       return labels[type] || type;
     },
     autoSelectFirstVersion() {
-      console.log('[PageDetailsSidebar] autoSelectFirstVersion called', {
-        versionsLength: this.versions.length,
-        selectedVersion: this.selectedVersion
-      });
-
       if (this.versions.length > 0) {
         this.$nextTick(() => {
-          console.log('[PageDetailsSidebar] Selecting first version:', this.versions[0]);
           this.selectVersion(this.versions[0]);
         });
       }

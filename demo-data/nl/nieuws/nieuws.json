@@ -1,0 +1,241 @@
+{
+    "uniqueId": "page-f22142c2-ee6c-4829-9afc-828ec257f26b",
+    "title": "Nieuws",
+    "language": "nl",
+    "layout": {
+        "columns": 1,
+        "rows": [
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element)",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "news.jpg",
+                        "alt": "Nieuws en updates",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Nieuws & Updates",
+                        "level": 1
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 3,
+                        "content": "Blijf op de hoogte van de laatste ontwikkelingen bij IntraVox en Nextcloud."
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Laatste Nieuws",
+                        "level": 2
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "IntraVox v1.0 Gelanceerd!",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "**29 november 2024** - We zijn verheugd om de eerste stabiele versie van IntraVox aan te kondigen! Na maanden van ontwikkeling en testen is IntraVox nu beschikbaar voor alle Nextcloud gebruikers.\n\n**Highlights:**\n- Visuele pagina editor met drag-and-drop\n- Ondersteuning voor meerdere talen\n- Mega menu en dropdown navigatie\n- Integratie met Nextcloud Group Folders"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Nextcloud Conference 2024 Recap",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "**15 oktober 2024** - IntraVox was aanwezig op de Nextcloud Conference in Berlijn. We hebben een live demo gegeven van de nieuwste functies en waardevolle feedback ontvangen van de community.\n\n[Bekijk de presentatie slides](https://nextcloud.com/conf/)"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Beta Programma Gesloten",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "**1 september 2024** - Ons beta programma is succesvol afgerond met meer dan 50 organisaties die IntraVox hebben getest. Bedankt aan alle beta testers voor hun waardevolle feedback!"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "var(--color-border)",
+                        "height": "2px"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Aankomende Evenementen",
+                        "level": 2
+                    }
+                ]
+            },
+            {
+                "columns": 2,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Webinar: IntraVox Intro",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "**Datum:** 15 december 2024\n**Tijd:** 14:00 - 15:00 CET\n\nEen introductie tot IntraVox voor nieuwe gebruikers. Leer de basis en stel vragen aan het development team."
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 1,
+                        "content": "FOSDEM 2025",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 2,
+                        "content": "**Datum:** 1-2 februari 2025\n**Locatie:** Brussel, België\n\nBezoek ons op FOSDEM! We zijn aanwezig in de Nextcloud devroom met een presentatie over IntraVox."
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element-light)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Blijf Op De Hoogte",
+                        "level": 2
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 2,
+                        "columns": 4,
+                        "items": [
+                            {
+                                "title": "Nextcloud Blog",
+                                "text": "Officiële blog posts",
+                                "url": "https://nextcloud.com/blog/",
+                                "icon": "newspaper",
+                                "target": "_blank"
+                            },
+                            {
+                                "title": "Twitter/X",
+                                "text": "@nextaboratedcloud",
+                                "url": "https://twitter.com/nextcloud",
+                                "icon": "twitter",
+                                "target": "_blank"
+                            },
+                            {
+                                "title": "Mastodon",
+                                "text": "@nextcloud@mastodon.xyz",
+                                "url": "https://mastodon.xyz/@nextcloud",
+                                "icon": "mastodon",
+                                "target": "_blank"
+                            },
+                            {
+                                "title": "GitHub",
+                                "text": "Releases volgen",
+                                "url": "https://github.com/nextcloud",
+                                "icon": "github",
+                                "target": "_blank"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "transparent",
+                        "height": "20px"
+                    }
+                ]
+            }
+        ],
+        "sideColumns": {
+            "left": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            },
+            "right": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            }
+        }
+    }
+}

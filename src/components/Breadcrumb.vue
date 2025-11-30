@@ -1,5 +1,5 @@
 <template>
-	<nav v-if="breadcrumb && breadcrumb.length > 1" class="breadcrumb" aria-label="Breadcrumb">
+	<nav v-if="breadcrumb && breadcrumb.length > 0" class="breadcrumb" aria-label="Breadcrumb">
 		<ol class="breadcrumb-list">
 			<li v-for="(item, index) in breadcrumbItems"
 			    :key="item.id"

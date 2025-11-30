@@ -1,0 +1,275 @@
+{
+    "uniqueId": "page-api-a1b2c3d4-e5f6-7890-abcd-bbbbbbbbbbbb",
+    "title": "API Referentie",
+    "language": "nl",
+    "layout": {
+        "columns": 1,
+        "rows": [
+            {
+                "columns": 1,
+                "backgroundColor": "#37474f",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "api.jpg",
+                        "alt": "API Referentie",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 2,
+                        "content": "API Referentie",
+                        "level": 1
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 3,
+                        "content": "Integreer IntraVox met externe systemen via onze RESTful API. Alle endpoints zijn beschikbaar via de Nextcloud OCS API."
+                    }
+                ]
+            },
+            {
+                "columns": 2,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Authenticatie",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Alle API calls vereisen authenticatie via:\n\n**Basic Auth:**\n```\nAuthorization: Basic base64(username:password)\n```\n\n**App Password:**\n```\nAuthorization: Basic base64(username:app_password)\n```"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 1,
+                        "content": "Base URL",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 2,
+                        "content": "Alle endpoints gebruiken deze basis URL:\n\n```\nhttps://your-nextcloud.com/ocs/v2.php/apps/intravox/api/v1\n```\n\n**Headers:**\n```\nOCS-APIRequest: true\nContent-Type: application/json\n```"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "var(--color-border)",
+                        "height": "2px"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Pages Endpoints",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "| Method | Endpoint | Beschrijving |\n|--------|----------|-------------|\n| GET | /pages | Lijst alle pagina's |\n| GET | /pages/{id} | Haal specifieke pagina op |\n| POST | /pages | Maak nieuwe pagina |\n| PUT | /pages/{id} | Update bestaande pagina |\n| DELETE | /pages/{id} | Verwijder pagina |"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Voorbeeld: Pagina Ophalen",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "```bash\ncurl -X GET \\\n  https://cloud.example.com/ocs/v2.php/apps/intravox/api/v1/pages/home \\\n  -H 'OCS-APIRequest: true' \\\n  -H 'Authorization: Basic dXNlcjpwYXNz'\n```\n\n**Response:**\n```json\n{\n  \"ocs\": {\n    \"data\": {\n      \"uniqueId\": \"page-abc123\",\n      \"title\": \"Homepage\",\n      \"layout\": { ... }\n    }\n  }\n}\n```"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Navigation Endpoints",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "| Method | Endpoint | Beschrijving |\n|--------|----------|-------------|\n| GET | /navigation | Haal navigatie op |\n| PUT | /navigation | Update navigatie |\n| GET | /navigation/footer | Haal footer op |\n| PUT | /navigation/footer | Update footer |"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Rate Limiting",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "De API heeft de volgende limieten:\n\n- **100 requests per minuut** per gebruiker\n- **1000 requests per uur** per IP\n\nBij overschrijding ontvangt u HTTP 429 (Too Many Requests)."
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "#37474f",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Meer Documentatie",
+                        "level": 2
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 2,
+                        "columns": 4,
+                        "items": [
+                            {
+                                "title": "Installatie",
+                                "text": "Server setup",
+                                "url": "#documentatie/installatie",
+                                "icon": "download",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Handleidingen",
+                                "text": "Stap-voor-stap",
+                                "url": "#documentatie/handleidingen",
+                                "icon": "book-open",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "FAQ",
+                                "text": "Veelgestelde vragen",
+                                "url": "#documentatie/faq",
+                                "icon": "help-circle",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "GitHub",
+                                "text": "Source code",
+                                "url": "https://github.com",
+                                "icon": "github",
+                                "target": "_blank"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "transparent",
+                        "height": "20px"
+                    }
+                ]
+            }
+        ],
+        "sideColumns": {
+            "left": {
+                "enabled": true,
+                "backgroundColor": "var(--color-background-dark)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Documentatie",
+                        "level": 3
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 2,
+                        "columns": 1,
+                        "items": [
+                            {
+                                "text": "Installatie",
+                                "url": "#documentatie/installatie",
+                                "icon": "download"
+                            },
+                            {
+                                "text": "Handleidingen",
+                                "url": "#documentatie/handleidingen",
+                                "icon": "book-open"
+                            },
+                            {
+                                "text": "API",
+                                "url": "#documentatie/api",
+                                "icon": "api"
+                            },
+                            {
+                                "text": "FAQ",
+                                "url": "#documentatie/faq",
+                                "icon": "help-circle"
+                            },
+                            {
+                                "text": "Tips",
+                                "url": "#documentatie/tips",
+                                "icon": "lightbulb"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "right": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            }
+        }
+    }
+}

@@ -15,7 +15,7 @@
                         "type": "image",
                         "column": 1,
                         "order": 1,
-                        "src": "images/features-showcase.jpg",
+                        "src": "features-showcase.jpg",
                         "alt": "Product updates",
                         "objectFit": "cover"
                     },
@@ -36,7 +36,7 @@
                         "type": "image",
                         "column": 1,
                         "order": 4,
-                        "src": "images/success-check.gif",
+                        "src": "collaboration.jpg",
                         "alt": "New features",
                         "objectFit": "contain"
                     }
@@ -63,7 +63,7 @@
                         "type": "image",
                         "column": 1,
                         "order": 3,
-                        "src": "images/modern-workspace.jpg",
+                        "src": "modern-workspace.jpg",
                         "alt": "Version 1.0"
                     },
                     {
@@ -83,7 +83,7 @@
                         "type": "image",
                         "column": 2,
                         "order": 3,
-                        "src": "images/secure-platform.jpg",
+                        "src": "secure-platform.jpg",
                         "alt": "Roadmap"
                     }
                 ]

@@ -89,16 +89,15 @@ if ! git diff-index --quiet HEAD --; then
 fi
 print_success "Working directory is clean"
 
-# Step 3: Update version numbers
+# Step 3: Update version numbers using sync script
 print_step "Step 3: Updating version numbers..."
 
-# Update package.json
-sed -i.bak "s/\"version\": \".*\"/\"version\": \"${VERSION}\"/" package.json
-rm package.json.bak
-
-# Update appinfo/info.xml
-sed -i.bak "s/<version>.*<\/version>/<version>${VERSION}<\/version>/" appinfo/info.xml
-rm appinfo/info.xml.bak
+# Use the version sync script for consistency
+node scripts/sync-version.js "${VERSION}"
+if [ $? -ne 0 ]; then
+    print_error "Failed to update version numbers"
+    exit 1
+fi
 
 print_success "Version numbers updated to ${VERSION}"
 
@@ -123,8 +122,10 @@ mkdir -p "$PACKAGE_DIR"
 
 # Copy files
 cp -r appinfo lib l10n templates css img js "$PACKAGE_DIR/"
+cp -r scripts "$PACKAGE_DIR/" 2>/dev/null || true
 cp README.md "$PACKAGE_DIR/" 2>/dev/null || true
 cp CHANGELOG.md "$PACKAGE_DIR/" 2>/dev/null || true
+cp LICENSE "$PACKAGE_DIR/" 2>/dev/null || true
 
 # Create tarball
 cd "$TEMP_DIR"

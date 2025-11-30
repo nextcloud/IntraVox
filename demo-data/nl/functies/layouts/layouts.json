@@ -1,0 +1,356 @@
+{
+    "uniqueId": "page-f2a2b3c4-d5e6-7890-abcd-222222222222",
+    "title": "Pagina Layouts",
+    "language": "nl",
+    "layout": {
+        "columns": 1,
+        "rows": [
+            {
+                "columns": 1,
+                "backgroundColor": "#1abc9c",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "layout-hero.jpg",
+                        "alt": "Flexibele layouts",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Flexibele Pagina Layouts",
+                        "level": 1
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 3,
+                        "content": "Creëer professionele pagina-indelingen met ons krachtige grid systeem. Van eenvoudige single-column tot complexe multi-column layouts."
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "1 Kolom Layout",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Perfect voor lange artikelen, documentatie en blogs. De volledige breedte zorgt voor optimale leesbaarheid. Ideaal voor content-focused pagina's waar tekst centraal staat.\n\n> **Pro tip:** Gebruik een 1-kolom layout voor belangrijke aankondigingen en nieuws items."
+                    }
+                ]
+            },
+            {
+                "columns": 2,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "2 Kolommen Layout",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Balanceer tekst en media naast elkaar. Ideaal voor:\n\n- Product features\n- Vergelijkingen\n- Afbeelding + tekst combinaties\n- Team introductions"
+                    },
+                    {
+                        "type": "image",
+                        "column": 2,
+                        "order": 1,
+                        "src": "layout-2col.jpg",
+                        "alt": "2 kolommen voorbeeld",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 2,
+                        "content": "De 2-kolom layout verdeelt de ruimte gelijkmatig, waardoor je content en visuals mooi kunt combineren."
+                    }
+                ]
+            },
+            {
+                "columns": 3,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Service A",
+                        "level": 3
+                    },
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 2,
+                        "src": "service-a.jpg",
+                        "alt": "Service A",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 3,
+                        "content": "Eerste service met uitgebreide beschrijving en alle features."
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 1,
+                        "content": "Service B",
+                        "level": 3
+                    },
+                    {
+                        "type": "image",
+                        "column": 2,
+                        "order": 2,
+                        "src": "service-b.jpg",
+                        "alt": "Service B",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 3,
+                        "content": "Tweede service met eigen unieke kenmerken en voordelen."
+                    },
+                    {
+                        "type": "heading",
+                        "column": 3,
+                        "order": 1,
+                        "content": "Service C",
+                        "level": 3
+                    },
+                    {
+                        "type": "image",
+                        "column": 3,
+                        "order": 2,
+                        "src": "service-c.jpg",
+                        "alt": "Service C",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "text",
+                        "column": 3,
+                        "order": 3,
+                        "content": "Derde service die het aanbod completeert."
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "#9b59b6",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "4+ Kolommen",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Voor feature grids, team overzichten en icon-based navigatie."
+                    }
+                ]
+            },
+            {
+                "columns": 5,
+                "backgroundColor": "#9b59b6",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Snelheid",
+                        "level": 4
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Razendsnelle laadtijden"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 1,
+                        "content": "Veilig",
+                        "level": 4
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 2,
+                        "content": "Enterprise beveiliging"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 3,
+                        "order": 1,
+                        "content": "Flexibel",
+                        "level": 4
+                    },
+                    {
+                        "type": "text",
+                        "column": 3,
+                        "order": 2,
+                        "content": "Volledig aanpasbaar"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 4,
+                        "order": 1,
+                        "content": "Schaalbaar",
+                        "level": 4
+                    },
+                    {
+                        "type": "text",
+                        "column": 4,
+                        "order": 2,
+                        "content": "Groeit met u mee"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 5,
+                        "order": 1,
+                        "content": "Open",
+                        "level": 4
+                    },
+                    {
+                        "type": "text",
+                        "column": 5,
+                        "order": 2,
+                        "content": "100% open source"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "var(--color-border)",
+                        "height": "2px"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Zijkolommen",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Voeg optionele linker- of rechterzijkolommen toe voor:\n\n| Gebruik | Voorbeeld |\n|---------|----------|\n| Navigatie | Inhoudsopgave, menu's |\n| Sidebar | Gerelateerde content |\n| Info | Contact, hulp |\n| Advertenties | Promoties, events |"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Meer Layout Opties",
+                        "level": 2
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 2,
+                        "columns": 4,
+                        "items": [
+                            {
+                                "title": "Widgets",
+                                "text": "Alle beschikbare widgets",
+                                "url": "#functies/widgets",
+                                "icon": "widgets",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Navigatie",
+                                "text": "Menu configuratie",
+                                "url": "#functies/navigatie",
+                                "icon": "menu",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Handleidingen",
+                                "text": "Stap-voor-stap tutorials",
+                                "url": "#documentatie/handleidingen",
+                                "icon": "book-open-page-variant",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Terug naar Functies",
+                                "text": "Overzicht alle functies",
+                                "url": "#functies",
+                                "icon": "arrow-left",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "transparent",
+                        "height": "20px"
+                    }
+                ]
+            }
+        ],
+        "sideColumns": {
+            "left": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            },
+            "right": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            }
+        }
+    }
+}

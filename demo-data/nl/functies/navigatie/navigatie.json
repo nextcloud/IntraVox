@@ -1,0 +1,279 @@
+{
+    "uniqueId": "page-f3a2b3c4-d5e6-7890-abcd-333333333333",
+    "title": "Navigatie Systeem",
+    "language": "nl",
+    "layout": {
+        "columns": 1,
+        "rows": [
+            {
+                "columns": 1,
+                "backgroundColor": "#e74c3c",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Navigatie & Menu's",
+                        "level": 1
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Configureer krachtige navigatiesystemen voor uw intranet. Kies tussen mega menu's en dropdown menu's voor de perfecte gebruikerservaring."
+                    }
+                ]
+            },
+            {
+                "columns": 2,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "megamenu.jpg",
+                        "alt": "Mega menu voorbeeld",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Mega Menu",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 3,
+                        "content": "Het mega menu toont alle navigatie-items in een overzichtelijk grid. Ideaal voor:\n\n- Grote websites met veel pagina's\n- Uitgebreide categoriestructuren\n- Visuele navigatie met iconen\n- Multi-level hiërarchieën"
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 4,
+                        "columns": 1,
+                        "items": [
+                            {
+                                "title": "Mega Menu Configureren",
+                                "text": "Stap-voor-stap handleiding",
+                                "url": "#documentatie/handleidingen",
+                                "icon": "cog",
+                                "target": "_self"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "image",
+                        "column": 2,
+                        "order": 1,
+                        "src": "dropdown.jpg",
+                        "alt": "Dropdown menu voorbeeld",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 2,
+                        "content": "Dropdown Menu",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 3,
+                        "content": "Klassieke cascading dropdown menu's voor eenvoudige navigatie. Perfect voor:\n\n- Kleinere websites\n- Lineaire navigatiestructuren\n- Mobiele apparaten\n- Snelle toegang"
+                    },
+                    {
+                        "type": "links",
+                        "column": 2,
+                        "order": 4,
+                        "columns": 1,
+                        "items": [
+                            {
+                                "title": "Dropdown Configureren",
+                                "text": "Basis menu opzetten",
+                                "url": "#documentatie/handleidingen",
+                                "icon": "menu",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Navigatie Features",
+                        "level": 2
+                    }
+                ]
+            },
+            {
+                "columns": 4,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Multi-level",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Onbeperkte niveaus van submenu's voor complexe structuren."
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 1,
+                        "content": "Iconen",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 2,
+                        "content": "Voeg Material Design iconen toe aan elk menu-item."
+                    },
+                    {
+                        "type": "heading",
+                        "column": 3,
+                        "order": 1,
+                        "content": "Externe Links",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 3,
+                        "order": 2,
+                        "content": "Link naar externe websites met _blank target."
+                    },
+                    {
+                        "type": "heading",
+                        "column": 4,
+                        "order": 1,
+                        "content": "Per Taal",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 4,
+                        "order": 2,
+                        "content": "Aparte navigatie per taal voor internationale sites."
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "var(--color-border)",
+                        "height": "2px"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Breadcrumbs & Footer",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Naast de hoofdnavigatie ondersteunt IntraVox ook:\n\n- **Breadcrumbs**: Automatische broodkruimelnavigatie gebaseerd op de paginastructuur\n- **Footer navigatie**: Aparte footer links voor belangrijke pagina's\n- **Zoekfunctie**: Doorzoek alle pagina's met full-text search"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "#27ae60",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Gerelateerde Onderwerpen",
+                        "level": 2
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 2,
+                        "columns": 3,
+                        "items": [
+                            {
+                                "title": "Widgets",
+                                "text": "Alle widget types",
+                                "url": "#functies/widgets",
+                                "icon": "widgets",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Layouts",
+                                "text": "Pagina indelingen",
+                                "url": "#functies/layouts",
+                                "icon": "view-grid",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Alle Functies",
+                                "text": "Terug naar overzicht",
+                                "url": "#functies",
+                                "icon": "arrow-left",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "transparent",
+                        "height": "20px"
+                    }
+                ]
+            }
+        ],
+        "sideColumns": {
+            "left": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            },
+            "right": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            }
+        }
+    }
+}

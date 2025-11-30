@@ -171,7 +171,14 @@
     "Relevance: {score}": "Relevance: {score}",
     "Title": "Title",
     "Content": "Content",
-    "Search failed: {error}": "Search failed: {error}"
+    "Search failed: {error}": "Search failed: {error}",
+    "Page structure": "Page structure",
+    "Loading page structure...": "Loading page structure...",
+    "Could not load page structure: {error}": "Could not load page structure: {error}",
+    "No pages found.": "No pages found.",
+    "Expand": "Expand",
+    "Collapse": "Collapse",
+    "Current": "Current"
   },
   "pluralForm": "nplurals=2; plural=(n != 1);"
 }

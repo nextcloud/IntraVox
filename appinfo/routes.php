@@ -5,6 +5,7 @@ return [
     'routes' => [
         // API routes MUST come first to avoid conflicts with language routes
         ['name' => 'api#listPages', 'url' => '/api/pages', 'verb' => 'GET'],
+        ['name' => 'api#getPageTree', 'url' => '/api/pages/tree', 'verb' => 'GET'],
         ['name' => 'api#getPage', 'url' => '/api/pages/{id}', 'verb' => 'GET'],
         ['name' => 'api#createPage', 'url' => '/api/pages', 'verb' => 'POST'],
         ['name' => 'api#updatePage', 'url' => '/api/pages/{id}', 'verb' => 'PUT'],
@@ -26,6 +27,11 @@ return [
         ['name' => 'navigation#save', 'url' => '/api/navigation', 'verb' => 'POST'],
         ['name' => 'footer#get', 'url' => '/api/footer', 'verb' => 'GET'],
         ['name' => 'footer#save', 'url' => '/api/footer', 'verb' => 'POST'],
+
+        // Demo data routes
+        ['name' => 'demoData#getStatus', 'url' => '/api/demo-data/status', 'verb' => 'GET'],
+        ['name' => 'demoData#getLanguages', 'url' => '/api/demo-data/languages', 'verb' => 'GET'],
+        ['name' => 'demoData#importDemoData', 'url' => '/api/demo-data/import', 'verb' => 'POST'],
 
         // Page routes
         ['name' => 'page#index', 'url' => '/', 'verb' => 'GET'],

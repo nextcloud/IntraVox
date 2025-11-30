@@ -1,0 +1,323 @@
+{
+    "uniqueId": "page-hr-a1b2c3d4-e5f6-7890-abcd-444444444444",
+    "title": "Human Resources",
+    "language": "nl",
+    "layout": {
+        "columns": 1,
+        "rows": [
+            {
+                "columns": 1,
+                "backgroundColor": "#8e44ad",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "hr-team.jpg",
+                        "alt": "HR Team",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Human Resources",
+                        "level": 1
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 3,
+                        "content": "Welkom bij de HR-afdeling. Wij zorgen voor onze medewerkers en bouwen aan een geweldige werkcultuur."
+                    }
+                ]
+            },
+            {
+                "columns": 3,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "recruitment.jpg",
+                        "alt": "Recruitment",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Werving & Selectie",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 3,
+                        "content": "Wij zoeken voortdurend naar talent. Bekijk onze vacatures of draag kandidaten aan."
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 4,
+                        "columns": 1,
+                        "items": [
+                            {
+                                "title": "Vacatures",
+                                "text": "Bekijk open posities",
+                                "url": "#",
+                                "icon": "briefcase-search",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Referral Programma",
+                                "text": "Verdien bonus bij aanname",
+                                "url": "#",
+                                "icon": "account-plus",
+                                "target": "_self"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "image",
+                        "column": 2,
+                        "order": 1,
+                        "src": "training.jpg",
+                        "alt": "Training",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 2,
+                        "content": "Opleidingen",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 3,
+                        "content": "Investeer in je ontwikkeling met ons uitgebreide opleidingsaanbod."
+                    },
+                    {
+                        "type": "links",
+                        "column": 2,
+                        "order": 4,
+                        "columns": 1,
+                        "items": [
+                            {
+                                "title": "Cursussen",
+                                "text": "Interne opleidingen",
+                                "url": "#",
+                                "icon": "school",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Certificeringen",
+                                "text": "Externe certificaten",
+                                "url": "#",
+                                "icon": "certificate",
+                                "target": "_self"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "image",
+                        "column": 3,
+                        "order": 1,
+                        "src": "benefits.jpg",
+                        "alt": "Benefits",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 3,
+                        "order": 2,
+                        "content": "Arbeidsvoorwaarden",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 3,
+                        "order": 3,
+                        "content": "Ontdek alle voordelen die we onze medewerkers bieden."
+                    },
+                    {
+                        "type": "links",
+                        "column": 3,
+                        "order": 4,
+                        "columns": 1,
+                        "items": [
+                            {
+                                "title": "Salaris & Bonus",
+                                "text": "Beloningsstructuur",
+                                "url": "#",
+                                "icon": "cash",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Secundair",
+                                "text": "Extra voordelen",
+                                "url": "#",
+                                "icon": "gift",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "var(--color-border)",
+                        "height": "2px"
+                    }
+                ]
+            },
+            {
+                "columns": 2,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "HR Documenten",
+                        "level": 2
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 2,
+                        "columns": 2,
+                        "items": [
+                            {
+                                "title": "Personeelshandboek",
+                                "text": "Alle regels en procedures",
+                                "url": "#",
+                                "icon": "book-open-variant",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Verlofaanvraag",
+                                "text": "Vraag vakantie aan",
+                                "url": "#",
+                                "icon": "calendar-plus",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Ziekmelden",
+                                "text": "Procedure ziekmelding",
+                                "url": "#",
+                                "icon": "medical-bag",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Declaraties",
+                                "text": "Onkosten indienen",
+                                "url": "#",
+                                "icon": "receipt",
+                                "target": "_self"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 1,
+                        "content": "Contact HR",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 2,
+                        "content": "Neem contact op met het HR-team:\n\n**Email:** hr@company.nl\n**Telefoon:** 020-123 4567\n**Kantoor:** Kamer 2.01\n\n**Openingstijden:**\nMaandag t/m vrijdag\n09:00 - 17:00"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "#8e44ad",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Andere Afdelingen",
+                        "level": 2
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 2,
+                        "columns": 4,
+                        "items": [
+                            {
+                                "title": "Marketing",
+                                "text": "Campagnes & branding",
+                                "url": "#afdeling/marketing",
+                                "icon": "bullhorn",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Sales",
+                                "text": "Verkoop & klanten",
+                                "url": "#afdeling/sales",
+                                "icon": "chart-line",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "IT",
+                                "text": "Technologie & support",
+                                "url": "#afdeling/it",
+                                "icon": "laptop",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Alle Afdelingen",
+                                "text": "Overzicht",
+                                "url": "#afdeling",
+                                "icon": "domain",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "transparent",
+                        "height": "20px"
+                    }
+                ]
+            }
+        ],
+        "sideColumns": {
+            "left": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            },
+            "right": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            }
+        }
+    }
+}

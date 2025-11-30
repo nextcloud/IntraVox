@@ -15,7 +15,7 @@
                         "type": "image",
                         "column": 1,
                         "order": 1,
-                        "src": "images/downloads.jpg",
+                        "src": "downloads.jpg",
                         "alt": "Downloads",
                         "objectFit": "cover"
                     },

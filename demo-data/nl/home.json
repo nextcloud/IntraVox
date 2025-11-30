@@ -1,133 +1,450 @@
 {
-  "uniqueId": "page-a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-  "title": "Home",
-  "language": "nl",
-  "layout": {
-    "columns": 1,
-    "rows": [
-      {
+    "uniqueId": "page-a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "title": "Welkom bij IntraVox",
+    "language": "nl",
+    "layout": {
         "columns": 1,
-        "backgroundColor": "var(--color-primary-light)",
-        "widgets": [
-          {
-            "type": "heading",
-            "column": 1,
-            "order": 1,
-            "content": "Welkom bij IntraVox",
-            "level": 1
-          },
-          {
-            "type": "text",
-            "column": 1,
-            "order": 2,
-            "content": "Uw centrale platform voor interne communicatie en samenwerking."
-          }
-        ]
-      },
-      {
-        "columns": 2,
-        "backgroundColor": "",
-        "widgets": [
-          {
-            "type": "image",
-            "column": 1,
-            "order": 1,
-            "src": "hero-office.jpg",
-            "alt": "Kantoor",
-            "width": "800px",
-            "objectFit": "cover",
-            "objectPosition": "center center"
-          },
-          {
-            "type": "heading",
-            "column": 2,
-            "order": 1,
-            "content": "Moderne Werkplek",
-            "level": 2
-          },
-          {
-            "type": "text",
-            "column": 2,
-            "order": 2,
-            "content": "Creëer een moderne digitale werkplek waar teams effectief kunnen samenwerken. Met IntraVox brengt u alle informatie en communicatie samen op één centrale plek."
-          }
-        ]
-      },
-      {
-        "columns": 3,
-        "backgroundColor": "",
-        "widgets": [
-          {
-            "type": "image",
-            "column": 1,
-            "order": 1,
-            "src": "team-hero.jpg",
-            "alt": "Team",
-            "width": "500px",
-            "objectFit": "cover",
-            "objectPosition": "center center"
-          },
-          {
-            "type": "heading",
-            "column": 1,
-            "order": 2,
-            "content": "Teamwork",
-            "level": 3
-          },
-          {
-            "type": "text",
-            "column": 1,
-            "order": 3,
-            "content": "Werk samen met uw team aan projecten en deel kennis."
-          },
-          {
-            "type": "image",
-            "column": 2,
-            "order": 1,
-            "src": "collaboration.jpg",
-            "alt": "Samenwerking",
-            "width": "500px",
-            "objectFit": "cover",
-            "objectPosition": "center center"
-          },
-          {
-            "type": "heading",
-            "column": 2,
-            "order": 2,
-            "content": "Communicatie",
-            "level": 3
-          },
-          {
-            "type": "text",
-            "column": 2,
-            "order": 3,
-            "content": "Blijf op de hoogte van het laatste nieuws en updates."
-          },
-          {
-            "type": "image",
-            "column": 3,
-            "order": 1,
-            "src": "hero-office.jpg",
-            "alt": "Documenten",
-            "width": "500px",
-            "objectFit": "cover",
-            "objectPosition": "center center"
-          },
-          {
-            "type": "heading",
-            "column": 3,
-            "order": 2,
-            "content": "Documentatie",
-            "level": 3
-          },
-          {
-            "type": "text",
-            "column": 3,
-            "order": 3,
-            "content": "Vind snel de informatie die u nodig heeft."
-          }
-        ]
-      }
-    ]
-  }
+        "rows": [
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element)",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "hero-team.jpg",
+                        "alt": "Team samenwerking met IntraVox",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 2,
+                        "content": "IntraVox - Uw Moderne Intranet Oplossing",
+                        "level": 1
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 3,
+                        "content": "**Transformeer uw organisatie** met een krachtig intranet platform gebouwd op Nextcloud. Open source, veilig en volledig aanpasbaar."
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Wat is IntraVox?",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "IntraVox is een **moderne intranet applicatie** voor Nextcloud die SharePoint-achtige content management naar de open-source wereld brengt.\n\n**Waarom kiezen voor IntraVox?**\n\n- Creëer prachtige pagina's met een visuele editor\n- Organiseer content met multi-level navigatie\n- Ondersteuning voor meerdere talen\n- Veilige team samenwerking\n- Volledige integratie met Nextcloud"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "var(--color-border)",
+                        "height": "2px"
+                    }
+                ]
+            },
+            {
+                "columns": 3,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "features.jpg",
+                        "alt": "Krachtige functies",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Krachtige Functies",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 3,
+                        "content": "Maak professionele pagina's met tekst, afbeeldingen, links en meer. De drag-and-drop editor maakt het eenvoudig om content te beheren."
+                    },
+                    {
+                        "type": "image",
+                        "column": 2,
+                        "order": 1,
+                        "src": "collaboration.jpg",
+                        "alt": "Team samenwerking",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 2,
+                        "content": "Naadloze Samenwerking",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 3,
+                        "content": "Werk samen met uw team in real-time. Deel kennis, bouw mooie intranets en houd iedereen verbonden."
+                    },
+                    {
+                        "type": "image",
+                        "column": 3,
+                        "order": 1,
+                        "src": "opensource.jpg",
+                        "alt": "Open source vrijheid",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 3,
+                        "order": 2,
+                        "content": "100% Open Source",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 3,
+                        "order": 3,
+                        "content": "Geen vendor lock-in, geen verborgen kosten. IntraVox is volledig open source onder de AGPL licentie."
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element-light)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Snelle Links",
+                        "level": 2
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 2,
+                        "columns": 4,
+                        "items": [
+                            {
+                                "title": "Over IntraVox",
+                                "text": "Ontdek onze missie en visie",
+                                "url": "#over-intravox",
+                                "icon": "information",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Functies",
+                                "text": "Bekijk alle mogelijkheden",
+                                "url": "#functies",
+                                "icon": "cog",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Nextcloud",
+                                "text": "Leer meer over het platform",
+                                "url": "#nextcloud",
+                                "icon": "cloud",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Contact",
+                                "text": "Neem contact met ons op",
+                                "url": "#contact",
+                                "icon": "email",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "var(--color-border)",
+                        "height": "2px"
+                    }
+                ]
+            },
+            {
+                "columns": 2,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "modern-office.jpg",
+                        "alt": "Moderne digitale werkplek",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Modern & Intuïtief",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 3,
+                        "content": "Een prachtige, gebruiksvriendelijke interface waar uw team van zal houden. Gebouwd met moderne webtechnologieën voor de beste gebruikerservaring.\n\n**Kenmerken:**\n- Responsive design voor alle apparaten\n- Intuïtieve drag-and-drop editor\n- Real-time preview"
+                    },
+                    {
+                        "type": "image",
+                        "column": 2,
+                        "order": 1,
+                        "src": "security.jpg",
+                        "alt": "Veilig samenwerkingsplatform",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 2,
+                        "content": "Veilig by Design",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 3,
+                        "content": "Uw data blijft op uw eigen servers. Gebouwd op Nextcloud's bewezen beveiligingsarchitectuur met enterprise-grade bescherming.\n\n**Beveiliging:**\n- End-to-end encryptie\n- GDPR compliant\n- On-premise hosting"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Externe Bronnen",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Ontdek meer over Nextcloud en de open source community:"
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 3,
+                        "columns": 3,
+                        "items": [
+                            {
+                                "title": "Nextcloud Website",
+                                "text": "Officiële Nextcloud website",
+                                "url": "https://nextcloud.com",
+                                "icon": "open-in-new",
+                                "target": "_blank"
+                            },
+                            {
+                                "title": "GitHub Repository",
+                                "text": "Bekijk de broncode",
+                                "url": "https://github.com/nextcloud",
+                                "icon": "github",
+                                "target": "_blank"
+                            },
+                            {
+                                "title": "Documentatie",
+                                "text": "Nextcloud handleidingen",
+                                "url": "https://docs.nextcloud.com",
+                                "icon": "book-open",
+                                "target": "_blank"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "var(--color-border)",
+                        "height": "2px"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Nieuwste Updates",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Blijf op de hoogte van het laatste nieuws, evenementen en aankondigingen van onze organisatie."
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 3,
+                        "columns": 2,
+                        "items": [
+                            {
+                                "title": "Nieuws",
+                                "text": "Laatste updates en aankondigingen",
+                                "url": "#nieuws",
+                                "icon": "newspaper",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Afdelingen",
+                                "text": "Informatie per afdeling",
+                                "url": "#afdeling",
+                                "icon": "account-multiple",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "transparent",
+                        "height": "20px"
+                    }
+                ]
+            }
+        ],
+        "sideColumns": {
+            "left": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            },
+            "right": {
+                "enabled": true,
+                "backgroundColor": "var(--color-primary-element)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Snel Navigeren",
+                        "level": 3
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 2,
+                        "items": [
+                            {
+                                "text": "Over Ons",
+                                "url": "#over-intravox",
+                                "icon": "information"
+                            },
+                            {
+                                "text": "Functies",
+                                "url": "#functies",
+                                "icon": "cog"
+                            },
+                            {
+                                "text": "Nieuws",
+                                "url": "#nieuws",
+                                "icon": "newspaper"
+                            },
+                            {
+                                "text": "Contact",
+                                "url": "#contact",
+                                "icon": "email"
+                            }
+                        ],
+                        "columns": 1
+                    },
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 3,
+                        "style": "solid",
+                        "color": "rgba(255,255,255,0.3)",
+                        "height": "1px"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 4,
+                        "content": "Hulp Nodig?",
+                        "level": 4
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 5,
+                        "content": "Onze support is beschikbaar op werkdagen van 9:00 - 17:00"
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 6,
+                        "items": [
+                            {
+                                "text": "Support Portal",
+                                "url": "https://help.nextcloud.com",
+                                "icon": "help-circle",
+                                "target": "_blank"
+                            }
+                        ],
+                        "columns": 1
+                    }
+                ]
+            }
+        }
+    }
 }

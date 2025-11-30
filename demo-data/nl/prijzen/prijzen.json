@@ -1,0 +1,261 @@
+{
+    "uniqueId": "page-42d1c7d3-7a3b-4ee4-8a5a-57c9834ca75b",
+    "title": "Prijzen",
+    "language": "nl",
+    "layout": {
+        "columns": 1,
+        "rows": [
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element)",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "pricing.jpg",
+                        "alt": "Prijzen en pakketten",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Prijzen & Pakketten",
+                        "level": 1
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 3,
+                        "content": "IntraVox is **100% gratis en open source**. Geen verborgen kosten, geen beperkingen."
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Open Source = Gratis",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "IntraVox is volledig **open source** onder de AGPL v3 licentie. Dit betekent:\n\n- **Gratis te downloaden** en te gebruiken\n- **Geen gebruikerslimiet** - onbeperkt aantal gebruikers\n- **Alle functies inbegrepen** - geen premium tier\n- **Volledige broncode** beschikbaar op GitHub"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "var(--color-border)",
+                        "height": "2px"
+                    }
+                ]
+            },
+            {
+                "columns": 3,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "calculator.jpg",
+                        "alt": "Community pakket",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Community",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "**Gratis**\n\n- Alle IntraVox functies\n- Community support\n- GitHub issues\n- Documentatie\n- Forum toegang"
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 3,
+                        "columns": 1,
+                        "items": [
+                            {
+                                "title": "Download Nu",
+                                "text": "Via Nextcloud App Store",
+                                "url": "https://apps.nextcloud.com",
+                                "icon": "download",
+                                "target": "_blank"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 1,
+                        "content": "Professional",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 2,
+                        "content": "**Op aanvraag**\n\n- Prioriteit support\n- Training sessies\n- Implementatie hulp\n- Custom ontwikkeling\n- SLA garantie"
+                    },
+                    {
+                        "type": "links",
+                        "column": 2,
+                        "order": 3,
+                        "columns": 1,
+                        "items": [
+                            {
+                                "title": "Offerte Aanvragen",
+                                "text": "Neem contact op",
+                                "url": "#contact",
+                                "icon": "file-document",
+                                "target": "_self"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "heading",
+                        "column": 3,
+                        "order": 1,
+                        "content": "Enterprise",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 3,
+                        "order": 2,
+                        "content": "**Op maat**\n\n- Dedicated support\n- On-premise installatie\n- Custom features\n- Security audits\n- 24/7 support optie"
+                    },
+                    {
+                        "type": "links",
+                        "column": 3,
+                        "order": 3,
+                        "columns": 1,
+                        "items": [
+                            {
+                                "title": "Contact Sales",
+                                "text": "Voor grote organisaties",
+                                "url": "mailto:sales@intravox.nl",
+                                "icon": "email",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Vergelijk met Alternatieven",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "| Aspect | IntraVox | SharePoint | Confluence |\n|--------|----------|------------|------------|\n| Licentiekosten | Gratis | €4-23/gebruiker/maand | €5-15/gebruiker/maand |\n| Hosting | Self-hosted | Cloud of On-premise | Cloud of On-premise |\n| Vendor Lock-in | Nee | Ja | Ja |\n| Open Source | Ja | Nee | Nee |\n| 100 gebruikers/jaar | €0 | €4.800 - €27.600 | €6.000 - €18.000 |"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "var(--color-border)",
+                        "height": "2px"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element-light)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Hosting Opties",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Nextcloud (en dus IntraVox) kan op verschillende manieren worden gehost:"
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 3,
+                        "columns": 3,
+                        "items": [
+                            {
+                                "title": "Self-Hosted",
+                                "text": "Op uw eigen servers",
+                                "url": "https://nextcloud.com/install/",
+                                "icon": "server",
+                                "target": "_blank"
+                            },
+                            {
+                                "title": "Managed Hosting",
+                                "text": "Via Nextcloud partners",
+                                "url": "https://nextcloud.com/providers/",
+                                "icon": "cloud",
+                                "target": "_blank"
+                            },
+                            {
+                                "title": "Enterprise",
+                                "text": "Nextcloud Enterprise",
+                                "url": "https://nextcloud.com/enterprise/",
+                                "icon": "shield-check",
+                                "target": "_blank"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ],
+        "sideColumns": {
+            "left": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            },
+            "right": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            }
+        }
+    }
+}

@@ -37,17 +37,13 @@ class NavigationController extends Controller {
     public function get(): JSONResponse {
         try {
             $currentLang = $this->l10n->getLanguageCode();
-            $this->logger->info('IntraVox: Getting navigation for language: ' . $currentLang);
-
             $navigation = $this->navigationService->getNavigation();
             $canEdit = $this->navigationService->canEdit();
-
-            $this->logger->info('IntraVox: Navigation loaded successfully with ' . count($navigation['items'] ?? []) . ' items');
 
             return new JSONResponse([
                 'navigation' => $navigation,
                 'canEdit' => $canEdit,
-                'language' => $currentLang  // Add debug info
+                'language' => $currentLang
             ]);
         } catch (\Exception $e) {
             $this->logger->error('IntraVox: Error loading navigation: ' . $e->getMessage());

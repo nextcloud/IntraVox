@@ -1,0 +1,271 @@
+{
+    "uniqueId": "page-7fe1d5d9-0ccc-44b4-9726-831e2b107861",
+    "title": "Over IntraVox",
+    "language": "nl",
+    "layout": {
+        "columns": 1,
+        "rows": [
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element)",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "team-meeting.jpg",
+                        "alt": "Over IntraVox",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Over IntraVox",
+                        "level": 1
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 3,
+                        "content": "De toekomst van intranet communicatie - **open source**, **veilig** en **flexibel**."
+                    }
+                ]
+            },
+            {
+                "columns": 2,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "collaboration.jpg",
+                        "alt": "Samenwerking",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Onze Missie",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 3,
+                        "content": "IntraVox is geboren uit de overtuiging dat organisaties **volledige controle** moeten hebben over hun interne communicatieplatform.\n\nWij geloven dat:\n- Organisaties geen vendor lock-in verdienen\n- Data soevereiniteit essentieel is\n- Open source de toekomst is\n- Samenwerking grenzeloos moet zijn"
+                    },
+                    {
+                        "type": "image",
+                        "column": 2,
+                        "order": 1,
+                        "src": "office-work.jpg",
+                        "alt": "Kantoor werk",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 2,
+                        "content": "Onze Visie",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 3,
+                        "content": "Een wereld waarin elke organisatie toegang heeft tot **professionele intranet functionaliteit** zonder afhankelijk te zijn van dure, gesloten systemen.\n\nIntraVox maakt dit mogelijk door:\n- Integratie met Nextcloud\n- Moderne webtechnologieën\n- Community-gedreven ontwikkeling\n- Transparante roadmap"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "var(--color-border)",
+                        "height": "2px"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Waarom IntraVox?",
+                        "level": 2
+                    }
+                ]
+            },
+            {
+                "columns": 4,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Open Source",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Volledige transparantie in de code. Bekijk, wijzig en verbeter naar eigen inzicht."
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 1,
+                        "content": "Privacy First",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 2,
+                        "content": "Uw data op uw servers. Volledige GDPR compliance en data soevereiniteit."
+                    },
+                    {
+                        "type": "heading",
+                        "column": 3,
+                        "order": 1,
+                        "content": "Nextcloud Native",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 3,
+                        "order": 2,
+                        "content": "Naadloze integratie met uw bestaande Nextcloud omgeving en gebruikers."
+                    },
+                    {
+                        "type": "heading",
+                        "column": 4,
+                        "order": 1,
+                        "content": "Meertalig",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 4,
+                        "order": 2,
+                        "content": "Ondersteuning voor meerdere talen binnen dezelfde installatie."
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Vergelijking met Alternatieven",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "| Functie | IntraVox | SharePoint | Confluence |\n|---------|----------|------------|------------|\n| Open Source | Ja | Nee | Nee |\n| Self-hosted | Ja | Optioneel | Optioneel |\n| Licentiekosten | Gratis | Duur | Duur |\n| GDPR Compliant | Volledig | Complex | Complex |\n| Nextcloud Integratie | Native | Nee | Nee |"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "var(--color-border)",
+                        "height": "2px"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element-light)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Meer Informatie",
+                        "level": 2
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 2,
+                        "columns": 3,
+                        "items": [
+                            {
+                                "title": "Bekijk Functies",
+                                "text": "Ontdek alle mogelijkheden",
+                                "url": "#functies",
+                                "icon": "cog",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Over Nextcloud",
+                                "text": "Het onderliggende platform",
+                                "url": "#nextcloud",
+                                "icon": "cloud",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Neem Contact Op",
+                                "text": "Wij helpen u graag verder",
+                                "url": "#contact",
+                                "icon": "email",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "transparent",
+                        "height": "20px"
+                    }
+                ]
+            }
+        ],
+        "sideColumns": {
+            "left": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            },
+            "right": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            }
+        }
+    }
+}

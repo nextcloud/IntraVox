@@ -1,5 +1,13 @@
 <template>
   <nav class="intravox-navigation">
+    <!-- Page Structure Button (left of navigation) -->
+    <button class="page-tree-btn"
+            @click="handleTreeClick"
+            :aria-label="t('Page structure')"
+            :title="t('Page structure')">
+      <FileTree :size="20" />
+    </button>
+
     <!-- Mobile hamburger menu -->
     <div class="mobile-nav">
       <NcActions>
@@ -9,10 +17,13 @@
         <template v-for="item in items" :key="getItemKey(item)">
           <!-- Top level items with children -->
           <template v-if="item.children && item.children.length > 0">
-            <NcActionButton @click="toggleMobileItem(getItemKey(item))">
+            <!-- Title navigates, chevron expands -->
+            <NcActionButton @click="handleMobileItemClick(item)">
               <template #icon>
-                <ChevronRight v-if="!isMobileItemExpanded(getItemKey(item))" :size="20" />
-                <ChevronDown v-else :size="20" />
+                <span class="mobile-expand-btn" @click.stop="toggleMobileItem(getItemKey(item))">
+                  <ChevronRight v-if="!isMobileItemExpanded(getItemKey(item))" :size="20" />
+                  <ChevronDown v-else :size="20" />
+                </span>
               </template>
               {{ decodeHtmlEntities(item.title) }}
             </NcActionButton>
@@ -20,23 +31,59 @@
             <!-- Level 2 items -->
             <template v-if="isMobileItemExpanded(getItemKey(item))">
               <template v-for="child in item.children" :key="getItemKey(child)">
-                <NcActionButton @click="child.children && child.children.length > 0 ? toggleMobileItem(getItemKey(child)) : handleItemClick(child)"
+                <!-- Level 2 with children -->
+                <NcActionButton v-if="child.children && child.children.length > 0"
+                               @click="handleMobileItemClick(child)"
                                class="mobile-nav-level-2">
                   <template #icon>
-                    <ChevronRight v-if="child.children && child.children.length > 0 && !isMobileItemExpanded(getItemKey(child))" :size="20" />
-                    <ChevronDown v-else-if="child.children && child.children.length > 0" :size="20" />
+                    <span class="mobile-expand-btn" @click.stop="toggleMobileItem(getItemKey(child))">
+                      <ChevronRight v-if="!isMobileItemExpanded(getItemKey(child))" :size="20" />
+                      <ChevronDown v-else :size="20" />
+                    </span>
                   </template>
+                  {{ decodeHtmlEntities(child.title) }}
+                </NcActionButton>
+
+                <!-- Level 2 without children -->
+                <NcActionButton v-else
+                               @click="handleItemClick(child)"
+                               class="mobile-nav-level-2">
                   {{ decodeHtmlEntities(child.title) }}
                 </NcActionButton>
 
                 <!-- Level 3 items -->
                 <template v-if="child.children && child.children.length > 0 && isMobileItemExpanded(getItemKey(child))">
-                  <NcActionButton v-for="grandchild in child.children"
-                                 :key="getItemKey(grandchild)"
-                                 @click="handleItemClick(grandchild)"
-                                 class="mobile-nav-level-3">
-                    {{ decodeHtmlEntities(grandchild.title) }}
-                  </NcActionButton>
+                  <!-- Level 3 with children -->
+                  <template v-for="grandchild in child.children" :key="getItemKey(grandchild)">
+                    <NcActionButton v-if="grandchild.children && grandchild.children.length > 0"
+                                   @click="handleMobileItemClick(grandchild)"
+                                   class="mobile-nav-level-3">
+                      <template #icon>
+                        <span class="mobile-expand-btn" @click.stop="toggleMobileItem(getItemKey(grandchild))">
+                          <ChevronRight v-if="!isMobileItemExpanded(getItemKey(grandchild))" :size="20" />
+                          <ChevronDown v-else :size="20" />
+                        </span>
+                      </template>
+                      {{ decodeHtmlEntities(grandchild.title) }}
+                    </NcActionButton>
+
+                    <!-- Level 3 without children -->
+                    <NcActionButton v-else
+                                   @click="handleItemClick(grandchild)"
+                                   class="mobile-nav-level-3">
+                      {{ decodeHtmlEntities(grandchild.title) }}
+                    </NcActionButton>
+
+                    <!-- Level 4 items -->
+                    <template v-if="grandchild.children && grandchild.children.length > 0 && isMobileItemExpanded(getItemKey(grandchild))">
+                      <NcActionButton v-for="greatGrandchild in grandchild.children"
+                                     :key="getItemKey(greatGrandchild)"
+                                     @click="handleItemClick(greatGrandchild)"
+                                     class="mobile-nav-level-4">
+                        {{ decodeHtmlEntities(greatGrandchild.title) }}
+                      </NcActionButton>
+                    </template>
+                  </template>
                 </template>
               </template>
             </template>
@@ -221,6 +268,7 @@ import { NcActions, NcActionButton } from '@nextcloud/vue';
 import ChevronDown from 'vue-material-design-icons/ChevronDown.vue';
 import ChevronRight from 'vue-material-design-icons/ChevronRight.vue';
 import Menu from 'vue-material-design-icons/Menu.vue';
+import FileTree from 'vue-material-design-icons/FileTree.vue';
 
 export default {
   name: 'Navigation',
@@ -229,7 +277,8 @@ export default {
     NcActionButton,
     ChevronDown,
     ChevronRight,
-    Menu
+    Menu,
+    FileTree
   },
   props: {
     items: {
@@ -242,7 +291,7 @@ export default {
       validator: (value) => ['dropdown', 'megamenu'].includes(value)
     }
   },
-  emits: ['navigate'],
+  emits: ['navigate', 'show-tree'],
   data() {
     return {
       // Mobile menu state
@@ -279,10 +328,24 @@ export default {
       }
       return '#';
     },
+    handleTreeClick(event) {
+      // Remove focus from button to prevent "active" state after modal closes
+      event.target.blur();
+      this.$emit('show-tree');
+    },
     handleItemClick(item) {
       this.$emit('navigate', item);
       this.hideDropdown();
       this.hideMegaMenu();
+    },
+    handleMobileItemClick(item) {
+      // Only navigate if item has a link (uniqueId or url)
+      if (item.uniqueId || item.url) {
+        this.$emit('navigate', item);
+      } else {
+        // If no link, toggle expand instead
+        this.toggleMobileItem(this.getItemKey(item));
+      }
     },
     // Dropdown methods
     showDropdown(item) {
@@ -354,6 +417,32 @@ export default {
   padding: 0 16px;
 }
 
+/* Page Tree Button */
+.page-tree-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  margin-right: 8px;
+  background: none;
+  border: none;
+  border-radius: var(--border-radius);
+  color: var(--color-main-text);
+  cursor: pointer;
+  transition: background-color 0.1s ease;
+  flex-shrink: 0;
+}
+
+.page-tree-btn:hover {
+  background-color: var(--color-background-hover);
+}
+
+.page-tree-btn:active {
+  background-color: var(--color-primary-element-light);
+}
+
 /* Mobile Navigation */
 .mobile-nav {
   display: none;
@@ -371,6 +460,33 @@ export default {
   font-size: 13px !important;
   color: var(--color-text-maxcontrast) !important;
   font-weight: 300 !important;
+}
+
+.mobile-nav-level-4 :deep(.action-button__longtext) {
+  padding-left: 80px !important;
+  font-size: 12px !important;
+  color: var(--color-text-maxcontrast) !important;
+  font-weight: 300 !important;
+}
+
+/* Mobile expand button - larger clickable area */
+.mobile-expand-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  margin: -8px;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: background-color 0.1s ease;
+}
+
+.mobile-expand-btn:hover {
+  background-color: var(--color-background-dark);
+}
+
+.mobile-expand-btn:active {
+  background-color: var(--color-primary-element-light);
 }
 
 /* Hover effects for mobile items */

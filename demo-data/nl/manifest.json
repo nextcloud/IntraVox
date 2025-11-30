@@ -1,0 +1,43 @@
+{
+    "language": "nl",
+    "version": "1.0.0",
+    "description": "Nederlandse demo data voor IntraVox",
+    "pages": [
+        "nextcloud",
+        "nieuws",
+        "nieuws/evenementen",
+        "nieuws/updates",
+        "contact",
+        "prijzen",
+        "functies",
+        "functies/layouts",
+        "functies/navigatie",
+        "functies/widgets",
+        "over-intravox",
+        "klanten",
+        "documentatie",
+        "documentatie/faq",
+        "documentatie/tips",
+        "documentatie/api",
+        "documentatie/installatie",
+        "documentatie/handleidingen",
+        "afdeling",
+        "afdeling/sales",
+        "afdeling/it",
+        "afdeling/hr",
+        "afdeling/marketing",
+        "afdeling/marketing/social-media",
+        "afdeling/marketing/branding",
+        "afdeling/marketing/campagnes"
+    ],
+    "images": [
+        "hero-banner.jpg",
+        "team-collaboration.jpg",
+        "office-workspace.jpg",
+        "meeting-room.jpg",
+        "innovation.jpg",
+        "customer-support.jpg",
+        "analytics-dashboard.jpg",
+        "security.jpg"
+    ]
+}

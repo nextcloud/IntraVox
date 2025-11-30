@@ -1,100 +1,242 @@
 {
-  "uniqueId": "page-c3d4e5f6-a7b8-9012-cdef-123456789012",
-  "title": "Marketing",
-  "language": "nl",
-  "layout": {
-    "columns": 1,
-    "rows": [
-      {
+    "uniqueId": "page-c3d4e5f6-a7b8-9012-cdef-123456789012",
+    "title": "Marketing",
+    "language": "nl",
+    "layout": {
         "columns": 1,
-        "backgroundColor": "",
-        "widgets": [
-          {
-            "type": "heading",
-            "column": 1,
-            "order": 1,
-            "content": "Marketing Afdeling",
-            "level": 1
-          }
-        ]
-      },
-      {
-        "columns": 2,
-        "backgroundColor": "",
-        "widgets": [
-          {
-            "type": "heading",
-            "column": 1,
-            "order": 1,
-            "content": "Onze Missie",
-            "level": 2
-          },
-          {
-            "type": "text",
-            "column": 1,
-            "order": 2,
-            "content": "De Marketing afdeling is verantwoordelijk voor het creëren en uitvoeren van marketingstrategieën die onze merk bekendheid vergroten en nieuwe klanten aantrekken.\n\nWe werken aan:\n- **Online marketing** - Social media, SEO, content marketing\n- **Branding** - Merkidentiteit en positionering\n- **Campagnes** - Geïntegreerde marketingcampagnes\n- **Analytics** - Data-gedreven beslissingen"
-          },
-          {
-            "type": "image",
-            "column": 2,
-            "order": 1,
-            "src": "features-showcase.jpg",
-            "alt": "Marketing features",
-            "width": "800px",
-            "objectFit": "cover",
-            "objectPosition": "center center"
-          }
-        ]
-      },
-      {
-        "columns": 1,
-        "backgroundColor": "var(--color-primary-light)",
-        "widgets": [
-          {
-            "type": "heading",
-            "column": 1,
-            "order": 1,
-            "content": "Recente Projecten",
-            "level": 2
-          },
-          {
-            "type": "text",
-            "column": 1,
-            "order": 2,
-            "content": "Bekijk onze nieuwste marketingcampagnes en projecten:"
-          }
-        ]
-      },
-      {
-        "columns": 2,
-        "backgroundColor": "",
-        "widgets": [
-          {
-            "type": "image",
-            "column": 1,
-            "order": 1,
-            "src": "tech-innovation.jpg",
-            "alt": "Innovatie",
-            "width": "800px",
-            "objectFit": "cover",
-            "objectPosition": "center center"
-          },
-          {
-            "type": "heading",
-            "column": 2,
-            "order": 1,
-            "content": "Digitale Transformatie",
-            "level": 3
-          },
-          {
-            "type": "text",
-            "column": 2,
-            "order": 2,
-            "content": "Onze focus ligt op digitale marketing en het benutten van de nieuwste technologieën om onze doelgroep te bereiken.\n\nDoor data-analyse en marketing automation kunnen we gepersonaliseerde campagnes creëren die resultaten opleveren."
-          }
-        ]
-      }
-    ]
-  }
+        "rows": [
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element)",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "marketing.jpg",
+                        "alt": "Marketing team aan het werk",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Marketing Afdeling",
+                        "level": 1
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 3,
+                        "content": "Wij bouwen merken, vertellen verhalen en verbinden mensen met oplossingen."
+                    }
+                ]
+            },
+            {
+                "columns": 2,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Onze Missie",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Het Marketing team is de stem van IntraVox. Wij zorgen ervoor dat onze boodschap helder, consistent en impactvol is.\n\n**Wat we doen:**\n- Merkstrategie en positionering\n- Content marketing en storytelling\n- Digitale campagnes\n- Event marketing\n- PR en media relaties"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 1,
+                        "content": "Ons Team",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 2,
+                        "content": "Een divers team van creatieve denkers en data-gedreven marketeers.\n\n**Team samenstelling:**\n- Content specialisten\n- Grafisch ontwerpers\n- Social media managers\n- Marketing analisten\n- Campagne managers"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "var(--color-border)",
+                        "height": "2px"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Marketing Statistieken 2024",
+                        "level": 2
+                    }
+                ]
+            },
+            {
+                "columns": 4,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "150+",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Gepubliceerde artikelen"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 1,
+                        "content": "25K",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 2,
+                        "content": "Social media volgers"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 3,
+                        "order": 1,
+                        "content": "12",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 3,
+                        "order": 2,
+                        "content": "Succesvolle campagnes"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 4,
+                        "order": 1,
+                        "content": "45%",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 4,
+                        "order": 2,
+                        "content": "Groei website bezoekers"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element-light)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Onze Campagnes",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Bekijk onze lopende en afgeronde marketing campagnes:"
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 3,
+                        "columns": 1,
+                        "items": [
+                            {
+                                "title": "Campagne Overzicht",
+                                "text": "Alle marketing campagnes in detail",
+                                "url": "#campagnes",
+                                "icon": "bullhorn",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "transparent",
+                        "height": "20px"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 1,
+                        "columns": 2,
+                        "items": [
+                            {
+                                "title": "Terug naar Afdelingen",
+                                "text": "Overzicht alle afdelingen",
+                                "url": "#afdeling",
+                                "icon": "arrow-left",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Contact Marketing",
+                                "text": "marketing@intravox.nl",
+                                "url": "mailto:marketing@intravox.nl",
+                                "icon": "email",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ],
+        "sideColumns": {
+            "left": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            },
+            "right": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            }
+        }
+    }
 }

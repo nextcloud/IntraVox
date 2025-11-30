@@ -1,0 +1,352 @@
+{
+    "uniqueId": "page-f1a2b3c4-d5e6-7890-abcd-111111111111",
+    "title": "Widget Overzicht",
+    "language": "nl",
+    "layout": {
+        "columns": 1,
+        "rows": [
+            {
+                "columns": 1,
+                "backgroundColor": "#2c3e50",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Widget Bibliotheek",
+                        "level": 1
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Ontdek alle beschikbare widgets om uw pagina's tot leven te brengen. Van tekst tot afbeeldingen, van links tot interactieve elementen."
+                    }
+                ]
+            },
+            {
+                "columns": 4,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "widget-text.jpg",
+                        "alt": "Tekst widget",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Tekst Widget",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 3,
+                        "content": "Rijke tekst met **Markdown** ondersteuning, inclusief lijsten, tabellen en links."
+                    },
+                    {
+                        "type": "image",
+                        "column": 2,
+                        "order": 1,
+                        "src": "widget-image.jpg",
+                        "alt": "Afbeelding widget",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 2,
+                        "content": "Afbeelding Widget",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 3,
+                        "content": "Upload foto's direct vanuit Nextcloud met automatische optimalisatie."
+                    },
+                    {
+                        "type": "image",
+                        "column": 3,
+                        "order": 1,
+                        "src": "widget-links.jpg",
+                        "alt": "Links widget",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 3,
+                        "order": 2,
+                        "content": "Links Widget",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 3,
+                        "order": 3,
+                        "content": "Creëer navigeerbare link collecties met iconen en beschrijvingen."
+                    },
+                    {
+                        "type": "image",
+                        "column": 4,
+                        "order": 1,
+                        "src": "widget-heading.jpg",
+                        "alt": "Heading widget",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 4,
+                        "order": 2,
+                        "content": "Heading Widget",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 4,
+                        "order": 3,
+                        "content": "Koppen van H1 tot H6 voor duidelijke hiërarchie in uw content."
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "var(--color-border)",
+                        "height": "2px"
+                    }
+                ]
+            },
+            {
+                "columns": 2,
+                "backgroundColor": "var(--color-primary-element-light)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Populaire Widgets",
+                        "level": 2
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 2,
+                        "columns": 2,
+                        "items": [
+                            {
+                                "title": "Tekst Editor",
+                                "text": "Markdown & rich text",
+                                "url": "#",
+                                "icon": "text-box",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Galerij",
+                                "text": "Foto collecties",
+                                "url": "#",
+                                "icon": "image-multiple",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Video Embed",
+                                "text": "YouTube & Vimeo",
+                                "url": "#",
+                                "icon": "video",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Code Blokken",
+                                "text": "Syntax highlighting",
+                                "url": "#",
+                                "icon": "code-tags",
+                                "target": "_self"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 1,
+                        "content": "Layout Elementen",
+                        "level": 2
+                    },
+                    {
+                        "type": "links",
+                        "column": 2,
+                        "order": 2,
+                        "columns": 2,
+                        "items": [
+                            {
+                                "title": "Divider",
+                                "text": "Scheidingslijnen",
+                                "url": "#",
+                                "icon": "minus",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Spacer",
+                                "text": "Verticale ruimte",
+                                "url": "#",
+                                "icon": "arrow-expand-vertical",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Kolommen",
+                                "text": "Grid layouts",
+                                "url": "#",
+                                "icon": "view-column",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Achtergrond",
+                                "text": "Kleuren & patronen",
+                                "url": "#",
+                                "icon": "palette",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "#3498db",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Widget Documentatie",
+                        "level": 2
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 2,
+                        "columns": 5,
+                        "items": [
+                            {
+                                "title": "Aan de slag",
+                                "text": "Eerste widget plaatsen",
+                                "url": "#documentatie/handleidingen",
+                                "icon": "rocket-launch",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Best Practices",
+                                "text": "Tips voor betere pagina's",
+                                "url": "#documentatie/tips",
+                                "icon": "lightbulb-on",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "FAQ",
+                                "text": "Veelgestelde vragen",
+                                "url": "#documentatie/faq",
+                                "icon": "frequently-asked-questions",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "API Referentie",
+                                "text": "Technische documentatie",
+                                "url": "#documentatie/api",
+                                "icon": "api",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Community",
+                                "text": "Hulp van anderen",
+                                "url": "https://help.nextcloud.com",
+                                "icon": "account-group",
+                                "target": "_blank"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "transparent",
+                        "height": "20px"
+                    }
+                ]
+            }
+        ],
+        "sideColumns": {
+            "left": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            },
+            "right": {
+                "enabled": true,
+                "backgroundColor": "var(--color-background-dark)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Snelkoppelingen",
+                        "level": 3
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 2,
+                        "columns": 1,
+                        "items": [
+                            {
+                                "text": "Alle Functies",
+                                "url": "#functies",
+                                "icon": "cog"
+                            },
+                            {
+                                "text": "Layouts",
+                                "url": "#functies/layouts",
+                                "icon": "view-grid"
+                            },
+                            {
+                                "text": "Navigatie",
+                                "url": "#functies/navigatie",
+                                "icon": "menu"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 3,
+                        "style": "solid",
+                        "color": "var(--color-border)",
+                        "height": "1px"
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 4,
+                        "content": "**Tip:** Sleep widgets naar de gewenste positie voor perfecte layouts."
+                    }
+                ]
+            }
+        }
+    }
+}

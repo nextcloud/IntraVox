@@ -1,0 +1,277 @@
+{
+    "uniqueId": "page-dddaa881-f813-45e3-9820-81c8a9801893",
+    "title": "Contact",
+    "language": "nl",
+    "layout": {
+        "columns": 1,
+        "rows": [
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element)",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "office.jpg",
+                        "alt": "Neem contact met ons op",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Contact",
+                        "level": 1
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 3,
+                        "content": "Wij staan klaar om uw vragen te beantwoorden en u te helpen met IntraVox."
+                    }
+                ]
+            },
+            {
+                "columns": 3,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "email.jpg",
+                        "alt": "E-mail contact",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Neem Contact Op",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 3,
+                        "content": "Heeft u vragen over IntraVox? Wilt u een demo? Of heeft u technische ondersteuning nodig?\n\n**E-mail:** info@intravox.nl\n**Telefoon:** +31 (0)20 123 4567\n**Support:** support@intravox.nl\n\n**Openingstijden:**\nMaandag - Vrijdag: 09:00 - 17:00 CET"
+                    },
+                    {
+                        "type": "image",
+                        "column": 2,
+                        "order": 1,
+                        "src": "office-phone.jpg",
+                        "alt": "Telefoon",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 2,
+                        "content": "Locatie",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 3,
+                        "content": "**IntraVox BV**\nSciencepark 402\n1098 XH Amsterdam\nNederland\n\n*Makkelijk bereikbaar met OV*\nStation Amsterdam Science Park: 5 min lopen"
+                    },
+                    {
+                        "type": "image",
+                        "column": 3,
+                        "order": 1,
+                        "src": "support.jpg",
+                        "alt": "Support team",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 3,
+                        "order": 2,
+                        "content": "Support",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 3,
+                        "order": 3,
+                        "content": "Onze support team staat voor u klaar.\n\n**Community:** GitHub Issues\n**Priority:** Enterprise support\n**Docs:** docs.intravox.nl"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "var(--color-border)",
+                        "height": "2px"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Contact Opties",
+                        "level": 2
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 2,
+                        "columns": 4,
+                        "items": [
+                            {
+                                "title": "Algemene Vragen",
+                                "text": "info@intravox.nl",
+                                "url": "mailto:info@intravox.nl",
+                                "icon": "email",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Technische Support",
+                                "text": "support@intravox.nl",
+                                "url": "mailto:support@intravox.nl",
+                                "icon": "help-circle",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Sales",
+                                "text": "sales@intravox.nl",
+                                "url": "mailto:sales@intravox.nl",
+                                "icon": "cash-register",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Bel Ons",
+                                "text": "+31 (0)20 123 4567",
+                                "url": "tel:+31201234567",
+                                "icon": "phone",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Demo Aanvragen",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Wilt u IntraVox in actie zien? Vraag een **gratis demo** aan!\n\nOnze product specialisten nemen binnen 24 uur contact met u op om een demo in te plannen. Tijdens de demo laten we u zien hoe IntraVox uw interne communicatie kan verbeteren.\n\n**Wat u kunt verwachten:**\n- Persoonlijke rondleiding door IntraVox\n- Beantwoording van al uw vragen\n- Advies voor uw specifieke situatie\n- Geen verplichtingen"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "var(--color-border)",
+                        "height": "2px"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element-light)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Volg Ons",
+                        "level": 2
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 2,
+                        "columns": 4,
+                        "items": [
+                            {
+                                "title": "GitHub",
+                                "text": "Open source code",
+                                "url": "https://github.com/nextcloud",
+                                "icon": "github",
+                                "target": "_blank"
+                            },
+                            {
+                                "title": "LinkedIn",
+                                "text": "Zakelijke updates",
+                                "url": "https://www.linkedin.com/company/nextcloud/",
+                                "icon": "linkedin",
+                                "target": "_blank"
+                            },
+                            {
+                                "title": "Twitter/X",
+                                "text": "Nieuws en tips",
+                                "url": "https://twitter.com/nextcloud",
+                                "icon": "twitter",
+                                "target": "_blank"
+                            },
+                            {
+                                "title": "Community Forum",
+                                "text": "Discussies en hulp",
+                                "url": "https://help.nextcloud.com",
+                                "icon": "forum",
+                                "target": "_blank"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "transparent",
+                        "height": "20px"
+                    }
+                ]
+            }
+        ],
+        "sideColumns": {
+            "left": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            },
+            "right": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            }
+        }
+    }
+}

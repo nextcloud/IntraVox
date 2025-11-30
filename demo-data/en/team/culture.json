@@ -15,7 +15,7 @@
                         "type": "image",
                         "column": 1,
                         "order": 1,
-                        "src": "images/team-group.jpg",
+                        "src": "team-group.jpg",
                         "alt": "Company culture",
                         "objectFit": "cover"
                     },

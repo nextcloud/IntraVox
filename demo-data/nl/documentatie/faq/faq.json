@@ -1,0 +1,240 @@
+{
+    "uniqueId": "page-f6988d7a-f56b-4ceb-8d00-b3655c2c327f",
+    "title": "FAQ",
+    "language": "nl",
+    "layout": {
+        "columns": 1,
+        "rows": [
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element)",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "faq.jpg",
+                        "alt": "Veelgestelde Vragen",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Veelgestelde Vragen",
+                        "level": 1
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 3,
+                        "content": "Antwoorden op de meest gestelde vragen over IntraVox."
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Algemene Vragen",
+                        "level": 2
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Wat is IntraVox?",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "IntraVox is een open source intranet applicatie voor Nextcloud. Het biedt SharePoint-achtige functionaliteit voor het maken van interne websites, pagina's en content management - volledig geïntegreerd met uw Nextcloud omgeving."
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Is IntraVox gratis?",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Ja! IntraVox is 100% open source en gratis te gebruiken onder de AGPL licentie. Er zijn geen verborgen kosten of premium features. Alle functionaliteit is beschikbaar voor iedereen."
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Welke Nextcloud versie heb ik nodig?",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "IntraVox vereist Nextcloud 27 of hoger. We raden aan om altijd de nieuwste stabiele versie van Nextcloud te gebruiken voor de beste ervaring en beveiligingsupdates."
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "var(--color-border)",
+                        "height": "2px"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Technische Vragen",
+                        "level": 2
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Hoe installeer ik IntraVox?",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "IntraVox kan worden geïnstalleerd via de Nextcloud App Store:\n1. Ga naar Apps in uw Nextcloud admin panel\n2. Zoek naar 'IntraVox'\n3. Klik 'Download en activeer'\n4. Configureer de app in de instellingen"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Kan ik IntraVox aanpassen?",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Ja! Als open source software kunt u IntraVox volledig aanpassen aan uw behoeften. U kunt:\n- Custom widgets ontwikkelen\n- Styling aanpassen\n- Nieuwe features toevoegen\n- Vertalingen bijdragen"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element-light)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Meer Vragen?",
+                        "level": 2
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 2,
+                        "columns": 3,
+                        "items": [
+                            {
+                                "title": "Contact",
+                                "text": "Stel uw vraag direct",
+                                "url": "#contact",
+                                "icon": "email",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Community Forum",
+                                "text": "Vraag de community",
+                                "url": "https://help.nextcloud.com",
+                                "icon": "forum",
+                                "target": "_blank"
+                            },
+                            {
+                                "title": "Terug naar Docs",
+                                "text": "Documentatie overzicht",
+                                "url": "#documentatie",
+                                "icon": "arrow-left",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "transparent",
+                        "height": "20px"
+                    }
+                ]
+            }
+        ],
+        "sideColumns": {
+            "left": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            },
+            "right": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            }
+        }
+    }
+}

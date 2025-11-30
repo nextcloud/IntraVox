@@ -1,0 +1,341 @@
+{
+    "uniqueId": "page-events-a1b2c3d4-e5f6-7890-abcd-999999999999",
+    "title": "Evenementen",
+    "language": "nl",
+    "layout": {
+        "columns": 1,
+        "rows": [
+            {
+                "columns": 1,
+                "backgroundColor": "#673ab7",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "events-hero.jpg",
+                        "alt": "Evenementen",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Evenementen & Webinars",
+                        "level": 1
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 3,
+                        "content": "Mis geen enkel evenement! Van interne workshops tot externe conferenties - blijf verbonden met de community."
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Aankomende Evenementen",
+                        "level": 2
+                    }
+                ]
+            },
+            {
+                "columns": 2,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "webinar.jpg",
+                        "alt": "Webinar",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Webinar: IntraVox voor Beginners",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 3,
+                        "content": "**Datum:** 15 december 2024\n**Tijd:** 14:00 - 15:30\n**Locatie:** Online (Zoom)\n\nLeer de basis van IntraVox in 90 minuten. Perfect voor nieuwe gebruikers die snel productief willen worden."
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 4,
+                        "columns": 1,
+                        "items": [
+                            {
+                                "title": "Aanmelden",
+                                "text": "Registreer nu gratis",
+                                "url": "#",
+                                "icon": "calendar-check",
+                                "target": "_self"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "image",
+                        "column": 2,
+                        "order": 1,
+                        "src": "workshop.jpg",
+                        "alt": "Workshop",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 2,
+                        "content": "Workshop: Geavanceerde Layouts",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 3,
+                        "content": "**Datum:** 20 december 2024\n**Tijd:** 10:00 - 12:00\n**Locatie:** Kantoor Amsterdam\n\nDuik dieper in layout mogelijkheden, zijkolommen en achtergrondkleuren voor professionele pagina's."
+                    },
+                    {
+                        "type": "links",
+                        "column": 2,
+                        "order": 4,
+                        "columns": 1,
+                        "items": [
+                            {
+                                "title": "Aanmelden",
+                                "text": "Beperkt aantal plaatsen",
+                                "url": "#",
+                                "icon": "calendar-check",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "var(--color-border)",
+                        "height": "2px"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Evenementen Kalender",
+                        "level": 2
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 2,
+                        "columns": 4,
+                        "items": [
+                            {
+                                "title": "Dec 15",
+                                "text": "Webinar: Beginners",
+                                "url": "#",
+                                "icon": "video",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Dec 20",
+                                "text": "Workshop: Layouts",
+                                "url": "#",
+                                "icon": "school",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Jan 10",
+                                "text": "Nieuwjaarsborrel",
+                                "url": "#",
+                                "icon": "party-popper",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Jan 25",
+                                "text": "Webinar: API's",
+                                "url": "#",
+                                "icon": "api",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element-light)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Afgelopen Evenementen",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "| Datum | Evenement | Opname |\n|-------|-----------|--------|\n| Nov 2024 | Webinar: Dark Mode | Beschikbaar |\n| Okt 2024 | Workshop: Multi-taal | Beschikbaar |\n| Sep 2024 | Lancering 0.4.0 | Beschikbaar |\n| Aug 2024 | Zomer BBQ | - |"
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 3,
+                        "columns": 1,
+                        "items": [
+                            {
+                                "title": "Bekijk Opnames",
+                                "text": "Alle webinar recordings",
+                                "url": "#",
+                                "icon": "video-box",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "#673ab7",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Gerelateerd",
+                        "level": 2
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 2,
+                        "columns": 3,
+                        "items": [
+                            {
+                                "title": "Product Updates",
+                                "text": "Nieuwe features",
+                                "url": "#nieuws/updates",
+                                "icon": "update",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Nieuws",
+                                "text": "Alle berichten",
+                                "url": "#nieuws",
+                                "icon": "newspaper",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Contact",
+                                "text": "Stel een vraag",
+                                "url": "#contact",
+                                "icon": "email",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "transparent",
+                        "height": "20px"
+                    }
+                ]
+            }
+        ],
+        "sideColumns": {
+            "left": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            },
+            "right": {
+                "enabled": true,
+                "backgroundColor": "var(--color-background-dark)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Volgende Event",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "**Webinar: Beginners**\n\n15 december 2024\n14:00 - 15:30\n\nOnline via Zoom"
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 3,
+                        "columns": 1,
+                        "items": [
+                            {
+                                "text": "Aanmelden",
+                                "url": "#",
+                                "icon": "calendar-plus"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 4,
+                        "style": "solid",
+                        "color": "var(--color-border)",
+                        "height": "1px"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 5,
+                        "content": "Nieuwsbrief",
+                        "level": 4
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 6,
+                        "content": "Ontvang event updates in uw inbox."
+                    }
+                ]
+            }
+        }
+    }
+}

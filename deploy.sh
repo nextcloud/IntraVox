@@ -2,11 +2,9 @@
 
 # IntraVox Deployment Script
 # Deploys to Nextcloud test server
+# All files are now in the root directory (no more intravox-deploy subdir)
 
 set -e
-
-echo "🚀 IntraVox Deployment Script"
-echo "=============================="
 
 # Configuration
 APP_NAME="intravox"
@@ -15,6 +13,14 @@ REMOTE_HOST="145.38.195.41"  # Dev server
 REMOTE_PATH="/var/www/nextcloud/apps"
 SSH_KEY="~/.ssh/sur"
 LOCAL_PATH="$(pwd)"
+
+# Extract version from package.json
+VERSION=$(grep '"version"' package.json | head -1 | sed 's/.*"version": "\([^"]*\)".*/\1/')
+
+echo "🚀 IntraVox Deployment Script"
+echo "=============================="
+echo "📌 Version: $VERSION"
+echo "📅 Date: $(date '+%Y-%m-%d %H:%M:%S')"
 
 # Files and folders to include in deployment
 INCLUDE_ITEMS=(
@@ -25,6 +31,7 @@ INCLUDE_ITEMS=(
     "css"
     "img"
     "js"
+    "scripts"
     "CHANGELOG.md"
     "LICENSE"
     "README.md"
@@ -33,39 +40,18 @@ INCLUDE_ITEMS=(
 echo ""
 echo "📦 Step 1: Building frontend..."
 
-# Build from intravox-deploy directory
-if [ -d "intravox-deploy" ]; then
-    echo "  🔨 Building from intravox-deploy directory..."
-    cd intravox-deploy
+# Install dependencies if node_modules doesn't exist
+if [ ! -d "node_modules" ]; then
+    echo "  📥 Installing dependencies..."
+    npm install
+fi
 
-    # Install dependencies if node_modules doesn't exist
-    if [ ! -d "node_modules" ]; then
-        echo "  📥 Installing dependencies..."
-        npm install
-    fi
+# Build
+npm run build
 
-    # Build
-    npm run build
-
-    if [ $? -ne 0 ]; then
-        echo "❌ Build failed!"
-        exit 1
-    fi
-
-    # Copy built files to main directory
-    echo "  📋 Copying built files to main directory..."
-    cp -r js/* ../js/
-    cp -r l10n/* ../l10n/
-
-    cd ..
-else
-    # Fallback to old build method
-    npm run build
-
-    if [ $? -ne 0 ]; then
-        echo "❌ Build failed!"
-        exit 1
-    fi
+if [ $? -ne 0 ]; then
+    echo "❌ Build failed!"
+    exit 1
 fi
 
 echo "✅ Build completed"
@@ -154,6 +140,28 @@ ssh -i "$SSH_KEY" "${REMOTE_USER}@${REMOTE_HOST}" << EOF
     echo "  ✅ App enabled"
 EOF
 
+echo ""
+echo "🏥 Step 5: Health check..."
+HEALTH_CHECK=$(ssh -i "$SSH_KEY" "${REMOTE_USER}@${REMOTE_HOST}" "curl -s -o /dev/null -w '%{http_code}' http://localhost/apps/intravox/ 2>/dev/null || echo '000'")
+
+if [ "$HEALTH_CHECK" = "200" ] || [ "$HEALTH_CHECK" = "302" ] || [ "$HEALTH_CHECK" = "303" ]; then
+    echo "  ✅ Health check passed (HTTP $HEALTH_CHECK)"
+else
+    echo "  ⚠️  Health check returned HTTP $HEALTH_CHECK (may require login)"
+fi
+
+# Verify deployed version
+echo ""
+echo "🔍 Step 6: Verifying deployed version..."
+DEPLOYED_VERSION=$(ssh -i "$SSH_KEY" "${REMOTE_USER}@${REMOTE_HOST}" "grep '<version>' $REMOTE_PATH/$APP_NAME/appinfo/info.xml | sed 's/.*<version>\([^<]*\)<\/version>.*/\1/'")
+echo "  📌 Deployed version: $DEPLOYED_VERSION"
+
+if [ "$VERSION" = "$DEPLOYED_VERSION" ]; then
+    echo "  ✅ Version matches!"
+else
+    echo "  ⚠️  Version mismatch! Local: $VERSION, Deployed: $DEPLOYED_VERSION"
+fi
+
 # Cleanup local temp files
 rm -rf "$TEMP_DIR"
 
@@ -162,15 +170,17 @@ echo "✅ Deployment completed successfully!"
 echo ""
 echo "📊 Summary:"
 echo "  • App Name: $APP_NAME"
+echo "  • Version: $DEPLOYED_VERSION"
 echo "  • Server: $REMOTE_HOST"
 echo "  • Status: Deployed and enabled"
 echo ""
 echo "🌐 Access IntraVox at:"
 echo "  https://$REMOTE_HOST"
 echo ""
-echo "🔧 Setup command (if needed):"
-echo "  ssh ${REMOTE_USER}@${REMOTE_HOST} 'sudo -u www-data php /var/www/html/occ intravox:setup'"
+echo "🔄 Rollback (if needed):"
+echo "  ssh ${REMOTE_USER}@${REMOTE_HOST} 'ls -la /tmp/${APP_NAME}.backup.*'"
+echo "  ssh ${REMOTE_USER}@${REMOTE_HOST} 'sudo rm -rf $REMOTE_PATH/$APP_NAME && sudo mv /tmp/${APP_NAME}.backup.YYYYMMDD_HHMMSS $REMOTE_PATH/$APP_NAME'"
 echo ""
 echo "📝 View logs:"
-echo "  ssh ${REMOTE_USER}@${REMOTE_HOST} 'sudo tail -f /var/www/html/data/nextcloud.log'"
+echo "  ssh ${REMOTE_USER}@${REMOTE_HOST} 'sudo tail -f /var/www/nextcloud/data/nextcloud.log'"
 echo ""

@@ -1,9 +1,6 @@
 import { createApp } from 'vue';
-import { getLanguage, translate, translatePlural } from '@nextcloud/l10n';
+import { translate, translatePlural } from '@nextcloud/l10n';
 import App from './App.vue';
-
-console.log('IntraVox: Initializing app...');
-console.log('IntraVox: Current language:', getLanguage());
 
 const app = createApp(App);
 
@@ -12,4 +9,3 @@ app.config.globalProperties.$t = (text, vars = {}) => translate('intravox', text
 app.config.globalProperties.$n = (singular, plural, count, vars = {}) => translatePlural('intravox', singular, plural, count, vars);
 
 app.mount('#app-intravox');
-console.log('IntraVox: App mounted successfully!');

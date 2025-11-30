@@ -14,7 +14,7 @@ use OCP\Files\Cache\ICacheEntry;
 class PageService {
     private const ALLOWED_WIDGET_TYPES = ['text', 'heading', 'image', 'links', 'file', 'divider'];
     private const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-    private const MAX_IMAGE_SIZE = 5242880; // 5MB
+    private const MAX_IMAGE_SIZE = 2097152; // 2MB (PHP default upload limit)
     private const MAX_COLUMNS = 5;
     private const SUPPORTED_LANGUAGES = ['nl', 'en', 'de', 'fr'];
     private const DEFAULT_LANGUAGE = 'en';
@@ -125,15 +125,22 @@ class PageService {
     /**
      * Recursively find a page by uniqueId
      */
-    private function findPageByUniqueId($folder, string $uniqueId): ?array {
-        // Check for home.json first (most common case)
-        if ($uniqueId === 'page-2e8f694e-147e-4793-8949-4732e679ae6b') {
-            try {
-                $homeFile = $folder->get('home.json');
-                return ['file' => $homeFile, 'folder' => $folder];
-            } catch (NotFoundException $e) {
-                // Continue searching
+    private function findPageByUniqueId($folder, string $uniqueId, $languageFolder = null): ?array {
+        // Track the language folder for isHome detection
+        if ($languageFolder === null) {
+            $languageFolder = $folder;
+        }
+
+        // Check for home.json first (most common case for homepage)
+        try {
+            $homeFile = $folder->get('home.json');
+            $content = $homeFile->getContent();
+            $data = json_decode($content, true);
+            if ($data && isset($data['uniqueId']) && $data['uniqueId'] === $uniqueId) {
+                return ['file' => $homeFile, 'folder' => $folder, 'isHome' => true];
             }
+        } catch (NotFoundException $e) {
+            // home.json doesn't exist here, continue searching
         }
 
         // FIRST: Check all JSON files in current folder
@@ -144,7 +151,8 @@ class PageService {
             if ($item->getType() === \OCP\Files\FileInfo::TYPE_FILE &&
                 substr($itemName, -5) === '.json' &&
                 $itemName !== 'navigation.json' &&
-                $itemName !== 'footer.json') {
+                $itemName !== 'footer.json' &&
+                $itemName !== 'home.json') {  // Already checked home.json above
                 try {
                     $content = $item->getContent();
                     $data = json_decode($content, true);
@@ -156,12 +164,12 @@ class PageService {
                         try {
                             $matchingFolder = $folder->get($baseName);
                             if ($matchingFolder->getType() === \OCP\Files\FileInfo::TYPE_FOLDER) {
-                                return ['file' => $item, 'folder' => $matchingFolder];
+                                return ['file' => $item, 'folder' => $matchingFolder, 'isHome' => false];
                             }
                         } catch (NotFoundException $e) {
                             // No matching folder, use current folder
                         }
-                        return ['file' => $item, 'folder' => $folder];
+                        return ['file' => $item, 'folder' => $folder, 'isHome' => false];
                     }
                 } catch (\Exception $e) {
                     // Skip invalid files
@@ -180,7 +188,7 @@ class PageService {
                     continue;
                 }
 
-                $result = $this->findPageByUniqueId($item, $uniqueId);
+                $result = $this->findPageByUniqueId($item, $uniqueId, $languageFolder);
                 if ($result !== null) {
                     return $result;
                 }
@@ -598,16 +606,27 @@ class PageService {
         $page = $this->getPage($pageId);
         $breadcrumb = [];
 
+        // Check if current page is the home page
+        $isHomePage = ($pageId === 'home' ||
+                       preg_match('/^[a-z]{2}\/home$/', $page['path']) ||
+                       preg_match('/^[a-z]{2}$/', $page['path']));
+
         // Always start with Home
         $breadcrumb[] = [
             'id' => 'home',
+            'uniqueId' => $isHomePage ? $page['uniqueId'] : null,
             'title' => 'Home',
             'path' => $this->getUserLanguage() . '/home',
-            'url' => '#home',
-            'current' => false
+            'url' => $isHomePage ? null : '#home',
+            'current' => $isHomePage
         ];
 
-        // Parse path to build breadcrumb
+        // If this is the home page, we're done - don't add duplicate
+        if ($isHomePage) {
+            return $breadcrumb;
+        }
+
+        // Parse path to build breadcrumb for non-home pages
         $pathParts = explode('/', $page['path']);
         $currentPath = '';
 
@@ -619,6 +638,11 @@ class PageService {
 
             // Skip 'public' and 'departments' keywords
             if (in_array($part, ['public', 'departments'])) {
+                continue;
+            }
+
+            // Skip 'home' as it's already added
+            if ($part === 'home') {
                 continue;
             }
 
@@ -1040,6 +1064,22 @@ class PageService {
             throw new \InvalidArgumentException('Invalid file upload');
         }
 
+        // Check if tmp_name is empty (upload failed on server)
+        if (empty($file['tmp_name'])) {
+            $errorCode = $file['error'] ?? -1;
+            $errorMessages = [
+                UPLOAD_ERR_INI_SIZE => 'File exceeds server upload limit',
+                UPLOAD_ERR_FORM_SIZE => 'File exceeds form upload limit',
+                UPLOAD_ERR_PARTIAL => 'File only partially uploaded',
+                UPLOAD_ERR_NO_FILE => 'No file was uploaded',
+                UPLOAD_ERR_NO_TMP_DIR => 'Server missing temporary folder',
+                UPLOAD_ERR_CANT_WRITE => 'Failed to write file to disk',
+                UPLOAD_ERR_EXTENSION => 'Upload stopped by PHP extension',
+            ];
+            $message = $errorMessages[$errorCode] ?? "Upload failed (error code: $errorCode)";
+            throw new \InvalidArgumentException($message);
+        }
+
         $pageId = $this->sanitizeId($pageId);
 
         // Validate file type
@@ -1053,7 +1093,7 @@ class PageService {
 
         // Validate file size
         if ($file['size'] > self::MAX_IMAGE_SIZE) {
-            throw new \InvalidArgumentException('Image too large. Max size: 5MB');
+            throw new \InvalidArgumentException('Image too large. Maximum size is 2MB.');
         }
 
         // Sanitize filename
@@ -1062,9 +1102,18 @@ class PageService {
 
         $languageFolder = $this->getLanguageFolder();
 
+        // Find the page by uniqueId (pageId is actually the uniqueId from the frontend)
+        $result = $this->findPageByUniqueId($languageFolder, $pageId);
+        if ($result === null) {
+            // Fallback: try finding by folder name for backwards compatibility
+            $result = $this->findPageById($languageFolder, $pageId);
+            if ($result === null) {
+                throw new \Exception('Page not found');
+            }
+        }
+
         // Get images folder for this page
-        // Folder is named "images"
-        if ($pageId === 'home') {
+        if ($result['isHome'] ?? false) {
             // Home images are in root/images/
             try {
                 $imagesFolder = $languageFolder->get('images');
@@ -1072,12 +1121,6 @@ class PageService {
                 $imagesFolder = $languageFolder->newFolder('images');
             }
         } else {
-            // Find the page folder using findPageById (handles nested pages correctly)
-            $result = $this->findPageById($languageFolder, $pageId);
-            if ($result === null) {
-                throw new \Exception('Page not found');
-            }
-
             $pageFolder = $result['folder'];
 
             // Get or create images subfolder
@@ -1306,6 +1349,46 @@ class PageService {
             }
         }
 
+        // Validate and sanitize side columns
+        if (isset($data['layout']['sideColumns']) && is_array($data['layout']['sideColumns'])) {
+            $sanitized['layout']['sideColumns'] = $this->sanitizeSideColumns($data['layout']['sideColumns']);
+        }
+
+        return $sanitized;
+    }
+
+    /**
+     * Sanitize side columns data
+     */
+    private function sanitizeSideColumns(array $sideColumns): array {
+        $sanitized = [];
+
+        foreach (['left', 'right'] as $side) {
+            if (isset($sideColumns[$side]) && is_array($sideColumns[$side])) {
+                $sideData = $sideColumns[$side];
+
+                $sanitizedSide = [
+                    'enabled' => !empty($sideData['enabled']),
+                    'backgroundColor' => isset($sideData['backgroundColor'])
+                        ? $this->sanitizeBackgroundColor($sideData['backgroundColor'])
+                        : '',
+                    'widgets' => []
+                ];
+
+                // Sanitize widgets in this side column
+                if (isset($sideData['widgets']) && is_array($sideData['widgets'])) {
+                    foreach ($sideData['widgets'] as $widget) {
+                        $sanitizedWidget = $this->sanitizeWidget($widget);
+                        if ($sanitizedWidget) {
+                            $sanitizedSide['widgets'][] = $sanitizedWidget;
+                        }
+                    }
+                }
+
+                $sanitized[$side] = $sanitizedSide;
+            }
+        }
+
         return $sanitized;
     }
 
@@ -1323,6 +1406,11 @@ class PageService {
             'order' => (int)($widget['order'] ?? 1)
         ];
 
+        // Preserve widget ID if present (needed for frontend to identify widgets)
+        if (isset($widget['id'])) {
+            $sanitized['id'] = $this->sanitizeText($widget['id']);
+        }
+
         switch ($widget['type']) {
             case 'text':
                 // Text widgets now contain HTML from rich text editor - sanitize HTML not text
@@ -1337,6 +1425,18 @@ class PageService {
             case 'image':
                 $sanitized['src'] = $this->sanitizePath($widget['src'] ?? '');
                 $sanitized['alt'] = $this->sanitizeText($widget['alt'] ?? '');
+                // Preserve optional image properties
+                if (isset($widget['width'])) {
+                    $sanitized['width'] = $this->sanitizeText((string)($widget['width'] ?? ''));
+                }
+                if (isset($widget['objectFit'])) {
+                    $allowedFits = ['cover', 'contain', 'fill', 'none', 'scale-down'];
+                    $sanitized['objectFit'] = in_array($widget['objectFit'], $allowedFits) ? $widget['objectFit'] : 'cover';
+                }
+                if (isset($widget['objectPosition'])) {
+                    $allowedPositions = ['center', 'top', 'bottom', 'left', 'right'];
+                    $sanitized['objectPosition'] = in_array($widget['objectPosition'], $allowedPositions) ? $widget['objectPosition'] : 'center';
+                }
                 break;
 
             case 'links':
@@ -1344,10 +1444,19 @@ class PageService {
                 if (isset($widget['items']) && is_array($widget['items'])) {
                     foreach ($widget['items'] as $link) {
                         $sanitizedLink = [];
+                        // Preserve title if present
+                        if (isset($link['title'])) {
+                            $sanitizedLink['title'] = $this->sanitizeText($link['title']);
+                        }
                         // Use sanitizeHtml for link text to allow HTML entities and formatting
                         $sanitizedLink['text'] = $this->sanitizeHtml($link['text'] ?? '');
                         $sanitizedLink['url'] = $this->sanitizeUrl($link['url'] ?? '');
                         $sanitizedLink['icon'] = $this->sanitizeText($link['icon'] ?? '');
+                        // Preserve target attribute
+                        if (isset($link['target'])) {
+                            $allowedTargets = ['_self', '_blank'];
+                            $sanitizedLink['target'] = in_array($link['target'], $allowedTargets) ? $link['target'] : '_self';
+                        }
                         if (isset($link['backgroundColor'])) {
                             $sanitizedLink['backgroundColor'] = $this->sanitizeBackgroundColor($link['backgroundColor']);
                         }
@@ -1366,7 +1475,20 @@ class PageService {
                 break;
 
             case 'divider':
-                // Divider has no additional properties
+                // Preserve divider styling properties
+                if (isset($widget['style'])) {
+                    $allowedStyles = ['solid', 'dashed', 'dotted'];
+                    $sanitized['style'] = in_array($widget['style'], $allowedStyles) ? $widget['style'] : 'solid';
+                }
+                if (isset($widget['color'])) {
+                    $sanitized['color'] = $this->sanitizeBackgroundColor($widget['color']);
+                }
+                if (isset($widget['height'])) {
+                    // Allow valid CSS height values like "2px", "1rem", etc.
+                    $sanitized['height'] = preg_match('/^\d+(px|rem|em|%)$/', $widget['height'])
+                        ? $widget['height']
+                        : '2px';
+                }
                 break;
         }
 
@@ -1417,8 +1539,8 @@ class PageService {
     private function sanitizeUrl(string $url): string {
         $url = filter_var($url, FILTER_SANITIZE_URL);
 
-        // Only allow http, https, and relative URLs
-        if (!empty($url) && !preg_match('/^(https?:\/\/|\/)/i', $url)) {
+        // Only allow http, https, relative URLs, and hash links
+        if (!empty($url) && !preg_match('/^(https?:\/\/|\/|#)/i', $url)) {
             return '';
         }
 
@@ -1433,7 +1555,7 @@ class PageService {
     }
 
     /**
-     * Sanitize background color (only allow theme CSS variables or empty string)
+     * Sanitize background color (only allow theme CSS variables, transparent, or empty string)
      */
     private function sanitizeBackgroundColor(string $color): string {
         // Empty string is allowed (transparent/default)
@@ -1441,11 +1563,14 @@ class PageService {
             return '';
         }
 
-        // Only allow Nextcloud theme CSS variables
+        // Only allow Nextcloud theme CSS variables and specific safe values
         $allowedColors = [
             'var(--color-primary-element)',
             'var(--color-primary-element-light)',
-            'var(--color-background-hover)'
+            'var(--color-background-hover)',
+            'var(--color-border)',
+            'transparent',
+            'rgba(255,255,255,0.3)'
         ];
 
         if (in_array($color, $allowedColors)) {
@@ -1800,6 +1925,10 @@ class PageService {
         // Get filesystem timestamps
         $mtime = $file->getMTime();
         $ctime = $file->getCreationTime();
+        // Fallback: if creation time is 0 (not supported by groupfolder/storage), use mtime
+        if ($ctime === 0) {
+            $ctime = $mtime;
+        }
 
         // Get page content for other metadata
         $content = $file->getContent();
@@ -1818,6 +1947,7 @@ class PageService {
             'language' => $data['language'] ?? $this->getUserLanguage(),
             'created' => $ctime,
             'createdFormatted' => date('Y-m-d H:i:s', $ctime),
+            'createdRelative' => $this->getRelativeTime($ctime),
             'modified' => $mtime,
             'modifiedFormatted' => date('Y-m-d H:i:s', $mtime),
             'modifiedRelative' => $this->getRelativeTime($mtime),
@@ -2214,6 +2344,108 @@ class PageService {
             'content' => $content,
             'rawContent' => $content
         ];
+    }
+
+    /**
+     * Get the full page tree structure for the current language
+     * Returns a hierarchical tree of all pages the user has access to
+     *
+     * @param string|null $currentPageId Optional: uniqueId of the current page to highlight
+     * @return array Tree structure with pages and their children
+     */
+    public function getPageTree(?string $currentPageId = null): array {
+        $folder = $this->getLanguageFolder();
+        $tree = [];
+
+        // Check for home.json in root
+        try {
+            $homeFile = $folder->get('home.json');
+            $content = $homeFile->getContent();
+            $data = json_decode($content, true);
+
+            if ($data && isset($data['uniqueId'], $data['title'])) {
+                $tree[] = [
+                    'uniqueId' => $data['uniqueId'],
+                    'title' => $data['title'],
+                    'path' => $this->getUserLanguage(),
+                    'isCurrent' => ($currentPageId === $data['uniqueId']),
+                    'children' => []
+                ];
+            }
+        } catch (NotFoundException $e) {
+            // No home page yet
+        }
+
+        // Recursively build tree from subfolders
+        $this->buildPageTree($folder, $tree, $currentPageId);
+
+        return $tree;
+    }
+
+    /**
+     * Recursively build the page tree from folder structure
+     */
+    private function buildPageTree($folder, array &$tree, ?string $currentPageId): void {
+        foreach ($folder->getDirectoryListing() as $item) {
+            if ($item->getType() !== \OCP\Files\FileInfo::TYPE_FOLDER) {
+                continue;
+            }
+
+            $folderName = $item->getName();
+
+            // Skip special folders
+            if (in_array($folderName, ['images', 'files', '.nomedia'])) {
+                continue;
+            }
+
+            // Skip folders starting with emoji (images folders)
+            if (preg_match('/^[\x{1F300}-\x{1F9FF}]/u', $folderName)) {
+                continue;
+            }
+
+            // Look for {foldername}.json inside the folder
+            try {
+                $jsonFile = $item->get($folderName . '.json');
+
+                // Check if file is readable and user has access
+                if (!$jsonFile->isReadable()) {
+                    continue;
+                }
+
+                $content = @$jsonFile->getContent();
+
+                if ($content === false || $content === null) {
+                    continue;
+                }
+
+                $data = json_decode($content, true);
+
+                if ($data && isset($data['uniqueId'], $data['title'])) {
+                    // Check folder permissions (respects ACLs)
+                    if (!$item->isReadable()) {
+                        continue;
+                    }
+
+                    $pageNode = [
+                        'uniqueId' => $data['uniqueId'],
+                        'title' => $data['title'],
+                        'path' => $this->getRelativePathFromRoot($item),
+                        'isCurrent' => ($currentPageId === $data['uniqueId']),
+                        'children' => []
+                    ];
+
+                    // Recursively get children
+                    $this->buildPageTree($item, $pageNode['children'], $currentPageId);
+
+                    $tree[] = $pageNode;
+                }
+            } catch (\Exception $e) {
+                // This folder doesn't contain a valid page or can't be read, continue
+            } catch (\Throwable $e) {
+                // Catch any other errors
+                continue;
+            }
+        }
     }
 
     /**

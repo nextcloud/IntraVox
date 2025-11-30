@@ -1,32 +1,83 @@
 <template>
-  <div class="page-viewer">
-    <div
-      v-for="(row, rowIndex) in page.layout.rows"
-      :key="rowIndex"
-      class="page-row"
-      :style="getRowStyle(row)"
-    >
+  <div class="page-viewer-wrapper">
+    <!-- Header Row (spans full width above everything) -->
+    <div v-if="hasHeaderRow"
+         class="header-row"
+         :style="getHeaderRowStyle()">
+      <Widget
+        v-for="widget in getHeaderRowWidgets()"
+        :key="widget.id || widget.order"
+        :widget="widget"
+        :page-id="page.uniqueId"
+        :editable="false"
+        :row-background-color="page.layout.headerRow.backgroundColor || ''"
+        @navigate="$emit('navigate', $event)"
+      />
+    </div>
+
+  <div class="page-viewer-container"
+       :class="{ 'has-left-column': hasLeftColumn, 'has-right-column': hasRightColumn }">
+    <!-- Left Side Column -->
+    <div v-if="hasLeftColumn"
+         class="side-column side-column-left"
+         :style="getSideColumnStyle('left')">
+      <Widget
+        v-for="widget in getSideColumnWidgets('left')"
+        :key="widget.id || widget.order"
+        :widget="widget"
+        :page-id="page.uniqueId"
+        :editable="false"
+        :row-background-color="page.layout.sideColumns.left.backgroundColor || ''"
+        @navigate="$emit('navigate', $event)"
+      />
+    </div>
+
+    <!-- Main Content -->
+    <div class="page-viewer">
       <div
-        class="page-grid"
-        :style="{ gridTemplateColumns: `repeat(${(row.columns || page.layout.columns) ?? 1}, 1fr)` }"
+        v-for="(row, rowIndex) in page.layout.rows"
+        :key="rowIndex"
+        class="page-row"
+        :style="getRowStyle(row)"
       >
         <div
-          v-for="column in ((row.columns || page.layout.columns) ?? 1)"
-          :key="column"
-          class="page-column"
+          class="page-grid"
+          :style="{ gridTemplateColumns: `repeat(${(row.columns || page.layout.columns) ?? 1}, 1fr)` }"
         >
-          <Widget
-            v-for="widget in getWidgetsForColumn(row, column)"
-            :key="widget.order"
-            :widget="widget"
-            :page-id="page.uniqueId"
-            :editable="false"
-            :row-background-color="row.backgroundColor || ''"
-            @navigate="$emit('navigate', $event)"
-          />
+          <div
+            v-for="column in ((row.columns || page.layout.columns) ?? 1)"
+            :key="column"
+            class="page-column"
+          >
+            <Widget
+              v-for="widget in getWidgetsForColumn(row, column)"
+              :key="widget.order"
+              :widget="widget"
+              :page-id="page.uniqueId"
+              :editable="false"
+              :row-background-color="row.backgroundColor || ''"
+              @navigate="$emit('navigate', $event)"
+            />
+          </div>
         </div>
       </div>
     </div>
+
+    <!-- Right Side Column -->
+    <div v-if="hasRightColumn"
+         class="side-column side-column-right"
+         :style="getSideColumnStyle('right')">
+      <Widget
+        v-for="widget in getSideColumnWidgets('right')"
+        :key="widget.id || widget.order"
+        :widget="widget"
+        :page-id="page.uniqueId"
+        :editable="false"
+        :row-background-color="page.layout.sideColumns.right.backgroundColor || ''"
+        @navigate="$emit('navigate', $event)"
+      />
+    </div>
+  </div>
   </div>
 </template>
 
@@ -45,6 +96,20 @@ export default {
     }
   },
   emits: ['navigate'],
+  computed: {
+    hasHeaderRow() {
+      return this.page?.layout?.headerRow?.enabled &&
+             this.page.layout.headerRow.widgets?.length > 0;
+    },
+    hasLeftColumn() {
+      return this.page?.layout?.sideColumns?.left?.enabled &&
+             this.page.layout.sideColumns.left.widgets?.length > 0;
+    },
+    hasRightColumn() {
+      return this.page?.layout?.sideColumns?.right?.enabled &&
+             this.page.layout.sideColumns.right.widgets?.length > 0;
+    }
+  },
   methods: {
     getWidgetsForColumn(row, column) {
       if (!row.widgets) return [];
@@ -53,6 +118,11 @@ export default {
       return row.widgets
         .filter(w => w.column === column)
         .sort((a, b) => a.order - b.order);
+    },
+    getSideColumnWidgets(side) {
+      const sideColumn = this.page?.layout?.sideColumns?.[side];
+      if (!sideColumn || !sideColumn.widgets) return [];
+      return [...sideColumn.widgets].sort((a, b) => (a.order || 0) - (b.order || 0));
     },
     getRowStyle(row) {
       const style = {};
@@ -71,16 +141,102 @@ export default {
       }
 
       return style;
+    },
+    getSideColumnStyle(side) {
+      const sideColumn = this.page?.layout?.sideColumns?.[side];
+      if (!sideColumn) return {};
+
+      const style = {};
+
+      if (sideColumn.backgroundColor) {
+        style.backgroundColor = sideColumn.backgroundColor;
+
+        // Set text color based on background color
+        if (sideColumn.backgroundColor === 'var(--color-primary-element)') {
+          style.color = 'var(--color-primary-element-text)';
+        } else {
+          style.color = 'var(--color-main-text)';
+        }
+      }
+
+      return style;
+    },
+    getHeaderRowWidgets() {
+      const headerRow = this.page?.layout?.headerRow;
+      if (!headerRow || !headerRow.widgets) return [];
+      return [...headerRow.widgets].sort((a, b) => (a.order || 0) - (b.order || 0));
+    },
+    getHeaderRowStyle() {
+      const headerRow = this.page?.layout?.headerRow;
+      if (!headerRow) return {};
+
+      const style = {};
+
+      if (headerRow.backgroundColor) {
+        style.backgroundColor = headerRow.backgroundColor;
+
+        if (headerRow.backgroundColor === 'var(--color-primary-element)') {
+          style.color = 'var(--color-primary-element-text)';
+        } else {
+          style.color = 'var(--color-main-text)';
+        }
+      }
+
+      return style;
     }
   }
 };
 </script>
 
 <style scoped>
-.page-viewer {
+.page-viewer-wrapper {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.page-viewer-container {
+  display: flex;
+  gap: 16px;
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
+}
+
+.page-viewer {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Header Row Styles */
+.header-row {
+  width: 100%;
+  padding: 16px;
+  margin-bottom: 16px;
+  border-radius: var(--border-radius-container-large);
+  background-color: var(--color-background-dark);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.side-column {
+  flex-shrink: 0;
+  width: 250px;
+  min-width: 200px;
+  max-width: 300px;
+  padding: 16px;
+  border-radius: var(--border-radius-container-large);
+  background-color: var(--color-background-dark);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-self: flex-start;
 }
 
 .page-row {
@@ -105,10 +261,26 @@ export default {
 
 /* Mobile styles */
 @media (max-width: 768px) {
+  .page-viewer-container {
+    flex-direction: column;
+  }
+
+  .side-column {
+    width: 100%;
+    min-width: 100%;
+    max-width: 100%;
+    order: 1; /* Side columns go below main content on mobile */
+  }
+
+  .side-column-left {
+    order: -1; /* Left column stays above on mobile */
+  }
+
   .page-viewer {
     overflow-x: hidden; /* Prevent horizontal scroll */
     width: 100%;
     max-width: 100%;
+    order: 0;
   }
 
   .page-row {

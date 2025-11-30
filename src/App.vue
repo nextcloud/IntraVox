@@ -30,9 +30,7 @@
                          :is-edit-mode="isEditMode"
                          :permissions="pagePermissions"
                          @edit-navigation="showNavigationEditor = true"
-                         @show-pages="showPageList"
-                         @create-page="createNewPage"
-                         @show-details="showDetailsSidebar = true" />
+                         @create-page="createNewPage" />
 
         <!-- Edit Mode Actions (Save/Cancel) -->
         <template v-else>
@@ -60,7 +58,8 @@
     <div class="intravox-nav-bar">
       <Navigation :items="navigation.items"
                   :type="navigation.type"
-                  @navigate="navigateToItem" />
+                  @navigate="navigateToItem"
+                  @show-tree="showPageTree = true" />
     </div>
 
     <!-- Main content area with sidebar -->
@@ -74,10 +73,22 @@
       </div>
 
       <div v-else class="intravox-content">
-        <!-- Breadcrumb -->
-        <Breadcrumb v-if="breadcrumb.length > 0"
-                    :breadcrumb="breadcrumb"
-                    @navigate="selectPage" />
+        <!-- Breadcrumb row with Details button -->
+        <div v-if="breadcrumb.length > 0 || !isEditMode" class="breadcrumb-row">
+          <Breadcrumb v-if="breadcrumb.length > 0"
+                      :breadcrumb="breadcrumb"
+                      @navigate="selectPage" />
+          <div v-else class="breadcrumb-spacer"></div>
+          <button v-if="!isEditMode"
+                  class="details-btn"
+                  :class="{ 'details-btn-disabled': showDetailsSidebar }"
+                  :disabled="showDetailsSidebar"
+                  @click="showDetailsSidebar = true"
+                  :aria-label="t('Details')"
+                  :title="t('Details')">
+            <Information :size="20" />
+          </button>
+        </div>
 
         <PageViewer
           v-if="!isEditMode && displayPage"
@@ -110,6 +121,13 @@
       @close="showPages = false"
       @select="selectPage"
       @delete="deletePage"
+    />
+
+    <PageTreeModal
+      v-if="showPageTree"
+      :current-page-id="currentPage?.uniqueId"
+      @close="showPageTree = false"
+      @navigate="selectPage"
     />
 
     <NewPageModal
@@ -149,9 +167,11 @@ import { NcButton } from '@nextcloud/vue';
 import ContentSave from 'vue-material-design-icons/ContentSave.vue';
 import Close from 'vue-material-design-icons/Close.vue';
 import Pencil from 'vue-material-design-icons/Pencil.vue';
+import Information from 'vue-material-design-icons/Information.vue';
 import PageViewer from './components/PageViewer.vue';
 import PageEditor from './components/PageEditor.vue';
 import PageListModal from './components/PageListModal.vue';
+import PageTreeModal from './components/PageTreeModal.vue';
 import NewPageModal from './components/NewPageModal.vue';
 import Navigation from './components/Navigation.vue';
 import NavigationEditor from './components/NavigationEditor.vue';
@@ -172,9 +192,11 @@ export default {
     ContentSave,
     Close,
     Pencil,
+    Information,
     PageViewer,
     PageEditor,
     PageListModal,
+    PageTreeModal,
     NewPageModal,
     Navigation,
     NavigationEditor,
@@ -194,6 +216,7 @@ export default {
       loading: true,
       error: null,
       showPages: false,
+      showPageTree: false,
       showNewPageModal: false,
       showDetailsSidebar: false,
       breadcrumb: [],
@@ -265,7 +288,6 @@ export default {
     }
   },
   async mounted() {
-    console.log('IntraVox: App mounted, starting initialization');
     // Load pages, navigation, and footer in parallel for faster initial load
     try {
       await Promise.all([
@@ -273,9 +295,8 @@ export default {
         this.loadNavigation(),
         this.loadFooter()
       ]);
-      console.log('IntraVox: All initial data loaded successfully');
     } catch (err) {
-      console.error('IntraVox: Error during initial data load:', err);
+      // Errors are handled in individual loaders
     }
 
     // Setup hash-based navigation
@@ -529,9 +550,6 @@ export default {
 
       const url = generateUrl(`/apps/intravox/api/pages/${this.currentPage.uniqueId}`);
 
-      console.log('[App.vue savePage] Saving page:', this.currentPage.uniqueId);
-      console.log('[App.vue savePage] Page data:', JSON.stringify(this.currentPage, null, 2));
-
       try {
         await axios.put(url, this.currentPage);
 
@@ -548,7 +566,6 @@ export default {
       }
     },
     async updatePage(updatedPage) {
-      console.log('[App.vue updatePage] Received updated page:', updatedPage);
       this.currentPage = updatedPage;
       // No auto-save - only save when user clicks Save button
     },
@@ -638,20 +655,14 @@ export default {
     },
     async addPageToNavigation(pageId, pageTitle) {
       try {
-        console.log('[addPageToNavigation] Starting for page:', pageId, pageTitle);
-        console.log('[addPageToNavigation] Current navigation:', JSON.stringify(this.navigation));
-
         // Get the full page path to determine parent hierarchy
         const page = this.pages.find(p => p.uniqueId === pageId);
         if (!page) {
           throw new Error('Page not found');
         }
 
-        console.log('[addPageToNavigation] Page found:', page);
-
         // Ensure navigation structure exists
         if (!this.navigation || !this.navigation.items) {
-          console.error('[addPageToNavigation] Navigation structure is invalid!');
           showError(this.t('Navigation structure is invalid. Please reload the page.'));
           return;
         }
@@ -661,8 +672,6 @@ export default {
         const pathParts = page.path ? page.path.split('/').filter(part =>
           part && !['en', 'nl', 'de', 'fr', 'departments'].includes(part)
         ) : [];
-
-        console.log('[addPageToNavigation] Path parts:', pathParts);
 
         // Helper function to find or create navigation item
         const findOrCreateNavItem = (items, pageId, title) => {
@@ -677,9 +686,6 @@ export default {
               children: []
             };
             items.push(item);
-            console.log('[addPageToNavigation] Created new nav item:', item);
-          } else {
-            console.log('[addPageToNavigation] Found existing nav item:', item);
           }
           return item;
         };
@@ -689,8 +695,6 @@ export default {
 
         // Handle root-level pages (pages with no parent path)
         if (pathParts.length === 0) {
-          console.log('[addPageToNavigation] Root-level page, adding directly to navigation.items');
-
           const newNavItem = {
             id: pageId,
             title: pageTitle,
@@ -703,13 +707,9 @@ export default {
           // Check if it already exists at root level
           const existingIndex = currentLevel.findIndex(i => i.pageId === pageId);
           if (existingIndex >= 0) {
-            // Update existing item
             currentLevel[existingIndex] = newNavItem;
-            console.log('[addPageToNavigation] Updated existing root item at index:', existingIndex);
           } else {
-            // Add new item at root
             currentLevel.push(newNavItem);
-            console.log('[addPageToNavigation] Added new root item to navigation');
           }
         } else {
           // For each part of the path except the last one (which is our new page)
@@ -721,11 +721,8 @@ export default {
             const partPage = this.pages.find(p => p.uniqueId === partPageId);
             const partTitle = partPage ? partPage.title : partPageId;
 
-            console.log('[addPageToNavigation] Processing part:', partPageId, partTitle, 'isLast:', isLastPart);
-
             // If this is the last part and it matches our pageId, this is our page
             if (isLastPart && partPageId === pageId) {
-              // This is the page we're adding
               const newNavItem = {
                 id: pageId,
                 title: pageTitle,
@@ -735,37 +732,27 @@ export default {
                 children: []
               };
 
-              // Check if it already exists at this level
               const existingIndex = currentLevel.findIndex(i => i.pageId === pageId);
               if (existingIndex >= 0) {
-                // Update existing item
                 currentLevel[existingIndex] = newNavItem;
-                console.log('[addPageToNavigation] Updated existing item at index:', existingIndex);
               } else {
-                // Add new item
                 currentLevel.push(newNavItem);
-                console.log('[addPageToNavigation] Added new item to navigation');
               }
             } else {
               // This is a parent, find or create it
               const parentNavItem = findOrCreateNavItem(currentLevel, partPageId, partTitle);
-              // Move to the children level for the next iteration
               currentLevel = parentNavItem.children;
             }
           }
         }
 
-        console.log('[addPageToNavigation] Final navigation structure:', JSON.stringify(this.navigation));
-
         // Save navigation (send the full navigation structure with type and items)
-        const response = await axios.post(generateUrl('/apps/intravox/api/navigation'), {
+        await axios.post(generateUrl('/apps/intravox/api/navigation'), {
           navigation: this.navigation
         });
 
-        console.log('[addPageToNavigation] Save response:', response.data);
         showSuccess(this.t('Added to navigation'));
       } catch (err) {
-        console.error('[addPageToNavigation] Error:', err);
         showError(this.t('Failed to add page to navigation'));
       }
     },
@@ -793,18 +780,12 @@ export default {
       this.showPages = true;
     },
     async loadNavigation() {
-      console.log('IntraVox: loadNavigation() called');
       try {
         const url = generateUrl('/apps/intravox/api/navigation');
-        console.log('IntraVox: Fetching navigation from:', url);
         const response = await axios.get(url);
-        console.log('IntraVox: Navigation response received:', response.data);
         this.navigation = response.data.navigation;
         this.canEditNavigation = response.data.canEdit;
-        console.log('IntraVox: Navigation loaded, items count:', this.navigation?.items?.length || 0);
       } catch (err) {
-        console.error('IntraVox: Could not load navigation:', err);
-        console.error('IntraVox: Navigation error details:', err.response?.data || err.message);
         // Provide default empty navigation
         this.navigation = {
           type: 'dropdown',
@@ -820,7 +801,6 @@ export default {
         this.showNavigationEditor = false;
         showSuccess(this.t('Navigation saved'));
       } catch (err) {
-        console.error('IntraVox: Could not save navigation:', err);
         showError(this.t('Could not save navigation: {error}', { error: err.message }));
       }
     },
@@ -830,7 +810,6 @@ export default {
         this.footerContent = response.data.content;
         this.canEditFooter = response.data.canEdit;
       } catch (err) {
-        console.error('IntraVox: Could not load footer:', err);
         this.footerContent = '';
         this.canEditFooter = false;
       }
@@ -843,7 +822,6 @@ export default {
         this.footerContent = response.data.content;
         showSuccess(this.t('Footer saved'));
       } catch (err) {
-        console.error('IntraVox: Could not save footer:', err);
         showError(this.t('Could not save footer: {error}', { error: err.message }));
       }
     },
@@ -912,8 +890,6 @@ export default {
       }
     },
     async handleVersionSelected(data) {
-      console.log('[App.vue handleVersionSelected] Version selected:', data);
-
       const { version, pageId } = data;
       this.selectedVersion = version;
       this.loadingVersion = true;
@@ -922,8 +898,6 @@ export default {
         // Fetch the version content
         const url = generateUrl(`/apps/intravox/api/pages/${pageId}/versions/${version.timestamp}/content`);
         const response = await axios.get(url);
-
-        console.log('[App.vue handleVersionSelected] Version content:', response.data);
 
         // Parse the JSON content from the version
         const versionJson = JSON.parse(response.data.content);
@@ -935,10 +909,7 @@ export default {
           // Add a visual indicator that this is a version
           title: `${versionJson.title || this.currentPage.title} (${this.formatVersionDate(version.timestamp)})`
         };
-
-        console.log('[App.vue handleVersionSelected] Version page created:', this.versionPage);
       } catch (err) {
-        console.error('[App.vue handleVersionSelected] Error loading version:', err);
         showError(this.t('Could not load version: {error}', { error: err.message }));
         this.selectedVersion = null;
         this.versionPage = null;
@@ -947,7 +918,6 @@ export default {
       }
     },
     clearVersionPreview() {
-      console.log('[App.vue clearVersionPreview] Clearing version preview');
       this.selectedVersion = null;
       this.versionPage = null;
     },
@@ -1061,6 +1031,50 @@ export default {
   box-sizing: border-box;
   flex: 1;
   overflow-y: auto;
+}
+
+/* Breadcrumb row with Details button */
+.breadcrumb-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  gap: 16px;
+}
+
+.breadcrumb-spacer {
+  flex: 1;
+}
+
+.details-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: var(--border-radius);
+  color: var(--color-main-text);
+  cursor: pointer;
+  transition: background-color 0.1s ease;
+  flex-shrink: 0;
+}
+
+.details-btn:hover {
+  background-color: var(--color-background-hover);
+}
+
+.details-btn:active {
+  background-color: var(--color-primary-element-light);
+}
+
+.details-btn-disabled,
+.details-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+  pointer-events: none;
 }
 
 .loading, .error {

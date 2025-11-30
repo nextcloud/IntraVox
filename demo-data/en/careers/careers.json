@@ -15,7 +15,7 @@
                         "type": "image",
                         "column": 1,
                         "order": 1,
-                        "src": "images/careers.jpg",
+                        "src": "careers.jpg",
                         "alt": "Join our team",
                         "objectFit": "cover"
                     },

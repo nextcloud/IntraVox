@@ -1,0 +1,318 @@
+{
+    "uniqueId": "page-social-a1b2c3d4-e5f6-7890-abcd-666666666666",
+    "title": "Social Media",
+    "language": "nl",
+    "layout": {
+        "columns": 1,
+        "rows": [
+            {
+                "columns": 1,
+                "backgroundColor": "#e91e63",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "social-hero.jpg",
+                        "alt": "Social Media",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Social Media Marketing",
+                        "level": 1
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 3,
+                        "content": "Bouw uw merk op via sociale netwerken. Van strategie tot uitvoering, wij helpen u succesvol te zijn op alle platforms."
+                    }
+                ]
+            },
+            {
+                "columns": 5,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "linkedin.jpg",
+                        "alt": "LinkedIn",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 2,
+                        "content": "LinkedIn",
+                        "level": 4
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 3,
+                        "content": "B2B netwerken en thought leadership"
+                    },
+                    {
+                        "type": "image",
+                        "column": 2,
+                        "order": 1,
+                        "src": "instagram.jpg",
+                        "alt": "Instagram",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 2,
+                        "content": "Instagram",
+                        "level": 4
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 3,
+                        "content": "Visuele storytelling en engagement"
+                    },
+                    {
+                        "type": "image",
+                        "column": 3,
+                        "order": 1,
+                        "src": "twitter.jpg",
+                        "alt": "X/Twitter",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 3,
+                        "order": 2,
+                        "content": "X/Twitter",
+                        "level": 4
+                    },
+                    {
+                        "type": "text",
+                        "column": 3,
+                        "order": 3,
+                        "content": "Real-time updates en klantenservice"
+                    },
+                    {
+                        "type": "image",
+                        "column": 4,
+                        "order": 1,
+                        "src": "facebook.jpg",
+                        "alt": "Facebook",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 4,
+                        "order": 2,
+                        "content": "Facebook",
+                        "level": 4
+                    },
+                    {
+                        "type": "text",
+                        "column": 4,
+                        "order": 3,
+                        "content": "Community building en events"
+                    },
+                    {
+                        "type": "image",
+                        "column": 5,
+                        "order": 1,
+                        "src": "youtube.jpg",
+                        "alt": "YouTube",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 5,
+                        "order": 2,
+                        "content": "YouTube",
+                        "level": 4
+                    },
+                    {
+                        "type": "text",
+                        "column": 5,
+                        "order": 3,
+                        "content": "Video content en tutorials"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "var(--color-border)",
+                        "height": "2px"
+                    }
+                ]
+            },
+            {
+                "columns": 2,
+                "backgroundColor": "var(--color-primary-element-light)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Content Kalender",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Plan uw social media content vooruit met onze content kalender. Werk samen met het team aan:\n\n- Posts en stories\n- Video content\n- Live streams\n- Advertenties"
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 3,
+                        "columns": 1,
+                        "items": [
+                            {
+                                "title": "Open Kalender",
+                                "text": "Bekijk en plan content",
+                                "url": "#",
+                                "icon": "calendar-month",
+                                "target": "_self"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 1,
+                        "content": "Brand Assets",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 2,
+                        "content": "Download goedgekeurde templates en assets voor uw social posts:\n\n- Logo variaties\n- Kleurenpaletten\n- Fonts en typografie\n- Template designs"
+                    },
+                    {
+                        "type": "links",
+                        "column": 2,
+                        "order": 3,
+                        "columns": 1,
+                        "items": [
+                            {
+                                "title": "Asset Library",
+                                "text": "Download brand materials",
+                                "url": "#afdeling/marketing/branding",
+                                "icon": "folder-image",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Social Media Guidelines",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "| Aspect | Richtlijn |\n|--------|----------|\n| Tone of Voice | Professioneel maar toegankelijk |\n| Responstijd | Binnen 2 uur op werkdagen |\n| Hashtags | Max 5 per post, altijd #OurBrand |\n| Afbeeldingen | Minimaal 1080x1080px |\n| Video | Max 60 sec voor feed, 15 sec voor stories |"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "#e91e63",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Marketing Team",
+                        "level": 2
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 2,
+                        "columns": 4,
+                        "items": [
+                            {
+                                "title": "Campagnes",
+                                "text": "Lopende campagnes",
+                                "url": "#afdeling/marketing/campagnes",
+                                "icon": "rocket",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Branding",
+                                "text": "Brand guidelines",
+                                "url": "#afdeling/marketing/branding",
+                                "icon": "palette",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Marketing",
+                                "text": "Terug naar Marketing",
+                                "url": "#afdeling/marketing",
+                                "icon": "arrow-left",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Contact",
+                                "text": "Social media team",
+                                "url": "#contact",
+                                "icon": "email",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "transparent",
+                        "height": "20px"
+                    }
+                ]
+            }
+        ],
+        "sideColumns": {
+            "left": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            },
+            "right": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            }
+        }
+    }
+}

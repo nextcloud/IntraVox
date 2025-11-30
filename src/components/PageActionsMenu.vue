@@ -1,31 +1,12 @@
 <template>
   <NcActions>
-    <!-- Pages List (most used) -->
-    <NcActionButton v-if="canPerformAction('viewPages')"
-                    @click="$emit('show-pages')">
-      <template #icon>
-        <ViewList :size="20" />
-      </template>
-      {{ t('Pages') }}
-    </NcActionButton>
-
-    <!-- New Page (second most used) -->
+    <!-- New Page -->
     <NcActionButton v-if="canPerformAction('createPage')"
                     @click="$emit('create-page')">
       <template #icon>
         <Plus :size="20" />
       </template>
       {{ t('New Page') }}
-    </NcActionButton>
-
-    <!-- Details (information about current page) -->
-    <NcActionButton v-if="!isEditMode"
-                    :close-after-click="true"
-                    @click="$emit('show-details')">
-      <template #icon>
-        <Information :size="20" />
-      </template>
-      {{ t('Details') }}
     </NcActionButton>
 
     <!-- Edit Navigation (admin action, less frequently used) -->
@@ -43,9 +24,7 @@
 import { translate as t } from '@nextcloud/l10n';
 import { NcActions, NcActionButton } from '@nextcloud/vue';
 import Cog from 'vue-material-design-icons/Cog.vue';
-import ViewList from 'vue-material-design-icons/ViewList.vue';
 import Plus from 'vue-material-design-icons/Plus.vue';
-import Information from 'vue-material-design-icons/Information.vue';
 
 export default {
   name: 'PageActionsMenu',
@@ -53,9 +32,7 @@ export default {
     NcActions,
     NcActionButton,
     Cog,
-    ViewList,
-    Plus,
-    Information
+    Plus
   },
   props: {
     isEditMode: {
@@ -73,7 +50,7 @@ export default {
       })
     }
   },
-  emits: ['edit-navigation', 'show-pages', 'create-page', 'show-details'],
+  emits: ['edit-navigation', 'create-page'],
   methods: {
     t(key, vars = {}) {
       return t('intravox', key, vars);

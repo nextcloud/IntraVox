@@ -1,0 +1,337 @@
+{
+    "uniqueId": "page-d2d5c68a-7022-4867-b6b2-503e64ef03e3",
+    "title": "Functies",
+    "language": "nl",
+    "layout": {
+        "columns": 1,
+        "rows": [
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element)",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "features-hero.jpg",
+                        "alt": "IntraVox Functies",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 2,
+                        "content": "IntraVox Functies",
+                        "level": 1
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 3,
+                        "content": "Ontdek de krachtige mogelijkheden van IntraVox voor uw organisatie."
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Pagina Editor",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "De visuele editor maakt het eenvoudig om professionele pagina's te maken zonder technische kennis."
+                    }
+                ]
+            },
+            {
+                "columns": 3,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Tekst Widget",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Voeg rijke tekst toe met **Markdown** ondersteuning:\n- Vetgedrukt en cursief\n- Lijsten en opsommingen\n- Links en afbeeldingen\n- Tabellen"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 1,
+                        "content": "Afbeelding Widget",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 2,
+                        "content": "Upload en toon afbeeldingen:\n- Automatische optimalisatie\n- Alt-tekst voor toegankelijkheid\n- Responsive weergave\n- Diverse formaten"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 3,
+                        "order": 1,
+                        "content": "Links Widget",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 3,
+                        "order": 2,
+                        "content": "Maak link collecties:\n- Interne paginalinks\n- Externe URLs\n- Iconen bibliotheek\n- Meerdere kolommen"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "var(--color-border)",
+                        "height": "2px"
+                    }
+                ]
+            },
+            {
+                "columns": 2,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "coding.jpg",
+                        "alt": "IntraVox dashboard",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 1,
+                        "content": "Flexibele Layouts",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 2,
+                        "content": "Creëer dynamische pagina-indelingen met:\n\n**Kolom opties:**\n- 1, 2, 3 of 4 kolommen per rij\n- Linker en rechter zijkolommen\n- Achtergrondkleuren per rij\n\n**Layout elementen:**\n- Scheidingslijnen\n- Ruimte/spacer widgets\n- Header rijen"
+                    },
+                    {
+                        "type": "image",
+                        "column": 2,
+                        "order": 3,
+                        "src": "meeting.jpg",
+                        "alt": "Team meeting",
+                        "objectFit": "cover"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element-light)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Navigatie Systeem",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "IntraVox biedt flexibele navigatie opties voor uw intranet:"
+                    }
+                ]
+            },
+            {
+                "columns": 2,
+                "backgroundColor": "var(--color-primary-element-light)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Mega Menu",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Ideaal voor uitgebreide navigatie met veel pagina's en categorieën. Toont alle items in een overzichtelijk raster."
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 1,
+                        "content": "Dropdown Menu",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 2,
+                        "content": "Klassieke cascaderende menu's voor eenvoudige navigatiestructuren. Ondersteunt meerdere niveaus van sub-items."
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "var(--color-border)",
+                        "height": "2px"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Extra Functies",
+                        "level": 2
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 2,
+                        "columns": 4,
+                        "items": [
+                            {
+                                "title": "Zoekfunctie",
+                                "text": "Doorzoek alle pagina's",
+                                "url": "#",
+                                "icon": "magnify",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Meertaligheid",
+                                "text": "NL, EN, DE, FR ondersteuning",
+                                "url": "#",
+                                "icon": "earth",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Gebruikersbeheer",
+                                "text": "Nextcloud integratie",
+                                "url": "#",
+                                "icon": "account-multiple",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Responsive",
+                                "text": "Werkt op alle apparaten",
+                                "url": "#",
+                                "icon": "cellphone-link",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Technische Specificaties",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "| Component | Technologie |\n|-----------|------------|\n| Frontend | Vue.js 3 |\n| Backend | PHP 8+ |\n| Database | MySQL/MariaDB/PostgreSQL |\n| Platform | Nextcloud 27+ |\n| Licentie | AGPL v3 |"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 1,
+                        "columns": 2,
+                        "items": [
+                            {
+                                "title": "Terug naar Home",
+                                "text": "Ga naar de homepage",
+                                "url": "#home",
+                                "icon": "home",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Neem Contact Op",
+                                "text": "Stel uw vragen",
+                                "url": "#contact",
+                                "icon": "email",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "transparent",
+                        "height": "20px"
+                    }
+                ]
+            }
+        ],
+        "sideColumns": {
+            "left": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            },
+            "right": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            }
+        }
+    }
+}

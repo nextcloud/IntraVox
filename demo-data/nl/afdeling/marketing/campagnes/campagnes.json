@@ -1,0 +1,217 @@
+{
+    "uniqueId": "page-d4e5f6a7-b8c9-0123-def1-234567890123",
+    "title": "Campagnes",
+    "language": "nl",
+    "layout": {
+        "columns": 1,
+        "rows": [
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element)",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "campaign-hero.jpg",
+                        "alt": "Marketing Campagnes",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Marketing Campagnes",
+                        "level": 1
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 3,
+                        "content": "Overzicht van onze marketing initiatieven en campagnes."
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Actieve Campagnes",
+                        "level": 2
+                    }
+                ]
+            },
+            {
+                "columns": 3,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Open Source Week",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "**Status:** Actief\n**Periode:** November 2024\n\nPromotie van open source software en IntraVox binnen de Europese markt."
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 1,
+                        "content": "Nextcloud Conference",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 2,
+                        "content": "**Status:** Gepland\n**Periode:** Q1 2025\n\nDeelname aan Nextcloud Conference met demo booth en presentaties."
+                    },
+                    {
+                        "type": "heading",
+                        "column": 3,
+                        "order": 1,
+                        "content": "GDPR Awareness",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 3,
+                        "order": 2,
+                        "content": "**Status:** Doorlopend\n**Periode:** 2024-2025\n\nContent marketing rond privacy en data soevereiniteit."
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "var(--color-border)",
+                        "height": "2px"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Voltooide Campagnes",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "| Campagne | Periode | Resultaat |\n|----------|---------|----------|\n| Product Launch | Sep 2024 | 500+ nieuwe gebruikers |\n| Summer Sale | Jul 2024 | 30% meer conversies |\n| Partner Programma | Q2 2024 | 15 nieuwe partners |"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element-light)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Campagne Resources",
+                        "level": 2
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 2,
+                        "columns": 3,
+                        "items": [
+                            {
+                                "title": "Brand Guidelines",
+                                "text": "Logo's en huisstijl",
+                                "url": "https://nextcloud.com/press/",
+                                "icon": "palette",
+                                "target": "_blank"
+                            },
+                            {
+                                "title": "Media Kit",
+                                "text": "Persmateriaal downloaden",
+                                "url": "https://nextcloud.com/press/",
+                                "icon": "download",
+                                "target": "_blank"
+                            },
+                            {
+                                "title": "Contact Marketing",
+                                "text": "Vragen? Neem contact op",
+                                "url": "#contact",
+                                "icon": "email",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "transparent",
+                        "height": "20px"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 1,
+                        "columns": 1,
+                        "items": [
+                            {
+                                "title": "Terug naar Marketing",
+                                "text": "Marketing afdeling overview",
+                                "url": "#marketing",
+                                "icon": "arrow-left",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ],
+        "sideColumns": {
+            "left": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            },
+            "right": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            }
+        }
+    }
+}

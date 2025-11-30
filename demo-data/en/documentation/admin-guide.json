@@ -15,7 +15,7 @@
                         "type": "image",
                         "column": 1,
                         "order": 1,
-                        "src": "images/tech-innovation.jpg",
+                        "src": "tech-innovation.jpg",
                         "alt": "Admin Guide",
                         "objectFit": "cover"
                     },
@@ -42,7 +42,7 @@
                         "type": "image",
                         "column": 1,
                         "order": 1,
-                        "src": "images/secure-platform.jpg",
+                        "src": "secure-platform.jpg",
                         "alt": "System configuration",
                         "objectFit": "cover"
                     },
@@ -63,7 +63,7 @@
                         "type": "image",
                         "column": 2,
                         "order": 1,
-                        "src": "images/documentation.jpg",
+                        "src": "documentation.jpg",
                         "alt": "Configuration",
                         "objectFit": "cover"
                     },

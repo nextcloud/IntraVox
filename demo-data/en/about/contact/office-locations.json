@@ -15,7 +15,7 @@
                         "type": "image",
                         "column": 1,
                         "order": 1,
-                        "src": "images/hero-office.jpg",
+                        "src": "hero-office.jpg",
                         "alt": "Our offices",
                         "objectFit": "cover"
                     },
@@ -42,7 +42,7 @@
                         "type": "image",
                         "column": 1,
                         "order": 1,
-                        "src": "images/modern-workspace.jpg",
+                        "src": "modern-workspace.jpg",
                         "alt": "Amsterdam office"
                     },
                     {
@@ -62,7 +62,7 @@
                         "type": "image",
                         "column": 2,
                         "order": 1,
-                        "src": "images/collaboration.jpg",
+                        "src": "collaboration.jpg",
                         "alt": "Berlin office"
                     },
                     {
@@ -82,7 +82,7 @@
                         "type": "image",
                         "column": 3,
                         "order": 1,
-                        "src": "images/team-hero.jpg",
+                        "src": "team-hero.jpg",
                         "alt": "San Francisco office"
                     },
                     {

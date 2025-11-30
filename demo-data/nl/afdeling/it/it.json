@@ -1,0 +1,364 @@
+{
+    "uniqueId": "page-it-a1b2c3d4-e5f6-7890-abcd-555555555555",
+    "title": "IT Afdeling",
+    "language": "nl",
+    "layout": {
+        "columns": 1,
+        "rows": [
+            {
+                "columns": 1,
+                "backgroundColor": "#2980b9",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "it-hero.jpg",
+                        "alt": "IT Afdeling",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 2,
+                        "content": "IT Afdeling",
+                        "level": 1
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 3,
+                        "content": "De IT-afdeling ondersteunt alle technologische aspecten van onze organisatie. Van helpdesk tot infrastructuur, wij staan voor u klaar."
+                    }
+                ]
+            },
+            {
+                "columns": 2,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "server-room.jpg",
+                        "alt": "Server Room",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 1,
+                        "content": "Onze Diensten",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 2,
+                        "content": "De IT-afdeling biedt een breed scala aan services:\n\n- **Helpdesk**: Eerste lijn support voor alle IT-vragen\n- **Netwerk**: Beheer van netwerk infrastructuur\n- **Security**: Beveiliging en compliance\n- **Development**: Software ontwikkeling\n- **Cloud**: Cloud diensten en migraties"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "var(--color-border)",
+                        "height": "2px"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "#e74c3c",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "IT Helpdesk",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Heeft u een IT-probleem? Neem contact op via onderstaande kanalen:"
+                    }
+                ]
+            },
+            {
+                "columns": 4,
+                "backgroundColor": "#e74c3c",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Ticket Systeem",
+                        "level": 4
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Maak een ticket aan voor niet-urgente zaken."
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 3,
+                        "columns": 1,
+                        "items": [
+                            {
+                                "title": "Nieuw Ticket",
+                                "url": "#",
+                                "icon": "ticket",
+                                "target": "_self"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 1,
+                        "content": "Telefoon",
+                        "level": 4
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 2,
+                        "content": "Voor urgente problemen:\n\n**020-555 1234**"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 3,
+                        "order": 1,
+                        "content": "Email",
+                        "level": 4
+                    },
+                    {
+                        "type": "text",
+                        "column": 3,
+                        "order": 2,
+                        "content": "Stuur een email:\n\n**it@company.nl**"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 4,
+                        "order": 1,
+                        "content": "Chat",
+                        "level": 4
+                    },
+                    {
+                        "type": "text",
+                        "column": 4,
+                        "order": 2,
+                        "content": "Live chat beschikbaar van 9:00-17:00."
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Veelgevraagde Onderwerpen",
+                        "level": 2
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 2,
+                        "columns": 5,
+                        "items": [
+                            {
+                                "title": "Wachtwoord Reset",
+                                "text": "Nieuw wachtwoord aanvragen",
+                                "url": "#",
+                                "icon": "lock-reset",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "VPN Toegang",
+                                "text": "Thuiswerken opzetten",
+                                "url": "#",
+                                "icon": "vpn",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Software Aanvraag",
+                                "text": "Nieuwe software installeren",
+                                "url": "#",
+                                "icon": "package-down",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Hardware",
+                                "text": "Laptop of monitor aanvragen",
+                                "url": "#",
+                                "icon": "laptop",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Email Problemen",
+                                "text": "Outlook & email issues",
+                                "url": "#",
+                                "icon": "email-alert",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "IT Policies",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "| Beleid | Beschrijving | Laatst bijgewerkt |\n|--------|--------------|-------------------|\n| Acceptable Use | Regels voor IT-gebruik | Jan 2024 |\n| Security Policy | Beveiligingsrichtlijnen | Dec 2023 |\n| BYOD | Eigen apparaten op werk | Nov 2023 |\n| Data Classification | Omgang met data | Okt 2023 |"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "#2980b9",
+                "widgets": [
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 1,
+                        "columns": 4,
+                        "items": [
+                            {
+                                "title": "HR",
+                                "text": "Personeelszaken",
+                                "url": "#afdeling/hr",
+                                "icon": "account-group",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Marketing",
+                                "text": "Campagnes & branding",
+                                "url": "#afdeling/marketing",
+                                "icon": "bullhorn",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Sales",
+                                "text": "Verkoop & klanten",
+                                "url": "#afdeling/sales",
+                                "icon": "chart-line",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Alle Afdelingen",
+                                "text": "Overzicht",
+                                "url": "#afdeling",
+                                "icon": "domain",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "transparent",
+                        "height": "20px"
+                    }
+                ]
+            }
+        ],
+        "sideColumns": {
+            "left": {
+                "enabled": true,
+                "backgroundColor": "var(--color-background-dark)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Status",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "**Systeem Status:**\nAlle systemen operationeel\n\n**Gepland onderhoud:**\nZaterdag 02:00-06:00"
+                    },
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 3,
+                        "style": "solid",
+                        "color": "var(--color-border)",
+                        "height": "1px"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 4,
+                        "content": "Quick Links",
+                        "level": 4
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 5,
+                        "columns": 1,
+                        "items": [
+                            {
+                                "text": "Ticket Status",
+                                "url": "#",
+                                "icon": "clipboard-list"
+                            },
+                            {
+                                "text": "Knowledge Base",
+                                "url": "#",
+                                "icon": "book-search"
+                            },
+                            {
+                                "text": "IT Nieuws",
+                                "url": "#",
+                                "icon": "newspaper"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "right": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            }
+        }
+    }
+}

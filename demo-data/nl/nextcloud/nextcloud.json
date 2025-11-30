@@ -1,0 +1,285 @@
+{
+    "uniqueId": "page-8002b29a-5830-43da-a83f-601a29e4b99f",
+    "title": "Nextcloud",
+    "language": "nl",
+    "layout": {
+        "columns": 1,
+        "rows": [
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element)",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "cloud-server.jpg",
+                        "alt": "Nextcloud cloud server",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Nextcloud - Het Fundament van IntraVox",
+                        "level": 1
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 3,
+                        "content": "IntraVox is gebouwd op Nextcloud, het toonaangevende open source platform voor veilige samenwerking."
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Wat is Nextcloud?",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Nextcloud is een **self-hosted productiviteitsplatform** dat de meest populaire cloud functionaliteiten combineert:\n\n- **Bestandssynchronisatie** - Sync uw bestanden tussen alle apparaten\n- **Delen** - Deel bestanden veilig binnen en buiten uw organisatie\n- **Samenwerking** - Real-time document bewerking\n- **Communicatie** - Chat, videobellen en agenda's\n- **Extensies** - Honderden apps in de App Store"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "var(--color-border)",
+                        "height": "2px"
+                    }
+                ]
+            },
+            {
+                "columns": 3,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "data-center.jpg",
+                        "alt": "Data center",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Data Soevereiniteit",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Uw data blijft op **uw servers**. Geen Amerikaanse cloud providers, volledige controle over waar uw gegevens worden opgeslagen."
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 1,
+                        "content": "Enterprise Ready",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 2,
+                        "content": "Gebruikt door **overheden**, **universiteiten** en **bedrijven** wereldwijd. Schaalbaar van 10 tot 100.000+ gebruikers."
+                    },
+                    {
+                        "type": "heading",
+                        "column": 3,
+                        "order": 1,
+                        "content": "GDPR Compliant",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 3,
+                        "order": 2,
+                        "content": "Volledig **AVG/GDPR compliant**. Ideaal voor Europese organisaties die waarde hechten aan privacy en compliance."
+                    }
+                ]
+            },
+            {
+                "columns": 2,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Nextcloud Hub",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Nextcloud Hub integreert alle tools die uw team nodig heeft:\n\n**Files** - Bestanden opslaan en delen\n**Talk** - Videovergaderingen en chat\n**Groupware** - Agenda, mail en contacten\n**Office** - Document bewerking"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 1,
+                        "content": "App Ecosysteem",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 2,
+                        "content": "De Nextcloud App Store bevat honderden extensies:\n\n- **IntraVox** - Uw intranet oplossing\n- **Deck** - Kanban projectborden\n- **Forms** - Online formulieren\n- **Polls** - Stemmingen en enquêtes"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "var(--color-border)",
+                        "height": "2px"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element-light)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Nextcloud Resources",
+                        "level": 2
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 2,
+                        "columns": 4,
+                        "items": [
+                            {
+                                "title": "Nextcloud.com",
+                                "text": "Officiële website",
+                                "url": "https://nextcloud.com",
+                                "icon": "open-in-new",
+                                "target": "_blank"
+                            },
+                            {
+                                "title": "Documentatie",
+                                "text": "Admin & user docs",
+                                "url": "https://docs.nextcloud.com",
+                                "icon": "book-open",
+                                "target": "_blank"
+                            },
+                            {
+                                "title": "GitHub",
+                                "text": "Broncode",
+                                "url": "https://github.com/nextcloud",
+                                "icon": "github",
+                                "target": "_blank"
+                            },
+                            {
+                                "title": "Community",
+                                "text": "Forums & support",
+                                "url": "https://help.nextcloud.com",
+                                "icon": "forum",
+                                "target": "_blank"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Nextcloud Partners",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Nextcloud wordt ondersteund door een wereldwijd netwerk van partners die implementatie, hosting en support bieden. Wilt u Nextcloud implementeren? Neem contact met ons op voor advies."
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 3,
+                        "columns": 2,
+                        "items": [
+                            {
+                                "title": "Partner Worden",
+                                "text": "Nextcloud partner programma",
+                                "url": "https://nextcloud.com/partners/",
+                                "icon": "handshake",
+                                "target": "_blank"
+                            },
+                            {
+                                "title": "Enterprise Support",
+                                "text": "Professionele ondersteuning",
+                                "url": "https://nextcloud.com/enterprise/",
+                                "icon": "shield-check",
+                                "target": "_blank"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "transparent",
+                        "height": "20px"
+                    }
+                ]
+            }
+        ],
+        "sideColumns": {
+            "left": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            },
+            "right": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            }
+        }
+    }
+}

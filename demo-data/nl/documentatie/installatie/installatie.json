@@ -1,0 +1,248 @@
+{
+    "uniqueId": "page-install-a1b2c3d4-e5f6-7890-abcd-aaaaaaaaaaaa",
+    "title": "Installatie",
+    "language": "nl",
+    "layout": {
+        "columns": 1,
+        "rows": [
+            {
+                "columns": 1,
+                "backgroundColor": "#009688",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "install.jpg",
+                        "alt": "Installatie Handleiding",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Installatie Handleiding",
+                        "level": 1
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 3,
+                        "content": "Volg deze stappen om IntraVox te installeren op uw Nextcloud server. De installatie duurt ongeveer 5 minuten."
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Vereisten",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Voordat u begint, controleer of uw server voldoet aan de volgende eisen:\n\n| Component | Minimum | Aanbevolen |\n|-----------|---------|------------|\n| Nextcloud | 27.0 | 28.0+ |\n| PHP | 8.0 | 8.2+ |\n| Database | MySQL 8.0 | MariaDB 10.6+ |\n| Geheugen | 256 MB | 512 MB+ |"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Stap 1: Download",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Download IntraVox via de Nextcloud App Store of handmatig:\n\n**Via App Store (aanbevolen):**\n1. Ga naar Nextcloud Admin > Apps\n2. Zoek naar \"IntraVox\"\n3. Klik op \"Download en activeer\"\n\n**Handmatig:**\n```bash\ncd /var/www/nextcloud/apps\nwget https://github.com/intravox/releases/latest.tar.gz\ntar -xzf latest.tar.gz\n```"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Stap 2: Activeren",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Activeer de app via de command line:\n\n```bash\nsudo -u www-data php occ app:enable intravox\n```\n\nOf via de web interface:\n1. Ga naar Settings > Apps\n2. Zoek IntraVox in de lijst\n3. Klik op \"Enable\""
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Stap 3: Configuratie",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Voer de setup wizard uit:\n\n```bash\nsudo -u www-data php occ intravox:setup\n```\n\nDit creëert:\n- De IntraVox groupfolder\n- Standaard homepage\n- Navigatie structuur\n- Initiële configuratie"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Stap 4: Gebruikers Toevoegen",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Voeg gebruikers toe aan de IntraVox group:\n\n1. Ga naar Users > Groups\n2. Selecteer \"IntraVox Users\" of \"IntraVox Editors\"\n3. Voeg de gewenste gebruikers toe\n\n**Rollen:**\n- **Users**: Alleen lezen\n- **Editors**: Lezen en bewerken\n- **Admins**: Volledige controle"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "#009688",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Volgende Stappen",
+                        "level": 2
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 2,
+                        "columns": 4,
+                        "items": [
+                            {
+                                "title": "Eerste Pagina",
+                                "text": "Maak uw eerste pagina",
+                                "url": "#documentatie/handleidingen",
+                                "icon": "file-document-plus",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "API Integratie",
+                                "text": "Koppel externe systemen",
+                                "url": "#documentatie/api",
+                                "icon": "api",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "FAQ",
+                                "text": "Veelgestelde vragen",
+                                "url": "#documentatie/faq",
+                                "icon": "help-circle",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Community",
+                                "text": "Hulp van anderen",
+                                "url": "https://help.nextcloud.com",
+                                "icon": "account-group",
+                                "target": "_blank"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "transparent",
+                        "height": "20px"
+                    }
+                ]
+            }
+        ],
+        "sideColumns": {
+            "left": {
+                "enabled": true,
+                "backgroundColor": "var(--color-background-dark)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Documentatie",
+                        "level": 3
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 2,
+                        "columns": 1,
+                        "items": [
+                            {
+                                "text": "Installatie",
+                                "url": "#documentatie/installatie",
+                                "icon": "download"
+                            },
+                            {
+                                "text": "Handleidingen",
+                                "url": "#documentatie/handleidingen",
+                                "icon": "book-open"
+                            },
+                            {
+                                "text": "API",
+                                "url": "#documentatie/api",
+                                "icon": "api"
+                            },
+                            {
+                                "text": "FAQ",
+                                "url": "#documentatie/faq",
+                                "icon": "help-circle"
+                            },
+                            {
+                                "text": "Tips",
+                                "url": "#documentatie/tips",
+                                "icon": "lightbulb"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "right": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            }
+        }
+    }
+}

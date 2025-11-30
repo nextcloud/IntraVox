@@ -15,7 +15,7 @@
                         "type": "image",
                         "column": 1,
                         "order": 1,
-                        "src": "images/about-mission.jpg",
+                        "src": "about-mission.jpg",
                         "alt": "Our mission",
                         "objectFit": "cover"
                     },

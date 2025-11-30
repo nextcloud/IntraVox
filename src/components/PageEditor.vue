@@ -1,7 +1,186 @@
 <template>
-  <div class="page-editor">
-    <!-- Page Grid -->
-    <template v-for="(row, rowIndex) in localPage.layout.rows" :key="rowIndex">
+  <div class="page-editor-wrapper">
+    <!-- Header Row (spans full width above everything) -->
+    <div v-if="hasHeaderRow" class="header-row-editor" :style="getHeaderRowStyle()">
+      <div class="header-row-header">
+        <span class="header-row-title">{{ t('Header row') }}</span>
+        <div class="header-row-actions">
+          <NcActions>
+            <template #icon>
+              <Palette :size="20" />
+            </template>
+            <NcActionButton v-for="color in backgroundColors"
+                            :key="color.value"
+                            @click="setHeaderRowBackgroundColor(color.value)">
+              <template #icon>
+                <div class="color-preview" :style="{ background: color.cssVar }"></div>
+              </template>
+              {{ color.label }}
+            </NcActionButton>
+          </NcActions>
+          <NcButton type="error"
+                    @click="removeHeaderRow()"
+                    :aria-label="t('Remove header row')">
+            <template #icon>
+              <Delete :size="20" />
+            </template>
+          </NcButton>
+        </div>
+      </div>
+      <div class="header-row-widgets">
+        <draggable
+          :list="headerRowWidgets"
+          :group="{ name: 'headerWidgets', pull: true, put: true }"
+          :animation="200"
+          item-key="id"
+          handle=".drag-handle"
+          @end="onHeaderRowDragEnd"
+          class="header-widget-drop-zone"
+        >
+          <template #item="{ element: widget }">
+            <div class="widget-wrapper">
+              <div class="floating-toolbar">
+                <div class="drag-handle" :aria-label="t('Drag to reorder')">
+                  <DragVertical :size="16" />
+                </div>
+                <NcButton v-if="needsEditButton(widget.type)"
+                          @click="editHeaderRowWidget(widget)"
+                          type="secondary"
+                          :aria-label="t('Edit widget')">
+                  <template #icon>
+                    <Pencil :size="16" />
+                  </template>
+                </NcButton>
+                <NcButton @click="deleteHeaderRowWidget(widget.id)"
+                          type="error"
+                          :aria-label="t('Delete widget')">
+                  <template #icon>
+                    <Delete :size="16" />
+                  </template>
+                </NcButton>
+              </div>
+              <Widget :widget="widget" :page-id="page.uniqueId" :editable="true" :row-background-color="getHeaderRowBgColor()" @update="updateHeaderRowWidget($event)" />
+            </div>
+          </template>
+        </draggable>
+        <NcButton @click="showHeaderRowWidgetPicker()" type="primary" class="add-widget-btn">
+          <template #icon>
+            <Plus :size="20" />
+          </template>
+          {{ t('Add Widget') }}
+        </NcButton>
+      </div>
+    </div>
+
+    <!-- Add Header Row Button (when no header row exists) -->
+    <div v-if="!hasHeaderRow" class="add-header-row-container">
+      <NcButton @click="addHeaderRow()" type="secondary" class="add-header-row-btn">
+        <template #icon>
+          <TableRowPlusBefore :size="20" />
+        </template>
+        {{ t('Header row') }}
+      </NcButton>
+    </div>
+
+  <div class="page-editor-container">
+    <!-- Left Side Column -->
+    <div v-if="hasSideColumn('left')" class="side-column-editor side-column-left" :style="getSideColumnStyle('left')">
+      <div class="side-column-header">
+        <span class="side-column-title">{{ t('Left column') }}</span>
+        <div class="side-column-actions">
+          <NcActions>
+            <template #icon>
+              <Palette :size="20" />
+            </template>
+            <NcActionButton v-for="color in backgroundColors"
+                            :key="color.value"
+                            @click="setSideColumnBackgroundColor('left', color.value)">
+              <template #icon>
+                <div class="color-preview" :style="{ background: color.cssVar }"></div>
+              </template>
+              {{ color.label }}
+            </NcActionButton>
+          </NcActions>
+          <NcButton type="error"
+                    @click="removeSideColumn('left')"
+                    :aria-label="t('Remove column')">
+            <template #icon>
+              <Delete :size="20" />
+            </template>
+          </NcButton>
+        </div>
+      </div>
+      <div class="side-column-widgets">
+        <draggable
+          :list="getSideColumnWidgets('left')"
+          :group="{ name: 'sideWidgets', pull: true, put: true }"
+          :animation="200"
+          item-key="id"
+          handle=".drag-handle"
+          @end="onSideColumnDragEnd('left')"
+          class="side-widget-drop-zone"
+        >
+          <template #item="{ element: widget }">
+            <div class="widget-wrapper">
+              <div class="floating-toolbar">
+                <div class="drag-handle" :aria-label="t('Drag to reorder')">
+                  <DragVertical :size="16" />
+                </div>
+                <NcButton v-if="needsEditButton(widget.type)"
+                          @click="editSideColumnWidget(widget, 'left')"
+                          type="secondary"
+                          :aria-label="t('Edit widget')">
+                  <template #icon>
+                    <Pencil :size="16" />
+                  </template>
+                </NcButton>
+                <NcButton @click="deleteSideColumnWidget('left', widget.id)"
+                          type="error"
+                          :aria-label="t('Delete widget')">
+                  <template #icon>
+                    <Delete :size="16" />
+                  </template>
+                </NcButton>
+              </div>
+              <Widget :widget="widget" :page-id="page.uniqueId" :editable="true" :row-background-color="getSideColumnBgColor('left')" @update="updateSideColumnWidget($event, 'left')" />
+            </div>
+          </template>
+        </draggable>
+        <NcButton @click="showSideColumnWidgetPicker('left')" type="primary" class="add-widget-btn">
+          <template #icon>
+            <Plus :size="20" />
+          </template>
+          {{ t('Add Widget') }}
+        </NcButton>
+      </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="page-editor">
+      <!-- Add Side Column Buttons -->
+      <div class="side-column-buttons">
+        <NcButton v-if="!hasSideColumn('left')"
+                  @click="addSideColumn('left')"
+                  type="secondary"
+                  :aria-label="t('Add left column')">
+          <template #icon>
+            <TableColumnPlusBefore :size="20" />
+          </template>
+          {{ t('Left column') }}
+        </NcButton>
+        <NcButton v-if="!hasSideColumn('right')"
+                  @click="addSideColumn('right')"
+                  type="secondary"
+                  :aria-label="t('Add right column')">
+          <template #icon>
+            <TableColumnPlusAfter :size="20" />
+          </template>
+          {{ t('Right column') }}
+        </NcButton>
+      </div>
+
+      <!-- Page Grid -->
+      <template v-for="(row, rowIndex) in localPage.layout.rows" :key="rowIndex">
     <div
       class="page-row editable"
       :style="getRowStyle(row)"
@@ -160,6 +339,80 @@
         </NcButton>
       </template>
     </NcDialog>
+    </div>
+
+    <!-- Right Side Column -->
+    <div v-if="hasSideColumn('right')" class="side-column-editor side-column-right" :style="getSideColumnStyle('right')">
+      <div class="side-column-header">
+        <span class="side-column-title">{{ t('Right column') }}</span>
+        <div class="side-column-actions">
+          <NcActions>
+            <template #icon>
+              <Palette :size="20" />
+            </template>
+            <NcActionButton v-for="color in backgroundColors"
+                            :key="color.value"
+                            @click="setSideColumnBackgroundColor('right', color.value)">
+              <template #icon>
+                <div class="color-preview" :style="{ background: color.cssVar }"></div>
+              </template>
+              {{ color.label }}
+            </NcActionButton>
+          </NcActions>
+          <NcButton type="error"
+                    @click="removeSideColumn('right')"
+                    :aria-label="t('Remove column')">
+            <template #icon>
+              <Delete :size="20" />
+            </template>
+          </NcButton>
+        </div>
+      </div>
+      <div class="side-column-widgets">
+        <draggable
+          :list="getSideColumnWidgets('right')"
+          :group="{ name: 'sideWidgets', pull: true, put: true }"
+          :animation="200"
+          item-key="id"
+          handle=".drag-handle"
+          @end="onSideColumnDragEnd('right')"
+          class="side-widget-drop-zone"
+        >
+          <template #item="{ element: widget }">
+            <div class="widget-wrapper">
+              <div class="floating-toolbar">
+                <div class="drag-handle" :aria-label="t('Drag to reorder')">
+                  <DragVertical :size="16" />
+                </div>
+                <NcButton v-if="needsEditButton(widget.type)"
+                          @click="editSideColumnWidget(widget, 'right')"
+                          type="secondary"
+                          :aria-label="t('Edit widget')">
+                  <template #icon>
+                    <Pencil :size="16" />
+                  </template>
+                </NcButton>
+                <NcButton @click="deleteSideColumnWidget('right', widget.id)"
+                          type="error"
+                          :aria-label="t('Delete widget')">
+                  <template #icon>
+                    <Delete :size="16" />
+                  </template>
+                </NcButton>
+              </div>
+              <Widget :widget="widget" :page-id="page.uniqueId" :editable="true" :row-background-color="getSideColumnBgColor('right')" @update="updateSideColumnWidget($event, 'right')" />
+            </div>
+          </template>
+        </draggable>
+        <NcButton @click="showSideColumnWidgetPicker('right')" type="primary" class="add-widget-btn">
+          <template #icon>
+            <Plus :size="20" />
+          </template>
+          {{ t('Add Widget') }}
+        </NcButton>
+      </div>
+    </div>
+  </div>
   </div>
 </template>
 
@@ -169,6 +422,9 @@ import { translate as t } from '@nextcloud/l10n';
 import { NcButton, NcDialog, NcActions, NcActionButton } from '@nextcloud/vue';
 import Plus from 'vue-material-design-icons/Plus.vue';
 import TableRowPlusAfter from 'vue-material-design-icons/TableRowPlusAfter.vue';
+import TableRowPlusBefore from 'vue-material-design-icons/TableRowPlusBefore.vue';
+import TableColumnPlusBefore from 'vue-material-design-icons/TableColumnPlusBefore.vue';
+import TableColumnPlusAfter from 'vue-material-design-icons/TableColumnPlusAfter.vue';
 import Pencil from 'vue-material-design-icons/Pencil.vue';
 import Delete from 'vue-material-design-icons/Delete.vue';
 import ContentDuplicate from 'vue-material-design-icons/ContentDuplicate.vue';
@@ -189,6 +445,9 @@ export default {
     NcActionButton,
     Plus,
     TableRowPlusAfter,
+    TableRowPlusBefore,
+    TableColumnPlusBefore,
+    TableColumnPlusAfter,
     Pencil,
     Delete,
     ContentDuplicate,
@@ -212,10 +471,16 @@ export default {
       showWidgetPicker: false,
       editingWidget: null,
       editingRowIndex: null,
+      editingSideColumn: null, // 'left' or 'right' when editing side column widget
       targetRowIndex: null,
       targetColumn: null,
+      targetSideColumn: null, // 'left' or 'right' when adding to side column
       nextWidgetId: 1,
       columnArrays: {}, // Store separate arrays per row/column
+      sideColumnWidgets: { left: [], right: [] }, // Separate arrays for side columns
+      headerRowWidgets: [], // Array for header row widgets
+      editingHeaderRow: false, // Flag when editing header row widget
+      targetHeaderRow: false, // Flag when adding widget to header row
       showDeleteDialog: false,
       deleteDialogTitle: '',
       deleteDialogMessage: '',
@@ -224,6 +489,9 @@ export default {
     };
   },
   computed: {
+    hasHeaderRow() {
+      return this.localPage.layout.headerRow?.enabled === true;
+    },
     backgroundColors() {
       return [
         {
@@ -253,6 +521,8 @@ export default {
     // Ensure all widgets have unique IDs
     this.initializeWidgetIds();
     this.initializeColumnArrays();
+    this.initializeSideColumns();
+    this.initializeHeaderRow();
   },
   watch: {
     localPage: {
@@ -420,6 +690,42 @@ export default {
     },
     addWidget(widgetType) {
       const newWidget = this.createWidget(widgetType);
+      newWidget.id = `widget-${this.nextWidgetId++}`;
+
+      // Check if adding to header row
+      if (this.targetHeaderRow) {
+        newWidget.order = this.headerRowWidgets.length + 1;
+        this.headerRowWidgets.push(newWidget);
+        this.localPage.layout.headerRow.widgets = [...this.headerRowWidgets];
+
+        this.showWidgetPicker = false;
+
+        // Open editor modal for widgets that need configuration
+        if (widgetType === 'image' || widgetType === 'links' || widgetType === 'file' || widgetType === 'heading') {
+          this.editHeaderRowWidget(newWidget);
+        }
+
+        this.targetHeaderRow = false;
+        return;
+      }
+
+      // Check if adding to side column
+      if (this.targetSideColumn) {
+        const side = this.targetSideColumn;
+        newWidget.order = this.sideColumnWidgets[side].length + 1;
+        this.sideColumnWidgets[side].push(newWidget);
+        this.localPage.layout.sideColumns[side].widgets = [...this.sideColumnWidgets[side]];
+
+        this.showWidgetPicker = false;
+
+        // Open editor modal for widgets that need configuration
+        if (widgetType === 'image' || widgetType === 'links' || widgetType === 'file' || widgetType === 'heading') {
+          this.editSideColumnWidget(newWidget, side);
+        }
+
+        this.targetSideColumn = null;
+        return;
+      }
 
       // Use target row and column if specified
       const rowIndex = this.targetRowIndex !== null ? this.targetRowIndex : 0;
@@ -431,7 +737,6 @@ export default {
       }
 
       const row = this.localPage.layout.rows[rowIndex];
-      newWidget.id = `widget-${this.nextWidgetId++}`;
       newWidget.column = column;
       newWidget.order = row.widgets.filter(w => w.column === column).length + 1;
       row.widgets.push(newWidget);
@@ -494,7 +799,47 @@ export default {
       this.editingRowIndex = rowIndex;
     },
     saveWidget(updatedWidget) {
-      console.log('[PageEditor saveWidget] Received updated widget:', updatedWidget);
+      // Check if editing a header row widget
+      if (this.editingHeaderRow) {
+        const index = this.headerRowWidgets.findIndex(w => w.id === this.editingWidget.id);
+
+        if (index !== -1) {
+          updatedWidget.id = this.editingWidget.id;
+          updatedWidget.order = this.editingWidget.order;
+
+          this.headerRowWidgets.splice(index, 1, updatedWidget);
+          this.localPage.layout.headerRow.widgets = [...this.headerRowWidgets];
+
+          this.localPage = JSON.parse(JSON.stringify(this.localPage));
+          this.$emit('update', this.localPage);
+        }
+
+        this.editingWidget = null;
+        this.editingHeaderRow = false;
+        return;
+      }
+
+      // Check if editing a side column widget
+      if (this.editingSideColumn) {
+        const side = this.editingSideColumn;
+        const widgets = this.sideColumnWidgets[side];
+        const index = widgets.findIndex(w => w.id === this.editingWidget.id);
+
+        if (index !== -1) {
+          updatedWidget.id = this.editingWidget.id;
+          updatedWidget.order = this.editingWidget.order;
+
+          widgets.splice(index, 1, updatedWidget);
+          this.localPage.layout.sideColumns[side].widgets = [...widgets];
+
+          this.localPage = JSON.parse(JSON.stringify(this.localPage));
+          this.$emit('update', this.localPage);
+        }
+
+        this.editingWidget = null;
+        this.editingSideColumn = null;
+        return;
+      }
 
       const row = this.localPage.layout.rows[this.editingRowIndex];
       const index = row.widgets.findIndex(w => w.id === this.editingWidget.id);
@@ -505,9 +850,6 @@ export default {
         updatedWidget.column = this.editingWidget.column;
         updatedWidget.order = this.editingWidget.order;
 
-        console.log('[PageEditor saveWidget] Updating widget at row', this.editingRowIndex, 'index', index);
-        console.log('[PageEditor saveWidget] Updated widget:', updatedWidget);
-
         // Use splice to ensure Vue reactivity detects the change
         row.widgets.splice(index, 1, updatedWidget);
 
@@ -516,8 +858,6 @@ export default {
 
         // Force trigger the watcher by creating a deep clone
         this.localPage = JSON.parse(JSON.stringify(this.localPage));
-
-        console.log('[PageEditor saveWidget] Updated localPage:', this.localPage);
 
         // Manually emit update to ensure parent receives the change
         this.$emit('update', this.localPage);
@@ -595,14 +935,402 @@ export default {
       this.deleteDialogTitle = '';
       this.deleteDialogMessage = '';
       this.deleteCallback = null;
+    },
+
+    // Side Column Methods
+    initializeSideColumns() {
+      // Ensure sideColumns structure exists
+      if (!this.localPage.layout.sideColumns) {
+        this.localPage.layout.sideColumns = {
+          left: { enabled: false, backgroundColor: '', widgets: [] },
+          right: { enabled: false, backgroundColor: '', widgets: [] }
+        };
+      }
+
+      // Initialize widget arrays
+      ['left', 'right'].forEach(side => {
+        if (!this.localPage.layout.sideColumns[side]) {
+          this.localPage.layout.sideColumns[side] = { enabled: false, backgroundColor: '', widgets: [] };
+        }
+        this.sideColumnWidgets[side] = this.localPage.layout.sideColumns[side].widgets || [];
+
+        // Ensure all widgets have IDs
+        this.sideColumnWidgets[side].forEach(widget => {
+          if (!widget.id) {
+            widget.id = `widget-${this.nextWidgetId++}`;
+          }
+        });
+      });
+    },
+    hasSideColumn(side) {
+      return this.localPage.layout.sideColumns?.[side]?.enabled === true;
+    },
+    addSideColumn(side) {
+      if (!this.localPage.layout.sideColumns) {
+        this.localPage.layout.sideColumns = {};
+      }
+      this.localPage.layout.sideColumns[side] = {
+        enabled: true,
+        backgroundColor: '',
+        widgets: []
+      };
+      this.sideColumnWidgets[side] = [];
+      // Force reactivity
+      this.localPage = JSON.parse(JSON.stringify(this.localPage));
+    },
+    removeSideColumn(side) {
+      this.showDeleteDialog = true;
+      this.deleteDialogTitle = this.t('Remove column');
+      this.deleteDialogMessage = this.t('Are you sure you want to remove this column?');
+      this.deleteCallback = () => {
+        if (this.localPage.layout.sideColumns?.[side]) {
+          this.localPage.layout.sideColumns[side].enabled = false;
+          this.localPage.layout.sideColumns[side].widgets = [];
+          this.sideColumnWidgets[side] = [];
+          // Force reactivity
+          this.localPage = JSON.parse(JSON.stringify(this.localPage));
+        }
+      };
+    },
+    getSideColumnWidgets(side) {
+      return this.sideColumnWidgets[side] || [];
+    },
+    getSideColumnBgColor(side) {
+      return this.localPage.layout.sideColumns?.[side]?.backgroundColor || '';
+    },
+    getSideColumnStyle(side) {
+      const sideColumn = this.localPage.layout.sideColumns?.[side];
+      if (!sideColumn) return {};
+
+      const style = {};
+      if (sideColumn.backgroundColor) {
+        style.backgroundColor = sideColumn.backgroundColor;
+        if (sideColumn.backgroundColor === 'var(--color-primary-element)') {
+          style.color = 'var(--color-primary-element-text)';
+        } else {
+          style.color = 'var(--color-main-text)';
+        }
+      }
+      return style;
+    },
+    setSideColumnBackgroundColor(side, color) {
+      if (this.localPage.layout.sideColumns?.[side]) {
+        this.localPage.layout.sideColumns[side].backgroundColor = color;
+        // Force reactivity
+        this.localPage = JSON.parse(JSON.stringify(this.localPage));
+      }
+    },
+    showSideColumnWidgetPicker(side) {
+      this.targetSideColumn = side;
+      this.targetRowIndex = null;
+      this.targetColumn = null;
+      this.showWidgetPicker = true;
+    },
+    onSideColumnDragEnd(side) {
+      this.$nextTick(() => {
+        // Update order for all widgets
+        this.sideColumnWidgets[side].forEach((widget, index) => {
+          widget.order = index + 1;
+        });
+        // Sync back to localPage
+        this.localPage.layout.sideColumns[side].widgets = [...this.sideColumnWidgets[side]];
+      });
+    },
+    editSideColumnWidget(widget, side) {
+      this.editingWidget = JSON.parse(JSON.stringify(widget));
+      this.editingSideColumn = side;
+      this.editingRowIndex = null;
+    },
+    updateSideColumnWidget(updatedWidget, side) {
+      const widgets = this.sideColumnWidgets[side];
+      const index = widgets.findIndex(w => w.id === updatedWidget.id);
+      if (index !== -1) {
+        widgets[index] = updatedWidget;
+        this.localPage.layout.sideColumns[side].widgets = [...widgets];
+        this.$emit('update', this.localPage);
+      }
+    },
+    deleteSideColumnWidget(side, widgetId) {
+      this.showDeleteDialog = true;
+      this.deleteDialogTitle = this.t('Delete widget');
+      this.deleteDialogMessage = this.t('Are you sure you want to delete this widget?');
+      this.deleteCallback = () => {
+        const index = this.sideColumnWidgets[side].findIndex(w => w.id === widgetId);
+        if (index !== -1) {
+          this.sideColumnWidgets[side].splice(index, 1);
+          this.localPage.layout.sideColumns[side].widgets = [...this.sideColumnWidgets[side]];
+        }
+      };
+    },
+
+    // Header Row Methods
+    initializeHeaderRow() {
+      // Ensure headerRow structure exists
+      if (!this.localPage.layout.headerRow) {
+        this.localPage.layout.headerRow = {
+          enabled: false,
+          backgroundColor: '',
+          widgets: []
+        };
+      }
+
+      // Initialize widget array
+      this.headerRowWidgets = this.localPage.layout.headerRow.widgets || [];
+
+      // Ensure all widgets have IDs
+      this.headerRowWidgets.forEach(widget => {
+        if (!widget.id) {
+          widget.id = `widget-${this.nextWidgetId++}`;
+        }
+      });
+    },
+    addHeaderRow() {
+      if (!this.localPage.layout.headerRow) {
+        this.localPage.layout.headerRow = {};
+      }
+      this.localPage.layout.headerRow = {
+        enabled: true,
+        backgroundColor: '',
+        widgets: []
+      };
+      this.headerRowWidgets = [];
+      // Force reactivity
+      this.localPage = JSON.parse(JSON.stringify(this.localPage));
+    },
+    removeHeaderRow() {
+      this.showDeleteDialog = true;
+      this.deleteDialogTitle = this.t('Remove header row');
+      this.deleteDialogMessage = this.t('Are you sure you want to remove the header row?');
+      this.deleteCallback = () => {
+        if (this.localPage.layout.headerRow) {
+          this.localPage.layout.headerRow.enabled = false;
+          this.localPage.layout.headerRow.widgets = [];
+          this.headerRowWidgets = [];
+          // Force reactivity
+          this.localPage = JSON.parse(JSON.stringify(this.localPage));
+        }
+      };
+    },
+    getHeaderRowBgColor() {
+      return this.localPage.layout.headerRow?.backgroundColor || '';
+    },
+    getHeaderRowStyle() {
+      const headerRow = this.localPage.layout.headerRow;
+      if (!headerRow) return {};
+
+      const style = {};
+      if (headerRow.backgroundColor) {
+        style.backgroundColor = headerRow.backgroundColor;
+        if (headerRow.backgroundColor === 'var(--color-primary-element)') {
+          style.color = 'var(--color-primary-element-text)';
+        } else {
+          style.color = 'var(--color-main-text)';
+        }
+      }
+      return style;
+    },
+    setHeaderRowBackgroundColor(color) {
+      if (this.localPage.layout.headerRow) {
+        this.localPage.layout.headerRow.backgroundColor = color;
+        // Force reactivity
+        this.localPage = JSON.parse(JSON.stringify(this.localPage));
+      }
+    },
+    showHeaderRowWidgetPicker() {
+      this.targetHeaderRow = true;
+      this.targetSideColumn = null;
+      this.targetRowIndex = null;
+      this.targetColumn = null;
+      this.showWidgetPicker = true;
+    },
+    onHeaderRowDragEnd() {
+      this.$nextTick(() => {
+        // Update order for all widgets
+        this.headerRowWidgets.forEach((widget, index) => {
+          widget.order = index + 1;
+        });
+        // Sync back to localPage
+        this.localPage.layout.headerRow.widgets = [...this.headerRowWidgets];
+      });
+    },
+    editHeaderRowWidget(widget) {
+      this.editingWidget = JSON.parse(JSON.stringify(widget));
+      this.editingHeaderRow = true;
+      this.editingSideColumn = null;
+      this.editingRowIndex = null;
+    },
+    updateHeaderRowWidget(updatedWidget) {
+      const index = this.headerRowWidgets.findIndex(w => w.id === updatedWidget.id);
+      if (index !== -1) {
+        this.headerRowWidgets[index] = updatedWidget;
+        this.localPage.layout.headerRow.widgets = [...this.headerRowWidgets];
+        this.$emit('update', this.localPage);
+      }
+    },
+    deleteHeaderRowWidget(widgetId) {
+      this.showDeleteDialog = true;
+      this.deleteDialogTitle = this.t('Delete widget');
+      this.deleteDialogMessage = this.t('Are you sure you want to delete this widget?');
+      this.deleteCallback = () => {
+        const index = this.headerRowWidgets.findIndex(w => w.id === widgetId);
+        if (index !== -1) {
+          this.headerRowWidgets.splice(index, 1);
+          this.localPage.layout.headerRow.widgets = [...this.headerRowWidgets];
+        }
+      };
     }
   }
 };
 </script>
 
 <style scoped>
-.page-editor {
+.page-editor-wrapper {
+  display: flex;
+  flex-direction: column;
   width: 100%;
+}
+
+.page-editor-container {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+}
+
+.page-editor {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+}
+
+/* Header Row Editor Styles */
+.header-row-editor {
+  width: 100%;
+  padding: 16px;
+  margin-bottom: 16px;
+  border: 2px dashed var(--color-border-dark);
+  border-radius: var(--border-radius-large);
+  background-color: var(--color-background-dark);
+  box-sizing: border-box;
+}
+
+.header-row-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.header-row-title {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.header-row-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.header-row-widgets {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.header-widget-drop-zone {
+  min-height: 80px;
+}
+
+.add-header-row-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+  padding: 12px;
+  background: var(--color-background-hover);
+  border-radius: var(--border-radius-large);
+}
+
+.add-header-row-btn {
+  width: auto;
+}
+
+/* Side Column Editor Styles */
+.side-column-editor {
+  flex-shrink: 0;
+  width: 280px;
+  min-width: 250px;
+  max-width: 320px;
+  padding: 16px;
+  border: 2px dashed var(--color-border-dark);
+  border-radius: var(--border-radius-large);
+  background-color: var(--color-background-dark);
+  box-sizing: border-box;
+  align-self: flex-start;
+}
+
+.side-column-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.side-column-title {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.side-column-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.side-column-widgets {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.side-widget-drop-zone {
+  min-height: 80px;
+}
+
+.side-column-buttons {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 12px;
+  background: var(--color-background-hover);
+  border-radius: var(--border-radius-large);
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .page-editor-container {
+    flex-direction: column;
+  }
+
+  .side-column-editor {
+    width: 100%;
+    min-width: 100%;
+    max-width: 100%;
+    order: 1;
+  }
+
+  .side-column-left {
+    order: -1;
+  }
+
+  .page-editor {
+    order: 0;
+  }
+
+  .side-column-buttons {
+    flex-direction: column;
+  }
 }
 
 .editor-toolbar {

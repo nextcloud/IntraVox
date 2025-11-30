@@ -15,7 +15,7 @@
                         "type": "image",
                         "column": 1,
                         "order": 1,
-                        "src": "images/contact.jpg",
+                        "src": "contact.jpg",
                         "alt": "Contact us",
                         "objectFit": "cover"
                     },

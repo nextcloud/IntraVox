@@ -103,6 +103,7 @@
               accept="image/jpeg,image/png,image/gif,image/webp"
               @change="handleImageUpload"
             />
+            <p class="hint">{{ t('Supported formats: JPEG, PNG, GIF, WebP. Maximum size: 2MB.') }}</p>
           </div>
           <div v-if="localWidget.src" class="image-preview">
             <img :src="getImageUrl(localWidget.src)" :alt="localWidget.alt" />
@@ -344,18 +345,21 @@ export default {
       const file = event.target.files[0];
       if (!file) return;
 
+      // Check file size before uploading (2MB default PHP limit)
+      const maxSize = 2 * 1024 * 1024; // 2MB
+      if (file.size > maxSize) {
+        showError(t('intravox', 'Image too large. Maximum size is 2MB.'));
+        return;
+      }
+
       const formData = new FormData();
       formData.append('image', file);
 
       try {
+        // Don't set Content-Type header - axios will set it automatically with the correct boundary
         const response = await axios.post(
           generateUrl(`/apps/intravox/api/pages/${this.pageId}/images`),
-          formData,
-          {
-            headers: {
-              'Content-Type': 'multipart/form-data'
-            }
-          }
+          formData
         );
 
         // Vue 3: Direct assignment is reactive
@@ -365,7 +369,9 @@ export default {
           this.localWidget.width = null;
         }
       } catch (err) {
-        showError('Kon afbeelding niet uploaden: ' + err.message);
+        // Extract error message from response if available
+        const errorMsg = err.response?.data?.error || err.message;
+        showError(t('intravox', 'Could not upload image') + ': ' + errorMsg);
       }
     },
     getImageUrl(src) {
@@ -437,6 +443,13 @@ export default {
   margin-bottom: 8px;
   font-weight: 500;
   color: var(--color-main-text);
+}
+
+.form-group .hint {
+  margin-top: 4px;
+  margin-bottom: 0;
+  font-size: 12px;
+  color: var(--color-text-maxcontrast);
 }
 
 .heading-text-input,

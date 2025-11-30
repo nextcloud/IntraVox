@@ -1,0 +1,254 @@
+{
+    "uniqueId": "page-59dc140e-1ab6-47f1-af5b-394ca4a34ae6",
+    "title": "Documentatie",
+    "language": "nl",
+    "layout": {
+        "columns": 1,
+        "rows": [
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element)",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "docs-hero.jpg",
+                        "alt": "Documentatie",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Documentatie & Support",
+                        "level": 1
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 3,
+                        "content": "Alles wat u nodig heeft om IntraVox succesvol te gebruiken."
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Zoek Hulp",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Welkom bij het IntraVox documentatie centrum. Hier vindt u handleidingen, veelgestelde vragen en tips om het maximale uit IntraVox te halen."
+                    }
+                ]
+            },
+            {
+                "columns": 3,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Handleidingen",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Stap-voor-stap instructies voor alle IntraVox functies. Van basis tot gevorderd."
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 3,
+                        "columns": 1,
+                        "items": [
+                            {
+                                "title": "Bekijk Handleidingen",
+                                "text": "",
+                                "url": "#handleidingen",
+                                "icon": "book-open",
+                                "target": "_self"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 1,
+                        "content": "FAQ",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 2,
+                        "content": "Antwoorden op veelgestelde vragen. Snel de oplossing vinden zonder te zoeken."
+                    },
+                    {
+                        "type": "links",
+                        "column": 2,
+                        "order": 3,
+                        "columns": 1,
+                        "items": [
+                            {
+                                "title": "Bekijk FAQ",
+                                "text": "",
+                                "url": "#faq",
+                                "icon": "help-circle",
+                                "target": "_self"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "heading",
+                        "column": 3,
+                        "order": 1,
+                        "content": "Tips & Tricks",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 3,
+                        "order": 2,
+                        "content": "Power user tips om uw productiviteit te verhogen en IntraVox optimaal te benutten."
+                    },
+                    {
+                        "type": "links",
+                        "column": 3,
+                        "order": 3,
+                        "columns": 1,
+                        "items": [
+                            {
+                                "title": "Bekijk Tips",
+                                "text": "",
+                                "url": "#tips",
+                                "icon": "lightbulb",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "var(--color-border)",
+                        "height": "2px"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Aan de Slag",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Nieuw bij IntraVox? Begin hier met de basis:\n\n1. **Installatie** - IntraVox installeren via de Nextcloud App Store\n2. **Configuratie** - Basisinstellingen configureren\n3. **Eerste pagina** - Uw eerste IntraVox pagina maken\n4. **Navigatie** - Menu structuur opzetten\n5. **Publiceren** - Content delen met uw team"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element-light)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Externe Resources",
+                        "level": 2
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 2,
+                        "columns": 4,
+                        "items": [
+                            {
+                                "title": "Nextcloud Docs",
+                                "text": "Platform documentatie",
+                                "url": "https://docs.nextcloud.com",
+                                "icon": "open-in-new",
+                                "target": "_blank"
+                            },
+                            {
+                                "title": "Community Forum",
+                                "text": "Vraag de community",
+                                "url": "https://help.nextcloud.com",
+                                "icon": "forum",
+                                "target": "_blank"
+                            },
+                            {
+                                "title": "GitHub Issues",
+                                "text": "Bug rapportages",
+                                "url": "https://github.com/nextcloud",
+                                "icon": "github",
+                                "target": "_blank"
+                            },
+                            {
+                                "title": "Contact Support",
+                                "text": "Direct hulp nodig?",
+                                "url": "#contact",
+                                "icon": "email",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "transparent",
+                        "height": "20px"
+                    }
+                ]
+            }
+        ],
+        "sideColumns": {
+            "left": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            },
+            "right": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            }
+        }
+    }
+}

@@ -1,89 +1,223 @@
 {
-  "uniqueId": "page-b2c3d4e5-f6a7-8901-bcde-f12345678901",
-  "title": "Afdeling",
-  "language": "nl",
-  "layout": {
-    "columns": 1,
-    "rows": [
-      {
+    "uniqueId": "page-b2c3d4e5-f6a7-8901-bcde-f12345678901",
+    "title": "Afdelingen",
+    "language": "nl",
+    "layout": {
         "columns": 1,
-        "backgroundColor": "var(--color-background-dark)",
-        "widgets": [
-          {
-            "type": "heading",
-            "column": 1,
-            "order": 1,
-            "content": "Afdelingen",
-            "level": 1
-          },
-          {
-            "type": "text",
-            "column": 1,
-            "order": 2,
-            "content": "Ontdek de verschillende afdelingen binnen onze organisatie en leer meer over hun taken en verantwoordelijkheden."
-          }
-        ]
-      },
-      {
-        "columns": 2,
-        "backgroundColor": "",
-        "widgets": [
-          {
-            "type": "heading",
-            "column": 1,
-            "order": 1,
-            "content": "Onze Teams",
-            "level": 2
-          },
-          {
-            "type": "text",
-            "column": 1,
-            "order": 2,
-            "content": "Elke afdeling speelt een belangrijke rol in het succes van onze organisatie. Van Marketing tot IT, van HR tot Financiën - iedereen draagt bij aan onze gezamenlijke doelen.\n\nOntdek hieronder meer informatie over de verschillende afdelingen en hun specifieke expertise."
-          },
-          {
-            "type": "divider",
-            "column": 1,
-            "order": 3,
-            "style": "solid",
-            "color": "#cccccc",
-            "height": "2px"
-          },
-          {
-            "type": "heading",
-            "column": 1,
-            "order": 4,
-            "content": "Samenwerking",
-            "level": 3
-          },
-          {
-            "type": "text",
-            "column": 1,
-            "order": 5,
-            "content": "Onze afdelingen werken nauw samen om de beste resultaten te behalen voor onze klanten en stakeholders."
-          },
-          {
-            "type": "image",
-            "column": 2,
-            "order": 1,
-            "src": "modern-workspace.jpg",
-            "alt": "Moderne werkplek",
-            "width": "500px",
-            "objectFit": "cover",
-            "objectPosition": "center center"
-          },
-          {
-            "type": "image",
-            "column": 2,
-            "order": 2,
-            "src": "team-group.jpg",
-            "alt": "Team",
-            "width": "500px",
-            "objectFit": "cover",
-            "objectPosition": "center center"
-          }
-        ]
-      }
-    ]
-  }
+        "rows": [
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element)",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "hero-team.jpg",
+                        "alt": "Onze afdelingen",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Onze Afdelingen",
+                        "level": 1
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 3,
+                        "content": "Ontdek de verschillende afdelingen binnen onze organisatie en hun specialisaties."
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Organisatiestructuur",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Onze organisatie bestaat uit diverse gespecialiseerde afdelingen die nauw samenwerken om de beste resultaten te bereiken. Elke afdeling heeft haar eigen focus en expertise."
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "var(--color-border)",
+                        "height": "2px"
+                    }
+                ]
+            },
+            {
+                "columns": 2,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "marketing.jpg",
+                        "alt": "Marketing team",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Marketing",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 3,
+                        "content": "De Marketing afdeling is verantwoordelijk voor onze merkidentiteit, communicatie en klantenwerving.\n\n**Focusgebieden:**\n- Digitale marketing\n- Content creatie\n- Merkstrategie\n- Campagne management"
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 4,
+                        "columns": 1,
+                        "items": [
+                            {
+                                "title": "Naar Marketing",
+                                "text": "Bekijk de marketing afdeling",
+                                "url": "#marketing",
+                                "icon": "bullhorn",
+                                "target": "_self"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "image",
+                        "column": 2,
+                        "order": 1,
+                        "src": "sales.jpg",
+                        "alt": "Sales team",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 2,
+                        "content": "Sales",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 3,
+                        "content": "Het Sales team bouwt relaties met klanten en zorgt voor groei van de organisatie.\n\n**Focusgebieden:**\n- Klantrelaties\n- Verkoop strategie\n- Account management\n- Partnership ontwikkeling"
+                    },
+                    {
+                        "type": "links",
+                        "column": 2,
+                        "order": 4,
+                        "columns": 1,
+                        "items": [
+                            {
+                                "title": "Naar Sales",
+                                "text": "Bekijk de sales afdeling",
+                                "url": "#sales",
+                                "icon": "cash-register",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Snelle Navigatie",
+                        "level": 2
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 2,
+                        "columns": 4,
+                        "items": [
+                            {
+                                "title": "Marketing",
+                                "text": "Campagnes en branding",
+                                "url": "#marketing",
+                                "icon": "bullhorn",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Sales",
+                                "text": "Verkoop en relaties",
+                                "url": "#sales",
+                                "icon": "cash-register",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Contact",
+                                "text": "Neem contact op",
+                                "url": "#contact",
+                                "icon": "email",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Home",
+                                "text": "Terug naar home",
+                                "url": "#home",
+                                "icon": "home",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "transparent",
+                        "height": "20px"
+                    }
+                ]
+            }
+        ],
+        "sideColumns": {
+            "left": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            },
+            "right": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            }
+        }
+    }
 }
