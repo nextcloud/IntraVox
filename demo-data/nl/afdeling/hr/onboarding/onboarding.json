@@ -1,0 +1,135 @@
+{
+    "uniqueId": "page-hr-onbo-2222-3333-4444-888888888888",
+    "title": "Onboarding",
+    "language": "nl",
+    "layout": {
+        "columns": 1,
+        "rows": [
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Onboarding Nieuwe Medewerkers",
+                        "level": 1
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Welkom bij IntraVox! Dit is je complete gids voor een succesvolle start."
+                    }
+                ]
+            },
+            {
+                "columns": 2,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Eerste Dag",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "**Checklist:**\n\n- [ ] Badge en toegangspas ophalen\n- [ ] Laptop en accounts instellen\n- [ ] Team introductie\n- [ ] Lunch met buddy\n- [ ] HR papierwerk afronden"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 1,
+                        "content": "Eerste Week",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 2,
+                        "content": "**Planning:**\n\n- Maandag: Introductie & setup\n- Dinsdag: Product training\n- Woensdag: Team meetings\n- Donderdag: Klant demo's bijwonen\n- Vrijdag: Feedback & vragen"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Belangrijke Links",
+                        "level": 2
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 2,
+                        "columns": 4,
+                        "items": [
+                            {
+                                "title": "IT Setup",
+                                "text": "Accounts & tools",
+                                "url": "#page-it-a1b2c3d4-e5f6-7890-abcd-555555555555",
+                                "icon": "laptop",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "HR Policies",
+                                "text": "Regels & richtlijnen",
+                                "url": "#page-hr-poli-3333-4444-5555-999999999999",
+                                "icon": "book-open",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Bedrijfsinfo",
+                                "text": "Over IntraVox",
+                                "url": "#page-7fe1d5d9-0ccc-44b4-9726-831e2b107861",
+                                "icon": "information",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Contact HR",
+                                "text": "Vragen? Neem contact op",
+                                "url": "mailto:hr@intravox.io",
+                                "icon": "email",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 1,
+                        "columns": 1,
+                        "items": [
+                            {
+                                "title": "Terug naar HR",
+                                "text": "HR overzicht",
+                                "url": "#page-hr-a1b2c3d4-e5f6-7890-abcd-444444444444",
+                                "icon": "arrow-left",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ],
+        "sideColumns": {
+            "left": { "enabled": false, "backgroundColor": "", "widgets": [] },
+            "right": { "enabled": false, "backgroundColor": "", "widgets": [] }
+        }
+    }
+}

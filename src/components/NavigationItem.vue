@@ -15,12 +15,14 @@
                @input="emitUpdate" />
 
         <div class="item-link-options">
-          <!-- Link to Page -->
-          <NcSelect v-model="selectedPage"
-                    :options="pageOptions"
-                    :placeholder="t('Link to page')"
-                    @update:modelValue="updatePageLink"
-                    class="link-selector" />
+          <!-- Link to Page (disabled when URL is set) -->
+          <PageTreeSelect
+            :model-value="localItem.uniqueId"
+            :placeholder="t('Link to page')"
+            :disabled="!!localItem.url"
+            @select="updatePageLink"
+            class="link-selector"
+            :class="{ 'is-disabled': !!localItem.url }" />
 
           <!-- OR Custom URL -->
           <span class="or-separator">{{ t('or') }}</span>
@@ -29,12 +31,22 @@
             <input v-model="localItem.url"
                    type="url"
                    class="url-input"
+                   :class="{ 'has-value': !!localItem.url }"
                    :placeholder="t('Custom URL')"
-                   @input="emitUpdate" />
+                   @input="onUrlInput" />
+
+            <!-- Clear URL button -->
+            <button v-if="localItem.url"
+                    type="button"
+                    class="clear-url-btn"
+                    @click="clearUrl"
+                    :aria-label="t('Clear URL')">
+              <Close :size="16" />
+            </button>
 
             <!-- Target selector (for URLs) -->
             <NcSelect v-if="localItem.url"
-                      v-model="selectedTarget"
+                      :model-value="selectedTarget"
                       :options="targetOptions"
                       @update:modelValue="updateTarget"
                       class="target-selector" />
@@ -44,6 +56,26 @@
 
       <!-- Actions -->
       <div class="item-actions">
+        <!-- Promote: move item up one level (to parent's level) -->
+        <NcButton v-if="canPromote"
+                  @click="$emit('promote', itemPath)"
+                  type="tertiary"
+                  :aria-label="t('Promote (move up one level)')">
+          <template #icon>
+            <ChevronLeft :size="20" />
+          </template>
+        </NcButton>
+
+        <!-- Demote: make item a child of the item above -->
+        <NcButton v-if="canDemote"
+                  @click="$emit('demote', itemPath)"
+                  type="tertiary"
+                  :aria-label="t('Demote (make child of item above)')">
+          <template #icon>
+            <ChevronRight :size="20" />
+          </template>
+        </NcButton>
+
         <NcButton v-if="level < 3"
                   @click="$emit('add-child', itemPath)"
                   type="tertiary"
@@ -76,10 +108,13 @@
                        :index="index"
                        :level="level + 1"
                        :parent-path="itemPath"
-                       :pages="pages"
+                       :is-first="index === 0"
+                       :sibling-count="localItem.children.length"
                        @update="(path, updates) => $emit('update', path, updates)"
                        @delete="(path) => $emit('delete', path)"
-                       @add-child="(path) => $emit('add-child', path)" />
+                       @add-child="(path) => $emit('add-child', path)"
+                       @promote="(path) => $emit('promote', path)"
+                       @demote="(path) => $emit('demote', path)" />
       </template>
     </draggable>
   </div>
@@ -92,6 +127,10 @@ import draggable from 'vuedraggable';
 import DragVertical from 'vue-material-design-icons/DragVertical.vue';
 import Plus from 'vue-material-design-icons/Plus.vue';
 import Delete from 'vue-material-design-icons/Delete.vue';
+import Close from 'vue-material-design-icons/Close.vue';
+import ChevronLeft from 'vue-material-design-icons/ChevronLeft.vue';
+import ChevronRight from 'vue-material-design-icons/ChevronRight.vue';
+import PageTreeSelect from './PageTreeSelect.vue';
 
 export default {
   name: 'NavigationItem',
@@ -101,7 +140,11 @@ export default {
     draggable,
     DragVertical,
     Plus,
-    Delete
+    Delete,
+    Close,
+    ChevronLeft,
+    ChevronRight,
+    PageTreeSelect
   },
   props: {
     item: {
@@ -120,12 +163,16 @@ export default {
       type: String,
       default: ''
     },
-    pages: {
-      type: Array,
-      default: () => []
+    isFirst: {
+      type: Boolean,
+      default: false
+    },
+    siblingCount: {
+      type: Number,
+      default: 1
     }
   },
-  emits: ['update', 'delete', 'add-child'],
+  emits: ['update', 'delete', 'add-child', 'promote', 'demote'],
   data() {
     return {
       localItem: JSON.parse(JSON.stringify(this.item)),
@@ -141,20 +188,19 @@ export default {
         ? `${this.parentPath}.${this.index}`
         : `${this.index}`;
     },
-    pageOptions() {
-      return this.pages.map(page => ({
-        value: page.uniqueId,
-        label: page.title
-      }));
-    },
-    selectedPage() {
-      if (!this.localItem.uniqueId) return null;
-      const page = this.pages.find(p => p.uniqueId === this.localItem.uniqueId);
-      return page ? { value: page.uniqueId, label: page.title } : null;
-    },
     selectedTarget() {
       const target = this.localItem.target || '_self';
       return this.targetOptions.find(opt => opt.value === target);
+    },
+    canPromote() {
+      // Can promote if not at top level (level > 1)
+      return this.level > 1;
+    },
+    canDemote() {
+      // Can demote if:
+      // - Not the first item in the list (needs a sibling above to become parent)
+      // - Current level < 3 (max depth)
+      return !this.isFirst && this.level < 3;
     }
   },
   watch: {
@@ -172,16 +218,16 @@ export default {
     emitUpdate() {
       this.$emit('update', this.itemPath, this.localItem);
     },
-    updatePageLink(option) {
-      if (option) {
-        this.localItem.uniqueId = option.value;
+    updatePageLink(page) {
+      if (page) {
+        this.localItem.uniqueId = page.uniqueId;
         this.localItem.url = null;
 
         // Auto-fill title with page name if current title is empty or "New Item"
         const currentTitle = this.localItem.title?.trim() || '';
         const isNewItem = currentTitle === '' || currentTitle === this.t('New Item');
         if (isNewItem) {
-          this.localItem.title = option.label;
+          this.localItem.title = page.title;
         }
       } else {
         this.localItem.uniqueId = null;
@@ -194,6 +240,18 @@ export default {
       } else {
         this.localItem.target = '_self';
       }
+      this.emitUpdate();
+    },
+    onUrlInput() {
+      // When URL is entered, clear the page selection
+      if (this.localItem.url && this.localItem.url.trim()) {
+        this.localItem.uniqueId = null;
+      }
+      this.emitUpdate();
+    },
+    clearUrl() {
+      this.localItem.url = null;
+      this.localItem.target = '_self';
       this.emitUpdate();
     },
     onChildrenChange() {
@@ -263,6 +321,11 @@ export default {
   min-width: 180px;
 }
 
+.link-selector.is-disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
 .or-separator {
   color: var(--color-text-maxcontrast);
   font-size: 11px;
@@ -282,6 +345,31 @@ export default {
   border: 1px solid var(--color-border);
   border-radius: var(--border-radius);
   font-size: 13px;
+}
+
+.url-input.has-value {
+  border-color: var(--color-primary-element);
+  background: var(--color-primary-element-light);
+}
+
+.clear-url-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  background: var(--color-background-dark);
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  color: var(--color-text-maxcontrast);
+  flex-shrink: 0;
+}
+
+.clear-url-btn:hover {
+  background: var(--color-error);
+  color: white;
 }
 
 .target-selector {

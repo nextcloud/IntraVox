@@ -7,7 +7,7 @@
         "rows": [
             {
                 "columns": 1,
-                "backgroundColor": "#37474f",
+                "backgroundColor": "var(--color-primary-element)",
                 "widgets": [
                     {
                         "type": "image",
@@ -73,7 +73,7 @@
                         "column": 1,
                         "order": 1,
                         "style": "solid",
-                        "color": "var(--color-border)",
+                        "color": "",
                         "height": "2px"
                     }
                 ]
@@ -156,7 +156,7 @@
             },
             {
                 "columns": 1,
-                "backgroundColor": "#37474f",
+                "backgroundColor": "var(--color-primary-element)",
                 "widgets": [
                     {
                         "type": "heading",
@@ -221,7 +221,7 @@
         "sideColumns": {
             "left": {
                 "enabled": true,
-                "backgroundColor": "var(--color-background-dark)",
+                "backgroundColor": "var(--color-background-hover)",
                 "widgets": [
                     {
                         "type": "heading",

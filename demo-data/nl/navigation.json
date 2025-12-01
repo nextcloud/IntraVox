@@ -58,14 +58,6 @@
                     "children": []
                 },
                 {
-                    "id": "nav_prijzen",
-                    "title": "Prijzen",
-                    "uniqueId": "page-42d1c7d3-7a3b-4ee4-8a5a-57c9834ca75b",
-                    "url": null,
-                    "target": null,
-                    "children": []
-                },
-                {
                     "id": "nav_klanten",
                     "title": "Klanten & Cases",
                     "uniqueId": "page-2076ad48-a392-4972-a400-c04d380d4638",
@@ -121,7 +113,32 @@
                     "uniqueId": "page-a0eeed43-9054-45c0-956a-6ce2dfca4f33",
                     "url": null,
                     "target": null,
-                    "children": []
+                    "children": [
+                        {
+                            "id": "nav_crm",
+                            "title": "CRM & Klantbeheer",
+                            "uniqueId": "page-sales-crm-1111-2222-3333-444444444444",
+                            "url": null,
+                            "target": null,
+                            "children": []
+                        },
+                        {
+                            "id": "nav_pipeline",
+                            "title": "Sales Pipeline",
+                            "uniqueId": "page-sales-pipe-2222-3333-4444-555555555555",
+                            "url": null,
+                            "target": null,
+                            "children": []
+                        },
+                        {
+                            "id": "nav_targets",
+                            "title": "Sales Targets",
+                            "uniqueId": "page-sales-targ-3333-4444-5555-666666666666",
+                            "url": null,
+                            "target": null,
+                            "children": []
+                        }
+                    ]
                 },
                 {
                     "id": "nav_hr",
@@ -129,7 +146,32 @@
                     "uniqueId": "page-hr-a1b2c3d4-e5f6-7890-abcd-444444444444",
                     "url": null,
                     "target": null,
-                    "children": []
+                    "children": [
+                        {
+                            "id": "nav_vacatures",
+                            "title": "Vacatures",
+                            "uniqueId": "page-hr-vaca-1111-2222-3333-777777777777",
+                            "url": null,
+                            "target": null,
+                            "children": []
+                        },
+                        {
+                            "id": "nav_onboarding",
+                            "title": "Onboarding",
+                            "uniqueId": "page-hr-onbo-2222-3333-4444-888888888888",
+                            "url": null,
+                            "target": null,
+                            "children": []
+                        },
+                        {
+                            "id": "nav_policies",
+                            "title": "HR Policies",
+                            "uniqueId": "page-hr-poli-3333-4444-5555-999999999999",
+                            "url": null,
+                            "target": null,
+                            "children": []
+                        }
+                    ]
                 },
                 {
                     "id": "nav_it",
@@ -137,7 +179,32 @@
                     "uniqueId": "page-it-a1b2c3d4-e5f6-7890-abcd-555555555555",
                     "url": null,
                     "target": null,
-                    "children": []
+                    "children": [
+                        {
+                            "id": "nav_helpdesk",
+                            "title": "IT Helpdesk",
+                            "uniqueId": "page-it-help-1111-2222-3333-aaaaaaaaaaaa",
+                            "url": null,
+                            "target": null,
+                            "children": []
+                        },
+                        {
+                            "id": "nav_systemen",
+                            "title": "Systemen & Tools",
+                            "uniqueId": "page-it-syst-2222-3333-4444-bbbbbbbbbbbb",
+                            "url": null,
+                            "target": null,
+                            "children": []
+                        },
+                        {
+                            "id": "nav_security",
+                            "title": "Security & Privacy",
+                            "uniqueId": "page-it-secu-3333-4444-5555-cccccccccccc",
+                            "url": null,
+                            "target": null,
+                            "children": []
+                        }
+                    ]
                 }
             ]
         },

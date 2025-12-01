@@ -7,7 +7,7 @@
         "rows": [
             {
                 "columns": 1,
-                "backgroundColor": "#2c3e50",
+                "backgroundColor": "var(--color-primary-element)",
                 "widgets": [
                     {
                         "type": "heading",
@@ -123,7 +123,7 @@
                         "column": 1,
                         "order": 1,
                         "style": "solid",
-                        "color": "var(--color-border)",
+                        "color": "",
                         "height": "2px"
                     }
                 ]
@@ -222,7 +222,7 @@
             },
             {
                 "columns": 1,
-                "backgroundColor": "#3498db",
+                "backgroundColor": "var(--color-primary-element)",
                 "widgets": [
                     {
                         "type": "heading",
@@ -299,7 +299,7 @@
             },
             "right": {
                 "enabled": true,
-                "backgroundColor": "var(--color-background-dark)",
+                "backgroundColor": "var(--color-background-hover)",
                 "widgets": [
                     {
                         "type": "heading",
@@ -336,7 +336,7 @@
                         "column": 1,
                         "order": 3,
                         "style": "solid",
-                        "color": "var(--color-border)",
+                        "color": "",
                         "height": "1px"
                     },
                     {

@@ -1,0 +1,215 @@
+{
+    "uniqueId": "page-e1ee4b1d-382c-465c-b526-35d0496b5a3d",
+    "title": "User Guides",
+    "language": "en",
+    "layout": {
+        "columns": 1,
+        "rows": [
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element)",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "tutorial.jpg",
+                        "alt": "User Guides",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 2,
+                        "content": "User Guides",
+                        "level": 1
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 3,
+                        "content": "Step-by-step instructions for all IntraVox features."
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Basic User Guides",
+                        "level": 2
+                    }
+                ]
+            },
+            {
+                "columns": 2,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Creating Pages",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "**Create new page:**\n1. Click on 'New Page' in the sidebar\n2. Enter a title\n3. Click 'Create'\n4. Start adding widgets\n\n**Tip:** Use descriptive titles for better findability."
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 1,
+                        "content": "Adding Widgets",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 2,
+                        "content": "**Add widget:**\n1. Click on 'Add Widget' in a row\n2. Choose the widget type\n3. Configure the widget content\n4. Click 'Save'\n\n**Available widgets:** Text, Heading, Image, Links, Divider, Spacer"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "",
+                        "height": "2px"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Advanced User Guides",
+                        "level": 2
+                    }
+                ]
+            },
+            {
+                "columns": 2,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Setting Up Navigation",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "**Edit menu:**\n1. Click on 'Navigation Edit'\n2. Choose menu type (Mega Menu or Dropdown)\n3. Add items with 'Add Item'\n4. Drag items to reorder\n5. Click 'Save'\n\n**Sub-items:** Create nested menus for complex structures."
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 1,
+                        "content": "Customizing Layout",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 2,
+                        "content": "**Configure columns:**\n- 1-4 columns per row\n- Side Columns left/right\n- Background colors per row\n\n**Header row:**\nAdd a header row for page-wide banner effect with background color."
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element-light)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Video Tutorials",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Watch our video tutorials for a visual explanation of all features."
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 3,
+                        "columns": 3,
+                        "items": [
+                            {
+                                "title": "YouTube Channel",
+                                "text": "All video tutorials",
+                                "url": "https://www.youtube.com/@Nextcloud",
+                                "icon": "youtube",
+                                "target": "_blank"
+                            },
+                            {
+                                "title": "Nextcloud Docs",
+                                "text": "Official documentation",
+                                "url": "https://docs.nextcloud.com",
+                                "icon": "book-open",
+                                "target": "_blank"
+                            },
+                            {
+                                "title": "Back to Docs",
+                                "text": "Documentation overview",
+                                "url": "#documentatie",
+                                "icon": "arrow-left",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "transparent",
+                        "height": "20px"
+                    }
+                ]
+            }
+        ],
+        "sideColumns": {
+            "left": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            },
+            "right": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            }
+        }
+    }
+}

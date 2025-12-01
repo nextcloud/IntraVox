@@ -1,0 +1,285 @@
+{
+    "uniqueId": "page-3647cead-9bc9-4f49-9422-ac31418a9cad",
+    "title": "Nextcloud",
+    "language": "en",
+    "layout": {
+        "columns": 1,
+        "rows": [
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element)",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "cloud-server.jpg",
+                        "alt": "Nextcloud cloud server",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Nextcloud - The Foundation of IntraVox",
+                        "level": 1
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 3,
+                        "content": "IntraVox is built on Nextcloud, the leading open source platform for secure collaboration."
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "What is Nextcloud?",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Nextcloud is a **self-hosted productivity platform** that combines the most popular cloud functionalities:\n\n- **File synchronization** - Sync your files across all devices\n- **Sharing** - Share files securely within and outside your organization\n- **Collaboration** - Real-time document editing\n- **Communication** - Chat, video calls and calendars\n- **Extensions** - Hundreds of apps in the App Store"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "",
+                        "height": "2px"
+                    }
+                ]
+            },
+            {
+                "columns": 3,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "data-center.jpg",
+                        "alt": "Data center",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Data Sovereignty",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Your data stays on **your servers**. No American cloud providers, full control over where your data is stored."
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 1,
+                        "content": "Enterprise Ready",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 2,
+                        "content": "Used by **governments**, **universities** and **companies** worldwide. Scalable from 10 to 100,000+ users."
+                    },
+                    {
+                        "type": "heading",
+                        "column": 3,
+                        "order": 1,
+                        "content": "GDPR Compliant",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 3,
+                        "order": 2,
+                        "content": "Fully **GDPR compliant**. Ideal for European organizations that value privacy and compliance."
+                    }
+                ]
+            },
+            {
+                "columns": 2,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Nextcloud Hub",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Nextcloud Hub integrates all the tools your team needs:\n\n**Files** - Store and share files\n**Talk** - Video meetings and chat\n**Groupware** - Calendar, mail and contacts\n**Office** - Document editing"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 1,
+                        "content": "App Ecosystem",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 2,
+                        "content": "The Nextcloud App Store contains hundreds of extensions:\n\n- **IntraVox** - Your intranet solution\n- **Deck** - Kanban project boards\n- **Forms** - Online forms\n- **Polls** - Votes and surveys"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "",
+                        "height": "2px"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element-light)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Nextcloud Resources",
+                        "level": 2
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 2,
+                        "columns": 4,
+                        "items": [
+                            {
+                                "title": "Nextcloud.com",
+                                "text": "Officiële website",
+                                "url": "https://nextcloud.com",
+                                "icon": "open-in-new",
+                                "target": "_blank"
+                            },
+                            {
+                                "title": "Documentation",
+                                "text": "Admin & user docs",
+                                "url": "https://docs.nextcloud.com",
+                                "icon": "book-open",
+                                "target": "_blank"
+                            },
+                            {
+                                "title": "GitHub",
+                                "text": "Broncode",
+                                "url": "https://github.com/nextcloud",
+                                "icon": "github",
+                                "target": "_blank"
+                            },
+                            {
+                                "title": "Community",
+                                "text": "Forums & support",
+                                "url": "https://help.nextcloud.com",
+                                "icon": "forum",
+                                "target": "_blank"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Nextcloud Partners",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Nextcloud is supported by a worldwide network of partners offering implementation, hosting and support. Want to implement Nextcloud? Contact us for advice."
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 3,
+                        "columns": 2,
+                        "items": [
+                            {
+                                "title": "Become a Partner",
+                                "text": "Nextcloud partner program",
+                                "url": "https://nextcloud.com/partners/",
+                                "icon": "handshake",
+                                "target": "_blank"
+                            },
+                            {
+                                "title": "Enterprise Support",
+                                "text": "Professional support",
+                                "url": "https://nextcloud.com/enterprise/",
+                                "icon": "shield-check",
+                                "target": "_blank"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "transparent",
+                        "height": "20px"
+                    }
+                ]
+            }
+        ],
+        "sideColumns": {
+            "left": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            },
+            "right": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            }
+        }
+    }
+}

@@ -1,9 +1,7 @@
 {
-    "uniqueId": "page-507de599-7957-4df2-98e6-fdf3df78138d",
+    "uniqueId": "page-e74a970d-aac2-4ea3-a837-cb33d483e76c",
     "title": "Documentation",
     "language": "en",
-    "created": 1760945741,
-    "modified": 1763537741,
     "layout": {
         "columns": 1,
         "rows": [
@@ -15,7 +13,7 @@
                         "type": "image",
                         "column": 1,
                         "order": 1,
-                        "src": "documentation.jpg",
+                        "src": "docs-hero.jpg",
                         "alt": "Documentation",
                         "objectFit": "cover"
                     },
@@ -23,14 +21,14 @@
                         "type": "heading",
                         "column": 1,
                         "order": 2,
-                        "content": "Documentation",
+                        "content": "Documentation & Support",
                         "level": 1
                     },
                     {
                         "type": "text",
                         "column": 1,
                         "order": 3,
-                        "content": "Everything you need to know about using IntraVox"
+                        "content": "Everything you need to successfully use IntraVox."
                     }
                 ]
             },
@@ -42,40 +40,215 @@
                         "type": "heading",
                         "column": 1,
                         "order": 1,
-                        "content": "Get Started",
+                        "content": "Find Help",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Welcome to the IntraVox documentation center. Here you will find guides, frequently asked questions and tips to get the most out of IntraVox."
+                    }
+                ]
+            },
+            {
+                "columns": 3,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "User Guides",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Step-by-step instructions for all IntraVox features. From basic to advanced."
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 3,
+                        "columns": 1,
+                        "items": [
+                            {
+                                "title": "View User Guides",
+                                "text": "",
+                                "url": "#handleidingen",
+                                "icon": "book-open",
+                                "target": "_self"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 1,
+                        "content": "FAQ",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 2,
+                        "content": "Answers to frequently asked questions. Find the solution quickly without searching."
+                    },
+                    {
+                        "type": "links",
+                        "column": 2,
+                        "order": 3,
+                        "columns": 1,
+                        "items": [
+                            {
+                                "title": "View FAQ",
+                                "text": "",
+                                "url": "#faq",
+                                "icon": "help-circle",
+                                "target": "_self"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "heading",
+                        "column": 3,
+                        "order": 1,
+                        "content": "Tips & Tricks",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 3,
+                        "order": 2,
+                        "content": "Power user tips to increase your productivity and make optimal use of IntraVox."
+                    },
+                    {
+                        "type": "links",
+                        "column": 3,
+                        "order": 3,
+                        "columns": 1,
+                        "items": [
+                            {
+                                "title": "View Tips",
+                                "text": "",
+                                "url": "#tips",
+                                "icon": "lightbulb",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "",
+                        "height": "2px"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Getting Started",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "New to IntraVox? Start here with the basics:\n\n1. **Installation** - Install IntraVox via the Nextcloud App Store\n2. **Configuration** - Configure basic settings\n3. **First page** - Create your first IntraVox page\n4. **Navigation** - Set up menu structure\n5. **Publishing** - Share content with your team"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element-light)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "External Resources",
                         "level": 2
                     },
                     {
                         "type": "links",
                         "column": 1,
                         "order": 2,
-                        "columns": 3,
+                        "columns": 4,
                         "items": [
                             {
-                                "title": "Getting Started",
-                                "text": "Quick start guide for new users",
-                                "url": "#documentation/getting-started",
-                                "icon": "rocket-launch",
-                                "target": "_self"
+                                "title": "Nextcloud Docs",
+                                "text": "Platform documentation",
+                                "url": "https://docs.nextcloud.com",
+                                "icon": "open-in-new",
+                                "target": "_blank"
                             },
                             {
-                                "title": "User Guide",
-                                "text": "Complete guide to using IntraVox",
-                                "url": "#documentation/user-guide",
-                                "icon": "book-open",
-                                "target": "_self"
+                                "title": "Community Forum",
+                                "text": "Ask the community",
+                                "url": "https://help.nextcloud.com",
+                                "icon": "forum",
+                                "target": "_blank"
                             },
                             {
-                                "title": "FAQ",
-                                "text": "Frequently asked questions",
-                                "url": "#documentation/faq",
-                                "icon": "help-circle",
+                                "title": "GitHub Issues",
+                                "text": "Bug reports",
+                                "url": "https://github.com/nextcloud",
+                                "icon": "github",
+                                "target": "_blank"
+                            },
+                            {
+                                "title": "Contact Support",
+                                "text": "Need direct help?",
+                                "url": "#contact",
+                                "icon": "email",
                                 "target": "_self"
                             }
                         ]
                     }
                 ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "transparent",
+                        "height": "20px"
+                    }
+                ]
             }
-        ]
+        ],
+        "sideColumns": {
+            "left": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            },
+            "right": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            }
+        }
     }
 }

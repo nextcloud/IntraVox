@@ -436,6 +436,139 @@ class DemoDataService {
     }
 
     /**
+     * Import demo data from bundled files in the app package
+     *
+     * @param string $language Language code (nl, en)
+     * @return array Result with success status and message
+     */
+    public function importBundledDemoData(string $language = 'nl'): array {
+        if (!in_array($language, self::SUPPORTED_LANGUAGES)) {
+            return [
+                'success' => false,
+                'message' => "Unsupported language: {$language}. Supported: " . implode(', ', self::SUPPORTED_LANGUAGES),
+            ];
+        }
+
+        try {
+            $this->logger->info("[DemoData] Starting bundled demo data import for language: {$language}");
+
+            // Get path to bundled demo data
+            $appPath = \OC::$SERVERROOT . '/apps/intravox';
+            $demoDataPath = $appPath . '/demo-data/' . $language;
+
+            if (!is_dir($demoDataPath)) {
+                $this->logger->error("[DemoData] Demo data path not found: {$demoDataPath}");
+                return [
+                    'success' => false,
+                    'message' => "Demo data not found for language: {$language}",
+                ];
+            }
+
+            // Get IntraVox groupfolder
+            $sharedFolder = $this->setupService->getSharedFolder();
+
+            // Get or create language folder
+            if (!$sharedFolder->nodeExists($language)) {
+                $languageFolder = $sharedFolder->newFolder($language);
+                $this->logger->info("[DemoData] Created language folder: {$language}");
+            } else {
+                $languageFolder = $sharedFolder->get($language);
+            }
+
+            // Import all files recursively
+            $result = $this->importDirectoryRecursive($demoDataPath, $languageFolder);
+
+            // Mark as imported
+            $this->markDemoDataImported();
+
+            // Trigger groupfolder scan
+            $this->scanGroupfolder();
+
+            $this->logger->info("[DemoData] Bundled import complete. Imported: {$result['imported']}, Errors: {$result['errors']}");
+
+            return [
+                'success' => $result['errors'] === 0,
+                'message' => "Demo data imported successfully. {$result['imported']} items imported" . ($result['errors'] > 0 ? ", {$result['errors']} errors" : ''),
+                'imported' => $result['imported'],
+                'errors' => $result['errors'],
+            ];
+
+        } catch (\Exception $e) {
+            $this->logger->error("[DemoData] Bundled import failed: " . $e->getMessage());
+            return [
+                'success' => false,
+                'message' => 'Failed to import demo data: ' . $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * Import a directory recursively from local filesystem to Nextcloud folder
+     */
+    private function importDirectoryRecursive(string $sourcePath, Folder $targetFolder): array {
+        $imported = 0;
+        $errors = 0;
+
+        $items = scandir($sourcePath);
+        foreach ($items as $item) {
+            if ($item === '.' || $item === '..') {
+                continue;
+            }
+
+            $itemPath = $sourcePath . '/' . $item;
+
+            if (is_dir($itemPath)) {
+                // Create subfolder and recurse
+                try {
+                    if (!$targetFolder->nodeExists($item)) {
+                        $subFolder = $targetFolder->newFolder($item);
+                    } else {
+                        $subFolder = $targetFolder->get($item);
+                    }
+                    $subResult = $this->importDirectoryRecursive($itemPath, $subFolder);
+                    $imported += $subResult['imported'];
+                    $errors += $subResult['errors'];
+                } catch (\Exception $e) {
+                    $this->logger->error("[DemoData] Failed to create folder {$item}: " . $e->getMessage());
+                    $errors++;
+                }
+            } else {
+                // Import file
+                try {
+                    $content = file_get_contents($itemPath);
+                    if ($content === false) {
+                        $errors++;
+                        continue;
+                    }
+
+                    if ($targetFolder->nodeExists($item)) {
+                        $file = $targetFolder->get($item);
+                        $file->putContent($content);
+                    } else {
+                        $targetFolder->newFile($item, $content);
+                    }
+                    $imported++;
+                    $this->logger->debug("[DemoData] Imported: {$item}");
+                } catch (\Exception $e) {
+                    $this->logger->error("[DemoData] Failed to import {$item}: " . $e->getMessage());
+                    $errors++;
+                }
+            }
+        }
+
+        return ['imported' => $imported, 'errors' => $errors];
+    }
+
+    /**
+     * Check if bundled demo data is available
+     */
+    public function hasBundledDemoData(string $language = 'nl'): bool {
+        $appPath = \OC::$SERVERROOT . '/apps/intravox';
+        $demoDataPath = $appPath . '/demo-data/' . $language;
+        return is_dir($demoDataPath) && is_file($demoDataPath . '/home.json');
+    }
+
+    /**
      * Trigger groupfolder scan to update file cache
      */
     private function scanGroupfolder(): void {

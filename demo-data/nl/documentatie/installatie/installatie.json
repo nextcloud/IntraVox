@@ -7,7 +7,7 @@
         "rows": [
             {
                 "columns": 1,
-                "backgroundColor": "#009688",
+                "backgroundColor": "var(--color-primary-element)",
                 "widgets": [
                     {
                         "type": "image",
@@ -129,7 +129,7 @@
             },
             {
                 "columns": 1,
-                "backgroundColor": "#009688",
+                "backgroundColor": "var(--color-primary-element)",
                 "widgets": [
                     {
                         "type": "heading",
@@ -194,7 +194,7 @@
         "sideColumns": {
             "left": {
                 "enabled": true,
-                "backgroundColor": "var(--color-background-dark)",
+                "backgroundColor": "var(--color-background-hover)",
                 "widgets": [
                     {
                         "type": "heading",

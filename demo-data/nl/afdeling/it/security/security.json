@@ -1,0 +1,137 @@
+{
+    "uniqueId": "page-it-secu-3333-4444-5555-cccccccccccc",
+    "title": "Security & Privacy",
+    "language": "nl",
+    "layout": {
+        "columns": 1,
+        "rows": [
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Security & Privacy",
+                        "level": 1
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Richtlijnen voor veilig werken en bescherming van bedrijfsgegevens."
+                    }
+                ]
+            },
+            {
+                "columns": 2,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Wachtwoorden",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "**Vereisten:**\n\n- Minimaal 12 karakters\n- Mix van letters, cijfers, symbolen\n- Uniek per applicatie\n- Wijzig elke 90 dagen\n\n*Gebruik een password manager!*"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 1,
+                        "content": "2FA Authenticatie",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 2,
+                        "content": "**Verplicht voor:**\n\n- Nextcloud\n- E-mail\n- VPN\n- Admin accounts\n\n*Setup via de IT Helpdesk*"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element-light)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Phishing & Scams",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "**Let op verdachte e-mails!**\n\nKlik NOOIT op links in onverwachte e-mails. Twijfel je? Meld het bij IT Security: security@intravox.io"
+                    }
+                ]
+            },
+            {
+                "columns": 2,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Clean Desk",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "- Vergrendel je scherm (Win+L)\n- Geen wachtwoorden op papier\n- Gevoelige docs in de kluis\n- Ruim je bureau op"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 1,
+                        "content": "Incident Melden",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 2,
+                        "content": "Beveiligingsincident?\n\n**Meld direct bij:**\nsecurity@intravox.io\n\nof bel: +31 20 123 4911"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 1,
+                        "columns": 1,
+                        "items": [
+                            {
+                                "title": "Terug naar IT",
+                                "text": "IT overzicht",
+                                "url": "#page-it-a1b2c3d4-e5f6-7890-abcd-555555555555",
+                                "icon": "arrow-left",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ],
+        "sideColumns": {
+            "left": { "enabled": false, "backgroundColor": "", "widgets": [] },
+            "right": { "enabled": false, "backgroundColor": "", "widgets": [] }
+        }
+    }
+}

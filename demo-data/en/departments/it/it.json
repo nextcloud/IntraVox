@@ -1,0 +1,364 @@
+{
+    "uniqueId": "page-7768529b-27aa-49d2-84bc-f087f0bc1ab7",
+    "title": "IT Department",
+    "language": "en",
+    "layout": {
+        "columns": 1,
+        "rows": [
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element)",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "it-hero.jpg",
+                        "alt": "IT Department",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 2,
+                        "content": "IT Department",
+                        "level": 1
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 3,
+                        "content": "The IT department supports all technological aspects of our organization. From helpdesk to infrastructure, we are here for you."
+                    }
+                ]
+            },
+            {
+                "columns": 2,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "server-room.jpg",
+                        "alt": "Server Room",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 1,
+                        "content": "Our Services",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 2,
+                        "content": "The IT department offers a wide range of services:\n\n- **Helpdesk**: First line support for all IT questions\n- **Network**: Network infrastructure management\n- **Security**: Security and compliance\n- **Development**: Software development\n- **Cloud**: Cloud services and migrations"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "",
+                        "height": "2px"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "IT Helpdesk",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Do you have an IT problem? Get in touch via the channels below:"
+                    }
+                ]
+            },
+            {
+                "columns": 4,
+                "backgroundColor": "var(--color-primary-element)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Ticket System",
+                        "level": 4
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Create a ticket for non-urgent matters."
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 3,
+                        "columns": 1,
+                        "items": [
+                            {
+                                "title": "New Ticket",
+                                "url": "#",
+                                "icon": "ticket",
+                                "target": "_self"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 1,
+                        "content": "Phone",
+                        "level": 4
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 2,
+                        "content": "For urgent problems:\n\n**020-555 1234**"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 3,
+                        "order": 1,
+                        "content": "Email",
+                        "level": 4
+                    },
+                    {
+                        "type": "text",
+                        "column": 3,
+                        "order": 2,
+                        "content": "Send an email:\n\n**it@company.com**"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 4,
+                        "order": 1,
+                        "content": "Chat",
+                        "level": 4
+                    },
+                    {
+                        "type": "text",
+                        "column": 4,
+                        "order": 2,
+                        "content": "Live chat available from 9:00-17:00."
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Frequently Asked Topics",
+                        "level": 2
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 2,
+                        "columns": 5,
+                        "items": [
+                            {
+                                "title": "Password Reset",
+                                "text": "Request new password",
+                                "url": "#",
+                                "icon": "lock-reset",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "VPN Access",
+                                "text": "Set up working from home",
+                                "url": "#",
+                                "icon": "vpn",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Software Request",
+                                "text": "Install new software",
+                                "url": "#",
+                                "icon": "package-down",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Hardware",
+                                "text": "Request laptop or monitor",
+                                "url": "#",
+                                "icon": "laptop",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Email Problems",
+                                "text": "Outlook & email issues",
+                                "url": "#",
+                                "icon": "email-alert",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "IT Policies",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "| Policy | Description | Last Updated |\n|--------|-------------|---------------|\n| Acceptable Use | Rules for IT usage | Jan 2024 |\n| Security Policy | Security guidelines | Dec 2023 |\n| BYOD | Personal devices at work | Nov 2023 |\n| Data Classification | Data handling | Oct 2023 |"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element)",
+                "widgets": [
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 1,
+                        "columns": 4,
+                        "items": [
+                            {
+                                "title": "HR",
+                                "text": "Personnel matters",
+                                "url": "#afdeling/hr",
+                                "icon": "account-group",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Marketing",
+                                "text": "Campaigns & branding",
+                                "url": "#afdeling/marketing",
+                                "icon": "bullhorn",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Sales",
+                                "text": "Sales & customers",
+                                "url": "#afdeling/sales",
+                                "icon": "chart-line",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "All Departments",
+                                "text": "Overview",
+                                "url": "#afdeling",
+                                "icon": "domain",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "transparent",
+                        "height": "20px"
+                    }
+                ]
+            }
+        ],
+        "sideColumns": {
+            "left": {
+                "enabled": true,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Status",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "**System Status:**\nAll systems operational\n\n**Planned maintenance:**\nSaturday 02:00-06:00"
+                    },
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 3,
+                        "style": "solid",
+                        "color": "",
+                        "height": "1px"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 4,
+                        "content": "Quick Links",
+                        "level": 4
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 5,
+                        "columns": 1,
+                        "items": [
+                            {
+                                "text": "Ticket Status",
+                                "url": "#",
+                                "icon": "clipboard-list"
+                            },
+                            {
+                                "text": "Knowledge Base",
+                                "url": "#",
+                                "icon": "book-search"
+                            },
+                            {
+                                "text": "IT News",
+                                "url": "#",
+                                "icon": "newspaper"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "right": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            }
+        }
+    }
+}

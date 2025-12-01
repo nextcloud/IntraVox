@@ -1,0 +1,323 @@
+{
+    "uniqueId": "page-e6f2f90b-ee77-42f8-a1a6-45948a67e37e",
+    "title": "Human Resources",
+    "language": "en",
+    "layout": {
+        "columns": 1,
+        "rows": [
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element)",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "hr-team.jpg",
+                        "alt": "HR Team",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Human Resources",
+                        "level": 1
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 3,
+                        "content": "Welcome to the HR department. We take care of our employees and build a great work culture."
+                    }
+                ]
+            },
+            {
+                "columns": 3,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "recruitment.jpg",
+                        "alt": "Recruitment",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Recruitment & Selection",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 3,
+                        "content": "We are continuously looking for talent. View our job openings or refer candidates."
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 4,
+                        "columns": 1,
+                        "items": [
+                            {
+                                "title": "Job Openings",
+                                "text": "View open positions",
+                                "url": "#",
+                                "icon": "briefcase-search",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Referral Program",
+                                "text": "Earn bonus upon hire",
+                                "url": "#",
+                                "icon": "account-plus",
+                                "target": "_self"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "image",
+                        "column": 2,
+                        "order": 1,
+                        "src": "training.jpg",
+                        "alt": "Training",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 2,
+                        "content": "Training",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 3,
+                        "content": "Invest in your development with our extensive training offerings."
+                    },
+                    {
+                        "type": "links",
+                        "column": 2,
+                        "order": 4,
+                        "columns": 1,
+                        "items": [
+                            {
+                                "title": "Courses",
+                                "text": "Internal training",
+                                "url": "#",
+                                "icon": "school",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Certifications",
+                                "text": "External certificates",
+                                "url": "#",
+                                "icon": "certificate",
+                                "target": "_self"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "image",
+                        "column": 3,
+                        "order": 1,
+                        "src": "benefits.jpg",
+                        "alt": "Benefits",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 3,
+                        "order": 2,
+                        "content": "Benefits",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 3,
+                        "order": 3,
+                        "content": "Discover all the benefits we offer our employees."
+                    },
+                    {
+                        "type": "links",
+                        "column": 3,
+                        "order": 4,
+                        "columns": 1,
+                        "items": [
+                            {
+                                "title": "Salary & Bonus",
+                                "text": "Compensation structure",
+                                "url": "#",
+                                "icon": "cash",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Secondary",
+                                "text": "Extra benefits",
+                                "url": "#",
+                                "icon": "gift",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "",
+                        "height": "2px"
+                    }
+                ]
+            },
+            {
+                "columns": 2,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "HR Documents",
+                        "level": 2
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 2,
+                        "columns": 2,
+                        "items": [
+                            {
+                                "title": "Employee Handbook",
+                                "text": "All rules and procedures",
+                                "url": "#",
+                                "icon": "book-open-variant",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Leave Request",
+                                "text": "Request vacation",
+                                "url": "#",
+                                "icon": "calendar-plus",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Sick Leave",
+                                "text": "Sick leave procedure",
+                                "url": "#",
+                                "icon": "medical-bag",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Expense Claims",
+                                "text": "Submit expenses",
+                                "url": "#",
+                                "icon": "receipt",
+                                "target": "_self"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 1,
+                        "content": "Contact HR",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 2,
+                        "content": "Get in touch with the HR team:\n\n**Email:** hr@company.com\n**Phone:** 020-123 4567\n**Office:** Room 2.01\n\n**Opening hours:**\nMonday to Friday\n09:00 - 17:00"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Other Departments",
+                        "level": 2
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 2,
+                        "columns": 4,
+                        "items": [
+                            {
+                                "title": "Marketing",
+                                "text": "Campaigns & branding",
+                                "url": "#afdeling/marketing",
+                                "icon": "bullhorn",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Sales",
+                                "text": "Sales & customers",
+                                "url": "#afdeling/sales",
+                                "icon": "chart-line",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "IT",
+                                "text": "Technologie & support",
+                                "url": "#afdeling/it",
+                                "icon": "laptop",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "All Departments",
+                                "text": "Overview",
+                                "url": "#afdeling",
+                                "icon": "domain",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "transparent",
+                        "height": "20px"
+                    }
+                ]
+            }
+        ],
+        "sideColumns": {
+            "left": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            },
+            "right": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            }
+        }
+    }
+}

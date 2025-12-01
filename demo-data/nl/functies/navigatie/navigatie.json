@@ -7,7 +7,7 @@
         "rows": [
             {
                 "columns": 1,
-                "backgroundColor": "#e74c3c",
+                "backgroundColor": "var(--color-primary-element)",
                 "widgets": [
                     {
                         "type": "heading",
@@ -182,7 +182,7 @@
                         "column": 1,
                         "order": 1,
                         "style": "solid",
-                        "color": "var(--color-border)",
+                        "color": "",
                         "height": "2px"
                     }
                 ]
@@ -208,7 +208,7 @@
             },
             {
                 "columns": 1,
-                "backgroundColor": "#27ae60",
+                "backgroundColor": "var(--color-primary-element)",
                 "widgets": [
                     {
                         "type": "heading",

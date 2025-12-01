@@ -1,9 +1,7 @@
 {
-    "uniqueId": "page-e1e356f5-3ea6-489b-929c-d786862ddb6b",
+    "uniqueId": "page-84a37a4e-63ab-4e8a-a672-98d43d7e523b",
     "title": "News",
     "language": "en",
-    "created": 1760945741,
-    "modified": 1763537741,
     "layout": {
         "columns": 1,
         "rows": [
@@ -15,22 +13,119 @@
                         "type": "image",
                         "column": 1,
                         "order": 1,
-                        "src": "news-press.jpg",
-                        "alt": "Latest news",
+                        "src": "news.jpg",
+                        "alt": "News and updates",
                         "objectFit": "cover"
                     },
                     {
                         "type": "heading",
                         "column": 1,
                         "order": 2,
-                        "content": "Latest News",
+                        "content": "News & Updates",
                         "level": 1
                     },
                     {
                         "type": "text",
                         "column": 1,
                         "order": 3,
-                        "content": "Stay informed about the latest developments"
+                        "content": "Stay up to date with the latest developments at IntraVox and Nextcloud."
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Latest News",
+                        "level": 2
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "IntraVox v1.0 Launched!",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "**November 29, 2024** - We are excited to announce the first stable version of IntraVox! After months of development and testing, IntraVox is now available for all Nextcloud users.\n\n**Highlights:**\n- Visual page editor with drag-and-drop\n- Support for multiple languages\n- Mega menu and dropdown navigation\n- Integration with Nextcloud Group Folders"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Nextcloud Conference 2024 Recap",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "**October 15, 2024** - IntraVox was present at the Nextcloud Conference in Berlin. We gave a live demo of the latest features and received valuable feedback from the community.\n\n[View the presentation slides](https://nextcloud.com/conf/)"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Beta Program Closed",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "**September 1, 2024** - Our beta program has been successfully completed with more than 50 organizations that tested IntraVox. Thanks to all beta testers for their valuable feedback!"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "",
+                        "height": "2px"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Upcoming Events",
+                        "level": 2
                     }
                 ]
             },
@@ -42,62 +137,105 @@
                         "type": "heading",
                         "column": 1,
                         "order": 1,
-                        "content": "IntraVox 1.0 Released",
+                        "content": "Webinar: IntraVox Intro",
                         "level": 3
                     },
                     {
                         "type": "text",
                         "column": 1,
                         "order": 2,
-                        "content": "**November 2025**\n\nWe're excited to announce the stable release of IntraVox 1.0! This major milestone brings enterprise-grade content management to Nextcloud with a beautiful, user-friendly interface."
+                        "content": "**Date:** December 15, 2024\n**Tijd:** 14:00 - 15:00 CET\n\nAn introduction to IntraVox for new users. Learn the basics and ask questions to the development team."
                     },
                     {
                         "type": "heading",
                         "column": 2,
                         "order": 1,
-                        "content": "New Features in 0.4.5",
+                        "content": "FOSDEM 2025",
                         "level": 3
                     },
                     {
                         "type": "text",
                         "column": 2,
                         "order": 2,
-                        "content": "**November 2025**\n\nVisual folder distinction with 📷 emoji prefix for images folders. Multi-column layouts support. Enhanced mobile experience for editing pages."
+                        "content": "**Datum:** 1-2 februari 2025\n**Location:** Brussel, België\n\nVisit us at FOSDEM! We will be present in the Nextcloud devroom with a presentation about IntraVox."
                     }
                 ]
             },
             {
-                "columns": 2,
-                "backgroundColor": "var(--color-background-hover)",
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element-light)",
                 "widgets": [
                     {
                         "type": "heading",
                         "column": 1,
                         "order": 1,
-                        "content": "Community Highlights",
-                        "level": 3
+                        "content": "Stay Informed",
+                        "level": 2
                     },
                     {
-                        "type": "text",
+                        "type": "links",
                         "column": 1,
                         "order": 2,
-                        "content": "**October 2025**\n\nThank you to our growing community of contributors! We've reached 1000+ downloads on the Nextcloud App Store."
-                    },
+                        "columns": 4,
+                        "items": [
+                            {
+                                "title": "Nextcloud Blog",
+                                "text": "Officiële blog posts",
+                                "url": "https://nextcloud.com/blog/",
+                                "icon": "newspaper",
+                                "target": "_blank"
+                            },
+                            {
+                                "title": "Twitter/X",
+                                "text": "@nextaboratedcloud",
+                                "url": "https://twitter.com/nextcloud",
+                                "icon": "twitter",
+                                "target": "_blank"
+                            },
+                            {
+                                "title": "Mastodon",
+                                "text": "@nextcloud@mastodon.xyz",
+                                "url": "https://mastodon.xyz/@nextcloud",
+                                "icon": "mastodon",
+                                "target": "_blank"
+                            },
+                            {
+                                "title": "GitHub",
+                                "text": "Releases volgen",
+                                "url": "https://github.com/nextcloud",
+                                "icon": "github",
+                                "target": "_blank"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
                     {
-                        "type": "heading",
-                        "column": 2,
+                        "type": "divider",
+                        "column": 1,
                         "order": 1,
-                        "content": "Beta Testing Success",
-                        "level": 3
-                    },
-                    {
-                        "type": "text",
-                        "column": 2,
-                        "order": 2,
-                        "content": "**September 2025**\n\nBeta testing phase completed with excellent feedback from early adopters. Ready for stable release!"
+                        "style": "solid",
+                        "color": "transparent",
+                        "height": "20px"
                     }
                 ]
             }
-        ]
+        ],
+        "sideColumns": {
+            "left": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            },
+            "right": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            }
+        }
     }
 }

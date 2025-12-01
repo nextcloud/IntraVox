@@ -28,6 +28,26 @@ class PageService {
     private LoggerInterface $logger;
     private array $pageFolderCache = [];
 
+    /** @var array Request-level cache for page data */
+    private array $pageDataCache = [];
+
+    /** @var array Request-level cache for page list */
+    private ?array $listPagesCache = null;
+
+    /**
+     * Clear all request-level caches (call after mutations)
+     */
+    private function clearCache(?string $pageId = null): void {
+        if ($pageId !== null) {
+            unset($this->pageDataCache[$pageId]);
+            unset($this->pageFolderCache[$pageId]);
+        } else {
+            $this->pageDataCache = [];
+            $this->pageFolderCache = [];
+        }
+        $this->listPagesCache = null;
+    }
+
     public function __construct(
         IRootFolder $rootFolder,
         IUserSession $userSession,
@@ -318,9 +338,86 @@ class PageService {
     }
 
     /**
+     * List all pages with full content (including layout)
+     * OPTIMIZED: Single filesystem traversal for search operations
+     * This eliminates the N+1 query pattern where listPages() + getPage() for each
+     */
+    public function listPagesWithContent(): array {
+        $folder = $this->getLanguageFolder();
+        $pages = [];
+
+        // Check for home.json in root
+        try {
+            $homeFile = $folder->get('home.json');
+            $content = $homeFile->getContent();
+            $data = json_decode($content, true);
+
+            if ($data && isset($data['uniqueId'])) {
+                $pages[] = $this->sanitizePage($data);
+            }
+        } catch (NotFoundException $e) {
+            // No home page yet
+        }
+
+        // Recursively find all pages with full content
+        $this->findPagesWithContentInFolder($folder, $pages);
+
+        return $pages;
+    }
+
+    /**
+     * Recursively find pages with full content in folders
+     */
+    private function findPagesWithContentInFolder($folder, array &$pages): void {
+        foreach ($folder->getDirectoryListing() as $item) {
+            if ($item->getType() === \OCP\Files\FileInfo::TYPE_FOLDER) {
+                $folderName = $item->getName();
+
+                // Skip special folders
+                if (in_array($folderName, ['images', 'files'])) {
+                    continue;
+                }
+
+                // Look for {foldername}.json inside the folder
+                try {
+                    $jsonFile = $item->get($folderName . '.json');
+
+                    if (!$jsonFile->isReadable()) {
+                        continue;
+                    }
+
+                    $content = @$jsonFile->getContent();
+
+                    if ($content === false || $content === null) {
+                        continue;
+                    }
+
+                    $data = json_decode($content, true);
+
+                    if ($data && isset($data['uniqueId'])) {
+                        $pages[] = $this->sanitizePage($data);
+                    }
+                } catch (\Exception $e) {
+                    // This folder doesn't contain a valid page
+                } catch (\Throwable $e) {
+                    continue;
+                }
+
+                // Recursively search subfolders
+                $this->findPagesWithContentInFolder($item, $pages);
+            }
+        }
+    }
+
+    /**
      * Get a specific page by uniqueId or legacy id
      */
     public function getPage(string $id): array {
+        // Check request-level cache first
+        if (isset($this->pageDataCache[$id])) {
+            return $this->pageDataCache[$id];
+        }
+
         $folder = $this->getLanguageFolder();
         $result = null;
 
@@ -375,7 +472,15 @@ class PageService {
         // Enrich with real-time path data
         $data = $this->enrichWithPathData($data, $result['folder']);
 
-        return $this->sanitizePage($data);
+        $sanitizedData = $this->sanitizePage($data);
+
+        // Cache the result for this request
+        $this->pageDataCache[$originalId] = $sanitizedData;
+        if (isset($data['uniqueId'])) {
+            $this->pageDataCache[$data['uniqueId']] = $sanitizedData;
+        }
+
+        return $sanitizedData;
     }
 
     /**
@@ -986,6 +1091,12 @@ class PageService {
             throw new \InvalidArgumentException('Failed to write updated page data: ' . $e->getMessage());
         }
 
+        // Clear caches for this page (and uniqueId if present)
+        $this->clearCache($originalId);
+        if (isset($validatedData['uniqueId'])) {
+            $this->clearCache($validatedData['uniqueId']);
+        }
+
         return $validatedData;
     }
 
@@ -1054,6 +1165,9 @@ class PageService {
 
         // Delete the entire folder (includes .json, images/, files/)
         $result['folder']->delete();
+
+        // Clear caches
+        $this->clearCache();
     }
 
     /**
@@ -2451,83 +2565,76 @@ class PageService {
     /**
      * Search pages by query string
      * Searches in page titles and text widget content
+     * OPTIMIZED: Loads all content in a single filesystem traversal
      */
     public function searchPages(string $query): array {
         $results = [];
         $query = mb_strtolower($query);
 
-        // Get all pages (listPages already gets them recursively from current language folder)
-        $pages = $this->listPages();
+        // Get all pages with full content in a single traversal
+        $pagesWithContent = $this->listPagesWithContent();
 
-        foreach ($pages as $page) {
+        foreach ($pagesWithContent as $pageData) {
             $matches = [];
             $score = 0;
 
+            // Skip pages without uniqueId
+            if (!isset($pageData['uniqueId']) || empty($pageData['uniqueId'])) {
+                continue;
+            }
+
             // Search in title (higher weight)
-            if (isset($page['title']) && mb_stripos($page['title'], $query) !== false) {
+            if (isset($pageData['title']) && mb_stripos($pageData['title'], $query) !== false) {
                 $score += 10;
                 $matches[] = [
                     'type' => 'title',
-                    'text' => $page['title']
+                    'text' => $pageData['title']
                 ];
             }
 
             // Search in uniqueId (medium weight)
-            if (isset($page['uniqueId']) && mb_stripos($page['uniqueId'], $query) !== false) {
+            if (mb_stripos($pageData['uniqueId'], $query) !== false) {
                 $score += 5;
             }
 
-            // Load page content and search in text widgets
-            try {
-                // Skip pages without uniqueId
-                if (!isset($page['uniqueId']) || empty($page['uniqueId'])) {
-                    continue;
-                }
-
-                // Get the full page data to search in content
-                $pageData = $this->getPage($page['uniqueId']);
-
-                if ($pageData && isset($pageData['layout']['rows'])) {
-                    foreach ($pageData['layout']['rows'] as $row) {
-                        if (isset($row['widgets'])) {
-                            foreach ($row['widgets'] as $widget) {
-                                // Search in text widgets
-                                if ($widget['type'] === 'text' && isset($widget['content'])) {
-                                    if (mb_stripos($widget['content'], $query) !== false) {
-                                        $score += 3;
-                                        // Extract snippet around match
-                                        $snippet = $this->extractSnippet($widget['content'], $query);
-                                        $matches[] = [
-                                            'type' => 'content',
-                                            'text' => $snippet
-                                        ];
-                                    }
+            // Search in content - layout is already loaded
+            if (isset($pageData['layout']['rows'])) {
+                foreach ($pageData['layout']['rows'] as $row) {
+                    if (isset($row['widgets'])) {
+                        foreach ($row['widgets'] as $widget) {
+                            // Search in text widgets
+                            if ($widget['type'] === 'text' && isset($widget['content'])) {
+                                if (mb_stripos($widget['content'], $query) !== false) {
+                                    $score += 3;
+                                    // Extract snippet around match
+                                    $snippet = $this->extractSnippet($widget['content'], $query);
+                                    $matches[] = [
+                                        'type' => 'content',
+                                        'text' => $snippet
+                                    ];
                                 }
-                                // Search in heading widgets
-                                if ($widget['type'] === 'heading' && isset($widget['text'])) {
-                                    if (mb_stripos($widget['text'], $query) !== false) {
-                                        $score += 5;
-                                        $matches[] = [
-                                            'type' => 'heading',
-                                            'text' => $widget['text']
-                                        ];
-                                    }
+                            }
+                            // Search in heading widgets
+                            if ($widget['type'] === 'heading' && isset($widget['text'])) {
+                                if (mb_stripos($widget['text'], $query) !== false) {
+                                    $score += 5;
+                                    $matches[] = [
+                                        'type' => 'heading',
+                                        'text' => $widget['text']
+                                    ];
                                 }
                             }
                         }
                     }
                 }
-            } catch (\Exception $e) {
-                // Skip pages that can't be read
-                continue;
             }
 
             // If we have matches, add to results
             if ($score > 0) {
                 $results[] = [
-                    'uniqueId' => $page['uniqueId'] ?? null,
-                    'title' => $page['title'] ?? 'Untitled',
-                    'path' => $page['path'] ?? '',
+                    'uniqueId' => $pageData['uniqueId'] ?? null,
+                    'title' => $pageData['title'] ?? 'Untitled',
+                    'path' => $pageData['path'] ?? '',
                     'score' => $score,
                     'matches' => array_slice($matches, 0, 3), // Limit to 3 matches per page
                     'matchCount' => count($matches)

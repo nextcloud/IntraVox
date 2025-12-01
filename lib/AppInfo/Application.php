@@ -24,7 +24,8 @@ class Application extends App implements IBootstrap {
         // Register OCC command
         $context->registerService(SetupCommand::class, function ($c) {
             return new SetupCommand(
-                $c->get(\OCA\IntraVox\Service\SetupService::class)
+                $c->get(\OCA\IntraVox\Service\SetupService::class),
+                $c->get(\OCA\IntraVox\Service\DemoDataService::class)
             );
         });
 

@@ -1,0 +1,113 @@
+{
+    "uniqueId": "page-c53a3a2e-4973-4abe-b22f-d334cf289dc5",
+    "title": "CRM & Customer Management",
+    "language": "en",
+    "layout": {
+        "columns": 1,
+        "rows": [
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "CRM & Customer Management",
+                        "level": 1
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Our CRM system is the heart of our customer relationships. Here you will find all information about how we manage and support customers."
+                    }
+                ]
+            },
+            {
+                "columns": 2,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Klantregistratie",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "**Register new customers:**\n\n1. Log in to the CRM portal\n2. Click 'New Customer'\n3. Fill in all required fields\n4. Assign an Account Manager\n5. Save and start the onboarding process"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 1,
+                        "content": "Klantcontact Logging",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 2,
+                        "content": "**Every customer contact is logged:**\n\n- Phone calls\n- Emails\n- Meetings\n- Support tickets\n- Demo sessions\n\n*Tip: Use tags for quick filtering!*"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "CRM Best Practices",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "- Update customer data within 24 hours after contact\n- Add notes to every interaction\n- Schedule follow-ups immediately\n- Use the mobile app on the go\n- Check for duplicates monthly"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 1,
+                        "columns": 1,
+                        "items": [
+                            {
+                                "title": "Back to Sales",
+                                "text": "Sales overview",
+                                "url": "#page-824924f9-d036-42bf-845f-18764bd1239c",
+                                "icon": "arrow-left",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ],
+        "sideColumns": {
+            "left": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            },
+            "right": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            }
+        }
+    }
+}

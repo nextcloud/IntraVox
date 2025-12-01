@@ -1,0 +1,131 @@
+{
+    "uniqueId": "page-it-help-1111-2222-3333-aaaaaaaaaaaa",
+    "title": "IT Helpdesk",
+    "language": "nl",
+    "layout": {
+        "columns": 1,
+        "rows": [
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "IT Helpdesk",
+                        "level": 1
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Technische ondersteuning voor alle medewerkers. We staan voor je klaar!"
+                    }
+                ]
+            },
+            {
+                "columns": 3,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Ticket Indienen",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "**Via e-mail:**\nit-support@intravox.io\n\n**Via portal:**\nhelp.intravox.io\n\n*Reactietijd: < 4 uur*"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 1,
+                        "content": "Spoedgevallen",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 2,
+                        "content": "**Telefoon:**\nIntern: 1234\nExtern: +31 20 123 4999\n\n*24/7 beschikbaar voor kritieke issues*"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 3,
+                        "order": 1,
+                        "content": "FAQ",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 3,
+                        "order": 2,
+                        "content": "**Veelgestelde vragen:**\n\n- Wachtwoord reset\n- VPN problemen\n- Printer setup\n- Software installatie"
+                    }
+                ]
+            },
+            {
+                "columns": 2,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Self-Service",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "**Zelf oplossen:**\n\n- Wachtwoord reset via portal\n- Software Center voor apps\n- Knowledge base artikelen\n- Video tutorials"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 1,
+                        "content": "Openingstijden",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 2,
+                        "content": "**Support beschikbaar:**\n\n- Ma-Vr: 08:00 - 18:00\n- Weekend: alleen spoed\n- Feestdagen: alleen spoed"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 1,
+                        "columns": 1,
+                        "items": [
+                            {
+                                "title": "Terug naar IT",
+                                "text": "IT overzicht",
+                                "url": "#page-it-a1b2c3d4-e5f6-7890-abcd-555555555555",
+                                "icon": "arrow-left",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ],
+        "sideColumns": {
+            "left": { "enabled": false, "backgroundColor": "", "widgets": [] },
+            "right": { "enabled": false, "backgroundColor": "", "widgets": [] }
+        }
+    }
+}

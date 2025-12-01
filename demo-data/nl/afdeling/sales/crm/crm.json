@@ -1,0 +1,105 @@
+{
+    "uniqueId": "page-sales-crm-1111-2222-3333-444444444444",
+    "title": "CRM & Klantbeheer",
+    "language": "nl",
+    "layout": {
+        "columns": 1,
+        "rows": [
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "CRM & Klantbeheer",
+                        "level": 1
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Ons CRM systeem vormt het hart van onze klantrelaties. Hier vindt u alle informatie over hoe we klanten beheren en ondersteunen."
+                    }
+                ]
+            },
+            {
+                "columns": 2,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Klantregistratie",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "**Nieuwe klanten registreren:**\n\n1. Log in op het CRM portaal\n2. Klik op 'Nieuwe Klant'\n3. Vul alle verplichte velden in\n4. Wijs een Account Manager toe\n5. Sla op en start het onboarding proces"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 1,
+                        "content": "Klantcontact Logging",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 2,
+                        "content": "**Elk klantcontact wordt gelogd:**\n\n- Telefoongesprekken\n- E-mails\n- Meetings\n- Support tickets\n- Demo sessies\n\n*Tip: Gebruik tags voor snelle filtering!*"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "CRM Best Practices",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "- Update klantgegevens binnen 24 uur na contact\n- Voeg notities toe bij elke interactie\n- Plan follow-ups direct in\n- Gebruik de mobiele app voor onderweg\n- Controleer duplicaten maandelijks"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 1,
+                        "columns": 1,
+                        "items": [
+                            {
+                                "title": "Terug naar Sales",
+                                "text": "Sales overzicht",
+                                "url": "#page-a0eeed43-9054-45c0-956a-6ce2dfca4f33",
+                                "icon": "arrow-left",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ],
+        "sideColumns": {
+            "left": { "enabled": false, "backgroundColor": "", "widgets": [] },
+            "right": { "enabled": false, "backgroundColor": "", "widgets": [] }
+        }
+    }
+}

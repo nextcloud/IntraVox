@@ -1,0 +1,352 @@
+{
+    "uniqueId": "page-a1752e53-ec89-456c-a088-74623339ba91",
+    "title": "Widget Overview",
+    "language": "en",
+    "layout": {
+        "columns": 1,
+        "rows": [
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Widget Library",
+                        "level": 1
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Discover all available widgets to bring your pages to life. From text to images, from links to interactive elements."
+                    }
+                ]
+            },
+            {
+                "columns": 4,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "widget-text.jpg",
+                        "alt": "Text widget",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Text Widget",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 3,
+                        "content": "Rich text with **Markdown** support, including lists, tables and links."
+                    },
+                    {
+                        "type": "image",
+                        "column": 2,
+                        "order": 1,
+                        "src": "widget-image.jpg",
+                        "alt": "Image widget",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 2,
+                        "content": "Image Widget",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 3,
+                        "content": "Upload photos directly from Nextcloud with automatic optimization."
+                    },
+                    {
+                        "type": "image",
+                        "column": 3,
+                        "order": 1,
+                        "src": "widget-links.jpg",
+                        "alt": "Links widget",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 3,
+                        "order": 2,
+                        "content": "Links Widget",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 3,
+                        "order": 3,
+                        "content": "Create navigable link collections with icons and descriptions."
+                    },
+                    {
+                        "type": "image",
+                        "column": 4,
+                        "order": 1,
+                        "src": "widget-heading.jpg",
+                        "alt": "Heading widget",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 4,
+                        "order": 2,
+                        "content": "Heading Widget",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 4,
+                        "order": 3,
+                        "content": "Headings from H1 to H6 for clear hierarchy in your content."
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "",
+                        "height": "2px"
+                    }
+                ]
+            },
+            {
+                "columns": 2,
+                "backgroundColor": "var(--color-primary-element-light)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Popular Widgets",
+                        "level": 2
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 2,
+                        "columns": 2,
+                        "items": [
+                            {
+                                "title": "Text Editor",
+                                "text": "Markdown & rich text",
+                                "url": "#",
+                                "icon": "text-box",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Gallery",
+                                "text": "Photo collections",
+                                "url": "#",
+                                "icon": "image-multiple",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Video Embed",
+                                "text": "YouTube & Vimeo",
+                                "url": "#",
+                                "icon": "video",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Code Blocks",
+                                "text": "Syntax highlighting",
+                                "url": "#",
+                                "icon": "code-tags",
+                                "target": "_self"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 1,
+                        "content": "Layout Elements",
+                        "level": 2
+                    },
+                    {
+                        "type": "links",
+                        "column": 2,
+                        "order": 2,
+                        "columns": 2,
+                        "items": [
+                            {
+                                "title": "Divider",
+                                "text": "Divider lines",
+                                "url": "#",
+                                "icon": "minus",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Spacer",
+                                "text": "Vertical space",
+                                "url": "#",
+                                "icon": "arrow-expand-vertical",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Columns",
+                                "text": "Grid layouts",
+                                "url": "#",
+                                "icon": "view-column",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Background",
+                                "text": "Colors & patterns",
+                                "url": "#",
+                                "icon": "palette",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Widget Documentation",
+                        "level": 2
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 2,
+                        "columns": 5,
+                        "items": [
+                            {
+                                "title": "Getting Started",
+                                "text": "Place your first widget",
+                                "url": "#documentatie/handleidingen",
+                                "icon": "rocket-launch",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Best Practices",
+                                "text": "Tips for better pages",
+                                "url": "#documentatie/tips",
+                                "icon": "lightbulb-on",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "FAQ",
+                                "text": "Frequently asked questions",
+                                "url": "#documentatie/faq",
+                                "icon": "frequently-asked-questions",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "API Reference",
+                                "text": "Technical documentation",
+                                "url": "#documentatie/api",
+                                "icon": "api",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Community",
+                                "text": "Help from others",
+                                "url": "https://help.nextcloud.com",
+                                "icon": "account-group",
+                                "target": "_blank"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "transparent",
+                        "height": "20px"
+                    }
+                ]
+            }
+        ],
+        "sideColumns": {
+            "left": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            },
+            "right": {
+                "enabled": true,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Quick Links",
+                        "level": 3
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 2,
+                        "columns": 1,
+                        "items": [
+                            {
+                                "text": "All Features",
+                                "url": "#functies",
+                                "icon": "cog"
+                            },
+                            {
+                                "text": "Layouts",
+                                "url": "#functies/layouts",
+                                "icon": "view-grid"
+                            },
+                            {
+                                "text": "Navigation",
+                                "url": "#functies/navigatie",
+                                "icon": "menu"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 3,
+                        "style": "solid",
+                        "color": "",
+                        "height": "1px"
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 4,
+                        "content": "**Tip:** Drag widgets to the desired position for perfect layouts."
+                    }
+                ]
+            }
+        }
+    }
+}

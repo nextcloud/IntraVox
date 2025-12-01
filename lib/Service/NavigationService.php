@@ -154,7 +154,7 @@ class NavigationService {
 
             $validatedItem = [
                 'id' => $item['id'] ?? uniqid('nav_'),
-                'title' => htmlspecialchars($item['title'] ?? '', ENT_QUOTES | ENT_HTML5, 'UTF-8'),
+                'title' => $item['title'] ?? '',
                 'uniqueId' => $uniqueId,
                 'url' => isset($item['url']) ? filter_var($item['url'], FILTER_SANITIZE_URL) : null,
                 'target' => in_array($item['target'] ?? '', ['_blank', '_self']) ? $item['target'] : null,

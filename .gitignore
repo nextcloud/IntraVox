@@ -21,6 +21,7 @@ Thumbs.db
 
 # Deployment
 *.tar.gz
+intravox-deploy/
 
 # Demo data images (generated/downloaded content)
 demo-data/*/images/

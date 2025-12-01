@@ -168,19 +168,23 @@ import ContentSave from 'vue-material-design-icons/ContentSave.vue';
 import Close from 'vue-material-design-icons/Close.vue';
 import Pencil from 'vue-material-design-icons/Pencil.vue';
 import Information from 'vue-material-design-icons/Information.vue';
+import { defineAsyncComponent } from 'vue';
 import PageViewer from './components/PageViewer.vue';
-import PageEditor from './components/PageEditor.vue';
-import PageListModal from './components/PageListModal.vue';
-import PageTreeModal from './components/PageTreeModal.vue';
-import NewPageModal from './components/NewPageModal.vue';
 import Navigation from './components/Navigation.vue';
-import NavigationEditor from './components/NavigationEditor.vue';
 import Footer from './components/Footer.vue';
 import PageActionsMenu from './components/PageActionsMenu.vue';
-import PageDetailsSidebar from './components/PageDetailsSidebar.vue';
 import Breadcrumb from './components/Breadcrumb.vue';
 import CacheService from './services/CacheService.js';
 import './metavox-integration.js'; // Load MetaVox integration
+
+// Lazy-loaded components (only loaded when needed)
+// This reduces initial bundle size and improves first load performance
+const PageEditor = defineAsyncComponent(() => import('./components/PageEditor.vue'));
+const PageListModal = defineAsyncComponent(() => import('./components/PageListModal.vue'));
+const PageTreeModal = defineAsyncComponent(() => import('./components/PageTreeModal.vue'));
+const NewPageModal = defineAsyncComponent(() => import('./components/NewPageModal.vue'));
+const NavigationEditor = defineAsyncComponent(() => import('./components/NavigationEditor.vue'));
+const PageDetailsSidebar = defineAsyncComponent(() => import('./components/PageDetailsSidebar.vue'));
 
 // Constants
 const HOME_PAGE_UNIQUE_ID = 'page-2e8f694e-147e-4793-8949-4732e679ae6b';

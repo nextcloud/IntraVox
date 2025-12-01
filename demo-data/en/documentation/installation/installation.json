@@ -1,0 +1,248 @@
+{
+    "uniqueId": "page-3e92d5d0-0e08-4def-80ef-ab87da56a649",
+    "title": "Installation",
+    "language": "en",
+    "layout": {
+        "columns": 1,
+        "rows": [
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element)",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "install.jpg",
+                        "alt": "Installation Guide",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Installation Guide",
+                        "level": 1
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 3,
+                        "content": "Follow these steps to install IntraVox on your Nextcloud server. Installation takes about 5 minutes."
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Requirements",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Before you begin, verify your server meets the following requirements:\n\n| Component | Minimum | Recommended |\n|-----------|---------|-------------|\n| Nextcloud | 27.0 | 28.0+ |\n| PHP | 8.0 | 8.2+ |\n| Database | MySQL 8.0 | MariaDB 10.6+ |\n| Memory | 256 MB | 512 MB+ |"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Step 1: Download",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Download IntraVox via the Nextcloud App Store or manually:\n\n**Via App Store (recommended):**\n1. Go to Nextcloud Admin > Apps\n2. Search for \"IntraVox\"\n3. Click \"Download and enable\"\n\n**Manually:**\n```bash\ncd /var/www/nextcloud/apps\nwget https://github.com/intravox/releases/latest.tar.gz\ntar -xzf latest.tar.gz\n```"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Step 2: Enable",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Enable the app via the command line:\n\n```bash\nsudo -u www-data php occ app:enable intravox\n```\n\nOr via the web interface:\n1. Go to Settings > Apps\n2. Find IntraVox in the list\n3. Click \"Enable\""
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Step 3: Configuration",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Run the setup wizard:\n\n```bash\nsudo -u www-data php occ intravox:setup\n```\n\nThis creates:\n- The IntraVox groupfolder\n- Default homepage\n- Navigation structure\n- Initial configuration"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Step 4: Add Users",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Add users to the IntraVox group:\n\n1. Go to Users > Groups\n2. Select \"IntraVox Users\" or \"IntraVox Editors\"\n3. Add the desired users\n\n**Roles:**\n- **Users**: Read only\n- **Editors**: Read and edit\n- **Admins**: Full control"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Next Steps",
+                        "level": 2
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 2,
+                        "columns": 4,
+                        "items": [
+                            {
+                                "title": "First Page",
+                                "text": "Create your first page",
+                                "url": "#documentatie/handleidingen",
+                                "icon": "file-document-plus",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "API Integration",
+                                "text": "Connect external systems",
+                                "url": "#documentatie/api",
+                                "icon": "api",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "FAQ",
+                                "text": "Frequently asked questions",
+                                "url": "#documentatie/faq",
+                                "icon": "help-circle",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Community",
+                                "text": "Help from others",
+                                "url": "https://help.nextcloud.com",
+                                "icon": "account-group",
+                                "target": "_blank"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "transparent",
+                        "height": "20px"
+                    }
+                ]
+            }
+        ],
+        "sideColumns": {
+            "left": {
+                "enabled": true,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Documentation",
+                        "level": 3
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 2,
+                        "columns": 1,
+                        "items": [
+                            {
+                                "text": "Installation",
+                                "url": "#documentatie/installatie",
+                                "icon": "download"
+                            },
+                            {
+                                "text": "User Guides",
+                                "url": "#documentatie/handleidingen",
+                                "icon": "book-open"
+                            },
+                            {
+                                "text": "API",
+                                "url": "#documentatie/api",
+                                "icon": "api"
+                            },
+                            {
+                                "text": "FAQ",
+                                "url": "#documentatie/faq",
+                                "icon": "help-circle"
+                            },
+                            {
+                                "text": "Tips",
+                                "url": "#documentatie/tips",
+                                "icon": "lightbulb"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "right": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            }
+        }
+    }
+}

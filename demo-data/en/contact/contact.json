@@ -1,9 +1,7 @@
 {
-    "uniqueId": "page-a879a7e3-2d98-4968-b06e-f19a2eb73d66",
-    "title": "Contact Us",
+    "uniqueId": "page-fb78f50f-a053-4193-b9d2-1af414217ccf",
+    "title": "Contact",
     "language": "en",
-    "created": 1760945741,
-    "modified": 1763537741,
     "layout": {
         "columns": 1,
         "rows": [
@@ -15,7 +13,7 @@
                         "type": "image",
                         "column": 1,
                         "order": 1,
-                        "src": "contact.jpg",
+                        "src": "office.jpg",
                         "alt": "Contact us",
                         "objectFit": "cover"
                     },
@@ -23,46 +21,97 @@
                         "type": "heading",
                         "column": 1,
                         "order": 2,
-                        "content": "Get in Touch",
+                        "content": "Contact",
                         "level": 1
                     },
                     {
                         "type": "text",
                         "column": 1,
                         "order": 3,
-                        "content": "We'd love to hear from you"
+                        "content": "We are ready to answer your questions and help you with IntraVox."
                     }
                 ]
             },
             {
-                "columns": 2,
+                "columns": 3,
                 "backgroundColor": "",
                 "widgets": [
                     {
-                        "type": "heading",
+                        "type": "image",
                         "column": 1,
                         "order": 1,
-                        "content": "Office",
+                        "src": "email.jpg",
+                        "alt": "Email contact",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Get In Touch",
                         "level": 2
                     },
                     {
                         "type": "text",
                         "column": 1,
-                        "order": 2,
-                        "content": "**Address:**\nIntraVox HQ\nAmsterdam Science Park\n1098 XH Amsterdam\nNetherlands"
+                        "order": 3,
+                        "content": "Do you have questions about IntraVox? Would you like a demo? Or do you need technical support?\n\n**Email:** info@intravox.nl\n**Phone:** +31 (0)20 123 4567\n**Support:** support@intravox.nl\n\n**Opening hours:**\nMonday - Friday: 09:00 - 17:00 CET"
+                    },
+                    {
+                        "type": "image",
+                        "column": 2,
+                        "order": 1,
+                        "src": "office-phone.jpg",
+                        "alt": "Phone",
+                        "objectFit": "cover"
                     },
                     {
                         "type": "heading",
                         "column": 2,
-                        "order": 1,
-                        "content": "Get in Touch",
+                        "order": 2,
+                        "content": "Location",
                         "level": 2
                     },
                     {
                         "type": "text",
                         "column": 2,
+                        "order": 3,
+                        "content": "**IntraVox BV**\nSciencepark 402\n1098 XH Amsterdam\nThe Netherlands\n\n*Easy to reach by public transport*\nAmsterdam Science Park station: 5 min walk"
+                    },
+                    {
+                        "type": "image",
+                        "column": 3,
+                        "order": 1,
+                        "src": "support.jpg",
+                        "alt": "Support team",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 3,
                         "order": 2,
-                        "content": "**Email:** info@intravox.example\n**Phone:** +31 (0) 20 123 4567\n**Support:** support@intravox.example"
+                        "content": "Support",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 3,
+                        "order": 3,
+                        "content": "Our support team is ready for you.\n\n**Community:** GitHub Issues\n**Priority:** Enterprise support\n**Docs:** docs.intravox.nl"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "",
+                        "height": "2px"
                     }
                 ]
             },
@@ -74,17 +123,155 @@
                         "type": "heading",
                         "column": 1,
                         "order": 1,
-                        "content": "Business Hours",
+                        "content": "Contact Options",
+                        "level": 2
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 2,
+                        "columns": 4,
+                        "items": [
+                            {
+                                "title": "General Questions",
+                                "text": "info@intravox.nl",
+                                "url": "mailto:info@intravox.nl",
+                                "icon": "email",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Technische Support",
+                                "text": "support@intravox.nl",
+                                "url": "mailto:support@intravox.nl",
+                                "icon": "help-circle",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Sales",
+                                "text": "sales@intravox.nl",
+                                "url": "mailto:sales@intravox.nl",
+                                "icon": "cash-register",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Call Us",
+                                "text": "+31 (0)20 123 4567",
+                                "url": "tel:+31201234567",
+                                "icon": "phone",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Request Demo",
                         "level": 2
                     },
                     {
                         "type": "text",
                         "column": 1,
                         "order": 2,
-                        "content": "Monday - Friday: 9:00 AM - 5:00 PM (CET)\n\nFor urgent support inquiries, please use our 24/7 support portal."
+                        "content": "Would you like to see IntraVox in action? Request a **free demo**!\n\nOur product specialists will contact you within 24 hours to schedule a demo. During the demo, we will show you how IntraVox can improve your internal communication.\n\n**What you can expect:**\n- Personal tour of IntraVox\n- Answers to all your questions\n- Advice for your specific situation\n- No obligations"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "",
+                        "height": "2px"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element-light)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Follow Us",
+                        "level": 2
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 2,
+                        "columns": 4,
+                        "items": [
+                            {
+                                "title": "GitHub",
+                                "text": "Open source code",
+                                "url": "https://github.com/nextcloud",
+                                "icon": "github",
+                                "target": "_blank"
+                            },
+                            {
+                                "title": "LinkedIn",
+                                "text": "Business updates",
+                                "url": "https://www.linkedin.com/company/nextcloud/",
+                                "icon": "linkedin",
+                                "target": "_blank"
+                            },
+                            {
+                                "title": "Twitter/X",
+                                "text": "News and tips",
+                                "url": "https://twitter.com/nextcloud",
+                                "icon": "twitter",
+                                "target": "_blank"
+                            },
+                            {
+                                "title": "Community Forum",
+                                "text": "Discussions and help",
+                                "url": "https://help.nextcloud.com",
+                                "icon": "forum",
+                                "target": "_blank"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "transparent",
+                        "height": "20px"
                     }
                 ]
             }
-        ]
+        ],
+        "sideColumns": {
+            "left": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            },
+            "right": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            }
+        }
     }
 }

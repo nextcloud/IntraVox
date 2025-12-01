@@ -1,9 +1,7 @@
 {
-    "uniqueId": "page-f33c6397-e2f2-4cd9-b58a-e84c20aae882",
+    "uniqueId": "page-385b2171-18cb-4eb9-82a9-7264f8f10176",
     "title": "About IntraVox",
     "language": "en",
-    "created": 1760945741,
-    "modified": 1763537741,
     "layout": {
         "columns": 1,
         "rows": [
@@ -15,8 +13,8 @@
                         "type": "image",
                         "column": 1,
                         "order": 1,
-                        "src": "about-mission.jpg",
-                        "alt": "Our mission",
+                        "src": "team-meeting.jpg",
+                        "alt": "About IntraVox",
                         "objectFit": "cover"
                     },
                     {
@@ -30,7 +28,7 @@
                         "type": "text",
                         "column": 1,
                         "order": 3,
-                        "content": "Building the future of collaborative intranets on Nextcloud"
+                        "content": "The future of intranet communication - **open source**, **secure** and **flexible**."
                     }
                 ]
             },
@@ -39,30 +37,46 @@
                 "backgroundColor": "",
                 "widgets": [
                     {
-                        "type": "heading",
+                        "type": "image",
                         "column": 1,
                         "order": 1,
+                        "src": "collaboration.jpg",
+                        "alt": "Collaboration",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 2,
                         "content": "Our Mission",
                         "level": 2
                     },
                     {
                         "type": "text",
                         "column": 1,
-                        "order": 2,
-                        "content": "IntraVox was created to bring **SharePoint-style content management** to the open-source Nextcloud platform. We believe that every organization should have access to powerful intranet tools without vendor lock-in or excessive costs."
+                        "order": 3,
+                        "content": "IntraVox was born from the conviction that organizations should have **full control** over their internal communication platform.\n\nWe believe that:\n- Organizations deserve no vendor lock-in\n- Data sovereignty is essential\n- Open source is the future\n- Collaboration should be boundless"
+                    },
+                    {
+                        "type": "image",
+                        "column": 2,
+                        "order": 1,
+                        "src": "office-work.jpg",
+                        "alt": "Office work",
+                        "objectFit": "cover"
                     },
                     {
                         "type": "heading",
                         "column": 2,
-                        "order": 1,
+                        "order": 2,
                         "content": "Our Vision",
                         "level": 2
                     },
                     {
                         "type": "text",
                         "column": 2,
-                        "order": 2,
-                        "content": "We envision a world where every organization can build **powerful, secure intranets** without compromising on privacy or paying excessive licensing fees. IntraVox makes this possible."
+                        "order": 3,
+                        "content": "A world where every organization has access to **professional intranet functionality** without relying on expensive, closed systems.\n\nIntraVox makes this possible through:\n- Integration with Nextcloud\n- Modern web technologies\n- Community-driven development\n- Transparent roadmap"
                     }
                 ]
             },
@@ -75,53 +89,79 @@
                         "column": 1,
                         "order": 1,
                         "style": "solid",
-                        "color": "var(--color-border)",
+                        "color": "",
                         "height": "2px"
                     }
                 ]
             },
             {
-                "columns": 3,
+                "columns": 1,
                 "backgroundColor": "var(--color-background-hover)",
                 "widgets": [
                     {
                         "type": "heading",
                         "column": 1,
                         "order": 1,
-                        "content": "Simple Yet Powerful",
-                        "level": 3
-                    },
-                    {
-                        "type": "text",
-                        "column": 1,
-                        "order": 2,
-                        "content": "Easy enough for non-technical users, powerful enough for complex intranets"
-                    },
+                        "content": "Why IntraVox?",
+                        "level": 2
+                    }
+                ]
+            },
+            {
+                "columns": 4,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
                     {
                         "type": "heading",
-                        "column": 2,
+                        "column": 1,
                         "order": 1,
                         "content": "Open Source",
                         "level": 3
                     },
                     {
                         "type": "text",
-                        "column": 2,
+                        "column": 1,
                         "order": 2,
-                        "content": "Built on the AGPL license, free to use and modify"
+                        "content": "Full transparency in the code. View, modify and improve as you see fit."
                     },
                     {
                         "type": "heading",
-                        "column": 3,
+                        "column": 2,
                         "order": 1,
                         "content": "Privacy First",
                         "level": 3
                     },
                     {
                         "type": "text",
+                        "column": 2,
+                        "order": 2,
+                        "content": "Your data on your servers. Full GDPR compliance and data sovereignty."
+                    },
+                    {
+                        "type": "heading",
+                        "column": 3,
+                        "order": 1,
+                        "content": "Nextcloud Native",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
                         "column": 3,
                         "order": 2,
-                        "content": "Your data stays on your servers, under your control"
+                        "content": "Seamless integration with your existing Nextcloud environment and users."
+                    },
+                    {
+                        "type": "heading",
+                        "column": 4,
+                        "order": 1,
+                        "content": "Multilingual",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 4,
+                        "order": 2,
+                        "content": "Support for multiple languages within the same installation."
                     }
                 ]
             },
@@ -133,7 +173,40 @@
                         "type": "heading",
                         "column": 1,
                         "order": 1,
-                        "content": "Why Choose IntraVox?",
+                        "content": "Comparison with Alternatives",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "| Feature | IntraVox | SharePoint | Confluence |\n|---------|----------|------------|------------|\n| Open Source | Yes | No | No |\n| Self-hosted | Yes | Optional | Optional |\n| License costs | Free | Expensive | Expensive |\n| GDPR Compliant | Full | Complex | Complex |\n| Nextcloud Integration | Native | No | No |"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "",
+                        "height": "2px"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element-light)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "More Information",
                         "level": 2
                     },
                     {
@@ -143,51 +216,56 @@
                         "columns": 3,
                         "items": [
                             {
-                                "title": "Easy to Use",
-                                "text": "Intuitive interface for everyone",
-                                "url": "#",
-                                "icon": "hand-okay",
+                                "title": "View Features",
+                                "text": "Discover all possibilities",
+                                "url": "#functies",
+                                "icon": "cog",
                                 "target": "_self"
                             },
                             {
-                                "title": "Secure",
-                                "text": "Enterprise-grade security built-in",
-                                "url": "#",
-                                "icon": "shield-check",
+                                "title": "About Nextcloud",
+                                "text": "The underlying platform",
+                                "url": "#nextcloud",
+                                "icon": "cloud",
                                 "target": "_self"
                             },
                             {
-                                "title": "Open Source",
-                                "text": "Free and transparent codebase",
-                                "url": "#",
-                                "icon": "open-source-initiative",
-                                "target": "_self"
-                            },
-                            {
-                                "title": "Multi-Language",
-                                "text": "Support for multiple languages",
-                                "url": "#",
-                                "icon": "translate",
-                                "target": "_self"
-                            },
-                            {
-                                "title": "Responsive",
-                                "text": "Works on all devices",
-                                "url": "#",
-                                "icon": "responsive",
-                                "target": "_self"
-                            },
-                            {
-                                "title": "Collaborative",
-                                "text": "Team collaboration made easy",
-                                "url": "#",
-                                "icon": "account-multiple",
+                                "title": "Get In Touch",
+                                "text": "We are happy to help you",
+                                "url": "#contact",
+                                "icon": "email",
                                 "target": "_self"
                             }
                         ]
                     }
                 ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "transparent",
+                        "height": "20px"
+                    }
+                ]
             }
-        ]
+        ],
+        "sideColumns": {
+            "left": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            },
+            "right": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            }
+        }
     }
 }

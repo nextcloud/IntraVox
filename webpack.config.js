@@ -30,8 +30,24 @@ module.exports = {
     },
     output: {
         filename: 'intravox-[name].js',
+        chunkFilename: 'intravox-[name].js',
         path: path.resolve(__dirname, 'js'),
         clean: true
+    },
+    optimization: {
+        splitChunks: {
+            chunks: 'async',
+            minSize: 10000,
+            cacheGroups: {
+                // Separate vendor chunks for large dependencies
+                vendors: {
+                    test: /[\\/]node_modules[\\/]/,
+                    name: 'vendors',
+                    chunks: 'async',
+                    priority: 10
+                }
+            }
+        }
     },
     module: {
         rules: [

@@ -32,6 +32,7 @@ INCLUDE_ITEMS=(
     "img"
     "js"
     "scripts"
+    "demo-data"
     "CHANGELOG.md"
     "LICENSE"
     "README.md"
@@ -133,9 +134,9 @@ ssh -i "$SSH_KEY" "${REMOTE_USER}@${REMOTE_HOST}" << EOF
     echo "  🔌 Enabling app..."
     sudo -u www-data php occ app:enable $APP_NAME || true
 
-    # Run setup command
+    # Run setup command with force-demo to update demo data
     echo "  🏗️  Running IntraVox setup..."
-    sudo -u www-data php occ intravox:setup || echo "  ℹ️  Setup will complete on first use"
+    sudo -u www-data php occ intravox:setup --force-demo || echo "  ℹ️  Setup will complete on first use"
 
     echo "  ✅ App enabled"
 EOF

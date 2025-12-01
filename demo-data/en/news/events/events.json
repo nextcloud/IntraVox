@@ -1,0 +1,341 @@
+{
+    "uniqueId": "page-9c5eae33-ddd2-47f8-b9da-b0b19b981c3c",
+    "title": "Events",
+    "language": "en",
+    "layout": {
+        "columns": 1,
+        "rows": [
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element)",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "events-hero.jpg",
+                        "alt": "Events",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Events & Webinars",
+                        "level": 1
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 3,
+                        "content": "Don't miss any event! From internal workshops to external conferences - stay connected with the community."
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Upcoming Events",
+                        "level": 2
+                    }
+                ]
+            },
+            {
+                "columns": 2,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "webinar.jpg",
+                        "alt": "Webinar",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Webinar: IntraVox for Beginners",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 3,
+                        "content": "**Date:** December 15, 2024\n**Time:** 2:00 PM - 3:30 PM\n**Location:** Online (Zoom)\n\nLearn the basics of IntraVox in 90 minutes. Perfect for new users who want to become productive quickly."
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 4,
+                        "columns": 1,
+                        "items": [
+                            {
+                                "title": "Register",
+                                "text": "Registreer nu gratis",
+                                "url": "#",
+                                "icon": "calendar-check",
+                                "target": "_self"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "image",
+                        "column": 2,
+                        "order": 1,
+                        "src": "workshop.jpg",
+                        "alt": "Workshop",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 2,
+                        "content": "Workshop: Advanced Layouts",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 3,
+                        "content": "**Date:** December 20, 2024\n**Time:** 10:00 AM - 12:00 PM\n**Location:** Amsterdam Office\n\nDive deeper into layout options, side columns and background colors for professional pages."
+                    },
+                    {
+                        "type": "links",
+                        "column": 2,
+                        "order": 4,
+                        "columns": 1,
+                        "items": [
+                            {
+                                "title": "Register",
+                                "text": "Beperkt aantal plaatsen",
+                                "url": "#",
+                                "icon": "calendar-check",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "",
+                        "height": "2px"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Events Calendar",
+                        "level": 2
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 2,
+                        "columns": 4,
+                        "items": [
+                            {
+                                "title": "Dec 15",
+                                "text": "Webinar: Beginners",
+                                "url": "#",
+                                "icon": "video",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Dec 20",
+                                "text": "Workshop: Layouts",
+                                "url": "#",
+                                "icon": "school",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Yesn 10",
+                                "text": "Newjaarsborrel",
+                                "url": "#",
+                                "icon": "party-popper",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Yesn 25",
+                                "text": "Webinar: API's",
+                                "url": "#",
+                                "icon": "api",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element-light)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Past Events",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "| Date | Event | Recording |\n|-------|-----------|--------|\n| Nov 2024 | Webinar: Dark Mode | Available |\n| Oct 2024 | Workshop: Multi-language | Available |\n| Sep 2024 | Launch 0.4.0 | Available |\n| Aug 2024 | Summer BBQ | - |"
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 3,
+                        "columns": 1,
+                        "items": [
+                            {
+                                "title": "View Opnames",
+                                "text": "Alle webinar recordings",
+                                "url": "#",
+                                "icon": "video-box",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Related",
+                        "level": 2
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 2,
+                        "columns": 3,
+                        "items": [
+                            {
+                                "title": "Product Updates",
+                                "text": "New features",
+                                "url": "#nieuws/updates",
+                                "icon": "update",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "News",
+                                "text": "All messages",
+                                "url": "#nieuws",
+                                "icon": "newspaper",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Contact",
+                                "text": "Ask a question",
+                                "url": "#contact",
+                                "icon": "email",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "transparent",
+                        "height": "20px"
+                    }
+                ]
+            }
+        ],
+        "sideColumns": {
+            "left": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            },
+            "right": {
+                "enabled": true,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Next Event",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "**Webinar: Beginners**\n\nDecember 15, 2024\n2:00 PM - 3:30 PM\n\nOnline via Zoom"
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 3,
+                        "columns": 1,
+                        "items": [
+                            {
+                                "text": "Register",
+                                "url": "#",
+                                "icon": "calendar-plus"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 4,
+                        "style": "solid",
+                        "color": "",
+                        "height": "1px"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 5,
+                        "content": "Newsletter",
+                        "level": 4
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 6,
+                        "content": "Receive event updates in your inbox."
+                    }
+                ]
+            }
+        }
+    }
+}

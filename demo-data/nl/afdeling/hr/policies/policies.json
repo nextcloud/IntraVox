@@ -1,0 +1,118 @@
+{
+    "uniqueId": "page-hr-poli-3333-4444-5555-999999999999",
+    "title": "HR Policies",
+    "language": "nl",
+    "layout": {
+        "columns": 1,
+        "rows": [
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "HR Policies & Reglementen",
+                        "level": 1
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Alle belangrijke regels en richtlijnen voor medewerkers van IntraVox."
+                    }
+                ]
+            },
+            {
+                "columns": 2,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Werktijden & Verlof",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "**Werktijden:**\n- Flexibele werktijden\n- Kernuren: 10:00 - 15:00\n- 40 uur per week (fulltime)\n\n**Verlof:**\n- 25 vakantiedagen\n- Feestdagen conform CAO\n- Onbetaald verlof mogelijk"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 1,
+                        "content": "Thuiswerken",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 2,
+                        "content": "**Hybride werken:**\n- Max 3 dagen thuis per week\n- Thuiswerkvergoeding: €2/dag\n- Thuiswerkplek voldoet aan Arbowet\n\n**Voorwaarden:**\n- Goede internetverbinding\n- Bereikbaar tijdens kernuren"
+                    }
+                ]
+            },
+            {
+                "columns": 2,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Ziekteverzuim",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "**Bij ziekte:**\n\n1. Meld je ziek vóór 09:00\n2. Bel je leidinggevende\n3. Blijf bereikbaar\n4. Meld je beter zodra mogelijk"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 1,
+                        "content": "Gedragscode",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 2,
+                        "content": "**Kernwaarden:**\n\n- Respect voor collega's\n- Open communicatie\n- Integriteit\n- Samenwerking\n- Professionaliteit"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 1,
+                        "columns": 1,
+                        "items": [
+                            {
+                                "title": "Terug naar HR",
+                                "text": "HR overzicht",
+                                "url": "#page-hr-a1b2c3d4-e5f6-7890-abcd-444444444444",
+                                "icon": "arrow-left",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ],
+        "sideColumns": {
+            "left": { "enabled": false, "backgroundColor": "", "widgets": [] },
+            "right": { "enabled": false, "backgroundColor": "", "widgets": [] }
+        }
+    }
+}

@@ -1,9 +1,7 @@
 {
-    "uniqueId": "page-2e8f694e-147e-4793-8949-4732e679ae6b",
-    "title": "Welcome to IntraVox",
+    "uniqueId": "page-61e74e0f-f7ff-4734-b1bd-6d48e1cae3e2",
+    "title": "Welcome at IntraVox",
     "language": "en",
-    "created": 1760945741,
-    "modified": 1763537741,
     "layout": {
         "columns": 1,
         "rows": [
@@ -15,22 +13,22 @@
                         "type": "image",
                         "column": 1,
                         "order": 1,
-                        "src": "team-hero.jpg",
-                        "alt": "The IntraVox team",
+                        "src": "hero-team.jpg",
+                        "alt": "Team collaboration with IntraVox",
                         "objectFit": "cover"
                     },
                     {
                         "type": "heading",
                         "column": 1,
                         "order": 2,
-                        "content": "Welcome to IntraVox",
+                        "content": "IntraVox - Your Modern Intranet Solution",
                         "level": 1
                     },
                     {
                         "type": "text",
                         "column": 1,
                         "order": 3,
-                        "content": "Your modern intranet platform built on Nextcloud"
+                        "content": "**Transform your organization** with a powerful intranet platform built on Nextcloud. Open source, secure and fully customizable."
                     }
                 ]
             },
@@ -49,156 +47,96 @@
                         "type": "text",
                         "column": 1,
                         "order": 2,
-                        "content": "IntraVox is a powerful **intranet application** for Nextcloud that brings SharePoint-style content management to the open-source world.\n\n✓ Create beautiful pages with a visual editor\n✓ Organize content with multi-level navigation\n✓ Support for multiple languages\n✓ Secure team collaboration"
+                        "content": "IntraVox is a **modern intranet application** for Nextcloud that brings SharePoint-like content management to the open-source world.\n\n**Why choose IntraVox?**\n\n- Create beautiful pages with a visual editor\n- Organize content with multi-level navigation\n- Support for multiple languages\n- Secure team collaboration\n- Full integration with Nextcloud"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "",
+                        "height": "2px"
                     }
                 ]
             },
             {
                 "columns": 3,
-                "backgroundColor": "",
+                "backgroundColor": "var(--color-background-hover)",
                 "widgets": [
                     {
                         "type": "image",
                         "column": 1,
                         "order": 1,
-                        "src": "features-showcase.jpg",
-                        "alt": "Feature showcase",
+                        "src": "features.jpg",
+                        "alt": "Krachtige functies",
                         "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Powerful Features",
+                        "level": 3
                     },
                     {
                         "type": "text",
                         "column": 1,
-                        "order": 2,
-                        "content": "**Powerful Features** - Create stunning pages with our visual editor. Add images, text, links, and more with just a few clicks."
+                        "order": 3,
+                        "content": "Create professional pages with text, images, links and more. The drag-and-drop editor makes it easy to manage content."
                     },
                     {
                         "type": "image",
                         "column": 2,
                         "order": 1,
                         "src": "collaboration.jpg",
-                        "alt": "Team collaboration",
-                        "objectFit": "cover"
-                    },
-                    {
-                        "type": "text",
-                        "column": 2,
-                        "order": 2,
-                        "content": "**Easy Collaboration** - Work together with your team in real-time. Share knowledge and keep everyone connected."
-                    },
-                    {
-                        "type": "image",
-                        "column": 3,
-                        "order": 1,
-                        "src": "open-source.jpg",
-                        "alt": "Open source freedom",
-                        "objectFit": "cover"
-                    },
-                    {
-                        "type": "text",
-                        "column": 3,
-                        "order": 2,
-                        "content": "**100% Open Source** - No vendor lock-in, no hidden costs. Complete control and freedom with the AGPL license."
-                    }
-                ]
-            },
-            {
-                "columns": 1,
-                "backgroundColor": "",
-                "widgets": [
-                    {
-                        "type": "divider",
-                        "column": 1,
-                        "order": 1,
-                        "style": "solid",
-                        "color": "var(--color-border)",
-                        "height": "2px"
-                    }
-                ]
-            },
-            {
-                "columns": 1,
-                "backgroundColor": "var(--color-background-hover)",
-                "widgets": [
-                    {
-                        "type": "heading",
-                        "column": 1,
-                        "order": 1,
-                        "content": "Why Choose IntraVox?",
-                        "level": 2
-                    },
-                    {
-                        "type": "text",
-                        "column": 1,
-                        "order": 2,
-                        "content": "Discover what makes IntraVox the perfect choice for your organization's intranet needs."
-                    }
-                ]
-            },
-            {
-                "columns": 2,
-                "backgroundColor": "",
-                "widgets": [
-                    {
-                        "type": "image",
-                        "column": 1,
-                        "order": 1,
-                        "src": "modern-workspace.jpg",
-                        "alt": "Modern digital workspace",
-                        "objectFit": "cover"
-                    },
-                    {
-                        "type": "heading",
-                        "column": 1,
-                        "order": 2,
-                        "content": "Modern & Intuitive",
-                        "level": 2
-                    },
-                    {
-                        "type": "text",
-                        "column": 1,
-                        "order": 3,
-                        "content": "A beautiful, user-friendly interface that your team will love. Built with modern web technologies for the best user experience."
-                    },
-                    {
-                        "type": "image",
-                        "column": 2,
-                        "order": 1,
-                        "src": "secure-platform.jpg",
-                        "alt": "Secure collaboration platform",
+                        "alt": "Team samenwerking",
                         "objectFit": "cover"
                     },
                     {
                         "type": "heading",
                         "column": 2,
                         "order": 2,
-                        "content": "Secure by Design",
-                        "level": 2
+                        "content": "Seamless Collaboration",
+                        "level": 3
                     },
                     {
                         "type": "text",
                         "column": 2,
                         "order": 3,
-                        "content": "Your data stays on your servers. Built on Nextcloud's proven security architecture with enterprise-grade protection."
-                    }
-                ]
-            },
-            {
-                "columns": 1,
-                "backgroundColor": "",
-                "widgets": [
+                        "content": "Work together with your team in real-time. Share knowledge, build beautiful intranets and keep everyone connected."
+                    },
                     {
-                        "type": "divider",
-                        "column": 1,
+                        "type": "image",
+                        "column": 3,
                         "order": 1,
-                        "style": "solid",
-                        "color": "var(--color-border)",
-                        "height": "2px"
+                        "src": "opensource.jpg",
+                        "alt": "Open source vrijheid",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 3,
+                        "order": 2,
+                        "content": "100% Open Source",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 3,
+                        "order": 3,
+                        "content": "No vendor lock-in, no hidden costs. IntraVox is fully open source under the AGPL license."
                     }
                 ]
             },
             {
                 "columns": 1,
-                "backgroundColor": "var(--color-background-hover)",
+                "backgroundColor": "var(--color-primary-element-light)",
                 "widgets": [
                     {
                         "type": "heading",
@@ -214,29 +152,29 @@
                         "columns": 4,
                         "items": [
                             {
-                                "title": "About Us",
-                                "text": "Learn about IntraVox mission and vision",
-                                "url": "#about",
+                                "title": "About IntraVox",
+                                "text": "Discover our mission and vision",
+                                "url": "#over-intravox",
                                 "icon": "information",
                                 "target": "_self"
                             },
                             {
-                                "title": "Our Team",
-                                "text": "Meet the people behind IntraVox",
-                                "url": "#team",
-                                "icon": "account-multiple",
+                                "title": "Features",
+                                "text": "View all possibilities",
+                                "url": "#functies",
+                                "icon": "cog",
                                 "target": "_self"
                             },
                             {
-                                "title": "Documentation",
-                                "text": "Get started with IntraVox guides",
-                                "url": "#documentation",
-                                "icon": "book-open",
+                                "title": "Nextcloud",
+                                "text": "Learn more about the platform",
+                                "url": "#nextcloud",
+                                "icon": "cloud",
                                 "target": "_self"
                             },
                             {
                                 "title": "Contact",
-                                "text": "Get in touch with us",
+                                "text": "Contact us",
                                 "url": "#contact",
                                 "icon": "email",
                                 "target": "_self"
@@ -250,52 +188,108 @@
                 "backgroundColor": "",
                 "widgets": [
                     {
-                        "type": "image",
+                        "type": "divider",
                         "column": 1,
                         "order": 1,
-                        "src": "collaboration.jpg",
-                        "alt": "Team collaboration",
-                        "objectFit": "cover"
-                    },
-                    {
-                        "type": "heading",
-                        "column": 1,
-                        "order": 2,
-                        "content": "Collaborate Seamlessly",
-                        "level": 2
-                    },
-                    {
-                        "type": "text",
-                        "column": 1,
-                        "order": 3,
-                        "content": "Work together with your team in real-time. Share knowledge, build beautiful intranets, and keep everyone connected with IntraVox."
+                        "style": "solid",
+                        "color": "",
+                        "height": "2px"
                     }
                 ]
             },
             {
-                "columns": 1,
+                "columns": 2,
                 "backgroundColor": "",
                 "widgets": [
                     {
                         "type": "image",
                         "column": 1,
                         "order": 1,
-                        "src": "open-source.jpg",
-                        "alt": "Open source community",
+                        "src": "modern-office.jpg",
+                        "alt": "Moderne digitale werkplek",
                         "objectFit": "cover"
                     },
                     {
                         "type": "heading",
                         "column": 1,
                         "order": 2,
-                        "content": "Open Source Freedom",
+                        "content": "Modern & Intuitive",
                         "level": 2
                     },
                     {
                         "type": "text",
                         "column": 1,
                         "order": 3,
-                        "content": "No vendor lock-in, no hidden costs. IntraVox is **100% open source** under the AGPL license, giving you complete control and freedom."
+                        "content": "A beautiful, user-friendly interface your team will love. Built with modern web technologies for the best user experience.\n\n**Features:**\n- Responsive design for all devices\n- Intuitive drag-and-drop editor\n- Real-time preview"
+                    },
+                    {
+                        "type": "image",
+                        "column": 2,
+                        "order": 1,
+                        "src": "security.jpg",
+                        "alt": "Secure samenwerkingsplatform",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 2,
+                        "content": "Secure by Design",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 3,
+                        "content": "Your data stays on your own servers. Built on Nextcloud's proven security architecture with enterprise-grade protection.\n\n**Security:**\n- End-to-end encryption\n- GDPR compliant\n- On-premise hosting"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "External Resources",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Discover more about Nextcloud and the open source community:"
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 3,
+                        "columns": 3,
+                        "items": [
+                            {
+                                "title": "Nextcloud Website",
+                                "text": "Official Nextcloud website",
+                                "url": "https://nextcloud.com",
+                                "icon": "open-in-new",
+                                "target": "_blank"
+                            },
+                            {
+                                "title": "GitHub Repository",
+                                "text": "View the source code",
+                                "url": "https://github.com/nextcloud",
+                                "icon": "github",
+                                "target": "_blank"
+                            },
+                            {
+                                "title": "Documentation",
+                                "text": "Nextcloud guides",
+                                "url": "https://docs.nextcloud.com",
+                                "icon": "book-open",
+                                "target": "_blank"
+                            }
+                        ]
                     }
                 ]
             },
@@ -308,7 +302,7 @@
                         "column": 1,
                         "order": 1,
                         "style": "solid",
-                        "color": "var(--color-border)",
+                        "color": "",
                         "height": "2px"
                     }
                 ]
@@ -328,39 +322,129 @@
                         "type": "text",
                         "column": 1,
                         "order": 2,
-                        "content": "Stay up to date with the latest news, events, and announcements from our organization."
+                        "content": "Stay up to date with the latest news, events and announcements from our organization."
                     },
                     {
                         "type": "links",
                         "column": 1,
                         "order": 3,
-                        "columns": 3,
+                        "columns": 2,
                         "items": [
                             {
                                 "title": "News",
                                 "text": "Latest updates and announcements",
-                                "url": "#news",
+                                "url": "#nieuws",
                                 "icon": "newspaper",
                                 "target": "_self"
                             },
                             {
-                                "title": "Events",
-                                "text": "Upcoming events and activities",
-                                "url": "#events",
-                                "icon": "calendar",
-                                "target": "_self"
-                            },
-                            {
-                                "title": "Press Releases",
-                                "text": "Official press releases",
-                                "url": "#press",
-                                "icon": "bullhorn",
+                                "title": "Departments",
+                                "text": "Information per department",
+                                "url": "#afdeling",
+                                "icon": "account-multiple",
                                 "target": "_self"
                             }
                         ]
                     }
                 ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "transparent",
+                        "height": "20px"
+                    }
+                ]
             }
-        ]
+        ],
+        "sideColumns": {
+            "left": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            },
+            "right": {
+                "enabled": true,
+                "backgroundColor": "var(--color-primary-element)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Quick Navigation",
+                        "level": 3
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 2,
+                        "items": [
+                            {
+                                "text": "About Us",
+                                "url": "#over-intravox",
+                                "icon": "information"
+                            },
+                            {
+                                "text": "Features",
+                                "url": "#functies",
+                                "icon": "cog"
+                            },
+                            {
+                                "text": "News",
+                                "url": "#nieuws",
+                                "icon": "newspaper"
+                            },
+                            {
+                                "text": "Contact",
+                                "url": "#contact",
+                                "icon": "email"
+                            }
+                        ],
+                        "columns": 1
+                    },
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 3,
+                        "style": "solid",
+                        "color": "",
+                        "height": "1px"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 4,
+                        "content": "Need Help?",
+                        "level": 4
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 5,
+                        "content": "Our support is available on weekdays from 9:00 - 17:00"
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 6,
+                        "items": [
+                            {
+                                "text": "Support Portal",
+                                "url": "https://help.nextcloud.com",
+                                "icon": "help-circle",
+                                "target": "_blank"
+                            }
+                        ],
+                        "columns": 1
+                    }
+                ]
+            }
+        }
     }
 }

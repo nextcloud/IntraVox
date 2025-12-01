@@ -56,10 +56,13 @@
             <NavigationItem :item="element"
                            :index="index"
                            :level="1"
-                           :pages="pages"
+                           :is-first="index === 0"
+                           :sibling-count="localNavigation.items.length"
                            @update="updateItem"
                            @delete="deleteItem"
-                           @add-child="addChildItem" />
+                           @add-child="addChildItem"
+                           @promote="promoteItem"
+                           @demote="demoteItem" />
           </template>
         </draggable>
       </div>
@@ -90,10 +93,6 @@ export default {
     navigation: {
       type: Object,
       required: true
-    },
-    pages: {
-      type: Array,
-      default: () => []
     }
   },
   emits: ['close', 'save'],
@@ -174,6 +173,91 @@ export default {
       }
 
       return current;
+    },
+    getParentAndIndex(path) {
+      const parts = path.split('.').map(p => parseInt(p));
+
+      if (parts.length === 1) {
+        // Top level item
+        return {
+          parent: null,
+          parentList: this.localNavigation.items,
+          index: parts[0]
+        };
+      }
+
+      // Nested item - get the parent
+      const parentPath = parts.slice(0, -1);
+      let parent = this.localNavigation.items[parentPath[0]];
+
+      for (let i = 1; i < parentPath.length; i++) {
+        if (!parent || !parent.children) return null;
+        parent = parent.children[parentPath[i]];
+      }
+
+      return {
+        parent,
+        parentList: parent.children,
+        index: parts[parts.length - 1]
+      };
+    },
+    promoteItem(path) {
+      // Move item up one level (to parent's level, after the parent)
+      const parts = path.split('.').map(p => parseInt(p));
+
+      if (parts.length === 1) {
+        // Already at top level, can't promote
+        return;
+      }
+
+      // Get the item to promote
+      const info = this.getParentAndIndex(path);
+      if (!info) return;
+
+      const item = info.parentList[info.index];
+
+      // Remove from current location
+      info.parentList.splice(info.index, 1);
+
+      // Find grandparent's list and parent's index
+      if (parts.length === 2) {
+        // Parent is at top level
+        const parentIndex = parts[0];
+        // Insert after parent in top level
+        this.localNavigation.items.splice(parentIndex + 1, 0, item);
+      } else {
+        // Parent is nested - get grandparent
+        const grandparentPath = parts.slice(0, -2).join('.');
+        const grandparentInfo = this.getParentAndIndex(parts.slice(0, -1).join('.'));
+        if (grandparentInfo) {
+          // Insert after parent in grandparent's children
+          grandparentInfo.parentList.splice(grandparentInfo.index + 1, 0, item);
+        }
+      }
+    },
+    demoteItem(path) {
+      // Make item a child of the item above it
+      const info = this.getParentAndIndex(path);
+      if (!info || info.index === 0) {
+        // First item in list, can't demote
+        return;
+      }
+
+      const item = info.parentList[info.index];
+      const siblingAbove = info.parentList[info.index - 1];
+
+      if (!siblingAbove) return;
+
+      // Initialize children array if needed
+      if (!siblingAbove.children) {
+        siblingAbove.children = [];
+      }
+
+      // Remove from current location
+      info.parentList.splice(info.index, 1);
+
+      // Add as last child of sibling above
+      siblingAbove.children.push(item);
     },
     save() {
       this.$emit('save', this.localNavigation);

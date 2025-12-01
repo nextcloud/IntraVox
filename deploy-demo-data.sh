@@ -71,6 +71,21 @@ TEMP_PATH="/tmp/intravox-demo-data"
 echo "   Cleaning existing demo data..."
 sudo rm -rf "${GROUPFOLDER}/nl"
 sudo rm -rf "${GROUPFOLDER}/en"
+
+# Force scan groupfolder to detect removals and clear stale cache entries
+echo "   Forcing groupfolder rescan to clear file cache..."
+sudo -u www-data php /var/www/nextcloud/occ groupfolders:scan 1 > /dev/null 2>&1 || true
+
+# Clean up any orphaned file cache entries
+echo "   Cleaning orphaned file cache entries..."
+sudo -u www-data php /var/www/nextcloud/occ files:cleanup > /dev/null 2>&1 || true
+
+# Remove any remaining stale cache entries for nl/en paths
+echo "   Removing stale cache entries from database..."
+sudo mysql -e "DELETE FROM oc_filecache WHERE path LIKE '%__groupfolders/1/files/nl%';" nextcloud 2>/dev/null || true
+sudo mysql -e "DELETE FROM oc_filecache WHERE path LIKE '%__groupfolders/1/files/en%';" nextcloud 2>/dev/null || true
+
+# Create fresh directories
 sudo mkdir -p "${GROUPFOLDER}/nl"
 sudo mkdir -p "${GROUPFOLDER}/en"
 sudo chown -R www-data:www-data "${GROUPFOLDER}/nl" "${GROUPFOLDER}/en"
@@ -132,6 +147,11 @@ echo "   ✅ NL structure copied recursively"
 echo "   📁 Deploying English (en) demo data..."
 sudo -u www-data php /var/www/nextcloud/occ intravox:import --language=en "${TEMP_PATH}/en" 2>&1 | grep -E '(Created|Updated|Successfully|Error|Failed)' || true
 
+# Copy the entire EN structure recursively (same as NL)
+echo "   📁 Copying ALL nested EN page structures recursively..."
+copy_nested_structure "${TEMP_PATH}/en" "${GROUPFOLDER}/en"
+
+echo "   ✅ EN structure copied recursively"
 echo "   ✅ Demo data deployed to groupfolder"
 ENDSSH
 
