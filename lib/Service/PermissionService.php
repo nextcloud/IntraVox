@@ -34,12 +34,6 @@ class PermissionService {
     private LoggerInterface $logger;
     private ?string $userId;
 
-    /** @var array Permission cache: [path => permissions] */
-    private array $permissionCache = [];
-
-    /** @var int|null Cached GroupFolder ID */
-    private ?int $groupFolderId = null;
-
     public function __construct(
         IRootFolder $rootFolder,
         IUserSession $userSession,
@@ -62,10 +56,6 @@ class PermissionService {
      * Get the GroupFolder ID for IntraVox
      */
     private function getGroupFolderId(): ?int {
-        if ($this->groupFolderId !== null) {
-            return $this->groupFolderId;
-        }
-
         try {
             if (!\OC::$server->getAppManager()->isEnabledForUser('groupfolders')) {
                 return null;
@@ -84,8 +74,7 @@ class PermissionService {
                 }
 
                 if ($mountPoint === 'IntraVox') {
-                    $this->groupFolderId = (int)$id;
-                    return $this->groupFolderId;
+                    return (int)$id;
                 }
             }
         } catch (\Exception $e) {
@@ -110,16 +99,8 @@ class PermissionService {
             return 0;
         }
 
-        // Check cache first
-        $cacheKey = $userId . ':' . $relativePath;
-        if (isset($this->permissionCache[$cacheKey])) {
-            return $this->permissionCache[$cacheKey];
-        }
-
         try {
-            $permissions = $this->calculatePermissions($relativePath, $userId);
-            $this->permissionCache[$cacheKey] = $permissions;
-            return $permissions;
+            return $this->calculatePermissions($relativePath, $userId);
         } catch (\Exception $e) {
             $this->logger->error('Failed to get permissions for path ' . $relativePath . ': ' . $e->getMessage());
             return 0;
@@ -365,9 +346,7 @@ class PermissionService {
         foreach ($items as $item) {
             // If item has a uniqueId, check permissions for that page
             if (!empty($item['uniqueId'])) {
-                // We need to find the path for this uniqueId
-                // For now, we'll include the item and let the page load check permissions
-                // In a future optimization, we could cache uniqueId -> path mapping
+                // We'll include the item and let the page load check permissions
                 $filteredItem = $item;
             } elseif (!empty($item['url'])) {
                 // External URL, always include
@@ -414,11 +393,4 @@ class PermissionService {
         return $absolutePath;
     }
 
-    /**
-     * Clear the permission cache.
-     * Call this when ACL rules might have changed.
-     */
-    public function clearCache(): void {
-        $this->permissionCache = [];
-    }
 }
