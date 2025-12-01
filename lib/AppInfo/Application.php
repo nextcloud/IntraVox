@@ -29,6 +29,19 @@ class Application extends App implements IBootstrap {
             );
         });
 
+        // Register PermissionService
+        $context->registerService(\OCA\IntraVox\Service\PermissionService::class, function ($c) {
+            return new \OCA\IntraVox\Service\PermissionService(
+                $c->get(\OCP\Files\IRootFolder::class),
+                $c->get(\OCP\IUserSession::class),
+                $c->get(\OCP\IGroupManager::class),
+                $c->get(\OCA\IntraVox\Service\SetupService::class),
+                $c->get(\OCP\IConfig::class),
+                $c->get(\Psr\Log\LoggerInterface::class),
+                $c->get(\OCP\IUserSession::class)->getUser()?->getUID()
+            );
+        });
+
         // Register FooterService
         $context->registerService(\OCA\IntraVox\Service\FooterService::class, function ($c) {
             return new \OCA\IntraVox\Service\FooterService(

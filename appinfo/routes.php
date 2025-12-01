@@ -23,6 +23,7 @@ return [
         ['name' => 'api#searchPages', 'url' => '/api/search', 'verb' => 'GET'],
         ['name' => 'api#getBreadcrumb', 'url' => '/api/pages/{id}/breadcrumb', 'verb' => 'GET'],
         ['name' => 'api#getMetaVoxStatus', 'url' => '/api/metavox/status', 'verb' => 'GET'],
+        ['name' => 'api#getPermissions', 'url' => '/api/permissions', 'verb' => 'GET'],
         ['name' => 'navigation#get', 'url' => '/api/navigation', 'verb' => 'GET'],
         ['name' => 'navigation#save', 'url' => '/api/navigation', 'verb' => 'POST'],
         ['name' => 'footer#get', 'url' => '/api/footer', 'verb' => 'GET'],

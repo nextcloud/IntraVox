@@ -15,7 +15,7 @@
 
       <div class="header-right">
         <!-- Edit Page Button (only visible when user has edit permissions for this page) -->
-        <NcButton v-if="!isEditMode && currentPage?.canEdit"
+        <NcButton v-if="!isEditMode && canEditCurrentPage"
                   @click="startEditMode"
                   type="secondary"
                   :aria-label="t('Edit this page')">
@@ -243,22 +243,25 @@ export default {
   },
   computed: {
     /**
-     * Page permissions based on folder-level ACLs
+     * Page permissions based on folder-level ACLs from GroupFolder
      * Uses Nextcloud's permission system to determine what the user can do
-     * - editNavigation: Can edit navigation (language folder level)
-     * - viewPages: Everyone can view pages
-     * - createPage: Can create pages in current folder
-     * - editPage: Can edit the current page (folder-specific)
-     * - deletePage: Can delete pages (folder-specific)
+     * Permissions are retrieved from the API for each page
      */
     pagePermissions() {
+      const perms = this.currentPage?.permissions || {};
       return {
         editNavigation: this.canEditNavigation,
-        viewPages: true,  // Everyone can view pages
-        createPage: this.currentPage?.canEdit || false,  // Use folder permissions
-        editPage: this.currentPage?.canEdit || false,    // Use folder permissions
-        deletePage: this.currentPage?.canEdit || false   // Use folder permissions
+        viewPages: perms.canRead !== false,  // Default to true if not specified
+        createPage: perms.canCreate || false,
+        editPage: perms.canWrite || false,
+        deletePage: perms.canDelete || false
       };
+    },
+    /**
+     * Helper to check if user can edit the current page
+     */
+    canEditCurrentPage() {
+      return this.currentPage?.permissions?.canWrite || false;
     },
     /**
      * Returns the page to display - either the version preview or the current page
@@ -788,7 +791,9 @@ export default {
         const url = generateUrl('/apps/intravox/api/navigation');
         const response = await axios.get(url);
         this.navigation = response.data.navigation;
-        this.canEditNavigation = response.data.canEdit;
+        // Use permissions object if available, fall back to canEdit for backwards compatibility
+        const perms = response.data.permissions || {};
+        this.canEditNavigation = perms.canWrite ?? response.data.canEdit ?? false;
       } catch (err) {
         // Provide default empty navigation
         this.navigation = {
@@ -812,7 +817,9 @@ export default {
       try {
         const response = await axios.get(generateUrl('/apps/intravox/api/footer'));
         this.footerContent = response.data.content;
-        this.canEditFooter = response.data.canEdit;
+        // Use permissions object if available, fall back to canEdit for backwards compatibility
+        const perms = response.data.permissions || {};
+        this.canEditFooter = perms.canWrite ?? response.data.canEdit ?? false;
       } catch (err) {
         this.footerContent = '';
         this.canEditFooter = false;

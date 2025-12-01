@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace OCA\IntraVox\Controller;
 
 use OCA\IntraVox\Service\DemoDataService;
+use OCA\IntraVox\Service\PermissionService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -16,16 +17,19 @@ use Psr\Log\LoggerInterface;
  */
 class DemoDataController extends Controller {
     private DemoDataService $demoDataService;
+    private PermissionService $permissionService;
     private LoggerInterface $logger;
 
     public function __construct(
         string $appName,
         IRequest $request,
         DemoDataService $demoDataService,
+        PermissionService $permissionService,
         LoggerInterface $logger
     ) {
         parent::__construct($appName, $request);
         $this->demoDataService = $demoDataService;
+        $this->permissionService = $permissionService;
         $this->logger = $logger;
     }
 
@@ -37,6 +41,14 @@ class DemoDataController extends Controller {
     #[NoAdminRequired]
     public function getStatus(): DataResponse {
         try {
+            // Check if user has access
+            if (!$this->permissionService->hasAccess()) {
+                return new DataResponse(
+                    ['error' => 'Access denied'],
+                    Http::STATUS_FORBIDDEN
+                );
+            }
+
             $status = $this->demoDataService->getStatus();
             return new DataResponse($status);
         } catch (\Exception $e) {
@@ -50,6 +62,7 @@ class DemoDataController extends Controller {
 
     /**
      * Import demo data for a specific language
+     * Only admins (users with full permissions) can import demo data
      *
      * @param string $language Language code (nl, en)
      * @return DataResponse
@@ -57,6 +70,14 @@ class DemoDataController extends Controller {
     #[NoAdminRequired]
     public function importDemoData(string $language = 'nl'): DataResponse {
         try {
+            // Only admins can import demo data
+            if (!$this->permissionService->isAdmin()) {
+                return new DataResponse(
+                    ['success' => false, 'error' => 'Permission denied: only administrators can import demo data'],
+                    Http::STATUS_FORBIDDEN
+                );
+            }
+
             $result = $this->demoDataService->importDemoData($language);
 
             $statusCode = $result['success'] ? Http::STATUS_OK : Http::STATUS_INTERNAL_SERVER_ERROR;
@@ -78,6 +99,14 @@ class DemoDataController extends Controller {
     #[NoAdminRequired]
     public function getLanguages(): DataResponse {
         try {
+            // Check if user has access
+            if (!$this->permissionService->hasAccess()) {
+                return new DataResponse(
+                    ['error' => 'Access denied'],
+                    Http::STATUS_FORBIDDEN
+                );
+            }
+
             $languages = $this->demoDataService->getAvailableLanguages();
             return new DataResponse(['languages' => $languages]);
         } catch (\Exception $e) {
