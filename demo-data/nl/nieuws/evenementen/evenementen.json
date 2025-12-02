@@ -21,14 +21,14 @@
                         "type": "heading",
                         "column": 1,
                         "order": 2,
-                        "content": "Evenementen & Webinars",
+                        "content": "Evenementen",
                         "level": 1
                     },
                     {
                         "type": "text",
                         "column": 1,
                         "order": 3,
-                        "content": "Mis geen enkel evenement! Van interne workshops tot externe conferenties - blijf verbonden met de community."
+                        "content": "Dit is een demo evenementenpagina. Gebruik deze layout om aankomende bedrijfsevenementen, vergaderingen of belangrijke data te tonen."
                     }
                 ]
             },
@@ -40,8 +40,14 @@
                         "type": "heading",
                         "column": 1,
                         "order": 1,
-                        "content": "Aankomende Evenementen",
+                        "content": "Voorbeeld: Aankomende Evenementen",
                         "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "De twee-kolommen layout hieronder laat zien hoe u event cards kunt tonen met afbeeldingen, beschrijvingen en actieknoppen."
                     }
                 ]
             },
@@ -61,14 +67,14 @@
                         "type": "heading",
                         "column": 1,
                         "order": 2,
-                        "content": "Webinar: IntraVox voor Beginners",
+                        "content": "Voorbeeld: Online Webinar",
                         "level": 3
                     },
                     {
                         "type": "text",
                         "column": 1,
                         "order": 3,
-                        "content": "**Datum:** 15 december 2024\n**Tijd:** 14:00 - 15:30\n**Locatie:** Online (Zoom)\n\nLeer de basis van IntraVox in 90 minuten. Perfect voor nieuwe gebruikers die snel productief willen worden."
+                        "content": "Voeg hier eventdetails toe:\n\n- Datum en tijd\n- Locatie (online/fysiek)\n- Beschrijving\n- Registratielink"
                     },
                     {
                         "type": "links",
@@ -77,8 +83,8 @@
                         "columns": 1,
                         "items": [
                             {
-                                "title": "Aanmelden",
-                                "text": "Registreer nu gratis",
+                                "title": "Registreren",
+                                "text": "Meld je aan voor dit event",
                                 "url": "#",
                                 "icon": "calendar-check",
                                 "target": "_self"
@@ -97,14 +103,14 @@
                         "type": "heading",
                         "column": 2,
                         "order": 2,
-                        "content": "Workshop: Geavanceerde Layouts",
+                        "content": "Voorbeeld: Fysieke Workshop",
                         "level": 3
                     },
                     {
                         "type": "text",
                         "column": 2,
                         "order": 3,
-                        "content": "**Datum:** 20 december 2024\n**Tijd:** 10:00 - 12:00\n**Locatie:** Kantoor Amsterdam\n\nDuik dieper in layout mogelijkheden, zijkolommen en achtergrondkleuren voor professionele pagina's."
+                        "content": "Fysieke events kunnen bevatten:\n\n- Locatieadres\n- Parkeermogelijkheden\n- Maximaal aantal deelnemers\n- Wat mee te nemen"
                     },
                     {
                         "type": "links",
@@ -113,7 +119,7 @@
                         "columns": 1,
                         "items": [
                             {
-                                "title": "Aanmelden",
+                                "title": "Registreren",
                                 "text": "Beperkt aantal plaatsen",
                                 "url": "#",
                                 "icon": "calendar-check",
@@ -145,41 +151,47 @@
                         "type": "heading",
                         "column": 1,
                         "order": 1,
-                        "content": "Evenementen Kalender",
+                        "content": "Snelkoppelingen Kalender",
                         "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "De Links widget kan worden gebruikt voor een visueel kalenderoverzicht:"
                     },
                     {
                         "type": "links",
                         "column": 1,
-                        "order": 2,
+                        "order": 3,
                         "columns": 4,
                         "items": [
                             {
-                                "title": "Dec 15",
-                                "text": "Webinar: Beginners",
+                                "title": "Q1",
+                                "text": "Eerste kwartaal events",
                                 "url": "#",
                                 "icon": "video",
                                 "target": "_self"
                             },
                             {
-                                "title": "Dec 20",
-                                "text": "Workshop: Layouts",
+                                "title": "Q2",
+                                "text": "Tweede kwartaal events",
                                 "url": "#",
                                 "icon": "school",
                                 "target": "_self"
                             },
                             {
-                                "title": "Jan 10",
-                                "text": "Nieuwjaarsborrel",
+                                "title": "Q3",
+                                "text": "Derde kwartaal events",
                                 "url": "#",
                                 "icon": "party-popper",
                                 "target": "_self"
                             },
                             {
-                                "title": "Jan 25",
-                                "text": "Webinar: API's",
+                                "title": "Q4",
+                                "text": "Vierde kwartaal events",
                                 "url": "#",
-                                "icon": "api",
+                                "icon": "calendar",
                                 "target": "_self"
                             }
                         ]
@@ -194,14 +206,14 @@
                         "type": "heading",
                         "column": 1,
                         "order": 1,
-                        "content": "Afgelopen Evenementen",
+                        "content": "Tabel Voorbeeld: Afgelopen Evenementen",
                         "level": 2
                     },
                     {
                         "type": "text",
                         "column": 1,
                         "order": 2,
-                        "content": "| Datum | Evenement | Opname |\n|-------|-----------|--------|\n| Nov 2024 | Webinar: Dark Mode | Beschikbaar |\n| Okt 2024 | Workshop: Multi-taal | Beschikbaar |\n| Sep 2024 | Lancering 0.4.0 | Beschikbaar |\n| Aug 2024 | Zomer BBQ | - |"
+                        "content": "Gebruik Markdown tabellen voor gestructureerde informatie:\n\n| Kwartaal | Event Type | Status |\n|----------|------------|--------|\n| Q1 | Training Sessie | Afgerond |\n| Q2 | Team Building | Afgerond |\n| Q3 | Conferentie | Afgerond |\n| Q4 | Jaarlijkse Meeting | Gepland |"
                     },
                     {
                         "type": "links",
@@ -210,8 +222,8 @@
                         "columns": 1,
                         "items": [
                             {
-                                "title": "Bekijk Opnames",
-                                "text": "Alle webinar recordings",
+                                "title": "Bekijk Archief",
+                                "text": "Alle afgelopen events",
                                 "url": "#",
                                 "icon": "video-box",
                                 "target": "_self"
@@ -228,7 +240,7 @@
                         "type": "heading",
                         "column": 1,
                         "order": 1,
-                        "content": "Gerelateerd",
+                        "content": "Gerelateerde Pagina's",
                         "level": 2
                     },
                     {
@@ -238,8 +250,8 @@
                         "columns": 3,
                         "items": [
                             {
-                                "title": "Product Updates",
-                                "text": "Nieuwe features",
+                                "title": "Updates",
+                                "text": "Laatste nieuws",
                                 "url": "#nieuws/updates",
                                 "icon": "update",
                                 "target": "_self"
@@ -253,7 +265,7 @@
                             },
                             {
                                 "title": "Contact",
-                                "text": "Stel een vraag",
+                                "text": "Neem contact op",
                                 "url": "#contact",
                                 "icon": "email",
                                 "target": "_self"
@@ -291,14 +303,14 @@
                         "type": "heading",
                         "column": 1,
                         "order": 1,
-                        "content": "Volgende Event",
+                        "content": "Zijkolom",
                         "level": 3
                     },
                     {
                         "type": "text",
                         "column": 1,
                         "order": 2,
-                        "content": "**Webinar: Beginners**\n\n15 december 2024\n14:00 - 15:30\n\nOnline via Zoom"
+                        "content": "Dit demonstreert een **rechter zijkolom**. Gebruik deze voor:\n\n- Snelle info\n- Highlights\n- Call to action"
                     },
                     {
                         "type": "links",
@@ -307,7 +319,7 @@
                         "columns": 1,
                         "items": [
                             {
-                                "text": "Aanmelden",
+                                "text": "Voorbeeld Knop",
                                 "url": "#",
                                 "icon": "calendar-plus"
                             }
@@ -325,14 +337,14 @@
                         "type": "heading",
                         "column": 1,
                         "order": 5,
-                        "content": "Nieuwsbrief",
+                        "content": "Abonneren",
                         "level": 4
                     },
                     {
                         "type": "text",
                         "column": 1,
                         "order": 6,
-                        "content": "Ontvang event updates in uw inbox."
+                        "content": "Voeg hier abonnement formulieren of nieuwsbrief links toe."
                     }
                 ]
             }

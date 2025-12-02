@@ -252,28 +252,28 @@
                             {
                                 "title": "HR",
                                 "text": "Personnel matters",
-                                "url": "#afdeling/hr",
+                                "url": "#departments/hr",
                                 "icon": "account-group",
                                 "target": "_self"
                             },
                             {
                                 "title": "Marketing",
                                 "text": "Campaigns & branding",
-                                "url": "#afdeling/marketing",
+                                "url": "#departments/marketing",
                                 "icon": "bullhorn",
                                 "target": "_self"
                             },
                             {
                                 "title": "Sales",
                                 "text": "Sales & customers",
-                                "url": "#afdeling/sales",
+                                "url": "#departments/sales",
                                 "icon": "chart-line",
                                 "target": "_self"
                             },
                             {
                                 "title": "All Departments",
                                 "text": "Overview",
-                                "url": "#afdeling",
+                                "url": "#departments",
                                 "icon": "domain",
                                 "target": "_self"
                             }

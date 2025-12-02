@@ -28,7 +28,7 @@
                         "type": "text",
                         "column": 1,
                         "order": 3,
-                        "content": "Wij staan klaar om uw vragen te beantwoorden en u te helpen met IntraVox."
+                        "content": "Dit is een demo contactpagina. Op een echt intranet zou hier de contactinformatie van uw organisatie staan."
                     }
                 ]
             },
@@ -55,7 +55,7 @@
                         "type": "text",
                         "column": 1,
                         "order": 3,
-                        "content": "Heeft u vragen over IntraVox? Wilt u een demo? Of heeft u technische ondersteuning nodig?\n\n**E-mail:** info@intravox.nl\n**Telefoon:** +31 (0)20 123 4567\n**Support:** support@intravox.nl\n\n**Openingstijden:**\nMaandag - Vrijdag: 09:00 - 17:00 CET"
+                        "content": "Hier kunt u contactgegevens toevoegen zoals:\n\n- Algemeen e-mailadres\n- Support e-mail\n- Telefoonnummers\n- Openingstijden"
                     },
                     {
                         "type": "image",
@@ -76,7 +76,7 @@
                         "type": "text",
                         "column": 2,
                         "order": 3,
-                        "content": "**IntraVox BV**\nSciencepark 402\n1098 XH Amsterdam\nNederland\n\n*Makkelijk bereikbaar met OV*\nStation Amsterdam Science Park: 5 min lopen"
+                        "content": "Voeg hier uw kantoorlocatie toe:\n\n- Straatnaam\n- Stad en postcode\n- Land\n- Routebeschrijving"
                     },
                     {
                         "type": "image",
@@ -97,7 +97,7 @@
                         "type": "text",
                         "column": 3,
                         "order": 3,
-                        "content": "Onze support team staat voor u klaar.\n\n**Community:** GitHub Issues\n**Priority:** Enterprise support\n**Docs:** docs.intravox.nl"
+                        "content": "Link naar support bronnen:\n\n- Helpdesk systeem\n- Kennisbank\n- FAQ pagina's\n- Support tijden"
                     }
                 ]
             },
@@ -127,59 +127,46 @@
                         "level": 2
                     },
                     {
-                        "type": "links",
+                        "type": "text",
                         "column": 1,
                         "order": 2,
+                        "content": "De Links widget hieronder laat zien hoe u snelkoppelingen kunt maken voor verschillende contactmethodes:"
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 3,
                         "columns": 4,
                         "items": [
                             {
-                                "title": "Algemene Vragen",
-                                "text": "info@intravox.nl",
-                                "url": "mailto:info@intravox.nl",
+                                "title": "E-mail",
+                                "text": "Algemene vragen",
+                                "url": "#",
                                 "icon": "email",
                                 "target": "_self"
                             },
                             {
-                                "title": "Technische Support",
-                                "text": "support@intravox.nl",
-                                "url": "mailto:support@intravox.nl",
+                                "title": "Support",
+                                "text": "Technische hulp",
+                                "url": "#",
                                 "icon": "help-circle",
                                 "target": "_self"
                             },
                             {
                                 "title": "Sales",
-                                "text": "sales@intravox.nl",
-                                "url": "mailto:sales@intravox.nl",
+                                "text": "Zakelijke vragen",
+                                "url": "#",
                                 "icon": "cash-register",
                                 "target": "_self"
                             },
                             {
-                                "title": "Bel Ons",
-                                "text": "+31 (0)20 123 4567",
-                                "url": "tel:+31201234567",
+                                "title": "Telefoon",
+                                "text": "Bel ons",
+                                "url": "#",
                                 "icon": "phone",
                                 "target": "_self"
                             }
                         ]
-                    }
-                ]
-            },
-            {
-                "columns": 1,
-                "backgroundColor": "",
-                "widgets": [
-                    {
-                        "type": "heading",
-                        "column": 1,
-                        "order": 1,
-                        "content": "Demo Aanvragen",
-                        "level": 2
-                    },
-                    {
-                        "type": "text",
-                        "column": 1,
-                        "order": 2,
-                        "content": "Wilt u IntraVox in actie zien? Vraag een **gratis demo** aan!\n\nOnze product specialisten nemen binnen 24 uur contact met u op om een demo in te plannen. Tijdens de demo laten we u zien hoe IntraVox uw interne communicatie kan verbeteren.\n\n**Wat u kunt verwachten:**\n- Persoonlijke rondleiding door IntraVox\n- Beantwoording van al uw vragen\n- Advies voor uw specifieke situatie\n- Geen verplichtingen"
                     }
                 ]
             },
@@ -205,13 +192,19 @@
                         "type": "heading",
                         "column": 1,
                         "order": 1,
-                        "content": "Volg Ons",
+                        "content": "Externe Links",
                         "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Links naar externe websites kunnen in een nieuw tabblad openen:"
                     },
                     {
                         "type": "links",
                         "column": 1,
-                        "order": 2,
+                        "order": 3,
                         "columns": 4,
                         "items": [
                             {
@@ -236,8 +229,8 @@
                                 "target": "_blank"
                             },
                             {
-                                "title": "Community Forum",
-                                "text": "Discussies en hulp",
+                                "title": "Community",
+                                "text": "Discussies",
                                 "url": "https://help.nextcloud.com",
                                 "icon": "forum",
                                 "target": "_blank"

@@ -97,7 +97,7 @@
                             {
                                 "title": "Contact HR",
                                 "text": "Vragen? Neem contact op",
-                                "url": "mailto:hr@intravox.io",
+                                "url": "#contact",
                                 "icon": "email",
                                 "target": "_self"
                             }

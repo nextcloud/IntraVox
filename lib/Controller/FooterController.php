@@ -4,25 +4,31 @@ declare(strict_types=1);
 namespace OCA\IntraVox\Controller;
 
 use OCA\IntraVox\Service\FooterService;
-use OCA\IntraVox\Service\PermissionService;
+use OCA\IntraVox\Service\PageService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
 
+/**
+ * Footer Controller
+ *
+ * Uses Nextcloud's native filesystem permissions which automatically
+ * respect GroupFolder ACL rules.
+ */
 class FooterController extends Controller {
     private FooterService $footerService;
-    private PermissionService $permissionService;
+    private PageService $pageService;
 
     public function __construct(
         string $appName,
         IRequest $request,
         FooterService $footerService,
-        PermissionService $permissionService
+        PageService $pageService
     ) {
         parent::__construct($appName, $request);
         $this->footerService = $footerService;
-        $this->permissionService = $permissionService;
+        $this->pageService = $pageService;
     }
 
     /**
@@ -31,8 +37,11 @@ class FooterController extends Controller {
      */
     public function get(): JSONResponse {
         try {
+            // Get root permissions using Nextcloud's filesystem
+            $permissions = $this->pageService->getFolderPermissions('');
+
             // Check if user has access
-            if (!$this->permissionService->hasAccess()) {
+            if (!$permissions['canRead']) {
                 return new JSONResponse(
                     ['error' => 'Access denied'],
                     Http::STATUS_FORBIDDEN
@@ -42,8 +51,8 @@ class FooterController extends Controller {
             $footer = $this->footerService->getFooter();
 
             // Add permissions to response
-            $footer['permissions'] = $this->permissionService->getPermissionsObject('');
-            $footer['canEdit'] = $this->permissionService->canWrite('');
+            $footer['permissions'] = $permissions;
+            $footer['canEdit'] = $permissions['canWrite'];
 
             return new JSONResponse($footer);
         } catch (\Exception $e) {
@@ -59,8 +68,9 @@ class FooterController extends Controller {
      */
     public function save(): JSONResponse {
         try {
-            // Check write permission
-            if (!$this->permissionService->canWrite('')) {
+            // Check write permission using Nextcloud's filesystem
+            $permissions = $this->pageService->getFolderPermissions('');
+            if (!$permissions['canWrite']) {
                 return new JSONResponse(
                     ['error' => 'Permission denied: cannot edit footer'],
                     Http::STATUS_FORBIDDEN

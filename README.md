@@ -1,65 +1,111 @@
-# IntraVox - Transform Your Nextcloud into a Powerful Intranet
+# IntraVox - Intranet Pages for Nextcloud
 
-> **⚠️ BETA VERSION - LIMITED RELEASE**: IntraVox is currently in active development. The application is being built and tested privately before public release. Check back later for updates on availability.
+**Build collaborative intranet pages directly in Nextcloud with a powerful drag-and-drop editor.**
 
-**Create beautiful, collaborative pages in Nextcloud with the simplicity of modern content management.**
-
-IntraVox brings SharePoint-style pages to Nextcloud, empowering your team to build engaging intranets, knowledge bases, and collaborative workspaces—all within your secure Nextcloud environment.
+IntraVox brings SharePoint-style page creation to Nextcloud, enabling teams to build intranets, knowledge bases, and collaborative workspaces within their secure Nextcloud environment.
 
 ![IntraVox Homepage](img/intravox%20home.png)
 
-*Beautiful, professional pages with drag-and-drop editing and smart navigation*
+*Professional pages with drag-and-drop editing and smart navigation*
 
 ![Edit Pages with Drag-and-Drop](img/Edit%20page.gif)
 
-*Powerful visual editor with flexible layouts and intuitive drag-and-drop widget management*
+*Visual editor with flexible layouts and intuitive widget management*
 
 ![Fully Responsive Design](img/Responsive.gif)
 
-*Seamless experience across desktop, tablet, and mobile devices*
+*Responsive design across desktop, tablet, and mobile*
 
 ---
 
-## Why IntraVox?
+## Features
 
-Traditional intranets are complex, expensive, and often separate from your existing tools. IntraVox changes that by seamlessly integrating rich content pages directly into Nextcloud, where your team already works.
+### Page Editor
 
-### Build Pages That Inspire
+- **Visual Drag-and-Drop Editor** - Create pages without coding. Drag widgets where you need them
+- **Flexible Grid System** - Build layouts with 1-5 columns per row
+- **Row Background Colors** - Theme-aware colors that adapt to your Nextcloud theme
+- **Header Row** - Full-width header section above the main content
+- **Side Columns** - Optional left and/or right side columns for additional content
+- **Unlimited Rows** - Add as many content rows as needed
 
-- **Visual Drag-and-Drop Editor** - No coding required. Simply drag widgets where you want them
-- **Flexible Grid System** - Create professional layouts with 1-5 columns and unlimited rows
-- **Rich Content Types** - Text, headings, images, links, files, and spacers
-- **Real-Time Collaboration** - Everyone sees updates instantly
-- **Beautiful & Responsive** - Looks great on desktop, tablet, and mobile
+### Available Widgets
 
-### Perfect For
+| Widget | Description |
+|--------|-------------|
+| **Text** | Rich text with full Markdown support (bold, italic, lists, links, tables) |
+| **Heading** | H1-H6 headers with customizable styling |
+| **Image** | Visual content with flexible sizing (cover, contain, custom width) |
+| **Links** | Multi-link grid widget (1-5 columns) with Material Design icons |
+| **Divider** | Visual separator that adapts to row background color |
 
-- **Company Intranets** - Create your digital workplace with news, resources, and team information
-- **Knowledge Bases** - Build comprehensive documentation that's easy to navigate and update
-- **Team Wikis** - Collaborate on shared knowledge with your colleagues
-- **Project Hubs** - Centralize project information, resources, and updates
-- **Department Portals** - Give each team their own space to share information
+### Navigation
+
+- **Customizable Navigation** - Build your own navigation structure
+- **Three Navigation Levels** - Support for deep page hierarchies
+- **Two Display Modes** - Choose between dropdown or megamenu style
+- **External Links** - Link to external URLs alongside internal pages
+- **Page Structure View** - Tree view of all accessible pages
+- **Mobile Menu** - Collapsible hamburger menu on mobile devices
+
+### Content Organization
+
+- **Multi-Language Support** - Separate content per language (Dutch, English, German, French)
+- **Nested Pages** - Create pages inside other pages for hierarchical organization
+- **Footer** - Editable footer section on the homepage
+- **Breadcrumb Navigation** - Automatic breadcrumb trail for easy navigation
+
+### Security & Permissions
+
+- **Nextcloud Native Permissions** - Uses GroupFolder ACL for access control
+- **Folder-Level Permissions** - Set different permissions per folder/page
+- **Permission-Based Filtering** - Navigation only shows pages the user can access
+- **Real-Time Permission Checks** - Changes take effect immediately
+
+### Integration
+
+- **Nextcloud Unified Search** - Search pages via Ctrl+K
+- **MetaVox Integration** - Add metadata to pages (when MetaVox app is installed)
+- **Files App Integration** - Pages stored as JSON files in GroupFolder
+- **Responsive Design** - Works on desktop, tablet, and mobile
 
 ---
 
-## Core Features
+## Demo Content
 
-### Key Capabilities
+IntraVox includes demo content to help you get started quickly. Install demo data directly from the **Admin Settings** panel.
 
-**Truly Collaborative** - Uses Nextcloud Groupfolders so everyone on your team sees the same content, in real-time.
+### Installing Demo Data
 
-**Multi-Language Support** - Separate content per language (Dutch, English, German, French supported out of the box). Each language has its own folder structure.
+1. Go to **Nextcloud Admin Settings** → **IntraVox**
+2. Choose a language (Nederlands, English, Deutsch, Français)
+3. Click **Install** to set up demo content
 
-**Beautifully Integrated** - Lives right in your Nextcloud interface with native Nextcloud Vue components.
+The demo pages showcase:
+- Different page layouts (single column, multi-column, side columns)
+- Various widget types (text, headings, images, links, dividers)
+- Navigation structure examples
+- Department page organization
+- Row background color options
 
-**Secure by Design** - Built with enterprise-grade security. All content is validated, sanitized, and stored safely. Leverages Nextcloud's permission system.
+### Reinstalling Demo Data
 
-**Available Widgets**:
-- 📝 **Text** - Rich text with full Markdown support (bold, italic, lists, links, tables, and more)
-- 📌 **Headings** - Structure content with H1-H6 headers, customizable styling
-- 🖼️ **Images** - Display beautiful visuals with flexible sizing options (cover, contain, auto)
-- 🔗 **Links** - Multi-link widgets with grid layouts (1-5 columns) and Material Design icons
-- ➖ **Dividers** - Visual separators with customizable styling
+If you want to reset demo content to its original state:
+1. Go to **Admin Settings** → **IntraVox**
+2. Click **Reinstall** next to the language
+3. Confirm the action (this will delete all existing demo content for that language)
+
+> **Note**: The demo content is fictional and intended only to demonstrate IntraVox's capabilities. Replace it with your organization's actual content.
+
+---
+
+## Use Cases
+
+- **Company Intranets** - Digital workplace with news, resources, and team information
+- **Knowledge Bases** - Documentation that's easy to navigate and maintain
+- **Team Wikis** - Collaborative knowledge sharing
+- **Project Hubs** - Centralized project information and resources
+- **Department Portals** - Dedicated spaces for teams to share information
 
 ---
 
@@ -68,48 +114,146 @@ Traditional intranets are complex, expensive, and often separate from your exist
 - Nextcloud 32 or higher
 - PHP 8.1 or higher
 - GroupFolders app installed and enabled
-- Recommended: At least 512MB PHP memory limit for large pages
+- Recommended: 512MB PHP memory limit for large pages
 
 ---
 
-## Recent Updates
+## Installation
 
-### Version 0.5.0 (November 29, 2025)
+1. Install the **GroupFolders** app from Nextcloud App Store
+2. Install **IntraVox** from Nextcloud App Store
+3. Go to **Admin Settings** → **IntraVox** and install demo data for your preferred language
+4. The `IntraVox` GroupFolder and permission groups are created automatically
+5. Assign users to the IntraVox groups or configure custom access via GroupFolder ACL
 
-**Navigation & Links Improvements**
-
-- **LinksWidget Fix**: Link names now save correctly when adding new links
-- **Navigation Links**: Fixed broken navigation links after editing (standardized on uniqueId)
-- **Simplified Page Creation**: Removed "Add to navigation" option from new page modal
-- **Code Cleanup**: Removed unused search indexing code
-
-### Version 0.4.13 (November 24, 2025)
-
-**Folder-Level Permission System**
-
-- **Permission Filtering**: Navigation now respects Nextcloud ACLs and groupfolder permissions
-- **Performance**: Request-level permission caching for minimal impact
-- **Security**: Immediate permission enforcement on navigation load
-
-For complete release notes, see [CHANGELOG.md](CHANGELOG.md).
+> **Fresh Installation**: On a new Nextcloud instance, simply install IntraVox and click "Install" for any demo language. The GroupFolder, groups, and permissions are set up automatically.
 
 ---
 
-## Contact
+## Configuration
 
-Interested in IntraVox or have questions?
+### Permission Groups
 
-- **Issues & Feature Requests**: [GitHub Issues](https://github.com/nextcloud/IntraVox/issues)
-- **Email**: rik@shalution.nl
+IntraVox uses Nextcloud's GroupFolder permissions. Recommended group structure:
+
+| Group | Permissions | Description |
+|-------|-------------|-------------|
+| IntraVox Admins | Full access | Edit navigation, manage all content |
+| IntraVox Editors | Read + Write + Create | Create and edit pages |
+| IntraVox Users | Read only | View content only |
+
+### Folder Structure
+
+```
+IntraVox/
+├── en/                          # English content
+│   ├── home.json               # Homepage
+│   ├── navigation.json         # Navigation configuration
+│   ├── footer.json             # Footer content
+│   └── about/                  # Page folder
+│       ├── about.json          # Page content
+│       └── images/             # Page images
+├── nl/                          # Dutch content
+│   └── ...
+├── de/                          # German content
+│   └── ...
+└── fr/                          # French content
+    └── ...
+```
+
+---
+
+## Technical Details
+
+### Technology Stack
+
+| Component | Technology |
+|-----------|------------|
+| Frontend | Vue.js 3, Nextcloud Vue components |
+| Backend | PHP 8.x, Nextcloud AppFramework |
+| Storage | Nextcloud GroupFolders (JSON files) |
+| Authorization | Nextcloud native permissions + ACL |
+| Build | Webpack, npm |
+
+### Page Storage Format
+
+Pages are stored as JSON files with the following structure:
+
+```json
+{
+    "uniqueId": "page-uuid-v4",
+    "title": "Page Title",
+    "language": "en",
+    "layout": {
+        "columns": 1,
+        "rows": [...],
+        "headerRow": {...},
+        "sideColumns": {...}
+    }
+}
+```
+
+### API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/pages` | List all accessible pages |
+| GET | `/api/pages/{id}` | Get page content |
+| POST | `/api/pages` | Create new page |
+| PUT | `/api/pages/{id}` | Update page |
+| DELETE | `/api/pages/{id}` | Delete page |
+| GET | `/api/navigation` | Get navigation structure |
+| POST | `/api/navigation` | Save navigation |
+
+---
+
+## Development
+
+### Building from Source
+
+```bash
+# Install dependencies
+npm install
+
+# Development build with watch
+npm run dev
+
+# Production build
+npm run build
+```
+
+### Deployment
+
+```bash
+# Deploy to server
+./deploy.sh
+```
+
+---
+
+## Documentation
+
+- [Authorization Guide](docs/AUTHORIZATION.md) - User and administrator permissions guide
+- [Architecture](docs/ARCHITECTURE.md) - Technical architecture documentation
+
+---
+
+## License
+
+AGPL-3.0
+
+---
+
+## Author
+
+**Rik Dekker** - [Shalution](https://shalution.nl)
 
 ---
 
 ## Acknowledgments
 
-IntraVox is being built with:
-- **Nextcloud** - The world's most popular open-source content collaboration platform
-- **Vue.js** - The progressive JavaScript framework
-- **SortableJS** - Beautiful drag-and-drop functionality
-
-**Developed by:** Rik Dekker - [Shalution](https://shalution.nl)
-**License:** AGPL-3.0
+Built with:
+- [Nextcloud](https://nextcloud.com) - Open-source content collaboration platform
+- [Vue.js](https://vuejs.org) - Progressive JavaScript framework
+- [SortableJS](https://sortablejs.github.io/Sortable/) - Drag-and-drop functionality
+- [TipTap](https://tiptap.dev) - Rich text editor

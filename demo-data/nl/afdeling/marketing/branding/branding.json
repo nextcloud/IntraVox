@@ -20,7 +20,7 @@
                         "type": "text",
                         "column": 1,
                         "order": 2,
-                        "content": "Onze visuele identiteit vertelt het verhaal van wie we zijn. Hier vindt u alle richtlijnen en assets om consistent te communiceren."
+                        "content": "Voorbeeld huisstijlpagina. Pas de kleuren, logo's en typografie aan naar uw eigen organisatie."
                     }
                 ]
             },
@@ -39,7 +39,7 @@
                         "type": "text",
                         "column": 1,
                         "order": 2,
-                        "content": "**Brand Blue**\n#2980b9\nRGB: 41, 128, 185\n\n**Brand Orange**\n#ff5722\nRGB: 255, 87, 34"
+                        "content": "**Primaire kleur**\n#XXXXXX\nRGB: X, X, X\n\n**Secundaire kleur**\n#XXXXXX\nRGB: X, X, X\n\n*Vul uw eigen kleuren in*"
                     },
                     {
                         "type": "heading",
@@ -52,7 +52,7 @@
                         "type": "text",
                         "column": 2,
                         "order": 2,
-                        "content": "**Light Gray**\n#ecf0f1\nRGB: 236, 240, 241\n\n**Dark Gray**\n#2c3e50\nRGB: 44, 62, 80"
+                        "content": "**Neutrale kleur licht**\n#XXXXXX\nRGB: X, X, X\n\n**Neutrale kleur donker**\n#XXXXXX\nRGB: X, X, X\n\n*Vul uw eigen kleuren in*"
                     },
                     {
                         "type": "heading",
@@ -65,7 +65,7 @@
                         "type": "text",
                         "column": 3,
                         "order": 2,
-                        "content": "**Success Green**\n#27ae60\nRGB: 39, 174, 96\n\n**Warning Red**\n#e74c3c\nRGB: 231, 76, 60"
+                        "content": "**Succes kleur**\n#XXXXXX\nRGB: X, X, X\n\n**Waarschuwing kleur**\n#XXXXXX\nRGB: X, X, X\n\n*Vul uw eigen kleuren in*"
                     }
                 ]
             },

@@ -252,7 +252,8 @@ export default {
       return {
         editNavigation: this.canEditNavigation,
         viewPages: perms.canRead !== false,  // Default to true if not specified
-        createPage: perms.canCreate || false,
+        // Creating a page requires both write and create permissions
+        createPage: (perms.canWrite && perms.canCreate) || false,
         editPage: perms.canWrite || false,
         deletePage: perms.canDelete || false
       };

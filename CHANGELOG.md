@@ -7,6 +7,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.7] - 2025-12-02 - App Store Preparation
+
+### Added
+- **LICENSE file**: Added AGPL-3.0 license file for App Store compliance
+- **User permissions on setup**: Installing user is automatically added to IntraVox Admins group with full permissions (including share and delete)
+
+### Changed
+- **info.xml improvements**: Added PHP version requirement (8.1+), multiple screenshots, corrected GitHub URLs
+- **Screenshots folder**: Moved screenshots to dedicated `screenshots/` folder for App Store
+
+## [0.5.1] - 2025-12-02 - Admin Settings & Demo Data Management
+
+### Added
+- **Admin Settings Panel**: New dedicated IntraVox section in Nextcloud Admin Settings
+  - Visual table showing all available demo data languages
+  - Status badges: Installed, Not installed, Empty folder
+  - Content badges: Full intranet vs Homepage only
+  - Language flags and names for easy identification
+- **Demo Data Install/Reinstall**: One-click demo data installation per language
+  - Install button for new languages
+  - Reinstall button with confirmation dialog for existing installations
+  - Nextcloud-styled NcDialog with warning message
+  - Automatic GroupFolder creation for new installations
+- **Fresh Install Support**: Demo data can now be installed on completely new Nextcloud instances
+  - GroupFolder is automatically created when installing demo data
+  - No manual setup required before installing demo content
+
+### Changed
+- **Reinstall Confirmation**: Native Nextcloud dialog replaces browser confirm()
+  - Uses NcDialog, NcNoteCard, and NcButton components
+  - Warning message clearly explains data will be deleted
+  - Cancel and Reinstall buttons with appropriate styling
+
+### Fixed
+- **Demo Data Import**: Fixed file cache vs filesystem mismatch issues
+  - Language folder is now deleted before reinstall to clear stale cache entries
+  - Proper handling of folders that exist in cache but not on disk
+  - Fixed `setupService->setup()` → `setupService->setupSharedFolder()` method call
+
+### Technical
+- Created `AdminSettings.vue` component with NcDialog, NcNoteCard, NcButton
+- Created `AdminSettings.php` and `AdminSection.php` for settings registration
+- Added `DemoDataController.php` with import endpoint (admin-only)
+- Added `deleteLanguageFolderIfExists()` method in DemoDataService
+- Enhanced `ensureFolderExists()` to verify folders exist on disk
+- Registered admin settings in `info.xml`
+
 ## [0.5.0] - 2025-11-29 - Navigation & Links Improvements
 
 ### Fixed

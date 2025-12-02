@@ -552,7 +552,7 @@ export default {
   border: 1px solid var(--color-border);
   border-radius: var(--border-radius-large);
   box-shadow: 0 2px 8px var(--color-box-shadow);
-  z-index: 1000;
+  z-index: 10010; /* Above Nextcloud sidebar (z-index ~2000) */
   padding: 8px;
 }
 
@@ -748,7 +748,7 @@ a.dropdown-section-header:active,
   border: 1px solid var(--color-border);
   border-radius: var(--border-radius-large);
   box-shadow: 0 4px 16px var(--color-box-shadow);
-  z-index: 1000;
+  z-index: 10010; /* Above Nextcloud sidebar (z-index ~2000) */
   padding: 24px;
 }
 

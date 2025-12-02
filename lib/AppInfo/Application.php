@@ -55,6 +55,11 @@ class Application extends App implements IBootstrap {
     }
 
     public function boot(IBootContext $context): void {
-        // Boot method intentionally left minimal to avoid navigation issues
+        // Load MetaVox scripts if installed (for IntraVox integration)
+        $appManager = $context->getServerContainer()->get(\OCP\App\IAppManager::class);
+        if ($appManager->isInstalled('metavox') && $appManager->isEnabledForUser('metavox')) {
+            \OCP\Util::addScript('metavox', 'files-plugin1');
+            \OCP\Util::addStyle('metavox', 'files');
+        }
     }
 }

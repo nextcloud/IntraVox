@@ -235,7 +235,7 @@
                         "type": "text",
                         "column": 1,
                         "order": 2,
-                        "content": "| Beleid | Beschrijving | Laatst bijgewerkt |\n|--------|--------------|-------------------|\n| Acceptable Use | Regels voor IT-gebruik | Jan 2024 |\n| Security Policy | Beveiligingsrichtlijnen | Dec 2023 |\n| BYOD | Eigen apparaten op werk | Nov 2023 |\n| Data Classification | Omgang met data | Okt 2023 |"
+                        "content": "| Beleid | Beschrijving | Laatst bijgewerkt |\n|--------|--------------|-------------------|\n| Voorbeeld Beleid 1 | Beschrijving | [datum] |\n| Voorbeeld Beleid 2 | Beschrijving | [datum] |\n| Voorbeeld Beleid 3 | Beschrijving | [datum] |\n\n*Pas deze tabel aan met uw eigen IT policies.*"
                     }
                 ]
             },

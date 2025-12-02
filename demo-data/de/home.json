@@ -1,0 +1,288 @@
+{
+    "uniqueId": "page-de-home-a1b2c3d4-e5f6-7890-abcd-000000000001",
+    "title": "Willkommen bei IntraVox",
+    "language": "de",
+    "layout": {
+        "columns": 1,
+        "rows": [
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element)",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "hero-team.jpg",
+                        "alt": "Teamzusammenarbeit mit IntraVox",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 2,
+                        "content": "IntraVox - Ihre moderne Intranet-Lösung",
+                        "level": 1
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 3,
+                        "content": "**Transformieren Sie Ihre Organisation** mit einer leistungsstarken Intranet-Plattform auf Basis von Nextcloud. Open Source, sicher und vollständig anpassbar."
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Was ist IntraVox?",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "IntraVox ist eine **moderne Intranet-Anwendung** für Nextcloud, die SharePoint-ähnliches Content-Management in die Open-Source-Welt bringt.\n\n**Warum IntraVox wählen?**\n\n- Erstellen Sie ansprechende Seiten mit einem visuellen Editor\n- Organisieren Sie Inhalte mit mehrstufiger Navigation\n- Unterstützung für mehrere Sprachen\n- Sichere Teamzusammenarbeit\n- Volle Integration mit Nextcloud"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "",
+                        "height": "2px"
+                    }
+                ]
+            },
+            {
+                "columns": 3,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "features.jpg",
+                        "alt": "Leistungsstarke Funktionen",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Leistungsstarke Funktionen",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 3,
+                        "content": "Erstellen Sie professionelle Seiten mit Text, Bildern, Links und mehr. Der Drag-and-Drop-Editor macht die Inhaltsverwaltung einfach."
+                    },
+                    {
+                        "type": "image",
+                        "column": 2,
+                        "order": 1,
+                        "src": "collaboration.jpg",
+                        "alt": "Teamzusammenarbeit",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 2,
+                        "content": "Nahtlose Zusammenarbeit",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 3,
+                        "content": "Arbeiten Sie in Echtzeit mit Ihrem Team zusammen. Teilen Sie Wissen, erstellen Sie ansprechende Intranets und halten Sie alle verbunden."
+                    },
+                    {
+                        "type": "image",
+                        "column": 3,
+                        "order": 1,
+                        "src": "opensource.jpg",
+                        "alt": "Open-Source-Freiheit",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 3,
+                        "order": 2,
+                        "content": "100% Open Source",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 3,
+                        "order": 3,
+                        "content": "Keine Herstellerabhängigkeit, keine versteckten Kosten. IntraVox ist vollständig Open Source unter der AGPL-Lizenz."
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element-light)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Schnellzugriff",
+                        "level": 2
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 2,
+                        "columns": 3,
+                        "items": [
+                            {
+                                "title": "Nextcloud Website",
+                                "text": "Offizielle Nextcloud-Website",
+                                "url": "https://nextcloud.com",
+                                "icon": "open-in-new",
+                                "target": "_blank"
+                            },
+                            {
+                                "title": "GitHub Repository",
+                                "text": "Quellcode ansehen",
+                                "url": "https://github.com/nextcloud",
+                                "icon": "github",
+                                "target": "_blank"
+                            },
+                            {
+                                "title": "Dokumentation",
+                                "text": "Nextcloud-Anleitungen",
+                                "url": "https://docs.nextcloud.com",
+                                "icon": "book-open",
+                                "target": "_blank"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "",
+                        "height": "2px"
+                    }
+                ]
+            },
+            {
+                "columns": 2,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "modern-office.jpg",
+                        "alt": "Moderner digitaler Arbeitsplatz",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Modern & Intuitiv",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 3,
+                        "content": "Eine ansprechende, benutzerfreundliche Oberfläche, die Ihr Team lieben wird. Mit modernen Web-Technologien für die beste Benutzererfahrung entwickelt.\n\n**Funktionen:**\n- Responsives Design für alle Geräte\n- Intuitiver Drag-and-Drop-Editor\n- Echtzeit-Vorschau"
+                    },
+                    {
+                        "type": "image",
+                        "column": 2,
+                        "order": 1,
+                        "src": "security.jpg",
+                        "alt": "Sichere Kollaborationsplattform",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 2,
+                        "content": "Sicherheit durch Design",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 3,
+                        "content": "Ihre Daten bleiben auf Ihren eigenen Servern. Basierend auf der bewährten Sicherheitsarchitektur von Nextcloud mit Enterprise-Schutz.\n\n**Sicherheit:**\n- Ende-zu-Ende-Verschlüsselung\n- DSGVO-konform\n- On-Premise-Hosting"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Demo-Inhalt",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Dies ist eine **Beispiel-Startseite** für IntraVox. Passen Sie diese Seite an Ihre Organisation an.\n\nSie können:\n- Den Text und die Bilder bearbeiten\n- Neue Widgets hinzufügen\n- Das Layout anpassen\n- Die Navigation erweitern"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "transparent",
+                        "height": "20px"
+                    }
+                ]
+            }
+        ],
+        "sideColumns": {
+            "left": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            },
+            "right": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            }
+        }
+    }
+}

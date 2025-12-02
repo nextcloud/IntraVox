@@ -74,7 +74,7 @@
                         "column": 1,
                         "order": 1,
                         "src": "features.jpg",
-                        "alt": "Krachtige functies",
+                        "alt": "Powerful features",
                         "objectFit": "cover"
                     },
                     {
@@ -161,7 +161,7 @@
                             {
                                 "title": "Features",
                                 "text": "View all possibilities",
-                                "url": "#functies",
+                                "url": "#features",
                                 "icon": "cog",
                                 "target": "_self"
                             },
@@ -333,14 +333,14 @@
                             {
                                 "title": "News",
                                 "text": "Latest updates and announcements",
-                                "url": "#nieuws",
+                                "url": "#news",
                                 "icon": "newspaper",
                                 "target": "_self"
                             },
                             {
                                 "title": "Departments",
                                 "text": "Information per department",
-                                "url": "#afdeling",
+                                "url": "#departments",
                                 "icon": "account-multiple",
                                 "target": "_self"
                             }
@@ -392,12 +392,12 @@
                             },
                             {
                                 "text": "Features",
-                                "url": "#functies",
+                                "url": "#features",
                                 "icon": "cog"
                             },
                             {
                                 "text": "News",
-                                "url": "#nieuws",
+                                "url": "#news",
                                 "icon": "newspaper"
                             },
                             {
@@ -420,14 +420,14 @@
                         "type": "heading",
                         "column": 1,
                         "order": 4,
-                        "content": "Need Help?",
+                        "content": "Side Column",
                         "level": 4
                     },
                     {
                         "type": "text",
                         "column": 1,
                         "order": 5,
-                        "content": "Our support is available on weekdays from 9:00 - 17:00"
+                        "content": "This sidebar demonstrates the **right side column** feature for quick navigation and highlights."
                     },
                     {
                         "type": "links",

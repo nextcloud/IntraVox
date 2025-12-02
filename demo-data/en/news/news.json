@@ -28,7 +28,7 @@
                         "type": "text",
                         "column": 1,
                         "order": 3,
-                        "content": "Stay up to date with the latest developments at IntraVox and Nextcloud."
+                        "content": "This is a demo news page. Use this layout to share company news, announcements, and updates with your team."
                     }
                 ]
             },
@@ -40,8 +40,14 @@
                         "type": "heading",
                         "column": 1,
                         "order": 1,
-                        "content": "Latest News",
+                        "content": "Example News Articles",
                         "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "The sections below demonstrate different ways to present news content."
                     }
                 ]
             },
@@ -53,14 +59,14 @@
                         "type": "heading",
                         "column": 1,
                         "order": 1,
-                        "content": "IntraVox v1.0 Launched!",
+                        "content": "Featured Article",
                         "level": 3
                     },
                     {
                         "type": "text",
                         "column": 1,
                         "order": 2,
-                        "content": "**November 29, 2024** - We are excited to announce the first stable version of IntraVox! After months of development and testing, IntraVox is now available for all Nextcloud users.\n\n**Highlights:**\n- Visual page editor with drag-and-drop\n- Support for multiple languages\n- Mega menu and dropdown navigation\n- Integration with Nextcloud Group Folders"
+                        "content": "Use this section for important announcements. You can include:\n\n**Key highlights:**\n- Main point one\n- Main point two\n- Main point three\n- Call to action"
                     }
                 ]
             },
@@ -72,14 +78,14 @@
                         "type": "heading",
                         "column": 1,
                         "order": 1,
-                        "content": "Nextcloud Conference 2024 Recap",
+                        "content": "Regular Article",
                         "level": 3
                     },
                     {
                         "type": "text",
                         "column": 1,
                         "order": 2,
-                        "content": "**October 15, 2024** - IntraVox was present at the Nextcloud Conference in Berlin. We gave a live demo of the latest features and received valuable feedback from the community.\n\n[View the presentation slides](https://nextcloud.com/conf/)"
+                        "content": "Standard news articles can include text formatting like **bold** and *italic*, as well as [links to other pages](#).\n\nYou can also add images, lists, and other content to make your news engaging."
                     }
                 ]
             },
@@ -91,14 +97,14 @@
                         "type": "heading",
                         "column": 1,
                         "order": 1,
-                        "content": "Beta Program Closed",
+                        "content": "Archived Article",
                         "level": 3
                     },
                     {
                         "type": "text",
                         "column": 1,
                         "order": 2,
-                        "content": "**September 1, 2024** - Our beta program has been successfully completed with more than 50 organizations that tested IntraVox. Thanks to all beta testers for their valuable feedback!"
+                        "content": "Older news can be kept for reference. Consider organizing past news by category or date for easy retrieval."
                     }
                 ]
             },
@@ -124,7 +130,7 @@
                         "type": "heading",
                         "column": 1,
                         "order": 1,
-                        "content": "Upcoming Events",
+                        "content": "Two-Column News Layout",
                         "level": 2
                     }
                 ]
@@ -137,27 +143,27 @@
                         "type": "heading",
                         "column": 1,
                         "order": 1,
-                        "content": "Webinar: IntraVox Intro",
+                        "content": "Article A",
                         "level": 3
                     },
                     {
                         "type": "text",
                         "column": 1,
                         "order": 2,
-                        "content": "**Date:** December 15, 2024\n**Tijd:** 14:00 - 15:00 CET\n\nAn introduction to IntraVox for new users. Learn the basics and ask questions to the development team."
+                        "content": "Two-column layouts work well for displaying multiple news items side by side.\n\nAdd relevant details here."
                     },
                     {
                         "type": "heading",
                         "column": 2,
                         "order": 1,
-                        "content": "FOSDEM 2025",
+                        "content": "Article B",
                         "level": 3
                     },
                     {
                         "type": "text",
                         "column": 2,
                         "order": 2,
-                        "content": "**Datum:** 1-2 februari 2025\n**Location:** Brussel, België\n\nVisit us at FOSDEM! We will be present in the Nextcloud devroom with a presentation about IntraVox."
+                        "content": "Each column can have its own heading and content.\n\nThis creates a balanced visual layout."
                     }
                 ]
             },
@@ -169,7 +175,7 @@
                         "type": "heading",
                         "column": 1,
                         "order": 1,
-                        "content": "Stay Informed",
+                        "content": "Related Links",
                         "level": 2
                     },
                     {
@@ -179,32 +185,32 @@
                         "columns": 4,
                         "items": [
                             {
-                                "title": "Nextcloud Blog",
-                                "text": "Officiële blog posts",
-                                "url": "https://nextcloud.com/blog/",
-                                "icon": "newspaper",
-                                "target": "_blank"
+                                "title": "Updates",
+                                "text": "Product updates",
+                                "url": "#news/updates",
+                                "icon": "update",
+                                "target": "_self"
                             },
                             {
-                                "title": "Twitter/X",
-                                "text": "@nextaboratedcloud",
-                                "url": "https://twitter.com/nextcloud",
-                                "icon": "twitter",
-                                "target": "_blank"
+                                "title": "Events",
+                                "text": "Upcoming events",
+                                "url": "#news/events",
+                                "icon": "calendar",
+                                "target": "_self"
                             },
                             {
-                                "title": "Mastodon",
-                                "text": "@nextcloud@mastodon.xyz",
-                                "url": "https://mastodon.xyz/@nextcloud",
-                                "icon": "mastodon",
-                                "target": "_blank"
+                                "title": "Documentation",
+                                "text": "Learn more",
+                                "url": "#documentation",
+                                "icon": "book-open",
+                                "target": "_self"
                             },
                             {
-                                "title": "GitHub",
-                                "text": "Releases volgen",
-                                "url": "https://github.com/nextcloud",
-                                "icon": "github",
-                                "target": "_blank"
+                                "title": "Contact",
+                                "text": "Get in touch",
+                                "url": "#contact",
+                                "icon": "email",
+                                "target": "_self"
                             }
                         ]
                     }

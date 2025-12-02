@@ -39,7 +39,7 @@
                         "type": "text",
                         "column": 1,
                         "order": 2,
-                        "content": "**Via e-mail:**\nit-support@intravox.io\n\n**Via portal:**\nhelp.intravox.io\n\n*Reactietijd: < 4 uur*"
+                        "content": "**Via e-mail:**\nVoeg hier uw support e-mailadres toe\n\n**Via portal:**\nVoeg hier uw helpdesk URL toe\n\n*Reactietijd: [Pas aan]*"
                     },
                     {
                         "type": "heading",
@@ -52,7 +52,7 @@
                         "type": "text",
                         "column": 2,
                         "order": 2,
-                        "content": "**Telefoon:**\nIntern: 1234\nExtern: +31 20 123 4999\n\n*24/7 beschikbaar voor kritieke issues*"
+                        "content": "**Telefoon:**\nVoeg hier uw interne en externe telefoonnummers toe\n\n*Pas de beschikbaarheid aan naar uw eigen situatie*"
                     },
                     {
                         "type": "heading",

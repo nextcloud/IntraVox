@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace OCA\IntraVox\Controller;
 
 use OCA\IntraVox\Service\PageService;
-use OCA\IntraVox\Service\PermissionService;
+use OCA\IntraVox\Service\SetupService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\DataResponse;
@@ -12,21 +12,27 @@ use OCP\AppFramework\Http\StreamResponse;
 use OCP\IRequest;
 use Psr\Log\LoggerInterface;
 
+/**
+ * API Controller for IntraVox pages
+ *
+ * All permission checks use Nextcloud's native filesystem permissions
+ * which automatically respect GroupFolder ACL rules.
+ */
 class ApiController extends Controller {
     private PageService $pageService;
-    private PermissionService $permissionService;
+    private SetupService $setupService;
     private LoggerInterface $logger;
 
     public function __construct(
         string $appName,
         IRequest $request,
         PageService $pageService,
-        PermissionService $permissionService,
+        SetupService $setupService,
         LoggerInterface $logger
     ) {
         parent::__construct($appName, $request);
         $this->pageService = $pageService;
-        $this->permissionService = $permissionService;
+        $this->setupService = $setupService;
         $this->logger = $logger;
     }
 
@@ -36,22 +42,13 @@ class ApiController extends Controller {
      */
     public function listPages(): DataResponse {
         try {
-            // Check if user has any access to IntraVox
-            if (!$this->permissionService->hasAccess()) {
-                return new DataResponse(
-                    ['error' => 'Access denied'],
-                    Http::STATUS_FORBIDDEN
-                );
-            }
-
             $pages = $this->pageService->listPages();
 
-            // Filter pages based on permissions and add permission info
+            // PageService already includes permissions from Nextcloud's filesystem
+            // Filter pages to only include those the user can read
             $filteredPages = [];
             foreach ($pages as $page) {
-                $path = $page['path'] ?? '';
-                if ($this->permissionService->canRead($path)) {
-                    $page['permissions'] = $this->permissionService->getPermissionsObject($path);
+                if ($page['permissions']['canRead'] ?? false) {
                     $filteredPages[] = $page;
                 }
             }
@@ -73,17 +70,16 @@ class ApiController extends Controller {
         try {
             $page = $this->pageService->getPage($id);
 
-            // Check read permission for this page's path
-            $path = $page['path'] ?? '';
-            if (!$this->permissionService->canRead($path)) {
+            // PageService already includes permissions from Nextcloud's filesystem
+            // which automatically respects GroupFolder ACL rules
+
+            // Check if user can read (permissions are already in the page data)
+            if (!($page['permissions']['canRead'] ?? false)) {
                 return new DataResponse(
                     ['error' => 'Access denied'],
                     Http::STATUS_FORBIDDEN
                 );
             }
-
-            // Add permissions to page response
-            $page['permissions'] = $this->permissionService->getPermissionsObject($path);
 
             // Add breadcrumb to page response
             try {
@@ -113,9 +109,10 @@ class ApiController extends Controller {
             $parentPath = $data['parentPath'] ?? null;
             unset($data['parentPath']); // Remove from data array to avoid storing it
 
-            // Check create permission on parent path
+            // Check create permission on parent path using Nextcloud's filesystem permissions
             $checkPath = $parentPath ?? '';
-            if (!$this->permissionService->canCreate($checkPath)) {
+            $folderPerms = $this->pageService->getFolderPermissions($checkPath);
+            if (!$folderPerms['canCreate']) {
                 return new DataResponse(
                     ['error' => 'Permission denied: cannot create pages in this location'],
                     Http::STATUS_FORBIDDEN
@@ -142,12 +139,11 @@ class ApiController extends Controller {
      */
     public function updatePage(string $id): DataResponse {
         try {
-            // First get the page to check its path
+            // First get the page to check permissions (from Nextcloud filesystem)
             $existingPage = $this->pageService->getPage($id);
-            $path = $existingPage['path'] ?? '';
 
-            // Check write permission
-            if (!$this->permissionService->canWrite($path)) {
+            // Check write permission using Nextcloud's permissions
+            if (!($existingPage['permissions']['canWrite'] ?? false)) {
                 return new DataResponse(
                     ['error' => 'Permission denied: cannot edit this page'],
                     Http::STATUS_FORBIDDEN
@@ -175,12 +171,11 @@ class ApiController extends Controller {
      */
     public function deletePage(string $id): DataResponse {
         try {
-            // First get the page to check its path
+            // First get the page to check permissions (from Nextcloud filesystem)
             $existingPage = $this->pageService->getPage($id);
-            $path = $existingPage['path'] ?? '';
 
-            // Check delete permission
-            if (!$this->permissionService->canDelete($path)) {
+            // Check delete permission using Nextcloud's permissions
+            if (!($existingPage['permissions']['canDelete'] ?? false)) {
                 return new DataResponse(
                     ['error' => 'Permission denied: cannot delete this page'],
                     Http::STATUS_FORBIDDEN
@@ -202,12 +197,11 @@ class ApiController extends Controller {
      */
     public function uploadImage(string $pageId): DataResponse {
         try {
-            // First get the page to check its path
+            // First get the page to check permissions (from Nextcloud filesystem)
             $existingPage = $this->pageService->getPage($pageId);
-            $path = $existingPage['path'] ?? '';
 
             // Check write permission (uploading images requires write access)
-            if (!$this->permissionService->canWrite($path)) {
+            if (!($existingPage['permissions']['canWrite'] ?? false)) {
                 return new DataResponse(
                     ['error' => 'Permission denied: cannot upload images to this page'],
                     Http::STATUS_FORBIDDEN
@@ -245,12 +239,11 @@ class ApiController extends Controller {
      */
     public function getImage(string $pageId, string $filename) {
         try {
-            // First get the page to check its path
+            // First get the page to check permissions (from Nextcloud filesystem)
             $existingPage = $this->pageService->getPage($pageId);
-            $path = $existingPage['path'] ?? '';
 
-            // Check read permission
-            if (!$this->permissionService->canRead($path)) {
+            // Check read permission using Nextcloud's permissions
+            if (!($existingPage['permissions']['canRead'] ?? false)) {
                 return new DataResponse(
                     ['error' => 'Access denied'],
                     Http::STATUS_FORBIDDEN
@@ -272,12 +265,11 @@ class ApiController extends Controller {
      */
     public function getPageVersions(string $pageId): DataResponse {
         try {
-            // First get the page to check its path
+            // First get the page to check permissions (from Nextcloud filesystem)
             $existingPage = $this->pageService->getPage($pageId);
-            $path = $existingPage['path'] ?? '';
 
-            // Check read permission
-            if (!$this->permissionService->canRead($path)) {
+            // Check read permission using Nextcloud's permissions
+            if (!($existingPage['permissions']['canRead'] ?? false)) {
                 return new DataResponse(
                     ['error' => 'Access denied'],
                     Http::STATUS_FORBIDDEN
@@ -299,12 +291,11 @@ class ApiController extends Controller {
      */
     public function restorePageVersion(string $pageId, string $timestamp): DataResponse {
         try {
-            // First get the page to check its path
+            // First get the page to check permissions (from Nextcloud filesystem)
             $existingPage = $this->pageService->getPage($pageId);
-            $path = $existingPage['path'] ?? '';
 
             // Check write permission (restoring requires write access)
-            if (!$this->permissionService->canWrite($path)) {
+            if (!($existingPage['permissions']['canWrite'] ?? false)) {
                 return new DataResponse(
                     ['error' => 'Permission denied: cannot restore this page'],
                     Http::STATUS_FORBIDDEN
@@ -327,12 +318,11 @@ class ApiController extends Controller {
      */
     public function updateVersionLabel(string $pageId, string $timestamp): DataResponse {
         try {
-            // First get the page to check its path
+            // First get the page to check permissions (from Nextcloud filesystem)
             $existingPage = $this->pageService->getPage($pageId);
-            $path = $existingPage['path'] ?? '';
 
-            // Check write permission
-            if (!$this->permissionService->canWrite($path)) {
+            // Check write permission using Nextcloud's permissions
+            if (!($existingPage['permissions']['canWrite'] ?? false)) {
                 return new DataResponse(
                     ['error' => 'Permission denied'],
                     Http::STATUS_FORBIDDEN
@@ -356,12 +346,11 @@ class ApiController extends Controller {
      */
     public function getVersionContent(string $pageId, string $timestamp): DataResponse {
         try {
-            // First get the page to check its path
+            // First get the page to check permissions (from Nextcloud filesystem)
             $existingPage = $this->pageService->getPage($pageId);
-            $path = $existingPage['path'] ?? '';
 
-            // Check read permission
-            if (!$this->permissionService->canRead($path)) {
+            // Check read permission using Nextcloud's permissions
+            if (!($existingPage['permissions']['canRead'] ?? false)) {
                 return new DataResponse(
                     ['error' => 'Access denied'],
                     Http::STATUS_FORBIDDEN
@@ -384,12 +373,11 @@ class ApiController extends Controller {
      */
     public function getCurrentPageContent(string $pageId): DataResponse {
         try {
-            // First get the page to check its path
+            // First get the page to check permissions (from Nextcloud filesystem)
             $existingPage = $this->pageService->getPage($pageId);
-            $path = $existingPage['path'] ?? '';
 
-            // Check read permission
-            if (!$this->permissionService->canRead($path)) {
+            // Check read permission using Nextcloud's permissions
+            if (!($existingPage['permissions']['canRead'] ?? false)) {
                 return new DataResponse(
                     ['error' => 'Access denied'],
                     Http::STATUS_FORBIDDEN
@@ -412,12 +400,11 @@ class ApiController extends Controller {
      */
     public function getPageMetadata(string $pageId): DataResponse {
         try {
-            // First get the page to check its path
+            // First get the page to check permissions (from Nextcloud filesystem)
             $existingPage = $this->pageService->getPage($pageId);
-            $path = $existingPage['path'] ?? '';
 
-            // Check read permission
-            if (!$this->permissionService->canRead($path)) {
+            // Check read permission using Nextcloud's permissions
+            if (!($existingPage['permissions']['canRead'] ?? false)) {
                 return new DataResponse(
                     ['error' => 'Access denied'],
                     Http::STATUS_FORBIDDEN
@@ -439,12 +426,11 @@ class ApiController extends Controller {
      */
     public function updatePageMetadata(string $pageId): DataResponse {
         try {
-            // First get the page to check its path
+            // First get the page to check permissions (from Nextcloud filesystem)
             $existingPage = $this->pageService->getPage($pageId);
-            $path = $existingPage['path'] ?? '';
 
-            // Check write permission
-            if (!$this->permissionService->canWrite($path)) {
+            // Check write permission using Nextcloud's permissions
+            if (!($existingPage['permissions']['canWrite'] ?? false)) {
                 return new DataResponse(
                     ['error' => 'Permission denied'],
                     Http::STATUS_FORBIDDEN
@@ -515,11 +501,10 @@ class ApiController extends Controller {
 
             $results = $this->pageService->searchPages($query);
 
-            // Filter results based on permissions
+            // Filter results based on Nextcloud's permissions (already in the results)
             $filteredResults = [];
             foreach ($results as $result) {
-                $path = $result['path'] ?? '';
-                if ($this->permissionService->canRead($path)) {
+                if ($result['permissions']['canRead'] ?? false) {
                     $filteredResults[] = $result;
                 }
             }
@@ -543,12 +528,11 @@ class ApiController extends Controller {
      */
     public function getBreadcrumb(string $id): DataResponse {
         try {
-            // First get the page to check its path
+            // First get the page to check permissions (from Nextcloud filesystem)
             $existingPage = $this->pageService->getPage($id);
-            $path = $existingPage['path'] ?? '';
 
-            // Check read permission
-            if (!$this->permissionService->canRead($path)) {
+            // Check read permission using Nextcloud's permissions
+            if (!($existingPage['permissions']['canRead'] ?? false)) {
                 return new DataResponse(
                     ['error' => 'Access denied'],
                     Http::STATUS_FORBIDDEN
@@ -574,18 +558,11 @@ class ApiController extends Controller {
      */
     public function getPageTree(?string $currentPageId = null): DataResponse {
         try {
-            // Check if user has any access
-            if (!$this->permissionService->hasAccess()) {
-                return new DataResponse(
-                    ['error' => 'Access denied'],
-                    Http::STATUS_FORBIDDEN
-                );
-            }
-
             $tree = $this->pageService->getPageTree($currentPageId);
 
-            // Filter tree based on permissions
-            $filteredTree = $this->permissionService->filterTree($tree);
+            // Filter tree to only include pages user can read
+            // PageService already includes Nextcloud permissions in each page
+            $filteredTree = $this->filterTreeByPermissions($tree);
 
             return new DataResponse([
                 'tree' => $filteredTree
@@ -599,6 +576,22 @@ class ApiController extends Controller {
     }
 
     /**
+     * Filter page tree to only include pages user can read
+     */
+    private function filterTreeByPermissions(array $tree): array {
+        $filtered = [];
+        foreach ($tree as $item) {
+            if ($item['permissions']['canRead'] ?? false) {
+                if (!empty($item['children'])) {
+                    $item['children'] = $this->filterTreeByPermissions($item['children']);
+                }
+                $filtered[] = $item;
+            }
+        }
+        return $filtered;
+    }
+
+    /**
      * Get current user's permissions for IntraVox
      *
      * @NoAdminRequired
@@ -607,7 +600,8 @@ class ApiController extends Controller {
     public function getPermissions(?string $path = null): DataResponse {
         try {
             $checkPath = $path ?? '';
-            $permissions = $this->permissionService->getPermissionsObject($checkPath);
+            // Use Nextcloud's native filesystem permissions
+            $permissions = $this->pageService->getFolderPermissions($checkPath);
 
             return new DataResponse([
                 'path' => $checkPath,
@@ -616,6 +610,33 @@ class ApiController extends Controller {
         } catch (\Exception $e) {
             return new DataResponse(
                 ['error' => $e->getMessage()],
+                Http::STATUS_INTERNAL_SERVER_ERROR
+            );
+        }
+    }
+
+    /**
+     * Run IntraVox setup (create GroupFolder)
+     * Admin only - creates the IntraVox GroupFolder
+     */
+    public function runSetup(): DataResponse {
+        try {
+            $this->logger->info('[ApiController] Running setup');
+
+            $result = $this->setupService->setup();
+
+            return new DataResponse([
+                'success' => true,
+                'message' => 'Setup completed successfully',
+                'result' => $result,
+            ]);
+        } catch (\Exception $e) {
+            $this->logger->error('[ApiController] Setup failed: ' . $e->getMessage());
+            return new DataResponse(
+                [
+                    'success' => false,
+                    'message' => 'Setup failed: ' . $e->getMessage(),
+                ],
                 Http::STATUS_INTERNAL_SERVER_ERROR
             );
         }

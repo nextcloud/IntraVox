@@ -26,7 +26,8 @@ if (isAnalyze) {
 
 module.exports = {
     entry: {
-        main: './src/main.js'
+        main: './src/main.js',
+        admin: './src/admin.js'
     },
     output: {
         filename: 'intravox-[name].js',

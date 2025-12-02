@@ -20,7 +20,7 @@
                         "type": "text",
                         "column": 1,
                         "order": 2,
-                        "content": "Volg de voortgang van alle verkoopkansen door onze gestructureerde pipeline."
+                        "content": "This is a demo sales pipeline page. Use this layout to track sales opportunities through structured stages."
                     }
                 ]
             },
@@ -52,33 +52,33 @@
                         "type": "text",
                         "column": 2,
                         "order": 2,
-                        "content": "Gekwalificeerde leads met budget"
+                        "content": "Qualified leads with budget"
                     },
                     {
                         "type": "heading",
                         "column": 3,
                         "order": 1,
-                        "content": "Propositie",
+                        "content": "Proposal",
                         "level": 3
                     },
                     {
                         "type": "text",
                         "column": 3,
                         "order": 2,
-                        "content": "Offerte verstuurd, wacht op reactie"
+                        "content": "Quote sent, awaiting response"
                     },
                     {
                         "type": "heading",
                         "column": 4,
                         "order": 1,
-                        "content": "Negotiatie",
+                        "content": "Negotiation",
                         "level": 3
                     },
                     {
                         "type": "text",
                         "column": 4,
                         "order": 2,
-                        "content": "Onderhandeling over voorwaarden"
+                        "content": "Negotiating terms and conditions"
                     },
                     {
                         "type": "heading",
@@ -110,20 +110,20 @@
                         "type": "text",
                         "column": 1,
                         "order": 2,
-                        "content": "**Important rules:**\n\n- Update status daily\n- Add expected close date\n- Estimate deal value realistically\n- Note next steps for every deal"
+                        "content": "**Example rules:**\n\n- Update status daily\n- Add expected close date\n- Estimate deal value realistically\n- Note next steps for every deal"
                     },
                     {
                         "type": "heading",
                         "column": 2,
                         "order": 1,
-                        "content": "Rapportages",
+                        "content": "Reports",
                         "level": 2
                     },
                     {
                         "type": "text",
                         "column": 2,
                         "order": 2,
-                        "content": "**Weekly reports:**\n\n- Monday: Pipeline review\n- Wednesday: Forecast update\n- Friday: Win/loss analysis"
+                        "content": "**Example schedule:**\n\n- Monday: Pipeline review\n- Wednesday: Forecast update\n- Friday: Win/loss analysis"
                     }
                 ]
             },

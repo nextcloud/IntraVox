@@ -94,13 +94,17 @@ class PermissionService {
     public function getPermissions(string $relativePath, ?string $userId = null): int {
         $userId = $userId ?? $this->userId;
 
+        $this->logger->info("[PermissionService] getPermissions called for path: '{$relativePath}', user: " . ($userId ?? 'null'));
+
         if (!$userId) {
             $this->logger->debug('No user ID, returning no permissions');
             return 0;
         }
 
         try {
-            return $this->calculatePermissions($relativePath, $userId);
+            $perms = $this->calculatePermissions($relativePath, $userId);
+            $this->logger->info("[PermissionService] Final permissions for '{$relativePath}': {$perms}");
+            return $perms;
         } catch (\Exception $e) {
             $this->logger->error('Failed to get permissions for path ' . $relativePath . ': ' . $e->getMessage());
             return 0;
@@ -183,47 +187,139 @@ class PermissionService {
 
     /**
      * Apply ACL rules from the GroupFolders ACL system.
+     *
+     * This method directly queries the ACL database to get the correct permissions,
+     * as the __groupfolders storage does not apply ACL rules to getPermissions().
      */
     private function applyAclRules(int $folderId, string $relativePath, string $userId, array $userGroups, int $basePermissions): int {
         try {
-            // Check if ACL manager is available (groupfolders with ACL enabled)
-            if (!class_exists('\OCA\GroupFolders\ACL\ACLManager')) {
+            // Build path segments to check (from least specific to most specific)
+            // ACL rules are stored with paths like "files/en/departments/hr"
+            // We check from root to specific so that more specific rules override parent rules
+            $pathsToCheck = ['files']; // Start with root
+
+            if (!empty($relativePath)) {
+                // Clean up the path
+                $cleanPath = trim($relativePath, '/');
+
+                // Build all parent paths to check (least specific to most specific)
+                $parts = explode('/', $cleanPath);
+                $currentPath = '';
+                foreach ($parts as $part) {
+                    $currentPath = $currentPath ? $currentPath . '/' . $part : $part;
+                    // ACL paths in database are prefixed with "files/"
+                    $pathsToCheck[] = 'files/' . $currentPath;
+                }
+            }
+
+            $this->logger->debug("Checking ACL for paths: " . implode(', ', $pathsToCheck));
+
+            // Query ACL rules directly from database
+            $db = \OC::$server->getDatabaseConnection();
+
+            // Get storage ID for the groupfolder
+            // Try both storage ID formats: object::groupfolder:: (newer) and local:: (older)
+            $storageQuery = $db->getQueryBuilder();
+            $storageQuery->select('numeric_id')
+                ->from('storages')
+                ->where($storageQuery->expr()->orX(
+                    $storageQuery->expr()->like('id', $storageQuery->createNamedParameter('object::groupfolder::' . $folderId)),
+                    $storageQuery->expr()->like('id', $storageQuery->createNamedParameter('%__groupfolders/' . $folderId . '/%'))
+                ));
+            $storageResult = $storageQuery->executeQuery();
+            $storageRow = $storageResult->fetch();
+            $storageResult->closeCursor();
+
+            if (!$storageRow) {
+                $this->logger->debug("No storage found for groupfolder {$folderId}, using base permissions");
                 return $basePermissions;
             }
 
-            $aclManager = \OC::$server->get(\OCA\GroupFolders\ACL\ACLManager::class);
+            $storageId = $storageRow['numeric_id'];
+            $this->logger->debug("Found storage ID {$storageId} for groupfolder {$folderId}");
 
-            // Build the full path for ACL lookup
-            // ACL paths are relative to the groupfolder root
-            $aclPath = $relativePath;
+            // For each path (most specific to least specific), check for ACL rules
+            $effectivePermissions = $basePermissions;
 
-            // Get the file node if it exists
-            try {
-                $intraVoxFolder = $this->setupService->getSharedFolder();
-                $node = empty($relativePath) ? $intraVoxFolder : $intraVoxFolder->get($relativePath);
+            foreach ($pathsToCheck as $aclPath) {
+                // Get fileid for this path
+                $fileQuery = $db->getQueryBuilder();
+                $fileQuery->select('fileid')
+                    ->from('filecache')
+                    ->where($fileQuery->expr()->eq('storage', $fileQuery->createNamedParameter($storageId)))
+                    ->andWhere($fileQuery->expr()->eq('path', $fileQuery->createNamedParameter($aclPath)));
+                $fileResult = $fileQuery->executeQuery();
+                $fileRow = $fileResult->fetch();
+                $fileResult->closeCursor();
 
-                // Get permissions from the ACL manager for this node
-                $permissions = $node->getPermissions();
+                if (!$fileRow) {
+                    $this->logger->debug("No filecache entry for path {$aclPath}");
+                    continue;
+                }
 
-                // The node's getPermissions() already incorporates ACL rules
-                // But we need to ensure we don't exceed base permissions
-                return $permissions & $basePermissions;
+                $fileId = $fileRow['fileid'];
 
-            } catch (\OCP\Files\NotFoundException $e) {
-                // Path doesn't exist yet (e.g., creating new page)
-                // Use base permissions but check parent path ACL
-                if (!empty($relativePath)) {
-                    $parentPath = dirname($relativePath);
-                    if ($parentPath !== '.' && $parentPath !== $relativePath) {
-                        return $this->getPermissions($parentPath, $userId);
+                // Check ACL rules for this file
+                // First check group rules (user belongs to these groups)
+                foreach ($userGroups as $groupId) {
+                    $aclQuery = $db->getQueryBuilder();
+                    $aclQuery->select('mask', 'permissions')
+                        ->from('group_folders_acl')
+                        ->where($aclQuery->expr()->eq('fileid', $aclQuery->createNamedParameter($fileId)))
+                        ->andWhere($aclQuery->expr()->eq('mapping_type', $aclQuery->createNamedParameter('group')))
+                        ->andWhere($aclQuery->expr()->eq('mapping_id', $aclQuery->createNamedParameter($groupId)));
+                    $aclResult = $aclQuery->executeQuery();
+                    $aclRow = $aclResult->fetch();
+                    $aclResult->closeCursor();
+
+                    if ($aclRow) {
+                        $mask = (int)$aclRow['mask'];
+                        $permissions = (int)$aclRow['permissions'];
+
+                        $this->logger->debug("Found ACL rule for group {$groupId} on path {$aclPath}: mask={$mask}, permissions={$permissions}");
+
+                        // Apply the ACL rule: permissions in the ACL override base permissions for the masked bits
+                        // mask indicates which permission bits are controlled by this ACL rule
+                        // permissions indicates the actual permission values
+                        // Clear the masked bits from effective permissions, then OR in the ACL permissions
+                        $effectivePermissions = ($effectivePermissions & ~$mask) | ($permissions & $mask);
+
+                        $this->logger->debug("After applying ACL: effectivePermissions={$effectivePermissions}");
                     }
                 }
-                return $basePermissions;
+
+                // Also check user-specific rules
+                $userAclQuery = $db->getQueryBuilder();
+                $userAclQuery->select('mask', 'permissions')
+                    ->from('group_folders_acl')
+                    ->where($userAclQuery->expr()->eq('fileid', $userAclQuery->createNamedParameter($fileId)))
+                    ->andWhere($userAclQuery->expr()->eq('mapping_type', $userAclQuery->createNamedParameter('user')))
+                    ->andWhere($userAclQuery->expr()->eq('mapping_id', $userAclQuery->createNamedParameter($userId)));
+                $userAclResult = $userAclQuery->executeQuery();
+                $userAclRow = $userAclResult->fetch();
+                $userAclResult->closeCursor();
+
+                if ($userAclRow) {
+                    $mask = (int)$userAclRow['mask'];
+                    $permissions = (int)$userAclRow['permissions'];
+
+                    $this->logger->debug("Found user ACL rule for {$userId} on path {$aclPath}: mask={$mask}, permissions={$permissions}");
+
+                    // User rules override group rules
+                    $effectivePermissions = ($effectivePermissions & ~$mask) | ($permissions & $mask);
+
+                    $this->logger->debug("After applying user ACL: effectivePermissions={$effectivePermissions}");
+                }
             }
 
+            $this->logger->debug("Final permissions for {$userId} on {$relativePath}: {$effectivePermissions}");
+            return $effectivePermissions;
+
         } catch (\Exception $e) {
-            $this->logger->debug('ACL check failed, using base permissions: ' . $e->getMessage());
-            return $basePermissions;
+            $this->logger->error('ACL check failed: ' . $e->getMessage());
+            $this->logger->error('Stack trace: ' . $e->getTraceAsString());
+            // In case of error, be restrictive - return read-only
+            return self::PERMISSION_READ;
         }
     }
 

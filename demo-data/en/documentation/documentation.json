@@ -77,7 +77,7 @@
                             {
                                 "title": "View User Guides",
                                 "text": "",
-                                "url": "#handleidingen",
+                                "url": "#documentation/guides",
                                 "icon": "book-open",
                                 "target": "_self"
                             }

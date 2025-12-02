@@ -32,7 +32,7 @@
                         "type": "heading",
                         "column": 1,
                         "order": 1,
-                        "content": "November 2024",
+                        "content": "Recente Updates",
                         "level": 2
                     }
                 ]
@@ -128,7 +128,7 @@
                         "type": "heading",
                         "column": 1,
                         "order": 1,
-                        "content": "Oktober 2024",
+                        "content": "Eerdere Updates",
                         "level": 2
                     }
                 ]
@@ -194,7 +194,7 @@
                         "type": "text",
                         "column": 1,
                         "order": 2,
-                        "content": "| Versie | Datum | Highlights |\n|--------|-------|------------|\n| 0.5.0 | Nov 2024 | Dark mode, sneller zoeken |\n| 0.4.5 | Okt 2024 | Multi-taal, nieuwe editor |\n| 0.4.0 | Sep 2024 | Mega menu, sidebar layouts |\n| 0.3.5 | Aug 2024 | Image optimization |\n| 0.3.0 | Jul 2024 | Links widget, dividers |"
+                        "content": "| Versie | Highlights |\n|--------|------------|\n| x.x.x | Voorbeeld: Dark mode, sneller zoeken |\n| x.x.x | Voorbeeld: Multi-taal ondersteuning |\n| x.x.x | Voorbeeld: Nieuwe editor features |\n\n*Pas deze tabel aan met uw eigen release informatie.*"
                     }
                 ]
             },

@@ -4,7 +4,13 @@
     <id>intravox</id>
     <name>IntraVox</name>
     <summary>SharePoint-like pages for Nextcloud</summary>
-    <description><![CDATA[IntraVox brings SharePoint-style page creation to Nextcloud with a powerful drag-and-drop interface.
+    <description><![CDATA[**⚠️ EVALUATION VERSION - NOT FOR PRODUCTION USE**
+
+This is an evaluation version intended for testing and demonstration purposes only. Do not use in production environments.
+
+---
+
+IntraVox brings SharePoint-style page creation to Nextcloud with a powerful drag-and-drop interface.
 
 **Features:**
 * Create rich, interactive pages with a visual editor
@@ -30,10 +36,14 @@ Built with Vue 3 and modern web technologies for a smooth, secure experience.
     <namespace>IntraVox</namespace>
     <category>organization</category>
     <category>office</category>
-    <website>https://github.com/shalution/IntraVox</website>
-    <bugs>https://github.com/shalution/IntraVox/issues</bugs>
-    <repository type="git">https://github.com/shalution/IntraVox.git</repository>
+    <website>https://github.com/nextcloud/intravox</website>
+    <bugs>https://github.com/nextcloud/intravox/issues</bugs>
+    <repository type="git">https://github.com/nextcloud/intravox.git</repository>
+    <screenshot>https://raw.githubusercontent.com/nextcloud/intravox/main/screenshots/intravox%20home.png</screenshot>
+    <screenshot>https://raw.githubusercontent.com/nextcloud/intravox/main/screenshots/Intravox%20edit.png</screenshot>
+    <screenshot>https://raw.githubusercontent.com/nextcloud/intravox/main/screenshots/IntraVox-MetaVox.png</screenshot>
     <dependencies>
+        <php min-version="8.1"/>
         <nextcloud min-version="32" max-version="32"/>
     </dependencies>
     <navigations>
@@ -50,4 +60,8 @@ Built with Vue 3 and modern web technologies for a smooth, secure experience.
         <command>OCA\IntraVox\Command\ImportPagesCommand</command>
         <command>OCA\IntraVox\Command\ImportDemoDataCommand</command>
     </commands>
+    <settings>
+        <admin>OCA\IntraVox\Settings\AdminSettings</admin>
+        <admin-section>OCA\IntraVox\Settings\AdminSection</admin-section>
+    </settings>
 </info>

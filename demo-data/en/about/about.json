@@ -218,7 +218,7 @@
                             {
                                 "title": "View Features",
                                 "text": "Discover all possibilities",
-                                "url": "#functies",
+                                "url": "#features",
                                 "icon": "cog",
                                 "target": "_self"
                             },

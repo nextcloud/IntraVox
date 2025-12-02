@@ -39,7 +39,7 @@
                         "type": "text",
                         "column": 1,
                         "order": 2,
-                        "content": "**Werktijden:**\n- Flexibele werktijden\n- Kernuren: 10:00 - 15:00\n- 40 uur per week (fulltime)\n\n**Verlof:**\n- 25 vakantiedagen\n- Feestdagen conform CAO\n- Onbetaald verlof mogelijk"
+                        "content": "**Werktijden:**\n- Pas de werktijden aan\n- Kernuren: [pas aan]\n- X uur per week (fulltime)\n\n**Verlof:**\n- X vakantiedagen\n- Feestdagen conform CAO\n- Onbetaald verlof mogelijk\n\n*Voorbeeld content - pas aan naar uw situatie.*"
                     },
                     {
                         "type": "heading",
@@ -52,7 +52,7 @@
                         "type": "text",
                         "column": 2,
                         "order": 2,
-                        "content": "**Hybride werken:**\n- Max 3 dagen thuis per week\n- Thuiswerkvergoeding: €2/dag\n- Thuiswerkplek voldoet aan Arbowet\n\n**Voorwaarden:**\n- Goede internetverbinding\n- Bereikbaar tijdens kernuren"
+                        "content": "**Hybride werken:**\n- Max X dagen thuis per week\n- Thuiswerkvergoeding: [pas aan]\n- Thuiswerkplek voldoet aan Arbowet\n\n**Voorwaarden:**\n- Goede internetverbinding\n- Bereikbaar tijdens kernuren\n\n*Voorbeeld content - pas aan naar uw situatie.*"
                     }
                 ]
             },

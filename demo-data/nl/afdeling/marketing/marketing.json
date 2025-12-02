@@ -86,7 +86,7 @@
                         "type": "heading",
                         "column": 1,
                         "order": 1,
-                        "content": "Marketing Statistieken 2024",
+                        "content": "Marketing Statistieken",
                         "level": 2
                     }
                 ]
@@ -216,8 +216,8 @@
                             },
                             {
                                 "title": "Contact Marketing",
-                                "text": "marketing@intravox.nl",
-                                "url": "mailto:marketing@intravox.nl",
+                                "text": "Neem contact op",
+                                "url": "#contact",
                                 "icon": "email",
                                 "target": "_self"
                             }

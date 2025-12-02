@@ -28,7 +28,7 @@
                         "type": "text",
                         "column": 1,
                         "order": 3,
-                        "content": "We are ready to answer your questions and help you with IntraVox."
+                        "content": "This is a demo contact page. In a real intranet, this would contain your organization's contact information."
                     }
                 ]
             },
@@ -55,7 +55,7 @@
                         "type": "text",
                         "column": 1,
                         "order": 3,
-                        "content": "Do you have questions about IntraVox? Would you like a demo? Or do you need technical support?\n\n**Email:** info@intravox.nl\n**Phone:** +31 (0)20 123 4567\n**Support:** support@intravox.nl\n\n**Opening hours:**\nMonday - Friday: 09:00 - 17:00 CET"
+                        "content": "You can add contact details here such as:\n\n- General inquiries email\n- Support email\n- Phone numbers\n- Office hours"
                     },
                     {
                         "type": "image",
@@ -76,7 +76,7 @@
                         "type": "text",
                         "column": 2,
                         "order": 3,
-                        "content": "**IntraVox BV**\nSciencepark 402\n1098 XH Amsterdam\nThe Netherlands\n\n*Easy to reach by public transport*\nAmsterdam Science Park station: 5 min walk"
+                        "content": "Add your office location here:\n\n- Street address\n- City and postal code\n- Country\n- Directions"
                     },
                     {
                         "type": "image",
@@ -97,7 +97,7 @@
                         "type": "text",
                         "column": 3,
                         "order": 3,
-                        "content": "Our support team is ready for you.\n\n**Community:** GitHub Issues\n**Priority:** Enterprise support\n**Docs:** docs.intravox.nl"
+                        "content": "Link to support resources:\n\n- Help desk system\n- Knowledge base\n- FAQ pages\n- Support hours"
                     }
                 ]
             },
@@ -127,59 +127,46 @@
                         "level": 2
                     },
                     {
-                        "type": "links",
+                        "type": "text",
                         "column": 1,
                         "order": 2,
+                        "content": "The Links widget below shows how you can create quick-access buttons for different contact methods:"
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 3,
                         "columns": 4,
                         "items": [
                             {
-                                "title": "General Questions",
-                                "text": "info@intravox.nl",
-                                "url": "mailto:info@intravox.nl",
+                                "title": "Email",
+                                "text": "General inquiries",
+                                "url": "#",
                                 "icon": "email",
                                 "target": "_self"
                             },
                             {
-                                "title": "Technische Support",
-                                "text": "support@intravox.nl",
-                                "url": "mailto:support@intravox.nl",
+                                "title": "Support",
+                                "text": "Technical help",
+                                "url": "#",
                                 "icon": "help-circle",
                                 "target": "_self"
                             },
                             {
                                 "title": "Sales",
-                                "text": "sales@intravox.nl",
-                                "url": "mailto:sales@intravox.nl",
+                                "text": "Business inquiries",
+                                "url": "#",
                                 "icon": "cash-register",
                                 "target": "_self"
                             },
                             {
-                                "title": "Call Us",
-                                "text": "+31 (0)20 123 4567",
-                                "url": "tel:+31201234567",
+                                "title": "Phone",
+                                "text": "Call us",
+                                "url": "#",
                                 "icon": "phone",
                                 "target": "_self"
                             }
                         ]
-                    }
-                ]
-            },
-            {
-                "columns": 1,
-                "backgroundColor": "",
-                "widgets": [
-                    {
-                        "type": "heading",
-                        "column": 1,
-                        "order": 1,
-                        "content": "Request Demo",
-                        "level": 2
-                    },
-                    {
-                        "type": "text",
-                        "column": 1,
-                        "order": 2,
-                        "content": "Would you like to see IntraVox in action? Request a **free demo**!\n\nOur product specialists will contact you within 24 hours to schedule a demo. During the demo, we will show you how IntraVox can improve your internal communication.\n\n**What you can expect:**\n- Personal tour of IntraVox\n- Answers to all your questions\n- Advice for your specific situation\n- No obligations"
                     }
                 ]
             },
@@ -205,13 +192,19 @@
                         "type": "heading",
                         "column": 1,
                         "order": 1,
-                        "content": "Follow Us",
+                        "content": "External Links",
                         "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Links to external websites can open in a new tab:"
                     },
                     {
                         "type": "links",
                         "column": 1,
-                        "order": 2,
+                        "order": 3,
                         "columns": 4,
                         "items": [
                             {
@@ -236,8 +229,8 @@
                                 "target": "_blank"
                             },
                             {
-                                "title": "Community Forum",
-                                "text": "Discussions and help",
+                                "title": "Community",
+                                "text": "Discussions",
                                 "url": "https://help.nextcloud.com",
                                 "icon": "forum",
                                 "target": "_blank"

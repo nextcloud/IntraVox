@@ -1,6 +1,6 @@
 {
     "uniqueId": "page-3118bbb6-8289-4b74-90e8-80e3d06ddd84",
-    "title": "Product Updates",
+    "title": "Updates",
     "language": "en",
     "layout": {
         "columns": 1,
@@ -13,14 +13,14 @@
                         "type": "heading",
                         "column": 1,
                         "order": 1,
-                        "content": "Product Updates",
+                        "content": "Updates",
                         "level": 1
                     },
                     {
                         "type": "text",
                         "column": 1,
                         "order": 2,
-                        "content": "Stay up to date with the latest features and improvements. Every month we release updates that improve your experience."
+                        "content": "This is a demo updates page. Use this layout to share news, announcements, or product updates with your team."
                     }
                 ]
             },
@@ -32,8 +32,14 @@
                         "type": "heading",
                         "column": 1,
                         "order": 1,
-                        "content": "November 2024",
+                        "content": "Featured Updates",
                         "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "The three-column layout below demonstrates how to showcase multiple updates side by side."
                     }
                 ]
             },
@@ -46,63 +52,63 @@
                         "column": 1,
                         "order": 1,
                         "src": "update-darkmode.jpg",
-                        "alt": "Dark Mode",
+                        "alt": "Update 1",
                         "objectFit": "cover"
                     },
                     {
                         "type": "heading",
                         "column": 1,
                         "order": 2,
-                        "content": "Dark Mode",
+                        "content": "Example Update 1",
                         "level": 3
                     },
                     {
                         "type": "text",
                         "column": 1,
                         "order": 3,
-                        "content": "New: Dark theme for IntraVox! Automatically follows your system preferences or set manually."
+                        "content": "Add your first update here. Describe what's new and how it benefits your users."
                     },
                     {
                         "type": "image",
                         "column": 2,
                         "order": 1,
                         "src": "update-search.jpg",
-                        "alt": "Improved search",
+                        "alt": "Update 2",
                         "objectFit": "cover"
                     },
                     {
                         "type": "heading",
                         "column": 2,
                         "order": 2,
-                        "content": "Faster Search",
+                        "content": "Example Update 2",
                         "level": 3
                     },
                     {
                         "type": "text",
                         "column": 2,
                         "order": 3,
-                        "content": "Search results now load 10x faster thanks to our new index engine."
+                        "content": "Add your second update here. Include relevant details and any actions required."
                     },
                     {
                         "type": "image",
                         "column": 3,
                         "order": 1,
                         "src": "update-mobile.jpg",
-                        "alt": "Mobiele verbeteringen",
+                        "alt": "Update 3",
                         "objectFit": "cover"
                     },
                     {
                         "type": "heading",
                         "column": 3,
                         "order": 2,
-                        "content": "Mobile Friendly",
+                        "content": "Example Update 3",
                         "level": 3
                     },
                     {
                         "type": "text",
                         "column": 3,
                         "order": 3,
-                        "content": "Responsive design improved for tablets and smartphones. Edit pages on the go!"
+                        "content": "Add your third update here. Keep content concise and actionable."
                     }
                 ]
             },
@@ -128,7 +134,7 @@
                         "type": "heading",
                         "column": 1,
                         "order": 1,
-                        "content": "October 2024",
+                        "content": "Two-Column Layout Example",
                         "level": 2
                     }
                 ]
@@ -141,27 +147,27 @@
                         "type": "heading",
                         "column": 1,
                         "order": 1,
-                        "content": "Multi-language Support",
+                        "content": "Feature Highlight",
                         "level": 3
                     },
                     {
                         "type": "text",
                         "column": 1,
                         "order": 2,
-                        "content": "Manage content in multiple languages from one dashboard. Automatic language detection for visitors.\n\n**Supported languages:**\n- Dutch\n- English\n- German\n- French\n- Spanish"
+                        "content": "Use two-column layouts for detailed explanations:\n\n**Key points:**\n- Bullet point 1\n- Bullet point 2\n- Bullet point 3\n- Bullet point 4"
                     },
                     {
                         "type": "heading",
                         "column": 2,
                         "order": 1,
-                        "content": "Improved Editor",
+                        "content": "Getting Started",
                         "level": 3
                     },
                     {
                         "type": "text",
                         "column": 2,
                         "order": 2,
-                        "content": "The drag-and-drop editor has been completely redesigned:\n\n- Real-time preview\n- Undo/redo support\n- Keyboard shortcuts\n- Auto-save function\n- Improved performance"
+                        "content": "Provide step-by-step instructions:\n\n1. First step\n2. Second step\n3. Third step\n4. Fourth step\n5. Final step"
                     }
                 ]
             },
@@ -187,14 +193,14 @@
                         "type": "heading",
                         "column": 1,
                         "order": 1,
-                        "content": "Changelog Archive",
+                        "content": "Table Example",
                         "level": 2
                     },
                     {
                         "type": "text",
                         "column": 1,
                         "order": 2,
-                        "content": "| Version | Date | Highlights |\n|--------|-------|------------|\n| 0.5.0 | Nov 2024 | Dark mode, faster search |\n| 0.4.5 | Oct 2024 | Multi-language, new editor |\n| 0.4.0 | Sep 2024 | Mega menu, sidebar layouts |\n| 0.3.5 | Aug 2024 | Image optimization |\n| 0.3.0 | Jul 2024 | Links widget, dividers |"
+                        "content": "Use Markdown tables to organize information:\n\n| Category | Status | Notes |\n|----------|--------|-------|\n| Category A | Active | Description |\n| Category B | Pending | Description |\n| Category C | Complete | Description |\n| Category D | In Progress | Description |"
                     }
                 ]
             },
@@ -206,7 +212,7 @@
                         "type": "heading",
                         "column": 1,
                         "order": 1,
-                        "content": "More News",
+                        "content": "Related Pages",
                         "level": 2
                     },
                     {
@@ -217,24 +223,24 @@
                         "items": [
                             {
                                 "title": "Events",
-                                "text": "Komende events",
-                                "url": "#nieuws/evenementen",
+                                "text": "Upcoming events",
+                                "url": "#news/events",
                                 "icon": "calendar-star",
                                 "target": "_self"
                             },
                             {
-                                "title": "News Overview",
-                                "text": "All news articles",
-                                "url": "#nieuws",
+                                "title": "News",
+                                "text": "All articles",
+                                "url": "#news",
                                 "icon": "newspaper",
                                 "target": "_self"
                             },
                             {
-                                "title": "GitHub Releases",
-                                "text": "Technische details",
-                                "url": "https://github.com",
-                                "icon": "github",
-                                "target": "_blank"
+                                "title": "Documentation",
+                                "text": "Learn more",
+                                "url": "#documentation",
+                                "icon": "book-open",
+                                "target": "_self"
                             }
                         ]
                     }

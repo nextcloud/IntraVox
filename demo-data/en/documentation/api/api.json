@@ -174,21 +174,21 @@
                             {
                                 "title": "Installation",
                                 "text": "Server setup",
-                                "url": "#documentatie/installatie",
+                                "url": "#documentation/installatie",
                                 "icon": "download",
                                 "target": "_self"
                             },
                             {
                                 "title": "User Guides",
                                 "text": "Step-by-step",
-                                "url": "#documentatie/handleidingen",
+                                "url": "#documentation/guides",
                                 "icon": "book-open",
                                 "target": "_self"
                             },
                             {
                                 "title": "FAQ",
                                 "text": "Frequently asked questions",
-                                "url": "#documentatie/faq",
+                                "url": "#documentation/faq",
                                 "icon": "help-circle",
                                 "target": "_self"
                             },
@@ -238,27 +238,27 @@
                         "items": [
                             {
                                 "text": "Installation",
-                                "url": "#documentatie/installatie",
+                                "url": "#documentation/installatie",
                                 "icon": "download"
                             },
                             {
                                 "text": "User Guides",
-                                "url": "#documentatie/handleidingen",
+                                "url": "#documentation/guides",
                                 "icon": "book-open"
                             },
                             {
                                 "text": "API",
-                                "url": "#documentatie/api",
+                                "url": "#documentation/api",
                                 "icon": "api"
                             },
                             {
                                 "text": "FAQ",
-                                "url": "#documentatie/faq",
+                                "url": "#documentation/faq",
                                 "icon": "help-circle"
                             },
                             {
                                 "text": "Tips",
-                                "url": "#documentatie/tips",
+                                "url": "#documentation/tips",
                                 "icon": "lightbulb"
                             }
                         ]

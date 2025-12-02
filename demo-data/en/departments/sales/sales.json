@@ -224,7 +224,7 @@
                             {
                                 "title": "Back to Departments",
                                 "text": "Overview of all departments",
-                                "url": "#afdeling",
+                                "url": "#departments",
                                 "icon": "arrow-left",
                                 "target": "_self"
                             }

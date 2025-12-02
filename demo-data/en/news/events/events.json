@@ -21,14 +21,14 @@
                         "type": "heading",
                         "column": 1,
                         "order": 2,
-                        "content": "Events & Webinars",
+                        "content": "Events",
                         "level": 1
                     },
                     {
                         "type": "text",
                         "column": 1,
                         "order": 3,
-                        "content": "Don't miss any event! From internal workshops to external conferences - stay connected with the community."
+                        "content": "This is a demo events page. Use this layout to showcase upcoming company events, meetings, or important dates."
                     }
                 ]
             },
@@ -40,8 +40,14 @@
                         "type": "heading",
                         "column": 1,
                         "order": 1,
-                        "content": "Upcoming Events",
+                        "content": "Example: Upcoming Events",
                         "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "The two-column layout below shows how you can display event cards with images, descriptions, and action buttons."
                     }
                 ]
             },
@@ -61,14 +67,14 @@
                         "type": "heading",
                         "column": 1,
                         "order": 2,
-                        "content": "Webinar: IntraVox for Beginners",
+                        "content": "Example: Online Webinar",
                         "level": 3
                     },
                     {
                         "type": "text",
                         "column": 1,
                         "order": 3,
-                        "content": "**Date:** December 15, 2024\n**Time:** 2:00 PM - 3:30 PM\n**Location:** Online (Zoom)\n\nLearn the basics of IntraVox in 90 minutes. Perfect for new users who want to become productive quickly."
+                        "content": "Add event details here:\n\n- Date and time\n- Location (online/physical)\n- Description\n- Registration link"
                     },
                     {
                         "type": "links",
@@ -78,7 +84,7 @@
                         "items": [
                             {
                                 "title": "Register",
-                                "text": "Registreer nu gratis",
+                                "text": "Sign up for this event",
                                 "url": "#",
                                 "icon": "calendar-check",
                                 "target": "_self"
@@ -97,14 +103,14 @@
                         "type": "heading",
                         "column": 2,
                         "order": 2,
-                        "content": "Workshop: Advanced Layouts",
+                        "content": "Example: In-Person Workshop",
                         "level": 3
                     },
                     {
                         "type": "text",
                         "column": 2,
                         "order": 3,
-                        "content": "**Date:** December 20, 2024\n**Time:** 10:00 AM - 12:00 PM\n**Location:** Amsterdam Office\n\nDive deeper into layout options, side columns and background colors for professional pages."
+                        "content": "In-person events can include:\n\n- Venue address\n- Parking information\n- Capacity limits\n- Materials to bring"
                     },
                     {
                         "type": "links",
@@ -114,7 +120,7 @@
                         "items": [
                             {
                                 "title": "Register",
-                                "text": "Beperkt aantal plaatsen",
+                                "text": "Limited seats available",
                                 "url": "#",
                                 "icon": "calendar-check",
                                 "target": "_self"
@@ -145,41 +151,47 @@
                         "type": "heading",
                         "column": 1,
                         "order": 1,
-                        "content": "Events Calendar",
+                        "content": "Quick Links Calendar",
                         "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "The Links widget can be used to create a visual calendar overview:"
                     },
                     {
                         "type": "links",
                         "column": 1,
-                        "order": 2,
+                        "order": 3,
                         "columns": 4,
                         "items": [
                             {
-                                "title": "Dec 15",
-                                "text": "Webinar: Beginners",
+                                "title": "Q1",
+                                "text": "First quarter events",
                                 "url": "#",
                                 "icon": "video",
                                 "target": "_self"
                             },
                             {
-                                "title": "Dec 20",
-                                "text": "Workshop: Layouts",
+                                "title": "Q2",
+                                "text": "Second quarter events",
                                 "url": "#",
                                 "icon": "school",
                                 "target": "_self"
                             },
                             {
-                                "title": "Yesn 10",
-                                "text": "Newjaarsborrel",
+                                "title": "Q3",
+                                "text": "Third quarter events",
                                 "url": "#",
                                 "icon": "party-popper",
                                 "target": "_self"
                             },
                             {
-                                "title": "Yesn 25",
-                                "text": "Webinar: API's",
+                                "title": "Q4",
+                                "text": "Fourth quarter events",
                                 "url": "#",
-                                "icon": "api",
+                                "icon": "calendar",
                                 "target": "_self"
                             }
                         ]
@@ -194,14 +206,14 @@
                         "type": "heading",
                         "column": 1,
                         "order": 1,
-                        "content": "Past Events",
+                        "content": "Table Example: Past Events",
                         "level": 2
                     },
                     {
                         "type": "text",
                         "column": 1,
                         "order": 2,
-                        "content": "| Date | Event | Recording |\n|-------|-----------|--------|\n| Nov 2024 | Webinar: Dark Mode | Available |\n| Oct 2024 | Workshop: Multi-language | Available |\n| Sep 2024 | Launch 0.4.0 | Available |\n| Aug 2024 | Summer BBQ | - |"
+                        "content": "Use Markdown tables to display structured information:\n\n| Quarter | Event Type | Status |\n|---------|------------|--------|\n| Q1 | Training Session | Completed |\n| Q2 | Team Building | Completed |\n| Q3 | Conference | Completed |\n| Q4 | Annual Meeting | Upcoming |"
                     },
                     {
                         "type": "links",
@@ -210,8 +222,8 @@
                         "columns": 1,
                         "items": [
                             {
-                                "title": "View Opnames",
-                                "text": "Alle webinar recordings",
+                                "title": "View Archive",
+                                "text": "See all past events",
                                 "url": "#",
                                 "icon": "video-box",
                                 "target": "_self"
@@ -228,7 +240,7 @@
                         "type": "heading",
                         "column": 1,
                         "order": 1,
-                        "content": "Related",
+                        "content": "Related Pages",
                         "level": 2
                     },
                     {
@@ -238,22 +250,22 @@
                         "columns": 3,
                         "items": [
                             {
-                                "title": "Product Updates",
-                                "text": "New features",
-                                "url": "#nieuws/updates",
+                                "title": "Updates",
+                                "text": "Latest news",
+                                "url": "#news/updates",
                                 "icon": "update",
                                 "target": "_self"
                             },
                             {
                                 "title": "News",
-                                "text": "All messages",
-                                "url": "#nieuws",
+                                "text": "All articles",
+                                "url": "#news",
                                 "icon": "newspaper",
                                 "target": "_self"
                             },
                             {
                                 "title": "Contact",
-                                "text": "Ask a question",
+                                "text": "Get in touch",
                                 "url": "#contact",
                                 "icon": "email",
                                 "target": "_self"
@@ -291,14 +303,14 @@
                         "type": "heading",
                         "column": 1,
                         "order": 1,
-                        "content": "Next Event",
+                        "content": "Side Column",
                         "level": 3
                     },
                     {
                         "type": "text",
                         "column": 1,
                         "order": 2,
-                        "content": "**Webinar: Beginners**\n\nDecember 15, 2024\n2:00 PM - 3:30 PM\n\nOnline via Zoom"
+                        "content": "This demonstrates a **right side column**. Use it for:\n\n- Quick info\n- Highlights\n- Call to action"
                     },
                     {
                         "type": "links",
@@ -307,7 +319,7 @@
                         "columns": 1,
                         "items": [
                             {
-                                "text": "Register",
+                                "text": "Example Button",
                                 "url": "#",
                                 "icon": "calendar-plus"
                             }
@@ -325,14 +337,14 @@
                         "type": "heading",
                         "column": 1,
                         "order": 5,
-                        "content": "Newsletter",
+                        "content": "Subscribe",
                         "level": 4
                     },
                     {
                         "type": "text",
                         "column": 1,
                         "order": 6,
-                        "content": "Receive event updates in your inbox."
+                        "content": "Add subscription forms or newsletter signup links here."
                     }
                 ]
             }

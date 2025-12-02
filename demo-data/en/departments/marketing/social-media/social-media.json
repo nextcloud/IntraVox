@@ -28,7 +28,7 @@
                         "type": "text",
                         "column": 1,
                         "order": 3,
-                        "content": "Build your brand through social networks. From strategy to execution, we help you succeed on all platforms."
+                        "content": "This is a demo social media page. Use this layout to document your social media strategy and guidelines."
                     }
                 ]
             },
@@ -55,7 +55,7 @@
                         "type": "text",
                         "column": 1,
                         "order": 3,
-                        "content": "B2B netwerken en thought leadership"
+                        "content": "B2B networking and thought leadership"
                     },
                     {
                         "type": "image",
@@ -76,7 +76,7 @@
                         "type": "text",
                         "column": 2,
                         "order": 3,
-                        "content": "Visuele storytelling en engagement"
+                        "content": "Visual storytelling and engagement"
                     },
                     {
                         "type": "image",
@@ -97,7 +97,7 @@
                         "type": "text",
                         "column": 3,
                         "order": 3,
-                        "content": "Real-time updates en klantenservice"
+                        "content": "Real-time updates and customer service"
                     },
                     {
                         "type": "image",
@@ -118,7 +118,7 @@
                         "type": "text",
                         "column": 4,
                         "order": 3,
-                        "content": "Community building en events"
+                        "content": "Community building and events"
                     },
                     {
                         "type": "image",
@@ -139,7 +139,7 @@
                         "type": "text",
                         "column": 5,
                         "order": 3,
-                        "content": "Video content en tutorials"
+                        "content": "Video content and tutorials"
                     }
                 ]
             },
@@ -165,14 +165,14 @@
                         "type": "heading",
                         "column": 1,
                         "order": 1,
-                        "content": "Content Kalender",
+                        "content": "Content Calendar",
                         "level": 2
                     },
                     {
                         "type": "text",
                         "column": 1,
                         "order": 2,
-                        "content": "Plan your social media content ahead with our content calendar. Collaborate with the team on:\n\n- Posts and stories\n- Video content\n- Live streams\n- Advertisements"
+                        "content": "Plan your social media content ahead with a content calendar. Collaborate with the team on:\n\n- Posts and stories\n- Video content\n- Live streams\n- Advertisements"
                     },
                     {
                         "type": "links",
@@ -181,8 +181,8 @@
                         "columns": 1,
                         "items": [
                             {
-                                "title": "Open Kalender",
-                                "text": "View en plan content",
+                                "title": "Open Calendar",
+                                "text": "View and plan content",
                                 "url": "#",
                                 "icon": "calendar-month",
                                 "target": "_self"
@@ -211,7 +211,7 @@
                             {
                                 "title": "Asset Library",
                                 "text": "Download brand materials",
-                                "url": "#afdeling/marketing/branding",
+                                "url": "#departments/marketing/branding",
                                 "icon": "folder-image",
                                 "target": "_self"
                             }
@@ -234,7 +234,7 @@
                         "type": "text",
                         "column": 1,
                         "order": 2,
-                        "content": "| Aspect | Guideline |\n|--------|----------|\n| Tone of Voice | Professional but approachable |\n| Response time | Within 2 hours on working days |\n| Hashtags | Max 5 per post, always #OurBrand |\n| Images | Minimum 1080x1080px |\n| Video | Max 60 sec for feed, 15 sec for stories |"
+                        "content": "| Aspect | Guideline |\n|--------|----------|\n| Tone of Voice | Professional but approachable |\n| Response time | Within 2 hours on working days |\n| Hashtags | Max 5 per post |\n| Images | Minimum 1080x1080px |\n| Video | Max 60 sec for feed, 15 sec for stories |"
                     }
                 ]
             },
@@ -246,7 +246,7 @@
                         "type": "heading",
                         "column": 1,
                         "order": 1,
-                        "content": "Marketing Team",
+                        "content": "Related Pages",
                         "level": 2
                     },
                     {
@@ -258,27 +258,27 @@
                             {
                                 "title": "Campaigns",
                                 "text": "Running campaigns",
-                                "url": "#afdeling/marketing/campagnes",
+                                "url": "#departments/marketing/campaigns",
                                 "icon": "rocket",
                                 "target": "_self"
                             },
                             {
                                 "title": "Branding",
                                 "text": "Brand guidelines",
-                                "url": "#afdeling/marketing/branding",
+                                "url": "#departments/marketing/branding",
                                 "icon": "palette",
                                 "target": "_self"
                             },
                             {
                                 "title": "Marketing",
                                 "text": "Back to Marketing",
-                                "url": "#afdeling/marketing",
+                                "url": "#departments/marketing",
                                 "icon": "arrow-left",
                                 "target": "_self"
                             },
                             {
                                 "title": "Contact",
-                                "text": "Social media team",
+                                "text": "Get in touch",
                                 "url": "#contact",
                                 "icon": "email",
                                 "target": "_self"

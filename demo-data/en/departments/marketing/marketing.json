@@ -14,21 +14,21 @@
                         "column": 1,
                         "order": 1,
                         "src": "marketing.jpg",
-                        "alt": "Marketing team aan het werk",
+                        "alt": "Marketing team at work",
                         "objectFit": "cover"
                     },
                     {
                         "type": "heading",
                         "column": 1,
                         "order": 2,
-                        "content": "Marketing Afdeling",
+                        "content": "Marketing Department",
                         "level": 1
                     },
                     {
                         "type": "text",
                         "column": 1,
                         "order": 3,
-                        "content": "Wij bouwen merken, vertellen verhalen en verbinden mensen met oplossingen."
+                        "content": "This is a demo department page. Use this layout to showcase team information, resources, and department-specific content."
                     }
                 ]
             },
@@ -47,20 +47,20 @@
                         "type": "text",
                         "column": 1,
                         "order": 2,
-                        "content": "The Marketing team is the voice of IntraVox. We ensure our message is clear, consistent and impactful.\n\n**What we do:**\n- Brand strategy and positioning\n- Content marketing and storytelling\n- Digital campaigns\n- Event marketing\n- PR and media relations"
+                        "content": "Add your department mission statement here.\n\n**Example responsibilities:**\n- Brand strategy\n- Content marketing\n- Digital campaigns\n- Event marketing\n- Communications"
                     },
                     {
                         "type": "heading",
                         "column": 2,
                         "order": 1,
-                        "content": "Ons Team",
+                        "content": "Our Team",
                         "level": 2
                     },
                     {
                         "type": "text",
                         "column": 2,
                         "order": 2,
-                        "content": "Een divers team van creatieve denkers en data-gedreven marketeers.\n\n**Team samenstelling:**\n- Content specialisten\n- Grafisch ontwerpers\n- Social media managers\n- Marketing analisten\n- Campagne managers"
+                        "content": "Describe your team composition here.\n\n**Example roles:**\n- Content specialists\n- Designers\n- Social media managers\n- Analysts\n- Campaign managers"
                     }
                 ]
             },
@@ -86,8 +86,14 @@
                         "type": "heading",
                         "column": 1,
                         "order": 1,
-                        "content": "Marketing Statistieken 2024",
+                        "content": "Key Metrics Example",
                         "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Use the four-column layout below to display statistics or KPIs:"
                     }
                 ]
             },
@@ -99,14 +105,14 @@
                         "type": "heading",
                         "column": 1,
                         "order": 1,
-                        "content": "150+",
+                        "content": "100+",
                         "level": 2
                     },
                     {
                         "type": "text",
                         "column": 1,
                         "order": 2,
-                        "content": "Gepubliceerde artikelen"
+                        "content": "Example metric A"
                     },
                     {
                         "type": "heading",
@@ -119,7 +125,7 @@
                         "type": "text",
                         "column": 2,
                         "order": 2,
-                        "content": "Social media volgers"
+                        "content": "Example metric B"
                     },
                     {
                         "type": "heading",
@@ -132,7 +138,7 @@
                         "type": "text",
                         "column": 3,
                         "order": 2,
-                        "content": "Successful campaigns"
+                        "content": "Example metric C"
                     },
                     {
                         "type": "heading",
@@ -145,7 +151,7 @@
                         "type": "text",
                         "column": 4,
                         "order": 2,
-                        "content": "Groei website bezoekers"
+                        "content": "Example metric D"
                     }
                 ]
             },
@@ -157,26 +163,40 @@
                         "type": "heading",
                         "column": 1,
                         "order": 1,
-                        "content": "Our Campaigns",
+                        "content": "Department Resources",
                         "level": 2
                     },
                     {
                         "type": "text",
                         "column": 1,
                         "order": 2,
-                        "content": "View our ongoing and completed marketing campaigns:"
+                        "content": "Link to department-specific resources and sub-pages:"
                     },
                     {
                         "type": "links",
                         "column": 1,
                         "order": 3,
-                        "columns": 1,
+                        "columns": 3,
                         "items": [
                             {
-                                "title": "Campaign Overview",
-                                "text": "All marketing campaigns in detail",
-                                "url": "#campagnes",
+                                "title": "Campaigns",
+                                "text": "Marketing campaigns",
+                                "url": "#departments/marketing/campaigns",
                                 "icon": "bullhorn",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Social Media",
+                                "text": "Social channels",
+                                "url": "#departments/marketing/social-media",
+                                "icon": "share-variant",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Branding",
+                                "text": "Brand guidelines",
+                                "url": "#departments/marketing/branding",
+                                "icon": "palette",
                                 "target": "_self"
                             }
                         ]
@@ -209,15 +229,15 @@
                         "items": [
                             {
                                 "title": "Back to Departments",
-                                "text": "Overview of all departments",
-                                "url": "#afdeling",
+                                "text": "View all departments",
+                                "url": "#departments",
                                 "icon": "arrow-left",
                                 "target": "_self"
                             },
                             {
-                                "title": "Contact Marketing",
-                                "text": "marketing@intravox.nl",
-                                "url": "mailto:marketing@intravox.nl",
+                                "title": "Contact",
+                                "text": "Get in touch",
+                                "url": "#contact",
                                 "icon": "email",
                                 "target": "_self"
                             }

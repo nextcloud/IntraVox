@@ -19,15 +19,22 @@ Thumbs.db
 *.swo
 *~
 
-# Deployment
+# Deployment artifacts
 *.tar.gz
 intravox-deploy/
 
-# Demo data images (generated/downloaded content)
+# Demo data images (downloaded/generated content)
 demo-data/*/images/
-
-# Demo data (optional - uncomment if you want to exclude)
-# demo-data/
 
 # Logs
 *.log
+
+# Translation templates (generated)
+translationfiles/
+
+# Package lock files (use composer.lock for PHP)
+package-lock.json
+
+# Local development scripts (if any remain)
+*.local.sh
+*.local.js

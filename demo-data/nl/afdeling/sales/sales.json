@@ -86,7 +86,7 @@
                         "type": "heading",
                         "column": 1,
                         "order": 1,
-                        "content": "Sales Prestaties 2024",
+                        "content": "Sales Prestaties",
                         "level": 2
                     }
                 ]
@@ -188,8 +188,8 @@
                             },
                             {
                                 "title": "Bel Ons",
-                                "text": "+31 (0)20 123 4567",
-                                "url": "tel:+31201234567",
+                                "text": "Voeg telefoonnummer toe",
+                                "url": "#contact",
                                 "icon": "phone",
                                 "target": "_self"
                             }

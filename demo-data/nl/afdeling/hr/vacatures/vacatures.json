@@ -39,7 +39,7 @@
                         "type": "text",
                         "column": 1,
                         "order": 2,
-                        "content": "**Senior PHP Developer**\nFulltime | Amsterdam\n\n**Vue.js Frontend Dev**\nFulltime | Remote\n\n**DevOps Engineer**\nFulltime | Amsterdam"
+                        "content": "**Voorbeeld Positie 1**\nFulltime | Locatie\n\n**Voorbeeld Positie 2**\nFulltime | Remote\n\n**Voorbeeld Positie 3**\nFulltime | Locatie"
                     },
                     {
                         "type": "heading",
@@ -52,7 +52,7 @@
                         "type": "text",
                         "column": 2,
                         "order": 2,
-                        "content": "**Account Manager**\nFulltime | Nederland\n\n**Content Marketeer**\nParttime | Remote\n\n**Partner Manager**\nFulltime | Amsterdam"
+                        "content": "**Voorbeeld Positie 4**\nFulltime | Locatie\n\n**Voorbeeld Positie 5**\nParttime | Remote\n\n**Voorbeeld Positie 6**\nFulltime | Locatie"
                     },
                     {
                         "type": "heading",
@@ -65,7 +65,7 @@
                         "type": "text",
                         "column": 3,
                         "order": 2,
-                        "content": "**Customer Success**\nFulltime | Amsterdam\n\n**Technical Support**\nFulltime | Remote\n\n**Office Manager**\nParttime | Amsterdam"
+                        "content": "**Voorbeeld Positie 7**\nFulltime | Locatie\n\n**Voorbeeld Positie 8**\nFulltime | Remote\n\n**Voorbeeld Positie 9**\nParttime | Locatie"
                     }
                 ]
             },
@@ -84,7 +84,7 @@
                         "type": "text",
                         "column": 1,
                         "order": 2,
-                        "content": "Interesse? Stuur je CV en motivatie naar **hr@intravox.io**. We reageren binnen 5 werkdagen."
+                        "content": "Interesse? Neem contact op met de HR-afdeling. Voeg hier uw eigen contactgegevens toe."
                     }
                 ]
             },

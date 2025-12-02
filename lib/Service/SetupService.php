@@ -107,7 +107,7 @@ class SetupService {
     }
 
     /**
-     * Ensure required groups exist
+     * Ensure required groups exist and add current user to admin group
      */
     private function ensureGroupsExist(): void {
         foreach ([self::ADMIN_GROUP, self::USER_GROUP] as $groupId) {
@@ -118,6 +118,16 @@ class SetupService {
                 $this->logger->info("Created group: {$groupId}");
             } else {
                 $this->logger->info("Group already exists: {$groupId}");
+            }
+        }
+
+        // Add current user to IntraVox Admins group for full permissions (including share and delete)
+        $currentUser = $this->userSession->getUser();
+        if ($currentUser !== null) {
+            $adminGroup = $this->groupManager->get(self::ADMIN_GROUP);
+            if ($adminGroup !== null && !$adminGroup->inGroup($currentUser)) {
+                $adminGroup->addUser($currentUser);
+                $this->logger->info("Added current user '{$currentUser->getUID()}' to " . self::ADMIN_GROUP . " group for full permissions");
             }
         }
     }
@@ -539,6 +549,18 @@ class SetupService {
      */
     public function getGroupFolderName(): string {
         return self::GROUPFOLDER_NAME;
+    }
+
+    /**
+     * Check if setup is complete (GroupFolder exists and is accessible)
+     */
+    public function isSetupComplete(): bool {
+        try {
+            $this->getSharedFolder();
+            return true;
+        } catch (\Exception $e) {
+            return false;
+        }
     }
 
 }

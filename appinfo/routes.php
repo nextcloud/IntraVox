@@ -29,6 +29,9 @@ return [
         ['name' => 'footer#get', 'url' => '/api/footer', 'verb' => 'GET'],
         ['name' => 'footer#save', 'url' => '/api/footer', 'verb' => 'POST'],
 
+        // Setup route
+        ['name' => 'api#runSetup', 'url' => '/api/setup', 'verb' => 'POST'],
+
         // Demo data routes
         ['name' => 'demoData#getStatus', 'url' => '/api/demo-data/status', 'verb' => 'GET'],
         ['name' => 'demoData#getLanguages', 'url' => '/api/demo-data/languages', 'verb' => 'GET'],

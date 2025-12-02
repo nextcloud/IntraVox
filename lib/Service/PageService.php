@@ -128,10 +128,81 @@ class PageService {
     }
 
     /**
-     * Get the shared IntraVox folder (team folder)
+     * Get the IntraVox folder from user's perspective (mounted GroupFolder)
+     *
+     * IMPORTANT: Uses the user's mounted folder view to respect GroupFolder ACL
+     * This is essential for non-admin users to access the IntraVox folder
      */
     private function getIntraVoxFolder() {
-        return $this->setupService->getSharedFolder();
+        if (!$this->userId) {
+            throw new \Exception('User not logged in');
+        }
+
+        // Get user's folder (this respects GroupFolder ACL)
+        $userFolder = $this->rootFolder->getUserFolder($this->userId);
+
+        // Get IntraVox folder from user's perspective (mounted GroupFolder)
+        try {
+            return $userFolder->get('IntraVox');
+        } catch (NotFoundException $e) {
+            throw new \Exception('IntraVox folder not found. Please check that you have access to the IntraVox GroupFolder.');
+        }
+    }
+
+    /**
+     * Get permissions for a folder path (relative to IntraVox root)
+     * Uses Nextcloud's native filesystem permissions which respect GroupFolder ACL
+     *
+     * IMPORTANT: Uses the user's mounted folder view to get ACL-aware permissions
+     *
+     * @param string $relativePath Path relative to IntraVox folder (e.g., "en/about" or "")
+     * @return array Permissions object with canRead, canWrite, canCreate, canDelete, canShare
+     */
+    public function getFolderPermissions(string $relativePath): array {
+        try {
+            if (!$this->userId) {
+                return [
+                    'canRead' => false,
+                    'canWrite' => false,
+                    'canCreate' => false,
+                    'canDelete' => false,
+                    'canShare' => false,
+                    'raw' => 0
+                ];
+            }
+
+            // Get user's folder (this respects GroupFolder ACL)
+            $userFolder = $this->rootFolder->getUserFolder($this->userId);
+
+            // Get IntraVox folder from user's perspective (mounted GroupFolder)
+            $intraVoxPath = 'IntraVox';
+            if (!empty($relativePath)) {
+                $intraVoxPath .= '/' . ltrim($relativePath, '/');
+            }
+
+            $folder = $userFolder->get($intraVoxPath);
+            $ncPerms = $folder->getPermissions();
+
+            return [
+                'canRead' => ($ncPerms & 1) !== 0,
+                'canWrite' => ($ncPerms & 2) !== 0,
+                'canCreate' => ($ncPerms & 4) !== 0,
+                'canDelete' => ($ncPerms & 8) !== 0,
+                'canShare' => ($ncPerms & 16) !== 0,
+                'raw' => $ncPerms
+            ];
+        } catch (\Exception $e) {
+            // If folder doesn't exist, return no permissions
+            $this->logger->debug('getFolderPermissions failed for path: ' . $relativePath . ' - ' . $e->getMessage());
+            return [
+                'canRead' => false,
+                'canWrite' => false,
+                'canCreate' => false,
+                'canDelete' => false,
+                'canShare' => false,
+                'raw' => 0
+            ];
+        }
     }
 
     /**
@@ -151,6 +222,12 @@ class PageService {
             $languageFolder = $folder;
         }
 
+        // Debug: Log which folder we're searching
+        $this->logger->info('IntraVox: findPageByUniqueId searching', [
+            'folder' => $folder->getPath(),
+            'uniqueId' => $uniqueId
+        ]);
+
         // Check for home.json first (most common case for homepage)
         try {
             $homeFile = $folder->get('home.json');
@@ -165,14 +242,21 @@ class PageService {
 
         // FIRST: Check all JSON files in current folder
         // This is faster and catches files like news/company-blog.json
+        $isLanguageRoot = ($folder->getPath() === $languageFolder->getPath());
+
         foreach ($folder->getDirectoryListing() as $item) {
             $itemName = $item->getName();
 
+            // Skip navigation.json and footer.json only in the language root folder
+            // (these are config files there, not pages). In subfolders they can be page files.
+            $skipFile = ($itemName === 'home.json'); // Always skip home.json, checked above
+            if ($isLanguageRoot && ($itemName === 'navigation.json' || $itemName === 'footer.json')) {
+                $skipFile = true;
+            }
+
             if ($item->getType() === \OCP\Files\FileInfo::TYPE_FILE &&
                 substr($itemName, -5) === '.json' &&
-                $itemName !== 'navigation.json' &&
-                $itemName !== 'footer.json' &&
-                $itemName !== 'home.json') {  // Already checked home.json above
+                !$skipFile) {
                 try {
                     $content = $item->getContent();
                     $data = json_decode($content, true);
@@ -199,6 +283,7 @@ class PageService {
         }
 
         // SECOND: Recursively search subfolders
+        $subfolders = [];
         foreach ($folder->getDirectoryListing() as $item) {
             $itemName = $item->getName();
 
@@ -207,6 +292,7 @@ class PageService {
                 if ($itemName === 'images' || $itemName === '.nomedia') {
                     continue;
                 }
+                $subfolders[] = $itemName;
 
                 $result = $this->findPageByUniqueId($item, $uniqueId, $languageFolder);
                 if ($result !== null) {
@@ -214,6 +300,12 @@ class PageService {
                 }
             }
         }
+
+        // Debug: Log subfolders found
+        $this->logger->info('IntraVox: findPageByUniqueId subfolders', [
+            'folder' => $folder->getPath(),
+            'subfolders' => $subfolders
+        ]);
 
         return null;
     }
@@ -261,7 +353,11 @@ class PageService {
      */
     public function listPages(): array {
         $folder = $this->getLanguageFolder();
+        $intraVoxFolder = $this->getIntraVoxFolder();
         $pages = [];
+
+        // Get base path for relative path calculation
+        $basePath = $intraVoxFolder->getPath();
 
         // Check for home.json in root
         try {
@@ -270,10 +366,22 @@ class PageService {
             $data = json_decode($content, true);
 
             if ($data && isset($data['uniqueId'], $data['title'])) {
+                // Calculate relative path from IntraVox root
+                $relativePath = substr($folder->getPath(), strlen($basePath) + 1);
+                $folderPerms = $folder->getPermissions();
+
                 $pages[] = [
                     'uniqueId' => $data['uniqueId'],
                     'title' => $data['title'],
-                    'modified' => $data['modified'] ?? $homeFile->getMTime()
+                    'modified' => $data['modified'] ?? $homeFile->getMTime(),
+                    'permissions' => [
+                        'canRead' => ($folderPerms & 1) !== 0,
+                        'canWrite' => ($folderPerms & 2) !== 0,
+                        'canCreate' => ($folderPerms & 4) !== 0,
+                        'canDelete' => ($folderPerms & 8) !== 0,
+                        'canShare' => ($folderPerms & 16) !== 0,
+                        'raw' => $folderPerms
+                    ]
                 ];
             }
         } catch (NotFoundException $e) {
@@ -281,7 +389,7 @@ class PageService {
         }
 
         // Recursively find all pages in subfolders
-        $this->findPagesInFolder($folder, $pages);
+        $this->findPagesInFolder($folder, $pages, $basePath);
 
         return $pages;
     }
@@ -289,7 +397,7 @@ class PageService {
     /**
      * Recursively find pages in folders
      */
-    private function findPagesInFolder($folder, array &$pages): void {
+    private function findPagesInFolder($folder, array &$pages, string $basePath = ''): void {
         foreach ($folder->getDirectoryListing() as $item) {
             if ($item->getType() === \OCP\Files\FileInfo::TYPE_FOLDER) {
                 $folderName = $item->getName();
@@ -318,10 +426,21 @@ class PageService {
                     $data = json_decode($content, true);
 
                     if ($data && isset($data['uniqueId'], $data['title'])) {
+                        // Get permissions from the folder containing the page
+                        $folderPerms = $item->getPermissions();
+
                         $pages[] = [
                             'uniqueId' => $data['uniqueId'],
                             'title' => $data['title'],
-                            'modified' => $data['modified'] ?? $jsonFile->getMTime()
+                            'modified' => $data['modified'] ?? $jsonFile->getMTime(),
+                            'permissions' => [
+                                'canRead' => ($folderPerms & 1) !== 0,
+                                'canWrite' => ($folderPerms & 2) !== 0,
+                                'canCreate' => ($folderPerms & 4) !== 0,
+                                'canDelete' => ($folderPerms & 8) !== 0,
+                                'canShare' => ($folderPerms & 16) !== 0,
+                                'raw' => $folderPerms
+                            ]
                         ];
                     }
                 } catch (\Exception $e) {
@@ -332,7 +451,7 @@ class PageService {
                 }
 
                 // Recursively search subfolders
-                $this->findPagesInFolder($item, $pages);
+                $this->findPagesInFolder($item, $pages, $basePath);
             }
         }
     }
@@ -509,18 +628,24 @@ class PageService {
         $page['language'] = $parsedPath[0] ?? $this->getUserLanguage();
         $page['department'] = $this->parseDepartmentFromPath($page['path']);
 
-        // Check edit permissions using Nextcloud's ACL system
-        // This respects folder-level permissions, group membership, and ACLs
-        $canEdit = $folder->isUpdateable();
+        // Get permissions directly from Nextcloud's filesystem
+        // This automatically respects GroupFolder ACL rules
+        $ncPerms = $folder->getPermissions();
 
-        // Debug logging
-        $this->logger->info('[IntraVox Permission Debug] Page: ' . ($page['uniqueId'] ?? 'unknown') .
-            ', Path: ' . $page['path'] .
-            ', Folder Path: ' . $folder->getPath() .
-            ', isUpdateable: ' . ($canEdit ? 'true' : 'false') .
-            ', User: ' . ($this->userId ?? 'none'));
+        // Nextcloud permission constants (from OCP\Constants):
+        // PERMISSION_READ = 1, PERMISSION_UPDATE = 2, PERMISSION_CREATE = 4,
+        // PERMISSION_DELETE = 8, PERMISSION_SHARE = 16, PERMISSION_ALL = 31
+        $page['permissions'] = [
+            'canRead' => ($ncPerms & 1) !== 0,
+            'canWrite' => ($ncPerms & 2) !== 0,
+            'canCreate' => ($ncPerms & 4) !== 0,
+            'canDelete' => ($ncPerms & 8) !== 0,
+            'canShare' => ($ncPerms & 16) !== 0,
+            'raw' => $ncPerms
+        ];
 
-        $page['canEdit'] = $canEdit;
+        // Keep canEdit for backwards compatibility
+        $page['canEdit'] = $folder->isUpdateable();
 
         return $page;
     }
@@ -710,6 +835,7 @@ class PageService {
     public function getBreadcrumb(string $pageId): array {
         $page = $this->getPage($pageId);
         $breadcrumb = [];
+        $language = $this->getUserLanguage();
 
         // Check if current page is the home page
         $isHomePage = ($pageId === 'home' ||
@@ -721,7 +847,7 @@ class PageService {
             'id' => 'home',
             'uniqueId' => $isHomePage ? $page['uniqueId'] : null,
             'title' => 'Home',
-            'path' => $this->getUserLanguage() . '/home',
+            'path' => $language . '/home',
             'url' => $isHomePage ? null : '#home',
             'current' => $isHomePage
         ];
@@ -731,18 +857,20 @@ class PageService {
             return $breadcrumb;
         }
 
-        // Parse path to build breadcrumb for non-home pages
+        // Build breadcrumb from the full path
+        // Example path: en/departments/marketing/campaigns
         $pathParts = explode('/', $page['path']);
-        $currentPath = '';
+        $accumulatedPath = '';
 
         foreach ($pathParts as $index => $part) {
-            // Skip language folder in breadcrumb display
-            if (in_array($part, self::SUPPORTED_LANGUAGES)) {
-                continue;
+            // Build accumulated path for looking up parent pages
+            if (!empty($accumulatedPath)) {
+                $accumulatedPath .= '/';
             }
+            $accumulatedPath .= $part;
 
-            // Skip 'public' and 'departments' keywords
-            if (in_array($part, ['public', 'departments'])) {
+            // Skip language folder in breadcrumb display (but include in accumulated path)
+            if ($index === 0 && in_array($part, self::SUPPORTED_LANGUAGES)) {
                 continue;
             }
 
@@ -750,8 +878,6 @@ class PageService {
             if ($part === 'home') {
                 continue;
             }
-
-            $currentPath .= ($currentPath ? '/' : '') . $part;
 
             // Check if this is the last item (current page)
             if ($index === count($pathParts) - 1) {
@@ -766,30 +892,84 @@ class PageService {
                 break;
             }
 
-            // Try to load parent page for its title
+            // Try to find parent page by its folder path
             try {
-                $parentPage = $this->getPage($part);
-                $breadcrumb[] = [
-                    'id' => $part,
-                    'title' => $parentPage['title'],
-                    'path' => $parentPage['path'],
-                    'url' => '#' . $part,
-                    'current' => false
-                ];
+                $parentPage = $this->findPageByFolderPath($accumulatedPath);
+                if ($parentPage) {
+                    $breadcrumb[] = [
+                        'id' => $part,
+                        'uniqueId' => $parentPage['uniqueId'],
+                        'title' => $parentPage['title'],
+                        'path' => $parentPage['path'],
+                        'url' => '#' . $parentPage['uniqueId'],
+                        'current' => false
+                    ];
+                } else {
+                    // No page found for this folder - use folder name as label but don't make clickable
+                    $breadcrumb[] = [
+                        'id' => $part,
+                        'uniqueId' => null,
+                        'title' => ucfirst(str_replace('-', ' ', $part)),
+                        'path' => $accumulatedPath,
+                        'url' => null,
+                        'current' => false
+                    ];
+                }
             } catch (\Exception $e) {
                 // Parent page not found or error loading it
                 // Use folder name as fallback
                 $breadcrumb[] = [
                     'id' => $part,
+                    'uniqueId' => null,
                     'title' => ucfirst(str_replace('-', ' ', $part)),
-                    'path' => $currentPath,
-                    'url' => '#' . $part,
+                    'path' => $accumulatedPath,
+                    'url' => null,
                     'current' => false
                 ];
             }
         }
 
         return $breadcrumb;
+    }
+
+    /**
+     * Find a page by its folder path relative to IntraVox root
+     *
+     * @param string $folderPath e.g., "en/departments" or "en/departments/marketing"
+     * @return array|null Page data or null if not found
+     */
+    private function findPageByFolderPath(string $folderPath): ?array {
+        try {
+            $intraVoxFolder = $this->getIntraVoxFolder();
+            $folder = $intraVoxFolder->get($folderPath);
+
+            if (!($folder instanceof \OCP\Files\Folder)) {
+                return null;
+            }
+
+            // Look for a JSON file in this folder (page definition)
+            $files = $folder->getDirectoryListing();
+            foreach ($files as $file) {
+                if ($file instanceof \OCP\Files\File &&
+                    pathinfo($file->getName(), PATHINFO_EXTENSION) === 'json' &&
+                    $file->getName() !== 'images.json') {
+
+                    $content = $file->getContent();
+                    $data = json_decode($content, true);
+
+                    if ($data && isset($data['uniqueId'])) {
+                        // Enrich with path data
+                        $data = $this->enrichWithPathData($data, $folder);
+                        return $this->sanitizePage($data);
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            // Folder or page not found
+            $this->logger->debug("Could not find page at path {$folderPath}: " . $e->getMessage());
+        }
+
+        return null;
     }
 
     /**
@@ -2054,6 +2234,30 @@ class PageService {
         // Format path to show full Nextcloud path starting with /IntraVox/
         $displayPath = isset($data['path']) ? '/IntraVox/' . $data['path'] : '';
 
+        // Get file info for MetaVox integration
+        $fileId = $file->getId();
+        $size = $file->getSize();
+        $internalPath = $file->getInternalPath();
+        $storagePath = $file->getPath();
+
+        // Get parent folder fileId for Files app link
+        $parentFolderId = null;
+        try {
+            $parentFolderId = $folder->getId();
+        } catch (\Exception $e) {
+            // Not critical
+        }
+
+        // Get permissions from enriched data (uses Nextcloud's native permissions)
+        $permissions = $data['permissions'] ?? [
+            'canRead' => true,
+            'canWrite' => false,
+            'canCreate' => false,
+            'canDelete' => false,
+            'canShare' => false,
+            'raw' => 1
+        ];
+
         // Return metadata using filesystem timestamps
         $metadata = [
             'title' => $data['title'] ?? 'Untitled',
@@ -2066,12 +2270,19 @@ class PageService {
             'modifiedFormatted' => date('Y-m-d H:i:s', $mtime),
             'modifiedRelative' => $this->getRelativeTime($mtime),
             // Path-related data (already in page)
-            'path' => $displayPath,
+            'path' => $storagePath,
             'depth' => $data['depth'] ?? 0,
             'parentId' => $data['parentId'] ?? null,
             'parentPath' => $data['parentPath'] ?? null,
             'department' => $data['department'] ?? null,
-            'canEdit' => $data['canEdit'] ?? false,
+            'canEdit' => $permissions['canWrite'] ?? false,
+            // Additional data for MetaVox integration
+            'fileId' => $fileId,
+            'size' => $size,
+            'parentFolderId' => $parentFolderId,
+            'mountPoint' => 'IntraVox',
+            // Permissions - use Nextcloud's native permissions
+            'permissions' => $permissions,
         ];
 
         return $metadata;
@@ -2478,12 +2689,22 @@ class PageService {
             $data = json_decode($content, true);
 
             if ($data && isset($data['uniqueId'], $data['title'])) {
+                // Get permissions for the language folder
+                $folderPerms = $folder->getPermissions();
                 $tree[] = [
                     'uniqueId' => $data['uniqueId'],
                     'title' => $data['title'],
                     'path' => $this->getUserLanguage(),
                     'isCurrent' => ($currentPageId === $data['uniqueId']),
-                    'children' => []
+                    'children' => [],
+                    'permissions' => [
+                        'canRead' => ($folderPerms & 1) !== 0,
+                        'canWrite' => ($folderPerms & 2) !== 0,
+                        'canCreate' => ($folderPerms & 4) !== 0,
+                        'canDelete' => ($folderPerms & 8) !== 0,
+                        'canShare' => ($folderPerms & 16) !== 0,
+                        'raw' => $folderPerms
+                    ]
                 ];
             }
         } catch (NotFoundException $e) {
@@ -2535,8 +2756,11 @@ class PageService {
                 $data = json_decode($content, true);
 
                 if ($data && isset($data['uniqueId'], $data['title'])) {
-                    // Check folder permissions (respects ACLs)
-                    if (!$item->isReadable()) {
+                    // Get folder permissions (respects ACLs)
+                    $folderPerms = $item->getPermissions();
+
+                    // Skip if user can't read this folder
+                    if (($folderPerms & 1) === 0) {
                         continue;
                     }
 
@@ -2545,7 +2769,15 @@ class PageService {
                         'title' => $data['title'],
                         'path' => $this->getRelativePathFromRoot($item),
                         'isCurrent' => ($currentPageId === $data['uniqueId']),
-                        'children' => []
+                        'children' => [],
+                        'permissions' => [
+                            'canRead' => ($folderPerms & 1) !== 0,
+                            'canWrite' => ($folderPerms & 2) !== 0,
+                            'canCreate' => ($folderPerms & 4) !== 0,
+                            'canDelete' => ($folderPerms & 8) !== 0,
+                            'canShare' => ($folderPerms & 16) !== 0,
+                            'raw' => $folderPerms
+                        ]
                     ];
 
                     // Recursively get children

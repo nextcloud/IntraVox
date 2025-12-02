@@ -71,7 +71,7 @@
                         "type": "text",
                         "column": 1,
                         "order": 2,
-                        "content": "**Let op verdachte e-mails!**\n\nKlik NOOIT op links in onverwachte e-mails. Twijfel je? Meld het bij IT Security: security@intravox.io"
+                        "content": "**Let op verdachte e-mails!**\n\nKlik NOOIT op links in onverwachte e-mails. Twijfel je? Meld het bij IT Security via de contactpagina."
                     }
                 ]
             },
@@ -103,7 +103,7 @@
                         "type": "text",
                         "column": 2,
                         "order": 2,
-                        "content": "Beveiligingsincident?\n\n**Meld direct bij:**\nsecurity@intravox.io\n\nof bel: +31 20 123 4911"
+                        "content": "Beveiligingsincident?\n\n**Meld direct bij:**\nVoeg hier uw security contactgegevens toe."
                     }
                 ]
             },

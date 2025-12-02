@@ -20,7 +20,7 @@
                         "type": "text",
                         "column": 1,
                         "order": 2,
-                        "content": "Our CRM system is the heart of our customer relationships. Here you will find all information about how we manage and support customers."
+                        "content": "This is a demo CRM page. Use this layout to document your customer relationship management processes."
                     }
                 ]
             },
@@ -32,27 +32,27 @@
                         "type": "heading",
                         "column": 1,
                         "order": 1,
-                        "content": "Klantregistratie",
+                        "content": "Customer Registration",
                         "level": 2
                     },
                     {
                         "type": "text",
                         "column": 1,
                         "order": 2,
-                        "content": "**Register new customers:**\n\n1. Log in to the CRM portal\n2. Click 'New Customer'\n3. Fill in all required fields\n4. Assign an Account Manager\n5. Save and start the onboarding process"
+                        "content": "**Example process:**\n\n1. Log in to the CRM portal\n2. Click 'New Customer'\n3. Fill in all required fields\n4. Assign an Account Manager\n5. Save and start the onboarding process"
                     },
                     {
                         "type": "heading",
                         "column": 2,
                         "order": 1,
-                        "content": "Klantcontact Logging",
+                        "content": "Contact Logging",
                         "level": 2
                     },
                     {
                         "type": "text",
                         "column": 2,
                         "order": 2,
-                        "content": "**Every customer contact is logged:**\n\n- Phone calls\n- Emails\n- Meetings\n- Support tickets\n- Demo sessions\n\n*Tip: Use tags for quick filtering!*"
+                        "content": "**Log all customer contacts:**\n\n- Phone calls\n- Emails\n- Meetings\n- Support tickets\n- Demo sessions\n\n*Tip: Use tags for quick filtering!*"
                     }
                 ]
             },

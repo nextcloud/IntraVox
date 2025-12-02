@@ -195,14 +195,14 @@
                             {
                                 "title": "User Guides",
                                 "text": "More detailed instructions",
-                                "url": "#handleidingen",
+                                "url": "#documentation/guides",
                                 "icon": "book-open",
                                 "target": "_self"
                             },
                             {
                                 "title": "Back to Docs",
                                 "text": "Documentation overview",
-                                "url": "#documentatie",
+                                "url": "#documentation",
                                 "icon": "arrow-left",
                                 "target": "_self"
                             }

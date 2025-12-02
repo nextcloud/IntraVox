@@ -13,14 +13,14 @@
                         "type": "heading",
                         "column": 1,
                         "order": 1,
-                        "content": "HR Policies & Reglementen",
+                        "content": "HR Policies & Guidelines",
                         "level": 1
                     },
                     {
                         "type": "text",
                         "column": 1,
                         "order": 2,
-                        "content": "All important rules and guidelines for IntraVox employees."
+                        "content": "This is a demo policies page. Use this layout to document important company rules and guidelines."
                     }
                 ]
             },
@@ -32,27 +32,27 @@
                         "type": "heading",
                         "column": 1,
                         "order": 1,
-                        "content": "Werktijden & Verlof",
+                        "content": "Working Hours & Leave",
                         "level": 2
                     },
                     {
                         "type": "text",
                         "column": 1,
                         "order": 2,
-                        "content": "**Werktijden:**\n- Flexiblee werktijden\n- Kernuren: 10:00 - 15:00\n- 40 uur per week (fulltime)\n\n**Verlof:**\n- 25 vakantiedagen\n- Holidays conform CAO\n- Onbetaald verlof mogelijk"
+                        "content": "**Example working hours:**\n- Flexible hours\n- Core hours: 10:00 - 15:00\n- 40 hours per week (full-time)\n\n**Example leave policy:**\n- Annual leave days\n- Public holidays\n- Unpaid leave options"
                     },
                     {
                         "type": "heading",
                         "column": 2,
                         "order": 1,
-                        "content": "Working from Home",
+                        "content": "Remote Work Policy",
                         "level": 2
                     },
                     {
                         "type": "text",
                         "column": 2,
                         "order": 2,
-                        "content": "**Hybride werken:**\n- Max 3 dagen thuis per week\n- Thuiswerkvergoeding: €2/dag\n- Thuiswerkplek voldoet aan Arbowet\n\n**Voorwaarden:**\n- Goede internetverbinding\n- Bereikbaar tijdens kernuren"
+                        "content": "**Hybrid working:**\n- Remote days per week\n- Home office allowance\n- Equipment requirements\n\n**Requirements:**\n- Stable internet connection\n- Reachable during core hours"
                     }
                 ]
             },
@@ -71,7 +71,7 @@
                         "type": "text",
                         "column": 1,
                         "order": 2,
-                        "content": "**Bij ziekte:**\n\n1. Report je ziek vóór 09:00\n2. Bel je leidinggevende\n3. Blijf bereikbaar\n4. Report je beter zodra mogelijk"
+                        "content": "**When calling in sick:**\n\n1. Report before 09:00\n2. Contact your manager\n3. Stay reachable\n4. Report recovery as soon as possible"
                     },
                     {
                         "type": "heading",
@@ -84,7 +84,7 @@
                         "type": "text",
                         "column": 2,
                         "order": 2,
-                        "content": "**Kernwaarden:**\n\n- Respect voor collega's\n- Open communicatie\n- Integriteit\n- Samenwerking\n- Professionaliteit"
+                        "content": "**Core values:**\n\n- Respect for colleagues\n- Open communication\n- Integrity\n- Collaboration\n- Professionalism"
                     }
                 ]
             },

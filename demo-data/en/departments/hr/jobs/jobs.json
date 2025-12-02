@@ -1,6 +1,6 @@
 {
     "uniqueId": "page-b1d4d55d-28d8-4cf2-867a-95e8a09fe0cc",
-    "title": "Job Openings",
+    "title": "Careers",
     "language": "en",
     "layout": {
         "columns": 1,
@@ -13,14 +13,14 @@
                         "type": "heading",
                         "column": 1,
                         "order": 1,
-                        "content": "Job Openings",
+                        "content": "Careers",
                         "level": 1
                     },
                     {
                         "type": "text",
                         "column": 1,
                         "order": 2,
-                        "content": "View onze openstaande posities en groei mee met IntraVox!"
+                        "content": "This is a demo careers page. Use this layout to showcase job openings and attract talent to your organization."
                     }
                 ]
             },
@@ -32,40 +32,40 @@
                         "type": "heading",
                         "column": 1,
                         "order": 1,
-                        "content": "Development",
+                        "content": "Department A",
                         "level": 2
                     },
                     {
                         "type": "text",
                         "column": 1,
                         "order": 2,
-                        "content": "**Senior PHP Developer**\nFulltime | Amsterdam\n\n**Vue.js Frontend Dev**\nFulltime | Remote\n\n**DevOps Engineer**\nFulltime | Amsterdam"
+                        "content": "**Example Position 1**\nFull-time\n\n**Example Position 2**\nFull-time\n\n**Example Position 3**\nPart-time"
                     },
                     {
                         "type": "heading",
                         "column": 2,
                         "order": 1,
-                        "content": "Sales & Marketing",
+                        "content": "Department B",
                         "level": 2
                     },
                     {
                         "type": "text",
                         "column": 2,
                         "order": 2,
-                        "content": "**Account Manager**\nFulltime | The Netherlands\n\n**Content Marketeer**\nParttime | Remote\n\n**Partner Manager**\nFulltime | Amsterdam"
+                        "content": "**Example Position 4**\nFull-time\n\n**Example Position 5**\nPart-time\n\n**Example Position 6**\nContract"
                     },
                     {
                         "type": "heading",
                         "column": 3,
                         "order": 1,
-                        "content": "Support & Operations",
+                        "content": "Department C",
                         "level": 2
                     },
                     {
                         "type": "text",
                         "column": 3,
                         "order": 2,
-                        "content": "**Customer Success**\nFulltime | Amsterdam\n\n**Technical Support**\nFulltime | Remote\n\n**Office Manager**\nParttime | Amsterdam"
+                        "content": "**Example Position 7**\nFull-time\n\n**Example Position 8**\nRemote\n\n**Example Position 9**\nInternship"
                     }
                 ]
             },
@@ -77,14 +77,14 @@
                         "type": "heading",
                         "column": 1,
                         "order": 1,
-                        "content": "Apply",
+                        "content": "How to Apply",
                         "level": 2
                     },
                     {
                         "type": "text",
                         "column": 1,
                         "order": 2,
-                        "content": "Interesse? Stuur je CV en motivatie naar **hr@intravox.io**. We reageren binnen 5 werkdagen."
+                        "content": "Add application instructions here:\n\n1. Review the job description\n2. Prepare your resume and cover letter\n3. Submit your application\n4. We'll respond within a few business days"
                     }
                 ]
             },

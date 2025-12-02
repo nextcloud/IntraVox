@@ -13,14 +13,14 @@
                         "type": "heading",
                         "column": 1,
                         "order": 1,
-                        "content": "Onboarding Newe Medewerkers",
+                        "content": "Employee Onboarding",
                         "level": 1
                     },
                     {
                         "type": "text",
                         "column": 1,
                         "order": 2,
-                        "content": "Welcome at IntraVox! Dit is je complete gids voor een succesvolle start."
+                        "content": "This is a demo onboarding page. Use this layout to guide new employees through their first days."
                     }
                 ]
             },
@@ -32,27 +32,27 @@
                         "type": "heading",
                         "column": 1,
                         "order": 1,
-                        "content": "Eerste Dag",
+                        "content": "First Day Checklist",
                         "level": 2
                     },
                     {
                         "type": "text",
                         "column": 1,
                         "order": 2,
-                        "content": "**Checklist:**\n\n- [ ] Badge en toegangspas ophalen\n- [ ] Laptop en accounts instellen\n- [ ] Team introductie\n- [ ] Lunch met buddy\n- [ ] HR papierwerk afronden"
+                        "content": "**Example tasks:**\n\n- [ ] Collect badge and access card\n- [ ] Set up laptop and accounts\n- [ ] Team introduction\n- [ ] Lunch with buddy\n- [ ] Complete HR paperwork"
                     },
                     {
                         "type": "heading",
                         "column": 2,
                         "order": 1,
-                        "content": "Eerste Week",
+                        "content": "First Week Overview",
                         "level": 2
                     },
                     {
                         "type": "text",
                         "column": 2,
                         "order": 2,
-                        "content": "**Planning:**\n\n- Monday: Introduction & setup\n- Tuesday: Product training\n- Wednesday: Team meetings\n- Thursday: Attend client demos\n- Friday: Feedback & questions"
+                        "content": "**Example schedule:**\n\n- Monday: Introduction & setup\n- Tuesday: Product training\n- Wednesday: Team meetings\n- Thursday: Shadowing sessions\n- Friday: Feedback & questions"
                     }
                 ]
             },
@@ -64,7 +64,7 @@
                         "type": "heading",
                         "column": 1,
                         "order": 1,
-                        "content": "Important Links",
+                        "content": "Important Resources",
                         "level": 2
                     },
                     {
@@ -76,28 +76,28 @@
                             {
                                 "title": "IT Setup",
                                 "text": "Accounts & tools",
-                                "url": "#page-7768529b-27aa-49d2-84bc-f087f0bc1ab7",
+                                "url": "#departments/it",
                                 "icon": "laptop",
                                 "target": "_self"
                             },
                             {
-                                "title": "HR Policies",
-                                "text": "Regels & richtlijnen",
-                                "url": "#page-65efaed4-dd68-40c3-a836-41298a041602",
+                                "title": "Policies",
+                                "text": "Rules & guidelines",
+                                "url": "#departments/hr/policies",
                                 "icon": "book-open",
                                 "target": "_self"
                             },
                             {
-                                "title": "Bedrijfsinfo",
-                                "text": "About IntraVox",
-                                "url": "#page-385b2171-18cb-4eb9-82a9-7264f8f10176",
+                                "title": "About Us",
+                                "text": "Company information",
+                                "url": "#about",
                                 "icon": "information",
                                 "target": "_self"
                             },
                             {
                                 "title": "Contact HR",
-                                "text": "Vragen? Get in touch",
-                                "url": "mailto:hr@intravox.io",
+                                "text": "Questions? Get in touch",
+                                "url": "#contact",
                                 "icon": "email",
                                 "target": "_self"
                             }

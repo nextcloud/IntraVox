@@ -13,7 +13,7 @@
                         "type": "heading",
                         "column": 1,
                         "order": 1,
-                        "content": "Sales Targets 2024",
+                        "content": "Sales Targets",
                         "level": 1
                     },
                     {
@@ -39,7 +39,7 @@
                         "type": "text",
                         "column": 1,
                         "order": 2,
-                        "content": "**€250K**\nARR Growth\n\n*Status: Behaald*"
+                        "content": "**€XXX K**\nVoorbeeld doelstelling\n\n*Status: Voorbeeld*"
                     },
                     {
                         "type": "heading",
@@ -52,7 +52,7 @@
                         "type": "text",
                         "column": 2,
                         "order": 2,
-                        "content": "**€300K**\nARR Growth\n\n*Status: Behaald*"
+                        "content": "**€XXX K**\nVoorbeeld doelstelling\n\n*Status: Voorbeeld*"
                     },
                     {
                         "type": "heading",
@@ -65,7 +65,7 @@
                         "type": "text",
                         "column": 3,
                         "order": 2,
-                        "content": "**€350K**\nARR Growth\n\n*Status: Op koers*"
+                        "content": "**€XXX K**\nVoorbeeld doelstelling\n\n*Status: Voorbeeld*"
                     },
                     {
                         "type": "heading",
@@ -78,7 +78,7 @@
                         "type": "text",
                         "column": 4,
                         "order": 2,
-                        "content": "**€400K**\nARR Growth\n\n*Status: Gepland*"
+                        "content": "**€XXX K**\nVoorbeeld doelstelling\n\n*Status: Voorbeeld*"
                     }
                 ]
             },
@@ -97,7 +97,7 @@
                         "type": "text",
                         "column": 1,
                         "order": 2,
-                        "content": "Elke Account Manager heeft:\n\n- Maandelijks target: €30K\n- Kwartaal target: €100K\n- Nieuwe klanten target: 5 per maand"
+                        "content": "Voorbeeld targets per medewerker:\n\n- Maandelijks target: €XX K\n- Kwartaal target: €XX K\n- Nieuwe klanten target: X per maand\n\n*Pas deze waarden aan naar uw eigen situatie.*"
                     },
                     {
                         "type": "heading",

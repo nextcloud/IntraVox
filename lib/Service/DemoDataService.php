@@ -17,8 +17,16 @@ class DemoDataService {
     // Demo data source URL - will be changed to GitHub when released
     private const DEMO_DATA_BASE_URL = 'https://raw.githubusercontent.com/nextcloud/intravox/main/demo-data';
 
-    private const SUPPORTED_LANGUAGES = ['nl', 'en'];
+    private const SUPPORTED_LANGUAGES = ['nl', 'en', 'de', 'fr'];
     private const DEFAULT_LANGUAGE = 'nl';
+
+    // Language metadata for UI
+    private const LANGUAGE_META = [
+        'nl' => ['name' => 'Nederlands', 'flag' => '🇳🇱', 'full' => true],
+        'en' => ['name' => 'English', 'flag' => '🇬🇧', 'full' => true],
+        'de' => ['name' => 'Deutsch', 'flag' => '🇩🇪', 'full' => false],
+        'fr' => ['name' => 'Français', 'flag' => '🇫🇷', 'full' => false],
+    ];
 
     private SetupService $setupService;
     private IClientService $clientService;
@@ -62,11 +70,85 @@ class DemoDataService {
      * Get demo data status for API response
      */
     public function getStatus(): array {
+        $setupComplete = $this->setupService->isSetupComplete();
+
         return [
             'imported' => $this->isDemoDataImported(),
             'available_languages' => self::SUPPORTED_LANGUAGES,
             'default_language' => self::DEFAULT_LANGUAGE,
+            'languages' => $this->getLanguagesWithStatus(),
+            'setupComplete' => $setupComplete,
         ];
+    }
+
+    /**
+     * Get detailed status for each available language
+     */
+    public function getLanguagesWithStatus(): array {
+        $languages = [];
+        $sharedFolder = null;
+        $setupComplete = false;
+
+        try {
+            $sharedFolder = $this->setupService->getSharedFolder();
+            $setupComplete = true;
+        } catch (\Exception $e) {
+            $this->logger->info('[DemoData] GroupFolder not yet available: ' . $e->getMessage());
+        }
+
+        foreach (self::SUPPORTED_LANGUAGES as $lang) {
+            $meta = self::LANGUAGE_META[$lang] ?? ['name' => $lang, 'flag' => '', 'full' => false];
+            $exists = false;
+            $hasContent = false;
+            $hasBundled = $this->hasBundledDemoData($lang);
+
+            if ($setupComplete && $sharedFolder !== null) {
+                try {
+                    $exists = $sharedFolder->nodeExists($lang);
+                    if ($exists) {
+                        $langFolder = $sharedFolder->get($lang);
+                        // Check if there's actual content (home.json exists)
+                        $hasContent = $langFolder->nodeExists('home.json');
+                    }
+                } catch (\Exception $e) {
+                    $this->logger->warning('[DemoData] Error checking language folder: ' . $e->getMessage());
+                }
+            }
+
+            $languages[] = [
+                'code' => $lang,
+                'name' => $meta['name'],
+                'flag' => $meta['flag'],
+                'fullContent' => $meta['full'],
+                'folderExists' => $exists,
+                'hasContent' => $hasContent,
+                'hasBundledData' => $hasBundled,
+                // canInstall is true if bundled data exists - setup will be done automatically during import
+                'canInstall' => $hasBundled,
+                'status' => $this->getLanguageStatus($exists, $hasContent, $hasBundled, $setupComplete),
+            ];
+        }
+
+        return $languages;
+    }
+
+    /**
+     * Determine status label for a language
+     */
+    private function getLanguageStatus(bool $exists, bool $hasContent, bool $hasBundled, bool $setupComplete = true): string {
+        if (!$setupComplete) {
+            return 'setup_required';
+        }
+        if (!$hasBundled) {
+            return 'unavailable';
+        }
+        if (!$exists) {
+            return 'not_installed';
+        }
+        if ($hasContent) {
+            return 'installed';
+        }
+        return 'empty';
     }
 
     /**
@@ -89,13 +171,9 @@ class DemoDataService {
             // Get IntraVox groupfolder
             $sharedFolder = $this->setupService->getSharedFolder();
 
-            // Get or create language folder
-            if (!$sharedFolder->nodeExists($language)) {
-                $languageFolder = $sharedFolder->newFolder($language);
-                $this->logger->info("[DemoData] Created language folder: {$language}");
-            } else {
-                $languageFolder = $sharedFolder->get($language);
-            }
+            // Get or create language folder (handles case where folder exists in cache but not on disk)
+            $languageFolder = $this->ensureFolderExists($sharedFolder, $language);
+            $this->logger->info("[DemoData] Using language folder: {$language}");
 
             // Download and import manifest
             $manifest = $this->downloadManifest($language);
@@ -439,9 +517,10 @@ class DemoDataService {
      * Import demo data from bundled files in the app package
      *
      * @param string $language Language code (nl, en)
+     * @param string $mode Import mode: 'overwrite' (default) or 'skip_existing'
      * @return array Result with success status and message
      */
-    public function importBundledDemoData(string $language = 'nl'): array {
+    public function importBundledDemoData(string $language = 'nl', string $mode = 'overwrite'): array {
         if (!in_array($language, self::SUPPORTED_LANGUAGES)) {
             return [
                 'success' => false,
@@ -450,33 +529,49 @@ class DemoDataService {
         }
 
         try {
-            $this->logger->info("[DemoData] Starting bundled demo data import for language: {$language}");
+            $this->logger->info("[DemoData] Starting bundled demo data import for language: {$language}, mode: {$mode}");
 
             // Get path to bundled demo data
-            $appPath = \OC::$SERVERROOT . '/apps/intravox';
-            $demoDataPath = $appPath . '/demo-data/' . $language;
+            $demoDataPath = $this->getBundledDemoDataPath($language);
 
-            if (!is_dir($demoDataPath)) {
-                $this->logger->error("[DemoData] Demo data path not found: {$demoDataPath}");
+            if ($demoDataPath === null) {
+                $this->logger->error("[DemoData] Demo data path not found for language: {$language}");
                 return [
                     'success' => false,
                     'message' => "Demo data not found for language: {$language}",
                 ];
             }
 
+            $this->logger->info("[DemoData] Using demo data from: {$demoDataPath}");
+
+            // Ensure setup is complete before importing
+            if (!$this->setupService->isSetupComplete()) {
+                $this->logger->info("[DemoData] Setup not complete, running setup first...");
+                $setupSuccess = $this->setupService->setupSharedFolder();
+                if (!$setupSuccess) {
+                    return [
+                        'success' => false,
+                        'message' => 'Setup failed: Could not create IntraVox GroupFolder',
+                    ];
+                }
+                $this->logger->info("[DemoData] Setup completed successfully");
+            }
+
             // Get IntraVox groupfolder
             $sharedFolder = $this->setupService->getSharedFolder();
 
-            // Get or create language folder
-            if (!$sharedFolder->nodeExists($language)) {
-                $languageFolder = $sharedFolder->newFolder($language);
-                $this->logger->info("[DemoData] Created language folder: {$language}");
-            } else {
-                $languageFolder = $sharedFolder->get($language);
+            // For overwrite mode, delete the language folder first to clear any cached-but-nonexistent entries
+            if ($mode === 'overwrite') {
+                $this->deleteLanguageFolderIfExists($sharedFolder, $language);
             }
 
+            // Get or create language folder (handles case where folder exists in cache but not on disk)
+            $languageFolder = $this->ensureFolderExists($sharedFolder, $language);
+            $this->logger->info("[DemoData] Using language folder: {$language}");
+
             // Import all files recursively
-            $result = $this->importDirectoryRecursive($demoDataPath, $languageFolder);
+            $skipExisting = ($mode === 'skip_existing');
+            $result = $this->importDirectoryRecursive($demoDataPath, $languageFolder, $skipExisting);
 
             // Mark as imported
             $this->markDemoDataImported();
@@ -484,12 +579,22 @@ class DemoDataService {
             // Trigger groupfolder scan
             $this->scanGroupfolder();
 
-            $this->logger->info("[DemoData] Bundled import complete. Imported: {$result['imported']}, Errors: {$result['errors']}");
+            $skipped = $result['skipped'] ?? 0;
+            $this->logger->info("[DemoData] Bundled import complete. Imported: {$result['imported']}, Skipped: {$skipped}, Errors: {$result['errors']}");
+
+            $message = "Demo data imported successfully. {$result['imported']} items imported";
+            if ($skipped > 0) {
+                $message .= ", {$skipped} existing files skipped";
+            }
+            if ($result['errors'] > 0) {
+                $message .= ", {$result['errors']} errors";
+            }
 
             return [
                 'success' => $result['errors'] === 0,
-                'message' => "Demo data imported successfully. {$result['imported']} items imported" . ($result['errors'] > 0 ? ", {$result['errors']} errors" : ''),
+                'message' => $message,
                 'imported' => $result['imported'],
+                'skipped' => $skipped,
                 'errors' => $result['errors'],
             ];
 
@@ -504,9 +609,14 @@ class DemoDataService {
 
     /**
      * Import a directory recursively from local filesystem to Nextcloud folder
+     *
+     * @param string $sourcePath Path to source directory
+     * @param Folder $targetFolder Target Nextcloud folder
+     * @param bool $skipExisting If true, skip files that already exist
      */
-    private function importDirectoryRecursive(string $sourcePath, Folder $targetFolder): array {
+    private function importDirectoryRecursive(string $sourcePath, Folder $targetFolder, bool $skipExisting = false): array {
         $imported = 0;
+        $skipped = 0;
         $errors = 0;
 
         $items = scandir($sourcePath);
@@ -520,13 +630,10 @@ class DemoDataService {
             if (is_dir($itemPath)) {
                 // Create subfolder and recurse
                 try {
-                    if (!$targetFolder->nodeExists($item)) {
-                        $subFolder = $targetFolder->newFolder($item);
-                    } else {
-                        $subFolder = $targetFolder->get($item);
-                    }
-                    $subResult = $this->importDirectoryRecursive($itemPath, $subFolder);
+                    $subFolder = $this->ensureFolderExists($targetFolder, $item);
+                    $subResult = $this->importDirectoryRecursive($itemPath, $subFolder, $skipExisting);
                     $imported += $subResult['imported'];
+                    $skipped += $subResult['skipped'] ?? 0;
                     $errors += $subResult['errors'];
                 } catch (\Exception $e) {
                     $this->logger->error("[DemoData] Failed to create folder {$item}: " . $e->getMessage());
@@ -535,6 +642,13 @@ class DemoDataService {
             } else {
                 // Import file
                 try {
+                    // Check if file exists and we should skip it
+                    if ($skipExisting && $targetFolder->nodeExists($item)) {
+                        $skipped++;
+                        $this->logger->debug("[DemoData] Skipped existing: {$item}");
+                        continue;
+                    }
+
                     $content = file_get_contents($itemPath);
                     if ($content === false) {
                         $errors++;
@@ -556,16 +670,109 @@ class DemoDataService {
             }
         }
 
-        return ['imported' => $imported, 'errors' => $errors];
+        return ['imported' => $imported, 'skipped' => $skipped, 'errors' => $errors];
+    }
+
+    /**
+     * Delete a language folder if it exists, to clear any cached-but-nonexistent entries.
+     * This is needed when the file cache contains entries for folders that don't exist on disk.
+     */
+    private function deleteLanguageFolderIfExists(Folder $parent, string $language): void {
+        try {
+            if ($parent->nodeExists($language)) {
+                $this->logger->info("[DemoData] Deleting existing language folder: {$language}");
+                $node = $parent->get($language);
+                $node->delete();
+                $this->logger->info("[DemoData] Language folder deleted successfully");
+            }
+        } catch (\Exception $e) {
+            $this->logger->warning("[DemoData] Failed to delete language folder: " . $e->getMessage());
+            // Continue anyway - the folder will be recreated
+        }
+    }
+
+    /**
+     * Ensure a folder exists, creating it if necessary.
+     * This handles the case where the folder exists in file cache but not on disk.
+     */
+    private function ensureFolderExists(Folder $parent, string $name): Folder {
+        try {
+            // First, verify the parent folder actually exists on disk
+            try {
+                $parent->getDirectoryListing();
+            } catch (\Exception $e) {
+                // Parent doesn't exist on disk - this is a deeper problem
+                // Try to recreate by getting internal path
+                $this->logger->warning("[DemoData] Parent folder doesn't exist on disk, this shouldn't happen");
+            }
+
+            if ($parent->nodeExists($name)) {
+                $node = $parent->get($name);
+                if ($node instanceof Folder) {
+                    // Try to access the folder to verify it actually exists on disk
+                    try {
+                        // getDirectoryListing will fail if folder doesn't exist on disk
+                        $node->getDirectoryListing();
+                        return $node;
+                    } catch (\Exception $e) {
+                        // Folder exists in cache but not on disk, delete cache entry and recreate
+                        $this->logger->info("[DemoData] Folder {$name} exists in cache but not on disk, recreating");
+                        try {
+                            $node->delete();
+                        } catch (\Exception $deleteE) {
+                            // Ignore delete errors, just try to create
+                            $this->logger->debug("[DemoData] Could not delete cached folder: " . $deleteE->getMessage());
+                        }
+                    }
+                } else {
+                    // Node exists but is not a folder - delete it and create folder
+                    $this->logger->warning("[DemoData] Node {$name} exists but is not a folder, deleting");
+                    try {
+                        $node->delete();
+                    } catch (\Exception $deleteE) {
+                        // Ignore delete errors
+                    }
+                }
+            }
+            // Create the folder
+            return $parent->newFolder($name);
+        } catch (\OCP\Files\NotPermittedException $e) {
+            // Folder might already exist, try to get it
+            if ($parent->nodeExists($name)) {
+                $node = $parent->get($name);
+                if ($node instanceof Folder) {
+                    return $node;
+                }
+            }
+            throw $e;
+        }
     }
 
     /**
      * Check if bundled demo data is available
      */
     public function hasBundledDemoData(string $language = 'nl'): bool {
-        $appPath = \OC::$SERVERROOT . '/apps/intravox';
-        $demoDataPath = $appPath . '/demo-data/' . $language;
-        return is_dir($demoDataPath) && is_file($demoDataPath . '/home.json');
+        $demoDataPath = $this->getBundledDemoDataPath($language);
+        return $demoDataPath !== null && is_file($demoDataPath . '/home.json');
+    }
+
+    /**
+     * Get the path to bundled demo data for a language
+     * Checks both apps/ and custom_apps/ directories
+     */
+    private function getBundledDemoDataPath(string $language): ?string {
+        $possiblePaths = [
+            \OC::$SERVERROOT . '/apps/intravox/demo-data/' . $language,
+            \OC::$SERVERROOT . '/custom_apps/intravox/demo-data/' . $language,
+        ];
+
+        foreach ($possiblePaths as $path) {
+            if (is_dir($path)) {
+                return $path;
+            }
+        }
+
+        return null;
     }
 
     /**

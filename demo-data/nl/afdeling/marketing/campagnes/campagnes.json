@@ -60,7 +60,7 @@
                         "type": "text",
                         "column": 1,
                         "order": 2,
-                        "content": "**Status:** Actief\n**Periode:** November 2024\n\nPromotie van open source software en IntraVox binnen de Europese markt."
+                        "content": "**Status:** Voorbeeld\n**Periode:** Doorlopend\n\nVoorbeeld van een actieve marketingcampagne. Pas dit aan naar uw eigen campagnes."
                     },
                     {
                         "type": "heading",
@@ -73,7 +73,7 @@
                         "type": "text",
                         "column": 2,
                         "order": 2,
-                        "content": "**Status:** Gepland\n**Periode:** Q1 2025\n\nDeelname aan Nextcloud Conference met demo booth en presentaties."
+                        "content": "**Status:** Voorbeeld\n**Periode:** Gepland\n\nVoorbeeld van een geplande campagne. Voeg hier uw eigen campagnes toe."
                     },
                     {
                         "type": "heading",
@@ -86,7 +86,7 @@
                         "type": "text",
                         "column": 3,
                         "order": 2,
-                        "content": "**Status:** Doorlopend\n**Periode:** 2024-2025\n\nContent marketing rond privacy en data soevereiniteit."
+                        "content": "**Status:** Voorbeeld\n**Periode:** Doorlopend\n\nVoorbeeld van een doorlopende campagne met lange termijn focus."
                     }
                 ]
             },
@@ -119,7 +119,7 @@
                         "type": "text",
                         "column": 1,
                         "order": 2,
-                        "content": "| Campagne | Periode | Resultaat |\n|----------|---------|----------|\n| Product Launch | Sep 2024 | 500+ nieuwe gebruikers |\n| Summer Sale | Jul 2024 | 30% meer conversies |\n| Partner Programma | Q2 2024 | 15 nieuwe partners |"
+                        "content": "| Campagne | Periode | Resultaat |\n|----------|---------|----------|\n| Voorbeeld Campagne 1 | Periode | Resultaat |\n| Voorbeeld Campagne 2 | Periode | Resultaat |\n| Voorbeeld Campagne 3 | Periode | Resultaat |\n\n*Pas deze tabel aan met uw eigen campagne historie.*"
                     }
                 ]
             },

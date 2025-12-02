@@ -62,23 +62,25 @@ class DemoDataController extends Controller {
 
     /**
      * Import demo data for a specific language
-     * Only admins (users with full permissions) can import demo data
+     * Only Nextcloud admins can import demo data (no NoAdminRequired attribute)
      *
      * @param string $language Language code (nl, en)
+     * @param string $mode Import mode: 'overwrite' (default) or 'skip_existing'
      * @return DataResponse
      */
-    #[NoAdminRequired]
-    public function importDemoData(string $language = 'nl'): DataResponse {
+    public function importDemoData(string $language = 'nl', string $mode = 'overwrite'): DataResponse {
         try {
-            // Only admins can import demo data
-            if (!$this->permissionService->isAdmin()) {
-                return new DataResponse(
-                    ['success' => false, 'error' => 'Permission denied: only administrators can import demo data'],
-                    Http::STATUS_FORBIDDEN
-                );
+            // Validate mode
+            if (!in_array($mode, ['overwrite', 'skip_existing'])) {
+                $mode = 'overwrite';
             }
 
-            $result = $this->demoDataService->importDemoData($language);
+            // Try bundled demo data first, fall back to remote download
+            if ($this->demoDataService->hasBundledDemoData($language)) {
+                $result = $this->demoDataService->importBundledDemoData($language, $mode);
+            } else {
+                $result = $this->demoDataService->importDemoData($language);
+            }
 
             $statusCode = $result['success'] ? Http::STATUS_OK : Http::STATUS_INTERNAL_SERVER_ERROR;
             return new DataResponse($result, $statusCode);

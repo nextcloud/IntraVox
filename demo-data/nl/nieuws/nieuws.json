@@ -53,14 +53,14 @@
                         "type": "heading",
                         "column": 1,
                         "order": 1,
-                        "content": "IntraVox v1.0 Gelanceerd!",
+                        "content": "Voorbeeld Nieuwsbericht 1",
                         "level": 3
                     },
                     {
                         "type": "text",
                         "column": 1,
                         "order": 2,
-                        "content": "**29 november 2024** - We zijn verheugd om de eerste stabiele versie van IntraVox aan te kondigen! Na maanden van ontwikkeling en testen is IntraVox nu beschikbaar voor alle Nextcloud gebruikers.\n\n**Highlights:**\n- Visuele pagina editor met drag-and-drop\n- Ondersteuning voor meerdere talen\n- Mega menu en dropdown navigatie\n- Integratie met Nextcloud Group Folders"
+                        "content": "Dit is een voorbeeld nieuwsbericht. Vervang dit met uw eigen nieuws.\n\n**Highlights:**\n- Voorbeeld highlight 1\n- Voorbeeld highlight 2\n- Voorbeeld highlight 3"
                     }
                 ]
             },
@@ -72,14 +72,14 @@
                         "type": "heading",
                         "column": 1,
                         "order": 1,
-                        "content": "Nextcloud Conference 2024 Recap",
+                        "content": "Voorbeeld Nieuwsbericht 2",
                         "level": 3
                     },
                     {
                         "type": "text",
                         "column": 1,
                         "order": 2,
-                        "content": "**15 oktober 2024** - IntraVox was aanwezig op de Nextcloud Conference in Berlijn. We hebben een live demo gegeven van de nieuwste functies en waardevolle feedback ontvangen van de community.\n\n[Bekijk de presentatie slides](https://nextcloud.com/conf/)"
+                        "content": "Dit is een voorbeeld nieuwsbericht. Gebruik dit format om uw eigen nieuws te delen met de organisatie."
                     }
                 ]
             },
@@ -91,14 +91,14 @@
                         "type": "heading",
                         "column": 1,
                         "order": 1,
-                        "content": "Beta Programma Gesloten",
+                        "content": "Voorbeeld Nieuwsbericht 3",
                         "level": 3
                     },
                     {
                         "type": "text",
                         "column": 1,
                         "order": 2,
-                        "content": "**1 september 2024** - Ons beta programma is succesvol afgerond met meer dan 50 organisaties die IntraVox hebben getest. Bedankt aan alle beta testers voor hun waardevolle feedback!"
+                        "content": "Dit is een voorbeeld nieuwsbericht. Voeg hier uw eigen updates en aankondigingen toe."
                     }
                 ]
             },
@@ -137,27 +137,27 @@
                         "type": "heading",
                         "column": 1,
                         "order": 1,
-                        "content": "Webinar: IntraVox Intro",
+                        "content": "Voorbeeld: Online Webinar",
                         "level": 3
                     },
                     {
                         "type": "text",
                         "column": 1,
                         "order": 2,
-                        "content": "**Datum:** 15 december 2024\n**Tijd:** 14:00 - 15:00 CET\n\nEen introductie tot IntraVox voor nieuwe gebruikers. Leer de basis en stel vragen aan het development team."
+                        "content": "**Datum:** [Pas aan]\n**Tijd:** [Pas aan]\n\nVoorbeeld beschrijving van een online evenement. Voeg hier uw eigen evenementen toe."
                     },
                     {
                         "type": "heading",
                         "column": 2,
                         "order": 1,
-                        "content": "FOSDEM 2025",
+                        "content": "Voorbeeld: Fysiek Event",
                         "level": 3
                     },
                     {
                         "type": "text",
                         "column": 2,
                         "order": 2,
-                        "content": "**Datum:** 1-2 februari 2025\n**Locatie:** Brussel, België\n\nBezoek ons op FOSDEM! We zijn aanwezig in de Nextcloud devroom met een presentatie over IntraVox."
+                        "content": "**Datum:** [Pas aan]\n**Locatie:** [Pas aan]\n\nVoorbeeld beschrijving van een fysiek evenement. Voeg hier uw eigen conferenties en meetups toe."
                     }
                 ]
             },

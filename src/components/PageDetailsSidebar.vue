@@ -38,7 +38,7 @@
               @keydown.enter="saveTitle"
               @keydown.esc="cancelTitleEdit"
             />
-            <span v-else class="metadata-text" @click="startTitleEdit">
+            <span v-else class="metadata-text" :class="{ 'metadata-text--editable': canEditTitle }" @click="startTitleEdit">
               {{ metadata.title || t('Untitled') }}
             </span>
             <NcButton
@@ -340,6 +340,10 @@ export default {
   computed: {
     pageSubtitle() {
       return this.t('Page details and history');
+    },
+    canEditTitle() {
+      // Check write permission using Nextcloud's permissions
+      return this.metadata?.permissions?.canWrite ?? this.metadata?.canEdit ?? false;
     }
   },
   watch: {
@@ -582,7 +586,9 @@ export default {
       }
     },
     startTitleEdit() {
-      if (!this.metadata?.canEdit) {
+      // Check write permission using Nextcloud's permissions
+      const canWrite = this.metadata?.permissions?.canWrite ?? this.metadata?.canEdit ?? false;
+      if (!canWrite) {
         return;
       }
       this.editableTitle = this.metadata.title;
@@ -934,13 +940,16 @@ export default {
 }
 
 .metadata-text {
-  cursor: pointer;
   padding: 4px;
   border-radius: var(--border-radius);
   transition: background 0.2s;
 }
 
-.metadata-text:hover {
+.metadata-text--editable {
+  cursor: pointer;
+}
+
+.metadata-text--editable:hover {
   background: var(--color-background-hover);
 }
 

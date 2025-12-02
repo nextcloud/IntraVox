@@ -1,6 +1,6 @@
 {
     "uniqueId": "page-78777fb8-14ba-4db1-8595-9cfb3f8954bf",
-    "title": "Branding & Brand identity",
+    "title": "Branding",
     "language": "en",
     "layout": {
         "columns": 1,
@@ -13,14 +13,14 @@
                         "type": "heading",
                         "column": 1,
                         "order": 1,
-                        "content": "Branding & Brand identity",
+                        "content": "Branding & Brand Identity",
                         "level": 1
                     },
                     {
                         "type": "text",
                         "column": 1,
                         "order": 2,
-                        "content": "Onze visuele identiteit vertelt het verhaal van wie we zijn. Hier vindt u alle richtlijnen en assets om consistent te communiceren."
+                        "content": "This is a demo branding page. Use this layout to document your brand guidelines, colors, and assets."
                     }
                 ]
             },
@@ -32,20 +32,20 @@
                         "type": "heading",
                         "column": 1,
                         "order": 1,
-                        "content": "Primaire Kleuren",
+                        "content": "Primary Colors",
                         "level": 3
                     },
                     {
                         "type": "text",
                         "column": 1,
                         "order": 2,
-                        "content": "**Brand Blue**\n#2980b9\nRGB: 41, 128, 185\n\n**Brand Orange**\n#ff5722\nRGB: 255, 87, 34"
+                        "content": "**Example Blue**\n#2980b9\nRGB: 41, 128, 185\n\n**Example Orange**\n#ff5722\nRGB: 255, 87, 34"
                     },
                     {
                         "type": "heading",
                         "column": 2,
                         "order": 1,
-                        "content": "Secundaire Kleuren",
+                        "content": "Secondary Colors",
                         "level": 3
                     },
                     {
@@ -58,7 +58,7 @@
                         "type": "heading",
                         "column": 3,
                         "order": 1,
-                        "content": "Accent Kleuren",
+                        "content": "Accent Colors",
                         "level": 3
                     },
                     {
@@ -92,14 +92,14 @@
                         "column": 1,
                         "order": 1,
                         "src": "logo-dark.jpg",
-                        "alt": "Logo op donkere achtergrond",
+                        "alt": "Logo on dark background",
                         "objectFit": "cover"
                     },
                     {
                         "type": "heading",
                         "column": 1,
                         "order": 2,
-                        "content": "Logo Gebruik",
+                        "content": "Logo Usage",
                         "level": 2
                     },
                     {
@@ -113,21 +113,21 @@
                         "column": 2,
                         "order": 1,
                         "src": "typography.jpg",
-                        "alt": "Typografie voorbeelden",
+                        "alt": "Typography examples",
                         "objectFit": "cover"
                     },
                     {
                         "type": "heading",
                         "column": 2,
                         "order": 2,
-                        "content": "Typografie",
+                        "content": "Typography",
                         "level": 2
                     },
                     {
                         "type": "text",
                         "column": 2,
                         "order": 3,
-                        "content": "**Headlines:** Inter Bold\nUse for headings and titles\n\n**Body text:** Inter Regular\nFor running text and content\n\n**Code:** JetBrains Mono\nTechnical documentation"
+                        "content": "**Headlines:** Example Bold\nUse for headings and titles\n\n**Body text:** Example Regular\nFor running text and content\n\n**Code:** Monospace\nTechnical documentation"
                     }
                 ]
             },
@@ -149,22 +149,22 @@
                         "columns": 4,
                         "items": [
                             {
-                                "title": "Logo Pakket",
-                                "text": "SVG, PNG, EPS formaten",
+                                "title": "Logo Package",
+                                "text": "SVG, PNG, EPS formats",
                                 "url": "#",
                                 "icon": "file-image",
                                 "target": "_self"
                             },
                             {
-                                "title": "Kleurenpaletten",
-                                "text": "ASE, CLR bestanden",
+                                "title": "Color Palettes",
+                                "text": "ASE, CLR files",
                                 "url": "#",
                                 "icon": "palette",
                                 "target": "_self"
                             },
                             {
-                                "title": "Font Licenties",
-                                "text": "Webfonts en desktop",
+                                "title": "Font Licenses",
+                                "text": "Webfonts and desktop",
                                 "url": "#",
                                 "icon": "format-font",
                                 "target": "_self"
@@ -193,21 +193,21 @@
                             {
                                 "title": "Social Media",
                                 "text": "Social templates",
-                                "url": "#afdeling/marketing/social-media",
+                                "url": "#departments/marketing/social-media",
                                 "icon": "share-variant",
                                 "target": "_self"
                             },
                             {
                                 "title": "Campaigns",
-                                "text": "Actieve campagnes",
-                                "url": "#afdeling/marketing/campagnes",
+                                "text": "Active campaigns",
+                                "url": "#departments/marketing/campaigns",
                                 "icon": "rocket",
                                 "target": "_self"
                             },
                             {
                                 "title": "Marketing",
                                 "text": "Back to Marketing",
-                                "url": "#afdeling/marketing",
+                                "url": "#departments/marketing",
                                 "icon": "arrow-left",
                                 "target": "_self"
                             }

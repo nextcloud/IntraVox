@@ -176,7 +176,7 @@
                             {
                                 "title": "Back to Docs",
                                 "text": "Documentation overview",
-                                "url": "#documentatie",
+                                "url": "#documentation",
                                 "icon": "arrow-left",
                                 "target": "_self"
                             }

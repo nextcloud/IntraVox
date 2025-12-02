@@ -1,6 +1,9 @@
 /**
  * IntraVox MetaVox Integration Plugin
- * Loads and initializes MetaVox for IntraVox pages
+ * Sets up communication between IntraVox and MetaVox for pages
+ *
+ * Note: MetaVox scripts are loaded by the PHP backend via Util::addScript()
+ * This file only handles the sidebar mock and event communication.
  */
 
 // Get Nextcloud webroot
@@ -11,7 +14,7 @@ function getWebRoot() {
     return '';
 }
 
-// Check if MetaVox is available
+// Check if MetaVox is available (for API checks)
 async function checkMetaVoxAvailability() {
     try {
         const url = getWebRoot() + '/apps/intravox/api/metavox/status';
@@ -19,51 +22,6 @@ async function checkMetaVoxAvailability() {
         const data = await response.json();
         return data.installed === true;
     } catch (error) {
-        return false;
-    }
-}
-
-// Load MetaVox scripts if installed
-async function loadMetaVoxScripts() {
-    const isInstalled = await checkMetaVoxAvailability();
-
-    if (!isInstalled) {
-        return false;
-    }
-
-    // Create Files Sidebar mock API BEFORE loading MetaVox scripts
-    createFilesSidebarMock();
-
-    const webroot = getWebRoot();
-
-    // Load MetaVox CSS
-    const cssLink = document.createElement('link');
-    cssLink.rel = 'stylesheet';
-    cssLink.href = webroot + '/apps/metavox/css/files.css';
-    document.head.appendChild(cssLink);
-
-    // Load MetaVox scripts
-    try {
-        const scriptsToLoad = [
-            webroot + '/apps/metavox/js/files-plugin1.js'
-        ];
-
-        for (const scriptSrc of scriptsToLoad) {
-            await new Promise((resolve, reject) => {
-                const script = document.createElement('script');
-                script.src = scriptSrc;
-                script.onload = resolve;
-                script.onerror = reject;
-                document.head.appendChild(script);
-            });
-        }
-
-        // Setup event listeners for MetaVox integration
-        setupMetaVoxEventListeners();
-
-        return true;
-    } catch (error) {
-        console.error('[IntraVox] Failed to load MetaVox scripts:', error);
         return false;
     }
 }
@@ -88,7 +46,6 @@ function createFilesSidebarMock() {
             setActiveTab(tabId) {}
         };
     }
-
 }
 
 // Get groupfolder name from groupfolder ID
@@ -141,6 +98,10 @@ function setupMetaVoxEventListeners() {
             path = `/${groupfolderName}/${pathAfterGroupfolder}`;
         }
 
+        // Get permissions from metadata (uses Nextcloud's native permissions)
+        // Default to read-only (1) if not available
+        const rawPermissions = metadata?.permissions?.raw ?? 1;
+
         // Create a file info object that looks like what Files app provides
         const fileInfo = {
             id: metadata?.fileId || pageId,
@@ -149,7 +110,7 @@ function setupMetaVoxEventListeners() {
             mimetype: 'application/json',
             size: metadata?.size || 0,
             mtime: metadata?.modified || Date.now(),
-            permissions: 31,
+            permissions: rawPermissions,
             shareTypes: [],
             mountType: 'group',
             type: 'file',
@@ -171,11 +132,21 @@ function setupMetaVoxEventListeners() {
     });
 }
 
-// Initialize when DOM is ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', loadMetaVoxScripts);
-} else {
-    loadMetaVoxScripts();
+// Initialize MetaVox integration
+// Scripts are loaded by PHP backend, we just need to setup the mock and listeners
+function initMetaVoxIntegration() {
+    // Create the sidebar mock so MetaVox can register its tab
+    createFilesSidebarMock();
+
+    // Setup event listeners for communication
+    setupMetaVoxEventListeners();
 }
 
-export { checkMetaVoxAvailability, loadMetaVoxScripts };
+// Initialize when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initMetaVoxIntegration);
+} else {
+    initMetaVoxIntegration();
+}
+
+export { checkMetaVoxAvailability, initMetaVoxIntegration };
