@@ -3,7 +3,7 @@ node_modules/
 vendor/
 
 # Build outputs
-js/
+# js/ - NOT ignored, needed for App Store
 dist/
 
 # IDE
