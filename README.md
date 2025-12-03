@@ -8,7 +8,7 @@ IntraVox brings SharePoint-style page creation to Nextcloud, enabling teams to b
 
 *Professional pages with drag-and-drop editing and smart navigation*
 
-![Edit Pages with Drag-and-Drop](https://raw.githubusercontent.com/nextcloud/intravox/main/screenshots/Edit%20page.gif)
+![Edit Pages with Drag-and-Drop](https://raw.githubusercontent.com/nextcloud/intravox/main/screenshots/IntraVox%20edit.png)
 
 *Visual editor with flexible layouts and intuitive widget management*
 
