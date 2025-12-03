@@ -39,6 +39,11 @@ package-lock.json
 *.local.sh
 *.local.js
 
+# Deployment and release scripts (local use only)
+create-release.sh
+deploy-demo-data.sh
+deploy.sh
+
 # Code signing certificates (private keys must never be committed!)
 *.key
 *.csr
