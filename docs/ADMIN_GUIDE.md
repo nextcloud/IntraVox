@@ -136,8 +136,8 @@ If you want to reset demo content to its original state:
 |----------|------|---------|
 | Nederlands | 🇳🇱 | Full intranet with departments, news, documentation |
 | English | 🇬🇧 | Full intranet (English translation) |
-| Deutsch | 🇩🇪 | Full intranet (German translation) |
-| Français | 🇫🇷 | Full intranet (French translation) |
+| Deutsch | 🇩🇪 | Homepage only |
+| Français | 🇫🇷 | Homepage only |
 
 ### What Demo Data Includes
 
