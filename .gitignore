@@ -38,3 +38,9 @@ package-lock.json
 # Local development scripts (if any remain)
 *.local.sh
 *.local.js
+
+# Code signing certificates (private keys must never be committed!)
+*.key
+*.csr
+*.crt
+*.pem

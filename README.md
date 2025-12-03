@@ -4,15 +4,15 @@
 
 IntraVox brings SharePoint-style page creation to Nextcloud, enabling teams to build intranets, knowledge bases, and collaborative workspaces within their secure Nextcloud environment.
 
-![IntraVox Homepage](img/intravox%20home.png)
+![IntraVox Homepage](https://raw.githubusercontent.com/nextcloud/intravox/main/screenshots/intravox%20home.png)
 
 *Professional pages with drag-and-drop editing and smart navigation*
 
-![Edit Pages with Drag-and-Drop](img/Edit%20page.gif)
+![Edit Pages with Drag-and-Drop](https://raw.githubusercontent.com/nextcloud/intravox/main/screenshots/Edit%20page.gif)
 
 *Visual editor with flexible layouts and intuitive widget management*
 
-![Fully Responsive Design](img/Responsive.gif)
+![Fully Responsive Design](https://raw.githubusercontent.com/nextcloud/intravox/main/screenshots/Responsive.gif)
 
 *Responsive design across desktop, tablet, and mobile*
 
