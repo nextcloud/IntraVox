@@ -49,3 +49,12 @@ deploy.sh
 *.csr
 *.crt
 *.pem
+
+# Backup files
+*.bak
+
+# macOS metadata
+._*
+
+# Claude Code configuration
+.claude/

@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.9] - 2025-12-03 - App Store Release
+
+### Fixed
+- **App Store Installation**: Fixed "This app makes the server unstable" error
+  - Removed macOS metadata files (`._*`) from release tarball
+  - Removed `.claude/` configuration folder from release
+  - Removed `.bak` backup files from release
+  - Clean signature.json without problematic files
+- **Namespace Resolution**: Fixed `QueryNotFoundException` for PageController
+  - Cache clearing required after installation from App Store
+
+### Changed
+- **Build Process**: Improved tarball creation with proper excludes
+  - Excludes `*.bak`, `._*`, `.claude`, `.DS_Store` files
+  - Cleaner release packages for App Store distribution
+- **Documentation**: Updated screenshots in documentation
+  - Added megamenu, widgets, pagestructure, and demodata screenshots
+
+## [0.5.8] - 2025-12-03 - App Store Signing Fix
+
+### Fixed
+- **Code Signing**: Re-signed app after removing problematic files
+- **Integrity Check**: App now passes `occ integrity:check-app` validation
+
 ## [0.5.7] - 2025-12-02 - App Store Preparation
 
 ### Added
