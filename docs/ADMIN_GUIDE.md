@@ -4,8 +4,8 @@ This guide covers installation, configuration, and maintenance of IntraVox for N
 
 ## Requirements
 
-- Nextcloud 28 or higher
-- PHP 8.0 or higher
+- Nextcloud 32 or higher
+- PHP 8.1 or higher
 - GroupFolders app installed and enabled
 
 ## Installation
@@ -104,31 +104,67 @@ IntraVox/
 
 ## Demo Data
 
-### Installing Demo Data
+IntraVox includes demo content to help you get started quickly. Demo data can be installed and managed directly from the Nextcloud Admin Settings.
 
-Demo data provides a complete example intranet to get started:
+### Installing Demo Data via Admin Settings
 
-```bash
-cd /path/to/intravox
-./deploy-demo-data.sh user@server:/path/to/nextcloud
-```
+1. Go to **Nextcloud Admin Settings** → **IntraVox**
+2. You'll see a table with all available demo data languages
+3. Click **Install** next to the language you want to set up
+4. The GroupFolder and permission groups are created automatically if they don't exist
 
-Or manually copy demo-data contents to the IntraVox GroupFolder.
+The Admin Settings panel shows:
+- **Status badges**: Installed, Not installed, or Empty folder
+- **Content badges**: Full intranet vs Homepage only
+- **Language flags** for easy identification
+
+### Reinstalling Demo Data
+
+If you want to reset demo content to its original state:
+
+1. Go to **Admin Settings** → **IntraVox**
+2. Click **Reinstall** next to the language
+3. Confirm the action (this will delete all existing content for that language and replace it with fresh demo data)
 
 ### Available Demo Data
 
-| Language | Content |
-|----------|---------|
-| nl | Full intranet with departments, news, documentation |
-| en | Full intranet (English translation) |
-| de | Homepage only |
-| fr | Homepage only |
+| Language | Flag | Content |
+|----------|------|---------|
+| Nederlands | 🇳🇱 | Full intranet with departments, news, documentation |
+| English | 🇬🇧 | Full intranet (English translation) |
+| Deutsch | 🇩🇪 | Full intranet (German translation) |
+| Français | 🇫🇷 | Full intranet (French translation) |
+
+### What Demo Data Includes
+
+Each full demo installation contains:
+- Homepage with welcome content
+- Department pages (HR, IT, Sales, Marketing)
+- News section with example articles
+- Documentation pages
+- Navigation structure with megamenu
+- Sample images and icons
+
+### Command Line Installation (Alternative)
+
+For automated deployments, demo data can also be installed via command line:
+
+```bash
+sudo -u www-data php occ intravox:import-demo-data --language=en
+```
+
+Available options:
+- `--language=nl|en|de|fr` - Language to install (default: en)
+- `--force` - Overwrite existing content
 
 ### Customizing Demo Data
 
-1. Edit JSON files in the IntraVox GroupFolder
+After installation, customize the content:
+
+1. Edit JSON files directly in the IntraVox GroupFolder via Nextcloud Files
 2. Replace images in the `images/` subfolders
-3. Update navigation.json to match your structure
+3. Update navigation.json to match your organization's structure
+4. Use the IntraVox editor for visual page editing
 
 ## Maintenance
 
