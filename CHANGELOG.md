@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.11] - 2025-12-03 - Permission Setup Fix
+
+### Fixed
+- **Permission Groups**: Fixed permission group creation during installation and upgrade
+  - Groups (`IntraVox Admins`, `IntraVox Users`) are now reliably created
+  - All Nextcloud admins are automatically synced to `IntraVox Admins` group
+  - Works correctly for CLI installations (`occ app:enable intravox`)
+  - Non-admin users no longer incorrectly get admin permissions
+  - **Upgrade fix**: Existing installations now get permissions fixed automatically
+
+### Changed
+- **Admin Synchronization**: Changed from adding current user to syncing all NC admins
+  - More robust: doesn't depend on user session (which can be null in CLI)
+  - More secure: only actual NC admins get IntraVox admin rights
+  - Consistent behavior regardless of who installs the app
+- **Repair Step Registration**: Added `post-migration` repair step to `info.xml`
+  - Setup code now runs automatically during app upgrades
+  - Fixes permission issues for users upgrading from v0.5.10
+
+### Documentation
+- **Admin Guide**: Added section explaining permission groups and admin sync
+
 ## [0.5.10] - 2025-12-03 - GroupFolders Dependency Clarification
 
 ### Added

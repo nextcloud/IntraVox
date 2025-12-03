@@ -29,14 +29,44 @@ tar -xzf intravox.tar.gz
 sudo -u www-data php /var/www/nextcloud/occ app:enable intravox
 ```
 
+## Permission Groups
+
+IntraVox automatically creates two permission groups during installation:
+
+| Group | Purpose | Permissions |
+|-------|---------|-------------|
+| **IntraVox Admins** | Full administrative access | Read, Write, Create, Delete, Share |
+| **IntraVox Users** | Standard read access | Read |
+
+### Automatic Admin Synchronization
+
+When IntraVox is installed or re-enabled, **all Nextcloud administrators** (members of the `admin` group) are automatically added to the `IntraVox Admins` group. This ensures:
+
+- All NC admins have full IntraVox permissions
+- CLI installations (`occ app:enable intravox`) work correctly
+- Consistent behavior regardless of who installs the app
+
+### Adding Users
+
+To give users access to IntraVox:
+
+1. **For read access**: Add users to the `IntraVox Users` group
+2. **For admin access**: Add users to the `IntraVox Admins` group (or make them a Nextcloud admin)
+
+You can manage group membership via:
+- Nextcloud Admin → Users → Edit user → Groups
+- Command line: `occ group:adduser "IntraVox Users" username`
+
 ## Initial Setup
 
 ### Automatic Setup
 
 When IntraVox is first accessed, it automatically:
-1. Creates a GroupFolder named "IntraVox"
-2. Sets up the basic folder structure
-3. Initializes navigation files
+1. Creates the permission groups (`IntraVox Admins` and `IntraVox Users`)
+2. Syncs Nextcloud admins to `IntraVox Admins`
+3. Creates a GroupFolder named "IntraVox"
+4. Sets up the basic folder structure
+5. Initializes navigation files
 
 ### Manual Setup
 

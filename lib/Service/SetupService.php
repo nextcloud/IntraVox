@@ -121,13 +121,16 @@ class SetupService {
             }
         }
 
-        // Add current user to IntraVox Admins group for full permissions (including share and delete)
-        $currentUser = $this->userSession->getUser();
-        if ($currentUser !== null) {
-            $adminGroup = $this->groupManager->get(self::ADMIN_GROUP);
-            if ($adminGroup !== null && !$adminGroup->inGroup($currentUser)) {
-                $adminGroup->addUser($currentUser);
-                $this->logger->info("Added current user '{$currentUser->getUID()}' to " . self::ADMIN_GROUP . " group for full permissions");
+        // Sync all Nextcloud admins to IntraVox Admins group
+        // This ensures all NC admins get IntraVox admin rights, regardless of who installs the app
+        $ncAdminGroup = $this->groupManager->get('admin');
+        $adminGroup = $this->groupManager->get(self::ADMIN_GROUP);
+        if ($ncAdminGroup !== null && $adminGroup !== null) {
+            foreach ($ncAdminGroup->getUsers() as $ncAdmin) {
+                if (!$adminGroup->inGroup($ncAdmin)) {
+                    $adminGroup->addUser($ncAdmin);
+                    $this->logger->info("Synced NC admin '{$ncAdmin->getUID()}' to " . self::ADMIN_GROUP . " group");
+                }
             }
         }
     }
