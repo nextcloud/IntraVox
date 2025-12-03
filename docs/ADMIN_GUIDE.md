@@ -106,6 +106,10 @@ IntraVox/
 
 IntraVox includes demo content to help you get started quickly. Demo data can be installed and managed directly from the Nextcloud Admin Settings.
 
+![Demo Data Admin Settings](https://raw.githubusercontent.com/nextcloud/intravox/main/screenshots/demodata.png)
+
+*Admin Settings panel for managing demo data installation*
+
 ### Installing Demo Data via Admin Settings
 
 1. Go to **Nextcloud Admin Settings** → **IntraVox**

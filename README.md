@@ -31,6 +31,10 @@ IntraVox brings SharePoint-style page creation to Nextcloud, enabling teams to b
 
 ### Available Widgets
 
+![Available Widgets](https://raw.githubusercontent.com/nextcloud/intravox/main/screenshots/widgets.png)
+
+*Widget palette with all available content types*
+
 | Widget | Description |
 |--------|-------------|
 | **Text** | Rich text with full Markdown support (bold, italic, lists, links, tables) |
@@ -47,6 +51,14 @@ IntraVox brings SharePoint-style page creation to Nextcloud, enabling teams to b
 - **External Links** - Link to external URLs alongside internal pages
 - **Page Structure View** - Tree view of all accessible pages
 - **Mobile Menu** - Collapsible hamburger menu on mobile devices
+
+![Megamenu Navigation](https://raw.githubusercontent.com/nextcloud/intravox/main/screenshots/megamenu.png)
+
+*Megamenu navigation with all sections visible*
+
+![Page Structure](https://raw.githubusercontent.com/nextcloud/intravox/main/screenshots/pagestructure.png)
+
+*Page structure view for easy content management*
 
 ### Content Organization
 

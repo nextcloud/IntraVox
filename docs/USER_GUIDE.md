@@ -41,6 +41,10 @@ The main navigation appears at the top of every page:
 - **Dropdowns**: Hover or click items with arrows to see submenus
 - **Megamenu**: Some intranets use a large dropdown showing all options
 
+![Megamenu Navigation](https://raw.githubusercontent.com/nextcloud/intravox/main/screenshots/megamenu.png)
+
+*Megamenu showing all navigation options at a glance*
+
 ### Breadcrumbs
 
 Below the navigation, breadcrumbs show your current location:

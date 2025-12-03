@@ -92,6 +92,10 @@ Enable in page settings.
 
 Widgets are the building blocks of page content.
 
+![Available Widgets](https://raw.githubusercontent.com/nextcloud/intravox/main/screenshots/widgets.png)
+
+*The widget palette showing all available widget types*
+
 ### Adding Widgets
 
 1. In the widget palette, click the widget type
@@ -228,6 +232,14 @@ Before uploading:
 4. Keep files under 500KB
 
 ## Navigation
+
+### Page Structure View
+
+The Page Structure panel shows all pages in a tree view, making it easy to navigate and manage your content hierarchy.
+
+![Page Structure View](https://raw.githubusercontent.com/nextcloud/intravox/main/screenshots/pagestructure.png)
+
+*Page structure showing the hierarchical organization of pages*
 
 ### Editing Navigation
 
