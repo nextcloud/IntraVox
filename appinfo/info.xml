@@ -12,6 +12,11 @@ This is an evaluation version intended for testing and demonstration purposes on
 
 IntraVox brings SharePoint-style page creation to Nextcloud with a powerful drag-and-drop interface.
 
+**📋 Requirements:**
+* **GroupFolders app must be installed and enabled BEFORE installing IntraVox!**
+* PHP 8.1 or higher
+* Nextcloud 32
+
 **Features:**
 * Create rich, interactive pages with a visual editor
 * Flexible grid layout system (1-5 columns)
@@ -30,7 +35,7 @@ IntraVox brings SharePoint-style page creation to Nextcloud with a powerful drag
 
 Built with Vue 3 and modern web technologies for a smooth, secure experience.
     ]]></description>
-    <version>0.5.9</version>
+    <version>0.5.10</version>
     <licence>agpl</licence>
     <author mail="rik@shalution.nl">Rik Dekker</author>
     <namespace>IntraVox</namespace>

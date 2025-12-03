@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.10] - 2025-12-03 - GroupFolders Dependency Clarification
+
+### Added
+- **App Icon**: Added `img/` folder with app icons (`app.svg`, `app-dark.svg`)
+  - Fixes "image not found: default-app-icon" error in Nextcloud navigation
+
+### Changed
+- **Requirements Documentation**: Made GroupFolders dependency more visible
+  - Added requirements section to app description in App Store
+  - Clear instruction that GroupFolders must be installed BEFORE IntraVox
+
 ## [0.5.9] - 2025-12-03 - App Store Release
 
 ### Fixed
