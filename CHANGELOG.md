@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.13] - 2025-12-04 - Navigation Save Fix & Translations
+
+### Fixed
+- **Navigation Save**: Fixed navigation not saving correctly in some cases
+  - Backend now handles both wrapped and unwrapped data formats
+  - "Add to Navigation" and "Navigation Editor" save now work consistently
+  - Fixes issue where navigation items would be lost after saving
+
+### Added
+- **Admin Settings Translations**: Added missing translations for Demo Data section
+  - Dutch (nl), English (en), German (de), French (fr) translations added
+  - All admin settings UI elements now fully translated
+
 ## [0.5.12] - 2025-12-04 - Demo Data Path Fix
 
 ### Fixed

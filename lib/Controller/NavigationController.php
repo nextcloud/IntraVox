@@ -137,7 +137,17 @@ class NavigationController extends Controller {
             }
 
             $data = $this->request->getParams();
-            $navigation = $this->navigationService->saveNavigation($data);
+
+            // Handle both wrapped and unwrapped data formats:
+            // - Wrapped: { navigation: { type: '...', items: [...] } }
+            // - Unwrapped: { type: '...', items: [...] }
+            if (isset($data['navigation']) && is_array($data['navigation'])) {
+                $navigationData = $data['navigation'];
+            } else {
+                $navigationData = $data;
+            }
+
+            $navigation = $this->navigationService->saveNavigation($navigationData);
 
             return new JSONResponse(['navigation' => $navigation]);
         } catch (\Exception $e) {
