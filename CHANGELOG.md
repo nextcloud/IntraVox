@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.14] - 2025-12-04 - Header Row Save Fix
+
+### Fixed
+- **Header Row Save**: Fixed header row (top row with widgets) not saving correctly
+  - Header row widgets were silently lost when saving a page
+  - Added `sanitizeHeaderRow()` method to `PageService.php`
+  - Header row now properly sanitizes and saves enabled state, background color, and widgets
+
 ## [0.5.13] - 2025-12-04 - Navigation Save Fix & Translations
 
 ### Fixed

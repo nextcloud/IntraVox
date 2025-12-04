@@ -1648,6 +1648,11 @@ class PageService {
             $sanitized['layout']['sideColumns'] = $this->sanitizeSideColumns($data['layout']['sideColumns']);
         }
 
+        // Validate and sanitize header row
+        if (isset($data['layout']['headerRow']) && is_array($data['layout']['headerRow'])) {
+            $sanitized['layout']['headerRow'] = $this->sanitizeHeaderRow($data['layout']['headerRow']);
+        }
+
         return $sanitized;
     }
 
@@ -1680,6 +1685,31 @@ class PageService {
                 }
 
                 $sanitized[$side] = $sanitizedSide;
+            }
+        }
+
+        return $sanitized;
+    }
+
+    /**
+     * Sanitize header row data
+     */
+    private function sanitizeHeaderRow(array $headerRow): array {
+        $sanitized = [
+            'enabled' => !empty($headerRow['enabled']),
+            'backgroundColor' => isset($headerRow['backgroundColor'])
+                ? $this->sanitizeBackgroundColor($headerRow['backgroundColor'])
+                : '',
+            'widgets' => []
+        ];
+
+        // Sanitize widgets in header row
+        if (isset($headerRow['widgets']) && is_array($headerRow['widgets'])) {
+            foreach ($headerRow['widgets'] as $widget) {
+                $sanitizedWidget = $this->sanitizeWidget($widget);
+                if ($sanitizedWidget) {
+                    $sanitized['widgets'][] = $sanitizedWidget;
+                }
             }
         }
 
