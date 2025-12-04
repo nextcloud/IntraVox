@@ -34,6 +34,9 @@ class PageService {
     /** @var array Request-level cache for page list */
     private ?array $listPagesCache = null;
 
+    /** @var array Request-level cache for pages by folder path */
+    private array $folderPathCache = [];
+
     /**
      * Clear all request-level caches (call after mutations)
      */
@@ -44,6 +47,7 @@ class PageService {
         } else {
             $this->pageDataCache = [];
             $this->pageFolderCache = [];
+            $this->folderPathCache = [];
         }
         $this->listPagesCache = null;
     }
@@ -240,12 +244,23 @@ class PageService {
             // home.json doesn't exist here, continue searching
         }
 
-        // FIRST: Check all JSON files in current folder
-        // This is faster and catches files like news/company-blog.json
+        // Get directory listing ONCE and separate files from folders
         $isLanguageRoot = ($folder->getPath() === $languageFolder->getPath());
+        $items = $folder->getDirectoryListing();
+        $subfolderItems = [];
 
-        foreach ($folder->getDirectoryListing() as $item) {
+        // FIRST: Check all JSON files in current folder
+        foreach ($items as $item) {
             $itemName = $item->getName();
+
+            // Collect subfolders for later recursive search
+            if ($item->getType() === \OCP\Files\FileInfo::TYPE_FOLDER) {
+                // Skip image folders and special folders
+                if ($itemName !== 'images' && $itemName !== '.nomedia') {
+                    $subfolderItems[] = $item;
+                }
+                continue;
+            }
 
             // Skip navigation.json and footer.json only in the language root folder
             // (these are config files there, not pages). In subfolders they can be page files.
@@ -254,9 +269,7 @@ class PageService {
                 $skipFile = true;
             }
 
-            if ($item->getType() === \OCP\Files\FileInfo::TYPE_FILE &&
-                substr($itemName, -5) === '.json' &&
-                !$skipFile) {
+            if (substr($itemName, -5) === '.json' && !$skipFile) {
                 try {
                     $content = $item->getContent();
                     $data = json_decode($content, true);
@@ -282,30 +295,13 @@ class PageService {
             }
         }
 
-        // SECOND: Recursively search subfolders
-        $subfolders = [];
-        foreach ($folder->getDirectoryListing() as $item) {
-            $itemName = $item->getName();
-
-            if ($item->getType() === \OCP\Files\FileInfo::TYPE_FOLDER) {
-                // Skip image folders and special folders
-                if ($itemName === 'images' || $itemName === '.nomedia') {
-                    continue;
-                }
-                $subfolders[] = $itemName;
-
-                $result = $this->findPageByUniqueId($item, $uniqueId, $languageFolder);
-                if ($result !== null) {
-                    return $result;
-                }
+        // SECOND: Recursively search subfolders (already collected above)
+        foreach ($subfolderItems as $subfolder) {
+            $result = $this->findPageByUniqueId($subfolder, $uniqueId, $languageFolder);
+            if ($result !== null) {
+                return $result;
             }
         }
-
-        // Debug: Log subfolders found
-        $this->logger->info('IntraVox: findPageByUniqueId subfolders', [
-            'folder' => $folder->getPath(),
-            'subfolders' => $subfolders
-        ]);
 
         return null;
     }
@@ -939,11 +935,17 @@ class PageService {
      * @return array|null Page data or null if not found
      */
     private function findPageByFolderPath(string $folderPath): ?array {
+        // Check request-level cache first
+        if (isset($this->folderPathCache[$folderPath])) {
+            return $this->folderPathCache[$folderPath];
+        }
+
         try {
             $intraVoxFolder = $this->getIntraVoxFolder();
             $folder = $intraVoxFolder->get($folderPath);
 
             if (!($folder instanceof \OCP\Files\Folder)) {
+                $this->folderPathCache[$folderPath] = null;
                 return null;
             }
 
@@ -960,7 +962,9 @@ class PageService {
                     if ($data && isset($data['uniqueId'])) {
                         // Enrich with path data
                         $data = $this->enrichWithPathData($data, $folder);
-                        return $this->sanitizePage($data);
+                        $result = $this->sanitizePage($data);
+                        $this->folderPathCache[$folderPath] = $result;
+                        return $result;
                     }
                 }
             }
@@ -969,6 +973,7 @@ class PageService {
             $this->logger->debug("Could not find page at path {$folderPath}: " . $e->getMessage());
         }
 
+        $this->folderPathCache[$folderPath] = null;
         return null;
     }
 

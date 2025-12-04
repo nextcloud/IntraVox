@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.15] - 2025-12-04 - Performance Optimization
+
+### Fixed
+- **Page Loading Performance**: Reduced page load time from ~11 seconds to ~1-2 seconds
+  - Eliminated duplicate filesystem traversals in `showByUniqueId()` - now uses direct lookup
+  - Optimized `findPageByUniqueId()` - single directory listing instead of double
+  - Added request-level caching for `findPageByFolderPath()` breadcrumb lookups
+  - Frontend shows cached data immediately, refreshes in background (non-blocking)
+
+- **Admin Settings Translations**: Fixed translations not loading in admin settings panel
+  - Added `Util::addTranslations()` call in AdminSettings.php
+
 ## [0.5.14] - 2025-12-04 - Header Row Save Fix
 
 ### Fixed

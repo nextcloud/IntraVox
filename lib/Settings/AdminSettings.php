@@ -39,6 +39,9 @@ class AdminSettings implements IDelegatedSettings {
             'setupComplete' => $status['setupComplete'] ?? false,
         ]);
 
+        // Load translations for JavaScript
+        Util::addTranslations(Application::APP_ID);
+
         // Load the admin settings JavaScript
         Util::addScript(Application::APP_ID, 'intravox-admin');
 

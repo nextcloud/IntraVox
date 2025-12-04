@@ -430,19 +430,34 @@ export default {
         const cacheKey = `page-${pageId}`;
         const cached = CacheService.get(cacheKey);
 
+        // Clear version preview when navigating to a different page
+        this.clearVersionPreview();
+
         if (cached) {
+          // Show cached data immediately - no waiting
           this.currentPage = cached;
           this.breadcrumb = cached.breadcrumb || [];
           this.isEditMode = false;
           this.showPages = false;
           this.loading = false;
-          // Continue loading in background to update cache
-        } else {
-          this.loading = true;
+
+          // Update URL and metadata immediately from cache
+          if (updateUrl && this.currentPage) {
+            const pageIdentifier = this.currentPage.uniqueId;
+            const newHash = `#${pageIdentifier}`;
+            if (window.location.hash !== newHash) {
+              window.location.hash = newHash;
+            }
+          }
+          this.updatePageMetadata();
+
+          // Background refresh - don't await, fire and forget
+          this.refreshPageInBackground(pageId, cacheKey);
+          return;
         }
 
-        // Clear version preview when navigating to a different page
-        this.clearVersionPreview();
+        // No cache - show loading and wait for response
+        this.loading = true;
         const response = await axios.get(generateUrl(`/apps/intravox/api/pages/${pageId}`));
         this.currentPage = response.data;
 
@@ -458,9 +473,8 @@ export default {
         CacheService.set(cacheKey, response.data);
 
         // Update URL hash if requested - use uniqueId for permanent links
-        // Fall back to id if uniqueId is not available (legacy pages)
         if (updateUrl && this.currentPage) {
-          const pageIdentifier = this.currentPage.uniqueId || this.currentPage.uniqueId;
+          const pageIdentifier = this.currentPage.uniqueId;
           const newHash = `#${pageIdentifier}`;
           if (window.location.hash !== newHash) {
             window.location.hash = newHash;
@@ -484,6 +498,27 @@ export default {
         console.error('IntraVox: Error loading breadcrumb:', err);
         // Don't show error to user, breadcrumb is not critical
         this.breadcrumb = [];
+      }
+    },
+    /**
+     * Refresh page data in background without blocking UI
+     * Used when showing cached data first
+     */
+    async refreshPageInBackground(pageId, cacheKey) {
+      try {
+        const response = await axios.get(generateUrl(`/apps/intravox/api/pages/${pageId}`));
+        // Only update if user is still on the same page
+        if (this.currentPage && this.currentPage.uniqueId === response.data.uniqueId) {
+          this.currentPage = response.data;
+          if (response.data.breadcrumb) {
+            this.breadcrumb = response.data.breadcrumb;
+          }
+        }
+        // Always update cache
+        CacheService.set(cacheKey, response.data);
+      } catch (err) {
+        // Silent fail for background refresh - user already has cached data
+        console.debug('IntraVox: Background refresh failed:', err.message);
       }
     },
     updatePageMetadata() {

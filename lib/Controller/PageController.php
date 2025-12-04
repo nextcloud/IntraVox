@@ -100,21 +100,14 @@ class PageController extends Controller {
         Util::addStyle('intravox', 'main');
 
         // Try to load page by uniqueId to get metadata
+        // getPage() supports direct uniqueId lookup (no need to list all pages first)
         $pageData = null;
         $pageTitle = 'IntraVox';
 
         try {
-            // Find page by uniqueId
-            $pages = $this->pageService->listPages();
-            foreach ($pages as $page) {
-                if (isset($page['uniqueId']) && $page['uniqueId'] === $uniqueId) {
-                    // Load full page data
-                    $pageData = $this->pageService->getPage($page['id']);
-                    if ($pageData && isset($pageData['title'])) {
-                        $pageTitle = $pageData['title'] . ' - IntraVox';
-                    }
-                    break;
-                }
+            $pageData = $this->pageService->getPage($uniqueId);
+            if ($pageData && isset($pageData['title'])) {
+                $pageTitle = $pageData['title'] . ' - IntraVox';
             }
         } catch (\Exception $e) {
             // Page not found - silently fall back to default title
