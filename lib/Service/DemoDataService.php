@@ -758,9 +758,25 @@ class DemoDataService {
 
     /**
      * Get the path to bundled demo data for a language
-     * Checks both apps/ and custom_apps/ directories
+     * Uses Nextcloud's app manager to find the actual app installation path
      */
     private function getBundledDemoDataPath(string $language): ?string {
+        // First, try to get the app path from Nextcloud's app manager (most reliable)
+        try {
+            $appManager = \OC::$server->getAppManager();
+            $appPath = $appManager->getAppPath('intravox');
+            if ($appPath !== null) {
+                $demoDataPath = $appPath . '/demo-data/' . $language;
+                if (is_dir($demoDataPath)) {
+                    $this->logger->debug("[DemoData] Found demo data at app path: {$demoDataPath}");
+                    return $demoDataPath;
+                }
+            }
+        } catch (\Exception $e) {
+            $this->logger->warning("[DemoData] Could not get app path from app manager: " . $e->getMessage());
+        }
+
+        // Fallback: check common paths (for backwards compatibility)
         $possiblePaths = [
             \OC::$SERVERROOT . '/apps/intravox/demo-data/' . $language,
             \OC::$SERVERROOT . '/custom_apps/intravox/demo-data/' . $language,
@@ -768,10 +784,12 @@ class DemoDataService {
 
         foreach ($possiblePaths as $path) {
             if (is_dir($path)) {
+                $this->logger->debug("[DemoData] Found demo data at fallback path: {$path}");
                 return $path;
             }
         }
 
+        $this->logger->warning("[DemoData] Demo data not found for language: {$language}");
         return null;
     }
 

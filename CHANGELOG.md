@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.12] - 2025-12-04 - Demo Data Path Fix
+
+### Fixed
+- **Demo Data Detection**: Fixed bundled demo data not being found on some installations
+  - Now uses Nextcloud's app manager to find the actual app installation path
+  - Works with custom apps directories configured via `apps_paths` in config.php
+  - Works with Docker installations and non-standard directory structures
+  - Fallback to common paths (`/apps/` and `/custom_apps/`) for backwards compatibility
+
 ## [0.5.11] - 2025-12-03 - Permission Setup Fix
 
 ### Fixed
