@@ -310,16 +310,8 @@ export default {
     // Setup hash-based navigation
     window.addEventListener('hashchange', this.handleHashChange);
 
-    // Poll for language changes (Nextcloud reloads the page, but we check after navigation)
-    this.languageCheckInterval = setInterval(() => {
-      const newLanguage = document.documentElement.lang || 'en';
-      if (newLanguage !== this.currentLanguage) {
-        this.currentLanguage = newLanguage;
-        this.handleLanguageChange();
-      }
-    }, 1000);
-
-    // Also use MutationObserver to watch for HTML lang attribute changes
+    // Use MutationObserver to watch for HTML lang attribute changes
+    // (more efficient than setInterval polling)
     this.langObserver = new MutationObserver(() => {
       const newLanguage = document.documentElement.lang || 'en';
       if (newLanguage !== this.currentLanguage) {
@@ -335,9 +327,6 @@ export default {
   },
   beforeUnmount() {
     window.removeEventListener('hashchange', this.handleHashChange);
-    if (this.languageCheckInterval) {
-      clearInterval(this.languageCheckInterval);
-    }
     if (this.langObserver) {
       this.langObserver.disconnect();
     }
@@ -551,8 +540,8 @@ export default {
       meta.setAttribute('content', content);
     },
     startEditMode() {
-      // Store original state for rollback
-      this.originalPage = JSON.parse(JSON.stringify(this.currentPage));
+      // Store original state for rollback (structuredClone is faster than JSON parse/stringify)
+      this.originalPage = structuredClone(this.currentPage);
       this.editableTitle = this.currentPage?.title || '';
       this.isEditMode = true;
     },
@@ -575,7 +564,7 @@ export default {
     cancelEditMode() {
       // Rollback to original state
       if (this.originalPage) {
-        this.currentPage = JSON.parse(JSON.stringify(this.originalPage));
+        this.currentPage = structuredClone(this.originalPage);
       }
       this.isEditMode = false;
       this.originalPage = null;

@@ -7,6 +7,62 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.19] - 2025-12-05 - Performance Optimization v2
+
+### Changed
+- **Directory Listing Cache**: Added request-level caching for folder directory listings
+  - Reduces filesystem operations from O(n*d) to O(n) for deep folder structures
+  - Prevents redundant `getDirectoryListing()` calls within the same request
+
+- **Permissions Cache**: Added request-level caching for folder permission checks
+  - Eliminates duplicate `getPermissions()` calls for the same folder
+  - Particularly beneficial when listing 100+ pages
+
+- **Language Detection**: Replaced setInterval polling with MutationObserver only
+  - Removed 1-second polling interval for language change detection
+  - MutationObserver is more efficient and responds instantly to changes
+
+- **Deep Clone Optimization**: Replaced `JSON.parse(JSON.stringify())` with `structuredClone()`
+  - Faster deep cloning for page data during edit mode
+  - Native browser API with better performance
+
+## [0.5.18] - 2025-12-05 - Page Save Fixes
+
+### Fixed
+- **Spacer Widget**: Added missing 'spacer' widget type to backend validation
+  - Spacer widgets were silently dropped when saving pages
+  - Now properly validates and saves spacer height (10-200px range)
+
+- **Background Colors**: Extended background color validation to support custom colors
+  - Now accepts hex colors (#RGB, #RRGGBB) in addition to CSS variables
+  - Now accepts rgb/rgba color values
+  - Previously only 6 specific CSS variables were allowed
+
+- **Empty Row Handling**: Rows with background colors are now preserved even without widgets
+  - Previously, rows without valid widgets were silently deleted
+  - Now keeps rows that have a background color set
+
+### Added
+- **Debug Logging**: Added warning logs when widgets are dropped during validation
+  - Helps identify validation issues in Nextcloud logs
+
+## [0.5.17] - 2025-12-05 - JSON Storage Cleanup
+
+### Changed
+- **Page JSON Storage**: Removed redundant `id` field from page JSON files
+  - The folder name IS the page ID, so storing it in JSON was unnecessary
+  - `uniqueId` remains the primary identifier for internal references
+  - Existing pages with `id` in JSON will continue to work (backwards compatible)
+  - New pages and saved pages will no longer have `id` in JSON
+  - API responses still include `id` (derived from folder name) for frontend compatibility
+
+## [0.5.16] - 2025-12-04 - Translation Fix
+
+### Fixed
+- **Admin Settings Translations**: Fixed .js translation files not containing Demo Data strings
+  - Regenerated all l10n/*.js files from .json sources
+  - Dutch, English, German, and French translations now work correctly in admin panel
+
 ## [0.5.15] - 2025-12-04 - Performance Optimization
 
 ### Fixed

@@ -12,7 +12,7 @@ use Psr\Log\LoggerInterface;
 use OCP\Files\Cache\ICacheEntry;
 
 class PageService {
-    private const ALLOWED_WIDGET_TYPES = ['text', 'heading', 'image', 'links', 'file', 'divider'];
+    private const ALLOWED_WIDGET_TYPES = ['text', 'heading', 'image', 'links', 'file', 'divider', 'spacer'];
     private const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
     private const MAX_IMAGE_SIZE = 2097152; // 2MB (PHP default upload limit)
     private const MAX_COLUMNS = 5;
@@ -37,6 +37,12 @@ class PageService {
     /** @var array Request-level cache for pages by folder path */
     private array $folderPathCache = [];
 
+    /** @var array Request-level cache for directory listings */
+    private array $directoryListingCache = [];
+
+    /** @var array Request-level cache for folder permissions */
+    private array $permissionsCache = [];
+
     /**
      * Clear all request-level caches (call after mutations)
      */
@@ -48,8 +54,32 @@ class PageService {
             $this->pageDataCache = [];
             $this->pageFolderCache = [];
             $this->folderPathCache = [];
+            $this->directoryListingCache = [];
+            $this->permissionsCache = [];
         }
         $this->listPagesCache = null;
+    }
+
+    /**
+     * Get cached directory listing for a folder
+     */
+    private function getCachedDirectoryListing(\OCP\Files\Folder $folder): array {
+        $path = $folder->getPath();
+        if (!isset($this->directoryListingCache[$path])) {
+            $this->directoryListingCache[$path] = $folder->getDirectoryListing();
+        }
+        return $this->directoryListingCache[$path];
+    }
+
+    /**
+     * Get cached permissions for a folder
+     */
+    private function getCachedPermissions(\OCP\Files\Folder $folder): int {
+        $path = $folder->getPath();
+        if (!isset($this->permissionsCache[$path])) {
+            $this->permissionsCache[$path] = $folder->getPermissions();
+        }
+        return $this->permissionsCache[$path];
     }
 
     public function __construct(
@@ -185,7 +215,7 @@ class PageService {
             }
 
             $folder = $userFolder->get($intraVoxPath);
-            $ncPerms = $folder->getPermissions();
+            $ncPerms = $this->getCachedPermissions($folder);
 
             return [
                 'canRead' => ($ncPerms & 1) !== 0,
@@ -244,9 +274,9 @@ class PageService {
             // home.json doesn't exist here, continue searching
         }
 
-        // Get directory listing ONCE and separate files from folders
+        // Get directory listing ONCE (cached) and separate files from folders
         $isLanguageRoot = ($folder->getPath() === $languageFolder->getPath());
-        $items = $folder->getDirectoryListing();
+        $items = $this->getCachedDirectoryListing($folder);
         $subfolderItems = [];
 
         // FIRST: Check all JSON files in current folder
@@ -332,7 +362,7 @@ class PageService {
         }
 
         // Recursively search subfolders
-        foreach ($folder->getDirectoryListing() as $item) {
+        foreach ($this->getCachedDirectoryListing($folder) as $item) {
             if ($item->getType() === \OCP\Files\FileInfo::TYPE_FOLDER) {
                 $result = $this->findPageById($item, $id);
                 if ($result !== null) {
@@ -364,7 +394,7 @@ class PageService {
             if ($data && isset($data['uniqueId'], $data['title'])) {
                 // Calculate relative path from IntraVox root
                 $relativePath = substr($folder->getPath(), strlen($basePath) + 1);
-                $folderPerms = $folder->getPermissions();
+                $folderPerms = $this->getCachedPermissions($folder);
 
                 $pages[] = [
                     'uniqueId' => $data['uniqueId'],
@@ -394,7 +424,7 @@ class PageService {
      * Recursively find pages in folders
      */
     private function findPagesInFolder($folder, array &$pages, string $basePath = ''): void {
-        foreach ($folder->getDirectoryListing() as $item) {
+        foreach ($this->getCachedDirectoryListing($folder) as $item) {
             if ($item->getType() === \OCP\Files\FileInfo::TYPE_FOLDER) {
                 $folderName = $item->getName();
 
@@ -423,7 +453,7 @@ class PageService {
 
                     if ($data && isset($data['uniqueId'], $data['title'])) {
                         // Get permissions from the folder containing the page
-                        $folderPerms = $item->getPermissions();
+                        $folderPerms = $this->getCachedPermissions($item);
 
                         $pages[] = [
                             'uniqueId' => $data['uniqueId'],
@@ -484,7 +514,7 @@ class PageService {
      * Recursively find pages with full content in folders
      */
     private function findPagesWithContentInFolder($folder, array &$pages): void {
-        foreach ($folder->getDirectoryListing() as $item) {
+        foreach ($this->getCachedDirectoryListing($folder) as $item) {
             if ($item->getType() === \OCP\Files\FileInfo::TYPE_FOLDER) {
                 $folderName = $item->getName();
 
@@ -626,7 +656,7 @@ class PageService {
 
         // Get permissions directly from Nextcloud's filesystem
         // This automatically respects GroupFolder ACL rules
-        $ncPerms = $folder->getPermissions();
+        $ncPerms = $this->getCachedPermissions($folder);
 
         // Nextcloud permission constants (from OCP\Constants):
         // PERMISSION_READ = 1, PERMISSION_UPDATE = 2, PERMISSION_CREATE = 4,
@@ -747,7 +777,7 @@ class PageService {
         $folder = $result['folder'];
 
         try {
-            foreach ($folder->getDirectoryListing() as $item) {
+            foreach ($this->getCachedDirectoryListing($folder) as $item) {
                 if ($item->getType() !== \OCP\Files\FileInfo::TYPE_FOLDER) {
                     continue;
                 }
@@ -950,7 +980,7 @@ class PageService {
             }
 
             // Look for a JSON file in this folder (page definition)
-            $files = $folder->getDirectoryListing();
+            $files = $this->getCachedDirectoryListing($folder);
             foreach ($files as $file) {
                 if ($file instanceof \OCP\Files\File &&
                     pathinfo($file->getName(), PATHINFO_EXTENSION) === 'json' &&
@@ -1008,12 +1038,12 @@ class PageService {
     /**
      * Create a page at a specific path with parent support
      *
-     * @param array $data Page data
+     * @param string $pageId The page ID (used as folder name)
+     * @param array $data Page data (without id - id is the folder name)
      * @param string|null $parentPath Optional parent path (e.g., "nl/departments/marketing")
      * @return array Created page data
      */
-    private function createPageAtPath(array $data, ?string $parentPath = null): array {
-        $pageId = $data['id'];
+    private function createPageAtPath(string $pageId, array $data, ?string $parentPath = null): array {
         $language = $this->getUserLanguage();
 
         // Determine target folder
@@ -1077,7 +1107,8 @@ class PageService {
             $this->scanPageFolder($pageFolder);
         }
 
-        return $data;
+        // Return data with id for frontend (id is derived from folder name)
+        return array_merge(['id' => $pageId], $data);
     }
 
     /**
@@ -1109,8 +1140,8 @@ class PageService {
 
         $validatedData = $this->validateAndSanitizePage($data);
 
-        // Use the new createPageAtPath helper
-        return $this->createPageAtPath($validatedData, $parentPath);
+        // Use the new createPageAtPath helper - pass id separately (not stored in JSON)
+        return $this->createPageAtPath($data['id'], $validatedData, $parentPath);
     }
 
     /**
@@ -1282,7 +1313,8 @@ class PageService {
             $this->clearCache($validatedData['uniqueId']);
         }
 
-        return $validatedData;
+        // Return data with id for frontend (id is derived from folder name)
+        return array_merge(['id' => $result['id']], $validatedData);
     }
 
     /**
@@ -1540,7 +1572,7 @@ class PageService {
     private function findImagesFolderForPage($folder, string $uniqueId): ?\OCP\Files\Folder {
         // First scan JSON files in CURRENT folder to see if page is here
         $foundMatch = false;
-        foreach ($folder->getDirectoryListing() as $item) {
+        foreach ($this->getCachedDirectoryListing($folder) as $item) {
             if ($item->getType() === \OCP\Files\FileInfo::TYPE_FILE &&
                 substr($item->getName(), -5) === '.json' &&
                 $item->getName() !== 'navigation.json' &&
@@ -1571,7 +1603,7 @@ class PageService {
         }
 
         // Recursively search subfolders
-        foreach ($folder->getDirectoryListing() as $item) {
+        foreach ($this->getCachedDirectoryListing($folder) as $item) {
             if ($item->getType() === \OCP\Files\FileInfo::TYPE_FOLDER) {
                 $itemName = $item->getName();
 
@@ -1603,8 +1635,8 @@ class PageService {
      * Validate and sanitize page data
      */
     private function validateAndSanitizePage(array $data): array {
+        // Note: 'id' is NOT stored in JSON - the folder name IS the id
         $sanitized = [
-            'id' => $this->sanitizeId($data['id']),
             'title' => $this->sanitizeText($data['title']),
             'layout' => [
                 'columns' => 1, // Default to 1 column
@@ -1626,6 +1658,12 @@ class PageService {
                         $sanitizedWidget = $this->sanitizeWidget($widget);
                         if ($sanitizedWidget) {
                             $sanitizedWidgets[] = $sanitizedWidget;
+                        } else {
+                            // Log when widgets are dropped for debugging
+                            $this->logger->warning('[validateAndSanitizePage] Widget dropped during validation', [
+                                'type' => $widget['type'] ?? 'unknown',
+                                'reason' => 'validation_failed'
+                            ]);
                         }
                     }
 
@@ -1641,7 +1679,8 @@ class PageService {
                         $sanitizedRow['backgroundColor'] = $this->sanitizeBackgroundColor($row['backgroundColor']);
                     }
 
-                    if (!empty($sanitizedWidgets)) {
+                    // Keep row if it has widgets OR a background color (don't silently drop empty styled rows)
+                    if (!empty($sanitizedWidgets) || !empty($sanitizedRow['backgroundColor'])) {
                         $sanitized['layout']['rows'][] = $sanitizedRow;
                     }
                 }
@@ -1819,6 +1858,16 @@ class PageService {
                         : '2px';
                 }
                 break;
+
+            case 'spacer':
+                // Spacer widget - just adds vertical space
+                if (isset($widget['height'])) {
+                    $height = (int)$widget['height'];
+                    $sanitized['height'] = max(10, min($height, 200)); // 10-200px range
+                } else {
+                    $sanitized['height'] = 20; // default 20px
+                }
+                break;
         }
 
         return $sanitized;
@@ -1884,7 +1933,7 @@ class PageService {
     }
 
     /**
-     * Sanitize background color (only allow theme CSS variables, transparent, or empty string)
+     * Sanitize background color (allow theme CSS variables, hex colors, rgba, transparent)
      */
     private function sanitizeBackgroundColor(string $color): string {
         // Empty string is allowed (transparent/default)
@@ -1892,7 +1941,7 @@ class PageService {
             return '';
         }
 
-        // Only allow Nextcloud theme CSS variables and specific safe values
+        // Allow Nextcloud theme CSS variables and specific safe values
         $allowedColors = [
             'var(--color-primary-element)',
             'var(--color-primary-element-light)',
@@ -1903,6 +1952,16 @@ class PageService {
         ];
 
         if (in_array($color, $allowedColors)) {
+            return $color;
+        }
+
+        // Allow hex colors (#RGB or #RRGGBB)
+        if (preg_match('/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/', $color)) {
+            return $color;
+        }
+
+        // Allow rgba/rgb colors
+        if (preg_match('/^rgba?\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*(,\s*[\d.]+\s*)?\)$/', $color)) {
             return $color;
         }
 
@@ -2008,7 +2067,7 @@ class PageService {
      */
     private function findFileByIdInFolder(\OCP\Files\Folder $folder, int $fileId): ?\OCP\Files\File {
         try {
-            $files = $folder->getDirectoryListing();
+            $files = $this->getCachedDirectoryListing($folder);
             foreach ($files as $item) {
                 if ($item->getId() === $fileId && $item instanceof \OCP\Files\File) {
                     return $item;
@@ -2079,7 +2138,8 @@ class PageService {
             // Write restored content to file
             $file->putContent(json_encode($validatedData, JSON_PRETTY_PRINT));
 
-            return $validatedData;
+            // Return data with id for frontend (id is derived from folder name)
+            return array_merge(['id' => $result['id']], $validatedData);
         } catch (\Exception $e) {
             $this->logger->error('[restorePageVersion] Failed to restore version', [
                 'error' => $e->getMessage(),
@@ -2725,7 +2785,7 @@ class PageService {
 
             if ($data && isset($data['uniqueId'], $data['title'])) {
                 // Get permissions for the language folder
-                $folderPerms = $folder->getPermissions();
+                $folderPerms = $this->getCachedPermissions($folder);
                 $tree[] = [
                     'uniqueId' => $data['uniqueId'],
                     'title' => $data['title'],
@@ -2756,7 +2816,7 @@ class PageService {
      * Recursively build the page tree from folder structure
      */
     private function buildPageTree($folder, array &$tree, ?string $currentPageId): void {
-        foreach ($folder->getDirectoryListing() as $item) {
+        foreach ($this->getCachedDirectoryListing($folder) as $item) {
             if ($item->getType() !== \OCP\Files\FileInfo::TYPE_FOLDER) {
                 continue;
             }
@@ -2792,7 +2852,7 @@ class PageService {
 
                 if ($data && isset($data['uniqueId'], $data['title'])) {
                     // Get folder permissions (respects ACLs)
-                    $folderPerms = $item->getPermissions();
+                    $folderPerms = $this->getCachedPermissions($item);
 
                     // Skip if user can't read this folder
                     if (($folderPerms & 1) === 0) {
