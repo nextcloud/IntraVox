@@ -51,6 +51,13 @@
                     <Pencil :size="16" />
                   </template>
                 </NcButton>
+                <NcButton @click="duplicateHeaderRowWidget(widget)"
+                          type="secondary"
+                          :aria-label="t('Duplicate widget')">
+                  <template #icon>
+                    <ContentDuplicate :size="16" />
+                  </template>
+                </NcButton>
                 <NcButton @click="deleteHeaderRowWidget(widget.id)"
                           type="error"
                           :aria-label="t('Delete widget')">
@@ -132,6 +139,13 @@
                           :aria-label="t('Edit widget')">
                   <template #icon>
                     <Pencil :size="16" />
+                  </template>
+                </NcButton>
+                <NcButton @click="duplicateSideColumnWidget(widget, 'left')"
+                          type="secondary"
+                          :aria-label="t('Duplicate widget')">
+                  <template #icon>
+                    <ContentDuplicate :size="16" />
                   </template>
                 </NcButton>
                 <NcButton @click="deleteSideColumnWidget('left', widget.id)"
@@ -390,6 +404,13 @@
                           :aria-label="t('Edit widget')">
                   <template #icon>
                     <Pencil :size="16" />
+                  </template>
+                </NcButton>
+                <NcButton @click="duplicateSideColumnWidget(widget, 'right')"
+                          type="secondary"
+                          :aria-label="t('Duplicate widget')">
+                  <template #icon>
+                    <ContentDuplicate :size="16" />
                   </template>
                 </NcButton>
                 <NcButton @click="deleteSideColumnWidget('right', widget.id)"
@@ -879,36 +900,42 @@ export default {
         this.$emit('update', this.localPage);
       }
     },
-    duplicateWidget(rowIndex, widget) {
-      const row = this.localPage.layout.rows[rowIndex];
-
-      // Create a deep copy of the widget
-      const duplicatedWidget = JSON.parse(JSON.stringify(widget));
-
-      // Assign a new unique ID
+    /**
+     * Generic helper to duplicate a widget in any zone
+     * @param {Object} widget - The widget to duplicate
+     * @param {Array} targetArray - The array containing the widget
+     * @param {Function} syncCallback - Callback to sync changes back to layout
+     */
+    duplicateWidgetGeneric(widget, targetArray, syncCallback) {
+      const duplicatedWidget = structuredClone(widget);
       duplicatedWidget.id = `widget-${this.nextWidgetId++}`;
 
-      // Insert the duplicated widget right after the original
-      const index = row.widgets.findIndex(w => w.id === widget.id);
+      const index = targetArray.findIndex(w => w.id === widget.id);
       if (index !== -1) {
-        // Update order for the duplicated widget and all widgets after it
         duplicatedWidget.order = widget.order + 1;
+        targetArray.splice(index + 1, 0, duplicatedWidget);
 
-        // Insert after the original widget
-        row.widgets.splice(index + 1, 0, duplicatedWidget);
+        // Update order for subsequent widgets
+        targetArray
+          .filter(w => w.order > widget.order && w.id !== duplicatedWidget.id)
+          .forEach(w => w.order++);
 
-        // Update order for all subsequent widgets in the same column
-        row.widgets
-          .filter(w => w.column === widget.column && w.order > widget.order)
-          .forEach(w => {
-            if (w.id !== duplicatedWidget.id) {
-              w.order++;
-            }
-          });
-
-        // Reinitialize column arrays to reflect the new widget
-        this.initializeColumnArrays();
+        if (syncCallback) syncCallback();
       }
+    },
+    duplicateWidget(rowIndex, widget) {
+      const columnWidgets = this.columnArrays[`${rowIndex}-${widget.column}`];
+      this.duplicateWidgetGeneric(widget, columnWidgets, () => this.initializeColumnArrays());
+    },
+    duplicateHeaderRowWidget(widget) {
+      this.duplicateWidgetGeneric(widget, this.headerRowWidgets, () => {
+        this.localPage.layout.headerRow.widgets = [...this.headerRowWidgets];
+      });
+    },
+    duplicateSideColumnWidget(widget, side) {
+      this.duplicateWidgetGeneric(widget, this.sideColumnWidgets[side], () => {
+        this.localPage.layout.sideColumns[side].widgets = [...this.sideColumnWidgets[side]];
+      });
     },
     deleteWidget(rowIndex, widgetId) {
       this.showDeleteDialog = true;

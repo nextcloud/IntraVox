@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.20] - 2025-12-05 - Generic Widget Duplicate
+
+### Added
+- **Widget Duplicate for All Zones**: Duplicate button now works in all page areas
+  - Header row: Added duplicate button to widget toolbar
+  - Left side column: Added duplicate button to widget toolbar
+  - Right side column: Added duplicate button to widget toolbar
+  - Previously only worked in main content area
+
+### Changed
+- **Refactored Duplicate Logic**: Created generic `duplicateWidgetGeneric()` helper
+  - Single source of truth for widget duplication
+  - Reduces code duplication across zones
+  - Uses `structuredClone()` for faster deep copying
+
 ## [0.5.19] - 2025-12-05 - Performance Optimization v2
 
 ### Changed
