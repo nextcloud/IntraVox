@@ -7,10 +7,23 @@ import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 
 /**
+ * Simple LRU cache for markdown parsing results
+ * Avoids re-parsing the same content on every render
+ */
+const markdownCache = new Map();
+const MAX_CACHE_SIZE = 100;
+
+/**
  * Convert Markdown to HTML for TipTap
+ * OPTIMIZED: Results are cached to avoid repeated parsing
  */
 export function markdownToHtml(markdown) {
   if (!markdown) return '';
+
+  // Check cache first
+  if (markdownCache.has(markdown)) {
+    return markdownCache.get(markdown);
+  }
 
   try {
     const html = marked(markdown, {
@@ -18,10 +31,20 @@ export function markdownToHtml(markdown) {
       gfm: true
     });
 
-    return DOMPurify.sanitize(html, {
+    const result = DOMPurify.sanitize(html, {
       ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 's', 'ul', 'ol', 'li', 'a', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'code', 'pre', 'hr'],
       ALLOWED_ATTR: ['href', 'target', 'rel', 'class']
     });
+
+    // Store in cache with LRU eviction
+    if (markdownCache.size >= MAX_CACHE_SIZE) {
+      // Delete oldest entry (first key in Map)
+      const firstKey = markdownCache.keys().next().value;
+      markdownCache.delete(firstKey);
+    }
+    markdownCache.set(markdown, result);
+
+    return result;
   } catch (err) {
     console.error('Markdown parsing error:', err);
     return markdown;

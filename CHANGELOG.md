@@ -7,6 +7,83 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2025-12-09 - Video Widget & Media Management
+
+### Added
+- **Welcome Screen**: New onboarding screen for fresh installations
+  - Shows when IntraVox is not yet configured (no pages found)
+  - Step-by-step guide: Install Demo Data, Configure Settings, Create Content
+  - Link to Admin Settings and GitHub documentation
+  - Fully translated in Dutch, English, German, and French
+
+- **Search Results Icon**: IntraVox pages now show app icon in Nextcloud unified search
+  - Custom icon with neutral gray color for good contrast on both light and dark themes
+  - Clear visual identification of IntraVox results in search
+
+- **Video Widget**: New widget type for embedding videos from external platforms
+  - Support for YouTube (privacy mode), Vimeo, PeerTube instances, and more
+  - Domain whitelist system for security - only allowed domains can be embedded
+  - Admin configurable: enable/disable video services in Admin Settings
+  - Playback options: autoplay, loop, muted controls per video
+  - Blocked video display with clear messaging when domain not whitelisted
+  - Privacy-focused: YouTube privacy mode and PeerTube recommended by default
+
+- **Video Embed Domains Admin UI**: Complete admin interface for video platform management
+  - Toggle individual video services on/off
+  - Add custom PeerTube or other video server domains
+  - External link icons to visit service websites directly
+  - Risk assessment badges for custom domains (HTTPS validation, platform type)
+  - Privacy warnings for commercial platforms with tracking concerns
+  - Categorized services: Privacy-friendly, Commercial, Tracking concerns
+
+- **Clickable Image Links**: Images can now link to pages or external URLs
+  - Internal page navigation: click image to go to another IntraVox page
+  - External URL links: open in new tab with proper security attributes
+  - Visual feedback: subtle hover effect and cursor change
+  - Configurable in image widget editor with page selector or URL input
+  - Image crop position control (top/center/bottom) for linked images
+
+- **Local Video Upload**: Upload and play videos directly from Nextcloud storage
+  - Upload MP4, WebM, OGG video files to IntraVox media folder
+  - Native HTML5 video player with controls
+  - Autoplay, loop, and muted options for uploaded videos
+  - Server-side file size validation with clear error messages
+  - Video error handling with user-friendly messages
+
+### Changed
+- **Media Folder Renamed**: `📷 images` folder renamed to `_media`
+  - Cleaner folder name without emoji for better compatibility
+  - Supports both images and videos in unified location
+  - Backwards compatible: existing `📷 images` folders still work
+  - All new media uploads go to `_media` folder
+
+- **Admin Settings Redesign**: Improved admin interface with tabbed navigation
+  - Separate tabs for Demo Data and Video Services configuration
+  - MetaVox-style tab navigation for better UX
+  - Cleaner organization of settings
+
+- **Default Video Domains**: Reduced default whitelist to essential privacy-friendly services
+  - Only YouTube (privacy mode) and Vimeo enabled by default
+  - Admins can enable additional services as needed
+  - More secure out-of-the-box configuration
+
+### Fixed
+- **Video URL Preservation**: Video URLs now preserved correctly when saving pages
+  - Fixed issue where originalSrc was lost on page save
+  - Blocked videos retain their URL for admin review
+  - Video widgets properly restore after domain is whitelisted
+
+### Translations
+- Complete Dutch, German, and French translations for all video-related features
+- New translation keys for video services, error messages, and admin UI
+
+### Technical
+- Created `VideoWidget.vue` for video rendering with multiple source types
+- Added video validation in `PageService.php` with domain whitelist checking
+- Video domains stored in app config with admin-only modification
+- CSP-compliant iframe embedding with proper sandbox attributes
+- `getServiceHomepage()` method maps embed domains to homepage URLs
+
 ## [0.5.20] - 2025-12-05 - Generic Widget Duplicate
 
 ### Added

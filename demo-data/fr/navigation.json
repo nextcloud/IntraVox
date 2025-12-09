@@ -10,6 +10,14 @@
             "children": []
         },
         {
+            "id": "nav_ai",
+            "title": "IA dans Nextcloud",
+            "uniqueId": "page-d4e5f6a7-b8c9-0123-def0-000000000001",
+            "url": null,
+            "target": null,
+            "children": []
+        },
+        {
             "id": "nav_externe_links",
             "title": "Liens externes",
             "uniqueId": null,

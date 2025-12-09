@@ -1,7 +1,25 @@
 <template>
 	<div class="intravox-admin-settings">
-		<div class="settings-section">
-			<h2>{{ t('intravox', 'Demo Data') }}</h2>
+		<!-- Tab Navigation - MetaVox style -->
+		<div class="tab-navigation">
+			<button
+				:class="['tab-button', { active: activeTab === 'video' }]"
+				@click="activeTab = 'video'">
+				<Video :size="16" />
+				{{ t('intravox', 'Video Services') }}
+			</button>
+			<button
+				:class="['tab-button', { active: activeTab === 'demo' }]"
+				@click="activeTab = 'demo'">
+				<PackageVariant :size="16" />
+				{{ t('intravox', 'Demo Data') }}
+			</button>
+		</div>
+
+		<!-- Demo Data Tab -->
+		<div v-if="activeTab === 'demo'" class="tab-content">
+			<div class="settings-section">
+				<h2>{{ t('intravox', 'Demo Data') }}</h2>
 			<p class="settings-section-desc">
 				{{ t('intravox', 'Install demo content to quickly set up your intranet with example pages, navigation, and images.') }}
 			</p>
@@ -73,8 +91,9 @@
 				</tbody>
 			</table>
 
-			<div v-if="message" :class="['message', messageType]">
+				<div v-if="message" :class="['message', messageType]">
 				{{ message }}
+			</div>
 			</div>
 		</div>
 
@@ -102,13 +121,139 @@
 				</NcButton>
 			</template>
 		</NcDialog>
+
+		<!-- Video Services Tab -->
+		<div v-if="activeTab === 'video'" class="tab-content">
+			<div class="settings-section">
+				<h2>{{ t('intravox', 'Video Embed Domains') }}</h2>
+				<p class="settings-section-desc">
+					{{ t('intravox', 'Configure which video platforms can be embedded in pages. Toggle services on or off.') }}
+				</p>
+
+				<!-- Services Grid (2 columns) -->
+				<div class="services-grid">
+					<div v-for="category in categories" :key="category.id" class="service-category" :class="category.id">
+						<h3 class="category-header" :class="category.id">
+							<span class="category-icon">{{ category.icon }}</span>
+							{{ t('intravox', category.name) }}
+						</h3>
+
+						<div class="service-list">
+							<div
+								v-for="service in getServicesByCategory(category.id)"
+								:key="service.id"
+								class="service-item"
+								:class="{ enabled: isServiceEnabled(service), 'tracking-warning': category.id === 'tracking' }">
+								<NcCheckboxRadioSwitch
+									type="switch"
+									:model-value="isServiceEnabled(service)"
+									@update:model-value="toggleService(service, $event)">
+									<div class="service-info">
+										<span class="service-name">
+											{{ service.name }}
+											<a
+												:href="getServiceHomepage(service)"
+												target="_blank"
+												rel="noopener noreferrer"
+												class="service-link"
+												:title="t('intravox', 'Visit website')"
+												@click.stop>
+												<OpenInNew :size="14" />
+											</a>
+										</span>
+										<span class="service-domain">{{ getHostFromUrl(service.domain) }}</span>
+									</div>
+								</NcCheckboxRadioSwitch>
+							</div>
+						</div>
+					</div>
+
+					<!-- Custom Servers Category (full width) -->
+					<div class="service-category custom">
+						<h3 class="category-header custom">
+							<span class="category-icon">🏢</span>
+							{{ t('intravox', 'Custom servers') }}
+						</h3>
+
+						<div class="service-list">
+							<!-- Existing custom domains with risk assessment -->
+							<div
+								v-for="domain in customDomains"
+								:key="domain"
+								class="service-item custom-item enabled">
+								<div class="custom-domain-info">
+									<span class="service-name">
+										<span class="protocol-badge">HTTPS</span>
+										<a
+											:href="domain"
+											target="_blank"
+											rel="noopener noreferrer"
+											class="custom-domain-link"
+											:title="t('intravox', 'Visit website')">
+											{{ getHostFromUrl(domain) }}
+											<OpenInNew :size="12" />
+										</a>
+									</span>
+									<span :class="['risk-badge', assessDomainRisk(domain).risk]">
+										{{ assessDomainRisk(domain).icon }} {{ t('intravox', assessDomainRisk(domain).label) }}
+									</span>
+								</div>
+								<NcButton
+									type="tertiary"
+									@click="removeCustomDomain(domain)">
+									{{ t('intravox', 'Remove') }}
+								</NcButton>
+							</div>
+
+							<!-- Add new domain row -->
+							<div class="add-domain-row">
+								<input
+									v-model="newDomain"
+									type="text"
+									class="domain-input"
+									:placeholder="t('intravox', 'video.example.org (HTTPS required)')"
+									@keyup.enter="addCustomDomain"
+								/>
+								<NcButton type="secondary" @click="addCustomDomain" :disabled="!newDomain.trim()">
+									{{ t('intravox', 'Add') }}
+								</NcButton>
+							</div>
+							<p class="custom-server-hint">
+								{{ t('intravox', 'Only secure HTTPS servers can be added. The URL will be validated before adding.') }}
+							</p>
+						</div>
+					</div>
+				</div>
+
+				<!-- Warnings display -->
+				<NcNoteCard v-if="domainWarnings.length > 0" type="warning" class="domain-warnings">
+					<p><strong>{{ t('intravox', 'Privacy warnings:') }}</strong></p>
+					<ul>
+						<li v-for="warning in domainWarnings" :key="warning">{{ warning }}</li>
+					</ul>
+				</NcNoteCard>
+
+				<div class="save-section">
+					<NcButton
+						type="primary"
+						:disabled="savingDomains"
+						@click="saveVideoDomains">
+						{{ savingDomains ? t('intravox', 'Saving...') : t('intravox', 'Save video settings') }}
+					</NcButton>
+				</div>
+			</div>
+		</div>
 	</div>
 </template>
 
 <script>
-import { NcButton, NcDialog, NcNoteCard } from '@nextcloud/vue'
+import { NcButton, NcDialog, NcNoteCard, NcCheckboxRadioSwitch } from '@nextcloud/vue'
+import { showSuccess, showError, showWarning } from '@nextcloud/dialogs'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
+import PackageVariant from 'vue-material-design-icons/PackageVariant.vue'
+import Video from 'vue-material-design-icons/Video.vue'
+import OpenInNew from 'vue-material-design-icons/OpenInNew.vue'
 
 export default {
 	name: 'AdminSettings',
@@ -116,6 +261,10 @@ export default {
 		NcButton,
 		NcDialog,
 		NcNoteCard,
+		NcCheckboxRadioSwitch,
+		PackageVariant,
+		Video,
+		OpenInNew,
 	},
 	props: {
 		initialState: {
@@ -125,6 +274,7 @@ export default {
 	},
 	data() {
 		return {
+			activeTab: 'video', // Default to video tab
 			languages: this.initialState.languages || [],
 			setupComplete: this.initialState.setupComplete !== false,
 			installing: null,
@@ -132,6 +282,33 @@ export default {
 			messageType: 'success',
 			reinstallDialogVisible: false,
 			reinstallLanguageCode: null,
+			// Video domains from server
+			videoDomains: Array.isArray(this.initialState.videoDomains)
+				? [...this.initialState.videoDomains]
+				: [],
+			newDomain: '',
+			savingDomains: false,
+			domainWarnings: [],
+			// Known video services with metadata
+			knownServices: [
+				// Privacy-friendly (no/minimal tracking)
+				{ id: 'youtube-privacy', name: 'YouTube (privacy mode)', domain: 'https://www.youtube-nocookie.com', category: 'privacy', description: 'No tracking cookies' },
+				{ id: 'vimeo', name: 'Vimeo', domain: 'https://player.vimeo.com', category: 'privacy', description: 'Professional video hosting' },
+				{ id: 'surfnet', name: 'SURF Video', domain: 'https://video.edu.nl', category: 'privacy', description: 'Dutch education network' },
+				{ id: 'ted', name: 'TED Talks', domain: 'https://embed.ted.com', category: 'privacy', description: 'Ideas worth spreading' },
+				{ id: 'framatube', name: 'FramaTube', domain: 'https://framatube.org', category: 'privacy', description: 'PeerTube by Framasoft' },
+				{ id: 'tilvids', name: 'TilVids', domain: 'https://tilvids.com', category: 'privacy', description: 'Educational PeerTube' },
+				{ id: 'diode', name: 'Diode Zone', domain: 'https://diode.zone', category: 'privacy', description: 'PeerTube instance' },
+				{ id: 'blender', name: 'Blender Video', domain: 'https://video.blender.org', category: 'privacy', description: 'Blender Foundation' },
+				// Tracking concerns (known trackers)
+				{ id: 'youtube', name: 'YouTube (standard)', domain: 'https://www.youtube.com', category: 'tracking', description: 'Contains Google tracking' },
+				{ id: 'dailymotion', name: 'Dailymotion', domain: 'https://www.dailymotion.com', category: 'tracking', description: 'Contains tracking' },
+			],
+			// Categories for display (2 columns: privacy + tracking)
+			categories: [
+				{ id: 'privacy', name: 'Privacy-friendly', icon: '✅', description: 'No or minimal tracking' },
+				{ id: 'tracking', name: 'Tracking concerns', icon: '⚠️', description: 'Platforms with known trackers' },
+			],
 		}
 	},
 	computed: {
@@ -140,8 +317,193 @@ export default {
 			const langData = this.languages.find(l => l.code === this.reinstallLanguageCode)
 			return langData?.name || this.reinstallLanguageCode
 		},
+		// Get custom domains (domains not in knownServices)
+		customDomains() {
+			const knownDomains = this.knownServices.map(s => s.domain)
+			return this.videoDomains.filter(d => !knownDomains.includes(d))
+		},
 	},
 	methods: {
+		// Service toggle methods
+		getServicesByCategory(categoryId) {
+			return this.knownServices.filter(s => s.category === categoryId)
+		},
+		isServiceEnabled(service) {
+			return this.videoDomains.includes(service.domain)
+		},
+		toggleService(service, enabled) {
+			if (enabled) {
+				if (!this.videoDomains.includes(service.domain)) {
+					this.videoDomains.push(service.domain)
+				}
+				if (service.category === 'tracking') {
+					showWarning(this.t('intravox', '{service} has tracking concerns. Consider privacy-friendly alternatives.', { service: service.name }))
+				}
+			} else {
+				const index = this.videoDomains.indexOf(service.domain)
+				if (index > -1) {
+					this.videoDomains.splice(index, 1)
+				}
+			}
+		},
+		// Custom domain methods
+		addCustomDomain() {
+			if (!this.newDomain) return
+
+			let domain = this.newDomain.trim()
+
+			// Remove trailing slashes and clean up
+			domain = domain.replace(/\/+$/, '')
+
+			// Check if it starts with http:// (insecure)
+			if (domain.startsWith('http://')) {
+				showError(this.t('intravox', 'Only HTTPS URLs are allowed for security reasons. Please use https://'))
+				return
+			}
+
+			// Add https:// if no protocol specified
+			if (!domain.startsWith('https://')) {
+				domain = 'https://' + domain
+			}
+
+			// Validate URL format
+			try {
+				const url = new URL(domain)
+
+				// Must be https
+				if (url.protocol !== 'https:') {
+					showError(this.t('intravox', 'Only HTTPS URLs are allowed for security reasons'))
+					return
+				}
+
+				// Must have a valid hostname
+				if (!url.hostname) {
+					showError(this.t('intravox', 'Please enter a valid domain name (e.g., video.example.org)'))
+					return
+				}
+
+				// Validate domain structure: must have at least one dot and valid TLD (2+ chars)
+				const parts = url.hostname.split('.')
+				if (parts.length < 2) {
+					showError(this.t('intravox', 'Please enter a valid domain name (e.g., video.example.org)'))
+					return
+				}
+
+				// TLD must be at least 2 characters
+				const tld = parts[parts.length - 1]
+				if (tld.length < 2) {
+					showError(this.t('intravox', 'Invalid domain: TLD must be at least 2 characters (e.g., .com, .org, .nl)'))
+					return
+				}
+
+				// Domain name part must be at least 1 character
+				const domainName = parts[parts.length - 2]
+				if (domainName.length < 1) {
+					showError(this.t('intravox', 'Please enter a valid domain name (e.g., video.example.org)'))
+					return
+				}
+
+				// Check for valid characters in hostname (letters, numbers, hyphens, dots)
+				if (!/^[a-zA-Z0-9.-]+$/.test(url.hostname)) {
+					showError(this.t('intravox', 'Domain contains invalid characters. Only letters, numbers, dots and hyphens are allowed.'))
+					return
+				}
+
+				// Use the cleaned URL (hostname only with https)
+				domain = `https://${url.hostname}`
+
+			} catch (e) {
+				showError(this.t('intravox', 'Invalid URL format. Please enter a valid URL (e.g., https://video.example.org)'))
+				return
+			}
+
+			// Check for duplicates
+			if (this.videoDomains.includes(domain)) {
+				showWarning(this.t('intravox', 'This domain is already in the list'))
+				this.newDomain = ''
+				return
+			}
+
+			// Check if it matches a known service
+			const knownService = this.knownServices.find(s => s.domain === domain)
+			if (knownService) {
+				showWarning(this.t('intravox', '{service} is already available in the predefined services above', { service: knownService.name }))
+				this.newDomain = ''
+				return
+			}
+
+			this.videoDomains.push(domain)
+			this.newDomain = ''
+			showSuccess(this.t('intravox', 'Domain added. Don\'t forget to save your settings.'))
+		},
+		removeCustomDomain(domain) {
+			const index = this.videoDomains.indexOf(domain)
+			if (index > -1) {
+				this.videoDomains.splice(index, 1)
+			}
+		},
+		getHostFromUrl(url) {
+			try {
+				return new URL(url).hostname
+			} catch {
+				return url
+			}
+		},
+		getServiceHomepage(service) {
+			// Map embed domains to their homepage URLs
+			const homepageMap = {
+				'www.youtube-nocookie.com': 'https://www.youtube.com',
+				'player.vimeo.com': 'https://vimeo.com',
+				'video.edu.nl': 'https://video.edu.nl',
+				'embed.ted.com': 'https://www.ted.com',
+				'framatube.org': 'https://framatube.org',
+				'tilvids.com': 'https://tilvids.com',
+				'diode.zone': 'https://diode.zone',
+				'video.blender.org': 'https://video.blender.org',
+				'www.youtube.com': 'https://www.youtube.com',
+				'www.dailymotion.com': 'https://www.dailymotion.com',
+			}
+
+			const host = this.getHostFromUrl(service.domain)
+			return homepageMap[host] || service.domain
+		},
+		// Risk assessment for custom domains
+		assessDomainRisk(domain) {
+			try {
+				const url = new URL(domain)
+				const host = url.hostname.toLowerCase()
+
+				// 1. HTTPS check - critical
+				if (url.protocol !== 'https:') {
+					return { risk: 'danger', label: 'No HTTPS', icon: '🔴' }
+				}
+
+				// 2. Known trackers - warning
+				if (/google\.|youtube\.|facebook\.|meta\.|doubleclick/i.test(host)) {
+					return { risk: 'warning', label: 'Tracking concerns', icon: '⚠️' }
+				}
+
+				// 3. PeerTube patterns - good
+				if (/peertube|tube\.|video\./i.test(host)) {
+					return { risk: 'good', label: 'Video platform', icon: '✅' }
+				}
+
+				// 4. Educational - good
+				if (/\.edu$|\.ac\.|university|college/i.test(host)) {
+					return { risk: 'good', label: 'Educational', icon: '🎓' }
+				}
+
+				// 5. Government - good
+				if (/\.gov$|\.overheid\.|\.govt\./i.test(host)) {
+					return { risk: 'good', label: 'Government', icon: '🏛️' }
+				}
+
+				// 6. Unknown - neutral
+				return { risk: 'unknown', label: 'Unknown platform', icon: '❓' }
+			} catch {
+				return { risk: 'danger', label: 'Invalid URL', icon: '🔴' }
+			}
+		},
 		getStatusLabel(status) {
 			const labels = {
 				not_installed: this.t('intravox', 'Not installed'),
@@ -204,8 +566,33 @@ export default {
 				console.error('Failed to refresh status:', error)
 			}
 		},
-		t(app, text) {
-			return window.t ? window.t(app, text) : text
+		t(app, text, vars) {
+			if (window.t) {
+				return vars ? window.t(app, text, vars) : window.t(app, text)
+			}
+			return text
+		},
+		async saveVideoDomains() {
+			this.savingDomains = true
+			this.domainWarnings = []
+
+			try {
+				const response = await axios.post(
+					generateUrl('/apps/intravox/api/settings/video-domains'),
+					{ domains: this.videoDomains.filter(d => d) }
+				)
+				showSuccess(this.t('intravox', 'Video domains saved'))
+
+				// Show warnings if any
+				if (response.data.warnings && response.data.warnings.length > 0) {
+					this.domainWarnings = response.data.warnings
+				}
+			} catch (error) {
+				console.error('Failed to save video domains:', error)
+				showError(this.t('intravox', 'Failed to save video domains'))
+			} finally {
+				this.savingDomains = false
+			}
 		},
 	},
 }
@@ -213,8 +600,49 @@ export default {
 
 <style scoped>
 .intravox-admin-settings {
-	max-width: 800px;
+	max-width: 900px;
 	padding: 20px;
+}
+
+/* Tab Navigation - MetaVox style */
+.tab-navigation {
+	border-bottom: 1px solid var(--color-border);
+	margin-bottom: 20px;
+	display: flex;
+	gap: 10px;
+}
+
+.tab-button {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 12px 20px;
+	border: none;
+	background: none;
+	cursor: pointer;
+	border-bottom: 2px solid transparent;
+	color: var(--color-text-lighter);
+	font-size: 14px;
+	transition: all 0.2s ease;
+}
+
+.tab-button:hover:not(.active) {
+	background: var(--color-background-hover);
+}
+
+.tab-button.active {
+	border-bottom-color: var(--color-primary);
+	color: var(--color-primary);
+	background: var(--color-primary-element-light);
+}
+
+.tab-content {
+	animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+	from { opacity: 0; transform: translateY(-4px); }
+	to { opacity: 1; transform: translateY(0); }
 }
 
 .settings-section h2 {
@@ -369,5 +797,271 @@ export default {
 .reinstall-warning {
 	margin-top: 12px;
 	color: var(--color-text-maxcontrast);
+}
+
+/* Video domains section */
+.settings-section + .settings-section {
+	margin-top: 40px;
+	padding-top: 20px;
+	border-top: 1px solid var(--color-border);
+}
+
+/* Services Grid - 2 columns */
+.services-grid {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	gap: 20px;
+	margin-bottom: 24px;
+}
+
+@media (max-width: 768px) {
+	.services-grid {
+		grid-template-columns: 1fr;
+	}
+}
+
+/* Custom servers category spans full width */
+.service-category.custom {
+	grid-column: 1 / -1;
+}
+
+.service-category {
+	/* No margin needed - grid handles spacing */
+}
+
+.category-header {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin: 0 0 12px 0;
+	padding: 8px 12px;
+	font-size: 14px;
+	font-weight: 600;
+	border-radius: var(--border-radius);
+}
+
+.category-header.privacy {
+	background-color: var(--color-success-hover);
+	color: var(--color-success-text);
+}
+
+.category-header.tracking {
+	background-color: var(--color-warning-hover);
+	color: var(--color-warning-text);
+}
+
+.category-header.custom {
+	background-color: var(--color-background-dark);
+	color: var(--color-main-text);
+}
+
+.category-icon {
+	font-size: 16px;
+}
+
+.service-list {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.service-item {
+	padding: 8px 12px;
+	background: var(--color-background-hover);
+	border-radius: var(--border-radius);
+	border-left: 3px solid transparent;
+	transition: border-color 0.15s ease;
+}
+
+.service-item.enabled {
+	border-left-color: var(--color-success);
+	background: var(--color-background-dark);
+}
+
+.service-item.tracking-warning.enabled {
+	border-left-color: var(--color-warning);
+}
+
+/* Custom domain items */
+.service-item.custom-item {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.custom-domain-info {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	flex: 1;
+}
+
+/* Risk badges */
+.risk-badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	font-size: 12px;
+	font-weight: 500;
+	padding: 2px 8px;
+	border-radius: 10px;
+	width: fit-content;
+}
+
+.risk-badge.good {
+	background-color: var(--color-success-hover);
+	color: var(--color-success-text);
+}
+
+.risk-badge.warning {
+	background-color: var(--color-warning-hover);
+	color: var(--color-warning-text);
+}
+
+.risk-badge.danger {
+	background-color: var(--color-error-hover);
+	color: var(--color-error-text);
+}
+
+.risk-badge.unknown {
+	background-color: var(--color-background-dark);
+	color: var(--color-text-maxcontrast);
+}
+
+.service-item :deep(.checkbox-radio-switch) {
+	width: 100%;
+}
+
+.service-item :deep(.checkbox-radio-switch__content) {
+	flex: 1;
+}
+
+.service-info {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.service-name {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	font-weight: 500;
+	color: var(--color-main-text);
+}
+
+/* External link styling for services */
+.service-link {
+	color: var(--color-text-maxcontrast);
+	opacity: 0.6;
+	transition: opacity 0.2s, color 0.2s;
+	vertical-align: middle;
+	text-decoration: none;
+}
+
+.service-link:hover {
+	opacity: 1;
+	color: var(--color-primary);
+}
+
+.service-item:hover .service-link {
+	opacity: 0.8;
+}
+
+.custom-domain-link {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	color: var(--color-main-text);
+	text-decoration: none;
+	transition: color 0.2s;
+}
+
+.custom-domain-link:hover {
+	color: var(--color-primary);
+}
+
+.custom-domain-link :deep(svg) {
+	opacity: 0.5;
+	transition: opacity 0.2s;
+}
+
+.custom-domain-link:hover :deep(svg) {
+	opacity: 1;
+}
+
+.protocol-badge {
+	display: inline-block;
+	font-size: 10px;
+	font-weight: 600;
+	padding: 2px 6px;
+	border-radius: 4px;
+	background-color: var(--color-success);
+	color: white;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+}
+
+.service-domain {
+	font-size: 12px;
+	color: var(--color-text-maxcontrast);
+	font-family: var(--font-monospace, monospace);
+}
+
+/* Add domain row */
+.add-domain-row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.domain-input {
+	flex: 1;
+	padding: 8px 12px;
+	border: 1px solid var(--color-border);
+	border-radius: var(--border-radius);
+	background: var(--color-main-background);
+	color: var(--color-main-text);
+	font-size: 14px;
+}
+
+.domain-input:focus {
+	border-color: var(--color-primary-element);
+	outline: none;
+}
+
+.custom-server-hint {
+	margin: 8px 0 0 0;
+	font-size: 12px;
+	color: var(--color-text-maxcontrast);
+	font-style: italic;
+}
+
+/* Warnings */
+.domain-warnings {
+	margin: 16px 0;
+}
+
+.domain-warnings ul {
+	margin: 8px 0 0 0;
+	padding-left: 20px;
+}
+
+.domain-warnings li {
+	margin-bottom: 4px;
+}
+
+/* Save section */
+.save-section {
+	margin-top: 24px;
+	padding-top: 16px;
+	border-top: 1px solid var(--color-border);
+}
+
+/* Section headers */
+.settings-section h3 {
+	font-size: 14px;
+	font-weight: 600;
+	margin: 0 0 12px 0;
 }
 </style>

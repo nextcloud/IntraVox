@@ -3,13 +3,18 @@ declare(strict_types=1);
 
 namespace OCA\IntraVox\Controller;
 
+use OCA\IntraVox\AppInfo\Application;
+use OCA\IntraVox\Constants;
 use OCA\IntraVox\Service\PageService;
 use OCA\IntraVox\Service\SetupService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\Http\StreamResponse;
+use OCP\IConfig;
+use OCP\IGroupManager;
 use OCP\IRequest;
+use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -22,18 +27,38 @@ class ApiController extends Controller {
     private PageService $pageService;
     private SetupService $setupService;
     private LoggerInterface $logger;
+    private IConfig $config;
+    private IGroupManager $groupManager;
+    private IUserSession $userSession;
 
     public function __construct(
         string $appName,
         IRequest $request,
         PageService $pageService,
         SetupService $setupService,
-        LoggerInterface $logger
+        LoggerInterface $logger,
+        IConfig $config,
+        IGroupManager $groupManager,
+        IUserSession $userSession
     ) {
         parent::__construct($appName, $request);
         $this->pageService = $pageService;
         $this->setupService = $setupService;
         $this->logger = $logger;
+        $this->config = $config;
+        $this->groupManager = $groupManager;
+        $this->userSession = $userSession;
+    }
+
+    /**
+     * Check if current user is admin
+     */
+    private function isAdmin(): bool {
+        $user = $this->userSession->getUser();
+        if ($user === null) {
+            return false;
+        }
+        return $this->groupManager->isAdmin($user->getUID());
     }
 
     /**
@@ -193,32 +218,42 @@ class ApiController extends Controller {
     }
 
     /**
+     * Upload media (image or video) for a page
+     * Unified endpoint that stores all media in a single 'media' folder
      * @NoAdminRequired
+     * @NoCSRFRequired
      */
-    public function uploadImage(string $pageId): DataResponse {
+    public function uploadMedia(string $pageId): DataResponse {
         try {
             // First get the page to check permissions (from Nextcloud filesystem)
             $existingPage = $this->pageService->getPage($pageId);
 
-            // Check write permission (uploading images requires write access)
+            // Check write permission (uploading media requires write access)
             if (!($existingPage['permissions']['canWrite'] ?? false)) {
                 return new DataResponse(
-                    ['error' => 'Permission denied: cannot upload images to this page'],
+                    ['error' => 'Permission denied: cannot upload media to this page'],
                     Http::STATUS_FORBIDDEN
                 );
             }
 
-            $file = $this->request->getUploadedFile('image');
+            // Try 'media' field first, then fall back to 'image' or 'video' for compatibility
+            $file = $this->request->getUploadedFile('media');
+            if (!$file) {
+                $file = $this->request->getUploadedFile('image');
+            }
+            if (!$file) {
+                $file = $this->request->getUploadedFile('video');
+            }
 
             if (!$file) {
-                throw new \InvalidArgumentException('No image provided');
+                throw new \InvalidArgumentException('No media file provided');
             }
 
             if (empty($file['tmp_name'])) {
                 throw new \InvalidArgumentException('File upload failed - tmp_name is empty. Upload error: ' . ($file['error'] ?? 'unknown'));
             }
 
-            $filename = $this->pageService->uploadImage($pageId, $file);
+            $filename = $this->pageService->uploadMedia($pageId, $file);
             return new DataResponse(['filename' => $filename], Http::STATUS_CREATED);
         } catch (\InvalidArgumentException $e) {
             return new DataResponse(
@@ -234,10 +269,33 @@ class ApiController extends Controller {
     }
 
     /**
+     * Get server upload limit
+     * Returns the effective upload limit in bytes
      * @NoAdminRequired
      * @NoCSRFRequired
      */
-    public function getImage(string $pageId, string $filename) {
+    public function getUploadLimit(): DataResponse {
+        try {
+            $limit = $this->pageService->getUploadLimit();
+            return new DataResponse([
+                'limit' => $limit,
+                'limitMB' => round($limit / (1024 * 1024), 1)
+            ]);
+        } catch (\Exception $e) {
+            return new DataResponse(
+                ['error' => $e->getMessage()],
+                Http::STATUS_INTERNAL_SERVER_ERROR
+            );
+        }
+    }
+
+    /**
+     * Get media (image or video) for a page
+     * Unified endpoint that serves all media from a single 'media' folder
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     */
+    public function getMedia(string $pageId, string $filename) {
         try {
             // First get the page to check permissions (from Nextcloud filesystem)
             $existingPage = $this->pageService->getPage($pageId);
@@ -250,7 +308,7 @@ class ApiController extends Controller {
                 );
             }
 
-            return $this->pageService->getImage($pageId, $filename);
+            return $this->pageService->getMedia($pageId, $filename);
         } catch (\Exception $e) {
             return new DataResponse(
                 ['error' => $e->getMessage()],
@@ -620,6 +678,14 @@ class ApiController extends Controller {
      * Admin only - creates the IntraVox GroupFolder
      */
     public function runSetup(): DataResponse {
+        // Security: Only admins can run setup
+        if (!$this->isAdmin()) {
+            return new DataResponse(
+                ['error' => 'Admin access required'],
+                Http::STATUS_FORBIDDEN
+            );
+        }
+
         try {
             $this->logger->info('[ApiController] Running setup');
 
@@ -640,5 +706,201 @@ class ApiController extends Controller {
                 Http::STATUS_INTERNAL_SERVER_ERROR
             );
         }
+    }
+
+    /**
+     * Get video domain whitelist
+     *
+     * @NoCSRFRequired
+     * @NoAdminRequired
+     */
+    public function getVideoDomains(): DataResponse {
+        $domains = $this->config->getAppValue(
+            Application::APP_ID,
+            'video_domains',
+            Constants::getDefaultVideoDomainsJson()
+        );
+
+        // Decode the stored JSON
+        $decoded = json_decode($domains, true);
+
+        // Only use defaults if JSON decode FAILED (null), not for empty array
+        // This allows admins to explicitly block all video embeds by removing all domains
+        if ($decoded === null) {
+            $decoded = Constants::DEFAULT_VIDEO_DOMAINS;
+        }
+
+        return new DataResponse(['domains' => $decoded]);
+    }
+
+    /**
+     * Get domain category for warning system
+     * Returns: recommended, commercial, discouraged, or blocked
+     */
+    private function getDomainCategory(string $host): array {
+        // Category 1: Recommended - privacy-friendly platforms
+        $recommended = [
+            'video.edu.nl',
+            'peertube.tv',
+            'framatube.org',
+            'tilvids.com',
+            'peertube.social',
+            'video.ploud.fr',
+            'diode.zone',
+            'tube.privacytools.io',
+            'peertube.debian.social',
+            'video.linux.it',
+        ];
+
+        // Category 2: Commercial but relatively safe (business platforms)
+        $commercial = [
+            'vimeo.com',
+            'wistia.com',
+            'loom.com',
+            'streamable.com',
+            'bunny.net',
+            'bunnycdn.com',
+        ];
+
+        // Category 3: Discouraged - major tracking/privacy concerns
+        $discouraged = [
+            'youtube.com',
+            'youtu.be',
+            'dailymotion.com',
+            'tiktok.com',
+            'facebook.com',
+            'fb.watch',
+            'instagram.com',
+            'twitter.com',
+            'x.com',
+            'twitch.tv',
+        ];
+
+        foreach ($recommended as $pattern) {
+            if (str_contains($host, $pattern)) {
+                return ['category' => 'recommended', 'level' => 1];
+            }
+        }
+
+        foreach ($commercial as $pattern) {
+            if (str_contains($host, $pattern)) {
+                return ['category' => 'commercial', 'level' => 2];
+            }
+        }
+
+        foreach ($discouraged as $pattern) {
+            if (str_contains($host, $pattern)) {
+                return ['category' => 'discouraged', 'level' => 3];
+            }
+        }
+
+        // Unknown domains - treat as custom PeerTube instances (allowed)
+        return ['category' => 'custom', 'level' => 1];
+    }
+
+    /**
+     * Set video domain whitelist
+     * Warning-based system: all domains allowed, but with category warnings
+     *
+     * @NoAdminRequired
+     */
+    public function setVideoDomains(): DataResponse {
+        // Manual admin check since @AuthorizedAdminSetting has dependency issues
+        if (!$this->isAdmin()) {
+            return new DataResponse([
+                'success' => false,
+                'message' => 'Only administrators can change video domain settings',
+            ], Http::STATUS_FORBIDDEN);
+        }
+
+        // Get domains from request - handle both JSON body and form data
+        $domains = $this->request->getParam('domains');
+
+        // If domains is null, try parsing JSON body directly
+        if ($domains === null) {
+            $body = file_get_contents('php://input');
+            $data = json_decode($body, true);
+            $domains = $data['domains'] ?? [];
+            $this->logger->debug('[ApiController] Parsed JSON body for domains: ' . json_encode($domains));
+        }
+
+        // Ensure domains is an array
+        if (!is_array($domains)) {
+            $domains = [];
+        }
+
+        // Validate and categorize domains
+        $validDomains = [];
+        $invalidDomains = [];
+        $domainCategories = [];
+        $warnings = [];
+
+        foreach ($domains as $domain) {
+            $domain = trim($domain);
+            if (empty($domain)) {
+                continue;
+            }
+
+            // Must be HTTPS - this is a hard requirement for security
+            if (!str_starts_with($domain, 'https://')) {
+                $invalidDomains[] = $domain . ' (HTTPS required for security)';
+                continue;
+            }
+
+            // Valid URL check
+            if (!filter_var($domain, FILTER_VALIDATE_URL)) {
+                $invalidDomains[] = $domain . ' (invalid URL format)';
+                continue;
+            }
+
+            // Get domain category
+            $parsedUrl = parse_url($domain);
+            $host = $parsedUrl['host'] ?? '';
+            $category = $this->getDomainCategory($host);
+
+            // Remove trailing slash
+            $domain = rtrim($domain, '/');
+
+            $validDomains[] = $domain;
+            $domainCategories[$domain] = $category;
+
+            // Add warnings for non-recommended domains
+            if ($category['category'] === 'commercial') {
+                $warnings[] = $host . ': Commercial platform - consider privacy-friendly alternatives like PeerTube';
+            } elseif ($category['category'] === 'discouraged') {
+                $warnings[] = $host . ': This platform has significant tracking and privacy concerns. Consider using PeerTube instead.';
+            }
+        }
+
+        // If there are invalid domains (HTTP or malformed), return error
+        if (!empty($invalidDomains)) {
+            return new DataResponse([
+                'success' => false,
+                'message' => 'Some domains are not valid: ' . implode(', ', $invalidDomains),
+                'invalidDomains' => $invalidDomains,
+            ], Http::STATUS_BAD_REQUEST);
+        }
+
+        // Save domains - all valid HTTPS domains are allowed
+        $this->config->setAppValue(
+            Application::APP_ID,
+            'video_domains',
+            json_encode(array_unique($validDomains))
+        );
+
+        $this->logger->info('[ApiController] Video domains updated: ' . implode(', ', $validDomains));
+
+        // Return success with warnings if applicable
+        $response = [
+            'success' => true,
+            'domains' => $validDomains,
+            'categories' => $domainCategories,
+        ];
+
+        if (!empty($warnings)) {
+            $response['warnings'] = $warnings;
+        }
+
+        return new DataResponse($response);
     }
 }

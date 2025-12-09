@@ -4,9 +4,11 @@ declare(strict_types=1);
 namespace OCA\IntraVox\Settings;
 
 use OCA\IntraVox\AppInfo\Application;
+use OCA\IntraVox\Constants;
 use OCA\IntraVox\Service\DemoDataService;
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\AppFramework\Services\IInitialState;
+use OCP\IConfig;
 use OCP\Settings\IDelegatedSettings;
 use OCP\Util;
 
@@ -16,13 +18,16 @@ use OCP\Util;
 class AdminSettings implements IDelegatedSettings {
     private DemoDataService $demoDataService;
     private IInitialState $initialState;
+    private IConfig $config;
 
     public function __construct(
         DemoDataService $demoDataService,
-        IInitialState $initialState
+        IInitialState $initialState,
+        IConfig $config
     ) {
         $this->demoDataService = $demoDataService;
         $this->initialState = $initialState;
+        $this->config = $config;
     }
 
     /**
@@ -32,11 +37,28 @@ class AdminSettings implements IDelegatedSettings {
         // Get demo data status
         $status = $this->demoDataService->getStatus();
 
+        // Get video domain whitelist
+        $videoDomains = $this->config->getAppValue(
+            Application::APP_ID,
+            'video_domains',
+            Constants::getDefaultVideoDomainsJson()
+        );
+
+        // Decode the stored JSON
+        $videoDomainsArray = json_decode($videoDomains, true);
+
+        // Only use defaults if JSON decode FAILED (null), not for empty array
+        // This allows admins to explicitly block all video embeds by removing all domains
+        if ($videoDomainsArray === null) {
+            $videoDomainsArray = Constants::DEFAULT_VIDEO_DOMAINS;
+        }
+
         // Pass initial state to the frontend
         $this->initialState->provideInitialState('admin-settings', [
             'languages' => $status['languages'] ?? [],
             'imported' => $status['imported'] ?? false,
             'setupComplete' => $status['setupComplete'] ?? false,
+            'videoDomains' => $videoDomainsArray,
         ]);
 
         // Load translations for JavaScript
@@ -76,6 +98,7 @@ class AdminSettings implements IDelegatedSettings {
         return [
             'intravox' => [
                 'demo_data_imported',
+                'video_domains',
             ],
         ];
     }

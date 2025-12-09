@@ -342,40 +342,40 @@ class DemoDataService {
     }
 
     /**
-     * Import images folder for the language root
+     * Import media folder for the language root
      */
     private function importImagesFolder(string $language, Folder $languageFolder): int {
         $imported = 0;
 
         try {
-            // Create images folder if not exists
-            if (!$languageFolder->nodeExists('images')) {
-                $imagesFolder = $languageFolder->newFolder('images');
+            // Create _media folder if not exists
+            if (!$languageFolder->nodeExists('_media')) {
+                $mediaFolder = $languageFolder->newFolder('_media');
             } else {
-                $imagesFolder = $languageFolder->get('images');
+                $mediaFolder = $languageFolder->get('_media');
             }
 
             // Download image list from manifest or use known images
             $knownImages = $this->getKnownImages($language);
 
             foreach ($knownImages as $imageName) {
-                $url = self::DEMO_DATA_BASE_URL . "/{$language}/images/{$imageName}";
+                $url = self::DEMO_DATA_BASE_URL . "/{$language}/_media/{$imageName}";
                 $content = $this->downloadFile($url);
 
                 if ($content !== null) {
-                    if ($imagesFolder->nodeExists($imageName)) {
-                        $file = $imagesFolder->get($imageName);
+                    if ($mediaFolder->nodeExists($imageName)) {
+                        $file = $mediaFolder->get($imageName);
                         $file->putContent($content);
                     } else {
-                        $imagesFolder->newFile($imageName, $content);
+                        $mediaFolder->newFile($imageName, $content);
                     }
                     $imported++;
-                    $this->logger->info("[DemoData] Imported image: images/{$imageName}");
+                    $this->logger->info("[DemoData] Imported media: _media/{$imageName}");
                 }
             }
 
         } catch (\Exception $e) {
-            $this->logger->error("[DemoData] Failed to import images: " . $e->getMessage());
+            $this->logger->error("[DemoData] Failed to import media: " . $e->getMessage());
         }
 
         return $imported;
@@ -425,9 +425,9 @@ class DemoDataService {
                 }
             }
 
-            // Create images subfolder
-            if (!$currentFolder->nodeExists('images')) {
-                $currentFolder->newFolder('images');
+            // Create _media subfolder
+            if (!$currentFolder->nodeExists('_media')) {
+                $currentFolder->newFolder('_media');
             }
 
             // Download and save page JSON
@@ -445,24 +445,24 @@ class DemoDataService {
                 $imported++;
                 $this->logger->info("[DemoData] Imported page: {$pagePath}/{$jsonFilename}");
 
-                // Download page-specific images
+                // Download page-specific media
                 $pageData = json_decode($jsonContent, true);
                 if ($pageData && isset($pageData['layout']['rows'])) {
                     $imageNames = $this->extractImageNames($pageData);
-                    $imagesFolder = $currentFolder->get('images');
+                    $mediaFolder = $currentFolder->get('_media');
 
                     foreach ($imageNames as $imageName) {
-                        $imageUrl = self::DEMO_DATA_BASE_URL . "/{$language}/{$pagePath}/images/{$imageName}";
+                        $imageUrl = self::DEMO_DATA_BASE_URL . "/{$language}/{$pagePath}/_media/{$imageName}";
                         $imageContent = $this->downloadFile($imageUrl);
 
                         if ($imageContent !== null) {
-                            if ($imagesFolder->nodeExists($imageName)) {
-                                $imgFile = $imagesFolder->get($imageName);
+                            if ($mediaFolder->nodeExists($imageName)) {
+                                $imgFile = $mediaFolder->get($imageName);
                                 $imgFile->putContent($imageContent);
                             } else {
-                                $imagesFolder->newFile($imageName, $imageContent);
+                                $mediaFolder->newFile($imageName, $imageContent);
                             }
-                            $this->logger->info("[DemoData] Imported image: {$pagePath}/images/{$imageName}");
+                            $this->logger->info("[DemoData] Imported media: {$pagePath}/_media/{$imageName}");
                         }
                     }
                 }

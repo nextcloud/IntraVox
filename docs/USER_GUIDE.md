@@ -87,14 +87,24 @@ You'll encounter various content types:
 |------|-------------|
 | Headings | Section titles (different sizes) |
 | Text | Paragraphs, lists, formatted text |
-| Images | Photos, diagrams, screenshots |
+| Images | Photos, diagrams, screenshots (may be clickable to navigate to other pages) |
+| Videos | Embedded videos from YouTube, Vimeo, PeerTube, or local uploads |
 | Links | Quick links to other pages or external sites |
 | Dividers | Visual separators between sections |
 
 ### Images
 
 - Click images to view them larger (if enabled)
+- Some images may be clickable and navigate to other pages or external websites
+- Clickable images show a cursor change when hovering
 - Images may have captions describing their content
+
+### Videos
+
+- Click the play button to start a video
+- Videos may autoplay (muted) depending on settings
+- Use video controls to pause, seek, or adjust volume
+- Some videos open in fullscreen mode when clicked
 
 ### Links
 

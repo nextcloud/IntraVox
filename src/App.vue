@@ -68,6 +68,9 @@
         {{ t('Loading...') }}
       </div>
 
+      <!-- Welcome screen when no pages exist (first install) -->
+      <WelcomeScreen v-else-if="showWelcomeScreen" />
+
       <div v-else-if="error" class="error">
         {{ error }}
       </div>
@@ -185,6 +188,7 @@ const PageTreeModal = defineAsyncComponent(() => import('./components/PageTreeMo
 const NewPageModal = defineAsyncComponent(() => import('./components/NewPageModal.vue'));
 const NavigationEditor = defineAsyncComponent(() => import('./components/NavigationEditor.vue'));
 const PageDetailsSidebar = defineAsyncComponent(() => import('./components/PageDetailsSidebar.vue'));
+const WelcomeScreen = defineAsyncComponent(() => import('./components/WelcomeScreen.vue'));
 
 // Constants
 const HOME_PAGE_UNIQUE_ID = 'page-2e8f694e-147e-4793-8949-4732e679ae6b';
@@ -207,7 +211,8 @@ export default {
     Footer,
     PageActionsMenu,
     PageDetailsSidebar,
-    Breadcrumb
+    Breadcrumb,
+    WelcomeScreen
   },
   data() {
     return {
@@ -293,6 +298,12 @@ export default {
       const isHome = pathParts.length === 1 ||
                      (pathParts.length === 2 && pathParts[1] === 'home');
       return isHome;
+    },
+    /**
+     * Show welcome screen when no pages exist (first-time install)
+     */
+    showWelcomeScreen() {
+      return !this.loading && this.pages.length === 0 && !this.error;
     }
   },
   async mounted() {
@@ -396,9 +407,8 @@ export default {
 
           // Only update URL if we didn't find the page in the hash (i.e., we're loading default/home)
           await this.selectPage(targetPage.uniqueId, !foundInHash);
-        } else {
-          this.error = this.t('No pages found. Please run the setup command first.');
         }
+        // If no pages found, don't set error - the welcome screen will be shown instead
       } catch (err) {
         console.error('IntraVox: Error loading pages:', err);
         this.error = this.t('Could not load pages: {error}', { error: err.message });

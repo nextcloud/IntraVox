@@ -27,6 +27,7 @@ import FormatTitle from 'vue-material-design-icons/FormatTitle.vue';
 import Image from 'vue-material-design-icons/Image.vue';
 import Minus from 'vue-material-design-icons/Minus.vue';
 import ViewGrid from 'vue-material-design-icons/ViewGrid.vue';
+import Video from 'vue-material-design-icons/Video.vue';
 
 export default {
   name: 'WidgetPicker',
@@ -36,7 +37,8 @@ export default {
     FormatTitle,
     Image,
     Minus,
-    ViewGrid
+    ViewGrid,
+    Video
   },
   emits: ['close', 'select'],
   computed: {
@@ -74,6 +76,12 @@ export default {
           name: this.$t('Links'),
           icon: 'view-grid',
           description: this.$t('Add a grid of links with icons')
+        },
+        {
+          type: 'video',
+          name: this.$t('Video'),
+          icon: 'video',
+          description: this.$t('Add a PeerTube or local video')
         }
       ];
     }
@@ -85,7 +93,8 @@ export default {
         'format-title': 'FormatTitle',
         'image': 'Image',
         'minus': 'Minus',
-        'view-grid': 'ViewGrid'
+        'view-grid': 'ViewGrid',
+        'video': 'Video'
       };
       return iconMap[iconName] || 'Text';
     }

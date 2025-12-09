@@ -187,7 +187,8 @@ WYSIWYG page editor:
 |------|-------------|
 | heading | H1-H6 headings |
 | text | Rich text content (Markdown) |
-| image | Image with alt text |
+| image | Image with alt text, optional clickable link (internal page or external URL) |
+| video | Embedded video from YouTube, Vimeo, PeerTube, or local upload |
 | links | Link collection (cards or list) |
 | divider | Horizontal separator |
 
@@ -240,14 +241,16 @@ IntraVox/
 │   ├── navigation.json
 │   ├── footer.json
 │   ├── home.json
-│   ├── images/
-│   │   └── *.jpg, *.png, ...
+│   ├── _media/
+│   │   └── *.jpg, *.png, *.mp4, ...
 │   └── {section}/
 │       ├── {page}.json
-│       ├── images/
+│       ├── _media/
 │       └── {subpage}/
 │           └── ...
 ```
+
+The `_media/` folder stores images, videos, and other media files. Local video uploads are stored here alongside images.
 
 ### Benefits of File-based Storage
 - Version control through Nextcloud versioning

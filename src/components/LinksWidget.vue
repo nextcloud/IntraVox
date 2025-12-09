@@ -3,7 +3,7 @@
     <div v-if="widget.items && widget.items.length > 0" class="links-grid" :style="getGridStyle()">
       <a
         v-for="(link, index) in widget.items"
-        :key="index"
+        :key="link.url || `link-${index}`"
         :href="link.url"
         :target="isInternalLink(link.url) ? '_self' : '_blank'"
         :rel="isInternalLink(link.url) ? '' : 'noopener noreferrer'"

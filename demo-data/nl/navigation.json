@@ -68,6 +68,14 @@
             ]
         },
         {
+            "id": "nav_ai",
+            "title": "AI in Nextcloud",
+            "uniqueId": "page-a1b2c3d4-e5f6-7890-abcd-000000000001",
+            "url": null,
+            "target": null,
+            "children": []
+        },
+        {
             "id": "nav_afdelingen",
             "title": "Afdelingen",
             "uniqueId": "page-b2c3d4e5-f6a7-8901-bcde-f12345678901",

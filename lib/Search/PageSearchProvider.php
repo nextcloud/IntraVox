@@ -73,9 +73,10 @@ class PageSearchProvider implements IProvider {
 
                 // Get first match for subline
                 $subline = '';
-                $thumbnailUrl = '';
-                // Use article icon for IntraVox pages
-                $icon = 'icon-article';
+                // Use IntraVox app icon for search results
+                // The app-search.svg has neutral gray color (#555) for good contrast on both themes
+                $thumbnailUrl = $this->urlGenerator->imagePath('intravox', 'app-search.svg');
+                $icon = '';
 
                 if (!empty($result['matches'])) {
                     $firstMatch = $result['matches'][0];

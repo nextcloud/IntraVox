@@ -432,7 +432,10 @@ export default {
       const lastSlash = path.lastIndexOf('/');
       const folderPath = lastSlash > 0 ? path.substring(0, lastSlash) : path;
 
-      // Convert internal path to display format
+      // Get the groupfolder name from metadata
+      const groupfolderName = this.metadata?.mountPoint || 'IntraVox';
+
+      // Format 1: Direct groupfolder access (admin/internal)
       // Path format: /__groupfolders/4/files/en/mission
       // Display format: IntraVox/en/mission
       if (folderPath.startsWith('/__groupfolders/')) {
@@ -442,11 +445,18 @@ export default {
         // Remove 'files/' from the beginning if present (internal path structure)
         const cleanPath = pathAfterGroupfolder.replace(/^files\//, '');
 
-        // Get the groupfolder name from metadata
-        const groupfolderName = this.metadata?.mountPoint || 'IntraVox';
-
         // Prepend groupfolder name
         return cleanPath ? `${groupfolderName}/${cleanPath}` : groupfolderName;
+      }
+
+      // Format 2: User-mounted groupfolder view (normal users)
+      // Path format: /user@email.com/files/IntraVox/en/mission
+      // Display format: IntraVox/en/mission
+      const userMountPattern = new RegExp(`^/[^/]+/files/${groupfolderName}/(.*)$`);
+      const userMatch = folderPath.match(userMountPattern);
+      if (userMatch) {
+        const relativePath = userMatch[1];
+        return relativePath ? `${groupfolderName}/${relativePath}` : groupfolderName;
       }
 
       return folderPath;
@@ -460,7 +470,13 @@ export default {
       const lastSlash = path.lastIndexOf('/');
       const folderPath = lastSlash > 0 ? path.substring(0, lastSlash) : path;
 
-      // Convert groupfolder internal path to Files app URL
+      // Use the groupfolder name from metadata if available, otherwise default to 'IntraVox'
+      const groupfolderName = this.metadata?.mountPoint || 'IntraVox';
+
+      // Get the parent folder fileId from metadata
+      const fileId = this.metadata?.parentFolderId;
+
+      // Format 1: Direct groupfolder access (admin/internal)
       // Path format: /__groupfolders/4/files/en/mission/page.json
       // Target format: /apps/files/files/{parentFolderId}?dir=/IntraVox/en/mission
       if (folderPath.startsWith('/__groupfolders/')) {
@@ -470,20 +486,31 @@ export default {
         // Remove 'files/' from the beginning if present (internal path structure)
         const cleanPath = pathAfterGroupfolder.replace(/^files\//, '');
 
-        // Use the groupfolder name from metadata if available, otherwise default to 'IntraVox'
-        const groupfolderName = this.metadata?.mountPoint || 'IntraVox';
-
-        // Get the parent folder fileId from metadata
-        const fileId = this.metadata?.parentFolderId;
-
         if (!fileId) {
-          // Fallback if no fileId available
           return '#';
         }
 
         // Generate Files app URL with fileId and dir parameters
-        // Format: /apps/files/files/{parentFolderId}?dir=/IntraVox/en/mission
         const filesPath = `/${groupfolderName}/${cleanPath}`;
+        return generateUrl('/apps/files/files/{fileId}?dir={dir}', {
+          fileId: fileId,
+          dir: filesPath
+        });
+      }
+
+      // Format 2: User-mounted groupfolder view (normal users)
+      // Path format: /user@email.com/files/IntraVox/en/mission
+      // Target format: /apps/files/files/{parentFolderId}?dir=/IntraVox/en/mission
+      const userMountPattern = new RegExp(`^/[^/]+/files/${groupfolderName}/(.*)$`);
+      const userMatch = folderPath.match(userMountPattern);
+      if (userMatch) {
+        const relativePath = userMatch[1];
+
+        if (!fileId) {
+          return '#';
+        }
+
+        const filesPath = relativePath ? `/${groupfolderName}/${relativePath}` : `/${groupfolderName}`;
         return generateUrl('/apps/files/files/{fileId}?dir={dir}', {
           fileId: fileId,
           dir: filesPath

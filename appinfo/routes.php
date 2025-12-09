@@ -10,8 +10,8 @@ return [
         ['name' => 'api#createPage', 'url' => '/api/pages', 'verb' => 'POST'],
         ['name' => 'api#updatePage', 'url' => '/api/pages/{id}', 'verb' => 'PUT'],
         ['name' => 'api#deletePage', 'url' => '/api/pages/{id}', 'verb' => 'DELETE'],
-        ['name' => 'api#uploadImage', 'url' => '/api/pages/{pageId}/images', 'verb' => 'POST'],
-        ['name' => 'api#getImage', 'url' => '/api/pages/{pageId}/images/{filename}', 'verb' => 'GET'],
+        ['name' => 'api#uploadMedia', 'url' => '/api/pages/{pageId}/media', 'verb' => 'POST'],
+        ['name' => 'api#getMedia', 'url' => '/api/pages/{pageId}/media/{filename}', 'verb' => 'GET'],
         ['name' => 'api#getPageVersions', 'url' => '/api/pages/{pageId}/versions', 'verb' => 'GET'],
         ['name' => 'api#restorePageVersion', 'url' => '/api/pages/{pageId}/versions/{timestamp}', 'verb' => 'POST'],
         ['name' => 'api#updateVersionLabel', 'url' => '/api/pages/{pageId}/versions/{timestamp}/label', 'verb' => 'PUT'],
@@ -36,6 +36,11 @@ return [
         ['name' => 'demoData#getStatus', 'url' => '/api/demo-data/status', 'verb' => 'GET'],
         ['name' => 'demoData#getLanguages', 'url' => '/api/demo-data/languages', 'verb' => 'GET'],
         ['name' => 'demoData#importDemoData', 'url' => '/api/demo-data/import', 'verb' => 'POST'],
+
+        // Settings routes
+        ['name' => 'api#getVideoDomains', 'url' => '/api/settings/video-domains', 'verb' => 'GET'],
+        ['name' => 'api#setVideoDomains', 'url' => '/api/settings/video-domains', 'verb' => 'POST'],
+        ['name' => 'api#getUploadLimit', 'url' => '/api/settings/upload-limit', 'verb' => 'GET'],
 
         // Page routes
         ['name' => 'page#index', 'url' => '/', 'verb' => 'GET'],

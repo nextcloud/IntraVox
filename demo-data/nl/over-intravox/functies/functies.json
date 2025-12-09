@@ -274,7 +274,7 @@
                         "type": "text",
                         "column": 1,
                         "order": 2,
-                        "content": "| Component | Technologie |\n|-----------|------------|\n| Frontend | Vue.js 3 |\n| Backend | PHP 8+ |\n| Database | MySQL/MariaDB/PostgreSQL |\n| Platform | Nextcloud 27+ |\n| Licentie | AGPL v3 |"
+                        "content": "| Component | Technologie |\n|-----------|------------|\n| Frontend | Vue.js 3 |\n| Backend | PHP 8+ |\n| Database | MySQL/MariaDB/PostgreSQL |\n| Platform | Nextcloud 32+ |\n| Licentie | AGPL v3 |"
                     }
                 ]
             },

@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace OCA\IntraVox\Service;
 
+use OCA\IntraVox\Constants;
 use OCP\Files\IRootFolder;
 use OCP\Files\NotFoundException;
 use OCP\IUserSession;
@@ -12,9 +13,16 @@ use Psr\Log\LoggerInterface;
 use OCP\Files\Cache\ICacheEntry;
 
 class PageService {
-    private const ALLOWED_WIDGET_TYPES = ['text', 'heading', 'image', 'links', 'file', 'divider', 'spacer'];
+    private const ALLOWED_WIDGET_TYPES = ['text', 'heading', 'image', 'links', 'file', 'divider', 'spacer', 'video'];
     private const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    private const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/ogg'];
+    private const ALLOWED_MEDIA_TYPES = [
+        'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+        'video/mp4', 'video/webm', 'video/ogg'
+    ];
     private const MAX_IMAGE_SIZE = 2097152; // 2MB (PHP default upload limit)
+    private const MAX_VIDEO_SIZE = 52428800; // 50MB
+    private const MAX_MEDIA_SIZE = 52428800; // 50MB (largest of image/video limits)
     private const MAX_COLUMNS = 5;
     private const SUPPORTED_LANGUAGES = ['nl', 'en', 'de', 'fr'];
     private const DEFAULT_LANGUAGE = 'en';
@@ -43,6 +51,47 @@ class PageService {
     /** @var array Request-level cache for folder permissions */
     private array $permissionsCache = [];
 
+    /** @var array Request-level cache for file contents */
+    private array $fileContentCache = [];
+
+    /** @var array Static cache for page tree (shared across requests within same PHP process) */
+    private static array $pageTreeCache = [];
+
+    /** @var int Cache TTL for page tree in seconds */
+    private const PAGE_TREE_CACHE_TTL = 300; // 5 minutes
+
+    /**
+     * Get the effective upload limit in bytes (minimum of upload_max_filesize and post_max_size)
+     */
+    public function getUploadLimit(): int {
+        $uploadMax = $this->parsePhpSize(ini_get('upload_max_filesize') ?: '2M');
+        $postMax = $this->parsePhpSize(ini_get('post_max_size') ?: '8M');
+
+        // Use the smaller of the two, but cap at our app's MAX_MEDIA_SIZE
+        $phpLimit = min($uploadMax, $postMax);
+        return min($phpLimit, self::MAX_MEDIA_SIZE);
+    }
+
+    /**
+     * Parse PHP size notation (e.g., '2M', '8M', '512K') to bytes
+     */
+    private function parsePhpSize(string $size): int {
+        $size = trim($size);
+        $unit = strtoupper(substr($size, -1));
+        $value = (int) substr($size, 0, -1);
+
+        switch ($unit) {
+            case 'G':
+                return $value * 1024 * 1024 * 1024;
+            case 'M':
+                return $value * 1024 * 1024;
+            case 'K':
+                return $value * 1024;
+            default:
+                return (int) $size;
+        }
+    }
+
     /**
      * Clear all request-level caches (call after mutations)
      */
@@ -56,8 +105,146 @@ class PageService {
             $this->folderPathCache = [];
             $this->directoryListingCache = [];
             $this->permissionsCache = [];
+            $this->fileContentCache = [];
         }
         $this->listPagesCache = null;
+
+        // Also clear the static page tree cache for this user/language
+        $cacheKey = $this->userId . '_' . $this->getUserLanguage();
+        unset(self::$pageTreeCache[$cacheKey]);
+    }
+
+    /**
+     * Preserve originalSrc for video widgets during page updates.
+     * This ensures that video URLs are not lost when the domain whitelist changes.
+     * When a video is blocked, its originalSrc is preserved so it can be re-enabled
+     * if the admin adds the domain back to the whitelist.
+     */
+    private function preserveVideoOriginalUrls(array $newData, array $existingData): array {
+        // Build a map of existing video widgets by their ID
+        $existingVideos = [];
+        $this->collectVideoWidgets($existingData, $existingVideos);
+
+        // Update new data with preserved originalSrc values
+        $this->updateVideoWidgetsWithOriginalUrls($newData, $existingVideos);
+
+        return $newData;
+    }
+
+    /**
+     * Collect all video widgets from page data into a map keyed by widget ID
+     */
+    private function collectVideoWidgets(array $data, array &$videos): void {
+        // Process main rows
+        if (isset($data['layout']['rows']) && is_array($data['layout']['rows'])) {
+            foreach ($data['layout']['rows'] as $row) {
+                if (isset($row['widgets']) && is_array($row['widgets'])) {
+                    foreach ($row['widgets'] as $widget) {
+                        if (($widget['type'] ?? '') === 'video' && isset($widget['id'])) {
+                            $videos[$widget['id']] = $widget;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Process side columns
+        if (isset($data['layout']['sideColumns']) && is_array($data['layout']['sideColumns'])) {
+            foreach (['left', 'right'] as $side) {
+                if (isset($data['layout']['sideColumns'][$side]['widgets']) && is_array($data['layout']['sideColumns'][$side]['widgets'])) {
+                    foreach ($data['layout']['sideColumns'][$side]['widgets'] as $widget) {
+                        if (($widget['type'] ?? '') === 'video' && isset($widget['id'])) {
+                            $videos[$widget['id']] = $widget;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Process header row
+        if (isset($data['layout']['headerRow']['widgets']) && is_array($data['layout']['headerRow']['widgets'])) {
+            foreach ($data['layout']['headerRow']['widgets'] as $widget) {
+                if (($widget['type'] ?? '') === 'video' && isset($widget['id'])) {
+                    $videos[$widget['id']] = $widget;
+                }
+            }
+        }
+    }
+
+    /**
+     * Update video widgets in new data with originalSrc from existing widgets
+     */
+    private function updateVideoWidgetsWithOriginalUrls(array &$data, array $existingVideos): void {
+        // Process main rows
+        if (isset($data['layout']['rows']) && is_array($data['layout']['rows'])) {
+            foreach ($data['layout']['rows'] as $rowIndex => &$row) {
+                if (isset($row['widgets']) && is_array($row['widgets'])) {
+                    foreach ($row['widgets'] as $widgetIndex => &$widget) {
+                        $this->preserveWidgetOriginalUrl($widget, $existingVideos);
+                    }
+                }
+            }
+        }
+
+        // Process side columns
+        if (isset($data['layout']['sideColumns']) && is_array($data['layout']['sideColumns'])) {
+            foreach (['left', 'right'] as $side) {
+                if (isset($data['layout']['sideColumns'][$side]['widgets']) && is_array($data['layout']['sideColumns'][$side]['widgets'])) {
+                    foreach ($data['layout']['sideColumns'][$side]['widgets'] as $widgetIndex => &$widget) {
+                        $this->preserveWidgetOriginalUrl($widget, $existingVideos);
+                    }
+                }
+            }
+        }
+
+        // Process header row
+        if (isset($data['layout']['headerRow']['widgets']) && is_array($data['layout']['headerRow']['widgets'])) {
+            foreach ($data['layout']['headerRow']['widgets'] as $widgetIndex => &$widget) {
+                $this->preserveWidgetOriginalUrl($widget, $existingVideos);
+            }
+        }
+    }
+
+    /**
+     * Preserve originalSrc for a single video widget
+     */
+    private function preserveWidgetOriginalUrl(array &$widget, array $existingVideos): void {
+        if (($widget['type'] ?? '') !== 'video') {
+            return;
+        }
+
+        // Skip local videos - they don't have originalSrc
+        if (($widget['provider'] ?? '') === 'local') {
+            return;
+        }
+
+        $widgetId = $widget['id'] ?? null;
+        if ($widgetId && isset($existingVideos[$widgetId])) {
+            $existing = $existingVideos[$widgetId];
+
+            // If the new widget has no src or originalSrc, but the existing one does,
+            // preserve the originalSrc so the URL isn't lost
+            $newSrc = $widget['src'] ?? '';
+            $newOriginalSrc = $widget['originalSrc'] ?? '';
+            $existingOriginalSrc = $existing['originalSrc'] ?? '';
+            $existingSrc = $existing['src'] ?? '';
+
+            // Preserve originalSrc: use existing originalSrc if new one is empty
+            if (empty($newOriginalSrc)) {
+                if (!empty($existingOriginalSrc)) {
+                    $widget['originalSrc'] = $existingOriginalSrc;
+                } elseif (!empty($existingSrc)) {
+                    // Fallback: use existing src as originalSrc
+                    $widget['originalSrc'] = $existingSrc;
+                }
+            }
+
+            // If new src is empty but we have originalSrc, keep it for re-validation
+            if (empty($newSrc) && !empty($widget['originalSrc'] ?? '')) {
+                // The sanitizeWidget function will re-validate against current whitelist
+                // and either allow it (setting src) or block it (keeping blocked=true)
+            }
+        }
     }
 
     /**
@@ -80,6 +267,17 @@ class PageService {
             $this->permissionsCache[$path] = $folder->getPermissions();
         }
         return $this->permissionsCache[$path];
+    }
+
+    /**
+     * Get cached file content (prevents repeated reads of same file within request)
+     */
+    private function getCachedFileContent(\OCP\Files\File $file): string {
+        $path = $file->getPath();
+        if (!isset($this->fileContentCache[$path])) {
+            $this->fileContentCache[$path] = $file->getContent();
+        }
+        return $this->fileContentCache[$path];
     }
 
     public function __construct(
@@ -118,15 +316,15 @@ class PageService {
     }
 
     /**
-     * Create a simple .nomedia marker for the images folder
-     * The folder name "images" itself is the primary identifier
+     * Create a simple .nomedia marker for the _media folder
+     * The folder name "_media" itself is the primary identifier
      */
-    private function createImagesFolderIcon($imagesFolder): void {
+    private function createMediaFolderMarker($mediaFolder): void {
         try {
             // Only create a simple .nomedia file
             // This is standard practice for media storage folders
-            if (!$imagesFolder->nodeExists('.nomedia')) {
-                $nomediaFile = $imagesFolder->newFile('.nomedia');
+            if (!$mediaFolder->nodeExists('.nomedia')) {
+                $nomediaFile = $mediaFolder->newFile('.nomedia');
                 $nomediaFile->putContent('');
             }
         } catch (\Exception $e) {
@@ -256,12 +454,6 @@ class PageService {
             $languageFolder = $folder;
         }
 
-        // Debug: Log which folder we're searching
-        $this->logger->info('IntraVox: findPageByUniqueId searching', [
-            'folder' => $folder->getPath(),
-            'uniqueId' => $uniqueId
-        ]);
-
         // Check for home.json first (most common case for homepage)
         try {
             $homeFile = $folder->get('home.json');
@@ -285,8 +477,8 @@ class PageService {
 
             // Collect subfolders for later recursive search
             if ($item->getType() === \OCP\Files\FileInfo::TYPE_FOLDER) {
-                // Skip image folders and special folders
-                if ($itemName !== 'images' && $itemName !== '.nomedia') {
+                // Skip media folders and special folders
+                if ($itemName !== '_media' && $itemName !== 'images' && $itemName !== '.nomedia') {
                     $subfolderItems[] = $item;
                 }
                 continue;
@@ -429,7 +621,7 @@ class PageService {
                 $folderName = $item->getName();
 
                 // Skip special folders
-                if (in_array($folderName, ['images', 'files'])) {
+                if (in_array($folderName, ['_media', 'images', 'files'])) {
                     continue;
                 }
 
@@ -442,8 +634,10 @@ class PageService {
                         continue;
                     }
 
-                    // Suppress any warnings from getContent and catch all exceptions
-                    $content = @$jsonFile->getContent();
+                    // Use cached file content to avoid repeated reads
+                    $content = $jsonFile instanceof \OCP\Files\File
+                        ? $this->getCachedFileContent($jsonFile)
+                        : @$jsonFile->getContent();
 
                     if ($content === false || $content === null) {
                         continue;
@@ -519,7 +713,7 @@ class PageService {
                 $folderName = $item->getName();
 
                 // Skip special folders
-                if (in_array($folderName, ['images', 'files'])) {
+                if (in_array($folderName, ['_media', 'images', 'files'])) {
                     continue;
                 }
 
@@ -531,7 +725,10 @@ class PageService {
                         continue;
                     }
 
-                    $content = @$jsonFile->getContent();
+                    // Use cached file content to avoid repeated reads
+                    $content = $jsonFile instanceof \OCP\Files\File
+                        ? $this->getCachedFileContent($jsonFile)
+                        : @$jsonFile->getContent();
 
                     if ($content === false || $content === null) {
                         continue;
@@ -783,7 +980,7 @@ class PageService {
                 }
 
                 // Skip special folders
-                if (in_array($item->getName(), ['images', 'files'])) {
+                if (in_array($item->getName(), ['_media', 'images', 'files'])) {
                     continue;
                 }
 
@@ -1063,13 +1260,13 @@ class PageService {
             $file = $targetFolder->newFile('home.json');
             $file->putContent(json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 
-            // Create images folder for home if it doesn't exist
+            // Create _media folder for home if it doesn't exist
             try {
-                $imagesFolder = $targetFolder->get('images');
-                $this->createImagesFolderIcon($imagesFolder);
+                $mediaFolder = $targetFolder->get('_media');
+                $this->createMediaFolderMarker($mediaFolder);
             } catch (NotFoundException $e) {
-                $imagesFolder = $targetFolder->newFolder('images');
-                $this->createImagesFolderIcon($imagesFolder);
+                $mediaFolder = $targetFolder->newFolder('_media');
+                $this->createMediaFolderMarker($mediaFolder);
             }
 
             $this->scanPageFolder($targetFolder);
@@ -1089,18 +1286,18 @@ class PageService {
                 throw new \InvalidArgumentException('Failed to create page file: ' . $e->getMessage());
             }
 
-            // Create images subfolder
+            // Create _media subfolder
             try {
-                $imagesFolder = $pageFolder->newFolder('images');
+                $mediaFolder = $pageFolder->newFolder('_media');
                 // Add a .nomedia file to indicate this is a special folder
-                $this->createImagesFolderIcon($imagesFolder);
+                $this->createMediaFolderMarker($mediaFolder);
             } catch (\Exception $e) {
-                // Images folder might already exist, that's okay
+                // Media folder might already exist, that's okay
                 try {
-                    $imagesFolder = $pageFolder->get('images');
-                    $this->createImagesFolderIcon($imagesFolder);
+                    $mediaFolder = $pageFolder->get('_media');
+                    $this->createMediaFolderMarker($mediaFolder);
                 } catch (\Exception $ex) {
-                    // Couldn't get images folder
+                    // Couldn't get media folder
                 }
             }
 
@@ -1277,14 +1474,20 @@ class PageService {
         try {
             $existingContent = $file->getContent();
             $existingData = json_decode($existingContent, true);
+            if (!is_array($existingData)) {
+                $existingData = [];
+            }
         } catch (\Exception $e) {
             throw new \InvalidArgumentException('Failed to read existing page data: ' . $e->getMessage());
         }
 
-        // Preserve uniqueId
+        // Preserve uniqueId from existing data
         if (isset($existingData['uniqueId'])) {
             $data['uniqueId'] = $existingData['uniqueId'];
         }
+
+        // Preserve originalSrc for video widgets to prevent URL loss when whitelist changes
+        $data = $this->preserveVideoOriginalUrls($data, $existingData);
 
         try {
             $validatedData = $this->validateAndSanitizePage($data);
@@ -1314,7 +1517,9 @@ class PageService {
         }
 
         // Return data with id for frontend (id is derived from folder name)
-        return array_merge(['id' => $result['id']], $validatedData);
+        // Get id from folder name (for home page it's 'home', otherwise folder basename)
+        $pageId = ($result['isHome'] ?? false) ? 'home' : $result['folder']->getName();
+        return array_merge(['id' => $pageId], $validatedData);
     }
 
     /**
@@ -1388,9 +1593,10 @@ class PageService {
     }
 
     /**
-     * Upload an image for a specific page
+     * Upload media (image or video) for a specific page
+     * Unified endpoint that stores all media in a single '_media' folder
      */
-    public function uploadImage(string $pageId, array $file): string {
+    public function uploadMedia(string $pageId, array $file): string {
         if (!isset($file['tmp_name']) || !isset($file['name'])) {
             throw new \InvalidArgumentException('Invalid file upload');
         }
@@ -1418,18 +1624,20 @@ class PageService {
         $mimeType = finfo_file($finfo, $file['tmp_name']);
         finfo_close($finfo);
 
-        if (!in_array($mimeType, self::ALLOWED_IMAGE_TYPES)) {
-            throw new \InvalidArgumentException('Invalid image type. Allowed: JPEG, PNG, GIF, WebP');
+        if (!in_array($mimeType, self::ALLOWED_MEDIA_TYPES)) {
+            throw new \InvalidArgumentException('Invalid file type. Allowed: JPEG, PNG, GIF, WebP, MP4, WebM, OGG');
         }
 
         // Validate file size
-        if ($file['size'] > self::MAX_IMAGE_SIZE) {
-            throw new \InvalidArgumentException('Image too large. Maximum size is 2MB.');
+        if ($file['size'] > self::MAX_MEDIA_SIZE) {
+            throw new \InvalidArgumentException('File too large. Maximum size is 50MB.');
         }
 
-        // Sanitize filename
-        $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
-        $filename = uniqid('img_', true) . '.' . $extension;
+        // Sanitize filename with prefix based on type
+        $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        $isVideo = in_array($mimeType, self::ALLOWED_VIDEO_TYPES);
+        $prefix = $isVideo ? 'vid_' : 'img_';
+        $filename = uniqid($prefix, true) . '.' . $extension;
 
         $languageFolder = $this->getLanguageFolder();
 
@@ -1443,26 +1651,26 @@ class PageService {
             }
         }
 
-        // Get images folder for this page
+        // Get media folder for this page
         if ($result['isHome'] ?? false) {
-            // Home images are in root/images/
+            // Home media is in root/_media/
             try {
-                $imagesFolder = $languageFolder->get('images');
+                $mediaFolder = $languageFolder->get('_media');
             } catch (NotFoundException $e) {
-                $imagesFolder = $languageFolder->newFolder('images');
+                $mediaFolder = $languageFolder->newFolder('_media');
             }
         } else {
             $pageFolder = $result['folder'];
 
-            // Get or create images subfolder
+            // Get or create media subfolder
             try {
-                $imagesFolder = $pageFolder->get('images');
+                $mediaFolder = $pageFolder->get('_media');
             } catch (NotFoundException $e) {
-                $imagesFolder = $pageFolder->newFolder('images');
+                $mediaFolder = $pageFolder->newFolder('_media');
             }
         }
 
-        $newFile = $imagesFolder->newFile($filename);
+        $newFile = $mediaFolder->newFile($filename);
         $content = file_get_contents($file['tmp_name']);
         $newFile->putContent($content);
 
@@ -1470,9 +1678,10 @@ class PageService {
     }
 
     /**
-     * Get an image for a specific page
+     * Get media (image or video) for a specific page
+     * Unified endpoint that serves all media from a single '_media' folder
      */
-    public function getImage(string $pageId, string $filename) {
+    public function getMedia(string $pageId, string $filename) {
         // Save original BEFORE sanitization
         $originalPageId = $pageId;
         $filename = basename($filename); // Prevent directory traversal
@@ -1485,8 +1694,8 @@ class PageService {
                 $originalPageId === '2e8f694e-147e-4793-8949-4732e679ae6b' ||
                 $originalPageId === 'page-2e8f694e-147e-4793-8949-4732e679ae6b') {
 
-                $imagesFolder = $languageFolder->get('images');
-                $file = $imagesFolder->get($filename);
+                $mediaFolder = $languageFolder->get('_media');
+                $file = $mediaFolder->get($filename);
 
                 if ($file->getType() !== \OCP\Files\FileInfo::TYPE_FILE) {
                     throw new \Exception('Not a file');
@@ -1495,43 +1704,55 @@ class PageService {
                 // Get mime type
                 $mimeType = $file->getMimeType();
 
+                // Validate it's an allowed media type
+                if (!in_array($mimeType, self::ALLOWED_MEDIA_TYPES)) {
+                    throw new \Exception('Invalid media type');
+                }
+
                 // Create stream response
                 $response = new \OCP\AppFramework\Http\StreamResponse($file->fopen('rb'));
                 $response->addHeader('Content-Type', $mimeType);
                 $response->addHeader('Content-Disposition', 'inline; filename="' . $file->getName() . '"');
-                $response->addHeader('Cache-Control', 'public, max-age=31536000');
+                // Use longer cache for images, shorter for videos
+                $isVideo = in_array($mimeType, self::ALLOWED_VIDEO_TYPES);
+                $cacheTime = $isVideo ? 86400 : 31536000;
+                $response->addHeader('Cache-Control', 'public, max-age=' . $cacheTime);
 
                 return $response;
             }
 
             // Try cache with BOTH original and sanitized IDs
-            $imagesFolder = null;
+            $mediaFolder = null;
             $pageId = $this->sanitizeId($originalPageId);
 
             if (isset($this->pageFolderCache[$originalPageId])) {
                 // Cache hit with original ID (page-abc-123...)
                 $pageFolder = $this->pageFolderCache[$originalPageId];
-                $imagesFolder = $pageFolder->get('images');
+                try {
+                    $mediaFolder = $pageFolder->get('_media');
+                } catch (NotFoundException $e) {
+                    // No media folder
+                }
             } else if (isset($this->pageFolderCache[$pageId])) {
                 // Cache hit with sanitized ID (abc-123...)
                 $pageFolder = $this->pageFolderCache[$pageId];
-                $imagesFolder = $pageFolder->get('images');
+                try {
+                    $mediaFolder = $pageFolder->get('_media');
+                } catch (NotFoundException $e) {
+                    // No media folder
+                }
             }
 
             // If cache miss, search using ORIGINAL pageId
-            if ($imagesFolder === null) {
-                $imagesFolder = $this->findImagesFolderForPage(
-                    $languageFolder,
-                    $originalPageId  // Use ORIGINAL with 'page-' prefix
-                );
+            if ($mediaFolder === null) {
+                $mediaFolder = $this->findMediaFolderForPage($languageFolder, $originalPageId);
             }
 
-            if ($imagesFolder === null) {
-                $this->logger->error("getImage: Images folder not found for page: {$originalPageId}");
-                throw new \Exception('Images folder not found for page: ' . $originalPageId);
+            if ($mediaFolder === null) {
+                throw new \Exception('Media folder not found');
             }
 
-            $file = $imagesFolder->get($filename);
+            $file = $mediaFolder->get($filename);
 
             if ($file->getType() !== \OCP\Files\FileInfo::TYPE_FILE) {
                 throw new \Exception('Not a file');
@@ -1540,15 +1761,23 @@ class PageService {
             // Get mime type
             $mimeType = $file->getMimeType();
 
+            // Validate it's an allowed media type
+            if (!in_array($mimeType, self::ALLOWED_MEDIA_TYPES)) {
+                throw new \Exception('Invalid media type');
+            }
+
             // Create stream response
             $response = new \OCP\AppFramework\Http\StreamResponse($file->fopen('rb'));
             $response->addHeader('Content-Type', $mimeType);
             $response->addHeader('Content-Disposition', 'inline; filename="' . $file->getName() . '"');
-            $response->addHeader('Cache-Control', 'public, max-age=31536000');
+            // Use longer cache for images, shorter for videos
+            $isVideo = in_array($mimeType, self::ALLOWED_VIDEO_TYPES);
+            $cacheTime = $isVideo ? 86400 : 31536000;
+            $response->addHeader('Cache-Control', 'public, max-age=' . $cacheTime);
 
             return $response;
         } catch (NotFoundException $e) {
-            throw new \Exception('Image not found');
+            throw new \Exception('Media not found');
         }
     }
 
@@ -1567,9 +1796,9 @@ class PageService {
     }
 
     /**
-     * Recursively find images folder for a page by uniqueId
+     * Recursively find media folder for a page by uniqueId
      */
-    private function findImagesFolderForPage($folder, string $uniqueId): ?\OCP\Files\Folder {
+    private function findMediaFolderForPage($folder, string $uniqueId): ?\OCP\Files\Folder {
         // First scan JSON files in CURRENT folder to see if page is here
         $foundMatch = false;
         foreach ($this->getCachedDirectoryListing($folder) as $item) {
@@ -1589,15 +1818,15 @@ class PageService {
             }
         }
 
-        // If we found the matching page JSON in this folder, return its images folder
+        // If we found the matching page JSON in this folder, return its media folder
         if ($foundMatch) {
             try {
-                $imagesFolder = $folder->get('images');
-                if ($imagesFolder->getType() === \OCP\Files\FileInfo::TYPE_FOLDER) {
-                    return $imagesFolder;
+                $mediaFolder = $folder->get('_media');
+                if ($mediaFolder->getType() === \OCP\Files\FileInfo::TYPE_FOLDER) {
+                    return $mediaFolder;
                 }
             } catch (\OCP\Files\NotFoundException $e) {
-                // Page found but no images folder
+                // Page found but no media folder
                 return null;
             }
         }
@@ -1608,13 +1837,13 @@ class PageService {
                 $itemName = $item->getName();
 
                 // Skip special folders to avoid infinite loops
-                if ($itemName === 'images' || $itemName === '.nomedia') {
+                if ($itemName === '_media' || $itemName === 'images' || $itemName === 'videos' || $itemName === '.nomedia') {
                     continue;
                 }
 
                 // Recurse into subfolder - wrap in try-catch to handle stale cache entries
                 try {
-                    $result = $this->findImagesFolderForPage($item, $uniqueId);
+                    $result = $this->findMediaFolderForPage($item, $uniqueId);
                     if ($result !== null) {
                         return $result;
                     }
@@ -1622,7 +1851,7 @@ class PageService {
                     // This subfolder doesn't actually exist (stale cache entry) - skip it
                     continue;
                 } catch (\Exception $e) {
-                    $this->logger->error("findImagesFolderForPage: Error accessing subfolder {$itemName}: {$e->getMessage()}");
+                    $this->logger->error("findMediaFolderForPage: Error accessing subfolder {$itemName}: {$e->getMessage()}");
                     continue;
                 }
             }
@@ -1805,6 +2034,17 @@ class PageService {
                     $allowedPositions = ['center', 'top', 'bottom', 'left', 'right'];
                     $sanitized['objectPosition'] = in_array($widget['objectPosition'], $allowedPositions) ? $widget['objectPosition'] : 'center';
                 }
+                // Preserve image link properties
+                if (isset($widget['linkType'])) {
+                    $allowedLinkTypes = ['none', 'internal', 'external'];
+                    $sanitized['linkType'] = in_array($widget['linkType'], $allowedLinkTypes) ? $widget['linkType'] : 'none';
+                }
+                if (isset($widget['linkUrl'])) {
+                    $sanitized['linkUrl'] = $this->sanitizeUrl($widget['linkUrl']);
+                }
+                if (isset($widget['linkPageId'])) {
+                    $sanitized['linkPageId'] = $this->sanitizeText($widget['linkPageId']);
+                }
                 break;
 
             case 'links':
@@ -1868,6 +2108,54 @@ class PageService {
                     $sanitized['height'] = 20; // default 20px
                 }
                 break;
+
+            case 'video':
+                // Video widget - embed URL or local file
+                // Supports: 'embed' (generic URL), 'local' (uploaded file)
+                // Legacy 'peertube' is treated as 'embed' for backwards compatibility
+                $provider = ($widget['provider'] ?? 'embed') === 'local' ? 'local' : 'embed';
+                $sanitized['provider'] = $provider;
+                $sanitized['title'] = $this->sanitizeText($widget['title'] ?? '');
+
+                if ($provider === 'embed') {
+                    // FIX: Check src (embed URL) first, then fallback to originalSrc
+                    // The frontend converts youtube.com → youtube-nocookie.com in src
+                    // but preserves the original URL in originalSrc
+                    // We need to validate src (the embed URL) against the whitelist
+                    $srcUrl = $widget['src'] ?? '';
+                    $originalUrl = $widget['originalSrc'] ?? '';
+
+                    // Validate src first (converted embed URL), fallback to originalSrc
+                    $urlToValidate = !empty($srcUrl) ? $srcUrl : $originalUrl;
+                    $sanitizedUrl = $this->sanitizeVideoEmbedUrl($urlToValidate);
+
+                    if ($sanitizedUrl === '' && !empty($originalUrl)) {
+                        // URL was blocked - preserve original URL so it can work again
+                        // if admin adds the domain to whitelist later
+                        $sanitized['src'] = '';
+                        $sanitized['originalSrc'] = $originalUrl; // Preserve for later
+                        $sanitized['blocked'] = true;
+                        // Show blockedDomain based on what we validated
+                        $blockedHost = !empty($srcUrl)
+                            ? parse_url($srcUrl, PHP_URL_HOST)
+                            : parse_url($originalUrl, PHP_URL_HOST);
+                        $sanitized['blockedDomain'] = $blockedHost ?? '';
+                    } else {
+                        $sanitized['src'] = $sanitizedUrl;
+                        $sanitized['originalSrc'] = $originalUrl ?: $sanitizedUrl; // Always preserve original
+                        $sanitized['blocked'] = false;
+                    }
+                } else {
+                    // Local video file - sanitize path
+                    $sanitized['src'] = $this->sanitizePath($widget['src'] ?? '');
+                    $sanitized['blocked'] = false;
+                }
+
+                // Playback options (boolean values)
+                $sanitized['autoplay'] = (bool) ($widget['autoplay'] ?? false);
+                $sanitized['loop'] = (bool) ($widget['loop'] ?? false);
+                $sanitized['muted'] = (bool) ($widget['muted'] ?? false);
+                break;
         }
 
         return $sanitized;
@@ -1926,6 +2214,132 @@ class PageService {
     }
 
     /**
+     * Get allowed video domains from config
+     * @return array List of allowed HTTPS domains
+     */
+    private function getAllowedVideoDomains(): array {
+        $domains = $this->config->getAppValue(
+            'intravox',
+            'video_domains',
+            Constants::getDefaultVideoDomainsJson()
+        );
+
+        // Decode the stored JSON
+        $decoded = json_decode($domains, true);
+
+        // Only use defaults if JSON decode FAILED (null), not for empty array
+        // This allows admins to explicitly block all video embeds by removing all domains
+        if ($decoded === null) {
+            return Constants::DEFAULT_VIDEO_DOMAINS;
+        }
+
+        return $decoded;
+    }
+
+    /**
+     * Map of video platform domains to their embed domains.
+     * When a user enters youtube.com, the frontend converts it to youtube-nocookie.com.
+     * This mapping allows the whitelist check to recognize both.
+     */
+    private const VIDEO_DOMAIN_ALIASES = [
+        // YouTube watch URLs → youtube-nocookie.com embed
+        'www.youtube.com' => 'www.youtube-nocookie.com',
+        'youtube.com' => 'www.youtube-nocookie.com',
+        'm.youtube.com' => 'www.youtube-nocookie.com',
+        // Vimeo watch URLs → player.vimeo.com embed
+        'www.vimeo.com' => 'player.vimeo.com',
+        'vimeo.com' => 'player.vimeo.com',
+    ];
+
+    /**
+     * Sanitize video embed URL
+     * Validates against configured whitelist of allowed domains
+     * Supports: YouTube, Vimeo, PeerTube, Dailymotion, Twitch, TikTok, etc.
+     */
+    private function sanitizeVideoEmbedUrl(string $url): string {
+        if (empty($url)) {
+            return '';
+        }
+
+        // Must be HTTPS
+        if (!str_starts_with($url, 'https://')) {
+            return '';
+        }
+
+        // Parse URL
+        $parsed = parse_url($url);
+        if (!$parsed || !isset($parsed['scheme']) || !isset($parsed['host']) || !isset($parsed['path'])) {
+            return '';
+        }
+
+        // Check against whitelist
+        $allowedDomains = $this->getAllowedVideoDomains();
+        $host = $parsed['host'];
+
+        // Check if this host has an alias (e.g., youtube.com → youtube-nocookie.com)
+        $embedHost = self::VIDEO_DOMAIN_ALIASES[$host] ?? null;
+
+        $isAllowed = false;
+        foreach ($allowedDomains as $allowedDomain) {
+            $allowedHost = parse_url($allowedDomain, PHP_URL_HOST);
+            // Match either the original host OR its embed alias
+            if ($host === $allowedHost || ($embedHost && $embedHost === $allowedHost)) {
+                $isAllowed = true;
+                break;
+            }
+        }
+
+        if (!$isAllowed) {
+            $this->logger->warning('Video domain not in whitelist: ' . $host);
+            return '';
+        }
+
+        // Convert watch URLs to embed URLs for known platforms
+        // YouTube: https://www.youtube.com/watch?v=VIDEO_ID → https://www.youtube-nocookie.com/embed/VIDEO_ID
+        if (in_array($host, ['www.youtube.com', 'youtube.com', 'm.youtube.com'])) {
+            parse_str($parsed['query'] ?? '', $queryParams);
+            $videoId = $queryParams['v'] ?? null;
+            if ($videoId) {
+                return 'https://www.youtube-nocookie.com/embed/' . urlencode($videoId);
+            }
+            // If already an embed URL or other format, pass through
+            if (str_contains($parsed['path'], '/embed/')) {
+                return 'https://www.youtube-nocookie.com' . $parsed['path'];
+            }
+        }
+
+        // Vimeo: https://vimeo.com/VIDEO_ID → https://player.vimeo.com/video/VIDEO_ID
+        if (in_array($host, ['www.vimeo.com', 'vimeo.com'])) {
+            // Extract video ID from path like /123456789 or /123456789?h=xxxxx
+            if (preg_match('#^/(\d+)#', $parsed['path'], $matches)) {
+                $videoId = $matches[1];
+                $embedUrl = 'https://player.vimeo.com/video/' . $videoId;
+                // Preserve hash parameter for unlisted videos
+                if (isset($parsed['query'])) {
+                    parse_str($parsed['query'], $queryParams);
+                    if (isset($queryParams['h'])) {
+                        $embedUrl .= '?h=' . urlencode($queryParams['h']);
+                    }
+                }
+                return $embedUrl;
+            }
+        }
+
+        // For PeerTube URLs, enforce privacy settings
+        if (str_contains($parsed['path'], '/videos/embed/')) {
+            $cleanUrl = $parsed['scheme'] . '://' . $parsed['host'] . $parsed['path'];
+            return $cleanUrl . '?p2p=0&peertubeLink=0';
+        }
+
+        // For other platforms, return the embed URL with existing query params
+        $cleanUrl = $parsed['scheme'] . '://' . $parsed['host'] . $parsed['path'];
+        if (isset($parsed['query'])) {
+            $cleanUrl .= '?' . $parsed['query'];
+        }
+        return $cleanUrl;
+    }
+
+    /**
      * Validate column count
      */
     private function validateColumns(int $columns): int {
@@ -1973,8 +2387,54 @@ class PageService {
      * Sanitize page for output (decode HTML entities for display)
      */
     private function sanitizePage(array $data): array {
-        // Return as-is since we already sanitized on input
-        // The frontend will handle the escaped content properly
+        // Re-sanitize widgets on every read to apply current whitelist settings
+        // This ensures blocked video domains are marked correctly even if the
+        // whitelist changed after the page was saved
+
+        if (isset($data['layout']['rows']) && is_array($data['layout']['rows'])) {
+            foreach ($data['layout']['rows'] as $rowIndex => $row) {
+                if (isset($row['widgets']) && is_array($row['widgets'])) {
+                    foreach ($row['widgets'] as $widgetIndex => $widget) {
+                        // Only re-sanitize video widgets to check against current whitelist
+                        if (($widget['type'] ?? '') === 'video') {
+                            $sanitized = $this->sanitizeWidget($widget);
+                            if ($sanitized) {
+                                $data['layout']['rows'][$rowIndex]['widgets'][$widgetIndex] = $sanitized;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Also sanitize side columns
+        if (isset($data['layout']['sideColumns']) && is_array($data['layout']['sideColumns'])) {
+            foreach (['left', 'right'] as $side) {
+                if (isset($data['layout']['sideColumns'][$side]['widgets']) && is_array($data['layout']['sideColumns'][$side]['widgets'])) {
+                    foreach ($data['layout']['sideColumns'][$side]['widgets'] as $widgetIndex => $widget) {
+                        if (($widget['type'] ?? '') === 'video') {
+                            $sanitized = $this->sanitizeWidget($widget);
+                            if ($sanitized) {
+                                $data['layout']['sideColumns'][$side]['widgets'][$widgetIndex] = $sanitized;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Also sanitize header row
+        if (isset($data['layout']['headerRow']['widgets']) && is_array($data['layout']['headerRow']['widgets'])) {
+            foreach ($data['layout']['headerRow']['widgets'] as $widgetIndex => $widget) {
+                if (($widget['type'] ?? '') === 'video') {
+                    $sanitized = $this->sanitizeWidget($widget);
+                    if ($sanitized) {
+                        $data['layout']['headerRow']['widgets'][$widgetIndex] = $sanitized;
+                    }
+                }
+            }
+        }
+
         return $data;
     }
 
@@ -2139,7 +2599,9 @@ class PageService {
             $file->putContent(json_encode($validatedData, JSON_PRETTY_PRINT));
 
             // Return data with id for frontend (id is derived from folder name)
-            return array_merge(['id' => $result['id']], $validatedData);
+            // For home page it's 'home', otherwise use the folder basename
+            $resolvedId = ($pageId === 'home') ? 'home' : $result['folder']->getName();
+            return array_merge(['id' => $resolvedId], $validatedData);
         } catch (\Exception $e) {
             $this->logger->error('[restorePageVersion] Failed to restore version', [
                 'error' => $e->getMessage(),
@@ -2770,10 +3232,26 @@ class PageService {
      * Get the full page tree structure for the current language
      * Returns a hierarchical tree of all pages the user has access to
      *
+     * OPTIMIZED: Uses static cache with TTL to avoid repeated filesystem traversals
+     *
      * @param string|null $currentPageId Optional: uniqueId of the current page to highlight
      * @return array Tree structure with pages and their children
      */
     public function getPageTree(?string $currentPageId = null): array {
+        // Build cache key based on user and language
+        $cacheKey = $this->userId . '_' . $this->getUserLanguage();
+        $now = time();
+
+        // Check if we have a valid cached tree (without currentPageId marking)
+        if (isset(self::$pageTreeCache[$cacheKey])) {
+            $cached = self::$pageTreeCache[$cacheKey];
+            if (($now - $cached['time']) < self::PAGE_TREE_CACHE_TTL) {
+                // Return cached tree with updated currentPageId marking
+                return $this->markCurrentPageInTree($cached['tree'], $currentPageId);
+            }
+        }
+
+        // Build fresh tree
         $folder = $this->getLanguageFolder();
         $tree = [];
 
@@ -2790,7 +3268,7 @@ class PageService {
                     'uniqueId' => $data['uniqueId'],
                     'title' => $data['title'],
                     'path' => $this->getUserLanguage(),
-                    'isCurrent' => ($currentPageId === $data['uniqueId']),
+                    'isCurrent' => false, // Will be set by markCurrentPageInTree
                     'children' => [],
                     'permissions' => [
                         'canRead' => ($folderPerms & 1) !== 0,
@@ -2807,9 +3285,37 @@ class PageService {
         }
 
         // Recursively build tree from subfolders
-        $this->buildPageTree($folder, $tree, $currentPageId);
+        $this->buildPageTree($folder, $tree, null); // Pass null, marking done separately
 
-        return $tree;
+        // Store in cache
+        self::$pageTreeCache[$cacheKey] = [
+            'tree' => $tree,
+            'time' => $now
+        ];
+
+        // Return with current page marked
+        return $this->markCurrentPageInTree($tree, $currentPageId);
+    }
+
+    /**
+     * Mark the current page in a tree structure
+     * Creates a deep copy to avoid modifying cached data
+     */
+    private function markCurrentPageInTree(array $tree, ?string $currentPageId): array {
+        if ($currentPageId === null) {
+            return $tree;
+        }
+
+        $result = [];
+        foreach ($tree as $node) {
+            $newNode = $node;
+            $newNode['isCurrent'] = ($node['uniqueId'] === $currentPageId);
+            if (!empty($node['children'])) {
+                $newNode['children'] = $this->markCurrentPageInTree($node['children'], $currentPageId);
+            }
+            $result[] = $newNode;
+        }
+        return $result;
     }
 
     /**
@@ -2842,7 +3348,10 @@ class PageService {
                     continue;
                 }
 
-                $content = @$jsonFile->getContent();
+                // Use cached file content to avoid repeated reads
+                $content = $jsonFile instanceof \OCP\Files\File
+                    ? $this->getCachedFileContent($jsonFile)
+                    : @$jsonFile->getContent();
 
                 if ($content === false || $content === null) {
                     continue;

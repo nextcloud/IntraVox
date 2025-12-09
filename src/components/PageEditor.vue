@@ -30,7 +30,7 @@
       <div class="header-row-widgets">
         <draggable
           :list="headerRowWidgets"
-          :group="{ name: 'headerWidgets', pull: true, put: true }"
+          :group="{ name: 'allWidgets', pull: true, put: true }"
           :animation="200"
           item-key="id"
           handle=".drag-handle"
@@ -120,7 +120,7 @@
       <div class="side-column-widgets">
         <draggable
           :list="getSideColumnWidgets('left')"
-          :group="{ name: 'sideWidgets', pull: true, put: true }"
+          :group="{ name: 'allWidgets', pull: true, put: true }"
           :animation="200"
           item-key="id"
           handle=".drag-handle"
@@ -249,7 +249,7 @@
           <div class="column-label">{{ t('Column {column}', { column }) }}</div>
           <draggable
             :list="getColumnWidgets(rowIndex, column)"
-            :group="{ name: 'widgets', pull: true, put: true }"
+            :group="{ name: 'allWidgets', pull: true, put: true }"
             :animation="200"
             item-key="id"
             handle=".drag-handle"
@@ -385,7 +385,7 @@
       <div class="side-column-widgets">
         <draggable
           :list="getSideColumnWidgets('right')"
-          :group="{ name: 'sideWidgets', pull: true, put: true }"
+          :group="{ name: 'allWidgets', pull: true, put: true }"
           :animation="200"
           item-key="id"
           handle=".drag-handle"
@@ -488,7 +488,7 @@ export default {
   emits: ['update'],
   data() {
     return {
-      localPage: JSON.parse(JSON.stringify(this.page)),
+      localPage: structuredClone(this.page),
       showWidgetPicker: false,
       editingWidget: null,
       editingRowIndex: null,
@@ -545,14 +545,7 @@ export default {
     this.initializeSideColumns();
     this.initializeHeaderRow();
   },
-  watch: {
-    localPage: {
-      handler() {
-        this.$emit('update', this.localPage);
-      },
-      deep: true
-    }
-  },
+  // Note: Deep watcher removed for performance - updates are emitted explicitly in syncAllZones()
   methods: {
     t(key, vars = {}) {
       return t('intravox', key, vars);
@@ -577,16 +570,71 @@ export default {
     },
     needsEditButton(widgetType) {
       // Show edit button for widgets that aren't inline-editable
-      return ['image', 'link', 'links', 'file', 'heading'].includes(widgetType);
+      return ['image', 'link', 'links', 'file', 'heading', 'video'].includes(widgetType);
     },
     initializeWidgetIds() {
-      // Assign unique IDs to all widgets if they don't have one
-      this.localPage.layout.rows.forEach(row => {
-        row.widgets.forEach(widget => {
-          if (!widget.id) {
-            widget.id = `widget-${this.nextWidgetId++}`;
+      // Collect ALL widgets from all zones for duplicate detection
+      const allWidgets = [];
+
+      // Collect main row widgets
+      this.localPage.layout.rows.forEach((row, rowIndex) => {
+        row.widgets.forEach((widget, widgetIndex) => {
+          allWidgets.push({ widget, zone: 'row', rowIndex, widgetIndex });
+        });
+      });
+
+      // Collect header row widgets
+      if (this.localPage.layout.headerRow?.widgets) {
+        this.localPage.layout.headerRow.widgets.forEach((widget, widgetIndex) => {
+          allWidgets.push({ widget, zone: 'header', widgetIndex });
+        });
+      }
+
+      // Collect side column widgets
+      if (this.localPage.layout.sideColumns) {
+        ['left', 'right'].forEach(side => {
+          if (this.localPage.layout.sideColumns[side]?.widgets) {
+            this.localPage.layout.sideColumns[side].widgets.forEach((widget, widgetIndex) => {
+              allWidgets.push({ widget, zone: `side-${side}`, widgetIndex });
+            });
           }
         });
+      }
+
+      // First pass: find highest ID and detect duplicates
+      let maxId = 0;
+      const seenIds = new Set();
+      const duplicateWidgets = [];
+
+      allWidgets.forEach(entry => {
+        const widget = entry.widget;
+        if (widget.id) {
+          // Extract numeric ID
+          const match = widget.id.match(/^widget-(\d+)$/);
+          if (match) {
+            maxId = Math.max(maxId, parseInt(match[1], 10));
+          }
+
+          // Check for duplicates
+          if (seenIds.has(widget.id)) {
+            duplicateWidgets.push(entry);
+          } else {
+            seenIds.add(widget.id);
+          }
+        }
+      });
+
+      // Set nextWidgetId to one more than the highest found
+      this.nextWidgetId = maxId + 1;
+
+      // Second pass: fix duplicates and assign IDs to widgets without one
+      allWidgets.forEach(entry => {
+        const widget = entry.widget;
+        if (!widget.id || duplicateWidgets.includes(entry)) {
+          // Assign new unique ID
+          widget.id = `widget-${this.nextWidgetId++}`;
+          console.log(`[IntraVox] Assigned new ID ${widget.id} to ${widget.type} widget in ${entry.zone}`);
+        }
       });
     },
     initializeColumnArrays() {
@@ -611,28 +659,70 @@ export default {
     onDragEnd(rowIndex, column) {
       // Use nextTick to batch updates and avoid flickering
       this.$nextTick(() => {
-        // Rebuild ALL rows' widgets from column arrays to handle cross-row drags
-        this.localPage.layout.rows.forEach((row, rIndex) => {
-          const allWidgets = [];
-          const rowColumns = (row.columns || this.localPage.layout.columns) ?? 1;
-
-          for (let col = 1; col <= rowColumns; col++) {
-            const key = `${rIndex}-${col}`;
-            const columnWidgets = this.columnArrays[key] || [];
-
-            columnWidgets.forEach((widget, index) => {
-              widget.column = col;
-              widget.order = index + 1;
-              allWidgets.push(widget);
-            });
-          }
-
-          row.widgets = allWidgets;
-        });
-
-        // Reinitialize column arrays to ensure they stay in sync
-        this.initializeColumnArrays();
+        // Sync all zones to handle cross-zone drags
+        this.syncAllZones();
       });
+    },
+    /**
+     * Centralized sync for all widget zones (header, side columns, main rows)
+     * This handles cross-zone drags correctly
+     */
+    syncAllZones() {
+      // Sync header row widgets
+      if (this.localPage.layout.headerRow) {
+        const updatedHeaderWidgets = this.headerRowWidgets.map((widget, index) => ({
+          ...widget,
+          order: index + 1
+        }));
+        this.headerRowWidgets = updatedHeaderWidgets;
+        this.localPage.layout.headerRow.widgets = [...updatedHeaderWidgets];
+      }
+
+      // Sync side column widgets
+      ['left', 'right'].forEach(side => {
+        if (this.localPage.layout.sideColumns?.[side]) {
+          const updatedSideWidgets = this.sideColumnWidgets[side].map((widget, index) => ({
+            ...widget,
+            order: index + 1
+          }));
+          this.sideColumnWidgets[side] = updatedSideWidgets;
+          this.localPage.layout.sideColumns[side].widgets = [...updatedSideWidgets];
+        }
+      });
+
+      // Rebuild ALL rows' widgets from column arrays
+      const updatedRows = this.localPage.layout.rows.map((row, rIndex) => {
+        const allWidgets = [];
+        const rowColumns = (row.columns || this.localPage.layout.columns) ?? 1;
+
+        for (let col = 1; col <= rowColumns; col++) {
+          const key = `${rIndex}-${col}`;
+          const columnWidgets = this.columnArrays[key] || [];
+
+          columnWidgets.forEach((widget, index) => {
+            // Create a new widget object to ensure reactivity
+            const updatedWidget = { ...widget, column: col, order: index + 1 };
+            allWidgets.push(updatedWidget);
+          });
+        }
+
+        // Return a new row object with updated widgets
+        return { ...row, widgets: allWidgets };
+      });
+
+      // Replace the entire rows array to trigger Vue reactivity
+      this.localPage.layout.rows = updatedRows;
+
+      // Force Vue to detect the change by creating a new localPage reference
+      this.localPage = structuredClone(this.localPage);
+
+      // Reinitialize all arrays to ensure they stay in sync
+      this.initializeColumnArrays();
+      this.initializeSideColumns();
+      this.initializeHeaderRow();
+
+      // Explicitly emit the update to parent
+      this.$emit('update', this.localPage);
     },
     setColumns(n) {
       const oldColumns = this.localPage.layout.columns;
@@ -668,6 +758,7 @@ export default {
       }
 
       this.initializeColumnArrays();
+      this.$emit('update', this.localPage);
     },
     setRowBackgroundColor(rowIndex, color) {
       // Set the backgroundColor property
@@ -676,6 +767,7 @@ export default {
 
       // Force Vue to detect the change by creating a new array reference
       this.localPage.layout.rows = [...this.localPage.layout.rows];
+      this.$emit('update', this.localPage);
     },
     addRow() {
       this.localPage.layout.rows.push({
@@ -684,6 +776,7 @@ export default {
         backgroundColor: ''
       });
       this.initializeColumnArrays();
+      this.$emit('update', this.localPage);
     },
     insertRow(index) {
       // Insert a new row at the specified index
@@ -693,6 +786,7 @@ export default {
         backgroundColor: ''
       });
       this.initializeColumnArrays();
+      this.$emit('update', this.localPage);
     },
     deleteRow(rowIndex) {
       this.showDeleteDialog = true;
@@ -702,6 +796,7 @@ export default {
         this.localPage.layout.rows.splice(rowIndex, 1);
         // Reinitialize column arrays to reflect the deleted row
         this.initializeColumnArrays();
+        this.$emit('update', this.localPage);
       };
     },
     showWidgetPickerForColumn(rowIndex, column) {
@@ -722,7 +817,7 @@ export default {
         this.showWidgetPicker = false;
 
         // Open editor modal for widgets that need configuration
-        if (widgetType === 'image' || widgetType === 'links' || widgetType === 'file' || widgetType === 'heading') {
+        if (widgetType === 'image' || widgetType === 'links' || widgetType === 'file' || widgetType === 'heading' || widgetType === 'video') {
           this.editHeaderRowWidget(newWidget);
         }
 
@@ -740,7 +835,7 @@ export default {
         this.showWidgetPicker = false;
 
         // Open editor modal for widgets that need configuration
-        if (widgetType === 'image' || widgetType === 'links' || widgetType === 'file' || widgetType === 'heading') {
+        if (widgetType === 'image' || widgetType === 'links' || widgetType === 'file' || widgetType === 'heading' || widgetType === 'video') {
           this.editSideColumnWidget(newWidget, side);
         }
 
@@ -768,7 +863,7 @@ export default {
       this.showWidgetPicker = false;
 
       // Open editor modal for widgets that need configuration
-      if (widgetType === 'image' || widgetType === 'links' || widgetType === 'file' || widgetType === 'heading') {
+      if (widgetType === 'image' || widgetType === 'links' || widgetType === 'file' || widgetType === 'heading' || widgetType === 'video') {
         this.editWidget(newWidget, rowIndex);
       }
 
@@ -807,6 +902,14 @@ export default {
           widget.path = '';
           widget.name = this.t('File');
           break;
+        case 'video':
+          widget.provider = 'embed';
+          widget.src = '';
+          widget.title = '';
+          widget.autoplay = false;
+          widget.loop = false;
+          widget.muted = false;
+          break;
         case 'divider':
         case 'spacer':
           // No additional properties needed for divider
@@ -816,7 +919,7 @@ export default {
       return widget;
     },
     editWidget(widget, rowIndex) {
-      this.editingWidget = JSON.parse(JSON.stringify(widget));
+      this.editingWidget = structuredClone(widget);
       this.editingRowIndex = rowIndex;
     },
     saveWidget(updatedWidget) {
@@ -831,7 +934,7 @@ export default {
           this.headerRowWidgets.splice(index, 1, updatedWidget);
           this.localPage.layout.headerRow.widgets = [...this.headerRowWidgets];
 
-          this.localPage = JSON.parse(JSON.stringify(this.localPage));
+          this.localPage = structuredClone(this.localPage);
           this.$emit('update', this.localPage);
         }
 
@@ -853,7 +956,7 @@ export default {
           widgets.splice(index, 1, updatedWidget);
           this.localPage.layout.sideColumns[side].widgets = [...widgets];
 
-          this.localPage = JSON.parse(JSON.stringify(this.localPage));
+          this.localPage = structuredClone(this.localPage);
           this.$emit('update', this.localPage);
         }
 
@@ -878,7 +981,7 @@ export default {
         this.initializeColumnArrays();
 
         // Force trigger the watcher by creating a deep clone
-        this.localPage = JSON.parse(JSON.stringify(this.localPage));
+        this.localPage = structuredClone(this.localPage);
 
         // Manually emit update to ensure parent receives the change
         this.$emit('update', this.localPage);
@@ -925,17 +1028,13 @@ export default {
     },
     duplicateWidget(rowIndex, widget) {
       const columnWidgets = this.columnArrays[`${rowIndex}-${widget.column}`];
-      this.duplicateWidgetGeneric(widget, columnWidgets, () => this.initializeColumnArrays());
+      this.duplicateWidgetGeneric(widget, columnWidgets, () => this.syncAllZones());
     },
     duplicateHeaderRowWidget(widget) {
-      this.duplicateWidgetGeneric(widget, this.headerRowWidgets, () => {
-        this.localPage.layout.headerRow.widgets = [...this.headerRowWidgets];
-      });
+      this.duplicateWidgetGeneric(widget, this.headerRowWidgets, () => this.syncAllZones());
     },
     duplicateSideColumnWidget(widget, side) {
-      this.duplicateWidgetGeneric(widget, this.sideColumnWidgets[side], () => {
-        this.localPage.layout.sideColumns[side].widgets = [...this.sideColumnWidgets[side]];
-      });
+      this.duplicateWidgetGeneric(widget, this.sideColumnWidgets[side], () => this.syncAllZones());
     },
     deleteWidget(rowIndex, widgetId) {
       this.showDeleteDialog = true;
@@ -948,6 +1047,7 @@ export default {
           row.widgets.splice(index, 1);
           // Reinitialize column arrays to reflect the deleted widget
           this.initializeColumnArrays();
+          this.$emit('update', this.localPage);
         }
       };
     },
@@ -1003,7 +1103,8 @@ export default {
       };
       this.sideColumnWidgets[side] = [];
       // Force reactivity
-      this.localPage = JSON.parse(JSON.stringify(this.localPage));
+      this.localPage = structuredClone(this.localPage);
+      this.$emit('update', this.localPage);
     },
     removeSideColumn(side) {
       this.showDeleteDialog = true;
@@ -1015,7 +1116,8 @@ export default {
           this.localPage.layout.sideColumns[side].widgets = [];
           this.sideColumnWidgets[side] = [];
           // Force reactivity
-          this.localPage = JSON.parse(JSON.stringify(this.localPage));
+          this.localPage = structuredClone(this.localPage);
+          this.$emit('update', this.localPage);
         }
       };
     },
@@ -1044,7 +1146,8 @@ export default {
       if (this.localPage.layout.sideColumns?.[side]) {
         this.localPage.layout.sideColumns[side].backgroundColor = color;
         // Force reactivity
-        this.localPage = JSON.parse(JSON.stringify(this.localPage));
+        this.localPage = structuredClone(this.localPage);
+        this.$emit('update', this.localPage);
       }
     },
     showSideColumnWidgetPicker(side) {
@@ -1055,16 +1158,12 @@ export default {
     },
     onSideColumnDragEnd(side) {
       this.$nextTick(() => {
-        // Update order for all widgets
-        this.sideColumnWidgets[side].forEach((widget, index) => {
-          widget.order = index + 1;
-        });
-        // Sync back to localPage
-        this.localPage.layout.sideColumns[side].widgets = [...this.sideColumnWidgets[side]];
+        // Sync all zones to handle cross-zone drags
+        this.syncAllZones();
       });
     },
     editSideColumnWidget(widget, side) {
-      this.editingWidget = JSON.parse(JSON.stringify(widget));
+      this.editingWidget = structuredClone(widget);
       this.editingSideColumn = side;
       this.editingRowIndex = null;
     },
@@ -1086,6 +1185,7 @@ export default {
         if (index !== -1) {
           this.sideColumnWidgets[side].splice(index, 1);
           this.localPage.layout.sideColumns[side].widgets = [...this.sideColumnWidgets[side]];
+          this.$emit('update', this.localPage);
         }
       };
     },
@@ -1122,7 +1222,8 @@ export default {
       };
       this.headerRowWidgets = [];
       // Force reactivity
-      this.localPage = JSON.parse(JSON.stringify(this.localPage));
+      this.localPage = structuredClone(this.localPage);
+      this.$emit('update', this.localPage);
     },
     removeHeaderRow() {
       this.showDeleteDialog = true;
@@ -1134,7 +1235,8 @@ export default {
           this.localPage.layout.headerRow.widgets = [];
           this.headerRowWidgets = [];
           // Force reactivity
-          this.localPage = JSON.parse(JSON.stringify(this.localPage));
+          this.localPage = structuredClone(this.localPage);
+          this.$emit('update', this.localPage);
         }
       };
     },
@@ -1160,7 +1262,8 @@ export default {
       if (this.localPage.layout.headerRow) {
         this.localPage.layout.headerRow.backgroundColor = color;
         // Force reactivity
-        this.localPage = JSON.parse(JSON.stringify(this.localPage));
+        this.localPage = structuredClone(this.localPage);
+        this.$emit('update', this.localPage);
       }
     },
     showHeaderRowWidgetPicker() {
@@ -1172,16 +1275,12 @@ export default {
     },
     onHeaderRowDragEnd() {
       this.$nextTick(() => {
-        // Update order for all widgets
-        this.headerRowWidgets.forEach((widget, index) => {
-          widget.order = index + 1;
-        });
-        // Sync back to localPage
-        this.localPage.layout.headerRow.widgets = [...this.headerRowWidgets];
+        // Sync all zones to handle cross-zone drags
+        this.syncAllZones();
       });
     },
     editHeaderRowWidget(widget) {
-      this.editingWidget = JSON.parse(JSON.stringify(widget));
+      this.editingWidget = structuredClone(widget);
       this.editingHeaderRow = true;
       this.editingSideColumn = null;
       this.editingRowIndex = null;
@@ -1203,6 +1302,7 @@ export default {
         if (index !== -1) {
           this.headerRowWidgets.splice(index, 1);
           this.localPage.layout.headerRow.widgets = [...this.headerRowWidgets];
+          this.$emit('update', this.localPage);
         }
       };
     }

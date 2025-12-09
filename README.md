@@ -45,7 +45,8 @@ IntraVox brings SharePoint-style page creation to Nextcloud, enabling teams to b
 |--------|-------------|
 | **Text** | Rich text with full Markdown support (bold, italic, lists, links, tables) |
 | **Heading** | H1-H6 headers with customizable styling |
-| **Image** | Visual content with flexible sizing (cover, contain, custom width) |
+| **Image** | Visual content with flexible sizing, optional clickable links to pages or external URLs |
+| **Video** | Embed videos from YouTube, Vimeo, PeerTube, or upload local videos |
 | **Links** | Multi-link grid widget (1-5 columns) with Material Design icons |
 | **Divider** | Visual separator that adapts to row background color |
 
@@ -80,9 +81,22 @@ IntraVox brings SharePoint-style page creation to Nextcloud, enabling teams to b
 - **Permission-Based Filtering** - Navigation only shows pages the user can access
 - **Real-Time Permission Checks** - Changes take effect immediately
 
+### Admin Settings
+
+- **Video Embed Domains** - Configure which video platforms are allowed
+- **Privacy-First Defaults** - YouTube privacy mode and PeerTube enabled by default
+- **Custom Video Servers** - Add your own PeerTube or video hosting domains
+- **Demo Data Management** - Install or reinstall demo content per language
+
+### Getting Started
+
+- **Welcome Screen** - New installations show an onboarding guide with clear next steps
+- **Quick Setup** - Install demo data with one click to see IntraVox in action
+- **Documentation Links** - Direct links to Admin Settings and GitHub documentation
+
 ### Integration
 
-- **Nextcloud Unified Search** - Search pages via Ctrl+K
+- **Nextcloud Unified Search** - Search pages via Ctrl+K with IntraVox app icon
 - **MetaVox Integration** - Add metadata to pages (when MetaVox app is installed)
 - **Files App Integration** - Pages stored as JSON files in GroupFolder
 - **Responsive Design** - Works on desktop, tablet, and mobile
@@ -101,7 +115,9 @@ IntraVox includes demo content to help you get started quickly. Install demo dat
 
 The demo pages showcase:
 - Different page layouts (single column, multi-column, side columns)
-- Various widget types (text, headings, images, links, dividers)
+- Various widget types (text, headings, images, videos, links, dividers)
+- Clickable images linking to pages and external URLs
+- Embedded video examples from different platforms
 - Navigation structure examples
 - Department page organization
 - Row background color options
@@ -168,9 +184,10 @@ IntraVox/
 │   ├── home.json               # Homepage
 │   ├── navigation.json         # Navigation configuration
 │   ├── footer.json             # Footer content
+│   ├── _media/                 # Shared media folder (images, videos)
 │   └── about/                  # Page folder
 │       ├── about.json          # Page content
-│       └── images/             # Page images
+│       └── _media/             # Page-specific media
 ├── nl/                          # Dutch content
 │   └── ...
 ├── de/                          # German content

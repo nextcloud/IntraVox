@@ -196,7 +196,7 @@ Available options:
 After installation, customize the content:
 
 1. Edit JSON files directly in the IntraVox GroupFolder via Nextcloud Files
-2. Replace images in the `images/` subfolders
+2. Replace images and videos in the `_media/` subfolders
 3. Update navigation.json to match your organization's structure
 4. Use the IntraVox editor for visual page editing
 
@@ -261,12 +261,13 @@ sudo -u www-data php occ app:list | grep groupfolders
 2. Verify `navigation.json` is valid JSON
 3. Check that page uniqueIds match between navigation and pages
 
-### Images Not Loading
+### Images/Videos Not Loading
 
-1. Verify images exist in the `images/` subfolder
+1. Verify files exist in the `_media/` subfolder
 2. Check file permissions
-3. Ensure image paths in JSON match actual filenames
-4. Try re-uploading the image via Nextcloud Files
+3. Ensure file paths in JSON match actual filenames
+4. Try re-uploading the file via Nextcloud Files
+5. For videos: Check that the video domain is whitelisted in Admin Settings
 
 ## Performance
 
@@ -299,12 +300,47 @@ sudo -u www-data php occ app:update intravox
 
 Always check the CHANGELOG.md for breaking changes before updating.
 
+## Video Embed Domains
+
+IntraVox includes an admin interface to manage which video platforms can be embedded. Access via **Nextcloud Admin Settings** → **IntraVox**.
+
+### Default Video Services
+
+The following services are enabled by default:
+- **YouTube (privacy mode)** - Uses youtube-nocookie.com for enhanced privacy
+- **Vimeo** - Professional video hosting
+- **PeerTube instances** - Various federated PeerTube servers
+
+### Managing Video Services
+
+1. Go to **Admin Settings** → **IntraVox**
+2. Use the **Video Services** tab
+3. Toggle services on/off using the switches
+4. Services are grouped by category (Privacy-friendly, Popular, PeerTube)
+
+### Adding Custom Video Servers
+
+For organizations with their own video hosting:
+
+1. Go to **Admin Settings** → **IntraVox**
+2. Click the **Custom Servers** tab
+3. Enter the domain (e.g., `video.company.com`)
+4. Click **Add**
+5. Only HTTPS domains are allowed for security
+
+### Security Considerations
+
+Videos from non-whitelisted domains are blocked and show a message with the blocked domain. This prevents:
+- Embedding from untrusted sources
+- Potential security risks from unknown video providers
+
 ## Security Considerations
 
 1. **Permissions**: Use principle of least privilege
 2. **Content**: Review user-generated content for sensitive information
-3. **Images**: Be aware that uploaded images are accessible to all users with read permission
+3. **Media files**: Be aware that uploaded images and videos are accessible to all users with read permission
 4. **External links**: Content editors can add external links - review navigation regularly
+5. **Video embeds**: Only allow trusted video platforms via the admin settings
 
 ## Integration
 

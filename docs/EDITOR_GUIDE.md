@@ -136,12 +136,15 @@ Rich text content with formatting.
 
 #### Image
 
-Photos, diagrams, and graphics.
+Photos, diagrams, and graphics with optional clickable links.
 
 **Options:**
-- Image source: Select from IntraVox images folder
+- Image source: Select from IntraVox media folder or upload new
 - Alt text: Description for accessibility
 - Object fit: Cover, contain, or auto
+- Link (optional): Make the image clickable
+  - Link to page: Navigate to an IntraVox page
+  - External URL: Open an external website
 
 **Image sizes:**
 - Small: Thumbnail size
@@ -153,6 +156,30 @@ Photos, diagrams, and graphics.
 - Use descriptive alt text
 - Optimize images before upload (< 500KB)
 - Use appropriate aspect ratios
+- Use clickable images for navigation cards and banners
+
+#### Video
+
+Embed videos from external platforms or upload local videos.
+
+**Supported platforms:**
+- YouTube (privacy-enhanced mode)
+- Vimeo
+- PeerTube instances
+- Local video upload (MP4)
+
+**Options:**
+- Video URL: Paste a video URL from a supported platform
+- Upload: Upload a video file to Nextcloud storage
+- Title: Display title above the video
+- Autoplay: Start video automatically (muted)
+- Loop: Repeat video when finished
+
+**Best practices:**
+- Use privacy-friendly platforms when possible
+- Keep uploaded videos under 100MB for performance
+- Always add a descriptive title
+- Check that the video domain is whitelisted by your administrator
 
 #### Links
 
@@ -205,16 +232,36 @@ Visual separators between content sections.
 2. Click the delete icon (trash)
 3. Widget is removed immediately
 
-## Working with Images
+## Working with Media
 
 ### Uploading Images
 
+**Via the Editor (recommended):**
+1. Add or edit an Image widget
+2. Click "Upload" in the image editor
+3. Select an image from your computer
+4. The image is automatically uploaded to the `_media/` folder
+
+**Via Nextcloud Files:**
 1. Open Nextcloud Files
-2. Navigate to IntraVox folder > your language > relevant section > images
+2. Navigate to IntraVox folder > your language > `_media/`
 3. Upload your image
 4. Return to IntraVox and select the image
 
-### Image Guidelines
+### Uploading Videos
+
+**Local video upload:**
+1. Add a Video widget
+2. Click "Upload video"
+3. Select an MP4 file from your computer
+4. The video is uploaded to the `_media/` folder
+
+**External video:**
+1. Add a Video widget
+2. Paste a video URL (YouTube, Vimeo, PeerTube)
+3. The video is embedded from the external platform
+
+### Media Guidelines
 
 | Type | Recommended Size | Format |
 |------|-----------------|--------|
@@ -222,14 +269,16 @@ Visual separators between content sections.
 | Content images | 800x600 px | JPG/PNG |
 | Icons | 64x64 px | PNG/SVG |
 | Logos | 200x100 px | PNG/SVG |
+| Videos | 1920x1080 px max | MP4 (H.264) |
 
-### Image Optimization
+### Media Optimization
 
 Before uploading:
 1. Resize to appropriate dimensions
 2. Compress to reduce file size
 3. Use JPG for photos, PNG for graphics
-4. Keep files under 500KB
+4. Keep image files under 500KB
+5. Keep video files under 100MB for best performance
 
 ## Navigation
 
@@ -374,10 +423,17 @@ IntraVox/
 
 ### Images Not Appearing
 
-- Verify image was uploaded
+- Verify image was uploaded to the `_media/` folder
 - Check image path is correct
 - Ensure image format is supported
 - Try re-selecting the image
+
+### Videos Not Playing
+
+- Check that the video URL is from a whitelisted platform
+- For local videos: Verify the file was uploaded correctly
+- For external videos: Check the URL is correct and publicly accessible
+- If blocked: Contact your administrator to whitelist the video domain
 
 ### Widget Not Working
 
