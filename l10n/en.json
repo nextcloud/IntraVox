@@ -283,7 +283,18 @@
     "Start building your intranet with pages, navigation, and multimedia content.": "Start building your intranet with pages, navigation, and multimedia content.",
     "Go to Admin Settings": "Go to Admin Settings",
     "After installing demo data, refresh this page to see your new intranet.": "After installing demo data, refresh this page to see your new intranet.",
-    "Documentation on GitHub": "Documentation on GitHub"
+    "Documentation on GitHub": "Documentation on GitHub",
+    "Video source:": "Video source:",
+    "Local file": "Local file",
+    "Upload video:": "Upload video:",
+    "Title (optional):": "Title (optional):",
+    "Current:": "Current:",
+    "Uploading video...": "Uploading video...",
+    "Uploading image...": "Uploading image...",
+    "MP4, WebM or OGG. Maximum {limit}MB.": "MP4, WebM or OGG. Maximum {limit}MB.",
+    "The upload limit is configured by your server administrator.": "The upload limit is configured by your server administrator.",
+    "Supported formats: JPEG, PNG, GIF, WebP. Maximum size: {limit}MB.": "Supported formats: JPEG, PNG, GIF, WebP. Maximum size: {limit}MB.",
+    "Image too large. Maximum size is {limit}MB.": "Image too large. Maximum size is {limit}MB."
   },
   "pluralForm": "nplurals=2; plural=(n != 1);"
 }

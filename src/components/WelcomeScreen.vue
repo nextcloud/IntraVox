@@ -95,10 +95,10 @@ export default {
 .welcome-screen {
 	display: flex;
 	justify-content: center;
-	align-items: center;
+	align-items: flex-start;
 	width: 100%;
-	height: calc(100vh - 50px);
-	padding: 40px 20px;
+	min-height: calc(100vh - 50px);
+	padding: 60px 20px 40px 20px;
 	background: var(--color-main-background);
 	box-sizing: border-box;
 }
@@ -138,7 +138,6 @@ export default {
 	flex-direction: column;
 	gap: 16px;
 	margin-bottom: 32px;
-	text-align: left;
 }
 
 .step {
@@ -148,6 +147,7 @@ export default {
 	padding: 16px;
 	background: var(--color-background-hover);
 	border-radius: var(--border-radius-large);
+	text-align: left;
 }
 
 .step-number {

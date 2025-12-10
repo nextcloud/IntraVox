@@ -80,6 +80,11 @@ class ApiController extends Controller {
 
             return new DataResponse($filteredPages);
         } catch (\Exception $e) {
+            // If IntraVox folder doesn't exist, return empty array
+            // This allows the WelcomeScreen to be shown instead of an error
+            if (strpos($e->getMessage(), 'IntraVox folder not found') !== false) {
+                return new DataResponse([]);
+            }
             return new DataResponse(
                 ['error' => $e->getMessage()],
                 Http::STATUS_INTERNAL_SERVER_ERROR

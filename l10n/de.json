@@ -329,7 +329,18 @@
     "Start building your intranet with pages, navigation, and multimedia content.": "Beginnen Sie mit dem Aufbau Ihres Intranets mit Seiten, Navigation und Multimedia-Inhalten.",
     "Go to Admin Settings": "Zu den Admin-Einstellungen",
     "After installing demo data, refresh this page to see your new intranet.": "Aktualisieren Sie nach der Installation der Demodaten diese Seite, um Ihr neues Intranet zu sehen.",
-    "Documentation on GitHub": "Dokumentation auf GitHub"
+    "Documentation on GitHub": "Dokumentation auf GitHub",
+    "Video source:": "Videoquelle:",
+    "Local file": "Lokale Datei",
+    "Upload video:": "Video hochladen:",
+    "Title (optional):": "Titel (optional):",
+    "Current:": "Aktuell:",
+    "Uploading video...": "Video wird hochgeladen...",
+    "Uploading image...": "Bild wird hochgeladen...",
+    "MP4, WebM or OGG. Maximum {limit}MB.": "MP4, WebM oder OGG. Maximal {limit}MB.",
+    "The upload limit is configured by your server administrator.": "Das Upload-Limit wird vom Serveradministrator konfiguriert.",
+    "Supported formats: JPEG, PNG, GIF, WebP. Maximum size: {limit}MB.": "Unterstützte Formate: JPEG, PNG, GIF, WebP. Maximalgröße: {limit}MB.",
+    "Image too large. Maximum size is {limit}MB.": "Bild zu groß. Maximalgröße ist {limit}MB."
   },
   "pluralForm": "nplurals=2; plural=(n != 1);"
 }

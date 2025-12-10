@@ -105,7 +105,7 @@
               :disabled="isUploading"
             />
             <p v-if="isUploading" class="hint uploading">{{ t('Uploading image...') }}</p>
-            <p v-else class="hint">{{ t('Supported formats: JPEG, PNG, GIF, WebP. Maximum size: 2MB.') }}</p>
+            <p v-else class="hint">{{ t('Supported formats: JPEG, PNG, GIF, WebP. Maximum size: {limit}MB.', { limit: uploadLimitMB }) }}</p>
           </div>
           <div v-if="localWidget.src" class="image-preview">
             <img :src="getImageUrl(localWidget.src)" :alt="localWidget.alt" />
@@ -686,11 +686,11 @@ export default {
 
       console.log('[ImageUpload] File selected:', file.name, 'Size:', file.size, 'Type:', file.type);
 
-      // Check file size before uploading (2MB default PHP limit)
-      const maxSize = 2 * 1024 * 1024; // 2MB
+      // Check file size before uploading (use server-configured limit)
+      const maxSize = this.uploadLimitBytes || (2 * 1024 * 1024); // Fallback to 2MB
       if (file.size > maxSize) {
         console.log('[ImageUpload] File too large:', file.size, '>', maxSize);
-        showError(t('intravox', 'Image too large. Maximum size is 2MB.'));
+        showError(t('intravox', 'Image too large. Maximum size is {limit}MB.', { limit: this.uploadLimitMB || 2 }));
         return;
       }
 
