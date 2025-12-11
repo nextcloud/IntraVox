@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.1] - 2025-12-11 - Bug Fixes
+
+### Fixed
+- **Image Links**: Fixed clickable image links not working correctly
+- **Image Crop Position**: Fixed image crop position (top/center/bottom) not being applied
+
 ## [0.6.0] - 2025-12-09 - Video Widget & Media Management
 
 ### Added
