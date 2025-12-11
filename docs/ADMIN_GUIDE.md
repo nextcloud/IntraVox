@@ -2,11 +2,19 @@
 
 This guide covers installation, configuration, and maintenance of IntraVox for Nextcloud administrators.
 
-## Requirements
+## System Requirements
 
-- Nextcloud 32 or higher
-- PHP 8.1 or higher
-- GroupFolders app installed and enabled
+| Component | Minimum | Recommended |
+|-----------|---------|-------------|
+| Nextcloud | 32+ | 32+ |
+| PHP | 8.1+ | 8.2+ |
+| PHP memory_limit | 256MB | 512MB |
+| GroupFolders app | Required | Required |
+
+> **Note**: The default PHP memory_limit of 128MB is insufficient for IntraVox. Demo data installation and large pages require at least 256MB. Increase this in your `php.ini`:
+> ```ini
+> memory_limit = 512M
+> ```
 
 ## Installation
 

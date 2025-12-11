@@ -145,10 +145,14 @@ If you want to reset demo content to its original state:
 
 ## System Requirements
 
-- Nextcloud 32 or higher
-- PHP 8.1 or higher
-- GroupFolders app installed and enabled
-- Recommended: 512MB PHP memory limit for large pages
+| Component | Minimum | Recommended |
+|-----------|---------|-------------|
+| Nextcloud | 32+ | 32+ |
+| PHP | 8.1+ | 8.2+ |
+| PHP memory_limit | 256MB | 512MB |
+| GroupFolders app | Required | Required |
+
+> ⚠️ **Important**: The default PHP memory_limit of 128MB is insufficient for IntraVox. Demo data installation requires at least 256MB. Update your `php.ini` if needed.
 
 ---
 
