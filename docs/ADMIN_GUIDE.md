@@ -2,6 +2,11 @@
 
 This guide covers installation, configuration, and maintenance of IntraVox for Nextcloud administrators.
 
+**Related documentation:**
+- [Admin Settings Guide](ADMIN_SETTINGS.md) - Demo data and video services configuration
+- [Authorization Guide](AUTHORIZATION.md) - Permissions and access control
+- [Architecture](ARCHITECTURE.md) - Technical architecture
+
 ## System Requirements
 
 | Component | Minimum | Recommended |
@@ -142,71 +147,30 @@ IntraVox/
 
 ## Demo Data
 
-IntraVox includes demo content to help you get started quickly. Demo data can be installed and managed directly from the Nextcloud Admin Settings.
+IntraVox includes demo content to help you get started quickly. Demo data can be installed and managed via **Nextcloud Admin Settings** → **IntraVox**.
 
-![Demo Data Admin Settings](https://raw.githubusercontent.com/nextcloud/intravox/main/screenshots/demodata.png)
-
-*Admin Settings panel for managing demo data installation*
-
-### Installing Demo Data via Admin Settings
+### Quick Start
 
 1. Go to **Nextcloud Admin Settings** → **IntraVox**
-2. You'll see a table with all available demo data languages
-3. Click **Install** next to the language you want to set up
-4. The GroupFolder and permission groups are created automatically if they don't exist
+2. Click **Install** next to your preferred language
+3. The GroupFolder and permission groups are created automatically
 
-The Admin Settings panel shows:
-- **Status badges**: Installed, Not installed, or Empty folder
-- **Content badges**: Full intranet vs Homepage only
-- **Language flags** for easy identification
+### Available Languages
 
-### Reinstalling Demo Data
+| Language | Content |
+|----------|---------|
+| Nederlands 🇳🇱 | Full intranet |
+| English 🇬🇧 | Full intranet |
+| Deutsch 🇩🇪 | Homepage only |
+| Français 🇫🇷 | Homepage only |
 
-If you want to reset demo content to its original state:
-
-1. Go to **Admin Settings** → **IntraVox**
-2. Click **Reinstall** next to the language
-3. Confirm the action (this will delete all existing content for that language and replace it with fresh demo data)
-
-### Available Demo Data
-
-| Language | Flag | Content |
-|----------|------|---------|
-| Nederlands | 🇳🇱 | Full intranet with departments, news, documentation |
-| English | 🇬🇧 | Full intranet (English translation) |
-| Deutsch | 🇩🇪 | Homepage only |
-| Français | 🇫🇷 | Homepage only |
-
-### What Demo Data Includes
-
-Each full demo installation contains:
-- Homepage with welcome content
-- Department pages (HR, IT, Sales, Marketing)
-- News section with example articles
-- Documentation pages
-- Navigation structure with megamenu
-- Sample images and icons
-
-### Command Line Installation (Alternative)
-
-For automated deployments, demo data can also be installed via command line:
+### Command Line Installation
 
 ```bash
 sudo -u www-data php occ intravox:import-demo-data --language=en
 ```
 
-Available options:
-- `--language=nl|en|de|fr` - Language to install (default: en)
-- `--force` - Overwrite existing content
-
-### Customizing Demo Data
-
-After installation, customize the content:
-
-1. Edit JSON files directly in the IntraVox GroupFolder via Nextcloud Files
-2. Replace images and videos in the `_media/` subfolders
-3. Update navigation.json to match your organization's structure
-4. Use the IntraVox editor for visual page editing
+See [ADMIN_SETTINGS.md](ADMIN_SETTINGS.md) for detailed demo data management.
 
 ## Maintenance
 
@@ -308,39 +272,30 @@ sudo -u www-data php occ app:update intravox
 
 Always check the CHANGELOG.md for breaking changes before updating.
 
-## Video Embed Domains
+## Video Widget Configuration
 
-IntraVox includes an admin interface to manage which video platforms can be embedded. Access via **Nextcloud Admin Settings** → **IntraVox**.
+IntraVox includes a Video Widget for embedding videos from external platforms or uploading local video files. Administrators control which platforms are allowed via **Nextcloud Admin Settings** → **IntraVox** → **Video Services**.
 
-### Default Video Services
+### Default Services
 
-The following services are enabled by default:
-- **YouTube (privacy mode)** - Uses youtube-nocookie.com for enhanced privacy
-- **Vimeo** - Professional video hosting
-- **PeerTube instances** - Various federated PeerTube servers
+| Service | Privacy |
+|---------|---------|
+| YouTube (privacy mode) | Enhanced - no tracking |
+| Vimeo | Standard |
 
-### Managing Video Services
+### Quick Configuration
 
-1. Go to **Admin Settings** → **IntraVox**
-2. Use the **Video Services** tab
-3. Toggle services on/off using the switches
-4. Services are grouped by category (Privacy-friendly, Popular, PeerTube)
+1. Go to **Admin Settings** → **IntraVox** → **Video Services**
+2. Toggle services on/off
+3. Add custom domains for corporate video servers
 
-### Adding Custom Video Servers
+### Security
 
-For organizations with their own video hosting:
+- Only whitelisted domains can be embedded
+- Videos from unknown domains are blocked
+- Only HTTPS sources allowed
 
-1. Go to **Admin Settings** → **IntraVox**
-2. Click the **Custom Servers** tab
-3. Enter the domain (e.g., `video.company.com`)
-4. Click **Add**
-5. Only HTTPS domains are allowed for security
-
-### Security Considerations
-
-Videos from non-whitelisted domains are blocked and show a message with the blocked domain. This prevents:
-- Embedding from untrusted sources
-- Potential security risks from unknown video providers
+See [ADMIN_SETTINGS.md](ADMIN_SETTINGS.md) for detailed video configuration.
 
 ## Security Considerations
 
