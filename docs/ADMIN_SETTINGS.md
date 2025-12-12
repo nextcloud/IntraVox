@@ -6,50 +6,8 @@ This guide covers the Nextcloud Admin Settings panel for IntraVox. Access via **
 
 The IntraVox Admin Settings panel has two main tabs:
 
-1. **Demo Data** - Install and manage demo content
-2. **Video Services** - Configure allowed video embed domains
-
----
-
-## Demo Data Tab
-
-### Installing Demo Data
-
-1. Go to **Nextcloud Admin Settings** → **IntraVox**
-2. You'll see a table with all available demo data languages
-3. Click **Install** next to the language you want to set up
-4. The GroupFolder and permission groups are created automatically if they don't exist
-
-### Status Indicators
-
-The Admin Settings panel shows:
-
-| Badge | Meaning |
-|-------|---------|
-| **Installed** | Demo data is installed and ready |
-| **Not installed** | No content exists for this language |
-| **Empty folder** | Folder exists but is empty |
-| **Full intranet** | Complete demo with all pages |
-| **Homepage only** | Basic demo with homepage |
-
-### Available Languages
-
-| Language | Flag | Content Type |
-|----------|------|--------------|
-| Nederlands | 🇳🇱 | Full intranet |
-| English | 🇬🇧 | Full intranet |
-| Deutsch | 🇩🇪 | Homepage only |
-| Français | 🇫🇷 | Homepage only |
-
-### Reinstalling Demo Data
-
-To reset demo content to its original state:
-
-1. Click **Reinstall** next to the language
-2. Confirm the action
-3. All existing content for that language will be replaced with fresh demo data
-
-> ⚠️ **Warning**: Reinstalling will delete all customizations made to the demo content.
+1. **Video Services** - Configure allowed video embed domains
+2. **Demo Data** - Install and manage demo content
 
 ---
 
@@ -151,6 +109,48 @@ Editors can configure these options per video:
 2. Select a video file (MP4, WebM, or OGG)
 3. Video is stored in the page's `_media/` folder
 4. Maximum file size is determined by Nextcloud's PHP upload limits
+
+---
+
+## Demo Data Tab
+
+### Installing Demo Data
+
+1. Go to **Nextcloud Admin Settings** → **IntraVox**
+2. Select the **Demo Data** tab
+3. Click **Install** next to the language you want to set up
+4. The GroupFolder and permission groups are created automatically if they don't exist
+
+### Status Indicators
+
+The Admin Settings panel shows:
+
+| Badge | Meaning |
+|-------|---------|
+| **Installed** | Demo data is installed and ready |
+| **Not installed** | No content exists for this language |
+| **Empty folder** | Folder exists but is empty |
+| **Full intranet** | Complete demo with all pages |
+| **Homepage only** | Basic demo with homepage |
+
+### Available Languages
+
+| Language | Flag | Content Type |
+|----------|------|--------------|
+| Nederlands | 🇳🇱 | Full intranet |
+| English | 🇬🇧 | Full intranet |
+| Deutsch | 🇩🇪 | Homepage only |
+| Français | 🇫🇷 | Homepage only |
+
+### Reinstalling Demo Data
+
+To reset demo content to its original state:
+
+1. Click **Reinstall** next to the language
+2. Confirm the action
+3. All existing content for that language will be replaced with fresh demo data
+
+> ⚠️ **Warning**: Reinstalling will delete all customizations made to the demo content.
 
 ---
 
