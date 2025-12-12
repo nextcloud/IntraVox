@@ -41,6 +41,24 @@ return [
         ['name' => 'api#getVideoDomains', 'url' => '/api/settings/video-domains', 'verb' => 'GET'],
         ['name' => 'api#setVideoDomains', 'url' => '/api/settings/video-domains', 'verb' => 'POST'],
         ['name' => 'api#getUploadLimit', 'url' => '/api/settings/upload-limit', 'verb' => 'GET'],
+        ['name' => 'api#getEngagementSettings', 'url' => '/api/settings/engagement', 'verb' => 'GET'],
+        ['name' => 'api#setEngagementSettings', 'url' => '/api/settings/engagement', 'verb' => 'POST'],
+
+        // Comments API routes
+        ['name' => 'comment#getComments', 'url' => '/api/pages/{pageId}/comments', 'verb' => 'GET'],
+        ['name' => 'comment#createComment', 'url' => '/api/pages/{pageId}/comments', 'verb' => 'POST'],
+        ['name' => 'comment#updateComment', 'url' => '/api/comments/{commentId}', 'verb' => 'PUT'],
+        ['name' => 'comment#deleteComment', 'url' => '/api/comments/{commentId}', 'verb' => 'DELETE'],
+
+        // Page reactions API routes
+        ['name' => 'comment#getPageReactions', 'url' => '/api/pages/{pageId}/reactions', 'verb' => 'GET'],
+        ['name' => 'comment#addPageReaction', 'url' => '/api/pages/{pageId}/reactions/{emoji}', 'verb' => 'POST'],
+        ['name' => 'comment#removePageReaction', 'url' => '/api/pages/{pageId}/reactions/{emoji}', 'verb' => 'DELETE'],
+
+        // Comment reactions API routes
+        ['name' => 'comment#getCommentReactions', 'url' => '/api/comments/{commentId}/reactions', 'verb' => 'GET'],
+        ['name' => 'comment#addCommentReaction', 'url' => '/api/comments/{commentId}/reactions/{emoji}', 'verb' => 'POST'],
+        ['name' => 'comment#removeCommentReaction', 'url' => '/api/comments/{commentId}/reactions/{emoji}', 'verb' => 'DELETE'],
 
         // Page routes
         ['name' => 'page#index', 'url' => '/', 'verb' => 'GET'],

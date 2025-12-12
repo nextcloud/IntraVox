@@ -446,6 +446,19 @@ class PageService {
     }
 
     /**
+     * Public method to check if a page exists by uniqueId
+     * Used by CommentsEntityListener to validate comment objectIds
+     */
+    public function pageExistsByUniqueId(string $uniqueId): bool {
+        try {
+            $folder = $this->getLanguageFolder();
+            return $this->findPageByUniqueId($folder, $uniqueId) !== null;
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+    /**
      * Recursively find a page by uniqueId
      */
     private function findPageByUniqueId($folder, string $uniqueId, $languageFolder = null): ?array {

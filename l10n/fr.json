@@ -340,7 +340,26 @@
     "MP4, WebM or OGG. Maximum {limit}MB.": "MP4, WebM ou OGG. Maximum {limit} Mo.",
     "The upload limit is configured by your server administrator.": "La limite de téléversement est configurée par l'administrateur du serveur.",
     "Supported formats: JPEG, PNG, GIF, WebP. Maximum size: {limit}MB.": "Formats supportés: JPEG, PNG, GIF, WebP. Taille maximale: {limit} Mo.",
-    "Image too large. Maximum size is {limit}MB.": "Image trop volumineuse. La taille maximale est de {limit} Mo."
+    "Image too large. Maximum size is {limit}MB.": "Image trop volumineuse. La taille maximale est de {limit} Mo.",
+    "Comments": "Commentaires",
+    "No comments yet. Be the first to comment!": "Pas encore de commentaires. Soyez le premier à commenter !",
+    "Write a comment...": "Écrivez un commentaire...",
+    "Send": "Envoyer",
+    "Reply": "Répondre",
+    "Replying to {name}": "Réponse à {name}",
+    "edited": "modifié",
+    "just now": "à l'instant",
+    "{minutes} min ago": "il y a {minutes} min",
+    "{hours} hours ago": "il y a {hours} heures",
+    "{days} days ago": "il y a {days} jours",
+    "Are you sure you want to delete this comment?": "Êtes-vous sûr de vouloir supprimer ce commentaire ?",
+    "Add reaction": "Ajouter une réaction",
+    "React": "Réagir",
+    "You and {count} others reacted with {emoji}": "Vous et {count} autres avez réagi avec {emoji}",
+    "{count} people reacted with {emoji}": "{count} personnes ont réagi avec {emoji}",
+    "Ctrl+Enter to send": "Ctrl+Entrée pour envoyer",
+    "Newest first": "Plus récents",
+    "Oldest first": "Plus anciens"
   },
   "pluralForm": "nplurals=2; plural=(n > 1);"
 }

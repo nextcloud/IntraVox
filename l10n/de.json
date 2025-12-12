@@ -340,7 +340,26 @@
     "MP4, WebM or OGG. Maximum {limit}MB.": "MP4, WebM oder OGG. Maximal {limit}MB.",
     "The upload limit is configured by your server administrator.": "Das Upload-Limit wird vom Serveradministrator konfiguriert.",
     "Supported formats: JPEG, PNG, GIF, WebP. Maximum size: {limit}MB.": "Unterstützte Formate: JPEG, PNG, GIF, WebP. Maximalgröße: {limit}MB.",
-    "Image too large. Maximum size is {limit}MB.": "Bild zu groß. Maximalgröße ist {limit}MB."
+    "Image too large. Maximum size is {limit}MB.": "Bild zu groß. Maximalgröße ist {limit}MB.",
+    "Comments": "Kommentare",
+    "No comments yet. Be the first to comment!": "Noch keine Kommentare. Sei der Erste, der kommentiert!",
+    "Write a comment...": "Schreibe einen Kommentar...",
+    "Send": "Senden",
+    "Reply": "Antworten",
+    "Replying to {name}": "Antwort an {name}",
+    "edited": "bearbeitet",
+    "just now": "gerade eben",
+    "{minutes} min ago": "vor {minutes} Min.",
+    "{hours} hours ago": "vor {hours} Stunden",
+    "{days} days ago": "vor {days} Tagen",
+    "Are you sure you want to delete this comment?": "Bist du sicher, dass du diesen Kommentar löschen möchtest?",
+    "Add reaction": "Reaktion hinzufügen",
+    "React": "Reagieren",
+    "You and {count} others reacted with {emoji}": "Du und {count} andere haben mit {emoji} reagiert",
+    "{count} people reacted with {emoji}": "{count} Personen haben mit {emoji} reagiert",
+    "Ctrl+Enter to send": "Strg+Enter zum Senden",
+    "Newest first": "Neueste zuerst",
+    "Oldest first": "Älteste zuerst"
   },
   "pluralForm": "nplurals=2; plural=(n != 1);"
 }

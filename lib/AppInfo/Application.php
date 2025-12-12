@@ -4,11 +4,13 @@ declare(strict_types=1);
 namespace OCA\IntraVox\AppInfo;
 
 use OCA\IntraVox\Command\SetupCommand;
+use OCA\IntraVox\Listener\CommentsEntityListener;
 use OCA\IntraVox\Search\PageSearchProvider;
 use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IBootstrap;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
+use OCP\Comments\CommentsEntityEvent;
 
 class Application extends App implements IBootstrap {
     public const APP_ID = 'intravox';
@@ -20,6 +22,12 @@ class Application extends App implements IBootstrap {
     public function register(IRegistrationContext $context): void {
         // Register search provider
         $context->registerSearchProvider(PageSearchProvider::class);
+
+        // Register Comments Entity Listener (enables comments on IntraVox pages)
+        $context->registerEventListener(
+            CommentsEntityEvent::class,
+            CommentsEntityListener::class
+        );
 
         // Register OCC command
         $context->registerService(SetupCommand::class, function ($c) {

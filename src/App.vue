@@ -30,7 +30,8 @@
                          :is-edit-mode="isEditMode"
                          :permissions="pagePermissions"
                          @edit-navigation="showNavigationEditor = true"
-                         @create-page="createNewPage" />
+                         @create-page="createNewPage"
+                         @page-settings="showPageSettingsModal = true" />
 
         <!-- Edit Mode Actions (Save/Cancel) -->
         <template v-else>
@@ -148,6 +149,14 @@
       @save="saveNavigation"
     />
 
+    <PageSettingsModal
+      v-if="showPageSettingsModal"
+      :settings="currentPage?.settings || {}"
+      :global-settings="globalEngagementSettings"
+      @close="showPageSettingsModal = false"
+      @save="handlePageSettingsSave"
+    />
+
     <!-- Footer -->
     <Footer
       v-if="!loading && !error"
@@ -189,6 +198,7 @@ const NewPageModal = defineAsyncComponent(() => import('./components/NewPageModa
 const NavigationEditor = defineAsyncComponent(() => import('./components/NavigationEditor.vue'));
 const PageDetailsSidebar = defineAsyncComponent(() => import('./components/PageDetailsSidebar.vue'));
 const WelcomeScreen = defineAsyncComponent(() => import('./components/WelcomeScreen.vue'));
+const PageSettingsModal = defineAsyncComponent(() => import('./components/PageSettingsModal.vue'));
 
 // Constants
 const HOME_PAGE_UNIQUE_ID = 'page-2e8f694e-147e-4793-8949-4732e679ae6b';
@@ -212,7 +222,8 @@ export default {
     PageActionsMenu,
     PageDetailsSidebar,
     Breadcrumb,
-    WelcomeScreen
+    WelcomeScreen,
+    PageSettingsModal
   },
   data() {
     return {
@@ -243,7 +254,16 @@ export default {
       versionPage: null,
       loadingVersion: false,
       // Sidebar state
-      sidebarInitialTab: 'details-tab'
+      sidebarInitialTab: 'details-tab',
+      // Page settings modal
+      showPageSettingsModal: false,
+      // Global engagement settings (loaded from API)
+      globalEngagementSettings: {
+        allowPageReactions: true,
+        allowComments: true,
+        allowCommentReactions: true,
+        singleReactionPerUser: true
+      }
     };
   },
   computed: {
@@ -307,12 +327,13 @@ export default {
     }
   },
   async mounted() {
-    // Load pages, navigation, and footer in parallel for faster initial load
+    // Load pages, navigation, footer, and settings in parallel for faster initial load
     try {
       await Promise.all([
         this.loadPages(),
         this.loadNavigation(),
-        this.loadFooter()
+        this.loadFooter(),
+        this.loadEngagementSettings()
       ]);
     } catch (err) {
       // Errors are handled in individual loaders
@@ -977,6 +998,34 @@ export default {
       this.sidebarInitialTab = 'details-tab';
       // Clear version preview when closing sidebar
       this.clearVersionPreview();
+    },
+    async loadEngagementSettings() {
+      try {
+        const response = await axios.get(generateUrl('/apps/intravox/api/settings/engagement'));
+        this.globalEngagementSettings = response.data;
+      } catch (err) {
+        console.debug('IntraVox: Could not load engagement settings, using defaults');
+      }
+    },
+    async handlePageSettingsSave(settings) {
+      if (!this.currentPage) return;
+
+      // Initialize settings object if it doesn't exist
+      if (!this.currentPage.settings) {
+        this.currentPage.settings = {};
+      }
+
+      // Update page settings
+      this.currentPage.settings.allowReactions = settings.allowReactions;
+      this.currentPage.settings.allowComments = settings.allowComments;
+
+      try {
+        await this.savePage();
+        this.showPageSettingsModal = false;
+        showSuccess(this.t('Page settings saved'));
+      } catch (err) {
+        showError(this.t('Could not save page settings: {error}', { error: err.message }));
+      }
     }
   }
 };

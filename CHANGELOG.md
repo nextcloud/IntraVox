@@ -7,6 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2025-12-11 - Reactions & Comments
+
+### Added
+- **Emoji Reactions**: Users can now react to pages with emoji
+  - Page-level reactions displayed below content (Confluence-style)
+  - 18 common emoji reactions available (👍❤️🎉😊🤔👀🚀💯 etc.)
+  - Click to toggle reaction, hover to see who reacted
+  - Real-time reaction counts per emoji
+  - Uses Nextcloud's native Comments API - no custom database tables needed
+
+- **Comments System**: Full commenting functionality on pages
+  - Comment section below page content with threaded replies (1 level)
+  - Edit and delete own comments
+  - Sort comments by newest or oldest first
+  - Relative timestamps ("just now", "5 min ago", "2 hours ago")
+  - Avatar display for comment authors
+  - Reply indicator when responding to comments
+  - Ctrl+Enter to send comments quickly
+
+- **Comment Reactions**: Emoji reactions on individual comments
+  - Same emoji picker as page reactions
+  - Toggle reactions with single click
+  - Reaction counts per comment
+
+### Technical
+- Created `CommentsEntityListener.php` to register `intravox_page` as objectType for NC Comments
+- Created `CommentService.php` as wrapper around `ICommentsManager`
+- Created `CommentController.php` with REST API endpoints for comments and reactions
+- Frontend components: `ReactionBar.vue`, `CommentSection.vue`, `CommentItem.vue`, `ReactionPicker.vue`
+- Page reactions stored as comments with `verb='reaction'` (NC Comments API feature)
+- All data stored in native `oc_comments` table - zero database migrations needed
+- Comments linked to pages via `uniqueId` (objectId in oc_comments)
+
+### Translations
+- Complete Dutch, German, and French translations for all reaction and comment features
+- New translation keys: Comments, Write a comment, Reply, edited, just now, Add reaction, etc.
+
 ## [0.6.1] - 2025-12-11 - Bug Fixes
 
 ### Fixed
@@ -62,6 +99,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Supports both images and videos in unified location
   - Backwards compatible: existing `📷 images` folders still work
   - All new media uploads go to `_media` folder
+  - ⚠️ **IMPORTANT**: Reinstall demo data after upgrading to v0.6.x to use the new `_media` folder structure. Without reinstalling, images in demo pages will not display correctly.
 
 - **Admin Settings Redesign**: Improved admin interface with tabbed navigation
   - Separate tabs for Demo Data and Video Services configuration

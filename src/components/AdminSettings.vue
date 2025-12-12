@@ -9,6 +9,12 @@
 				{{ t('intravox', 'Video Services') }}
 			</button>
 			<button
+				:class="['tab-button', { active: activeTab === 'engagement' }]"
+				@click="activeTab = 'engagement'">
+				<EmoticonHappy :size="16" />
+				{{ t('intravox', 'Engagement') }}
+			</button>
+			<button
 				:class="['tab-button', { active: activeTab === 'demo' }]"
 				@click="activeTab = 'demo'">
 				<PackageVariant :size="16" />
@@ -243,6 +249,79 @@
 				</div>
 			</div>
 		</div>
+
+		<!-- Engagement Tab -->
+		<div v-if="activeTab === 'engagement'" class="tab-content">
+			<div class="settings-section">
+				<h2>{{ t('intravox', 'Reactions & Comments') }}</h2>
+				<p class="settings-section-desc">
+					{{ t('intravox', 'Configure how users can interact with pages through reactions and comments.') }}
+				</p>
+
+				<!-- Page Reactions -->
+				<div class="engagement-group">
+					<h3 class="engagement-group-header">
+						<span class="engagement-icon">👍</span>
+						{{ t('intravox', 'Page Reactions') }}
+					</h3>
+					<div class="engagement-option">
+						<NcCheckboxRadioSwitch
+							type="switch"
+							:model-value="engagementSettings.allowPageReactions"
+							@update:model-value="engagementSettings.allowPageReactions = $event">
+							<div class="option-info">
+								<span class="option-label">{{ t('intravox', 'Allow reactions on pages') }}</span>
+								<span class="option-desc">{{ t('intravox', 'Users can add emoji reactions to pages') }}</span>
+							</div>
+						</NcCheckboxRadioSwitch>
+					</div>
+				</div>
+
+				<!-- Comments -->
+				<div class="engagement-group">
+					<h3 class="engagement-group-header">
+						<span class="engagement-icon">💬</span>
+						{{ t('intravox', 'Comments') }}
+					</h3>
+					<div class="engagement-option">
+						<NcCheckboxRadioSwitch
+							type="switch"
+							:model-value="engagementSettings.allowComments"
+							@update:model-value="engagementSettings.allowComments = $event">
+							<div class="option-info">
+								<span class="option-label">{{ t('intravox', 'Allow comments on pages') }}</span>
+								<span class="option-desc">{{ t('intravox', 'Users can post comments on pages') }}</span>
+							</div>
+						</NcCheckboxRadioSwitch>
+					</div>
+					<div v-if="engagementSettings.allowComments" class="engagement-option sub-option">
+						<NcCheckboxRadioSwitch
+							type="switch"
+							:model-value="engagementSettings.allowCommentReactions"
+							@update:model-value="engagementSettings.allowCommentReactions = $event">
+							<div class="option-info">
+								<span class="option-label">{{ t('intravox', 'Allow reactions on comments') }}</span>
+								<span class="option-desc">{{ t('intravox', 'Users can add emoji reactions to comments') }}</span>
+							</div>
+						</NcCheckboxRadioSwitch>
+					</div>
+				</div>
+
+				<!-- Info note about page-level settings -->
+				<NcNoteCard type="info" class="page-settings-note">
+					{{ t('intravox', 'Page editors can override these settings for individual pages in the page editor.') }}
+				</NcNoteCard>
+
+				<div class="save-section">
+					<NcButton
+						type="primary"
+						:disabled="savingEngagement"
+						@click="saveEngagementSettings">
+						{{ savingEngagement ? t('intravox', 'Saving...') : t('intravox', 'Save engagement settings') }}
+					</NcButton>
+				</div>
+			</div>
+		</div>
 	</div>
 </template>
 
@@ -254,6 +333,7 @@ import { generateUrl } from '@nextcloud/router'
 import PackageVariant from 'vue-material-design-icons/PackageVariant.vue'
 import Video from 'vue-material-design-icons/Video.vue'
 import OpenInNew from 'vue-material-design-icons/OpenInNew.vue'
+import EmoticonHappy from 'vue-material-design-icons/EmoticonHappy.vue'
 
 export default {
 	name: 'AdminSettings',
@@ -265,6 +345,7 @@ export default {
 		PackageVariant,
 		Video,
 		OpenInNew,
+		EmoticonHappy,
 	},
 	props: {
 		initialState: {
@@ -289,6 +370,13 @@ export default {
 			newDomain: '',
 			savingDomains: false,
 			domainWarnings: [],
+			// Engagement settings
+			engagementSettings: {
+				allowPageReactions: this.initialState.engagementSettings?.allowPageReactions ?? true,
+				allowComments: this.initialState.engagementSettings?.allowComments ?? true,
+				allowCommentReactions: this.initialState.engagementSettings?.allowCommentReactions ?? true,
+			},
+			savingEngagement: false,
 			// Known video services with metadata
 			knownServices: [
 				// Privacy-friendly (no/minimal tracking)
@@ -592,6 +680,22 @@ export default {
 				showError(this.t('intravox', 'Failed to save video domains'))
 			} finally {
 				this.savingDomains = false
+			}
+		},
+		async saveEngagementSettings() {
+			this.savingEngagement = true
+
+			try {
+				await axios.post(
+					generateUrl('/apps/intravox/api/settings/engagement'),
+					this.engagementSettings
+				)
+				showSuccess(this.t('intravox', 'Engagement settings saved'))
+			} catch (error) {
+				console.error('Failed to save engagement settings:', error)
+				showError(this.t('intravox', 'Failed to save engagement settings'))
+			} finally {
+				this.savingEngagement = false
 			}
 		},
 	},
@@ -1063,5 +1167,58 @@ export default {
 	font-size: 14px;
 	font-weight: 600;
 	margin: 0 0 12px 0;
+}
+
+/* Engagement tab styles */
+.engagement-group {
+	margin-bottom: 24px;
+	padding: 16px;
+	background: var(--color-background-hover);
+	border-radius: var(--border-radius-large);
+}
+
+.engagement-group-header {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin: 0 0 16px 0;
+	padding-bottom: 8px;
+	border-bottom: 1px solid var(--color-border);
+	font-size: 15px;
+	font-weight: 600;
+}
+
+.engagement-icon {
+	font-size: 18px;
+}
+
+.engagement-option {
+	padding: 8px 0;
+}
+
+.engagement-option.sub-option {
+	margin-left: 24px;
+	padding-left: 16px;
+	border-left: 2px solid var(--color-border);
+}
+
+.option-info {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.option-label {
+	font-weight: 500;
+	color: var(--color-main-text);
+}
+
+.option-desc {
+	font-size: 12px;
+	color: var(--color-text-maxcontrast);
+}
+
+.page-settings-note {
+	margin: 24px 0;
 }
 </style>

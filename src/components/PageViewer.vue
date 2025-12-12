@@ -78,16 +78,37 @@
       />
     </div>
   </div>
+
+    <!-- Reactions & Comments Section (full width, below all columns) -->
+    <div v-if="showReactions || showComments" class="reactions-comments-section">
+      <ReactionBar
+        v-if="showReactions"
+        :page-id="page.uniqueId"
+        :reactions="pageReactions"
+        :user-reactions="userReactions"
+        @update="handleReactionsUpdate"
+      />
+      <CommentSection
+        v-if="showComments"
+        :page-id="page.uniqueId"
+        :allow-comment-reactions="allowCommentReactions"
+      />
+    </div>
   </div>
 </template>
 
 <script>
 import Widget from './Widget.vue';
+import ReactionBar from './reactions/ReactionBar.vue';
+import CommentSection from './reactions/CommentSection.vue';
+import { getPageReactions, getEngagementSettings } from '../services/CommentService.js';
 
 export default {
   name: 'PageViewer',
   components: {
-    Widget
+    Widget,
+    ReactionBar,
+    CommentSection
   },
   props: {
     page: {
@@ -96,6 +117,18 @@ export default {
     }
   },
   emits: ['navigate'],
+  data() {
+    return {
+      pageReactions: {},
+      userReactions: [],
+      engagementSettings: {
+        allowPageReactions: true,
+        allowComments: true,
+        allowCommentReactions: true,
+        singleReactionPerUser: true
+      }
+    };
+  },
   computed: {
     hasHeaderRow() {
       return this.page?.layout?.headerRow?.enabled &&
@@ -108,6 +141,57 @@ export default {
     hasRightColumn() {
       return this.page?.layout?.sideColumns?.right?.enabled &&
              this.page.layout.sideColumns.right.widgets?.length > 0;
+    },
+    /**
+     * Check if reactions are allowed on this page
+     * Takes into account both global settings and page-level overrides
+     */
+    showReactions() {
+      // Global setting off = no reactions anywhere
+      if (!this.engagementSettings.allowPageReactions) {
+        return false;
+      }
+      // Check page-level override
+      const pageSetting = this.page?.settings?.allowReactions;
+      if (pageSetting === false) {
+        return false;
+      }
+      // Default: show reactions
+      return true;
+    },
+    /**
+     * Check if comments are allowed on this page
+     * Takes into account both global settings and page-level overrides
+     */
+    showComments() {
+      // Global setting off = no comments anywhere
+      if (!this.engagementSettings.allowComments) {
+        return false;
+      }
+      // Check page-level override
+      const pageSetting = this.page?.settings?.allowComments;
+      if (pageSetting === false) {
+        return false;
+      }
+      // Default: show comments
+      return true;
+    },
+    /**
+     * Check if reactions on comments are allowed
+     * Takes into account both global settings and page-level overrides
+     */
+    allowCommentReactions() {
+      // Global setting off = no comment reactions anywhere
+      if (!this.engagementSettings.allowCommentReactions) {
+        return false;
+      }
+      // Check page-level override
+      const pageSetting = this.page?.settings?.allowCommentReactions;
+      if (pageSetting === false) {
+        return false;
+      }
+      // Default: allow comment reactions
+      return true;
     }
   },
   methods: {
@@ -183,7 +267,40 @@ export default {
       }
 
       return style;
+    },
+    async loadReactions() {
+      if (!this.page?.uniqueId) return;
+      try {
+        const result = await getPageReactions(this.page.uniqueId);
+        this.pageReactions = result.reactions || {};
+        this.userReactions = result.userReactions || [];
+      } catch (error) {
+        console.error('Failed to load reactions:', error);
+      }
+    },
+    async loadEngagementSettings() {
+      try {
+        const settings = await getEngagementSettings();
+        this.engagementSettings = settings;
+      } catch (error) {
+        console.error('Failed to load engagement settings:', error);
+      }
+    },
+    handleReactionsUpdate(result) {
+      this.pageReactions = result.reactions || {};
+      this.userReactions = result.userReactions || [];
     }
+  },
+  watch: {
+    'page.uniqueId': {
+      immediate: true,
+      handler() {
+        this.loadReactions();
+      }
+    }
+  },
+  mounted() {
+    this.loadEngagementSettings();
   }
 };
 </script>
@@ -257,6 +374,14 @@ export default {
   min-height: 50px;
   box-sizing: border-box;
   min-width: 0;
+}
+
+/* Reactions & Comments Section */
+.reactions-comments-section {
+  margin-top: 24px;
+  padding: 0 16px;
+  width: 100%;
+  max-width: 100%;
 }
 
 /* Mobile styles */

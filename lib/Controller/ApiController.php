@@ -5,6 +5,7 @@ namespace OCA\IntraVox\Controller;
 
 use OCA\IntraVox\AppInfo\Application;
 use OCA\IntraVox\Constants;
+use OCA\IntraVox\Service\EngagementSettingsService;
 use OCA\IntraVox\Service\PageService;
 use OCA\IntraVox\Service\SetupService;
 use OCP\AppFramework\Controller;
@@ -26,6 +27,7 @@ use Psr\Log\LoggerInterface;
 class ApiController extends Controller {
     private PageService $pageService;
     private SetupService $setupService;
+    private EngagementSettingsService $engagementSettings;
     private LoggerInterface $logger;
     private IConfig $config;
     private IGroupManager $groupManager;
@@ -36,6 +38,7 @@ class ApiController extends Controller {
         IRequest $request,
         PageService $pageService,
         SetupService $setupService,
+        EngagementSettingsService $engagementSettings,
         LoggerInterface $logger,
         IConfig $config,
         IGroupManager $groupManager,
@@ -44,6 +47,7 @@ class ApiController extends Controller {
         parent::__construct($appName, $request);
         $this->pageService = $pageService;
         $this->setupService = $setupService;
+        $this->engagementSettings = $engagementSettings;
         $this->logger = $logger;
         $this->config = $config;
         $this->groupManager = $groupManager;
@@ -907,5 +911,50 @@ class ApiController extends Controller {
         }
 
         return new DataResponse($response);
+    }
+
+    /**
+     * Get engagement settings (reactions & comments)
+     *
+     * @NoCSRFRequired
+     * @NoAdminRequired
+     */
+    public function getEngagementSettings(): DataResponse {
+        return new DataResponse($this->engagementSettings->getAll());
+    }
+
+    /**
+     * Update engagement settings
+     * Admin only
+     */
+    public function setEngagementSettings(): DataResponse {
+        // Only admins can change engagement settings
+        if (!$this->isAdmin()) {
+            return new DataResponse([
+                'success' => false,
+                'message' => 'Only administrators can change engagement settings',
+            ], Http::STATUS_FORBIDDEN);
+        }
+
+        // Get settings from request body
+        $body = file_get_contents('php://input');
+        $settings = json_decode($body, true) ?? [];
+
+        try {
+            $updated = $this->engagementSettings->updateAll($settings);
+
+            $this->logger->info('[ApiController] Engagement settings updated', $settings);
+
+            return new DataResponse([
+                'success' => true,
+                'settings' => $updated,
+            ]);
+        } catch (\Exception $e) {
+            $this->logger->error('[ApiController] Failed to update engagement settings: ' . $e->getMessage());
+            return new DataResponse([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], Http::STATUS_INTERNAL_SERVER_ERROR);
+        }
     }
 }

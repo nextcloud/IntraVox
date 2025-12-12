@@ -6,6 +6,7 @@ namespace OCA\IntraVox\Settings;
 use OCA\IntraVox\AppInfo\Application;
 use OCA\IntraVox\Constants;
 use OCA\IntraVox\Service\DemoDataService;
+use OCA\IntraVox\Service\EngagementSettingsService;
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\AppFramework\Services\IInitialState;
 use OCP\IConfig;
@@ -17,15 +18,18 @@ use OCP\Util;
  */
 class AdminSettings implements IDelegatedSettings {
     private DemoDataService $demoDataService;
+    private EngagementSettingsService $engagementSettings;
     private IInitialState $initialState;
     private IConfig $config;
 
     public function __construct(
         DemoDataService $demoDataService,
+        EngagementSettingsService $engagementSettings,
         IInitialState $initialState,
         IConfig $config
     ) {
         $this->demoDataService = $demoDataService;
+        $this->engagementSettings = $engagementSettings;
         $this->initialState = $initialState;
         $this->config = $config;
     }
@@ -59,6 +63,7 @@ class AdminSettings implements IDelegatedSettings {
             'imported' => $status['imported'] ?? false,
             'setupComplete' => $status['setupComplete'] ?? false,
             'videoDomains' => $videoDomainsArray,
+            'engagementSettings' => $this->engagementSettings->getAll(),
         ]);
 
         // Load translations for JavaScript

@@ -17,6 +17,15 @@
       </template>
       {{ t('Edit Navigation') }}
     </NcActionButton>
+
+    <!-- Page Settings (for editors) -->
+    <NcActionButton v-if="canPerformAction('editPage')"
+                    @click="$emit('page-settings')">
+      <template #icon>
+        <TuneVertical :size="20" />
+      </template>
+      {{ t('Page Settings') }}
+    </NcActionButton>
   </NcActions>
 </template>
 
@@ -25,6 +34,7 @@ import { translate as t } from '@nextcloud/l10n';
 import { NcActions, NcActionButton } from '@nextcloud/vue';
 import Cog from 'vue-material-design-icons/Cog.vue';
 import Plus from 'vue-material-design-icons/Plus.vue';
+import TuneVertical from 'vue-material-design-icons/TuneVertical.vue';
 
 export default {
   name: 'PageActionsMenu',
@@ -32,7 +42,8 @@ export default {
     NcActions,
     NcActionButton,
     Cog,
-    Plus
+    Plus,
+    TuneVertical
   },
   props: {
     isEditMode: {
@@ -50,7 +61,7 @@ export default {
       })
     }
   },
-  emits: ['edit-navigation', 'create-page'],
+  emits: ['edit-navigation', 'create-page', 'page-settings'],
   methods: {
     t(key, vars = {}) {
       return t('intravox', key, vars);

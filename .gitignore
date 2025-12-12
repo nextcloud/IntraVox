@@ -58,3 +58,4 @@ deploy.sh
 
 # Claude Code configuration
 .claude/
+CLAUDE.md
