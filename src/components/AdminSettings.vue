@@ -307,11 +307,6 @@
 					</div>
 				</div>
 
-				<!-- Info note about page-level settings -->
-				<NcNoteCard type="info" class="page-settings-note">
-					{{ t('intravox', 'Page editors can override these settings for individual pages in the page editor.') }}
-				</NcNoteCard>
-
 				<div class="save-section">
 					<NcButton
 						type="primary"
@@ -1216,9 +1211,5 @@ export default {
 .option-desc {
 	font-size: 12px;
 	color: var(--color-text-maxcontrast);
-}
-
-.page-settings-note {
-	margin: 24px 0;
 }
 </style>
