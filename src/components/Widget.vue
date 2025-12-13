@@ -27,8 +27,8 @@
       <a
         v-if="widget.src && hasImageLink"
         :href="getImageLinkHref()"
-        :target="widget.linkType === 'external' ? '_blank' : '_self'"
-        :rel="widget.linkType === 'external' ? 'noopener noreferrer' : ''"
+        :target="getImageLinkTarget()"
+        :rel="getImageLinkRel()"
         class="image-link"
         @click="handleImageLinkClick"
       >
@@ -439,8 +439,7 @@ export default {
       // Video iframe loaded successfully - no action needed
     },
     onVideoEmbedError() {
-      // iframe errors are limited, but we log for debugging
-      console.warn('Video embed may have failed to load');
+      // iframe errors are limited - silent fail
     },
     onLocalVideoError(event) {
       const video = event.target;
@@ -475,13 +474,31 @@ export default {
       }
       return '#';
     },
+    getImageLinkTarget() {
+      // Internal links always open in same tab
+      if (this.widget.linkType === 'internal') {
+        return '_self';
+      }
+      // External links: check linkNewTab setting (defaults to true for backwards compatibility)
+      if (this.widget.linkType === 'external') {
+        return this.widget.linkNewTab !== false ? '_blank' : '_self';
+      }
+      return '_self';
+    },
+    getImageLinkRel() {
+      // Only add noopener noreferrer when opening in new tab
+      if (this.widget.linkType === 'external' && this.widget.linkNewTab !== false) {
+        return 'noopener noreferrer';
+      }
+      return '';
+    },
     handleImageLinkClick(event) {
       // Handle internal link navigation
       if (this.widget.linkType === 'internal' && this.widget.linkPageId) {
         event.preventDefault();
         this.$emit('navigate', this.widget.linkPageId);
       }
-      // External links follow their default behavior (open in new tab)
+      // External links follow their default behavior based on target attribute
     }
   }
 };

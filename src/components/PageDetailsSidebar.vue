@@ -334,7 +334,8 @@ export default {
       selectedVersion: null,
       editingLabel: null,
       editableLabel: '',
-      isRestoring: false // Flag to prevent auto-select during restore
+      isRestoring: false, // Flag to prevent auto-select during restore
+      versionsLoaded: false // Flag for lazy loading
     };
   },
   computed: {
@@ -349,24 +350,18 @@ export default {
   watch: {
     isOpen(newValue) {
       if (newValue) {
-        // Load versions silently - don't block sidebar if it fails
-        this.loadVersions().catch(() => {
-          // Silently fail - versions tab is hidden anyway
-        });
-        this.loadMetadata().catch(() => {
-          // Metadata errors are already handled in the component
-        });
+        // Reset lazy loading flag for new session
+        this.versionsLoaded = false;
+        // Only load metadata (for details tab - default)
+        this.loadMetadata().catch(() => {});
         this.checkMetaVoxInstalled();
       }
     },
     pageId() {
       if (this.isOpen) {
-        this.loadVersions().catch(() => {
-          // Silently fail - versions tab is hidden anyway
-        });
-        this.loadMetadata().catch(() => {
-          // Metadata errors are already handled in the component
-        });
+        // Reset and reload for new page
+        this.versionsLoaded = false;
+        this.loadMetadata().catch(() => {});
         this.dispatchMetaVoxUpdate();
       }
     },
@@ -376,14 +371,17 @@ export default {
       }
     },
     activeTab(newTab) {
-      if (newTab === 'metavox-tab' && this.metaVoxInstalled) {
-        // Use nextTick to ensure the container ref is available
+      // Lazy load versions when tab is activated
+      if (newTab === 'versions-tab' && !this.versionsLoaded) {
+        this.loadVersions().then(() => {
+          this.versionsLoaded = true;
+        }).catch(() => {});
+      } else if (newTab === 'metavox-tab' && this.metaVoxInstalled) {
         this.$nextTick(() => {
           this.dispatchMetaVoxUpdate();
         });
       }
       // Auto-select first version when versions tab is activated
-      // Only if versions are already loaded and we don't have a selection
       if (newTab === 'versions-tab' && this.versions.length > 0 && !this.selectedVersion) {
         this.autoSelectFirstVersion();
       }
@@ -406,13 +404,8 @@ export default {
   },
   mounted() {
     if (this.isOpen) {
-      // Load versions and metadata silently - don't block sidebar if they fail
-      this.loadVersions().catch(() => {
-        // Silently fail - versions tab is hidden anyway
-      });
-      this.loadMetadata().catch(() => {
-        // Metadata errors are already handled in the component
-      });
+      // Only load metadata at mount (details tab is default)
+      this.loadMetadata().catch(() => {});
       this.checkMetaVoxInstalled();
     }
   },

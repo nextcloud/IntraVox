@@ -27,6 +27,7 @@ async function checkMetaVoxAvailability() {
 }
 
 // Create a mock Files Sidebar API for MetaVox to register with
+// Only used on IntraVox pages where the real Files sidebar doesn't exist
 function createFilesSidebarMock() {
     if (!window.OCA) {
         window.OCA = {};
@@ -34,12 +35,42 @@ function createFilesSidebarMock() {
     if (!window.OCA.Files) {
         window.OCA.Files = {};
     }
+
+    // If real sidebar exists (Files app), find MetaVox tab from there
+    if (window.OCA.Files.Sidebar && window.OCA.Files.Sidebar._tabs) {
+        const metavoxTab = window.OCA.Files.Sidebar._tabs.find(
+            tab => tab.id === 'metavox-metadata' || tab.id === 'metavox'
+        );
+        if (metavoxTab) {
+            window._metaVoxTab = metavoxTab;
+        }
+        return; // Don't create mock, use existing sidebar
+    }
+
+    // Create mock sidebar only if it doesn't exist (IntraVox pages)
     if (!window.OCA.Files.Sidebar) {
+        // Mock Tab class that MetaVox uses to create tabs
+        class MockTab {
+            constructor(options) {
+                this.id = options.id;
+                this.name = options.name;
+                this.iconSvg = options.iconSvg;
+                this.mount = options.mount;
+                this.update = options.update;
+                this.destroy = options.destroy;
+                this.enabled = options.enabled;
+            }
+        }
+
         window.OCA.Files.Sidebar = {
             _tabs: [],
+            Tab: MockTab,
             registerTab(tab) {
                 this._tabs.push(tab);
-                window._metaVoxTab = tab;
+                // Store MetaVox tab for IntraVox to use
+                if (tab.id === 'metavox-metadata' || tab.id === 'metavox') {
+                    window._metaVoxTab = tab;
+                }
             },
             open(path) {},
             close() {},

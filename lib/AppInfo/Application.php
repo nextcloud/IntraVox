@@ -63,10 +63,13 @@ class Application extends App implements IBootstrap {
     }
 
     public function boot(IBootContext $context): void {
-        // Load MetaVox scripts if installed (for IntraVox integration)
+        // Load MetaVox scripts if installed (for IntraVox sidebar integration)
+        // MetaVox's filesplugin.js has its own duplicate registration check,
+        // so loading it here is safe even if MetaVox also loads it in Files app.
         $appManager = $context->getServerContainer()->get(\OCP\App\IAppManager::class);
         if ($appManager->isInstalled('metavox') && $appManager->isEnabledForUser('metavox')) {
-            \OCP\Util::addScript('metavox', 'files-plugin1');
+            // Load the main filesplugin that contains the sidebar tab component
+            \OCP\Util::addScript('metavox', 'filesplugin');
             \OCP\Util::addStyle('metavox', 'files');
         }
     }

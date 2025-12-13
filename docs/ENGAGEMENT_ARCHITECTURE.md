@@ -1,9 +1,12 @@
-# Comments & Reactions Architecture
+# Engagement Architecture
 
-This document describes the technical architecture of IntraVox's comments and reactions system.
+Technical documentation for IntraVox's engagement system (reactions and comments).
+
+**Audience:** Developers and technical administrators
 
 **Related documentation:**
-- [Comments Settings](COMMENTS_SETTINGS.md) - Configuration options for admins and editors
+- [Engagement Admin Guide](ENGAGEMENT_ADMIN.md) - Configuration for administrators
+- [Engagement User Guide](ENGAGEMENT_GUIDE.md) - End-user documentation
 - [Authorization Guide](AUTHORIZATION.md) - Permission model
 
 ---
@@ -101,6 +104,13 @@ The `uniqueId` in the .json file is the **key** connecting pages to comments.
 | POST | `/api/comments/{id}/reactions/{emoji}` | Add reaction to comment | Read access |
 | DELETE | `/api/comments/{id}/reactions/{emoji}` | Remove reaction | Read access |
 
+### Settings
+
+| Method | Endpoint | Description | Permission |
+|--------|----------|-------------|------------|
+| GET | `/api/settings/engagement` | Get engagement settings | Any user |
+| PUT | `/api/settings/engagement` | Update settings | Admin only |
+
 ---
 
 ## Permission Model
@@ -177,9 +187,68 @@ PageViewer.vue
 
 ---
 
-## UI Design
+## Settings Storage
 
-### Position: Below Page Content
+### Admin Settings
+
+Stored in Nextcloud's config using `OCP\IConfig`:
+
+| Key | Type | Default |
+|-----|------|---------|
+| `intravox/allowPageReactions` | bool | true |
+| `intravox/allowComments` | bool | true |
+| `intravox/allowCommentReactions` | bool | true |
+
+### Page Settings
+
+Stored in the page's JSON file:
+
+```json
+{
+  "uniqueId": "page-abc-123",
+  "title": "My Page",
+  "settings": {
+    "allowReactions": null,
+    "allowComments": false,
+    "allowCommentReactions": null
+  },
+  "layout": { ... }
+}
+```
+
+Values:
+- `null` - Inherit from admin (default)
+- `false` - Force disabled
+
+Note: Pages can only **disable** features that are globally enabled. They cannot enable features that are globally disabled.
+
+---
+
+## Settings Resolution
+
+### Priority Order
+
+```
+Admin Setting (master switch) → Page Setting (can only disable)
+```
+
+### Decision Flow
+
+```
+Is feature X allowed on this page?
+├── Admin setting disabled?
+│   └── Yes → Feature disabled (page cannot override)
+└── No (Admin enabled)
+    └── Page setting explicitly disabled?
+        ├── Yes → Feature disabled
+        └── No (null/inherit) → Feature enabled
+```
+
+---
+
+## UI Position
+
+### Below Page Content
 
 ```
 ┌─────────────────────────────────────────────────┐
@@ -221,7 +290,7 @@ PageViewer.vue
 
 ---
 
-## Technical Notes
+## Technical Constraints
 
 - **Threading**: Limited to 1 level (comment -> reply, no reply to reply)
 - **Pagination**: Default 50 comments at a time
@@ -232,9 +301,7 @@ PageViewer.vue
 
 ---
 
-## Export/Import
-
-### Export Format (Future)
+## Export/Import (Future)
 
 ```json
 {
@@ -245,9 +312,10 @@ PageViewer.vue
       "comments": [
         {
           "userId": "john",
+          "displayName": "John Doe",
           "message": "Great article!",
           "createdAt": "2024-12-01T10:00:00Z",
-          "reactions": ["👍", "❤️"],
+          "reactions": { "👍": ["jane", "anna"] },
           "replies": [...]
         }
       ],

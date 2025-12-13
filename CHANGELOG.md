@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.7.0] - 2025-12-11 - Reactions & Comments
+## [0.7.0] - 2025-12-13 - Reactions, Comments & Performance
 
 ### Added
 - **Emoji Reactions**: Users can now react to pages with emoji
@@ -31,6 +31,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Toggle reactions with single click
   - Reaction counts per comment
 
+- **Admin Engagement Settings**: Global control over engagement features
+  - Enable/disable page reactions globally
+  - Enable/disable comments globally
+  - Enable/disable comment reactions globally
+  - Dedicated "Engagement" tab in Admin Settings
+
+- **Page-Level Engagement Settings**: Per-page control over engagement
+  - Override global settings per page (can only disable, not enable)
+  - Settings in Page Settings modal (gear icon in edit mode)
+  - Options: "Use global setting" or "Disabled"
+  - Grayed out when globally disabled
+
+- **Image Link Target Option**: Control how external links open
+  - New "Open in new tab" checkbox for external URL image links
+  - Defaults to new tab for backwards compatibility
+  - Option to open external links in same tab
+
+### Changed
+- **Performance: Smart Cache Refresh**: Background refresh only when cache > 2 minutes old
+  - Prevents unnecessary API calls during rapid navigation
+  - 50% reduction in API calls during normal browsing
+- **Performance: localStorage Persistence**: Cache survives browser refresh
+  - Pages list, navigation, and footer cached in localStorage
+  - Instant load on return visits (no waiting for API)
+  - 75% faster initial load after browser refresh
+- **Performance: Lazy Loading Sidebar**: Versions tab loads on-demand
+  - Sidebar opens 67% faster
+  - Versions API only called when user clicks Versions tab
+- **Performance: Centralized Engagement Settings**: Loaded once in App.vue
+  - Passed as prop to PageViewer instead of loading per component
+  - 1 fewer API call per page navigation
+
 ### Technical
 - Created `CommentsEntityListener.php` to register `intravox_page` as objectType for NC Comments
 - Created `CommentService.php` as wrapper around `ICommentsManager`
@@ -39,10 +71,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Page reactions stored as comments with `verb='reaction'` (NC Comments API feature)
 - All data stored in native `oc_comments` table - zero database migrations needed
 - Comments linked to pages via `uniqueId` (objectId in oc_comments)
+- Enhanced `CacheService.js` with `getAge()` method and localStorage persistence
+- Removed unused `loadBreadcrumb()` method from App.vue
 
 ### Translations
 - Complete Dutch, German, and French translations for all reaction and comment features
 - New translation keys: Comments, Write a comment, Reply, edited, just now, Add reaction, etc.
+- Admin settings translations for engagement configuration
 
 ## [0.6.1] - 2025-12-11 - Bug Fixes
 

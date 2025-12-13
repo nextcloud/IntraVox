@@ -4,10 +4,10 @@ This guide covers installation, configuration, and maintenance of IntraVox for N
 
 **Related documentation:**
 - [Admin Settings Guide](ADMIN_SETTINGS.md) - Demo data and video services configuration
-- [Comments Settings](COMMENTS_SETTINGS.md) - Reactions and comments configuration
+- [Engagement Admin Guide](ENGAGEMENT_ADMIN.md) - Reactions and comments configuration
 - [Authorization Guide](AUTHORIZATION.md) - Permissions and access control
 - [Architecture](ARCHITECTURE.md) - Technical architecture
-- [Comments Architecture](COMMENTS_ARCHITECTURE.md) - Comments system technical details
+- [Engagement Architecture](ENGAGEMENT_ARCHITECTURE.md) - Engagement system technical details
 
 ## System Requirements
 

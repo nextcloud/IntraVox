@@ -97,6 +97,7 @@
         <PageViewer
           v-if="!isEditMode && displayPage"
           :page="displayPage"
+          :engagement-settings="globalEngagementSettings"
           @navigate="selectPage"
         />
         <PageEditor
@@ -471,8 +472,12 @@ export default {
           }
           this.updatePageMetadata();
 
-          // Background refresh - don't await, fire and forget
-          this.refreshPageInBackground(pageId, cacheKey);
+          // Smart background refresh - only if cache is older than 2 minutes
+          const cacheAge = CacheService.getAge(cacheKey);
+          const minRefreshAge = 2 * 60 * 1000; // 2 minutes
+          if (!cacheAge || cacheAge > minRefreshAge) {
+            this.refreshPageInBackground(pageId, cacheKey);
+          }
           return;
         }
 
@@ -510,16 +515,6 @@ export default {
         this.loading = false;
       }
     },
-    async loadBreadcrumb(pageId) {
-      try {
-        const response = await axios.get(generateUrl(`/apps/intravox/api/pages/${pageId}/breadcrumb`));
-        this.breadcrumb = response.data;
-      } catch (err) {
-        console.error('IntraVox: Error loading breadcrumb:', err);
-        // Don't show error to user, breadcrumb is not critical
-        this.breadcrumb = [];
-      }
-    },
     /**
      * Refresh page data in background without blocking UI
      * Used when showing cached data first
@@ -538,7 +533,6 @@ export default {
         CacheService.set(cacheKey, response.data);
       } catch (err) {
         // Silent fail for background refresh - user already has cached data
-        console.debug('IntraVox: Background refresh failed:', err.message);
       }
     },
     updatePageMetadata() {
@@ -907,10 +901,8 @@ export default {
       }
     },
     handleLanguageChange() {
-      // Reload navigation and pages for the new language
+      // Only reload navigation - pages structure doesn't change with language
       this.loadNavigation();
-      this.loadPages();
-      // this.loadFooter(); // Temporarily disabled
       // Force Vue to re-render all translated strings
       this.$forceUpdate();
     },
@@ -1004,7 +996,7 @@ export default {
         const response = await axios.get(generateUrl('/apps/intravox/api/settings/engagement'));
         this.globalEngagementSettings = response.data;
       } catch (err) {
-        console.debug('IntraVox: Could not load engagement settings, using defaults');
+        // Silent fail - use defaults
       }
     },
     async handlePageSettingsSave(settings) {

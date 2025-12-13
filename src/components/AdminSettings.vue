@@ -11,7 +11,7 @@
 			<button
 				:class="['tab-button', { active: activeTab === 'engagement' }]"
 				@click="activeTab = 'engagement'">
-				<EmoticonHappy :size="16" />
+				<CommentTextOutline :size="16" />
 				{{ t('intravox', 'Engagement') }}
 			</button>
 			<button
@@ -328,7 +328,7 @@ import { generateUrl } from '@nextcloud/router'
 import PackageVariant from 'vue-material-design-icons/PackageVariant.vue'
 import Video from 'vue-material-design-icons/Video.vue'
 import OpenInNew from 'vue-material-design-icons/OpenInNew.vue'
-import EmoticonHappy from 'vue-material-design-icons/EmoticonHappy.vue'
+import CommentTextOutline from 'vue-material-design-icons/CommentTextOutline.vue'
 
 export default {
 	name: 'AdminSettings',
@@ -340,7 +340,7 @@ export default {
 		PackageVariant,
 		Video,
 		OpenInNew,
-		EmoticonHappy,
+		CommentTextOutline,
 	},
 	props: {
 		initialState: {

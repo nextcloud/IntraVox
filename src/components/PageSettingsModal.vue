@@ -4,6 +4,8 @@
 		:name="t('intravox', 'Page Settings')"
 		size="normal"
 		@close="$emit('close')">
+		<!-- Hidden element to capture initial focus and blur it -->
+		<div ref="focusTrap" tabindex="-1" class="focus-trap" />
 		<div class="page-settings">
 			<div class="settings-section">
 				<h3 class="settings-section-header">
@@ -24,6 +26,7 @@
 							:options="disableOnlyOptions"
 							:clearable="true"
 							:searchable="false"
+							:autofocus="false"
 							:placeholder="t('intravox', 'Use global setting')"
 							class="tri-state-select"
 							@clear="localSettings.allowReactions = null" />
@@ -44,6 +47,7 @@
 							:options="disableOnlyOptions"
 							:clearable="true"
 							:searchable="false"
+							:autofocus="false"
 							:placeholder="t('intravox', 'Use global setting')"
 							class="tri-state-select"
 							@clear="localSettings.allowComments = null" />
@@ -64,6 +68,7 @@
 							:options="disableOnlyOptions"
 							:clearable="true"
 							:searchable="false"
+							:autofocus="false"
 							:placeholder="t('intravox', 'Use global setting')"
 							class="tri-state-select"
 							@clear="localSettings.allowCommentReactions = null" />
@@ -134,18 +139,24 @@ export default {
 				{ value: false, label: t('intravox', 'Disabled') },
 			]
 		},
-		// Only show comment reactions option if comments are enabled
-		// (both globally and not disabled at page level)
-		showCommentReactionsOption() {
-			// If comments are globally disabled, don't show
+		// Check if comments are effectively enabled for this page
+		// (globally enabled AND not disabled at page level)
+		commentsEffectivelyEnabled() {
+			// If comments are globally disabled, they're off
 			if (!this.globalSettings.allowComments) {
 				return false
 			}
-			// If comments are explicitly disabled for this page, don't show
-			if (this.localSettings.allowComments?.value === false) {
+			// If comments are explicitly disabled for this page, they're off
+			// Check both the option object format and direct value
+			const commentValue = this.localSettings.allowComments?.value ?? this.localSettings.allowComments
+			if (commentValue === false) {
 				return false
 			}
 			return true
+		},
+		// Only show comment reactions option if comments are enabled
+		showCommentReactionsOption() {
+			return this.commentsEffectivelyEnabled
 		},
 	},
 	created() {
@@ -154,6 +165,14 @@ export default {
 		this.localSettings.allowReactions = this.mapToOption(this.settings?.allowReactions)
 		this.localSettings.allowComments = this.mapToOption(this.settings?.allowComments)
 		this.localSettings.allowCommentReactions = this.mapToOption(this.settings?.allowCommentReactions)
+	},
+	mounted() {
+		// Remove focus from any element after modal opens
+		this.$nextTick(() => {
+			if (document.activeElement && document.activeElement !== document.body) {
+				document.activeElement.blur()
+			}
+		})
 	},
 	methods: {
 		t(app, key, vars = {}) {
@@ -205,6 +224,13 @@ export default {
 </script>
 
 <style scoped>
+.focus-trap {
+	position: absolute;
+	width: 0;
+	height: 0;
+	overflow: hidden;
+}
+
 .page-settings {
 	padding: 16px 0;
 }

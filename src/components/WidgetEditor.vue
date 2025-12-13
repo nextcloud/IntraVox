@@ -247,7 +247,16 @@
               :placeholder="t('https://example.com')"
               class="widget-input"
             />
-            <p class="size-hint">{{ t('Click on the image to open this URL in a new tab') }}</p>
+            <div class="link-target-options">
+              <label class="checkbox-label">
+                <input
+                  type="checkbox"
+                  v-model="localWidget.linkNewTab"
+                />
+                {{ t('Open in new tab') }}
+              </label>
+            </div>
+            <p class="size-hint">{{ localWidget.linkNewTab ? t('Click on the image to open this URL in a new tab') : t('Click on the image to open this URL') }}</p>
           </div>
         </div>
 
@@ -509,9 +518,8 @@ export default {
         this.videoDomainWhitelist = whitelistResponse.data.domains;
       }
       this.videoWhitelistLoaded = true;
-    } catch (e) {
+    } catch {
       // Use defaults if fetch fails
-      console.warn('Could not fetch settings:', e);
       this.videoWhitelistLoaded = true; // Mark as loaded even on error to enable UI
     }
 
@@ -680,16 +688,12 @@ export default {
     async handleImageUpload(event) {
       const file = event.target.files[0];
       if (!file) {
-        console.log('[ImageUpload] No file selected');
         return;
       }
-
-      console.log('[ImageUpload] File selected:', file.name, 'Size:', file.size, 'Type:', file.type);
 
       // Check file size before uploading (use server-configured limit)
       const maxSize = this.uploadLimitBytes || (2 * 1024 * 1024); // Fallback to 2MB
       if (file.size > maxSize) {
-        console.log('[ImageUpload] File too large:', file.size, '>', maxSize);
         showError(t('intravox', 'Image too large. Maximum size is {limit}MB.', { limit: this.uploadLimitMB || 2 }));
         return;
       }
@@ -698,8 +702,6 @@ export default {
       formData.append('media', file);
 
       const uploadUrl = generateUrl(`/apps/intravox/api/pages/${this.pageId}/media`);
-      console.log('[ImageUpload] Uploading to:', uploadUrl);
-      console.log('[ImageUpload] Page ID:', this.pageId);
 
       // Prevent saving while uploading
       this.isUploading = true;
@@ -708,8 +710,6 @@ export default {
         // Don't set Content-Type header - axios will set it automatically with the correct boundary
         const response = await axios.post(uploadUrl, formData);
 
-        console.log('[ImageUpload] Upload success:', response.data);
-
         // Vue 3: Direct assignment is reactive
         this.localWidget.src = response.data.filename;
         // Initialize width if not set (default to null for full width)
@@ -717,9 +717,6 @@ export default {
           this.localWidget.width = null;
         }
       } catch (err) {
-        console.error('[ImageUpload] Upload error:', err);
-        console.error('[ImageUpload] Error response:', err.response?.data);
-        console.error('[ImageUpload] Error status:', err.response?.status);
         // Extract error message from response if available
         const errorMsg = err.response?.data?.error || err.message;
         showError(t('intravox', 'Could not upload image') + ': ' + errorMsg);
@@ -751,10 +748,16 @@ export default {
       if (linkType === 'none') {
         this.localWidget.linkPageId = null;
         this.localWidget.linkUrl = null;
+        this.localWidget.linkNewTab = undefined;
       } else if (linkType === 'internal') {
         this.localWidget.linkUrl = null;
+        this.localWidget.linkNewTab = undefined;
       } else if (linkType === 'external') {
         this.localWidget.linkPageId = null;
+        // Default to opening in new tab for external URLs
+        if (this.localWidget.linkNewTab === undefined) {
+          this.localWidget.linkNewTab = true;
+        }
       }
     },
     convertVideoUrl() {
@@ -798,7 +801,6 @@ export default {
 
           // Validate video ID format (11 characters, alphanumeric + dash/underscore)
           if (videoId && !/^[a-zA-Z0-9_-]{11}$/.test(videoId)) {
-            console.warn('[Video] Invalid YouTube video ID format:', videoId);
             videoId = null;
           }
 
@@ -972,17 +974,11 @@ export default {
     async handleVideoUpload(event) {
       const file = event.target.files[0];
       if (!file) {
-        console.log('[VideoUpload] No file selected');
         return;
       }
 
-      console.log('[VideoUpload] File selected:', file.name, 'Size:', file.size, 'Type:', file.type);
-      console.log('[VideoUpload] PageId:', this.pageId);
-      console.log('[VideoUpload] Upload limit:', this.uploadLimitBytes, 'bytes');
-
       // Check file size against server limit
       if (file.size > this.uploadLimitBytes) {
-        console.log('[VideoUpload] File too large:', file.size, '>', this.uploadLimitBytes);
         showError(t('intravox', 'Video too large. Maximum size is {limit}MB.', { limit: this.uploadLimitMB }));
         return;
       }
@@ -990,7 +986,6 @@ export default {
       // Validate video file type
       const validTypes = ['video/mp4', 'video/webm', 'video/ogg'];
       if (!validTypes.includes(file.type)) {
-        console.log('[VideoUpload] Invalid file type:', file.type);
         showError(t('intravox', 'Invalid video format. Please use MP4, WebM or OGG.'));
         return;
       }
@@ -1007,24 +1002,13 @@ export default {
           generateUrl(`/apps/intravox/api/pages/${this.pageId}/media`),
           formData
         );
-        console.log('[VideoUpload] Upload response:', response.data);
         this.localWidget.src = response.data.filename;
         // Ensure provider is set to 'local' for uploaded files
         this.localWidget.provider = 'local';
         // Clear originalSrc for local files
         this.localWidget.originalSrc = null;
-        console.log('[VideoUpload] Widget updated - src:', this.localWidget.src, 'provider:', this.localWidget.provider);
         showSuccess(t('intravox', 'Video uploaded successfully'));
       } catch (err) {
-        console.error('[VideoUpload] Upload error:', err);
-        console.error('[VideoUpload] Full error object:', JSON.stringify(err, Object.getOwnPropertyNames(err)));
-        if (err.response) {
-          console.error('[VideoUpload] Response status:', err.response.status);
-          console.error('[VideoUpload] Response data:', err.response.data);
-        }
-        if (err.request) {
-          console.error('[VideoUpload] Request made but no response:', err.request.status, err.request.statusText);
-        }
         // Provide more specific error messages
         let errorMsg = t('intravox', 'Could not upload video');
         if (err.code === 'ERR_NETWORK') {
@@ -1478,6 +1462,11 @@ export default {
 /* Checkbox group styling */
 .checkbox-group {
   margin-bottom: 12px;
+}
+
+.link-target-options {
+  margin-top: 8px;
+  margin-bottom: 4px;
 }
 
 .checkbox-label {

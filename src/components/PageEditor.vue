@@ -633,7 +633,6 @@ export default {
         if (!widget.id || duplicateWidgets.includes(entry)) {
           // Assign new unique ID
           widget.id = `widget-${this.nextWidgetId++}`;
-          console.log(`[IntraVox] Assigned new ID ${widget.id} to ${widget.type} widget in ${entry.zone}`);
         }
       });
     },

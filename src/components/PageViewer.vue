@@ -101,7 +101,7 @@
 import Widget from './Widget.vue';
 import ReactionBar from './reactions/ReactionBar.vue';
 import CommentSection from './reactions/CommentSection.vue';
-import { getPageReactions, getEngagementSettings } from '../services/CommentService.js';
+import { getPageReactions } from '../services/CommentService.js';
 
 export default {
   name: 'PageViewer',
@@ -114,19 +114,22 @@ export default {
     page: {
       type: Object,
       required: true
+    },
+    engagementSettings: {
+      type: Object,
+      default: () => ({
+        allowPageReactions: true,
+        allowComments: true,
+        allowCommentReactions: true,
+        singleReactionPerUser: true
+      })
     }
   },
   emits: ['navigate'],
   data() {
     return {
       pageReactions: {},
-      userReactions: [],
-      engagementSettings: {
-        allowPageReactions: true,
-        allowComments: true,
-        allowCommentReactions: true,
-        singleReactionPerUser: true
-      }
+      userReactions: []
     };
   },
   computed: {
@@ -278,14 +281,6 @@ export default {
         console.error('Failed to load reactions:', error);
       }
     },
-    async loadEngagementSettings() {
-      try {
-        const settings = await getEngagementSettings();
-        this.engagementSettings = settings;
-      } catch (error) {
-        console.error('Failed to load engagement settings:', error);
-      }
-    },
     handleReactionsUpdate(result) {
       this.pageReactions = result.reactions || {};
       this.userReactions = result.userReactions || [];
@@ -298,9 +293,6 @@ export default {
         this.loadReactions();
       }
     }
-  },
-  mounted() {
-    this.loadEngagementSettings();
   }
 };
 </script>

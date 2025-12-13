@@ -67,6 +67,14 @@ IntraVox brings SharePoint-style page creation to Nextcloud, enabling teams to b
 
 *Page structure view for easy content management*
 
+### Engagement
+
+- **Page Reactions** - Users can react to pages with emoji (👍❤️🎉😊🤔👀🚀💯 etc.)
+- **Comments** - Full commenting system with threaded replies (1 level deep)
+- **Comment Reactions** - React to individual comments with emoji
+- **Admin Control** - Enable/disable reactions and comments globally
+- **Page-Level Settings** - Override engagement settings per page
+
 ### Content Organization
 
 - **Multi-Language Support** - Separate content per language (Dutch, English, German, French)
@@ -83,6 +91,7 @@ IntraVox brings SharePoint-style page creation to Nextcloud, enabling teams to b
 
 ### Admin Settings
 
+- **Engagement Settings** - Enable/disable page reactions, comments, and comment reactions
 - **Video Embed Domains** - Configure which video platforms are allowed
 - **Privacy-First Defaults** - YouTube privacy mode and PeerTube enabled by default
 - **Custom Video Servers** - Add your own PeerTube or video hosting domains
@@ -97,9 +106,16 @@ IntraVox brings SharePoint-style page creation to Nextcloud, enabling teams to b
 ### Integration
 
 - **Nextcloud Unified Search** - Search pages via Ctrl+K with IntraVox app icon
+- **Nextcloud Comments API** - Reactions and comments use native Nextcloud infrastructure
 - **MetaVox Integration** - Add metadata to pages (when MetaVox app is installed)
 - **Files App Integration** - Pages stored as JSON files in GroupFolder
 - **Responsive Design** - Works on desktop, tablet, and mobile
+
+### Performance
+
+- **Smart Caching** - Intelligent cache refresh reduces unnecessary API calls by 50%
+- **localStorage Persistence** - Cache survives browser refresh for instant page loads
+- **Lazy Loading** - Sidebar tabs and data load on-demand
 
 ---
 
@@ -243,6 +259,11 @@ Pages are stored as JSON files with the following structure:
 | DELETE | `/api/pages/{id}` | Delete page |
 | GET | `/api/navigation` | Get navigation structure |
 | POST | `/api/navigation` | Save navigation |
+| GET | `/api/pages/{id}/comments` | Get comments for a page |
+| POST | `/api/pages/{id}/comments` | Add a comment |
+| GET | `/api/pages/{id}/reactions` | Get page reactions |
+| POST | `/api/pages/{id}/reactions/{emoji}` | Add page reaction |
+| GET | `/api/settings/engagement` | Get engagement settings |
 
 ---
 
@@ -274,6 +295,9 @@ npm run build
 
 - [Authorization Guide](docs/AUTHORIZATION.md) - User and administrator permissions guide
 - [Architecture](docs/ARCHITECTURE.md) - Technical architecture documentation
+- [Engagement User Guide](docs/ENGAGEMENT_GUIDE.md) - How to use reactions and comments
+- [Engagement Admin Guide](docs/ENGAGEMENT_ADMIN.md) - Configure engagement settings
+- [Engagement Architecture](docs/ENGAGEMENT_ARCHITECTURE.md) - Technical engagement details
 
 ---
 
