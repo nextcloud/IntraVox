@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.1] - 2025-12-13 - Translation Fixes
+
+### Fixed
+- **Engagement Translations**: Added missing translations for engagement features
+  - German (de): Added 30 missing engagement-related translation keys
+  - French (fr): Added 30 missing engagement-related translation keys
+  - Dutch (nl): Added 6 missing engagement-related translation keys
+  - All engagement admin settings, page settings, and user-facing strings now fully translated
+
 ## [0.7.0] - 2025-12-13 - Reactions, Comments & Performance
 
 ### Added
