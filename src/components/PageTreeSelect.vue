@@ -111,6 +111,10 @@ export default {
     disabled: {
       type: Boolean,
       default: false
+    },
+    language: {
+      type: String,
+      default: null
     }
   },
   emits: ['update:modelValue', 'select'],
@@ -160,6 +164,10 @@ export default {
         this.searchQuery = '';
         this.focusedId = null;
       }
+    },
+    language() {
+      // Reload tree when language changes
+      this.loadTree();
     }
   },
   mounted() {
@@ -176,8 +184,14 @@ export default {
     async loadTree() {
       this.loading = true;
       try {
-        const response = await axios.get(generateUrl('/apps/intravox/api/pages/tree'));
-        this.tree = response.data.tree || [];
+        const params = {};
+        if (this.language) {
+          params.language = this.language;
+        }
+        const response = await axios.get(generateUrl('/apps/intravox/api/pages/tree'), { params });
+        const tree = response.data.tree || [];
+
+        this.tree = tree;
         this.flatPages = this.flattenTree(this.tree, '');
 
         // Auto-expand first level

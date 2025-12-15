@@ -334,14 +334,6 @@ class SetupService {
                     $this->logger->info("Created language folder: {$lang}");
                 }
 
-                // Create subdirectories in each language folder
-                try {
-                    $langFolder->get('images');
-                } catch (NotFoundException $e) {
-                    $langFolder->newFolder('images');
-                    $this->logger->info("Created images folder in {$lang}");
-                }
-
                 // Create default homepage for each language
                 try {
                     $langFolder->get('home.json');

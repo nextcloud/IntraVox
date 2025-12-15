@@ -1,0 +1,587 @@
+<?php
+declare(strict_types=1);
+
+namespace OCA\IntraVox\Service\Import;
+
+use Psr\Log\LoggerInterface;
+use ZipArchive;
+
+/**
+ * Confluence HTML Export Importer
+ *
+ * Imports content from Confluence HTML exports (exported via Space Tools → Export Space)
+ */
+class ConfluenceHtmlImporter {
+    private ConfluenceImporter $confluenceImporter;
+
+    public function __construct(
+        private LoggerInterface $logger
+    ) {
+        $this->confluenceImporter = new ConfluenceImporter($logger);
+    }
+
+    /**
+     * Import from Confluence HTML export ZIP file
+     *
+     * @param string $zipPath Path to ZIP file
+     * @param string $language Target language
+     * @return IntermediateFormat Intermediate representation
+     */
+    public function importFromZip(string $zipPath, string $language = 'nl'): IntermediateFormat {
+        $this->logger->info('Importing Confluence HTML export from: ' . $zipPath);
+
+        // Extract ZIP to temporary directory
+        $extractPath = $this->extractZip($zipPath);
+
+        try {
+            // Find all HTML files
+            $htmlFiles = $this->findHtmlFiles($extractPath);
+            $this->logger->info('Found ' . count($htmlFiles) . ' HTML files');
+
+            // Build page hierarchy from directory structure and breadcrumbs
+            $pageHierarchy = $this->buildPageHierarchy($htmlFiles, $extractPath);
+            $this->logger->info('Built page hierarchy', ['pages' => count($pageHierarchy)]);
+
+            // Parse each HTML file
+            $format = new IntermediateFormat();
+            $format->language = $language;
+
+            foreach ($htmlFiles as $htmlFile) {
+                $pageData = $this->parseHtmlFile($htmlFile, $extractPath);
+
+                if ($pageData) {
+                    // Add hierarchy information
+                    $relativePath = substr($htmlFile, strlen($extractPath) + 1);
+                    if (isset($pageHierarchy[$relativePath])) {
+                        $pageData['parentPath'] = $pageHierarchy[$relativePath]['parent'];
+                        $pageData['filePath'] = $relativePath;
+                    }
+
+                    // Parse using ConfluenceImporter
+                    $pageFormat = $this->confluenceImporter->parse($pageData);
+
+                    // Merge pages
+                    foreach ($pageFormat->pages as $page) {
+                        $page->language = $language;
+                        $format->addPage($page);
+                    }
+
+                    // Merge media downloads
+                    foreach ($pageFormat->mediaDownloads as $media) {
+                        $format->addMediaDownload($media);
+                    }
+                }
+            }
+
+            // Set parent relationships based on hierarchy
+            $this->setParentRelationships($format, $pageHierarchy);
+
+            return $format;
+
+        } finally {
+            // Cleanup temporary directory
+            $this->cleanupDirectory($extractPath);
+        }
+    }
+
+    /**
+     * Extract ZIP file to temporary directory
+     *
+     * @param string $zipPath Path to ZIP file
+     * @return string Path to extracted directory
+     */
+    private function extractZip(string $zipPath): string {
+        $zip = new ZipArchive();
+
+        if ($zip->open($zipPath) !== true) {
+            throw new \RuntimeException('Failed to open ZIP file: ' . $zipPath);
+        }
+
+        // Log ZIP contents
+        $this->logger->info('ZIP contains ' . $zip->numFiles . ' files');
+        for ($i = 0; $i < min(10, $zip->numFiles); $i++) {
+            $stat = $zip->statIndex($i);
+            $this->logger->debug('ZIP file ' . $i . ': ' . $stat['name']);
+        }
+
+        // Create temporary directory
+        $extractPath = sys_get_temp_dir() . '/confluence_import_' . uniqid();
+        if (!mkdir($extractPath, 0755, true)) {
+            throw new \RuntimeException('Failed to create temp directory: ' . $extractPath);
+        }
+        $this->logger->info('Created temp directory: ' . $extractPath);
+
+        // Extract files individually to avoid directory issues
+        $extractedCount = 0;
+        for ($i = 0; $i < $zip->numFiles; $i++) {
+            $stat = $zip->statIndex($i);
+            $filename = $stat['name'];
+
+            // Skip root directory entries and __MACOSX
+            if ($filename === '/' || $filename === '' || strpos($filename, '__MACOSX') !== false) {
+                continue;
+            }
+
+            // Extract file
+            $targetPath = $extractPath . '/' . $filename;
+
+            // Create directory if needed
+            if (substr($filename, -1) === '/') {
+                if (!is_dir($targetPath)) {
+                    mkdir($targetPath, 0755, true);
+                }
+            } else {
+                // Extract file
+                $dirname = dirname($targetPath);
+                if (!is_dir($dirname)) {
+                    mkdir($dirname, 0755, true);
+                }
+
+                $content = $zip->getFromIndex($i);
+                if ($content !== false) {
+                    file_put_contents($targetPath, $content);
+                    $extractedCount++;
+                }
+            }
+        }
+
+        $zip->close();
+        $this->logger->info('Extracted ZIP: ' . $extractedCount . ' files');
+
+        // Check if directory exists and list contents
+        if (!is_dir($extractPath)) {
+            throw new \RuntimeException('Extract path does not exist: ' . $extractPath);
+        }
+
+        // Use scandir first to see what's there
+        $contents = scandir($extractPath);
+        $this->logger->info('Directory contents: ' . json_encode($contents));
+
+        // List extracted files
+        try {
+            $iterator = new \RecursiveIteratorIterator(
+                new \RecursiveDirectoryIterator($extractPath, \RecursiveDirectoryIterator::SKIP_DOTS),
+                \RecursiveIteratorIterator::SELF_FIRST
+            );
+            $fileCount = 0;
+            foreach ($iterator as $file) {
+                $fileCount++;
+                if ($fileCount <= 10) {
+                    $this->logger->debug('Extracted: ' . $file->getPathname());
+                }
+            }
+            $this->logger->info('Extracted ' . $fileCount . ' total files');
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to iterate directory: ' . $e->getMessage());
+        }
+
+        return $extractPath;
+    }
+
+    /**
+     * Find all HTML files in directory (recursively)
+     *
+     * @param string $directory Directory to search
+     * @return array Array of file paths
+     */
+    private function findHtmlFiles(string $directory): array {
+        $htmlFiles = [];
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($directory, \RecursiveDirectoryIterator::SKIP_DOTS)
+        );
+
+        $allFiles = 0;
+        $htmlCount = 0;
+        $skippedCount = 0;
+
+        foreach ($iterator as $file) {
+            $allFiles++;
+            if ($file->isFile() && strtolower($file->getExtension()) === 'html') {
+                $htmlCount++;
+                // Skip index files and navigation files
+                $filename = $file->getFilename();
+                if (!in_array($filename, ['index.html', 'overview.html', 'toc.html'])) {
+                    $htmlFiles[] = $file->getPathname();
+                    $this->logger->debug('Found HTML file: ' . $file->getPathname());
+                } else {
+                    $skippedCount++;
+                    $this->logger->debug('Skipped HTML file: ' . $filename);
+                }
+            }
+        }
+
+        $this->logger->info("File scan complete: {$allFiles} total files, {$htmlCount} HTML files, {$skippedCount} skipped, " . count($htmlFiles) . " will be processed");
+
+        return $htmlFiles;
+    }
+
+    /**
+     * Parse HTML file to page data
+     *
+     * @param string $htmlFile Path to HTML file
+     * @param string $baseDir Base directory for resolving attachments
+     * @return array|null Page data or null if parsing fails
+     */
+    private function parseHtmlFile(string $htmlFile, string $baseDir): ?array {
+        $html = file_get_contents($htmlFile);
+
+        if (!$html) {
+            $this->logger->warning('Failed to read HTML file: ' . $htmlFile);
+            return null;
+        }
+
+        // Extract title from HTML
+        $title = $this->extractTitle($html, $htmlFile);
+
+        // Extract body content (between <body> tags or specific content div)
+        $body = $this->extractBody($html);
+
+        if (empty($body)) {
+            $this->logger->warning('No body content found in: ' . $htmlFile);
+            return null;
+        }
+
+        // Get relative path for hierarchy matching
+        $relativePath = substr($htmlFile, strlen($baseDir) + 1);
+
+        return [
+            'title' => $title,
+            'body' => $body,
+            'sourceFile' => $relativePath,
+            'baseDir' => $baseDir,
+        ];
+    }
+
+    /**
+     * Extract title from HTML
+     *
+     * @param string $html HTML content
+     * @param string $fallbackPath Fallback path for title
+     * @return string Page title
+     */
+    private function extractTitle(string $html, string $fallbackPath): string {
+        // Try to find <title> tag
+        if (preg_match('/<title[^>]*>(.*?)<\/title>/is', $html, $matches)) {
+            $title = html_entity_decode(strip_tags($matches[1]));
+            $title = trim($title);
+
+            // Remove " - Confluence" suffix if present
+            $title = preg_replace('/ - Confluence$/', '', $title);
+
+            if (!empty($title)) {
+                return $title;
+            }
+        }
+
+        // Try to find <h1> tag
+        if (preg_match('/<h1[^>]*>(.*?)<\/h1>/is', $html, $matches)) {
+            $title = html_entity_decode(strip_tags($matches[1]));
+            $title = trim($title);
+
+            if (!empty($title)) {
+                return $title;
+            }
+        }
+
+        // Fallback: use filename
+        $filename = basename($fallbackPath, '.html');
+        return ucfirst(str_replace(['-', '_'], ' ', $filename));
+    }
+
+    /**
+     * Extract body content from HTML
+     *
+     * @param string $html Full HTML content
+     * @return string Body content
+     */
+    private function extractBody(string $html): string {
+        // Confluence exports typically have content in a div with id="main-content" or class="wiki-content"
+        // Try to extract just the content area
+
+        // Try #main-content
+        if (preg_match('/<div[^>]*id=["\']main-content["\'][^>]*>(.*?)<\/div>\s*<\/div>/is', $html, $matches)) {
+            return $matches[1];
+        }
+
+        // Try .wiki-content
+        if (preg_match('/<div[^>]*class=["\'][^"\']*wiki-content[^"\']*["\'][^>]*>(.*?)<\/div>/is', $html, $matches)) {
+            return $matches[1];
+        }
+
+        // Try .page-content
+        if (preg_match('/<div[^>]*class=["\'][^"\']*page-content[^"\']*["\'][^>]*>(.*?)<\/div>/is', $html, $matches)) {
+            return $matches[1];
+        }
+
+        // Fallback: extract everything between <body> tags
+        if (preg_match('/<body[^>]*>(.*?)<\/body>/is', $html, $matches)) {
+            return $matches[1];
+        }
+
+        // Last resort: return full HTML
+        $this->logger->warning('Could not extract body content, using full HTML');
+        return $html;
+    }
+
+    /**
+     * Build page hierarchy from directory structure and breadcrumbs
+     *
+     * Confluence HTML exports can have hierarchy in multiple ways:
+     * 1. Directory structure (subdirectories represent child pages)
+     * 2. Breadcrumb navigation in HTML
+     * 3. Index.html with page tree
+     *
+     * @param array $htmlFiles List of HTML file paths
+     * @param string $baseDir Base directory
+     * @return array Hierarchy map [filePath => ['parent' => parentPath, 'title' => title]]
+     */
+    private function buildPageHierarchy(array $htmlFiles, string $baseDir): array {
+        $hierarchy = [];
+
+        foreach ($htmlFiles as $htmlFile) {
+            $relativePath = substr($htmlFile, strlen($baseDir) + 1);
+            $pathParts = explode('/', $relativePath);
+            $fileName = array_pop($pathParts);
+
+            // Initialize hierarchy entry
+            $hierarchy[$relativePath] = [
+                'parent' => null,
+                'title' => null,
+                'level' => count($pathParts), // Depth in directory structure
+            ];
+
+            // Method 1: Use directory structure to determine hierarchy
+            // If file is in a subdirectory, look for parent HTML in parent directory
+            if (count($pathParts) > 0) {
+                // Look for index.html in parent directory
+                $parentDir = implode('/', $pathParts);
+                $parentIndexPath = $parentDir . '/index.html';
+
+                // Check if parent index exists
+                if (isset($hierarchy[$parentIndexPath])) {
+                    $hierarchy[$relativePath]['parent'] = $parentIndexPath;
+                    $this->logger->debug("Found parent via directory structure: $relativePath -> $parentIndexPath");
+                } else {
+                    // Look for any HTML file in parent directory with similar name
+                    $parentDirName = end($pathParts);
+                    $possibleParentFile = count($pathParts) > 1
+                        ? implode('/', array_slice($pathParts, 0, -1)) . '/' . $parentDirName . '.html'
+                        : $parentDirName . '.html';
+
+                    if (isset($hierarchy[$possibleParentFile])) {
+                        $hierarchy[$relativePath]['parent'] = $possibleParentFile;
+                        $this->logger->debug("Found parent via naming: $relativePath -> $possibleParentFile");
+                    }
+                }
+            }
+
+            // Method 2: Parse breadcrumbs from HTML file
+            $html = file_get_contents($htmlFile);
+
+            // Log first HTML file sample for debugging
+            static $sampledFirst = false;
+            if (!$sampledFirst) {
+                $sampledFirst = true;
+                $sample = substr($html, 0, 2000);
+                $this->logger->info("First HTML file sample", [
+                    'file' => $relativePath,
+                    'sample' => $sample
+                ]);
+            }
+
+            $breadcrumbParent = $this->extractParentFromBreadcrumb($html, $relativePath);
+            if ($breadcrumbParent) {
+                $hierarchy[$relativePath]['parent'] = $breadcrumbParent;
+                $this->logger->debug("Found parent via breadcrumb: $relativePath -> $breadcrumbParent");
+            }
+        }
+
+        return $hierarchy;
+    }
+
+    /**
+     * Extract parent page from breadcrumb navigation
+     *
+     * @param string $html HTML content
+     * @param string $currentFilePath Current file's relative path (e.g., "NICE/234424394.html")
+     * @return string|null Parent page path
+     */
+    private function extractParentFromBreadcrumb(string $html, string $currentFilePath): ?string {
+        // Look for Confluence breadcrumb patterns
+        // Common patterns:
+        // <ol class="breadcrumbs"> or <ol id="breadcrumbs">
+        // <div id="breadcrumb-section">
+        // <nav aria-label="Breadcrumb">
+
+        // Try breadcrumb list (match both class and id)
+        if (preg_match('/<ol[^>]*(?:class|id)=["\'][^"\']*breadcrumb[^"\']*["\'][^>]*>(.*?)<\/ol>/is', $html, $matches)) {
+            $breadcrumbHtml = $matches[1];
+
+            // Extract all links from breadcrumb
+            preg_match_all('/<a[^>]*href=["\']([^"\']+)["\'][^>]*>(.*?)<\/a>/is', $breadcrumbHtml, $links, PREG_SET_ORDER);
+
+            $this->logger->debug("Found breadcrumb with " . count($links) . " links");
+
+            // The parent is typically the second-to-last link (last is current page)
+            if (count($links) >= 2) {
+                $parentLink = $links[count($links) - 2];
+                $href = $parentLink[1];
+
+                // Convert href to relative path
+                $normalizedHref = $this->normalizeHref($href);
+
+                // Get the directory from current file path (e.g., "NICE" from "NICE/234424394.html")
+                $pathParts = explode('/', $currentFilePath);
+                $directory = count($pathParts) > 1 ? $pathParts[0] : '';
+
+                // If the href doesn't include a directory, prepend the current file's directory
+                if ($directory && strpos($normalizedHref, '/') === false) {
+                    $relativePath = $directory . '/' . $normalizedHref;
+                } else {
+                    $relativePath = $normalizedHref;
+                }
+
+                $this->logger->debug("Extracted parent from breadcrumb", [
+                    'href' => $href,
+                    'normalized' => $normalizedHref,
+                    'withDirectory' => $relativePath
+                ]);
+                return $relativePath;
+            }
+        } else {
+            // Try to find ANY breadcrumb-like structure
+            if (preg_match('/<nav[^>]*aria-label=["\']Breadcrumb["\'][^>]*>(.*?)<\/nav>/is', $html, $matches)) {
+                $this->logger->debug("Found <nav> breadcrumb");
+            } elseif (preg_match('/<div[^>]*id=["\']breadcrumb[^"\']*["\'][^>]*>/is', $html)) {
+                $this->logger->debug("Found <div id='breadcrumb*'>");
+            } else {
+                // Sample first 1000 chars to see what's there
+                $sample = substr($html, 0, 1000);
+                if (stripos($sample, 'breadcrumb') !== false) {
+                    $this->logger->debug("Found 'breadcrumb' text in HTML but couldn't match pattern");
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Normalize href to relative file path
+     *
+     * @param string $href Link href attribute
+     * @return string Normalized relative path
+     */
+    private function normalizeHref(string $href): string {
+        // Remove leading ./
+        $href = preg_replace('/^\.\//', '', $href);
+
+        // Remove leading /
+        $href = ltrim($href, '/');
+
+        // Remove anchor
+        $href = preg_replace('/#.*$/', '', $href);
+
+        // Remove query string
+        $href = preg_replace('/\?.*$/', '', $href);
+
+        return $href;
+    }
+
+    /**
+     * Set parent relationships on pages based on hierarchy
+     *
+     * @param IntermediateFormat $format Intermediate format with pages
+     * @param array $hierarchy Hierarchy map
+     */
+    private function setParentRelationships(IntermediateFormat $format, array $hierarchy): void {
+        // Build a map of filePath -> Page for quick lookup
+        $pagesByPath = [];
+
+        foreach ($format->pages as $page) {
+            if (isset($page->sourceFile)) {
+                $pagesByPath[$page->sourceFile] = $page;
+            }
+        }
+
+        $this->logger->info("Pages by path map", [
+            'count' => count($pagesByPath),
+            'paths' => array_keys($pagesByPath)
+        ]);
+
+        $this->logger->info("Hierarchy map", [
+            'count' => count($hierarchy),
+            'paths' => array_keys($hierarchy)
+        ]);
+
+        // Set parent relationships
+        $matched = 0;
+        $withParent = 0;
+        foreach ($hierarchy as $filePath => $info) {
+            if (!isset($pagesByPath[$filePath])) {
+                $this->logger->warning("Page not found in pagesByPath", [
+                    'filePath' => $filePath,
+                    'hierarchyInfo' => $info
+                ]);
+                continue;
+            }
+
+            $matched++;
+            $page = $pagesByPath[$filePath];
+            $parentPath = $info['parent'];
+
+            if ($parentPath && isset($pagesByPath[$parentPath])) {
+                $parentPage = $pagesByPath[$parentPath];
+                $page->parentUniqueId = $parentPage->uniqueId;
+                $withParent++;
+
+                $this->logger->info("Set parent relationship", [
+                    'page' => $page->title,
+                    'parent' => $parentPage->title,
+                    'filePath' => $filePath,
+                    'parentPath' => $parentPath,
+                ]);
+            } elseif ($parentPath) {
+                $this->logger->warning("Parent page not found", [
+                    'page' => $page->title,
+                    'filePath' => $filePath,
+                    'parentPath' => $parentPath,
+                    'parentExists' => isset($pagesByPath[$parentPath])
+                ]);
+            }
+        }
+
+        $this->logger->info("Parent relationship summary", [
+            'totalHierarchy' => count($hierarchy),
+            'matchedPages' => $matched,
+            'pagesWithParent' => $withParent
+        ]);
+    }
+
+    /**
+     * Cleanup temporary directory
+     *
+     * @param string $directory Directory to remove
+     */
+    private function cleanupDirectory(string $directory): void {
+        if (!is_dir($directory)) {
+            return;
+        }
+
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($directory, \RecursiveDirectoryIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::CHILD_FIRST
+        );
+
+        foreach ($iterator as $file) {
+            if ($file->isDir()) {
+                rmdir($file->getPathname());
+            } else {
+                unlink($file->getPathname());
+            }
+        }
+
+        rmdir($directory);
+        $this->logger->info('Cleaned up temporary directory: ' . $directory);
+    }
+}

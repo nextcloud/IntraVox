@@ -6,15 +6,20 @@ namespace OCA\IntraVox\Controller;
 use OCA\IntraVox\AppInfo\Application;
 use OCA\IntraVox\Constants;
 use OCA\IntraVox\Service\EngagementSettingsService;
+use OCA\IntraVox\Service\ImportService;
+use OCA\IntraVox\Service\Import\ConfluenceHtmlImporter;
+use OCA\IntraVox\Service\Import\ConfluenceImporter;
 use OCA\IntraVox\Service\PageService;
 use OCA\IntraVox\Service\SetupService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\DataResponse;
+use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\StreamResponse;
 use OCP\IConfig;
 use OCP\IGroupManager;
 use OCP\IRequest;
+use OCP\ITempManager;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
 
@@ -28,10 +33,12 @@ class ApiController extends Controller {
     private PageService $pageService;
     private SetupService $setupService;
     private EngagementSettingsService $engagementSettings;
+    private ImportService $importService;
     private LoggerInterface $logger;
     private IConfig $config;
     private IGroupManager $groupManager;
     private IUserSession $userSession;
+    private ITempManager $tempManager;
 
     public function __construct(
         string $appName,
@@ -39,19 +46,23 @@ class ApiController extends Controller {
         PageService $pageService,
         SetupService $setupService,
         EngagementSettingsService $engagementSettings,
+        ImportService $importService,
         LoggerInterface $logger,
         IConfig $config,
         IGroupManager $groupManager,
-        IUserSession $userSession
+        IUserSession $userSession,
+        ITempManager $tempManager
     ) {
         parent::__construct($appName, $request);
         $this->pageService = $pageService;
         $this->setupService = $setupService;
         $this->engagementSettings = $engagementSettings;
+        $this->importService = $importService;
         $this->logger = $logger;
         $this->config = $config;
         $this->groupManager = $groupManager;
         $this->userSession = $userSession;
+        $this->tempManager = $tempManager;
     }
 
     /**
@@ -623,9 +634,9 @@ class ApiController extends Controller {
      * @NoAdminRequired
      * @NoCSRFRequired
      */
-    public function getPageTree(?string $currentPageId = null): DataResponse {
+    public function getPageTree(?string $currentPageId = null, ?string $language = null): DataResponse {
         try {
-            $tree = $this->pageService->getPageTree($currentPageId);
+            $tree = $this->pageService->getPageTree($currentPageId, $language);
 
             // Filter tree to only include pages user can read
             // PageService already includes Nextcloud permissions in each page
@@ -956,5 +967,277 @@ class ApiController extends Controller {
                 'message' => $e->getMessage(),
             ], Http::STATUS_INTERNAL_SERVER_ERROR);
         }
+    }
+
+    /**
+     * Import from uploaded ZIP file
+     *
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     * @return JSONResponse
+     */
+    public function importZip(): JSONResponse {
+        try {
+            $file = $this->request->getUploadedFile('file');
+
+            if (!$file || $file['error'] !== UPLOAD_ERR_OK) {
+                $errorMessages = [
+                    UPLOAD_ERR_INI_SIZE => 'File exceeds upload_max_filesize',
+                    UPLOAD_ERR_FORM_SIZE => 'File exceeds MAX_FILE_SIZE',
+                    UPLOAD_ERR_PARTIAL => 'File was only partially uploaded',
+                    UPLOAD_ERR_NO_FILE => 'No file was uploaded',
+                    UPLOAD_ERR_NO_TMP_DIR => 'Missing temporary folder',
+                    UPLOAD_ERR_CANT_WRITE => 'Failed to write file to disk',
+                    UPLOAD_ERR_EXTENSION => 'Upload stopped by PHP extension',
+                ];
+                $errorCode = $file['error'] ?? UPLOAD_ERR_NO_FILE;
+                $errorMessage = $errorMessages[$errorCode] ?? 'Unknown upload error';
+                return new JSONResponse(['error' => $errorMessage], Http::STATUS_BAD_REQUEST);
+            }
+
+            // Validate file type
+            $finfo = new \finfo(FILEINFO_MIME_TYPE);
+            $mimeType = $finfo->file($file['tmp_name']);
+
+            // Accept both application/zip and application/x-zip-compressed
+            if (!in_array($mimeType, ['application/zip', 'application/x-zip-compressed', 'application/octet-stream'])) {
+                return new JSONResponse(
+                    ['error' => 'Invalid file type. Expected ZIP file, got: ' . $mimeType],
+                    Http::STATUS_BAD_REQUEST
+                );
+            }
+
+            // Additional check: verify it's actually a ZIP by checking magic bytes
+            $handle = fopen($file['tmp_name'], 'rb');
+            $header = fread($handle, 4);
+            fclose($handle);
+
+            // ZIP files start with PK (0x50 0x4B)
+            if (substr($header, 0, 2) !== 'PK') {
+                return new JSONResponse(
+                    ['error' => 'Invalid ZIP file format'],
+                    Http::STATUS_BAD_REQUEST
+                );
+            }
+
+            $importComments = $this->request->getParam('importComments', '1') === '1';
+            $overwrite = $this->request->getParam('overwrite', '0') === '1';
+
+            $zipContent = file_get_contents($file['tmp_name']);
+            $stats = $this->importService->importFromZip($zipContent, $importComments, $overwrite);
+
+            return new JSONResponse([
+                'success' => true,
+                'stats' => $stats,
+            ]);
+        } catch (\Exception $e) {
+            return new JSONResponse(
+                ['error' => $e->getMessage()],
+                Http::STATUS_INTERNAL_SERVER_ERROR
+            );
+        }
+    }
+
+    /**
+     * Import from Confluence HTML export ZIP file
+     *
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     * @return JSONResponse
+     */
+    public function importConfluenceHtml(): JSONResponse {
+        $this->logger->info('Confluence HTML import endpoint called');
+
+        try {
+            $file = $this->request->getUploadedFile('file');
+            $language = $this->request->getParam('language', 'nl');
+            $parentPageId = $this->request->getParam('parentPageId', null);
+
+            $this->logger->info('Import request received', [
+                'file' => $file ? $file['name'] : 'no file',
+                'language' => $language,
+                'parentPageId' => $parentPageId,
+            ]);
+
+            if (!$file || $file['error'] !== UPLOAD_ERR_OK) {
+                $this->logger->warning('File upload error', ['error' => $file['error'] ?? 'no file']);
+                return new JSONResponse(
+                    ['error' => 'No file uploaded or upload error'],
+                    Http::STATUS_BAD_REQUEST
+                );
+            }
+
+            // Validate ZIP file
+            $finfo = new \finfo(FILEINFO_MIME_TYPE);
+            $mimeType = $finfo->file($file['tmp_name']);
+
+            if (!in_array($mimeType, ['application/zip', 'application/x-zip-compressed', 'application/octet-stream'])) {
+                return new JSONResponse(
+                    ['error' => 'Invalid file type. Expected ZIP file'],
+                    Http::STATUS_BAD_REQUEST
+                );
+            }
+
+            $this->logger->info('Starting Confluence HTML import', [
+                'filename' => $file['name'],
+                'size' => $file['size'],
+                'language' => $language,
+            ]);
+
+            // Create HTML importer
+            $htmlImporter = new ConfluenceHtmlImporter($this->logger);
+            $confluenceImporter = new ConfluenceImporter($this->logger);
+
+            // Import from ZIP
+            $intermediateFormat = $htmlImporter->importFromZip($file['tmp_name'], $language);
+
+            $this->logger->info('Parsed Confluence HTML export', [
+                'pages' => count($intermediateFormat->pages),
+                'media' => count($intermediateFormat->mediaDownloads),
+            ]);
+
+            // Convert to IntraVox export format
+            $export = $this->convertIntermediateToExport($confluenceImporter, $intermediateFormat);
+
+            // Log hierarchy before setting parent
+            $this->logger->info('Export hierarchy BEFORE setting parent', [
+                'pages' => array_map(function($p) {
+                    return [
+                        'title' => $p['content']['title'] ?? 'unknown',
+                        'uniqueId' => substr($p['uniqueId'], 0, 20),
+                        'parentUniqueId' => isset($p['parentUniqueId']) ? substr($p['parentUniqueId'], 0, 20) : 'NONE'
+                    ];
+                }, $export['pages'])
+            ]);
+
+            // Set parent page for ROOT imported pages (pages without a parent in the import)
+            if ($parentPageId) {
+                $rootCount = 0;
+                foreach ($export['pages'] as &$page) {
+                    // Only set parent for pages that don't already have a parent
+                    if (empty($page['parentUniqueId'])) {
+                        $page['parentUniqueId'] = $parentPageId;
+                        $rootCount++;
+                    }
+                }
+                unset($page); // Break reference
+                $this->logger->info('Set parent page for root imported pages', [
+                    'parentPageId' => $parentPageId,
+                    'rootPagesCount' => $rootCount,
+                    'totalPages' => count($export['pages'])
+                ]);
+
+                // Log hierarchy AFTER setting parent
+                $this->logger->info('Export hierarchy AFTER setting parent', [
+                    'pages' => array_map(function($p) {
+                        return [
+                            'title' => $p['content']['title'] ?? 'unknown',
+                            'uniqueId' => substr($p['uniqueId'], 0, 20),
+                            'parentUniqueId' => isset($p['parentUniqueId']) ? substr($p['parentUniqueId'], 0, 20) : 'NONE'
+                        ];
+                    }, $export['pages'])
+                ]);
+            }
+
+            // Create temporary directory for export
+            $tempDir = $this->tempManager->getTemporaryFolder();
+
+            // Write export.json
+            file_put_contents($tempDir . '/export.json', json_encode($export, JSON_PRETTY_PRINT));
+
+            // Create ZIP
+            $zipPath = $tempDir . '/confluence-html-import.zip';
+            $this->createZipFromDirectory($tempDir, $zipPath);
+
+            // Import the ZIP with parent page ID
+            $zipContent = file_get_contents($zipPath);
+            $stats = $this->importService->importFromZip($zipContent, true, false, $parentPageId);
+
+            // Cleanup
+            $this->cleanupTempDir($tempDir);
+
+            return new JSONResponse([
+                'success' => true,
+                'stats' => $stats,
+                'pages' => count($intermediateFormat->pages),
+                'message' => 'Confluence HTML export imported successfully',
+            ]);
+        } catch (\Exception $e) {
+            $this->logger->error('Confluence HTML import failed: ' . $e->getMessage(), [
+                'exception' => $e,
+            ]);
+            return new JSONResponse(
+                ['error' => $e->getMessage()],
+                Http::STATUS_INTERNAL_SERVER_ERROR
+            );
+        }
+    }
+
+    /**
+     * Convert intermediate format to IntraVox export format
+     */
+    private function convertIntermediateToExport(ConfluenceImporter $importer, $intermediateFormat): array {
+        // Use reflection to access the protected method
+        $reflectionClass = new \ReflectionClass($importer);
+        $method = $reflectionClass->getMethod('convertToIntraVoxExport');
+        $method->setAccessible(true);
+
+        $export = $method->invoke($importer, $intermediateFormat);
+
+        return $export;
+    }
+
+    /**
+     * Create ZIP archive from directory
+     */
+    private function createZipFromDirectory(string $sourceDir, string $zipPath): void {
+        $zip = new \ZipArchive();
+        if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
+            throw new \Exception('Failed to create ZIP archive');
+        }
+
+        $sourceDir = rtrim($sourceDir, '/');
+
+        $files = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($sourceDir, \FilesystemIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::LEAVES_ONLY
+        );
+
+        foreach ($files as $file) {
+            if (!$file->isDir()) {
+                $filePath = $file->getRealPath();
+                $relativePath = substr($filePath, strlen($sourceDir) + 1);
+
+                // Skip the zip itself
+                if ($relativePath !== 'confluence-html-import.zip') {
+                    $zip->addFile($filePath, $relativePath);
+                }
+            }
+        }
+
+        $zip->close();
+    }
+
+    /**
+     * Cleanup temporary directory
+     */
+    private function cleanupTempDir(string $dir): void {
+        if (!is_dir($dir)) {
+            return;
+        }
+
+        $files = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::CHILD_FIRST
+        );
+
+        foreach ($files as $file) {
+            if ($file->isDir()) {
+                @rmdir($file->getPathname());
+            } else {
+                @unlink($file->getPathname());
+            }
+        }
+        @rmdir($dir);
     }
 }

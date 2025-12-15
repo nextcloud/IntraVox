@@ -4,7 +4,9 @@ declare(strict_types=1);
 namespace OCA\IntraVox\AppInfo;
 
 use OCA\IntraVox\Command\SetupCommand;
+use OCA\IntraVox\Event\PageDeletedEvent;
 use OCA\IntraVox\Listener\CommentsEntityListener;
+use OCA\IntraVox\Listener\PageDeletedListener;
 use OCA\IntraVox\Search\PageSearchProvider;
 use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
@@ -27,6 +29,12 @@ class Application extends App implements IBootstrap {
         $context->registerEventListener(
             CommentsEntityEvent::class,
             CommentsEntityListener::class
+        );
+
+        // Register Page Deleted Listener (cleanup comments when page is deleted)
+        $context->registerEventListener(
+            PageDeletedEvent::class,
+            PageDeletedListener::class
         );
 
         // Register OCC command
@@ -66,8 +74,15 @@ class Application extends App implements IBootstrap {
         // Load MetaVox scripts if installed (for IntraVox sidebar integration)
         // MetaVox's filesplugin.js has its own duplicate registration check,
         // so loading it here is safe even if MetaVox also loads it in Files app.
+        // Only load on main IntraVox pages, not on admin settings (where OC object is not available)
         $appManager = $context->getServerContainer()->get(\OCP\App\IAppManager::class);
-        if ($appManager->isInstalled('metavox') && $appManager->isEnabledForUser('metavox')) {
+        $request = $context->getServerContainer()->get(\OCP\IRequest::class);
+        $requestUri = $request->getRequestUri();
+
+        // Don't load MetaVox on admin/settings pages - OC object is not available there
+        $isAdminPage = str_contains($requestUri, '/settings/') || str_contains($requestUri, '/admin/');
+
+        if (!$isAdminPage && $appManager->isInstalled('metavox') && $appManager->isEnabledForUser('metavox')) {
             // Load the main filesplugin that contains the sidebar tab component
             \OCP\Util::addScript('metavox', 'filesplugin');
             \OCP\Util::addStyle('metavox', 'files');

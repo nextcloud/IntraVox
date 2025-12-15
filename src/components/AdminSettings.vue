@@ -20,6 +20,12 @@
 				<PackageVariant :size="16" />
 				{{ t('intravox', 'Demo Data') }}
 			</button>
+			<button
+				:class="['tab-button', { active: activeTab === 'export' }]"
+				@click="activeTab = 'export'">
+				<Download :size="16" />
+				{{ t('intravox', 'Export/Import') }}
+			</button>
 		</div>
 
 		<!-- Demo Data Tab -->
@@ -250,6 +256,135 @@
 			</div>
 		</div>
 
+		<!-- Export/Import Tab -->
+		<div v-if="activeTab === 'export'" class="tab-content">
+			<!-- Export Section -->
+			<div class="settings-section">
+				<h2>{{ t('intravox', 'Export Pages') }}</h2>
+				<p class="settings-section-desc">
+					{{ t('intravox', 'Export your IntraVox pages for backup or migration.') }}
+				</p>
+
+				<div class="export-options">
+					<div class="export-row">
+						<label class="export-label">{{ t('intravox', 'Language') }}</label>
+						<select v-model="exportLanguage" class="export-select">
+							<option :value="null" disabled>{{ t('intravox', 'Select language') }}</option>
+							<option
+								v-for="lang in exportLanguages"
+								:key="lang.code"
+								:value="lang.code">
+								{{ lang.flag }} {{ lang.name }}
+								<template v-if="lang.hasContent">({{ lang.pageCount }} {{ t('intravox', 'pages') }})</template>
+								<template v-else>({{ t('intravox', 'empty') }})</template>
+							</option>
+						</select>
+					</div>
+
+					<div class="export-row">
+						<label class="export-label">{{ t('intravox', 'Format') }}</label>
+						<div class="export-format-options">
+							<NcCheckboxRadioSwitch
+								v-model="exportFormat"
+								value="zip"
+								type="radio"
+								name="exportFormat">
+								ZIP ({{ t('intravox', 'with media files') }})
+							</NcCheckboxRadioSwitch>
+							<NcCheckboxRadioSwitch
+								v-model="exportFormat"
+								value="json"
+								type="radio"
+								name="exportFormat">
+								JSON ({{ t('intravox', 'pages only') }})
+							</NcCheckboxRadioSwitch>
+						</div>
+					</div>
+
+					<div class="export-row">
+						<NcCheckboxRadioSwitch
+							:checked="exportIncludeComments"
+							@update:checked="exportIncludeComments = $event">
+							{{ t('intravox', 'Include comments and reactions') }}
+						</NcCheckboxRadioSwitch>
+					</div>
+
+					<NcButton
+						type="primary"
+						:disabled="!exportLanguage || exporting"
+						@click="downloadExport">
+						<template #icon>
+							<Download :size="20" />
+						</template>
+						{{ exporting ? t('intravox', 'Exporting...') : t('intravox', 'Download Export') }}
+					</NcButton>
+				</div>
+			</div>
+
+			<!-- Confluence Import Section -->
+			<div class="settings-section confluence-import-section">
+				<ConfluenceImport />
+			</div>
+
+			<!-- Import Section -->
+			<div class="settings-section import-section">
+				<h2>{{ t('intravox', 'Import from ZIP') }}</h2>
+				<p class="settings-section-desc">
+					{{ t('intravox', 'Import pages and media from an IntraVox ZIP export file.') }}
+				</p>
+
+				<div class="import-options">
+					<div class="import-row">
+						<label class="import-label">{{ t('intravox', 'Select ZIP file') }}</label>
+						<input
+							ref="importFileInput"
+							type="file"
+							accept=".zip"
+							class="import-file-input"
+							@change="onImportFileSelect" />
+						<span v-if="importFileName" class="import-filename">
+							{{ importFileName }}
+						</span>
+					</div>
+
+					<div class="import-row">
+						<NcCheckboxRadioSwitch
+							:checked="importIncludeComments"
+							@update:checked="importIncludeComments = $event">
+							{{ t('intravox', 'Import comments and reactions') }}
+						</NcCheckboxRadioSwitch>
+					</div>
+
+					<div class="import-row">
+						<NcCheckboxRadioSwitch
+							:checked="importOverwrite"
+							@update:checked="importOverwrite = $event">
+							{{ t('intravox', 'Overwrite existing pages') }}
+						</NcCheckboxRadioSwitch>
+					</div>
+
+					<NcButton
+						type="primary"
+						:disabled="!importFile || importing"
+						@click="startImport">
+						<template #icon>
+							<Upload :size="20" />
+						</template>
+						{{ importing ? t('intravox', 'Importing...') : t('intravox', 'Start Import') }}
+					</NcButton>
+
+					<div v-if="importResult" class="import-result">
+						<NcNoteCard type="success">
+							{{ t('intravox', 'Import completed') }}:
+							{{ importResult.stats.pagesImported }} {{ t('intravox', 'pages') }},
+							{{ importResult.stats.mediaFilesImported }} {{ t('intravox', 'media files') }},
+							{{ importResult.stats.commentsImported }} {{ t('intravox', 'comments') }}
+						</NcNoteCard>
+					</div>
+				</div>
+			</div>
+		</div>
+
 		<!-- Engagement Tab -->
 		<div v-if="activeTab === 'engagement'" class="tab-content">
 			<div class="settings-section">
@@ -329,6 +464,9 @@ import PackageVariant from 'vue-material-design-icons/PackageVariant.vue'
 import Video from 'vue-material-design-icons/Video.vue'
 import OpenInNew from 'vue-material-design-icons/OpenInNew.vue'
 import CommentTextOutline from 'vue-material-design-icons/CommentTextOutline.vue'
+import Download from 'vue-material-design-icons/Download.vue'
+import Upload from 'vue-material-design-icons/Upload.vue'
+import ConfluenceImport from '../admin/components/ConfluenceImport.vue'
 
 export default {
 	name: 'AdminSettings',
@@ -341,6 +479,9 @@ export default {
 		Video,
 		OpenInNew,
 		CommentTextOutline,
+		Download,
+		Upload,
+		ConfluenceImport,
 	},
 	props: {
 		initialState: {
@@ -372,6 +513,19 @@ export default {
 				allowCommentReactions: this.initialState.engagementSettings?.allowCommentReactions ?? true,
 			},
 			savingEngagement: false,
+			// Export settings
+			exportLanguage: null,
+			exportLanguages: [],
+			exportIncludeComments: true,
+			exportFormat: 'zip',
+			exporting: false,
+			// Import settings
+			importFile: null,
+			importFileName: '',
+			importIncludeComments: true,
+			importOverwrite: false,
+			importing: false,
+			importResult: null,
 			// Known video services with metadata
 			knownServices: [
 				// Privacy-friendly (no/minimal tracking)
@@ -693,6 +847,87 @@ export default {
 				this.savingEngagement = false
 			}
 		},
+		async loadExportLanguages() {
+			try {
+				const response = await axios.get(generateUrl('/apps/intravox/api/export/languages'))
+				this.exportLanguages = response.data
+			} catch (error) {
+				console.error('Failed to load export languages:', error)
+			}
+		},
+		downloadExport() {
+			if (!this.exportLanguage) return
+
+			this.exporting = true
+			try {
+				// Choose endpoint based on format
+				const endpoint = this.exportFormat === 'zip'
+					? '/apps/intravox/api/export/language/{language}/zip'
+					: '/apps/intravox/api/export/language/{language}'
+
+				const url = generateUrl(endpoint, {
+					language: this.exportLanguage,
+				})
+				const params = new URLSearchParams({
+					includeComments: this.exportIncludeComments ? '1' : '0',
+				})
+
+				// Direct download via window.location
+				window.location.href = `${url}?${params}`
+				showSuccess(this.t('intravox', 'Export started'))
+			} catch (error) {
+				console.error('Failed to start export:', error)
+				showError(this.t('intravox', 'Failed to start export'))
+			} finally {
+				// Reset after a short delay to show loading state
+				setTimeout(() => {
+					this.exporting = false
+				}, 1000)
+			}
+		},
+		onImportFileSelect(event) {
+			const file = event.target.files[0]
+			if (file) {
+				this.importFile = file
+				this.importFileName = file.name
+				this.importResult = null
+			}
+		},
+		async startImport() {
+			if (!this.importFile) return
+
+			this.importing = true
+			this.importResult = null
+
+			try {
+				const formData = new FormData()
+				formData.append('file', this.importFile)
+				formData.append('importComments', this.importIncludeComments ? '1' : '0')
+				formData.append('overwrite', this.importOverwrite ? '1' : '0')
+
+				const response = await axios.post(
+					generateUrl('/apps/intravox/api/import/zip'),
+					formData,
+					{
+						headers: { 'Content-Type': 'multipart/form-data' },
+					}
+				)
+
+				this.importResult = response.data
+				showSuccess(this.t('intravox', 'Import completed successfully'))
+
+				// Refresh export languages to show new content
+				this.loadExportLanguages()
+			} catch (error) {
+				console.error('Import failed:', error)
+				showError(this.t('intravox', 'Import failed: ') + (error.response?.data?.error || error.message))
+			} finally {
+				this.importing = false
+			}
+		},
+	},
+	mounted() {
+		this.loadExportLanguages()
 	},
 }
 </script>
@@ -1211,5 +1446,95 @@ export default {
 .option-desc {
 	font-size: 12px;
 	color: var(--color-text-maxcontrast);
+}
+
+/* Export tab styles */
+.export-options {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	max-width: 400px;
+}
+
+.export-row {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.export-label {
+	font-weight: 500;
+	color: var(--color-main-text);
+}
+
+.export-select {
+	padding: 8px 12px;
+	border: 1px solid var(--color-border);
+	border-radius: var(--border-radius);
+	background: var(--color-main-background);
+	color: var(--color-main-text);
+	font-size: 14px;
+	cursor: pointer;
+}
+
+.export-select:focus {
+	border-color: var(--color-primary-element);
+	outline: none;
+}
+
+.export-format-options {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+/* Import section styles */
+.import-section {
+	margin-top: 32px;
+	padding-top: 24px;
+	border-top: 1px solid var(--color-border);
+}
+
+.import-options {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	max-width: 500px;
+}
+
+.import-row {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.import-label {
+	font-weight: 500;
+	color: var(--color-main-text);
+}
+
+.import-file-input {
+	padding: 8px 12px;
+	border: 1px solid var(--color-border);
+	border-radius: var(--border-radius);
+	background: var(--color-main-background);
+	color: var(--color-main-text);
+	font-size: 14px;
+	cursor: pointer;
+}
+
+.import-file-input:focus {
+	border-color: var(--color-primary-element);
+	outline: none;
+}
+
+.import-filename {
+	font-size: 13px;
+	color: var(--color-text-maxcontrast);
+	font-style: italic;
+}
+
+.import-result {
+	margin-top: 8px;
 }
 </style>

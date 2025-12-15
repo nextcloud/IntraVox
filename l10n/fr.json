@@ -389,7 +389,18 @@
     "Using global setting (enabled)": "Utilisation du paramètre global (activé)",
     "Using global setting (disabled)": "Utilisation du paramètre global (désactivé)",
     "Page settings saved": "Paramètres de page enregistrés",
-    "Could not save page settings: {error}": "Impossible d'enregistrer les paramètres de page: {error}"
+    "Could not save page settings: {error}": "Impossible d'enregistrer les paramètres de page: {error}",
+    "Export": "Exporter",
+    "Export Pages": "Exporter les pages",
+    "Export your IntraVox pages to a JSON file for backup or migration.": "Exportez vos pages IntraVox vers un fichier JSON pour la sauvegarde ou la migration.",
+    "Select language": "Sélectionner la langue",
+    "Include comments and reactions": "Inclure les commentaires et les réactions",
+    "Download Export": "Télécharger l'export",
+    "Exporting...": "Exportation...",
+    "Export started": "Export démarré",
+    "Failed to start export": "Échec du démarrage de l'export",
+    "pages": "pages",
+    "empty": "vide"
   },
   "pluralForm": "nplurals=2; plural=(n > 1);"
 }

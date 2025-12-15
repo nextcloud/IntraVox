@@ -4,6 +4,8 @@ declare(strict_types=1);
 namespace OCA\IntraVox\Service;
 
 use OCA\IntraVox\Constants;
+use OCA\IntraVox\Event\PageDeletedEvent;
+use OCP\EventDispatcher\IEventDispatcher;
 use OCP\Files\IRootFolder;
 use OCP\Files\NotFoundException;
 use OCP\IUserSession;
@@ -34,6 +36,7 @@ class PageService {
     private IConfig $config;
     private IDBConnection $db;
     private LoggerInterface $logger;
+    private IEventDispatcher $eventDispatcher;
     private array $pageFolderCache = [];
 
     /** @var array Request-level cache for page data */
@@ -287,6 +290,7 @@ class PageService {
         IConfig $config,
         IDBConnection $db,
         LoggerInterface $logger,
+        IEventDispatcher $eventDispatcher,
         ?string $userId
     ) {
         $this->rootFolder = $rootFolder;
@@ -295,6 +299,7 @@ class PageService {
         $this->config = $config;
         $this->db = $db;
         $this->logger = $logger;
+        $this->eventDispatcher = $eventDispatcher;
         $this->userId = $userId ?? '';
     }
 
@@ -341,6 +346,29 @@ class PageService {
     private function getLanguageFolder() {
         $baseFolder = $this->getIntraVoxFolder();
         $lang = $this->getUserLanguage();
+
+        try {
+            return $baseFolder->get($lang);
+        } catch (NotFoundException $e) {
+            // If language folder doesn't exist, try default language
+            if ($lang !== self::DEFAULT_LANGUAGE) {
+                try {
+                    return $baseFolder->get(self::DEFAULT_LANGUAGE);
+                } catch (NotFoundException $e2) {
+                    // Create default language folder if it doesn't exist
+                    return $baseFolder->newFolder(self::DEFAULT_LANGUAGE);
+                }
+            }
+            // Create the requested language folder
+            return $baseFolder->newFolder($lang);
+        }
+    }
+
+    /**
+     * Get language folder by language code
+     */
+    private function getLanguageFolderByCode(string $lang) {
+        $baseFolder = $this->getIntraVoxFolder();
 
         try {
             return $baseFolder->get($lang);
@@ -1596,6 +1624,20 @@ class PageService {
 
         if ($result === null) {
             throw new \Exception('Page not found');
+        }
+
+        // Get page data before deletion to retrieve uniqueId for comment cleanup
+        try {
+            $pageData = $result['data'] ?? [];
+            $uniqueId = $pageData['uniqueId'] ?? '';
+
+            // Dispatch event to cleanup comments/reactions before deleting the page
+            if (!empty($uniqueId)) {
+                $this->eventDispatcher->dispatchTyped(new PageDeletedEvent($id, $uniqueId));
+            }
+        } catch (\Exception $e) {
+            // Log but don't block deletion if event dispatch fails
+            $this->logger->warning('Failed to dispatch PageDeletedEvent for page ' . $id . ': ' . $e->getMessage());
         }
 
         // Delete the entire folder (includes .json, images/, files/)
@@ -3250,9 +3292,12 @@ class PageService {
      * @param string|null $currentPageId Optional: uniqueId of the current page to highlight
      * @return array Tree structure with pages and their children
      */
-    public function getPageTree(?string $currentPageId = null): array {
+    public function getPageTree(?string $currentPageId = null, ?string $language = null): array {
+        // Use provided language or fall back to user's language
+        $lang = $language ?? $this->getUserLanguage();
+
         // Build cache key based on user and language
-        $cacheKey = $this->userId . '_' . $this->getUserLanguage();
+        $cacheKey = $this->userId . '_' . $lang;
         $now = time();
 
         // Check if we have a valid cached tree (without currentPageId marking)
@@ -3264,8 +3309,8 @@ class PageService {
             }
         }
 
-        // Build fresh tree
-        $folder = $this->getLanguageFolder();
+        // Build fresh tree for specified language
+        $folder = $this->getLanguageFolderByCode($lang);
         $tree = [];
 
         // Check for home.json in root
@@ -3280,7 +3325,8 @@ class PageService {
                 $tree[] = [
                     'uniqueId' => $data['uniqueId'],
                     'title' => $data['title'],
-                    'path' => $this->getUserLanguage(),
+                    'path' => $lang,
+                    'language' => $lang,
                     'isCurrent' => false, // Will be set by markCurrentPageInTree
                     'children' => [],
                     'permissions' => [
@@ -3298,7 +3344,7 @@ class PageService {
         }
 
         // Recursively build tree from subfolders
-        $this->buildPageTree($folder, $tree, null); // Pass null, marking done separately
+        $this->buildPageTree($folder, $tree, null, $lang); // Pass null, marking done separately
 
         // Store in cache
         self::$pageTreeCache[$cacheKey] = [
@@ -3334,7 +3380,7 @@ class PageService {
     /**
      * Recursively build the page tree from folder structure
      */
-    private function buildPageTree($folder, array &$tree, ?string $currentPageId): void {
+    private function buildPageTree($folder, array &$tree, ?string $currentPageId, string $language = null): void {
         foreach ($this->getCachedDirectoryListing($folder) as $item) {
             if ($item->getType() !== \OCP\Files\FileInfo::TYPE_FOLDER) {
                 continue;
@@ -3385,6 +3431,7 @@ class PageService {
                         'uniqueId' => $data['uniqueId'],
                         'title' => $data['title'],
                         'path' => $this->getRelativePathFromRoot($item),
+                        'language' => $language ?? $this->getUserLanguage(),
                         'isCurrent' => ($currentPageId === $data['uniqueId']),
                         'children' => [],
                         'permissions' => [
@@ -3398,7 +3445,7 @@ class PageService {
                     ];
 
                     // Recursively get children
-                    $this->buildPageTree($item, $pageNode['children'], $currentPageId);
+                    $this->buildPageTree($item, $pageNode['children'], $currentPageId, $language);
 
                     $tree[] = $pageNode;
                 }
