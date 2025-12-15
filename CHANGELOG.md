@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0] - TBD - Confluence Import & Bug Fixes
+
+### Fixed
+- **Groupfolder Setup**: Fixed database constraint violation error on app updates
+  - Error: `SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry '1--admin'`
+  - Made `configureGroupfolderPermissions()` idempotent (safe to run multiple times)
+  - Gracefully handles duplicate group entries during app updates
+  - No more error logs when updating the app
+
 ## [0.7.1] - 2025-12-13 - Translation Fixes
 
 ### Fixed
