@@ -202,32 +202,49 @@ class SetupService {
 
     /**
      * Configure groupfolder permissions for groups
+     * Idempotent: safe to run multiple times (on install and updates)
      */
     private function configureGroupfolderPermissions(int $folderId): void {
         try {
             $this->logger->info("Getting FolderManager for permissions configuration...");
             $groupfolderManager = \OC::$server->get(\OCA\GroupFolders\Folder\FolderManager::class);
 
-            // Add standard Nextcloud admin group with full permissions
-            $this->logger->info("Adding 'admin' group to groupfolder {$folderId}...");
-            $groupfolderManager->addApplicableGroup($folderId, 'admin');
-            $this->logger->info("Setting full permissions for 'admin' group...");
-            $groupfolderManager->setGroupPermissions($folderId, 'admin', \OCP\Constants::PERMISSION_ALL);
-            $this->logger->info("Granted full permissions to: admin");
+            // Define groups to configure
+            $groupsToAdd = [
+                ['name' => 'admin', 'permissions' => \OCP\Constants::PERMISSION_ALL],
+                ['name' => self::ADMIN_GROUP, 'permissions' => \OCP\Constants::PERMISSION_ALL],
+                ['name' => self::USER_GROUP, 'permissions' => \OCP\Constants::PERMISSION_READ],
+            ];
 
-            // Add IntraVox admin group with full permissions
-            $this->logger->info("Adding " . self::ADMIN_GROUP . " to groupfolder {$folderId}...");
-            $groupfolderManager->addApplicableGroup($folderId, self::ADMIN_GROUP);
-            $this->logger->info("Setting full permissions for " . self::ADMIN_GROUP . "...");
-            $groupfolderManager->setGroupPermissions($folderId, self::ADMIN_GROUP, \OCP\Constants::PERMISSION_ALL);
-            $this->logger->info("Granted full permissions to: " . self::ADMIN_GROUP);
+            foreach ($groupsToAdd as $groupConfig) {
+                $groupName = $groupConfig['name'];
+                $permissions = $groupConfig['permissions'];
 
-            // Add user group with read permissions
-            $this->logger->info("Adding " . self::USER_GROUP . " to groupfolder {$folderId}...");
-            $groupfolderManager->addApplicableGroup($folderId, self::USER_GROUP);
-            $this->logger->info("Setting read permissions for " . self::USER_GROUP . "...");
-            $groupfolderManager->setGroupPermissions($folderId, self::USER_GROUP, \OCP\Constants::PERMISSION_READ);
-            $this->logger->info("Granted read permissions to: " . self::USER_GROUP);
+                // Try to add group - ignore duplicate entry errors (idempotent)
+                try {
+                    $this->logger->info("Adding group '{$groupName}' to groupfolder {$folderId}...");
+                    $groupfolderManager->addApplicableGroup($folderId, $groupName);
+                    $this->logger->info("Group '{$groupName}' added successfully");
+                } catch (\Doctrine\DBAL\Exception\UniqueConstraintViolationException $e) {
+                    // Group already exists - this is expected on updates
+                    $this->logger->info("Group '{$groupName}' already exists in groupfolder (expected on updates)");
+                } catch (\Exception $e) {
+                    // Check if it's a duplicate entry error by message
+                    if (strpos($e->getMessage(), 'Duplicate entry') !== false || strpos($e->getMessage(), '1062') !== false) {
+                        $this->logger->info("Group '{$groupName}' already exists in groupfolder (expected on updates)");
+                    } else {
+                        // Re-throw other exceptions
+                        throw $e;
+                    }
+                }
+
+                // Always set permissions to ensure they're correct (even on updates)
+                $this->logger->info("Setting permissions for '{$groupName}'...");
+                $groupfolderManager->setGroupPermissions($folderId, $groupName, $permissions);
+
+                $permissionType = ($permissions === \OCP\Constants::PERMISSION_ALL) ? 'full' : 'read';
+                $this->logger->info("Granted {$permissionType} permissions to: {$groupName}");
+            }
 
         } catch (\Exception $e) {
             $this->logger->error('Exception in configureGroupfolderPermissions: ' . $e->getMessage());
