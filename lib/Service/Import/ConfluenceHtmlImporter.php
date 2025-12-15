@@ -298,24 +298,62 @@ class ConfluenceHtmlImporter {
         // Confluence exports typically have content in a div with id="main-content" or class="wiki-content"
         // Try to extract just the content area
 
-        // Try #main-content
-        if (preg_match('/<div[^>]*id=["\']main-content["\'][^>]*>(.*?)<\/div>\s*<\/div>/is', $html, $matches)) {
-            return $matches[1];
+        // Create DOMDocument for better HTML parsing
+        $dom = new \DOMDocument();
+        // Suppress warnings for malformed HTML
+        libxml_use_internal_errors(true);
+        $dom->loadHTML('<?xml encoding="UTF-8">' . $html, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+        libxml_clear_errors();
+
+        $xpath = new \DOMXPath($dom);
+
+        // Try to find content by common Confluence selectors (in order of specificity)
+        $selectors = [
+            "//div[@id='main-content']",
+            "//div[contains(@class, 'wiki-content')]",
+            "//div[contains(@class, 'page-content')]",
+            "//div[@id='content']",
+            "//main",
+            "//article"
+        ];
+
+        foreach ($selectors as $selector) {
+            $nodes = $xpath->query($selector);
+            if ($nodes && $nodes->length > 0) {
+                $contentNode = $nodes->item(0);
+
+                // Remove unwanted elements from content
+                $this->removeUnwantedElements($contentNode, $xpath);
+
+                // Get the innerHTML
+                $content = $dom->saveHTML($contentNode);
+
+                // Clean up the extracted content
+                $content = $this->cleanupHtml($content);
+
+                if (!empty(trim(strip_tags($content)))) {
+                    $this->logger->debug("Extracted body using selector: $selector");
+                    return $content;
+                }
+            }
         }
 
-        // Try .wiki-content
-        if (preg_match('/<div[^>]*class=["\'][^"\']*wiki-content[^"\']*["\'][^>]*>(.*?)<\/div>/is', $html, $matches)) {
-            return $matches[1];
-        }
-
-        // Try .page-content
-        if (preg_match('/<div[^>]*class=["\'][^"\']*page-content[^"\']*["\'][^>]*>(.*?)<\/div>/is', $html, $matches)) {
-            return $matches[1];
-        }
-
-        // Fallback: extract everything between <body> tags
+        // Fallback: Try regex-based extraction for body
         if (preg_match('/<body[^>]*>(.*?)<\/body>/is', $html, $matches)) {
-            return $matches[1];
+            $bodyContent = $matches[1];
+
+            // Remove common Confluence navigation/header elements via regex
+            $bodyContent = preg_replace('/<div[^>]*id=["\']pagetreesearch["\'][^>]*>.*?<\/div>/is', '', $bodyContent);
+            $bodyContent = preg_replace('/<div[^>]*class=["\'][^"\']*breadcrumbs[^"\']*["\'][^>]*>.*?<\/div>/is', '', $bodyContent);
+            $bodyContent = preg_replace('/<form[^>]*pagetreesearchform[^>]*>.*?<\/form>/is', '', $bodyContent);
+
+            // Clean up the extracted content
+            $bodyContent = $this->cleanupHtml($bodyContent);
+
+            if (!empty(trim(strip_tags($bodyContent)))) {
+                $this->logger->debug("Extracted body using <body> fallback with cleanup");
+                return $bodyContent;
+            }
         }
 
         // Last resort: return full HTML
@@ -324,30 +362,88 @@ class ConfluenceHtmlImporter {
     }
 
     /**
+     * Clean up extracted HTML content
+     *
+     * @param string $html HTML content to clean
+     * @return string Cleaned HTML
+     */
+    private function cleanupHtml(string $html): string {
+        // Remove orphaned closing tags (tags without opening tags)
+        // Common ones from Confluence exports
+        $html = preg_replace('/<\/(p|div|span|h[1-6]|ul|ol|li|table|tr|td|th)>\s*(?!<)/i', '', $html);
+
+        // Remove empty paragraph tags and divs
+        $html = preg_replace('/<(p|div)[^>]*>\s*<\/\1>/i', '', $html);
+
+        // Remove standalone closing tags at the beginning or end
+        $html = preg_replace('/^\s*<\/[^>]+>/i', '', $html);
+        $html = preg_replace('/<\/[^>]+>\s*$/i', '', $html);
+
+        // Trim whitespace
+        $html = trim($html);
+
+        return $html;
+    }
+
+    /**
+     * Remove unwanted elements from a DOM node
+     *
+     * @param \DOMNode $node Node to clean
+     * @param \DOMXPath $xpath XPath object
+     */
+    private function removeUnwantedElements(\DOMNode $node, \DOMXPath $xpath): void {
+        // Remove navigation, breadcrumbs, search forms, etc.
+        $unwantedSelectors = [
+            ".//div[@id='pagetreesearch']",
+            ".//div[contains(@class, 'breadcrumbs')]",
+            ".//div[contains(@class, 'pageSection')]",
+            ".//form[contains(@name, 'pagetreesearchform')]",
+            ".//form[contains(@class, 'aui')]",
+            ".//nav",
+            ".//div[contains(@class, 'page-metadata')]"
+        ];
+
+        foreach ($unwantedSelectors as $selector) {
+            $unwantedNodes = $xpath->query($selector, $node);
+            if ($unwantedNodes) {
+                foreach ($unwantedNodes as $unwantedNode) {
+                    if ($unwantedNode->parentNode) {
+                        $unwantedNode->parentNode->removeChild($unwantedNode);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
      * Build page hierarchy from directory structure and breadcrumbs
      *
      * Confluence HTML exports can have hierarchy in multiple ways:
      * 1. Directory structure (subdirectories represent child pages)
      * 2. Breadcrumb navigation in HTML
-     * 3. Index.html with page tree
+     * 3. Index.html with page tree (also used for ordering)
      *
      * @param array $htmlFiles List of HTML file paths
      * @param string $baseDir Base directory
-     * @return array Hierarchy map [filePath => ['parent' => parentPath, 'title' => title]]
+     * @return array Hierarchy map [filePath => ['parent' => parentPath, 'title' => title, 'order' => int]]
      */
     private function buildPageHierarchy(array $htmlFiles, string $baseDir): array {
         $hierarchy = [];
+
+        // Extract order from index.html if it exists
+        $pageOrder = $this->extractPageOrderFromIndex($baseDir);
 
         foreach ($htmlFiles as $htmlFile) {
             $relativePath = substr($htmlFile, strlen($baseDir) + 1);
             $pathParts = explode('/', $relativePath);
             $fileName = array_pop($pathParts);
 
-            // Initialize hierarchy entry
+            // Initialize hierarchy entry with order
             $hierarchy[$relativePath] = [
                 'parent' => null,
                 'title' => null,
                 'level' => count($pathParts), // Depth in directory structure
+                'order' => $pageOrder[$relativePath] ?? 9999, // Use extracted order or default to end
             ];
 
             // Method 1: Use directory structure to determine hierarchy
@@ -397,6 +493,62 @@ class ConfluenceHtmlImporter {
         }
 
         return $hierarchy;
+    }
+
+    /**
+     * Extract page order from index.html file
+     *
+     * Confluence HTML exports typically include an index.html with links to all pages
+     * in the correct order. We parse this to preserve the original page order.
+     *
+     * @param string $baseDir Base directory
+     * @return array Map of [filePath => order] where order is 0-based index
+     */
+    private function extractPageOrderFromIndex(string $baseDir): array {
+        $indexPath = $baseDir . '/index.html';
+        $order = [];
+
+        if (!file_exists($indexPath)) {
+            $this->logger->debug('No index.html found for page ordering');
+            return $order;
+        }
+
+        $html = file_get_contents($indexPath);
+        if (!$html) {
+            $this->logger->warning('Failed to read index.html');
+            return $order;
+        }
+
+        // Extract all links from index.html
+        // Confluence index.html typically has links in <ul> or <ol> lists
+        preg_match_all('/<a[^>]*href=["\']([^"\']+)["\'][^>]*>/is', $html, $matches);
+
+        if (empty($matches[1])) {
+            $this->logger->debug('No links found in index.html');
+            return $order;
+        }
+
+        $currentOrder = 0;
+        foreach ($matches[1] as $href) {
+            // Normalize href to relative path
+            $normalizedHref = $this->normalizeHref($href);
+
+            // Skip empty hrefs
+            if (empty($normalizedHref)) {
+                continue;
+            }
+
+            // Store order (0-based index)
+            $order[$normalizedHref] = $currentOrder;
+            $currentOrder++;
+        }
+
+        $this->logger->info('Extracted page order from index.html', [
+            'totalPages' => count($order),
+            'sample' => array_slice($order, 0, 5, true)
+        ]);
+
+        return $order;
     }
 
     /**
@@ -530,6 +682,11 @@ class ConfluenceHtmlImporter {
             $page = $pagesByPath[$filePath];
             $parentPath = $info['parent'];
 
+            // Store order in page metadata for sorting later
+            if (isset($info['order'])) {
+                $page->metadata['confluenceOrder'] = $info['order'];
+            }
+
             if ($parentPath && isset($pagesByPath[$parentPath])) {
                 $parentPage = $pagesByPath[$parentPath];
                 $page->parentUniqueId = $parentPage->uniqueId;
@@ -540,6 +697,7 @@ class ConfluenceHtmlImporter {
                     'parent' => $parentPage->title,
                     'filePath' => $filePath,
                     'parentPath' => $parentPath,
+                    'order' => $info['order'] ?? 'none'
                 ]);
             } elseif ($parentPath) {
                 $this->logger->warning("Parent page not found", [
