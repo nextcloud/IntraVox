@@ -54,7 +54,25 @@ class IntermediatePage {
         $this->title = $title;
         $this->slug = $slug;
         $this->language = $language;
-        $this->uniqueId = uniqid('page-', true);
+        $this->uniqueId = 'page-' . $this->generateUUID();
+    }
+
+    /**
+     * Generate RFC 4122 compliant UUID v4
+     *
+     * @return string UUID in format XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+     */
+    private function generateUUID(): string {
+        $data = random_bytes(16);
+
+        // Set version to 4 (0100 in binary)
+        $data[6] = chr(ord($data[6]) & 0x0f | 0x40);
+
+        // Set variant to RFC 4122 (10 in binary)
+        $data[8] = chr(ord($data[8]) & 0x3f | 0x80);
+
+        // Format as XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+        return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
     }
 
     public function addContentBlock(ContentBlock $block): void {

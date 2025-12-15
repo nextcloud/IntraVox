@@ -99,6 +99,43 @@ private function findNavigationItemByUniqueId(array &$items, string $uniqueId): 
 
 **Code Location**: `lib/Service/ImportService.php` lines 803-829
 
+### 5. Page Order Preservation
+**Problem**: Imported pages did not maintain the order from Confluence export.
+
+**Solution Applied**: Order extracted from `index.html`:
+- Pages receive order number (`confluenceOrder`) in metadata
+- Order preserved in both navigation and page structure
+- Sort algorithm respects both hierarchy and order
+
+**Code Location**: `lib/Service/Import/ConfluenceHtmlImporter.php` lines 411-456, 533-536
+
+### 6. Improved HTML Cleanup
+**Problem**: Some pages displayed raw HTML like `</p>`, search forms, and breadcrumbs.
+
+**Solution Applied**: Advanced HTML parsing with DOMDocument and XPath:
+- Removes Confluence navigation elements (breadcrumbs, search forms)
+- Cleans up orphaned HTML tags (tags without opening tags)
+- Removes empty elements
+
+**Code Location**: `lib/Service/Import/ConfluenceHtmlImporter.php` lines 297-416
+
+### 7. UniqueId Format Consistency
+**Problem**: Imported pages used `uniqid('page-', true)` which generates IDs with dots like `page-66b8c12a.87654321`, while native IntraVox page creation uses RFC 4122 UUID v4 format: `page-a1b2c3d4-e5f6-4789-abcd-ef1234567890`.
+
+**Solution Applied**: Import now uses same UUID v4 format as native page creation:
+- Added `generateUUID()` method to `IntermediatePage` class
+- Generates RFC 4122 compliant UUID v4
+- No dots in uniqueIds
+- Consistent with how IntraVox creates pages via UI
+
+**Code Location**: `lib/Service/Import/IntermediateFormat.php` lines 57, 60-76
+
+**Benefits**:
+- Consistent ID format throughout application
+- RFC 4122 standard (industry best practice)
+- Guaranteed uniqueness
+- Better readability (no confusing dots)
+
 ## Implementation Details
 
 ### Folder Structure Creation Flow
@@ -159,6 +196,10 @@ private function findNavigationItemByUniqueId(array &$items, string $uniqueId): 
 - `findNavigationItemPath()` - Finds path to navigation item
 - `getNavigationItemByPath()` - Gets item reference by path
 - `addPagesToNavigation()` - Adds pages to navigation array
+- `extractPageOrderFromIndex()` - Extracts page order from index.html
+- `removeUnwantedElements()` - Removes Confluence navigation elements
+- `cleanupHtml()` - Cleans up orphaned and empty HTML tags
+- `generateUUID()` - Generates RFC 4122 UUID v4 (in IntermediatePage)
 
 ## Testing Checklist
 
@@ -169,9 +210,12 @@ After browser hard refresh (Cmd+Shift+R / Ctrl+Shift+R):
 - [ ] Verify `_media/` folders exist with `.nomedia` marker
 - [ ] Verify pages appear in navigation at correct level
 - [ ] Verify hierarchy preserved from Confluence
+- [ ] Verify page order matches Confluence export order
 - [ ] Verify pages load without 404 errors
 - [ ] Verify parent-child relationships correct
 - [ ] Verify page titles match original Confluence titles
+- [ ] Verify no raw HTML displayed (no `</p>`, search forms, etc.)
+- [ ] Verify uniqueIds use UUID format: `page-XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX` (no dots)
 
 ## Known Issues
 
@@ -198,6 +242,11 @@ TypeError: can't access property "call", n[e] is undefined
 
 ## Deployment
 
-All changes deployed to server on December 14, 2025 at 17:57 UTC.
+All changes deployed to server on December 15, 2025 at 10:41 UTC.
 
 Build completed successfully with no errors.
+
+**Latest Changes**:
+- UniqueId format changed from `uniqid('page-', true)` to RFC 4122 UUID v4
+- Page order preservation from Confluence index.html
+- Improved HTML cleanup with DOMDocument/XPath parsing
