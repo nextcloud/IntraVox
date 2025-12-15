@@ -500,6 +500,28 @@ export default {
   align-items: center;
   gap: 4px;
   flex: 1;
+  overflow-x: auto; /* Enable horizontal scrolling */
+  overflow-y: hidden;
+  scrollbar-width: thin; /* Firefox */
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+}
+
+/* Scrollbar styling for desktop navigation */
+.desktop-nav::-webkit-scrollbar {
+  height: 4px;
+}
+
+.desktop-nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.desktop-nav::-webkit-scrollbar-thumb {
+  background: var(--color-border-dark);
+  border-radius: 2px;
+}
+
+.desktop-nav::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-maxcontrast);
 }
 
 /* Dropdown Navigation */
@@ -554,6 +576,27 @@ export default {
   box-shadow: 0 2px 8px var(--color-box-shadow);
   z-index: 10010; /* Above Nextcloud sidebar (z-index ~2000) */
   padding: 8px;
+  max-height: calc(100vh - 100px); /* Prevent overflow beyond viewport */
+  overflow-y: auto; /* Enable vertical scrolling if needed */
+  overflow-x: hidden;
+}
+
+/* Scrollbar styling for dropdown menu */
+.dropdown-menu::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dropdown-menu::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.dropdown-menu::-webkit-scrollbar-thumb {
+  background: var(--color-border-dark);
+  border-radius: 3px;
+}
+
+.dropdown-menu::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-maxcontrast);
 }
 
 .dropdown-content {
@@ -750,13 +793,32 @@ a.dropdown-section-header:active,
   box-shadow: 0 4px 16px var(--color-box-shadow);
   z-index: 10010; /* Above Nextcloud sidebar (z-index ~2000) */
   padding: 24px;
+  max-height: calc(100vh - 100px); /* Prevent overflow beyond viewport */
+  overflow-y: auto; /* Enable vertical scrolling if needed */
+}
+
+/* Scrollbar styling for megamenu dropdown */
+.megamenu-dropdown::-webkit-scrollbar {
+  width: 8px;
+}
+
+.megamenu-dropdown::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.megamenu-dropdown::-webkit-scrollbar-thumb {
+  background: var(--color-border-dark);
+  border-radius: 4px;
+}
+
+.megamenu-dropdown::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-maxcontrast);
 }
 
 .megamenu-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0;
-  column-gap: 32px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 32px 32px;
 }
 
 .megamenu-column {
@@ -764,14 +826,10 @@ a.dropdown-section-header:active,
   flex-direction: column;
   gap: 0;
   padding: 16px 0;
-  border-right: 1px solid var(--color-border);
-  padding-right: 32px;
   min-width: 200px;
-  flex: 0 0 auto;
 }
 
 .megamenu-column:last-child {
-  border-right: none;
   padding-right: 0;
 }
 
@@ -803,6 +861,27 @@ a.megamenu-column-header:active {
   display: flex;
   flex-direction: column;
   gap: 0;
+  max-height: 400px; /* Limit individual column height */
+  overflow-y: auto; /* Scroll if content exceeds max-height */
+  overflow-x: hidden;
+}
+
+/* Scrollbar styling for megamenu lists */
+.megamenu-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.megamenu-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.megamenu-list::-webkit-scrollbar-thumb {
+  background: var(--color-border-dark);
+  border-radius: 3px;
+}
+
+.megamenu-list::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-maxcontrast);
 }
 
 .megamenu-list-item {
