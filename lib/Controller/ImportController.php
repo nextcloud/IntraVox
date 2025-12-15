@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace OCA\IntraVox\Controller;
 
 use OCA\IntraVox\Service\ImportService;
-use OCA\IntraVox\Service\Import\ConfluenceApiImporter;
 use OCA\IntraVox\Service\Import\ConfluenceImporter;
 use OCA\IntraVox\Service\Import\ConfluenceHtmlImporter;
 use OCP\AppFramework\Controller;
@@ -90,191 +89,6 @@ class ImportController extends Controller {
                 'stats' => $stats,
             ]);
         } catch (\Exception $e) {
-            return new JSONResponse(
-                ['error' => $e->getMessage()],
-                Http::STATUS_INTERNAL_SERVER_ERROR
-            );
-        }
-    }
-
-    /**
-     * Test Confluence connection
-     *
-     * @NoAdminRequired
-     * @return JSONResponse
-     */
-    public function testConfluenceConnection(): JSONResponse {
-        try {
-            $baseUrl = $this->request->getParam('baseUrl');
-            $authType = $this->request->getParam('authType');
-            $authUser = $this->request->getParam('authUser', '');
-            $authToken = $this->request->getParam('authToken');
-
-            if (empty($baseUrl) || empty($authToken)) {
-                return new JSONResponse(
-                    ['error' => 'Missing required parameters'],
-                    Http::STATUS_BAD_REQUEST
-                );
-            }
-
-            $importer = new ConfluenceApiImporter(
-                $this->logger,
-                $baseUrl,
-                $authType,
-                $authUser,
-                $authToken
-            );
-
-            $result = $importer->testConnection();
-
-            if ($result['success']) {
-                return new JSONResponse([
-                    'success' => true,
-                    'version' => $result['version'],
-                    'user' => $result['user'],
-                ]);
-            } else {
-                return new JSONResponse(
-                    ['error' => $result['error']],
-                    Http::STATUS_UNAUTHORIZED
-                );
-            }
-
-        } catch (\Exception $e) {
-            return new JSONResponse(
-                ['error' => $e->getMessage()],
-                Http::STATUS_INTERNAL_SERVER_ERROR
-            );
-        }
-    }
-
-    /**
-     * List Confluence spaces
-     *
-     * @NoAdminRequired
-     * @return JSONResponse
-     */
-    public function listConfluenceSpaces(): JSONResponse {
-        try {
-            $baseUrl = $this->request->getParam('baseUrl');
-            $authType = $this->request->getParam('authType');
-            $authUser = $this->request->getParam('authUser', '');
-            $authToken = $this->request->getParam('authToken');
-
-            if (empty($baseUrl) || empty($authToken)) {
-                return new JSONResponse(
-                    ['error' => 'Missing required parameters'],
-                    Http::STATUS_BAD_REQUEST
-                );
-            }
-
-            $importer = new ConfluenceApiImporter(
-                $this->logger,
-                $baseUrl,
-                $authType,
-                $authUser,
-                $authToken
-            );
-
-            $spaces = $importer->listSpaces();
-
-            return new JSONResponse([
-                'success' => true,
-                'spaces' => $spaces,
-            ]);
-
-        } catch (\Exception $e) {
-            return new JSONResponse(
-                ['error' => $e->getMessage()],
-                Http::STATUS_INTERNAL_SERVER_ERROR
-            );
-        }
-    }
-
-    /**
-     * Import from Confluence via REST API
-     *
-     * @NoAdminRequired
-     * @return JSONResponse
-     */
-    public function importFromConfluence(): JSONResponse {
-        try {
-            $baseUrl = $this->request->getParam('baseUrl');
-            $authType = $this->request->getParam('authType');
-            $authUser = $this->request->getParam('authUser', '');
-            $authToken = $this->request->getParam('authToken');
-            $spaceKey = $this->request->getParam('spaceKey');
-            $language = $this->request->getParam('language', 'nl');
-
-            if (empty($baseUrl) || empty($authToken) || empty($spaceKey)) {
-                return new JSONResponse(
-                    ['error' => 'Missing required parameters'],
-                    Http::STATUS_BAD_REQUEST
-                );
-            }
-
-            $this->logger->info('Starting Confluence import', [
-                'baseUrl' => $baseUrl,
-                'spaceKey' => $spaceKey,
-                'language' => $language,
-            ]);
-
-            // Create API importer
-            $apiImporter = new ConfluenceApiImporter(
-                $this->logger,
-                $baseUrl,
-                $authType,
-                $authUser,
-                $authToken
-            );
-
-            // Import space
-            $intermediateFormat = $apiImporter->importSpace($spaceKey, $language);
-
-            // Create Confluence importer instance to use conversion methods
-            $confluenceImporter = new ConfluenceImporter($this->logger);
-
-            // Convert IntermediateFormat to IntraVox export structure
-            $exportData = $this->convertIntermediateToExport($confluenceImporter, $intermediateFormat);
-
-            // Create temporary ZIP file with export data
-            $tempDir = $this->tempManager->getTemporaryFolder();
-
-            // Write export.json
-            $exportJson = json_encode($exportData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-            file_put_contents($tempDir . '/export.json', $exportJson);
-
-            // Download attachments/media files
-            $mediaStats = $this->downloadConfluenceMedia(
-                $apiImporter,
-                $intermediateFormat,
-                $tempDir,
-                $language
-            );
-
-            // Create ZIP
-            $zipPath = $tempDir . '/confluence-import.zip';
-            $this->createZipFromDirectory($tempDir, $zipPath);
-
-            // Import using existing ImportService
-            $zipContent = file_get_contents($zipPath);
-            $stats = $this->importService->importFromZip($zipContent, false, false);
-
-            // Cleanup
-            $this->cleanupTempDir($tempDir);
-
-            $this->logger->info('Confluence import complete', [
-                'pages' => $stats['pagesImported'],
-                'media' => $stats['mediaFilesImported'],
-            ]);
-
-            return new JSONResponse([
-                'success' => true,
-                'stats' => $stats,
-            ]);
-
-        } catch (\Exception $e) {
-            $this->logger->error('Confluence import failed: ' . $e->getMessage());
             return new JSONResponse(
                 ['error' => $e->getMessage()],
                 Http::STATUS_INTERNAL_SERVER_ERROR
@@ -381,17 +195,6 @@ class ImportController extends Controller {
      * Convert IntermediateFormat to IntraVox export structure
      */
     private function convertIntermediateToExport(ConfluenceImporter $importer, $intermediateFormat): array {
-        // Use the AbstractImporter's conversion method via reflection
-        // Since convertToIntraVoxExport is protected, we'll recreate it here
-        $export = [
-            'exportVersion' => '1.0',
-            'exportDate' => (new \DateTime())->format('c'),
-            'language' => $intermediateFormat->language,
-            'navigation' => $intermediateFormat->navigation,
-            'footer' => [],
-            'pages' => [],
-        ];
-
         // Use reflection to access the protected method
         $reflectionClass = new \ReflectionClass($importer);
         $method = $reflectionClass->getMethod('convertToIntraVoxExport');
@@ -400,46 +203,6 @@ class ImportController extends Controller {
         $export = $method->invoke($importer, $intermediateFormat);
 
         return $export;
-    }
-
-    /**
-     * Download media files from Confluence
-     */
-    private function downloadConfluenceMedia(
-        ConfluenceApiImporter $apiImporter,
-        $intermediateFormat,
-        string $tempDir,
-        string $language
-    ): int {
-        $count = 0;
-
-        foreach ($intermediateFormat->mediaDownloads as $media) {
-            try {
-                // Determine page directory
-                $pageSlug = $media->pageSlug;
-                $mediaDir = $tempDir . '/' . $language . '/' . $pageSlug . '/images';
-
-                if (!is_dir($mediaDir)) {
-                    mkdir($mediaDir, 0755, true);
-                }
-
-                // Download file (this would need the page ID, which we'd need to track)
-                // For now, skip actual download - this would be implemented fully later
-                $this->logger->info('Media download placeholder: ' . $media->targetFilename);
-
-                // In full implementation:
-                // $content = $apiImporter->downloadAttachment($pageId, $media->targetFilename);
-                // if ($content) {
-                //     file_put_contents($mediaDir . '/' . $media->targetFilename, $content);
-                //     $count++;
-                // }
-
-            } catch (\Exception $e) {
-                $this->logger->warning('Failed to download media: ' . $e->getMessage());
-            }
-        }
-
-        return $count;
     }
 
     /**

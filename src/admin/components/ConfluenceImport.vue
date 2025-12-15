@@ -2,37 +2,12 @@
   <div class="confluence-import">
     <h2>Import from Confluence</h2>
     <p class="description">
-      Import pages from Confluence Cloud, Server, or Data Center into IntraVox.
-      Supported macros: Info/Note/Warning/Tip panels, Code blocks, Images, Attachments, and Expand/Collapse.
+      Import pages from Confluence by uploading an HTML export ZIP file.
+      Export your Confluence space as HTML (Space Tools → Content Tools → Export) and upload it here.
     </p>
 
-    <!-- Import Method Selection -->
-    <div class="import-method-selector">
-      <button
-        type="button"
-        :class="{ active: importMethod === 'api' }"
-        @click="importMethod = 'api'"
-        class="method-btn"
-      >
-        📡 Direct API Import
-      </button>
-      <button
-        type="button"
-        :class="{ active: importMethod === 'html' }"
-        @click="importMethod = 'html'"
-        class="method-btn"
-      >
-        📁 Upload HTML Export
-      </button>
-    </div>
-
     <!-- HTML Export Upload Section -->
-    <div v-if="importMethod === 'html'" class="html-export-section">
-      <h3>Upload Confluence HTML Export</h3>
-      <p class="description">
-        Export your Confluence space as HTML (Space Tools → Content Tools → Export) and upload the ZIP file here.
-      </p>
-
+    <div class="html-export-section">
       <div class="form-group">
         <label for="html-language">Target Language</label>
         <select id="html-language" v-model="htmlImportLanguage" class="input-field" @change="onLanguageChange">
@@ -105,206 +80,6 @@
         </div>
       </div>
     </div>
-
-    <!-- API Import Section -->
-    <div v-if="importMethod === 'api'" class="api-import-section">
-      <!-- Connection Configuration -->
-    <div class="config-section">
-      <h3>Connection Settings</h3>
-
-      <div class="form-group">
-        <label for="confluence-url">Confluence URL *</label>
-        <input
-          id="confluence-url"
-          v-model="config.baseUrl"
-          type="url"
-          placeholder="https://yoursite.atlassian.net/wiki or https://confluence.company.com"
-          class="input-field"
-          @blur="detectVersion"
-        />
-        <p class="hint">Enter the base URL of your Confluence instance</p>
-      </div>
-
-      <!-- Detected Version Display -->
-      <div v-if="detectedVersion" class="version-badge" :class="'version-' + detectedVersion">
-        <span class="badge-icon">✓</span>
-        <span>Detected: {{ versionLabels[detectedVersion] }}</span>
-      </div>
-
-      <!-- Authentication Method -->
-      <div class="form-group">
-        <label>Authentication Method</label>
-        <div class="auth-method-selector">
-          <button
-            type="button"
-            :class="{ active: config.authType === 'api_token' }"
-            @click="config.authType = 'api_token'"
-            class="method-btn"
-          >
-            API Token (Cloud)
-          </button>
-          <button
-            type="button"
-            :class="{ active: config.authType === 'bearer' }"
-            @click="config.authType = 'bearer'"
-            class="method-btn"
-          >
-            Personal Access Token (Server v7.9+)
-          </button>
-          <button
-            type="button"
-            :class="{ active: config.authType === 'basic' }"
-            @click="config.authType = 'basic'"
-            class="method-btn"
-          >
-            Basic Auth (Server Legacy)
-          </button>
-        </div>
-      </div>
-
-      <!-- Auth Fields for API Token / Basic Auth -->
-      <div v-if="config.authType === 'api_token' || config.authType === 'basic'" class="form-group">
-        <label for="auth-user">Email / Username *</label>
-        <input
-          id="auth-user"
-          v-model="config.authUser"
-          type="text"
-          :placeholder="config.authType === 'api_token' ? 'your.email@company.com' : 'username'"
-          class="input-field"
-        />
-      </div>
-
-      <!-- Auth Token Field -->
-      <div class="form-group">
-        <label for="auth-token">
-          {{ config.authType === 'api_token' ? 'API Token' : config.authType === 'bearer' ? 'Personal Access Token' : 'Password' }} *
-        </label>
-        <input
-          id="auth-token"
-          v-model="config.authToken"
-          type="password"
-          placeholder="Enter your token/password"
-          class="input-field"
-        />
-        <p v-if="config.authType === 'api_token'" class="hint">
-          <a href="https://id.atlassian.com/manage-profile/security/api-tokens" target="_blank">Create an API token</a>
-        </p>
-      </div>
-
-      <!-- Test Connection Button -->
-      <div class="form-actions">
-        <button
-          type="button"
-          @click="testConnection"
-          :disabled="!canTestConnection || isTestingConnection"
-          class="btn btn-secondary"
-        >
-          <span v-if="isTestingConnection" class="spinner"></span>
-          {{ isTestingConnection ? 'Testing...' : 'Test Connection' }}
-        </button>
-      </div>
-
-      <!-- Connection Status -->
-      <div v-if="connectionStatus" class="status-message" :class="connectionStatus.success ? 'success' : 'error'">
-        <span v-if="connectionStatus.success">
-          ✓ Connected successfully as {{ connectionStatus.user }}
-          <span class="version-label">({{ versionLabels[connectionStatus.version] }})</span>
-        </span>
-        <span v-else>
-          ✗ Connection failed: {{ connectionStatus.error }}
-        </span>
-      </div>
-    </div>
-
-    <!-- Space Selection (only shown after successful connection) -->
-    <div v-if="connectionStatus?.success" class="config-section">
-      <h3>Select Space to Import</h3>
-
-      <button
-        v-if="!spaces.length"
-        type="button"
-        @click="loadSpaces"
-        :disabled="isLoadingSpaces"
-        class="btn btn-secondary"
-      >
-        <span v-if="isLoadingSpaces" class="spinner"></span>
-        {{ isLoadingSpaces ? 'Loading...' : 'Load Spaces' }}
-      </button>
-
-      <div v-if="spaces.length" class="form-group">
-        <label for="space-select">Space *</label>
-        <select
-          id="space-select"
-          v-model="selectedSpace"
-          class="input-field"
-        >
-          <option value="">Select a space...</option>
-          <option v-for="space in spaces" :key="space.key" :value="space.key">
-            {{ space.name }} ({{ space.key }})
-          </option>
-        </select>
-        <p v-if="selectedSpaceInfo" class="hint">{{ selectedSpaceInfo.description }}</p>
-      </div>
-
-      <div class="form-group">
-        <label for="target-language">Target Language *</label>
-        <select
-          id="target-language"
-          v-model="config.language"
-          class="input-field"
-        >
-          <option value="nl">Nederlands (nl)</option>
-          <option value="en">English (en)</option>
-          <option value="de">Deutsch (de)</option>
-          <option value="fr">Français (fr)</option>
-        </select>
-        <p class="hint">Pages will be imported into this language folder in IntraVox</p>
-      </div>
-    </div>
-
-    <!-- Import Button -->
-    <div v-if="connectionStatus?.success && selectedSpace" class="config-section">
-      <h3>Start Import</h3>
-
-      <div class="form-actions">
-        <button
-          type="button"
-          @click="startImport"
-          :disabled="isImporting"
-          class="btn btn-primary"
-        >
-          <span v-if="isImporting" class="spinner"></span>
-          {{ isImporting ? 'Importing...' : 'Import Space' }}
-        </button>
-      </div>
-
-      <!-- Import Progress -->
-      <div v-if="importProgress" class="import-progress">
-        <h4>Import Progress</h4>
-        <div class="progress-stats">
-          <div class="stat">
-            <span class="stat-label">Pages:</span>
-            <span class="stat-value">{{ importProgress.pagesImported || 0 }}</span>
-          </div>
-          <div class="stat">
-            <span class="stat-label">Media Files:</span>
-            <span class="stat-value">{{ importProgress.mediaFilesImported || 0 }}</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Import Result -->
-      <div v-if="importResult" class="status-message" :class="importResult.success ? 'success' : 'error'">
-        <span v-if="importResult.success">
-          ✓ Import completed successfully!
-          Imported {{ importResult.stats.pagesImported }} pages and {{ importResult.stats.mediaFilesImported }} media files.
-        </span>
-        <span v-else">
-          ✗ Import failed: {{ importResult.error }}
-        </span>
-      </div>
-    </div>
-    </div>
   </div>
 </template>
 
@@ -322,8 +97,6 @@ export default {
 
   data() {
     return {
-      importMethod: 'html', // 'html' or 'api'
-
       // HTML Export Upload
       selectedHtmlFile: null,
       selectedParentPageId: null,
@@ -332,145 +105,10 @@ export default {
       uploadProgress: null,
       uploadStatus: '',
       htmlImportResult: null,
-
-      // API Import
-      config: {
-        baseUrl: '',
-        authType: 'api_token',
-        authUser: '',
-        authToken: '',
-        language: 'nl',
-      },
-
-      detectedVersion: null,
-      connectionStatus: null,
-      isTestingConnection: false,
-
-      spaces: [],
-      selectedSpace: '',
-      isLoadingSpaces: false,
-
-      isImporting: false,
-      importProgress: null,
-      importResult: null,
-
-      versionLabels: {
-        cloud: 'Confluence Cloud',
-        server: 'Confluence Server',
-        datacenter: 'Confluence Data Center',
-      },
     }
   },
 
-  computed: {
-    canTestConnection() {
-      return this.config.baseUrl &&
-        this.config.authToken &&
-        (this.config.authType === 'bearer' || this.config.authUser)
-    },
-
-    selectedSpaceInfo() {
-      if (!this.selectedSpace) return null
-      return this.spaces.find(s => s.key === this.selectedSpace)
-    },
-  },
-
   methods: {
-    detectVersion() {
-      // Auto-detect Cloud vs Server based on URL
-      if (this.config.baseUrl.includes('.atlassian.net')) {
-        this.detectedVersion = 'cloud'
-        this.config.authType = 'api_token'
-      } else {
-        this.detectedVersion = 'server'
-        this.config.authType = 'bearer'
-      }
-    },
-
-    async testConnection() {
-      this.isTestingConnection = true
-      this.connectionStatus = null
-      this.spaces = []
-      this.selectedSpace = ''
-
-      try {
-        const response = await axios.post(
-          generateUrl('/apps/intravox/api/import/confluence/test'),
-          {
-            baseUrl: this.config.baseUrl,
-            authType: this.config.authType,
-            authUser: this.config.authUser,
-            authToken: this.config.authToken,
-          }
-        )
-
-        this.connectionStatus = response.data
-        this.detectedVersion = response.data.version
-
-      } catch (error) {
-        this.connectionStatus = {
-          success: false,
-          error: error.response?.data?.error || error.message,
-        }
-      } finally {
-        this.isTestingConnection = false
-      }
-    },
-
-    async loadSpaces() {
-      this.isLoadingSpaces = true
-
-      try {
-        const response = await axios.post(
-          generateUrl('/apps/intravox/api/import/confluence/spaces'),
-          {
-            baseUrl: this.config.baseUrl,
-            authType: this.config.authType,
-            authUser: this.config.authUser,
-            authToken: this.config.authToken,
-          }
-        )
-
-        this.spaces = response.data.spaces
-
-      } catch (error) {
-        console.error('Failed to load spaces:', error)
-      } finally {
-        this.isLoadingSpaces = false
-      }
-    },
-
-    async startImport() {
-      this.isImporting = true
-      this.importProgress = { pagesImported: 0, mediaFilesImported: 0 }
-      this.importResult = null
-
-      try {
-        const response = await axios.post(
-          generateUrl('/apps/intravox/api/import/confluence'),
-          {
-            baseUrl: this.config.baseUrl,
-            authType: this.config.authType,
-            authUser: this.config.authUser,
-            authToken: this.config.authToken,
-            spaceKey: this.selectedSpace,
-            language: this.config.language,
-          }
-        )
-
-        this.importResult = response.data
-        this.importProgress = response.data.stats
-
-      } catch (error) {
-        this.importResult = {
-          success: false,
-          error: error.response?.data?.error || error.message,
-        }
-      } finally {
-        this.isImporting = false
-      }
-    },
-
     // HTML Export Upload Methods
     handleHtmlFileSelect(event) {
       const file = event.target.files[0]
@@ -773,35 +411,6 @@ label {
 }
 
 /* HTML Export Upload Styles */
-.import-method-selector {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 30px;
-}
-
-.import-method-selector .method-btn {
-  flex: 1;
-  padding: 15px 20px;
-  font-size: 16px;
-  font-weight: 600;
-  border: 2px solid #ddd;
-  background: white;
-  cursor: pointer;
-  border-radius: 8px;
-  transition: all 0.2s;
-}
-
-.import-method-selector .method-btn:hover {
-  border-color: #0082c9;
-  background: #f0f9ff;
-}
-
-.import-method-selector .method-btn.active {
-  border-color: #0082c9;
-  background: #0082c9;
-  color: white;
-}
-
 .html-export-section {
   background: #f8f9fa;
   border-radius: 8px;

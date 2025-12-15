@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.8.0] - TBD - Confluence Import & Bug Fixes
 
+### Changed
+- **Confluence Import**: Removed direct API import, now only supports HTML export upload
+  - Simplified import interface - only HTML export ZIP upload available
+  - Removed Confluence API authentication and connection testing
+  - Removed space listing and direct API import endpoints
+  - HTML export import remains fully functional with all features
+
 ### Fixed
 - **Groupfolder Setup**: Fixed database constraint violation error on app updates
   - Error: `SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry '1--admin'`

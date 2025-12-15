@@ -54,11 +54,6 @@ return [
         ['name' => 'api#import_zip', 'url' => '/api/import/zip', 'verb' => 'POST'],
         ['name' => 'api#import_confluence_html', 'url' => '/api/import/confluence/html', 'verb' => 'POST'],
 
-        // Confluence import routes
-        ['name' => 'import#testConfluenceConnection', 'url' => '/api/import/confluence/test', 'verb' => 'POST'],
-        ['name' => 'import#listConfluenceSpaces', 'url' => '/api/import/confluence/spaces', 'verb' => 'POST'],
-        ['name' => 'import#importFromConfluence', 'url' => '/api/import/confluence', 'verb' => 'POST'],
-
         // Comments API routes
         ['name' => 'comment#getComments', 'url' => '/api/pages/{pageId}/comments', 'verb' => 'GET'],
         ['name' => 'comment#createComment', 'url' => '/api/pages/{pageId}/comments', 'verb' => 'POST'],
