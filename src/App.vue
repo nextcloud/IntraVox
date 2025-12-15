@@ -1010,6 +1010,7 @@ export default {
       // Update page settings
       this.currentPage.settings.allowReactions = settings.allowReactions;
       this.currentPage.settings.allowComments = settings.allowComments;
+      this.currentPage.settings.allowCommentReactions = settings.allowCommentReactions;
 
       try {
         await this.savePage();

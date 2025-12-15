@@ -16,6 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Gracefully handles duplicate group entries during app updates
   - No more error logs when updating the app
 
+- **Page Settings Persistence**: Fixed page settings not persisting after page refresh
+  - Backend: Updated `validateAndSanitizePage()` to preserve the `settings` object
+  - Frontend: Added missing `allowCommentReactions` field to save handler
+  - Settings for comments, reactions, and comment reactions now persist correctly
+
 ## [0.7.1] - 2025-12-13 - Translation Fixes
 
 ### Fixed

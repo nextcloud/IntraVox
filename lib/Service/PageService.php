@@ -1933,6 +1933,15 @@ class PageService {
             $sanitized['uniqueId'] = $data['uniqueId'];
         }
 
+        // Preserve settings object (engagement settings for comments/reactions)
+        if (isset($data['settings']) && is_array($data['settings'])) {
+            $sanitized['settings'] = [
+                'allowReactions' => isset($data['settings']['allowReactions']) ? (bool)$data['settings']['allowReactions'] : true,
+                'allowComments' => isset($data['settings']['allowComments']) ? (bool)$data['settings']['allowComments'] : true,
+                'allowCommentReactions' => isset($data['settings']['allowCommentReactions']) ? (bool)$data['settings']['allowCommentReactions'] : true,
+            ];
+        }
+
         if (isset($data['layout']['rows']) && is_array($data['layout']['rows'])) {
             foreach ($data['layout']['rows'] as $row) {
                 if (isset($row['widgets']) && is_array($row['widgets'])) {
