@@ -16,6 +16,7 @@ use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\StreamResponse;
+use OCP\Files\NotFoundException;
 use OCP\IConfig;
 use OCP\IGroupManager;
 use OCP\IRequest;
@@ -279,6 +280,172 @@ class ApiController extends Controller {
             return new DataResponse(
                 ['error' => $e->getMessage()],
                 Http::STATUS_BAD_REQUEST
+            );
+        } catch (\Exception $e) {
+            return new DataResponse(
+                ['error' => $e->getMessage()],
+                Http::STATUS_INTERNAL_SERVER_ERROR
+            );
+        }
+    }
+
+    /**
+     * Check if media file with given name already exists
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     */
+    public function checkMediaDuplicate(string $pageId): DataResponse {
+        try {
+            $filename = $this->request->getParam('filename');
+            $target = $this->request->getParam('target', 'page');
+
+            if (!$filename) {
+                return new DataResponse(
+                    ['error' => 'Filename parameter required'],
+                    Http::STATUS_BAD_REQUEST
+                );
+            }
+
+            $exists = $this->pageService->checkMediaExists($pageId, $filename, $target);
+
+            return new DataResponse(['exists' => $exists]);
+        } catch (\Exception $e) {
+            return new DataResponse(
+                ['error' => $e->getMessage()],
+                Http::STATUS_INTERNAL_SERVER_ERROR
+            );
+        }
+    }
+
+    /**
+     * Upload media with original filename
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     */
+    public function uploadMediaWithName(string $pageId): DataResponse {
+        try {
+            // Check write permission
+            $existingPage = $this->pageService->getPage($pageId);
+            if (!($existingPage['permissions']['canWrite'] ?? false)) {
+                return new DataResponse(
+                    ['error' => 'Permission denied: cannot upload media to this page'],
+                    Http::STATUS_FORBIDDEN
+                );
+            }
+
+            // Get uploaded file
+            $file = $this->request->getUploadedFile('media');
+            if (!$file) {
+                $file = $this->request->getUploadedFile('file');
+            }
+
+            if (!$file || empty($file['tmp_name'])) {
+                return new DataResponse(
+                    ['error' => 'No file uploaded'],
+                    Http::STATUS_BAD_REQUEST
+                );
+            }
+
+            // Get parameters
+            $target = $this->request->getParam('target', 'page');
+            $overwrite = $this->request->getParam('overwrite', '0') === '1';
+
+            // Upload file
+            $result = $this->pageService->uploadMediaWithOriginalName($pageId, $file, $target, $overwrite);
+
+            return new DataResponse($result, Http::STATUS_CREATED);
+
+        } catch (\InvalidArgumentException $e) {
+            return new DataResponse(
+                ['error' => $e->getMessage()],
+                Http::STATUS_BAD_REQUEST
+            );
+        } catch (\Exception $e) {
+            // Check if it's a "File already exists" error
+            if ($e->getMessage() === 'File already exists') {
+                return new DataResponse(
+                    ['error' => $e->getMessage()],
+                    Http::STATUS_CONFLICT
+                );
+            }
+
+            return new DataResponse(
+                ['error' => $e->getMessage()],
+                Http::STATUS_INTERNAL_SERVER_ERROR
+            );
+        }
+    }
+
+    /**
+     * Get list of media files for a page or resources folder
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     */
+    public function listMedia(string $pageId): DataResponse {
+        try {
+            $folder = $this->request->getParam('folder', 'page');
+            $path = $this->request->getParam('path', ''); // NEW: for subfolder navigation
+
+            // Security: Sanitize path for resources folder
+            if ($folder === 'resources' && !empty($path)) {
+                try {
+                    $path = $this->sanitizePath($path);
+                } catch (\InvalidArgumentException $e) {
+                    return new DataResponse(
+                        ['error' => 'Invalid path: ' . $e->getMessage()],
+                        Http::STATUS_BAD_REQUEST
+                    );
+                }
+            }
+
+            $mediaList = $this->pageService->getMediaList($pageId, $folder, $path);
+
+            return new DataResponse(['media' => $mediaList]);
+        } catch (\Exception $e) {
+            return new DataResponse(
+                ['error' => $e->getMessage()],
+                Http::STATUS_INTERNAL_SERVER_ERROR
+            );
+        }
+    }
+
+    /**
+     * Get media file from resources folder
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     */
+    public function getResourcesMedia(string $filename) {
+        try {
+            // Security: Validate path (prevent directory traversal)
+            try {
+                $safePath = $this->sanitizePath($filename);
+            } catch (\InvalidArgumentException $e) {
+                return new DataResponse(
+                    ['error' => 'Invalid path: ' . $e->getMessage()],
+                    Http::STATUS_BAD_REQUEST
+                );
+            }
+
+            $file = $this->pageService->getResourcesMediaFile($safePath);
+
+            // Set appropriate content type
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $mimeType = $finfo->buffer($file->getContent());
+            finfo_close($finfo);
+
+            // Get just the filename for Content-Disposition (not the full path)
+            $displayName = basename($safePath);
+
+            $response = new StreamResponse($file->fopen('rb'));
+            $response->addHeader('Content-Type', $mimeType);
+            $response->addHeader('Content-Disposition', 'inline; filename="' . $displayName . '"');
+            $response->addHeader('Cache-Control', 'public, max-age=31536000'); // 1 year cache
+
+            return $response;
+        } catch (NotFoundException $e) {
+            return new DataResponse(
+                ['error' => 'Media file not found'],
+                Http::STATUS_NOT_FOUND
             );
         } catch (\Exception $e) {
             return new DataResponse(
@@ -711,10 +878,16 @@ class ApiController extends Controller {
 
             $result = $this->setupService->setup();
 
+            // Run _resources folder migration
+            $this->logger->info('[ApiController] Running _resources migration');
+            $migrationResult = $this->setupService->migrateResourcesFolders();
+            $this->logger->info('[ApiController] Migration result: ' . ($migrationResult ? 'success' : 'failed'));
+
             return new DataResponse([
                 'success' => true,
                 'message' => 'Setup completed successfully',
                 'result' => $result,
+                'migration' => $migrationResult,
             ]);
         } catch (\Exception $e) {
             $this->logger->error('[ApiController] Setup failed: ' . $e->getMessage());
@@ -1239,5 +1412,31 @@ class ApiController extends Controller {
             }
         }
         @rmdir($dir);
+    }
+
+    /**
+     * Sanitize file path - prevent directory traversal
+     * @param string $path User-provided path
+     * @return string Safe path
+     * @throws \InvalidArgumentException if path is malicious
+     */
+    private function sanitizePath(string $path): string {
+        // Remove leading/trailing slashes
+        $path = trim($path, '/');
+
+        // Detect directory traversal attempts
+        if (strpos($path, '..') !== false || strpos($path, '\\') !== false) {
+            throw new \InvalidArgumentException('Invalid path');
+        }
+
+        // Split into segments and validate each
+        $segments = explode('/', $path);
+        foreach ($segments as $segment) {
+            if (empty($segment) || $segment === '.' || $segment === '..') {
+                throw new \InvalidArgumentException('Invalid path segment');
+            }
+        }
+
+        return $path;
     }
 }

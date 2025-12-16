@@ -258,8 +258,30 @@
 
 		<!-- Export/Import Tab -->
 		<div v-if="activeTab === 'export'" class="tab-content">
+			<!-- Sub-tab Navigation -->
+			<div class="sub-tab-navigation">
+				<button
+					:class="['sub-tab-button', { active: exportSubTab === 'export' }]"
+					@click="exportSubTab = 'export'">
+					<Download :size="16" />
+					{{ t('intravox', 'Export') }}
+				</button>
+				<button
+					:class="['sub-tab-button', { active: exportSubTab === 'confluence' }]"
+					@click="exportSubTab = 'confluence'">
+					<CloudDownload :size="16" />
+					{{ t('intravox', 'Confluence') }}
+				</button>
+				<button
+					:class="['sub-tab-button', { active: exportSubTab === 'import' }]"
+					@click="exportSubTab = 'import'">
+					<Upload :size="16" />
+					{{ t('intravox', 'Import') }}
+				</button>
+			</div>
+
 			<!-- Export Section -->
-			<div class="settings-section">
+			<div v-if="exportSubTab === 'export'" class="settings-section">
 				<h2>{{ t('intravox', 'Export Pages') }}</h2>
 				<p class="settings-section-desc">
 					{{ t('intravox', 'Export your IntraVox pages for backup or migration.') }}
@@ -303,8 +325,8 @@
 
 					<div class="export-row">
 						<NcCheckboxRadioSwitch
-							:checked="exportIncludeComments"
-							@update:checked="exportIncludeComments = $event">
+							v-model="exportIncludeComments"
+							type="checkbox">
 							{{ t('intravox', 'Include comments and reactions') }}
 						</NcCheckboxRadioSwitch>
 					</div>
@@ -322,12 +344,12 @@
 			</div>
 
 			<!-- Confluence Import Section -->
-			<div class="settings-section confluence-import-section">
+			<div v-if="exportSubTab === 'confluence'" class="settings-section confluence-import-section">
 				<ConfluenceImport />
 			</div>
 
 			<!-- Import Section -->
-			<div class="settings-section import-section">
+			<div v-if="exportSubTab === 'import'" class="settings-section import-section">
 				<h2>{{ t('intravox', 'Import from ZIP') }}</h2>
 				<p class="settings-section-desc">
 					{{ t('intravox', 'Import pages and media from an IntraVox ZIP export file.') }}
@@ -349,16 +371,16 @@
 
 					<div class="import-row">
 						<NcCheckboxRadioSwitch
-							:checked="importIncludeComments"
-							@update:checked="importIncludeComments = $event">
+							v-model="importIncludeComments"
+							type="checkbox">
 							{{ t('intravox', 'Import comments and reactions') }}
 						</NcCheckboxRadioSwitch>
 					</div>
 
 					<div class="import-row">
 						<NcCheckboxRadioSwitch
-							:checked="importOverwrite"
-							@update:checked="importOverwrite = $event">
+							v-model="importOverwrite"
+							type="checkbox">
 							{{ t('intravox', 'Overwrite existing pages') }}
 						</NcCheckboxRadioSwitch>
 					</div>
@@ -466,6 +488,7 @@ import OpenInNew from 'vue-material-design-icons/OpenInNew.vue'
 import CommentTextOutline from 'vue-material-design-icons/CommentTextOutline.vue'
 import Download from 'vue-material-design-icons/Download.vue'
 import Upload from 'vue-material-design-icons/Upload.vue'
+import CloudDownload from 'vue-material-design-icons/CloudDownload.vue'
 import ConfluenceImport from '../admin/components/ConfluenceImport.vue'
 
 export default {
@@ -492,6 +515,7 @@ export default {
 	data() {
 		return {
 			activeTab: 'video', // Default to video tab
+			exportSubTab: 'export', // Default export sub-tab
 			languages: this.initialState.languages || [],
 			setupComplete: this.initialState.setupComplete !== false,
 			installing: null,
@@ -1536,5 +1560,46 @@ export default {
 
 .import-result {
 	margin-top: 8px;
+}
+
+/* Sub-tab navigation */
+.sub-tab-navigation {
+	display: flex;
+	gap: 8px;
+	margin-bottom: 30px;
+	border-bottom: 2px solid var(--color-border);
+	padding-bottom: 0;
+}
+
+.sub-tab-button {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 12px 24px;
+	border: none;
+	background: none;
+	color: var(--color-text-lighter);
+	cursor: pointer;
+	transition: all 0.2s ease;
+	border-bottom: 3px solid transparent;
+	margin-bottom: -2px; /* Overlap parent border */
+	font-size: 14px;
+	font-weight: 500;
+}
+
+.sub-tab-button:hover {
+	color: var(--color-main-text);
+	background: var(--color-background-hover);
+}
+
+.sub-tab-button.active {
+	color: var(--color-primary);
+	border-bottom-color: var(--color-primary);
+	background: var(--color-primary-element-light);
+}
+
+.sub-tab-button .material-design-icon {
+	display: flex;
+	align-items: center;
 }
 </style>

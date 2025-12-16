@@ -97,15 +97,16 @@
         <!-- Image Widget -->
         <div v-else-if="localWidget.type === 'image'">
           <div class="form-group">
-            <label>{{ t('Upload image:') }}</label>
-            <input
-              type="file"
-              accept="image/jpeg,image/png,image/gif,image/webp"
-              @change="handleImageUpload"
-              :disabled="isUploading"
-            />
-            <p v-if="isUploading" class="hint uploading">{{ t('Uploading image...') }}</p>
-            <p v-else class="hint">{{ t('Supported formats: JPEG, PNG, GIF, WebP. Maximum size: {limit}MB.', { limit: uploadLimitMB }) }}</p>
+            <label>{{ t('Image:') }}</label>
+            <NcButton
+              type="primary"
+              @click="openMediaPicker('image')"
+            >
+              <template #icon>
+                <ImageIcon :size="20" />
+              </template>
+              {{ t('Browse media...') }}
+            </NcButton>
           </div>
           <div v-if="localWidget.src" class="image-preview">
             <img :src="getImageUrl(localWidget.src)" :alt="localWidget.alt" />
@@ -341,15 +342,16 @@
 
           <!-- Lokaal bestand upload -->
           <div v-else class="form-group">
-            <label>{{ t('Upload video:') }}</label>
-            <input
-              type="file"
-              accept="video/mp4,video/webm,video/ogg"
-              :disabled="isUploading"
-              @change="handleVideoUpload"
-            />
-            <p v-if="isUploading" class="hint uploading">{{ t('Uploading video...') }}</p>
-            <p v-else class="hint">{{ t('MP4, WebM or OGG. Maximum {limit}MB.', { limit: uploadLimitMB }) }}</p>
+            <label>{{ t('Video:') }}</label>
+            <NcButton
+              type="primary"
+              @click="openMediaPicker('video')"
+            >
+              <template #icon>
+                <VideoIcon :size="20" />
+              </template>
+              {{ t('Browse media...') }}
+            </NcButton>
             <div v-if="localWidget.src" class="current-video">
               {{ t('Current:') }} {{ localWidget.src }}
             </div>
@@ -451,6 +453,17 @@
         </NcButton>
       </div>
     </div>
+
+    <!-- Media Picker Dialog -->
+    <MediaPicker
+      v-if="showMediaPicker"
+      :open="showMediaPicker"
+      :page-id="pageId"
+      :media-type="mediaPickerType"
+      :title="mediaPickerType === 'image' ? t('Select Image') : t('Select Video')"
+      @close="showMediaPicker = false"
+      @select="handleMediaSelect"
+    />
   </NcModal>
 </template>
 
@@ -460,7 +473,10 @@ import { generateUrl } from '@nextcloud/router';
 import { translate as t } from '@nextcloud/l10n';
 import { NcButton, NcModal } from '@nextcloud/vue';
 import PageTreeSelect from './PageTreeSelect.vue';
+import MediaPicker from './MediaPicker.vue';
 import { showError, showSuccess } from '@nextcloud/dialogs';
+import ImageIcon from 'vue-material-design-icons/Image.vue';
+import VideoIcon from 'vue-material-design-icons/Video.vue';
 
 // Tiptap imports
 import { Editor, EditorContent } from '@tiptap/vue-3';
@@ -474,7 +490,10 @@ export default {
     NcButton,
     NcModal,
     EditorContent,
-    PageTreeSelect
+    PageTreeSelect,
+    MediaPicker,
+    ImageIcon,
+    VideoIcon
   },
   props: {
     widget: {
@@ -498,7 +517,9 @@ export default {
       videoDomainWhitelist: [], // Whitelist of allowed video domains
       videoWhitelistLoaded: false, // Track if whitelist has been loaded
       convertVideoUrlTimeout: null, // Debounce timer for video URL conversion
-      isUploading: false // Track upload in progress
+      isUploading: false, // Track upload in progress
+      showMediaPicker: false, // Control MediaPicker dialog visibility
+      mediaPickerType: 'image' // 'image' or 'video'
     };
   },
   async mounted() {
@@ -676,6 +697,22 @@ export default {
       this.$emit('save', this.localWidget);
       this.$emit('close');
     },
+    openMediaPicker(type) {
+      this.mediaPickerType = type;
+      this.showMediaPicker = true;
+    },
+    handleMediaSelect(selection) {
+      // selection = { filename, folder }
+      this.localWidget.src = selection.filename;
+      this.localWidget.mediaFolder = selection.folder;
+
+      // For video widgets, ensure provider is set to 'local'
+      if (this.mediaPickerType === 'video') {
+        this.localWidget.provider = 'local';
+      }
+
+      this.showMediaPicker = false;
+    },
     debouncedConvertVideoUrl() {
       // Debounce video URL conversion to avoid too many conversions while typing
       if (this.convertVideoUrlTimeout) {
@@ -685,50 +722,17 @@ export default {
         this.convertVideoUrl();
       }, 500);
     },
-    async handleImageUpload(event) {
-      const file = event.target.files[0];
-      if (!file) {
-        return;
-      }
-
-      // Check file size before uploading (use server-configured limit)
-      const maxSize = this.uploadLimitBytes || (2 * 1024 * 1024); // Fallback to 2MB
-      if (file.size > maxSize) {
-        showError(t('intravox', 'Image too large. Maximum size is {limit}MB.', { limit: this.uploadLimitMB || 2 }));
-        return;
-      }
-
-      const formData = new FormData();
-      formData.append('media', file);
-
-      const uploadUrl = generateUrl(`/apps/intravox/api/pages/${this.pageId}/media`);
-
-      // Prevent saving while uploading
-      this.isUploading = true;
-
-      try {
-        // Don't set Content-Type header - axios will set it automatically with the correct boundary
-        const response = await axios.post(uploadUrl, formData);
-
-        // Vue 3: Direct assignment is reactive
-        this.localWidget.src = response.data.filename;
-        // Initialize width if not set (default to null for full width)
-        if (this.localWidget.width === undefined) {
-          this.localWidget.width = null;
-        }
-      } catch (err) {
-        // Extract error message from response if available
-        const errorMsg = err.response?.data?.error || err.message;
-        showError(t('intravox', 'Could not upload image') + ': ' + errorMsg);
-      } finally {
-        this.isUploading = false;
-      }
-    },
     getImageUrl(src) {
       if (!src) return '';
+
+      // Check mediaFolder property (new format)
+      if (this.localWidget.mediaFolder === 'resources') {
+        return generateUrl(`/apps/intravox/api/resources/media/${src}`);
+      }
+
       // Remove legacy prefixes if present
       const cleanFilename = src.replace(/^(📷 images\/|images\/|_media\/)/, '');
-      // Use unified media API
+      // Default: page media
       return generateUrl(`/apps/intravox/api/pages/${this.pageId}/media/${cleanFilename}`);
     },
     setImageSize(width) {
@@ -971,62 +975,17 @@ export default {
         this.detectedPlatform = null;
       }
     },
-    async handleVideoUpload(event) {
-      const file = event.target.files[0];
-      if (!file) {
-        return;
-      }
-
-      // Check file size against server limit
-      if (file.size > this.uploadLimitBytes) {
-        showError(t('intravox', 'Video too large. Maximum size is {limit}MB.', { limit: this.uploadLimitMB }));
-        return;
-      }
-
-      // Validate video file type
-      const validTypes = ['video/mp4', 'video/webm', 'video/ogg'];
-      if (!validTypes.includes(file.type)) {
-        showError(t('intravox', 'Invalid video format. Please use MP4, WebM or OGG.'));
-        return;
-      }
-
-      const formData = new FormData();
-      // Use 'video' field name for video uploads
-      formData.append('video', file);
-
-      this.isUploading = true;
-
-      try {
-        // Use exact same pattern as handleImageUpload (which works)
-        const response = await axios.post(
-          generateUrl(`/apps/intravox/api/pages/${this.pageId}/media`),
-          formData
-        );
-        this.localWidget.src = response.data.filename;
-        // Ensure provider is set to 'local' for uploaded files
-        this.localWidget.provider = 'local';
-        // Clear originalSrc for local files
-        this.localWidget.originalSrc = null;
-        showSuccess(t('intravox', 'Video uploaded successfully'));
-      } catch (err) {
-        // Provide more specific error messages
-        let errorMsg = t('intravox', 'Could not upload video');
-        if (err.code === 'ERR_NETWORK') {
-          errorMsg = t('intravox', 'Network error - please check your connection and try again');
-        } else if (err.response?.status === 413) {
-          errorMsg = t('intravox', 'Video file is too large for the server');
-        } else if (err.response?.data?.error) {
-          errorMsg = err.response.data.error;
-        }
-        showError(errorMsg);
-      } finally {
-        this.isUploading = false;
-      }
-    },
     getVideoUrl(filename) {
       if (!filename) return '';
+
+      // Check mediaFolder property (new format)
+      if (this.localWidget.mediaFolder === 'resources') {
+        return generateUrl(`/apps/intravox/api/resources/media/${filename}`);
+      }
+
       // Remove legacy prefixes if present
       const cleanFilename = filename.replace(/^(videos\/|_media\/)/, '');
+      // Default: page media
       return generateUrl(`/apps/intravox/api/pages/${this.pageId}/media/${cleanFilename}`);
     }
   }
@@ -1490,4 +1449,6 @@ export default {
   margin-left: 26px;
   margin-bottom: 0;
 }
+
+/* Media Picker Integration */
 </style>

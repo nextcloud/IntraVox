@@ -386,8 +386,8 @@ class ImportService {
                 $this->commentService->createComment(
                     $uniqueId,
                     $commentData['message'] ?? '',
-                    $commentData['userId'] ?? null,
-                    $commentData['parentId'] ?? null
+                    $commentData['parentId'] ?? null,
+                    $commentData['userId'] ?? null
                 );
                 $count++;
 

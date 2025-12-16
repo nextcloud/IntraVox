@@ -51,6 +51,14 @@ class SetupCommand extends Command {
         $output->writeln('<info>✓ Default homepage created</info>');
         $output->writeln('<info>✓ Groups configured with proper permissions</info>');
 
+        // Ensure _resources folders exist (for both new installations and updates)
+        $output->writeln('<info>Ensuring _resources folders exist...</info>');
+        if ($this->setupService->migrateResourcesFolders()) {
+            $output->writeln('<info>✓ _resources folders verified/created</info>');
+        } else {
+            $output->writeln('<comment>⚠ Warning: _resources folder migration had issues (check logs)</comment>');
+        }
+
         // Import demo data unless skipped
         $skipDemo = $input->getOption('skip-demo');
         $forceDemo = $input->getOption('force-demo');

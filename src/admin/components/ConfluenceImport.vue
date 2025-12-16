@@ -1,6 +1,5 @@
 <template>
   <div class="confluence-import">
-    <h2>Import from Confluence</h2>
     <p class="description">
       Import pages from Confluence by uploading an HTML export ZIP file.
       Export your Confluence space as HTML (Space Tools → Content Tools → Export) and upload it here.

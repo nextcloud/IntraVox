@@ -358,6 +358,15 @@ class SetupService {
                 } catch (NotFoundException $e) {
                     $this->createDefaultHomePageViaAPI($langFolder, $lang);
                 }
+
+                // Create _resources folder for shared media
+                try {
+                    $langFolder->get('_resources');
+                    $this->logger->info("_resources folder already exists in {$lang}");
+                } catch (NotFoundException $e) {
+                    $langFolder->newFolder('_resources');
+                    $this->logger->info("Created _resources folder in {$lang}");
+                }
             }
 
             $this->logger->info('Created default content in IntraVox folder');
@@ -571,6 +580,48 @@ class SetupService {
             $this->getSharedFolder();
             return true;
         } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Migrate existing installations to add _resources folders
+     * Idempotent: safe to run multiple times
+     */
+    public function migrateResourcesFolders(): bool {
+        try {
+            $this->logger->info('Starting _resources folder migration');
+
+            // Get the IntraVox groupfolder
+            $folder = $this->getSharedFolder();
+
+            // Create _resources folder for each language
+            foreach (self::SUPPORTED_LANGUAGES as $lang) {
+                try {
+                    $langFolder = $folder->get($lang);
+                    $this->logger->info("Checking language folder: {$lang}");
+
+                    // Check if _resources folder exists
+                    try {
+                        $langFolder->get('_resources');
+                        $this->logger->info("_resources folder already exists in {$lang}");
+                    } catch (NotFoundException $e) {
+                        // Create _resources folder
+                        $langFolder->newFolder('_resources');
+                        $this->logger->info("Created _resources folder in {$lang}");
+                    }
+                } catch (NotFoundException $e) {
+                    $this->logger->warning("Language folder {$lang} not found, skipping");
+                    continue;
+                }
+            }
+
+            $this->logger->info('_resources folder migration completed successfully');
+            return true;
+
+        } catch (\Exception $e) {
+            $this->logger->error('_resources folder migration failed: ' . $e->getMessage());
+            $this->logger->error('Stack trace: ' . $e->getTraceAsString());
             return false;
         }
     }

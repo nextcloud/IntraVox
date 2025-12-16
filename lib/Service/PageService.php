@@ -2098,6 +2098,11 @@ class PageService {
                     $allowedPositions = ['center', 'top', 'bottom', 'left', 'right'];
                     $sanitized['objectPosition'] = in_array($widget['objectPosition'], $allowedPositions) ? $widget['objectPosition'] : 'center';
                 }
+                // Preserve mediaFolder property (for _resources folder media)
+                if (isset($widget['mediaFolder'])) {
+                    $allowedFolders = ['page', 'resources'];
+                    $sanitized['mediaFolder'] = in_array($widget['mediaFolder'], $allowedFolders) ? $widget['mediaFolder'] : 'page';
+                }
                 // Preserve image link properties
                 if (isset($widget['linkType'])) {
                     $allowedLinkTypes = ['none', 'internal', 'external'];
@@ -2213,6 +2218,12 @@ class PageService {
                     // Local video file - sanitize path
                     $sanitized['src'] = $this->sanitizePath($widget['src'] ?? '');
                     $sanitized['blocked'] = false;
+                }
+
+                // Preserve mediaFolder property (for _resources folder media)
+                if (isset($widget['mediaFolder'])) {
+                    $allowedFolders = ['page', 'resources'];
+                    $sanitized['mediaFolder'] = in_array($widget['mediaFolder'], $allowedFolders) ? $widget['mediaFolder'] : 'page';
                 }
 
                 // Playback options (boolean values)
@@ -3581,5 +3592,361 @@ class PageService {
         $suffix = (mb_strlen($text) > $start + $contextLength) ? '...' : '';
 
         return $prefix . trim($snippet) . $suffix;
+    }
+
+    /**
+     * Sanitize filename for safe storage
+     * - Remove special characters
+     * - Convert spaces to underscores
+     * - Limit to 255 characters
+     */
+    public function sanitizeFilename(string $filename): string {
+        // Get extension
+        $extension = '';
+        if (($dotPos = strrpos($filename, '.')) !== false) {
+            $extension = substr($filename, $dotPos);
+            $filename = substr($filename, 0, $dotPos);
+        }
+
+        // Remove special characters, keep alphanumeric, dash, underscore
+        $filename = preg_replace('/[^a-zA-Z0-9_\-]/', '_', $filename);
+
+        // Replace multiple underscores with single underscore
+        $filename = preg_replace('/_+/', '_', $filename);
+
+        // Trim underscores from start and end
+        $filename = trim($filename, '_');
+
+        // Limit to 200 chars (leaving room for extension and potential suffixes)
+        $filename = substr($filename, 0, 200);
+
+        // Ensure we have a filename
+        if (empty($filename)) {
+            $filename = 'file_' . time();
+        }
+
+        return $filename . $extension;
+    }
+
+    /**
+     * Check if media file exists in page/_media or _resources folder
+     *
+     * @param string $pageId Page unique ID
+     * @param string $filename Filename to check
+     * @param string $targetFolder 'page' or 'resources'
+     * @return bool True if file exists
+     */
+    public function checkMediaExists(string $pageId, string $filename, string $targetFolder): bool {
+        try {
+            $languageFolder = $this->getLanguageFolder();
+            $filename = basename($filename); // Prevent directory traversal
+
+            if ($targetFolder === 'resources') {
+                // Check in _resources folder
+                try {
+                    $resourcesFolder = $languageFolder->get('_resources');
+                    $resourcesFolder->get($filename);
+                    return true;
+                } catch (NotFoundException $e) {
+                    return false;
+                }
+            } else {
+                // Check in page/_media folder
+                $pageId = $this->sanitizeId($pageId);
+
+                // Find the page
+                $result = $this->findPageByUniqueId($languageFolder, $pageId);
+                if ($result === null) {
+                    $result = $this->findPageById($languageFolder, $pageId);
+                    if ($result === null) {
+                        return false;
+                    }
+                }
+
+                // Get media folder
+                if ($result['isHome'] ?? false) {
+                    try {
+                        $mediaFolder = $languageFolder->get('_media');
+                    } catch (NotFoundException $e) {
+                        return false;
+                    }
+                } else {
+                    $pageFolder = $result['folder'];
+                    try {
+                        $mediaFolder = $pageFolder->get('_media');
+                    } catch (NotFoundException $e) {
+                        return false;
+                    }
+                }
+
+                // Check if file exists
+                try {
+                    $mediaFolder->get($filename);
+                    return true;
+                } catch (NotFoundException $e) {
+                    return false;
+                }
+            }
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Upload media with original filename
+     *
+     * @param string $pageId Page unique ID
+     * @param array $file Uploaded file data
+     * @param string $targetFolder 'page' or 'resources'
+     * @param bool $overwrite Whether to overwrite existing file
+     * @return array ['filename' => '...', 'exists' => bool]
+     * @throws \Exception On upload failure or if file exists and overwrite is false
+     */
+    public function uploadMediaWithOriginalName(string $pageId, array $file, string $targetFolder, bool $overwrite = false): array {
+        if (!isset($file['tmp_name']) || !isset($file['name'])) {
+            throw new \InvalidArgumentException('Invalid file upload');
+        }
+
+        // Check if tmp_name is empty (upload failed on server)
+        if (empty($file['tmp_name'])) {
+            $errorCode = $file['error'] ?? -1;
+            $errorMessages = [
+                UPLOAD_ERR_INI_SIZE => 'File exceeds server upload limit',
+                UPLOAD_ERR_FORM_SIZE => 'File exceeds form upload limit',
+                UPLOAD_ERR_PARTIAL => 'File only partially uploaded',
+                UPLOAD_ERR_NO_FILE => 'No file was uploaded',
+                UPLOAD_ERR_NO_TMP_DIR => 'Server missing temporary folder',
+                UPLOAD_ERR_CANT_WRITE => 'Failed to write file to disk',
+                UPLOAD_ERR_EXTENSION => 'Upload stopped by PHP extension',
+            ];
+            $message = $errorMessages[$errorCode] ?? "Upload failed (error code: $errorCode)";
+            throw new \InvalidArgumentException($message);
+        }
+
+        // Validate file type
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mimeType = finfo_file($finfo, $file['tmp_name']);
+        finfo_close($finfo);
+
+        if (!in_array($mimeType, self::ALLOWED_MEDIA_TYPES)) {
+            throw new \InvalidArgumentException('Invalid file type. Allowed: JPEG, PNG, GIF, WebP, MP4, WebM, OGG');
+        }
+
+        // Validate file size
+        if ($file['size'] > self::MAX_MEDIA_SIZE) {
+            throw new \InvalidArgumentException('File too large. Maximum size is 50MB.');
+        }
+
+        // Sanitize original filename
+        $filename = $this->sanitizeFilename($file['name']);
+
+        // Check if file exists
+        $fileExists = $this->checkMediaExists($pageId, $filename, $targetFolder);
+        if ($fileExists && !$overwrite) {
+            throw new \Exception('File already exists');
+        }
+
+        $languageFolder = $this->getLanguageFolder();
+
+        // Get target folder based on targetFolder parameter
+        if ($targetFolder === 'resources') {
+            // Upload to _resources folder
+            try {
+                $uploadFolder = $languageFolder->get('_resources');
+            } catch (NotFoundException $e) {
+                $uploadFolder = $languageFolder->newFolder('_resources');
+            }
+        } else {
+            // Upload to page/_media folder
+            $pageId = $this->sanitizeId($pageId);
+
+            // Find the page
+            $result = $this->findPageByUniqueId($languageFolder, $pageId);
+            if ($result === null) {
+                $result = $this->findPageById($languageFolder, $pageId);
+                if ($result === null) {
+                    throw new \Exception('Page not found');
+                }
+            }
+
+            // Get media folder for this page
+            if ($result['isHome'] ?? false) {
+                // Home media is in root/_media/
+                try {
+                    $uploadFolder = $languageFolder->get('_media');
+                } catch (NotFoundException $e) {
+                    $uploadFolder = $languageFolder->newFolder('_media');
+                }
+            } else {
+                $pageFolder = $result['folder'];
+
+                // Get or create media subfolder
+                try {
+                    $uploadFolder = $pageFolder->get('_media');
+                } catch (NotFoundException $e) {
+                    $uploadFolder = $pageFolder->newFolder('_media');
+                }
+            }
+        }
+
+        // Upload file
+        $content = file_get_contents($file['tmp_name']);
+
+        if ($fileExists && $overwrite) {
+            // Overwrite existing file
+            $existingFile = $uploadFolder->get($filename);
+            $existingFile->putContent($content);
+        } else {
+            // Create new file
+            $newFile = $uploadFolder->newFile($filename);
+            $newFile->putContent($content);
+        }
+
+        return [
+            'filename' => $filename,
+            'exists' => $fileExists
+        ];
+    }
+
+    /**
+     * Get list of media files in a folder
+     *
+     * @param string $pageId Page unique ID
+     * @param string $folderType 'page' or 'resources'
+     * @param string $subPath Subfolder path for resources (optional)
+     * @return array List of media files with metadata
+     */
+    public function getMediaList(string $pageId, string $folderType, string $subPath = ''): array {
+        try {
+            $languageFolder = $this->getLanguageFolder();
+            $mediaFiles = [];
+
+            if ($folderType === 'resources') {
+                // List files in _resources folder
+                try {
+                    $resourcesFolder = $languageFolder->get('_resources');
+
+                    // Navigate to subfolder if path provided
+                    $targetFolder = $resourcesFolder;
+                    if (!empty($subPath)) {
+                        $subPath = trim($subPath, '/');
+                        $targetFolder = $resourcesFolder->get($subPath);
+                    }
+
+                    $files = $targetFolder->getDirectoryListing();
+
+                    foreach ($files as $file) {
+                        $relativePath = $this->getRelativePath($file, $resourcesFolder);
+
+                        if ($file->getType() === \OCP\Files\FileInfo::TYPE_FOLDER) {
+                            // It's a folder
+                            $mediaFiles[] = [
+                                'type' => 'folder',
+                                'name' => $file->getName(),
+                                'path' => $relativePath,
+                                'modified' => $file->getMTime()
+                            ];
+                        } else {
+                            // It's a file
+                            $mediaFiles[] = [
+                                'type' => 'file',
+                                'name' => $file->getName(),
+                                'path' => $relativePath,
+                                'size' => $file->getSize(),
+                                'mimeType' => $file->getMimetype(),
+                                'modified' => $file->getMTime()
+                            ];
+                        }
+                    }
+                } catch (NotFoundException $e) {
+                    // _resources folder or subfolder doesn't exist
+                    return [];
+                }
+            } else {
+                // List files in page/_media folder
+                $pageId = $this->sanitizeId($pageId);
+
+                // Find the page
+                $result = $this->findPageByUniqueId($languageFolder, $pageId);
+                if ($result === null) {
+                    $result = $this->findPageById($languageFolder, $pageId);
+                    if ($result === null) {
+                        return [];
+                    }
+                }
+
+                // Get media folder
+                if ($result['isHome'] ?? false) {
+                    try {
+                        $mediaFolder = $languageFolder->get('_media');
+                    } catch (NotFoundException $e) {
+                        return [];
+                    }
+                } else {
+                    $pageFolder = $result['folder'];
+                    try {
+                        $mediaFolder = $pageFolder->get('_media');
+                    } catch (NotFoundException $e) {
+                        return [];
+                    }
+                }
+
+                // List files
+                $files = $mediaFolder->getDirectoryListing();
+                foreach ($files as $file) {
+                    if ($file->getType() === \OCP\Files\FileInfo::TYPE_FILE) {
+                        $mediaFiles[] = [
+                            'name' => $file->getName(),
+                            'size' => $file->getSize(),
+                            'mimeType' => $file->getMimetype(),
+                            'modified' => $file->getMTime()
+                        ];
+                    }
+                }
+            }
+
+            // Sort by name
+            usort($mediaFiles, function($a, $b) {
+                return strcmp($a['name'], $b['name']);
+            });
+
+            return $mediaFiles;
+
+        } catch (\Exception $e) {
+            return [];
+        }
+    }
+
+    /**
+     * Get media file from _resources folder
+     *
+     * @param string $path File path (can include subfolders)
+     * @return \OCP\Files\File File object
+     * @throws NotFoundException If file not found
+     */
+    public function getResourcesMediaFile(string $path) {
+        // Path is already sanitized by ApiController::sanitizePath()
+        $languageFolder = $this->getLanguageFolder();
+
+        try {
+            $resourcesFolder = $languageFolder->get('_resources');
+
+            // Navigate to file (supports subfolder paths)
+            return $resourcesFolder->get($path);
+        } catch (NotFoundException $e) {
+            throw new NotFoundException('Media file not found: ' . $path);
+        }
+    }
+
+    /**
+     * Get relative path from resources root
+     * @param \OCP\Files\Node $node File or folder node
+     * @param \OCP\Files\Folder $resourcesRoot _resources folder root
+     * @return string Relative path (e.g., "logos/company.png")
+     */
+    private function getRelativePath(\OCP\Files\Node $node, \OCP\Files\Folder $resourcesRoot): string {
+        $fullPath = $node->getPath();
+        $rootPath = $resourcesRoot->getPath();
+        return ltrim(substr($fullPath, strlen($rootPath)), '/');
     }
 }

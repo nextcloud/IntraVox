@@ -36,7 +36,17 @@ class ImportController extends Controller {
      */
     public function importZip(string $type = 'file'): JSONResponse {
         try {
+            $this->logger->info('Import ZIP endpoint called', [
+                'method' => $this->request->getMethod(),
+                'contentType' => $this->request->getHeader('Content-Type'),
+            ]);
+
             $file = $this->request->getUploadedFile('file');
+
+            $this->logger->info('File upload status', [
+                'file' => $file ? 'present' : 'null',
+                'error' => $file['error'] ?? 'no error key',
+            ]);
 
             if (!$file || $file['error'] !== UPLOAD_ERR_OK) {
                 $errorMessages = [

@@ -134,9 +134,10 @@ class ExportService {
 
                 $currentPath = $relativePath ? $relativePath . '/' . $nodeName : $nodeName;
 
-                // Check for page.json in this folder
-                if ($node->nodeExists('page.json')) {
-                    $pageFile = $node->get('page.json');
+                // Check for {folderId}.json in this folder (IntraVox page structure)
+                $pageFileName = $nodeName . '.json';
+                if ($node->nodeExists($pageFileName)) {
+                    $pageFile = $node->get($pageFileName);
                     if ($pageFile instanceof File) {
                         $content = $pageFile->getContent();
                         $data = json_decode($content, true);

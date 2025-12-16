@@ -7,16 +7,74 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.8.0] - TBD - Confluence Import & Bug Fixes
+### Added
+- **Media Management Improvements (Complete)**:
+  - **Backend**:
+    - _resources folder: New per-language shared media folder (nl/_resources, en/_resources, etc.)
+    - Original filenames: Media uploads now preserve original filenames with sanitization
+    - Duplicate detection: Check if file exists before upload
+    - Media listing: Browse existing media in page folders and resources
+    - New API endpoints:
+      - POST /api/pages/{pageId}/media/check - Check if file exists
+      - POST /api/pages/{pageId}/media/upload - Upload with original filename
+      - GET /api/pages/{pageId}/media/list - List media in page or resources folder
+      - GET /api/resources/media/{filename} - Serve shared media files
+    - SetupService: Automatically creates _resources folders on setup
+    - Migration method: migrateResourcesFolders() for existing installations
+  - **Frontend**:
+    - MediaPicker component: New 3-tab media browser for images and videos
+      - Tab 1: Upload - Upload new media with target selector (page/shared library)
+      - Tab 2: Page Media - Browse and select from current page's media
+      - Tab 3: Shared Library - Browse and select from _resources folder
+    - Duplicate handling: User dialog when uploading file that already exists (Cancel/Rename/Overwrite)
+    - WidgetEditor integration: "Browse media..." button for both image and video widgets
+    - Legacy upload: Direct file upload still available via expandable section
+    - Widget rendering: Automatic URL generation based on mediaFolder property
+    - Backwards compatible: Existing widgets continue to work without changes
 
-### Changed
-- **Confluence Import**: Removed direct API import, now only supports HTML export upload
-  - Simplified import interface - only HTML export ZIP upload available
-  - Removed Confluence API authentication and connection testing
-  - Removed space listing and direct API import endpoints
-  - HTML export import remains fully functional with all features
+## [0.8.1] - 2025-12-15 - Media Management Bug Fixes
 
 ### Fixed
+- **_resources Folder Persistence**: Fixed _resources folders disappearing after app updates
+  - SetupCommand now calls migrateResourcesFolders() during setup
+  - Ensures _resources folders exist for both new installations and app updates
+  - Migration is idempotent (safe to run multiple times)
+- **Folder Navigation**: Fixed folders not appearing in MediaPicker Shared Library tab
+  - filterMediaByType() now includes folders (they don't have mimeType)
+  - Folders display with 📁 icon and "Folder" type label
+  - Breadcrumb navigation works correctly with subfolder paths
+
+## [0.8.0] - 2025-12-15 - Import & Export Improvements
+
+### Added
+- **Export/Import UI Reorganization**: Admin interface now uses sub-tabs for better organization
+  - Export tab: Export pages by language with page count display and comments option
+  - Confluence tab: Import from Confluence HTML export with parent page selection
+  - Import tab: Import IntraVox ZIP files with comments and overwrite options
+  - Cleaner separation of functionality with tabbed navigation
+
+### Fixed
+- **Comment Import**: Fixed comments not being imported from ZIP files
+  - CommentService now accepts optional userId parameter for import scenarios
+  - Validates imported userId and falls back to current user if not found
+  - Import preserves original comment authors when users exist in system
+  - Maintains proper parent-child relationships for comment threads
+
+- **Export Page Count**: Fixed incorrect page count in export language dropdown
+  - ExportService now correctly finds pages using `{folderId}.json` pattern
+  - Previously showed "1 pages" for all languages despite having more pages
+  - Now accurately displays actual page count (e.g., "135 pages")
+
+- **Checkbox Functionality**: Fixed all import/export checkboxes not responding
+  - Export: "Include comments and reactions" checkbox now works
+  - Import: Both "Import comments and reactions" and "Overwrite existing pages" checkboxes work
+  - Changed from `:checked` binding to `v-model` pattern with `type="checkbox"`
+
+- **PHP Upload Limits**: Increased file upload size limits to support larger imports
+  - upload_max_filesize: 2M → 50M
+  - post_max_size: 8M → 50M
+  - Applied to both 1dev and 3dev servers
+  - Fixes "No file uploaded" errors for imports larger than 8MB
 - **Groupfolder Setup**: Fixed database constraint violation error on app updates
   - Error: `SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry '1--admin'`
   - Made `configureGroupfolderPermissions()` idempotent (safe to run multiple times)

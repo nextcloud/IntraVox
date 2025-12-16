@@ -88,12 +88,28 @@ class CommentService {
      * @param string $pageId The uniqueId of the page
      * @param string $message The comment message
      * @param string|null $parentId Parent comment ID for replies (optional)
+     * @param string|null $userId User ID (for imports, otherwise uses current user)
      * @return array The created comment
      */
-    public function createComment(string $pageId, string $message, ?string $parentId = null): array {
-        $userId = $this->getCurrentUserId();
+    public function createComment(string $pageId, string $message, ?string $parentId = null, ?string $userId = null): array {
+        // Use provided userId or get current user
         if ($userId === null) {
-            throw new \RuntimeException('User not logged in');
+            $userId = $this->getCurrentUserId();
+            if ($userId === null) {
+                throw new \RuntimeException('User not logged in');
+            }
+        } else {
+            // Verify user exists when importing
+            $user = $this->userManager->get($userId);
+            if ($user === null) {
+                $this->logger->warning('User not found for import, using current user', [
+                    'importUserId' => $userId
+                ]);
+                $userId = $this->getCurrentUserId();
+                if ($userId === null) {
+                    throw new \RuntimeException('User not logged in');
+                }
+            }
         }
 
         $comment = $this->commentsManager->create('users', $userId, self::OBJECT_TYPE, $pageId);

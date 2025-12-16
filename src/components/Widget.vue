@@ -247,9 +247,15 @@ export default {
     },
     getImageUrl(filename) {
       if (!filename) return '';
+
+      // Check mediaFolder property (new format)
+      if (this.widget.mediaFolder === 'resources') {
+        return generateUrl(`/apps/intravox/api/resources/media/${filename}`);
+      }
+
       // Remove legacy prefixes if present
       const cleanFilename = filename.replace(/^(📷 images\/|images\/|_media\/)/, '');
-      // Media served via unified API
+      // Media served via unified API (default: page media)
       return generateUrl(`/apps/intravox/api/pages/${this.pageId}/media/${cleanFilename}`);
     },
     getFileUrl(filename) {
@@ -259,9 +265,15 @@ export default {
     },
     getVideoUrl(filename) {
       if (!filename) return '';
+
+      // Check mediaFolder property (new format)
+      if (this.widget.mediaFolder === 'resources') {
+        return generateUrl(`/apps/intravox/api/resources/media/${filename}`);
+      }
+
       // Remove legacy prefixes if present
       const cleanFilename = filename.replace(/^(videos\/|_media\/)/, '');
-      // Media served via unified API
+      // Media served via unified API (default: page media)
       return generateUrl(`/apps/intravox/api/pages/${this.pageId}/media/${cleanFilename}`);
     },
     getImageStyle() {
