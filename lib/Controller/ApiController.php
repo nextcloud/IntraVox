@@ -13,6 +13,9 @@ use OCA\IntraVox\Service\PageService;
 use OCA\IntraVox\Service\SetupService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\Attribute\NoAdminRequired;
+use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
+use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\StreamResponse;
@@ -410,15 +413,26 @@ class ApiController extends Controller {
     }
 
     /**
-     * Get media file from resources folder
+     * Get media file from resources folder with separate folder and filename
+     * Handles URLs like: /api/resources/media/backgrounds/header.svg
      * @NoAdminRequired
      * @NoCSRFRequired
      */
-    public function getResourcesMedia(string $filename) {
+    public function getResourcesMediaWithFolder(string $folder, string $filename) {
+        $path = $folder . '/' . $filename;
+        return $this->getResourcesMedia($path);
+    }
+
+    /**
+     * Get media file from resources folder (globally readable)
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     */
+    public function getResourcesMedia(string $path) {
         try {
             // Security: Validate path (prevent directory traversal)
             try {
-                $safePath = $this->sanitizePath($filename);
+                $safePath = $this->sanitizePath($path);
             } catch (\InvalidArgumentException $e) {
                 return new DataResponse(
                     ['error' => 'Invalid path: ' . $e->getMessage()],
@@ -448,8 +462,9 @@ class ApiController extends Controller {
                 Http::STATUS_NOT_FOUND
             );
         } catch (\Exception $e) {
+            $this->logger->error('Error serving resources media: ' . $e->getMessage());
             return new DataResponse(
-                ['error' => $e->getMessage()],
+                ['error' => 'Internal server error'],
                 Http::STATUS_INTERNAL_SERVER_ERROR
             );
         }

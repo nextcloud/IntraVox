@@ -58,15 +58,6 @@
             <button type="button" @click="clearFile" class="btn-remove">✕</button>
           </div>
 
-          <div v-if="selectedFile" class="upload-options">
-            <div class="form-group">
-              <label for="upload-target">Save to:</label>
-              <select id="upload-target" v-model="uploadTarget" class="select-field">
-                <option value="page">This page</option>
-                <option value="resources">Shared library</option>
-              </select>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -276,7 +267,7 @@ export default {
   computed: {
     acceptTypes() {
       if (this.mediaType === 'image') {
-        return 'image/jpeg,image/png,image/gif,image/webp'
+        return 'image/jpeg,image/png,image/gif,image/webp,image/svg+xml'
       }
       return 'video/mp4,video/webm,video/ogg'
     },
@@ -348,7 +339,7 @@ export default {
         return []
       }
 
-      const imageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+      const imageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml']
       const videoTypes = ['video/mp4', 'video/webm', 'video/ogg']
 
       return mediaList.filter(media => {
@@ -533,10 +524,20 @@ export default {
 
     getMediaThumbnail(media, folder) {
       if (folder === 'resources') {
-        // Use path instead of name for resources (supports subfolders)
-        return generateUrl('/apps/intravox/api/resources/media/{path}', {
-          path: media.path || media.name
-        })
+        // Use path for resources (supports subfolders)
+        const path = media.path || media.name
+
+        // Split path into folder and filename for two-parameter route
+        const lastSlashIndex = path.lastIndexOf('/')
+        if (lastSlashIndex > 0) {
+          // Path contains subfolder (e.g., "icons/document-icon.svg")
+          const folderPart = path.substring(0, lastSlashIndex)
+          const filenamePart = path.substring(lastSlashIndex + 1)
+          return generateUrl(`/apps/intravox/api/resources/media/${folderPart}/${filenamePart}`)
+        } else {
+          // Path is just filename (root level)
+          return generateUrl(`/apps/intravox/api/resources/media/${path}`)
+        }
       }
       return generateUrl('/apps/intravox/api/pages/{pageId}/media/{filename}', {
         pageId: this.pageId,
@@ -675,35 +676,6 @@ export default {
 
 .btn-remove:hover {
   color: #e74c3c;
-}
-
-.upload-options {
-  padding-top: 10px;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.form-group label {
-  font-weight: 600;
-  font-size: 14px;
-}
-
-.select-field {
-  padding: 10px 12px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 14px;
-  background: white;
-}
-
-.select-field:focus {
-  outline: none;
-  border-color: #0082c9;
-  box-shadow: 0 0 0 2px rgba(0, 130, 201, 0.1);
 }
 
 /* Media Grid Styles */

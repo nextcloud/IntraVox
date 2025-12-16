@@ -15,6 +15,8 @@ return [
         ['name' => 'api#uploadMediaWithName', 'url' => '/api/pages/{pageId}/media/upload', 'verb' => 'POST'],
         ['name' => 'api#listMedia', 'url' => '/api/pages/{pageId}/media/list', 'verb' => 'GET'],
         ['name' => 'api#getMedia', 'url' => '/api/pages/{pageId}/media/{filename}', 'verb' => 'GET'],
+        // Resources media routes (supports subfolders like backgrounds/file.svg)
+        ['name' => 'api#getResourcesMediaWithFolder', 'url' => '/api/resources/media/{folder}/{filename}', 'verb' => 'GET'],
         ['name' => 'api#getResourcesMedia', 'url' => '/api/resources/media/{filename}', 'verb' => 'GET'],
         ['name' => 'api#getPageVersions', 'url' => '/api/pages/{pageId}/versions', 'verb' => 'GET'],
         ['name' => 'api#restorePageVersion', 'url' => '/api/pages/{pageId}/versions/{timestamp}', 'verb' => 'POST'],

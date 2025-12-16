@@ -1072,7 +1072,7 @@ export default {
 .header-left {
   flex: 1 1 auto;
   min-width: 0;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .header-right {

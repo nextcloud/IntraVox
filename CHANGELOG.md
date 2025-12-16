@@ -7,84 +7,93 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-- **Media Management Improvements (Complete)**:
-  - **Backend**:
-    - _resources folder: New per-language shared media folder (nl/_resources, en/_resources, etc.)
-    - Original filenames: Media uploads now preserve original filenames with sanitization
-    - Duplicate detection: Check if file exists before upload
-    - Media listing: Browse existing media in page folders and resources
-    - New API endpoints:
-      - POST /api/pages/{pageId}/media/check - Check if file exists
-      - POST /api/pages/{pageId}/media/upload - Upload with original filename
-      - GET /api/pages/{pageId}/media/list - List media in page or resources folder
-      - GET /api/resources/media/{filename} - Serve shared media files
-    - SetupService: Automatically creates _resources folders on setup
-    - Migration method: migrateResourcesFolders() for existing installations
-  - **Frontend**:
-    - MediaPicker component: New 3-tab media browser for images and videos
-      - Tab 1: Upload - Upload new media with target selector (page/shared library)
-      - Tab 2: Page Media - Browse and select from current page's media
-      - Tab 3: Shared Library - Browse and select from _resources folder
-    - Duplicate handling: User dialog when uploading file that already exists (Cancel/Rename/Overwrite)
-    - WidgetEditor integration: "Browse media..." button for both image and video widgets
-    - Legacy upload: Direct file upload still available via expandable section
-    - Widget rendering: Automatic URL generation based on mediaFolder property
-    - Backwards compatible: Existing widgets continue to work without changes
-
-## [0.8.1] - 2025-12-15 - Media Management Bug Fixes
-
-### Fixed
-- **_resources Folder Persistence**: Fixed _resources folders disappearing after app updates
-  - SetupCommand now calls migrateResourcesFolders() during setup
-  - Ensures _resources folders exist for both new installations and app updates
-  - Migration is idempotent (safe to run multiple times)
-- **Folder Navigation**: Fixed folders not appearing in MediaPicker Shared Library tab
-  - filterMediaByType() now includes folders (they don't have mimeType)
-  - Folders display with 📁 icon and "Folder" type label
-  - Breadcrumb navigation works correctly with subfolder paths
-
-## [0.8.0] - 2025-12-15 - Import & Export Improvements
+## [0.8.0] - 2025-12-16 - Media Management & SVG Support
 
 ### Added
+- **SVG Image Support**: SVG files (`image/svg+xml`) now supported for upload
+  - Automatic server-side sanitization for safe rendering using `enshrined/svg-sanitize` library
+  - Upload and display SVG files in Image widgets
+  - Works in both page _media folders and _resources shared library
+  - Subfolder support (e.g., `icons/`, `logos/`, `backgrounds/`)
+  - Backward compatible with existing image formats (JPEG, PNG, GIF, WebP)
+  - Security documentation available in `docs/SECURITY.md`
+
+- **Media Management System (Complete)**:
+  - **Shared Media Library**: New _resources folder per language for reusable media
+    - Hierarchical folder structure with subfolder navigation
+    - Breadcrumb navigation in MediaPicker
+    - Sample demo data with logos, icons, and backgrounds
+  - **MediaPicker Component**: New 3-tab media browser for images and videos
+    - Tab 1: Upload new media to page folder
+    - Tab 2: Browse and select from current page's media
+    - Tab 3: Browse and select from shared library with folder navigation
+  - **Original Filenames**: Media uploads now preserve original filenames with sanitization
+  - **Duplicate Detection**: User dialog when uploading file that already exists (Cancel/Rename/Overwrite)
+  - **New API Endpoints**:
+    - POST /api/pages/{pageId}/media/check - Check if file exists
+    - POST /api/pages/{pageId}/media/upload - Upload with original filename
+    - GET /api/pages/{pageId}/media/list - List media in page or resources folder
+    - GET /api/resources/media/{folder}/{filename} - Serve shared media with subfolder support
+    - GET /api/resources/media/{filename} - Serve shared media from root
+  - **WidgetEditor Integration**: "Browse media..." button for both image and video widgets
+  - **Backwards Compatible**: Existing widgets and media continue to work without changes
+
 - **Export/Import UI Reorganization**: Admin interface now uses sub-tabs for better organization
   - Export tab: Export pages by language with page count display and comments option
   - Confluence tab: Import from Confluence HTML export with parent page selection
   - Import tab: Import IntraVox ZIP files with comments and overwrite options
   - Cleaner separation of functionality with tabbed navigation
 
+### Changed
+- **Navigation Scrolling**: Added horizontal scrollbar to navigation bar for long menu lists
+  - Enables horizontal scrolling when navigation items exceed viewport width
+  - All navigation items now visible and accessible via horizontal scroll
+  - Thin scrollbar styling for clean appearance
+  - Responsive overflow handling on mobile devices
+  - Vertical overflow set to visible to allow dropdowns to overlay content
+
 ### Fixed
+- **Navigation Dropdown Visibility**: Fixed dropdown menus being clipped by parent containers
+  - Changed dropdown positioning from `absolute` to `fixed` to escape parent overflow
+  - Dynamic positioning using `getBoundingClientRect()` for accurate placement
+  - Dropdown and megamenu items now properly overlay page content
+  - Removed vertical scrollbar that prevented menu items from being visible
+  - Applied to both dropdown and megamenu navigation types
+
+- **MediaPicker Preview Loading**: Fixed SVG thumbnails showing 404 on first load
+  - Split subfolder paths into separate route parameters for proper URL generation
+  - URLs like `icons/document.svg` now correctly match two-parameter route structure
+
+- **_resources Folder Persistence**: Fixed _resources folders disappearing after app updates
+  - SetupCommand now calls migrateResourcesFolders() AFTER demo data import
+  - Ensures _resources folders exist for both new installations and app updates
+  - Migration is idempotent (safe to run multiple times)
+
+- **Folder Navigation**: Fixed folders not appearing in MediaPicker Shared Library tab
+  - filterMediaByType() now includes folders (they don't have mimeType)
+  - Folders display with 📁 icon and "Folder" type label
+  - Breadcrumb navigation works correctly with subfolder paths
+
 - **Comment Import**: Fixed comments not being imported from ZIP files
   - CommentService now accepts optional userId parameter for import scenarios
-  - Validates imported userId and falls back to current user if not found
   - Import preserves original comment authors when users exist in system
   - Maintains proper parent-child relationships for comment threads
 
 - **Export Page Count**: Fixed incorrect page count in export language dropdown
   - ExportService now correctly finds pages using `{folderId}.json` pattern
-  - Previously showed "1 pages" for all languages despite having more pages
   - Now accurately displays actual page count (e.g., "135 pages")
 
 - **Checkbox Functionality**: Fixed all import/export checkboxes not responding
-  - Export: "Include comments and reactions" checkbox now works
-  - Import: Both "Import comments and reactions" and "Overwrite existing pages" checkboxes work
   - Changed from `:checked` binding to `v-model` pattern with `type="checkbox"`
 
 - **PHP Upload Limits**: Increased file upload size limits to support larger imports
-  - upload_max_filesize: 2M → 50M
-  - post_max_size: 8M → 50M
-  - Applied to both 1dev and 3dev servers
-  - Fixes "No file uploaded" errors for imports larger than 8MB
+  - upload_max_filesize: 2M → 50M, post_max_size: 8M → 50M
+
 - **Groupfolder Setup**: Fixed database constraint violation error on app updates
-  - Error: `SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry '1--admin'`
   - Made `configureGroupfolderPermissions()` idempotent (safe to run multiple times)
-  - Gracefully handles duplicate group entries during app updates
-  - No more error logs when updating the app
 
 - **Page Settings Persistence**: Fixed page settings not persisting after page refresh
-  - Backend: Updated `validateAndSanitizePage()` to preserve the `settings` object
-  - Frontend: Added missing `allowCommentReactions` field to save handler
-  - Settings for comments, reactions, and comment reactions now persist correctly
+  - Updated `validateAndSanitizePage()` to preserve the `settings` object
 
 ## [0.7.1] - 2025-12-13 - Translation Fixes
 

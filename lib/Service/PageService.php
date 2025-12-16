@@ -13,13 +13,14 @@ use OCP\IConfig;
 use OCP\IDBConnection;
 use Psr\Log\LoggerInterface;
 use OCP\Files\Cache\ICacheEntry;
+use enshrined\svgSanitize\Sanitizer;
 
 class PageService {
     private const ALLOWED_WIDGET_TYPES = ['text', 'heading', 'image', 'links', 'file', 'divider', 'spacer', 'video'];
-    private const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    private const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
     private const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/ogg'];
     private const ALLOWED_MEDIA_TYPES = [
-        'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+        'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
         'video/mp4', 'video/webm', 'video/ogg'
     ];
     private const MAX_IMAGE_SIZE = 2097152; // 2MB (PHP default upload limit)
@@ -1680,12 +1681,20 @@ class PageService {
         finfo_close($finfo);
 
         if (!in_array($mimeType, self::ALLOWED_MEDIA_TYPES)) {
-            throw new \InvalidArgumentException('Invalid file type. Allowed: JPEG, PNG, GIF, WebP, MP4, WebM, OGG');
+            throw new \InvalidArgumentException('Invalid file type. Allowed: JPEG, PNG, GIF, WebP, SVG, MP4, WebM, OGG');
         }
 
         // Validate file size
         if ($file['size'] > self::MAX_MEDIA_SIZE) {
             throw new \InvalidArgumentException('File too large. Maximum size is 50MB.');
+        }
+
+        // Sanitize SVG files before upload
+        if ($mimeType === 'image/svg+xml') {
+            $content = file_get_contents($file['tmp_name']);
+            $content = $this->sanitizeSVG($content);
+        } else {
+            $content = file_get_contents($file['tmp_name']);
         }
 
         // Sanitize filename with prefix based on type
@@ -1726,7 +1735,6 @@ class PageService {
         }
 
         $newFile = $mediaFolder->newFile($filename);
-        $content = file_get_contents($file['tmp_name']);
         $newFile->putContent($content);
 
         return $filename;
@@ -3629,6 +3637,38 @@ class PageService {
     }
 
     /**
+     * Sanitize SVG file content to prevent XSS attacks
+     *
+     * Removes: <script>, event handlers, <foreignObject>, DOCTYPE, external refs
+     *
+     * @param string $svgContent Raw SVG file content
+     * @return string Sanitized SVG content
+     * @throws \Exception If SVG is malformed or contains disallowed content
+     */
+    private function sanitizeSVG(string $svgContent): string {
+        try {
+            $sanitizer = new Sanitizer();
+            $sanitizer->removeRemoteReferences(true);
+
+            $cleanSvg = $sanitizer->sanitize($svgContent);
+
+            if ($cleanSvg === false || empty($cleanSvg)) {
+                throw new \Exception('SVG sanitization failed - file may contain malicious content');
+            }
+
+            // Additional security: reject DOCTYPE (XXE attack vector)
+            if (stripos($cleanSvg, '<!DOCTYPE') !== false) {
+                throw new \Exception('SVG contains DOCTYPE declaration (not allowed)');
+            }
+
+            return $cleanSvg;
+        } catch (\Exception $e) {
+            $this->logger->error('SVG sanitization error: ' . $e->getMessage());
+            throw new \Exception('Invalid SVG file: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * Check if media file exists in page/_media or _resources folder
      *
      * @param string $pageId Page unique ID
@@ -3729,12 +3769,20 @@ class PageService {
         finfo_close($finfo);
 
         if (!in_array($mimeType, self::ALLOWED_MEDIA_TYPES)) {
-            throw new \InvalidArgumentException('Invalid file type. Allowed: JPEG, PNG, GIF, WebP, MP4, WebM, OGG');
+            throw new \InvalidArgumentException('Invalid file type. Allowed: JPEG, PNG, GIF, WebP, SVG, MP4, WebM, OGG');
         }
 
         // Validate file size
         if ($file['size'] > self::MAX_MEDIA_SIZE) {
             throw new \InvalidArgumentException('File too large. Maximum size is 50MB.');
+        }
+
+        // Sanitize SVG files before upload
+        if ($mimeType === 'image/svg+xml') {
+            $content = file_get_contents($file['tmp_name']);
+            $content = $this->sanitizeSVG($content);
+        } else {
+            $content = file_get_contents($file['tmp_name']);
         }
 
         // Sanitize original filename
@@ -3789,9 +3837,7 @@ class PageService {
             }
         }
 
-        // Upload file
-        $content = file_get_contents($file['tmp_name']);
-
+        // Upload file (content already sanitized for SVG)
         if ($fileExists && $overwrite) {
             // Overwrite existing file
             $existingFile = $uploadFolder->get($filename);

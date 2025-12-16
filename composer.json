@@ -1,0 +1,20 @@
+{
+  "name": "shalution/intravox",
+  "description": "SharePoint-like pages for Nextcloud",
+  "type": "nextcloud-app",
+  "license": "AGPL-3.0",
+  "require": {
+    "php": ">=8.1",
+    "enshrined/svg-sanitize": "^0.20"
+  },
+  "autoload": {
+    "psr-4": {
+      "OCA\\IntraVox\\": "lib/"
+    }
+  },
+  "config": {
+    "audit": {
+      "ignore": ["PKSA-4g5g-4rkv-myqs"]
+    }
+  }
+}

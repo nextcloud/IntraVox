@@ -103,7 +103,7 @@
         <!-- Top level with children -->
         <div v-if="item.children && item.children.length > 0"
              class="dropdown-item"
-             @mouseenter="showDropdown(item)"
+             @mouseenter="showDropdown(item, $event)"
              @mouseleave="hideDropdown">
           <a :href="getItemUrl(item)"
              :target="item.target || '_self'"
@@ -188,7 +188,7 @@
         <!-- Top level with children -->
         <div v-if="item.children && item.children.length > 0"
              class="megamenu-item"
-             @mouseenter="showMegaMenu(item)"
+             @mouseenter="showMegaMenu(item, $event)"
              @mouseleave="hideMegaMenu">
           <a :href="getItemUrl(item)"
              :target="item.target || '_self'"
@@ -302,8 +302,18 @@ export default {
       dropdownExpandedSections: [],
       // Mega menu state
       activeMegaMenu: null,
-      megaMenuTimeout: null
+      megaMenuTimeout: null,
+      // Track current trigger element for repositioning on scroll
+      currentTriggerElement: null
     };
+  },
+  mounted() {
+    // Add scroll listener to reposition dropdown menus during scroll
+    window.addEventListener('scroll', this.updateDropdownPosition, true);
+  },
+  beforeUnmount() {
+    // Clean up scroll listener
+    window.removeEventListener('scroll', this.updateDropdownPosition, true);
   },
   methods: {
     t(key, vars = {}) {
@@ -348,11 +358,17 @@ export default {
       }
     },
     // Dropdown methods
-    showDropdown(item) {
+    showDropdown(item, event) {
       if (this.dropdownTimeout) {
         clearTimeout(this.dropdownTimeout);
       }
       this.activeDropdown = this.getItemKey(item);
+      this.currentTriggerElement = event?.currentTarget;
+
+      // Position dropdown menu below trigger using fixed positioning
+      this.$nextTick(() => {
+        this.updateDropdownPosition();
+      });
     },
     keepDropdownOpen() {
       if (this.dropdownTimeout) {
@@ -363,7 +379,20 @@ export default {
       this.dropdownTimeout = setTimeout(() => {
         this.activeDropdown = null;
         this.dropdownExpandedSections = [];
+        this.currentTriggerElement = null;
       }, 200);
+    },
+    updateDropdownPosition() {
+      if (!this.currentTriggerElement) return;
+
+      const trigger = this.currentTriggerElement;
+      const menu = trigger.querySelector('.dropdown-menu, .megamenu-dropdown');
+
+      if (trigger && menu) {
+        const rect = trigger.getBoundingClientRect();
+        menu.style.top = `${rect.bottom + 4}px`; // 4px margin
+        menu.style.left = `${rect.left}px`;
+      }
     },
     toggleDropdownSection(sectionId) {
       const index = this.dropdownExpandedSections.indexOf(sectionId);
@@ -389,11 +418,17 @@ export default {
       return this.mobileExpandedItems.includes(itemId);
     },
     // Mega menu methods
-    showMegaMenu(item) {
+    showMegaMenu(item, event) {
       if (this.megaMenuTimeout) {
         clearTimeout(this.megaMenuTimeout);
       }
       this.activeMegaMenu = this.getItemKey(item);
+      this.currentTriggerElement = event?.currentTarget;
+
+      // Position megamenu below trigger using fixed positioning
+      this.$nextTick(() => {
+        this.updateDropdownPosition();
+      });
     },
     keepMegaMenuOpen() {
       if (this.megaMenuTimeout) {
@@ -403,6 +438,7 @@ export default {
     hideMegaMenu() {
       this.megaMenuTimeout = setTimeout(() => {
         this.activeMegaMenu = null;
+        this.currentTriggerElement = null;
       }, 200);
     }
   }
@@ -501,7 +537,7 @@ export default {
   gap: 4px;
   flex: 1;
   overflow-x: auto; /* Enable horizontal scrolling */
-  overflow-y: hidden;
+  overflow-y: visible; /* Allow dropdown menus to be visible */
   scrollbar-width: thin; /* Firefox */
   -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
 }
@@ -564,9 +600,9 @@ export default {
 }
 
 .dropdown-menu {
-  position: absolute;
-  top: 100%;
-  left: 0;
+  position: fixed; /* Changed from absolute to fixed to escape parent overflow */
+  top: auto; /* Will be set by JavaScript */
+  left: auto; /* Will be set by JavaScript */
   min-width: 250px;
   max-width: 350px;
   margin-top: 4px;
@@ -576,27 +612,6 @@ export default {
   box-shadow: 0 2px 8px var(--color-box-shadow);
   z-index: 10010; /* Above Nextcloud sidebar (z-index ~2000) */
   padding: 8px;
-  max-height: calc(100vh - 100px); /* Prevent overflow beyond viewport */
-  overflow-y: auto; /* Enable vertical scrolling if needed */
-  overflow-x: hidden;
-}
-
-/* Scrollbar styling for dropdown menu */
-.dropdown-menu::-webkit-scrollbar {
-  width: 6px;
-}
-
-.dropdown-menu::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.dropdown-menu::-webkit-scrollbar-thumb {
-  background: var(--color-border-dark);
-  border-radius: 3px;
-}
-
-.dropdown-menu::-webkit-scrollbar-thumb:hover {
-  background: var(--color-text-maxcontrast);
 }
 
 .dropdown-content {
@@ -781,9 +796,9 @@ a.dropdown-section-header:active,
 }
 
 .megamenu-dropdown {
-  position: absolute;
-  top: 100%;
-  left: 0;
+  position: fixed; /* Changed from absolute to fixed to escape parent overflow */
+  top: auto; /* Will be set by JavaScript */
+  left: auto; /* Will be set by JavaScript */
   min-width: 600px;
   max-width: 900px;
   margin-top: 4px;
@@ -793,26 +808,6 @@ a.dropdown-section-header:active,
   box-shadow: 0 4px 16px var(--color-box-shadow);
   z-index: 10010; /* Above Nextcloud sidebar (z-index ~2000) */
   padding: 24px;
-  max-height: calc(100vh - 100px); /* Prevent overflow beyond viewport */
-  overflow-y: auto; /* Enable vertical scrolling if needed */
-}
-
-/* Scrollbar styling for megamenu dropdown */
-.megamenu-dropdown::-webkit-scrollbar {
-  width: 8px;
-}
-
-.megamenu-dropdown::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.megamenu-dropdown::-webkit-scrollbar-thumb {
-  background: var(--color-border-dark);
-  border-radius: 4px;
-}
-
-.megamenu-dropdown::-webkit-scrollbar-thumb:hover {
-  background: var(--color-text-maxcontrast);
 }
 
 .megamenu-grid {
@@ -861,27 +856,6 @@ a.megamenu-column-header:active {
   display: flex;
   flex-direction: column;
   gap: 0;
-  max-height: 400px; /* Limit individual column height */
-  overflow-y: auto; /* Scroll if content exceeds max-height */
-  overflow-x: hidden;
-}
-
-/* Scrollbar styling for megamenu lists */
-.megamenu-list::-webkit-scrollbar {
-  width: 6px;
-}
-
-.megamenu-list::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.megamenu-list::-webkit-scrollbar-thumb {
-  background: var(--color-border-dark);
-  border-radius: 3px;
-}
-
-.megamenu-list::-webkit-scrollbar-thumb:hover {
-  background: var(--color-text-maxcontrast);
 }
 
 .megamenu-list-item {
