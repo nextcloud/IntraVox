@@ -1210,9 +1210,10 @@ class ApiController extends Controller {
 
             $importComments = $this->request->getParam('importComments', '1') === '1';
             $overwrite = $this->request->getParam('overwrite', '0') === '1';
+            $autoCreateMetaVoxFields = $this->request->getParam('autoCreateMetaVoxFields', '0') === '1';
 
             $zipContent = file_get_contents($file['tmp_name']);
-            $stats = $this->importService->importFromZip($zipContent, $importComments, $overwrite);
+            $stats = $this->importService->importFromZip($zipContent, $importComments, $overwrite, null, $autoCreateMetaVoxFields);
 
             return new JSONResponse([
                 'success' => true,

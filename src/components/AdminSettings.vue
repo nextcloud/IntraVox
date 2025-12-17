@@ -340,6 +340,19 @@
 						</template>
 						{{ exporting ? t('intravox', 'Exporting...') : t('intravox', 'Download Export') }}
 					</NcButton>
+
+					<!-- Export Progress -->
+					<div v-if="exporting" class="export-progress">
+						<NcProgressBar :value="exportProgress" />
+						<p class="progress-text">{{ exportStatusText }}</p>
+					</div>
+
+					<!-- Export Success Message -->
+					<div v-if="exportComplete" class="export-result">
+						<NcNoteCard type="success">
+							{{ t('intravox', 'Export completed successfully. Download should start automatically.') }}
+						</NcNoteCard>
+					</div>
 				</div>
 			</div>
 
@@ -395,9 +408,16 @@
 						{{ importing ? t('intravox', 'Importing...') : t('intravox', 'Start Import') }}
 					</NcButton>
 
+					<!-- Import Progress -->
+					<div v-if="importing" class="import-progress">
+						<NcProgressBar :value="importProgress" />
+						<p class="progress-text">{{ importStatusText }}</p>
+					</div>
+
+					<!-- Import Result -->
 					<div v-if="importResult" class="import-result">
 						<NcNoteCard type="success">
-							{{ t('intravox', 'Import completed') }}:
+							{{ t('intravox', 'Import completed successfully') }}:
 							{{ importResult.stats.pagesImported }} {{ t('intravox', 'pages') }},
 							{{ importResult.stats.mediaFilesImported }} {{ t('intravox', 'media files') }},
 							{{ importResult.stats.commentsImported }} {{ t('intravox', 'comments') }}
@@ -478,7 +498,7 @@
 </template>
 
 <script>
-import { NcButton, NcDialog, NcNoteCard, NcCheckboxRadioSwitch } from '@nextcloud/vue'
+import { NcButton, NcDialog, NcNoteCard, NcCheckboxRadioSwitch, NcProgressBar } from '@nextcloud/vue'
 import { showSuccess, showError, showWarning } from '@nextcloud/dialogs'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
@@ -498,6 +518,7 @@ export default {
 		NcDialog,
 		NcNoteCard,
 		NcCheckboxRadioSwitch,
+		NcProgressBar,
 		PackageVariant,
 		Video,
 		OpenInNew,
@@ -543,12 +564,17 @@ export default {
 			exportIncludeComments: true,
 			exportFormat: 'zip',
 			exporting: false,
+			exportProgress: 0,
+			exportStatusText: '',
+			exportComplete: false,
 			// Import settings
 			importFile: null,
 			importFileName: '',
 			importIncludeComments: true,
 			importOverwrite: false,
 			importing: false,
+			importProgress: 0,
+			importStatusText: '',
 			importResult: null,
 			// Known video services with metadata
 			knownServices: [
@@ -582,6 +608,18 @@ export default {
 		customDomains() {
 			const knownDomains = this.knownServices.map(s => s.domain)
 			return this.videoDomains.filter(d => !knownDomains.includes(d))
+		},
+	},
+	watch: {
+		// Clear success messages when switching tabs
+		activeTab() {
+			this.exportComplete = false
+			this.importResult = null
+		},
+		// Clear success messages when switching export sub-tabs
+		exportSubTab() {
+			this.exportComplete = false
+			this.importResult = null
 		},
 	},
 	methods: {
@@ -879,10 +917,14 @@ export default {
 				console.error('Failed to load export languages:', error)
 			}
 		},
-		downloadExport() {
+		async downloadExport() {
 			if (!this.exportLanguage) return
 
 			this.exporting = true
+			this.exportProgress = 0
+			this.exportComplete = false
+			this.exportStatusText = this.t('intravox', 'Preparing export...')
+
 			try {
 				// Choose endpoint based on format
 				const endpoint = this.exportFormat === 'zip'
@@ -892,20 +934,65 @@ export default {
 				const url = generateUrl(endpoint, {
 					language: this.exportLanguage,
 				})
-				const params = new URLSearchParams({
-					includeComments: this.exportIncludeComments ? '1' : '0',
+
+				// Use axios to download with progress tracking
+				const response = await axios.get(url, {
+					params: {
+						includeComments: this.exportIncludeComments ? '1' : '0',
+					},
+					responseType: 'blob',
+					onDownloadProgress: (progressEvent) => {
+						if (progressEvent.lengthComputable) {
+							const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total)
+							this.exportProgress = percentCompleted
+							this.exportStatusText = this.t('intravox', 'Downloading... {percent}%', { percent: percentCompleted })
+						} else {
+							// If total size is unknown, show indeterminate progress
+							this.exportStatusText = this.t('intravox', 'Downloading... {size} MB', {
+								size: (progressEvent.loaded / 1024 / 1024).toFixed(2)
+							})
+						}
+					}
 				})
 
-				// Direct download via window.location
-				window.location.href = `${url}?${params}`
-				showSuccess(this.t('intravox', 'Export started'))
+				// Create blob download link
+				const blob = new Blob([response.data], {
+					type: response.headers['content-type'] || 'application/octet-stream'
+				})
+				const downloadUrl = window.URL.createObjectURL(blob)
+				const link = document.createElement('a')
+				link.href = downloadUrl
+
+				// Get filename from Content-Disposition header or generate one
+				const contentDisposition = response.headers['content-disposition']
+				let filename = `intravox-export-${this.exportLanguage}.${this.exportFormat}`
+				if (contentDisposition) {
+					const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/)
+					if (filenameMatch && filenameMatch[1]) {
+						filename = filenameMatch[1].replace(/['"]/g, '')
+					}
+				}
+				link.download = filename
+
+				// Trigger download
+				document.body.appendChild(link)
+				link.click()
+				document.body.removeChild(link)
+				window.URL.revokeObjectURL(downloadUrl)
+
+				// Show success
+				this.exportProgress = 100
+				this.exportStatusText = this.t('intravox', 'Export completed')
+				this.exportComplete = true
+				showSuccess(this.t('intravox', 'Export downloaded successfully'))
 			} catch (error) {
-				console.error('Failed to start export:', error)
-				showError(this.t('intravox', 'Failed to start export'))
+				console.error('Failed to export:', error)
+				showError(this.t('intravox', 'Failed to export: ') + (error.response?.data?.error || error.message))
 			} finally {
-				// Reset after a short delay to show loading state
+				// Reset after a short delay
 				setTimeout(() => {
 					this.exporting = false
+					this.exportProgress = 0
 				}, 1000)
 			}
 		},
@@ -921,7 +1008,9 @@ export default {
 			if (!this.importFile) return
 
 			this.importing = true
+			this.importProgress = 0
 			this.importResult = null
+			this.importStatusText = this.t('intravox', 'Uploading ZIP file...')
 
 			try {
 				const formData = new FormData()
@@ -934,9 +1023,35 @@ export default {
 					formData,
 					{
 						headers: { 'Content-Type': 'multipart/form-data' },
+						onUploadProgress: (progressEvent) => {
+							// Upload progress (0-50%)
+							if (progressEvent.lengthComputable) {
+								const uploadPercent = Math.round((progressEvent.loaded * 50) / progressEvent.total)
+								this.importProgress = uploadPercent
+								this.importStatusText = this.t('intravox', 'Uploading... {percent}%', { percent: Math.round((progressEvent.loaded * 100) / progressEvent.total) })
+							} else {
+								this.importStatusText = this.t('intravox', 'Uploading... {size} MB', {
+									size: (progressEvent.loaded / 1024 / 1024).toFixed(2)
+								})
+							}
+						},
+						onDownloadProgress: (progressEvent) => {
+							// Processing on server (50-100%)
+							// Since we don't know the exact processing time, show indeterminate progress
+							if (this.importProgress < 50) {
+								this.importProgress = 50
+							}
+							// Simulate processing progress
+							const processingProgress = 50 + Math.min(45, Math.floor(Math.random() * 30))
+							this.importProgress = processingProgress
+							this.importStatusText = this.t('intravox', 'Processing import on server...')
+						}
 					}
 				)
 
+				// Complete
+				this.importProgress = 100
+				this.importStatusText = this.t('intravox', 'Import completed')
 				this.importResult = response.data
 				showSuccess(this.t('intravox', 'Import completed successfully'))
 
@@ -946,12 +1061,29 @@ export default {
 				console.error('Import failed:', error)
 				showError(this.t('intravox', 'Import failed: ') + (error.response?.data?.error || error.message))
 			} finally {
-				this.importing = false
+				// Reset after a short delay
+				setTimeout(() => {
+					this.importing = false
+					this.importProgress = 0
+				}, 1000)
+			}
+		},
+		handleBeforeUnload(event) {
+			// Warn user if export or import is in progress
+			if (this.exporting || this.importing) {
+				event.preventDefault()
+				event.returnValue = '' // Required for Chrome
+				return '' // Required for some browsers
 			}
 		},
 	},
 	mounted() {
 		this.loadExportLanguages()
+		// Prevent accidental navigation during export
+		window.addEventListener('beforeunload', this.handleBeforeUnload)
+	},
+	beforeUnmount() {
+		window.removeEventListener('beforeunload', this.handleBeforeUnload)
 	},
 }
 </script>
@@ -1486,6 +1618,21 @@ export default {
 	gap: 8px;
 }
 
+.export-progress {
+	margin-top: 16px;
+}
+
+.progress-text {
+	margin-top: 8px;
+	color: var(--color-text-lighter);
+	font-size: 14px;
+	text-align: center;
+}
+
+.export-result {
+	margin-top: 16px;
+}
+
 .export-label {
 	font-weight: 500;
 	color: var(--color-main-text);
@@ -1558,8 +1705,12 @@ export default {
 	font-style: italic;
 }
 
+.import-progress {
+	margin-top: 16px;
+}
+
 .import-result {
-	margin-top: 8px;
+	margin-top: 16px;
 }
 
 /* Sub-tab navigation */

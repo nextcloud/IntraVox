@@ -19,7 +19,8 @@ class ImportService {
         private NavigationService $navigationService,
         private FooterService $footerService,
         private ITempManager $tempManager,
-        private LoggerInterface $logger
+        private LoggerInterface $logger,
+        private MetaVoxImportService $metaVoxImportService
     ) {}
 
     /**
@@ -28,9 +29,11 @@ class ImportService {
      * @param string $zipContent ZIP file content
      * @param bool $importComments Import comments and reactions
      * @param bool $overwrite Overwrite existing pages
+     * @param string|null $parentPageId Parent page ID for Confluence imports
+     * @param bool $autoCreateMetaVoxFields Auto-create missing MetaVox field definitions
      * @return array Import result with stats
      */
-    public function importFromZip(string $zipContent, bool $importComments = true, bool $overwrite = false, ?string $parentPageId = null): array {
+    public function importFromZip(string $zipContent, bool $importComments = true, bool $overwrite = false, ?string $parentPageId = null, bool $autoCreateMetaVoxFields = false): array {
         $tempDir = $this->tempManager->getTemporaryFolder();
         $zipPath = $tempDir . '/import.zip';
 
@@ -67,6 +70,40 @@ class ImportService {
         }
 
         $language = $exportData['language'] ?? 'nl';
+
+        // Check for MetaVox data
+        $hasMetaVoxData = isset($exportData['metavox']);
+        $metaVoxCompatibility = null;
+        $metaVoxFieldValidation = null;
+
+        if ($hasMetaVoxData) {
+            // Validate MetaVox compatibility
+            $metaVoxCompatibility = $this->metaVoxImportService->validateCompatibility(
+                $exportData['metavox']
+            );
+
+            // Validate field definitions
+            $metaVoxFieldValidation = $this->metaVoxImportService->validateFieldDefinitions(
+                $exportData['metavox']['fieldDefinitions'] ?? []
+            );
+
+            // Log compatibility status
+            $this->logger->info('MetaVox import compatibility check', $metaVoxCompatibility);
+
+            // Create missing fields if auto-create enabled
+            if ($autoCreateMetaVoxFields && !empty($metaVoxFieldValidation['fieldsToCreate'])) {
+                $createResult = $this->metaVoxImportService->createFieldDefinitions(
+                    $metaVoxFieldValidation['fieldsToCreate'],
+                    true
+                );
+
+                $this->logger->info('Auto-created MetaVox fields', [
+                    'created' => count($createResult['created']),
+                    'failed' => count($createResult['failed'])
+                ]);
+            }
+        }
+
         $stats = [
             'pagesImported' => 0,
             'pagesSkipped' => 0,
@@ -74,6 +111,10 @@ class ImportService {
             'commentsImported' => 0,
             'navigationImported' => false,
             'footerImported' => false,
+            'metavoxEnabled' => $hasMetaVoxData,
+            'metavoxFieldsImported' => 0,
+            'metavoxFieldsSkipped' => 0,
+            'metavoxFieldsFailed' => 0,
         ];
 
         // 5. Import navigation (arguments: navigation array, language string)
@@ -131,6 +172,9 @@ class ImportService {
             }
         }
 
+        // Get groupfolder ID for MetaVox imports
+        $groupfolderId = $this->setupService->getGroupFolderId();
+
         // 8. Import pages
         foreach ($sortedPages as $pageData) {
             $result = $this->importPage($pageData, $language, $overwrite, $importedPages);
@@ -139,6 +183,43 @@ class ImportService {
 
                 // Track this page for parent path resolution
                 $importedPages[$pageData['uniqueId']] = $result['path'];
+
+                // Import MetaVox metadata
+                if ($hasMetaVoxData &&
+                    !empty($pageData['metadata']) &&
+                    isset($result['fileId']) &&
+                    $groupfolderId > 0) {
+
+                    $this->logger->info('Importing MetaVox metadata for page', [
+                        'uniqueId' => $pageData['uniqueId'],
+                        'fileId' => $result['fileId'],
+                        'groupfolderId' => $groupfolderId,
+                        'metadataCount' => count($pageData['metadata'])
+                    ]);
+
+                    $metaStats = $this->metaVoxImportService->importPageMetadata(
+                        $result['fileId'],
+                        $groupfolderId,
+                        $pageData['metadata']
+                    );
+
+                    $stats['metavoxFieldsImported'] += $metaStats['imported'];
+                    $stats['metavoxFieldsSkipped'] += $metaStats['skipped'];
+                    $stats['metavoxFieldsFailed'] += $metaStats['failed'];
+
+                    $this->logger->info('MetaVox metadata import complete', [
+                        'imported' => $metaStats['imported'],
+                        'skipped' => $metaStats['skipped'],
+                        'failed' => $metaStats['failed']
+                    ]);
+                } elseif ($hasMetaVoxData) {
+                    $this->logger->debug('Skipping MetaVox metadata import', [
+                        'uniqueId' => $pageData['uniqueId'],
+                        'hasMetadata' => !empty($pageData['metadata']),
+                        'hasFileId' => isset($result['fileId']),
+                        'groupfolderId' => $groupfolderId
+                    ]);
+                }
 
                 // 9. Import comments if requested
                 if ($importComments && !empty($pageData['comments'])) {
@@ -154,8 +235,7 @@ class ImportService {
         }
 
         // 9. Import media files
-        $mediaStats = $this->importMediaFiles($tempDir, $language);
-        $stats['mediaFilesImported'] = $mediaStats;
+        $stats['mediaFilesImported'] = $this->importMediaFiles($tempDir, $language, $overwrite);
 
         // 10. Update navigation with imported pages (if navigation wasn't explicitly imported)
         // Always update navigation unless it was explicitly provided in export
@@ -182,6 +262,14 @@ class ImportService {
 
         // 11. Trigger groupfolder scan to update file cache
         $this->triggerGroupfolderScan();
+
+        // Add MetaVox compatibility info to stats
+        if ($metaVoxCompatibility) {
+            $stats['metavoxCompatibility'] = $metaVoxCompatibility;
+        }
+        if ($metaVoxFieldValidation) {
+            $stats['metavoxFieldValidation'] = $metaVoxFieldValidation;
+        }
 
         // Cleanup
         $this->cleanupTempDir($tempDir);
@@ -278,9 +366,12 @@ class ImportService {
                     $file->putContent($jsonContent);
                     $this->logger->info('Updated home page');
                 } else {
-                    $targetFolder->newFile($targetFile, $jsonContent);
+                    $file = $targetFolder->newFile($targetFile, $jsonContent);
                     $this->logger->info('Created home page');
                 }
+
+                // Get file ID for MetaVox metadata import
+                $fileId = $file->getId();
 
                 // Ensure _media folder exists for home page
                 if (!$targetFolder->nodeExists('_media')) {
@@ -336,9 +427,12 @@ class ImportService {
                     $file->putContent($jsonContent);
                     $this->logger->info('Updated page JSON: ' . $targetFile);
                 } else {
-                    $pageFolder->newFile($targetFile, $jsonContent);
+                    $file = $pageFolder->newFile($targetFile, $jsonContent);
                     $this->logger->info('Created page JSON: ' . $targetFile);
                 }
+
+                // Get file ID for MetaVox metadata import
+                $fileId = $file->getId();
 
                 // 5. Ensure _media folder exists
                 if (!$pageFolder->nodeExists('_media')) {
@@ -352,7 +446,7 @@ class ImportService {
                 $pageFolderPath = $language . '/' . $relativePagePath;
             }
 
-            return ['imported' => true, 'path' => $pageFolderPath];
+            return ['imported' => true, 'path' => $pageFolderPath, 'fileId' => $fileId];
         } catch (\Exception $e) {
             $this->logger->error('Failed to import page ' . $uniqueId . ': ' . $e->getMessage());
             return ['imported' => false, 'reason' => 'error: ' . $e->getMessage()];
@@ -408,51 +502,56 @@ class ImportService {
      *
      * @param string $tempDir Temporary directory
      * @param string $language Language code
+     * @param bool $overwrite Whether to overwrite existing media files
      * @return int Number of media files imported
      */
-    private function importMediaFiles(string $tempDir, string $language): int {
+    private function importMediaFiles(string $tempDir, string $language, bool $overwrite = false): int {
         $count = 0;
         $mediaSourceDir = $tempDir . '/' . $language;
 
         if (!is_dir($mediaSourceDir)) {
-            $this->logger->info('No media directory found for language: ' . $language);
             return 0;
         }
 
         try {
             $intraVoxFolder = $this->setupService->getSharedFolder();
 
-            // Recursively find _media folders
+            // Recursively find _media and _resources folders
             $iterator = new \RecursiveIteratorIterator(
                 new \RecursiveDirectoryIterator($mediaSourceDir, \FilesystemIterator::SKIP_DOTS),
                 \RecursiveIteratorIterator::SELF_FIRST
             );
 
             foreach ($iterator as $item) {
-                if ($item->isFile() && str_contains($item->getPath(), '_media')) {
-                    // Determine target path relative to temp dir
+                if ($item->isFile() && (str_contains($item->getPath(), '_media') || str_contains($item->getPath(), '_resources'))) {
                     $relativePath = substr($item->getPathname(), strlen($tempDir) + 1);
 
                     try {
-                        // Ensure folder path exists
+                        // Ensure folder path exists (including nested folders in _resources)
                         $targetFolder = $this->ensureFolderPath($intraVoxFolder, dirname($relativePath));
 
                         // Copy file
                         $fileName = $item->getFilename();
-                        if (!$targetFolder->nodeExists($fileName)) {
+                        $fileExists = $targetFolder->nodeExists($fileName);
+
+                        if (!$fileExists) {
+                            // File doesn't exist, create new
                             $targetFolder->newFile($fileName, file_get_contents($item->getPathname()));
                             $count++;
-                            $this->logger->debug('Imported media file: ' . $relativePath);
-                        } else {
-                            $this->logger->debug('Media file already exists: ' . $relativePath);
+                        } elseif ($overwrite) {
+                            // File exists but overwrite is enabled
+                            $existingFile = $targetFolder->get($fileName);
+                            $existingFile->putContent(file_get_contents($item->getPathname()));
+                            $count++;
                         }
+                        // If file exists and overwrite is disabled, skip silently
                     } catch (\Exception $e) {
-                        $this->logger->warning('Failed to import media file ' . $relativePath . ': ' . $e->getMessage());
+                        $this->logger->warning('Failed to import media file: ' . $e->getMessage(), [
+                            'file' => $relativePath
+                        ]);
                     }
                 }
             }
-
-            $this->logger->info('Imported ' . $count . ' media files');
         } catch (\Exception $e) {
             $this->logger->error('Failed to import media files: ' . $e->getMessage());
         }

@@ -1,18 +1,15 @@
 {
-    "uniqueId": "page-61e74e0f-f7ff-4734-b1bd-6d48e1cae3e2",
     "title": "Welcome to IntraVox",
-    "language": "en",
     "layout": {
         "columns": 1,
         "rows": [
             {
-                "columns": 1,
-                "backgroundColor": "var(--color-primary-element)",
                 "widgets": [
                     {
                         "type": "heading",
                         "column": 1,
                         "order": 1,
+                        "id": "widget-1",
                         "content": "Welcome to IntraVox",
                         "level": 1
                     },
@@ -20,32 +17,57 @@
                         "type": "text",
                         "column": 1,
                         "order": 2,
+                        "id": "widget-2",
                         "content": "**The modern intranet solution for Nextcloud.** Create beautiful, dynamic intranet pages with an intuitive drag-and-drop editor. No coding required."
+                    },
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 3,
+                        "id": "widget-32",
+                        "src": "backgrounds\/hero-banner.svg",
+                        "alt": "",
+                        "mediaFolder": "resources"
+                    },
+                    {
+                        "type": "video",
+                        "column": 1,
+                        "order": 4,
+                        "id": "widget-33",
+                        "provider": "local",
+                        "title": "",
+                        "src": "Demo-video.mp4",
+                        "blocked": false,
+                        "mediaFolder": "page",
+                        "autoplay": false,
+                        "loop": false,
+                        "muted": false
                     }
-                ]
+                ],
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element)"
             },
             {
-                "columns": 1,
-                "backgroundColor": "",
                 "widgets": [
                     {
                         "type": "image",
                         "column": 1,
                         "order": 1,
+                        "id": "widget-3",
                         "src": "hero-team.jpg",
-                        "alt": "Team collaboration with IntraVox",
-                        "caption": ""
+                        "alt": "Team collaboration with IntraVox"
                     }
-                ]
+                ],
+                "columns": 1,
+                "backgroundColor": ""
             },
             {
-                "columns": 1,
-                "backgroundColor": "",
                 "widgets": [
                     {
                         "type": "heading",
                         "column": 1,
                         "order": 1,
+                        "id": "widget-4",
                         "content": "What is IntraVox?",
                         "level": 2
                     },
@@ -53,40 +75,43 @@
                         "type": "text",
                         "column": 1,
                         "order": 2,
+                        "id": "widget-5",
                         "content": "IntraVox transforms your Nextcloud into a powerful intranet platform. Build company portals, department pages, knowledge bases, and more - all within the secure environment of your Nextcloud server.\n\n**Key benefits:**\n\n- **Privacy-first** - Your data stays on your server\n- **No vendor lock-in** - Open source and self-hosted\n- **Seamless integration** - Works with existing Nextcloud users and groups\n- **Multi-language** - Built-in support for multiple languages"
                     }
-                ]
+                ],
+                "columns": 1,
+                "backgroundColor": ""
             },
             {
-                "columns": 1,
-                "backgroundColor": "",
                 "widgets": [
                     {
                         "type": "divider",
                         "column": 1,
                         "order": 1,
+                        "id": "widget-6",
                         "style": "solid",
                         "color": "",
                         "height": "2px"
                     }
-                ]
+                ],
+                "columns": 1,
+                "backgroundColor": ""
             },
             {
-                "columns": 3,
-                "backgroundColor": "var(--color-background-hover)",
                 "widgets": [
                     {
                         "type": "image",
                         "column": 1,
                         "order": 1,
+                        "id": "widget-7",
                         "src": "features.jpg",
-                        "alt": "Drag and drop editor",
-                        "caption": ""
+                        "alt": "Drag and drop editor"
                     },
                     {
                         "type": "heading",
                         "column": 1,
                         "order": 2,
+                        "id": "widget-8",
                         "content": "Visual Editor",
                         "level": 3
                     },
@@ -94,20 +119,22 @@
                         "type": "text",
                         "column": 1,
                         "order": 3,
+                        "id": "widget-9",
                         "content": "Create pages with an intuitive drag-and-drop editor. Add text, images, videos, links, and more. See changes in real-time."
                     },
                     {
                         "type": "image",
                         "column": 2,
                         "order": 1,
+                        "id": "widget-10",
                         "src": "dashboard.jpg",
-                        "alt": "Flexible layouts",
-                        "caption": ""
+                        "alt": "Flexible layouts"
                     },
                     {
                         "type": "heading",
                         "column": 2,
                         "order": 2,
+                        "id": "widget-11",
                         "content": "Flexible Layouts",
                         "level": 3
                     },
@@ -115,20 +142,22 @@
                         "type": "text",
                         "column": 2,
                         "order": 3,
+                        "id": "widget-12",
                         "content": "Choose from 1 to 4 column layouts. Add sidebars, background colors, and create visually stunning pages."
                     },
                     {
                         "type": "image",
                         "column": 3,
                         "order": 1,
+                        "id": "widget-13",
                         "src": "collaboration.jpg",
-                        "alt": "Navigation management",
-                        "caption": ""
+                        "alt": "Navigation management"
                     },
                     {
                         "type": "heading",
                         "column": 3,
                         "order": 2,
+                        "id": "widget-14",
                         "content": "Easy Navigation",
                         "level": 3
                     },
@@ -136,18 +165,20 @@
                         "type": "text",
                         "column": 3,
                         "order": 3,
+                        "id": "widget-15",
                         "content": "Build mega menus with nested items. Organize your content with a hierarchical page structure."
                     }
-                ]
+                ],
+                "columns": 3,
+                "backgroundColor": "var(--color-background-hover)"
             },
             {
-                "columns": 1,
-                "backgroundColor": "var(--color-primary-element-light)",
                 "widgets": [
                     {
                         "type": "heading",
                         "column": 1,
                         "order": 1,
+                        "id": "widget-16",
                         "content": "Powerful Widgets",
                         "level": 2
                     },
@@ -155,23 +186,24 @@
                         "type": "text",
                         "column": 1,
                         "order": 2,
+                        "id": "widget-17",
                         "content": "IntraVox comes with a rich set of widgets to build any type of page:"
                     },
                     {
                         "type": "links",
                         "column": 1,
                         "order": 3,
-                        "columns": 4,
+                        "id": "widget-18",
                         "items": [
                             {
-                                "title": "Text & Headings",
+                                "title": "Text &amp; Headings",
                                 "text": "Rich text with markdown support",
                                 "url": "#",
                                 "icon": "format-text",
                                 "target": "_self"
                             },
                             {
-                                "title": "Images & Video",
+                                "title": "Images &amp; Video",
                                 "text": "Local files or embedded videos",
                                 "url": "#",
                                 "icon": "image-multiple",
@@ -191,40 +223,43 @@
                                 "icon": "minus",
                                 "target": "_self"
                             }
-                        ]
+                        ],
+                        "columns": 4
                     }
-                ]
+                ],
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element-light)"
             },
             {
-                "columns": 1,
-                "backgroundColor": "",
                 "widgets": [
                     {
                         "type": "divider",
                         "column": 1,
                         "order": 1,
+                        "id": "widget-19",
                         "style": "solid",
                         "color": "",
                         "height": "2px"
                     }
-                ]
+                ],
+                "columns": 1,
+                "backgroundColor": ""
             },
             {
-                "columns": 2,
-                "backgroundColor": "",
                 "widgets": [
                     {
                         "type": "image",
                         "column": 1,
                         "order": 1,
+                        "id": "widget-20",
                         "src": "security.jpg",
-                        "alt": "Enterprise security",
-                        "caption": ""
+                        "alt": "Enterprise security"
                     },
                     {
                         "type": "heading",
                         "column": 1,
                         "order": 2,
+                        "id": "widget-21",
                         "content": "Enterprise Ready",
                         "level": 2
                     },
@@ -232,20 +267,22 @@
                         "type": "text",
                         "column": 1,
                         "order": 3,
+                        "id": "widget-22",
                         "content": "IntraVox is built for organizations of any size.\n\n**Features:**\n- Role-based access control\n- Multi-language content\n- Demo data for quick setup\n- Regular updates and support"
                     },
                     {
                         "type": "image",
                         "column": 2,
                         "order": 1,
+                        "id": "widget-23",
                         "src": "opensource.jpg",
-                        "alt": "Open source",
-                        "caption": ""
+                        "alt": "Open source"
                     },
                     {
                         "type": "heading",
                         "column": 2,
                         "order": 2,
+                        "id": "widget-24",
                         "content": "Open Source",
                         "level": 2
                     },
@@ -253,23 +290,27 @@
                         "type": "text",
                         "column": 2,
                         "order": 3,
+                        "id": "widget-25",
                         "content": "IntraVox is open source and free to use.\n\n**Benefits:**\n- Transparent codebase\n- Community contributions\n- No subscription fees\n- Full control over your data"
                     }
-                ]
+                ],
+                "columns": 2,
+                "backgroundColor": ""
             },
             {
-                "columns": 1,
-                "backgroundColor": "",
                 "widgets": [
                     {
                         "type": "divider",
                         "column": 1,
                         "order": 1,
+                        "id": "widget-26",
                         "style": "solid",
                         "color": "transparent",
                         "height": "20px"
                     }
-                ]
+                ],
+                "columns": 1,
+                "backgroundColor": ""
             }
         ],
         "sideColumns": {
@@ -286,6 +327,7 @@
                         "type": "heading",
                         "column": 1,
                         "order": 1,
+                        "id": "widget-27",
                         "content": "Get Started",
                         "level": 3
                     },
@@ -293,12 +335,14 @@
                         "type": "text",
                         "column": 1,
                         "order": 2,
+                        "id": "widget-28",
                         "content": "**Quick Setup**\nInstall IntraVox from the Nextcloud App Store and load the demo data to see it in action.\n\n**Documentation**\nCheck out our guides to learn how to create and manage pages."
                     },
                     {
                         "type": "divider",
                         "column": 1,
                         "order": 3,
+                        "id": "widget-29",
                         "style": "solid",
                         "color": "",
                         "height": "1px"
@@ -307,6 +351,7 @@
                         "type": "heading",
                         "column": 1,
                         "order": 4,
+                        "id": "widget-30",
                         "content": "Resources",
                         "level": 4
                     },
@@ -314,22 +359,23 @@
                         "type": "links",
                         "column": 1,
                         "order": 5,
+                        "id": "widget-31",
                         "items": [
                             {
                                 "text": "GitHub",
-                                "url": "https://github.com/Rikkert-com/intravox",
+                                "url": "https:\/\/github.com\/Rikkert-com\/intravox",
                                 "icon": "github",
                                 "target": "_blank"
                             },
                             {
                                 "text": "Documentation",
-                                "url": "/apps/intravox/documentation",
+                                "url": "\/apps\/intravox\/documentation",
                                 "icon": "book-open-variant",
                                 "target": "_self"
                             },
                             {
                                 "text": "AI in Nextcloud",
-                                "url": "/apps/intravox/ai",
+                                "url": "\/apps\/intravox\/ai",
                                 "icon": "robot",
                                 "target": "_self"
                             }
@@ -338,6 +384,12 @@
                     }
                 ]
             }
+        },
+        "headerRow": {
+            "enabled": false,
+            "backgroundColor": "",
+            "widgets": []
         }
-    }
+    },
+    "uniqueId": "page-61e74e0f-f7ff-4734-b1bd-6d48e1cae3e2"
 }

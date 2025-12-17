@@ -201,8 +201,11 @@ const PageDetailsSidebar = defineAsyncComponent(() => import('./components/PageD
 const WelcomeScreen = defineAsyncComponent(() => import('./components/WelcomeScreen.vue'));
 const PageSettingsModal = defineAsyncComponent(() => import('./components/PageSettingsModal.vue'));
 
-// Constants
-const HOME_PAGE_UNIQUE_ID = 'page-2e8f694e-147e-4793-8949-4732e679ae6b';
+// Helper function to find home page
+const findHomePage = (pages) => {
+  // Try to find page with slug "home" or filename containing "home"
+  return pages.find(p => p.slug === 'home' || p.path?.toLowerCase().includes('/home.json')) || pages[0];
+};
 
 export default {
   name: 'App',
@@ -228,7 +231,6 @@ export default {
   },
   data() {
     return {
-      HOME_PAGE_UNIQUE_ID,
       pages: [],
       currentPage: null,
       originalPage: null, // For rollback
@@ -417,7 +419,7 @@ export default {
 
           // Fall back to home page if no hash or page not found
           if (!targetPage) {
-            targetPage = this.pages.find(p => p.uniqueId === HOME_PAGE_UNIQUE_ID) || this.pages[0];
+            targetPage = findHomePage(this.pages);
           }
 
           // Validate targetPage has a uniqueId before selecting
@@ -931,7 +933,10 @@ export default {
       const hash = window.location.hash;
       if (!hash || hash === '#') {
         // No hash, load home page
-        this.selectPage(HOME_PAGE_UNIQUE_ID, false);
+        const homePage = findHomePage(this.pages);
+        if (homePage) {
+          this.selectPage(homePage.uniqueId, false);
+        }
         return;
       }
 
@@ -945,7 +950,10 @@ export default {
         this.selectPage(targetPage.uniqueId, false);
       } else {
         // Fall back to home
-        this.selectPage(HOME_PAGE_UNIQUE_ID, true);
+        const homePage = findHomePage(this.pages);
+        if (homePage) {
+          this.selectPage(homePage.uniqueId, true);
+        }
       }
     },
     async handleVersionSelected(data) {

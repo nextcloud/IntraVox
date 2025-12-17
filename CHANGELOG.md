@@ -7,6 +7,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] - 2025-12-16 - MetaVox Export/Import Integration
+
+### Added
+- **MetaVox Metadata Export/Import**: Full integration with MetaVox file metadata system
+  - **Export Format v1.1**: Exports now include MetaVox metadata when MetaVox is installed
+    - Field definitions exported with metadata structure
+    - Page metadata values exported for each page
+    - MetaVox version tracking for compatibility checking
+    - Batch metadata retrieval for optimal performance (N+1 query prevention)
+  - **Version Compatibility Handling**: Graceful handling of MetaVox version differences
+    - Newer export version → Skip unknown fields, log warnings
+    - Older export version → Import all compatible fields
+    - Clear compatibility warnings in import stats
+  - **Field Definition Management**: Automatic field validation and optional creation
+    - Validates field definitions against current MetaVox installation
+    - Auto-create missing fields with `autoCreateMetaVoxFields` parameter
+    - Conflict resolution for incompatible field definitions
+  - **Graceful Degradation**: Works seamlessly with or without MetaVox
+    - Export without MetaVox: Skips metadata section, continues normally
+    - Import without MetaVox: Logs info message, pages import successfully
+    - No breaking changes for installations without MetaVox
+  - **New API Parameter**: `autoCreateMetaVoxFields` in import endpoint
+    - Default: false (safe, manual field creation required)
+    - When true: Automatically creates missing field definitions
+  - **Enhanced Import Stats**: Detailed tracking of metadata import results
+    - `metavoxFieldsImported`: Successfully imported field count
+    - `metavoxFieldsSkipped`: Fields skipped due to incompatibility
+    - `metavoxFieldsFailed`: Fields that failed to import
+    - `metavoxCompatibility`: Version compatibility information
+    - `metavoxFieldValidation`: Field validation results
+  - **Backward Compatibility**: Export format v1.0 still imports successfully
+    - No metadata section → Skips metadata import
+    - Pages, comments, navigation import as before
+
+### Technical Details
+- **New Service**: `MetaVoxImportService` for version compatibility and metadata import logic
+- **ExportService Updates**: MetaVox detection via IAppManager, batch metadata retrieval
+- **ImportService Updates**: MetaVoxImportService integration, metadata import per page
+- **SetupService Enhancement**: New `getGroupFolderId()` method for metadata association
+- **Performance**: Uses `FieldService::getBulkFileMetadata()` for batch operations
+- **File ID Tracking**: Captures Nextcloud file IDs during import for metadata linking
+
 ## [0.8.0] - 2025-12-16 - Media Management & SVG Support
 
 ### Added

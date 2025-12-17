@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace OCA\IntraVox\Service;
 
+use OCP\App\IAppManager;
 use OCP\Files\File;
 use OCP\Files\Folder;
 use OCP\ITempManager;
@@ -12,6 +13,10 @@ use Psr\Log\LoggerInterface;
  * Service for exporting IntraVox pages, navigation, and engagement data
  */
 class ExportService {
+    private ?bool $metaVoxAvailable = null;
+    private ?string $metaVoxVersion = null;
+    private $metaVoxFieldService = null;
+
     public function __construct(
         private PageService $pageService,
         private CommentService $commentService,
@@ -19,7 +24,8 @@ class ExportService {
         private FooterService $footerService,
         private SetupService $setupService,
         private ITempManager $tempManager,
-        private LoggerInterface $logger
+        private LoggerInterface $logger,
+        private IAppManager $appManager
     ) {}
 
     /**
@@ -36,7 +42,7 @@ class ExportService {
         $pages = $this->getPagesFromLanguageFolder($language);
 
         $export = [
-            'exportVersion' => '1.0',
+            'exportVersion' => '1.1',  // Bumped version for MetaVox support
             'exportDate' => (new \DateTime())->format('c'),
             'language' => $language,
             'navigation' => $this->navigationService->getNavigation($language),
@@ -44,17 +50,49 @@ class ExportService {
             'pages' => []
         ];
 
+        // Add MetaVox information if available
+        if ($this->isMetaVoxAvailable()) {
+            $export['metavox'] = [
+                'version' => $this->metaVoxVersion,
+                'fieldDefinitions' => $this->getMetaVoxFieldDefinitions()
+            ];
+
+            // Collect all file IDs for batch retrieval
+            $fileIds = $this->collectPageFileIds($pages);
+
+            // Batch retrieve metadata for all pages
+            $metadataByFileId = $this->retrieveMetadataForPages($fileIds);
+        }
+
         foreach ($pages as $page) {
             $uniqueId = $page['uniqueId'] ?? '';
             if (empty($uniqueId)) {
                 continue;
             }
 
+            // Remove internal export properties before adding to content
+            $pageContent = $page;
+            unset($pageContent['_fileId']);
+            unset($pageContent['_exportPath']);
+
             $data = [
                 'uniqueId' => $uniqueId,
                 'title' => $page['title'] ?? '',
-                'content' => $page,
+                'content' => $pageContent,
             ];
+
+            // Add MetaVox metadata if available
+            if (isset($metadataByFileId) && isset($page['_fileId'])) {
+                $fileId = $page['_fileId'];
+                if (isset($metadataByFileId[$fileId])) {
+                    $data['metadata'] = $metadataByFileId[$fileId];
+                    $this->logger->debug('Added metadata for page', [
+                        'uniqueId' => $uniqueId,
+                        'fileId' => $fileId,
+                        'metadataCount' => count($metadataByFileId[$fileId])
+                    ]);
+                }
+            }
 
             if ($includeComments) {
                 $data['comments'] = $this->exportComments($uniqueId);
@@ -64,7 +102,10 @@ class ExportService {
             $export['pages'][] = $data;
         }
 
-        $this->logger->info('Export complete: ' . count($export['pages']) . ' pages');
+        $this->logger->info('Export complete', [
+            'pages' => count($export['pages']),
+            'metavoxEnabled' => isset($export['metavox'])
+        ]);
 
         return $export;
     }
@@ -100,6 +141,8 @@ class ExportService {
                     if ($data && isset($data['uniqueId'])) {
                         // Mark as home page for import
                         $data['_exportPath'] = 'home';
+                        // Add file ID for MetaVox metadata retrieval
+                        $data['_fileId'] = $homeFile->getId();
                         $pages[] = $data;
                     }
                 }
@@ -127,8 +170,8 @@ class ExportService {
             if ($node instanceof Folder) {
                 $nodeName = $node->getName();
 
-                // Skip _media folders
-                if ($nodeName === '_media') {
+                // Skip _media and _resources folders
+                if ($nodeName === '_media' || $nodeName === '_resources') {
                     continue;
                 }
 
@@ -144,6 +187,8 @@ class ExportService {
                         if ($data && isset($data['uniqueId'])) {
                             // Add the folder path for import to recreate structure
                             $data['_exportPath'] = $currentPath;
+                            // Add file ID for MetaVox metadata retrieval
+                            $data['_fileId'] = $pageFile->getId();
                             $pages[] = $data;
                         }
                     }
@@ -326,7 +371,7 @@ class ExportService {
     }
 
     /**
-     * Recursively copy _media folders
+     * Recursively copy _media and _resources folders
      *
      * @param Folder $folder Source folder
      * @param string $targetPath Target path
@@ -335,28 +380,41 @@ class ExportService {
         foreach ($folder->getDirectoryListing() as $node) {
             $nodeName = $node->getName();
 
-            if ($nodeName === '_media' && $node instanceof Folder) {
-                // Copy entire _media folder
-                $mediaTargetPath = $targetPath . '/_media';
-                if (!is_dir($mediaTargetPath)) {
-                    mkdir($mediaTargetPath, 0755, true);
-                }
-
-                foreach ($node->getDirectoryListing() as $file) {
-                    if ($file instanceof File) {
-                        try {
-                            file_put_contents(
-                                $mediaTargetPath . '/' . $file->getName(),
-                                $file->getContent()
-                            );
-                        } catch (\Exception $e) {
-                            $this->logger->warning('Failed to copy file: ' . $file->getName());
-                        }
-                    }
-                }
-            } elseif ($node instanceof Folder && $nodeName !== '_media') {
+            if (($nodeName === '_media' || $nodeName === '_resources') && $node instanceof Folder) {
+                // Copy entire _media or _resources folder (including subfolders)
+                $mediaTargetPath = $targetPath . '/' . $nodeName;
+                $this->copyMediaFolderRecursive($node, $mediaTargetPath);
+            } elseif ($node instanceof Folder && $nodeName !== '_media' && $nodeName !== '_resources') {
                 // Recursively process subfolders
                 $this->copyMediaRecursive($node, $targetPath . '/' . $nodeName);
+            }
+        }
+    }
+
+    /**
+     * Copy a media folder recursively (supports nested folders in _resources)
+     *
+     * @param Folder $sourceFolder Source folder node
+     * @param string $targetPath Target path
+     */
+    private function copyMediaFolderRecursive(Folder $sourceFolder, string $targetPath): void {
+        if (!is_dir($targetPath)) {
+            mkdir($targetPath, 0755, true);
+        }
+
+        foreach ($sourceFolder->getDirectoryListing() as $item) {
+            if ($item instanceof File) {
+                try {
+                    file_put_contents(
+                        $targetPath . '/' . $item->getName(),
+                        $item->getContent()
+                    );
+                } catch (\Exception $e) {
+                    $this->logger->warning('Failed to copy file: ' . $item->getName());
+                }
+            } elseif ($item instanceof Folder) {
+                // Recursively copy subfolder (for _resources with nested folders)
+                $this->copyMediaFolderRecursive($item, $targetPath . '/' . $item->getName());
             }
         }
     }
@@ -394,5 +452,160 @@ class ExportService {
         }
 
         $zip->close();
+    }
+
+    /**
+     * Check if MetaVox is installed and available
+     *
+     * @return bool True if MetaVox is available
+     */
+    private function isMetaVoxAvailable(): bool {
+        if ($this->metaVoxAvailable === null) {
+            try {
+                $this->metaVoxAvailable =
+                    $this->appManager->isInstalled('metavox') &&
+                    $this->appManager->isEnabledForUser('metavox');
+
+                if ($this->metaVoxAvailable) {
+                    // Get MetaVox version
+                    $this->metaVoxVersion = $this->appManager->getAppVersion('metavox');
+
+                    // Get FieldService instance
+                    try {
+                        $this->metaVoxFieldService = \OC::$server->get(\OCA\MetaVox\Service\FieldService::class);
+                    } catch (\Exception $e) {
+                        $this->logger->warning('MetaVox FieldService not available: ' . $e->getMessage());
+                        $this->metaVoxAvailable = false;
+                        return false;
+                    }
+
+                    $this->logger->info('MetaVox detected for export', [
+                        'version' => $this->metaVoxVersion,
+                        'serviceAvailable' => $this->metaVoxFieldService !== null
+                    ]);
+                }
+            } catch (\Exception $e) {
+                $this->logger->warning('MetaVox detection failed: ' . $e->getMessage());
+                $this->metaVoxAvailable = false;
+            }
+        }
+
+        return $this->metaVoxAvailable;
+    }
+
+    /**
+     * Get MetaVox field definitions
+     *
+     * @return array Field definitions with schema information
+     */
+    private function getMetaVoxFieldDefinitions(): array {
+        if (!$this->isMetaVoxAvailable() || !$this->metaVoxFieldService) {
+            return [];
+        }
+
+        try {
+            $fields = $this->metaVoxFieldService->getAllFields();
+
+            // Transform to export format
+            return array_map(function($field) {
+                return [
+                    'field_name' => $field['field_name'],
+                    'field_label' => $field['field_label'],
+                    'field_type' => $field['field_type'],
+                    'field_description' => $field['field_description'] ?? '',
+                    'field_options' => $field['field_options'] ?? [],
+                    'is_required' => $field['is_required'],
+                    'sort_order' => $field['sort_order'],
+                    'scope' => $field['scope'] ?? 'groupfolder',
+                ];
+            }, $fields);
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to get MetaVox field definitions: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Collect file IDs from pages for batch metadata retrieval
+     *
+     * @param array $pages Array of pages
+     * @return array Array of file IDs
+     */
+    private function collectPageFileIds(array $pages): array {
+        $fileIds = [];
+
+        foreach ($pages as $page) {
+            if (isset($page['_fileId'])) {
+                $fileIds[] = $page['_fileId'];
+            }
+        }
+
+        return $fileIds;
+    }
+
+    /**
+     * Retrieve metadata for multiple pages using batch API
+     *
+     * @param array $fileIds Array of file IDs
+     * @return array Metadata indexed by file ID
+     */
+    private function retrieveMetadataForPages(array $fileIds): array {
+        if (empty($fileIds) || !$this->isMetaVoxAvailable() || !$this->metaVoxFieldService) {
+            $this->logger->debug('Skipping metadata retrieval', [
+                'emptyFileIds' => empty($fileIds),
+                'metaVoxAvailable' => $this->isMetaVoxAvailable(),
+                'fieldServiceAvailable' => $this->metaVoxFieldService !== null
+            ]);
+            return [];
+        }
+
+        try {
+            $this->logger->info('Retrieving metadata for pages', [
+                'fileIdCount' => count($fileIds),
+                'fileIds' => $fileIds
+            ]);
+
+            // Use bulk retrieval for performance
+            $bulkMetadata = $this->metaVoxFieldService->getBulkFileMetadata($fileIds);
+
+            $this->logger->info('Bulk metadata retrieved', [
+                'resultCount' => count($bulkMetadata)
+            ]);
+
+            // Transform to simplified export format
+            $result = [];
+            foreach ($bulkMetadata as $fileId => $fields) {
+                $filteredFields = array_filter($fields, function($field) {
+                    // Only export fields with values
+                    return !empty($field['value']);
+                });
+
+                $result[$fileId] = array_map(function($field) {
+                    return [
+                        'field_name' => $field['field_name'],
+                        'value' => $field['value']
+                    ];
+                }, $filteredFields);
+
+                $this->logger->debug('Processed metadata for file', [
+                    'fileId' => $fileId,
+                    'totalFields' => count($fields),
+                    'filteredFields' => count($filteredFields)
+                ]);
+            }
+
+            $this->logger->info('Metadata processing complete', [
+                'filesWithMetadata' => count($result)
+            ]);
+
+            return $result;
+
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to retrieve metadata: ' . $e->getMessage(), [
+                'exception' => get_class($e),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return [];
+        }
     }
 }
