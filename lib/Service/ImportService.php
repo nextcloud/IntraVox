@@ -381,17 +381,39 @@ class ImportService {
                 }
             } else {
                 // Regular page: create folder structure like IntraVox does
-                // 1. Determine folder name (pageId)
-                $folderId = $exportPath ?: $this->extractPageIdFromUniqueId($uniqueId);
+                // exportPath contains the full relative path (e.g., "about-intravox" or "departments/sales")
 
-                // 2. Determine parent location
-                if ($parentPath) {
-                    // Remove language prefix from parent path to get relative path
+                if ($exportPath) {
+                    // Use the export path to recreate the exact folder structure
+                    // This preserves nested folders like departments/sales/sales.json
+
+                    // Split path into parent directories and page folder
+                    $pathParts = explode('/', $exportPath);
+                    $pageFolderName = array_pop($pathParts); // Last part is the page folder
+
+                    // Create parent directories if any
+                    if (!empty($pathParts)) {
+                        $parentPath = implode('/', $pathParts);
+                        $parentFolder = $this->ensureFolderPath($langFolder, $parentPath);
+                    } else {
+                        $parentFolder = $langFolder;
+                    }
+
+                    $folderId = $pageFolderName;
+                    $this->logger->info('Importing page with export path', [
+                        'exportPath' => $exportPath,
+                        'parentPath' => !empty($pathParts) ? implode('/', $pathParts) : '(root)',
+                        'folderId' => $folderId
+                    ]);
+                } elseif ($parentPath) {
+                    // Fallback: use parent path from page data
                     $relativeParentPath = preg_replace('/^' . preg_quote($language, '/') . '\//', '', $parentPath);
                     $parentFolder = $this->ensureFolderPath($langFolder, $relativeParentPath);
+                    $folderId = $this->extractPageIdFromUniqueId($uniqueId);
                 } else {
-                    // No parent, create at language root
+                    // Last resort: create at language root with extracted ID
                     $parentFolder = $langFolder;
+                    $folderId = $this->extractPageIdFromUniqueId($uniqueId);
                 }
 
                 // 3. Create or get page folder
