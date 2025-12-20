@@ -28,19 +28,15 @@ class ConfluenceHtmlImporter {
      * @return IntermediateFormat Intermediate representation
      */
     public function importFromZip(string $zipPath, string $language = 'nl'): IntermediateFormat {
-        $this->logger->info('Importing Confluence HTML export from: ' . $zipPath);
-
         // Extract ZIP to temporary directory
         $extractPath = $this->extractZip($zipPath);
 
         try {
             // Find all HTML files
             $htmlFiles = $this->findHtmlFiles($extractPath);
-            $this->logger->info('Found ' . count($htmlFiles) . ' HTML files');
 
             // Build page hierarchy from directory structure and breadcrumbs
             $pageHierarchy = $this->buildPageHierarchy($htmlFiles, $extractPath);
-            $this->logger->info('Built page hierarchy', ['pages' => count($pageHierarchy)]);
 
             // Parse each HTML file
             $format = new IntermediateFormat();
@@ -97,19 +93,11 @@ class ConfluenceHtmlImporter {
             throw new \RuntimeException('Failed to open ZIP file: ' . $zipPath);
         }
 
-        // Log ZIP contents
-        $this->logger->info('ZIP contains ' . $zip->numFiles . ' files');
-        for ($i = 0; $i < min(10, $zip->numFiles); $i++) {
-            $stat = $zip->statIndex($i);
-            $this->logger->debug('ZIP file ' . $i . ': ' . $stat['name']);
-        }
-
         // Create temporary directory
         $extractPath = sys_get_temp_dir() . '/confluence_import_' . uniqid();
         if (!mkdir($extractPath, 0755, true)) {
             throw new \RuntimeException('Failed to create temp directory: ' . $extractPath);
         }
-        $this->logger->info('Created temp directory: ' . $extractPath);
 
         // Extract files individually to avoid directory issues
         $extractedCount = 0;
@@ -146,33 +134,10 @@ class ConfluenceHtmlImporter {
         }
 
         $zip->close();
-        $this->logger->info('Extracted ZIP: ' . $extractedCount . ' files');
 
-        // Check if directory exists and list contents
+        // Check if directory exists
         if (!is_dir($extractPath)) {
             throw new \RuntimeException('Extract path does not exist: ' . $extractPath);
-        }
-
-        // Use scandir first to see what's there
-        $contents = scandir($extractPath);
-        $this->logger->info('Directory contents: ' . json_encode($contents));
-
-        // List extracted files
-        try {
-            $iterator = new \RecursiveIteratorIterator(
-                new \RecursiveDirectoryIterator($extractPath, \RecursiveDirectoryIterator::SKIP_DOTS),
-                \RecursiveIteratorIterator::SELF_FIRST
-            );
-            $fileCount = 0;
-            foreach ($iterator as $file) {
-                $fileCount++;
-                if ($fileCount <= 10) {
-                    $this->logger->debug('Extracted: ' . $file->getPathname());
-                }
-            }
-            $this->logger->info('Extracted ' . $fileCount . ' total files');
-        } catch (\Exception $e) {
-            $this->logger->error('Failed to iterate directory: ' . $e->getMessage());
         }
 
         return $extractPath;
@@ -190,27 +155,15 @@ class ConfluenceHtmlImporter {
             new \RecursiveDirectoryIterator($directory, \RecursiveDirectoryIterator::SKIP_DOTS)
         );
 
-        $allFiles = 0;
-        $htmlCount = 0;
-        $skippedCount = 0;
-
         foreach ($iterator as $file) {
-            $allFiles++;
             if ($file->isFile() && strtolower($file->getExtension()) === 'html') {
-                $htmlCount++;
                 // Skip index files and navigation files
                 $filename = $file->getFilename();
                 if (!in_array($filename, ['index.html', 'overview.html', 'toc.html'])) {
                     $htmlFiles[] = $file->getPathname();
-                    $this->logger->debug('Found HTML file: ' . $file->getPathname());
-                } else {
-                    $skippedCount++;
-                    $this->logger->debug('Skipped HTML file: ' . $filename);
                 }
             }
         }
-
-        $this->logger->info("File scan complete: {$allFiles} total files, {$htmlCount} HTML files, {$skippedCount} skipped, " . count($htmlFiles) . " will be processed");
 
         return $htmlFiles;
     }
@@ -332,7 +285,6 @@ class ConfluenceHtmlImporter {
                 $content = $this->cleanupHtml($content);
 
                 if (!empty(trim(strip_tags($content)))) {
-                    $this->logger->debug("Extracted body using selector: $selector");
                     return $content;
                 }
             }
@@ -351,13 +303,11 @@ class ConfluenceHtmlImporter {
             $bodyContent = $this->cleanupHtml($bodyContent);
 
             if (!empty(trim(strip_tags($bodyContent)))) {
-                $this->logger->debug("Extracted body using <body> fallback with cleanup");
                 return $bodyContent;
             }
         }
 
         // Last resort: return full HTML
-        $this->logger->warning('Could not extract body content, using full HTML');
         return $html;
     }
 
@@ -456,7 +406,6 @@ class ConfluenceHtmlImporter {
                 // Check if parent index exists
                 if (isset($hierarchy[$parentIndexPath])) {
                     $hierarchy[$relativePath]['parent'] = $parentIndexPath;
-                    $this->logger->debug("Found parent via directory structure: $relativePath -> $parentIndexPath");
                 } else {
                     // Look for any HTML file in parent directory with similar name
                     $parentDirName = end($pathParts);
@@ -466,7 +415,6 @@ class ConfluenceHtmlImporter {
 
                     if (isset($hierarchy[$possibleParentFile])) {
                         $hierarchy[$relativePath]['parent'] = $possibleParentFile;
-                        $this->logger->debug("Found parent via naming: $relativePath -> $possibleParentFile");
                     }
                 }
             }
@@ -474,21 +422,9 @@ class ConfluenceHtmlImporter {
             // Method 2: Parse breadcrumbs from HTML file
             $html = file_get_contents($htmlFile);
 
-            // Log first HTML file sample for debugging
-            static $sampledFirst = false;
-            if (!$sampledFirst) {
-                $sampledFirst = true;
-                $sample = substr($html, 0, 2000);
-                $this->logger->info("First HTML file sample", [
-                    'file' => $relativePath,
-                    'sample' => $sample
-                ]);
-            }
-
             $breadcrumbParent = $this->extractParentFromBreadcrumb($html, $relativePath);
             if ($breadcrumbParent) {
                 $hierarchy[$relativePath]['parent'] = $breadcrumbParent;
-                $this->logger->debug("Found parent via breadcrumb: $relativePath -> $breadcrumbParent");
             }
         }
 
@@ -509,22 +445,18 @@ class ConfluenceHtmlImporter {
         $order = [];
 
         if (!file_exists($indexPath)) {
-            $this->logger->debug('No index.html found for page ordering');
             return $order;
         }
 
         $html = file_get_contents($indexPath);
         if (!$html) {
-            $this->logger->warning('Failed to read index.html');
             return $order;
         }
 
         // Extract all links from index.html
-        // Confluence index.html typically has links in <ul> or <ol> lists
         preg_match_all('/<a[^>]*href=["\']([^"\']+)["\'][^>]*>/is', $html, $matches);
 
         if (empty($matches[1])) {
-            $this->logger->debug('No links found in index.html');
             return $order;
         }
 
@@ -542,11 +474,6 @@ class ConfluenceHtmlImporter {
             $order[$normalizedHref] = $currentOrder;
             $currentOrder++;
         }
-
-        $this->logger->info('Extracted page order from index.html', [
-            'totalPages' => count($order),
-            'sample' => array_slice($order, 0, 5, true)
-        ]);
 
         return $order;
     }
@@ -572,8 +499,6 @@ class ConfluenceHtmlImporter {
             // Extract all links from breadcrumb
             preg_match_all('/<a[^>]*href=["\']([^"\']+)["\'][^>]*>(.*?)<\/a>/is', $breadcrumbHtml, $links, PREG_SET_ORDER);
 
-            $this->logger->debug("Found breadcrumb with " . count($links) . " links");
-
             // The parent is typically the second-to-last link (last is current page)
             if (count($links) >= 2) {
                 $parentLink = $links[count($links) - 2];
@@ -588,30 +513,9 @@ class ConfluenceHtmlImporter {
 
                 // If the href doesn't include a directory, prepend the current file's directory
                 if ($directory && strpos($normalizedHref, '/') === false) {
-                    $relativePath = $directory . '/' . $normalizedHref;
-                } else {
-                    $relativePath = $normalizedHref;
+                    return $directory . '/' . $normalizedHref;
                 }
-
-                $this->logger->debug("Extracted parent from breadcrumb", [
-                    'href' => $href,
-                    'normalized' => $normalizedHref,
-                    'withDirectory' => $relativePath
-                ]);
-                return $relativePath;
-            }
-        } else {
-            // Try to find ANY breadcrumb-like structure
-            if (preg_match('/<nav[^>]*aria-label=["\']Breadcrumb["\'][^>]*>(.*?)<\/nav>/is', $html, $matches)) {
-                $this->logger->debug("Found <nav> breadcrumb");
-            } elseif (preg_match('/<div[^>]*id=["\']breadcrumb[^"\']*["\'][^>]*>/is', $html)) {
-                $this->logger->debug("Found <div id='breadcrumb*'>");
-            } else {
-                // Sample first 1000 chars to see what's there
-                $sample = substr($html, 0, 1000);
-                if (stripos($sample, 'breadcrumb') !== false) {
-                    $this->logger->debug("Found 'breadcrumb' text in HTML but couldn't match pattern");
-                }
+                return $normalizedHref;
             }
         }
 
@@ -656,29 +560,12 @@ class ConfluenceHtmlImporter {
             }
         }
 
-        $this->logger->info("Pages by path map", [
-            'count' => count($pagesByPath),
-            'paths' => array_keys($pagesByPath)
-        ]);
-
-        $this->logger->info("Hierarchy map", [
-            'count' => count($hierarchy),
-            'paths' => array_keys($hierarchy)
-        ]);
-
         // Set parent relationships
-        $matched = 0;
-        $withParent = 0;
         foreach ($hierarchy as $filePath => $info) {
             if (!isset($pagesByPath[$filePath])) {
-                $this->logger->warning("Page not found in pagesByPath", [
-                    'filePath' => $filePath,
-                    'hierarchyInfo' => $info
-                ]);
                 continue;
             }
 
-            $matched++;
             $page = $pagesByPath[$filePath];
             $parentPath = $info['parent'];
 
@@ -690,30 +577,8 @@ class ConfluenceHtmlImporter {
             if ($parentPath && isset($pagesByPath[$parentPath])) {
                 $parentPage = $pagesByPath[$parentPath];
                 $page->parentUniqueId = $parentPage->uniqueId;
-                $withParent++;
-
-                $this->logger->info("Set parent relationship", [
-                    'page' => $page->title,
-                    'parent' => $parentPage->title,
-                    'filePath' => $filePath,
-                    'parentPath' => $parentPath,
-                    'order' => $info['order'] ?? 'none'
-                ]);
-            } elseif ($parentPath) {
-                $this->logger->warning("Parent page not found", [
-                    'page' => $page->title,
-                    'filePath' => $filePath,
-                    'parentPath' => $parentPath,
-                    'parentExists' => isset($pagesByPath[$parentPath])
-                ]);
             }
         }
-
-        $this->logger->info("Parent relationship summary", [
-            'totalHierarchy' => count($hierarchy),
-            'matchedPages' => $matched,
-            'pagesWithParent' => $withParent
-        ]);
     }
 
     /**
@@ -740,6 +605,5 @@ class ConfluenceHtmlImporter {
         }
 
         rmdir($directory);
-        $this->logger->info('Cleaned up temporary directory: ' . $directory);
     }
 }

@@ -343,6 +343,10 @@
 
 					<!-- Export Progress -->
 					<div v-if="exporting" class="export-progress">
+						<NcNoteCard type="warning">
+							<p><strong>{{ t('intravox', 'Export in progress') }}</strong></p>
+							<p>{{ t('intravox', 'Please keep this page open until the export completes.') }}</p>
+						</NcNoteCard>
 						<NcProgressBar :value="exportProgress" />
 						<p class="progress-text">{{ exportStatusText }}</p>
 					</div>
@@ -410,6 +414,10 @@
 
 					<!-- Import Progress -->
 					<div v-if="importing" class="import-progress">
+						<NcNoteCard type="warning">
+							<p><strong>{{ t('intravox', 'Import in progress') }}</strong></p>
+							<p>{{ t('intravox', 'Please keep this page open until the import completes.') }}</p>
+						</NcNoteCard>
 						<NcProgressBar :value="importProgress" />
 						<p class="progress-text">{{ importStatusText }}</p>
 					</div>
@@ -1707,6 +1715,16 @@ export default {
 
 .import-progress {
 	margin-top: 16px;
+}
+
+.import-progress .note-card,
+.export-progress .note-card {
+	margin-bottom: 16px;
+}
+
+.import-progress p,
+.export-progress p {
+	margin: 4px 0;
 }
 
 .import-result {

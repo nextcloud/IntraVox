@@ -6,6 +6,7 @@ namespace OCA\IntraVox\Service;
 use OCP\App\IAppManager;
 use OCP\Files\File;
 use OCP\Files\Folder;
+use OCP\IDBConnection;
 use OCP\ITempManager;
 use Psr\Log\LoggerInterface;
 
@@ -25,7 +26,8 @@ class ExportService {
         private SetupService $setupService,
         private ITempManager $tempManager,
         private LoggerInterface $logger,
-        private IAppManager $appManager
+        private IAppManager $appManager,
+        private IDBConnection $connection
     ) {}
 
     /**
@@ -42,26 +44,32 @@ class ExportService {
         $pages = $this->getPagesFromLanguageFolder($language);
 
         $export = [
-            'exportVersion' => '1.1',  // Bumped version for MetaVox support
+            'exportVersion' => '1.3',  // uniqueId-based metadata mapping (v0.9.0)
+            'schemaVersion' => '1.3',
             'exportDate' => (new \DateTime())->format('c'),
             'language' => $language,
+            'exportedBy' => 'IntraVox/' . $this->getAppVersion(),
+            'requiresMinVersion' => '0.8.11',
             'navigation' => $this->navigationService->getNavigation($language),
             'footer' => $this->footerService->getFooter($language),
             'pages' => []
         ];
 
-        // Add MetaVox information if available
+        // Add MetaVox field definitions if available
         if ($this->isMetaVoxAvailable()) {
             $export['metavox'] = [
                 'version' => $this->metaVoxVersion,
                 'fieldDefinitions' => $this->getMetaVoxFieldDefinitions()
             ];
 
-            // Collect all file IDs for batch retrieval
-            $fileIds = $this->collectPageFileIds($pages);
-
-            // Batch retrieve metadata for all pages
-            $metadataByFileId = $this->retrieveMetadataForPages($fileIds);
+            // Attach metadata directly to each page (v1.3 format)
+            try {
+                $groupfolderId = $this->setupService->getGroupFolderId();
+                $pages = $this->attachMetadataToPages($pages, $groupfolderId);
+            } catch (\Exception $e) {
+                $this->logger->error('Failed to attach metadata to pages: ' . $e->getMessage());
+                // Continue export without metadata (graceful degradation)
+            }
         }
 
         foreach ($pages as $page) {
@@ -70,28 +78,29 @@ class ExportService {
                 continue;
             }
 
-            // Remove internal export properties before adding to content
+            // Extract export path for top-level inclusion
+            $exportPath = $page['_exportPath'] ?? null;
+
+            // Extract metadata if attached
+            $metadata = $page['metadata'] ?? null;
+
+            // Remove internal properties before adding to content
             $pageContent = $page;
             unset($pageContent['_fileId']);
+            unset($pageContent['_folderFileId']);
             unset($pageContent['_exportPath']);
+            unset($pageContent['metadata']); // Remove from content since we add it at top level
 
             $data = [
                 'uniqueId' => $uniqueId,
                 'title' => $page['title'] ?? '',
                 'content' => $pageContent,
+                '_exportPath' => $exportPath, // Needed for import to recreate folder structure
             ];
 
-            // Add MetaVox metadata if available
-            if (isset($metadataByFileId) && isset($page['_fileId'])) {
-                $fileId = $page['_fileId'];
-                if (isset($metadataByFileId[$fileId])) {
-                    $data['metadata'] = $metadataByFileId[$fileId];
-                    $this->logger->debug('Added metadata for page', [
-                        'uniqueId' => $uniqueId,
-                        'fileId' => $fileId,
-                        'metadataCount' => count($metadataByFileId[$fileId])
-                    ]);
-                }
+            // Add metadata if present (nested directly in page object)
+            if (!empty($metadata)) {
+                $data['metadata'] = $metadata;
             }
 
             if ($includeComments) {
@@ -143,6 +152,8 @@ class ExportService {
                         $data['_exportPath'] = 'home';
                         // Add file ID for MetaVox metadata retrieval
                         $data['_fileId'] = $homeFile->getId();
+                        // Add folder ID for team folder metadata (language folder itself)
+                        $data['_folderFileId'] = $langFolder->getId();
                         $pages[] = $data;
                     }
                 }
@@ -189,6 +200,8 @@ class ExportService {
                             $data['_exportPath'] = $currentPath;
                             // Add file ID for MetaVox metadata retrieval
                             $data['_fileId'] = $pageFile->getId();
+                            // Add folder ID for team folder metadata retrieval
+                            $data['_folderFileId'] = $node->getId();
                             $pages[] = $data;
                         }
                     }
@@ -526,10 +539,232 @@ class ExportService {
     }
 
     /**
+     * Get Files storage file ID from groupfolder file ID
+     *
+     * MetaVox stores metadata using file IDs from user's Files view (storage type different from groupfolder mount).
+     * This method maps a groupfolder file ID to its corresponding Files storage file ID.
+     *
+     * @param int $groupfolderFileId File ID from groupfolder mount
+     * @param int $groupfolderId Groupfolder ID
+     * @return int|null Files storage file ID, or null if not found
+     */
+    private function getFilesStorageFileId(int $groupfolderFileId, int $groupfolderId): ?int {
+        try {
+            // Get the file path from the groupfolder file ID
+            $qb = $this->connection->getQueryBuilder();
+            $qb->select('path')
+               ->from('filecache')
+               ->where($qb->expr()->eq('fileid', $qb->createNamedParameter($groupfolderFileId)));
+
+            $result = $qb->executeQuery();
+            $row = $result->fetch();
+            $result->closeCursor();
+
+            if (!$row || empty($row['path'])) {
+                return null;
+            }
+
+            $groupfolderPath = $row['path'];
+
+            // Extract the relative path within the groupfolder
+            // Pattern: __groupfolders/{id}/files/{language}/...
+            // We need: files/{language}/...
+            $pattern = '__groupfolders/' . $groupfolderId . '/';
+            if (strpos($groupfolderPath, $pattern) !== 0) {
+                $this->logger->debug('Path does not match groupfolder pattern', [
+                    'path' => $groupfolderPath,
+                    'pattern' => $pattern
+                ]);
+                return null;
+            }
+
+            // Get the relative path after __groupfolders/{id}/
+            $relativePath = substr($groupfolderPath, strlen($pattern));
+
+            // Now find the file ID in Files storage with this relative path
+            $qb2 = $this->connection->getQueryBuilder();
+            $qb2->select('fileid')
+                ->from('filecache')
+                ->where($qb2->expr()->eq('path', $qb2->createNamedParameter($relativePath)));
+
+            $result2 = $qb2->executeQuery();
+            $row2 = $result2->fetch();
+            $result2->closeCursor();
+
+            if ($row2 && isset($row2['fileid'])) {
+                $this->logger->debug('Mapped groupfolder file ID to Files storage ID', [
+                    'groupfolderFileId' => $groupfolderFileId,
+                    'groupfolderPath' => $groupfolderPath,
+                    'relativePath' => $relativePath,
+                    'filesStorageFileId' => $row2['fileid']
+                ]);
+                return (int)$row2['fileid'];
+            }
+
+            return null;
+
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to map groupfolder file ID to Files storage ID', [
+                'groupfolderFileId' => $groupfolderFileId,
+                'error' => $e->getMessage()
+            ]);
+            return null;
+        }
+    }
+
+    /**
+     * Attach metadata directly to each page object (v1.3 export format)
+     * Uses uniqueId mapping instead of file_id for cross-system compatibility
+     *
+     * @param array $pages Array of pages with _fileId and _folderFileId properties
+     * @param int $groupfolderId Groupfolder ID for metadata scoping
+     * @return array Pages with metadata attached
+     */
+    private function attachMetadataToPages(array $pages, int $groupfolderId): array {
+        if (!$this->isMetaVoxAvailable() || !$this->metaVoxFieldService) {
+            return $pages;
+        }
+
+        if ($groupfolderId <= 0) {
+            $this->logger->warning('Invalid groupfolder ID for metadata attachment', [
+                'groupfolderId' => $groupfolderId
+            ]);
+            return $pages;
+        }
+
+        $this->logger->info('Attaching metadata to pages', [
+            'pageCount' => count($pages),
+            'groupfolderId' => $groupfolderId
+        ]);
+
+        $successCount = 0;
+
+        foreach ($pages as &$page) {
+            $groupfolderFileId = $page['_fileId'] ?? null;
+            $groupfolderFolderFileId = $page['_folderFileId'] ?? null;
+            $uniqueId = $page['uniqueId'] ?? 'unknown';
+
+            if (!$groupfolderFileId) {
+                continue;
+            }
+
+            try {
+                // Map groupfolder file IDs to Files storage file IDs
+                // (MetaVox stores metadata using Files storage IDs, not groupfolder IDs)
+                $fileId = $this->getFilesStorageFileId($groupfolderFileId, $groupfolderId);
+                if (!$fileId) {
+                    $this->logger->warning('Could not map groupfolder file ID to Files storage ID', [
+                        'uniqueId' => $uniqueId,
+                        'groupfolderFileId' => $groupfolderFileId
+                    ]);
+                    continue;
+                }
+
+                $folderFileId = null;
+                if ($groupfolderFolderFileId) {
+                    $folderFileId = $this->getFilesStorageFileId($groupfolderFolderFileId, $groupfolderId);
+                }
+
+                // Get file metadata (attached to the JSON file itself)
+                $fileMetadata = $this->metaVoxFieldService->getGroupfolderFileMetadata(
+                    $groupfolderId,
+                    $fileId
+                );
+
+                // Get folder metadata (attached to the containing folder)
+                $folderMetadata = [];
+                if ($folderFileId) {
+                    try {
+                        $folderMetadata = $this->metaVoxFieldService->getGroupfolderFileMetadata(
+                            $groupfolderId,
+                            $folderFileId
+                        );
+                    } catch (\Exception $e) {
+                        $this->logger->debug('Failed to get folder metadata', [
+                            'uniqueId' => $uniqueId,
+                            'folderFileId' => $folderFileId,
+                            'error' => $e->getMessage()
+                        ]);
+                    }
+                }
+
+                // Separate file vs folder metadata
+                $fileFields = [];
+                $folderFields = [];
+
+                foreach ($fileMetadata as $field) {
+                    if (!empty($field['value'])) {
+                        if ($field['applies_to_groupfolder'] == 0) {
+                            // File-level metadata
+                            $fileFields[] = [
+                                'field_name' => $field['field_name'],
+                                'field_label' => $field['field_label'],
+                                'field_type' => $field['field_type'],
+                                'value' => $field['value']
+                            ];
+                        } else {
+                            // Folder metadata (from file's own call)
+                            $folderFields[] = [
+                                'field_name' => $field['field_name'],
+                                'field_label' => $field['field_label'],
+                                'field_type' => $field['field_type'],
+                                'value' => $field['value']
+                            ];
+                        }
+                    }
+                }
+
+                // Add folder-level metadata from folder call
+                foreach ($folderMetadata as $field) {
+                    if (!empty($field['value']) && $field['applies_to_groupfolder'] == 1) {
+                        $folderFields[] = [
+                            'field_name' => $field['field_name'],
+                            'field_label' => $field['field_label'],
+                            'field_type' => $field['field_type'],
+                            'value' => $field['value']
+                        ];
+                    }
+                }
+
+                // Attach metadata to page if any exists
+                if (!empty($fileFields) || !empty($folderFields)) {
+                    $page['metadata'] = [
+                        'file' => $fileFields,
+                        'folder' => $folderFields
+                    ];
+
+                    $successCount++;
+
+                    $this->logger->debug('Attached metadata to page', [
+                        'uniqueId' => $uniqueId,
+                        'fileFieldCount' => count($fileFields),
+                        'folderFieldCount' => count($folderFields)
+                    ]);
+                }
+
+            } catch (\Exception $e) {
+                $this->logger->warning('Failed to get metadata for page', [
+                    'uniqueId' => $uniqueId,
+                    'fileId' => $fileId,
+                    'error' => $e->getMessage()
+                ]);
+            }
+        }
+
+        $this->logger->info('Metadata attachment complete', [
+            'totalPages' => count($pages),
+            'pagesWithMetadata' => $successCount
+        ]);
+
+        return $pages;
+    }
+
+    /**
      * Collect file IDs from pages for batch metadata retrieval
      *
      * @param array $pages Array of pages
      * @return array Array of file IDs
+     * @deprecated Use attachMetadataToPages() instead (v0.9.0+)
      */
     private function collectPageFileIds(array $pages): array {
         $fileIds = [];
@@ -544,12 +779,16 @@ class ExportService {
     }
 
     /**
-     * Retrieve metadata for multiple pages using batch API
+     * Retrieve metadata for multiple pages
+     *
+     * NOTE: Uses individual API calls instead of bulk because MetaVox's getBulkFileMetadata()
+     * doesn't accept groupfolder_id parameter, which is REQUIRED by the database schema.
      *
      * @param array $fileIds Array of file IDs
+     * @param int $groupfolderId Groupfolder ID for metadata scoping
      * @return array Metadata indexed by file ID
      */
-    private function retrieveMetadataForPages(array $fileIds): array {
+    private function retrieveMetadataForPages(array $fileIds, int $groupfolderId): array {
         if (empty($fileIds) || !$this->isMetaVoxAvailable() || !$this->metaVoxFieldService) {
             $this->logger->debug('Skipping metadata retrieval', [
                 'emptyFileIds' => empty($fileIds),
@@ -559,43 +798,95 @@ class ExportService {
             return [];
         }
 
+        // Validate groupfolder ID
+        if ($groupfolderId <= 0) {
+            $this->logger->warning('Invalid groupfolder ID for metadata retrieval', [
+                'groupfolderId' => $groupfolderId
+            ]);
+            return [];
+        }
+
         try {
             $this->logger->info('Retrieving metadata for pages', [
                 'fileIdCount' => count($fileIds),
+                'groupfolderId' => $groupfolderId,
                 'fileIds' => $fileIds
             ]);
 
-            // Use bulk retrieval for performance
-            $bulkMetadata = $this->metaVoxFieldService->getBulkFileMetadata($fileIds);
+            // NOTE: We must use individual calls instead of bulk API because
+            // MetaVox's getBulkFileMetadata() doesn't accept groupfolder_id parameter.
+            // The database schema requires BOTH file_id AND groupfolder_id to query
+            // the metavox_file_gf_meta table.
 
-            $this->logger->info('Bulk metadata retrieved', [
-                'resultCount' => count($bulkMetadata)
-            ]);
-
-            // Transform to simplified export format
             $result = [];
-            foreach ($bulkMetadata as $fileId => $fields) {
-                $filteredFields = array_filter($fields, function($field) {
-                    // Only export fields with values
-                    return !empty($field['value']);
-                });
+            $successCount = 0;
+            $failureCount = 0;
 
-                $result[$fileId] = array_map(function($field) {
-                    return [
-                        'field_name' => $field['field_name'],
-                        'value' => $field['value']
-                    ];
-                }, $filteredFields);
+            foreach ($fileIds as $fileId) {
+                try {
+                    // Use getGroupfolderFileMetadata which accepts both parameters
+                    $fileMetadata = $this->metaVoxFieldService->getGroupfolderFileMetadata(
+                        $groupfolderId,
+                        $fileId
+                    );
 
-                $this->logger->debug('Processed metadata for file', [
-                    'fileId' => $fileId,
-                    'totalFields' => count($fields),
-                    'filteredFields' => count($filteredFields)
-                ]);
+                    // DEBUG: Log RAW API response
+                    $this->logger->info('MetaVox API Response for file', [
+                        'fileId' => $fileId,
+                        'groupfolderId' => $groupfolderId,
+                        'rawResponse' => $fileMetadata,
+                        'responseCount' => count($fileMetadata)
+                    ]);
+
+                    // Filter fields with values only
+                    $filteredFields = array_filter($fileMetadata, function($field) {
+                        return !empty($field['value']);
+                    });
+
+                    $this->logger->info('Filtered metadata', [
+                        'fileId' => $fileId,
+                        'totalFields' => count($fileMetadata),
+                        'fieldsWithValues' => count($filteredFields),
+                        'filteredFields' => $filteredFields
+                    ]);
+
+                    if (!empty($filteredFields)) {
+                        // Transform to simplified export format
+                        $result[$fileId] = array_map(function($field) {
+                            return [
+                                'field_name' => $field['field_name'],
+                                'value' => $field['value']
+                            ];
+                        }, array_values($filteredFields));
+
+                        $successCount++;
+
+                        $this->logger->debug('Retrieved metadata for file', [
+                            'fileId' => $fileId,
+                            'totalFields' => count($fileMetadata),
+                            'fieldsWithValues' => count($filteredFields)
+                        ]);
+                    } else {
+                        $this->logger->info('No metadata with values found for file', [
+                            'fileId' => $fileId,
+                            'groupfolderId' => $groupfolderId
+                        ]);
+                    }
+                } catch (\Exception $e) {
+                    $failureCount++;
+                    $this->logger->warning('Failed to retrieve metadata for file', [
+                        'fileId' => $fileId,
+                        'groupfolderId' => $groupfolderId,
+                        'error' => $e->getMessage()
+                    ]);
+                    // Continue processing other files
+                }
             }
 
-            $this->logger->info('Metadata processing complete', [
-                'filesWithMetadata' => count($result)
+            $this->logger->info('Metadata retrieval complete', [
+                'totalFiles' => count($fileIds),
+                'filesWithMetadata' => $successCount,
+                'failedFiles' => $failureCount
             ]);
 
             return $result;
@@ -606,6 +897,134 @@ class ExportService {
                 'trace' => $e->getTraceAsString()
             ]);
             return [];
+        }
+    }
+
+    /**
+     * Retrieve team folder metadata for all folders in a language
+     * Team folder metadata is attached to folders themselves, not files
+     *
+     * @param string $language Language code
+     * @param array $pages Array of pages with their folder information
+     * @return array Metadata indexed by folder path
+     */
+    private function retrieveTeamFolderMetadata(string $language, array $pages): array {
+        if (!$this->isMetaVoxAvailable() || !$this->metaVoxFieldService) {
+            return [];
+        }
+
+        try {
+            $groupfolderId = $this->setupService->getGroupFolderId();
+            if ($groupfolderId <= 0) {
+                return [];
+            }
+
+            $this->logger->info('Retrieving team folder metadata', [
+                'language' => $language,
+                'groupfolderId' => $groupfolderId
+            ]);
+
+            // Get root groupfolder metadata for home page
+            $groupfolderMetadata = $this->metaVoxFieldService->getGroupfolderMetadata($groupfolderId);
+
+            $result = [];
+
+            // Add root metadata for home page
+            if (!empty($groupfolderMetadata)) {
+                $filteredMetadata = array_filter($groupfolderMetadata, function($field) {
+                    return !empty($field['value']);
+                });
+
+                if (!empty($filteredMetadata)) {
+                    $result['home'] = array_map(function($field) {
+                        return [
+                            'field_name' => $field['field_name'],
+                            'value' => $field['value']
+                        ];
+                    }, array_values($filteredMetadata));
+
+                    $this->logger->debug('Root team folder metadata retrieved', [
+                        'metadataCount' => count($result['home'])
+                    ]);
+                }
+            }
+
+            // Collect unique folder paths and their folder IDs
+            $folderIds = [];
+            $folderPaths = [];
+
+            foreach ($pages as $page) {
+                if (isset($page['_folderFileId']) && !empty($page['_exportPath'])) {
+                    $exportPath = $page['_exportPath'];
+                    if (!isset($folderPaths[$exportPath])) {
+                        $folderPaths[$exportPath] = $page['_folderFileId'];
+                        $folderIds[] = $page['_folderFileId'];
+                    }
+                }
+            }
+
+            if (empty($folderIds)) {
+                $this->logger->info('No subfolder metadata to retrieve');
+                return $result;
+            }
+
+            // Retrieve metadata for all folders using bulk API
+            $this->logger->debug('Retrieving metadata for subfolders', [
+                'folderCount' => count($folderIds),
+                'folderIds' => $folderIds
+            ]);
+
+            $bulkFolderMetadata = $this->metaVoxFieldService->getBulkFileMetadata($folderIds);
+
+            // Map folder metadata to export paths
+            foreach ($folderPaths as $exportPath => $folderId) {
+                if (isset($bulkFolderMetadata[$folderId]) && !empty($bulkFolderMetadata[$folderId])) {
+                    $filteredFields = array_filter($bulkFolderMetadata[$folderId], function($field) {
+                        return !empty($field['value']);
+                    });
+
+                    if (!empty($filteredFields)) {
+                        $result[$exportPath] = array_map(function($field) {
+                            return [
+                                'field_name' => $field['field_name'],
+                                'value' => $field['value']
+                            ];
+                        }, array_values($filteredFields));
+
+                        $this->logger->debug('Subfolder team folder metadata retrieved', [
+                            'exportPath' => $exportPath,
+                            'folderId' => $folderId,
+                            'metadataCount' => count($result[$exportPath])
+                        ]);
+                    }
+                }
+            }
+
+            $this->logger->info('Team folder metadata retrieval complete', [
+                'foldersWithMetadata' => count($result)
+            ]);
+
+            return $result;
+
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to retrieve team folder metadata: ' . $e->getMessage(), [
+                'exception' => get_class($e),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return [];
+        }
+    }
+
+    /**
+     * Get IntraVox app version
+     *
+     * @return string App version
+     */
+    private function getAppVersion(): string {
+        try {
+            return $this->appManager->getAppVersion('intravox');
+        } catch (\Exception $e) {
+            return 'unknown';
         }
     }
 }

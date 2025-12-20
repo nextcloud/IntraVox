@@ -573,6 +573,28 @@ class SetupService {
     }
 
     /**
+     * Get a specific language folder within the IntraVox groupfolder
+     *
+     * @param string $language Language code (e.g., 'en', 'nl', 'de')
+     * @return \OCP\Files\Folder The language folder
+     * @throws \OCP\Files\NotFoundException If the language folder doesn't exist
+     */
+    public function getLanguageFolder(string $language): \OCP\Files\Folder {
+        $sharedFolder = $this->getSharedFolder();
+
+        if (!$sharedFolder->nodeExists($language)) {
+            throw new \OCP\Files\NotFoundException("Language folder '{$language}' not found");
+        }
+
+        $langFolder = $sharedFolder->get($language);
+        if (!($langFolder instanceof \OCP\Files\Folder)) {
+            throw new \OCP\Files\NotFoundException("Language path '{$language}' is not a folder");
+        }
+
+        return $langFolder;
+    }
+
+    /**
      * Check if setup is complete (GroupFolder exists and is accessible)
      */
     public function isSetupComplete(): bool {

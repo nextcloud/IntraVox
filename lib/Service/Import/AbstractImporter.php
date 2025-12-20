@@ -111,6 +111,7 @@ abstract class AbstractImporter {
                 'language' => $page->language,
                 'layout' => $layout,
                 '_exportPath' => $exportPath,
+                'metadata' => $page->metadata,
             ],
             'comments' => [],
             'pageReactions' => [],
@@ -283,7 +284,6 @@ abstract class AbstractImporter {
      */
     protected function downloadFile(string $url, string $targetFilename): ?string {
         // To be implemented by subclasses or use a shared download service
-        $this->logger->info('Download file: ' . $url . ' -> ' . $targetFilename);
         return $targetFilename;
     }
 

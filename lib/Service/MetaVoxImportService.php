@@ -286,6 +286,67 @@ class MetaVoxImportService {
 	}
 
 	/**
+	 * Import a single metadata field value (v1.3 format helper)
+	 *
+	 * @param int $fileId Target file ID (after rescan)
+	 * @param int $groupfolderId Target groupfolder ID
+	 * @param string $fieldName Field name (e.g., "file_gf_Status")
+	 * @param mixed $value Field value
+	 * @return bool True if import succeeded, false otherwise
+	 */
+	public function importFieldValue(int $fileId, int $groupfolderId, string $fieldName, $value): bool {
+		if (!$this->isAvailable()) {
+			return false;
+		}
+
+		try {
+			// Get field definition
+			$fields = $this->fieldService->getAllFields();
+			$field = null;
+			foreach ($fields as $f) {
+				if ($f['field_name'] === $fieldName) {
+					$field = $f;
+					break;
+				}
+			}
+
+			if (!$field) {
+				$this->logger->warning('Field not found during import', [
+					'field_name' => $fieldName,
+					'fileId' => $fileId
+				]);
+				return false;
+			}
+
+			// Save value using MetaVox FieldService
+			$success = $this->fieldService->saveGroupfolderFileFieldValue(
+				$groupfolderId,
+				$fileId,
+				$field['id'],
+				$value
+			);
+
+			if ($success) {
+				$this->logger->debug('Imported field value', [
+					'field_name' => $fieldName,
+					'file_id' => $fileId,
+					'value' => $value
+				]);
+			}
+
+			return $success;
+
+		} catch (\Exception $e) {
+			$this->logger->error('Failed to import field value', [
+				'field_name' => $fieldName,
+				'file_id' => $fileId,
+				'error' => $e->getMessage()
+			]);
+			return false;
+		}
+	}
+
+	/**
 	 * Detect changes between current and export field definitions
 	 *
 	 * @param array $current Current field definition

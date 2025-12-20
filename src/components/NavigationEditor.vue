@@ -102,7 +102,8 @@ export default {
       typeOptions: [
         { value: 'dropdown', label: t('intravox', 'Dropdown (Cascading)') },
         { value: 'megamenu', label: t('intravox', 'Mega Menu') }
-      ]
+      ],
+      lastAddedItemId: null
     };
   },
   computed: {
@@ -121,24 +122,42 @@ export default {
       }
     },
     addTopLevelItem() {
+      const newId = `nav_${Date.now()}`;
       this.localNavigation.items.push({
-        id: `nav_${Date.now()}`,
+        id: newId,
         title: t('intravox', 'New Item'),
         uniqueId: null,
         url: null,
         children: []
       });
+      this.lastAddedItemId = newId;
+      this.$nextTick(() => {
+        this.focusNewItem(newId);
+      });
     },
     addChildItem(parentPath) {
       const parent = this.getItemByPath(parentPath);
       if (parent && parent.children.length < 10) {
+        const newId = `nav_${Date.now()}`;
         parent.children.push({
-          id: `nav_${Date.now()}`,
+          id: newId,
           title: t('intravox', 'New Item'),
           uniqueId: null,
           url: null,
           children: []
         });
+        this.lastAddedItemId = newId;
+        this.$nextTick(() => {
+          this.focusNewItem(newId);
+        });
+      }
+    },
+    focusNewItem(itemId) {
+      // Find the input element with data-item-id attribute
+      const input = this.$el.querySelector(`input[data-item-id="${itemId}"]`);
+      if (input) {
+        input.focus();
+        input.select();
       }
     },
     updateItem(path, updates) {

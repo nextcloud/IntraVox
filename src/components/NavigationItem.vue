@@ -12,6 +12,7 @@
                type="text"
                class="item-title-input"
                :placeholder="t('Item title')"
+               :data-item-id="item.id"
                @input="emitUpdate" />
 
         <div class="item-link-options">
