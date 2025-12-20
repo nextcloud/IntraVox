@@ -998,27 +998,36 @@ The current architecture supports extensions through:
 
 ## Version History
 
-- **v0.9.0** (2025-12-16):
-  - **MetaVox Integration**: Full metadata export/import support
-  - Export format v1.1 with MetaVox field definitions and page metadata
-  - Version compatibility handling for different MetaVox versions
-  - Auto-create fields option for field definition management
-  - Batch metadata retrieval for optimal performance
-  - Enhanced import stats with detailed MetaVox tracking
-  - Graceful degradation when MetaVox is not installed
-  - Backward compatibility with v1.0 exports
+- **v0.8.0** (2025-12-20):
+  - **Export Format v1.3**: Guaranteed `_exportPath` and metadata support
+  - **MetaVox Integration**: Full metadata export/import with version compatibility
+  - **Confluence HTML Import**: Preserves page hierarchy and ordering
+  - **Reactions & Comments**: Export and import of page reactions and comment reactions
+  - **File ID Mapping**: Correct MetaVox metadata storage using Files storage IDs
+  - **Cleaned Up Logging**: Removed verbose debug logging for production use
+  - **Tested**: Successfully exported 135+ pages from 1dev and imported to 3dev
 
-- **v0.8.0** (2025-12-16):
-  - Added tabbed interface for Export/Import/Confluence
-  - Export includes page count display
-  - Import supports comments and overwrite options
-  - Confluence import preserves page hierarchy
-  - Checkbox functionality fixes
+### Tested Migration Workflow (v0.8.0)
 
-- **v0.7.0** (2024-12-10):
-  - Initial export/import functionality
-  - Basic ZIP structure
-  - Single-page export support
+The following workflow was successfully tested:
+
+1. **Export** from source server (1dev - 145.38.193.235):
+   - Export Dutch (nl) language with 135 pages
+   - Include comments and reactions
+   - MetaVox metadata included automatically
+
+2. **Import** to target server (3dev - 145.38.188.218):
+   - Upload exported ZIP
+   - Enable comments import
+   - Enable overwrite for updates
+   - Auto-create MetaVox fields enabled
+   - All pages, comments, reactions, and metadata imported successfully
+
+3. **Confluence Import** also tested:
+   - 123 pages from Confluence HTML export
+   - Page hierarchy preserved from breadcrumbs
+   - Page ordering from index.html preserved
+   - Imported under selected parent page
 
 ---
 
@@ -1030,5 +1039,5 @@ For questions or feature requests:
 
 ---
 
-**Last Updated**: 2025-12-16
-**Document Version**: 2.0 (Updated for v0.9.0 - MetaVox Integration)
+**Last Updated**: 2025-12-20
+**Document Version**: 2.1 (Updated for v0.8.0 - Export/Import tested)
