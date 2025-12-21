@@ -2272,12 +2272,64 @@ class PageService {
     }
 
     /**
-     * Sanitize file path (prevent directory traversal)
+     * Sanitize file path - prevent directory traversal and other path attacks
+     *
+     * Security checks:
+     * - Null byte injection
+     * - Unicode normalization (NFD/NFC attacks)
+     * - Directory traversal (..)
+     * - Backslash conversion
+     * - Hidden files (starting with .)
+     * - Executable file extensions
+     *
+     * @param string $path User-provided path
+     * @return string Safe path
+     * @throws \InvalidArgumentException if path is malicious
      */
     private function sanitizePath(string $path): string {
-        // Remove any path traversal attempts
-        $path = str_replace(['../', '..\\'], '', $path);
-        $path = ltrim($path, '/\\');
+        // 1. Check for null bytes (can bypass extension checks)
+        if (strpos($path, "\0") !== false) {
+            throw new \InvalidArgumentException('Null bytes not allowed in path');
+        }
+
+        // 2. Unicode normalization (prevent NFD/NFC attacks)
+        if (class_exists('Normalizer')) {
+            $normalized = \Normalizer::normalize($path, \Normalizer::FORM_C);
+            if ($normalized === false) {
+                throw new \InvalidArgumentException('Invalid unicode sequence in path');
+            }
+            $path = $normalized;
+        }
+
+        // 3. Convert backslashes to forward slashes
+        $path = str_replace('\\', '/', $path);
+
+        // 4. Remove leading/trailing slashes
+        $path = trim($path, '/');
+
+        // 5. Detect directory traversal attempts
+        if (strpos($path, '..') !== false) {
+            throw new \InvalidArgumentException('Path traversal not allowed');
+        }
+
+        // 6. Validate path segments
+        $segments = explode('/', $path);
+        foreach ($segments as $segment) {
+            // Empty segments (double slashes)
+            if (empty($segment) || $segment === '.' || $segment === '..') {
+                throw new \InvalidArgumentException('Invalid path segment');
+            }
+
+            // Hidden files (starting with dot)
+            if (substr($segment, 0, 1) === '.') {
+                throw new \InvalidArgumentException('Hidden files not allowed');
+            }
+
+            // Block executable PHP extensions
+            if (preg_match('/\.(php|phtml|php[345]|phar|phps|pht)$/i', $segment)) {
+                throw new \InvalidArgumentException('Executable files not allowed');
+            }
+        }
 
         return $path;
     }

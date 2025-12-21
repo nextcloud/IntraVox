@@ -100,7 +100,8 @@
             :src="getEmbedUrl(widget)"
             :title="widget.title || t('Video')"
             frameborder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+            allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+            sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
             allowfullscreen
             loading="lazy"
             referrerpolicy="strict-origin-when-cross-origin"
@@ -200,22 +201,81 @@ export default {
       return false;
     },
     textColorStyle() {
-      // Map background colors to their matching text colors (Nextcloud pattern)
-      // Each background has a paired text color for optimal contrast
+      // Map background colors to their matching text/link/selection colors
+      // Each background has paired colors for optimal contrast (WCAG 2.1 compliant)
       const bgColor = this.rowBackgroundColor || '';
 
-      const colorMap = {
-        'var(--color-primary-element)': 'var(--color-primary-element-text)',
-        'var(--color-primary-element-light)': 'var(--color-primary-element-light-text)',
-        'var(--color-error)': 'var(--color-error-text)',
-        'var(--color-warning)': 'var(--color-warning-text)',
-        'var(--color-success)': 'var(--color-success-text)',
-        'var(--color-background-dark)': 'var(--color-main-text)',
-        'var(--color-background-hover)': 'var(--color-main-text)',
+      // Define color mappings for text, links, and selection
+      const colorMappings = {
+        'var(--color-primary-element)': {
+          text: 'var(--color-primary-element-text)',
+          link: 'var(--color-primary-element-text)', // White links on dark blue
+          linkHover: 'rgba(255, 255, 255, 0.8)',
+          selection: 'rgba(255, 255, 255, 0.3)',
+          selectionText: 'var(--color-primary-element-text)'
+        },
+        'var(--color-primary-element-light)': {
+          text: 'var(--color-primary-element-light-text)',
+          link: 'var(--color-primary-element)', // Primary blue links on light blue
+          linkHover: 'var(--color-primary-element-hover)',
+          selection: 'var(--color-primary-element)',
+          selectionText: 'var(--color-primary-element-text)'
+        },
+        'var(--color-error)': {
+          text: 'var(--color-error-text)',
+          link: 'var(--color-error-text)',
+          linkHover: 'rgba(255, 255, 255, 0.8)',
+          selection: 'rgba(255, 255, 255, 0.3)',
+          selectionText: 'var(--color-error-text)'
+        },
+        'var(--color-warning)': {
+          text: 'var(--color-warning-text)',
+          link: 'var(--color-warning-text)',
+          linkHover: 'rgba(0, 0, 0, 0.7)',
+          selection: 'rgba(0, 0, 0, 0.2)',
+          selectionText: 'var(--color-warning-text)'
+        },
+        'var(--color-success)': {
+          text: 'var(--color-success-text)',
+          link: 'var(--color-success-text)',
+          linkHover: 'rgba(255, 255, 255, 0.8)',
+          selection: 'rgba(255, 255, 255, 0.3)',
+          selectionText: 'var(--color-success-text)'
+        },
+        'var(--color-background-dark)': {
+          text: 'var(--color-main-text)',
+          link: 'var(--color-primary-element)',
+          linkHover: 'var(--color-primary-element-hover)',
+          selection: 'var(--color-primary-element-light)',
+          selectionText: 'var(--color-main-text)'
+        },
+        'var(--color-background-hover)': {
+          text: 'var(--color-main-text)',
+          link: 'var(--color-primary-element)',
+          linkHover: 'var(--color-primary-element-hover)',
+          selection: 'var(--color-primary-element-light)',
+          selectionText: 'var(--color-main-text)'
+        }
       };
 
-      const textColor = colorMap[bgColor] || 'var(--color-main-text)';
-      return { color: textColor };
+      // Default colors for no background or unknown backgrounds
+      const defaultColors = {
+        text: 'var(--color-main-text)',
+        link: 'var(--color-primary-element)',
+        linkHover: 'var(--color-primary-element-hover)',
+        selection: 'var(--color-primary-element-light)',
+        selectionText: 'var(--color-main-text)'
+      };
+
+      const colors = colorMappings[bgColor] || defaultColors;
+
+      return {
+        'color': colors.text,
+        '--widget-link-color': colors.link,
+        '--widget-link-hover-color': colors.linkHover,
+        '--widget-selection-bg': colors.selection,
+        '--widget-selection-text': colors.selectionText
+      };
     }
   },
   watch: {
@@ -583,9 +643,25 @@ export default {
   color: inherit !important;
 }
 
+/* Links - use dynamic CSS variables for contrast on all backgrounds */
 .widget-text :deep(a) {
-  color: var(--color-primary);
+  color: var(--widget-link-color, var(--color-primary-element));
   text-decoration: underline;
+}
+
+.widget-text :deep(a:hover) {
+  color: var(--widget-link-hover-color, var(--color-primary-element-hover));
+}
+
+/* Text selection - use dynamic CSS variables for contrast */
+.widget-text :deep(::selection) {
+  background: var(--widget-selection-bg, var(--color-primary-element-light));
+  color: var(--widget-selection-text, var(--color-main-text));
+}
+
+.widget-text :deep(::-moz-selection) {
+  background: var(--widget-selection-bg, var(--color-primary-element-light));
+  color: var(--widget-selection-text, var(--color-main-text));
 }
 
 .widget-text :deep(h1),

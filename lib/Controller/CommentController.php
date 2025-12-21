@@ -49,6 +49,21 @@ class CommentController extends Controller {
         return $this->pageService->pageExistsByUniqueId($pageId);
     }
 
+    /**
+     * Check if user has access to the page associated with a comment
+     * Prevents IDOR by verifying page access before any comment operation
+     *
+     * @param string $commentId Comment ID to check
+     * @return bool True if user has access, false otherwise
+     */
+    private function checkCommentPageAccess(string $commentId): bool {
+        $pageId = $this->commentService->getCommentPageId($commentId);
+        if ($pageId === null) {
+            return false; // Comment not found
+        }
+        return $this->checkPageAccess($pageId);
+    }
+
     // ==================== COMMENTS ====================
 
     /**
@@ -128,6 +143,14 @@ class CommentController extends Controller {
      */
     public function updateComment(string $commentId, string $message): DataResponse {
         try {
+            // Security: verify user has access to the page this comment belongs to
+            if (!$this->checkCommentPageAccess($commentId)) {
+                return new DataResponse(
+                    ['error' => 'Comment not found or access denied'],
+                    Http::STATUS_NOT_FOUND
+                );
+            }
+
             if (empty(trim($message))) {
                 return new DataResponse(
                     ['error' => 'Message cannot be empty'],
@@ -164,6 +187,14 @@ class CommentController extends Controller {
      */
     public function deleteComment(string $commentId): DataResponse {
         try {
+            // Security: verify user has access to the page this comment belongs to
+            if (!$this->checkCommentPageAccess($commentId)) {
+                return new DataResponse(
+                    ['error' => 'Comment not found or access denied'],
+                    Http::STATUS_NOT_FOUND
+                );
+            }
+
             $this->commentService->deleteComment($commentId, $this->isAdmin());
 
             return new DataResponse(['success' => true]);
@@ -288,6 +319,14 @@ class CommentController extends Controller {
      */
     public function getCommentReactions(string $commentId): DataResponse {
         try {
+            // Security: verify user has access to the page this comment belongs to
+            if (!$this->checkCommentPageAccess($commentId)) {
+                return new DataResponse(
+                    ['error' => 'Comment not found or access denied'],
+                    Http::STATUS_NOT_FOUND
+                );
+            }
+
             $reactions = $this->commentService->getCommentReactions($commentId);
 
             return new DataResponse($reactions);
@@ -310,6 +349,14 @@ class CommentController extends Controller {
      */
     public function addCommentReaction(string $commentId, string $emoji): DataResponse {
         try {
+            // Security: verify user has access to the page this comment belongs to
+            if (!$this->checkCommentPageAccess($commentId)) {
+                return new DataResponse(
+                    ['error' => 'Comment not found or access denied'],
+                    Http::STATUS_NOT_FOUND
+                );
+            }
+
             $reactions = $this->commentService->addCommentReaction($commentId, $emoji);
 
             return new DataResponse($reactions);
@@ -333,6 +380,14 @@ class CommentController extends Controller {
      */
     public function removeCommentReaction(string $commentId, string $emoji): DataResponse {
         try {
+            // Security: verify user has access to the page this comment belongs to
+            if (!$this->checkCommentPageAccess($commentId)) {
+                return new DataResponse(
+                    ['error' => 'Comment not found or access denied'],
+                    Http::STATUS_NOT_FOUND
+                );
+            }
+
             $reactions = $this->commentService->removeCommentReaction($commentId, $emoji);
 
             return new DataResponse($reactions);

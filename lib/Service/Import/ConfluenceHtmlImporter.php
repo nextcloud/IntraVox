@@ -82,6 +82,8 @@ class ConfluenceHtmlImporter {
 
     /**
      * Extract ZIP file to temporary directory
+     * Uses cryptographically secure random directory names and validates paths
+     * to prevent ZIP Slip attacks (CWE-22)
      *
      * @param string $zipPath Path to ZIP file
      * @return string Path to extracted directory
@@ -93,13 +95,22 @@ class ConfluenceHtmlImporter {
             throw new \RuntimeException('Failed to open ZIP file: ' . $zipPath);
         }
 
-        // Create temporary directory
-        $extractPath = sys_get_temp_dir() . '/confluence_import_' . uniqid();
-        if (!mkdir($extractPath, 0755, true)) {
+        // Create temporary directory with cryptographically secure random name
+        // Use random_bytes() instead of uniqid() for unpredictable names
+        $extractPath = sys_get_temp_dir() . '/confluence_import_' . bin2hex(random_bytes(16));
+        // Use restrictive permissions (0700 = owner only)
+        if (!mkdir($extractPath, 0700, true)) {
             throw new \RuntimeException('Failed to create temp directory: ' . $extractPath);
         }
 
-        // Extract files individually to avoid directory issues
+        // Get real path for ZIP Slip prevention
+        $realExtractPath = realpath($extractPath);
+        if ($realExtractPath === false) {
+            throw new \RuntimeException('Failed to resolve extract path');
+        }
+        $realExtractPath = rtrim($realExtractPath, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+
+        // Extract files individually with path traversal validation
         $extractedCount = 0;
         for ($i = 0; $i < $zip->numFiles; $i++) {
             $stat = $zip->statIndex($i);
@@ -110,19 +121,46 @@ class ConfluenceHtmlImporter {
                 continue;
             }
 
-            // Extract file
-            $targetPath = $extractPath . '/' . $filename;
+            // Skip hidden files that start with ._
+            if (strpos(basename($filename), '._') === 0) {
+                continue;
+            }
 
-            // Create directory if needed
-            if (substr($filename, -1) === '/') {
+            // Build target path
+            $targetPath = $realExtractPath . $filename;
+
+            // Check if this is a directory entry
+            $isDirectory = substr($filename, -1) === '/';
+
+            if ($isDirectory) {
+                // Create directory with restrictive permissions
                 if (!is_dir($targetPath)) {
-                    mkdir($targetPath, 0755, true);
+                    if (!mkdir($targetPath, 0700, true)) {
+                        throw new \RuntimeException('Failed to create directory: ' . $filename);
+                    }
                 }
             } else {
-                // Extract file
+                // For files, verify the path is within destination (ZIP Slip prevention)
                 $dirname = dirname($targetPath);
                 if (!is_dir($dirname)) {
-                    mkdir($dirname, 0755, true);
+                    if (!mkdir($dirname, 0700, true)) {
+                        throw new \RuntimeException('Failed to create parent directory for: ' . $filename);
+                    }
+                }
+
+                // Validate path is within extract directory
+                $realDirname = realpath($dirname);
+                if ($realDirname === false || strpos($realDirname . DIRECTORY_SEPARATOR, $realExtractPath) !== 0) {
+                    $this->logger->error('ZIP Slip attack detected in Confluence import', [
+                        'filename' => $filename,
+                        'targetPath' => $targetPath,
+                        'realDirname' => $realDirname,
+                        'extractPath' => $realExtractPath
+                    ]);
+                    // Clean up and throw
+                    $zip->close();
+                    $this->cleanupDirectory($extractPath);
+                    throw new \RuntimeException('Zip Slip detected: Invalid path in ZIP file');
                 }
 
                 $content = $zip->getFromIndex($i);

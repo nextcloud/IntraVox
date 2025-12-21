@@ -190,29 +190,29 @@
 						<div class="service-list">
 							<!-- Existing custom domains with risk assessment -->
 							<div
-								v-for="domain in customDomains"
-								:key="domain"
+								v-for="item in customDomainsWithRisk"
+								:key="item.domain"
 								class="service-item custom-item enabled">
 								<div class="custom-domain-info">
 									<span class="service-name">
 										<span class="protocol-badge">HTTPS</span>
 										<a
-											:href="domain"
+											:href="item.domain"
 											target="_blank"
 											rel="noopener noreferrer"
 											class="custom-domain-link"
 											:title="t('intravox', 'Visit website')">
-											{{ getHostFromUrl(domain) }}
+											{{ getHostFromUrl(item.domain) }}
 											<OpenInNew :size="12" />
 										</a>
 									</span>
-									<span :class="['risk-badge', assessDomainRisk(domain).risk]">
-										{{ assessDomainRisk(domain).icon }} {{ t('intravox', assessDomainRisk(domain).label) }}
+									<span :class="['risk-badge', item.risk.risk]">
+										{{ item.risk.icon }} {{ t('intravox', item.risk.label) }}
 									</span>
 								</div>
 								<NcButton
 									type="tertiary"
-									@click="removeCustomDomain(domain)">
+									@click="removeCustomDomain(item.domain)">
 									{{ t('intravox', 'Remove') }}
 								</NcButton>
 							</div>
@@ -584,6 +584,11 @@ export default {
 			importProgress: 0,
 			importStatusText: '',
 			importResult: null,
+			// Timeout IDs for cleanup
+			exportTimeoutId: null,
+			importTimeoutId: null,
+			// Bound event handler for proper cleanup
+			boundBeforeUnloadHandler: null,
 			// Known video services with metadata
 			knownServices: [
 				// Privacy-friendly (no/minimal tracking)
@@ -616,6 +621,13 @@ export default {
 		customDomains() {
 			const knownDomains = this.knownServices.map(s => s.domain)
 			return this.videoDomains.filter(d => !knownDomains.includes(d))
+		},
+		// Computed domain risk assessments (prevents re-calculation on every render)
+		customDomainsWithRisk() {
+			return this.customDomains.map(domain => ({
+				domain,
+				risk: this.assessDomainRisk(domain)
+			}))
 		},
 	},
 	watch: {
@@ -997,10 +1009,14 @@ export default {
 				console.error('Failed to export:', error)
 				showError(this.t('intravox', 'Failed to export: ') + (error.response?.data?.error || error.message))
 			} finally {
-				// Reset after a short delay
-				setTimeout(() => {
+				// Reset after a short delay (with proper cleanup)
+				if (this.exportTimeoutId) {
+					clearTimeout(this.exportTimeoutId)
+				}
+				this.exportTimeoutId = setTimeout(() => {
 					this.exporting = false
 					this.exportProgress = 0
+					this.exportTimeoutId = null
 				}, 1000)
 			}
 		},
@@ -1069,10 +1085,14 @@ export default {
 				console.error('Import failed:', error)
 				showError(this.t('intravox', 'Import failed: ') + (error.response?.data?.error || error.message))
 			} finally {
-				// Reset after a short delay
-				setTimeout(() => {
+				// Reset after a short delay (with proper cleanup)
+				if (this.importTimeoutId) {
+					clearTimeout(this.importTimeoutId)
+				}
+				this.importTimeoutId = setTimeout(() => {
 					this.importing = false
 					this.importProgress = 0
+					this.importTimeoutId = null
 				}, 1000)
 			}
 		},
@@ -1087,11 +1107,25 @@ export default {
 	},
 	mounted() {
 		this.loadExportLanguages()
-		// Prevent accidental navigation during export
-		window.addEventListener('beforeunload', this.handleBeforeUnload)
+		// Prevent accidental navigation during export (use bound handler for proper cleanup)
+		this.boundBeforeUnloadHandler = this.handleBeforeUnload.bind(this)
+		window.addEventListener('beforeunload', this.boundBeforeUnloadHandler)
 	},
 	beforeUnmount() {
-		window.removeEventListener('beforeunload', this.handleBeforeUnload)
+		// Clean up event listener with the same bound function reference
+		if (this.boundBeforeUnloadHandler) {
+			window.removeEventListener('beforeunload', this.boundBeforeUnloadHandler)
+			this.boundBeforeUnloadHandler = null
+		}
+		// Clean up any pending timeouts
+		if (this.exportTimeoutId) {
+			clearTimeout(this.exportTimeoutId)
+			this.exportTimeoutId = null
+		}
+		if (this.importTimeoutId) {
+			clearTimeout(this.importTimeoutId)
+			this.importTimeoutId = null
+		}
 	},
 }
 </script>

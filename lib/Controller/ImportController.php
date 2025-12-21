@@ -6,6 +6,7 @@ namespace OCA\IntraVox\Controller;
 use OCA\IntraVox\Service\ImportService;
 use OCA\IntraVox\Service\Import\ConfluenceImporter;
 use OCA\IntraVox\Service\Import\ConfluenceHtmlImporter;
+use OCA\IntraVox\Service\PermissionService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
@@ -21,6 +22,7 @@ class ImportController extends Controller {
         string $appName,
         IRequest $request,
         private ImportService $importService,
+        private PermissionService $permissionService,
         private LoggerInterface $logger,
         private ITempManager $tempManager
     ) {
@@ -29,6 +31,7 @@ class ImportController extends Controller {
 
     /**
      * Import from uploaded ZIP file
+     * Requires admin permissions on the IntraVox folder
      *
      * @NoAdminRequired
      * @NoCSRFRequired
@@ -36,6 +39,15 @@ class ImportController extends Controller {
      */
     public function importZip(string $type = 'file'): JSONResponse {
         try {
+            // Security check: Require admin permissions to import
+            if (!$this->permissionService->isAdmin()) {
+                $this->logger->warning('[ImportController] Unauthorized import attempt');
+                return new JSONResponse(
+                    ['error' => 'Permission denied: Admin access required for import operations'],
+                    Http::STATUS_FORBIDDEN
+                );
+            }
+
             $this->logger->info('Import ZIP endpoint called', [
                 'method' => $this->request->getMethod(),
                 'contentType' => $this->request->getHeader('Content-Type'),
@@ -108,6 +120,7 @@ class ImportController extends Controller {
 
     /**
      * Import from Confluence HTML export ZIP file
+     * Requires admin permissions on the IntraVox folder
      *
      * @NoAdminRequired
      * @NoCSRFRequired
@@ -117,6 +130,15 @@ class ImportController extends Controller {
         $this->logger->info('Confluence HTML import endpoint called');
 
         try {
+            // Security check: Require admin permissions to import
+            if (!$this->permissionService->isAdmin()) {
+                $this->logger->warning('[ImportController] Unauthorized Confluence import attempt');
+                return new JSONResponse(
+                    ['error' => 'Permission denied: Admin access required for import operations'],
+                    Http::STATUS_FORBIDDEN
+                );
+            }
+
             $file = $this->request->getUploadedFile('file');
             $language = $this->request->getParam('language', 'nl');
 

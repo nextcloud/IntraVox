@@ -113,9 +113,13 @@ class PageController extends Controller {
     }
 
     /**
+     * Show page by unique ID
+     *
+     * Note: @PublicPage removed for security - all pages require Nextcloud authentication.
+     * Public sharing feature can be implemented in future with explicit isPublic flag validation.
+     *
      * @NoAdminRequired
      * @NoCSRFRequired
-     * @PublicPage
      */
     public function showByUniqueId(string $uniqueId): TemplateResponse {
         Util::addScript('intravox', 'intravox-main');

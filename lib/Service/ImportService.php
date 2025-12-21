@@ -13,6 +13,8 @@ use Psr\Log\LoggerInterface;
  * Service for importing IntraVox pages and media from ZIP exports
  */
 class ImportService {
+    private const LOG_PREFIX = '[ImportService]';
+
     public function __construct(
         private PageService $pageService,
         private SetupService $setupService,
@@ -39,17 +41,17 @@ class ImportService {
         $tempDir = $this->tempManager->getTemporaryFolder();
         $zipPath = $tempDir . '/import.zip';
 
-        $this->logger->info('Starting import from ZIP');
+        $this->logger->info(self::LOG_PREFIX . ' Starting import from ZIP');
 
         // 1. Write ZIP to temp
         file_put_contents($zipPath, $zipContent);
 
-        // 2. Extract ZIP
+        // 2. Extract ZIP safely (prevent ZIP Slip vulnerability)
         $zip = new \ZipArchive();
         if ($zip->open($zipPath) !== true) {
             throw new \Exception('Invalid ZIP file');
         }
-        $zip->extractTo($tempDir);
+        $this->safeExtractZip($zip, $tempDir);
         $zip->close();
 
         // 3. Read export.json
@@ -104,7 +106,7 @@ class ImportService {
         }
 
         if ($isConfluenceImport) {
-            $this->logger->info('Confluence import detected', ['pages' => count($pages)]);
+            $this->logger->info(self::LOG_PREFIX . ' Confluence import detected', ['pages' => count($pages)]);
         }
 
         $language = $exportData['language'] ?? 'nl';
@@ -139,8 +141,8 @@ class ImportService {
             'pagesSkipped' => 0,
             'mediaFilesImported' => 0,
             'commentsImported' => 0,
-            'navigationImported' => false,
-            'footerImported' => false,
+            'navigationImported' => 0,  // 1 = imported, 0 = not imported (consistent int type)
+            'footerImported' => 0,      // 1 = imported, 0 = not imported (consistent int type)
             'metavoxEnabled' => $hasMetaVoxData,
             'metavoxFieldsImported' => 0,
             'metavoxFieldsSkipped' => 0,
@@ -151,9 +153,9 @@ class ImportService {
         if (!empty($exportData['navigation'])) {
             try {
                 $this->navigationService->saveNavigation($exportData['navigation'], $language);
-                $stats['navigationImported'] = true;
+                $stats['navigationImported'] = 1;
             } catch (\Exception $e) {
-                $this->logger->warning('Failed to import navigation: ' . $e->getMessage());
+                $this->logger->warning(self::LOG_PREFIX . ' Failed to import navigation: ' . $e->getMessage());
             }
         }
 
@@ -163,10 +165,10 @@ class ImportService {
                 $footerContent = $exportData['footer']['content'] ?? '';
                 if (!empty($footerContent)) {
                     $this->footerService->saveFooter($footerContent);
-                    $stats['footerImported'] = true;
+                    $stats['footerImported'] = 1;
                 }
             } catch (\Exception $e) {
-                $this->logger->warning('Failed to import footer: ' . $e->getMessage());
+                $this->logger->warning(self::LOG_PREFIX . ' Failed to import footer: ' . $e->getMessage());
             }
         }
 
@@ -391,7 +393,7 @@ class ImportService {
         // Cleanup
         $this->cleanupTempDir($tempDir);
 
-        $this->logger->info('Import complete', $stats);
+        $this->logger->info(self::LOG_PREFIX . ' Import complete', $stats);
 
         return $stats;
     }
@@ -1503,6 +1505,86 @@ class ImportService {
                 'error' => $e->getMessage()
             ]);
             return null;
+        }
+    }
+
+    /**
+     * Safely extract ZIP file to destination directory
+     * Prevents ZIP Slip vulnerability (CWE-22) by validating all paths
+     *
+     * @param \ZipArchive $zip Opened ZIP archive
+     * @param string $destDir Destination directory (must exist)
+     * @throws \Exception If path traversal is detected
+     */
+    private function safeExtractZip(\ZipArchive $zip, string $destDir): void {
+        // Get the real path of destination directory
+        $destDir = realpath($destDir);
+        if ($destDir === false) {
+            throw new \Exception('Destination directory does not exist');
+        }
+        $destDir = rtrim($destDir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+
+        for ($i = 0; $i < $zip->numFiles; $i++) {
+            $filename = $zip->getNameIndex($i);
+
+            // Skip empty filenames
+            if (empty($filename)) {
+                continue;
+            }
+
+            // Skip __MACOSX and other hidden files
+            if (strpos($filename, '__MACOSX') !== false || strpos($filename, '._') === 0) {
+                continue;
+            }
+
+            // Build target path
+            $targetPath = $destDir . $filename;
+
+            // Check if this is a directory entry
+            $isDirectory = substr($filename, -1) === '/';
+
+            if ($isDirectory) {
+                // Create directory if it doesn't exist
+                if (!is_dir($targetPath)) {
+                    if (!mkdir($targetPath, 0750, true)) {
+                        throw new \Exception('Failed to create directory: ' . $filename);
+                    }
+                }
+            } else {
+                // For files, verify the path is within destination
+                // First, ensure parent directory exists
+                $parentDir = dirname($targetPath);
+                if (!is_dir($parentDir)) {
+                    if (!mkdir($parentDir, 0750, true)) {
+                        throw new \Exception('Failed to create parent directory for: ' . $filename);
+                    }
+                }
+
+                // Get real path of parent directory and verify it's within destDir
+                $realParentDir = realpath($parentDir);
+                if ($realParentDir === false || strpos($realParentDir . DIRECTORY_SEPARATOR, $destDir) !== 0) {
+                    $this->logger->error(self::LOG_PREFIX . ' ZIP Slip attack detected', [
+                        'filename' => $filename,
+                        'targetPath' => $targetPath,
+                        'realParentDir' => $realParentDir,
+                        'destDir' => $destDir
+                    ]);
+                    throw new \Exception('Zip Slip detected: Invalid path in ZIP file');
+                }
+
+                // Extract file content and write it
+                $content = $zip->getFromIndex($i);
+                if ($content === false) {
+                    $this->logger->warning(self::LOG_PREFIX . ' Failed to read file from ZIP', [
+                        'filename' => $filename
+                    ]);
+                    continue;
+                }
+
+                if (file_put_contents($targetPath, $content) === false) {
+                    throw new \Exception('Failed to write file: ' . $filename);
+                }
+            }
         }
     }
 

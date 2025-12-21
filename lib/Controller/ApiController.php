@@ -81,6 +81,64 @@ class ApiController extends Controller {
     }
 
     /**
+     * Validate parentPageId parameter for import operations
+     *
+     * Security: Prevents IDOR attacks by validating:
+     * 1. Parent page exists
+     * 2. User has write permission on parent
+     * 3. Parent is in the same language (groupfolder)
+     *
+     * @param string $parentPageId The parent page unique ID
+     * @param string $targetLanguage The target language for import
+     * @return array{valid: bool, error?: string, page?: array} Validation result
+     */
+    private function validateParentPageId(string $parentPageId, string $targetLanguage): array {
+        try {
+            $parentPage = $this->pageService->getPage($parentPageId);
+        } catch (\Exception $e) {
+            $this->logger->warning('[ApiController] Parent page validation failed: page not found', [
+                'parentPageId' => $parentPageId,
+                'error' => $e->getMessage()
+            ]);
+            return [
+                'valid' => false,
+                'error' => 'Parent page not found'
+            ];
+        }
+
+        // Check write permission
+        if (!($parentPage['permissions']['canWrite'] ?? false)) {
+            $this->logger->warning('[ApiController] Parent page validation failed: no write permission', [
+                'parentPageId' => $parentPageId,
+                'targetLanguage' => $targetLanguage
+            ]);
+            return [
+                'valid' => false,
+                'error' => 'No write permission for parent page'
+            ];
+        }
+
+        // Check same language (prevents cross-groupfolder imports)
+        $parentLanguage = $parentPage['language'] ?? null;
+        if ($parentLanguage !== $targetLanguage) {
+            $this->logger->warning('[ApiController] Parent page validation failed: language mismatch', [
+                'parentPageId' => $parentPageId,
+                'parentLanguage' => $parentLanguage,
+                'targetLanguage' => $targetLanguage
+            ]);
+            return [
+                'valid' => false,
+                'error' => 'Parent page must be in the same language as import target'
+            ];
+        }
+
+        return [
+            'valid' => true,
+            'page' => $parentPage
+        ];
+    }
+
+    /**
      * @NoAdminRequired
      * @NoCSRFRequired
      */
@@ -1267,6 +1325,17 @@ class ApiController extends Controller {
                 );
             }
 
+            // Security: Validate parentPageId before import (IDOR prevention)
+            if ($parentPageId) {
+                $validation = $this->validateParentPageId($parentPageId, $language);
+                if (!$validation['valid']) {
+                    return new JSONResponse(
+                        ['error' => $validation['error']],
+                        Http::STATUS_BAD_REQUEST
+                    );
+                }
+            }
+
             $this->logger->info('Starting Confluence HTML import', [
                 'filename' => $file['name'],
                 'size' => $file['size'],
@@ -1431,25 +1500,62 @@ class ApiController extends Controller {
     }
 
     /**
-     * Sanitize file path - prevent directory traversal
+     * Sanitize file path - prevent directory traversal and other path attacks
+     *
+     * Security checks:
+     * - Null byte injection
+     * - Unicode normalization (NFD/NFC attacks)
+     * - Directory traversal (..)
+     * - Backslash conversion
+     * - Hidden files (starting with .)
+     * - Executable file extensions
+     *
      * @param string $path User-provided path
      * @return string Safe path
      * @throws \InvalidArgumentException if path is malicious
      */
     private function sanitizePath(string $path): string {
-        // Remove leading/trailing slashes
-        $path = trim($path, '/');
-
-        // Detect directory traversal attempts
-        if (strpos($path, '..') !== false || strpos($path, '\\') !== false) {
-            throw new \InvalidArgumentException('Invalid path');
+        // 1. Check for null bytes (can bypass extension checks)
+        if (strpos($path, "\0") !== false) {
+            throw new \InvalidArgumentException('Null bytes not allowed in path');
         }
 
-        // Split into segments and validate each
+        // 2. Unicode normalization (prevent NFD/NFC attacks)
+        if (class_exists('Normalizer')) {
+            $normalized = \Normalizer::normalize($path, \Normalizer::FORM_C);
+            if ($normalized === false) {
+                throw new \InvalidArgumentException('Invalid unicode sequence in path');
+            }
+            $path = $normalized;
+        }
+
+        // 3. Convert backslashes to forward slashes
+        $path = str_replace('\\', '/', $path);
+
+        // 4. Remove leading/trailing slashes
+        $path = trim($path, '/');
+
+        // 5. Detect directory traversal attempts
+        if (strpos($path, '..') !== false) {
+            throw new \InvalidArgumentException('Path traversal not allowed');
+        }
+
+        // 6. Split into segments and validate each
         $segments = explode('/', $path);
         foreach ($segments as $segment) {
+            // Empty segments (double slashes)
             if (empty($segment) || $segment === '.' || $segment === '..') {
                 throw new \InvalidArgumentException('Invalid path segment');
+            }
+
+            // Hidden files (starting with dot)
+            if (substr($segment, 0, 1) === '.') {
+                throw new \InvalidArgumentException('Hidden files not allowed');
+            }
+
+            // Block executable PHP extensions
+            if (preg_match('/\.(php|phtml|php[345]|phar|phps|pht)$/i', $segment)) {
+                throw new \InvalidArgumentException('Executable files not allowed');
             }
         }
 

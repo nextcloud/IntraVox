@@ -14,9 +14,17 @@ use Psr\Log\LoggerInterface;
  * Service for exporting IntraVox pages, navigation, and engagement data
  */
 class ExportService {
+    private const LOG_PREFIX = '[ExportService]';
+
     private ?bool $metaVoxAvailable = null;
     private ?string $metaVoxVersion = null;
     private $metaVoxFieldService = null;
+
+    /** @var array Request-level cache for pages per language */
+    private array $pagesCache = [];
+
+    /** @var array Request-level cache for file ID mappings */
+    private array $fileIdMappingCache = [];
 
     public function __construct(
         private PageService $pageService,
@@ -38,7 +46,7 @@ class ExportService {
      * @return array Export data
      */
     public function exportLanguage(string $language, bool $includeComments = true): array {
-        $this->logger->info('Starting export for language: ' . $language);
+        $this->logger->info(self::LOG_PREFIX . ' Starting export for language: ' . $language);
 
         // Get pages from language folder directly via SetupService
         $pages = $this->getPagesFromLanguageFolder($language);
@@ -111,7 +119,7 @@ class ExportService {
             $export['pages'][] = $data;
         }
 
-        $this->logger->info('Export complete', [
+        $this->logger->info(self::LOG_PREFIX . ' Export complete', [
             'pages' => count($export['pages']),
             'metavoxEnabled' => isset($export['metavox'])
         ]);
@@ -120,12 +128,17 @@ class ExportService {
     }
 
     /**
-     * Get all pages from a specific language folder
+     * Get all pages from a specific language folder (with request-level caching)
      *
      * @param string $language Language code
      * @return array Pages with full content
      */
     private function getPagesFromLanguageFolder(string $language): array {
+        // Return cached result if available
+        if (isset($this->pagesCache[$language])) {
+            return $this->pagesCache[$language];
+        }
+
         $pages = [];
 
         try {
@@ -165,6 +178,9 @@ class ExportService {
         } catch (\Exception $e) {
             $this->logger->error('Failed to get pages from language folder: ' . $e->getMessage());
         }
+
+        // Cache the result
+        $this->pagesCache[$language] = $pages;
 
         return $pages;
     }
@@ -539,7 +555,7 @@ class ExportService {
     }
 
     /**
-     * Get Files storage file ID from groupfolder file ID
+     * Get Files storage file ID from groupfolder file ID (with caching)
      *
      * MetaVox stores metadata using file IDs from user's Files view (storage type different from groupfolder mount).
      * This method maps a groupfolder file ID to its corresponding Files storage file ID.
@@ -549,6 +565,12 @@ class ExportService {
      * @return int|null Files storage file ID, or null if not found
      */
     private function getFilesStorageFileId(int $groupfolderFileId, int $groupfolderId): ?int {
+        // Check cache first
+        $cacheKey = $groupfolderFileId . ':' . $groupfolderId;
+        if (isset($this->fileIdMappingCache[$cacheKey])) {
+            return $this->fileIdMappingCache[$cacheKey];
+        }
+
         try {
             // Get the file path from the groupfolder file ID
             $qb = $this->connection->getQueryBuilder();
@@ -561,6 +583,7 @@ class ExportService {
             $result->closeCursor();
 
             if (!$row || empty($row['path'])) {
+                $this->fileIdMappingCache[$cacheKey] = null;
                 return null;
             }
 
@@ -571,10 +594,7 @@ class ExportService {
             // We need: files/{language}/...
             $pattern = '__groupfolders/' . $groupfolderId . '/';
             if (strpos($groupfolderPath, $pattern) !== 0) {
-                $this->logger->debug('Path does not match groupfolder pattern', [
-                    'path' => $groupfolderPath,
-                    'pattern' => $pattern
-                ]);
+                $this->fileIdMappingCache[$cacheKey] = null;
                 return null;
             }
 
@@ -592,15 +612,12 @@ class ExportService {
             $result2->closeCursor();
 
             if ($row2 && isset($row2['fileid'])) {
-                $this->logger->debug('Mapped groupfolder file ID to Files storage ID', [
-                    'groupfolderFileId' => $groupfolderFileId,
-                    'groupfolderPath' => $groupfolderPath,
-                    'relativePath' => $relativePath,
-                    'filesStorageFileId' => $row2['fileid']
-                ]);
-                return (int)$row2['fileid'];
+                $filesStorageId = (int)$row2['fileid'];
+                $this->fileIdMappingCache[$cacheKey] = $filesStorageId;
+                return $filesStorageId;
             }
 
+            $this->fileIdMappingCache[$cacheKey] = null;
             return null;
 
         } catch (\Exception $e) {
@@ -608,7 +625,98 @@ class ExportService {
                 'groupfolderFileId' => $groupfolderFileId,
                 'error' => $e->getMessage()
             ]);
+            $this->fileIdMappingCache[$cacheKey] = null;
             return null;
+        }
+    }
+
+    /**
+     * Batch load file ID mappings for multiple groupfolder file IDs
+     * Reduces N+1 queries to 2 batch queries
+     *
+     * @param array $groupfolderFileIds Array of groupfolder file IDs
+     * @param int $groupfolderId Groupfolder ID
+     */
+    private function preloadFileIdMappings(array $groupfolderFileIds, int $groupfolderId): void {
+        if (empty($groupfolderFileIds)) {
+            return;
+        }
+
+        // Filter out already cached IDs
+        $uncachedIds = [];
+        foreach ($groupfolderFileIds as $id) {
+            $cacheKey = $id . ':' . $groupfolderId;
+            if (!isset($this->fileIdMappingCache[$cacheKey])) {
+                $uncachedIds[] = $id;
+            }
+        }
+
+        if (empty($uncachedIds)) {
+            return;
+        }
+
+        $pattern = '__groupfolders/' . $groupfolderId . '/';
+
+        try {
+            // Step 1: Batch get paths for all file IDs
+            $qb = $this->connection->getQueryBuilder();
+            $qb->select('fileid', 'path')
+               ->from('filecache')
+               ->where($qb->expr()->in('fileid', $qb->createNamedParameter($uncachedIds, \Doctrine\DBAL\Connection::PARAM_INT_ARRAY)));
+
+            $result = $qb->executeQuery();
+            $pathsByFileId = [];
+            $relativePaths = [];
+
+            while ($row = $result->fetch()) {
+                $fileId = (int)$row['fileid'];
+                $path = $row['path'];
+
+                if (strpos($path, $pattern) === 0) {
+                    $relativePath = substr($path, strlen($pattern));
+                    $pathsByFileId[$fileId] = $relativePath;
+                    $relativePaths[] = $relativePath;
+                } else {
+                    // Mark as not found
+                    $cacheKey = $fileId . ':' . $groupfolderId;
+                    $this->fileIdMappingCache[$cacheKey] = null;
+                }
+            }
+            $result->closeCursor();
+
+            if (empty($relativePaths)) {
+                return;
+            }
+
+            // Step 2: Batch get Files storage IDs for all relative paths
+            $qb2 = $this->connection->getQueryBuilder();
+            $qb2->select('fileid', 'path')
+                ->from('filecache')
+                ->where($qb2->expr()->in('path', $qb2->createNamedParameter($relativePaths, \Doctrine\DBAL\Connection::PARAM_STR_ARRAY)));
+
+            $result2 = $qb2->executeQuery();
+            $filesIdsByPath = [];
+
+            while ($row = $result2->fetch()) {
+                $filesIdsByPath[$row['path']] = (int)$row['fileid'];
+            }
+            $result2->closeCursor();
+
+            // Step 3: Map results back to cache
+            foreach ($pathsByFileId as $groupfolderFileId => $relativePath) {
+                $cacheKey = $groupfolderFileId . ':' . $groupfolderId;
+                $this->fileIdMappingCache[$cacheKey] = $filesIdsByPath[$relativePath] ?? null;
+            }
+
+            $this->logger->debug('Preloaded file ID mappings', [
+                'requested' => count($uncachedIds),
+                'mapped' => count(array_filter($this->fileIdMappingCache))
+            ]);
+
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to preload file ID mappings', [
+                'error' => $e->getMessage()
+            ]);
         }
     }
 
@@ -636,6 +744,20 @@ class ExportService {
             'pageCount' => count($pages),
             'groupfolderId' => $groupfolderId
         ]);
+
+        // Collect all file IDs for batch preloading (performance optimization)
+        $allFileIds = [];
+        foreach ($pages as $page) {
+            if (isset($page['_fileId'])) {
+                $allFileIds[] = $page['_fileId'];
+            }
+            if (isset($page['_folderFileId'])) {
+                $allFileIds[] = $page['_folderFileId'];
+            }
+        }
+
+        // Batch preload file ID mappings (reduces N+1 to 2 queries)
+        $this->preloadFileIdMappings($allFileIds, $groupfolderId);
 
         $successCount = 0;
 

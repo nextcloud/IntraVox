@@ -438,7 +438,7 @@ export default {
 }
 
 .menubar-button.is-active {
-  background: var(--color-primary-element-light);
+  background: var(--color-primary-element);
   border-color: var(--color-primary-element);
   color: var(--color-primary-element-text);
 }
@@ -483,7 +483,7 @@ export default {
 }
 
 .heading-menu-item.is-active {
-  background: var(--color-primary-element-light);
+  background: var(--color-primary-element);
   color: var(--color-primary-element-text);
   font-weight: 600;
 }
@@ -566,15 +566,15 @@ export default {
   background: transparent;
 }
 
-/* Text Selection */
+/* Text Selection - uses CSS variables from parent Widget for contrast */
 .editor-content :deep(.ProseMirror ::selection) {
-  background: var(--color-primary-element-light);
-  color: var(--color-main-text);
+  background: var(--widget-selection-bg, var(--color-primary-element-light));
+  color: var(--widget-selection-text, var(--color-main-text));
 }
 
 .editor-content :deep(.ProseMirror ::-moz-selection) {
-  background: var(--color-primary-element-light);
-  color: var(--color-main-text);
+  background: var(--widget-selection-bg, var(--color-primary-element-light));
+  color: var(--widget-selection-text, var(--color-main-text));
 }
 
 /* Placeholder */
@@ -658,13 +658,15 @@ export default {
   color: inherit !important;
 }
 
+/* Links - uses CSS variables from parent Widget for contrast */
 .editor-content :deep(.ProseMirror a) {
-  color: var(--color-primary);
+  color: var(--widget-link-color, var(--color-primary-element));
   text-decoration: underline;
   cursor: pointer;
 }
 
 .editor-content :deep(.ProseMirror a:hover) {
+  color: var(--widget-link-hover-color, var(--color-primary-element-hover));
   text-decoration: none;
 }
 

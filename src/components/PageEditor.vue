@@ -1335,7 +1335,7 @@ export default {
   margin-bottom: 16px;
   border: 2px dashed var(--color-border-dark);
   border-radius: var(--border-radius-large);
-  background-color: var(--color-background-dark);
+  background-color: transparent;
   box-sizing: border-box;
 }
 

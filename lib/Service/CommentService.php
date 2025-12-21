@@ -83,6 +83,22 @@ class CommentService {
     }
 
     /**
+     * Get the page ID (objectId) that a comment belongs to
+     * Used for IDOR prevention - ensures user has access to page before operating on comment
+     *
+     * @param string $commentId The comment ID
+     * @return string|null The page uniqueId, or null if comment not found
+     */
+    public function getCommentPageId(string $commentId): ?string {
+        try {
+            $comment = $this->commentsManager->get($commentId);
+            return $comment->getObjectId();
+        } catch (CommentNotFoundException $e) {
+            return null;
+        }
+    }
+
+    /**
      * Create a new comment on a page
      *
      * @param string $pageId The uniqueId of the page

@@ -15,6 +15,12 @@ class MetaVoxImportService {
 	private ?string $metaVoxVersion = null;
 	private $fieldService = null;
 
+	/** @var array|null Cached field definitions (request-level cache) */
+	private ?array $cachedFields = null;
+
+	/** @var array|null Cached fields indexed by name */
+	private ?array $cachedFieldsByName = null;
+
 	public function __construct(
 		private IAppManager $appManager,
 		private LoggerInterface $logger
@@ -117,6 +123,42 @@ class MetaVoxImportService {
 	}
 
 	/**
+	 * Get all fields with request-level caching
+	 * Prevents N+1 queries when importing multiple pages
+	 *
+	 * @return array All field definitions
+	 */
+	private function getCachedFields(): array {
+		if ($this->cachedFields === null) {
+			$this->cachedFields = $this->fieldService->getAllFields();
+		}
+		return $this->cachedFields;
+	}
+
+	/**
+	 * Get fields indexed by name with request-level caching
+	 *
+	 * @return array Fields indexed by field_name
+	 */
+	private function getCachedFieldsByName(): array {
+		if ($this->cachedFieldsByName === null) {
+			$this->cachedFieldsByName = [];
+			foreach ($this->getCachedFields() as $field) {
+				$this->cachedFieldsByName[$field['field_name']] = $field;
+			}
+		}
+		return $this->cachedFieldsByName;
+	}
+
+	/**
+	 * Clear the field cache (call after creating/updating fields)
+	 */
+	public function clearFieldCache(): void {
+		$this->cachedFields = null;
+		$this->cachedFieldsByName = null;
+	}
+
+	/**
 	 * Validate and prepare field definitions for import
 	 *
 	 * @param array $exportFieldDefinitions Field definitions from export
@@ -132,12 +174,8 @@ class MetaVoxImportService {
 		}
 
 		try {
-			// Get current field definitions
-			$currentFields = $this->fieldService->getAllFields();
-			$currentFieldsByName = [];
-			foreach ($currentFields as $field) {
-				$currentFieldsByName[$field['field_name']] = $field;
-			}
+			// Get current field definitions (cached)
+			$currentFieldsByName = $this->getCachedFieldsByName();
 
 			$result = [
 				'fieldsToCreate' => [],
@@ -213,6 +251,11 @@ class MetaVoxImportService {
 			}
 		}
 
+		// Clear cache after creating new fields
+		if (!empty($result['created'])) {
+			$this->clearFieldCache();
+		}
+
 		return $result;
 	}
 
@@ -232,12 +275,8 @@ class MetaVoxImportService {
 		$stats = ['imported' => 0, 'skipped' => 0, 'failed' => 0];
 
 		try {
-			// Get current field definitions
-			$fields = $this->fieldService->getAllFields();
-			$fieldsByName = [];
-			foreach ($fields as $field) {
-				$fieldsByName[$field['field_name']] = $field;
-			}
+			// Get current field definitions (cached)
+			$fieldsByName = $this->getCachedFieldsByName();
 
 			foreach ($metadata as $metadataItem) {
 				$fieldName = $metadataItem['field_name'];
@@ -300,15 +339,9 @@ class MetaVoxImportService {
 		}
 
 		try {
-			// Get field definition
-			$fields = $this->fieldService->getAllFields();
-			$field = null;
-			foreach ($fields as $f) {
-				if ($f['field_name'] === $fieldName) {
-					$field = $f;
-					break;
-				}
-			}
+			// Get field definition (cached - prevents N+1 queries)
+			$fieldsByName = $this->getCachedFieldsByName();
+			$field = $fieldsByName[$fieldName] ?? null;
 
 			if (!$field) {
 				$this->logger->warning('Field not found during import', [
@@ -327,10 +360,11 @@ class MetaVoxImportService {
 			);
 
 			if ($success) {
+				// Log field import without exposing potentially sensitive values
 				$this->logger->debug('Imported field value', [
 					'field_name' => $fieldName,
 					'file_id' => $fileId,
-					'value' => $value
+					'value_length' => is_string($value) ? strlen($value) : (is_array($value) ? count($value) : 1)
 				]);
 			}
 

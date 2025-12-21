@@ -417,7 +417,8 @@
             <div v-else class="preview-container" style="height:200px;">
               <iframe
                 :src="embedUrl"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+                allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+                sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
                 allowfullscreen
                 referrerpolicy="strict-origin-when-cross-origin"
                 style="width:100%;height:100%;border:none;"
