@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.1] - 2025-12-21 - Demo Data Improvements
+
+### Changed
+- **English Demo Homepage**: Updated structure to match Dutch homepage layout
+  - Consistent sidebar with "Get Started" and "Resources" sections
+  - Same visual layout across all language versions
+
 ## [0.8.0] - 2025-12-21 - Export/Import, Security & Editor Improvements
 
 ### Added
