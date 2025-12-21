@@ -1,0 +1,12 @@
+# Exclude internal documentation from release archives (GitHub releases)
+# These files are still tracked in git and pushed to all remotes,
+# but won't be included in downloaded release tarballs/zips
+docs/internal/ export-ignore
+
+# Also exclude development files from releases
+.claude/ export-ignore
+.github/ export-ignore
+*.md export-ignore
+!README.md
+!CHANGELOG.md
+!LICENSE

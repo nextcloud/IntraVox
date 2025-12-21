@@ -59,6 +59,3 @@ deploy.sh
 # Claude Code configuration
 .claude/
 CLAUDE.md
-
-# Internal documentation (for Gitea only, not GitHub)
-docs/internal/
