@@ -30,23 +30,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Hierarchical folder structure with subfolder navigation
   - MediaPicker with 3 tabs: Upload, Page media, Shared library
 - **SVG Image Support**: Upload and display SVG files with automatic sanitization
-- **Video Widget**: Embed videos from YouTube, Vimeo, PeerTube and more
-  - Domain whitelist system for security
-  - Admin configurable video services
-
-#### User Engagement
-- **Emoji Reactions**: React to pages with emoji (Confluence-style)
-- **Comments System**: Threaded comments with replies on pages
-- **Comment Reactions**: Emoji reactions on individual comments
-- **Engagement Settings**: Global and per-page control over reactions/comments
 
 #### Editor Improvements
 - **Row Drag-and-Drop**: Reorder rows by dragging the handle in the row toolbar
 - **Header Row Transparency**: Default header row background is now transparent
 
 #### Other Features
-- **Image Links**: Images can now link to pages or external URLs
-- **Local Video Upload**: Upload MP4/WebM/OGG videos to IntraVox
 - **Nextcloud Unified Search**: IntraVox pages searchable via Ctrl+K
 - **Version History**: View and restore previous page versions
 
@@ -61,8 +50,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Export/Import reliability with proper page hierarchy handling
 - Navigation dropdown visibility on all screen sizes
-- Comment import with original authors preserved
-- Page reactions and comment reactions import
 - Confluence import with page ordering
 
 ### Security
@@ -72,8 +59,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **ZIP Slip Prevention**: Secure ZIP extraction with path validation
 - **Temp File Security**: Cryptographically secure filenames with restrictive permissions
 - **Import Authorization**: Permission checks before import operations
-- **Comment IDOR Prevention**: Users can only edit/delete their own comments
-- **iframe Sandboxing**: Restricted permissions for embedded video content
 - **Sensitive Log Masking**: PII and credentials excluded from logs
 
 ## [0.7.1] - 2025-12-13 - Translation Fixes
