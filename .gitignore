@@ -43,6 +43,8 @@ package-lock.json
 create-release.sh
 deploy-demo-data.sh
 deploy.sh
+deploy-*.sh
+check-*.sh
 
 # Code signing certificates (private keys must never be committed!)
 *.key
