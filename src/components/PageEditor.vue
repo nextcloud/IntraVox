@@ -194,12 +194,24 @@
       </div>
 
       <!-- Page Grid -->
-      <template v-for="(row, rowIndex) in localPage.layout.rows" :key="rowIndex">
+      <draggable
+        :list="localPage.layout.rows"
+        :animation="200"
+        item-key="id"
+        handle=".row-drag-handle"
+        @end="onRowDragEnd"
+        class="rows-container"
+      >
+        <template #item="{ element: row, index: rowIndex }">
+    <div class="row-wrapper">
     <div
       class="page-row editable"
       :style="getRowStyle(row)"
     >
       <div class="row-controls">
+        <div class="row-drag-handle" :aria-label="t('Drag to reorder row')">
+          <DragVertical :size="20" />
+        </div>
         <label style="margin-right: 8px;">{{ t('Row columns:') }}</label>
         <button
           v-for="n in 5"
@@ -311,7 +323,9 @@
         {{ t('Insert Row') }}
       </NcButton>
     </div>
-    </template>
+    </div>
+        </template>
+      </draggable>
 
     <!-- Widget Picker Modal -->
     <WidgetPicker
@@ -497,6 +511,7 @@ export default {
       targetColumn: null,
       targetSideColumn: null, // 'left' or 'right' when adding to side column
       nextWidgetId: 1,
+      nextRowId: 1,
       columnArrays: {}, // Store separate arrays per row/column
       sideColumnWidgets: { left: [], right: [] }, // Separate arrays for side columns
       headerRowWidgets: [], // Array for header row widgets
@@ -539,6 +554,8 @@ export default {
     }
   },
   mounted() {
+    // Ensure all rows have unique IDs for drag-and-drop
+    this.initializeRowIds();
     // Ensure all widgets have unique IDs
     this.initializeWidgetIds();
     this.initializeColumnArrays();
@@ -549,6 +566,39 @@ export default {
   methods: {
     t(key, vars = {}) {
       return t('intravox', key, vars);
+    },
+    initializeRowIds() {
+      // Ensure all rows have unique IDs for drag-and-drop
+      let maxRowId = 0;
+      this.localPage.layout.rows.forEach(row => {
+        if (row.id) {
+          const match = row.id.match(/^row-(\d+)$/);
+          if (match) {
+            maxRowId = Math.max(maxRowId, parseInt(match[1], 10));
+          }
+        }
+      });
+
+      this.nextRowId = maxRowId + 1;
+
+      this.localPage.layout.rows.forEach(row => {
+        if (!row.id) {
+          row.id = `row-${this.nextRowId++}`;
+        }
+      });
+    },
+    generateRowId() {
+      if (!this.nextRowId) {
+        this.nextRowId = 1;
+      }
+      return `row-${this.nextRowId++}`;
+    },
+    onRowDragEnd() {
+      // After drag ends, reinitialize column arrays and emit update
+      this.$nextTick(() => {
+        this.initializeColumnArrays();
+        this.$emit('update', this.localPage);
+      });
     },
     getRowStyle(row) {
       const style = {};
@@ -770,6 +820,7 @@ export default {
     },
     addRow() {
       this.localPage.layout.rows.push({
+        id: this.generateRowId(),
         columns: 1,
         widgets: [],
         backgroundColor: ''
@@ -780,6 +831,7 @@ export default {
     insertRow(index) {
       // Insert a new row at the specified index
       this.localPage.layout.rows.splice(index, 0, {
+        id: this.generateRowId(),
         columns: 1,
         widgets: [],
         backgroundColor: ''
@@ -1543,6 +1595,51 @@ export default {
   background: transparent;
   border-radius: var(--border-radius-large);
   border: 1px solid var(--color-border);
+}
+
+/* Row drag handle */
+.row-drag-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 8px;
+  margin-right: 8px;
+  cursor: grab;
+  color: var(--color-text-maxcontrast);
+  border-radius: var(--border-radius);
+  transition: all 0.15s ease;
+}
+
+.row-drag-handle:hover {
+  background: var(--color-background-hover);
+  color: var(--color-main-text);
+}
+
+.row-drag-handle:active {
+  cursor: grabbing;
+  background: var(--color-primary-element-light);
+}
+
+/* Rows container for drag-and-drop */
+.rows-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.row-wrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Drag ghost styling */
+.sortable-ghost .page-row {
+  opacity: 0.5;
+  background: var(--color-primary-element-light);
+}
+
+.sortable-drag .page-row {
+  opacity: 1;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .page-grid {

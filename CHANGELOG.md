@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.8.0] - 2025-12-20 - Export/Import, Media & MetaVox Integration
+## [0.8.0] - 2025-12-21 - Export/Import, Security & Editor Improvements
 
 ### Added
 
@@ -40,6 +40,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Comment Reactions**: Emoji reactions on individual comments
 - **Engagement Settings**: Global and per-page control over reactions/comments
 
+#### Editor Improvements
+- **Row Drag-and-Drop**: Reorder rows by dragging the handle in the row toolbar
+- **Header Row Transparency**: Default header row background is now transparent
+
 #### Other Features
 - **Image Links**: Images can now link to pages or external URLs
 - **Local Video Upload**: Upload MP4/WebM/OGG videos to IntraVox
@@ -51,6 +55,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Navigation Scrolling**: Horizontal scrollbar for long navigation menus
 - **Performance**: Smart cache refresh, localStorage persistence, lazy loading sidebar
 - **Admin Interface**: Tabbed navigation for export/import/settings
+- **Toolbar Contrast**: Improved visibility for active toolbar buttons (WCAG compliant)
+- **Widget Text Contrast**: Dynamic link and selection colors based on row background
 
 ### Fixed
 - Export/Import reliability with proper page hierarchy handling
@@ -58,6 +64,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Comment import with original authors preserved
 - Page reactions and comment reactions import
 - Confluence import with page ordering
+
+### Security
+- **@PublicPage Removal**: All pages now require Nextcloud authentication
+- **parentPageId Validation**: Pages can only be created within authorized groupfolders
+- **Enhanced Path Sanitization**: Improved protection against path traversal attacks
+- **ZIP Slip Prevention**: Secure ZIP extraction with path validation
+- **Temp File Security**: Cryptographically secure filenames with restrictive permissions
+- **Import Authorization**: Permission checks before import operations
+- **Comment IDOR Prevention**: Users can only edit/delete their own comments
+- **iframe Sandboxing**: Restricted permissions for embedded video content
+- **Sensitive Log Masking**: PII and credentials excluded from logs
 
 ## [0.7.1] - 2025-12-13 - Translation Fixes
 

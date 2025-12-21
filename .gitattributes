@@ -6,7 +6,3 @@ docs/internal/ export-ignore
 # Also exclude development files from releases
 .claude/ export-ignore
 .github/ export-ignore
-*.md export-ignore
-!README.md
-!CHANGELOG.md
-!LICENSE
