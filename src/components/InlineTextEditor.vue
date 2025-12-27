@@ -1,7 +1,8 @@
 <template>
   <div class="inline-text-editor" :class="{ 'is-focused': isFocused }">
     <!-- Floating Toolbar -->
-    <div v-if="editor && isFocused && showToolbar" class="text-menubar">
+    <div v-if="editor && isFocused && showToolbar" class="text-menubar" :class="{ 'text-menubar--compact': compact }">
+      <!-- Text Formatting - Always visible -->
       <button
         type="button"
         @mousedown.prevent="editor.chain().focus().toggleBold().run()"
@@ -9,7 +10,7 @@
         :title="t('Bold (Ctrl+B)')"
         class="menubar-button"
       >
-        <strong>B</strong>
+        <FormatBold :size="18" />
       </button>
       <button
         type="button"
@@ -18,7 +19,7 @@
         :title="t('Italic (Ctrl+I)')"
         class="menubar-button"
       >
-        <em>I</em>
+        <FormatItalic :size="18" />
       </button>
       <button
         type="button"
@@ -27,70 +28,271 @@
         :title="t('Underline (Ctrl+U)')"
         class="menubar-button"
       >
-        <u>U</u>
+        <FormatUnderline :size="18" />
       </button>
-      <button
-        type="button"
-        @mousedown.prevent="editor.chain().focus().toggleStrike().run()"
-        :class="{ 'is-active': editor.isActive('strike') }"
-        :title="t('Strikethrough')"
-        class="menubar-button"
-      >
-        <s>S</s>
-      </button>
-      <span class="menubar-divider"></span>
-      <!-- Heading Dropdown Button -->
-      <div class="heading-dropdown">
+
+      <!-- COMPACT MODE: "More" dropdown with all other options -->
+      <div v-if="compact" class="more-dropdown">
         <button
           type="button"
-          @mousedown.prevent="toggleHeadingMenu"
-          class="menubar-button heading-button"
-          :title="t('Heading')"
+          @mousedown.prevent="toggleMoreMenu"
+          :title="t('More options')"
+          class="menubar-button"
         >
-          {{ getCurrentHeadingLabel() }}
+          <DotsHorizontal :size="18" />
         </button>
-        <div v-if="showHeadingMenu" class="heading-menu">
+        <div v-if="showMoreMenu" class="dropdown-menu more-menu">
+          <!-- Strikethrough -->
           <button
-            v-for="level in [0, 1, 2, 3, 4, 5, 6]"
+            type="button"
+            @mousedown.prevent="editor.chain().focus().toggleStrike().run(); showMoreMenu = false"
+            :class="{ 'is-active': editor.isActive('strike') }"
+            class="dropdown-menu-item"
+          >
+            <FormatStrikethrough :size="16" />
+            {{ t('Strikethrough') }}
+          </button>
+          <div class="dropdown-divider"></div>
+          <!-- Headings -->
+          <button
+            v-for="level in [0, 1, 2, 3, 4]"
             :key="level"
             type="button"
-            @mousedown.prevent="setHeadingLevel(level)"
+            @mousedown.prevent="setHeadingLevel(level); showMoreMenu = false"
             :class="{ 'is-active': isHeadingLevel(level) }"
-            class="heading-menu-item"
+            class="dropdown-menu-item"
           >
             {{ getHeadingLabel(level) }}
           </button>
+          <div class="dropdown-divider"></div>
+          <!-- Lists -->
+          <button
+            type="button"
+            @mousedown.prevent="editor.chain().focus().toggleBulletList().run(); showMoreMenu = false"
+            :class="{ 'is-active': editor.isActive('bulletList') }"
+            class="dropdown-menu-item"
+          >
+            <FormatListBulleted :size="16" />
+            {{ t('Bullet list') }}
+          </button>
+          <button
+            type="button"
+            @mousedown.prevent="editor.chain().focus().toggleOrderedList().run(); showMoreMenu = false"
+            :class="{ 'is-active': editor.isActive('orderedList') }"
+            class="dropdown-menu-item"
+          >
+            <FormatListNumbered :size="16" />
+            {{ t('Numbered list') }}
+          </button>
+          <div class="dropdown-divider"></div>
+          <!-- Link -->
+          <button
+            type="button"
+            @mousedown.prevent="showLinkModalHandler(); showMoreMenu = false"
+            :class="{ 'is-active': editor.isActive('link') }"
+            class="dropdown-menu-item"
+          >
+            <LinkVariant :size="16" />
+            {{ t('Link') }}
+          </button>
+          <!-- Table -->
+          <button
+            type="button"
+            @mousedown.prevent="insertTable(); showMoreMenu = false"
+            class="dropdown-menu-item"
+          >
+            <TableIcon :size="16" />
+            {{ t('Insert table') }}
+          </button>
+          <!-- Table editing options when in table -->
+          <template v-if="editor.isActive('table')">
+            <div class="dropdown-divider"></div>
+            <button
+              type="button"
+              @mousedown.prevent="addRowAfter(); showMoreMenu = false"
+              class="dropdown-menu-item"
+            >
+              <TableRowPlusAfter :size="16" />
+              {{ t('Add row') }}
+            </button>
+            <button
+              type="button"
+              @mousedown.prevent="addColumnAfter(); showMoreMenu = false"
+              class="dropdown-menu-item"
+            >
+              <TableColumnPlusAfter :size="16" />
+              {{ t('Add column') }}
+            </button>
+            <button
+              type="button"
+              @mousedown.prevent="deleteTable(); showMoreMenu = false"
+              class="dropdown-menu-item dropdown-menu-item--danger"
+            >
+              <TableRemove :size="16" />
+              {{ t('Delete table') }}
+            </button>
+          </template>
         </div>
       </div>
-      <span class="menubar-divider"></span>
-      <button
-        type="button"
-        @mousedown.prevent="editor.chain().focus().toggleBulletList().run()"
-        :class="{ 'is-active': editor.isActive('bulletList') }"
-        :title="t('Unordered list')"
-        class="menubar-button"
-      >
-        ●
-      </button>
-      <button
-        type="button"
-        @mousedown.prevent="editor.chain().focus().toggleOrderedList().run()"
-        :class="{ 'is-active': editor.isActive('orderedList') }"
-        :title="t('Ordered list')"
-        class="menubar-button"
-      >
-        1.
-      </button>
-      <span class="menubar-divider"></span>
-      <button
-        type="button"
-        @mousedown.prevent="showLinkModalHandler"
-        :class="{ 'is-active': editor.isActive('link') }"
-        :title="t('Insert link')"
-        class="menubar-button"
-      >
-        🔗
-      </button>
+
+      <!-- FULL MODE: All buttons visible -->
+      <template v-else>
+        <button
+          type="button"
+          @mousedown.prevent="editor.chain().focus().toggleStrike().run()"
+          :class="{ 'is-active': editor.isActive('strike') }"
+          :title="t('Strikethrough')"
+          class="menubar-button"
+        >
+          <FormatStrikethrough :size="18" />
+        </button>
+
+        <span class="menubar-divider"></span>
+
+        <!-- Heading Dropdown -->
+        <div class="heading-dropdown">
+          <button
+            type="button"
+            @mousedown.prevent="toggleHeadingMenu"
+            class="menubar-button heading-button"
+            :title="t('Heading')"
+          >
+            {{ getCurrentHeadingLabel() }}
+            <ChevronDown :size="14" />
+          </button>
+          <div v-if="showHeadingMenu" class="dropdown-menu">
+            <button
+              v-for="level in [0, 1, 2, 3, 4]"
+              :key="level"
+              type="button"
+              @mousedown.prevent="setHeadingLevel(level)"
+              :class="{ 'is-active': isHeadingLevel(level) }"
+              class="dropdown-menu-item"
+            >
+              {{ getHeadingLabel(level) }}
+            </button>
+          </div>
+        </div>
+
+        <span class="menubar-divider"></span>
+
+        <!-- Lists -->
+        <button
+          type="button"
+          @mousedown.prevent="editor.chain().focus().toggleBulletList().run()"
+          :class="{ 'is-active': editor.isActive('bulletList') }"
+          :title="t('Bullet list')"
+          class="menubar-button"
+        >
+          <FormatListBulleted :size="18" />
+        </button>
+        <button
+          type="button"
+          @mousedown.prevent="editor.chain().focus().toggleOrderedList().run()"
+          :class="{ 'is-active': editor.isActive('orderedList') }"
+          :title="t('Numbered list')"
+          class="menubar-button"
+        >
+          <FormatListNumbered :size="18" />
+        </button>
+
+        <span class="menubar-divider"></span>
+
+        <!-- Link -->
+        <button
+          type="button"
+          @mousedown.prevent="showLinkModalHandler"
+          :class="{ 'is-active': editor.isActive('link') }"
+          :title="t('Insert link')"
+          class="menubar-button"
+        >
+          <LinkVariant :size="18" />
+        </button>
+
+        <!-- Table Dropdown -->
+        <div class="table-dropdown">
+          <button
+            type="button"
+            @mousedown.prevent="toggleTableMenu"
+            :class="{ 'is-active': editor.isActive('table') }"
+            :title="t('Table')"
+            class="menubar-button"
+          >
+            <TableIcon :size="18" />
+            <ChevronDown :size="14" />
+          </button>
+          <div v-if="showTableMenu" class="dropdown-menu table-menu">
+            <button
+              type="button"
+              @mousedown.prevent="insertTable"
+              class="dropdown-menu-item"
+            >
+              <TableIcon :size="16" />
+              {{ t('Insert table') }}
+            </button>
+            <template v-if="editor.isActive('table')">
+              <div class="dropdown-divider"></div>
+              <button
+                type="button"
+                @mousedown.prevent="addRowBefore"
+                class="dropdown-menu-item"
+              >
+                <TableRowPlusBefore :size="16" />
+                {{ t('Add row above') }}
+              </button>
+              <button
+                type="button"
+                @mousedown.prevent="addRowAfter"
+                class="dropdown-menu-item"
+              >
+                <TableRowPlusAfter :size="16" />
+                {{ t('Add row below') }}
+              </button>
+              <button
+                type="button"
+                @mousedown.prevent="addColumnBefore"
+                class="dropdown-menu-item"
+              >
+                <TableColumnPlusBefore :size="16" />
+                {{ t('Add column left') }}
+              </button>
+              <button
+                type="button"
+                @mousedown.prevent="addColumnAfter"
+                class="dropdown-menu-item"
+              >
+                <TableColumnPlusAfter :size="16" />
+                {{ t('Add column right') }}
+              </button>
+              <div class="dropdown-divider"></div>
+              <button
+                type="button"
+                @mousedown.prevent="deleteRow"
+                class="dropdown-menu-item dropdown-menu-item--danger"
+              >
+                <TableRowRemove :size="16" />
+                {{ t('Delete row') }}
+              </button>
+              <button
+                type="button"
+                @mousedown.prevent="deleteColumn"
+                class="dropdown-menu-item dropdown-menu-item--danger"
+              >
+                <TableColumnRemove :size="16" />
+                {{ t('Delete column') }}
+              </button>
+              <button
+                type="button"
+                @mousedown.prevent="deleteTable"
+                class="dropdown-menu-item dropdown-menu-item--danger"
+              >
+                <TableRemove :size="16" />
+                {{ t('Delete table') }}
+              </button>
+            </template>
+          </div>
+        </div>
+      </template>
     </div>
 
     <!-- Editor Content -->
@@ -144,15 +346,55 @@ import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
 import Link from '@tiptap/extension-link';
 import Placeholder from '@tiptap/extension-placeholder';
+import { Table } from '@tiptap/extension-table';
+import { TableRow } from '@tiptap/extension-table-row';
+import { TableHeader } from '@tiptap/extension-table-header';
+import { TableCell } from '@tiptap/extension-table-cell';
 import { NcModal, NcButton } from '@nextcloud/vue';
 import { markdownToHtml, htmlToMarkdown, cleanMarkdown } from '../utils/markdownSerializer.js';
+
+// Material Design Icons
+import FormatBold from 'vue-material-design-icons/FormatBold.vue';
+import FormatItalic from 'vue-material-design-icons/FormatItalic.vue';
+import FormatUnderline from 'vue-material-design-icons/FormatUnderline.vue';
+import FormatStrikethrough from 'vue-material-design-icons/FormatStrikethrough.vue';
+import FormatListBulleted from 'vue-material-design-icons/FormatListBulleted.vue';
+import FormatListNumbered from 'vue-material-design-icons/FormatListNumbered.vue';
+import LinkVariant from 'vue-material-design-icons/LinkVariant.vue';
+import TableIcon from 'vue-material-design-icons/Table.vue';
+import TableRowPlusAfter from 'vue-material-design-icons/TableRowPlusAfter.vue';
+import TableRowPlusBefore from 'vue-material-design-icons/TableRowPlusBefore.vue';
+import TableColumnPlusAfter from 'vue-material-design-icons/TableColumnPlusAfter.vue';
+import TableColumnPlusBefore from 'vue-material-design-icons/TableColumnPlusBefore.vue';
+import TableRowRemove from 'vue-material-design-icons/TableRowRemove.vue';
+import TableColumnRemove from 'vue-material-design-icons/TableColumnRemove.vue';
+import TableRemove from 'vue-material-design-icons/TableRemove.vue';
+import ChevronDown from 'vue-material-design-icons/ChevronDown.vue';
+import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue';
 
 export default {
   name: 'InlineTextEditor',
   components: {
     EditorContent,
     NcModal,
-    NcButton
+    NcButton,
+    FormatBold,
+    FormatItalic,
+    FormatUnderline,
+    FormatStrikethrough,
+    FormatListBulleted,
+    FormatListNumbered,
+    LinkVariant,
+    TableIcon,
+    TableRowPlusAfter,
+    TableRowPlusBefore,
+    TableColumnPlusAfter,
+    TableColumnPlusBefore,
+    TableRowRemove,
+    TableColumnRemove,
+    TableRemove,
+    ChevronDown,
+    DotsHorizontal
   },
   props: {
     modelValue: {
@@ -166,6 +408,10 @@ export default {
     placeholder: {
       type: String,
       default: ''
+    },
+    compact: {
+      type: Boolean,
+      default: false
     }
   },
   emits: ['update:modelValue', 'focus', 'blur'],
@@ -177,18 +423,24 @@ export default {
       showLinkModal: false,
       linkUrl: '',
       linkText: '',
-      showHeadingMenu: false
+      showHeadingMenu: false,
+      showTableMenu: false,
+      showMoreMenu: false
     };
   },
   mounted() {
-    // Convert markdown to HTML for TipTap
+    // Convert Markdown to HTML for TipTap editor
     const htmlContent = markdownToHtml(this.modelValue);
 
     this.editor = new Editor({
       content: htmlContent,
       editable: this.editable,
       extensions: [
-        StarterKit,
+        StarterKit.configure({
+          // Disable built-in extensions we configure separately
+          link: false,
+          underline: false,
+        }),
         Underline,
         Link.configure({
           openOnClick: false,
@@ -199,17 +451,40 @@ export default {
         }),
         Placeholder.configure({
           placeholder: this.placeholder || this.t('Enter text...')
-        })
+        }),
+        Table.configure({
+          resizable: true,
+          handleWidth: 4,
+          cellMinWidth: 50,
+          lastColumnResizable: true
+        }),
+        TableRow,
+        TableHeader,
+        TableCell
       ],
       onUpdate: () => {
-        // Convert HTML back to markdown before emitting
+        // Convert HTML back to Markdown for storage
         const html = this.editor.getHTML();
+        console.log('[InlineTextEditor.onUpdate] TipTap HTML:', html);
         const markdown = cleanMarkdown(htmlToMarkdown(html));
+        console.log('[InlineTextEditor.onUpdate] Emitting Markdown:', markdown);
         this.$emit('update:modelValue', markdown);
       },
       onFocus: () => {
         this.isFocused = true;
         this.$emit('focus');
+
+        // Prevent automatic select-all: place cursor at end instead
+        // Use setTimeout to let the browser finish its default behavior first
+        setTimeout(() => {
+          if (!this.editor) return;
+          const { state } = this.editor;
+          const docSize = state.doc.content.size;
+          // If entire content is selected (selectAll behavior), deselect and place cursor at end
+          if (state.selection.from <= 1 && state.selection.to >= docSize - 1 && docSize > 2) {
+            this.editor.commands.setTextSelection(docSize - 1);
+          }
+        }, 0);
       },
       onBlur: () => {
         this.isFocused = false;
@@ -233,7 +508,7 @@ export default {
         return;
       }
 
-      // Convert markdown to HTML for comparison and update
+      // Convert Markdown to HTML for comparison
       const htmlContent = markdownToHtml(newValue);
       const currentHtml = this.editor.getHTML();
 
@@ -242,7 +517,7 @@ export default {
         // Save cursor position
         const { from, to } = this.editor.state.selection;
 
-        // Update content
+        // Update content (converted to HTML)
         this.editor.commands.setContent(htmlContent, false);
 
         // Restore cursor position if possible
@@ -291,13 +566,6 @@ export default {
         this.editor.chain().focus().setHeading({ level }).run();
       }
       this.showHeadingMenu = false;
-
-      // Force update after a small delay to ensure TipTap has processed the command
-      setTimeout(() => {
-        const html = this.editor.getHTML();
-        const markdown = cleanMarkdown(htmlToMarkdown(html));
-        this.$emit('update:modelValue', markdown);
-      }, 10);
     },
     showLinkModalHandler() {
       const { from, to } = this.editor.state.selection;
@@ -387,6 +655,52 @@ export default {
       if (!event.target.closest('.heading-dropdown')) {
         this.showHeadingMenu = false;
       }
+      // Close table menu if clicking outside the dropdown
+      if (!event.target.closest('.table-dropdown')) {
+        this.showTableMenu = false;
+      }
+      // Close more menu if clicking outside the dropdown
+      if (!event.target.closest('.more-dropdown')) {
+        this.showMoreMenu = false;
+      }
+    },
+    toggleMoreMenu() {
+      this.showMoreMenu = !this.showMoreMenu;
+    },
+    toggleTableMenu() {
+      this.showTableMenu = !this.showTableMenu;
+    },
+    insertTable() {
+      this.editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
+      this.showTableMenu = false;
+    },
+    addRowBefore() {
+      this.editor.chain().focus().addRowBefore().run();
+      this.showTableMenu = false;
+    },
+    addRowAfter() {
+      this.editor.chain().focus().addRowAfter().run();
+      this.showTableMenu = false;
+    },
+    addColumnBefore() {
+      this.editor.chain().focus().addColumnBefore().run();
+      this.showTableMenu = false;
+    },
+    addColumnAfter() {
+      this.editor.chain().focus().addColumnAfter().run();
+      this.showTableMenu = false;
+    },
+    deleteRow() {
+      this.editor.chain().focus().deleteRow().run();
+      this.showTableMenu = false;
+    },
+    deleteColumn() {
+      this.editor.chain().focus().deleteColumn().run();
+      this.showTableMenu = false;
+    },
+    deleteTable() {
+      this.editor.chain().focus().deleteTable().run();
+      this.showTableMenu = false;
     }
   }
 };
@@ -443,16 +757,19 @@ export default {
   color: var(--color-primary-element-text);
 }
 
-/* Heading Dropdown */
-.heading-dropdown {
+/* Dropdown Containers */
+.heading-dropdown,
+.table-dropdown {
   position: relative;
 }
 
 .heading-button {
-  min-width: 80px !important;
+  min-width: 90px !important;
+  gap: 4px;
 }
 
-.heading-menu {
+/* Dropdown Menu */
+.dropdown-menu {
   position: absolute;
   top: 100%;
   left: 0;
@@ -460,13 +777,45 @@ export default {
   background: var(--color-main-background);
   border: 1px solid var(--color-border);
   border-radius: var(--border-radius);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  z-index: 1000;
-  min-width: 120px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1001;
+  min-width: 140px;
+  padding: 4px 0;
 }
 
-.heading-menu-item {
-  display: block;
+.table-menu {
+  min-width: 180px;
+}
+
+/* Compact Toolbar Mode */
+.text-menubar--compact {
+  padding: 4px;
+  gap: 2px;
+}
+
+.text-menubar--compact .menubar-button {
+  padding: 4px 6px;
+  min-width: 28px;
+  height: 28px;
+}
+
+/* More dropdown for compact mode */
+.more-dropdown {
+  position: relative;
+}
+
+.more-menu {
+  right: 0;
+  left: auto;
+  min-width: 180px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.dropdown-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   width: 100%;
   padding: 8px 12px;
   background: transparent;
@@ -475,25 +824,33 @@ export default {
   cursor: pointer;
   font-size: 14px;
   color: var(--color-main-text);
-  transition: background-color 0.2s ease;
+  transition: background-color 0.15s ease;
 }
 
-.heading-menu-item:hover {
+.dropdown-menu-item:hover {
   background: var(--color-background-hover);
 }
 
-.heading-menu-item.is-active {
+.dropdown-menu-item.is-active {
   background: var(--color-primary-element);
   color: var(--color-primary-element-text);
   font-weight: 600;
 }
 
-.heading-menu-item:first-child {
-  border-radius: var(--border-radius) var(--border-radius) 0 0;
+.dropdown-menu-item--danger {
+  color: #c9302c;
+  font-weight: 500;
 }
 
-.heading-menu-item:last-child {
-  border-radius: 0 0 var(--border-radius) var(--border-radius);
+.dropdown-menu-item--danger:hover {
+  background: #c9302c;
+  color: white;
+}
+
+.dropdown-divider {
+  height: 1px;
+  background: var(--color-border);
+  margin: 4px 0;
 }
 
 .menubar-divider {
@@ -717,7 +1074,7 @@ export default {
 .editor-content :deep(.ProseMirror table td),
 .editor-content :deep(.ProseMirror table th) {
   min-width: 1em;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-border-dark, #bbb);
   padding: 8px 12px;
   vertical-align: top;
   box-sizing: border-box;
@@ -725,11 +1082,7 @@ export default {
   color: inherit !important;
 }
 
-.editor-content :deep(.ProseMirror table th) {
-  font-weight: 600;
-  text-align: left;
-  background: var(--color-background-hover);
-}
+/* th now styled same as td - user can customize via content */
 
 .editor-content :deep(.ProseMirror table .selectedCell) {
   background: var(--color-primary-element-light);

@@ -400,7 +400,19 @@
     "Export started": "Export gestartet",
     "Failed to start export": "Start des Exports fehlgeschlagen",
     "pages": "Seiten",
-    "empty": "leer"
+    "empty": "leer",
+    "Table": "Tabelle",
+    "Add row above": "Zeile darüber einfügen",
+    "Add row below": "Zeile darunter einfügen",
+    "Add row": "Zeile hinzufügen",
+    "Add column left": "Spalte links einfügen",
+    "Add column right": "Spalte rechts einfügen",
+    "Add column": "Spalte hinzufügen",
+    "Delete table": "Tabelle löschen",
+    "Delete column": "Spalte löschen",
+    "Delete row": "Zeile löschen",
+    "Insert table": "Tabelle einfügen",
+    "More options": "Weitere Optionen"
   },
   "pluralForm": "nplurals=2; plural=(n != 1);"
 }

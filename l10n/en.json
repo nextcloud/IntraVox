@@ -396,7 +396,19 @@
     "Import completed successfully": "Import completed successfully",
     "Import failed: ": "Import failed: ",
     "media files": "media files",
-    "comments": "comments"
+    "comments": "comments",
+    "Table": "Table",
+    "Add row above": "Add row above",
+    "Add row below": "Add row below",
+    "Add row": "Add row",
+    "Add column left": "Add column left",
+    "Add column right": "Add column right",
+    "Add column": "Add column",
+    "Delete table": "Delete table",
+    "Delete column": "Delete column",
+    "Delete row": "Delete row",
+    "Insert table": "Insert table",
+    "More options": "More options"
   },
   "pluralForm": "nplurals=2; plural=(n != 1);"
 }

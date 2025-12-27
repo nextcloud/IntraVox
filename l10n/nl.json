@@ -421,7 +421,19 @@
     "Import completed successfully": "Import succesvol voltooid",
     "Import failed: ": "Import mislukt: ",
     "media files": "mediabestanden",
-    "comments": "reacties"
+    "comments": "reacties",
+    "Table": "Tabel",
+    "Add row above": "Rij erboven toevoegen",
+    "Add row below": "Rij eronder toevoegen",
+    "Add row": "Rij toevoegen",
+    "Add column left": "Kolom links toevoegen",
+    "Add column right": "Kolom rechts toevoegen",
+    "Add column": "Kolom toevoegen",
+    "Delete table": "Tabel verwijderen",
+    "Delete column": "Kolom verwijderen",
+    "Delete row": "Rij verwijderen",
+    "Insert table": "Tabel invoegen",
+    "More options": "Meer opties"
   },
   "pluralForm": "nplurals=2; plural=(n != 1);"
 }

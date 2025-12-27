@@ -625,8 +625,8 @@ export default {
       }
     },
     async updatePage(updatedPage) {
-      this.currentPage = updatedPage;
-      // No auto-save - only save when user clicks Save button
+      // Use structuredClone to ensure Vue reactivity captures all nested changes
+      this.currentPage = structuredClone(updatedPage);
     },
     createNewPage() {
       this.showNewPageModal = true;

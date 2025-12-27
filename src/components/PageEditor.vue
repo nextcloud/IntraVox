@@ -38,7 +38,7 @@
           class="header-widget-drop-zone"
         >
           <template #item="{ element: widget }">
-            <div class="widget-wrapper">
+            <div class="widget-wrapper" :class="{ 'editing': focusedWidgetId === widget.id }">
               <div class="floating-toolbar">
                 <div class="drag-handle" :aria-label="t('Drag to reorder')">
                   <DragVertical :size="16" />
@@ -66,7 +66,7 @@
                   </template>
                 </NcButton>
               </div>
-              <Widget :widget="widget" :page-id="page.uniqueId" :editable="true" :row-background-color="getHeaderRowBgColor()" @update="updateHeaderRowWidget($event)" />
+              <Widget :widget="widget" :page-id="page.uniqueId" :editable="true" :row-background-color="getHeaderRowBgColor()" @update="updateHeaderRowWidget($event)" @focus="focusedWidgetId = widget.id" @blur="focusedWidgetId = null" />
             </div>
           </template>
         </draggable>
@@ -128,7 +128,7 @@
           class="side-widget-drop-zone"
         >
           <template #item="{ element: widget }">
-            <div class="widget-wrapper">
+            <div class="widget-wrapper" :class="{ 'editing': focusedWidgetId === widget.id }">
               <div class="floating-toolbar">
                 <div class="drag-handle" :aria-label="t('Drag to reorder')">
                   <DragVertical :size="16" />
@@ -156,7 +156,7 @@
                   </template>
                 </NcButton>
               </div>
-              <Widget :widget="widget" :page-id="page.uniqueId" :editable="true" :row-background-color="getSideColumnBgColor('left')" @update="updateSideColumnWidget($event, 'left')" />
+              <Widget :widget="widget" :page-id="page.uniqueId" :editable="true" :row-background-color="getSideColumnBgColor('left')" @update="updateSideColumnWidget($event, 'left')" @focus="focusedWidgetId = widget.id" @blur="focusedWidgetId = null" />
             </div>
           </template>
         </draggable>
@@ -407,7 +407,7 @@
           class="side-widget-drop-zone"
         >
           <template #item="{ element: widget }">
-            <div class="widget-wrapper">
+            <div class="widget-wrapper" :class="{ 'editing': focusedWidgetId === widget.id }">
               <div class="floating-toolbar">
                 <div class="drag-handle" :aria-label="t('Drag to reorder')">
                   <DragVertical :size="16" />
@@ -435,7 +435,7 @@
                   </template>
                 </NcButton>
               </div>
-              <Widget :widget="widget" :page-id="page.uniqueId" :editable="true" :row-background-color="getSideColumnBgColor('right')" @update="updateSideColumnWidget($event, 'right')" />
+              <Widget :widget="widget" :page-id="page.uniqueId" :editable="true" :row-background-color="getSideColumnBgColor('right')" @update="updateSideColumnWidget($event, 'right')" @focus="focusedWidgetId = widget.id" @blur="focusedWidgetId = null" />
             </div>
           </template>
         </draggable>

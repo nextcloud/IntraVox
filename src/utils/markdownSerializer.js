@@ -6,12 +6,53 @@
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 
+// Configure marked for GFM (GitHub Flavored Markdown) with tables
+// Use synchronous parsing to avoid Promise issues
+marked.use({
+  gfm: true,
+  breaks: true,
+  async: false  // Force synchronous parsing
+});
+
 /**
  * Simple LRU cache for markdown parsing results
  * Avoids re-parsing the same content on every render
  */
 const markdownCache = new Map();
 const MAX_CACHE_SIZE = 100;
+
+/**
+ * Normalize markdown to ensure tables parse correctly
+ * Tables need blank lines before them, but NOT between rows
+ */
+function normalizeMarkdownTables(markdown) {
+  const lines = markdown.split('\n');
+  const result = [];
+  let inTable = false;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const isTableRow = line.trim().startsWith('|') && line.trim().endsWith('|');
+    const prevLine = result.length > 0 ? result[result.length - 1] : '';
+    const prevIsTableRow = prevLine.trim().startsWith('|') && prevLine.trim().endsWith('|');
+    const prevIsEmpty = prevLine.trim() === '';
+
+    if (isTableRow && !inTable) {
+      // Starting a new table - ensure blank line before it (unless at start or already blank)
+      if (result.length > 0 && !prevIsEmpty) {
+        result.push('');
+      }
+      inTable = true;
+    } else if (!isTableRow && inTable) {
+      // Leaving a table
+      inTable = false;
+    }
+
+    result.push(line);
+  }
+
+  return result.join('\n');
+}
 
 /**
  * Convert Markdown to HTML for TipTap
@@ -26,19 +67,20 @@ export function markdownToHtml(markdown) {
   }
 
   try {
-    const html = marked(markdown, {
-      breaks: true,
-      gfm: true
-    });
+    // Normalize tables: ensure blank line before table, but not between rows
+    const normalizedMarkdown = normalizeMarkdownTables(markdown);
+
+    // Parse markdown (GFM configured globally above)
+    const html = marked.parse(normalizedMarkdown);
 
     const result = DOMPurify.sanitize(html, {
-      ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 's', 'ul', 'ol', 'li', 'a', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'code', 'pre', 'hr'],
+      ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 's', 'ul', 'ol', 'li', 'a', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'code', 'pre', 'hr',
+                     'table', 'thead', 'tbody', 'tr', 'th', 'td'],
       ALLOWED_ATTR: ['href', 'target', 'rel', 'class']
     });
 
     // Store in cache with LRU eviction
     if (markdownCache.size >= MAX_CACHE_SIZE) {
-      // Delete oldest entry (first key in Map)
       const firstKey = markdownCache.keys().next().value;
       markdownCache.delete(firstKey);
     }
@@ -167,7 +209,8 @@ function elementToMarkdown(element, listDepth = 0) {
 }
 
 function convertTable(tableElement) {
-  let markdown = '\n';
+  // Tables need a blank line before them in Markdown for proper parsing
+  let markdown = '\n\n';
   const rows = tableElement.querySelectorAll('tr');
 
   rows.forEach((row, rowIndex) => {
@@ -207,13 +250,44 @@ function convertList(listElement, listDepth, ordered) {
 
 /**
  * Clean up markdown formatting
+ * Preserves table structure while removing excessive newlines elsewhere
  */
 export function cleanMarkdown(markdown) {
   if (!markdown) return '';
 
-  return markdown
-    // Remove excessive newlines (more than 2)
-    .replace(/\n{3,}/g, '\n\n')
-    // Trim whitespace
-    .trim();
+  // Split into lines and process
+  const lines = markdown.split('\n');
+  const result = [];
+  let consecutiveEmpty = 0;
+  let inTable = false;
+
+  for (const line of lines) {
+    const isTableRow = line.trim().startsWith('|') && line.trim().endsWith('|');
+    const isEmpty = line.trim() === '';
+
+    if (isTableRow) {
+      inTable = true;
+      consecutiveEmpty = 0;
+      result.push(line);
+    } else if (isEmpty) {
+      if (inTable) {
+        // End of table, allow one blank line after
+        inTable = false;
+        result.push(line);
+        consecutiveEmpty = 1;
+      } else {
+        consecutiveEmpty++;
+        // Allow max 1 empty line (which creates 2 newlines = paragraph break)
+        if (consecutiveEmpty <= 1) {
+          result.push(line);
+        }
+      }
+    } else {
+      inTable = false;
+      consecutiveEmpty = 0;
+      result.push(line);
+    }
+  }
+
+  return result.join('\n').trim();
 }

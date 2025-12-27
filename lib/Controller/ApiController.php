@@ -486,11 +486,11 @@ class ApiController extends Controller {
      * @NoAdminRequired
      * @NoCSRFRequired
      */
-    public function getResourcesMedia(string $path) {
+    public function getResourcesMedia(string $filename) {
         try {
             // Security: Validate path (prevent directory traversal)
             try {
-                $safePath = $this->sanitizePath($path);
+                $safePath = $this->sanitizePath($filename);
             } catch (\InvalidArgumentException $e) {
                 return new DataResponse(
                     ['error' => 'Invalid path: ' . $e->getMessage()],

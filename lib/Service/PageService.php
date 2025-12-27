@@ -2255,8 +2255,23 @@ class PageService {
      * Sanitize HTML content (allow safe formatting tags, prevent XSS)
      */
     private function sanitizeHtml(string $html): string {
-        // Define allowed tags and attributes
-        $allowedTags = '<p><br><strong><em><u><s><ul><ol><li><a><h1><h2><h3><h4><h5><h6>';
+        // Define allowed tags - must match frontend sanitization.js ALLOWED_TAGS
+        // Text structure
+        $allowedTags = '<p><br><span><div>';
+        // Text formatting
+        $allowedTags .= '<strong><b><em><i><u><s><del><mark><sub><sup>';
+        // Headings
+        $allowedTags .= '<h1><h2><h3><h4><h5><h6>';
+        // Lists
+        $allowedTags .= '<ul><ol><li>';
+        // Links
+        $allowedTags .= '<a>';
+        // Block elements
+        $allowedTags .= '<blockquote><pre><code>';
+        // Tables - CRITICAL for TipTap table support
+        $allowedTags .= '<table><thead><tbody><tfoot><tr><th><td><caption><colgroup><col>';
+        // Task lists (TipTap uses data attributes)
+        $allowedTags .= '<input><label>';
 
         // Strip all tags except allowed ones
         $cleaned = strip_tags($html, $allowedTags);
@@ -2264,6 +2279,39 @@ class PageService {
         // Additional XSS prevention: remove any event handlers or javascript
         $cleaned = preg_replace('/on\w+\s*=\s*["\']?[^"\']*["\']?/i', '', $cleaned);
         $cleaned = preg_replace('/javascript:/i', '', $cleaned);
+
+        // Sanitize style attributes - only allow safe CSS properties
+        // This allows background-color and text-align for table cells
+        $cleaned = preg_replace_callback(
+            '/style\s*=\s*["\']([^"\']*)["\']?/i',
+            function ($matches) {
+                $style = $matches[1];
+                $allowedProperties = [];
+
+                // Extract and validate each CSS property
+                preg_match_all('/([a-z-]+)\s*:\s*([^;]+)/i', $style, $props, PREG_SET_ORDER);
+
+                foreach ($props as $prop) {
+                    $property = strtolower(trim($prop[1]));
+                    $value = trim($prop[2]);
+
+                    // Only allow specific safe properties
+                    if (in_array($property, ['background-color', 'text-align', 'color', 'width'])) {
+                        // Validate values - no javascript or expressions
+                        if (!preg_match('/expression|javascript|url\s*\(/i', $value)) {
+                            $allowedProperties[] = $property . ': ' . $value;
+                        }
+                    }
+                }
+
+                if (empty($allowedProperties)) {
+                    return '';
+                }
+
+                return 'style="' . implode('; ', $allowedProperties) . '"';
+            },
+            $cleaned
+        );
 
         // Clean up any malformed HTML entities
         $cleaned = preg_replace('/&(?![a-z]+;|#[0-9]+;|#x[0-9a-f]+;)/i', '&amp;', $cleaned);

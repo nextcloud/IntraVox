@@ -6,6 +6,7 @@
         v-if="editable"
         v-model="localContent"
         :editable="true"
+        :compact="isCompactMode"
         :placeholder="t('Enter text...')"
         @focus="$emit('focus')"
         @blur="onBlur"
@@ -183,8 +184,23 @@ export default {
   data() {
     return {
       localContent: this.widget.content || '',
-      localVideoError: null
+      localVideoError: null,
+      isCompactMode: false,
+      resizeObserver: null
     };
+  },
+  mounted() {
+    // Auto-detect compact mode based on container width
+    this.resizeObserver = new ResizeObserver(entries => {
+      const width = entries[0].contentRect.width;
+      this.isCompactMode = width < 400;
+    });
+    this.resizeObserver.observe(this.$el);
+  },
+  beforeUnmount() {
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect();
+    }
   },
   computed: {
     sanitizedContent() {
@@ -298,8 +314,12 @@ export default {
     },
     sanitizeHtml(content) {
       if (!content) return '';
-      // Use the markdown serializer to convert markdown to HTML
-      return markdownToHtml(content);
+      // Debug: log what content we receive
+      console.log('[Widget.sanitizeHtml] Raw content from widget:', content);
+      // Convert Markdown to HTML for display (includes sanitization)
+      const html = markdownToHtml(content);
+      console.log('[Widget.sanitizeHtml] Converted HTML:', html);
+      return html;
     },
     onBlur() {
       // No need to save here anymore - watcher handles it
@@ -929,6 +949,37 @@ export default {
   color: var(--color-text-maxcontrast);
   margin: 0;
   font-style: italic;
+}
+
+/* Table styling in text widgets - matches edit mode styling exactly */
+.widget-text :deep(table) {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  margin: 1em 0;
+  overflow: hidden;
+  background: transparent;
+  color: inherit;
+}
+
+.widget-text :deep(th),
+.widget-text :deep(td) {
+  min-width: 1em;
+  border: 1px solid var(--color-border-dark, #bbb);
+  padding: 8px 12px;
+  text-align: left;
+  vertical-align: top;
+  box-sizing: border-box;
+  color: inherit;
+  background: transparent;
+}
+
+/* th now styled same as td - user can customize via content */
+
+/* Geen hover effect op rijen */
+.widget-text :deep(tr),
+.widget-text :deep(tr:hover) {
+  background: transparent !important;
 }
 
 /* Unknown Widget */

@@ -322,16 +322,16 @@
                                 "target": "_blank"
                             },
                             {
-                                "text": "Documentatie",
-                                "url": "/apps/intravox/documentation",
+                                "text": "Nextcloud Docs",
+                                "url": "https://docs.nextcloud.com",
                                 "icon": "book-open-variant",
-                                "target": "_self"
+                                "target": "_blank"
                             },
                             {
-                                "text": "AI in Nextcloud",
-                                "url": "/apps/intravox/ai",
-                                "icon": "robot",
-                                "target": "_self"
+                                "text": "Nextcloud Apps",
+                                "url": "https://apps.nextcloud.com",
+                                "icon": "apps",
+                                "target": "_blank"
                             }
                         ],
                         "columns": 1

@@ -36,19 +36,7 @@ module.exports = {
         clean: true
     },
     optimization: {
-        splitChunks: {
-            chunks: 'async',
-            minSize: 10000,
-            cacheGroups: {
-                // Separate vendor chunks for large dependencies
-                vendors: {
-                    test: /[\\/]node_modules[\\/]/,
-                    name: 'vendors',
-                    chunks: 'async',
-                    priority: 10
-                }
-            }
-        }
+        splitChunks: false
     },
     module: {
         rules: [

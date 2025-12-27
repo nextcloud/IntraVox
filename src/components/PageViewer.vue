@@ -244,6 +244,9 @@ export default {
         } else {
           style.color = 'var(--color-main-text)';
         }
+      } else {
+        // Explicitly set transparent to override CSS default
+        style.backgroundColor = 'transparent';
       }
 
       return style;
@@ -267,6 +270,9 @@ export default {
         } else {
           style.color = 'var(--color-main-text)';
         }
+      } else {
+        // Explicitly set transparent to override CSS default
+        style.backgroundColor = 'transparent';
       }
 
       return style;

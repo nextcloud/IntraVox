@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.2] - 2025-12-27 - Tables & Editor Improvements
+
+### Added
+- **Table Support**: Full table editing in text widgets
+  - Insert, edit, and delete tables with the toolbar
+  - Add/remove rows and columns
+  - Resize columns by dragging
+  - Tables saved as Markdown for portability
+- **Compact Toolbar Mode**: Automatic compact toolbar for narrow columns
+  - Shows B/I/U buttons with "More" dropdown for additional options
+  - Auto-detects container width (<400px triggers compact mode)
+
+### Changed
+- **Table Header Rows**: Header rows now styled identically to body rows
+  - Users can apply their own formatting (bold, etc.) if desired
+- **Toolbar Icons**: Material Design icons for all toolbar buttons
+  - Consistent icon style across the application
+
+### Fixed
+- **Row Drag-and-Drop**: Fixed issue where dragging rows caused widgets to lose their type after reordering
+  - Uses stable row IDs instead of volatile row indices for cache keys
+  - Reliable row reordering even with repeated drags in the same session
+- **Shared Media Library**: Fixed 500 error when loading images from shared resources folder
+  - Route parameter name mismatch corrected in API controller
+- **Links Editor UI**: Delete button now uses consistent NcButton styling
+  - Matches row and widget toolbar delete buttons for visual consistency
+- **Delete Actions Visibility**: Improved contrast for delete actions in dropdown menus
+
 ## [0.8.1] - 2025-12-21 - Demo Data Improvements
 
 ### Changed
