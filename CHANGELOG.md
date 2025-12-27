@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.4] - 2025-12-27 - News Widget & API Documentation
+
+### Added
+- **News Widget**: New widget type to display pages as news items
+  - Select a source folder to pull pages from
+  - Filter pages using MetaVox metadata fields (if MetaVox is installed)
+  - Three layout options: List, Grid, and Carousel
+  - Configurable number of items, sorting (date/title), and display options
+  - Shows page thumbnail, title, date, and excerpt
+  - Graceful fallback when MetaVox is not available
+- **OpenAPI Specification**: Complete API documentation for third-party integration
+  - Compatible with OCS API Viewer app for interactive documentation
+  - Documents all IntraVox API endpoints with request/response schemas
+  - Includes schemas for pages, widgets, media, navigation, comments, and news
+
 ## [0.8.3] - 2025-12-27 - Empty Line Preservation
 
 ### Fixed

@@ -79,6 +79,7 @@
     <NewsWidget
       v-else-if="widget.type === 'news'"
       :widget="widget"
+      :row-background-color="rowBackgroundColor"
       @navigate="$emit('navigate', $event)"
     />
 

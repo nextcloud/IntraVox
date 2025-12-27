@@ -12,21 +12,16 @@
       />
     </div>
 
-    <!-- Source Path -->
+    <!-- Source Location -->
     <div class="editor-section">
-      <label class="editor-label">{{ t('Source folder') }}</label>
-      <div class="source-selector">
-        <select v-model="localWidget.sourcePath" class="editor-select" @change="emitUpdate">
-          <option value="">{{ t('All pages') }}</option>
-          <option v-for="folder in availableFolders" :key="folder.path" :value="folder.path">
-            {{ folder.name }}
-          </option>
-        </select>
-        <button class="refresh-button" @click="loadFolders" :disabled="loadingFolders">
-          <Refresh :size="18" :class="{ spinning: loadingFolders }" />
-        </button>
-      </div>
-      <p class="editor-hint">{{ t('Select a folder to show pages from, or leave empty for all pages') }}</p>
+      <label class="editor-label">{{ t('Source location') }}</label>
+      <PageTreeSelect
+        v-model="localWidget.sourcePageId"
+        :placeholder="t('All pages')"
+        :clearable="true"
+        @select="handleSourceSelect"
+      />
+      <p class="editor-hint">{{ t('Select a page or folder to show content from, including all subpages') }}</p>
     </div>
 
     <!-- Layout Selection -->
@@ -60,6 +55,23 @@
           {{ cols }}
         </button>
       </div>
+    </div>
+
+    <!-- Autoplay Interval (only for carousel layout) -->
+    <div v-if="localWidget.layout === 'carousel'" class="editor-section">
+      <label class="editor-label">{{ t('Autoplay interval (seconds)') }}</label>
+      <div class="limit-selector">
+        <input
+          type="range"
+          v-model.number="localWidget.autoplayInterval"
+          min="0"
+          max="30"
+          class="limit-slider"
+          @input="emitUpdate"
+        />
+        <span class="limit-value">{{ localWidget.autoplayInterval === 0 ? t('Off') : localWidget.autoplayInterval + 's' }}</span>
+      </div>
+      <p class="editor-hint">{{ t('Set to 0 to disable autoplay') }}</p>
     </div>
 
     <!-- Number of items -->
@@ -125,7 +137,7 @@
 
       <div v-if="filters.length > 0" class="filters-list">
         <div v-for="(filter, index) in filters" :key="index" class="filter-row">
-          <select v-model="filter.fieldName" class="filter-field" @change="emitUpdate">
+          <select v-model="filter.fieldName" class="filter-field" @change="syncFilters">
             <option value="">{{ t('Select field') }}</option>
             <option v-for="field in metavoxFields" :key="field.field_name" :value="field.field_name">
               {{ field.field_label || field.field_name }}
@@ -189,12 +201,12 @@ import axios from '@nextcloud/axios';
 import ViewList from 'vue-material-design-icons/ViewList.vue';
 import ViewGrid from 'vue-material-design-icons/ViewGrid.vue';
 import ViewCarousel from 'vue-material-design-icons/ViewCarousel.vue';
-import Refresh from 'vue-material-design-icons/Refresh.vue';
 import SortAscending from 'vue-material-design-icons/SortAscending.vue';
 import SortDescending from 'vue-material-design-icons/SortDescending.vue';
 import Plus from 'vue-material-design-icons/Plus.vue';
 import Close from 'vue-material-design-icons/Close.vue';
 import Information from 'vue-material-design-icons/Information.vue';
+import PageTreeSelect from './PageTreeSelect.vue';
 
 export default {
   name: 'NewsWidgetEditor',
@@ -202,12 +214,12 @@ export default {
     ViewList,
     ViewGrid,
     ViewCarousel,
-    Refresh,
     SortAscending,
     SortDescending,
     Plus,
     Close,
     Information,
+    PageTreeSelect,
   },
   props: {
     widget: {
@@ -219,8 +231,6 @@ export default {
   data() {
     return {
       localWidget: this.createDefaultWidget(),
-      availableFolders: [],
-      loadingFolders: false,
       metavoxAvailable: false,
       metavoxFields: [],
       filters: [],
@@ -249,7 +259,6 @@ export default {
     },
   },
   mounted() {
-    this.loadFolders();
     this.checkMetaVox();
   },
   methods: {
@@ -260,6 +269,7 @@ export default {
       return {
         type: 'news',
         title: '',
+        sourcePageId: null,
         sourcePath: '',
         layout: 'list',
         columns: 3,
@@ -270,28 +280,18 @@ export default {
         showDate: true,
         showExcerpt: true,
         excerptLength: 100,
+        autoplayInterval: 5,
         filters: [],
         filterOperator: 'AND',
       };
     },
-    async loadFolders() {
-      this.loadingFolders = true;
-      try {
-        const response = await axios.get(generateUrl('/apps/intravox/api/pages/tree'));
-        const tree = response.data.tree || [];
-
-        // Extract top-level folders from tree
-        this.availableFolders = tree
-          .filter(item => item.uniqueId && item.title)
-          .map(item => ({
-            path: item.path?.split('/').pop() || item.title.toLowerCase(),
-            name: item.title,
-          }));
-      } catch (error) {
-        console.error('Failed to load folders:', error);
-      } finally {
-        this.loadingFolders = false;
+    handleSourceSelect(page) {
+      if (page) {
+        this.localWidget.sourcePageId = page.uniqueId;
+      } else {
+        this.localWidget.sourcePageId = null;
       }
+      this.emitUpdate();
     },
     async checkMetaVox() {
       try {
@@ -307,11 +307,11 @@ export default {
     },
     async loadMetaVoxFields() {
       try {
-        // Try to get fields from MetaVox API
-        const response = await axios.get(generateUrl('/apps/metavox/api/groupfolders/fields'));
-        this.metavoxFields = response.data || [];
+        // Get fields from IntraVox API which fetches MetaVox fields for the IntraVox groupfolder
+        const response = await axios.get(generateUrl('/apps/intravox/api/metavox/fields'));
+        this.metavoxFields = response.data.fields || [];
       } catch (error) {
-        // MetaVox API might not be available or different endpoint
+        // MetaVox API might not be available
         this.metavoxFields = [];
       }
     },
@@ -333,7 +333,8 @@ export default {
         operator: 'equals',
         value: '',
       });
-      this.syncFilters();
+      // Don't call syncFilters() here - it would remove the empty filter immediately
+      // The filter will be synced when user selects a field
     },
     removeFilter(index) {
       this.filters.splice(index, 1);
@@ -401,40 +402,6 @@ export default {
   outline: none;
 }
 
-.source-selector {
-  display: flex;
-  gap: 8px;
-}
-
-.source-selector .editor-select {
-  flex: 1;
-}
-
-.refresh-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  padding: 0;
-  border: 1px solid var(--color-border);
-  border-radius: var(--border-radius);
-  background: var(--color-main-background);
-  cursor: pointer;
-}
-
-.refresh-button:hover {
-  background: var(--color-background-hover);
-}
-
-.spinning {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
 
 .layout-options {
   display: flex;

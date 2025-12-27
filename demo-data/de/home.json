@@ -21,20 +21,26 @@
                         "column": 1,
                         "order": 2,
                         "content": "**Die moderne Intranet-Lösung für Nextcloud.** Erstellen Sie schöne, dynamische Intranet-Seiten mit einem intuitiven Drag-and-Drop-Editor. Keine Programmierung erforderlich."
-                    }
-                ]
-            },
-            {
-                "columns": 1,
-                "backgroundColor": "",
-                "widgets": [
+                    },
                     {
-                        "type": "image",
+                        "type": "news",
                         "column": 1,
-                        "order": 1,
-                        "src": "hero-team.jpg",
-                        "alt": "Teamzusammenarbeit mit IntraVox",
-                        "caption": ""
+                        "order": 3,
+                        "title": "",
+                        "sourcePath": "nachrichten",
+                        "sourcePageId": "",
+                        "layout": "carousel",
+                        "columns": 3,
+                        "limit": 5,
+                        "sortBy": "modified",
+                        "sortOrder": "desc",
+                        "showImage": true,
+                        "showDate": true,
+                        "showExcerpt": true,
+                        "excerptLength": 100,
+                        "autoplayInterval": 2,
+                        "filters": [],
+                        "filterOperator": "AND"
                     }
                 ]
             },
@@ -322,16 +328,16 @@
                                 "target": "_blank"
                             },
                             {
-                                "text": "Dokumentation",
-                                "url": "/apps/intravox/documentation",
+                                "text": "Nextcloud Docs",
+                                "url": "https://docs.nextcloud.com",
                                 "icon": "book-open-variant",
-                                "target": "_self"
+                                "target": "_blank"
                             },
                             {
-                                "text": "KI in Nextcloud",
-                                "url": "/apps/intravox/ai",
-                                "icon": "robot",
-                                "target": "_self"
+                                "text": "Nextcloud Apps",
+                                "url": "https://apps.nextcloud.com",
+                                "icon": "apps",
+                                "target": "_blank"
                             }
                         ],
                         "columns": 1

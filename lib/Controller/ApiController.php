@@ -261,11 +261,19 @@ class ApiController extends Controller {
             $page = $this->pageService->updatePage($id, $data);
             return new DataResponse($page);
         } catch (\InvalidArgumentException $e) {
+            $this->logger->error('[updatePage] InvalidArgumentException: ' . $e->getMessage(), [
+                'pageId' => $id,
+                'trace' => $e->getTraceAsString(),
+            ]);
             return new DataResponse(
                 ['error' => $e->getMessage()],
                 Http::STATUS_BAD_REQUEST
             );
         } catch (\Exception $e) {
+            $this->logger->error('[updatePage] Exception: ' . $e->getMessage(), [
+                'pageId' => $id,
+                'trace' => $e->getTraceAsString(),
+            ]);
             return new DataResponse(
                 ['error' => $e->getMessage()],
                 Http::STATUS_INTERNAL_SERVER_ERROR
@@ -770,7 +778,7 @@ class ApiController extends Controller {
      * @NoAdminRequired
      * @NoCSRFRequired
      */
-    public function getMetaVoxStatus(): DataResponse {
+    public function getMetavoxStatus(): DataResponse {
         try {
             $appManager = \OC::$server->getAppManager();
             $installed = $appManager->isInstalled('metavox') && $appManager->isEnabledForUser('metavox');
@@ -782,6 +790,54 @@ class ApiController extends Controller {
         } catch (\Exception $e) {
             return new DataResponse(
                 ['installed' => false, 'enabled' => false],
+                Http::STATUS_OK
+            );
+        }
+    }
+
+    /**
+     * Get MetaVox fields for the IntraVox groupfolder
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     */
+    public function getMetavoxFields(): DataResponse {
+        try {
+            $appManager = \OC::$server->getAppManager();
+            if (!$appManager->isInstalled('metavox') || !$appManager->isEnabledForUser('metavox')) {
+                return new DataResponse(['fields' => [], 'error' => 'MetaVox not available']);
+            }
+
+            // Get the IntraVox groupfolder ID
+            $setupService = \OC::$server->get(\OCA\IntraVox\Service\SetupService::class);
+            $groupfolderId = $setupService->getGroupFolderId();
+
+            if ($groupfolderId <= 0) {
+                return new DataResponse(['fields' => [], 'error' => 'IntraVox groupfolder not found']);
+            }
+
+            // Get MetaVox FieldService
+            $fieldService = \OC::$server->get(\OCA\MetaVox\Service\FieldService::class);
+
+            // Get fields assigned to this groupfolder (with full field data)
+            $allFields = $fieldService->getAssignedFieldsWithDataForGroupfolder($groupfolderId);
+
+            // Format fields for the frontend
+            $fields = array_map(function($field) {
+                return [
+                    'field_name' => $field['field_name'] ?? '',
+                    'field_label' => $field['field_label'] ?? $field['field_name'] ?? '',
+                    'field_type' => $field['field_type'] ?? 'text',
+                    'options' => $field['field_options'] ?? [],
+                ];
+            }, $allFields);
+
+            return new DataResponse([
+                'fields' => array_values($fields),
+                'groupfolderId' => $groupfolderId
+            ]);
+        } catch (\Exception $e) {
+            return new DataResponse(
+                ['fields' => [], 'error' => $e->getMessage()],
                 Http::STATUS_OK
             );
         }
@@ -812,6 +868,7 @@ class ApiController extends Controller {
     public function getNews(): DataResponse {
         try {
             $sourcePath = $this->request->getParam('sourcePath', '');
+            $sourcePageId = $this->request->getParam('sourcePageId', '');
             $filtersJson = $this->request->getParam('filters', '[]');
             $filterOperator = $this->request->getParam('filterOperator', 'AND');
             $limit = (int) $this->request->getParam('limit', 5);
@@ -845,7 +902,8 @@ class ApiController extends Controller {
                 $filterOperator,
                 $limit,
                 $sortBy,
-                $sortOrder
+                $sortOrder,
+                !empty($sourcePageId) ? $sourcePageId : null
             );
 
             return new DataResponse($result);

@@ -21,20 +21,26 @@
                         "column": 1,
                         "order": 2,
                         "content": "**De moderne intranetoplossing voor Nextcloud.** Maak mooie, dynamische intranetpagina's met een intuïtieve drag-and-drop editor. Geen code nodig."
-                    }
-                ]
-            },
-            {
-                "columns": 1,
-                "backgroundColor": "",
-                "widgets": [
+                    },
                     {
-                        "type": "image",
+                        "type": "news",
                         "column": 1,
-                        "order": 1,
-                        "src": "hero-team.jpg",
-                        "alt": "Team samenwerking met IntraVox",
-                        "caption": ""
+                        "order": 3,
+                        "title": "",
+                        "sourcePath": "nieuws",
+                        "sourcePageId": "",
+                        "layout": "carousel",
+                        "columns": 3,
+                        "limit": 5,
+                        "sortBy": "modified",
+                        "sortOrder": "desc",
+                        "showImage": true,
+                        "showDate": true,
+                        "showExcerpt": true,
+                        "excerptLength": 100,
+                        "autoplayInterval": 2,
+                        "filters": [],
+                        "filterOperator": "AND"
                     }
                 ]
             },

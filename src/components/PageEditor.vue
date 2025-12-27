@@ -620,7 +620,7 @@ export default {
     },
     needsEditButton(widgetType) {
       // Show edit button for widgets that aren't inline-editable
-      return ['image', 'link', 'links', 'file', 'heading', 'video'].includes(widgetType);
+      return ['image', 'link', 'links', 'file', 'heading', 'video', 'news'].includes(widgetType);
     },
     initializeWidgetIds() {
       // Collect ALL widgets from all zones for duplicate detection
@@ -693,7 +693,10 @@ export default {
         const rowColumns = (row.columns || this.localPage.layout.columns) ?? 1;
         for (let col = 1; col <= rowColumns; col++) {
           const key = `${rowIndex}-${col}`;
-          newArrays[key] = row.widgets.filter(w => w.column === col);
+          // Filter by column AND sort by order to match view mode
+          newArrays[key] = row.widgets
+            .filter(w => w.column === col)
+            .sort((a, b) => (a.order || 0) - (b.order || 0));
         }
       });
       this.columnArrays = newArrays;
@@ -868,7 +871,7 @@ export default {
         this.showWidgetPicker = false;
 
         // Open editor modal for widgets that need configuration
-        if (widgetType === 'image' || widgetType === 'links' || widgetType === 'file' || widgetType === 'heading' || widgetType === 'video') {
+        if (widgetType === 'image' || widgetType === 'links' || widgetType === 'file' || widgetType === 'heading' || widgetType === 'video' || widgetType === 'news') {
           this.editHeaderRowWidget(newWidget);
         }
 
@@ -886,7 +889,7 @@ export default {
         this.showWidgetPicker = false;
 
         // Open editor modal for widgets that need configuration
-        if (widgetType === 'image' || widgetType === 'links' || widgetType === 'file' || widgetType === 'heading' || widgetType === 'video') {
+        if (widgetType === 'image' || widgetType === 'links' || widgetType === 'file' || widgetType === 'heading' || widgetType === 'video' || widgetType === 'news') {
           this.editSideColumnWidget(newWidget, side);
         }
 
@@ -914,7 +917,7 @@ export default {
       this.showWidgetPicker = false;
 
       // Open editor modal for widgets that need configuration
-      if (widgetType === 'image' || widgetType === 'links' || widgetType === 'file' || widgetType === 'heading' || widgetType === 'video') {
+      if (widgetType === 'image' || widgetType === 'links' || widgetType === 'file' || widgetType === 'heading' || widgetType === 'video' || widgetType === 'news') {
         this.editWidget(newWidget, rowIndex);
       }
 
@@ -964,6 +967,23 @@ export default {
         case 'divider':
         case 'spacer':
           // No additional properties needed for divider
+          break;
+        case 'news':
+          widget.title = '';
+          widget.sourcePageId = null;
+          widget.sourcePath = '';
+          widget.layout = 'list';
+          widget.columns = 3;
+          widget.limit = 5;
+          widget.sortBy = 'modified';
+          widget.sortOrder = 'desc';
+          widget.showImage = true;
+          widget.showDate = true;
+          widget.showExcerpt = true;
+          widget.excerptLength = 100;
+          widget.autoplayInterval = 5;
+          widget.filters = [];
+          widget.filterOperator = 'AND';
           break;
       }
 

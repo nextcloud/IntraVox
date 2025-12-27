@@ -16,7 +16,7 @@ use OCP\Files\Cache\ICacheEntry;
 use enshrined\svgSanitize\Sanitizer;
 
 class PageService {
-    private const ALLOWED_WIDGET_TYPES = ['text', 'heading', 'image', 'links', 'file', 'divider', 'spacer', 'video'];
+    private const ALLOWED_WIDGET_TYPES = ['text', 'heading', 'image', 'links', 'file', 'divider', 'spacer', 'video', 'news'];
     private const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
     private const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/ogg'];
     private const ALLOWED_MEDIA_TYPES = [
@@ -1534,6 +1534,10 @@ class PageService {
         try {
             $validatedData = $this->validateAndSanitizePage($data);
         } catch (\Exception $e) {
+            $this->logger->error('[updatePage] Validation failed: ' . $e->getMessage(), [
+                'pageId' => $originalId,
+                'trace' => $e->getTraceAsString(),
+            ]);
             throw new \InvalidArgumentException('Page validation failed: ' . $e->getMessage());
         }
 
@@ -2239,6 +2243,71 @@ class PageService {
                 $sanitized['loop'] = (bool) ($widget['loop'] ?? false);
                 $sanitized['muted'] = (bool) ($widget['muted'] ?? false);
                 break;
+
+            case 'news':
+                // News widget - displays pages from a folder with optional MetaVox filters
+                $sanitized['title'] = $this->sanitizeText($widget['title'] ?? '');
+                $sanitized['sourcePath'] = $this->sanitizePath($widget['sourcePath'] ?? '');
+                // sourcePageId is the uniqueId of the source page/folder (new PageTreeSelect approach)
+                $sanitized['sourcePageId'] = isset($widget['sourcePageId']) && !empty($widget['sourcePageId'])
+                    ? preg_replace('/[^a-zA-Z0-9_-]/', '', $widget['sourcePageId'])
+                    : null;
+
+                // Layout options
+                $allowedLayouts = ['list', 'grid', 'carousel'];
+                $sanitized['layout'] = in_array($widget['layout'] ?? 'list', $allowedLayouts)
+                    ? $widget['layout']
+                    : 'list';
+
+                // Grid columns (2-4)
+                $sanitized['columns'] = max(2, min((int)($widget['columns'] ?? 3), 4));
+
+                // Limit (1-20 items)
+                $sanitized['limit'] = max(1, min((int)($widget['limit'] ?? 5), 20));
+
+                // Sort options
+                $allowedSortBy = ['modified', 'title'];
+                $sanitized['sortBy'] = in_array($widget['sortBy'] ?? 'modified', $allowedSortBy)
+                    ? $widget['sortBy']
+                    : 'modified';
+
+                $allowedSortOrder = ['asc', 'desc'];
+                $sanitized['sortOrder'] = in_array($widget['sortOrder'] ?? 'desc', $allowedSortOrder)
+                    ? $widget['sortOrder']
+                    : 'desc';
+
+                // Display options (booleans)
+                $sanitized['showImage'] = (bool)($widget['showImage'] ?? true);
+                $sanitized['showDate'] = (bool)($widget['showDate'] ?? true);
+                $sanitized['showExcerpt'] = (bool)($widget['showExcerpt'] ?? true);
+                $sanitized['excerptLength'] = max(50, min((int)($widget['excerptLength'] ?? 100), 500));
+
+                // Carousel autoplay interval (0-30 seconds, 0 = disabled)
+                $sanitized['autoplayInterval'] = max(0, min((int)($widget['autoplayInterval'] ?? 5), 30));
+
+                // MetaVox filters
+                $sanitized['filters'] = [];
+                if (isset($widget['filters']) && is_array($widget['filters'])) {
+                    foreach ($widget['filters'] as $filter) {
+                        if (isset($filter['fieldName']) && !empty($filter['fieldName'])) {
+                            $allowedOperators = ['equals', 'contains', 'in', 'not_empty'];
+                            $sanitizedFilter = [
+                                'fieldName' => $this->sanitizeText($filter['fieldName']),
+                                'operator' => in_array($filter['operator'] ?? 'equals', $allowedOperators)
+                                    ? $filter['operator']
+                                    : 'equals',
+                                'value' => $this->sanitizeText($filter['value'] ?? ''),
+                            ];
+                            $sanitized['filters'][] = $sanitizedFilter;
+                        }
+                    }
+                }
+
+                $allowedFilterOperators = ['AND', 'OR'];
+                $sanitized['filterOperator'] = in_array($widget['filterOperator'] ?? 'AND', $allowedFilterOperators)
+                    ? $widget['filterOperator']
+                    : 'AND';
+                break;
         }
 
         return $sanitized;
@@ -2335,6 +2404,11 @@ class PageService {
      * @throws \InvalidArgumentException if path is malicious
      */
     private function sanitizePath(string $path): string {
+        // Allow empty paths (used for news widget sourcePath to indicate "all pages")
+        if (empty($path)) {
+            return '';
+        }
+
         // 1. Check for null bytes (can bypass extension checks)
         if (strpos($path, "\0") !== false) {
             throw new \InvalidArgumentException('Null bytes not allowed in path');
@@ -2355,12 +2429,17 @@ class PageService {
         // 4. Remove leading/trailing slashes
         $path = trim($path, '/');
 
-        // 5. Detect directory traversal attempts
+        // 5. If path becomes empty after trimming, return empty
+        if (empty($path)) {
+            return '';
+        }
+
+        // 6. Detect directory traversal attempts
         if (strpos($path, '..') !== false) {
             throw new \InvalidArgumentException('Path traversal not allowed');
         }
 
-        // 6. Validate path segments
+        // 7. Validate path segments
         $segments = explode('/', $path);
         foreach ($segments as $segment) {
             // Empty segments (double slashes)
@@ -4113,14 +4192,36 @@ class PageService {
         string $filterOperator = 'AND',
         int $limit = 5,
         string $sortBy = 'modified',
-        string $sortOrder = 'desc'
+        string $sortOrder = 'desc',
+        ?string $sourcePageId = null
     ): array {
         $folder = $this->getLanguageFolder();
         $pages = [];
         $language = $this->getUserLanguage();
 
-        // If sourcePath is provided, navigate to that folder
-        if (!empty($sourcePath)) {
+        // If sourcePageId is provided, find that page and use its folder as source
+        // Also include the selected page itself in the results
+        $sourcePageData = null;
+        if (!empty($sourcePageId)) {
+            try {
+                $result = $this->findPageByUniqueId($folder, $sourcePageId);
+                if ($result && isset($result['folder'])) {
+                    $folder = $result['folder'];
+                    // Store the source page data to include it in results
+                    if (isset($result['file'])) {
+                        $sourcePageData = $result;
+                    }
+                } else {
+                    $this->logger->warning('News widget: Source page not found', ['sourcePageId' => $sourcePageId]);
+                    return ['items' => [], 'total' => 0, 'metavoxAvailable' => $this->isMetaVoxAvailable()];
+                }
+            } catch (\Exception $e) {
+                $this->logger->warning('News widget: Error finding source page', ['sourcePageId' => $sourcePageId, 'error' => $e->getMessage()]);
+                return ['items' => [], 'total' => 0, 'metavoxAvailable' => $this->isMetaVoxAvailable()];
+            }
+        }
+        // Legacy: If sourcePath is provided (but no sourcePageId), navigate to that folder
+        elseif (!empty($sourcePath)) {
             $sourcePath = trim($sourcePath, '/');
             try {
                 $folder = $folder->get($sourcePath);
@@ -4132,6 +4233,41 @@ class PageService {
 
         // Recursively collect pages from the source folder
         $this->findNewsPagesInFolder($folder, $pages, $language);
+
+        // Add the selected source page itself to the results (if sourcePageId was provided)
+        if ($sourcePageData !== null && isset($sourcePageData['file'])) {
+            try {
+                $content = $sourcePageData['file']->getContent();
+                $data = json_decode($content, true);
+
+                if ($data && isset($data['uniqueId'], $data['title'])) {
+                    // Get folder permissions
+                    $folderPerms = $this->getCachedPermissions($sourcePageData['folder']);
+
+                    // Only add if user can read
+                    if (($folderPerms & 1) !== 0) {
+                        $excerpt = $this->getPageExcerpt($data, 150);
+                        $image = $this->getPageFirstImage($data);
+
+                        $newsItem = [
+                            'uniqueId' => $data['uniqueId'],
+                            'title' => $data['title'],
+                            'excerpt' => $excerpt,
+                            'image' => $image,
+                            'imagePath' => $image ? '/apps/intravox/api/pages/' . $data['uniqueId'] . '/media/' . $image : null,
+                            'modified' => $sourcePageData['file']->getMTime(),
+                            'modifiedFormatted' => $this->formatDateLocalized($sourcePageData['file']->getMTime(), $language),
+                            'path' => $sourcePageData['folder']->getPath(),
+                        ];
+
+                        // Add to beginning of pages array (it's the "parent" page)
+                        array_unshift($pages, $newsItem);
+                    }
+                }
+            } catch (\Exception $e) {
+                $this->logger->debug('News widget: Could not add source page to results', ['error' => $e->getMessage()]);
+            }
+        }
 
         // Apply MetaVox filters if any and if MetaVox is available
         if (!empty($filters) && $this->isMetaVoxAvailable()) {

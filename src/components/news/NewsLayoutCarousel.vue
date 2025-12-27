@@ -3,7 +3,7 @@
     <div class="carousel-container">
       <button
         class="carousel-nav carousel-nav--prev"
-        :disabled="currentIndex === 0"
+        :style="navButtonStyle"
         @click="prev"
       >
         <ChevronLeft :size="24" />
@@ -22,18 +22,21 @@
             <a
               :href="`#${item.uniqueId}`"
               class="carousel-item"
+              :style="itemStyle"
               @click.prevent="$emit('navigate', item.uniqueId)"
+              @mouseenter="pauseAutoplay"
+              @mouseleave="resumeAutoplay"
             >
-              <div v-if="item.imagePath" class="carousel-image">
+              <div v-if="widget.showImage !== false && item.imagePath" class="carousel-image">
                 <img :src="getImageUrl(item)" :alt="item.title" loading="lazy" />
               </div>
               <div class="carousel-content">
-                <h4 class="carousel-title">{{ item.title }}</h4>
-                <div v-if="widget.showDate !== false" class="carousel-date">
+                <h4 class="carousel-title" :style="textStyle">{{ item.title }}</h4>
+                <div v-if="widget.showDate !== false" class="carousel-date" :style="secondaryTextStyle">
                   <CalendarBlank :size="14" />
                   <span>{{ item.modifiedFormatted }}</span>
                 </div>
-                <p v-if="widget.showExcerpt !== false && item.excerpt" class="carousel-excerpt">
+                <p v-if="widget.showExcerpt !== false && item.excerpt" class="carousel-excerpt" :style="secondaryTextStyle">
                   {{ item.excerpt }}
                 </p>
               </div>
@@ -44,7 +47,7 @@
 
       <button
         class="carousel-nav carousel-nav--next"
-        :disabled="currentIndex >= items.length - 1"
+        :style="navButtonStyle"
         @click="next"
       >
         <ChevronRight :size="24" />
@@ -57,6 +60,7 @@
         :key="item.uniqueId"
         class="carousel-dot"
         :class="{ 'carousel-dot--active': index === currentIndex }"
+        :style="index === currentIndex ? activeDotStyle : dotStyle"
         @click="goTo(index)"
       />
     </div>
@@ -85,11 +89,17 @@ export default {
       type: Object,
       required: true,
     },
+    rowBackgroundColor: {
+      type: String,
+      default: '',
+    },
   },
   emits: ['navigate'],
   data() {
     return {
       currentIndex: 0,
+      autoplayTimer: null,
+      isPaused: false,
     };
   },
   computed: {
@@ -98,6 +108,87 @@ export default {
         transform: `translateX(-${this.currentIndex * 100}%)`,
       };
     },
+    autoplayInterval() {
+      // Default 5 seconds, configurable via widget.autoplayInterval
+      return (this.widget.autoplayInterval || 5) * 1000;
+    },
+    isDarkBackground() {
+      const darkBackgrounds = [
+        'var(--color-primary-element)',
+        'var(--color-error)',
+        'var(--color-success)',
+      ];
+      return darkBackgrounds.includes(this.rowBackgroundColor);
+    },
+    textStyle() {
+      if (this.isDarkBackground) {
+        return { color: 'var(--color-primary-element-text)' };
+      }
+      return {};
+    },
+    secondaryTextStyle() {
+      if (this.isDarkBackground) {
+        return { color: 'rgba(255, 255, 255, 0.8)' };
+      }
+      return {};
+    },
+    itemStyle() {
+      if (this.isDarkBackground) {
+        return {
+          background: 'rgba(255, 255, 255, 0.1)',
+          borderColor: 'rgba(255, 255, 255, 0.2)',
+        };
+      }
+      return {};
+    },
+    navButtonStyle() {
+      if (this.isDarkBackground) {
+        return {
+          background: 'rgba(255, 255, 255, 0.2)',
+          borderColor: 'rgba(255, 255, 255, 0.3)',
+          color: 'var(--color-primary-element-text)',
+        };
+      }
+      return {};
+    },
+    dotStyle() {
+      if (this.isDarkBackground) {
+        return {
+          background: 'rgba(255, 255, 255, 0.4)',
+        };
+      }
+      return {};
+    },
+    activeDotStyle() {
+      if (this.isDarkBackground) {
+        return {
+          background: 'var(--color-primary-element-text)',
+        };
+      }
+      return {};
+    },
+  },
+  watch: {
+    items: {
+      immediate: true,
+      handler() {
+        // Reset to first item when items change
+        this.currentIndex = 0;
+        this.startAutoplay();
+      },
+    },
+    'widget.autoplayInterval': {
+      handler() {
+        // Restart autoplay when interval changes
+        this.startAutoplay();
+      },
+    },
+  },
+  mounted() {
+    this.startAutoplay();
+  },
+  beforeUnmount() {
+    this.stopAutoplay();
   },
   methods: {
     getImageUrl(item) {
@@ -107,15 +198,50 @@ export default {
     prev() {
       if (this.currentIndex > 0) {
         this.currentIndex--;
+      } else {
+        // Loop to last item
+        this.currentIndex = this.items.length - 1;
       }
+      this.resetAutoplayTimer();
     },
     next() {
       if (this.currentIndex < this.items.length - 1) {
         this.currentIndex++;
+      } else {
+        // Loop to first item
+        this.currentIndex = 0;
       }
+      this.resetAutoplayTimer();
     },
     goTo(index) {
       this.currentIndex = index;
+      this.resetAutoplayTimer();
+    },
+    startAutoplay() {
+      this.stopAutoplay();
+      if (this.items.length > 1 && this.widget.autoplayInterval > 0) {
+        this.autoplayTimer = setInterval(() => {
+          if (!this.isPaused) {
+            this.next();
+          }
+        }, this.autoplayInterval);
+      }
+    },
+    stopAutoplay() {
+      if (this.autoplayTimer) {
+        clearInterval(this.autoplayTimer);
+        this.autoplayTimer = null;
+      }
+    },
+    resetAutoplayTimer() {
+      // Restart the timer after manual navigation
+      this.startAutoplay();
+    },
+    pauseAutoplay() {
+      this.isPaused = true;
+    },
+    resumeAutoplay() {
+      this.isPaused = false;
     },
   },
 };
@@ -124,12 +250,15 @@ export default {
 <style scoped>
 .news-layout-carousel {
   width: 100%;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .carousel-container {
   display: flex;
   align-items: center;
   gap: 8px;
+  max-width: 100%;
 }
 
 .carousel-nav {
@@ -148,19 +277,15 @@ export default {
   transition: all 0.2s;
 }
 
-.carousel-nav:hover:not(:disabled) {
+.carousel-nav:hover {
   background: var(--color-background-hover);
   border-color: var(--color-primary);
   color: var(--color-primary);
 }
 
-.carousel-nav:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
-}
-
 .carousel-viewport {
   flex: 1;
+  min-width: 0;
   overflow: hidden;
   border-radius: var(--border-radius-large);
 }
@@ -168,11 +293,14 @@ export default {
 .carousel-track {
   display: flex;
   transition: transform 0.3s ease;
+  width: 100%;
 }
 
 .carousel-slide {
   flex: 0 0 100%;
   min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .carousel-item {
