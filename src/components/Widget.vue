@@ -75,6 +75,13 @@
       :style="getDividerStyle()"
     ></div>
 
+    <!-- News Widget -->
+    <NewsWidget
+      v-else-if="widget.type === 'news'"
+      :widget="widget"
+      @navigate="$emit('navigate', $event)"
+    />
+
     <!-- Video Widget -->
     <div v-else-if="widget.type === 'video'" class="widget-video">
       <!-- Blocked Video - domain not in whitelist -->
@@ -154,13 +161,15 @@ import { translate as t } from '@nextcloud/l10n';
 import { generateUrl } from '@nextcloud/router';
 import InlineTextEditor from './InlineTextEditor.vue';
 import LinksWidget from './LinksWidget.vue';
+import NewsWidget from './NewsWidget.vue';
 import { markdownToHtml } from '../utils/markdownSerializer.js';
 
 export default {
   name: 'Widget',
   components: {
     InlineTextEditor,
-    LinksWidget
+    LinksWidget,
+    NewsWidget,
   },
   props: {
     widget: {

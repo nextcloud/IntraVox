@@ -804,6 +804,61 @@ class ApiController extends Controller {
     }
 
     /**
+     * Get news pages for the News widget
+     *
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     */
+    public function getNews(): DataResponse {
+        try {
+            $sourcePath = $this->request->getParam('sourcePath', '');
+            $filtersJson = $this->request->getParam('filters', '[]');
+            $filterOperator = $this->request->getParam('filterOperator', 'AND');
+            $limit = (int) $this->request->getParam('limit', 5);
+            $sortBy = $this->request->getParam('sortBy', 'modified');
+            $sortOrder = $this->request->getParam('sortOrder', 'desc');
+
+            // Parse filters JSON
+            $filters = json_decode($filtersJson, true) ?? [];
+
+            // Validate limit
+            $limit = max(1, min($limit, 50));
+
+            // Validate sortBy
+            if (!in_array($sortBy, ['modified', 'title'])) {
+                $sortBy = 'modified';
+            }
+
+            // Validate sortOrder
+            if (!in_array($sortOrder, ['asc', 'desc'])) {
+                $sortOrder = 'desc';
+            }
+
+            // Validate filterOperator
+            if (!in_array($filterOperator, ['AND', 'OR'])) {
+                $filterOperator = 'AND';
+            }
+
+            $result = $this->pageService->getNewsPages(
+                $sourcePath,
+                $filters,
+                $filterOperator,
+                $limit,
+                $sortBy,
+                $sortOrder
+            );
+
+            return new DataResponse($result);
+        } catch (\Exception $e) {
+            $this->logger->error('News widget error: ' . $e->getMessage());
+            return new DataResponse(
+                ['error' => $e->getMessage()],
+                Http::STATUS_INTERNAL_SERVER_ERROR
+            );
+        }
+    }
+
+    /**
      * @NoAdminRequired
      * @NoCSRFRequired
      */

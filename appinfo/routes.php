@@ -27,6 +27,7 @@ return [
         ['name' => 'api#updatePageMetadata', 'url' => '/api/pages/{pageId}/metadata', 'verb' => 'PUT'],
         ['name' => 'api#checkPageCacheStatus', 'url' => '/api/page/{pageId}/cache-status', 'verb' => 'GET'],
         ['name' => 'api#searchPages', 'url' => '/api/search', 'verb' => 'GET'],
+        ['name' => 'api#getNews', 'url' => '/api/news', 'verb' => 'GET'],
         ['name' => 'api#getBreadcrumb', 'url' => '/api/pages/{id}/breadcrumb', 'verb' => 'GET'],
         ['name' => 'api#getMetaVoxStatus', 'url' => '/api/metavox/status', 'verb' => 'GET'],
         ['name' => 'api#getPermissions', 'url' => '/api/permissions', 'verb' => 'GET'],

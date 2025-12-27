@@ -28,6 +28,7 @@ import Image from 'vue-material-design-icons/Image.vue';
 import Minus from 'vue-material-design-icons/Minus.vue';
 import ViewGrid from 'vue-material-design-icons/ViewGrid.vue';
 import Video from 'vue-material-design-icons/Video.vue';
+import Newspaper from 'vue-material-design-icons/Newspaper.vue';
 
 export default {
   name: 'WidgetPicker',
@@ -38,7 +39,8 @@ export default {
     Image,
     Minus,
     ViewGrid,
-    Video
+    Video,
+    Newspaper,
   },
   emits: ['close', 'select'],
   computed: {
@@ -82,6 +84,12 @@ export default {
           name: this.$t('Video'),
           icon: 'video',
           description: this.$t('Add a PeerTube or local video')
+        },
+        {
+          type: 'news',
+          name: this.$t('News'),
+          icon: 'newspaper',
+          description: this.$t('Show news from a folder')
         }
       ];
     }
@@ -94,7 +102,8 @@ export default {
         'image': 'Image',
         'minus': 'Minus',
         'view-grid': 'ViewGrid',
-        'video': 'Video'
+        'video': 'Video',
+        'newspaper': 'Newspaper',
       };
       return iconMap[iconName] || 'Text';
     }

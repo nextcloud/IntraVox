@@ -4095,4 +4095,447 @@ class PageService {
         $rootPath = $resourcesRoot->getPath();
         return ltrim(substr($fullPath, strlen($rootPath)), '/');
     }
+
+    /**
+     * Get news pages for the News widget
+     *
+     * @param string $sourcePath Source folder path (relative to language folder)
+     * @param array $filters MetaVox filters to apply
+     * @param string $filterOperator 'AND' or 'OR' for combining filters
+     * @param int $limit Maximum number of results
+     * @param string $sortBy Field to sort by ('modified' or 'title')
+     * @param string $sortOrder Sort direction ('asc' or 'desc')
+     * @return array News items with excerpts and images
+     */
+    public function getNewsPages(
+        string $sourcePath = '',
+        array $filters = [],
+        string $filterOperator = 'AND',
+        int $limit = 5,
+        string $sortBy = 'modified',
+        string $sortOrder = 'desc'
+    ): array {
+        $folder = $this->getLanguageFolder();
+        $pages = [];
+        $language = $this->getUserLanguage();
+
+        // If sourcePath is provided, navigate to that folder
+        if (!empty($sourcePath)) {
+            $sourcePath = trim($sourcePath, '/');
+            try {
+                $folder = $folder->get($sourcePath);
+            } catch (NotFoundException $e) {
+                $this->logger->warning('News widget: Source folder not found', ['path' => $sourcePath]);
+                return ['items' => [], 'total' => 0, 'metavoxAvailable' => $this->isMetaVoxAvailable()];
+            }
+        }
+
+        // Recursively collect pages from the source folder
+        $this->findNewsPagesInFolder($folder, $pages, $language);
+
+        // Apply MetaVox filters if any and if MetaVox is available
+        if (!empty($filters) && $this->isMetaVoxAvailable()) {
+            $pages = $this->applyMetaVoxFilters($pages, $filters, $filterOperator);
+        }
+
+        $total = count($pages);
+
+        // Sort pages
+        usort($pages, function($a, $b) use ($sortBy, $sortOrder) {
+            if ($sortBy === 'title') {
+                $cmp = strcasecmp($a['title'] ?? '', $b['title'] ?? '');
+            } else {
+                // Default: sort by modified
+                $cmp = ($a['modified'] ?? 0) - ($b['modified'] ?? 0);
+            }
+            return $sortOrder === 'asc' ? $cmp : -$cmp;
+        });
+
+        // Limit results
+        $pages = array_slice($pages, 0, $limit);
+
+        return [
+            'items' => $pages,
+            'total' => $total,
+            'metavoxAvailable' => $this->isMetaVoxAvailable()
+        ];
+    }
+
+    /**
+     * Recursively find news pages in a folder
+     */
+    private function findNewsPagesInFolder($folder, array &$pages, string $language): void {
+        foreach ($this->getCachedDirectoryListing($folder) as $item) {
+            if ($item->getType() !== \OCP\Files\FileInfo::TYPE_FOLDER) {
+                continue;
+            }
+
+            $folderName = $item->getName();
+
+            // Skip special folders
+            if (in_array($folderName, ['_media', '_resources', 'images', 'files'])) {
+                continue;
+            }
+
+            // Look for {foldername}.json inside the folder
+            try {
+                $jsonFile = $item->get($folderName . '.json');
+
+                if (!$jsonFile->isReadable()) {
+                    continue;
+                }
+
+                $content = $jsonFile instanceof \OCP\Files\File
+                    ? $this->getCachedFileContent($jsonFile)
+                    : @$jsonFile->getContent();
+
+                if ($content === false || $content === null) {
+                    continue;
+                }
+
+                $data = json_decode($content, true);
+
+                if ($data && isset($data['uniqueId'], $data['title'])) {
+                    // Get folder permissions
+                    $folderPerms = $this->getCachedPermissions($item);
+
+                    // Skip if user can't read
+                    if (($folderPerms & 1) === 0) {
+                        continue;
+                    }
+
+                    // Extract excerpt from first text widget
+                    $excerpt = $this->getPageExcerpt($data, 150);
+
+                    // Find first image
+                    $image = $this->getPageFirstImage($data);
+
+                    // Build relative path
+                    $relativePath = $this->getRelativePathFromRoot($item);
+
+                    // Get file modification time
+                    $modified = $jsonFile->getMTime();
+
+                    // Format modified date in user's locale
+                    $modifiedFormatted = $this->formatDateLocalized($modified, $language);
+
+                    $pages[] = [
+                        'uniqueId' => $data['uniqueId'],
+                        'title' => $data['title'],
+                        'excerpt' => $excerpt,
+                        'image' => $image,
+                        'imagePath' => $image ? "/apps/intravox/api/pages/{$data['uniqueId']}/media/{$image}" : null,
+                        'modified' => $modified,
+                        'modifiedFormatted' => $modifiedFormatted,
+                        'path' => $relativePath,
+                        'fileId' => $jsonFile->getId(),
+                        'permissions' => [
+                            'canRead' => ($folderPerms & 1) !== 0,
+                            'canWrite' => ($folderPerms & 2) !== 0,
+                            'raw' => $folderPerms
+                        ]
+                    ];
+                }
+            } catch (\Exception $e) {
+                // This folder doesn't contain a valid page
+            } catch (\Throwable $e) {
+                continue;
+            }
+
+            // Recursively search subfolders
+            $this->findNewsPagesInFolder($item, $pages, $language);
+        }
+    }
+
+    /**
+     * Extract an excerpt from page content (first text widget)
+     */
+    public function getPageExcerpt(array $pageData, int $length = 150): string {
+        if (!isset($pageData['layout']['rows']) || !is_array($pageData['layout']['rows'])) {
+            return '';
+        }
+
+        // Search through all rows for text widgets
+        foreach ($pageData['layout']['rows'] as $row) {
+            if (!isset($row['widgets']) || !is_array($row['widgets'])) {
+                continue;
+            }
+
+            foreach ($row['widgets'] as $widget) {
+                if (($widget['type'] ?? '') === 'text' && !empty($widget['content'])) {
+                    // Strip HTML tags and get plain text
+                    $text = strip_tags($widget['content']);
+                    // Remove excessive whitespace
+                    $text = preg_replace('/\s+/', ' ', $text);
+                    $text = trim($text);
+
+                    if (!empty($text)) {
+                        // Truncate to desired length
+                        if (mb_strlen($text) > $length) {
+                            $text = mb_substr($text, 0, $length);
+                            // Cut at last word boundary
+                            $lastSpace = mb_strrpos($text, ' ');
+                            if ($lastSpace !== false && $lastSpace > $length * 0.7) {
+                                $text = mb_substr($text, 0, $lastSpace);
+                            }
+                            $text .= '...';
+                        }
+                        return $text;
+                    }
+                }
+            }
+        }
+
+        return '';
+    }
+
+    /**
+     * Find the first image in a page's layout
+     */
+    public function getPageFirstImage(array $pageData): ?string {
+        // Check header row first
+        if (isset($pageData['layout']['headerRow']['widgets']) && is_array($pageData['layout']['headerRow']['widgets'])) {
+            foreach ($pageData['layout']['headerRow']['widgets'] as $widget) {
+                if (($widget['type'] ?? '') === 'image' && !empty($widget['src'])) {
+                    return $widget['src'];
+                }
+            }
+        }
+
+        // Then check main rows
+        if (isset($pageData['layout']['rows']) && is_array($pageData['layout']['rows'])) {
+            foreach ($pageData['layout']['rows'] as $row) {
+                if (!isset($row['widgets']) || !is_array($row['widgets'])) {
+                    continue;
+                }
+
+                foreach ($row['widgets'] as $widget) {
+                    if (($widget['type'] ?? '') === 'image' && !empty($widget['src'])) {
+                        return $widget['src'];
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Check if MetaVox app is available
+     */
+    private function isMetaVoxAvailable(): bool {
+        try {
+            $appManager = \OC::$server->getAppManager();
+            return $appManager->isInstalled('metavox') && $appManager->isEnabledForUser('metavox');
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Apply MetaVox filters to pages
+     *
+     * @param array $pages Pages to filter
+     * @param array $filters Filter definitions
+     * @param string $operator 'AND' or 'OR'
+     * @return array Filtered pages
+     */
+    private function applyMetaVoxFilters(array $pages, array $filters, string $operator = 'AND'): array {
+        if (empty($filters) || !$this->isMetaVoxAvailable()) {
+            return $pages;
+        }
+
+        // Get file IDs from pages
+        $fileIds = array_filter(array_column($pages, 'fileId'));
+        if (empty($fileIds)) {
+            return $pages;
+        }
+
+        // Fetch MetaVox data for all file IDs
+        $metaVoxData = $this->getMetaVoxDataForFiles($fileIds);
+
+        // Filter pages based on MetaVox values
+        return array_filter($pages, function($page) use ($filters, $operator, $metaVoxData) {
+            $fileId = $page['fileId'] ?? null;
+            if (!$fileId) {
+                return $operator === 'OR'; // No fileId = no match for AND, possible match for OR
+            }
+
+            $meta = $metaVoxData[$fileId] ?? [];
+            $results = [];
+
+            foreach ($filters as $filter) {
+                $fieldName = $filter['fieldName'] ?? '';
+                $filterOperator = $filter['operator'] ?? 'equals';
+                $filterValue = $filter['value'] ?? '';
+                $actualValue = $meta[$fieldName] ?? null;
+
+                $results[] = $this->matchesFilter($actualValue, $filterOperator, $filterValue);
+            }
+
+            if (empty($results)) {
+                return true;
+            }
+
+            return $operator === 'AND'
+                ? !in_array(false, $results, true)
+                : in_array(true, $results, true);
+        });
+    }
+
+    /**
+     * Check if a value matches a filter
+     */
+    private function matchesFilter($value, string $operator, $filterValue): bool {
+        switch ($operator) {
+            case 'equals':
+                return $value === $filterValue;
+            case 'contains':
+                return is_string($value) && str_contains($value, $filterValue);
+            case 'in':
+                $allowedValues = is_array($filterValue) ? $filterValue : [$filterValue];
+                return in_array($value, $allowedValues);
+            case 'not_empty':
+                return !empty($value);
+            case 'empty':
+                return empty($value);
+            default:
+                return false;
+        }
+    }
+
+    /**
+     * Get MetaVox metadata for multiple files
+     *
+     * @param array $fileIds Array of file IDs
+     * @return array Associative array: fileId => [fieldName => value, ...]
+     */
+    private function getMetaVoxDataForFiles(array $fileIds): array {
+        if (empty($fileIds) || !$this->isMetaVoxAvailable()) {
+            return [];
+        }
+
+        try {
+            // Query the metavox_file_gf_meta table directly
+            $qb = $this->db->getQueryBuilder();
+            $qb->select('file_id', 'field_name', 'field_value')
+                ->from('metavox_file_gf_meta')
+                ->where($qb->expr()->in('file_id', $qb->createNamedParameter($fileIds, \Doctrine\DBAL\Connection::PARAM_INT_ARRAY)));
+
+            $result = $qb->executeQuery();
+            $rows = $result->fetchAll();
+            $result->closeCursor();
+
+            // Organize by file ID
+            $metaData = [];
+            foreach ($rows as $row) {
+                $fileId = (int)$row['file_id'];
+                $fieldName = $row['field_name'];
+                $fieldValue = $row['field_value'];
+
+                if (!isset($metaData[$fileId])) {
+                    $metaData[$fileId] = [];
+                }
+                $metaData[$fileId][$fieldName] = $fieldValue;
+            }
+
+            return $metaData;
+
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to get MetaVox data', [
+                'error' => $e->getMessage(),
+                'fileIds' => $fileIds
+            ]);
+            return [];
+        }
+    }
+
+    /**
+     * Format a timestamp in a localized date format
+     */
+    private function formatDateLocalized(int $timestamp, string $language): string {
+        $months = [
+            'nl' => ['januari', 'februari', 'maart', 'april', 'mei', 'juni', 'juli', 'augustus', 'september', 'oktober', 'november', 'december'],
+            'en' => ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+            'de' => ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'],
+            'fr' => ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'],
+        ];
+
+        $monthNames = $months[$language] ?? $months['en'];
+        $monthIndex = (int)date('n', $timestamp) - 1;
+        $day = date('j', $timestamp);
+        $year = date('Y', $timestamp);
+
+        return "$day {$monthNames[$monthIndex]} $year";
+    }
+
+    /**
+     * Get list of available source folders for the News widget
+     * Returns top-level folders in the language folder that contain pages
+     */
+    public function getNewsSourcFolders(): array {
+        $folder = $this->getLanguageFolder();
+        $folders = [];
+
+        foreach ($this->getCachedDirectoryListing($folder) as $item) {
+            if ($item->getType() !== \OCP\Files\FileInfo::TYPE_FOLDER) {
+                continue;
+            }
+
+            $folderName = $item->getName();
+
+            // Skip special folders
+            if (in_array($folderName, ['_media', '_resources', 'images', 'files'])) {
+                continue;
+            }
+
+            // Check if this folder contains any pages
+            if ($this->folderContainsPages($item)) {
+                $folders[] = [
+                    'path' => $folderName,
+                    'name' => $folderName,
+                ];
+            }
+        }
+
+        // Sort alphabetically
+        usort($folders, function($a, $b) {
+            return strcasecmp($a['name'], $b['name']);
+        });
+
+        return $folders;
+    }
+
+    /**
+     * Check if a folder contains any pages (recursively)
+     */
+    private function folderContainsPages($folder): bool {
+        $folderName = $folder->getName();
+
+        // Check if this folder itself is a page
+        try {
+            $folder->get($folderName . '.json');
+            return true;
+        } catch (NotFoundException $e) {
+            // Not a page folder
+        }
+
+        // Check subfolders
+        foreach ($this->getCachedDirectoryListing($folder) as $item) {
+            if ($item->getType() === \OCP\Files\FileInfo::TYPE_FOLDER) {
+                $subFolderName = $item->getName();
+
+                // Skip special folders
+                if (in_array($subFolderName, ['_media', '_resources', 'images', 'files'])) {
+                    continue;
+                }
+
+                if ($this->folderContainsPages($item)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
 }

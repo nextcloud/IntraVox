@@ -298,6 +298,13 @@
           </div>
         </div>
 
+        <!-- News Widget -->
+        <NewsWidgetEditor
+          v-else-if="localWidget.type === 'news'"
+          :widget="localWidget"
+          @update="handleNewsWidgetUpdate"
+        />
+
         <!-- Video Widget -->
         <div v-else-if="localWidget.type === 'video'">
           <!-- Provider keuze -->
@@ -475,6 +482,7 @@ import { translate as t } from '@nextcloud/l10n';
 import { NcButton, NcModal } from '@nextcloud/vue';
 import PageTreeSelect from './PageTreeSelect.vue';
 import MediaPicker from './MediaPicker.vue';
+import NewsWidgetEditor from './NewsWidgetEditor.vue';
 import { showError, showSuccess } from '@nextcloud/dialogs';
 import ImageIcon from 'vue-material-design-icons/Image.vue';
 import VideoIcon from 'vue-material-design-icons/Video.vue';
@@ -493,6 +501,7 @@ export default {
     EditorContent,
     PageTreeSelect,
     MediaPicker,
+    NewsWidgetEditor,
     ImageIcon,
     VideoIcon
   },
@@ -683,6 +692,10 @@ export default {
   methods: {
     t(key, vars = {}) {
       return this.$t(key, vars);
+    },
+    handleNewsWidgetUpdate(updatedWidget) {
+      // Merge the updated news widget properties into localWidget
+      Object.assign(this.localWidget, updatedWidget);
     },
     decodeHtml(html) {
       // Decode HTML entities
