@@ -314,12 +314,8 @@ export default {
     },
     sanitizeHtml(content) {
       if (!content) return '';
-      // Debug: log what content we receive
-      console.log('[Widget.sanitizeHtml] Raw content from widget:', content);
       // Convert Markdown to HTML for display (includes sanitization)
-      const html = markdownToHtml(content);
-      console.log('[Widget.sanitizeHtml] Converted HTML:', html);
-      return html;
+      return markdownToHtml(content);
     },
     onBlur() {
       // No need to save here anymore - watcher handles it

@@ -465,9 +465,7 @@ export default {
       onUpdate: () => {
         // Convert HTML back to Markdown for storage
         const html = this.editor.getHTML();
-        console.log('[InlineTextEditor.onUpdate] TipTap HTML:', html);
         const markdown = cleanMarkdown(htmlToMarkdown(html));
-        console.log('[InlineTextEditor.onUpdate] Emitting Markdown:', markdown);
         this.$emit('update:modelValue', markdown);
       },
       onFocus: () => {

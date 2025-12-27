@@ -55,6 +55,44 @@ function normalizeMarkdownTables(markdown) {
 }
 
 /**
+ * Preserve empty lines in markdown by converting them to zero-width space paragraphs
+ * This prevents marked from collapsing multiple blank lines into one
+ *
+ * In Markdown, multiple blank lines are treated as a single paragraph break.
+ * But users expect their empty lines to be preserved for visual spacing.
+ *
+ * Solution: Replace each "extra" empty line with a paragraph containing a zero-width space.
+ * This creates actual <p> tags that render as empty visual lines.
+ */
+function preserveEmptyLines(markdown) {
+  const lines = markdown.split('\n');
+  const result = [];
+  let consecutiveEmpty = 0;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const isEmpty = line.trim() === '';
+
+    if (isEmpty) {
+      consecutiveEmpty++;
+      // First empty line is the normal paragraph separator (keep as is)
+      // Additional empty lines need to become actual content to be preserved
+      if (consecutiveEmpty > 1) {
+        // Use a zero-width space (invisible but creates a paragraph)
+        result.push('\u200B');
+      } else {
+        result.push(line);
+      }
+    } else {
+      consecutiveEmpty = 0;
+      result.push(line);
+    }
+  }
+
+  return result.join('\n');
+}
+
+/**
  * Convert Markdown to HTML for TipTap
  * OPTIMIZED: Results are cached to avoid repeated parsing
  */
@@ -70,8 +108,13 @@ export function markdownToHtml(markdown) {
     // Normalize tables: ensure blank line before table, but not between rows
     const normalizedMarkdown = normalizeMarkdownTables(markdown);
 
+    // Preserve empty lines by converting them to special markers before parsing
+    // Markdown collapses multiple blank lines into one, but we want to keep them
+    // Strategy: Replace sequences of empty lines with placeholder paragraphs
+    const preservedMarkdown = preserveEmptyLines(normalizedMarkdown);
+
     // Parse markdown (GFM configured globally above)
-    const html = marked.parse(normalizedMarkdown);
+    const html = marked.parse(preservedMarkdown);
 
     const result = DOMPurify.sanitize(html, {
       ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 's', 'ul', 'ol', 'li', 'a', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'code', 'pre', 'hr',
@@ -127,7 +170,16 @@ function elementToMarkdown(element, listDepth = 0) {
 
   switch (tag) {
     case 'p':
-      return content + '\n\n';
+      // Empty paragraph (with or without <br>) should produce a blank line
+      // content will be '\n' if it contains only <br>, or '' if truly empty
+      // Zero-width space (\u200B) is used as a placeholder for preserved empty lines
+      // All of these should result in an empty line in the markdown
+      const trimmedContent = content.replace(/\u200B/g, '').trim();
+      // If content is only zero-width spaces or empty, treat as empty paragraph
+      if (trimmedContent === '' || trimmedContent === '\n') {
+        return '\n\n';
+      }
+      return content.replace(/\u200B/g, '') + '\n\n';
 
     case 'br':
       return '\n';
@@ -250,7 +302,7 @@ function convertList(listElement, listDepth, ordered) {
 
 /**
  * Clean up markdown formatting
- * Preserves table structure while removing excessive newlines elsewhere
+ * Preserves table structure and user-intended blank lines
  */
 export function cleanMarkdown(markdown) {
   if (!markdown) return '';
@@ -258,36 +310,24 @@ export function cleanMarkdown(markdown) {
   // Split into lines and process
   const lines = markdown.split('\n');
   const result = [];
-  let consecutiveEmpty = 0;
   let inTable = false;
 
   for (const line of lines) {
     const isTableRow = line.trim().startsWith('|') && line.trim().endsWith('|');
-    const isEmpty = line.trim() === '';
 
     if (isTableRow) {
       inTable = true;
-      consecutiveEmpty = 0;
       result.push(line);
-    } else if (isEmpty) {
-      if (inTable) {
-        // End of table, allow one blank line after
-        inTable = false;
-        result.push(line);
-        consecutiveEmpty = 1;
-      } else {
-        consecutiveEmpty++;
-        // Allow max 1 empty line (which creates 2 newlines = paragraph break)
-        if (consecutiveEmpty <= 1) {
-          result.push(line);
-        }
-      }
     } else {
-      inTable = false;
-      consecutiveEmpty = 0;
+      if (inTable && line.trim() === '') {
+        // End of table
+        inTable = false;
+      }
+      // Preserve all lines including empty ones (user-intended spacing)
       result.push(line);
     }
   }
 
+  // Join lines and only trim leading/trailing whitespace, but preserve internal blank lines
   return result.join('\n').trim();
 }

@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.3] - 2025-12-27 - Empty Line Preservation
+
+### Fixed
+- **Empty Lines in Text Editor**: Fixed issue where empty lines (hard returns) were being collapsed when saving
+  - Multiple consecutive empty lines are now preserved in text widgets
+  - Uses zero-width space placeholders to prevent Markdown from collapsing blank lines
+  - Works correctly for both editing and viewing modes
+
 ## [0.8.2] - 2025-12-27 - Tables & Editor Improvements
 
 ### Added
