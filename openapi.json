@@ -1,0 +1,1739 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "IntraVox API",
+    "version": "0.8.3",
+    "description": "IntraVox is a modern intranet page builder for Nextcloud. This API provides endpoints for managing pages, media, navigation, comments, and more.",
+    "license": {
+      "name": "AGPL-3.0",
+      "url": "https://www.gnu.org/licenses/agpl-3.0.html"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://{nextcloud_host}/apps/intravox",
+      "description": "IntraVox API",
+      "variables": {
+        "nextcloud_host": {
+          "default": "localhost",
+          "description": "Nextcloud server hostname"
+        }
+      }
+    }
+  ],
+  "security": [
+    {
+      "basic_auth": []
+    },
+    {
+      "bearer_auth": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Pages",
+      "description": "Page management operations"
+    },
+    {
+      "name": "Media",
+      "description": "Media file operations"
+    },
+    {
+      "name": "Navigation",
+      "description": "Navigation management"
+    },
+    {
+      "name": "Comments",
+      "description": "Page comments and reactions"
+    },
+    {
+      "name": "News",
+      "description": "News widget data"
+    },
+    {
+      "name": "Settings",
+      "description": "App settings (admin only)"
+    },
+    {
+      "name": "Export",
+      "description": "Content export"
+    }
+  ],
+  "paths": {
+    "/api/pages": {
+      "get": {
+        "operationId": "list-pages",
+        "summary": "List all pages",
+        "description": "Returns a list of all pages the current user has access to",
+        "tags": ["Pages"],
+        "responses": {
+          "200": {
+            "description": "List of pages",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PageSummary"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      },
+      "post": {
+        "operationId": "create-page",
+        "summary": "Create a new page",
+        "description": "Creates a new page with the given data",
+        "tags": ["Pages"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PageCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Page created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      }
+    },
+    "/api/pages/tree": {
+      "get": {
+        "operationId": "get-page-tree",
+        "summary": "Get page tree",
+        "description": "Returns the hierarchical page tree structure",
+        "tags": ["Pages"],
+        "responses": {
+          "200": {
+            "description": "Page tree",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "tree": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PageTreeNode"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/pages/{id}": {
+      "get": {
+        "operationId": "get-page",
+        "summary": "Get a page",
+        "description": "Returns a single page by its unique ID",
+        "tags": ["Pages"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Page unique ID (e.g., page-abc123)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Page data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "put": {
+        "operationId": "update-page",
+        "summary": "Update a page",
+        "description": "Updates an existing page",
+        "tags": ["Pages"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Page unique ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PageUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Page updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "delete-page",
+        "summary": "Delete a page",
+        "description": "Deletes a page and all its children",
+        "tags": ["Pages"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Page unique ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Page deleted successfully"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/pages/{id}/breadcrumb": {
+      "get": {
+        "operationId": "get-breadcrumb",
+        "summary": "Get page breadcrumb",
+        "description": "Returns the breadcrumb path for a page",
+        "tags": ["Pages"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Breadcrumb path",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "breadcrumb": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/BreadcrumbItem"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/pages/{pageId}/versions": {
+      "get": {
+        "operationId": "get-page-versions",
+        "summary": "Get page versions",
+        "description": "Returns version history for a page",
+        "tags": ["Pages"],
+        "parameters": [
+          {
+            "name": "pageId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Version list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "versions": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PageVersion"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/pages/{pageId}/versions/{timestamp}": {
+      "post": {
+        "operationId": "restore-page-version",
+        "summary": "Restore page version",
+        "description": "Restores a page to a previous version",
+        "tags": ["Pages"],
+        "parameters": [
+          {
+            "name": "pageId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "timestamp",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Version restored successfully"
+          }
+        }
+      }
+    },
+    "/api/pages/{pageId}/media": {
+      "post": {
+        "operationId": "upload-media",
+        "summary": "Upload media file",
+        "description": "Uploads a media file to a page",
+        "tags": ["Media"],
+        "parameters": [
+          {
+            "name": "pageId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "File to upload"
+                  }
+                },
+                "required": ["file"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "File uploaded successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "filename": {
+                      "type": "string"
+                    },
+                    "path": {
+                      "type": "string"
+                    },
+                    "size": {
+                      "type": "integer"
+                    },
+                    "mimeType": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "413": {
+            "description": "File too large"
+          }
+        }
+      }
+    },
+    "/api/pages/{pageId}/media/list": {
+      "get": {
+        "operationId": "list-media",
+        "summary": "List media files",
+        "description": "Returns a list of media files for a page",
+        "tags": ["Media"],
+        "parameters": [
+          {
+            "name": "pageId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Media file list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "files": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/MediaFile"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/pages/{pageId}/media/{filename}": {
+      "get": {
+        "operationId": "get-media",
+        "summary": "Get media file",
+        "description": "Returns a media file",
+        "tags": ["Media"],
+        "parameters": [
+          {
+            "name": "pageId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filename",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Media file content",
+            "content": {
+              "image/*": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "video/*": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/search": {
+      "get": {
+        "operationId": "search-pages",
+        "summary": "Search pages",
+        "description": "Search pages by title and content",
+        "tags": ["Pages"],
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": true,
+            "description": "Search query (minimum 2 characters)",
+            "schema": {
+              "type": "string",
+              "minLength": 2
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Search results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/SearchResult"
+                      }
+                    },
+                    "query": {
+                      "type": "string"
+                    },
+                    "total": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/news": {
+      "get": {
+        "operationId": "get-news",
+        "summary": "Get news items",
+        "description": "Returns news items for the News widget with optional filtering",
+        "tags": ["News"],
+        "parameters": [
+          {
+            "name": "sourcePath",
+            "in": "query",
+            "description": "Source folder path (relative to language folder)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filters",
+            "in": "query",
+            "description": "JSON array of MetaVox filters",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filterOperator",
+            "in": "query",
+            "description": "How to combine filters",
+            "schema": {
+              "type": "string",
+              "enum": ["AND", "OR"],
+              "default": "AND"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of items to return",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 5
+            }
+          },
+          {
+            "name": "sortBy",
+            "in": "query",
+            "description": "Field to sort by",
+            "schema": {
+              "type": "string",
+              "enum": ["modified", "title"],
+              "default": "modified"
+            }
+          },
+          {
+            "name": "sortOrder",
+            "in": "query",
+            "description": "Sort direction",
+            "schema": {
+              "type": "string",
+              "enum": ["asc", "desc"],
+              "default": "desc"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "News items",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/NewsItem"
+                      }
+                    },
+                    "total": {
+                      "type": "integer"
+                    },
+                    "metavoxAvailable": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/navigation": {
+      "get": {
+        "operationId": "get-navigation",
+        "summary": "Get navigation",
+        "description": "Returns the navigation structure",
+        "tags": ["Navigation"],
+        "responses": {
+          "200": {
+            "description": "Navigation data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Navigation"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "save-navigation",
+        "summary": "Save navigation",
+        "description": "Saves the navigation structure",
+        "tags": ["Navigation"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Navigation"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Navigation saved"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      }
+    },
+    "/api/footer": {
+      "get": {
+        "operationId": "get-footer",
+        "summary": "Get footer",
+        "description": "Returns the footer configuration",
+        "tags": ["Navigation"],
+        "responses": {
+          "200": {
+            "description": "Footer data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Footer"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "save-footer",
+        "summary": "Save footer",
+        "description": "Saves the footer configuration",
+        "tags": ["Navigation"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Footer"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Footer saved"
+          }
+        }
+      }
+    },
+    "/api/pages/{pageId}/comments": {
+      "get": {
+        "operationId": "get-comments",
+        "summary": "Get page comments",
+        "description": "Returns comments for a page",
+        "tags": ["Comments"],
+        "parameters": [
+          {
+            "name": "pageId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Comment list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "comments": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Comment"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "create-comment",
+        "summary": "Create comment",
+        "description": "Creates a new comment on a page",
+        "tags": ["Comments"],
+        "parameters": [
+          {
+            "name": "pageId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "content": {
+                    "type": "string",
+                    "description": "Comment content"
+                  },
+                  "parentId": {
+                    "type": "integer",
+                    "description": "Parent comment ID for replies"
+                  }
+                },
+                "required": ["content"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Comment created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Comment"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/comments/{commentId}": {
+      "put": {
+        "operationId": "update-comment",
+        "summary": "Update comment",
+        "tags": ["Comments"],
+        "parameters": [
+          {
+            "name": "commentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "content": {
+                    "type": "string"
+                  }
+                },
+                "required": ["content"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Comment updated"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "delete-comment",
+        "summary": "Delete comment",
+        "tags": ["Comments"],
+        "parameters": [
+          {
+            "name": "commentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Comment deleted"
+          }
+        }
+      }
+    },
+    "/api/pages/{pageId}/reactions": {
+      "get": {
+        "operationId": "get-page-reactions",
+        "summary": "Get page reactions",
+        "tags": ["Comments"],
+        "parameters": [
+          {
+            "name": "pageId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reaction data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Reactions"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/pages/{pageId}/reactions/{emoji}": {
+      "post": {
+        "operationId": "add-page-reaction",
+        "summary": "Add page reaction",
+        "tags": ["Comments"],
+        "parameters": [
+          {
+            "name": "pageId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "emoji",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reaction added"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "remove-page-reaction",
+        "summary": "Remove page reaction",
+        "tags": ["Comments"],
+        "parameters": [
+          {
+            "name": "pageId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "emoji",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reaction removed"
+          }
+        }
+      }
+    },
+    "/api/settings/video-domains": {
+      "get": {
+        "operationId": "get-video-domains",
+        "summary": "Get video domains whitelist",
+        "tags": ["Settings"],
+        "responses": {
+          "200": {
+            "description": "Video domains",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "domains": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "set-video-domains",
+        "summary": "Set video domains whitelist",
+        "description": "Admin only",
+        "tags": ["Settings"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "domains": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Domains updated"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      }
+    },
+    "/api/settings/engagement": {
+      "get": {
+        "operationId": "get-engagement-settings",
+        "summary": "Get engagement settings",
+        "tags": ["Settings"],
+        "responses": {
+          "200": {
+            "description": "Engagement settings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngagementSettings"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "set-engagement-settings",
+        "summary": "Set engagement settings",
+        "description": "Admin only",
+        "tags": ["Settings"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EngagementSettings"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Settings updated"
+          }
+        }
+      }
+    },
+    "/api/export/languages": {
+      "get": {
+        "operationId": "get-exportable-languages",
+        "summary": "Get exportable languages",
+        "tags": ["Export"],
+        "responses": {
+          "200": {
+            "description": "Available languages",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "languages": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/export/language/{language}/zip": {
+      "get": {
+        "operationId": "export-language-zip",
+        "summary": "Export language as ZIP",
+        "tags": ["Export"],
+        "parameters": [
+          {
+            "name": "language",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ZIP file",
+            "content": {
+              "application/zip": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/metavox/status": {
+      "get": {
+        "operationId": "get-metavox-status",
+        "summary": "Get MetaVox status",
+        "description": "Check if MetaVox app is installed and enabled",
+        "tags": ["Settings"],
+        "responses": {
+          "200": {
+            "description": "MetaVox status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "installed": {
+                      "type": "boolean"
+                    },
+                    "enabled": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/permissions": {
+      "get": {
+        "operationId": "get-permissions",
+        "summary": "Get user permissions",
+        "description": "Returns the current user's permissions",
+        "tags": ["Settings"],
+        "responses": {
+          "200": {
+            "description": "Permission data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isAdmin": {
+                      "type": "boolean"
+                    },
+                    "canEdit": {
+                      "type": "boolean"
+                    },
+                    "canCreate": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "basic_auth": {
+        "type": "http",
+        "scheme": "basic"
+      },
+      "bearer_auth": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    },
+    "responses": {
+      "Unauthorized": {
+        "description": "Authentication required",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "Permission denied",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Resource not found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "BadRequest": {
+        "description": "Invalid request",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "PageSummary": {
+        "type": "object",
+        "properties": {
+          "uniqueId": {
+            "type": "string",
+            "description": "Unique page identifier"
+          },
+          "title": {
+            "type": "string"
+          },
+          "modified": {
+            "type": "integer",
+            "description": "Unix timestamp of last modification"
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/Permissions"
+          }
+        }
+      },
+      "Page": {
+        "type": "object",
+        "properties": {
+          "uniqueId": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "language": {
+            "type": "string",
+            "enum": ["nl", "en", "de", "fr"]
+          },
+          "layout": {
+            "$ref": "#/components/schemas/PageLayout"
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/Permissions"
+          },
+          "breadcrumb": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BreadcrumbItem"
+            }
+          }
+        }
+      },
+      "PageCreate": {
+        "type": "object",
+        "required": ["title"],
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "parentId": {
+            "type": "string",
+            "description": "Parent page unique ID"
+          },
+          "language": {
+            "type": "string"
+          }
+        }
+      },
+      "PageUpdate": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "layout": {
+            "$ref": "#/components/schemas/PageLayout"
+          }
+        }
+      },
+      "PageLayout": {
+        "type": "object",
+        "properties": {
+          "columns": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5
+          },
+          "headerRow": {
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "type": "boolean"
+              },
+              "backgroundColor": {
+                "type": "string"
+              },
+              "widgets": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Widget"
+                }
+              }
+            }
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Row"
+            }
+          },
+          "sideColumns": {
+            "type": "object",
+            "properties": {
+              "left": {
+                "$ref": "#/components/schemas/SideColumn"
+              },
+              "right": {
+                "$ref": "#/components/schemas/SideColumn"
+              }
+            }
+          }
+        }
+      },
+      "Row": {
+        "type": "object",
+        "properties": {
+          "columns": {
+            "type": "integer"
+          },
+          "backgroundColor": {
+            "type": "string"
+          },
+          "widgets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Widget"
+            }
+          }
+        }
+      },
+      "SideColumn": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "backgroundColor": {
+            "type": "string"
+          },
+          "widgets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Widget"
+            }
+          }
+        }
+      },
+      "Widget": {
+        "type": "object",
+        "required": ["type"],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["text", "heading", "image", "links", "divider", "video", "file", "spacer", "news"]
+          },
+          "column": {
+            "type": "integer"
+          },
+          "order": {
+            "type": "integer"
+          },
+          "content": {
+            "type": "string",
+            "description": "For text/heading widgets"
+          },
+          "src": {
+            "type": "string",
+            "description": "For image/video widgets"
+          },
+          "level": {
+            "type": "integer",
+            "description": "For heading widget (1-6)"
+          }
+        }
+      },
+      "PageTreeNode": {
+        "type": "object",
+        "properties": {
+          "uniqueId": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PageTreeNode"
+            }
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/Permissions"
+          }
+        }
+      },
+      "BreadcrumbItem": {
+        "type": "object",
+        "properties": {
+          "uniqueId": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        }
+      },
+      "PageVersion": {
+        "type": "object",
+        "properties": {
+          "timestamp": {
+            "type": "integer"
+          },
+          "label": {
+            "type": "string"
+          },
+          "author": {
+            "type": "string"
+          },
+          "size": {
+            "type": "integer"
+          }
+        }
+      },
+      "Permissions": {
+        "type": "object",
+        "properties": {
+          "canRead": {
+            "type": "boolean"
+          },
+          "canWrite": {
+            "type": "boolean"
+          },
+          "canCreate": {
+            "type": "boolean"
+          },
+          "canDelete": {
+            "type": "boolean"
+          },
+          "canShare": {
+            "type": "boolean"
+          },
+          "raw": {
+            "type": "integer",
+            "description": "Nextcloud permissions bitmask"
+          }
+        }
+      },
+      "MediaFile": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "mimeType": {
+            "type": "string"
+          },
+          "size": {
+            "type": "integer"
+          },
+          "modified": {
+            "type": "integer"
+          }
+        }
+      },
+      "SearchResult": {
+        "type": "object",
+        "properties": {
+          "uniqueId": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "excerpt": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "score": {
+            "type": "number"
+          }
+        }
+      },
+      "NewsItem": {
+        "type": "object",
+        "properties": {
+          "uniqueId": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "excerpt": {
+            "type": "string"
+          },
+          "image": {
+            "type": "string",
+            "nullable": true
+          },
+          "imagePath": {
+            "type": "string",
+            "nullable": true
+          },
+          "modified": {
+            "type": "integer"
+          },
+          "modifiedFormatted": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          }
+        }
+      },
+      "Navigation": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NavigationItem"
+            }
+          }
+        }
+      },
+      "NavigationItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "pageId": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "icon": {
+            "type": "string"
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NavigationItem"
+            }
+          }
+        }
+      },
+      "Footer": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "content": {
+            "type": "string"
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "Comment": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "content": {
+            "type": "string"
+          },
+          "authorId": {
+            "type": "string"
+          },
+          "authorName": {
+            "type": "string"
+          },
+          "created": {
+            "type": "integer"
+          },
+          "modified": {
+            "type": "integer"
+          },
+          "parentId": {
+            "type": "integer",
+            "nullable": true
+          },
+          "reactions": {
+            "$ref": "#/components/schemas/Reactions"
+          },
+          "replies": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Comment"
+            }
+          }
+        }
+      },
+      "Reactions": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "object",
+          "properties": {
+            "count": {
+              "type": "integer"
+            },
+            "userReacted": {
+              "type": "boolean"
+            }
+          }
+        }
+      },
+      "EngagementSettings": {
+        "type": "object",
+        "properties": {
+          "commentsEnabled": {
+            "type": "boolean"
+          },
+          "reactionsEnabled": {
+            "type": "boolean"
+          },
+          "allowedReactions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}
