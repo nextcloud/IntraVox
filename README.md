@@ -48,7 +48,35 @@ IntraVox brings SharePoint-style page creation to Nextcloud, enabling teams to b
 | **Image** | Visual content with flexible sizing, optional clickable links to pages or external URLs |
 | **Video** | Embed videos from YouTube, Vimeo, PeerTube, or upload local videos |
 | **Links** | Multi-link grid widget (1-5 columns) with Material Design icons |
+| **News** | Display pages from a folder as news items with List, Grid, or Carousel layout |
 | **Divider** | Visual separator that adapts to row background color |
+| **Spacer** | Add empty space between content |
+
+### News Widget
+
+![News Widget Carousel](https://raw.githubusercontent.com/nextcloud/intravox/main/screenshots/Newswidget-carrousel.gif)
+
+*Carousel layout with automatic rotation*
+
+The News Widget displays pages from a selected folder as dynamic news items:
+
+- **Three Layouts**: List, Grid (2-4 columns), or Carousel with autoplay
+- **MetaVox Filtering**: Filter pages by metadata fields (when MetaVox is installed)
+- **Configurable Display**: Toggle image, date, and excerpt visibility
+- **Sorting Options**: Sort by date modified or title, ascending or descending
+- **Source Selection**: Pick any folder as content source
+
+![News Widget Editor](https://raw.githubusercontent.com/nextcloud/intravox/main/screenshots/Newswidget-edit.png)
+
+*News widget configuration with MetaVox filters*
+
+### Table Support
+
+Full table editing in text widgets:
+- Insert tables via the toolbar
+- Add/remove rows and columns
+- Resize columns by dragging
+- Tables saved as Markdown for portability
 
 ### Navigation
 
@@ -103,12 +131,28 @@ IntraVox brings SharePoint-style page creation to Nextcloud, enabling teams to b
 - **Quick Setup** - Install demo data with one click to see IntraVox in action
 - **Documentation Links** - Direct links to Admin Settings and GitHub documentation
 
+### Export & Import
+
+- **Full Export** - Export entire IntraVox installations to ZIP files
+- **Confluence Import** - Migrate from Atlassian Confluence via HTML export
+- **MetaVox Integration** - Metadata preserved during export/import
+- **Parent Page Selection** - Import into specific locations in your page tree
+- **Page Hierarchy** - Folder structure preserved during export/import
+
+### Version History
+
+- **Page Versions** - View and restore previous versions of any page
+- **Version Labels** - Add custom labels to important versions
+- **Content Diff** - Compare versions to see what changed
+
 ### Integration
 
 - **Nextcloud Unified Search** - Search pages via Ctrl+K with IntraVox app icon
 - **Nextcloud Comments API** - Reactions and comments use native Nextcloud infrastructure
-- **MetaVox Integration** - Add metadata to pages (when MetaVox app is installed)
+- **MetaVox Integration** - Add metadata to pages and filter News widgets (when MetaVox is installed)
 - **Files App Integration** - Pages stored as JSON files in GroupFolder
+- **OpenAPI Documentation** - Complete API specification for third-party integration
+- **OCS API Viewer** - Interactive API documentation when OCS API Viewer app is installed
 - **Responsive Design** - Works on desktop, tablet, and mobile
 
 ### Performance
@@ -116,6 +160,15 @@ IntraVox brings SharePoint-style page creation to Nextcloud, enabling teams to b
 - **Smart Caching** - Intelligent cache refresh reduces unnecessary API calls by 50%
 - **localStorage Persistence** - Cache survives browser refresh for instant page loads
 - **Lazy Loading** - Sidebar tabs and data load on-demand
+
+### Security
+
+- **Nextcloud Authentication** - All pages require Nextcloud login
+- **GroupFolder Permissions** - Native ACL-based access control
+- **Path Traversal Protection** - Enhanced path sanitization
+- **ZIP Slip Prevention** - Secure ZIP extraction with path validation
+- **SVG Sanitization** - Uploaded SVG files are sanitized to prevent XSS
+- **Secure Temp Files** - Cryptographically secure filenames with restrictive permissions
 
 ---
 
@@ -204,7 +257,12 @@ IntraVox/
 │   ├── home.json               # Homepage
 │   ├── navigation.json         # Navigation configuration
 │   ├── footer.json             # Footer content
-│   ├── _media/                 # Shared media folder (images, videos)
+│   ├── _resources/             # Shared media library (images, videos, SVG)
+│   ├── news/                   # News articles folder
+│   │   ├── article1/
+│   │   │   ├── article1.json   # Article content
+│   │   │   └── _media/         # Article-specific media
+│   │   └── article2/
 │   └── about/                  # Page folder
 │       ├── about.json          # Page content
 │       └── _media/             # Page-specific media
@@ -215,6 +273,12 @@ IntraVox/
 └── fr/                          # French content
     └── ...
 ```
+
+### Media Management
+
+- **Page Media** (`_media/`): Images and videos specific to a single page
+- **Shared Library** (`_resources/`): Reusable media across all pages in a language
+- **Supported Formats**: JPEG, PNG, GIF, WebP, SVG (sanitized), MP4, WebM, OGG
 
 ---
 
@@ -250,20 +314,39 @@ Pages are stored as JSON files with the following structure:
 
 ### API Endpoints
 
+IntraVox provides a complete REST API documented with OpenAPI 3.1. Install the [OCS API Viewer](https://apps.nextcloud.com/apps/ocs_api_viewer) app for interactive documentation.
+
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/api/pages` | List all accessible pages |
+| GET | `/api/pages/tree` | Get page tree structure |
 | GET | `/api/pages/{id}` | Get page content |
 | POST | `/api/pages` | Create new page |
 | PUT | `/api/pages/{id}` | Update page |
 | DELETE | `/api/pages/{id}` | Delete page |
+| GET | `/api/pages/{id}/breadcrumb` | Get breadcrumb navigation |
+| GET | `/api/pages/{id}/versions` | Get page version history |
+| POST | `/api/pages/{id}/versions/{timestamp}` | Restore a version |
+| GET | `/api/pages/{id}/media/list` | List page media files |
+| POST | `/api/pages/{id}/media` | Upload media file |
 | GET | `/api/navigation` | Get navigation structure |
 | POST | `/api/navigation` | Save navigation |
+| GET | `/api/footer` | Get footer content |
+| POST | `/api/footer` | Save footer |
+| GET | `/api/news` | Get news items with filtering |
 | GET | `/api/pages/{id}/comments` | Get comments for a page |
 | POST | `/api/pages/{id}/comments` | Add a comment |
 | GET | `/api/pages/{id}/reactions` | Get page reactions |
 | POST | `/api/pages/{id}/reactions/{emoji}` | Add page reaction |
 | GET | `/api/settings/engagement` | Get engagement settings |
+| GET | `/api/metavox/status` | Check MetaVox availability |
+| GET | `/api/metavox/fields` | Get MetaVox field definitions |
+| GET | `/api/search` | Search pages |
+| GET | `/api/export/languages` | Get exportable languages |
+| GET | `/api/export/language/{lang}` | Export language content |
+| POST | `/api/import/zip` | Import ZIP archive |
+
+For complete API documentation, see the `openapi.json` file or use OCS API Viewer.
 
 ---
 
@@ -295,9 +378,12 @@ npm run build
 
 - [Authorization Guide](docs/AUTHORIZATION.md) - User and administrator permissions guide
 - [Architecture](docs/ARCHITECTURE.md) - Technical architecture documentation
+- [News Widget Guide](docs/NEWS_WIDGET.md) - How to use the News widget
+- [Export/Import Guide](docs/EXPORT-IMPORT.md) - Export and import content
 - [Engagement User Guide](docs/ENGAGEMENT_GUIDE.md) - How to use reactions and comments
 - [Engagement Admin Guide](docs/ENGAGEMENT_ADMIN.md) - Configure engagement settings
 - [Engagement Architecture](docs/ENGAGEMENT_ARCHITECTURE.md) - Technical engagement details
+- [API Documentation](openapi.json) - OpenAPI 3.1 specification
 
 ---
 
