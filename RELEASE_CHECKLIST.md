@@ -125,13 +125,41 @@ Doorloop deze checklist voor elke release naar de Nextcloud App Store.
 - [ ] Voer `./create-release.sh <version> <label> "<description>"` uit
 - [ ] Controleer dat de tarball correct is aangemaakt
 - [ ] Verifieer de inhoud van de tarball (`tar -tzf intravox-x.x.x.tar.gz`)
-- [ ] Onderteken package met de private key
-- [ ] Verifieer de signature
-- [ ] Upload naar GitHub releases
+- [ ] **BELANGRIJK:** Controleer dat de root folder in de tarball `intravox` heet (NIET `intravox-x.x.x`)
+  - App Store vereist lowercase folder naam zonder versienummer
+  - Indien nodig, handmatig herpackagen (zie hieronder)
+- [ ] Push naar beide remotes:
+  - [ ] `git push gitea main`
+  - [ ] `git push github main`
+- [ ] Upload tarball naar GitHub release: `gh release upload vX.X.X intravox-x.x.x.tar.gz --clobber`
+- [ ] Genereer signature met de juiste key:
+  ```bash
+  openssl dgst -sha512 -sign /pad/naar/intravox.key /pad/naar/intravox-x.x.x.tar.gz | openssl base64 -A
+  ```
 - [ ] Upload naar Nextcloud App Store:
-  - [ ] Download URL (GitHub release link)
-  - [ ] Signature
+  - [ ] Download URL (let op kleine letters): `https://github.com/nextcloud/IntraVox/releases/download/vX.X.X/intravox-x.x.x.tar.gz`
+  - [ ] Signature (nieuw genereren na elke tarball wijziging!)
   - [ ] Release notes
+
+### Tarball Herpackagen (indien folder naam fout is)
+
+Als de tarball `intravox-x.x.x/` als root folder heeft i.p.v. `intravox/`:
+
+```bash
+# Maak nieuwe tarball met correcte folder naam
+TEMP_DIR=$(mktemp -d) && \
+mkdir -p "$TEMP_DIR/intravox" && \
+cp -r appinfo lib l10n templates css img js "$TEMP_DIR/intravox/" && \
+cp -r scripts demo-data README.md CHANGELOG.md LICENSE openapi.json "$TEMP_DIR/intravox/" 2>/dev/null || true && \
+cd "$TEMP_DIR" && \
+tar -czf intravox-x.x.x.tar.gz intravox && \
+mv intravox-x.x.x.tar.gz /pad/naar/IntraVox/ && \
+rm -rf "$TEMP_DIR"
+
+# Upload nieuwe tarball en genereer nieuwe signature
+gh release upload vX.X.X intravox-x.x.x.tar.gz --clobber
+openssl dgst -sha512 -sign /pad/naar/intravox.key intravox-x.x.x.tar.gz | openssl base64 -A
+```
 
 ---
 

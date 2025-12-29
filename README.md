@@ -62,6 +62,7 @@ The News Widget displays pages from a selected folder as dynamic news items:
 
 - **Three Layouts**: List, Grid (2-4 columns), or Carousel with autoplay
 - **MetaVox Filtering**: Filter pages by metadata fields (when MetaVox is installed)
+- **Publication Date Filtering**: Schedule content with publish and expiration dates
 - **Configurable Display**: Toggle image, date, and excerpt visibility
 - **Sorting Options**: Sort by date modified or title, ascending or descending
 - **Source Selection**: Pick any folder as content source
@@ -69,6 +70,19 @@ The News Widget displays pages from a selected folder as dynamic news items:
 ![News Widget Editor](https://raw.githubusercontent.com/nextcloud/intravox/main/screenshots/Newswidget-edit.png)
 
 *News widget configuration with MetaVox filters*
+
+### Collapsible Rows
+
+Create SharePoint-style collapsible sections for better content organization:
+
+- **Toggle Sections**: Click header to expand/collapse row content
+- **Custom Titles**: Set descriptive titles for each collapsible section
+- **Default State**: Choose whether rows start expanded or collapsed
+- **Visual Feedback**: Clear indicators show expandable content
+
+![Collapsible Sections](https://raw.githubusercontent.com/nextcloud/intravox/main/screenshots/Collapsible-sections.png)
+
+*Collapsible rows for organized content sections*
 
 ### Table Support
 
@@ -120,6 +134,7 @@ Full table editing in text widgets:
 ### Admin Settings
 
 - **Engagement Settings** - Enable/disable page reactions, comments, and comment reactions
+- **Publication Settings** - Configure MetaVox date fields for content scheduling
 - **Video Embed Domains** - Configure which video platforms are allowed
 - **Privacy-First Defaults** - YouTube privacy mode and PeerTube enabled by default
 - **Custom Video Servers** - Add your own PeerTube or video hosting domains
@@ -339,6 +354,7 @@ IntraVox provides a complete REST API documented with OpenAPI 3.1. Install the [
 | GET | `/api/pages/{id}/reactions` | Get page reactions |
 | POST | `/api/pages/{id}/reactions/{emoji}` | Add page reaction |
 | GET | `/api/settings/engagement` | Get engagement settings |
+| GET | `/api/settings/publication` | Get publication settings |
 | GET | `/api/metavox/status` | Check MetaVox availability |
 | GET | `/api/metavox/fields` | Get MetaVox field definitions |
 | GET | `/api/search` | Search pages |
