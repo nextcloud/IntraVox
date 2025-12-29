@@ -80,7 +80,7 @@
 							<!-- Not installed: single Install button -->
 							<template v-if="lang.canInstall && lang.status !== 'installed'">
 								<NcButton
-									:disabled="installing !== null"
+									:disabled="installing !== null || cleaningStart !== null"
 									type="primary"
 									@click="installDemoData(lang.code)">
 									<template #icon>
@@ -92,7 +92,7 @@
 							<!-- Already installed: reinstall button -->
 							<template v-else-if="lang.canInstall && lang.status === 'installed'">
 								<NcButton
-									:disabled="installing !== null"
+									:disabled="installing !== null || cleaningStart !== null"
 									type="secondary"
 									@click="showReinstallDialog(lang.code)">
 									<template #icon>
@@ -104,6 +104,18 @@
 							<span v-else class="unavailable">
 								{{ t('intravox', 'Not available') }}
 							</span>
+							<!-- Clean Start button - always available when setup is complete -->
+							<NcButton
+								v-if="setupComplete"
+								:disabled="installing !== null || cleaningStart !== null"
+								type="tertiary"
+								@click="showCleanStartDialog(lang.code)">
+								<template #icon>
+									<span v-if="cleaningStart === lang.code" class="icon-loading-small"></span>
+									<Broom v-else :size="16" />
+								</template>
+								{{ cleaningStart === lang.code ? t('intravox', 'Resetting...') : t('intravox', 'Clean Start') }}
+							</NcButton>
 						</td>
 					</tr>
 				</tbody>
@@ -136,6 +148,44 @@
 				</NcButton>
 				<NcButton type="error" @click="confirmReinstall">
 					{{ t('intravox', 'Reinstall') }}
+				</NcButton>
+			</template>
+		</NcDialog>
+
+		<!-- Clean Start confirmation dialog -->
+		<NcDialog
+			v-if="cleanStartDialogVisible"
+			:name="t('intravox', 'Clean Start')"
+			@closing="cleanStartDialogVisible = false">
+			<template #default>
+				<div class="clean-start-dialog-content">
+					<NcNoteCard type="error">
+						<p><strong>{{ t('intravox', 'Warning: This action will permanently delete all content!') }}</strong></p>
+					</NcNoteCard>
+					<p class="clean-start-info">
+						{{ t('intravox', 'This will delete for') }} <strong>{{ cleanStartLanguageName }}</strong>:
+					</p>
+					<ul class="deletion-list">
+						<li>{{ t('intravox', 'All pages and subpages') }}</li>
+						<li>{{ t('intravox', 'Navigation structure') }}</li>
+						<li>{{ t('intravox', 'Footer content') }}</li>
+						<li>{{ t('intravox', 'All comments and reactions') }}</li>
+						<li>{{ t('intravox', 'All uploaded media files') }}</li>
+					</ul>
+					<p class="clean-start-result">
+						{{ t('intravox', 'You will get a fresh empty homepage and empty navigation.') }}
+					</p>
+					<NcNoteCard type="warning">
+						{{ t('intravox', 'This action cannot be undone!') }}
+					</NcNoteCard>
+				</div>
+			</template>
+			<template #actions>
+				<NcButton type="tertiary" @click="cleanStartDialogVisible = false">
+					{{ t('intravox', 'Cancel') }}
+				</NcButton>
+				<NcButton type="error" @click="confirmCleanStart">
+					{{ t('intravox', 'Delete All & Start Fresh') }}
 				</NcButton>
 			</template>
 		</NcDialog>
@@ -614,6 +664,7 @@ import CalendarClock from 'vue-material-design-icons/CalendarClock.vue'
 import Download from 'vue-material-design-icons/Download.vue'
 import Upload from 'vue-material-design-icons/Upload.vue'
 import CloudDownload from 'vue-material-design-icons/CloudDownload.vue'
+import Broom from 'vue-material-design-icons/Broom.vue'
 import ConfluenceImport from '../admin/components/ConfluenceImport.vue'
 
 export default {
@@ -632,6 +683,7 @@ export default {
 		Download,
 		Upload,
 		CloudDownload,
+		Broom,
 		ConfluenceImport,
 	},
 	props: {
@@ -651,6 +703,10 @@ export default {
 			messageType: 'success',
 			reinstallDialogVisible: false,
 			reinstallLanguageCode: null,
+			// Clean start state
+			cleaningStart: null,
+			cleanStartDialogVisible: false,
+			cleanStartLanguageCode: null,
 			// Video domains from server
 			videoDomains: Array.isArray(this.initialState.videoDomains)
 				? [...this.initialState.videoDomains]
@@ -725,6 +781,11 @@ export default {
 			if (!this.reinstallLanguageCode) return ''
 			const langData = this.languages.find(l => l.code === this.reinstallLanguageCode)
 			return langData?.name || this.reinstallLanguageCode
+		},
+		cleanStartLanguageName() {
+			if (!this.cleanStartLanguageCode) return ''
+			const langData = this.languages.find(l => l.code === this.cleanStartLanguageCode)
+			return langData?.name || this.cleanStartLanguageCode
 		},
 		// Get custom domains (domains not in knownServices)
 		customDomains() {
@@ -958,6 +1019,40 @@ export default {
 			this.reinstallDialogVisible = false
 			if (this.reinstallLanguageCode) {
 				this.installDemoData(this.reinstallLanguageCode)
+			}
+		},
+		showCleanStartDialog(language) {
+			this.cleanStartLanguageCode = language
+			this.cleanStartDialogVisible = true
+		},
+		async confirmCleanStart() {
+			this.cleanStartDialogVisible = false
+			if (!this.cleanStartLanguageCode) return
+
+			this.cleaningStart = this.cleanStartLanguageCode
+			this.message = ''
+
+			try {
+				const response = await axios.post(
+					generateUrl('/apps/intravox/api/demo-data/clean-start'),
+					{ language: this.cleanStartLanguageCode }
+				)
+
+				if (response.data.success) {
+					this.message = this.t('intravox', 'Clean start completed successfully')
+					this.messageType = 'success'
+					await this.refreshStatus()
+				} else {
+					this.message = response.data.message || this.t('intravox', 'Clean start failed')
+					this.messageType = 'error'
+				}
+			} catch (error) {
+				console.error('Clean start failed:', error)
+				this.message = error.response?.data?.message || this.t('intravox', 'Clean start failed')
+				this.messageType = 'error'
+			} finally {
+				this.cleaningStart = null
+				this.cleanStartLanguageCode = null
 			}
 		},
 		async installDemoData(language) {
@@ -1476,6 +1571,39 @@ export default {
 .reinstall-warning {
 	margin-top: 12px;
 	color: var(--color-text-maxcontrast);
+}
+
+/* Clean Start dialog */
+.clean-start-dialog-content {
+	padding: 8px 0;
+}
+
+.clean-start-info {
+	margin: 12px 0 8px 0;
+	color: var(--color-main-text);
+}
+
+.deletion-list {
+	margin: 8px 0 16px 20px;
+	padding: 0;
+	color: var(--color-text-maxcontrast);
+}
+
+.deletion-list li {
+	margin-bottom: 4px;
+}
+
+.clean-start-result {
+	margin: 16px 0 12px 0;
+	color: var(--color-main-text);
+	font-weight: 500;
+}
+
+/* Action cell with multiple buttons */
+.action-cell {
+	display: flex;
+	gap: 8px;
+	align-items: center;
 }
 
 /* Video domains section */

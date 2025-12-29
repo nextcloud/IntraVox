@@ -245,20 +245,21 @@
           </label>
         </div>
 
-        <label style="margin-right: 8px;">{{ t('Row columns:') }}</label>
-        <button
-          v-for="n in 5"
-          :key="n"
-          :class="{ active: (row.columns || localPage.layout.columns) === n }"
-          @click="setRowColumns(rowIndex, n)"
-          class="column-button small"
-          style="margin-right: 4px;"
-        >
-          {{ n }}
-        </button>
+        <label class="row-columns-label">{{ t('Row columns:') }}</label>
+        <div class="column-buttons">
+          <button
+            v-for="n in 5"
+            :key="n"
+            :class="{ active: (row.columns || localPage.layout.columns) === n }"
+            @click="setRowColumns(rowIndex, n)"
+            class="column-button"
+          >
+            {{ n }}
+          </button>
+        </div>
 
         <!-- Background Color Picker -->
-        <NcActions style="margin-left: 8px;">
+        <NcActions class="row-action-button">
           <template #icon>
             <Palette :size="20" />
           </template>
@@ -274,8 +275,8 @@
 
         <NcButton @click="deleteRow(rowIndex)"
                   type="error"
-                  :aria-label="t('Delete row')"
-                  style="margin-left: 8px;">
+                  class="row-action-button"
+                  :aria-label="t('Delete row')">
           <template #icon>
             <Delete :size="20" />
           </template>
@@ -1764,10 +1765,19 @@ export default {
   display: flex;
   align-items: center;
   margin-bottom: 10px;
-  padding: 8px;
-  background: transparent;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.15);
   border-radius: var(--border-radius-large);
-  border: 1px solid var(--color-border);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: inherit;
+  font-size: 13px;
+}
+
+/* When row has default background, use normal colors */
+.page-row:not([style*="background"]) .row-controls,
+.page-row[style*="transparent"] .row-controls {
+  background: var(--color-background-hover);
+  border-color: var(--color-border);
 }
 
 /* Row drag handle */
@@ -1807,7 +1817,7 @@ export default {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 13px;
+  font-size: inherit;
   font-weight: 500;
   color: inherit;
   cursor: pointer;
@@ -1820,7 +1830,7 @@ export default {
   cursor: pointer;
   width: 16px;
   height: 16px;
-  accent-color: var(--color-primary-element);
+  accent-color: currentColor;
 }
 
 /* Section title input */
@@ -1828,15 +1838,23 @@ export default {
   flex: 0 1 200px;
   min-width: 120px;
   max-width: 300px;
-  height: 28px;
+  height: 32px;
   margin-right: 12px;
-  padding: 4px 8px;
-  border: 1px solid var(--color-border);
+  padding: 4px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: var(--border-radius);
-  background: var(--color-main-background);
-  font-size: 13px;
-  font-weight: 600;
+  background: rgba(255, 255, 255, 0.9);
+  font-family: var(--font-face);
+  font-size: inherit;
+  font-weight: 500;
   color: var(--color-main-text);
+}
+
+/* When row has default background, use normal input colors */
+.page-row:not([style*="background"]) .row-section-title,
+.page-row[style*="transparent"] .row-section-title {
+  border-color: var(--color-border);
+  background: var(--color-main-background);
 }
 
 .row-section-title:focus {
@@ -1850,22 +1868,95 @@ export default {
   font-weight: normal;
 }
 
-/* Default collapsed checkbox label */
+/* Default collapsed checkbox label - same styling as collapsible-toggle-label */
 .default-collapsed-label {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   margin-right: 12px;
-  font-size: 12px;
+  font-size: inherit;
+  font-weight: 500;
   color: inherit;
-  opacity: 0.8;
   cursor: pointer;
   white-space: nowrap;
+  user-select: none;
 }
 
 .default-collapsed-label input[type="checkbox"] {
   margin: 0;
   cursor: pointer;
+  width: 16px;
+  height: 16px;
+  accent-color: currentColor;
+}
+
+/* Row columns label */
+.row-columns-label {
+  font-size: inherit;
+  font-weight: 500;
+  color: inherit;
+  margin-right: 8px;
+  white-space: nowrap;
+}
+
+/* Column buttons container */
+.column-buttons {
+  display: flex;
+  gap: 4px;
+  margin-right: 8px;
+}
+
+/* Column number buttons */
+.row-controls .column-button {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: var(--border-radius);
+  background: rgba(255, 255, 255, 0.2);
+  color: inherit;
+  font-size: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.row-controls .column-button:hover {
+  background: rgba(255, 255, 255, 0.35);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.row-controls .column-button.active {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(255, 255, 255, 0.9);
+  color: var(--color-main-text);
+  font-weight: 600;
+}
+
+/* When row has default background, use normal button colors */
+.page-row:not([style*="background"]) .row-controls .column-button,
+.page-row[style*="transparent"] .row-controls .column-button {
+  border-color: var(--color-border);
+  background: var(--color-main-background);
+  color: var(--color-main-text);
+}
+
+.page-row:not([style*="background"]) .row-controls .column-button:hover,
+.page-row[style*="transparent"] .row-controls .column-button:hover {
+  background: var(--color-background-hover);
+  border-color: var(--color-border-dark);
+}
+
+.page-row:not([style*="background"]) .row-controls .column-button.active,
+.page-row[style*="transparent"] .row-controls .column-button.active {
+  background: var(--color-primary-element);
+  border-color: var(--color-primary-element);
+  color: var(--color-primary-element-text);
+}
+
+/* Row action buttons (palette, delete) */
+.row-action-button {
+  margin-left: 8px;
 }
 
 /* Row content container */

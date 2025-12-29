@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace OCA\IntraVox\Service;
 
+use OCP\Comments\ICommentsManager;
 use OCP\Files\Folder;
 use OCP\Http\Client\IClientService;
 use OCP\IConfig;
@@ -32,17 +33,20 @@ class DemoDataService {
     private IClientService $clientService;
     private IConfig $config;
     private LoggerInterface $logger;
+    private ICommentsManager $commentsManager;
 
     public function __construct(
         SetupService $setupService,
         IClientService $clientService,
         IConfig $config,
-        LoggerInterface $logger
+        LoggerInterface $logger,
+        ICommentsManager $commentsManager
     ) {
         $this->setupService = $setupService;
         $this->clientService = $clientService;
         $this->config = $config;
         $this->logger = $logger;
+        $this->commentsManager = $commentsManager;
     }
 
     /**
@@ -825,5 +829,245 @@ class DemoDataService {
         } catch (\Exception $e) {
             $this->logger->warning('[DemoData] Failed to trigger scan: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Perform a clean start for a language - deletes all content and creates minimal fresh content
+     *
+     * @param string $language Language code (nl, en, de, fr)
+     * @return array Result with success status and message
+     */
+    public function performCleanStart(string $language): array {
+        if (!in_array($language, self::SUPPORTED_LANGUAGES)) {
+            return [
+                'success' => false,
+                'message' => "Unsupported language: {$language}. Supported: " . implode(', ', self::SUPPORTED_LANGUAGES),
+            ];
+        }
+
+        try {
+            $this->logger->info("[CleanStart] Starting clean start for language: {$language}");
+
+            // Ensure setup is complete before cleaning
+            if (!$this->setupService->isSetupComplete()) {
+                $this->logger->info("[CleanStart] Setup not complete, running setup first...");
+                $setupSuccess = $this->setupService->setupSharedFolder();
+                if (!$setupSuccess) {
+                    return [
+                        'success' => false,
+                        'message' => 'Setup failed: Could not create IntraVox GroupFolder',
+                    ];
+                }
+                $this->logger->info("[CleanStart] Setup completed successfully");
+            }
+
+            // Get IntraVox groupfolder
+            $sharedFolder = $this->setupService->getSharedFolder();
+
+            // Collect all uniqueIds before deletion (for comment cleanup)
+            $uniqueIds = [];
+            if ($sharedFolder->nodeExists($language)) {
+                $langFolder = $sharedFolder->get($language);
+                if ($langFolder instanceof Folder) {
+                    $uniqueIds = $this->collectAllPageUniqueIds($langFolder);
+                    $this->logger->info("[CleanStart] Found " . count($uniqueIds) . " pages to clean up comments for");
+                }
+            }
+
+            // Delete all comments and reactions for collected uniqueIds
+            $commentsDeleted = 0;
+            foreach ($uniqueIds as $uniqueId) {
+                try {
+                    $this->commentsManager->deleteCommentsAtObject('intravox_page', $uniqueId);
+                    $commentsDeleted++;
+                    $this->logger->debug("[CleanStart] Deleted comments for page: {$uniqueId}");
+                } catch (\Exception $e) {
+                    $this->logger->warning("[CleanStart] Failed to delete comments for {$uniqueId}: " . $e->getMessage());
+                }
+            }
+            $this->logger->info("[CleanStart] Deleted comments for {$commentsDeleted} pages");
+
+            // Delete the language folder if it exists
+            $this->deleteLanguageFolderIfExists($sharedFolder, $language);
+
+            // Create fresh minimal content
+            $languageFolder = $sharedFolder->newFolder($language);
+            $this->logger->info("[CleanStart] Created fresh language folder: {$language}");
+
+            // Generate new unique ID for home page
+            $homeUniqueId = 'page-' . $this->generateUUID();
+            $this->logger->info("[CleanStart] Generated new uniqueId for home: {$homeUniqueId}");
+
+            // Create home.json with fresh uniqueId
+            $homeContent = $this->getCleanStartHomeContent($language, $homeUniqueId);
+            $languageFolder->newFile('home.json', json_encode($homeContent, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+            $this->logger->info("[CleanStart] Created home.json");
+
+            // Create navigation.json with link to home
+            $navigationContent = $this->getCleanStartNavigationContent($language, $homeUniqueId);
+            $languageFolder->newFile('navigation.json', json_encode($navigationContent, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+            $this->logger->info("[CleanStart] Created navigation.json");
+
+            // Create empty footer.json
+            $footerContent = $this->getCleanStartFooterContent();
+            $languageFolder->newFile('footer.json', json_encode($footerContent, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+            $this->logger->info("[CleanStart] Created footer.json");
+
+            // Create _resources folder
+            $languageFolder->newFolder('_resources');
+            $this->logger->info("[CleanStart] Created _resources folder");
+
+            // Trigger groupfolder scan
+            $this->scanGroupfolder();
+
+            $this->logger->info("[CleanStart] Clean start completed successfully for language: {$language}");
+
+            return [
+                'success' => true,
+                'message' => "Clean start completed successfully. Created fresh homepage with new ID.",
+                'uniqueId' => $homeUniqueId,
+                'commentsDeleted' => $commentsDeleted,
+            ];
+
+        } catch (\Exception $e) {
+            $this->logger->error("[CleanStart] Clean start failed: " . $e->getMessage());
+            return [
+                'success' => false,
+                'message' => 'Failed to perform clean start: ' . $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * Recursively collect all page uniqueIds from a language folder
+     * Used for cleaning up comments/reactions when deleting all content
+     *
+     * @param Folder $folder The folder to scan
+     * @return array List of uniqueIds found
+     */
+    private function collectAllPageUniqueIds(Folder $folder): array {
+        $uniqueIds = [];
+
+        try {
+            $nodes = $folder->getDirectoryListing();
+
+            foreach ($nodes as $node) {
+                if ($node instanceof Folder) {
+                    // Recursively scan subfolders (but skip _media and _resources folders)
+                    $nodeName = $node->getName();
+                    if ($nodeName !== '_media' && $nodeName !== '_resources') {
+                        $subIds = $this->collectAllPageUniqueIds($node);
+                        $uniqueIds = array_merge($uniqueIds, $subIds);
+                    }
+                } elseif ($node instanceof \OCP\Files\File) {
+                    // Check if it's a JSON file (potential page)
+                    $name = $node->getName();
+                    if (str_ends_with($name, '.json') && $name !== 'navigation.json' && $name !== 'footer.json') {
+                        try {
+                            $content = $node->getContent();
+                            $data = json_decode($content, true);
+                            if ($data && isset($data['uniqueId'])) {
+                                $uniqueIds[] = $data['uniqueId'];
+                            }
+                        } catch (\Exception $e) {
+                            $this->logger->warning("[CleanStart] Could not read page file {$name}: " . $e->getMessage());
+                        }
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            $this->logger->warning("[CleanStart] Error scanning folder: " . $e->getMessage());
+        }
+
+        return $uniqueIds;
+    }
+
+    /**
+     * Get clean start homepage content for a specific language
+     */
+    private function getCleanStartHomeContent(string $lang, string $uniqueId): array {
+        $translations = [
+            'nl' => ['title' => 'Home', 'heading' => 'Welkom'],
+            'en' => ['title' => 'Home', 'heading' => 'Welcome'],
+            'de' => ['title' => 'Startseite', 'heading' => 'Willkommen'],
+            'fr' => ['title' => 'Accueil', 'heading' => 'Bienvenue'],
+        ];
+
+        $t = $translations[$lang] ?? $translations['en'];
+        $now = time();
+
+        return [
+            'uniqueId' => $uniqueId,
+            'title' => $t['title'],
+            'layout' => [
+                'columns' => 1,
+                'rows' => [
+                    [
+                        'widgets' => [
+                            [
+                                'type' => 'heading',
+                                'content' => $t['heading'],
+                                'level' => 1,
+                                'column' => 1,
+                                'order' => 1,
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+            'created' => $now,
+            'modified' => $now,
+        ];
+    }
+
+    /**
+     * Get clean start navigation content
+     */
+    private function getCleanStartNavigationContent(string $lang, string $homeUniqueId): array {
+        $translations = [
+            'nl' => 'Home',
+            'en' => 'Home',
+            'de' => 'Startseite',
+            'fr' => 'Accueil',
+        ];
+
+        return [
+            'type' => 'megamenu',
+            'items' => [
+                [
+                    'id' => 'nav_home',
+                    'title' => $translations[$lang] ?? 'Home',
+                    'uniqueId' => $homeUniqueId,
+                    'url' => null,
+                    'target' => null,
+                    'children' => [],
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * Get clean start footer content (empty)
+     */
+    private function getCleanStartFooterContent(): array {
+        return [
+            'content' => '',
+            'modifiedBy' => 'system',
+        ];
+    }
+
+    /**
+     * Generate a UUID v4
+     * Same implementation as PageService::generateUUID()
+     */
+    private function generateUUID(): string {
+        $data = random_bytes(16);
+
+        // Set version to 4
+        $data[6] = chr(ord($data[6]) & 0x0f | 0x40);
+        // Set variant to RFC 4122
+        $data[8] = chr(ord($data[8]) & 0x3f | 0x80);
+
+        return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
     }
 }

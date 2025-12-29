@@ -44,6 +44,7 @@ return [
         ['name' => 'demoData#getStatus', 'url' => '/api/demo-data/status', 'verb' => 'GET'],
         ['name' => 'demoData#getLanguages', 'url' => '/api/demo-data/languages', 'verb' => 'GET'],
         ['name' => 'demoData#importDemoData', 'url' => '/api/demo-data/import', 'verb' => 'POST'],
+        ['name' => 'demoData#cleanStart', 'url' => '/api/demo-data/clean-start', 'verb' => 'POST'],
 
         // Settings routes
         ['name' => 'api#getVideoDomains', 'url' => '/api/settings/video-domains', 'verb' => 'GET'],

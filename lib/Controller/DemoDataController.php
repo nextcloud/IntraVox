@@ -119,4 +119,32 @@ class DemoDataController extends Controller {
             );
         }
     }
+
+    /**
+     * Perform clean start for a specific language
+     * Only Nextcloud admins can perform clean start (no NoAdminRequired attribute)
+     *
+     * Deletes all content for the specified language and creates a fresh
+     * homepage with a new uniqueId, empty navigation, and empty footer.
+     *
+     * @param string $language Language code (nl, en, de, fr)
+     * @return DataResponse
+     */
+    public function cleanStart(string $language = 'nl'): DataResponse {
+        try {
+            $this->logger->info("[DemoDataController] Clean start requested for language: {$language}");
+
+            $result = $this->demoDataService->performCleanStart($language);
+
+            $statusCode = $result['success'] ? Http::STATUS_OK : Http::STATUS_INTERNAL_SERVER_ERROR;
+            return new DataResponse($result, $statusCode);
+
+        } catch (\Exception $e) {
+            $this->logger->error('[DemoDataController] Clean start failed: ' . $e->getMessage());
+            return new DataResponse(
+                ['success' => false, 'error' => 'Failed to perform clean start: ' . $e->getMessage()],
+                Http::STATUS_INTERNAL_SERVER_ERROR
+            );
+        }
+    }
 }

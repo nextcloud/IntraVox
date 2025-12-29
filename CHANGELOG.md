@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.6] - 2025-12-29 - Clean Start & Translation Fixes
+
+### Added
+- **Clean Start**: New option in Demo Data settings to start fresh with empty content
+  - "Clean Start" button per language in Admin Settings → Demo Data
+  - Deletes all pages, navigation, footer, comments, reactions, and media for selected language
+  - Creates fresh homepage with newly generated unique ID (prevents conflicts)
+  - Creates empty navigation with only Home link
+  - Creates empty footer
+  - Confirmation dialog with clear warning about permanent deletion
+  - Useful for starting over without demo content or resetting after testing
+
+### Fixed
+- **Translations**: Fixed missing translations in v0.8.5 for Publication dates and Collapsible rows features
+  - Added ~80 new translation keys for row controls, widget actions, background colors, video/image widgets, versions, MetaVox integration
+  - Regenerated .js translation files from .json sources for all languages (nl, en, de, fr)
+- **Row Controls Styling**: Fixed inconsistent styling of row header controls on colored backgrounds
+  - Unified font colors, sizes, and backgrounds across all row control elements
+  - Fixed "Collapsed by default" label to match other control labels
+  - Fixed section title input to use correct system font
+
 ## [0.8.5] - 2025-12-29 - Publication Dates, Collapsible Rows & Editor Consolidation
 
 ### Added
