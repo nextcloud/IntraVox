@@ -6,3 +6,6 @@ docs/internal/ export-ignore
 # Also exclude development files from releases
 .claude/ export-ignore
 .github/ export-ignore
+
+# Screenshots are only for GitHub README documentation, not needed in app
+screenshots/ export-ignore
