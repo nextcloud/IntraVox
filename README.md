@@ -403,6 +403,25 @@ npm run build
 
 ---
 
+## Troubleshooting
+
+### "Could not find resource intravox/js/intravox-main.js to load"
+
+This error typically occurs after updating IntraVox and is caused by Nextcloud's resource cache not being refreshed. To fix it, run one of the following commands on your server:
+
+```bash
+# Option 1: Run maintenance repair (recommended)
+sudo -u www-data php occ maintenance:repair
+
+# Option 2: Disable and re-enable the app
+sudo -u www-data php occ app:disable intravox
+sudo -u www-data php occ app:enable intravox
+```
+
+After running either command, refresh your browser (Ctrl+F5) to clear the browser cache.
+
+---
+
 ## License
 
 AGPL-3.0
