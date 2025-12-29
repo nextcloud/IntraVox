@@ -272,6 +272,87 @@
                         "column": 1,
                         "order": 1,
                         "style": "solid",
+                        "color": "",
+                        "height": "2px"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Collapsible Sections",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Organize your content with **collapsible sections**. Perfect for FAQs, release notes, or any content that benefits from progressive disclosure. Click on the section headers below to expand or collapse them."
+                    }
+                ]
+            },
+            {
+                "id": "row-collapsible-demo-1",
+                "columns": 1,
+                "backgroundColor": "var(--color-background-hover)",
+                "collapsible": true,
+                "sectionTitle": "Getting Started",
+                "defaultCollapsed": false,
+                "widgets": [
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 1,
+                        "content": "**Welcome to IntraVox!** Here's how to get started:\n\n1. **Install the app** from the Nextcloud App Store\n2. **Load demo data** from the admin settings to see IntraVox in action\n3. **Create your first page** using the visual editor\n4. **Configure navigation** to organize your intranet structure\n\n*Tip: Check out the documentation section for detailed guides and tutorials.*"
+                    }
+                ]
+            },
+            {
+                "id": "row-collapsible-demo-2",
+                "columns": 1,
+                "backgroundColor": "var(--color-background-hover)",
+                "collapsible": true,
+                "sectionTitle": "FAQ - Frequently Asked Questions",
+                "defaultCollapsed": true,
+                "widgets": [
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 1,
+                        "content": "**Q: Can I use IntraVox with my existing Nextcloud users?**\nA: Yes! IntraVox integrates seamlessly with Nextcloud's user and group management.\n\n**Q: Is IntraVox free to use?**\nA: Yes, IntraVox is open source and free. There are no subscription fees or hidden costs.\n\n**Q: Can I have multiple languages on my intranet?**\nA: Absolutely! IntraVox supports multiple languages. You can create separate content for each language.\n\n**Q: Where is my data stored?**\nA: All data stays on your Nextcloud server. IntraVox uses Nextcloud's groupfolders for storage."
+                    }
+                ]
+            },
+            {
+                "id": "row-collapsible-demo-3",
+                "columns": 1,
+                "backgroundColor": "var(--color-background-hover)",
+                "collapsible": true,
+                "sectionTitle": "Release Notes - Version 0.8",
+                "defaultCollapsed": true,
+                "widgets": [
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 1,
+                        "content": "**Version 0.8.5** - December 2025\n\n- **New:** Collapsible rows (SharePoint-style sections)\n- **New:** Auto-compact News widget for side columns\n- **Fixed:** Transparent background in side columns\n- **Improved:** Row controls visibility on colored backgrounds\n\n**Version 0.8.4** - December 2025\n\n- **New:** Header row support\n- **New:** Side columns (left & right)\n- **Improved:** Mobile responsive layouts\n- **Fixed:** Various bug fixes and improvements"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
                         "color": "transparent",
                         "height": "20px"
                     }

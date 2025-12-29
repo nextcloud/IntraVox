@@ -272,6 +272,87 @@
                         "column": 1,
                         "order": 1,
                         "style": "solid",
+                        "color": "",
+                        "height": "2px"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Inklapbare Secties",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Organiseer uw content met **inklapbare secties**. Perfect voor FAQ's, release notes of andere content die baat heeft bij progressieve onthulling. Klik op de sectiekoppen hieronder om ze uit te klappen of in te klappen."
+                    }
+                ]
+            },
+            {
+                "id": "row-collapsible-demo-1",
+                "columns": 1,
+                "backgroundColor": "var(--color-background-hover)",
+                "collapsible": true,
+                "sectionTitle": "Aan de slag",
+                "defaultCollapsed": false,
+                "widgets": [
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 1,
+                        "content": "**Welkom bij IntraVox!** Zo gaat u aan de slag:\n\n1. **Installeer de app** vanuit de Nextcloud App Store\n2. **Laad demo data** vanuit de admin instellingen om IntraVox in actie te zien\n3. **Maak uw eerste pagina** met de visuele editor\n4. **Configureer navigatie** om uw intranetstructuur te organiseren\n\n*Tip: Bekijk de documentatie sectie voor gedetailleerde handleidingen en tutorials.*"
+                    }
+                ]
+            },
+            {
+                "id": "row-collapsible-demo-2",
+                "columns": 1,
+                "backgroundColor": "var(--color-background-hover)",
+                "collapsible": true,
+                "sectionTitle": "FAQ - Veelgestelde Vragen",
+                "defaultCollapsed": true,
+                "widgets": [
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 1,
+                        "content": "**V: Kan ik IntraVox gebruiken met mijn bestaande Nextcloud gebruikers?**\nA: Ja! IntraVox integreert naadloos met het gebruikers- en groepenbeheer van Nextcloud.\n\n**V: Is IntraVox gratis te gebruiken?**\nA: Ja, IntraVox is open source en gratis. Er zijn geen abonnementskosten of verborgen kosten.\n\n**V: Kan ik meerdere talen op mijn intranet hebben?**\nA: Absoluut! IntraVox ondersteunt meerdere talen. U kunt aparte content maken voor elke taal.\n\n**V: Waar wordt mijn data opgeslagen?**\nA: Alle data blijft op uw Nextcloud server. IntraVox gebruikt Nextcloud's groupfolders voor opslag."
+                    }
+                ]
+            },
+            {
+                "id": "row-collapsible-demo-3",
+                "columns": 1,
+                "backgroundColor": "var(--color-background-hover)",
+                "collapsible": true,
+                "sectionTitle": "Release Notes - Versie 0.8",
+                "defaultCollapsed": true,
+                "widgets": [
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 1,
+                        "content": "**Versie 0.8.5** - December 2025\n\n- **Nieuw:** Inklapbare rijen (SharePoint-stijl secties)\n- **Nieuw:** Auto-compact News widget voor zijkolommen\n- **Opgelost:** Transparante achtergrond in zijkolommen\n- **Verbeterd:** Zichtbaarheid rijbediening op gekleurde achtergronden\n\n**Versie 0.8.4** - December 2025\n\n- **Nieuw:** Header rij ondersteuning\n- **Nieuw:** Zijkolommen (links & rechts)\n- **Verbeterd:** Mobiel responsieve layouts\n- **Opgelost:** Diverse bugfixes en verbeteringen"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
                         "color": "transparent",
                         "height": "20px"
                     }

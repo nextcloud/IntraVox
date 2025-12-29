@@ -38,6 +38,7 @@ class PageService {
     private IDBConnection $db;
     private LoggerInterface $logger;
     private IEventDispatcher $eventDispatcher;
+    private PublicationSettingsService $publicationSettings;
     private array $pageFolderCache = [];
 
     /** @var array Request-level cache for page data */
@@ -292,6 +293,7 @@ class PageService {
         IDBConnection $db,
         LoggerInterface $logger,
         IEventDispatcher $eventDispatcher,
+        PublicationSettingsService $publicationSettings,
         ?string $userId
     ) {
         $this->rootFolder = $rootFolder;
@@ -301,6 +303,7 @@ class PageService {
         $this->db = $db;
         $this->logger = $logger;
         $this->eventDispatcher = $eventDispatcher;
+        $this->publicationSettings = $publicationSettings;
         $this->userId = $userId ?? '';
     }
 
@@ -1974,6 +1977,11 @@ class PageService {
 
                     $sanitizedRow = ['widgets' => $sanitizedWidgets];
 
+                    // Preserve row ID if set (needed for collapsible state tracking)
+                    if (isset($row['id'])) {
+                        $sanitizedRow['id'] = $this->sanitizeText($row['id']);
+                    }
+
                     // Preserve row-specific column count if set
                     if (isset($row['columns'])) {
                         $sanitizedRow['columns'] = $this->validateColumns($row['columns']);
@@ -1984,8 +1992,19 @@ class PageService {
                         $sanitizedRow['backgroundColor'] = $this->sanitizeBackgroundColor($row['backgroundColor']);
                     }
 
-                    // Keep row if it has widgets OR a background color (don't silently drop empty styled rows)
-                    if (!empty($sanitizedWidgets) || !empty($sanitizedRow['backgroundColor'])) {
+                    // Preserve collapsible row settings
+                    if (isset($row['collapsible'])) {
+                        $sanitizedRow['collapsible'] = (bool)$row['collapsible'];
+                    }
+                    if (isset($row['sectionTitle'])) {
+                        $sanitizedRow['sectionTitle'] = $this->sanitizeText($row['sectionTitle']);
+                    }
+                    if (isset($row['defaultCollapsed'])) {
+                        $sanitizedRow['defaultCollapsed'] = (bool)$row['defaultCollapsed'];
+                    }
+
+                    // Keep row if it has widgets OR a background color OR is collapsible (don't silently drop empty styled/collapsible rows)
+                    if (!empty($sanitizedWidgets) || !empty($sanitizedRow['backgroundColor']) || !empty($sanitizedRow['collapsible'])) {
                         $sanitized['layout']['rows'][] = $sanitizedRow;
                     }
                 }
@@ -2307,6 +2326,9 @@ class PageService {
                 $sanitized['filterOperator'] = in_array($widget['filterOperator'] ?? 'AND', $allowedFilterOperators)
                     ? $widget['filterOperator']
                     : 'AND';
+
+                // Publication date filter (show only published pages)
+                $sanitized['filterPublished'] = (bool)($widget['filterPublished'] ?? false);
                 break;
         }
 
@@ -4193,7 +4215,8 @@ class PageService {
         int $limit = 5,
         string $sortBy = 'modified',
         string $sortOrder = 'desc',
-        ?string $sourcePageId = null
+        ?string $sourcePageId = null,
+        bool $filterPublished = false
     ): array {
         $folder = $this->getLanguageFolder();
         $pages = [];
@@ -4272,6 +4295,11 @@ class PageService {
         // Apply MetaVox filters if any and if MetaVox is available
         if (!empty($filters) && $this->isMetaVoxAvailable()) {
             $pages = $this->applyMetaVoxFilters($pages, $filters, $filterOperator);
+        }
+
+        // Apply publication date filter if enabled and MetaVox is available
+        if ($filterPublished && $this->isMetaVoxAvailable()) {
+            $pages = $this->applyPublicationDateFilter($pages);
         }
 
         $total = count($pages);
@@ -4538,6 +4566,107 @@ class PageService {
             default:
                 return false;
         }
+    }
+
+    /**
+     * Filter pages based on publication dates from MetaVox fields
+     *
+     * Logic: (Publish date is empty OR Publish date <= today)
+     *    AND (Expiration date is empty OR Expiration date > today)
+     *
+     * @param array $pages Pages to filter
+     * @return array Filtered pages that are currently published
+     */
+    private function applyPublicationDateFilter(array $pages): array {
+        $publishDateField = $this->publicationSettings->getPublishDateField();
+        $expirationDateField = $this->publicationSettings->getExpirationDateField();
+
+        // If no fields configured, return all pages
+        if (empty($publishDateField) && empty($expirationDateField)) {
+            return $pages;
+        }
+
+        $fileIds = array_filter(array_column($pages, 'fileId'));
+        if (empty($fileIds)) {
+            return $pages;
+        }
+
+        $metaVoxData = $this->getMetaVoxDataForFiles($fileIds);
+        $today = date('Y-m-d');
+
+        return array_values(array_filter($pages, function($page) use ($publishDateField, $expirationDateField, $metaVoxData, $today) {
+            $fileId = $page['fileId'] ?? null;
+            if (!$fileId) {
+                return true; // No fileId = include page (can't filter without metadata)
+            }
+
+            $meta = $metaVoxData[$fileId] ?? [];
+
+            // Check publish date: page is visible if publish date is empty OR publish date <= today
+            if (!empty($publishDateField)) {
+                $publishDate = $meta[$publishDateField] ?? '';
+                if (!empty($publishDate)) {
+                    $parsedPublishDate = $this->parseDate($publishDate);
+                    if ($parsedPublishDate && $parsedPublishDate > $today) {
+                        return false; // Not yet published
+                    }
+                }
+            }
+
+            // Check expiration date: page is visible if expiration date is empty OR expiration date > today
+            if (!empty($expirationDateField)) {
+                $expirationDate = $meta[$expirationDateField] ?? '';
+                if (!empty($expirationDate)) {
+                    $parsedExpirationDate = $this->parseDate($expirationDate);
+                    if ($parsedExpirationDate && $parsedExpirationDate <= $today) {
+                        return false; // Already expired
+                    }
+                }
+            }
+
+            return true; // Page is visible
+        }));
+    }
+
+    /**
+     * Parse a date string to Y-m-d format for comparison
+     *
+     * @param string $dateStr Date string in various formats
+     * @return string|null Normalized date in Y-m-d format, or null if parsing failed
+     */
+    private function parseDate(string $dateStr): ?string {
+        if (empty($dateStr)) {
+            return null;
+        }
+
+        $dateStr = trim($dateStr);
+
+        // Try common date formats
+        $formats = [
+            'Y-m-d',        // ISO format: 2025-01-15
+            'd-m-Y',        // European: 15-01-2025
+            'm/d/Y',        // US: 01/15/2025
+            'd/m/Y',        // European with slash: 15/01/2025
+            'Y/m/d',        // Alternative ISO: 2025/01/15
+            'Y-m-d H:i:s',  // ISO with time: 2025-01-15 14:30:00
+            'd-m-Y H:i:s',  // European with time
+            'Y-m-d\TH:i:s', // ISO 8601: 2025-01-15T14:30:00
+        ];
+
+        foreach ($formats as $format) {
+            $date = \DateTime::createFromFormat($format, $dateStr);
+            if ($date !== false) {
+                return $date->format('Y-m-d');
+            }
+        }
+
+        // Try strtotime as fallback for natural language dates
+        $timestamp = strtotime($dateStr);
+        if ($timestamp !== false) {
+            return date('Y-m-d', $timestamp);
+        }
+
+        return null;
     }
 
     /**

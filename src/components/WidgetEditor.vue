@@ -8,66 +8,15 @@
         <div v-if="localWidget.type === 'text'" class="form-group full-width-editor">
           <label>{{ t('Text:') }}</label>
 
-          <!-- Tiptap Rich Text Editor -->
-          <div v-if="editor" class="rich-text-toolbar">
-            <button
-              type="button"
-              @click="editor.chain().focus().toggleBold().run()"
-              :class="{ 'is-active': editor.isActive('bold') }"
-              :title="t('Bold')"
-              class="toolbar-btn"
-            >
-              <strong>B</strong>
-            </button>
-            <button
-              type="button"
-              @click="editor.chain().focus().toggleItalic().run()"
-              :class="{ 'is-active': editor.isActive('italic') }"
-              :title="t('Italic')"
-              class="toolbar-btn"
-            >
-              <em>I</em>
-            </button>
-            <button
-              type="button"
-              @click="editor.chain().focus().toggleUnderline().run()"
-              :class="{ 'is-active': editor.isActive('underline') }"
-              :title="t('Underline')"
-              class="toolbar-btn"
-            >
-              <u>U</u>
-            </button>
-            <button
-              type="button"
-              @click="editor.chain().focus().toggleStrike().run()"
-              :class="{ 'is-active': editor.isActive('strike') }"
-              :title="t('Strikethrough')"
-              class="toolbar-btn"
-            >
-              <s>S</s>
-            </button>
-            <span class="toolbar-divider"></span>
-            <button
-              type="button"
-              @click="editor.chain().focus().toggleBulletList().run()"
-              :class="{ 'is-active': editor.isActive('bulletList') }"
-              :title="t('Bullet list')"
-              class="toolbar-btn"
-            >
-              • List
-            </button>
-            <button
-              type="button"
-              @click="editor.chain().focus().toggleOrderedList().run()"
-              :class="{ 'is-active': editor.isActive('orderedList') }"
-              :title="t('Numbered list')"
-              class="toolbar-btn"
-            >
-              1. List
-            </button>
+          <!-- Use InlineTextEditor for consistent editing experience -->
+          <div class="text-editor-wrapper">
+            <InlineTextEditor
+              v-model="localWidget.content"
+              :editable="true"
+              :compact="false"
+              :placeholder="t('Enter text...')"
+            />
           </div>
-
-          <editor-content :editor="editor" class="rich-text-editor" />
         </div>
 
         <!-- Heading Widget -->
@@ -486,19 +435,14 @@ import NewsWidgetEditor from './NewsWidgetEditor.vue';
 import { showError, showSuccess } from '@nextcloud/dialogs';
 import ImageIcon from 'vue-material-design-icons/Image.vue';
 import VideoIcon from 'vue-material-design-icons/Video.vue';
-
-// Tiptap imports
-import { Editor, EditorContent } from '@tiptap/vue-3';
-import StarterKit from '@tiptap/starter-kit';
-import Underline from '@tiptap/extension-underline';
-import Placeholder from '@tiptap/extension-placeholder';
+import InlineTextEditor from './InlineTextEditor.vue';
 
 export default {
   name: 'WidgetEditor',
   components: {
     NcButton,
     NcModal,
-    EditorContent,
+    InlineTextEditor,
     PageTreeSelect,
     MediaPicker,
     NewsWidgetEditor,
@@ -519,7 +463,6 @@ export default {
   data() {
     return {
       localWidget: JSON.parse(JSON.stringify(this.widget)),
-      editor: null,
       detectedPlatform: null,
       embedUrl: null,
       uploadLimitBytes: 50 * 1024 * 1024, // Default 50MB, will be fetched from server
@@ -574,48 +517,8 @@ export default {
         this.detectPlatformFromEmbedUrl(embedUrlFromSrc);
       }
     }
-
-    // Initialize Tiptap editor for text widgets
-    if (this.localWidget.type === 'text') {
-      // Decode HTML entities if content contains escaped HTML
-      let content = this.localWidget.content || '';
-      if (content.includes('&lt;') || content.includes('&gt;')) {
-        content = this.decodeHtml(content);
-      }
-
-      this.editor = new Editor({
-        extensions: [
-          StarterKit.configure({
-            // Configure paragraph to have no spacing
-            paragraph: {
-              HTMLAttributes: {
-                class: 'tight-paragraph',
-              },
-            },
-          }),
-          Underline,
-          Placeholder.configure({
-            placeholder: 'Typ hier je tekst...'
-          })
-        ],
-        editorProps: {
-          attributes: {
-            class: 'intravox-editor-full-width'
-          }
-        },
-        content: content,
-        onUpdate: ({ editor }) => {
-          // Update widget content as HTML
-          this.localWidget.content = editor.getHTML();
-        }
-      });
-    }
   },
   beforeUnmount() {
-    // Clean up editor instance
-    if (this.editor) {
-      this.editor.destroy();
-    }
     // Clean up debounce timer
     if (this.convertVideoUrlTimeout) {
       clearTimeout(this.convertVideoUrlTimeout);
@@ -696,12 +599,6 @@ export default {
     handleNewsWidgetUpdate(updatedWidget) {
       // Merge the updated news widget properties into localWidget
       Object.assign(this.localWidget, updatedWidget);
-    },
-    decodeHtml(html) {
-      // Decode HTML entities
-      const txt = document.createElement('textarea');
-      txt.innerHTML = html;
-      return txt.value;
     },
     save() {
       // Ensure video URL is converted before saving (in case user didn't blur input)
@@ -1213,155 +1110,23 @@ export default {
   margin-top: 0;
 }
 
-/* Rich Text Editor Toolbar */
-.rich-text-toolbar {
-  display: flex;
-  gap: 4px;
-  padding: 12px 20px;
-  background: var(--color-background-dark);
+/* Text Editor Wrapper - uses InlineTextEditor component */
+.text-editor-wrapper {
   border: 1px solid var(--color-border);
   border-left: none;
   border-right: none;
-  border-radius: 0;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.toolbar-btn {
-  padding: 6px 12px;
-  background: var(--color-main-background);
-  border: 1px solid var(--color-border);
-  border-radius: var(--border-radius-large);
-  color: var(--color-main-text);
-  cursor: pointer;
-  font-size: 14px;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.toolbar-btn:hover {
-  background: var(--color-background-hover);
-  border-color: var(--color-primary);
-}
-
-.toolbar-btn.is-active {
-  background: var(--color-primary-element-light);
-  border-color: var(--color-primary);
-  color: var(--color-primary);
-}
-
-.toolbar-divider {
-  width: 1px;
-  height: 24px;
-  background: var(--color-border);
-  margin: 0 4px;
-}
-
-/* Tiptap Editor Styles */
-.rich-text-editor {
-  width: 100%;
-  border: 1px solid var(--color-border);
-  border-top: none;
-  border-left: none;
-  border-right: none;
-  border-radius: 0;
-  background: var(--color-main-background);
-}
-
-.rich-text-editor :deep(.tiptap) {
-  width: 100%;
-  max-width: 100%;
-}
-
-/* Force full width using custom class to override Tiptap inline styles */
-.rich-text-editor :deep(.intravox-editor-full-width) {
-  width: 100% !important;
   min-height: 400px;
   max-height: 600px;
-  padding: 20px;
-  color: var(--color-main-text);
-  font-family: var(--font-face);
-  font-size: 14px;
-  line-height: 1.5;
   overflow-y: auto;
-  outline: none;
 }
 
-.rich-text-editor :deep(.ProseMirror) {
-  width: 100%;
-  min-height: 400px;
-  max-height: 600px;
-  padding: 20px;
-  color: var(--color-main-text);
-  font-family: var(--font-face);
-  font-size: 14px;
-  line-height: 1.5;
-  overflow-y: auto;
-  outline: none;
+.text-editor-wrapper :deep(.inline-text-editor) {
+  min-height: 380px;
 }
 
-.rich-text-editor :deep(.ProseMirror:focus) {
-  outline: none;
-}
-
-/* Rich text content styling */
-.rich-text-editor :deep(.ProseMirror p) {
-  margin: 0;
-}
-
-.rich-text-editor :deep(.ProseMirror p + p) {
-  margin-top: 0;
-}
-
-.rich-text-editor :deep(.ProseMirror ul),
-.rich-text-editor :deep(.ProseMirror ol) {
-  padding-left: 1.5em;
-  margin: 0.5em 0;
-  list-style-position: outside;
-}
-
-.rich-text-editor :deep(.ProseMirror ul) {
-  list-style-type: disc;
-}
-
-.rich-text-editor :deep(.ProseMirror ol) {
-  list-style-type: decimal;
-}
-
-.rich-text-editor :deep(.ProseMirror li) {
-  margin: 0.25em 0;
-  display: list-item;
-}
-
-.rich-text-editor :deep(.ProseMirror li p) {
-  margin: 0;
-}
-
-.rich-text-editor :deep(.ProseMirror strong) {
-  font-weight: 700;
-}
-
-.rich-text-editor :deep(.ProseMirror em) {
-  font-style: italic;
-}
-
-.rich-text-editor :deep(.ProseMirror u) {
-  text-decoration: underline;
-}
-
-.rich-text-editor :deep(.ProseMirror s) {
-  text-decoration: line-through;
-}
-
-/* Placeholder */
-.rich-text-editor :deep(.ProseMirror p.is-editor-empty:first-child::before) {
-  content: attr(data-placeholder);
-  float: left;
-  color: var(--color-text-maxcontrast);
-  pointer-events: none;
-  height: 0;
+.text-editor-wrapper :deep(.ProseMirror) {
+  min-height: 350px;
+  padding: 16px 20px;
 }
 
 .size-presets {

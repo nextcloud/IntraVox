@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.5] - 2025-12-29 - Publication Dates, Collapsible Rows & Editor Consolidation
+
+### Added
+- **Publication Date Filtering**: News widget can now filter pages based on publication dates
+  - Configure MetaVox date fields in Settings → IntraVox → Publication
+  - "Show only published pages" checkbox in News widget editor
+  - Pages filtered based on publish date (visible from) and expiration date (hidden after)
+  - Dropdown selection shows available date fields from MetaVox with display names
+  - Warnings shown when MetaVox not available or fields not configured
+  - Supports multiple date formats (YYYY-MM-DD, DD-MM-YYYY, ISO 8601, etc.)
+- **Collapsible Rows (SharePoint-style)**: Rows can now be made collapsible
+  - Checkbox "Collapsible section" in row controls to enable
+  - Customizable section title shown in the header
+  - Option to collapse by default in view mode
+  - Click header to expand/collapse in view mode
+  - All widgets in the row collapse together
+
+### Changed
+- **Editor Consolidation**: WidgetEditor now uses InlineTextEditor component
+  - Consistent editing experience in modal and inline editing modes
+  - All toolbar features (tables, links, headings, etc.) available everywhere
+  - Single codebase for rich text editing
+
+### Fixed
+- **Nested List Styling**: Fixed visual hierarchy for nested lists
+  - Ordered lists: 1. → a. → i. → 1. (cycling through levels)
+  - Unordered lists: • → ○ → ▪ → • (cycling through levels)
+  - Consistent styling in both edit and view modes
+- **Row Controls Visibility**: Fixed row drag handle and controls visibility on colored row backgrounds
+  - Uses inherited colors for proper contrast on any background color
+
 ## [0.8.4] - 2025-12-27 - News Widget & API Documentation
 
 ### Added

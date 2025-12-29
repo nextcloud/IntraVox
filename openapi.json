@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "IntraVox API",
-    "version": "0.8.4",
+    "version": "0.8.5",
     "description": "IntraVox is a modern intranet page builder for Nextcloud. This API provides endpoints for managing pages, media, navigation, comments, and more.",
     "license": {
       "name": "AGPL-3.0",
@@ -1086,6 +1086,46 @@
         }
       }
     },
+    "/api/settings/publication": {
+      "get": {
+        "operationId": "get-publication-settings",
+        "summary": "Get publication settings",
+        "tags": ["Settings"],
+        "responses": {
+          "200": {
+            "description": "Publication settings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicationSettings"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "set-publication-settings",
+        "summary": "Set publication settings",
+        "description": "Admin only",
+        "tags": ["Settings"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublicationSettings"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Settings updated"
+          }
+        }
+      }
+    },
     "/api/export/languages": {
       "get": {
         "operationId": "get-exportable-languages",
@@ -1731,6 +1771,19 @@
             "items": {
               "type": "string"
             }
+          }
+        }
+      },
+      "PublicationSettings": {
+        "type": "object",
+        "properties": {
+          "publishedOnField": {
+            "type": "string",
+            "description": "MetaVox field name for publish date"
+          },
+          "depublishedOnField": {
+            "type": "string",
+            "description": "MetaVox field name for expiration date"
           }
         }
       }

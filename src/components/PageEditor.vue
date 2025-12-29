@@ -212,6 +212,39 @@
         <div class="row-drag-handle" :aria-label="t('Drag to reorder row')">
           <DragVertical :size="20" />
         </div>
+
+        <!-- Collapsible Section Controls (grouped) -->
+        <div class="collapsible-controls">
+          <label class="collapsible-toggle-label" @click.stop>
+            <input
+              type="checkbox"
+              :checked="row.collapsible"
+              @change="toggleRowCollapsible(row)"
+            />
+            {{ t('Collapsible section') }}
+          </label>
+
+          <!-- Section Title (only shown when collapsible) -->
+          <input
+            v-if="row.collapsible"
+            v-model="row.sectionTitle"
+            class="row-section-title"
+            :placeholder="t('Section title...')"
+            @input="onSectionTitleChange(row)"
+            @click.stop
+          />
+
+          <!-- Default Collapsed checkbox (only shown when collapsible) -->
+          <label v-if="row.collapsible" class="default-collapsed-label" @click.stop>
+            <input
+              type="checkbox"
+              v-model="row.defaultCollapsed"
+              @change="onDefaultCollapsedChange(row)"
+            />
+            {{ t('Collapsed by default') }}
+          </label>
+        </div>
+
         <label style="margin-right: 8px;">{{ t('Row columns:') }}</label>
         <button
           v-for="n in 5"
@@ -249,66 +282,73 @@
         </NcButton>
       </div>
 
+      <!-- Row Content (collapsible) -->
       <div
-        class="page-grid"
-        :style="{ gridTemplateColumns: `repeat(${(row.columns || localPage.layout.columns) ?? 1}, 1fr)` }"
+        class="row-content"
+        :class="{ collapsed: row.collapsible && row.collapsed }"
+        v-show="!row.collapsible || !row.collapsed"
       >
         <div
-          v-for="column in ((row.columns || localPage.layout.columns) ?? 1)"
-          :key="`${rowIndex}-${column}`"
-          class="page-column droppable"
+          class="page-grid"
+          :style="{ gridTemplateColumns: `repeat(${(row.columns || localPage.layout.columns) ?? 1}, 1fr)` }"
         >
-          <div class="column-label">{{ t('Column {column}', { column }) }}</div>
-          <draggable
-            :list="getColumnWidgets(rowIndex, column)"
-            :group="{ name: 'allWidgets', pull: true, put: true }"
-            :animation="200"
-            item-key="id"
-            handle=".drag-handle"
-            @end="onDragEnd(rowIndex, column)"
-            class="widget-drop-zone"
+          <div
+            v-for="column in ((row.columns || localPage.layout.columns) ?? 1)"
+            :key="`${rowIndex}-${column}`"
+            class="page-column droppable"
           >
-            <template #item="{ element: widget }">
-              <div class="widget-wrapper" :class="{ 'editing': focusedWidgetId === widget.id }">
-                <!-- Floating toolbar - appears on hover -->
-                <div class="floating-toolbar">
-                  <div class="drag-handle" :aria-label="t('Drag to reorder')">
-                    <DragVertical :size="16" />
+            <div class="column-label">{{ t('Column {column}', { column }) }}</div>
+            <draggable
+              :list="getColumnWidgets(rowIndex, column)"
+              :group="{ name: 'allWidgets', pull: true, put: true }"
+              :animation="200"
+              item-key="id"
+              handle=".drag-handle"
+              @end="onDragEnd(rowIndex, column)"
+              class="widget-drop-zone"
+            >
+              <template #item="{ element: widget }">
+                <div class="widget-wrapper" :class="{ 'editing': focusedWidgetId === widget.id }">
+                  <!-- Floating toolbar - appears on hover -->
+                  <div class="floating-toolbar">
+                    <div class="drag-handle" :aria-label="t('Drag to reorder')">
+                      <DragVertical :size="16" />
+                    </div>
+                    <NcButton v-if="needsEditButton(widget.type)"
+                              @click="editWidget(widget, rowIndex)"
+                              type="secondary"
+                              :aria-label="t('Edit widget')">
+                      <template #icon>
+                        <Pencil :size="16" />
+                      </template>
+                    </NcButton>
+                    <NcButton @click="duplicateWidget(rowIndex, widget)"
+                              type="secondary"
+                              :aria-label="t('Duplicate widget')">
+                      <template #icon>
+                        <ContentDuplicate :size="16" />
+                      </template>
+                    </NcButton>
+                    <NcButton @click="deleteWidget(rowIndex, widget.id)"
+                              type="error"
+                              :aria-label="t('Delete widget')">
+                      <template #icon>
+                        <Delete :size="16" />
+                      </template>
+                    </NcButton>
                   </div>
-                  <NcButton v-if="needsEditButton(widget.type)"
-                            @click="editWidget(widget, rowIndex)"
-                            type="secondary"
-                            :aria-label="t('Edit widget')">
-                    <template #icon>
-                      <Pencil :size="16" />
-                    </template>
-                  </NcButton>
-                  <NcButton @click="duplicateWidget(rowIndex, widget)"
-                            type="secondary"
-                            :aria-label="t('Duplicate widget')">
-                    <template #icon>
-                      <ContentDuplicate :size="16" />
-                    </template>
-                  </NcButton>
-                  <NcButton @click="deleteWidget(rowIndex, widget.id)"
-                            type="error"
-                            :aria-label="t('Delete widget')">
-                    <template #icon>
-                      <Delete :size="16" />
-                    </template>
-                  </NcButton>
+                  <Widget :widget="widget" :page-id="page.uniqueId" :editable="true" :row-background-color="row.backgroundColor || ''" @update="updateWidget($event, rowIndex)" @focus="focusedWidgetId = widget.id" @blur="focusedWidgetId = null" />
                 </div>
-                <Widget :widget="widget" :page-id="page.uniqueId" :editable="true" :row-background-color="row.backgroundColor || ''" @update="updateWidget($event, rowIndex)" @focus="focusedWidgetId = widget.id" @blur="focusedWidgetId = null" />
-              </div>
-            </template>
-          </draggable>
-          <div class="column-add-widget">
-            <NcButton @click="showWidgetPickerForColumn(rowIndex, column)" type="primary" class="add-widget-btn">
-              <template #icon>
-                <Plus :size="20" />
               </template>
-              {{ t('Add Widget') }}
-            </NcButton>
+            </draggable>
+            <div class="column-add-widget">
+              <NcButton @click="showWidgetPickerForColumn(rowIndex, column)" type="primary" class="add-widget-btn">
+                <template #icon>
+                  <Plus :size="20" />
+                </template>
+                {{ t('Add Widget') }}
+              </NcButton>
+            </div>
           </div>
         </div>
       </div>
@@ -821,12 +861,48 @@ export default {
       this.localPage.layout.rows = [...this.localPage.layout.rows];
       this.$emit('update', this.localPage);
     },
+    toggleRowCollapsible(row) {
+      // Toggle whether this row is a collapsible section
+      row.collapsible = !row.collapsible;
+      if (!row.collapsible) {
+        // Reset collapsed state and title when disabling collapsible
+        row.collapsed = false;
+        row.sectionTitle = '';
+      }
+      // Force Vue to detect the change
+      this.localPage.layout.rows = [...this.localPage.layout.rows];
+      this.$emit('update', this.localPage);
+    },
+    toggleRowCollapsed(row) {
+      // Toggle collapsed state (only if collapsible is enabled)
+      if (row.collapsible) {
+        row.collapsed = !row.collapsed;
+        // Force Vue to detect the change
+        this.localPage.layout.rows = [...this.localPage.layout.rows];
+        this.$emit('update', this.localPage);
+      }
+    },
+    onSectionTitleChange(row) {
+      // Debounced update when section title changes
+      // Force Vue to detect the change
+      this.localPage.layout.rows = [...this.localPage.layout.rows];
+      this.$emit('update', this.localPage);
+    },
+    onDefaultCollapsedChange(row) {
+      // Update when default collapsed state changes
+      this.localPage.layout.rows = [...this.localPage.layout.rows];
+      this.$emit('update', this.localPage);
+    },
     addRow() {
       this.localPage.layout.rows.push({
         id: this.generateRowId(),
         columns: 1,
         widgets: [],
-        backgroundColor: ''
+        backgroundColor: '',
+        collapsible: false,
+        sectionTitle: '',
+        collapsed: false,
+        defaultCollapsed: false
       });
       this.initializeColumnArrays();
       this.$emit('update', this.localPage);
@@ -837,7 +913,11 @@ export default {
         id: this.generateRowId(),
         columns: 1,
         widgets: [],
-        backgroundColor: ''
+        backgroundColor: '',
+        collapsible: false,
+        sectionTitle: '',
+        collapsed: false,
+        defaultCollapsed: false
       });
       this.initializeColumnArrays();
       this.$emit('update', this.localPage);
@@ -1210,6 +1290,9 @@ export default {
         } else {
           style.color = 'var(--color-main-text)';
         }
+      } else {
+        // Explicitly set transparent to override CSS default
+        style.backgroundColor = 'transparent';
       }
       return style;
     },
@@ -1326,6 +1409,9 @@ export default {
         } else {
           style.color = 'var(--color-main-text)';
         }
+      } else {
+        // Explicitly set transparent to override CSS default
+        style.backgroundColor = 'transparent';
       }
       return style;
     },
@@ -1529,6 +1615,73 @@ export default {
   .side-column-buttons {
     flex-direction: column;
   }
+
+  /* Row controls responsive */
+  .row-controls {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .collapsible-controls {
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-right: 8px;
+  }
+
+  .row-section-title {
+    flex: 1 1 100%;
+    min-width: 100px;
+    max-width: none;
+    margin-right: 0;
+    margin-top: 4px;
+  }
+
+  .default-collapsed-label {
+    margin-right: 8px;
+  }
+
+  /* Widget wrapper responsive */
+  .widget-wrapper {
+    padding: 8px;
+  }
+
+  .floating-toolbar {
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 4px;
+  }
+
+  .floating-toolbar button {
+    padding: 4px 6px;
+    min-width: 28px;
+    height: 28px;
+  }
+}
+
+@media (max-width: 480px) {
+  .row-controls {
+    padding: 6px;
+  }
+
+  .collapsible-toggle-label {
+    font-size: 12px;
+  }
+
+  .row-section-title {
+    height: 32px;
+    font-size: 14px;
+  }
+
+  .default-collapsed-label {
+    font-size: 11px;
+  }
+
+  .column-button.small {
+    width: 24px;
+    height: 24px;
+    font-size: 11px;
+  }
 }
 
 .editor-toolbar {
@@ -1625,19 +1778,103 @@ export default {
   padding: 4px 8px;
   margin-right: 8px;
   cursor: grab;
-  color: var(--color-text-maxcontrast);
+  color: inherit;
+  opacity: 0.6;
   border-radius: var(--border-radius);
   transition: all 0.15s ease;
 }
 
 .row-drag-handle:hover {
-  background: var(--color-background-hover);
-  color: var(--color-main-text);
+  background: rgba(0, 0, 0, 0.1);
+  opacity: 1;
 }
 
 .row-drag-handle:active {
   cursor: grabbing;
-  background: var(--color-primary-element-light);
+  background: rgba(0, 0, 0, 0.15);
+}
+
+/* Collapsible controls container */
+.collapsible-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: 12px;
+}
+
+/* Main collapsible toggle checkbox with label */
+.collapsible-toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.collapsible-toggle-label input[type="checkbox"] {
+  margin: 0;
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+  accent-color: var(--color-primary-element);
+}
+
+/* Section title input */
+.row-section-title {
+  flex: 0 1 200px;
+  min-width: 120px;
+  max-width: 300px;
+  height: 28px;
+  margin-right: 12px;
+  padding: 4px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  background: var(--color-main-background);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-main-text);
+}
+
+.row-section-title:focus {
+  outline: none;
+  border-color: var(--color-primary-element);
+  box-shadow: 0 0 0 2px var(--color-primary-element-light);
+}
+
+.row-section-title::placeholder {
+  color: var(--color-text-maxcontrast);
+  font-weight: normal;
+}
+
+/* Default collapsed checkbox label */
+.default-collapsed-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-right: 12px;
+  font-size: 12px;
+  color: inherit;
+  opacity: 0.8;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.default-collapsed-label input[type="checkbox"] {
+  margin: 0;
+  cursor: pointer;
+}
+
+/* Row content container */
+.row-content {
+  /* No overflow: hidden - needed for floating toolbar visibility */
+}
+
+.row-content.collapsed {
+  display: none;
 }
 
 /* Rows container for drag-and-drop */

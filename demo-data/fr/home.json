@@ -272,6 +272,87 @@
                         "column": 1,
                         "order": 1,
                         "style": "solid",
+                        "color": "",
+                        "height": "2px"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Sections Repliables",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Organisez votre contenu avec des **sections repliables**. Parfait pour les FAQ, les notes de version ou tout contenu qui bénéficie d'une divulgation progressive. Cliquez sur les en-têtes de section ci-dessous pour les déplier ou les replier."
+                    }
+                ]
+            },
+            {
+                "id": "row-collapsible-demo-1",
+                "columns": 1,
+                "backgroundColor": "var(--color-background-hover)",
+                "collapsible": true,
+                "sectionTitle": "Pour Commencer",
+                "defaultCollapsed": false,
+                "widgets": [
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 1,
+                        "content": "**Bienvenue sur IntraVox !** Voici comment commencer :\n\n1. **Installez l'application** depuis le Nextcloud App Store\n2. **Chargez les données de démo** depuis les paramètres admin pour voir IntraVox en action\n3. **Créez votre première page** avec l'éditeur visuel\n4. **Configurez la navigation** pour organiser la structure de votre intranet\n\n*Conseil : Consultez la section documentation pour des guides et tutoriels détaillés.*"
+                    }
+                ]
+            },
+            {
+                "id": "row-collapsible-demo-2",
+                "columns": 1,
+                "backgroundColor": "var(--color-background-hover)",
+                "collapsible": true,
+                "sectionTitle": "FAQ - Questions Fréquentes",
+                "defaultCollapsed": true,
+                "widgets": [
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 1,
+                        "content": "**Q : Puis-je utiliser IntraVox avec mes utilisateurs Nextcloud existants ?**\nR : Oui ! IntraVox s'intègre parfaitement avec la gestion des utilisateurs et des groupes de Nextcloud.\n\n**Q : IntraVox est-il gratuit ?**\nR : Oui, IntraVox est open source et gratuit. Il n'y a pas de frais d'abonnement ou de coûts cachés.\n\n**Q : Puis-je avoir plusieurs langues sur mon intranet ?**\nR : Absolument ! IntraVox prend en charge plusieurs langues. Vous pouvez créer du contenu séparé pour chaque langue.\n\n**Q : Où sont stockées mes données ?**\nR : Toutes les données restent sur votre serveur Nextcloud. IntraVox utilise les groupfolders de Nextcloud pour le stockage."
+                    }
+                ]
+            },
+            {
+                "id": "row-collapsible-demo-3",
+                "columns": 1,
+                "backgroundColor": "var(--color-background-hover)",
+                "collapsible": true,
+                "sectionTitle": "Notes de Version - Version 0.8",
+                "defaultCollapsed": true,
+                "widgets": [
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 1,
+                        "content": "**Version 0.8.5** - Décembre 2025\n\n- **Nouveau :** Lignes repliables (sections style SharePoint)\n- **Nouveau :** Widget News auto-compact pour colonnes latérales\n- **Corrigé :** Arrière-plan transparent dans les colonnes latérales\n- **Amélioré :** Visibilité des contrôles de ligne sur fonds colorés\n\n**Version 0.8.4** - Décembre 2025\n\n- **Nouveau :** Support ligne d'en-tête\n- **Nouveau :** Colonnes latérales (gauche & droite)\n- **Amélioré :** Layouts responsive mobile\n- **Corrigé :** Diverses corrections de bugs et améliorations"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
                         "color": "transparent",
                         "height": "20px"
                     }

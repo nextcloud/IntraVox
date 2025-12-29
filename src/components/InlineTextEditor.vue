@@ -719,6 +719,7 @@ export default {
   z-index: 1000;
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 4px;
   padding: 8px;
   background: var(--color-main-background);
@@ -726,6 +727,8 @@ export default {
   border-radius: var(--border-radius);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   margin-bottom: 8px;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .menubar-button {
@@ -993,6 +996,35 @@ export default {
   color: inherit !important;
 }
 
+/* Nested lists - indentation en list-style hierarchy */
+.editor-content :deep(.ProseMirror li > ul),
+.editor-content :deep(.ProseMirror li > ol) {
+  margin: 0.25em 0;
+  padding-left: 1.5em;
+}
+
+/* Ordered list nesting: 1. → a. → i. → 1. */
+.editor-content :deep(.ProseMirror ol ol) {
+  list-style-type: lower-alpha;
+}
+.editor-content :deep(.ProseMirror ol ol ol) {
+  list-style-type: lower-roman;
+}
+.editor-content :deep(.ProseMirror ol ol ol ol) {
+  list-style-type: decimal;
+}
+
+/* Unordered list nesting: • → ○ → ▪ → • */
+.editor-content :deep(.ProseMirror ul ul) {
+  list-style-type: circle;
+}
+.editor-content :deep(.ProseMirror ul ul ul) {
+  list-style-type: square;
+}
+.editor-content :deep(.ProseMirror ul ul ul ul) {
+  list-style-type: disc;
+}
+
 .editor-content :deep(.ProseMirror strong) {
   font-weight: bold;
   color: inherit !important;
@@ -1129,5 +1161,55 @@ export default {
   border: none;
   border-top: 2px solid var(--color-border);
   margin: 2em 0;
+}
+
+/* Mobile styles */
+@media (max-width: 480px) {
+  .text-menubar {
+    padding: 6px;
+    gap: 2px;
+  }
+
+  .menubar-button {
+    padding: 4px 6px;
+    min-width: 28px;
+    height: 28px;
+  }
+
+  .menubar-divider {
+    display: none; /* Hide dividers on mobile to save space */
+  }
+
+  .heading-button {
+    min-width: 70px !important;
+    font-size: 12px;
+  }
+
+  .dropdown-menu {
+    min-width: 120px;
+    max-width: calc(100vw - 32px);
+  }
+
+  .dropdown-menu-item {
+    padding: 6px 10px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 360px) {
+  .text-menubar {
+    padding: 4px;
+  }
+
+  .menubar-button {
+    padding: 3px 5px;
+    min-width: 26px;
+    height: 26px;
+  }
+
+  .heading-button {
+    min-width: 60px !important;
+    font-size: 11px;
+  }
 }
 </style>

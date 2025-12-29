@@ -51,6 +51,8 @@ return [
         ['name' => 'api#getUploadLimit', 'url' => '/api/settings/upload-limit', 'verb' => 'GET'],
         ['name' => 'api#getEngagementSettings', 'url' => '/api/settings/engagement', 'verb' => 'GET'],
         ['name' => 'api#setEngagementSettings', 'url' => '/api/settings/engagement', 'verb' => 'POST'],
+        ['name' => 'api#getPublicationSettings', 'url' => '/api/settings/publication', 'verb' => 'GET'],
+        ['name' => 'api#setPublicationSettings', 'url' => '/api/settings/publication', 'verb' => 'POST'],
 
         // Export routes
         ['name' => 'export#getExportableLanguages', 'url' => '/api/export/languages', 'verb' => 'GET'],

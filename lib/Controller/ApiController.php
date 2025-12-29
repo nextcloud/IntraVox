@@ -7,6 +7,7 @@ use OCA\IntraVox\AppInfo\Application;
 use OCA\IntraVox\Constants;
 use OCA\IntraVox\Service\EngagementSettingsService;
 use OCA\IntraVox\Service\ImportService;
+use OCA\IntraVox\Service\PublicationSettingsService;
 use OCA\IntraVox\Service\Import\ConfluenceHtmlImporter;
 use OCA\IntraVox\Service\Import\ConfluenceImporter;
 use OCA\IntraVox\Service\PageService;
@@ -37,6 +38,7 @@ class ApiController extends Controller {
     private PageService $pageService;
     private SetupService $setupService;
     private EngagementSettingsService $engagementSettings;
+    private PublicationSettingsService $publicationSettings;
     private ImportService $importService;
     private LoggerInterface $logger;
     private IConfig $config;
@@ -50,6 +52,7 @@ class ApiController extends Controller {
         PageService $pageService,
         SetupService $setupService,
         EngagementSettingsService $engagementSettings,
+        PublicationSettingsService $publicationSettings,
         ImportService $importService,
         LoggerInterface $logger,
         IConfig $config,
@@ -61,6 +64,7 @@ class ApiController extends Controller {
         $this->pageService = $pageService;
         $this->setupService = $setupService;
         $this->engagementSettings = $engagementSettings;
+        $this->publicationSettings = $publicationSettings;
         $this->importService = $importService;
         $this->logger = $logger;
         $this->config = $config;
@@ -874,6 +878,7 @@ class ApiController extends Controller {
             $limit = (int) $this->request->getParam('limit', 5);
             $sortBy = $this->request->getParam('sortBy', 'modified');
             $sortOrder = $this->request->getParam('sortOrder', 'desc');
+            $filterPublished = $this->request->getParam('filterPublished', 'false') === 'true';
 
             // Parse filters JSON
             $filters = json_decode($filtersJson, true) ?? [];
@@ -903,7 +908,8 @@ class ApiController extends Controller {
                 $limit,
                 $sortBy,
                 $sortOrder,
-                !empty($sourcePageId) ? $sourcePageId : null
+                !empty($sourcePageId) ? $sourcePageId : null,
+                $filterPublished
             );
 
             return new DataResponse($result);
@@ -1321,6 +1327,51 @@ class ApiController extends Controller {
             ]);
         } catch (\Exception $e) {
             $this->logger->error('[ApiController] Failed to update engagement settings: ' . $e->getMessage());
+            return new DataResponse([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], Http::STATUS_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Get publication settings (MetaVox field names for date filtering)
+     *
+     * @NoCSRFRequired
+     * @NoAdminRequired
+     */
+    public function getPublicationSettings(): DataResponse {
+        return new DataResponse($this->publicationSettings->getAll());
+    }
+
+    /**
+     * Update publication settings
+     * Admin only
+     */
+    public function setPublicationSettings(): DataResponse {
+        // Only admins can change publication settings
+        if (!$this->isAdmin()) {
+            return new DataResponse([
+                'success' => false,
+                'message' => 'Only administrators can change publication settings',
+            ], Http::STATUS_FORBIDDEN);
+        }
+
+        // Get settings from request body
+        $body = file_get_contents('php://input');
+        $settings = json_decode($body, true) ?? [];
+
+        try {
+            $updated = $this->publicationSettings->updateAll($settings);
+
+            $this->logger->info('[ApiController] Publication settings updated', $settings);
+
+            return new DataResponse([
+                'success' => true,
+                'settings' => $updated,
+            ]);
+        } catch (\Exception $e) {
+            $this->logger->error('[ApiController] Failed to update publication settings: ' . $e->getMessage());
             return new DataResponse([
                 'success' => false,
                 'message' => $e->getMessage(),

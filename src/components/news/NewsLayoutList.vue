@@ -37,8 +37,37 @@ export default {
 
 <style scoped>
 .news-layout-list {
+  container-type: inline-size;
+  container-name: news-list;
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+/* Compact card layout voor smalle containers (side columns) */
+@container news-list (max-width: 280px) {
+  .news-layout-list :deep(.news-item) {
+    flex-direction: column;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .news-layout-list :deep(.news-item-image) {
+    width: 100%;
+    height: 120px;
+    border-radius: var(--border-radius-large) var(--border-radius-large) 0 0;
+  }
+
+  .news-layout-list :deep(.news-item-content) {
+    padding: 12px;
+  }
+
+  .news-layout-list :deep(.news-item-title) {
+    font-size: 14px;
+  }
+
+  .news-layout-list :deep(.news-item-excerpt) {
+    display: none; /* Verberg excerpt in compact mode */
+  }
 }
 </style>

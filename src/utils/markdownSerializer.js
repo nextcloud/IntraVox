@@ -118,8 +118,9 @@ export function markdownToHtml(markdown) {
 
     const result = DOMPurify.sanitize(html, {
       ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 's', 'ul', 'ol', 'li', 'a', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'code', 'pre', 'hr',
-                     'table', 'thead', 'tbody', 'tr', 'th', 'td'],
-      ALLOWED_ATTR: ['href', 'target', 'rel', 'class']
+                     'table', 'thead', 'tbody', 'tr', 'th', 'td',
+                     'details', 'summary', 'details-content'],
+      ALLOWED_ATTR: ['href', 'target', 'rel', 'class', 'open']
     });
 
     // Store in cache with LRU eviction
@@ -166,6 +167,17 @@ function nodeToMarkdown(node, listDepth = 0) {
 
 function elementToMarkdown(element, listDepth = 0) {
   const tag = element.tagName.toLowerCase();
+
+  // Check for TipTap NodeView data-type attributes first
+  const dataType = element.getAttribute('data-type');
+  if (dataType === 'details') {
+    return convertTipTapDetails(element);
+  }
+  if (dataType === 'detailsContent') {
+    // Content is handled by convertTipTapDetails
+    return nodeToMarkdown(element, listDepth);
+  }
+
   const content = nodeToMarkdown(element, listDepth);
 
   switch (tag) {
@@ -255,9 +267,75 @@ function elementToMarkdown(element, listDepth = 0) {
       }
       return '';
 
+    case 'button':
+      // Skip buttons (e.g., TipTap details toggle button)
+      return '';
+
+    case 'details':
+      // Preserve details as raw HTML in markdown (no native markdown syntax for this)
+      return convertDetails(element);
+
+    case 'summary':
+      // Summary is handled by convertDetails
+      return content;
+
+    case 'details-content':
+      // TipTap uses custom element for details content, convert it
+      return content;
+
     default:
       return content;
   }
+}
+
+/**
+ * Convert TipTap NodeView details structure to HTML
+ * TipTap renders: <div data-type="details"> with <summary> and <div data-type="detailsContent">
+ *
+ * Content inside details is stored as HTML (not markdown) because:
+ * 1. Markdown parsers don't parse content inside HTML tags
+ * 2. This ensures tables, lists, etc. render correctly inside details
+ */
+function convertTipTapDetails(detailsElement) {
+  // TipTap structure: div[data-type="details"] > button + div > summary + div[data-type="detailsContent"]
+  const summary = detailsElement.querySelector('summary');
+  const content = detailsElement.querySelector('[data-type="detailsContent"]');
+
+  const summaryText = summary ? summary.textContent.trim() : 'Details';
+
+  // Get the inner HTML of content, preserving HTML structure for tables, lists, etc.
+  // We need to get the actual HTML content, not convert to markdown
+  let contentHtml = '';
+  if (content) {
+    // Clone the content to avoid modifying the original
+    const clone = content.cloneNode(true);
+    contentHtml = clone.innerHTML.trim();
+  }
+
+  // Convert to standard HTML <details> for markdown storage
+  // Content is stored as HTML to preserve tables, formatting, etc.
+  return `\n\n<details>\n<summary>${summaryText}</summary>\n\n${contentHtml}\n\n</details>\n\n`;
+}
+
+/**
+ * Convert native HTML details element to markdown-embedded HTML
+ * Since markdown doesn't have native collapsible syntax, we preserve the HTML
+ * Content is stored as HTML to preserve tables, formatting, etc.
+ */
+function convertDetails(detailsElement) {
+  const summary = detailsElement.querySelector('summary');
+  const summaryText = summary ? summary.textContent.trim() : 'Details';
+
+  // Get HTML content from children that are not summary
+  let contentHtml = '';
+  for (const child of detailsElement.children) {
+    if (child.tagName.toLowerCase() !== 'summary') {
+      contentHtml += child.outerHTML;
+    }
+  }
+  contentHtml = contentHtml.trim();
+
+  return `\n\n<details>\n<summary>${summaryText}</summary>\n\n${contentHtml}\n\n</details>\n\n`;
 }
 
 function convertTable(tableElement) {
@@ -286,11 +364,32 @@ function convertList(listElement, listDepth, ordered) {
   const items = listElement.querySelectorAll(':scope > li');
 
   items.forEach((li, index) => {
-    const indent = '  '.repeat(listDepth);
+    // Use 3 spaces for indentation (works better with marked parser for nested lists)
+    const indent = '   '.repeat(listDepth);
     const bullet = ordered ? `${index + 1}.` : '-';
-    const content = nodeToMarkdown(li, listDepth + 1).trim();
 
-    markdown += `${indent}${bullet} ${content}\n`;
+    // Separate text content from nested lists
+    let textContent = '';
+    let nestedLists = '';
+
+    for (const child of li.childNodes) {
+      if (child.nodeType === Node.TEXT_NODE) {
+        textContent += child.textContent;
+      } else if (child.nodeType === Node.ELEMENT_NODE) {
+        const tagName = child.tagName.toLowerCase();
+        if (tagName === 'ul' || tagName === 'ol') {
+          // Process nested list separately
+          nestedLists += convertList(child, listDepth + 1, tagName === 'ol');
+        } else {
+          textContent += nodeToMarkdown(child, listDepth + 1);
+        }
+      }
+    }
+
+    markdown += `${indent}${bullet} ${textContent.trim()}\n`;
+    if (nestedLists) {
+      markdown += nestedLists;
+    }
   });
 
   if (listDepth === 0) {

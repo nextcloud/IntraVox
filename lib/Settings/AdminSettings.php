@@ -7,6 +7,8 @@ use OCA\IntraVox\AppInfo\Application;
 use OCA\IntraVox\Constants;
 use OCA\IntraVox\Service\DemoDataService;
 use OCA\IntraVox\Service\EngagementSettingsService;
+use OCA\IntraVox\Service\PublicationSettingsService;
+use OCP\App\IAppManager;
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\AppFramework\Services\IInitialState;
 use OCP\IConfig;
@@ -19,19 +21,25 @@ use OCP\Util;
 class AdminSettings implements IDelegatedSettings {
     private DemoDataService $demoDataService;
     private EngagementSettingsService $engagementSettings;
+    private PublicationSettingsService $publicationSettings;
     private IInitialState $initialState;
     private IConfig $config;
+    private IAppManager $appManager;
 
     public function __construct(
         DemoDataService $demoDataService,
         EngagementSettingsService $engagementSettings,
+        PublicationSettingsService $publicationSettings,
         IInitialState $initialState,
-        IConfig $config
+        IConfig $config,
+        IAppManager $appManager
     ) {
         $this->demoDataService = $demoDataService;
         $this->engagementSettings = $engagementSettings;
+        $this->publicationSettings = $publicationSettings;
         $this->initialState = $initialState;
         $this->config = $config;
+        $this->appManager = $appManager;
     }
 
     /**
@@ -57,6 +65,10 @@ class AdminSettings implements IDelegatedSettings {
             $videoDomainsArray = Constants::DEFAULT_VIDEO_DOMAINS;
         }
 
+        // Check if MetaVox is available
+        $metavoxAvailable = $this->appManager->isInstalled('metavox')
+            && $this->appManager->isEnabledForUser('metavox');
+
         // Pass initial state to the frontend
         $this->initialState->provideInitialState('admin-settings', [
             'languages' => $status['languages'] ?? [],
@@ -64,6 +76,8 @@ class AdminSettings implements IDelegatedSettings {
             'setupComplete' => $status['setupComplete'] ?? false,
             'videoDomains' => $videoDomainsArray,
             'engagementSettings' => $this->engagementSettings->getAll(),
+            'publicationSettings' => $this->publicationSettings->getAll(),
+            'metavoxAvailable' => $metavoxAvailable,
         ]);
 
         // Load translations for JavaScript
@@ -104,6 +118,8 @@ class AdminSettings implements IDelegatedSettings {
             'intravox' => [
                 'demo_data_imported',
                 'video_domains',
+                'publication_publish_date_field',
+                'publication_expiration_date_field',
             ],
         ];
     }

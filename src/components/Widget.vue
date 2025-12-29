@@ -643,6 +643,29 @@ export default {
   list-style-type: decimal;
 }
 
+/* Nested lists - proper indentation and numbering */
+.widget-text :deep(li > ul),
+.widget-text :deep(li > ol) {
+  margin: 0.25em 0;
+  padding-left: 1.5em;
+}
+
+.widget-text :deep(ol ol) {
+  list-style-type: lower-alpha;
+}
+
+.widget-text :deep(ol ol ol) {
+  list-style-type: lower-roman;
+}
+
+.widget-text :deep(ul ul) {
+  list-style-type: circle;
+}
+
+.widget-text :deep(ul ul ul) {
+  list-style-type: square;
+}
+
 .widget-text :deep(li) {
   margin: 0.25em 0;
   color: inherit !important;
@@ -986,6 +1009,148 @@ export default {
 .widget-text :deep(tr),
 .widget-text :deep(tr:hover) {
   background: transparent !important;
+}
+
+/* Details/Collapsible Section in text widgets - inherits colors from widget */
+.widget-text :deep(details),
+.widget-text :deep(details.intravox-details) {
+  border: 1px solid currentColor;
+  border-radius: var(--border-radius, 4px);
+  margin: 1em 0;
+  background: transparent;
+  color: inherit;
+  opacity: 0.9;
+}
+
+.widget-text :deep(details summary) {
+  cursor: pointer;
+  padding: 0.75em 1em 0.75em 2.5em;
+  background: rgba(128, 128, 128, 0.15);
+  font-weight: 700;
+  user-select: none;
+  display: block;
+  list-style: none;
+  color: inherit;
+  position: relative;
+  min-height: 1.5em;
+  line-height: 1.5;
+  border-radius: var(--border-radius, 4px) var(--border-radius, 4px) 0 0;
+}
+
+.widget-text :deep(details:not([open]) summary) {
+  border-radius: var(--border-radius, 4px);
+}
+
+.widget-text :deep(details summary::before) {
+  content: '▸';
+  font-size: 1em;
+  position: absolute;
+  left: 0.75em;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.widget-text :deep(details[open] summary::before) {
+  content: '▾';
+}
+
+.widget-text :deep(details > *:not(summary)) {
+  padding: 0.75em 1em;
+  color: inherit;
+}
+
+/* Table inside details - contained within the padded content area */
+.widget-text :deep(details > table) {
+  margin: 0.75em 1em;
+  width: calc(100% - 2em);
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.widget-text :deep(details > *:not(summary) table) {
+  margin: 0;
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.widget-text :deep(details th),
+.widget-text :deep(details td) {
+  min-width: 1em;
+  border: 1px solid var(--color-border-dark, #bbb);
+  padding: 8px 12px;
+  text-align: left;
+  vertical-align: top;
+  box-sizing: border-box;
+  color: inherit;
+  background: transparent;
+}
+
+.widget-text :deep(details p:first-child),
+.widget-text :deep(details > *:not(summary) p:first-child) {
+  margin-top: 0;
+}
+
+.widget-text :deep(details p:last-child),
+.widget-text :deep(details > *:not(summary) p:last-child) {
+  margin-bottom: 0;
+}
+
+/* Lists inside details - proper styling */
+.widget-text :deep(details ul),
+.widget-text :deep(details ol) {
+  padding-left: 1.5em;
+  margin: 0.5em 0;
+  list-style-position: outside;
+}
+
+.widget-text :deep(details ul) {
+  list-style-type: disc;
+}
+
+.widget-text :deep(details ol) {
+  list-style-type: decimal;
+}
+
+.widget-text :deep(details li) {
+  display: list-item;
+  margin: 0.25em 0;
+}
+
+/* Nested lists inside details */
+.widget-text :deep(details li > ul),
+.widget-text :deep(details li > ol) {
+  margin: 0.25em 0;
+  padding-left: 1.5em;
+}
+
+.widget-text :deep(details ol ol) {
+  list-style-type: lower-alpha;
+}
+.widget-text :deep(details ol ol ol) {
+  list-style-type: lower-roman;
+}
+.widget-text :deep(details ol ol ol ol) {
+  list-style-type: decimal;
+}
+
+.widget-text :deep(details ul ul) {
+  list-style-type: circle;
+}
+.widget-text :deep(details ul ul ul) {
+  list-style-type: square;
+}
+.widget-text :deep(details ul ul ul ul) {
+  list-style-type: disc;
+}
+
+/* Remove default marker */
+.widget-text :deep(details summary::-webkit-details-marker) {
+  display: none;
+}
+
+.widget-text :deep(details summary::marker) {
+  display: none;
 }
 
 /* Unknown Widget */

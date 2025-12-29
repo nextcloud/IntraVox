@@ -169,6 +169,7 @@ export default {
           sortBy: this.widget.sortBy || 'modified',
           sortOrder: this.widget.sortOrder || 'desc',
           limit: this.widget.limit || 5,
+          filterPublished: this.widget.filterPublished ? 'true' : 'false',
         });
 
         // Add sourcePageId if available (new), otherwise fall back to sourcePath (legacy)
@@ -212,6 +213,7 @@ export default {
 .news-widget {
   width: 100%;
   margin: 12px 0;
+  container-type: inline-size; /* Enable container queries for child layouts */
 }
 
 .news-widget-title {

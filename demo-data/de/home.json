@@ -272,6 +272,87 @@
                         "column": 1,
                         "order": 1,
                         "style": "solid",
+                        "color": "",
+                        "height": "2px"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Einklappbare Abschnitte",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Organisieren Sie Ihre Inhalte mit **einklappbaren Abschnitten**. Perfekt für FAQs, Release Notes oder andere Inhalte, die von progressiver Offenlegung profitieren. Klicken Sie auf die Abschnittsüberschriften unten, um sie ein- oder auszuklappen."
+                    }
+                ]
+            },
+            {
+                "id": "row-collapsible-demo-1",
+                "columns": 1,
+                "backgroundColor": "var(--color-background-hover)",
+                "collapsible": true,
+                "sectionTitle": "Erste Schritte",
+                "defaultCollapsed": false,
+                "widgets": [
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 1,
+                        "content": "**Willkommen bei IntraVox!** So starten Sie:\n\n1. **Installieren Sie die App** aus dem Nextcloud App Store\n2. **Laden Sie Demo-Daten** aus den Admin-Einstellungen, um IntraVox in Aktion zu sehen\n3. **Erstellen Sie Ihre erste Seite** mit dem visuellen Editor\n4. **Konfigurieren Sie die Navigation**, um Ihre Intranet-Struktur zu organisieren\n\n*Tipp: Schauen Sie sich den Dokumentationsbereich für detaillierte Anleitungen und Tutorials an.*"
+                    }
+                ]
+            },
+            {
+                "id": "row-collapsible-demo-2",
+                "columns": 1,
+                "backgroundColor": "var(--color-background-hover)",
+                "collapsible": true,
+                "sectionTitle": "FAQ - Häufig gestellte Fragen",
+                "defaultCollapsed": true,
+                "widgets": [
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 1,
+                        "content": "**F: Kann ich IntraVox mit meinen bestehenden Nextcloud-Benutzern verwenden?**\nA: Ja! IntraVox integriert sich nahtlos mit dem Benutzer- und Gruppenmanagement von Nextcloud.\n\n**F: Ist IntraVox kostenlos nutzbar?**\nA: Ja, IntraVox ist Open Source und kostenlos. Es gibt keine Abonnementgebühren oder versteckte Kosten.\n\n**F: Kann ich mehrere Sprachen auf meinem Intranet haben?**\nA: Absolut! IntraVox unterstützt mehrere Sprachen. Sie können separate Inhalte für jede Sprache erstellen.\n\n**F: Wo werden meine Daten gespeichert?**\nA: Alle Daten bleiben auf Ihrem Nextcloud-Server. IntraVox verwendet Nextclouds Groupfolders zur Speicherung."
+                    }
+                ]
+            },
+            {
+                "id": "row-collapsible-demo-3",
+                "columns": 1,
+                "backgroundColor": "var(--color-background-hover)",
+                "collapsible": true,
+                "sectionTitle": "Release Notes - Version 0.8",
+                "defaultCollapsed": true,
+                "widgets": [
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 1,
+                        "content": "**Version 0.8.5** - Dezember 2025\n\n- **Neu:** Einklappbare Zeilen (SharePoint-Stil Abschnitte)\n- **Neu:** Auto-Kompakt News-Widget für Seitenspalten\n- **Behoben:** Transparenter Hintergrund in Seitenspalten\n- **Verbessert:** Sichtbarkeit der Zeilensteuerung auf farbigen Hintergründen\n\n**Version 0.8.4** - Dezember 2025\n\n- **Neu:** Header-Zeilen-Unterstützung\n- **Neu:** Seitenspalten (links & rechts)\n- **Verbessert:** Mobile responsive Layouts\n- **Behoben:** Verschiedene Bugfixes und Verbesserungen"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
                         "color": "transparent",
                         "height": "20px"
                     }

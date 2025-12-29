@@ -15,6 +15,12 @@
 				{{ t('intravox', 'Engagement') }}
 			</button>
 			<button
+				:class="['tab-button', { active: activeTab === 'publication' }]"
+				@click="activeTab = 'publication'">
+				<CalendarClock :size="16" />
+				{{ t('intravox', 'Publication') }}
+			</button>
+			<button
 				:class="['tab-button', { active: activeTab === 'demo' }]"
 				@click="activeTab = 'demo'">
 				<PackageVariant :size="16" />
@@ -502,6 +508,96 @@
 				</div>
 			</div>
 		</div>
+
+		<!-- Publication Tab -->
+		<div v-if="activeTab === 'publication'" class="tab-content">
+			<div class="settings-section">
+				<h2>{{ t('intravox', 'Publication Date Fields') }}</h2>
+				<p class="settings-section-desc">
+					{{ t('intravox', 'Configure MetaVox fields used for publication date filtering in the News widget.') }}
+				</p>
+
+				<NcNoteCard v-if="!metavoxAvailable" type="warning">
+					{{ t('intravox', 'MetaVox is not available. Install and enable MetaVox to use publication date filtering.') }}
+				</NcNoteCard>
+
+				<div v-else class="publication-settings">
+					<p class="settings-info">
+						{{ t('intravox', 'Select the MetaVox date fields used for publication filtering. The News widget will use these fields to filter pages based on their publication period.') }}
+					</p>
+
+					<!-- Loading state -->
+					<div v-if="loadingMetavoxFields" class="loading-fields">
+						<span class="icon-loading-small"></span>
+						{{ t('intravox', 'Loading MetaVox fields...') }}
+					</div>
+
+					<!-- No date fields available -->
+					<NcNoteCard v-else-if="dateFields.length === 0" type="warning">
+						{{ t('intravox', 'No date fields found in MetaVox. Create date fields in MetaVox first and assign them to the IntraVox groupfolder.') }}
+					</NcNoteCard>
+
+					<template v-else>
+						<div class="setting-row">
+							<label class="setting-label" for="publish-date-field">
+								{{ t('intravox', 'Publish date field') }}
+							</label>
+							<select
+								id="publish-date-field"
+								v-model="publicationSettings.publishDateField"
+								class="setting-select">
+								<option value="">{{ t('intravox', '— Not configured —') }}</option>
+								<option
+									v-for="field in dateFields"
+									:key="field.field_name"
+									:value="field.field_name">
+									{{ field.field_label }}
+									<template v-if="field.field_label !== field.field_name">
+										({{ field.field_name }})
+									</template>
+								</option>
+							</select>
+							<p class="setting-hint">
+								{{ t('intravox', 'Pages will only be shown on or after this date.') }}
+							</p>
+						</div>
+
+						<div class="setting-row">
+							<label class="setting-label" for="expiration-date-field">
+								{{ t('intravox', 'Expiration date field') }}
+							</label>
+							<select
+								id="expiration-date-field"
+								v-model="publicationSettings.expirationDateField"
+								class="setting-select">
+								<option value="">{{ t('intravox', '— Not configured —') }}</option>
+								<option
+									v-for="field in dateFields"
+									:key="field.field_name"
+									:value="field.field_name">
+									{{ field.field_label }}
+									<template v-if="field.field_label !== field.field_name">
+										({{ field.field_name }})
+									</template>
+								</option>
+							</select>
+							<p class="setting-hint">
+								{{ t('intravox', 'Pages will be hidden after this date.') }}
+							</p>
+						</div>
+
+						<div class="save-section">
+							<NcButton
+								type="primary"
+								:disabled="savingPublication"
+								@click="savePublicationSettings">
+								{{ savingPublication ? t('intravox', 'Saving...') : t('intravox', 'Save publication settings') }}
+							</NcButton>
+						</div>
+					</template>
+				</div>
+			</div>
+		</div>
 	</div>
 </template>
 
@@ -514,6 +610,7 @@ import PackageVariant from 'vue-material-design-icons/PackageVariant.vue'
 import Video from 'vue-material-design-icons/Video.vue'
 import OpenInNew from 'vue-material-design-icons/OpenInNew.vue'
 import CommentTextOutline from 'vue-material-design-icons/CommentTextOutline.vue'
+import CalendarClock from 'vue-material-design-icons/CalendarClock.vue'
 import Download from 'vue-material-design-icons/Download.vue'
 import Upload from 'vue-material-design-icons/Upload.vue'
 import CloudDownload from 'vue-material-design-icons/CloudDownload.vue'
@@ -531,8 +628,10 @@ export default {
 		Video,
 		OpenInNew,
 		CommentTextOutline,
+		CalendarClock,
 		Download,
 		Upload,
+		CloudDownload,
 		ConfluenceImport,
 	},
 	props: {
@@ -566,6 +665,16 @@ export default {
 				allowCommentReactions: this.initialState.engagementSettings?.allowCommentReactions ?? true,
 			},
 			savingEngagement: false,
+			// Publication settings
+			publicationSettings: {
+				publishDateField: this.initialState.publicationSettings?.publishDateField ?? '',
+				expirationDateField: this.initialState.publicationSettings?.expirationDateField ?? '',
+			},
+			savingPublication: false,
+			metavoxAvailable: this.initialState.metavoxAvailable ?? false,
+			// MetaVox fields for publication settings
+			metavoxFields: [],
+			loadingMetavoxFields: false,
 			// Export settings
 			exportLanguage: null,
 			exportLanguages: [],
@@ -629,12 +738,20 @@ export default {
 				risk: this.assessDomainRisk(domain)
 			}))
 		},
+		// Filter MetaVox fields to only show date type fields
+		dateFields() {
+			return this.metavoxFields.filter(field => field.field_type === 'date')
+		},
 	},
 	watch: {
 		// Clear success messages when switching tabs
-		activeTab() {
+		activeTab(newTab) {
 			this.exportComplete = false
 			this.importResult = null
+			// Load MetaVox fields when switching to publication tab
+			if (newTab === 'publication' && this.metavoxAvailable && this.metavoxFields.length === 0) {
+				this.loadMetavoxFields()
+			}
 		},
 		// Clear success messages when switching export sub-tabs
 		exportSubTab() {
@@ -927,6 +1044,36 @@ export default {
 				showError(this.t('intravox', 'Failed to save engagement settings'))
 			} finally {
 				this.savingEngagement = false
+			}
+		},
+		async savePublicationSettings() {
+			this.savingPublication = true
+
+			try {
+				await axios.post(
+					generateUrl('/apps/intravox/api/settings/publication'),
+					this.publicationSettings
+				)
+				showSuccess(this.t('intravox', 'Publication settings saved'))
+			} catch (error) {
+				console.error('Failed to save publication settings:', error)
+				showError(this.t('intravox', 'Failed to save publication settings'))
+			} finally {
+				this.savingPublication = false
+			}
+		},
+		async loadMetavoxFields() {
+			if (!this.metavoxAvailable) return
+
+			this.loadingMetavoxFields = true
+			try {
+				const response = await axios.get(generateUrl('/apps/intravox/api/metavox/fields'))
+				this.metavoxFields = response.data.fields || []
+			} catch (error) {
+				console.error('Failed to load MetaVox fields:', error)
+				this.metavoxFields = []
+			} finally {
+				this.loadingMetavoxFields = false
 			}
 		},
 		async loadExportLanguages() {
@@ -1804,5 +1951,80 @@ export default {
 .sub-tab-button .material-design-icon {
 	display: flex;
 	align-items: center;
+}
+
+/* Publication Settings */
+.publication-settings {
+	margin-top: 20px;
+}
+
+.settings-info {
+	color: var(--color-text-maxcontrast);
+	margin-bottom: 24px;
+	line-height: 1.5;
+}
+
+.setting-row {
+	margin-bottom: 24px;
+}
+
+.setting-label {
+	display: block;
+	font-weight: 500;
+	margin-bottom: 8px;
+	color: var(--color-main-text);
+}
+
+.setting-input {
+	width: 100%;
+	max-width: 400px;
+	padding: 8px 12px;
+	border: 1px solid var(--color-border);
+	border-radius: 4px;
+	font-size: 14px;
+	background: var(--color-main-background);
+	color: var(--color-main-text);
+}
+
+.setting-input:focus {
+	border-color: var(--color-primary-element);
+	outline: none;
+	box-shadow: 0 0 0 2px var(--color-primary-element-light);
+}
+
+.setting-input::placeholder {
+	color: var(--color-text-maxcontrast);
+}
+
+.setting-hint {
+	margin-top: 6px;
+	font-size: 13px;
+	color: var(--color-text-maxcontrast);
+}
+
+.setting-select {
+	width: 100%;
+	max-width: 400px;
+	padding: 8px 12px;
+	border: 1px solid var(--color-border);
+	border-radius: 4px;
+	font-size: 14px;
+	background: var(--color-main-background);
+	color: var(--color-main-text);
+	cursor: pointer;
+}
+
+.setting-select:focus {
+	border-color: var(--color-primary-element);
+	outline: none;
+	box-shadow: 0 0 0 2px var(--color-primary-element-light);
+}
+
+.loading-fields {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 16px;
+	color: var(--color-text-maxcontrast);
 }
 </style>

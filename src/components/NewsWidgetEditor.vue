@@ -128,6 +128,25 @@
       </div>
     </div>
 
+    <!-- Publication Filter -->
+    <div class="editor-section">
+      <label class="checkbox-option publication-filter-option">
+        <input type="checkbox" v-model="localWidget.filterPublished" @change="emitUpdate" />
+        <span>{{ t('Show only published pages') }}</span>
+      </label>
+      <p class="editor-hint">{{ t('Filter pages based on publication and expiration dates configured in admin settings.') }}</p>
+
+      <div v-if="localWidget.filterPublished && !metavoxAvailable" class="publication-warning">
+        <AlertCircle :size="16" />
+        <span>{{ t('MetaVox is required for publication filtering but is not available.') }}</span>
+      </div>
+
+      <div v-else-if="localWidget.filterPublished && !publicationFieldsConfigured" class="publication-warning">
+        <AlertCircle :size="16" />
+        <span>{{ t('Publication date fields have not been configured in admin settings.') }}</span>
+      </div>
+    </div>
+
     <!-- MetaVox Filters -->
     <div class="editor-section" v-if="metavoxAvailable">
       <label class="editor-label">
@@ -206,6 +225,7 @@ import SortDescending from 'vue-material-design-icons/SortDescending.vue';
 import Plus from 'vue-material-design-icons/Plus.vue';
 import Close from 'vue-material-design-icons/Close.vue';
 import Information from 'vue-material-design-icons/Information.vue';
+import AlertCircle from 'vue-material-design-icons/AlertCircle.vue';
 import PageTreeSelect from './PageTreeSelect.vue';
 
 export default {
@@ -219,6 +239,7 @@ export default {
     Plus,
     Close,
     Information,
+    AlertCircle,
     PageTreeSelect,
   },
   props: {
@@ -234,6 +255,7 @@ export default {
       metavoxAvailable: false,
       metavoxFields: [],
       filters: [],
+      publicationFieldsConfigured: false,
     };
   },
   computed: {
@@ -283,6 +305,7 @@ export default {
         autoplayInterval: 5,
         filters: [],
         filterOperator: 'AND',
+        filterPublished: false,
       };
     },
     handleSourceSelect(page) {
@@ -301,8 +324,20 @@ export default {
         if (this.metavoxAvailable) {
           await this.loadMetaVoxFields();
         }
+
+        // Always check publication config (it shows a warning if not configured)
+        await this.checkPublicationConfig();
       } catch (error) {
         this.metavoxAvailable = false;
+      }
+    },
+    async checkPublicationConfig() {
+      try {
+        const response = await axios.get(generateUrl('/apps/intravox/api/settings/publication'));
+        const settings = response.data;
+        this.publicationFieldsConfigured = !!(settings.publishDateField || settings.expirationDateField);
+      } catch (error) {
+        this.publicationFieldsConfigured = false;
       }
     },
     async loadMetaVoxFields() {
@@ -625,5 +660,27 @@ export default {
   border-radius: var(--border-radius);
   color: var(--color-text-maxcontrast);
   font-size: 13px;
+}
+
+/* Publication Filter */
+.publication-filter-option {
+  margin-bottom: 4px;
+}
+
+.publication-warning {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 10px 12px;
+  background: var(--color-warning-light, #fff3cd);
+  border: 1px solid var(--color-warning, #ffc107);
+  border-radius: var(--border-radius);
+  color: var(--color-warning-text, #856404);
+  font-size: 13px;
+}
+
+.publication-warning .material-design-icon {
+  flex-shrink: 0;
 }
 </style>

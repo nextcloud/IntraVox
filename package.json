@@ -1,6 +1,6 @@
 {
   "name": "nextcloud-intravox",
-  "version": "0.8.4",
+  "version": "0.8.5",
   "description": "SharePoint-like pages for Nextcloud",
   "repository": {
     "type": "git",
@@ -31,6 +31,7 @@
     "@tiptap/extension-blockquote": "^3.14.0",
     "@tiptap/extension-code": "^3.14.0",
     "@tiptap/extension-code-block": "^3.14.0",
+    "@tiptap/extension-details": "^3.14.0",
     "@tiptap/extension-horizontal-rule": "^3.14.0",
     "@tiptap/extension-link": "^3.14.0",
     "@tiptap/extension-placeholder": "^3.14.0",

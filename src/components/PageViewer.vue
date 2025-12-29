@@ -38,26 +38,46 @@
         v-for="(row, rowIndex) in page.layout.rows"
         :key="rowIndex"
         class="page-row"
+        :class="{ 'collapsible-row': row.collapsible }"
         :style="getRowStyle(row)"
       >
+        <!-- Section Header (only for collapsible rows) -->
         <div
-          class="page-grid"
-          :style="{ gridTemplateColumns: `repeat(${(row.columns || page.layout.columns) ?? 1}, 1fr)` }"
+          v-if="row.collapsible"
+          class="row-section-header"
+          :class="{ collapsed: isRowCollapsed(row) }"
+          @click="toggleRowCollapsed(row)"
+        >
+          <ChevronDown v-if="!isRowCollapsed(row)" :size="20" class="section-chevron" />
+          <ChevronRight v-else :size="20" class="section-chevron" />
+          <span class="section-title">{{ row.sectionTitle || 'Sectie' }}</span>
+        </div>
+
+        <!-- Row Content (collapsible) -->
+        <div
+          class="row-content"
+          :class="{ collapsed: row.collapsible && isRowCollapsed(row) }"
+          v-show="!row.collapsible || !isRowCollapsed(row)"
         >
           <div
-            v-for="column in ((row.columns || page.layout.columns) ?? 1)"
-            :key="column"
-            class="page-column"
+            class="page-grid"
+            :style="{ gridTemplateColumns: `repeat(${(row.columns || page.layout.columns) ?? 1}, 1fr)` }"
           >
-            <Widget
-              v-for="widget in getWidgetsForColumn(row, column)"
-              :key="widget.order"
-              :widget="widget"
-              :page-id="page.uniqueId"
-              :editable="false"
-              :row-background-color="row.backgroundColor || ''"
-              @navigate="$emit('navigate', $event)"
-            />
+            <div
+              v-for="column in ((row.columns || page.layout.columns) ?? 1)"
+              :key="column"
+              class="page-column"
+            >
+              <Widget
+                v-for="widget in getWidgetsForColumn(row, column)"
+                :key="widget.order"
+                :widget="widget"
+                :page-id="page.uniqueId"
+                :editable="false"
+                :row-background-color="row.backgroundColor || ''"
+                @navigate="$emit('navigate', $event)"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -102,13 +122,17 @@ import Widget from './Widget.vue';
 import ReactionBar from './reactions/ReactionBar.vue';
 import CommentSection from './reactions/CommentSection.vue';
 import { getPageReactions } from '../services/CommentService.js';
+import ChevronDown from 'vue-material-design-icons/ChevronDown.vue';
+import ChevronRight from 'vue-material-design-icons/ChevronRight.vue';
 
 export default {
   name: 'PageViewer',
   components: {
     Widget,
     ReactionBar,
-    CommentSection
+    CommentSection,
+    ChevronDown,
+    ChevronRight
   },
   props: {
     page: {
@@ -129,7 +153,8 @@ export default {
   data() {
     return {
       pageReactions: {},
-      userReactions: []
+      userReactions: [],
+      collapsedRows: {} // Track collapsed state for collapsible rows in view mode
     };
   },
   computed: {
@@ -205,6 +230,24 @@ export default {
       return row.widgets
         .filter(w => w.column === column)
         .sort((a, b) => a.order - b.order);
+    },
+    isRowCollapsed(row) {
+      // Check if this collapsible row is currently collapsed in view mode
+      if (!row.collapsible) return false;
+      // Use row.id as key, fallback to row's index position
+      const rowKey = row.id || `row-${this.page.layout.rows.indexOf(row)}`;
+      // Use stored state if available, otherwise use defaultCollapsed setting
+      return this.collapsedRows[rowKey] ?? row.defaultCollapsed ?? false;
+    },
+    toggleRowCollapsed(row) {
+      if (!row.collapsible) return;
+      const rowKey = row.id || `row-${this.page.layout.rows.indexOf(row)}`;
+      // Get current state (from stored state, or defaultCollapsed, or false)
+      const currentState = this.collapsedRows[rowKey] ?? row.defaultCollapsed ?? false;
+      this.collapsedRows = {
+        ...this.collapsedRows,
+        [rowKey]: !currentState
+      };
     },
     getSideColumnWidgets(side) {
       const sideColumn = this.page?.layout?.sideColumns?.[side];
@@ -332,7 +375,7 @@ export default {
   padding: 16px;
   margin-bottom: 16px;
   border-radius: var(--border-radius-container-large);
-  background-color: var(--color-background-dark);
+  /* No default background - controlled by inline style via getHeaderRowStyle() */
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -346,7 +389,7 @@ export default {
   max-width: 300px;
   padding: 16px;
   border-radius: var(--border-radius-container-large);
-  background-color: var(--color-background-dark);
+  /* No default background - controlled by inline style via getSideColumnStyle() */
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -359,6 +402,59 @@ export default {
   padding: 16px;
   border-radius: var(--border-radius-container-large);
   box-sizing: border-box;
+}
+
+/* Collapsible row styling */
+.page-row.collapsible-row {
+  padding: 0;
+  overflow: hidden;
+}
+
+.row-section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.2s ease;
+  color: inherit;
+}
+
+.row-section-header:hover {
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.row-section-header .section-chevron {
+  flex-shrink: 0;
+  color: inherit;
+  opacity: 0.7;
+  transition: transform 0.2s ease;
+}
+
+.row-section-header .section-title {
+  font-weight: 600;
+  font-size: 1.1em;
+  color: inherit;
+}
+
+/* Collapsed state header styling */
+.row-section-header.collapsed {
+  border-radius: var(--border-radius-container-large);
+}
+
+/* Row content container */
+.row-content {
+  padding: 16px;
+}
+
+.page-row.collapsible-row .row-content {
+  padding-top: 12px;
+}
+
+.row-content.collapsed {
+  display: none;
 }
 
 .page-grid {
@@ -384,8 +480,16 @@ export default {
 
 /* Mobile styles */
 @media (max-width: 768px) {
+  .page-viewer-wrapper {
+    padding: 0 8px;
+  }
+
   .page-viewer-container {
     flex-direction: column;
+  }
+
+  .header-row {
+    border-radius: var(--border-radius-container-large);
   }
 
   .side-column {
@@ -393,6 +497,7 @@ export default {
     min-width: 100%;
     max-width: 100%;
     order: 1; /* Side columns go below main content on mobile */
+    border-radius: var(--border-radius-container-large);
   }
 
   .side-column-left {
@@ -408,13 +513,25 @@ export default {
 
   .page-row {
     margin-bottom: 16px;
-    padding: 16px 8px;
-    margin-left: 0;
-    margin-right: 0;
-    border-radius: 0;
+    padding: 16px 12px;
+    border-radius: var(--border-radius-container-large) !important;
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
+    overflow: hidden; /* Ensures border-radius is visible */
+  }
+
+  .page-row.collapsible-row {
+    border-radius: var(--border-radius-container-large) !important;
+    overflow: hidden;
+  }
+
+  .row-section-header {
+    border-radius: 0; /* Header takes full width inside row */
+  }
+
+  .row-section-header.collapsed {
+    border-radius: 0; /* Parent row handles border-radius */
   }
 
   .page-grid {
