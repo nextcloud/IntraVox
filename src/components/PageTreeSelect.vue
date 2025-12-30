@@ -168,6 +168,15 @@ export default {
     language() {
       // Reload tree when language changes
       this.loadTree();
+    },
+    modelValue: {
+      immediate: true,
+      handler(newValue) {
+        // If we have a value but tree is not loaded yet, load it
+        if (newValue && this.flatPages.length === 0 && !this.loading) {
+          this.loadTree();
+        }
+      }
     }
   },
   mounted() {

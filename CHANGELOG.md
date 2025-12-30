@@ -7,6 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.7] - 2025-12-30 - Links Widget Page Selector & News Widget Fixes
+
+### Added
+- **Links Widget Page Selector**: Internal pages can now be selected from a page tree dropdown
+  - New PageTreeSelect component integrated in Links Editor
+  - Choose between internal page or external URL (mutually exclusive)
+  - Auto-fills link text with page title when selecting a page
+  - Backwards compatible with existing links
+- **Links Widget Drag-and-Drop**: Links can now be reordered by dragging
+  - Drag handle added to each link item in the editor
+  - Uses same drag-and-drop pattern as row reordering
+  - Smooth animation during drag operations
+
+### Fixed
+- **Row Drag-and-Drop**: Fixed issue where dragging a row into a column would cause the row to disappear
+  - Added explicit drag group to prevent rows from being dropped into widget zones
+  - Rows can now only be reordered within the rows container
+- **News Widget Excerpts**: Markdown syntax is now stripped from excerpts
+  - Excerpts no longer show raw markdown like `**bold**` or `[link](url)`
+  - Supports stripping: bold, italic, strikethrough, links, images, code, headers, blockquotes, lists, horizontal rules
+  - Results in clean, readable preview text
+- **News Widget Shared Library Images**: Fixed images from Shared Library not displaying in news widget
+  - Images added from Shared Library (`_resources` folder) now display correctly
+  - `getPageFirstImage()` now returns both `src` and `mediaFolder` properties
+  - Image path is correctly constructed based on media source (page media vs shared library)
+- **Links Widget Data Persistence**: Fixed internal page links not being saved after page refresh
+  - Added `uniqueId` property to link sanitization in backend
+  - Legacy `#uniqueId` URLs are automatically converted to the new format
+
+### Translations
+- Added missing translations for Links Widget in all 4 languages (nl, en, de, fr)
+- Added translations for widget descriptions, icon labels, and background options
+- Added missing translations for other widgets (Background color, Video widget description)
+
 ## [0.8.6] - 2025-12-29 - Clean Start & Translation Fixes
 
 ### Added

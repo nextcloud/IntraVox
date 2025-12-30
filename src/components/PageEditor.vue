@@ -199,6 +199,7 @@
         :animation="200"
         item-key="id"
         handle=".row-drag-handle"
+        :group="{ name: 'rows', pull: false, put: false }"
         @end="onRowDragEnd"
         class="rows-container"
       >

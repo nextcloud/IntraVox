@@ -61,96 +61,116 @@
           </NcButton>
         </div>
 
-        <div v-if="localWidget.items && localWidget.items.length > 0" class="links-list">
-          <div
-            v-for="(link, index) in localWidget.items"
-            :key="index"
-            class="link-editor-item"
-          >
-            <div class="link-number">{{ index + 1 }}</div>
-
-            <div class="link-fields">
-              <div class="form-row">
-                <div class="form-group flex-1">
-                  <label>{{ t('Link text:') }}</label>
-                  <input
-                    v-model="link.text"
-                    type="text"
-                    :placeholder="t('Click here')"
-                    class="widget-input"
-                  />
-                </div>
-
-                <div class="form-group flex-1">
-                  <label>{{ t('URL:') }}</label>
-                  <input
-                    v-model="link.url"
-                    type="url"
-                    placeholder="https://example.com"
-                    class="widget-input"
-                  />
-                </div>
+        <draggable
+          v-if="localWidget.items && localWidget.items.length > 0"
+          v-model="localWidget.items"
+          item-key="id"
+          handle=".drag-handle"
+          class="links-list"
+          :animation="200"
+        >
+          <template #item="{ element: link, index }">
+            <div class="link-editor-item">
+              <div class="drag-handle" :title="t('Drag to reorder')">
+                <DragVertical :size="20" />
               </div>
 
-              <div class="form-row">
-                <div class="form-group flex-1">
-                  <label>{{ t('Icon:') }}</label>
-                  <NcSelect
-                    v-model="link.iconObject"
-                    :options="iconOptions"
-                    :placeholder="t('Select an icon')"
-                    :clearable="true"
-                    @update:modelValue="updateLinkIcon(index, $event)"
-                  >
-                    <template #selected-option="option">
-                      <div class="icon-option">
-                        <component :is="getIconComponent(option.value)" :size="20" />
-                        <span>{{ option.label }}</span>
-                      </div>
-                    </template>
-                    <template #option="option">
-                      <div class="icon-option">
-                        <component :is="getIconComponent(option.value)" :size="20" />
-                        <span>{{ option.label }}</span>
-                      </div>
-                    </template>
-                  </NcSelect>
+              <div class="link-fields">
+                <div class="form-row">
+                  <div class="form-group flex-1">
+                    <label>{{ t('Link text:') }}</label>
+                    <input
+                      v-model="link.text"
+                      type="text"
+                      :placeholder="t('Click here')"
+                      class="widget-input"
+                    />
+                  </div>
+
+                  <div class="form-group flex-1">
+                    <label>{{ t('Link to:') }}</label>
+                    <div class="link-target-options">
+                      <PageTreeSelect
+                        :model-value="link.uniqueId"
+                        :placeholder="t('Select page')"
+                        :disabled="!!link.url"
+                        :clearable="true"
+                        @select="updatePageLink(index, $event)"
+                        class="page-selector"
+                      />
+                      <span class="or-separator">{{ t('or') }}</span>
+                      <input
+                        v-model="link.url"
+                        type="url"
+                        placeholder="https://example.com"
+                        class="widget-input url-input"
+                        :disabled="!!link.uniqueId"
+                        @input="clearPageLink(index)"
+                      />
+                    </div>
+                  </div>
                 </div>
 
-                <div class="form-group flex-1">
-                  <label>{{ t('Link background:') }}</label>
-                  <div class="color-presets">
-                    <button
-                      type="button"
-                      :class="{ active: !link.backgroundColor }"
-                      @click="setLinkBackground(index, null)"
-                      class="color-preset-btn small"
+                <div class="form-row">
+                  <div class="form-group flex-1">
+                    <label>{{ t('Icon:') }}</label>
+                    <NcSelect
+                      v-model="link.iconObject"
+                      :options="iconOptions"
+                      :placeholder="t('Select an icon')"
+                      :clearable="true"
+                      @update:modelValue="updateLinkIcon(index, $event)"
                     >
-                      {{ t('Default') }}
-                    </button>
-                    <button
-                      type="button"
-                      :class="{ active: link.backgroundColor === 'var(--color-primary-element-light)' }"
-                      @click="setLinkBackground(index, 'var(--color-primary-element-light)')"
-                      class="color-preset-btn small"
-                    >
-                      {{ t('Primary') }}
-                    </button>
+                      <template #selected-option="option">
+                        <div class="icon-option">
+                          <component :is="getIconComponent(option.value)" :size="20" />
+                          <span>{{ option.label }}</span>
+                        </div>
+                      </template>
+                      <template #option="option">
+                        <div class="icon-option">
+                          <component :is="getIconComponent(option.value)" :size="20" />
+                          <span>{{ option.label }}</span>
+                        </div>
+                      </template>
+                    </NcSelect>
+                  </div>
+
+                  <div class="form-group flex-1">
+                    <label>{{ t('Link background:') }}</label>
+                    <div class="color-presets">
+                      <button
+                        type="button"
+                        :class="{ active: !link.backgroundColor }"
+                        @click="setLinkBackground(index, null)"
+                        class="color-preset-btn small"
+                      >
+                        {{ t('Default') }}
+                      </button>
+                      <button
+                        type="button"
+                        :class="{ active: link.backgroundColor === 'var(--color-primary-element-light)' }"
+                        @click="setLinkBackground(index, 'var(--color-primary-element-light)')"
+                        class="color-preset-btn small"
+                      >
+                        {{ t('Primary') }}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            <button
-              type="button"
-              @click="removeLink(index)"
-              class="remove-link-btn"
-              :title="t('Remove link')"
-            >
-              <Delete :size="20" />
-            </button>
-          </div>
-        </div>
+              <button
+                type="button"
+                @click="removeLink(index)"
+                class="remove-link-btn"
+                :title="t('Remove link')"
+              >
+                <Delete :size="20" />
+              </button>
+            </div>
+          </template>
+        </draggable>
 
         <div v-else class="empty-state">
           <ViewGrid :size="48" />
@@ -176,6 +196,9 @@ import { NcButton, NcModal, NcSelect } from '@nextcloud/vue';
 import Plus from 'vue-material-design-icons/Plus.vue';
 import Delete from 'vue-material-design-icons/Delete.vue';
 import ViewGrid from 'vue-material-design-icons/ViewGrid.vue';
+import DragVertical from 'vue-material-design-icons/DragVertical.vue';
+import PageTreeSelect from './PageTreeSelect.vue';
+import draggable from 'vuedraggable';
 
 // Import all available icons
 import Home from 'vue-material-design-icons/Home.vue';
@@ -209,6 +232,9 @@ export default {
     Plus,
     Delete,
     ViewGrid,
+    DragVertical,
+    PageTreeSelect,
+    draggable,
     Home,
     Information,
     Email,
@@ -282,13 +308,26 @@ export default {
     // Initialize iconObject for each link from the icon string value
     // Also ensure text field exists (fallback from title for backwards compatibility)
     if (this.localWidget.items) {
-      this.localWidget.items.forEach(link => {
+      this.localWidget.items.forEach((link, index) => {
+        // Ensure each item has an id for drag-and-drop
+        if (!link.id) {
+          link.id = Date.now() + index + Math.random().toString(36).substr(2, 9);
+        }
         if (link.icon && !link.iconObject) {
           link.iconObject = this.iconOptions.find(opt => opt.value === link.icon);
         }
         // Ensure text field exists (use title as fallback for backwards compatibility)
         if (!link.text && link.title) {
           link.text = link.title;
+        }
+        // Ensure uniqueId field exists (for backwards compatibility with older links)
+        if (link.uniqueId === undefined) {
+          link.uniqueId = null;
+        }
+        // Convert legacy #uniqueId URLs to uniqueId field
+        if (link.url && link.url.startsWith('#') && !link.uniqueId) {
+          link.uniqueId = link.url.substring(1);
+          link.url = '';
         }
       });
     }
@@ -328,12 +367,32 @@ export default {
         this.localWidget.items = [];
       }
       this.localWidget.items.push({
+        id: Date.now() + Math.random().toString(36).substr(2, 9),
         text: '',
         url: '',
+        uniqueId: null,
         icon: 'open-in-new',
         iconObject: this.iconOptions.find(opt => opt.value === 'open-in-new'),
         backgroundColor: null
       });
+    },
+    updatePageLink(index, page) {
+      if (page) {
+        this.localWidget.items[index].uniqueId = page.uniqueId;
+        this.localWidget.items[index].url = '';
+        // Auto-fill text if empty
+        if (!this.localWidget.items[index].text) {
+          this.localWidget.items[index].text = page.title;
+        }
+      } else {
+        this.localWidget.items[index].uniqueId = null;
+      }
+    },
+    clearPageLink(index) {
+      // Clear uniqueId when URL is entered
+      if (this.localWidget.items[index].url) {
+        this.localWidget.items[index].uniqueId = null;
+      }
     },
     updateLinkIcon(index, iconObject) {
       // Sync the selected icon object back to the string value
@@ -479,18 +538,32 @@ export default {
   border-radius: var(--border-radius-large);
 }
 
-.link-number {
+.drag-handle {
   flex-shrink: 0;
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--color-primary-element);
-  color: white;
-  border-radius: 50%;
-  font-weight: 600;
-  font-size: 13px;
+  cursor: grab;
+  padding: 4px;
+  color: var(--color-text-maxcontrast);
+  border-radius: var(--border-radius);
+  transition: all 0.2s;
+}
+
+.drag-handle:hover {
+  background: var(--color-background-dark);
+  color: var(--color-main-text);
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+/* Sortable ghost styling (during drag) */
+.sortable-ghost {
+  opacity: 0.5;
+  background: var(--color-primary-element-light);
+}
+
+.sortable-drag {
+  opacity: 1;
 }
 
 .link-fields {
@@ -514,8 +587,8 @@ export default {
 .remove-link-btn {
   flex-shrink: 0;
   padding: 8px;
-  background: transparent;
-  border: none;
+  background: var(--color-error-hover, rgba(229, 57, 53, 0.1));
+  border: 1px solid var(--color-error);
   color: var(--color-error);
   cursor: pointer;
   border-radius: var(--border-radius);
@@ -531,6 +604,35 @@ export default {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.link-target-options {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.or-separator {
+  color: var(--color-text-lighter);
+  font-size: 12px;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.page-selector {
+  flex: 2;
+  min-width: 250px;
+}
+
+.url-input {
+  flex: 1;
+  min-width: 180px;
+}
+
+.url-input:disabled,
+.page-selector.is-disabled {
+  opacity: 0.5;
+  pointer-events: none;
 }
 
 .empty-state {

@@ -137,7 +137,7 @@ Doorloop deze checklist voor elke release naar de Nextcloud App Store.
   openssl dgst -sha512 -sign /pad/naar/intravox.key /pad/naar/intravox-x.x.x.tar.gz | openssl base64 -A
   ```
 - [ ] Upload naar Nextcloud App Store:
-  - [ ] Download URL (let op kleine letters): `https://github.com/nextcloud/IntraVox/releases/download/vX.X.X/intravox-x.x.x.tar.gz`
+  - [ ] Download URL (LOWERCASE!): `https://github.com/nextcloud/intravox/releases/download/vX.X.X/intravox-x.x.x.tar.gz`
   - [ ] Signature (nieuw genereren na elke tarball wijziging!)
   - [ ] Release notes
 
@@ -204,12 +204,73 @@ npm run analyze
 # Security audit
 npm audit
 
-# Release maken
+# Release maken (Gitea)
 ./create-release.sh <version> <label> "<description>"
 
 # Deploy naar test server
 ./deploy.sh 1dev
 ```
+
+---
+
+## Quick Release Flow
+
+Volledige release naar Gitea + GitHub + App Store. Gebruik dit wanneer Claude "maak release" uitvoert:
+
+### 1. Voorbereiding
+```bash
+npm run version:sync -- --check
+npm run build
+```
+
+### 2. Commit & Push (beide remotes)
+```bash
+git add -A
+git commit -m "Release vX.Y.Z - [Label]"
+git push gitea main
+git push github main
+```
+
+### 3. Tag (beide remotes)
+```bash
+git tag -a vX.Y.Z -m "Release vX.Y.Z - [Label]"
+git push gitea vX.Y.Z
+git push github vX.Y.Z
+```
+
+### 4. Tarball maken
+**BELANGRIJK:** Root folder moet `intravox` zijn (lowercase, geen versienummer)
+
+```bash
+TEMP_DIR=$(mktemp -d) && \
+mkdir -p "$TEMP_DIR/intravox" && \
+cp -r appinfo lib l10n templates css img js scripts demo-data docs "$TEMP_DIR/intravox/" && \
+cp openapi.json CHANGELOG.md LICENSE README.md "$TEMP_DIR/intravox/" && \
+cd "$TEMP_DIR" && \
+tar -czf intravox-X.Y.Z.tar.gz intravox && \
+mv intravox-X.Y.Z.tar.gz ~/Documents/Development/IntraVox/ && \
+rm -rf "$TEMP_DIR"
+```
+
+**Niet opnemen:** src/, node_modules/, screenshots/, .git/, *.key
+
+### 5. GitHub Release
+```bash
+gh release create vX.Y.Z --repo nextcloud/IntraVox --title "vX.Y.Z - [Label]" --notes "[notes]"
+gh release upload vX.Y.Z intravox-X.Y.Z.tar.gz --repo nextcloud/IntraVox
+```
+
+### 6. Signature genereren (voor App Store)
+```bash
+openssl dgst -sha512 -sign intravox.key intravox-X.Y.Z.tar.gz | openssl base64 -A
+```
+
+### 7. App Store Upload
+- **URL:** `https://github.com/nextcloud/intravox/releases/download/vX.Y.Z/intravox-X.Y.Z.tar.gz`
+  - **BELANGRIJK:** Gebruik lowercase `intravox` in de URL (GitHub is case-insensitive maar App Store vereist lowercase)
+- **Signature:** Output van stap 6
+
+**Let op:** Signature opnieuw genereren na elke tarball wijziging!
 
 ---
 

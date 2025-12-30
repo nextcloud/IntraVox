@@ -2160,6 +2160,10 @@ class PageService {
                         $sanitizedLink['text'] = $this->sanitizeHtml($link['text'] ?? '');
                         $sanitizedLink['url'] = $this->sanitizeUrl($link['url'] ?? '');
                         $sanitizedLink['icon'] = $this->sanitizeText($link['icon'] ?? '');
+                        // Preserve uniqueId for internal page links
+                        if (isset($link['uniqueId']) && !empty($link['uniqueId'])) {
+                            $sanitizedLink['uniqueId'] = $this->sanitizeText($link['uniqueId']);
+                        }
                         // Preserve target attribute
                         if (isset($link['target'])) {
                             $allowedTargets = ['_self', '_blank'];
@@ -4270,14 +4274,22 @@ class PageService {
                     // Only add if user can read
                     if (($folderPerms & 1) !== 0) {
                         $excerpt = $this->getPageExcerpt($data, 150);
-                        $image = $this->getPageFirstImage($data);
+                        $imageData = $this->getPageFirstImage($data);
+                        $imagePath = null;
+                        if ($imageData) {
+                            if (($imageData['mediaFolder'] ?? 'page') === 'resources') {
+                                $imagePath = '/apps/intravox/api/resources/media/' . $imageData['src'];
+                            } else {
+                                $imagePath = '/apps/intravox/api/pages/' . $data['uniqueId'] . '/media/' . $imageData['src'];
+                            }
+                        }
 
                         $newsItem = [
                             'uniqueId' => $data['uniqueId'],
                             'title' => $data['title'],
                             'excerpt' => $excerpt,
-                            'image' => $image,
-                            'imagePath' => $image ? '/apps/intravox/api/pages/' . $data['uniqueId'] . '/media/' . $image : null,
+                            'image' => $imageData ? $imageData['src'] : null,
+                            'imagePath' => $imagePath,
                             'modified' => $sourcePageData['file']->getMTime(),
                             'modifiedFormatted' => $this->formatDateLocalized($sourcePageData['file']->getMTime(), $language),
                             'path' => $sourcePageData['folder']->getPath(),
@@ -4372,7 +4384,15 @@ class PageService {
                     $excerpt = $this->getPageExcerpt($data, 150);
 
                     // Find first image
-                    $image = $this->getPageFirstImage($data);
+                    $imageData = $this->getPageFirstImage($data);
+                    $imagePath = null;
+                    if ($imageData) {
+                        if (($imageData['mediaFolder'] ?? 'page') === 'resources') {
+                            $imagePath = '/apps/intravox/api/resources/media/' . $imageData['src'];
+                        } else {
+                            $imagePath = '/apps/intravox/api/pages/' . $data['uniqueId'] . '/media/' . $imageData['src'];
+                        }
+                    }
 
                     // Build relative path
                     $relativePath = $this->getRelativePathFromRoot($item);
@@ -4387,8 +4407,8 @@ class PageService {
                         'uniqueId' => $data['uniqueId'],
                         'title' => $data['title'],
                         'excerpt' => $excerpt,
-                        'image' => $image,
-                        'imagePath' => $image ? "/apps/intravox/api/pages/{$data['uniqueId']}/media/{$image}" : null,
+                        'image' => $imageData ? $imageData['src'] : null,
+                        'imagePath' => $imagePath,
                         'modified' => $modified,
                         'modifiedFormatted' => $modifiedFormatted,
                         'path' => $relativePath,
@@ -4429,6 +4449,8 @@ class PageService {
                 if (($widget['type'] ?? '') === 'text' && !empty($widget['content'])) {
                     // Strip HTML tags and get plain text
                     $text = strip_tags($widget['content']);
+                    // Strip markdown syntax for clean excerpts
+                    $text = $this->stripMarkdown($text);
                     // Remove excessive whitespace
                     $text = preg_replace('/\s+/', ' ', $text);
                     $text = trim($text);
@@ -4454,14 +4476,60 @@ class PageService {
     }
 
     /**
-     * Find the first image in a page's layout
+     * Strip markdown syntax from text for clean excerpts
      */
-    public function getPageFirstImage(array $pageData): ?string {
+    private function stripMarkdown(string $text): string {
+        // Bold: **text** or __text__
+        $text = preg_replace('/\*\*(.+?)\*\*/', '$1', $text);
+        $text = preg_replace('/__(.+?)__/', '$1', $text);
+
+        // Italic: *text* or _text_
+        $text = preg_replace('/\*(.+?)\*/', '$1', $text);
+        $text = preg_replace('/_(.+?)_/', '$1', $text);
+
+        // Strikethrough: ~~text~~
+        $text = preg_replace('/~~(.+?)~~/', '$1', $text);
+
+        // Links: [text](url)
+        $text = preg_replace('/\[([^\]]+)\]\([^)]+\)/', '$1', $text);
+
+        // Images: ![alt](url)
+        $text = preg_replace('/!\[([^\]]*)\]\([^)]+\)/', '$1', $text);
+
+        // Inline code: `code`
+        $text = preg_replace('/`([^`]+)`/', '$1', $text);
+
+        // Headers: # ## ### etc
+        $text = preg_replace('/^#{1,6}\s+/m', '', $text);
+
+        // Blockquotes: > text
+        $text = preg_replace('/^>\s+/m', '', $text);
+
+        // Unordered list markers: - or * or +
+        $text = preg_replace('/^[\-\*\+]\s+/m', '', $text);
+
+        // Ordered list markers: 1. 2. etc
+        $text = preg_replace('/^\d+\.\s+/m', '', $text);
+
+        // Horizontal rules: --- or *** or ___
+        $text = preg_replace('/^[\-\*_]{3,}\s*$/m', '', $text);
+
+        return $text;
+    }
+
+    /**
+     * Find the first image in a page's layout
+     * Returns array with 'src' and 'mediaFolder' or null if no image found
+     */
+    public function getPageFirstImage(array $pageData): ?array {
         // Check header row first
         if (isset($pageData['layout']['headerRow']['widgets']) && is_array($pageData['layout']['headerRow']['widgets'])) {
             foreach ($pageData['layout']['headerRow']['widgets'] as $widget) {
                 if (($widget['type'] ?? '') === 'image' && !empty($widget['src'])) {
-                    return $widget['src'];
+                    return [
+                        'src' => $widget['src'],
+                        'mediaFolder' => $widget['mediaFolder'] ?? 'page'
+                    ];
                 }
             }
         }
@@ -4475,7 +4543,10 @@ class PageService {
 
                 foreach ($row['widgets'] as $widget) {
                     if (($widget['type'] ?? '') === 'image' && !empty($widget['src'])) {
-                        return $widget['src'];
+                        return [
+                            'src' => $widget['src'],
+                            'mediaFolder' => $widget['mediaFolder'] ?? 'page'
+                        ];
                     }
                 }
             }

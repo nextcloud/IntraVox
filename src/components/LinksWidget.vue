@@ -3,10 +3,10 @@
     <div v-if="widget.items && widget.items.length > 0" class="links-grid" :style="getGridStyle()">
       <a
         v-for="(link, index) in widget.items"
-        :key="link.url || `link-${index}`"
-        :href="link.url"
-        :target="isInternalLink(link.url) ? '_self' : '_blank'"
-        :rel="isInternalLink(link.url) ? '' : 'noopener noreferrer'"
+        :key="link.uniqueId || link.url || `link-${index}`"
+        :href="getLinkUrl(link)"
+        :target="isInternalLink(link) ? '_self' : '_blank'"
+        :rel="isInternalLink(link) ? '' : 'noopener noreferrer'"
         class="link-item"
         :style="getLinkStyle(link)"
         @click="handleLinkClick($event, link)"
@@ -205,17 +205,28 @@ export default {
       }
       return style;
     },
-    isInternalLink(url) {
-      // Check if it's an internal navigation link (starts with #)
-      return url && url.startsWith('#') && url.length > 1;
+    getLinkUrl(link) {
+      // If link has a uniqueId (internal page), return hash URL
+      if (link.uniqueId) {
+        return `#${link.uniqueId}`;
+      }
+      // Otherwise return the external URL
+      return link.url || '#';
+    },
+    isInternalLink(link) {
+      // Check if it's an internal navigation link (has uniqueId or URL starts with #)
+      if (link.uniqueId) {
+        return true;
+      }
+      return link.url && link.url.startsWith('#') && link.url.length > 1;
     },
     handleLinkClick(event, link) {
       // If it's an internal link, prevent default and emit navigate event
-      if (this.isInternalLink(link.url)) {
+      if (this.isInternalLink(link)) {
         event.preventDefault();
         event.stopPropagation();
-        // Remove the # and emit the pageId
-        const pageId = link.url.substring(1);
+        // Get the pageId from uniqueId or from URL hash
+        const pageId = link.uniqueId || link.url.substring(1);
         this.$emit('navigate', pageId);
       }
       // For external links, the default behavior (open in new tab) will happen
