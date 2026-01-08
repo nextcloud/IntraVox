@@ -492,17 +492,17 @@ export default {
 .color-presets {
   display: flex;
   gap: 8px;
-  flex-wrap: wrap;
 }
 
 .color-preset-btn {
-  padding: 8px 16px;
+  flex: 1;
+  padding: 8px 12px;
   border: 2px solid var(--color-border);
-  border-radius: var(--border-radius-large);
+  border-radius: var(--border-radius);
   background: var(--color-main-background);
   color: var(--color-main-text);
   cursor: pointer;
-  font-size: 14px;
+  font-size: 13px;
   transition: all 0.2s;
 }
 
@@ -512,14 +512,12 @@ export default {
 }
 
 .color-preset-btn:hover {
-  background: var(--color-background-hover);
-  border-color: var(--color-primary);
+  border-color: var(--color-primary-element-light);
 }
 
 .color-preset-btn.active {
-  background: var(--color-primary);
-  color: white;
   border-color: var(--color-primary);
+  background: var(--color-primary-element-light);
 }
 
 .links-list {

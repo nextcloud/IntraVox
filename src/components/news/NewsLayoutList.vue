@@ -8,6 +8,7 @@
       :show-date="widget.showDate !== false"
       :show-excerpt="widget.showExcerpt !== false"
       :excerpt-length="widget.excerptLength || 100"
+      :item-background="itemBackgroundMode"
       @navigate="$emit('navigate', $event)"
     />
   </div>
@@ -30,8 +31,47 @@ export default {
       type: Object,
       required: true,
     },
+    rowBackgroundColor: {
+      type: String,
+      default: '',
+    },
   },
   emits: ['navigate'],
+  computed: {
+    effectiveBackgroundColor() {
+      // Widget's own backgroundColor takes precedence over row background
+      return this.widget.backgroundColor || this.rowBackgroundColor || '';
+    },
+    isDarkBackground() {
+      const darkBackgrounds = [
+        'var(--color-primary-element)',
+        'var(--color-error)',
+        'var(--color-success)',
+      ];
+      return darkBackgrounds.includes(this.effectiveBackgroundColor);
+    },
+    itemBackgroundMode() {
+      const bgColor = this.widget.backgroundColor;
+
+      // No widget background color set -> transparent items (inherit parent)
+      if (!bgColor) {
+        return 'transparent';
+      }
+
+      // Light container -> white items
+      if (bgColor === 'var(--color-background-hover)') {
+        return 'white';
+      }
+
+      // Dark container (Primary, etc.) -> dark mode items
+      if (this.isDarkBackground) {
+        return 'dark';
+      }
+
+      // Fallback to default
+      return 'default';
+    },
+  },
 };
 </script>
 
@@ -70,4 +110,6 @@ export default {
     display: none; /* Verberg excerpt in compact mode */
   }
 }
+
+/* Dark mode styling is now handled by NewsItem via item-background prop */
 </style>

@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.8] - 2026-01-05 - Widget Background Colors & Field-Type Filters
+
+### Added
+- **News Widget Background Color**: News widgets now support container background colors
+  - Three options: None (transparent), Light (gray), Primary (dark blue)
+  - Background color can be set independently from row background
+  - Consistent with Links widget styling
+- **Consistent Item Styling**: Both News and Links widgets now have consistent item background behavior
+  - **None**: Transparent items that inherit parent/row background
+  - **Light**: Gray container with white items for contrast
+  - **Primary**: Dark blue container with semi-transparent white items and white text
+- **Field-Type Specific Filter Operators**: MetaVox filters in the News widget now show operators appropriate for each field type
+  - **Date fields**: equals, is before, is after, is not empty, is empty
+  - **Number fields**: equals, greater than, less than, greater or equal, less or equal, is not empty, is empty
+  - **Select fields**: equals, is one of (multiple selection), is not empty, is empty
+  - **Multiselect fields**: contains, contains all, is not empty, is empty
+  - **Checkbox fields**: is true, is false, is not empty
+  - **Text/Textarea fields**: equals, contains, does not contain, is not empty, is empty
+- **Dynamic Value Inputs**: Filter value inputs now adapt to the field type
+  - Date fields show a date picker
+  - Number fields show a number input
+  - Select/Multiselect fields show a dropdown with the field's options from MetaVox
+  - Checkbox fields require no value input (operator determines the filter)
+- **Multi-Select Filter Values**: "Is one of" operator for select fields allows selecting multiple allowed values
+
+### Fixed
+- **Links Widget Individual Link Backgrounds**: Fixed contrast issues when individual links have a dark background color
+  - Links with "Primary" background now correctly show white text and icons
+  - Individual link background takes precedence over container background for styling
+- **News Item Backgrounds**: Fixed inconsistent item backgrounds between News and Links widgets
+  - News items now use the same background logic as Links items
+
+### Translations
+- Added translations for all new filter operators in all 4 languages (nl, en, de, fr)
+
 ## [0.8.7] - 2025-12-30 - Links Widget Page Selector & News Widget Fixes
 
 ### Added

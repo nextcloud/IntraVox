@@ -280,6 +280,10 @@ msgstr ""
 msgid "Add empty space"
 msgstr ""
 
+# NewsWidgetEditor.vue
+msgid "Background color"
+msgstr ""
+
 # Errors
 msgid "Error: {message}"
 msgstr ""

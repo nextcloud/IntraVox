@@ -1,5 +1,5 @@
 <template>
-  <div class="news-widget">
+  <div class="news-widget" :style="getContainerStyle()">
     <h3 v-if="widget.title" class="news-widget-title" :style="titleStyle">{{ widget.title }}</h3>
 
     <!-- Debug info (only in edit mode or when showDebug is true) -->
@@ -32,7 +32,7 @@
       :is="layoutComponent"
       :items="items"
       :widget="widget"
-      :row-background-color="rowBackgroundColor"
+      :row-background-color="effectiveBackgroundColor"
       @navigate="handleNavigate"
     />
   </div>
@@ -92,9 +92,13 @@ export default {
       };
       return layouts[this.widget.layout] || NewsLayoutList;
     },
+    effectiveBackgroundColor() {
+      // Widget's own backgroundColor takes precedence over row background
+      return this.widget.backgroundColor || this.rowBackgroundColor || '';
+    },
     titleStyle() {
       // Map background colors to appropriate text colors for optimal contrast
-      const bgColor = this.rowBackgroundColor || '';
+      const bgColor = this.effectiveBackgroundColor;
 
       const colorMappings = {
         'var(--color-primary-element)': 'var(--color-primary-element-text)',
@@ -204,6 +208,15 @@ export default {
     },
     handleNavigate(pageId) {
       this.$emit('navigate', pageId);
+    },
+    getContainerStyle() {
+      const style = {};
+      if (this.widget.backgroundColor) {
+        style.backgroundColor = this.widget.backgroundColor;
+        style.padding = '20px';
+        style.borderRadius = 'var(--border-radius-large)';
+      }
+      return style;
     },
   },
 };

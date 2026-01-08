@@ -2,7 +2,10 @@
   <a
     :href="itemUrl"
     class="news-item"
-    :class="{ 'news-item--compact': compact, 'news-item--no-image': !showImage || !item.imagePath }"
+    :class="[
+      { 'news-item--compact': compact, 'news-item--no-image': !showImage || !item.imagePath },
+      `news-item--bg-${itemBackground}`
+    ]"
     @click="handleClick"
   >
     <div v-if="showImage && item.imagePath" class="news-item-image">
@@ -55,6 +58,11 @@ export default {
       type: Boolean,
       default: false,
     },
+    itemBackground: {
+      type: String,
+      default: 'default',
+      validator: (value) => ['default', 'transparent', 'white', 'dark'].includes(value),
+    },
   },
   emits: ['navigate'],
   computed: {
@@ -83,11 +91,11 @@ export default {
 </script>
 
 <style scoped>
+/* Base news-item styles */
 .news-item {
   display: flex;
   gap: 16px;
   padding: 16px;
-  background: var(--color-main-background);
   border: 1px solid var(--color-border);
   border-radius: var(--border-radius-large);
   text-decoration: none;
@@ -95,10 +103,65 @@ export default {
   transition: all 0.2s ease;
 }
 
-.news-item:hover {
-  border-color: var(--color-primary);
+/* Default background (light gray) - for backwards compatibility */
+.news-item--bg-default {
   background: var(--color-background-hover);
+}
+
+.news-item--bg-default:hover {
+  border-color: var(--color-primary);
+  background: var(--color-primary-element-light);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Transparent background - for "None" option, inherits parent background */
+.news-item--bg-transparent {
+  background: transparent;
+}
+
+.news-item--bg-transparent:hover {
+  background: var(--color-background-hover);
+  border-color: var(--color-primary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* White background - for "Light" container option */
+.news-item--bg-white {
+  background: var(--color-main-background);
+}
+
+.news-item--bg-white:hover {
+  border-color: var(--color-primary);
+  background: var(--color-primary-element-light);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Dark/Primary background - semi-transparent white for dark containers */
+.news-item--bg-dark {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.news-item--bg-dark:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.news-item--bg-dark .news-item-title {
+  color: var(--color-primary-element-text);
+}
+
+.news-item--bg-dark:hover .news-item-title {
+  color: var(--color-primary-element-text);
+}
+
+.news-item--bg-dark .news-item-date {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.news-item--bg-dark .news-item-excerpt {
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .news-item--compact {
@@ -158,6 +221,11 @@ export default {
 
 .news-item:hover .news-item-title {
   color: var(--color-primary);
+}
+
+/* Dark mode: keep white text on hover */
+.news-item--bg-dark:hover .news-item-title {
+  color: var(--color-primary-element-text);
 }
 
 .news-item-date {

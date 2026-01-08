@@ -8,6 +8,7 @@
       :show-date="widget.showDate !== false"
       :show-excerpt="widget.showExcerpt !== false"
       :excerpt-length="widget.excerptLength || 80"
+      :item-background="itemBackgroundMode"
       class="news-grid-item"
       @navigate="$emit('navigate', $event)"
     />
@@ -31,6 +32,10 @@ export default {
       type: Object,
       required: true,
     },
+    rowBackgroundColor: {
+      type: String,
+      default: '',
+    },
   },
   emits: ['navigate'],
   computed: {
@@ -39,6 +44,39 @@ export default {
       return {
         gridTemplateColumns: `repeat(${columns}, 1fr)`,
       };
+    },
+    effectiveBackgroundColor() {
+      // Widget's own backgroundColor takes precedence over row background
+      return this.widget.backgroundColor || this.rowBackgroundColor || '';
+    },
+    isDarkBackground() {
+      const darkBackgrounds = [
+        'var(--color-primary-element)',
+        'var(--color-error)',
+        'var(--color-success)',
+      ];
+      return darkBackgrounds.includes(this.effectiveBackgroundColor);
+    },
+    itemBackgroundMode() {
+      const bgColor = this.widget.backgroundColor;
+
+      // No widget background color set -> transparent items (inherit parent)
+      if (!bgColor) {
+        return 'transparent';
+      }
+
+      // Light container -> white items
+      if (bgColor === 'var(--color-background-hover)') {
+        return 'white';
+      }
+
+      // Dark container (Primary, etc.) -> dark mode items
+      if (this.isDarkBackground) {
+        return 'dark';
+      }
+
+      // Fallback to default
+      return 'default';
     },
   },
 };
@@ -75,4 +113,6 @@ export default {
     grid-template-columns: 1fr !important;
   }
 }
+
+/* Dark mode styling is now handled by NewsItem via item-background prop */
 </style>

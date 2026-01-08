@@ -2313,14 +2313,37 @@ class PageService {
                 if (isset($widget['filters']) && is_array($widget['filters'])) {
                     foreach ($widget['filters'] as $filter) {
                         if (isset($filter['fieldName']) && !empty($filter['fieldName'])) {
-                            $allowedOperators = ['equals', 'contains', 'in', 'not_empty'];
+                            $allowedOperators = [
+                                // Text
+                                'equals', 'contains', 'not_contains', 'in',
+                                // Empty
+                                'not_empty', 'empty',
+                                // Date
+                                'before', 'after',
+                                // Number
+                                'greater_than', 'less_than', 'greater_or_equal', 'less_or_equal',
+                                // Checkbox
+                                'is_true', 'is_false',
+                                // Multiselect
+                                'contains_all',
+                            ];
                             $sanitizedFilter = [
                                 'fieldName' => $this->sanitizeText($filter['fieldName']),
                                 'operator' => in_array($filter['operator'] ?? 'equals', $allowedOperators)
                                     ? $filter['operator']
                                     : 'equals',
                                 'value' => $this->sanitizeText($filter['value'] ?? ''),
+                                'values' => [],
                             ];
+
+                            // Sanitize values array (for 'in', 'contains', 'contains_all' operators)
+                            if (isset($filter['values']) && is_array($filter['values'])) {
+                                $sanitizedFilter['values'] = array_map(
+                                    fn($v) => $this->sanitizeText((string)$v),
+                                    $filter['values']
+                                );
+                            }
+
                             $sanitized['filters'][] = $sanitizedFilter;
                         }
                     }
@@ -4603,7 +4626,13 @@ class PageService {
                 $fieldName = $filter['fieldName'] ?? '';
                 $filterOperator = $filter['operator'] ?? 'equals';
                 $filterValue = $filter['value'] ?? '';
+                $filterValues = $filter['values'] ?? [];
                 $actualValue = $meta[$fieldName] ?? null;
+
+                // Use values array for operators that work with multiple values
+                if (in_array($filterOperator, ['in', 'contains', 'contains_all']) && !empty($filterValues)) {
+                    $filterValue = $filterValues;
+                }
 
                 $results[] = $this->matchesFilter($actualValue, $filterOperator, $filterValue);
             }
@@ -4623,10 +4652,20 @@ class PageService {
      */
     private function matchesFilter($value, string $operator, $filterValue): bool {
         switch ($operator) {
+            // Text/general operators
             case 'equals':
                 return $value === $filterValue;
             case 'contains':
+                if (is_array($value)) {
+                    // For multiselect: check if filterValue is in the array
+                    return in_array($filterValue, $value);
+                }
                 return is_string($value) && str_contains($value, $filterValue);
+            case 'not_contains':
+                if (is_array($value)) {
+                    return !in_array($filterValue, $value);
+                }
+                return is_string($value) && !str_contains($value, $filterValue);
             case 'in':
                 $allowedValues = is_array($filterValue) ? $filterValue : [$filterValue];
                 return in_array($value, $allowedValues);
@@ -4634,6 +4673,48 @@ class PageService {
                 return !empty($value);
             case 'empty':
                 return empty($value);
+
+            // Date operators
+            case 'before':
+                $dateValue = $this->parseDate($value);
+                $dateFilter = $this->parseDate($filterValue);
+                if (!$dateValue || !$dateFilter) return false;
+                return $dateValue < $dateFilter;
+            case 'after':
+                $dateValue = $this->parseDate($value);
+                $dateFilter = $this->parseDate($filterValue);
+                if (!$dateValue || !$dateFilter) return false;
+                return $dateValue > $dateFilter;
+
+            // Number operators
+            case 'greater_than':
+                if (!is_numeric($value) || !is_numeric($filterValue)) return false;
+                return (float)$value > (float)$filterValue;
+            case 'less_than':
+                if (!is_numeric($value) || !is_numeric($filterValue)) return false;
+                return (float)$value < (float)$filterValue;
+            case 'greater_or_equal':
+                if (!is_numeric($value) || !is_numeric($filterValue)) return false;
+                return (float)$value >= (float)$filterValue;
+            case 'less_or_equal':
+                if (!is_numeric($value) || !is_numeric($filterValue)) return false;
+                return (float)$value <= (float)$filterValue;
+
+            // Checkbox operators
+            case 'is_true':
+                return $value === true || $value === 'true' || $value === '1' || $value === 1;
+            case 'is_false':
+                return $value === false || $value === 'false' || $value === '0' || $value === 0 || $value === '';
+
+            // Multiselect operators
+            case 'contains_all':
+                if (!is_array($value)) return false;
+                $requiredValues = is_array($filterValue) ? $filterValue : [$filterValue];
+                foreach ($requiredValues as $required) {
+                    if (!in_array($required, $value)) return false;
+                }
+                return true;
+
             default:
                 return false;
         }

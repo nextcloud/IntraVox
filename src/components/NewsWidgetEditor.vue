@@ -12,6 +12,37 @@
       />
     </div>
 
+    <!-- Background Color -->
+    <div class="editor-section">
+      <label class="editor-label">{{ t('Background color') }}</label>
+      <div class="color-presets">
+        <button
+          type="button"
+          :class="{ active: !localWidget.backgroundColor }"
+          @click="setBackgroundColor(null)"
+          class="color-preset-btn"
+        >
+          {{ t('None') }}
+        </button>
+        <button
+          type="button"
+          :class="{ active: localWidget.backgroundColor === 'var(--color-background-hover)' }"
+          @click="setBackgroundColor('var(--color-background-hover)')"
+          class="color-preset-btn"
+        >
+          {{ t('Light') }}
+        </button>
+        <button
+          type="button"
+          :class="{ active: localWidget.backgroundColor === 'var(--color-primary-element)' }"
+          @click="setBackgroundColor('var(--color-primary-element)')"
+          class="color-preset-btn"
+        >
+          {{ t('Primary') }}
+        </button>
+      </div>
+    </div>
+
     <!-- Source Location -->
     <div class="editor-section">
       <label class="editor-label">{{ t('Source location') }}</label>
@@ -156,25 +187,89 @@
 
       <div v-if="filters.length > 0" class="filters-list">
         <div v-for="(filter, index) in filters" :key="index" class="filter-row">
-          <select v-model="filter.fieldName" class="filter-field" @change="syncFilters">
+          <select v-model="filter.fieldName" class="filter-field" @change="handleFieldChange(filter)">
             <option value="">{{ t('Select field') }}</option>
             <option v-for="field in metavoxFields" :key="field.field_name" :value="field.field_name">
               {{ field.field_label || field.field_name }}
             </option>
           </select>
-          <select v-model="filter.operator" class="filter-operator" @change="emitUpdate">
-            <option value="equals">{{ t('equals') }}</option>
-            <option value="contains">{{ t('contains') }}</option>
-            <option value="not_empty">{{ t('is not empty') }}</option>
+          <select v-model="filter.operator" class="filter-operator" @change="handleOperatorChange(filter)">
+            <option v-for="op in getOperatorsForField(filter.fieldName)" :key="op.value" :value="op.value">
+              {{ t(op.label) }}
+            </option>
           </select>
-          <input
-            v-if="filter.operator !== 'not_empty'"
-            type="text"
-            v-model="filter.value"
-            class="filter-value"
-            :placeholder="t('Value')"
-            @input="emitUpdate"
-          />
+
+          <!-- Value input - conditional based on field type and operator -->
+          <template v-if="!requiresNoValue(filter.operator)">
+            <!-- Date field -->
+            <input
+              v-if="getFieldType(filter.fieldName) === 'date'"
+              type="date"
+              v-model="filter.value"
+              class="filter-value"
+              @input="emitUpdate"
+            />
+
+            <!-- Number field -->
+            <input
+              v-else-if="getFieldType(filter.fieldName) === 'number'"
+              type="number"
+              v-model="filter.value"
+              class="filter-value"
+              :placeholder="t('Value')"
+              @input="emitUpdate"
+            />
+
+            <!-- Select field with equals operator -->
+            <select
+              v-else-if="getFieldType(filter.fieldName) === 'select' && filter.operator === 'equals'"
+              v-model="filter.value"
+              class="filter-value"
+              @change="emitUpdate"
+            >
+              <option value="">{{ t('Select value') }}</option>
+              <option v-for="option in getFieldOptions(filter.fieldName)" :key="option" :value="option">
+                {{ option }}
+              </option>
+            </select>
+
+            <!-- Select field with 'in' operator (multiple) -->
+            <select
+              v-else-if="getFieldType(filter.fieldName) === 'select' && filter.operator === 'in'"
+              v-model="filter.values"
+              class="filter-value filter-value--multi"
+              multiple
+              @change="emitUpdate"
+            >
+              <option v-for="option in getFieldOptions(filter.fieldName)" :key="option" :value="option">
+                {{ option }}
+              </option>
+            </select>
+
+            <!-- Multiselect field -->
+            <select
+              v-else-if="getFieldType(filter.fieldName) === 'multiselect'"
+              v-model="filter.values"
+              class="filter-value filter-value--multi"
+              multiple
+              @change="emitUpdate"
+            >
+              <option v-for="option in getFieldOptions(filter.fieldName)" :key="option" :value="option">
+                {{ option }}
+              </option>
+            </select>
+
+            <!-- Text/Textarea field (default) -->
+            <input
+              v-else
+              type="text"
+              v-model="filter.value"
+              class="filter-value"
+              :placeholder="t('Value')"
+              @input="emitUpdate"
+            />
+          </template>
+
           <button class="filter-remove" @click="removeFilter(index)">
             <Close :size="16" />
           </button>
@@ -256,6 +351,56 @@ export default {
       metavoxFields: [],
       filters: [],
       publicationFieldsConfigured: false,
+      // Operators by field type
+      operatorsByFieldType: {
+        text: [
+          { value: 'equals', label: 'equals' },
+          { value: 'contains', label: 'contains' },
+          { value: 'not_contains', label: 'does not contain' },
+          { value: 'not_empty', label: 'is not empty' },
+          { value: 'empty', label: 'is empty' },
+        ],
+        textarea: [
+          { value: 'equals', label: 'equals' },
+          { value: 'contains', label: 'contains' },
+          { value: 'not_contains', label: 'does not contain' },
+          { value: 'not_empty', label: 'is not empty' },
+          { value: 'empty', label: 'is empty' },
+        ],
+        date: [
+          { value: 'equals', label: 'equals' },
+          { value: 'before', label: 'is before' },
+          { value: 'after', label: 'is after' },
+          { value: 'not_empty', label: 'is not empty' },
+          { value: 'empty', label: 'is empty' },
+        ],
+        number: [
+          { value: 'equals', label: 'equals' },
+          { value: 'greater_than', label: 'is greater than' },
+          { value: 'less_than', label: 'is less than' },
+          { value: 'greater_or_equal', label: 'is greater or equal' },
+          { value: 'less_or_equal', label: 'is less or equal' },
+          { value: 'not_empty', label: 'is not empty' },
+          { value: 'empty', label: 'is empty' },
+        ],
+        select: [
+          { value: 'equals', label: 'equals' },
+          { value: 'in', label: 'is one of' },
+          { value: 'not_empty', label: 'is not empty' },
+          { value: 'empty', label: 'is empty' },
+        ],
+        multiselect: [
+          { value: 'contains', label: 'contains' },
+          { value: 'contains_all', label: 'contains all' },
+          { value: 'not_empty', label: 'is not empty' },
+          { value: 'empty', label: 'is empty' },
+        ],
+        checkbox: [
+          { value: 'is_true', label: 'is true' },
+          { value: 'is_false', label: 'is false' },
+          { value: 'not_empty', label: 'is not empty' },
+        ],
+      },
     };
   },
   computed: {
@@ -291,6 +436,7 @@ export default {
       return {
         type: 'news',
         title: '',
+        backgroundColor: null,
         sourcePageId: null,
         sourcePath: '',
         layout: 'list',
@@ -367,9 +513,74 @@ export default {
         fieldName: '',
         operator: 'equals',
         value: '',
+        values: [], // For 'in' and multiselect operators
       });
       // Don't call syncFilters() here - it would remove the empty filter immediately
       // The filter will be synced when user selects a field
+    },
+    getFieldType(fieldName) {
+      const field = this.metavoxFields.find(f => f.field_name === fieldName);
+      return field?.field_type || 'text';
+    },
+    getOperatorsForField(fieldName) {
+      const fieldType = this.getFieldType(fieldName);
+      return this.operatorsByFieldType[fieldType] || this.operatorsByFieldType.text;
+    },
+    getFieldOptions(fieldName) {
+      const field = this.metavoxFields.find(f => f.field_name === fieldName);
+      if (!field?.options) {
+        return [];
+      }
+
+      let options = field.options;
+
+      // Handle string options (newline-separated or JSON array)
+      if (typeof options === 'string') {
+        // Try to parse as JSON array first
+        if (options.startsWith('[')) {
+          try {
+            options = JSON.parse(options);
+          } catch (e) {
+            // Not valid JSON, treat as newline-separated
+            options = options.split('\n').filter(o => o.trim());
+          }
+        } else {
+          // Newline-separated options
+          options = options.split('\n').filter(o => o.trim());
+        }
+      }
+
+      // Ensure we have an array
+      if (!Array.isArray(options)) {
+        return [];
+      }
+
+      return options.filter(o => o && (typeof o === 'string' ? o.trim() : true));
+    },
+    handleFieldChange(filter) {
+      const fieldType = this.getFieldType(filter.fieldName);
+      const validOperators = this.operatorsByFieldType[fieldType] || this.operatorsByFieldType.text;
+
+      // Reset to first valid operator if current is not valid
+      if (!validOperators.find(op => op.value === filter.operator)) {
+        filter.operator = validOperators[0].value;
+      }
+
+      // Clear values when switching fields
+      filter.value = '';
+      filter.values = [];
+
+      this.syncFilters();
+    },
+    handleOperatorChange(filter) {
+      // Clear values array when not using 'in' or multiselect operators
+      if (!['in', 'contains', 'contains_all'].includes(filter.operator)) {
+        filter.values = [];
+      }
+      this.emitUpdate();
+    },
+    requiresNoValue(operator) {
+      return ['not_empty', 'empty', 'is_true', 'is_false'].includes(operator);
     },
     removeFilter(index) {
       this.filters.splice(index, 1);
@@ -385,6 +596,10 @@ export default {
     },
     emitUpdate() {
       this.$emit('update', { ...this.localWidget });
+    },
+    setBackgroundColor(color) {
+      this.localWidget.backgroundColor = color;
+      this.emitUpdate();
     },
   },
 };
@@ -437,6 +652,30 @@ export default {
   outline: none;
 }
 
+.color-presets {
+  display: flex;
+  gap: 8px;
+}
+
+.color-preset-btn {
+  flex: 1;
+  padding: 8px 12px;
+  border: 2px solid var(--color-border);
+  border-radius: var(--border-radius);
+  background: var(--color-main-background);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.color-preset-btn:hover {
+  border-color: var(--color-primary-element-light);
+}
+
+.color-preset-btn.active {
+  border-color: var(--color-primary);
+  background: var(--color-primary-element-light);
+}
 
 .layout-options {
   display: flex;
@@ -589,6 +828,10 @@ export default {
   border: 1px solid var(--color-border);
   border-radius: var(--border-radius);
   font-size: 13px;
+}
+
+.filter-value--multi {
+  min-height: 60px;
 }
 
 .filter-remove {

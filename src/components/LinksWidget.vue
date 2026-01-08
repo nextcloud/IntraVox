@@ -8,6 +8,7 @@
         :target="isInternalLink(link) ? '_self' : '_blank'"
         :rel="isInternalLink(link) ? '' : 'noopener noreferrer'"
         class="link-item"
+        :class="getLinkItemClass(link)"
         :style="getLinkStyle(link)"
         @click="handleLinkClick($event, link)"
       >
@@ -128,6 +129,16 @@ export default {
     }
   },
   emits: ['navigate'],
+  computed: {
+    isDarkContainerBackground() {
+      const darkBackgrounds = [
+        'var(--color-primary-element)',
+        'var(--color-error)',
+        'var(--color-success)',
+      ];
+      return darkBackgrounds.includes(this.widget.backgroundColor);
+    },
+  },
   methods: {
     t(key, vars = {}) {
       return t('intravox', key, vars);
@@ -136,6 +147,43 @@ export default {
       if (!content) return '';
       // Use the markdown serializer to convert markdown to HTML
       return markdownToHtml(content);
+    },
+    isDarkColor(color) {
+      const darkColors = [
+        'var(--color-primary-element)',
+        'var(--color-primary)',
+        'var(--color-error)',
+        'var(--color-success)',
+      ];
+      return darkColors.includes(color);
+    },
+    getLinkItemClass(link) {
+      // Individual link background takes precedence
+      const linkBg = link.backgroundColor;
+      if (linkBg) {
+        if (this.isDarkColor(linkBg)) {
+          return 'link-item--bg-dark';
+        }
+        // Link has light background
+        return 'link-item--bg-white';
+      }
+
+      // No individual link background -> use container logic
+      const containerBg = this.widget.backgroundColor;
+
+      if (!containerBg) {
+        return 'link-item--bg-transparent';
+      }
+
+      if (containerBg === 'var(--color-background-hover)') {
+        return 'link-item--bg-white';
+      }
+
+      if (this.isDarkContainerBackground) {
+        return 'link-item--bg-dark';
+      }
+
+      return 'link-item--bg-default';
     },
     getIconComponent(iconName) {
       const iconMap = {
@@ -247,12 +295,12 @@ export default {
   grid-template-columns: repeat(2, 1fr);
 }
 
+/* Base link-item styles */
 .link-item {
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 16px;
-  background: var(--color-background-hover);
   border: 1px solid var(--color-border);
   border-radius: var(--border-radius-container-large);
   color: var(--color-main-text);
@@ -261,20 +309,78 @@ export default {
   cursor: pointer;
 }
 
-.link-item:hover {
+.link-icon {
+  flex-shrink: 0;
+  color: var(--color-text-maxcontrast);
+}
+
+/* Default background (light gray) - for backwards compatibility */
+.link-item--bg-default {
+  background: var(--color-background-hover);
+}
+
+.link-item--bg-default:hover {
   background: var(--color-primary-element-light);
   border-color: var(--color-primary);
   color: var(--color-primary);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
-.link-icon {
-  flex-shrink: 0;
-  color: var(--color-text-maxcontrast);
+.link-item--bg-default:hover .link-icon {
+  color: var(--color-primary);
 }
 
-.link-item:hover .link-icon {
+/* Transparent background - for "None" option, inherits parent background */
+.link-item--bg-transparent {
+  background: transparent;
+}
+
+.link-item--bg-transparent:hover {
+  background: var(--color-background-hover);
+  border-color: var(--color-primary);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.link-item--bg-transparent:hover .link-icon {
   color: var(--color-primary);
+}
+
+/* White background - for "Light" container option */
+.link-item--bg-white {
+  background: var(--color-main-background);
+}
+
+.link-item--bg-white:hover {
+  background: var(--color-primary-element-light);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.link-item--bg-white:hover .link-icon {
+  color: var(--color-primary);
+}
+
+/* Dark/Primary background - semi-transparent white for dark containers */
+.link-item--bg-dark {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: var(--color-primary-element-text);
+}
+
+.link-item--bg-dark .link-icon {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.link-item--bg-dark:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.4);
+  color: var(--color-primary-element-text);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.link-item--bg-dark:hover .link-icon {
+  color: var(--color-primary-element-text);
 }
 
 .link-text {
