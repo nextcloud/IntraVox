@@ -149,8 +149,8 @@
                       </button>
                       <button
                         type="button"
-                        :class="{ active: link.backgroundColor === 'var(--color-primary-element-light)' }"
-                        @click="setLinkBackground(index, 'var(--color-primary-element-light)')"
+                        :class="{ active: link.backgroundColor === 'var(--color-primary-element)' }"
+                        @click="setLinkBackground(index, 'var(--color-primary-element)')"
                         class="color-preset-btn small"
                       >
                         {{ t('Primary') }}

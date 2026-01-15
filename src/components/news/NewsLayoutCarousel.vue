@@ -75,6 +75,7 @@ import { translate as t } from '@nextcloud/l10n';
 import ChevronLeft from 'vue-material-design-icons/ChevronLeft.vue';
 import ChevronRight from 'vue-material-design-icons/ChevronRight.vue';
 import CalendarBlank from 'vue-material-design-icons/CalendarBlank.vue';
+import { isDarkBackground as isDarkBg, getEffectiveBackgroundColor } from '../../utils/colorUtils.js';
 
 export default {
   name: 'NewsLayoutCarousel',
@@ -115,13 +116,11 @@ export default {
       // Default 5 seconds, configurable via widget.autoplayInterval
       return (this.widget.autoplayInterval || 5) * 1000;
     },
+    effectiveBackgroundColor() {
+      return getEffectiveBackgroundColor(this.widget.backgroundColor, this.rowBackgroundColor);
+    },
     isDarkBackground() {
-      const darkBackgrounds = [
-        'var(--color-primary-element)',
-        'var(--color-error)',
-        'var(--color-success)',
-      ];
-      return darkBackgrounds.includes(this.rowBackgroundColor);
+      return isDarkBg(this.effectiveBackgroundColor);
     },
     textStyle() {
       if (this.isDarkBackground) {

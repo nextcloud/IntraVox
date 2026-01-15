@@ -17,6 +17,7 @@
 
 <script>
 import NewsItem from './NewsItem.vue';
+import { isDarkBackground as isDarkBg, getEffectiveBackgroundColor } from '../../utils/colorUtils.js';
 
 export default {
   name: 'NewsLayoutGrid',
@@ -46,22 +47,20 @@ export default {
       };
     },
     effectiveBackgroundColor() {
-      // Widget's own backgroundColor takes precedence over row background
-      return this.widget.backgroundColor || this.rowBackgroundColor || '';
+      return getEffectiveBackgroundColor(this.widget.backgroundColor, this.rowBackgroundColor);
     },
     isDarkBackground() {
-      const darkBackgrounds = [
-        'var(--color-primary-element)',
-        'var(--color-error)',
-        'var(--color-success)',
-      ];
-      return darkBackgrounds.includes(this.effectiveBackgroundColor);
+      return isDarkBg(this.effectiveBackgroundColor);
     },
     itemBackgroundMode() {
       const bgColor = this.widget.backgroundColor;
 
-      // No widget background color set -> transparent items (inherit parent)
+      // No widget background color set -> check row background
       if (!bgColor) {
+        // Row has dark background -> items need 'dark' styling for white text
+        if (this.isDarkBackground) {
+          return 'dark';
+        }
         return 'transparent';
       }
 

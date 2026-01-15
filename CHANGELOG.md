@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.9] - 2026-01-15 - Widget Color Consistency & Row Background Inheritance
+
+### Added
+- **Centralized Color Utilities**: New `colorUtils.js` module for consistent dark background detection
+  - Single source of truth for dark background colors across all widgets
+  - `isDarkBackground()` and `getEffectiveBackgroundColor()` helper functions
+  - Easier to maintain and extend color handling
+
+### Fixed
+- **Links Widget Row Background**: Links widget now correctly inherits row background color
+  - Added `rowBackgroundColor` prop to LinksWidget component
+  - Links on dark row backgrounds (Primary, Error, Success) now show white text
+  - Consistent behavior with News widget
+- **Links Widget Primary Color**: Fixed individual link "Primary" background using wrong color
+  - Changed from `--color-primary-element-light` to `--color-primary-element`
+  - Links with Primary background now have correct dark blue color
+- **News Widget Text Contrast**: Fixed black text on dark row backgrounds
+  - News items without widget background now check row background for styling
+  - Items on dark row backgrounds correctly show white text
+  - Applies to List, Grid, and Carousel layouts
+- **Backwards Compatibility**: Added `--color-primary-element-light` to dark color detection
+  - Existing links with old color value still render correctly with white text
+
+### Changed
+- **Consistent Widget Pattern**: All widgets now use the same pattern for background handling
+  - `effectiveBackgroundColor` computed property (widget bg takes precedence over row bg)
+  - `isDarkBackground` check using centralized utility
+  - Uniform prop passing from Widget.vue to child widgets
+
+### Technical
+- Refactored NewsLayoutList, NewsLayoutGrid, NewsLayoutCarousel to use colorUtils
+- Added rowBackgroundColor prop passthrough in Widget.vue for LinksWidget
+
 ## [0.8.8] - 2026-01-05 - Version History UI, Widget Background Colors & Field-Type Filters
 
 ### Added

@@ -31,6 +31,7 @@
 <script>
 import { translate as t } from '@nextcloud/l10n';
 import { markdownToHtml } from '../utils/markdownSerializer.js';
+import { isDarkBackground, getEffectiveBackgroundColor } from '../utils/colorUtils.js';
 
 // Import common Material Design Icons
 import ViewGrid from 'vue-material-design-icons/ViewGrid.vue';
@@ -126,17 +127,19 @@ export default {
     widget: {
       type: Object,
       required: true
+    },
+    rowBackgroundColor: {
+      type: String,
+      default: ''
     }
   },
   emits: ['navigate'],
   computed: {
+    effectiveBackgroundColor() {
+      return getEffectiveBackgroundColor(this.widget.backgroundColor, this.rowBackgroundColor);
+    },
     isDarkContainerBackground() {
-      const darkBackgrounds = [
-        'var(--color-primary-element)',
-        'var(--color-error)',
-        'var(--color-success)',
-      ];
-      return darkBackgrounds.includes(this.widget.backgroundColor);
+      return isDarkBackground(this.effectiveBackgroundColor);
     },
   },
   methods: {
@@ -148,34 +151,23 @@ export default {
       // Use the markdown serializer to convert markdown to HTML
       return markdownToHtml(content);
     },
-    isDarkColor(color) {
-      const darkColors = [
-        'var(--color-primary-element)',
-        'var(--color-primary)',
-        'var(--color-error)',
-        'var(--color-success)',
-      ];
-      return darkColors.includes(color);
-    },
     getLinkItemClass(link) {
       // Individual link background takes precedence
       const linkBg = link.backgroundColor;
       if (linkBg) {
-        if (this.isDarkColor(linkBg)) {
+        if (isDarkBackground(linkBg)) {
           return 'link-item--bg-dark';
         }
         // Link has light background
         return 'link-item--bg-white';
       }
 
-      // No individual link background -> use container logic
-      const containerBg = this.widget.backgroundColor;
-
-      if (!containerBg) {
+      // No individual link background -> check container/row background
+      if (!this.widget.backgroundColor && !this.rowBackgroundColor) {
         return 'link-item--bg-transparent';
       }
 
-      if (containerBg === 'var(--color-background-hover)') {
+      if (this.effectiveBackgroundColor === 'var(--color-background-hover)') {
         return 'link-item--bg-white';
       }
 

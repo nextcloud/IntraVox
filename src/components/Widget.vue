@@ -57,6 +57,7 @@
     <LinksWidget
       v-else-if="widget.type === 'links'"
       :widget="widget"
+      :row-background-color="rowBackgroundColor"
       @navigate="$emit('navigate', $event)"
     />
 
