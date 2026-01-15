@@ -1,181 +1,181 @@
 # IntraVox Versioning
 
-IntraVox biedt ingebouwd versiebeheer voor alle pagina's, volledig geïntegreerd met Nextcloud's native versioning systeem en GroupFolders.
+IntraVox provides built-in version control for all pages, fully integrated with Nextcloud's native versioning system and GroupFolders.
 
-## Overzicht
+## Overview
 
-Elke wijziging aan een IntraVox pagina wordt automatisch opgeslagen als een nieuwe versie. Dit maakt het mogelijk om:
+Every change to an IntraVox page is automatically saved as a new version. This allows you to:
 
-- **Versiegeschiedenis bekijken** - Zie alle eerdere versies van een pagina
-- **Versies vergelijken** - Bekijk de inhoud van oudere versies
-- **Versies herstellen** - Zet een pagina terug naar een eerdere staat
-- **Wijzigingen traceren** - Zie wie wanneer wijzigingen heeft gemaakt
+- **View version history** - See all previous versions of a page
+- **Compare versions** - View the content of older versions
+- **Restore versions** - Revert a page to a previous state
+- **Track changes** - See who made changes and when
 
-## Hoe het werkt
+## How It Works
 
-### Technische Architectuur
+### Technical Architecture
 
-IntraVox pagina's worden opgeslagen als JSON-bestanden in een Nextcloud GroupFolder. Het versiebeheer maakt gebruik van Nextcloud's ingebouwde `IVersionManager` API:
+IntraVox pages are stored as JSON files in a Nextcloud GroupFolder. Version control uses Nextcloud's built-in `IVersionManager` API:
 
 ```
 GroupFolder: IntraVox/
 ├── en/
-│   ├── homepage.json          ← Huidige versie
+│   ├── homepage.json          ← Current version
 │   └── .versions/
 │       └── homepage.json/
-│           ├── 1736934521     ← Versie van 15 jan 2026, 10:08
-│           ├── 1736932860     ← Versie van 15 jan 2026, 09:41
+│           ├── 1736934521     ← Version from Jan 15, 2026, 10:08
+│           ├── 1736932860     ← Version from Jan 15, 2026, 09:41
 │           └── ...
 ├── nl/
 │   └── ...
-└── _resources/                ← Gedeelde mediabibliotheek
+└── _resources/                ← Shared media library
 ```
 
-### Voordelen van deze aanpak
+### Benefits of This Approach
 
-1. **Consistentie met Nextcloud Files** - Dezelfde versioning als gewone bestanden
-2. **Geen extra database** - Versies worden beheerd door Nextcloud zelf
-3. **GroupFolder integratie** - Versiebeheer werkt automatisch binnen GroupFolders
-4. **Betrouwbaar** - Gebruikt bewezen Nextcloud infrastructuur
+1. **Consistency with Nextcloud Files** - Same versioning as regular files
+2. **No extra database** - Versions are managed by Nextcloud itself
+3. **GroupFolder integration** - Version control works automatically within GroupFolders
+4. **Reliable** - Uses proven Nextcloud infrastructure
 
-## Gebruikersinterface
+## User Interface
 
 ### Versions Tab
 
-De versiegeschiedenis is beschikbaar via de **Versions** tab in de pagina-sidebar:
+Version history is available via the **Versions** tab in the page sidebar:
 
-![Versioning sidebar met versiegeschiedenis](../screenshots/Versioning-1.png)
+![Versioning sidebar with version history](../screenshots/Versioning-1.png)
 
-*De Versions tab toont de huidige versie bovenaan, gevolgd door de versiegeschiedenis. Elke versie toont de auteur, relatieve tijd ("1 sec. ago", "27 min. ago") en bestandsgrootte.*
+*The Versions tab shows the current version at the top, followed by the version history. Each version displays the author, relative time ("1 sec. ago", "27 min. ago") and file size.*
 
-### Versie Bekijken
+### Viewing a Version
 
-Klik op een versie in de lijst om de inhoud te bekijken:
+Click on a version in the list to view its content:
 
-![Versie selecteren en bekijken](../screenshots/Versioning-2.png)
+![Selecting and viewing a version](../screenshots/Versioning-2.png)
 
-*Wanneer je een oudere versie selecteert, wordt de pagina-inhoud bijgewerkt om die versie te tonen. De titel in de header geeft aan welke versie je bekijkt.*
+*When you select an older version, the page content updates to show that version. The title in the header indicates which version you are viewing.*
 
-### Versie Herstellen
+### Restoring a Version
 
-Klik op de **restore knop** (↺) naast een versie om deze te herstellen:
+Click the **restore button** (↺) next to a version to restore it:
 
-![Versie hersteld met succesmelding](../screenshots/Versioning-3.png)
+![Version restored with success message](../screenshots/Versioning-3.png)
 
-*Na het herstellen verschijnt een succesmelding. De herstelde versie wordt nu de "Current version" en de vorige huidige versie wordt automatisch opgeslagen in de versiegeschiedenis.*
+*After restoring, a success message appears. The restored version becomes the "Current version" and the previous current version is automatically saved in the version history.*
 
-## Versie Informatie
+## Version Information
 
-Elke versie toont de volgende informatie:
+Each version displays the following information:
 
-| Veld | Beschrijving |
-|------|-------------|
-| **Current version** | Label voor de actieve versie |
-| **Auteur** | Gebruiker die de wijziging heeft gemaakt |
-| **Relatieve tijd** | Tijd sinds de wijziging ("1 sec. ago", "2 hours ago", "3 days ago") |
-| **Bestandsgrootte** | Grootte van het JSON-bestand (bijv. "19.5 KB") |
+| Field | Description |
+|-------|-------------|
+| **Current version** | Label for the active version |
+| **Author** | User who made the change |
+| **Relative time** | Time since the change ("1 sec. ago", "2 hours ago", "3 days ago") |
+| **File size** | Size of the JSON file (e.g., "19.5 KB") |
 
 ## Restore Flow
 
-Wanneer je een versie herstelt, gebeurt het volgende:
+When you restore a version, the following happens:
 
 ```
-1. Gebruiker klikt "Restore" op versie [X]
+1. User clicks "Restore" on version [X]
    ↓
-2. Nextcloud maakt automatisch een backup van de huidige versie
+2. Nextcloud automatically creates a backup of the current version
    ↓
-3. De geselecteerde versie [X] wordt de nieuwe huidige versie
+3. The selected version [X] becomes the new current version
    ↓
-4. Versiegeschiedenis wordt bijgewerkt:
-   - [Current] Herstelde versie (was [X])
-   - [Version] Backup van vorige current (nieuw aangemaakt)
-   - [Version] Andere historische versies
+4. Version history is updated:
+   - [Current] Restored version (was [X])
+   - [Version] Backup of previous current (newly created)
+   - [Version] Other historical versions
    ↓
-5. Pagina-inhoud wordt herladen
+5. Page content is reloaded
    ↓
-6. Succesmelding wordt getoond
+6. Success message is displayed
 ```
 
-## Integratie met Nextcloud Files
+## Integration with Nextcloud Files
 
 ### GroupFolder Versioning
 
-IntraVox maakt gebruik van dezelfde versioning als Nextcloud Files. Dit betekent:
+IntraVox uses the same versioning as Nextcloud Files. This means:
 
-- **Versiebeheer instellingen** worden gerespecteerd (max aantal versies, retentiebeleid)
-- **Quota** wordt gedeeld met de GroupFolder quota
-- **Beheerders** kunnen versies ook via de Files app bekijken
+- **Version control settings** are respected (max number of versions, retention policy)
+- **Quota** is shared with the GroupFolder quota
+- **Administrators** can also view versions via the Files app
 
-### Versies in Files App
+### Versions in Files App
 
-De JSON-bestanden van IntraVox pagina's zijn ook zichtbaar in de Nextcloud Files app:
+The JSON files of IntraVox pages are also visible in the Nextcloud Files app:
 
-1. Ga naar **Files** → **IntraVox** GroupFolder
-2. Navigeer naar de taalmap (bijv. `en/`)
-3. Klik met rechts op een `.json` bestand
-4. Kies **Versies** om de versiegeschiedenis te zien
+1. Go to **Files** → **IntraVox** GroupFolder
+2. Navigate to the language folder (e.g., `en/`)
+3. Right-click on a `.json` file
+4. Choose **Versions** to view the version history
 
-> **Let op:** Het direct bewerken van JSON-bestanden via de Files app wordt afgeraden. Gebruik altijd de IntraVox editor.
+> **Note:** Directly editing JSON files via the Files app is not recommended. Always use the IntraVox editor.
 
-## Configuratie
+## Configuration
 
-### Nextcloud Versioning Instellingen
+### Nextcloud Versioning Settings
 
-De versioning van IntraVox volgt de algemene Nextcloud instellingen:
+IntraVox versioning follows the general Nextcloud settings:
 
-- **Versions app** moet geactiveerd zijn
-- **GroupFolders** moet geïnstalleerd zijn
-- Retentiebeleid wordt bepaald door Nextcloud configuratie
+- **Versions app** must be activated
+- **GroupFolders** must be installed
+- Retention policy is determined by Nextcloud configuration
 
-### Aanbevolen Instellingen
+### Recommended Settings
 
-Voor optimaal versiebeheer in IntraVox:
+For optimal version control in IntraVox:
 
 ```php
 // config/config.php
-'versions_retention_obligation' => 'auto',  // Automatisch versiebeheer
-'version_expire_days' => 365,               // Versies bewaren voor 1 jaar
+'versions_retention_obligation' => 'auto',  // Automatic version management
+'version_expire_days' => 365,               // Keep versions for 1 year
 ```
 
 ## Best Practices
 
-### Voor Editors
+### For Editors
 
-1. **Regelmatig opslaan** - Elke save creëert een herstelpunt
-2. **Betekenisvolle wijzigingen** - Groepeer gerelateerde wijzigingen in één save
-3. **Controleer voor publicatie** - Bekijk de preview voordat je opslaat
+1. **Save regularly** - Every save creates a restore point
+2. **Meaningful changes** - Group related changes in a single save
+3. **Check before publishing** - Review the preview before saving
 
-### Voor Beheerders
+### For Administrators
 
-1. **Monitor quota** - Versies tellen mee voor GroupFolder quota
-2. **Retentiebeleid** - Configureer hoelang versies bewaard blijven
-3. **Backup strategie** - Versioning is geen vervanging voor backups
+1. **Monitor quota** - Versions count towards GroupFolder quota
+2. **Retention policy** - Configure how long versions are kept
+3. **Backup strategy** - Versioning is not a replacement for backups
 
-## Beperkingen
+## Limitations
 
-- **Geen versie-labels** - Anders dan SharePoint ondersteunt Nextcloud geen custom versienummers (1.0, 2.0)
-- **Geen major/minor versies** - Alle versies zijn gelijkwaardig
-- **Geen vergelijkingsweergave** - Diff-weergave tussen versies is niet beschikbaar
-- **Alleen JSON-inhoud** - Media in `_resources` heeft eigen versioning
+- **No version labels** - Unlike SharePoint, Nextcloud does not support custom version numbers (1.0, 2.0)
+- **No major/minor versions** - All versions are equal
+- **No comparison view** - Diff view between versions is not available
+- **JSON content only** - Media in `_resources` has its own versioning
 
-## Veelgestelde Vragen
+## Frequently Asked Questions
 
-### Hoeveel versies worden bewaard?
+### How many versions are kept?
 
-Dit hangt af van de Nextcloud configuratie. Standaard bewaart Nextcloud versies volgens een exponentieel schema: meer recente versies worden vaker bewaard.
+This depends on the Nextcloud configuration. By default, Nextcloud keeps versions according to an exponential scheme: more recent versions are kept more frequently.
 
-### Telt versioning mee voor mijn quota?
+### Does versioning count towards my quota?
 
-Ja, versies tellen mee voor de GroupFolder quota. Oude versies worden automatisch opgeruimd volgens het retentiebeleid.
+Yes, versions count towards the GroupFolder quota. Old versions are automatically cleaned up according to the retention policy.
 
-### Kan ik versies permanent verwijderen?
+### Can I permanently delete versions?
 
-Via de Nextcloud Files app kunnen beheerders specifieke versies verwijderen. Dit is niet mogelijk vanuit de IntraVox interface.
+Via the Nextcloud Files app, administrators can delete specific versions. This is not possible from the IntraVox interface.
 
-### Wat gebeurt er met media bij een restore?
+### What happens to media when restoring?
 
-Media (afbeeldingen, video's) in de `_resources` folder hebben hun eigen versioning. Bij het herstellen van een pagina worden media-bestanden niet automatisch teruggezet.
+Media (images, videos) in the `_resources` folder have their own versioning. When restoring a page, media files are not automatically reverted.
 
 ---
 
-*Laatst bijgewerkt: Januari 2026 - IntraVox v0.8.8*
+*Last updated: January 2026 - IntraVox v0.8.8*
