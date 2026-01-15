@@ -648,7 +648,13 @@
     "Disabled by administrator": "Uitgeschakeld door beheerder",
     "Select Image": "Afbeelding selecteren",
     "Select Video": "Video selecteren",
-    "Write a reply...": "Schrijf een antwoord..."
+    "Write a reply...": "Schrijf een antwoord...",
+    "Current version": "Huidige versie",
+    "Version history": "Versiegeschiedenis",
+    "No versions available": "Geen versies beschikbaar",
+    "Now": "Nu",
+    "Version": "Versie",
+    "Go to slide {number}": "Ga naar slide {number}"
   },
   "pluralForm": "nplurals=2; plural=(n != 1);"
 }

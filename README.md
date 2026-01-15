@@ -156,9 +156,14 @@ Full table editing in text widgets:
 
 ### Version History
 
-- **Page Versions** - View and restore previous versions of any page
-- **Version Labels** - Add custom labels to important versions
-- **Content Diff** - Compare versions to see what changed
+- **Files App Style UI** - Version history designed to match Nextcloud Files app
+- **Current Version Display** - Shows real file metadata (modified time, size, author)
+- **Relative Time** - "36 sec. ago", "2 min. ago" formatting like Nextcloud
+- **Version Preview** - Click any version to preview its content before restoring
+- **One-Click Restore** - Restore previous versions with automatic backup
+- **Version Labels** - Add custom labels to mark important versions
+- **Auto-Refresh** - Version list updates automatically when page is saved
+- **Edit Mode Awareness** - Entering edit mode always shows current version being edited
 
 ### Integration
 

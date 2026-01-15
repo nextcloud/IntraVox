@@ -109,10 +109,10 @@
 
       <!-- Page Details Sidebar (inside content wrapper) -->
       <PageDetailsSidebar
-        v-if="currentPage && !loading && !error"
+        v-show="currentPage && !loading && !error"
         :is-open="showDetailsSidebar"
-        :page-id="currentPage.uniqueId"
-        :page-name="currentPage.title || t('Untitled Page')"
+        :page-id="currentPage?.uniqueId"
+        :page-name="currentPage?.title || t('Untitled Page')"
         :initial-tab="sidebarInitialTab"
         @close="handleCloseSidebar"
         @version-restored="handleVersionRestored"
@@ -571,6 +571,14 @@ export default {
       this.originalPage = structuredClone(this.currentPage);
       this.editableTitle = this.currentPage?.title || '';
       this.isEditMode = true;
+
+      // Clear any version preview - user should edit current version
+      this.clearVersionPreview();
+
+      // Notify sidebar to reset to current version selection
+      window.dispatchEvent(new CustomEvent('intravox:edit:started', {
+        detail: { pageId: this.currentPage?.uniqueId }
+      }));
     },
     async saveAndExitEditMode() {
       try {
@@ -617,6 +625,11 @@ export default {
         CacheService.delete('pages-list');
 
         showSuccess(this.t('Page saved'));
+
+        // Dispatch event to notify sidebar that a new version was created
+        window.dispatchEvent(new CustomEvent('intravox:page:saved', {
+          detail: { pageId: this.currentPage.uniqueId }
+        }));
       } catch (err) {
         console.error('[savePage] Error:', err);
         const errorMsg = err.response?.data?.error || err.message || 'Unknown error';
@@ -909,19 +922,24 @@ export default {
       this.$forceUpdate();
     },
     async handleVersionRestored(restoredPageData) {
-      // Update current page with restored version
-      this.currentPage = restoredPageData;
       showSuccess(this.t('Version restored successfully'));
 
       // Reload pages list to update timestamps, but stay on current page
-      const currentPageId = this.currentPage.uniqueId;
+      const currentPageId = restoredPageData.uniqueId || this.currentPage?.uniqueId;
+
       try {
+        // Invalidate cache for this page
+        CacheService.delete(`page-${currentPageId}`);
+        CacheService.delete('pages-list');
+
+        // Reload pages list
         const response = await axios.get(generateUrl('/apps/intravox/api/pages'));
         this.pages = response.data;
-        // Re-select the current page to refresh it without changing the URL
+
+        // Re-fetch the page to get the fully restored content
         await this.selectPage(currentPageId, false);
 
-        // Open sidebar with Versions tab and auto-select first version
+        // Open sidebar with Versions tab
         this.sidebarInitialTab = 'versions-tab';
         this.showDetailsSidebar = true;
       } catch (err) {
@@ -958,6 +976,13 @@ export default {
     },
     async handleVersionSelected(data) {
       const { version, pageId } = data;
+
+      // If version is null, clear the preview (show current page)
+      if (!version) {
+        this.clearVersionPreview();
+        return;
+      }
+
       this.selectedVersion = version;
       this.loadingVersion = true;
 

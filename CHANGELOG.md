@@ -7,9 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.8.8] - 2026-01-05 - Widget Background Colors & Field-Type Filters
+## [0.8.8] - 2026-01-05 - Version History UI, Widget Background Colors & Field-Type Filters
 
 ### Added
+- **Files App Style Version History**: Complete redesign of the version history tab in the sidebar
+  - Displays "Current version" with real file metadata (modified time, size, author)
+  - Relative time formatting like Nextcloud Files app ("36 sec. ago", "2 min. ago", "3 hours ago")
+  - Server-side time calculation to avoid timezone issues
+  - Version list shows all available versions with author and relative time
+  - Click any version to preview its content
+  - Restore button to revert to a previous version
+  - Custom labels can be added to mark important versions
+- **Version History Auto-Refresh**: Version list automatically updates when page is saved
+- **Edit Mode Version Focus**: When entering edit mode, version selection resets to "Current version"
+  - Prevents confusion about which version is being edited
 - **News Widget Background Color**: News widgets now support container background colors
   - Three options: None (transparent), Light (gray), Primary (dark blue)
   - Background color can be set independently from row background
@@ -38,6 +49,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Individual link background takes precedence over container background for styling
 - **News Item Backgrounds**: Fixed inconsistent item backgrounds between News and Links widgets
   - News items now use the same background logic as Links items
+
+### Changed
+- **Sidebar State Preservation**: Sidebar tab focus is preserved during page refresh and version restore
+  - Uses `v-show` instead of `v-if` to keep component mounted
+  - No more unexpected tab switches when saving or restoring versions
 
 ### Translations
 - Added translations for all new filter operators in all 4 languages (nl, en, de, fr)

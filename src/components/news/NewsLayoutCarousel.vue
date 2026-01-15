@@ -54,13 +54,15 @@
       </button>
     </div>
 
-    <div class="carousel-dots" v-if="items.length > 1">
+    <div class="carousel-indicators" v-if="items.length > 1">
       <button
         v-for="(item, index) in items"
         :key="item.uniqueId"
-        class="carousel-dot"
-        :class="{ 'carousel-dot--active': index === currentIndex }"
-        :style="index === currentIndex ? activeDotStyle : dotStyle"
+        class="carousel-indicator"
+        :class="{ 'carousel-indicator--active': index === currentIndex }"
+        :style="index === currentIndex ? activeIndicatorStyle : indicatorStyle"
+        :aria-label="t('intravox', 'Go to slide {number}', { number: index + 1 })"
+        :aria-current="index === currentIndex ? 'true' : 'false'"
         @click="goTo(index)"
       />
     </div>
@@ -69,6 +71,7 @@
 
 <script>
 import { generateUrl } from '@nextcloud/router';
+import { translate as t } from '@nextcloud/l10n';
 import ChevronLeft from 'vue-material-design-icons/ChevronLeft.vue';
 import ChevronRight from 'vue-material-design-icons/ChevronRight.vue';
 import CalendarBlank from 'vue-material-design-icons/CalendarBlank.vue';
@@ -151,15 +154,15 @@ export default {
       }
       return {};
     },
-    dotStyle() {
+    indicatorStyle() {
       if (this.isDarkBackground) {
         return {
-          background: 'rgba(255, 255, 255, 0.4)',
+          background: 'rgba(255, 255, 255, 0.3)',
         };
       }
       return {};
     },
-    activeDotStyle() {
+    activeIndicatorStyle() {
       if (this.isDarkBackground) {
         return {
           background: 'var(--color-primary-element-text)',
@@ -191,6 +194,7 @@ export default {
     this.stopAutoplay();
   },
   methods: {
+    t,
     getImageUrl(item) {
       if (!item.imagePath) return '';
       return generateUrl(item.imagePath);
@@ -369,14 +373,15 @@ export default {
   -webkit-box-orient: vertical;
 }
 
-.carousel-dots {
+.carousel-indicators {
   display: flex;
   justify-content: center;
-  gap: 8px;
+  gap: 10px;
   margin-top: 16px;
+  padding: 8px 0;
 }
 
-.carousel-dot {
+.carousel-indicator {
   width: 10px;
   height: 10px;
   padding: 0;
@@ -384,16 +389,30 @@ export default {
   border-radius: 50%;
   background: var(--color-border-dark);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
+  position: relative;
 }
 
-.carousel-dot:hover {
+/* Enlarge touch target without changing visual size */
+.carousel-indicator::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  right: -8px;
+  bottom: -8px;
+}
+
+.carousel-indicator:hover {
   background: var(--color-primary-element-light);
+  transform: scale(1.2);
 }
 
-.carousel-dot--active {
-  background: var(--color-primary);
-  transform: scale(1.2);
+.carousel-indicator--active {
+  width: 12px;
+  height: 12px;
+  background: var(--color-primary-element);
+  box-shadow: 0 0 0 3px rgba(0, 130, 201, 0.2);
 }
 
 @media (max-width: 600px) {

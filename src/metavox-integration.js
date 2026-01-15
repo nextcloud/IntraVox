@@ -1,9 +1,12 @@
 /**
  * IntraVox MetaVox Integration Plugin
- * Sets up communication between IntraVox and MetaVox for pages
+ * Sets up communication between IntraVox and MetaVox sidebar tab
  *
  * Note: MetaVox scripts are loaded by the PHP backend via Util::addScript()
- * This file only handles the sidebar mock and event communication.
+ * This file handles the sidebar mock and event communication for MetaVox integration.
+ *
+ * Versions are handled directly by IntraVox using the internal versions API,
+ * which leverages Nextcloud's GroupFolders versioning backend.
  */
 
 // Get Nextcloud webroot
@@ -164,12 +167,12 @@ function setupMetaVoxEventListeners() {
 }
 
 // Initialize MetaVox integration
-// Scripts are loaded by PHP backend, we just need to setup the mock and listeners
+// MetaVox scripts are loaded by PHP backend, we just need to setup the mock and listeners
 function initMetaVoxIntegration() {
     // Create the sidebar mock so MetaVox can register its tab
     createFilesSidebarMock();
 
-    // Setup event listeners for communication
+    // Setup event listeners for MetaVox communication
     setupMetaVoxEventListeners();
 }
 

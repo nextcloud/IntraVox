@@ -594,21 +594,29 @@ class ApiController extends Controller {
      * @NoCSRFRequired
      */
     public function getPageVersions(string $pageId): DataResponse {
+        $this->logger->info('[ApiController::getPageVersions] Called with pageId: ' . $pageId);
+
         try {
             // First get the page to check permissions (from Nextcloud filesystem)
+            $this->logger->info('[ApiController::getPageVersions] Getting page...');
             $existingPage = $this->pageService->getPage($pageId);
+            $this->logger->info('[ApiController::getPageVersions] Got page, checking permissions...');
 
             // Check read permission using Nextcloud's permissions
             if (!($existingPage['permissions']['canRead'] ?? false)) {
+                $this->logger->warning('[ApiController::getPageVersions] Access denied for pageId: ' . $pageId);
                 return new DataResponse(
                     ['error' => 'Access denied'],
                     Http::STATUS_FORBIDDEN
                 );
             }
 
+            $this->logger->info('[ApiController::getPageVersions] Calling pageService->getPageVersions...');
             $versions = $this->pageService->getPageVersions($pageId);
+            $this->logger->info('[ApiController::getPageVersions] Got ' . count($versions) . ' versions');
             return new DataResponse($versions);
         } catch (\Exception $e) {
+            $this->logger->error('[ApiController::getPageVersions] Error: ' . $e->getMessage());
             return new DataResponse(
                 ['error' => $e->getMessage()],
                 Http::STATUS_INTERNAL_SERVER_ERROR

@@ -648,7 +648,13 @@
     "Disabled by administrator": "Disabled by administrator",
     "Select Image": "Select Image",
     "Select Video": "Select Video",
-    "Write a reply...": "Write a reply..."
+    "Write a reply...": "Write a reply...",
+    "Current version": "Current version",
+    "Version history": "Version history",
+    "No versions available": "No versions available",
+    "Now": "Now",
+    "Version": "Version",
+    "Go to slide {number}": "Go to slide {number}"
   },
   "pluralForm": "nplurals=2; plural=(n != 1);"
 }

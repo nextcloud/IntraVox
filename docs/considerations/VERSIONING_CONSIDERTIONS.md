@@ -281,6 +281,7 @@ The `VersionsBackend` class (`lib/Versions/VersionsBackend.php`) handles:
 - Restoring previous versions
 - Expiring old versions per retention policy
 
+
 ### Known Code Paths with Issues
 
 1. **Version creation timing**: Versions may be created with current timestamp instead of previous modification time
@@ -308,11 +309,62 @@ Collectives solves this with:
 
 ---
 
+## Appendix C: Testing Results (January 2026)
+
+### Test Environment
+
+| Component | Version |
+|-----------|---------|
+| Nextcloud | 32.0.3 |
+| GroupFolders | 20.1.7 |
+| files_versions | 1.25.0 |
+| Test Server | 3dev (145.38.188.218) |
+
+### Issue Status Update
+
+All major versioning issues have been **CLOSED** as of January 2026:
+
+| Issue | Status | Resolution |
+|-------|--------|------------|
+| [#1901](https://github.com/nextcloud/groupfolders/issues/1901) | CLOSED | Version ordering fixed (PR #2047). Timestamp issue tracked separately in #2055. |
+| [#2077](https://github.com/nextcloud/groupfolders/issues/2077) | CLOSED | Rollback behavior fixed (PR #2543) |
+| [#2718](https://github.com/nextcloud/groupfolders/issues/2718) | CLOSED | Versioning restored via app updates |
+| [#3095](https://github.com/nextcloud/groupfolders/issues/3095) | CLOSED | Labeled versions protected from expiration (PR #3213). Note: edge cases may remain for auto-expiration. |
+
+### Test Results
+
+**Versioning is now functional** in GroupFolders 20.1.7 with Nextcloud 32.
+
+Verification performed on 2026-01-13:
+
+1. **Version Creation**: Versions are automatically created when files are modified
+2. **Database Storage**: Versions are stored in `oc_group_folders_versions` table (separate from regular `oc_files_versions`)
+3. **File Storage**: Version files are stored in `/data/__groupfolders/<folder_id>/versions/<file_id>/<timestamp>`
+4. **Author Tracking**: Metadata includes author information: `{"author":"admin"}`
+5. **Multiple Versions**: Multiple versions accumulate correctly over time
+
+### Recommendation Update
+
+Based on these findings, **Option 2 (Wait for GroupFolders Fix)** is now viable:
+
+- GroupFolders versioning works reliably in version 20.1.7
+- IntraVox can leverage native Nextcloud versioning without custom implementation
+- Recommend minimum GroupFolders version: **20.1.7** (for Nextcloud 32) or equivalent stable branch for other Nextcloud versions
+
+### Next Steps
+
+1. Update IntraVox minimum requirements to specify GroupFolders 20.x+
+2. Test version UI integration (viewing versions in Files app sidebar)
+3. Test rollback functionality via UI
+4. Monitor for any regressions in future GroupFolders releases
+
+---
+
 ## Document Information
 
 - **Author**: IntraVox Development Team
-- **Date**: December 2025
-- **Status**: Draft for Discussion
+- **Date**: December 2025 (Updated: January 2026)
+- **Status**: Verified - GroupFolders versioning confirmed working
 - **Target Audience**: Nextcloud architects, GroupFolders maintainers, IntraVox contributors
 
 ---

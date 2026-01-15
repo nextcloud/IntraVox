@@ -121,9 +121,8 @@
       </div>
     </NcAppSidebarTab>
 
-    <!-- Versions Tab - Hidden for v1.0 -->
+    <!-- Versions Tab - Uses IntraVox versions API (leverages Nextcloud/GroupFolders versioning) -->
     <NcAppSidebarTab
-      v-if="false"
       id="versions-tab"
       :name="t('Versions')"
       :order="3"
@@ -132,112 +131,71 @@
         <History :size="20" />
       </template>
 
-      <!-- Loading State -->
-      <NcEmptyContent v-if="loadingVersions" :name="t('Loading versions...')">
-        <template #icon>
-          <NcLoadingIcon />
-        </template>
-      </NcEmptyContent>
+      <div class="versions-container">
+        <div v-if="loadingVersions" class="loading">
+          {{ t('Loading versions...') }}
+        </div>
 
-      <!-- Error State -->
-      <NcEmptyContent v-else-if="versionError" :name="t('Failed to load versions')">
-        <template #icon>
-          <AlertCircle :size="64" />
-        </template>
-        <template #description>
+        <div v-else-if="versionError" class="error-message">
           {{ versionError }}
-        </template>
-      </NcEmptyContent>
+        </div>
 
-      <!-- Empty State -->
-      <NcEmptyContent v-else-if="versions.length === 0" :name="t('No versions yet')">
-        <template #icon>
-          <History :size="64" />
-        </template>
-        <template #description>
-          {{ t('Versions are created automatically when you save changes to this page.') }}
-        </template>
-      </NcEmptyContent>
+        <div v-else-if="versions.length === 0" class="empty-state">
+          <p>{{ t('No versions available') }}</p>
+          <p class="hint">{{ t('Versions are created automatically when you save changes') }}</p>
+        </div>
 
-      <!-- Version List -->
-      <div v-else class="version-list">
-        <div
-          v-for="version in versions"
-          :key="version.timestamp"
-          :class="['version-item', { 'version-item--selected': selectedVersion?.timestamp === version.timestamp }]"
-          @click="selectVersion(version)"
-        >
-          <div class="version-info">
-            <!-- Version header with date and author -->
-            <div class="version-header">
-              <span class="version-date">{{ version.relativeDate }}</span>
-              <span v-if="version.author" class="version-author">
-                {{ t('by {author}', { author: version.author }) }}
-              </span>
-            </div>
-
-            <!-- Version details (absolute date and size) -->
-            <div class="version-details">
-              {{ version.date }} · {{ formatBytes(version.size) }}
-            </div>
-
-            <!-- Version label (editable) -->
-            <div v-if="editingLabel === version.timestamp" class="version-label-edit" @click.stop>
-              <NcTextField
-                v-model="editableLabel"
-                :label="t('Version label')"
-                :placeholder="t('Add a label to this version')"
-                @keydown.enter="saveVersionLabel(version.timestamp)"
-                @keydown.esc="cancelLabelEdit"
-              />
-              <div class="label-actions">
-                <NcButton
-                  type="primary"
-                  size="small"
-                  @click="saveVersionLabel(version.timestamp)"
-                >
-                  {{ t('Save') }}
-                </NcButton>
-                <NcButton
-                  type="secondary"
-                  size="small"
-                  @click="cancelLabelEdit"
-                >
-                  {{ t('Cancel') }}
-                </NcButton>
+        <div v-else class="version-list">
+          <!-- Current version (the actual file, not from history) - like Nextcloud Files app -->
+          <div
+            class="version-item version-item--current"
+            :class="{ 'version-item--selected': selectedVersion === null }"
+            @click="selectCurrentVersion"
+          >
+            <div class="version-info">
+              <div class="version-header">
+                <span class="version-name">{{ t('Current version') }}</span>
+                <span v-if="currentVersionAuthor" class="version-author">{{ currentVersionAuthor }}</span>
               </div>
-            </div>
-            <div v-else-if="version.label" class="version-label">
-              <Label :size="16" />
-              <span>{{ version.label }}</span>
+              <div class="version-details">
+                {{ currentVersionDate }}<span v-if="currentVersionSize"> · {{ currentVersionSize }}</span>
+              </div>
             </div>
           </div>
 
-          <!-- Version actions -->
-          <div class="version-actions" @click.stop>
-            <!-- Add/Edit Label -->
-            <NcButton
-              type="tertiary"
-              @click="startLabelEdit(version)"
-              :aria-label="version.label ? t('Edit label') : t('Add label')"
-            >
-              <template #icon>
-                <Label :size="20" />
-              </template>
-            </NcButton>
+          <!-- Version history -->
+          <div class="version-history-label">
+            {{ t('Version history') }}
+          </div>
 
-            <!-- Restore -->
-            <NcButton
-              type="secondary"
-              @click="confirmRestoreVersion(version.timestamp)"
-              :disabled="restoringVersion"
-              :aria-label="t('Restore this version')"
-            >
-              <template #icon>
-                <Restore :size="20" />
-              </template>
-              {{ t('Restore') }}
-            </NcButton>
+          <div
+            v-for="version in versions"
+            :key="version.timestamp"
+            class="version-item"
+            :class="{ 'version-item--selected': selectedVersion?.timestamp === version.timestamp }"
+            @click="selectVersion(version)"
+          >
+            <div class="version-info">
+              <div class="version-header">
+                <span class="version-name">{{ version.label || t('Version') }}</span>
+                <span v-if="version.author" class="version-author">{{ version.author }}</span>
+              </div>
+              <div class="version-details">
+                {{ version.relativeTime || version.formattedDate }} · {{ formatBytes(version.size) }}
+              </div>
+            </div>
+            <div class="version-actions">
+              <NcButton
+                type="tertiary"
+                :aria-label="t('Restore this version')"
+                :title="t('Restore this version')"
+                @click.stop="confirmRestoreVersion(version.timestamp)"
+              >
+                <template #icon>
+                  <Restore :size="20" />
+                </template>
+              </NcButton>
+            </div>
           </div>
         </div>
       </div>
@@ -270,12 +228,10 @@ import { translate as t } from '@nextcloud/l10n';
 import { generateUrl } from '@nextcloud/router';
 import axios from '@nextcloud/axios';
 import { showError, showSuccess } from '@nextcloud/dialogs';
-import { NcAppSidebar, NcAppSidebarTab, NcButton, NcDialog, NcEmptyContent, NcLoadingIcon, NcTextField } from '@nextcloud/vue';
+import { NcAppSidebar, NcAppSidebarTab, NcButton, NcDialog } from '@nextcloud/vue';
 import History from 'vue-material-design-icons/History.vue';
 import InformationOutline from 'vue-material-design-icons/InformationOutline.vue';
 import Restore from 'vue-material-design-icons/Restore.vue';
-import Label from 'vue-material-design-icons/Label.vue';
-import AlertCircle from 'vue-material-design-icons/AlertCircle.vue';
 import MetaVoxIcon from './icons/MetaVoxIcon.vue';
 
 export default {
@@ -285,15 +241,10 @@ export default {
     NcAppSidebarTab,
     NcButton,
     NcDialog,
-    NcEmptyContent,
-    NcLoadingIcon,
-    NcTextField,
     History,
     InformationOutline,
     MetaVoxIcon,
-    Restore,
-    Label,
-    AlertCircle
+    Restore
   },
   props: {
     isOpen: {
@@ -318,6 +269,7 @@ export default {
     return {
       activeTab: 'details-tab',
       versions: [],
+      currentVersion: null, // Current file metadata from API
       loadingVersions: false,
       versionError: null,
       restoringVersion: false,
@@ -345,13 +297,36 @@ export default {
     canEditTitle() {
       // Check write permission using Nextcloud's permissions
       return this.metadata?.permissions?.canWrite ?? this.metadata?.canEdit ?? false;
+    },
+    currentVersionDate() {
+      // Use the relativeTime from currentVersion API response (like Files app)
+      if (this.currentVersion?.relativeTime) {
+        return this.currentVersion.relativeTime;
+      }
+      // Fallback to metadata if versions not loaded yet
+      if (this.metadata?.modifiedRelative) {
+        return this.metadata.modifiedRelative;
+      }
+      return this.t('Now');
+    },
+    currentVersionSize() {
+      // Size from currentVersion API response
+      if (this.currentVersion?.size) {
+        return this.formatBytes(this.currentVersion.size);
+      }
+      return null;
+    },
+    currentVersionAuthor() {
+      // Author from currentVersion API response
+      return this.currentVersion?.author || null;
     }
   },
   watch: {
-    isOpen(newValue) {
-      if (newValue) {
-        // Reset lazy loading flag for new session
+    isOpen(newValue, oldValue) {
+      if (newValue && !oldValue) {
+        // Sidebar just opened - reset state and apply initialTab
         this.versionsLoaded = false;
+        this.activeTab = this.initialTab || 'details-tab';
         // Only load metadata (for details tab - default)
         this.loadMetadata().catch(() => {});
         this.checkMetaVoxInstalled();
@@ -366,24 +341,21 @@ export default {
       }
     },
     initialTab(newTab) {
-      if (newTab && newTab !== this.activeTab) {
+      // Only apply initialTab if sidebar is currently closed
+      // When sidebar is open, user controls the active tab
+      if (!this.isOpen && newTab) {
         this.activeTab = newTab;
       }
     },
     activeTab(newTab) {
-      // Lazy load versions when tab is activated
+      // Load versions when tab is activated (lazy loading)
       if (newTab === 'versions-tab' && !this.versionsLoaded) {
-        this.loadVersions().then(() => {
-          this.versionsLoaded = true;
-        }).catch(() => {});
+        this.loadVersions();
+        this.versionsLoaded = true;
       } else if (newTab === 'metavox-tab' && this.metaVoxInstalled) {
         this.$nextTick(() => {
           this.dispatchMetaVoxUpdate();
         });
-      }
-      // Auto-select first version when versions tab is activated
-      if (newTab === 'versions-tab' && this.versions.length > 0 && !this.selectedVersion) {
-        this.autoSelectFirstVersion();
       }
     },
     versions(newVersions) {
@@ -408,6 +380,16 @@ export default {
       this.loadMetadata().catch(() => {});
       this.checkMetaVoxInstalled();
     }
+
+    // Listen for page save events to refresh versions
+    window.addEventListener('intravox:page:saved', this.handlePageSaved);
+    // Listen for edit mode started to reset to current version
+    window.addEventListener('intravox:edit:started', this.handleEditStarted);
+  },
+  beforeUnmount() {
+    // Clean up event listeners
+    window.removeEventListener('intravox:page:saved', this.handlePageSaved);
+    window.removeEventListener('intravox:edit:started', this.handleEditStarted);
   },
   methods: {
     t(key, vars = {}) {
@@ -514,8 +496,11 @@ export default {
       return generateUrl('/apps/files/?dir={dir}', { dir: folderPath });
     },
     onTabChange(newTabId) {
-      // This is a more reliable way to detect tab changes
-      if (newTabId === 'metavox-tab' && this.metaVoxInstalled) {
+      // Load versions when tab is activated (lazy loading)
+      if (newTabId === 'versions-tab' && !this.versionsLoaded) {
+        this.loadVersions();
+        this.versionsLoaded = true;
+      } else if (newTabId === 'metavox-tab' && this.metaVoxInstalled) {
         this.$nextTick(() => {
           this.dispatchMetaVoxUpdate();
         });
@@ -528,8 +513,18 @@ export default {
       try {
         const url = generateUrl(`/apps/intravox/api/pages/${this.pageId}/versions`);
         const response = await axios.get(url);
-        this.versions = response.data;
+
+        // API response structure: { currentVersion: {...}, versions: [...] }
+        if (response.data && typeof response.data === 'object' && 'versions' in response.data) {
+          this.currentVersion = response.data.currentVersion;
+          this.versions = response.data.versions;
+        } else {
+          // Backwards compatibility: old API returned array directly
+          this.versions = response.data;
+          this.currentVersion = null;
+        }
       } catch (error) {
+        console.error('Failed to load versions:', error);
         this.versionError = error.response?.data?.error || this.t('Failed to load version history');
       } finally {
         this.loadingVersions = false;
@@ -722,6 +717,15 @@ export default {
         }));
       }
     },
+    selectCurrentVersion() {
+      // Clear version selection to show current page
+      this.selectedVersion = null;
+      // Emit event to clear version preview in parent
+      this.$emit('version-selected', {
+        version: null,
+        pageId: this.pageId
+      });
+    },
     async selectVersion(version) {
       this.selectedVersion = version;
 
@@ -744,12 +748,24 @@ export default {
       return labels[type] || type;
     },
     autoSelectFirstVersion() {
-      if (this.versions.length > 0) {
-        this.$nextTick(() => {
-          this.selectVersion(this.versions[0]);
-        });
+      // Auto-select current version (not a history version)
+      this.$nextTick(() => {
+        this.selectCurrentVersion();
+      });
+    },
+    handlePageSaved(event) {
+      // Refresh versions when this page is saved (if versions were already loaded)
+      if (event.detail?.pageId === this.pageId && this.versionsLoaded) {
+        this.loadVersions();
       }
     },
+    handleEditStarted(event) {
+      // When edit mode starts, reset to current version selection
+      // User should always edit the current version, not a history version
+      if (event.detail?.pageId === this.pageId) {
+        this.selectCurrentVersion();
+      }
+    }
   }
 };
 </script>
@@ -818,7 +834,7 @@ export default {
   flex-wrap: wrap;
 }
 
-.version-date {
+.version-name {
   font-weight: 600;
   font-size: 14px;
 }
@@ -826,35 +842,47 @@ export default {
 .version-author {
   font-size: 12px;
   color: var(--color-text-maxcontrast);
-  font-style: italic;
+}
+
+.version-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: var(--border-radius-pill, 20px);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.version-badge--current {
+  background-color: var(--color-primary-element);
+  color: var(--color-primary-element-text, white);
+}
+
+/* Current version item styling */
+.version-item--current {
+  background: var(--color-primary-element-light);
+  border-color: var(--color-primary-element);
+}
+
+.version-item--current:hover {
+  background: var(--color-primary-element-light);
+}
+
+/* Version history label */
+.version-history-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-maxcontrast);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 12px 0 8px 0;
+  margin-top: 4px;
+  border-top: 1px solid var(--color-border);
 }
 
 .version-details {
   font-size: 12px;
   color: var(--color-text-maxcontrast);
-}
-
-.version-label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 8px;
-  background: var(--color-background-dark);
-  color: var(--color-main-text);
-  border-radius: var(--border-radius);
-  font-size: 12px;
-  width: fit-content;
-  margin-top: 4px;
-}
-
-.version-label-edit {
-  margin-top: 8px;
-}
-
-.label-actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 8px;
 }
 
 .version-actions {
@@ -863,9 +891,10 @@ export default {
   align-items: center;
 }
 
-.coming-soon {
-  font-style: italic;
-  color: var(--color-text-maxcontrast);
+/* Versions container */
+.versions-container {
+  min-height: 200px;
+  padding: 8px;
 }
 
 /* Metadata container */
@@ -996,190 +1025,5 @@ export default {
 .metavox-container {
   padding: 12px;
   min-height: 200px;
-}
-
-/* Preview dialog */
-.preview-loading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 40px;
-  gap: 16px;
-  color: var(--color-text-maxcontrast);
-}
-
-.preview-container {
-  display: flex;
-  flex-direction: column;
-  height: 70vh;
-  max-height: 800px;
-}
-
-.preview-header {
-  padding: 20px 20px 16px 20px;
-  border-bottom: 1px solid var(--color-border);
-  flex-shrink: 0;
-}
-
-.preview-header h3 {
-  margin: 0 0 8px 0;
-  font-size: 20px;
-  font-weight: 600;
-}
-
-.preview-meta {
-  margin: 0;
-  font-size: 12px;
-  color: var(--color-text-maxcontrast);
-}
-
-.preview-tabs {
-  display: flex;
-  gap: 0;
-  border-bottom: 1px solid var(--color-border);
-  flex-shrink: 0;
-  padding: 0 20px;
-}
-
-.preview-tabs button {
-  padding: 12px 20px;
-  background: none;
-  border: none;
-  border-bottom: 2px solid transparent;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--color-text-maxcontrast);
-  transition: all 0.2s;
-}
-
-.preview-tabs button:hover {
-  color: var(--color-main-text);
-  background: var(--color-background-hover);
-}
-
-.preview-tabs button.active {
-  color: var(--color-primary-element);
-  border-bottom-color: var(--color-primary-element);
-}
-
-.preview-content {
-  padding: 20px;
-  overflow-y: auto;
-  flex: 1;
-  min-height: 0;
-}
-
-.preview-body {
-  line-height: 1.6;
-}
-
-.preview-body :deep(h1),
-.preview-body :deep(h2),
-.preview-body :deep(h3),
-.preview-body :deep(h4),
-.preview-body :deep(h5),
-.preview-body :deep(h6) {
-  margin-top: 1.5em;
-  margin-bottom: 0.5em;
-}
-
-.preview-body :deep(p) {
-  margin-bottom: 1em;
-}
-
-.preview-body :deep(ul),
-.preview-body :deep(ol) {
-  margin-left: 1.5em;
-  margin-bottom: 1em;
-}
-
-.preview-source pre {
-  background: var(--color-background-dark);
-  padding: 16px;
-  border-radius: var(--border-radius);
-  overflow-x: auto;
-  font-family: 'Courier New', monospace;
-  font-size: 13px;
-  line-height: 1.5;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-}
-
-/* Diff viewer */
-.preview-diff {
-  height: 100%;
-}
-
-.diff-loading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 40px;
-  gap: 16px;
-  color: var(--color-text-maxcontrast);
-}
-
-.diff-error {
-  padding: 20px;
-  text-align: center;
-  color: var(--color-text-maxcontrast);
-}
-
-.diff-viewer {
-  font-family: 'Courier New', monospace;
-  font-size: 13px;
-  line-height: 1.5;
-  background: var(--color-background-dark);
-  border-radius: var(--border-radius);
-  overflow: hidden;
-}
-
-.diff-viewer > div {
-  display: flex;
-  padding: 2px 8px;
-  border-left: 3px solid transparent;
-}
-
-.diff-prefix {
-  display: inline-block;
-  width: 20px;
-  flex-shrink: 0;
-  font-weight: bold;
-  user-select: none;
-}
-
-.diff-line {
-  flex: 1;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-}
-
-.diff-added {
-  background: rgba(16, 185, 129, 0.15);
-  border-left-color: #10b981;
-}
-
-.diff-added .diff-prefix {
-  color: #10b981;
-}
-
-.diff-removed {
-  background: rgba(239, 68, 68, 0.15);
-  border-left-color: #ef4444;
-}
-
-.diff-removed .diff-prefix {
-  color: #ef4444;
-}
-
-.diff-unchanged {
-  background: transparent;
-}
-
-.diff-unchanged .diff-prefix {
-  color: var(--color-text-maxcontrast);
 }
 </style>

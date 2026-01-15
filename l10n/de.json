@@ -668,7 +668,13 @@
     "Disabled by administrator": "Vom Administrator deaktiviert",
     "Select Image": "Bild auswählen",
     "Select Video": "Video auswählen",
-    "Write a reply...": "Antwort schreiben..."
+    "Write a reply...": "Antwort schreiben...",
+    "Current version": "Aktuelle Version",
+    "Version history": "Versionsgeschichte",
+    "No versions available": "Keine Versionen verfügbar",
+    "Now": "Jetzt",
+    "Version": "Version",
+    "Go to slide {number}": "Gehe zu Folie {number}"
   },
   "pluralForm": "nplurals=2; plural=(n != 1);"
 }
