@@ -58,8 +58,9 @@ De demo data bevat:
 
 | Tier | Pagina's | Prijs/jaar | Doelgroep |
 |------|----------|------------|-----------|
-| **Pro** | 500 per taal | €499/jaar | MKB |
-| **Enterprise** | Onbeperkt | €1.499/jaar | Grote organisaties |
+| **Business** | 250 per taal | €499/jaar | Klein MKB (1-2 afdelingen) |
+| **Professional** | 1000 per taal | €999/jaar | Middelgroot (volledig intranet) |
+| **Enterprise** | Onbeperkt | €1.999/jaar | Grote organisaties (multi-site) |
 
 Inclusief bij alle betaalde tiers:
 - Alle features
@@ -73,9 +74,10 @@ Inclusief bij alle betaalde tiers:
 | SharePoint Online | €5.040/jaar (€4.20/user/maand) |
 | Confluence | €6.600/jaar (€5.50/user/maand) |
 | Notion Team | €9.600/jaar (€8/user/maand) |
-| **IntraVox Pro** | **€499/jaar** |
+| **IntraVox Business** | **€499/jaar** |
+| **IntraVox Professional** | **€999/jaar** |
 
-**Besparing vs SharePoint**: €4.541/jaar (90% goedkoper)
+**Besparing vs SharePoint**: €4.041 - €4.541/jaar (80-90% goedkoper)
 
 ### Waarom paginalimiet werkt
 
@@ -271,7 +273,7 @@ Uit de Nextcloud memo:
 - **Interne ontwikkeling**: €60.000 - €100.000+ (meerdere persoon-maanden)
 - **Strategische waarde**: SharePoint alternatief, adoptie, digital workplace
 
-IntraVox Enterprise (€1.499/jaar) = **~6% van SharePoint kosten**
+IntraVox Enterprise (€1.999/jaar) = **~8% van SharePoint kosten**
 
 ### Concurrentievergelijking
 
@@ -280,23 +282,33 @@ IntraVox Enterprise (€1.499/jaar) = **~6% van SharePoint kosten**
 | SharePoint Online | €5.040 | €25.200 |
 | Confluence Cloud | €6.600 | €33.000 |
 | Notion Team | €9.600 | €48.000 |
-| **IntraVox Pro** | **€499/jaar** | **€499/jaar** |
-| **IntraVox Enterprise** | **€1.499/jaar** | **€1.499/jaar** |
+| **IntraVox Business** | **€499/jaar** | **€499/jaar** |
+| **IntraVox Professional** | **€999/jaar** | **€999/jaar** |
+| **IntraVox Enterprise** | **€1.999/jaar** | **€1.999/jaar** |
 
 ### ROI Calculator (voor sales)
 
 ```
 Besparing vs SharePoint (500 users, 3 jaar):
   SharePoint: 3 × €25.200 = €75.600
-  IntraVox:   3 × €1.499 = €4.497
+  IntraVox:   3 × €1.999 = €5.997
 
-  Besparing: €71.103 (94%)
+  Besparing: €69.603 (92%)
 ```
 
 ### Prijspsychologie
 
-- **€499/jaar** (Pro): Minder dan €42/maand, makkelijke beslissing
-- **€1.499/jaar** (Enterprise): Minder dan €125/maand, fractie van SharePoint
+- **€499/jaar** (Business): Minder dan €42/maand, makkelijke beslissing
+- **€999/jaar** (Professional): Minder dan €84/maand, duidelijke waarde
+- **€1.999/jaar** (Enterprise): Minder dan €167/maand, fractie van SharePoint
+
+### Prijsladder logica
+
+```
+Gratis → €499 → €999 → €1.999
+          (2x)   (2x)
+```
+Elke stap is ongeveer een verdubbeling - voelt logisch en eerlijk voor klanten.
 
 ## Implementatie Stappen
 
@@ -372,7 +384,8 @@ Besparing vs SharePoint (500 users, 3 jaar):
 
 ### Functioneel
 - Gratis tier stopt bij 50 pagina's per taal (demo data past erin)
-- Pro key ontgrendelt 500 pagina's per taal
+- Business key ontgrendelt 250 pagina's per taal
+- Professional key ontgrendelt 1000 pagina's per taal
 - Enterprise key ontgrendelt onbeperkt
 - Ongeldige key wordt afgewezen met duidelijke melding
 - Offline fallback werkt als server onbereikbaar is
