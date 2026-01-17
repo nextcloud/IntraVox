@@ -152,4 +152,96 @@ class LicenseController extends Controller {
             );
         }
     }
+
+    /**
+     * Save license settings (server URL and license key)
+     *
+     * Admin only - no @NoAdminRequired annotation.
+     *
+     * @return DataResponse
+     */
+    public function saveSettings(): DataResponse {
+        // Double-check admin
+        if (!$this->isAdmin()) {
+            return $this->forbiddenResponse('Admin privileges required');
+        }
+
+        try {
+            $licenseServerUrl = $this->request->getParam('licenseServerUrl', '');
+            $licenseKey = $this->request->getParam('licenseKey', '');
+
+            // Save license server URL if provided
+            if ($licenseServerUrl !== null) {
+                $this->licenseService->setLicenseServerUrl($licenseServerUrl);
+            }
+
+            // Save license key if provided
+            if ($licenseKey !== null) {
+                $this->licenseService->setLicenseKey($licenseKey);
+            }
+
+            return new DataResponse([
+                'success' => true,
+                'message' => 'License settings saved successfully'
+            ]);
+        } catch (\Exception $e) {
+            return $this->safeErrorResponse(
+                $e,
+                'Failed to save license settings',
+                Http::STATUS_INTERNAL_SERVER_ERROR
+            );
+        }
+    }
+
+    /**
+     * Validate the configured license
+     *
+     * Admin only - no @NoAdminRequired annotation.
+     *
+     * @return DataResponse
+     */
+    public function validate(): DataResponse {
+        // Double-check admin
+        if (!$this->isAdmin()) {
+            return $this->forbiddenResponse('Admin privileges required');
+        }
+
+        try {
+            $result = $this->licenseService->validateLicense();
+
+            return new DataResponse($result);
+        } catch (\Exception $e) {
+            return $this->safeErrorResponse(
+                $e,
+                'Failed to validate license',
+                Http::STATUS_INTERNAL_SERVER_ERROR
+            );
+        }
+    }
+
+    /**
+     * Update license usage on the license server
+     *
+     * Admin only - no @NoAdminRequired annotation.
+     *
+     * @return DataResponse
+     */
+    public function updateUsage(): DataResponse {
+        // Double-check admin
+        if (!$this->isAdmin()) {
+            return $this->forbiddenResponse('Admin privileges required');
+        }
+
+        try {
+            $result = $this->licenseService->updateUsage();
+
+            return new DataResponse($result);
+        } catch (\Exception $e) {
+            return $this->safeErrorResponse(
+                $e,
+                'Failed to update license usage',
+                Http::STATUS_INTERNAL_SERVER_ERROR
+            );
+        }
+    }
 }

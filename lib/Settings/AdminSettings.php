@@ -83,6 +83,8 @@ class AdminSettings implements IDelegatedSettings {
             'publicationSettings' => $this->publicationSettings->getAll(),
             'metavoxAvailable' => $metavoxAvailable,
             'licenseStats' => $this->licenseService->getStats(),
+            'licenseServerUrl' => $this->licenseService->getLicenseServerUrl(),
+            'licenseKey' => $this->licenseService->getLicenseKey() ?? '',
         ]);
 
         // Load translations for JavaScript

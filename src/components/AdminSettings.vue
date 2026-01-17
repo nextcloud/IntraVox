@@ -657,6 +657,88 @@
 
 		<!-- License Tab -->
 		<div v-if="activeTab === 'license'" class="tab-content">
+			<!-- License Configuration Section -->
+			<div class="settings-section">
+				<h2>{{ t('intravox', 'License Configuration') }}</h2>
+				<p class="settings-section-desc">
+					{{ t('intravox', 'Configure your license server connection and license key.') }}
+				</p>
+
+				<div class="license-config">
+					<div class="setting-row">
+						<label class="setting-label" for="license-server-url">
+							{{ t('intravox', 'License Server URL') }}
+						</label>
+						<input
+							id="license-server-url"
+							v-model="licenseServerUrl"
+							type="url"
+							class="setting-input"
+							placeholder="https://licenses.voxcloud.nl" />
+						<p class="setting-hint">
+							{{ t('intravox', 'The URL of the license server. Leave empty to use the default.') }}
+						</p>
+					</div>
+
+					<div class="setting-row">
+						<label class="setting-label" for="license-key">
+							{{ t('intravox', 'License Key') }}
+						</label>
+						<input
+							id="license-key"
+							v-model="licenseKey"
+							type="text"
+							class="setting-input license-key-input"
+							:placeholder="t('intravox', 'Enter your license key')" />
+						<p class="setting-hint">
+							{{ t('intravox', 'Your license key from VoxCloud. Leave empty for the free version.') }}
+						</p>
+					</div>
+
+					<!-- License Status -->
+					<div v-if="licenseKey" class="license-status">
+						<div v-if="validatingLicense" class="status-checking">
+							<span class="icon-loading-small"></span>
+							{{ t('intravox', 'Validating license...') }}
+						</div>
+						<div v-else-if="licenseValidation" class="status-result">
+							<NcNoteCard :type="licenseValidation.valid ? 'success' : 'error'">
+								<template v-if="licenseValidation.valid">
+									<p><strong>{{ t('intravox', 'License valid') }}</strong></p>
+									<p v-if="licenseValidation.license">
+										{{ t('intravox', 'Type') }}: {{ licenseValidation.license.licenseType || 'Standard' }}
+										<span v-if="licenseValidation.license.maxPages">
+											| {{ t('intravox', 'Max pages') }}: {{ licenseValidation.license.maxPages }}
+										</span>
+									</p>
+								</template>
+								<template v-else>
+									<p><strong>{{ t('intravox', 'License invalid') }}</strong></p>
+									<p>{{ licenseValidation.reason }}</p>
+								</template>
+							</NcNoteCard>
+						</div>
+					</div>
+
+					<div class="save-section license-save">
+						<NcButton
+							type="primary"
+							:disabled="savingLicense"
+							@click="saveLicenseSettings">
+							{{ savingLicense ? t('intravox', 'Saving...') : t('intravox', 'Save license settings') }}
+						</NcButton>
+						<NcButton
+							v-if="licenseKey"
+							type="secondary"
+							:disabled="validatingLicense"
+							@click="validateLicenseNow">
+							{{ validatingLicense ? t('intravox', 'Validating...') : t('intravox', 'Validate now') }}
+						</NcButton>
+					</div>
+				</div>
+			</div>
+
+			<!-- Page Statistics Section -->
 			<div class="settings-section">
 				<h2>{{ t('intravox', 'Page Statistics') }}</h2>
 				<p class="settings-section-desc">
@@ -696,8 +778,8 @@
 						{{ licenseStats.totalPages }} {{ t('intravox', 'pages') }}
 					</div>
 
-					<!-- Free tier info -->
-					<NcNoteCard type="info" class="license-info-card">
+					<!-- Free tier info - show if no license, invalid license, or expired license -->
+					<NcNoteCard v-if="showFreeTierInfo" type="info" class="license-info-card">
 						<p>
 							{{ t('intravox', 'In the free version, {limit} pages per language are included.', { limit: licenseStats.freeLimit }) }}
 						</p>
@@ -823,6 +905,12 @@ export default {
 				freeLimit: 50,
 				supportedLanguages: ['nl', 'en', 'de', 'fr'],
 			},
+			// License configuration
+			licenseServerUrl: this.initialState.licenseServerUrl || '',
+			licenseKey: this.initialState.licenseKey || '',
+			savingLicense: false,
+			validatingLicense: false,
+			licenseValidation: null,
 			// Known video services with metadata
 			knownServices: [
 				// Privacy-friendly (no/minimal tracking)
@@ -871,6 +959,14 @@ export default {
 		// Filter MetaVox fields to only show date type fields
 		dateFields() {
 			return this.metavoxFields.filter(field => field.field_type === 'date')
+		},
+		// Show free tier info if no license, invalid license, or expired license
+		showFreeTierInfo() {
+			// No license key entered
+			if (!this.licenseKey) return true
+			// License validation failed (invalid or expired)
+			if (this.licenseValidation && !this.licenseValidation.valid) return true
+			return false
 		},
 	},
 	watch: {
@@ -1439,6 +1535,53 @@ export default {
 			const limit = this.licenseStats.freeLimit
 			// Cap at 100% for display, but allow exceeded styling
 			return Math.min((count / limit) * 100, 100)
+		},
+		async saveLicenseSettings() {
+			this.savingLicense = true
+
+			try {
+				await axios.post(
+					generateUrl('/apps/intravox/api/settings/license'),
+					{
+						licenseServerUrl: this.licenseServerUrl,
+						licenseKey: this.licenseKey,
+					}
+				)
+				showSuccess(this.t('intravox', 'License settings saved'))
+
+				// Validate after saving if we have a key
+				if (this.licenseKey) {
+					await this.validateLicenseNow()
+				} else {
+					this.licenseValidation = null
+				}
+			} catch (error) {
+				console.error('Failed to save license settings:', error)
+				showError(this.t('intravox', 'Failed to save license settings'))
+			} finally {
+				this.savingLicense = false
+			}
+		},
+		async validateLicenseNow() {
+			if (!this.licenseKey) return
+
+			this.validatingLicense = true
+			this.licenseValidation = null
+
+			try {
+				const response = await axios.post(
+					generateUrl('/apps/intravox/api/license/validate')
+				)
+				this.licenseValidation = response.data
+			} catch (error) {
+				console.error('Failed to validate license:', error)
+				this.licenseValidation = {
+					valid: false,
+					reason: error.response?.data?.error || this.t('intravox', 'Failed to validate license'),
+				}
+			} finally {
+				this.validatingLicense = false
+			}
 		},
 	},
 	mounted() {
@@ -2343,5 +2486,40 @@ export default {
 
 .license-info-card p:last-child {
 	margin-bottom: 0;
+}
+
+/* License configuration */
+.license-config {
+	margin-top: 20px;
+	max-width: 500px;
+}
+
+.license-key-input {
+	font-family: var(--font-monospace, monospace);
+	letter-spacing: 0.5px;
+}
+
+.license-status {
+	margin-top: 16px;
+}
+
+.status-checking {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 12px;
+	background: var(--color-background-hover);
+	border-radius: var(--border-radius);
+	color: var(--color-text-maxcontrast);
+}
+
+.status-result {
+	margin-top: 8px;
+}
+
+.license-save {
+	display: flex;
+	gap: 12px;
+	align-items: center;
 }
 </style>

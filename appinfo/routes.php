@@ -113,6 +113,9 @@ return [
         ['name' => 'license#getStats', 'url' => '/api/license/stats', 'verb' => 'GET'],
         ['name' => 'license#sendTelemetry', 'url' => '/api/license/telemetry', 'verb' => 'POST'],
         ['name' => 'license#getInstanceInfo', 'url' => '/api/license/instance', 'verb' => 'GET'],
+        ['name' => 'license#saveSettings', 'url' => '/api/settings/license', 'verb' => 'POST'],
+        ['name' => 'license#validate', 'url' => '/api/license/validate', 'verb' => 'POST'],
+        ['name' => 'license#updateUsage', 'url' => '/api/license/update-usage', 'verb' => 'POST'],
 
         // Page routes
         ['name' => 'page#index', 'url' => '/', 'verb' => 'GET'],
