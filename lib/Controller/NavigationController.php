@@ -125,6 +125,7 @@ class NavigationController extends Controller {
 
     /**
      * @NoAdminRequired
+     * @NoCSRFRequired
      */
     public function save(): JSONResponse {
         try {

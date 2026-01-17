@@ -65,6 +65,7 @@ class FooterController extends Controller {
 
     /**
      * @NoAdminRequired
+     * @NoCSRFRequired
      */
     public function save(): JSONResponse {
         try {

@@ -333,11 +333,13 @@ export default {
       }
     },
     pageId() {
+      // Note: Sidebar is closed on navigation (in App.vue), so this is a fallback
       if (this.isOpen) {
-        // Reset and reload for new page
         this.versionsLoaded = false;
-        this.loadMetadata().catch(() => {});
-        this.dispatchMetaVoxUpdate();
+        this.selectedVersion = null;
+        this.versions = [];
+        this.currentVersion = null;
+        this.metadata = null;
       }
     },
     initialTab(newTab) {
@@ -348,10 +350,12 @@ export default {
       }
     },
     activeTab(newTab) {
-      // Load versions when tab is activated (lazy loading)
+      // Load data when tab is activated (lazy loading)
       if (newTab === 'versions-tab' && !this.versionsLoaded) {
         this.loadVersions();
         this.versionsLoaded = true;
+      } else if (newTab === 'details-tab' && !this.metadata) {
+        this.loadMetadata().catch(() => {});
       } else if (newTab === 'metavox-tab' && this.metaVoxInstalled) {
         this.$nextTick(() => {
           this.dispatchMetaVoxUpdate();

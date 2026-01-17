@@ -7,10 +7,25 @@
     "php": ">=8.1",
     "enshrined/svg-sanitize": "^0.20"
   },
+  "require-dev": {
+    "phpunit/phpunit": "^10.0",
+    "mockery/mockery": "^1.6"
+  },
   "autoload": {
     "psr-4": {
       "OCA\\IntraVox\\": "lib/"
     }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "OCA\\IntraVox\\Tests\\": "tests/"
+    }
+  },
+  "scripts": {
+    "test": "phpunit",
+    "test:unit": "phpunit --testsuite Unit",
+    "test:integration": "phpunit --testsuite Integration",
+    "test:coverage": "phpunit --coverage-html coverage"
   },
   "config": {
     "audit": {

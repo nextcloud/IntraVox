@@ -376,6 +376,91 @@ class PermissionService {
     }
 
     /**
+     * Check if user is a Nextcloud system administrator.
+     *
+     * This checks the admin group membership, not the IntraVox folder permissions.
+     * Use this for operations that require system-level access like settings,
+     * bulk operations, and import/export.
+     */
+    public function isSystemAdmin(?string $userId = null): bool {
+        $userId = $userId ?? $this->userId;
+        if (!$userId) {
+            return false;
+        }
+
+        $user = \OC::$server->getUserManager()->get($userId);
+        if (!$user) {
+            return false;
+        }
+
+        return $this->groupManager->isAdmin($userId);
+    }
+
+    /**
+     * Check if user can manage IntraVox settings.
+     * Requires system admin privileges.
+     */
+    public function canManageSettings(?string $userId = null): bool {
+        return $this->isSystemAdmin($userId);
+    }
+
+    /**
+     * Check if user can perform bulk operations.
+     * Requires system admin privileges.
+     */
+    public function canBulkDelete(?string $userId = null): bool {
+        return $this->isSystemAdmin($userId);
+    }
+
+    /**
+     * Check if user can perform bulk move operations.
+     * Requires system admin privileges.
+     */
+    public function canBulkMove(?string $userId = null): bool {
+        return $this->isSystemAdmin($userId);
+    }
+
+    /**
+     * Check if user can perform bulk update operations.
+     * Requires system admin privileges.
+     */
+    public function canBulkUpdate(?string $userId = null): bool {
+        return $this->isSystemAdmin($userId);
+    }
+
+    /**
+     * Check if user can import content.
+     * Requires system admin privileges.
+     */
+    public function canImport(?string $userId = null): bool {
+        return $this->isSystemAdmin($userId);
+    }
+
+    /**
+     * Check if user can export all content.
+     * Requires system admin privileges for full export.
+     */
+    public function canExport(?string $userId = null): bool {
+        return $this->isSystemAdmin($userId);
+    }
+
+    /**
+     * Check if user can view analytics dashboard.
+     * Requires system admin privileges.
+     */
+    public function canViewAnalyticsDashboard(?string $userId = null): bool {
+        return $this->isSystemAdmin($userId);
+    }
+
+    /**
+     * Check if user can modify analytics settings.
+     * Requires system admin privileges.
+     */
+    public function canManageAnalytics(?string $userId = null): bool {
+        return $this->isSystemAdmin($userId);
+    }
+
+    /**
      * Get a permissions object for API responses.
      *
      * @param string $relativePath Path to get permissions for

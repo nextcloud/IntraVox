@@ -449,6 +449,12 @@ export default {
           return;
         }
 
+        // Close sidebar when navigating to a different page
+        if (this.showDetailsSidebar && this.currentPage?.uniqueId !== pageId) {
+          this.showDetailsSidebar = false;
+          this.sidebarInitialTab = 'details-tab';
+        }
+
         // Check cache first
         const cacheKey = `page-${pageId}`;
         const cached = CacheService.get(cacheKey);

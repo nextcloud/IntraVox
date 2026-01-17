@@ -2,12 +2,26 @@
 declare(strict_types=1);
 
 return [
+    'ocs' => [
+        // OCS routes for external API access (Basic Auth)
+        ['name' => 'api#listPages', 'url' => '/api/v1/pages', 'verb' => 'GET'],
+        ['name' => 'api#createPage', 'url' => '/api/v1/pages', 'verb' => 'POST'],
+        ['name' => 'api#getPage', 'url' => '/api/v1/pages/{id}', 'verb' => 'GET'],
+        ['name' => 'api#updatePage', 'url' => '/api/v1/pages/{id}', 'verb' => 'PUT'],
+        ['name' => 'api#deletePage', 'url' => '/api/v1/pages/{id}', 'verb' => 'DELETE'],
+
+        // OCS Media routes for external API access
+        ['name' => 'api#uploadMedia', 'url' => '/api/v1/pages/{pageId}/media', 'verb' => 'POST'],
+        ['name' => 'api#listMedia', 'url' => '/api/v1/pages/{pageId}/media', 'verb' => 'GET'],
+        ['name' => 'api#getMedia', 'url' => '/api/v1/pages/{pageId}/media/{filename}', 'verb' => 'GET'],
+
+    ],
     'routes' => [
-        // API routes MUST come first to avoid conflicts with language routes
+        // Standard routes for internal use (session auth)
+        ['name' => 'api#createPage', 'url' => '/api/pages', 'verb' => 'POST'],
         ['name' => 'api#listPages', 'url' => '/api/pages', 'verb' => 'GET'],
         ['name' => 'api#getPageTree', 'url' => '/api/pages/tree', 'verb' => 'GET'],
         ['name' => 'api#getPage', 'url' => '/api/pages/{id}', 'verb' => 'GET'],
-        ['name' => 'api#createPage', 'url' => '/api/pages', 'verb' => 'POST'],
         ['name' => 'api#updatePage', 'url' => '/api/pages/{id}', 'verb' => 'PUT'],
         ['name' => 'api#deletePage', 'url' => '/api/pages/{id}', 'verb' => 'DELETE'],
         ['name' => 'api#uploadMedia', 'url' => '/api/pages/{pageId}/media', 'verb' => 'POST'],
@@ -80,6 +94,20 @@ return [
         ['name' => 'comment#getCommentReactions', 'url' => '/api/comments/{commentId}/reactions', 'verb' => 'GET'],
         ['name' => 'comment#addCommentReaction', 'url' => '/api/comments/{commentId}/reactions/{emoji}', 'verb' => 'POST'],
         ['name' => 'comment#removeCommentReaction', 'url' => '/api/comments/{commentId}/reactions/{emoji}', 'verb' => 'DELETE'],
+
+        // Analytics API routes
+        ['name' => 'analytics#trackView', 'url' => '/api/analytics/track/{pageId}', 'verb' => 'POST'],
+        ['name' => 'analytics#getPageStats', 'url' => '/api/analytics/page/{pageId}', 'verb' => 'GET'],
+        ['name' => 'analytics#getTopPages', 'url' => '/api/analytics/top', 'verb' => 'GET'],
+        ['name' => 'analytics#getDashboard', 'url' => '/api/analytics/dashboard', 'verb' => 'GET'],
+        ['name' => 'analytics#getSettings', 'url' => '/api/analytics/settings', 'verb' => 'GET'],
+        ['name' => 'analytics#setSettings', 'url' => '/api/analytics/settings', 'verb' => 'POST'],
+
+        // Bulk operations API routes
+        ['name' => 'bulk#validateOperation', 'url' => '/api/bulk/validate', 'verb' => 'POST'],
+        ['name' => 'bulk#deletePages', 'url' => '/api/bulk/delete', 'verb' => 'POST'],
+        ['name' => 'bulk#movePages', 'url' => '/api/bulk/move', 'verb' => 'POST'],
+        ['name' => 'bulk#updatePages', 'url' => '/api/bulk/update', 'verb' => 'POST'],
 
         // Page routes
         ['name' => 'page#index', 'url' => '/', 'verb' => 'GET'],

@@ -7,6 +7,73 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-01-17 - API Security & Error Handling
+
+### Added
+- **Analytics API**: New endpoints for page view tracking and statistics
+  - `POST /api/analytics/track/{pageId}` - Track page views
+  - `GET /api/analytics/page/{pageId}` - Get page statistics
+  - `GET /api/analytics/top` - Get top viewed pages
+  - `GET /api/analytics/dashboard` - Admin dashboard with aggregate stats
+  - `GET/POST /api/analytics/settings` - Admin analytics configuration
+- **Bulk Operations API**: New endpoints for batch page management (admin only)
+  - `POST /api/bulk/validate` - Dry-run validation before execution
+  - `POST /api/bulk/delete` - Bulk delete pages with optional child deletion
+  - `POST /api/bulk/move` - Bulk move pages to new parent
+  - `POST /api/bulk/update` - Bulk update page metadata
+  - Maximum 100 pages per operation to prevent DoS
+- **OCS Media Routes**: External API access for media uploads via Basic Auth
+  - `POST /ocs/v2.php/apps/intravox/api/v1/pages/{pageId}/media` - Upload media
+  - `GET /ocs/v2.php/apps/intravox/api/v1/pages/{pageId}/media` - List media
+  - `GET /ocs/v2.php/apps/intravox/api/v1/pages/{pageId}/media/{filename}` - Get media file
+- **API Error Handling**: Consistent error responses across all controllers
+  - New `ApiErrorTrait` for standardized error handling
+  - All responses include `success: true/false` field
+  - Error responses include `errorId` for support correlation
+  - Generic error messages prevent information disclosure
+  - Full error details logged server-side for debugging
+- **Versioning Documentation**: New section "What Triggers a New Version?" in VERSIONING.md
+  - Clear table showing what actions create versions and what don't
+  - Detailed explanation of MetaVox metadata and versioning relationship
+  - Visual diagram showing separation between JSON content and MetaVox database
+
+### Changed
+- **API Response Format**: All API responses now consistently include `success` field
+- **Admin-Only Endpoints**: Settings, import, and bulk operations require admin privileges
+  - Removed `@NoAdminRequired` annotation from sensitive endpoints
+  - Runtime admin checks as secondary protection layer
+
+### Fixed
+- **Sidebar Closes on Page Navigation**: The page details sidebar now automatically closes when navigating to a different page
+  - Prevents stale data from previous page being displayed
+  - Resolves issue where Versions tab showed "No versions available" after navigation
+  - Resolves issue where MetaVox tab showed metadata from previous page
+  - Consistent behavior: sidebar always shows fresh data when reopened
+- **Simplified Sidebar State Management**: Cleaned up the `pageId` watcher in PageDetailsSidebar
+  - Removed complex refresh logic that was causing race conditions
+  - Sidebar now relies on clean open/close cycle for data loading
+
+### Security
+- **File Upload Security**: Enhanced validation for uploaded files
+  - Extension whitelist for allowed file types (jpg, png, gif, webp, svg, mp4, webm, ogg, pdf)
+  - MIME type validation with `getimagesize()` cross-check for images
+  - SVG sanitization with dangerous element detection (iframe, embed, object, script)
+- **Path Traversal Protection**: Hardened path validation
+  - URL-encoded bypass prevention
+  - Unicode normalization
+  - Null byte detection
+- **API Documentation**: Updated API_REFERENCE.md with security section
+  - Admin-only endpoints table
+  - File upload restrictions
+  - Error response format
+
+### Technical
+- New `lib/Controller/ApiErrorTrait.php` for reusable error handling
+- Updated BulkController, AnalyticsController, ApiController with trait
+- Sidebar close logic added to `selectPage()` method in App.vue
+- PageDetailsSidebar `pageId` watcher simplified to fallback-only reset
+- Event handlers for page save (`handlePageSaved`) preserved for version refresh
+
 ## [0.8.9] - 2026-01-15 - Widget Color Consistency & Row Background Inheritance
 
 ### Added

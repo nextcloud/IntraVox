@@ -151,12 +151,50 @@ For optimal version control in IntraVox:
 2. **Retention policy** - Configure how long versions are kept
 3. **Backup strategy** - Versioning is not a replacement for backups
 
+## What Triggers a New Version?
+
+A new version is created when:
+
+| Action | Creates Version? |
+|--------|-----------------|
+| Saving page content (text, blocks, structure) | ✅ Yes |
+| Changing page title | ✅ Yes |
+| Modifying navigation settings | ✅ Yes |
+| Changing MetaVox metadata | ❌ No |
+| Adding tags or comments | ❌ No |
+| Sharing the page | ❌ No |
+
+### MetaVox Metadata and Versioning
+
+**MetaVox metadata does NOT create new versions.** This is by design:
+
+1. **Separate storage** - MetaVox stores metadata in its own database table (`metavox_file_gf_meta`), not in the JSON file itself
+2. **Metadata ≠ Content** - Metadata describes the page (author, status, tags), while versions track *content* changes
+3. **Nextcloud standard** - This is consistent with how Nextcloud handles file metadata (tags, comments, shares don't create versions)
+4. **Practical** - If every metadata change created a version, the version history would become cluttered with minor changes
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  IntraVox Page (JSON file)    │  MetaVox Database       │
+│  → Changes create versions    │  → No versions          │
+├───────────────────────────────┼─────────────────────────┤
+│  homepage.json                │  metavox_file_gf_meta   │
+│  - title                      │  - file_id: 12345       │
+│  - content blocks             │  - author: "Jan"        │
+│  - navigation                 │  - status: "published"  │
+│  - settings                   │  - department: "HR"     │
+└───────────────────────────────┴─────────────────────────┘
+```
+
+> **Tip:** If you need to track metadata changes over time, consider this a feature request for MetaVox (audit logging).
+
 ## Limitations
 
 - **No version labels** - Unlike SharePoint, Nextcloud does not support custom version numbers (1.0, 2.0)
 - **No major/minor versions** - All versions are equal
 - **No comparison view** - Diff view between versions is not available
 - **JSON content only** - Media in `_resources` has its own versioning
+- **No metadata versioning** - MetaVox metadata changes are not versioned
 
 ## Frequently Asked Questions
 
@@ -178,4 +216,4 @@ Media (images, videos) in the `_resources` folder have their own versioning. Whe
 
 ---
 
-*Last updated: January 2026 - IntraVox v0.8.8*
+*Last updated: January 2026 - IntraVox v0.9.0*

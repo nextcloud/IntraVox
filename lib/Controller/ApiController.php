@@ -35,6 +35,8 @@ use Psr\Log\LoggerInterface;
  * which automatically respect GroupFolder ACL rules.
  */
 class ApiController extends Controller {
+    use ApiErrorTrait;
+
     private PageService $pageService;
     private SetupService $setupService;
     private EngagementSettingsService $engagementSettings;
@@ -71,6 +73,13 @@ class ApiController extends Controller {
         $this->groupManager = $groupManager;
         $this->userSession = $userSession;
         $this->tempManager = $tempManager;
+    }
+
+    /**
+     * Get the logger instance for ApiErrorTrait.
+     */
+    protected function getLogger(): LoggerInterface {
+        return $this->logger;
     }
 
     /**
@@ -211,6 +220,7 @@ class ApiController extends Controller {
 
     /**
      * @NoAdminRequired
+     * @NoCSRFRequired
      */
     public function createPage(): DataResponse {
         try {
@@ -247,6 +257,7 @@ class ApiController extends Controller {
 
     /**
      * @NoAdminRequired
+     * @NoCSRFRequired
      */
     public function updatePage(string $id): DataResponse {
         try {
@@ -287,6 +298,7 @@ class ApiController extends Controller {
 
     /**
      * @NoAdminRequired
+     * @NoCSRFRequired
      */
     public function deletePage(string $id): DataResponse {
         try {
@@ -626,6 +638,7 @@ class ApiController extends Controller {
 
     /**
      * @NoAdminRequired
+     * @NoCSRFRequired
      */
     public function restorePageVersion(string $pageId, string $timestamp): DataResponse {
         try {
@@ -761,6 +774,7 @@ class ApiController extends Controller {
 
     /**
      * @NoAdminRequired
+     * @NoCSRFRequired
      */
     public function updatePageMetadata(string $pageId): DataResponse {
         try {
@@ -1194,8 +1208,9 @@ class ApiController extends Controller {
     /**
      * Set video domain whitelist
      * Warning-based system: all domains allowed, but with category warnings
+     * Admin only
      *
-     * @NoAdminRequired
+     * @NoCSRFRequired
      */
     public function setVideoDomains(): DataResponse {
         // Manual admin check since @AuthorizedAdminSetting has dependency issues
@@ -1310,6 +1325,8 @@ class ApiController extends Controller {
     /**
      * Update engagement settings
      * Admin only
+     *
+     * @NoCSRFRequired
      */
     public function setEngagementSettings(): DataResponse {
         // Only admins can change engagement settings
@@ -1355,6 +1372,8 @@ class ApiController extends Controller {
     /**
      * Update publication settings
      * Admin only
+     *
+     * @NoCSRFRequired
      */
     public function setPublicationSettings(): DataResponse {
         // Only admins can change publication settings
@@ -1389,12 +1408,20 @@ class ApiController extends Controller {
 
     /**
      * Import from uploaded ZIP file
+     * Admin only
      *
-     * @NoAdminRequired
      * @NoCSRFRequired
      * @return JSONResponse
      */
     public function importZip(): JSONResponse {
+        // Security: Only admins can import
+        if (!$this->isAdmin()) {
+            return new JSONResponse(
+                ['error' => 'Admin access required'],
+                Http::STATUS_FORBIDDEN
+            );
+        }
+
         try {
             $file = $this->request->getUploadedFile('file');
 
@@ -1450,8 +1477,15 @@ class ApiController extends Controller {
                 'stats' => $stats,
             ]);
         } catch (\Exception $e) {
+            $errorId = uniqid('err_');
+            $this->logger->error('IntraVox Import: ZIP import failed', [
+                'errorId' => $errorId,
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
             return new JSONResponse(
-                ['error' => $e->getMessage()],
+                ['error' => 'Import failed. Please check the ZIP file format and try again.', 'errorId' => $errorId],
                 Http::STATUS_INTERNAL_SERVER_ERROR
             );
         }
@@ -1459,12 +1493,20 @@ class ApiController extends Controller {
 
     /**
      * Import from Confluence HTML export ZIP file
+     * Admin only
      *
-     * @NoAdminRequired
      * @NoCSRFRequired
      * @return JSONResponse
      */
     public function importConfluenceHtml(): JSONResponse {
+        // Security: Only admins can import
+        if (!$this->isAdmin()) {
+            return new JSONResponse(
+                ['error' => 'Admin access required'],
+                Http::STATUS_FORBIDDEN
+            );
+        }
+
         $this->logger->info('Confluence HTML import endpoint called');
 
         try {
@@ -1593,11 +1635,15 @@ class ApiController extends Controller {
                 'message' => 'Confluence HTML export imported successfully',
             ]);
         } catch (\Exception $e) {
-            $this->logger->error('Confluence HTML import failed: ' . $e->getMessage(), [
-                'exception' => $e,
+            $errorId = uniqid('err_');
+            $this->logger->error('Confluence HTML import failed', [
+                'errorId' => $errorId,
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
             ]);
             return new JSONResponse(
-                ['error' => $e->getMessage()],
+                ['error' => 'Confluence import failed. Please check the export format and try again.', 'errorId' => $errorId],
                 Http::STATUS_INTERNAL_SERVER_ERROR
             );
         }
@@ -1687,47 +1733,71 @@ class ApiController extends Controller {
      * @throws \InvalidArgumentException if path is malicious
      */
     private function sanitizePath(string $path): string {
-        // 1. Check for null bytes (can bypass extension checks)
-        if (strpos($path, "\0") !== false) {
-            throw new \InvalidArgumentException('Null bytes not allowed in path');
+        if (empty($path)) {
+            return '';
         }
 
-        // 2. Unicode normalization (prevent NFD/NFC attacks)
+        // 1. Check for null bytes FIRST (can bypass extension checks)
+        if (strpos($path, "\0") !== false) {
+            throw new \InvalidArgumentException('Invalid path: null bytes detected');
+        }
+
+        // 2. URL decode and check for double-encoding attacks
+        $decoded = urldecode($path);
+        if ($decoded !== $path) {
+            // Path was URL-encoded, decode once more to detect double-encoding
+            $doubleDecoded = urldecode($decoded);
+            if (strpos($doubleDecoded, '..') !== false ||
+                strpos($doubleDecoded, '\\') !== false ||
+                strpos($doubleDecoded, "\0") !== false) {
+                throw new \InvalidArgumentException('Path traversal detected');
+            }
+            $path = $decoded;
+        }
+
+        // 3. Unicode normalization (prevent NFD/NFC attacks)
         if (class_exists('Normalizer')) {
             $normalized = \Normalizer::normalize($path, \Normalizer::FORM_C);
             if ($normalized === false) {
-                throw new \InvalidArgumentException('Invalid unicode sequence in path');
+                throw new \InvalidArgumentException('Invalid unicode in path');
             }
             $path = $normalized;
         }
 
-        // 3. Convert backslashes to forward slashes
+        // 4. Convert backslashes to forward slashes
         $path = str_replace('\\', '/', $path);
 
-        // 4. Remove leading/trailing slashes
-        $path = trim($path, '/');
+        // 5. Remove leading/trailing slashes and dots
+        $path = trim($path, '/.');
 
-        // 5. Detect directory traversal attempts
-        if (strpos($path, '..') !== false) {
-            throw new \InvalidArgumentException('Path traversal not allowed');
+        // 6. Detect directory traversal patterns
+        if (preg_match('#(\.\./|/\.\.|\.\.$|^\.\./)#', $path)) {
+            throw new \InvalidArgumentException('Path traversal detected');
         }
 
-        // 6. Split into segments and validate each
-        $segments = explode('/', $path);
-        foreach ($segments as $segment) {
-            // Empty segments (double slashes)
-            if (empty($segment) || $segment === '.' || $segment === '..') {
-                throw new \InvalidArgumentException('Invalid path segment');
-            }
+        // 7. Validate characters - only allow safe path characters
+        if (!empty($path) && !preg_match('#^[a-zA-Z0-9/_\-\.]+$#', $path)) {
+            throw new \InvalidArgumentException('Invalid characters in path');
+        }
 
-            // Hidden files (starting with dot)
-            if (substr($segment, 0, 1) === '.') {
-                throw new \InvalidArgumentException('Hidden files not allowed');
-            }
+        // 8. Split into segments and validate each
+        if (!empty($path)) {
+            $segments = explode('/', $path);
+            foreach ($segments as $segment) {
+                // Empty segments (double slashes)
+                if (empty($segment) || $segment === '.' || $segment === '..') {
+                    throw new \InvalidArgumentException('Invalid path segment');
+                }
 
-            // Block executable PHP extensions
-            if (preg_match('/\.(php|phtml|php[345]|phar|phps|pht)$/i', $segment)) {
-                throw new \InvalidArgumentException('Executable files not allowed');
+                // Hidden files (starting with dot) - except _media, _resources
+                if (substr($segment, 0, 1) === '.' && $segment !== '.') {
+                    throw new \InvalidArgumentException('Hidden files not allowed');
+                }
+
+                // Block executable PHP extensions
+                if (preg_match('/\.(php|phtml|php[345]|phar|phps|pht|cgi|pl|sh|bash)$/i', $segment)) {
+                    throw new \InvalidArgumentException('Executable files not allowed');
+                }
             }
         }
 

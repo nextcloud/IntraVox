@@ -104,6 +104,7 @@ class CommentController extends Controller {
      * Create a new comment
      *
      * @NoAdminRequired
+     * @NoCSRFRequired
      */
     public function createComment(string $pageId, string $message, ?string $parentId = null): DataResponse {
         try {
@@ -140,6 +141,7 @@ class CommentController extends Controller {
      * Update an existing comment
      *
      * @NoAdminRequired
+     * @NoCSRFRequired
      */
     public function updateComment(string $commentId, string $message): DataResponse {
         try {
@@ -184,6 +186,7 @@ class CommentController extends Controller {
      * Delete a comment
      *
      * @NoAdminRequired
+     * @NoCSRFRequired
      */
     public function deleteComment(string $commentId): DataResponse {
         try {
@@ -253,6 +256,7 @@ class CommentController extends Controller {
      * Add a reaction to a page
      *
      * @NoAdminRequired
+     * @NoCSRFRequired
      */
     public function addPageReaction(string $pageId, string $emoji): DataResponse {
         try {
@@ -283,6 +287,7 @@ class CommentController extends Controller {
      * Remove a reaction from a page
      *
      * @NoAdminRequired
+     * @NoCSRFRequired
      */
     public function removePageReaction(string $pageId, string $emoji): DataResponse {
         try {
@@ -346,6 +351,7 @@ class CommentController extends Controller {
      * Add a reaction to a comment
      *
      * @NoAdminRequired
+     * @NoCSRFRequired
      */
     public function addCommentReaction(string $commentId, string $emoji): DataResponse {
         try {
@@ -377,6 +383,7 @@ class CommentController extends Controller {
      * Remove a reaction from a comment
      *
      * @NoAdminRequired
+     * @NoCSRFRequired
      */
     public function removeCommentReaction(string $commentId, string $emoji): DataResponse {
         try {

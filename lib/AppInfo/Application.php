@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace OCA\IntraVox\AppInfo;
 
+use OCA\IntraVox\Activity\Provider as ActivityProvider;
+use OCA\IntraVox\Activity\Setting as ActivitySetting;
 use OCA\IntraVox\Command\SetupCommand;
 use OCA\IntraVox\Event\PageDeletedEvent;
 use OCA\IntraVox\Listener\CommentsEntityListener;
@@ -42,6 +44,15 @@ class Application extends App implements IBootstrap {
             PageDeletedEvent::class,
             PageDeletedListener::class
         );
+
+        // Register Activity Provider and Setting for Nextcloud Activity integration
+        // Note: These methods may not be available in all Nextcloud versions
+        if (method_exists($context, 'registerActivityProvider')) {
+            $context->registerActivityProvider(ActivityProvider::class);
+        }
+        if (method_exists($context, 'registerActivitySetting')) {
+            $context->registerActivitySetting(ActivitySetting::class);
+        }
 
         // Register OCC command
         $context->registerService(SetupCommand::class, function ($c) {

@@ -25,9 +25,14 @@ class PageService {
         'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
         'video/mp4', 'video/webm', 'video/ogg'
     ];
+    private const ALLOWED_EXTENSIONS = [
+        'jpg', 'jpeg', 'png', 'gif', 'webp', 'svg',  // Images
+        'mp4', 'webm', 'ogg',                         // Videos
+    ];
     private const MAX_IMAGE_SIZE = 2097152; // 2MB (PHP default upload limit)
     private const MAX_VIDEO_SIZE = 52428800; // 50MB
     private const MAX_MEDIA_SIZE = 52428800; // 50MB (largest of image/video limits)
+    private const MAX_SVG_SIZE = 1048576; // 1MB for SVG files (prevent XML bomb attacks)
     private const MAX_COLUMNS = 5;
     private const SUPPORTED_LANGUAGES = ['nl', 'en', 'de', 'fr'];
     private const DEFAULT_LANGUAGE = 'en';
@@ -1656,8 +1661,16 @@ class PageService {
             throw new \InvalidArgumentException('File too large. Maximum size is 50MB.');
         }
 
-        // Sanitize SVG files before upload
+        // Additional validation for image files (prevents polyglot attacks)
+        if (in_array($mimeType, ['image/jpeg', 'image/png', 'image/gif', 'image/webp'])) {
+            $this->validateImageFile($file['tmp_name'], $mimeType);
+        }
+
+        // SVG files get special treatment: smaller size limit + sanitization
         if ($mimeType === 'image/svg+xml') {
+            if ($file['size'] > self::MAX_SVG_SIZE) {
+                throw new \InvalidArgumentException('SVG file too large. Maximum size is 1MB.');
+            }
             $content = file_get_contents($file['tmp_name']);
             $content = $this->sanitizeSVG($content);
         } else {
@@ -3875,15 +3888,32 @@ class PageService {
 
     /**
      * Sanitize filename for safe storage
+     * - Validates extension against whitelist
      * - Remove special characters
      * - Convert spaces to underscores
-     * - Limit to 255 characters
+     * - Check for Windows reserved names
+     * - Limit to filesystem-safe length
+     *
+     * @param string $filename Original filename
+     * @param bool $validateExtension Whether to validate extension (default true)
+     * @return string Sanitized filename
+     * @throws \InvalidArgumentException If extension is not allowed
      */
-    public function sanitizeFilename(string $filename): string {
+    public function sanitizeFilename(string $filename, bool $validateExtension = true): string {
         // Get extension
         $extension = '';
         if (($dotPos = strrpos($filename, '.')) !== false) {
-            $extension = substr($filename, $dotPos);
+            $ext = strtolower(substr($filename, $dotPos + 1));
+
+            // Whitelist check for allowed extensions
+            if ($validateExtension && !in_array($ext, self::ALLOWED_EXTENSIONS)) {
+                throw new \InvalidArgumentException(
+                    "File extension not allowed: $ext. Allowed: " .
+                    implode(', ', self::ALLOWED_EXTENSIONS)
+                );
+            }
+
+            $extension = '.' . $ext;
             $filename = substr($filename, 0, $dotPos);
         }
 
@@ -3896,12 +3926,25 @@ class PageService {
         // Trim underscores from start and end
         $filename = trim($filename, '_');
 
-        // Limit to 200 chars (leaving room for extension and potential suffixes)
-        $filename = substr($filename, 0, 200);
+        // Check for Windows reserved names (security measure)
+        $reserved = ['con', 'prn', 'aux', 'nul'];
+        for ($i = 1; $i <= 9; $i++) {
+            $reserved[] = "com$i";
+            $reserved[] = "lpt$i";
+        }
+        if (in_array(strtolower($filename), $reserved)) {
+            $filename = 'file_' . uniqid();
+        }
+
+        // Limit to safe length (255 - extension length for filesystem compatibility)
+        $maxLength = 255 - strlen($extension);
+        if (strlen($filename) > $maxLength) {
+            $filename = substr($filename, 0, $maxLength);
+        }
 
         // Ensure we have a filename
         if (empty($filename)) {
-            $filename = 'file_' . time();
+            $filename = 'file_' . uniqid();
         }
 
         return $filename . $extension;
@@ -3932,10 +3975,69 @@ class PageService {
                 throw new \Exception('SVG contains DOCTYPE declaration (not allowed)');
             }
 
+            // Check for dangerous elements that could bypass sanitizer
+            $dangerousPatterns = [
+                '<!ENTITY',      // XML entities (XXE)
+                '<iframe',       // Embedded frames
+                '<embed',        // Embedded content
+                '<object',       // Embedded objects
+                '<script',       // Scripts (should be caught by sanitizer, but double-check)
+                'javascript:',   // JavaScript URLs
+                'data:text/html', // Data URIs with HTML
+                'SYSTEM',        // External entity references
+                'PUBLIC',        // Public entity references
+            ];
+
+            foreach ($dangerousPatterns as $pattern) {
+                if (stripos($cleanSvg, $pattern) !== false) {
+                    throw new \Exception("SVG contains prohibited content: $pattern");
+                }
+            }
+
             return $cleanSvg;
         } catch (\Exception $e) {
             $this->logger->error('SVG sanitization error: ' . $e->getMessage());
-            throw new \Exception('Invalid SVG file: ' . $e->getMessage());
+            throw new \Exception('Invalid SVG file');
+        }
+    }
+
+    /**
+     * Validate image file using getimagesize() to prevent polyglot attacks
+     *
+     * This provides additional security beyond MIME type detection by
+     * actually parsing the image headers.
+     *
+     * @param string $tmpFile Path to temporary uploaded file
+     * @param string $detectedMime MIME type detected by finfo
+     * @throws \InvalidArgumentException If image is invalid or MIME type doesn't match
+     */
+    private function validateImageFile(string $tmpFile, string $detectedMime): void {
+        $imageInfo = @getimagesize($tmpFile);
+
+        if ($imageInfo === false) {
+            throw new \InvalidArgumentException(
+                'File appears to be an invalid or corrupted image'
+            );
+        }
+
+        // Map PHP's IMAGETYPE constants to MIME types
+        $expectedMime = match ($imageInfo[2]) {
+            IMAGETYPE_JPEG => 'image/jpeg',
+            IMAGETYPE_PNG => 'image/png',
+            IMAGETYPE_GIF => 'image/gif',
+            IMAGETYPE_WEBP => 'image/webp',
+            default => null
+        };
+
+        // Verify MIME type matches what getimagesize() detected
+        if ($expectedMime !== null && $expectedMime !== $detectedMime) {
+            $this->logger->warning('Image MIME type mismatch', [
+                'detected' => $detectedMime,
+                'actual' => $expectedMime
+            ]);
+            throw new \InvalidArgumentException(
+                'Image file appears to be corrupted or has incorrect extension'
+            );
         }
     }
 
@@ -4048,8 +4150,16 @@ class PageService {
             throw new \InvalidArgumentException('File too large. Maximum size is 50MB.');
         }
 
-        // Sanitize SVG files before upload
+        // Additional validation for image files (prevents polyglot attacks)
+        if (in_array($mimeType, ['image/jpeg', 'image/png', 'image/gif', 'image/webp'])) {
+            $this->validateImageFile($file['tmp_name'], $mimeType);
+        }
+
+        // SVG files get special treatment: smaller size limit + sanitization
         if ($mimeType === 'image/svg+xml') {
+            if ($file['size'] > self::MAX_SVG_SIZE) {
+                throw new \InvalidArgumentException('SVG file too large. Maximum size is 1MB.');
+            }
             $content = file_get_contents($file['tmp_name']);
             $content = $this->sanitizeSVG($content);
         } else {
