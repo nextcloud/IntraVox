@@ -400,18 +400,6 @@ All widgets have these common properties:
 - `layout`: "grid", "carousel", "list"
 - `sortBy`: "modified", "created", "title"
 
-#### Files Widget
-```json
-{
-  "type": "files",
-  "column": 1,
-  "order": 1,
-  "path": "/Documents/Shared",
-  "showFolders": true,
-  "showFiles": true
-}
-```
-
 ### Complete Page Example
 
 ```bash
