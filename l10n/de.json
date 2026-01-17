@@ -674,7 +674,17 @@
     "No versions available": "Keine Versionen verfügbar",
     "Now": "Jetzt",
     "Version": "Version",
-    "Go to slide {number}": "Gehe zu Folie {number}"
+    "Go to slide {number}": "Gehe zu Folie {number}",
+    "License": "Lizenz",
+    "Page Statistics": "Seitenstatistiken",
+    "Overview of pages per language in your IntraVox installation.": "Übersicht der Seiten pro Sprache in Ihrer IntraVox-Installation.",
+    "Dutch": "Niederländisch",
+    "English": "Englisch",
+    "German": "Deutsch",
+    "French": "Französisch",
+    "Total": "Gesamt",
+    "In the free version, {limit} pages per language are included.": "In der kostenlosen Version sind {limit} Seiten pro Sprache enthalten.",
+    "Contact us for a license if you need more pages.": "Kontaktieren Sie uns für eine Lizenz, wenn Sie mehr Seiten benötigen."
   },
   "pluralForm": "nplurals=2; plural=(n != 1);"
 }

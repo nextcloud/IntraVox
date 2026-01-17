@@ -654,7 +654,17 @@
     "No versions available": "Geen versies beschikbaar",
     "Now": "Nu",
     "Version": "Versie",
-    "Go to slide {number}": "Ga naar slide {number}"
+    "Go to slide {number}": "Ga naar slide {number}",
+    "License": "Licentie",
+    "Page Statistics": "Pagina Statistieken",
+    "Overview of pages per language in your IntraVox installation.": "Overzicht van pagina's per taal in je IntraVox-installatie.",
+    "Dutch": "Nederlands",
+    "English": "Engels",
+    "German": "Duits",
+    "French": "Frans",
+    "Total": "Totaal",
+    "In the free version, {limit} pages per language are included.": "In de gratis versie zijn {limit} pagina's per taal inbegrepen.",
+    "Contact us for a license if you need more pages.": "Neem contact met ons op voor een licentie als je meer pagina's nodig hebt."
   },
   "pluralForm": "nplurals=2; plural=(n != 1);"
 }

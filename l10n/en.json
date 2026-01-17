@@ -654,7 +654,17 @@
     "No versions available": "No versions available",
     "Now": "Now",
     "Version": "Version",
-    "Go to slide {number}": "Go to slide {number}"
+    "Go to slide {number}": "Go to slide {number}",
+    "License": "License",
+    "Page Statistics": "Page Statistics",
+    "Overview of pages per language in your IntraVox installation.": "Overview of pages per language in your IntraVox installation.",
+    "Dutch": "Dutch",
+    "English": "English",
+    "German": "German",
+    "French": "French",
+    "Total": "Total",
+    "In the free version, {limit} pages per language are included.": "In the free version, {limit} pages per language are included.",
+    "Contact us for a license if you need more pages.": "Contact us for a license if you need more pages."
   },
   "pluralForm": "nplurals=2; plural=(n != 1);"
 }
