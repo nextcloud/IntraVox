@@ -32,6 +32,12 @@
 				<Download :size="16" />
 				{{ t('intravox', 'Export/Import') }}
 			</button>
+			<button
+				:class="['tab-button', { active: activeTab === 'license' }]"
+				@click="activeTab = 'license'">
+				<License :size="16" />
+				{{ t('intravox', 'License') }}
+			</button>
 		</div>
 
 		<!-- Demo Data Tab -->
@@ -648,6 +654,60 @@
 				</div>
 			</div>
 		</div>
+
+		<!-- License Tab -->
+		<div v-if="activeTab === 'license'" class="tab-content">
+			<div class="settings-section">
+				<h2>{{ t('intravox', 'Page Statistics') }}</h2>
+				<p class="settings-section-desc">
+					{{ t('intravox', 'Overview of pages per language in your IntraVox installation.') }}
+				</p>
+
+				<div class="license-stats">
+					<!-- Language stats with progress bars -->
+					<div class="language-stats">
+						<div
+							v-for="lang in licenseStats.supportedLanguages"
+							:key="lang"
+							class="language-stat-row">
+							<div class="language-info">
+								<span class="language-flag">{{ getLanguageFlag(lang) }}</span>
+								<span class="language-name">{{ getLanguageName(lang) }}</span>
+								<span class="language-code">({{ lang }})</span>
+							</div>
+							<div class="progress-container">
+								<div class="progress-bar">
+									<div
+										class="progress-fill"
+										:class="{ exceeded: (licenseStats.pageCounts[lang] || 0) > licenseStats.freeLimit }"
+										:style="{ width: getProgressWidth(lang) + '%' }">
+									</div>
+								</div>
+								<span class="page-count">
+									{{ licenseStats.pageCounts[lang] || 0 }} {{ t('intravox', 'pages') }}
+								</span>
+							</div>
+						</div>
+					</div>
+
+					<!-- Total pages -->
+					<div class="total-pages">
+						<strong>{{ t('intravox', 'Total') }}:</strong>
+						{{ licenseStats.totalPages }} {{ t('intravox', 'pages') }}
+					</div>
+
+					<!-- Free tier info -->
+					<NcNoteCard type="info" class="license-info-card">
+						<p>
+							{{ t('intravox', 'In the free version, {limit} pages per language are included.', { limit: licenseStats.freeLimit }) }}
+						</p>
+						<p>
+							{{ t('intravox', 'Contact us for a license if you need more pages.') }}
+						</p>
+					</NcNoteCard>
+				</div>
+			</div>
+		</div>
 	</div>
 </template>
 
@@ -665,6 +725,7 @@ import Download from 'vue-material-design-icons/Download.vue'
 import Upload from 'vue-material-design-icons/Upload.vue'
 import CloudDownload from 'vue-material-design-icons/CloudDownload.vue'
 import Broom from 'vue-material-design-icons/Broom.vue'
+import License from 'vue-material-design-icons/License.vue'
 import ConfluenceImport from '../admin/components/ConfluenceImport.vue'
 
 export default {
@@ -684,6 +745,7 @@ export default {
 		Upload,
 		CloudDownload,
 		Broom,
+		License,
 		ConfluenceImport,
 	},
 	props: {
@@ -754,6 +816,13 @@ export default {
 			importTimeoutId: null,
 			// Bound event handler for proper cleanup
 			boundBeforeUnloadHandler: null,
+			// License stats
+			licenseStats: this.initialState.licenseStats || {
+				pageCounts: {},
+				totalPages: 0,
+				freeLimit: 50,
+				supportedLanguages: ['nl', 'en', 'de', 'fr'],
+			},
 			// Known video services with metadata
 			knownServices: [
 				// Privacy-friendly (no/minimal tracking)
@@ -1345,6 +1414,31 @@ export default {
 				event.returnValue = '' // Required for Chrome
 				return '' // Required for some browsers
 			}
+		},
+		// License tab helper methods
+		getLanguageFlag(lang) {
+			const flags = {
+				nl: '🇳🇱',
+				en: '🇬🇧',
+				de: '🇩🇪',
+				fr: '🇫🇷',
+			}
+			return flags[lang] || '🌐'
+		},
+		getLanguageName(lang) {
+			const names = {
+				nl: this.t('intravox', 'Dutch'),
+				en: this.t('intravox', 'English'),
+				de: this.t('intravox', 'German'),
+				fr: this.t('intravox', 'French'),
+			}
+			return names[lang] || lang
+		},
+		getProgressWidth(lang) {
+			const count = this.licenseStats.pageCounts[lang] || 0
+			const limit = this.licenseStats.freeLimit
+			// Cap at 100% for display, but allow exceeded styling
+			return Math.min((count / limit) * 100, 100)
 		},
 	},
 	mounted() {
@@ -2154,5 +2248,100 @@ export default {
 	gap: 8px;
 	padding: 16px;
 	color: var(--color-text-maxcontrast);
+}
+
+/* License tab styles */
+.license-stats {
+	margin-top: 20px;
+}
+
+.language-stats {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	margin-bottom: 24px;
+}
+
+.language-stat-row {
+	display: flex;
+	align-items: center;
+	gap: 16px;
+	padding: 12px 16px;
+	background: var(--color-background-hover);
+	border-radius: var(--border-radius-large);
+}
+
+.language-info {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-width: 160px;
+}
+
+.language-flag {
+	font-size: 1.5em;
+}
+
+.language-name {
+	font-weight: 500;
+	color: var(--color-main-text);
+}
+
+.language-code {
+	color: var(--color-text-maxcontrast);
+	font-size: 13px;
+}
+
+.progress-container {
+	flex: 1;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.progress-bar {
+	flex: 1;
+	height: 8px;
+	background: var(--color-background-dark);
+	border-radius: 4px;
+	overflow: hidden;
+}
+
+.progress-fill {
+	height: 100%;
+	background: var(--color-success);
+	border-radius: 4px;
+	transition: width 0.3s ease;
+}
+
+.progress-fill.exceeded {
+	background: var(--color-warning);
+}
+
+.page-count {
+	min-width: 100px;
+	text-align: right;
+	font-weight: 500;
+	color: var(--color-main-text);
+}
+
+.total-pages {
+	padding: 16px;
+	background: var(--color-background-dark);
+	border-radius: var(--border-radius-large);
+	margin-bottom: 20px;
+	font-size: 16px;
+}
+
+.license-info-card {
+	margin-top: 16px;
+}
+
+.license-info-card p {
+	margin: 4px 0;
+}
+
+.license-info-card p:last-child {
+	margin-bottom: 0;
 }
 </style>

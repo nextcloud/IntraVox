@@ -7,6 +7,7 @@ use OCA\IntraVox\AppInfo\Application;
 use OCA\IntraVox\Constants;
 use OCA\IntraVox\Service\DemoDataService;
 use OCA\IntraVox\Service\EngagementSettingsService;
+use OCA\IntraVox\Service\LicenseService;
 use OCA\IntraVox\Service\PublicationSettingsService;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Http\TemplateResponse;
@@ -21,6 +22,7 @@ use OCP\Util;
 class AdminSettings implements IDelegatedSettings {
     private DemoDataService $demoDataService;
     private EngagementSettingsService $engagementSettings;
+    private LicenseService $licenseService;
     private PublicationSettingsService $publicationSettings;
     private IInitialState $initialState;
     private IConfig $config;
@@ -29,6 +31,7 @@ class AdminSettings implements IDelegatedSettings {
     public function __construct(
         DemoDataService $demoDataService,
         EngagementSettingsService $engagementSettings,
+        LicenseService $licenseService,
         PublicationSettingsService $publicationSettings,
         IInitialState $initialState,
         IConfig $config,
@@ -36,6 +39,7 @@ class AdminSettings implements IDelegatedSettings {
     ) {
         $this->demoDataService = $demoDataService;
         $this->engagementSettings = $engagementSettings;
+        $this->licenseService = $licenseService;
         $this->publicationSettings = $publicationSettings;
         $this->initialState = $initialState;
         $this->config = $config;
@@ -78,6 +82,7 @@ class AdminSettings implements IDelegatedSettings {
             'engagementSettings' => $this->engagementSettings->getAll(),
             'publicationSettings' => $this->publicationSettings->getAll(),
             'metavoxAvailable' => $metavoxAvailable,
+            'licenseStats' => $this->licenseService->getStats(),
         ]);
 
         // Load translations for JavaScript

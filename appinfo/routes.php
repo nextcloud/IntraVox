@@ -109,6 +109,11 @@ return [
         ['name' => 'bulk#movePages', 'url' => '/api/bulk/move', 'verb' => 'POST'],
         ['name' => 'bulk#updatePages', 'url' => '/api/bulk/update', 'verb' => 'POST'],
 
+        // License API routes (admin only)
+        ['name' => 'license#getStats', 'url' => '/api/license/stats', 'verb' => 'GET'],
+        ['name' => 'license#sendTelemetry', 'url' => '/api/license/telemetry', 'verb' => 'POST'],
+        ['name' => 'license#getInstanceInfo', 'url' => '/api/license/instance', 'verb' => 'GET'],
+
         // Page routes
         ['name' => 'page#index', 'url' => '/', 'verb' => 'GET'],
         ['name' => 'page#show', 'url' => '/page/{id}', 'verb' => 'GET'],
