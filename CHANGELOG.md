@@ -24,6 +24,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Telemetry toggle in Admin Settings (enabled by default, opt-out)
   - Collects: page counts, user counts, version info (no personal data)
 
+### Fixed
+- **PHP 8.4 Compatibility**: Fixed implicit nullable parameter deprecation warning ([#14](https://github.com/nextcloud/intravox/issues/14))
+  - Changed `string $language = null` to `?string $language = null` in `PageService::buildPageTree()`
+  - Resolves "Could not update app" error on PHP 8.4 systems
+
 ### Technical
 - New `lib/Service/TelemetryService.php` for telemetry collection
 - New `lib/Service/LicenseService.php` for license management

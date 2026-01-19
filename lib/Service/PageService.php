@@ -3692,7 +3692,7 @@ class PageService {
     /**
      * Recursively build the page tree from folder structure
      */
-    private function buildPageTree($folder, array &$tree, ?string $currentPageId, string $language = null): void {
+    private function buildPageTree($folder, array &$tree, ?string $currentPageId, ?string $language = null): void {
         foreach ($this->getCachedDirectoryListing($folder) as $item) {
             if ($item->getType() !== \OCP\Files\FileInfo::TYPE_FOLDER) {
                 continue;
