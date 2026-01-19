@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.1] - 2026-01-19 - License Server & Telemetry
+
+### Added
+- **License Server Integration**: Connect to VoxCloud license server for usage tracking
+  - `LicenseService` with license validation and usage tracking
+  - `LicenseController` API endpoints for license operations
+  - `LicenseUsageJob` background job runs every 24 hours (with jitter)
+  - License tab in Admin Settings showing page statistics per language
+  - Free tier info displayed for invalid/expired licenses
+  - Instance URLs hashed with SHA-256 for privacy
+- **Telemetry Service**: Anonymous usage statistics to help improve IntraVox
+  - `TelemetryService` for collecting anonymous usage data
+  - `TelemetryJob` background job for daily telemetry sync
+  - API endpoints for telemetry status and manual send
+  - Telemetry toggle in Admin Settings (enabled by default, opt-out)
+  - Collects: page counts, user counts, version info (no personal data)
+
+### Technical
+- New `lib/Service/TelemetryService.php` for telemetry collection
+- New `lib/Service/LicenseService.php` for license management
+- New `lib/BackgroundJob/TelemetryJob.php` (24h interval + random jitter)
+- New `lib/BackgroundJob/LicenseUsageJob.php` (24h interval + random jitter)
+- New `lib/Controller/LicenseController.php` for license API
+- Updated `AdminSettings.vue` with License and Telemetry tabs
+
 ## [0.9.0] - 2026-01-17 - API Security & Error Handling
 
 ### Added

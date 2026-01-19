@@ -35,7 +35,7 @@ IntraVox brings SharePoint-style page creation to Nextcloud with a powerful drag
 
 Built with Vue 3 and modern web technologies for a smooth, secure experience.
     ]]></description>
-    <version>0.9.2</version>
+    <version>0.9.1</version>
     <licence>agpl</licence>
     <author mail="rik@shalution.nl">Rik Dekker</author>
     <namespace>IntraVox</namespace>
