@@ -71,6 +71,7 @@ Built with Vue 3 and modern web technologies for a smooth, secure experience.
     </settings>
     <background-jobs>
         <job>OCA\IntraVox\BackgroundJob\LicenseUsageJob</job>
+        <job>OCA\IntraVox\BackgroundJob\TelemetryJob</job>
     </background-jobs>
     <repair-steps>
         <post-migration>

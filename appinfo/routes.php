@@ -116,6 +116,7 @@ return [
         ['name' => 'license#saveSettings', 'url' => '/api/settings/license', 'verb' => 'POST'],
         ['name' => 'license#validate', 'url' => '/api/license/validate', 'verb' => 'POST'],
         ['name' => 'license#updateUsage', 'url' => '/api/license/update-usage', 'verb' => 'POST'],
+        ['name' => 'api#setTelemetrySettings', 'url' => '/api/settings/telemetry', 'verb' => 'POST'],
 
         // Page routes
         ['name' => 'page#index', 'url' => '/', 'verb' => 'GET'],

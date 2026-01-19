@@ -9,6 +9,7 @@ use OCA\IntraVox\Service\DemoDataService;
 use OCA\IntraVox\Service\EngagementSettingsService;
 use OCA\IntraVox\Service\LicenseService;
 use OCA\IntraVox\Service\PublicationSettingsService;
+use OCA\IntraVox\Service\TelemetryService;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\AppFramework\Services\IInitialState;
@@ -24,6 +25,7 @@ class AdminSettings implements IDelegatedSettings {
     private EngagementSettingsService $engagementSettings;
     private LicenseService $licenseService;
     private PublicationSettingsService $publicationSettings;
+    private TelemetryService $telemetryService;
     private IInitialState $initialState;
     private IConfig $config;
     private IAppManager $appManager;
@@ -33,6 +35,7 @@ class AdminSettings implements IDelegatedSettings {
         EngagementSettingsService $engagementSettings,
         LicenseService $licenseService,
         PublicationSettingsService $publicationSettings,
+        TelemetryService $telemetryService,
         IInitialState $initialState,
         IConfig $config,
         IAppManager $appManager
@@ -41,6 +44,7 @@ class AdminSettings implements IDelegatedSettings {
         $this->engagementSettings = $engagementSettings;
         $this->licenseService = $licenseService;
         $this->publicationSettings = $publicationSettings;
+        $this->telemetryService = $telemetryService;
         $this->initialState = $initialState;
         $this->config = $config;
         $this->appManager = $appManager;
@@ -85,6 +89,8 @@ class AdminSettings implements IDelegatedSettings {
             'licenseStats' => $this->licenseService->getStats(),
             'licenseServerUrl' => $this->licenseService->getLicenseServerUrl(),
             'licenseKey' => $this->licenseService->getLicenseKey() ?? '',
+            'telemetryEnabled' => $this->telemetryService->isEnabled(),
+            'telemetryLastReport' => $this->telemetryService->getStatus()['lastReport'] ?? null,
         ]);
 
         // Load translations for JavaScript

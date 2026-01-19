@@ -8,6 +8,7 @@ use OCA\IntraVox\Constants;
 use OCA\IntraVox\Service\EngagementSettingsService;
 use OCA\IntraVox\Service\ImportService;
 use OCA\IntraVox\Service\PublicationSettingsService;
+use OCA\IntraVox\Service\TelemetryService;
 use OCA\IntraVox\Service\Import\ConfluenceHtmlImporter;
 use OCA\IntraVox\Service\Import\ConfluenceImporter;
 use OCA\IntraVox\Service\PageService;
@@ -41,6 +42,7 @@ class ApiController extends Controller {
     private SetupService $setupService;
     private EngagementSettingsService $engagementSettings;
     private PublicationSettingsService $publicationSettings;
+    private TelemetryService $telemetryService;
     private ImportService $importService;
     private LoggerInterface $logger;
     private IConfig $config;
@@ -55,6 +57,7 @@ class ApiController extends Controller {
         SetupService $setupService,
         EngagementSettingsService $engagementSettings,
         PublicationSettingsService $publicationSettings,
+        TelemetryService $telemetryService,
         ImportService $importService,
         LoggerInterface $logger,
         IConfig $config,
@@ -67,6 +70,7 @@ class ApiController extends Controller {
         $this->setupService = $setupService;
         $this->engagementSettings = $engagementSettings;
         $this->publicationSettings = $publicationSettings;
+        $this->telemetryService = $telemetryService;
         $this->importService = $importService;
         $this->logger = $logger;
         $this->config = $config;
@@ -1399,6 +1403,44 @@ class ApiController extends Controller {
             ]);
         } catch (\Exception $e) {
             $this->logger->error('[ApiController] Failed to update publication settings: ' . $e->getMessage());
+            return new DataResponse([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], Http::STATUS_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Set telemetry settings (enable/disable anonymous usage statistics)
+     * Admin only
+     *
+     * @return DataResponse
+     */
+    public function setTelemetrySettings(): DataResponse {
+        // Only admins can change telemetry settings
+        if (!$this->isAdmin()) {
+            return new DataResponse([
+                'success' => false,
+                'message' => 'Only administrators can change telemetry settings',
+            ], Http::STATUS_FORBIDDEN);
+        }
+
+        // Get settings from request body
+        $body = file_get_contents('php://input');
+        $settings = json_decode($body, true) ?? [];
+
+        try {
+            $enabled = isset($settings['enabled']) ? (bool)$settings['enabled'] : false;
+            $this->telemetryService->setEnabled($enabled);
+
+            $this->logger->info('[ApiController] Telemetry settings updated', ['enabled' => $enabled]);
+
+            return new DataResponse([
+                'success' => true,
+                'enabled' => $enabled,
+            ]);
+        } catch (\Exception $e) {
+            $this->logger->error('[ApiController] Failed to update telemetry settings: ' . $e->getMessage());
             return new DataResponse([
                 'success' => false,
                 'message' => $e->getMessage(),

@@ -789,6 +789,54 @@
 					</NcNoteCard>
 				</div>
 			</div>
+
+			<!-- Telemetry Section -->
+			<div class="settings-section">
+				<h2>{{ t('intravox', 'Anonymous Usage Statistics') }}</h2>
+				<p class="settings-section-desc">
+					{{ t('intravox', 'Help improve IntraVox by sharing anonymous usage statistics.') }}
+				</p>
+
+				<div class="telemetry-settings">
+					<div class="engagement-option">
+						<NcCheckboxRadioSwitch
+							type="switch"
+							:model-value="telemetryEnabled"
+							@update:model-value="toggleTelemetry($event)">
+							<div class="option-info">
+								<span class="option-label">{{ t('intravox', 'Share anonymous usage statistics') }}</span>
+								<span class="option-desc">{{ t('intravox', 'We collect: page counts per language, user counts, and version info (IntraVox, Nextcloud, PHP). No personal data or page content is shared.') }}</span>
+							</div>
+						</NcCheckboxRadioSwitch>
+					</div>
+
+					<div v-if="telemetryEnabled" class="telemetry-info">
+						<NcNoteCard type="success">
+							<p>{{ t('intravox', 'Thank you for helping improve IntraVox!') }}</p>
+							<p v-if="telemetryLastReport">
+								{{ t('intravox', 'Last report sent') }}: {{ formatTelemetryDate(telemetryLastReport) }}
+							</p>
+						</NcNoteCard>
+					</div>
+
+					<div class="telemetry-details">
+						<h4>{{ t('intravox', 'What we collect') }}:</h4>
+						<ul>
+							<li>{{ t('intravox', 'Page counts per language (e.g., EN: 45, NL: 32)') }}</li>
+							<li>{{ t('intravox', 'Total user count and active users') }}</li>
+							<li>{{ t('intravox', 'IntraVox, Nextcloud, and PHP version numbers') }}</li>
+							<li>{{ t('intravox', 'A unique hash of your instance URL (privacy-friendly identifier)') }}</li>
+						</ul>
+						<h4>{{ t('intravox', 'What we never collect') }}:</h4>
+						<ul class="not-collected">
+							<li>{{ t('intravox', 'Page content or titles') }}</li>
+							<li>{{ t('intravox', 'User names or email addresses') }}</li>
+							<li>{{ t('intravox', 'Your actual server URL') }}</li>
+							<li>{{ t('intravox', 'Any personal or sensitive data') }}</li>
+						</ul>
+					</div>
+				</div>
+			</div>
 		</div>
 	</div>
 </template>
@@ -911,6 +959,9 @@ export default {
 			savingLicense: false,
 			validatingLicense: false,
 			licenseValidation: null,
+			// Telemetry settings
+			telemetryEnabled: this.initialState.telemetryEnabled || false,
+			telemetryLastReport: this.initialState.telemetryLastReport || null,
 			// Known video services with metadata
 			knownServices: [
 				// Privacy-friendly (no/minimal tracking)
@@ -1582,6 +1633,34 @@ export default {
 			} finally {
 				this.validatingLicense = false
 			}
+		},
+		async toggleTelemetry(enabled) {
+			try {
+				await axios.post(
+					generateUrl('/apps/intravox/api/settings/telemetry'),
+					{ enabled }
+				)
+				this.telemetryEnabled = enabled
+				if (enabled) {
+					showSuccess(this.t('intravox', 'Thank you! Anonymous usage statistics enabled.'))
+				} else {
+					showSuccess(this.t('intravox', 'Anonymous usage statistics disabled.'))
+				}
+			} catch (error) {
+				console.error('Failed to toggle telemetry:', error)
+				showError(this.t('intravox', 'Failed to update telemetry settings'))
+			}
+		},
+		formatTelemetryDate(timestamp) {
+			if (!timestamp) return ''
+			const date = new Date(timestamp * 1000)
+			return date.toLocaleDateString(undefined, {
+				year: 'numeric',
+				month: 'long',
+				day: 'numeric',
+				hour: '2-digit',
+				minute: '2-digit'
+			})
 		},
 	},
 	mounted() {
@@ -2521,5 +2600,51 @@ export default {
 	display: flex;
 	gap: 12px;
 	align-items: center;
+}
+
+/* Telemetry section */
+.telemetry-settings {
+	margin-top: 20px;
+}
+
+.telemetry-info {
+	margin-top: 16px;
+}
+
+.telemetry-details {
+	margin-top: 24px;
+	padding: 16px;
+	background: var(--color-background-hover);
+	border-radius: var(--border-radius-large);
+}
+
+.telemetry-details h4 {
+	margin: 0 0 12px 0;
+	font-size: 14px;
+	font-weight: 600;
+	color: var(--color-main-text);
+}
+
+.telemetry-details h4:not(:first-child) {
+	margin-top: 20px;
+}
+
+.telemetry-details ul {
+	margin: 0;
+	padding-left: 24px;
+	color: var(--color-text-maxcontrast);
+}
+
+.telemetry-details ul li {
+	margin-bottom: 6px;
+	line-height: 1.4;
+}
+
+.telemetry-details ul.not-collected {
+	color: var(--color-success);
+}
+
+.telemetry-details ul.not-collected li::marker {
+	content: '✓ ';
 }
 </style>
