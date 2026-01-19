@@ -684,7 +684,15 @@
     "French": "Französisch",
     "Total": "Gesamt",
     "In the free version, {limit} pages per language are included.": "In der kostenlosen Version sind {limit} Seiten pro Sprache enthalten.",
-    "Contact us for a license if you need more pages.": "Kontaktieren Sie uns für eine Lizenz, wenn Sie mehr Seiten benötigen."
+    "Contact us for a license if you need more pages.": "Kontaktieren Sie uns für eine Lizenz, wenn Sie mehr Seiten benötigen.",
+    "Statistics": "Statistiken",
+    "The Future of IntraVox": "Die Zukunft von IntraVox",
+    "IntraVox is and will remain free for most users. To keep IntraVox actively maintained and improved, we're introducing a licensing model for larger organizations.": "IntraVox ist und bleibt für die meisten Nutzer kostenlos. Um IntraVox aktiv zu pflegen und zu verbessern, führen wir ein Lizenzmodell für größere Organisationen ein.",
+    "Our promise": "Unser Versprechen",
+    "A free tier for small and medium installations": "Eine kostenlose Version für kleine und mittlere Installationen",
+    "All current features remain available": "Alle aktuellen Funktionen bleiben verfügbar",
+    "Transparent pricing based on actual usage": "Transparente Preisgestaltung basierend auf der tatsächlichen Nutzung",
+    "We're currently collecting anonymous statistics to establish fair limits that work for everyone. Your feedback matters – together we're building a sustainable future for IntraVox.": "Wir sammeln derzeit anonyme Statistiken, um faire Grenzen festzulegen, die für alle funktionieren. Ihr Feedback ist wichtig – gemeinsam bauen wir eine nachhaltige Zukunft für IntraVox."
   },
   "pluralForm": "nplurals=2; plural=(n != 1);"
 }

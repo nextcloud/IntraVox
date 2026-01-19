@@ -168,13 +168,7 @@ class LicenseController extends Controller {
         }
 
         try {
-            $licenseServerUrl = $this->request->getParam('licenseServerUrl', '');
             $licenseKey = $this->request->getParam('licenseKey', '');
-
-            // Save license server URL if provided
-            if ($licenseServerUrl !== null) {
-                $this->licenseService->setLicenseServerUrl($licenseServerUrl);
-            }
 
             // Save license key if provided
             if ($licenseKey !== null) {

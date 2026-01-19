@@ -7,22 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.9.1] - 2026-01-19 - License Server & Telemetry
+## [0.9.1] - 2026-01-19 - Statistics & PHP 8.4 Fix
 
 ### Added
-- **License Server Integration**: Connect to VoxCloud license server for usage tracking
-  - `LicenseService` with license validation and usage tracking
-  - `LicenseController` API endpoints for license operations
-  - `LicenseUsageJob` background job runs every 24 hours (with jitter)
-  - License tab in Admin Settings showing page statistics per language
-  - Free tier info displayed for invalid/expired licenses
-  - Instance URLs hashed with SHA-256 for privacy
-- **Telemetry Service**: Anonymous usage statistics to help improve IntraVox
-  - `TelemetryService` for collecting anonymous usage data
-  - `TelemetryJob` background job for daily telemetry sync
-  - API endpoints for telemetry status and manual send
-  - Telemetry toggle in Admin Settings (enabled by default, opt-out)
-  - Collects: page counts, user counts, version info (no personal data)
+- **Statistics Tab**: New admin settings tab showing page counts per language
+  - Overview of pages per language in your IntraVox installation
+  - Visual progress indicators for each language
+  - Total page count across all languages
+- **Anonymous Telemetry**: Opt-in usage statistics to help improve IntraVox
+  - Collects: page counts, user counts, Nextcloud/PHP version info
+  - No personal data, usernames, or page content collected
+  - Can be disabled in Admin Settings
+  - Background job runs every 24 hours (with random jitter)
+- **Translation Script**: New `npm run l10n` command to generate JavaScript translation files from JSON
 
 ### Fixed
 - **PHP 8.4 Compatibility**: Fixed implicit nullable parameter deprecation warning ([#14](https://github.com/nextcloud/intravox/issues/14))
@@ -31,11 +28,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Technical
 - New `lib/Service/TelemetryService.php` for telemetry collection
-- New `lib/Service/LicenseService.php` for license management
+- New `lib/Service/LicenseService.php` for usage statistics
 - New `lib/BackgroundJob/TelemetryJob.php` (24h interval + random jitter)
 - New `lib/BackgroundJob/LicenseUsageJob.php` (24h interval + random jitter)
-- New `lib/Controller/LicenseController.php` for license API
-- Updated `AdminSettings.vue` with License and Telemetry tabs
+- New `scripts/generate-l10n.js` for translation file generation
+- Updated `AdminSettings.vue` with Statistics and Telemetry tabs
 
 ## [0.9.0] - 2026-01-17 - API Security & Error Handling
 

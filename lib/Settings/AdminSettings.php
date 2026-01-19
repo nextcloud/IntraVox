@@ -87,7 +87,6 @@ class AdminSettings implements IDelegatedSettings {
             'publicationSettings' => $this->publicationSettings->getAll(),
             'metavoxAvailable' => $metavoxAvailable,
             'licenseStats' => $this->licenseService->getStats(),
-            'licenseServerUrl' => $this->licenseService->getLicenseServerUrl(),
             'licenseKey' => $this->licenseService->getLicenseKey() ?? '',
             'telemetryEnabled' => $this->telemetryService->isEnabled(),
             'telemetryLastReport' => $this->telemetryService->getStatus()['lastReport'] ?? null,

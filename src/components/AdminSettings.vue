@@ -35,8 +35,8 @@
 			<button
 				:class="['tab-button', { active: activeTab === 'license' }]"
 				@click="activeTab = 'license'">
-				<License :size="16" />
-				{{ t('intravox', 'License') }}
+				<ChartBox :size="16" />
+				{{ t('intravox', 'Statistics') }}
 			</button>
 		</div>
 
@@ -657,87 +657,6 @@
 
 		<!-- License Tab -->
 		<div v-if="activeTab === 'license'" class="tab-content">
-			<!-- License Configuration Section -->
-			<div class="settings-section">
-				<h2>{{ t('intravox', 'License Configuration') }}</h2>
-				<p class="settings-section-desc">
-					{{ t('intravox', 'Configure your license server connection and license key.') }}
-				</p>
-
-				<div class="license-config">
-					<div class="setting-row">
-						<label class="setting-label" for="license-server-url">
-							{{ t('intravox', 'License Server URL') }}
-						</label>
-						<input
-							id="license-server-url"
-							v-model="licenseServerUrl"
-							type="url"
-							class="setting-input"
-							placeholder="https://licenses.voxcloud.nl" />
-						<p class="setting-hint">
-							{{ t('intravox', 'The URL of the license server. Leave empty to use the default.') }}
-						</p>
-					</div>
-
-					<div class="setting-row">
-						<label class="setting-label" for="license-key">
-							{{ t('intravox', 'License Key') }}
-						</label>
-						<input
-							id="license-key"
-							v-model="licenseKey"
-							type="text"
-							class="setting-input license-key-input"
-							:placeholder="t('intravox', 'Enter your license key')" />
-						<p class="setting-hint">
-							{{ t('intravox', 'Your license key from VoxCloud. Leave empty for the free version.') }}
-						</p>
-					</div>
-
-					<!-- License Status -->
-					<div v-if="licenseKey" class="license-status">
-						<div v-if="validatingLicense" class="status-checking">
-							<span class="icon-loading-small"></span>
-							{{ t('intravox', 'Validating license...') }}
-						</div>
-						<div v-else-if="licenseValidation" class="status-result">
-							<NcNoteCard :type="licenseValidation.valid ? 'success' : 'error'">
-								<template v-if="licenseValidation.valid">
-									<p><strong>{{ t('intravox', 'License valid') }}</strong></p>
-									<p v-if="licenseValidation.license">
-										{{ t('intravox', 'Type') }}: {{ licenseValidation.license.licenseType || 'Standard' }}
-										<span v-if="licenseValidation.license.maxPages">
-											| {{ t('intravox', 'Max pages') }}: {{ licenseValidation.license.maxPages }}
-										</span>
-									</p>
-								</template>
-								<template v-else>
-									<p><strong>{{ t('intravox', 'License invalid') }}</strong></p>
-									<p>{{ licenseValidation.reason }}</p>
-								</template>
-							</NcNoteCard>
-						</div>
-					</div>
-
-					<div class="save-section license-save">
-						<NcButton
-							type="primary"
-							:disabled="savingLicense"
-							@click="saveLicenseSettings">
-							{{ savingLicense ? t('intravox', 'Saving...') : t('intravox', 'Save license settings') }}
-						</NcButton>
-						<NcButton
-							v-if="licenseKey"
-							type="secondary"
-							:disabled="validatingLicense"
-							@click="validateLicenseNow">
-							{{ validatingLicense ? t('intravox', 'Validating...') : t('intravox', 'Validate now') }}
-						</NcButton>
-					</div>
-				</div>
-			</div>
-
 			<!-- Page Statistics Section -->
 			<div class="settings-section">
 				<h2>{{ t('intravox', 'Page Statistics') }}</h2>
@@ -761,7 +680,6 @@
 								<div class="progress-bar">
 									<div
 										class="progress-fill"
-										:class="{ exceeded: (licenseStats.pageCounts[lang] || 0) > licenseStats.freeLimit }"
 										:style="{ width: getProgressWidth(lang) + '%' }">
 									</div>
 								</div>
@@ -778,15 +696,18 @@
 						{{ licenseStats.totalPages }} {{ t('intravox', 'pages') }}
 					</div>
 
-					<!-- Free tier info - show if no license, invalid license, or expired license -->
-					<NcNoteCard v-if="showFreeTierInfo" type="info" class="license-info-card">
-						<p>
-							{{ t('intravox', 'In the free version, {limit} pages per language are included.', { limit: licenseStats.freeLimit }) }}
-						</p>
-						<p>
-							{{ t('intravox', 'Contact us for a license if you need more pages.') }}
-						</p>
-					</NcNoteCard>
+					<!-- Future licensing info -->
+					<div class="future-licensing-info">
+						<h4>{{ t('intravox', 'The Future of IntraVox') }}</h4>
+						<p>{{ t('intravox', 'IntraVox is and will remain free for most users. To keep IntraVox actively maintained and improved, we\'re introducing a licensing model for larger organizations.') }}</p>
+						<p><strong>{{ t('intravox', 'Our promise') }}:</strong></p>
+						<ul class="promise-list">
+							<li>{{ t('intravox', 'A free tier for small and medium installations') }}</li>
+							<li>{{ t('intravox', 'All current features remain available') }}</li>
+							<li>{{ t('intravox', 'Transparent pricing based on actual usage') }}</li>
+						</ul>
+						<p class="feedback-note">{{ t('intravox', 'We\'re currently collecting anonymous statistics to establish fair limits that work for everyone. Your feedback matters – together we\'re building a sustainable future for IntraVox.') }}</p>
+					</div>
 				</div>
 			</div>
 
@@ -855,7 +776,7 @@ import Download from 'vue-material-design-icons/Download.vue'
 import Upload from 'vue-material-design-icons/Upload.vue'
 import CloudDownload from 'vue-material-design-icons/CloudDownload.vue'
 import Broom from 'vue-material-design-icons/Broom.vue'
-import License from 'vue-material-design-icons/License.vue'
+import ChartBox from 'vue-material-design-icons/ChartBox.vue'
 import ConfluenceImport from '../admin/components/ConfluenceImport.vue'
 
 export default {
@@ -875,7 +796,7 @@ export default {
 		Upload,
 		CloudDownload,
 		Broom,
-		License,
+		ChartBox,
 		ConfluenceImport,
 	},
 	props: {
@@ -954,7 +875,6 @@ export default {
 				supportedLanguages: ['nl', 'en', 'de', 'fr'],
 			},
 			// License configuration
-			licenseServerUrl: this.initialState.licenseServerUrl || '',
 			licenseKey: this.initialState.licenseKey || '',
 			savingLicense: false,
 			validatingLicense: false,
@@ -1594,7 +1514,6 @@ export default {
 				await axios.post(
 					generateUrl('/apps/intravox/api/settings/license'),
 					{
-						licenseServerUrl: this.licenseServerUrl,
 						licenseKey: this.licenseKey,
 					}
 				)
@@ -2531,13 +2450,9 @@ export default {
 
 .progress-fill {
 	height: 100%;
-	background: var(--color-success);
+	background: var(--color-primary-element);
 	border-radius: 4px;
 	transition: width 0.3s ease;
-}
-
-.progress-fill.exceeded {
-	background: var(--color-warning);
 }
 
 .page-count {
@@ -2641,10 +2556,66 @@ export default {
 }
 
 .telemetry-details ul.not-collected {
-	color: var(--color-success);
+	color: var(--color-main-text);
+}
+
+.telemetry-details ul.not-collected li {
+	display: flex;
+	align-items: flex-start;
+	gap: 8px;
+}
+
+.telemetry-details ul.not-collected li::before {
+	content: '✓';
+	color: var(--color-success-text, #2d7b43);
+	font-weight: 600;
+	flex-shrink: 0;
 }
 
 .telemetry-details ul.not-collected li::marker {
-	content: '✓ ';
+	content: '';
+}
+
+/* Future licensing info */
+.future-licensing-info {
+	margin-top: 24px;
+	padding: 20px;
+	background: var(--color-background-hover);
+	border-radius: var(--border-radius-large);
+	border-left: 4px solid var(--color-primary-element);
+}
+
+.future-licensing-info h4 {
+	margin: 0 0 12px 0;
+	font-size: 16px;
+	font-weight: 600;
+	color: var(--color-main-text);
+}
+
+.future-licensing-info p {
+	margin: 0 0 12px 0;
+	color: var(--color-main-text);
+	line-height: 1.5;
+}
+
+.future-licensing-info p:last-child {
+	margin-bottom: 0;
+}
+
+.promise-list {
+	margin: 8px 0 16px 0;
+	padding-left: 24px;
+	color: var(--color-main-text);
+}
+
+.promise-list li {
+	margin-bottom: 6px;
+	line-height: 1.4;
+}
+
+.feedback-note {
+	font-size: 13px;
+	color: var(--color-text-maxcontrast);
+	font-style: italic;
 }
 </style>
