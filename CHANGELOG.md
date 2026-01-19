@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.2] - 2026-01-19 - Certificate Update
+
+### Fixed
+- **App Store Certificate**: Updated to new code signing certificate after previous certificate was revoked
+  - Resolves "Certificate has been revoked" error when installing from App Store
+  - No functional changes from 0.9.1
+
 ## [0.9.1] - 2026-01-19 - Statistics & PHP 8.4 Fix
 
 ### Added
