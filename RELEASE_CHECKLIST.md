@@ -4,6 +4,35 @@ Doorloop deze checklist voor elke release naar de Nextcloud App Store.
 
 ---
 
+## 0. Certificaat Verificatie (KRITIEK!)
+
+**⚠️ BELANGRIJK:** Controleer VOOR elke release dat de signing key overeenkomt met het App Store certificaat!
+
+- [ ] Verifieer dat de signing key matcht met het App Store certificaat:
+  ```bash
+  # Hash van lokale signing key
+  openssl rsa -in intravox.key -pubout 2>/dev/null | openssl md5
+
+  # Hash van App Store certificaat (moet IDENTIEK zijn!)
+  curl -s "https://apps.nextcloud.com/api/v1/apps.json" | \
+    python3 -c "import json,sys; [print(a['certificate']) for a in json.load(sys.stdin) if a['id']=='intravox']" | \
+    openssl x509 -pubkey -noout 2>/dev/null | openssl md5
+  ```
+- [ ] Beide MD5 hashes zijn **IDENTIEK**
+- [ ] Controleer certificaat serienummer en geldigheid:
+  ```bash
+  curl -s "https://raw.githubusercontent.com/nextcloud/app-certificate-requests/master/intravox/intravox.crt" | \
+    openssl x509 -text -noout 2>/dev/null | grep -A1 "Serial Number"
+  ```
+
+### Waarschuwingen over certificaten:
+- **VRAAG NOOIT onnodig een nieuw certificaat aan** - dit revoceert automatisch het oude!
+- Vraag alleen een nieuw certificaat aan als de private key is gecompromitteerd of kwijt
+- Bewaar `intravox.key` veilig (backup op veilige locatie, NIET in git!)
+- Na certificaat-wijziging: download het nieuwe certificaat en bewaar bij de key
+
+---
+
 ## 1. Code Kwaliteit & Beveiliging
 
 - [ ] Verwijder alle `console.log()` en debug statements uit JavaScript (`src/`)
@@ -284,4 +313,4 @@ openssl dgst -sha512 -sign intravox.key intravox-X.Y.Z.tar.gz | openssl base64 -
 
 ---
 
-*Laatst bijgewerkt: December 2024*
+*Laatst bijgewerkt: Januari 2026*
