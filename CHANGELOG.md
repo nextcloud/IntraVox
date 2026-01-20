@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.4] - 2026-01-20 - Cache Bypass Release
+
+### Fixed
+- **App Store Cache**: New version to bypass cached signature data in Nextcloud App Store
+  - No functional changes from 0.9.3
+
 ## [0.9.3] - 2026-01-20 - App Store Re-registration
 
 ### Fixed
