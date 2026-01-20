@@ -392,6 +392,11 @@ class LicenseService {
         try {
             $sharedFolder = $this->setupService->getSharedFolder();
 
+            if ($sharedFolder === null) {
+                $this->logger->warning('LicenseService: Shared folder not available, returning empty counts');
+                return [];
+            }
+
             foreach (self::SUPPORTED_LANGUAGES as $lang) {
                 try {
                     if ($sharedFolder->nodeExists($lang)) {

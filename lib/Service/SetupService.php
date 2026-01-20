@@ -229,8 +229,13 @@ class SetupService {
                     // Group already exists - this is expected on updates
                     $this->logger->info("Group '{$groupName}' already exists in groupfolder (expected on updates)");
                 } catch (\Exception $e) {
-                    // Check if it's a duplicate entry error by message
-                    if (strpos($e->getMessage(), 'Duplicate entry') !== false || strpos($e->getMessage(), '1062') !== false) {
+                    // Check if it's a duplicate entry error by message (MySQL: 1062, PostgreSQL: 23505)
+                    $message = $e->getMessage();
+                    if (strpos($message, 'Duplicate entry') !== false
+                        || strpos($message, '1062') !== false
+                        || strpos($message, '23505') !== false
+                        || strpos($message, 'duplicate key') !== false
+                        || strpos($message, 'UNIQUE constraint') !== false) {
                         $this->logger->info("Group '{$groupName}' already exists in groupfolder (expected on updates)");
                     } else {
                         // Re-throw other exceptions

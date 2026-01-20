@@ -305,9 +305,21 @@ class AnalyticsService {
                 ]);
             $qb->executeStatement();
             return true; // New unique user for this day
-        } catch (\Exception $e) {
-            // Unique constraint violation = user already viewed today
+        } catch (\Doctrine\DBAL\Exception\UniqueConstraintViolationException $e) {
+            // Unique constraint violation = user already viewed today (works for MySQL and PostgreSQL)
             return false;
+        } catch (\Exception $e) {
+            // Fallback: check error message for duplicate key indicators (MySQL: 1062, PostgreSQL: 23505)
+            $message = $e->getMessage();
+            if (strpos($message, 'Duplicate entry') !== false
+                || strpos($message, '1062') !== false
+                || strpos($message, '23505') !== false
+                || strpos($message, 'duplicate key') !== false
+                || strpos($message, 'UNIQUE constraint') !== false) {
+                return false;
+            }
+            // Re-throw unexpected exceptions
+            throw $e;
         }
     }
 

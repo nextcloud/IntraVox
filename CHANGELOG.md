@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.5] - 2026-01-20 - PostgreSQL Compatibility
+
+### Fixed
+- **PostgreSQL Support**: Fixed database compatibility issues for PostgreSQL users
+  - SetupService: Now correctly handles PostgreSQL duplicate key errors (SQLSTATE 23505)
+  - LicenseService: Added null check for shared folder to prevent crashes during setup
+  - AnalyticsService: Improved exception handling for unique constraint violations
+- **Installation on PostgreSQL**: Setup no longer fails when re-running or retrying installation
+
 ## [0.9.4] - 2026-01-20 - Cache Bypass Release
 
 ### Fixed
