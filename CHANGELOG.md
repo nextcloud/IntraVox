@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.3] - 2026-01-20 - App Store Re-registration
+
+### Fixed
+- **App Store Certificate Sync**: Re-registered app with new certificate (serial 4824) to sync with App Store database
+  - Previous releases were signed correctly but App Store database had outdated certificate reference
+  - Resolves "Certificate 4822 has been revoked" error for all users
+  - No functional changes from 0.9.2
+
+### Documentation
+- Added certificate verification section to RELEASE_CHECKLIST.md
+- Added warnings about certificate management best practices
+
 ## [0.9.2] - 2026-01-19 - Certificate Update
 
 ### Fixed
