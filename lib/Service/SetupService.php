@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace OCA\IntraVox\Service;
 
+use OCP\DB\Exception as DBException;
 use OCP\Files\IRootFolder;
 use OCP\Files\NotFoundException;
 use OCP\Files\Folder;
@@ -225,17 +226,9 @@ class SetupService {
                     $this->logger->info("Adding group '{$groupName}' to groupfolder {$folderId}...");
                     $groupfolderManager->addApplicableGroup($folderId, $groupName);
                     $this->logger->info("Group '{$groupName}' added successfully");
-                } catch (\Doctrine\DBAL\Exception\UniqueConstraintViolationException $e) {
-                    // Group already exists - this is expected on updates
-                    $this->logger->info("Group '{$groupName}' already exists in groupfolder (expected on updates)");
-                } catch (\Exception $e) {
-                    // Check if it's a duplicate entry error by message (MySQL: 1062, PostgreSQL: 23505)
-                    $message = $e->getMessage();
-                    if (strpos($message, 'Duplicate entry') !== false
-                        || strpos($message, '1062') !== false
-                        || strpos($message, '23505') !== false
-                        || strpos($message, 'duplicate key') !== false
-                        || strpos($message, 'UNIQUE constraint') !== false) {
+                } catch (DBException $e) {
+                    if ($e->getReason() === DBException::REASON_UNIQUE_CONSTRAINT_VIOLATION) {
+                        // Group already exists - this is expected on updates
                         $this->logger->info("Group '{$groupName}' already exists in groupfolder (expected on updates)");
                     } else {
                         // Re-throw other exceptions

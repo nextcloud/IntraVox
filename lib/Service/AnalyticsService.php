@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace OCA\IntraVox\Service;
 
+use OCP\DB\Exception as DBException;
 use OCP\IConfig;
 use OCP\IDBConnection;
 use OCP\IUserSession;
@@ -305,21 +306,12 @@ class AnalyticsService {
                 ]);
             $qb->executeStatement();
             return true; // New unique user for this day
-        } catch (\Doctrine\DBAL\Exception\UniqueConstraintViolationException $e) {
-            // Unique constraint violation = user already viewed today (works for MySQL and PostgreSQL)
-            return false;
-        } catch (\Exception $e) {
-            // Fallback: check error message for duplicate key indicators (MySQL: 1062, PostgreSQL: 23505)
-            $message = $e->getMessage();
-            if (strpos($message, 'Duplicate entry') !== false
-                || strpos($message, '1062') !== false
-                || strpos($message, '23505') !== false
-                || strpos($message, 'duplicate key') !== false
-                || strpos($message, 'UNIQUE constraint') !== false) {
-                return false;
+        } catch (DBException $e) {
+            if ($e->getReason() !== DBException::REASON_UNIQUE_CONSTRAINT_VIOLATION) {
+                throw $e;
             }
-            // Re-throw unexpected exceptions
-            throw $e;
+            // Unique constraint violation = user already viewed today
+            return false;
         }
     }
 

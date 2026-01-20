@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.6] - 2026-01-20 - Database Exception Handling
+
+### Changed
+- **Database Exception Handling**: Use `OCP\DB\Exception` instead of Doctrine exceptions
+  - Follows Nextcloud coding standards for database-agnostic error handling
+  - Cleaner code without string-based error detection
+
+### Security
+- **svg-sanitize**: Updated from ^0.20 to ^0.22 to fix medium severity vulnerability (GHSA bypass)
+
 ## [0.9.5] - 2026-01-20 - PostgreSQL Compatibility
 
 ### Fixed
