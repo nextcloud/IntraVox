@@ -1,127 +1,116 @@
 # IntraVox App Store Release Checklist
 
-Doorloop deze checklist voor elke release naar de Nextcloud App Store.
+Follow this checklist for every release to the Nextcloud App Store.
 
 ---
 
-## 0. Certificaat Verificatie (KRITIEK!)
+## 0. Certificate Verification (CRITICAL!)
 
-**⚠️ BELANGRIJK:** Controleer VOOR elke release dat de signing key overeenkomt met het App Store certificaat!
+**Before every release**, verify that your signing key matches the App Store certificate!
 
-- [ ] Verifieer dat de signing key matcht met het App Store certificaat:
+- [ ] Verify signing key matches App Store certificate:
   ```bash
-  # Hash van lokale signing key
-  openssl rsa -in intravox.key -pubout 2>/dev/null | openssl md5
+  # Hash of local signing key
+  openssl rsa -in <your-app>.key -pubout 2>/dev/null | openssl md5
 
-  # Hash van App Store certificaat (moet IDENTIEK zijn!)
+  # Hash of App Store certificate (must be IDENTICAL!)
   curl -s "https://apps.nextcloud.com/api/v1/apps.json" | \
-    python3 -c "import json,sys; [print(a['certificate']) for a in json.load(sys.stdin) if a['id']=='intravox']" | \
+    python3 -c "import json,sys; [print(a['certificate']) for a in json.load(sys.stdin) if a['id']=='<your-app-id>']" | \
     openssl x509 -pubkey -noout 2>/dev/null | openssl md5
   ```
-- [ ] Beide MD5 hashes zijn **IDENTIEK**
-- [ ] Controleer certificaat serienummer en geldigheid:
-  ```bash
-  curl -s "https://raw.githubusercontent.com/nextcloud/app-certificate-requests/master/intravox/intravox.crt" | \
-    openssl x509 -text -noout 2>/dev/null | grep -A1 "Serial Number"
-  ```
+- [ ] Both MD5 hashes are **IDENTICAL**
+- [ ] Check certificate serial number and validity
 
-### Waarschuwingen over certificaten:
-- **VRAAG NOOIT onnodig een nieuw certificaat aan** - dit revoceert automatisch het oude!
-- Vraag alleen een nieuw certificaat aan als de private key is gecompromitteerd of kwijt
-- Bewaar `intravox.key` veilig (backup op veilige locatie, NIET in git!)
-- Na certificaat-wijziging: download het nieuwe certificaat en bewaar bij de key
+### Certificate Warnings:
+- **NEVER request a new certificate unnecessarily** - this automatically revokes the old one!
+- Only request a new certificate if the private key is compromised or lost
+- Keep your `.key` file safe (backup in secure location, NOT in git!)
+- After certificate change: download the new certificate and store with the key
 
 ---
 
-## 1. Code Kwaliteit & Beveiliging
+## 1. Code Quality & Security
 
-- [ ] Verwijder alle `console.log()` en debug statements uit JavaScript (`src/`)
-- [ ] Verwijder alle `error_log()` en debug code uit PHP (`lib/`)
-- [ ] Controleer op hardcoded credentials, API keys of wachtwoorden
-- [ ] Zorg dat `.gitignore` up-to-date is (keys, certificates, .env files)
-- [ ] Verifieer dat `intravox.key` en andere gevoelige bestanden NIET in de repository staan
-- [ ] Voer `npm audit` uit en los kritieke vulnerabilities op
-- [ ] Controleer op XSS, SQL injection en andere OWASP kwetsbaarheden
-- [ ] Review alle nieuwe code op security issues
-
----
-
-## 2. Vertalingen (l10n/)
-
-- [ ] Controleer of alle nieuwe strings zijn vertaald in alle 4 talen:
-  - [ ] Engels (en)
-  - [ ] Nederlands (nl)
-  - [ ] Duits (de)
-  - [ ] Frans (fr)
-- [ ] Valideer JSON syntax in alle vertaalbestanden (`l10n/*.json`)
-- [ ] Test de applicatie in elke taal op ontbrekende of afgekapte teksten
-- [ ] Controleer demo-data vertalingen (`demo-data/en/`, `de/`, `nl/`, `fr/`)
-- [ ] Verifieer dat `.js` vertaalbestanden zijn gegenereerd
+- [ ] Remove all `console.log()` and debug statements from JavaScript (`src/`)
+- [ ] Remove all `error_log()` and debug code from PHP (`lib/`)
+- [ ] Check for hardcoded credentials, API keys, or passwords
+- [ ] Ensure `.gitignore` is up-to-date (keys, certificates, .env files)
+- [ ] Verify that sensitive files are NOT in the repository
+- [ ] Run `npm audit` and fix critical vulnerabilities
+- [ ] Check for XSS, SQL injection, and other OWASP vulnerabilities
+- [ ] Review all new code for security issues
+- [ ] **Check tarball for sensitive data** (see Section 9.1)
 
 ---
 
-## 3. Versie Management
+## 2. Translations (l10n/)
 
-- [ ] Bepaal het nieuwe versienummer (semantic versioning: MAJOR.MINOR.PATCH)
-- [ ] Update versienummer in `package.json`
-- [ ] Update versienummer in `appinfo/info.xml`
-- [ ] Voer `npm run version:sync -- --check` uit om te verifiëren dat versies matchen
-- [ ] Update `CHANGELOG.md` met alle wijzigingen voor deze release:
-  - [ ] Nieuwe features
+- [ ] Check that all new strings are translated in all supported languages
+- [ ] Validate JSON syntax in all translation files (`l10n/*.json`)
+- [ ] Test the application in each language for missing or truncated text
+- [ ] Check demo-data translations
+- [ ] Verify that `.js` translation files are generated
+
+---
+
+## 3. Version Management
+
+- [ ] Determine new version number (semantic versioning: MAJOR.MINOR.PATCH)
+- [ ] Update version in `package.json`
+- [ ] Update version in `appinfo/info.xml`
+- [ ] Run `npm run version:sync -- --check` to verify versions match
+- [ ] Update `CHANGELOG.md` with all changes for this release:
+  - [ ] New features
   - [ ] Bug fixes
   - [ ] Breaking changes
-  - [ ] Bekende issues
+  - [ ] Known issues
 
 ---
 
-## 4. API Documentatie
+## 4. API Documentation
 
-- [ ] Update `openapi.json` met eventuele API wijzigingen
-- [ ] Valideer dat de OpenAPI spec correct is (geen syntax errors)
-- [ ] Controleer dat alle nieuwe endpoints gedocumenteerd zijn
-- [ ] Update response schemas indien gewijzigd
-- [ ] Verifieer API versienummer in `openapi.json`
+- [ ] Update `openapi.json` with any API changes
+- [ ] Validate that the OpenAPI spec is correct (no syntax errors)
+- [ ] Check that all new endpoints are documented
+- [ ] Update response schemas if changed
+- [ ] Verify API version number in `openapi.json`
 
 ---
 
 ## 5. Build & Testing
 
-- [ ] Verwijder `node_modules/` en voer `npm ci` uit (clean install)
-- [ ] Voer `npm run build` uit zonder errors of warnings
-- [ ] Controleer bundle size met `npm run analyze` (geen onverwachte groei)
-- [ ] Test alle core functionaliteiten handmatig:
-  - [ ] Pagina's aanmaken, bewerken, verwijderen
-  - [ ] Navigatie en menu's
-  - [ ] Media upload en beheer
-  - [ ] Reacties en commentaar
-  - [ ] Export en import
-  - [ ] Zoekfunctionaliteit
-- [ ] Test op een schone Nextcloud installatie
-- [ ] Controleer browser console op JavaScript errors
-- [ ] Test met verschillende browsers:
-  - [ ] Chrome
-  - [ ] Firefox
-  - [ ] Safari
-  - [ ] Edge
-- [ ] Test met GroupFolders extensie geïnstalleerd
-- [ ] Test de demo-data setup wizard
+- [ ] Remove `node_modules/` and run `npm ci` (clean install)
+- [ ] Run `npm run build` without errors or warnings
+- [ ] Check bundle size with `npm run analyze` (no unexpected growth)
+- [ ] Test all core functionalities manually:
+  - [ ] Create, edit, delete pages
+  - [ ] Navigation and menus
+  - [ ] Media upload and management
+  - [ ] Comments and reactions
+  - [ ] Export and import
+  - [ ] Search functionality
+- [ ] Test on a clean Nextcloud installation
+- [ ] Check browser console for JavaScript errors
+- [ ] Test with different browsers (Chrome, Firefox, Safari, Edge)
+- [ ] Test with GroupFolders extension installed
+- [ ] Test the demo-data setup wizard
 
 ---
 
-## 6. Nextcloud Compatibiliteit
+## 6. Nextcloud Compatibility
 
-- [ ] Controleer min/max Nextcloud versie in `appinfo/info.xml`
-- [ ] Test op de minimum ondersteunde Nextcloud versie (NC 32)
-- [ ] Test op de nieuwste Nextcloud versie
-- [ ] Verifieer PHP versie vereiste (8.1+) in `appinfo/info.xml`
-- [ ] Controleer dat alle Nextcloud API calls nog werken
-- [ ] Test met de laatste versie van @nextcloud/vue
+- [ ] Check min/max Nextcloud version in `appinfo/info.xml`
+- [ ] Test on the minimum supported Nextcloud version
+- [ ] Test on the latest Nextcloud version
+- [ ] Verify PHP version requirement in `appinfo/info.xml`
+- [ ] Check that all Nextcloud API calls still work
+- [ ] Test with the latest version of @nextcloud/vue
 
 ---
 
-## 7. Assets & Bestanden
+## 7. Assets & Files
 
-- [ ] Controleer dat alle benodigde bestanden in de tarball komen:
+- [ ] Verify all required files are in the tarball:
   - [ ] `appinfo/` (info.xml, routes.php)
   - [ ] `lib/` (PHP backend)
   - [ ] `js/` (compiled JavaScript)
@@ -133,184 +122,168 @@ Doorloop deze checklist voor elke release naar de Nextcloud App Store.
   - [ ] `README.md`
   - [ ] `CHANGELOG.md`
   - [ ] `LICENSE`
-- [ ] Verifieer dat `src/` NIET in de tarball zit (alleen compiled code)
-- [ ] Controleer app icon (512x512) voor App Store
-- [ ] Update screenshots indien UI is gewijzigd
+- [ ] Verify that `src/` is NOT in the tarball (only compiled code)
+- [ ] Check app icon (512x512) for App Store
+- [ ] Update screenshots if UI has changed
 
 ---
 
 ## 8. Git & Repository
 
-- [ ] Alle wijzigingen zijn gecommit
-- [ ] Geen uncommitted changes aanwezig
-- [ ] Branch is up-to-date met main/master
-- [ ] Merge conflicts zijn opgelost
-- [ ] Controleer dat gevoelige bestanden niet in git history staan
+- [ ] All changes are committed
+- [ ] No uncommitted changes present
+- [ ] Branch is up-to-date with main/master
+- [ ] Merge conflicts are resolved
+- [ ] Check that sensitive files are not in git history
 
 ---
 
 ## 9. Release Package
 
-- [ ] Voer `./create-release.sh <version> <label> "<description>"` uit
-- [ ] Controleer dat de tarball correct is aangemaakt
-- [ ] Verifieer de inhoud van de tarball (`tar -tzf intravox-x.x.x.tar.gz`)
-- [ ] **BELANGRIJK:** Controleer dat de root folder in de tarball `intravox` heet (NIET `intravox-x.x.x`)
-  - App Store vereist lowercase folder naam zonder versienummer
-  - Indien nodig, handmatig herpackagen (zie hieronder)
-- [ ] Push naar beide remotes:
-  - [ ] `git push gitea main`
-  - [ ] `git push github main`
-- [ ] Upload tarball naar GitHub release: `gh release upload vX.X.X intravox-x.x.x.tar.gz --clobber`
-- [ ] Genereer signature met de juiste key:
+- [ ] Create the tarball
+- [ ] Verify tarball contents (`tar -tzf <app>-x.x.x.tar.gz`)
+- [ ] **IMPORTANT:** Verify root folder is lowercase app name (NOT `app-x.x.x`)
+  - App Store requires lowercase folder name without version number
+- [ ] Push to remote(s)
+- [ ] Upload tarball to GitHub release
+- [ ] Generate signature with the correct key:
   ```bash
-  openssl dgst -sha512 -sign /pad/naar/intravox.key /pad/naar/intravox-x.x.x.tar.gz | openssl base64 -A
+  openssl dgst -sha512 -sign <your-app>.key <your-app>-x.x.x.tar.gz | openssl base64 -A
   ```
-- [ ] Upload naar Nextcloud App Store:
-  - [ ] Download URL (LOWERCASE!): `https://github.com/nextcloud/intravox/releases/download/vX.X.X/intravox-x.x.x.tar.gz`
-  - [ ] Signature (nieuw genereren na elke tarball wijziging!)
+- [ ] Upload to Nextcloud App Store:
+  - [ ] Download URL (lowercase!)
+  - [ ] Signature (regenerate after any tarball change!)
   - [ ] Release notes
 
-### Tarball Herpackagen (indien folder naam fout is)
+### 9.1 Tarball Security Check (CRITICAL!)
 
-Als de tarball `intravox-x.x.x/` als root folder heeft i.p.v. `intravox/`:
+**ALWAYS check** the tarball for sensitive data before uploading!
 
 ```bash
-# Maak nieuwe tarball met correcte folder naam
-TEMP_DIR=$(mktemp -d) && \
-mkdir -p "$TEMP_DIR/intravox" && \
-cp -r appinfo lib l10n templates css img js "$TEMP_DIR/intravox/" && \
-cp -r scripts demo-data README.md CHANGELOG.md LICENSE openapi.json "$TEMP_DIR/intravox/" 2>/dev/null || true && \
-cd "$TEMP_DIR" && \
-tar -czf intravox-x.x.x.tar.gz intravox && \
-mv intravox-x.x.x.tar.gz /pad/naar/IntraVox/ && \
-rm -rf "$TEMP_DIR"
+# Check for sensitive files
+tar -tzf <app>-x.x.x.tar.gz | grep -iE '(internal|credential|\.key|\.env)'
 
-# Upload nieuwe tarball en genereer nieuwe signature
-gh release upload vX.X.X intravox-x.x.x.tar.gz --clobber
-openssl dgst -sha512 -sign /pad/naar/intravox.key intravox-x.x.x.tar.gz | openssl base64 -A
+# Search for IP addresses, usernames, passwords
+tar -xzf <app>-x.x.x.tar.gz -O 2>/dev/null | \
+  grep -iE '(password\s*=|api_key\s*=|secret\s*=|private.*key)' | head -20
 ```
+
+**Do NOT include in tarball:**
+- `docs/internal/` - Internal documentation
+- `*.key`, `*.crt`, `*.pem` - Certificates and keys
+- `src/` - Source code (only compiled js/)
+- `node_modules/` - Dependencies
+- `.git/` - Git history
+- Any files containing server IPs, credentials, or usernames
 
 ---
 
-## 10. Post-Release Verificatie
+## 10. Post-Release Verification
 
-- [ ] Installeer de app vanuit de App Store op een test server
-- [ ] Verifieer dat de app correct werkt na installatie
-- [ ] Controleer dat de versie correct wordt weergegeven
-- [ ] Test de upgrade path van de vorige versie
-- [ ] Sync beide remotes:
-  - [ ] Gitea (intern)
-  - [ ] GitHub (publiek)
-- [ ] Maak een release announcement indien major release
-- [ ] Update externe documentatie indien nodig
+- [ ] Install the app from the App Store on a test server
+- [ ] Verify the app works correctly after installation
+- [ ] Check that the version is displayed correctly
+- [ ] Test the upgrade path from the previous version
+- [ ] Sync all remotes
+- [ ] Make a release announcement if major release
+- [ ] Update external documentation if needed
 
 ---
 
 ## 11. Rollback Plan
 
-- [ ] Backup van de vorige release is beschikbaar
-- [ ] Rollback procedure is getest
-- [ ] Test server beschikbaar voor noodgevallen
-- [ ] Contactgegevens van key stakeholders bij de hand
+- [ ] Backup of the previous release is available
+- [ ] Rollback procedure is tested
+- [ ] Test server available for emergencies
 
 ---
 
 ## Quick Commands
 
 ```bash
-# Versie synchronisatie controleren
+# Check version synchronization
 npm run version:sync -- --check
 
-# Versie updaten
+# Update version
 npm run version:sync -- X.Y.Z
 
 # Production build
 npm run build
 
-# Bundle analyse
+# Bundle analysis
 npm run analyze
 
 # Security audit
 npm audit
-
-# Release maken (Gitea)
-./create-release.sh <version> <label> "<description>"
-
-# Deploy naar test server
-./deploy.sh 1dev
 ```
 
 ---
 
 ## Quick Release Flow
 
-Volledige release naar Gitea + GitHub + App Store. Gebruik dit wanneer Claude "maak release" uitvoert:
-
-### 1. Voorbereiding
+### 1. Preparation
 ```bash
 npm run version:sync -- --check
 npm run build
 ```
 
-### 2. Commit & Push (beide remotes)
+### 2. Commit & Push
 ```bash
 git add -A
 git commit -m "Release vX.Y.Z - [Label]"
-git push gitea main
-git push github main
+git push origin main
 ```
 
-### 3. Tag (beide remotes)
+### 3. Create Tag
 ```bash
 git tag -a vX.Y.Z -m "Release vX.Y.Z - [Label]"
-git push gitea vX.Y.Z
-git push github vX.Y.Z
+git push origin vX.Y.Z
 ```
 
-### 4. Tarball maken
-**BELANGRIJK:** Root folder moet `intravox` zijn (lowercase, geen versienummer)
+### 4. Create Tarball
+**IMPORTANT:** Root folder must be lowercase app name without version number
 
 ```bash
 TEMP_DIR=$(mktemp -d) && \
-mkdir -p "$TEMP_DIR/intravox" && \
-cp -r appinfo lib l10n templates css img js scripts demo-data docs "$TEMP_DIR/intravox/" && \
-cp openapi.json CHANGELOG.md LICENSE README.md "$TEMP_DIR/intravox/" && \
+mkdir -p "$TEMP_DIR/<app-name>/docs" && \
+cp -r appinfo lib l10n templates css img js scripts demo-data "$TEMP_DIR/<app-name>/" && \
+# Copy only public docs (exclude internal documentation)
+cp docs/*.md "$TEMP_DIR/<app-name>/docs/" 2>/dev/null || true && \
+cp openapi.json CHANGELOG.md LICENSE README.md "$TEMP_DIR/<app-name>/" && \
 cd "$TEMP_DIR" && \
-tar -czf intravox-X.Y.Z.tar.gz intravox && \
-mv intravox-X.Y.Z.tar.gz ~/Documents/Development/IntraVox/ && \
+tar -czf <app-name>-X.Y.Z.tar.gz <app-name> && \
+mv <app-name>-X.Y.Z.tar.gz /path/to/project/ && \
 rm -rf "$TEMP_DIR"
 ```
 
-**Niet opnemen:** src/, node_modules/, screenshots/, .git/, *.key
+**Exclude:** src/, node_modules/, screenshots/, .git/, *.key, docs/internal/
 
 ### 5. GitHub Release
 ```bash
-gh release create vX.Y.Z --repo nextcloud/IntraVox --title "vX.Y.Z - [Label]" --notes "[notes]"
-gh release upload vX.Y.Z intravox-X.Y.Z.tar.gz --repo nextcloud/IntraVox
+gh release create vX.Y.Z --title "vX.Y.Z - [Label]" --notes "[notes]"
+gh release upload vX.Y.Z <app-name>-X.Y.Z.tar.gz
 ```
 
-### 6. Signature genereren (voor App Store)
+### 6. Generate Signature (for App Store)
 ```bash
-openssl dgst -sha512 -sign intravox.key intravox-X.Y.Z.tar.gz | openssl base64 -A
+openssl dgst -sha512 -sign <app-name>.key <app-name>-X.Y.Z.tar.gz | openssl base64 -A
 ```
 
 ### 7. App Store Upload
-- **URL:** `https://github.com/nextcloud/intravox/releases/download/vX.Y.Z/intravox-X.Y.Z.tar.gz`
-  - **BELANGRIJK:** Gebruik lowercase `intravox` in de URL (GitHub is case-insensitive maar App Store vereist lowercase)
-- **Signature:** Output van stap 6
+- **URL:** GitHub release download URL (lowercase!)
+- **Signature:** Output from step 6
 
-**Let op:** Signature opnieuw genereren na elke tarball wijziging!
-
----
-
-## Notities
-
-- **Minimale Nextcloud versie:** 32
-- **PHP versie:** 8.1+
-- **Ondersteunde talen:** en, nl, de, fr
-- **Vereiste extensies:** GroupFolders
-- **App Store:** https://apps.nextcloud.com/apps/intravox
+**Note:** Regenerate signature after any tarball change!
 
 ---
 
-*Laatst bijgewerkt: Januari 2026*
+## Notes
+
+- **Minimum Nextcloud version:** Check `appinfo/info.xml`
+- **PHP version:** Check `appinfo/info.xml`
+- **Supported languages:** Check `l10n/` folder
+- **App Store:** https://apps.nextcloud.com
+
+---
+
+*Last updated: January 2026*
