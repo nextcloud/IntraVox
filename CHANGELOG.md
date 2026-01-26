@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.7] - 2026-01-26 - Code Block Fix
+
+### Fixed
+- **Code Block Rendering**: Fixed code blocks corrupting after editing ([#15](https://github.com/nextcloud/IntraVox/issues/15))
+  - Backticks no longer accumulate when saving and re-editing code blocks
+  - Fixed double-processing of nested `<code>` tags inside `<pre>` elements
+  - Code block content now correctly preserved through save/load cycles
+
 ## [0.9.6] - 2026-01-20 - Database Exception Handling
 
 ### Changed

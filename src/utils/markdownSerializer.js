@@ -252,7 +252,11 @@ function elementToMarkdown(element, listDepth = 0) {
       return `\`${content}\``;
 
     case 'pre':
-      return `\`\`\`\n${content}\n\`\`\`\n\n`;
+      // TipTap wraps code blocks as <pre><code>content</code></pre>
+      // Get raw text content to avoid double-processing the nested <code> tag
+      const codeElement = element.querySelector('code');
+      const codeContent = codeElement ? codeElement.textContent : element.textContent;
+      return `\`\`\`\n${codeContent}\n\`\`\`\n\n`;
 
     case 'hr':
       return '---\n\n';
