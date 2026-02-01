@@ -13,6 +13,7 @@ class FooterService {
     private IUserSession $userSession;
     private string $userId;
     private SetupService $setupService;
+    private SystemFileService $systemFileService;
     private IConfig $config;
     private const SUPPORTED_LANGUAGES = ['nl', 'en', 'de', 'fr'];
     private const DEFAULT_LANGUAGE = 'en';
@@ -21,12 +22,14 @@ class FooterService {
         IRootFolder $rootFolder,
         IUserSession $userSession,
         SetupService $setupService,
+        SystemFileService $systemFileService,
         IConfig $config,
         ?string $userId
     ) {
         $this->rootFolder = $rootFolder;
         $this->userSession = $userSession;
         $this->setupService = $setupService;
+        $this->systemFileService = $systemFileService;
         $this->config = $config;
         $this->userId = $userId ?? '';
     }
@@ -44,7 +47,7 @@ class FooterService {
         // Get user's folder (this respects GroupFolder ACL)
         $userFolder = $this->rootFolder->getUserFolder($this->userId);
 
-        // Get IntraVox folder from user's perspective (mounted GroupFolder)
+        // Get folder from user's perspective (mounted GroupFolder)
         return $userFolder->get('IntraVox');
     }
 
@@ -71,10 +74,14 @@ class FooterService {
 
     /**
      * Get footer content for current user's language
+     *
+     * First tries to read via user's folder view (respects ACL).
+     * Falls back to SystemFileService for users with limited access (e.g., department-only).
      */
     public function getFooter(): array {
         $language = $this->getUserLanguage();
 
+        // Try to read via user's folder view first (respects ACL)
         try {
             $groupFolder = $this->getIntraVoxFolder();
             $languageFolder = $groupFolder->get($language);
@@ -102,8 +109,32 @@ class FooterService {
                 'canEdit' => $this->canEditFooter()
             ];
         } catch (\Exception $e) {
-            throw new \Exception('Could not load footer: ' . $e->getMessage());
+            // User doesn't have access to the language root folder
+            // Fall back to SystemFileService
         }
+
+        // Fallback: Use SystemFileService to read footer via system context
+        // This allows users with department-level access to still see the footer
+        try {
+            $data = $this->systemFileService->getFooter($language);
+
+            if ($data !== null && isset($data['content'])) {
+                return [
+                    'content' => $data['content'],
+                    'language' => $language,
+                    'canEdit' => false // Users without root access cannot edit footer
+                ];
+            }
+        } catch (\Exception $e) {
+            // SystemFileService also failed
+        }
+
+        // Return empty footer
+        return [
+            'content' => '',
+            'language' => $language,
+            'canEdit' => false
+        ];
     }
 
     /**

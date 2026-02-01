@@ -7,6 +7,103 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.8] - 2026-01-30 - Public Sharing & Password Protection
+
+### Added
+- **Public Share Links**: Full anonymous access to IntraVox pages via Nextcloud share links
+  - Share any folder scope (language root or subfolder) as a public link
+  - Anonymous users see pages, navigation, footer, page tree, and breadcrumbs without login
+  - Share scope enforced: only pages within the shared folder are accessible
+  - Rate limiting on all public endpoints to prevent abuse
+- **Public Page Viewer**: Dedicated read-only view for anonymous visitors
+  - Full page rendering with all widget types (text, images, video, links, news)
+  - Navigation menu with mega-menu support
+  - Page tree sidebar for browsing available pages
+  - Breadcrumb navigation
+  - Footer display
+  - Responsive layout for mobile and desktop
+- **Password-Protected Shares**: Full support for Nextcloud share link passwords
+  - Server-side password challenge screen (rendered before JavaScript loads)
+  - Session-based authentication — enter password once, navigate freely within scope
+  - Brute force protection (10 attempts/min per IP) with random timing delays
+  - Password verified via Nextcloud's `IHasher` (bcrypt) — plain text never stored
+  - API endpoints return 401 with `passwordRequired` flag for expired sessions
+  - Vue.js fallback password form for session expiry during navigation
+- **Share Dialog**: Redesigned public link modal with full share context
+  - Scope indicator shows whether link shares a page, folder, or language root
+  - "Password protected" badge with lock icon when share has a password
+  - Navigation tree showing shared pages structure
+  - Clickable "Manage share in Files" link opens Nextcloud Files sharing sidebar
+  - Copy public link button
+- **Share Button**: Always visible in page toolbar with two states
+  - Active state (theme color): share link exists — click to open share dialog
+  - Inactive state (muted): no share link — click for guidance on creating one
+  - Detects existing Nextcloud share links for the current scope
+- **Admin Shares Overview**: New "Sharing" tab in IntraVox admin settings
+  - Lists all active Nextcloud share links on IntraVox content
+  - Shows scope, file path, creation date, and expiration
+  - Direct link to manage each share in the Files app
+  - Useful for auditing public access
+- **Sharing Disabled Warning**: Clear feedback when NC link sharing is disabled
+  - Warning dialog with link to Nextcloud Sharing settings
+  - Explains the prerequisite for public sharing
+- **Public News Widget**: News widget works in anonymous share view
+  - New API endpoint `/api/share/{token}/news` for fetching news without authentication
+  - Supports both `sourcePageId` and legacy `sourcePath` filtering
+  - Share-aware image URLs for media in news items
+  - Only shows pages within the share scope
+- **Public Media Access**: Images and resources accessible via share token
+  - Page media: `/api/share/{token}/page/{uniqueId}/media/{filename}`
+  - Shared resources: `/api/share/{token}/resources/media/{filename}`
+  - Resource subfolders: `/api/share/{token}/resources/media/{folder}/{filename}`
+- **Links Widget Color System**: Redesigned color options for intuitive background control
+  - Container background: 4 options — None, Light, Accent, Primary (with visual color swatches)
+  - Individual link background: 3 options — Default, Light, Primary (with visual color swatches)
+  - Default links blend transparently into their container/row background
+  - Automatic contrast detection: white text/icons on dark backgrounds, dark text on light
+- **Telemetry expansion**: Added 7 new server configuration fields to anonymous usage statistics
+  - Country code, database type, default language, timezone, OS family, web server, Docker detection
+- **Send report now button**: Manual telemetry report trigger in admin Statistics tab
+- **Breadcrumb Home label from navigation.json**: Home breadcrumb now reads its label from the first item in `navigation.json` instead of hardcoded "Home"
+- **Public sharing documentation**: Comprehensive guide covering setup, scope, password protection, security, and admin overview
+
+### Changed
+- **SystemFileService**: Extended with news page retrieval for public context
+  - `getNewsPagesForShare()` uses system-level GroupFolder access (no user session)
+  - Recursive page discovery with share scope filtering
+  - Excerpt extraction from first text widget
+  - First image detection with share-aware URL rewriting
+- **Color Utilities Refactored**: Separated `DARK_BACKGROUNDS` and `LIGHT_BACKGROUNDS` arrays in `colorUtils.js`
+  - New `isLightBackground()` function for accurate contrast detection
+  - `--color-primary-element-light` correctly classified as light background (was incorrectly dark)
+  - News widget layouts (List, Grid) updated to use new light background detection
+
+### Fixed
+- **Public Share Page Tree**: Fixed page tree only showing homepage when sharing a language root folder
+  - `extractSubtreeByScope()` now correctly returns the full tree for language-root shares
+  - All subfolders and pages are visible in the sidebar navigation
+- **Links Widget Contrast**: Fixed white text/icons on light backgrounds (Accent, Light)
+  - Links without explicit background now blend transparently into their container
+  - Correct contrast for all container/link background combinations
+- **Webpack Chunk Caching**: Fixed `TypeError: n[e] is undefined` when opening page editor after rebuild
+  - Added content hash to chunk filenames (`[contenthash:8]`) to prevent stale cached chunks
+- **Telemetry countryCode and timezone**: Country code now derived from `default_phone_region` instead of `default_language`. Timezone uses smarter fallback: Nextcloud config → php.ini → UTC
+- **Telemetry sending to wrong URL**: Fixed telemetry using deprecated endpoint. Now correctly uses `TelemetryService::sendReport()`
+- **Homepage breadcrumb label**: Fixed breadcrumb showing page title instead of navigation label on the homepage itself
+- **Files URL in Share Dialog**: Fixed file ID using internal GroupFolder storage ID instead of user-mounted ID, and corrected URL format to include `index.php` prefix
+
+### Removed
+- **HMAC token system**: Removed unused `PublicPageService`, `PublicPageController`, and `templates/public.php` — dead code from an earlier public sharing approach that was never used
+
+### Security
+- All public endpoints use `#[PublicPage]` and `#[NoCSRFRequired]` attributes
+- Share token validation before any data access
+- Share scope path enforcement prevents access to pages outside the shared folder
+- Anonymous rate throttling (60 requests/minute) on all public endpoints
+- Password brute force protection (10 attempts/minute per IP) with random delays (100–300ms)
+- Session-based password auth — password never sent to browser or exposed in API responses
+- Nextcloud share link settings respected (`shareapi_allow_links`)
+
 ## [0.9.7] - 2026-01-26 - Code Block Fix
 
 ### Fixed

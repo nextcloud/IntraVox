@@ -11,6 +11,7 @@
         :page-id="page.uniqueId"
         :editable="false"
         :row-background-color="page.layout.headerRow.backgroundColor || ''"
+        :share-token="shareToken"
         @navigate="$emit('navigate', $event)"
       />
     </div>
@@ -28,6 +29,7 @@
         :page-id="page.uniqueId"
         :editable="false"
         :row-background-color="page.layout.sideColumns.left.backgroundColor || ''"
+        :share-token="shareToken"
         @navigate="$emit('navigate', $event)"
       />
     </div>
@@ -75,6 +77,7 @@
                 :page-id="page.uniqueId"
                 :editable="false"
                 :row-background-color="row.backgroundColor || ''"
+                :share-token="shareToken"
                 @navigate="$emit('navigate', $event)"
               />
             </div>
@@ -94,6 +97,7 @@
         :page-id="page.uniqueId"
         :editable="false"
         :row-background-color="page.layout.sideColumns.right.backgroundColor || ''"
+        :share-token="shareToken"
         @navigate="$emit('navigate', $event)"
       />
     </div>
@@ -147,6 +151,14 @@ export default {
         allowCommentReactions: true,
         singleReactionPerUser: true
       })
+    },
+    shareToken: {
+      type: String,
+      default: ''
+    },
+    isPublic: {
+      type: Boolean,
+      default: false
     }
   },
   emits: ['navigate'],

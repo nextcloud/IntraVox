@@ -30,6 +30,7 @@ class LicenseController extends Controller {
         string $appName,
         IRequest $request,
         private LicenseService $licenseService,
+        private TelemetryService $telemetryService,
         private IUserSession $userSession,
         private IGroupManager $groupManager,
         private LoggerInterface $logger
@@ -101,7 +102,7 @@ class LicenseController extends Controller {
         }
 
         try {
-            $success = $this->licenseService->sendTelemetry();
+            $success = $this->telemetryService->sendReport();
 
             if ($success) {
                 return new DataResponse([

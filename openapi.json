@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "IntraVox API",
-    "version": "0.8.5",
+    "version": "0.9.8",
     "description": "IntraVox is a modern intranet page builder for Nextcloud. This API provides endpoints for managing pages, media, navigation, comments, and more.",
     "license": {
       "name": "AGPL-3.0",
@@ -57,6 +57,10 @@
     {
       "name": "Export",
       "description": "Content export"
+    },
+    {
+      "name": "Public Share",
+      "description": "Anonymous access to shared content via Nextcloud share links. No authentication required — access is controlled by the share token. Password-protected shares require session-based authentication via the /s/{token}/authenticate endpoint."
     }
   ],
   "paths": {
@@ -1238,6 +1242,375 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/share/{token}/page/{uniqueId}": {
+      "get": {
+        "operationId": "get-page-by-share",
+        "summary": "Get a page via share token",
+        "description": "Returns a page's content for anonymous access via a Nextcloud share link. The page must be within the share's scope. Password-protected shares require a valid session (see /s/{token}/authenticate).",
+        "tags": ["Public Share"],
+        "security": [],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Nextcloud share token (15-20 alphanumeric characters)"
+          },
+          {
+            "name": "uniqueId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Unique ID of the page to retrieve"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Page data including content, breadcrumb, and metadata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Password required or invalid session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": { "type": "string" },
+                    "passwordRequired": { "type": "boolean" }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Page is outside the share scope"
+          },
+          "404": {
+            "description": "Share token invalid or page not found"
+          }
+        }
+      }
+    },
+    "/api/share/{token}/navigation": {
+      "get": {
+        "operationId": "get-navigation-by-share",
+        "summary": "Get navigation for a share",
+        "description": "Returns the navigation menu filtered to the share's scope. Only items within the shared folder are included.",
+        "tags": ["Public Share"],
+        "security": [],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Nextcloud share token"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Navigation data filtered by share scope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "navigation": {
+                      "$ref": "#/components/schemas/Navigation"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Password required"
+          },
+          "404": {
+            "description": "Share token invalid"
+          }
+        }
+      }
+    },
+    "/api/share/{token}/tree": {
+      "get": {
+        "operationId": "get-page-tree-by-share",
+        "summary": "Get page tree for a share",
+        "description": "Returns the page tree structure filtered to the share's scope.",
+        "tags": ["Public Share"],
+        "security": [],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Nextcloud share token"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Page tree filtered by share scope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "tree": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PageTreeItem"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Password required"
+          },
+          "404": {
+            "description": "Share token invalid"
+          }
+        }
+      }
+    },
+    "/api/share/{token}/news": {
+      "get": {
+        "operationId": "get-news-by-share",
+        "summary": "Get news items for a share",
+        "description": "Returns news items from pages within the share scope. Supports filtering by source page and sorting.",
+        "tags": ["Public Share"],
+        "security": [],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Nextcloud share token"
+          },
+          {
+            "name": "sourcePageId",
+            "in": "query",
+            "schema": { "type": "string" },
+            "description": "Filter news to a specific source page"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "default": 10 },
+            "description": "Maximum number of news items"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "schema": { "type": "string", "enum": ["date", "title"] },
+            "description": "Sort order for news items"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of news items within share scope"
+          },
+          "401": {
+            "description": "Password required"
+          },
+          "404": {
+            "description": "Share token invalid"
+          }
+        }
+      }
+    },
+    "/api/share/{token}/page/{uniqueId}/media/{filename}": {
+      "get": {
+        "operationId": "get-media-by-share",
+        "summary": "Get page media via share token",
+        "description": "Returns a media file (image, video, etc.) attached to a page within the share scope.",
+        "tags": ["Public Share"],
+        "security": [],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Nextcloud share token"
+          },
+          {
+            "name": "uniqueId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Unique ID of the page"
+          },
+          {
+            "name": "filename",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Media filename"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Media file content",
+            "content": {
+              "application/octet-stream": {
+                "schema": { "type": "string", "format": "binary" }
+              }
+            }
+          },
+          "401": {
+            "description": "Password required"
+          },
+          "404": {
+            "description": "Share token invalid or media not found"
+          }
+        }
+      }
+    },
+    "/api/share/{token}/resources/media/{filename}": {
+      "get": {
+        "operationId": "get-resources-media-by-share",
+        "summary": "Get shared resource media via share token",
+        "description": "Returns a media file from the shared resources library (_resources folder).",
+        "tags": ["Public Share"],
+        "security": [],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Nextcloud share token"
+          },
+          {
+            "name": "filename",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Resource media filename"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Media file content",
+            "content": {
+              "application/octet-stream": {
+                "schema": { "type": "string", "format": "binary" }
+              }
+            }
+          },
+          "401": {
+            "description": "Password required"
+          },
+          "404": {
+            "description": "Share token invalid or resource not found"
+          }
+        }
+      }
+    },
+    "/api/share/{token}/resources/media/{folder}/{filename}": {
+      "get": {
+        "operationId": "get-resources-media-with-folder-by-share",
+        "summary": "Get shared resource media from subfolder via share token",
+        "description": "Returns a media file from a subfolder within the shared resources library.",
+        "tags": ["Public Share"],
+        "security": [],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Nextcloud share token"
+          },
+          {
+            "name": "folder",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Subfolder name (e.g. 'backgrounds')"
+          },
+          {
+            "name": "filename",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Resource media filename"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Media file content",
+            "content": {
+              "application/octet-stream": {
+                "schema": { "type": "string", "format": "binary" }
+              }
+            }
+          },
+          "401": {
+            "description": "Password required"
+          },
+          "404": {
+            "description": "Share token invalid or resource not found"
+          }
+        }
+      }
+    },
+    "/api/pages/{uniqueId}/share-info": {
+      "get": {
+        "operationId": "get-share-info",
+        "summary": "Get share info for a page",
+        "description": "Returns information about whether and how a page is shared via Nextcloud share links. Includes scope, password status, and public URL.",
+        "tags": ["Public Share"],
+        "parameters": [
+          {
+            "name": "uniqueId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Unique ID of the page"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Share information",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "hasShare": { "type": "boolean" },
+                    "scope": { "type": "string", "enum": ["page", "folder"] },
+                    "scopeName": { "type": "string" },
+                    "scopeLabel": { "type": "string" },
+                    "isLanguageRoot": { "type": "boolean" },
+                    "hasPassword": { "type": "boolean" },
+                    "publicUrl": { "type": "string" },
+                    "filesUrl": { "type": "string" },
+                    "navigation": { "type": "array" }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }

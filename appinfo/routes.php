@@ -118,8 +118,23 @@ return [
         ['name' => 'license#updateUsage', 'url' => '/api/license/update-usage', 'verb' => 'POST'],
         ['name' => 'api#setTelemetrySettings', 'url' => '/api/settings/telemetry', 'verb' => 'POST'],
 
+        // NC Share link detection routes (for ShareButton)
+        ['name' => 'api#getShareInfo', 'url' => '/api/pages/{uniqueId}/share-info', 'verb' => 'GET'],
+        ['name' => 'api#getActiveShares', 'url' => '/api/admin/shares', 'verb' => 'GET'],
+
+        // Public share access routes (anonymous access via NC share links)
+        ['name' => 'api#getPageByShare', 'url' => '/api/share/{token}/page/{uniqueId}', 'verb' => 'GET'],
+        ['name' => 'api#getMediaByShare', 'url' => '/api/share/{token}/page/{uniqueId}/media/{filename}', 'verb' => 'GET'],
+        ['name' => 'api#getResourcesMediaByShare', 'url' => '/api/share/{token}/resources/media/{filename}', 'verb' => 'GET'],
+        ['name' => 'api#getResourcesMediaWithFolderByShare', 'url' => '/api/share/{token}/resources/media/{folder}/{filename}', 'verb' => 'GET'],
+        ['name' => 'api#getNavigationByShare', 'url' => '/api/share/{token}/navigation', 'verb' => 'GET'],
+        ['name' => 'api#getPageTreeByShare', 'url' => '/api/share/{token}/tree', 'verb' => 'GET'],
+        ['name' => 'api#getNewsByShare', 'url' => '/api/share/{token}/news', 'verb' => 'GET'],
+
         // Page routes
         ['name' => 'page#index', 'url' => '/', 'verb' => 'GET'],
+        ['name' => 'page#shareAccess', 'url' => '/s/{shareToken}', 'verb' => 'GET'],
+        ['name' => 'page#shareAuthenticate', 'url' => '/s/{shareToken}/authenticate', 'verb' => 'POST'],
         ['name' => 'page#show', 'url' => '/page/{id}', 'verb' => 'GET'],
         ['name' => 'page#showByUniqueId', 'url' => '/p/{uniqueId}', 'verb' => 'GET'],
     ],

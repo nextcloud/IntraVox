@@ -138,9 +138,6 @@ export default {
     effectiveBackgroundColor() {
       return getEffectiveBackgroundColor(this.widget.backgroundColor, this.rowBackgroundColor);
     },
-    isDarkContainerBackground() {
-      return isDarkBackground(this.effectiveBackgroundColor);
-    },
   },
   methods: {
     t(key, vars = {}) {
@@ -158,24 +155,19 @@ export default {
         if (isDarkBackground(linkBg)) {
           return 'link-item--bg-dark';
         }
-        // Link has light background
-        return 'link-item--bg-white';
+        return 'link-item--bg-light';
       }
 
-      // No individual link background -> check container/row background
-      if (!this.widget.backgroundColor && !this.rowBackgroundColor) {
-        return 'link-item--bg-transparent';
+      // No individual link background → blend into container/row background
+      const containerBg = this.effectiveBackgroundColor;
+
+      if (isDarkBackground(containerBg)) {
+        // Dark container → transparent links with white text
+        return 'link-item--bg-on-dark';
       }
 
-      if (this.effectiveBackgroundColor === 'var(--color-background-hover)') {
-        return 'link-item--bg-white';
-      }
-
-      if (this.isDarkContainerBackground) {
-        return 'link-item--bg-dark';
-      }
-
-      return 'link-item--bg-default';
+      // Default: transparent links that blend into their background
+      return 'link-item--bg-transparent';
     },
     getIconComponent(iconName) {
       const iconMap = {
@@ -297,77 +289,78 @@ export default {
   border-radius: var(--border-radius-container-large);
   color: var(--color-main-text);
   text-decoration: none;
-  transition: all 0.2s;
+  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
   cursor: pointer;
 }
 
 .link-icon {
   flex-shrink: 0;
-  color: var(--color-text-maxcontrast);
+  color: var(--color-primary-element);
 }
 
-/* Default background (light gray) - for backwards compatibility */
-.link-item--bg-default {
-  background: var(--color-background-hover);
-}
-
-.link-item--bg-default:hover {
-  background: var(--color-primary-element-light);
-  border-color: var(--color-primary);
-  color: var(--color-primary);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-}
-
-.link-item--bg-default:hover .link-icon {
-  color: var(--color-primary);
-}
-
-/* Transparent background - for "None" option, inherits parent background */
+/* Transparent — default: blends into container/row background */
 .link-item--bg-transparent {
   background: transparent;
 }
 
 .link-item--bg-transparent:hover {
-  background: var(--color-background-hover);
-  border-color: var(--color-primary);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  background: rgba(0, 0, 0, 0.04);
+  border-color: var(--color-primary-element);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
 }
 
-.link-item--bg-transparent:hover .link-icon {
-  color: var(--color-primary);
-}
-
-/* White background - for "Light" container option */
-.link-item--bg-white {
-  background: var(--color-main-background);
-}
-
-.link-item--bg-white:hover {
-  background: var(--color-primary-element-light);
-  border-color: var(--color-primary);
-  color: var(--color-primary);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-}
-
-.link-item--bg-white:hover .link-icon {
-  color: var(--color-primary);
-}
-
-/* Dark/Primary background - semi-transparent white for dark containers */
-.link-item--bg-dark {
-  background: rgba(255, 255, 255, 0.1);
+/* On dark container — transparent links with white text/icons */
+.link-item--bg-on-dark {
+  background: transparent;
   border-color: rgba(255, 255, 255, 0.2);
   color: var(--color-primary-element-text);
 }
 
+.link-item--bg-on-dark .link-icon {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.link-item--bg-on-dark:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.4);
+  color: var(--color-primary-element-text);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.link-item--bg-on-dark:hover .link-icon {
+  color: var(--color-primary-element-text);
+}
+
+/* Explicit light background — individual link set to Light */
+.link-item--bg-light {
+  background: var(--color-background-hover);
+  border-color: var(--color-border);
+  color: var(--color-main-text);
+}
+
+.link-item--bg-light .link-icon {
+  color: var(--color-primary-element);
+}
+
+.link-item--bg-light:hover {
+  background: var(--color-primary-element-light);
+  border-color: var(--color-primary-element);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+/* Explicit dark background — individual link set to Primary */
+.link-item--bg-dark {
+  background: var(--color-primary-element);
+  border-color: var(--color-primary-element);
+  color: var(--color-primary-element-text);
+}
+
 .link-item--bg-dark .link-icon {
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(255, 255, 255, 0.85);
 }
 
 .link-item--bg-dark:hover {
-  background: rgba(255, 255, 255, 0.15);
-  border-color: rgba(255, 255, 255, 0.4);
-  color: var(--color-primary-element-text);
+  filter: brightness(1.1);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 

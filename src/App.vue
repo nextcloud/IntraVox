@@ -14,6 +14,12 @@
       </div>
 
       <div class="header-right">
+        <!-- Share Button (only visible when NC share exists) -->
+        <ShareButton v-if="!isEditMode && currentPage?.uniqueId"
+                     :page-unique-id="currentPage.uniqueId"
+                     :page-title="currentPage.title"
+                     :language="currentLanguage" />
+
         <!-- Edit Page Button (only visible when user has edit permissions for this page) -->
         <NcButton v-if="!isEditMode && canEditCurrentPage"
                   @click="startEditMode"
@@ -152,6 +158,7 @@
 
     <PageSettingsModal
       v-if="showPageSettingsModal"
+      :page-unique-id="currentPage?.uniqueId"
       :settings="currentPage?.settings || {}"
       :global-settings="globalEngagementSettings"
       @close="showPageSettingsModal = false"
@@ -187,6 +194,7 @@ import Navigation from './components/Navigation.vue';
 import Footer from './components/Footer.vue';
 import PageActionsMenu from './components/PageActionsMenu.vue';
 import Breadcrumb from './components/Breadcrumb.vue';
+import ShareButton from './components/ShareButton.vue';
 import CacheService from './services/CacheService.js';
 import './metavox-integration.js'; // Load MetaVox integration
 
@@ -227,7 +235,8 @@ export default {
     PageDetailsSidebar,
     Breadcrumb,
     WelcomeScreen,
-    PageSettingsModal
+    PageSettingsModal,
+    ShareButton
   },
   data() {
     return {
@@ -330,7 +339,7 @@ export default {
     }
   },
   async mounted() {
-    // Load pages, navigation, footer, and settings in parallel for faster initial load
+    // Load pages, navigation, footer, and settings in parallel
     try {
       await Promise.all([
         this.loadPages(),
@@ -373,7 +382,8 @@ export default {
     async loadPages() {
       try {
         // Check cache first
-        const cached = CacheService.get('pages-list');
+        const cacheKey = 'pages-list';
+        const cached = CacheService.get(cacheKey);
         if (cached) {
           this.pages = cached;
           this.loading = false;

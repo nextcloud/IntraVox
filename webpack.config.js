@@ -31,7 +31,7 @@ module.exports = {
     },
     output: {
         filename: 'intravox-[name].js',
-        chunkFilename: 'intravox-[name].js',
+        chunkFilename: 'intravox-[name].[contenthash:8].js',
         path: path.resolve(__dirname, 'js'),
         clean: true
     },

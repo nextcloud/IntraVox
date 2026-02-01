@@ -18,4 +18,7 @@ if (isset($_['pageData']) && $_['pageData']) {
 }
 ?>
 
-<div id="app-intravox" data-unique-id="<?php p($_['uniqueId'] ?? ''); ?>"></div>
+<div id="app-intravox"
+     data-unique-id="<?php p($_['uniqueId'] ?? ''); ?>"
+     data-is-public="<?php p(($_['isPublicShare'] ?? false) ? 'true' : 'false'); ?>"
+     data-token="<?php p($_['shareToken'] ?? ''); ?>"></div>

@@ -52,6 +52,10 @@ export default {
     currentPageId: {
       type: String,
       default: null
+    },
+    shareToken: {
+      type: String,
+      default: null
     }
   },
   emits: ['close', 'navigate'],
@@ -81,7 +85,13 @@ export default {
 
       try {
         const params = this.currentPageId ? { currentPageId: this.currentPageId } : {};
-        const response = await axios.get(generateUrl('/apps/intravox/api/pages/tree'), { params });
+        let url;
+        if (this.shareToken) {
+          url = generateUrl('/apps/intravox/api/share/{token}/tree', { token: this.shareToken });
+        } else {
+          url = generateUrl('/apps/intravox/api/pages/tree');
+        }
+        const response = await axios.get(url, { params });
         this.tree = response.data.tree || [];
 
         // Auto-expand nodes: path to current page + all children below current

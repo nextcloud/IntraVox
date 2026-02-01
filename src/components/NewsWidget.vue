@@ -72,6 +72,14 @@ export default {
       type: String,
       default: '',
     },
+    shareToken: {
+      type: String,
+      default: '',
+    },
+    pageId: {
+      type: String,
+      default: '',
+    },
   },
   emits: ['navigate'],
   data() {
@@ -183,7 +191,9 @@ export default {
           params.append('sourcePath', this.widget.sourcePath);
         }
 
-        const url = generateUrl(`/apps/intravox/api/news?${params}`);
+        const url = this.shareToken
+          ? generateUrl(`/apps/intravox/api/share/${this.shareToken}/news?${params}`)
+          : generateUrl(`/apps/intravox/api/news?${params}`);
         const response = await axios.get(url);
 
         this.apiResponse = {

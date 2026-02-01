@@ -139,7 +139,14 @@ class TelemetryService {
             'activeUsers30d' => $this->getActiveUserCount(30),
             'intravoxVersion' => $this->getAppVersion(),
             'nextcloudVersion' => $this->getNextcloudVersion(),
-            'phpVersion' => PHP_VERSION
+            'phpVersion' => PHP_VERSION,
+            'countryCode' => $this->getCountryCode(),
+            'databaseType' => $this->config->getSystemValue('dbtype', 'sqlite'),
+            'defaultLanguage' => $this->config->getSystemValue('default_language', 'en'),
+            'defaultTimezone' => $this->getDefaultTimezone(),
+            'osFamily' => PHP_OS_FAMILY,
+            'webServer' => $this->getWebServer(),
+            'isDocker' => $this->isDocker(),
         ];
     }
 
@@ -229,6 +236,68 @@ class TelemetryService {
 
         // Send report if more than 24 hours since last report
         return (time() - $lastReport) > (24 * 60 * 60);
+    }
+
+    /**
+     * Get ISO 3166-1 alpha-2 country code from default_phone_region setting
+     * Returns null if not configured — server derives country from timezone
+     */
+    private function getCountryCode(): ?string {
+        $region = $this->config->getSystemValue('default_phone_region', '');
+        if (!empty($region) && preg_match('/^[A-Z]{2}$/', strtoupper($region))) {
+            return strtoupper($region);
+        }
+        return null;
+    }
+
+    /**
+     * Get the default timezone setting
+     * Tries Nextcloud config first, then PHP default, falls back to UTC
+     */
+    private function getDefaultTimezone(): string {
+        $tz = $this->config->getSystemValue('default_timezone', '');
+        if (!empty($tz) && $tz !== 'UTC') {
+            return $tz;
+        }
+        // Try PHP's configured timezone (from php.ini)
+        $phpTz = date_default_timezone_get();
+        if (!empty($phpTz) && $phpTz !== 'UTC') {
+            return $phpTz;
+        }
+        return 'UTC';
+    }
+
+    /**
+     * Detect web server from SERVER_SOFTWARE header
+     */
+    private function getWebServer(): ?string {
+        $software = $_SERVER['SERVER_SOFTWARE'] ?? null;
+        if ($software === null) {
+            return null;
+        }
+        if (stripos($software, 'apache') !== false) {
+            return 'Apache';
+        }
+        if (stripos($software, 'nginx') !== false) {
+            return 'nginx';
+        }
+        return explode('/', $software)[0];
+    }
+
+    /**
+     * Detect if running inside a Docker container
+     */
+    private function isDocker(): bool {
+        if (file_exists('/.dockerenv')) {
+            return true;
+        }
+        if (file_exists('/proc/1/cgroup')) {
+            $cgroup = @file_get_contents('/proc/1/cgroup');
+            if ($cgroup !== false && str_contains($cgroup, 'docker')) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

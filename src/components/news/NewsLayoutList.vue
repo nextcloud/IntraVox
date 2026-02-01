@@ -16,7 +16,7 @@
 
 <script>
 import NewsItem from './NewsItem.vue';
-import { isDarkBackground as isDarkBg, getEffectiveBackgroundColor } from '../../utils/colorUtils.js';
+import { isDarkBackground as isDarkBg, isLightBackground as isLightBg, getEffectiveBackgroundColor } from '../../utils/colorUtils.js';
 
 export default {
   name: 'NewsLayoutList',
@@ -46,28 +46,20 @@ export default {
       return isDarkBg(this.effectiveBackgroundColor);
     },
     itemBackgroundMode() {
-      const bgColor = this.widget.backgroundColor;
+      const containerBg = this.effectiveBackgroundColor;
 
-      // No widget background color set -> check row background
-      if (!bgColor) {
-        // Row has dark background -> items need 'dark' styling for white text
-        if (this.isDarkBackground) {
-          return 'dark';
-        }
+      if (!containerBg) {
         return 'transparent';
       }
 
-      // Light container -> white items
-      if (bgColor === 'var(--color-background-hover)') {
-        return 'white';
-      }
-
-      // Dark container (Primary, etc.) -> dark mode items
-      if (this.isDarkBackground) {
+      if (isDarkBg(containerBg)) {
         return 'dark';
       }
 
-      // Fallback to default
+      if (isLightBg(containerBg)) {
+        return 'white';
+      }
+
       return 'default';
     },
   },

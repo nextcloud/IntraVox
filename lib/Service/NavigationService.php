@@ -14,6 +14,7 @@ class NavigationService {
     private IRootFolder $rootFolder;
     private IUserSession $userSession;
     private SetupService $setupService;
+    private SystemFileService $systemFileService;
     private IL10N $l10n;
     private string $userId;
     private const SUPPORTED_LANGUAGES = ['nl', 'en', 'de', 'fr'];
@@ -22,22 +23,29 @@ class NavigationService {
         IRootFolder $rootFolder,
         IUserSession $userSession,
         SetupService $setupService,
+        SystemFileService $systemFileService,
         IL10N $l10n,
         ?string $userId
     ) {
         $this->rootFolder = $rootFolder;
         $this->userSession = $userSession;
         $this->setupService = $setupService;
+        $this->systemFileService = $systemFileService;
         $this->l10n = $l10n;
         $this->userId = $userId ?? '';
     }
 
     /**
      * Get navigation structure for current language
+     *
+     * First tries to read via user's folder view (respects ACL).
+     * Falls back to SystemFileService for users with limited access (e.g., department-only).
      */
     public function getNavigation(?string $language = null): array {
+        $lang = $language ?? $this->getCurrentLanguage();
+
+        // Try to read via user's folder view first (respects ACL)
         try {
-            $lang = $language ?? $this->getCurrentLanguage();
             $folder = $this->getLanguageFolder($lang);
             $navigationFile = 'navigation.json';
 
@@ -54,21 +62,38 @@ class NavigationService {
                     return $navigation;
                 }
             }
-
-            // Return default empty navigation
-            return [
-                'type' => 'dropdown', // dropdown or megamenu
-                'items' => []
-            ];
         } catch (\Exception $e) {
-            throw new \Exception('Failed to get navigation: ' . $e->getMessage());
+            // User doesn't have access to the language root folder
+            // Fall back to SystemFileService
         }
+
+        // Fallback: Use SystemFileService to read navigation via system context
+        // This allows users with department-level access to still see the navigation
+        try {
+            $navigation = $this->systemFileService->getNavigation($lang);
+
+            if ($navigation !== null && is_array($navigation)) {
+                // Normalize navigation items
+                if (isset($navigation['items']) && is_array($navigation['items'])) {
+                    $navigation['items'] = $this->normalizeNavigationItems($navigation['items']);
+                }
+                return $navigation;
+            }
+        } catch (\Exception $e) {
+            // SystemFileService also failed
+        }
+
+        // Return default empty navigation
+        return [
+            'type' => 'dropdown', // dropdown or megamenu
+            'items' => []
+        ];
     }
 
     /**
      * Normalize navigation items to use uniqueId consistently
      */
-    private function normalizeNavigationItems(array $items): array {
+    public function normalizeNavigationItems(array $items): array {
         $normalized = [];
         foreach ($items as $item) {
             if (!is_array($item)) {
@@ -185,7 +210,7 @@ class NavigationService {
         // Get user's folder (this respects GroupFolder ACL)
         $userFolder = $this->rootFolder->getUserFolder($this->userId);
 
-        // Get IntraVox folder from user's perspective (mounted GroupFolder)
+        // Get folder from user's perspective (mounted GroupFolder)
         return $userFolder->get('IntraVox');
     }
 
@@ -211,7 +236,7 @@ class NavigationService {
     /**
      * Get current user's language
      */
-    private function getCurrentLanguage(): string {
+    public function getCurrentLanguage(): string {
         $languageCode = $this->l10n->getLanguageCode();
 
         // Extract base language (e.g., 'nl' from 'nl_NL')

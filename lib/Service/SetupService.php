@@ -140,65 +140,7 @@ class SetupService {
      * Create or get existing groupfolder
      */
     private function createOrGetGroupfolder(): ?int {
-        try {
-            $this->logger->info('Checking if groupfolders app is enabled...');
-            // Check if groupfolders app is enabled
-            if (!\OC::$server->getAppManager()->isEnabledForUser('groupfolders')) {
-                $this->logger->error('Groupfolders app is not enabled');
-                return null;
-            }
-            $this->logger->info('Groupfolders app is enabled');
-
-            // Try to use groupfolders API
-            $this->logger->info('Getting FolderManager instance...');
-            $groupfolderManager = \OC::$server->get(\OCA\GroupFolders\Folder\FolderManager::class);
-            $this->logger->info('FolderManager instance obtained');
-
-            // Check if groupfolder already exists - use the one with highest ID
-            $this->logger->info('Fetching all groupfolders...');
-            $folders = $groupfolderManager->getAllFolders();
-            $this->logger->info('Found ' . count($folders) . ' existing groupfolders');
-
-            $existingFolderId = null;
-            $highestId = 0;
-
-            foreach ($folders as $id => $folderData) {
-                $this->logger->info("Checking groupfolder ID: {$id}");
-                // Handle FolderDefinitionWithMappings object
-                if (is_object($folderData)) {
-                    // Try property access first (mountPoint), then method if available
-                    $mountPoint = property_exists($folderData, 'mountPoint') ? $folderData->mountPoint :
-                                 (method_exists($folderData, 'getMountPoint') ? $folderData->getMountPoint() : null);
-                } else {
-                    $mountPoint = $folderData['mount_point'] ?? null;
-                }
-                $this->logger->info("Mount point: {$mountPoint}");
-
-                // Find the IntraVox folder with the highest ID
-                if ($mountPoint === self::GROUPFOLDER_NAME && $id > $highestId) {
-                    $this->logger->info("Found matching groupfolder with ID: {$id}");
-                    $existingFolderId = $id;
-                    $highestId = $id;
-                }
-            }
-
-            if ($existingFolderId !== null) {
-                $this->logger->info("Using existing groupfolder with ID: {$existingFolderId}");
-                return $existingFolderId;
-            }
-
-            // Create new groupfolder
-            $this->logger->info('No existing groupfolder found, creating new one...');
-            $folderId = $groupfolderManager->createFolder(self::GROUPFOLDER_NAME);
-            $this->logger->info("Created groupfolder with ID: {$folderId}");
-
-            return $folderId;
-
-        } catch (\Exception $e) {
-            $this->logger->error('Exception in createOrGetGroupfolder: ' . $e->getMessage());
-            $this->logger->error('Stack trace: ' . $e->getTraceAsString());
-            return null;
-        }
+        return $this->createOrGetGroupfolderByName(self::GROUPFOLDER_NAME);
     }
 
     /**
@@ -275,62 +217,39 @@ class SetupService {
      * Get the IntraVox groupfolder
      */
     public function getSharedFolder() {
+        return $this->getSharedFolderByName(self::GROUPFOLDER_NAME);
+    }
+
+    /**
+     * Get a groupfolder by name (generic)
+     */
+    private function getSharedFolderByName(string $folderName) {
         try {
-            $this->logger->info('[getSharedFolder] Starting to get IntraVox groupfolder');
-
-            // Get groupfolder manager
-            $this->logger->info('[getSharedFolder] Getting FolderManager instance');
             $groupfolderManager = \OC::$server->get(\OCA\GroupFolders\Folder\FolderManager::class);
-            $this->logger->info('[getSharedFolder] Got FolderManager instance');
-
-            // Find IntraVox groupfolder - use the one with highest ID (most recent)
-            $this->logger->info('[getSharedFolder] Getting all folders');
             $folders = $groupfolderManager->getAllFolders();
-            $this->logger->info('[getSharedFolder] Found ' . count($folders) . ' groupfolders');
             $folderId = null;
             $highestId = 0;
 
             foreach ($folders as $id => $folderData) {
-                $this->logger->info("[getSharedFolder] Checking folder ID: {$id}");
-                // Handle FolderDefinitionWithMappings object
-                if (is_object($folderData)) {
-                    $className = get_class($folderData);
-                    $this->logger->info("[getSharedFolder] Folder data is object of class: {$className}");
-                    // Try property access first (mountPoint), then method if available
-                    $mountPoint = property_exists($folderData, 'mountPoint') ? $folderData->mountPoint :
-                                 (method_exists($folderData, 'getMountPoint') ? $folderData->getMountPoint() : null);
-                } else {
-                    $this->logger->info("[getSharedFolder] Folder data is array");
-                    $mountPoint = $folderData['mount_point'] ?? null;
-                }
-
-                $this->logger->info("[getSharedFolder] Mount point: '{$mountPoint}', looking for: '" . self::GROUPFOLDER_NAME . "'");
-
-                // Find the IntraVox folder with the highest ID (most recent)
-                if ($mountPoint === self::GROUPFOLDER_NAME && $id > $highestId) {
-                    $this->logger->info("[getSharedFolder] Found matching groupfolder with ID: {$id}");
+                $mountPoint = $this->getMountPointFromFolderData($folderData);
+                if ($mountPoint === $folderName && $id > $highestId) {
                     $folderId = $id;
                     $highestId = $id;
                 }
             }
 
             if ($folderId === null) {
-                $this->logger->error('[getSharedFolder] No matching groupfolder found');
-                throw new \Exception('IntraVox groupfolder not found. Please run intravox:setup command first.');
+                throw new \Exception("Groupfolder '{$folderName}' not found.");
             }
 
-            $this->logger->info("[getSharedFolder] Using groupfolder ID: {$folderId}");
-
-            // Use the new getGroupfolderObject method to avoid recursion
-            $this->logger->info("[getSharedFolder] Getting groupfolder object for ID: {$folderId}");
             $result = $this->getGroupfolderObject($folderId);
-            $this->logger->info('[getSharedFolder] Successfully got groupfolder object');
+            if ($result === null) {
+                throw new \Exception("Groupfolder '{$folderName}' not accessible.");
+            }
             return $result;
 
         } catch (\Exception $e) {
-            $this->logger->error('[getSharedFolder] Exception: ' . $e->getMessage());
-            $this->logger->error('[getSharedFolder] Stack trace: ' . $e->getTraceAsString());
-            throw new \Exception('IntraVox groupfolder not accessible. Error: ' . $e->getMessage());
+            throw new \Exception("Groupfolder '{$folderName}' not accessible: " . $e->getMessage());
         }
     }
 
@@ -524,26 +443,17 @@ class SetupService {
      */
     public function getGroupFolderId(): int {
         try {
-            $this->logger->info('[getGroupFolderId] Getting groupfolder ID');
+            if (!\OC::$server->getAppManager()->isEnabledForUser('groupfolders')) {
+                throw new \Exception('Groupfolders app is not enabled');
+            }
 
-            // Get groupfolder manager
             $groupfolderManager = \OC::$server->get(\OCA\GroupFolders\Folder\FolderManager::class);
-
-            // Find IntraVox groupfolder - use the one with highest ID
             $folders = $groupfolderManager->getAllFolders();
             $folderId = null;
             $highestId = 0;
 
             foreach ($folders as $id => $folderData) {
-                // Handle FolderDefinitionWithMappings object
-                if (is_object($folderData)) {
-                    $mountPoint = property_exists($folderData, 'mountPoint') ? $folderData->mountPoint :
-                                 (method_exists($folderData, 'getMountPoint') ? $folderData->getMountPoint() : null);
-                } else {
-                    $mountPoint = $folderData['mount_point'] ?? null;
-                }
-
-                // Find the IntraVox folder with the highest ID
+                $mountPoint = $this->getMountPointFromFolderData($folderData);
                 if ($mountPoint === self::GROUPFOLDER_NAME && $id > $highestId) {
                     $folderId = $id;
                     $highestId = $id;
@@ -554,11 +464,9 @@ class SetupService {
                 throw new \Exception('IntraVox groupfolder not found');
             }
 
-            $this->logger->info('[getGroupFolderId] Found groupfolder ID: ' . $folderId);
             return $folderId;
 
         } catch (\Exception $e) {
-            $this->logger->error('[getGroupFolderId] Exception: ' . $e->getMessage());
             throw new \Exception('Failed to get groupfolder ID: ' . $e->getMessage());
         }
     }
@@ -602,6 +510,56 @@ class SetupService {
         } catch (\Exception $e) {
             return false;
         }
+    }
+
+    /**
+     * Create or get a groupfolder by name (generic version)
+     */
+    private function createOrGetGroupfolderByName(string $folderName): ?int {
+        try {
+            if (!\OC::$server->getAppManager()->isEnabledForUser('groupfolders')) {
+                $this->logger->error('Groupfolders app is not enabled');
+                return null;
+            }
+
+            $groupfolderManager = \OC::$server->get(\OCA\GroupFolders\Folder\FolderManager::class);
+            $folders = $groupfolderManager->getAllFolders();
+
+            $existingFolderId = null;
+            $highestId = 0;
+
+            foreach ($folders as $id => $folderData) {
+                $mountPoint = $this->getMountPointFromFolderData($folderData);
+                if ($mountPoint === $folderName && $id > $highestId) {
+                    $existingFolderId = $id;
+                    $highestId = $id;
+                }
+            }
+
+            if ($existingFolderId !== null) {
+                $this->logger->info("Using existing groupfolder '{$folderName}' with ID: {$existingFolderId}");
+                return $existingFolderId;
+            }
+
+            $folderId = $groupfolderManager->createFolder($folderName);
+            $this->logger->info("Created groupfolder '{$folderName}' with ID: {$folderId}");
+            return $folderId;
+
+        } catch (\Exception $e) {
+            $this->logger->error("Exception in createOrGetGroupfolderByName('{$folderName}'): " . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Extract mount point from folder data (handles both object and array)
+     */
+    private function getMountPointFromFolderData($folderData): ?string {
+        if (is_object($folderData)) {
+            return property_exists($folderData, 'mountPoint') ? $folderData->mountPoint :
+                   (method_exists($folderData, 'getMountPoint') ? $folderData->getMountPoint() : null);
+        }
+        return $folderData['mount_point'] ?? null;
     }
 
     /**

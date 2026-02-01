@@ -80,6 +80,8 @@
     <NewsWidget
       v-else-if="widget.type === 'news'"
       :widget="widget"
+      :share-token="shareToken"
+      :page-id="pageId"
       :row-background-color="rowBackgroundColor"
       @navigate="$emit('navigate', $event)"
     />
@@ -187,6 +189,10 @@ export default {
       default: false
     },
     rowBackgroundColor: {
+      type: String,
+      default: ''
+    },
+    shareToken: {
       type: String,
       default: ''
     }
@@ -337,11 +343,19 @@ export default {
 
       // Check mediaFolder property (new format)
       if (this.widget.mediaFolder === 'resources') {
+        // If we have a share token, use the public endpoint
+        if (this.shareToken) {
+          return generateUrl(`/apps/intravox/api/share/${this.shareToken}/resources/media/${filename}`);
+        }
         return generateUrl(`/apps/intravox/api/resources/media/${filename}`);
       }
 
       // Remove legacy prefixes if present
       const cleanFilename = filename.replace(/^(📷 images\/|images\/|_media\/)/, '');
+      // If we have a share token, use the public share endpoint
+      if (this.shareToken) {
+        return generateUrl(`/apps/intravox/api/share/${this.shareToken}/page/${this.pageId}/media/${cleanFilename}`);
+      }
       // Media served via unified API (default: page media)
       return generateUrl(`/apps/intravox/api/pages/${this.pageId}/media/${cleanFilename}`);
     },
@@ -355,11 +369,19 @@ export default {
 
       // Check mediaFolder property (new format)
       if (this.widget.mediaFolder === 'resources') {
+        // If we have a share token, use the public endpoint
+        if (this.shareToken) {
+          return generateUrl(`/apps/intravox/api/share/${this.shareToken}/resources/media/${filename}`);
+        }
         return generateUrl(`/apps/intravox/api/resources/media/${filename}`);
       }
 
       // Remove legacy prefixes if present
       const cleanFilename = filename.replace(/^(videos\/|_media\/)/, '');
+      // If we have a share token, use the public share endpoint
+      if (this.shareToken) {
+        return generateUrl(`/apps/intravox/api/share/${this.shareToken}/page/${this.pageId}/media/${cleanFilename}`);
+      }
       // Media served via unified API (default: page media)
       return generateUrl(`/apps/intravox/api/pages/${this.pageId}/media/${cleanFilename}`);
     },

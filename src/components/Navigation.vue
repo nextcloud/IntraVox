@@ -289,6 +289,10 @@ export default {
       type: String,
       default: 'dropdown',
       validator: (value) => ['dropdown', 'megamenu'].includes(value)
+    },
+    isPublic: {
+      type: Boolean,
+      default: false
     }
   },
   emits: ['navigate', 'show-tree'],

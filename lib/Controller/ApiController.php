@@ -8,16 +8,23 @@ use OCA\IntraVox\Constants;
 use OCA\IntraVox\Service\EngagementSettingsService;
 use OCA\IntraVox\Service\ImportService;
 use OCA\IntraVox\Service\PublicationSettingsService;
+use OCA\IntraVox\Service\PublicShareService;
 use OCA\IntraVox\Service\TelemetryService;
 use OCA\IntraVox\Service\Import\ConfluenceHtmlImporter;
 use OCA\IntraVox\Service\Import\ConfluenceImporter;
+use OCA\IntraVox\Service\NavigationService;
 use OCA\IntraVox\Service\PageService;
+use OCA\IntraVox\Service\PermissionService;
 use OCA\IntraVox\Service\SetupService;
+use OCA\IntraVox\Service\SystemFileService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\Attribute\AnonRateThrottle;
+use OCP\AppFramework\Http\Attribute\BruteForceProtection;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\Attribute\PublicPage;
+use OCP\Security\Bruteforce\IThrottler;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\StreamResponse;
@@ -26,6 +33,7 @@ use OCP\IConfig;
 use OCP\IGroupManager;
 use OCP\IRequest;
 use OCP\ITempManager;
+use OCP\ISession;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
 
@@ -42,6 +50,7 @@ class ApiController extends Controller {
     private SetupService $setupService;
     private EngagementSettingsService $engagementSettings;
     private PublicationSettingsService $publicationSettings;
+    private PublicShareService $publicShareService;
     private TelemetryService $telemetryService;
     private ImportService $importService;
     private LoggerInterface $logger;
@@ -49,6 +58,10 @@ class ApiController extends Controller {
     private IGroupManager $groupManager;
     private IUserSession $userSession;
     private ITempManager $tempManager;
+    private SystemFileService $systemFileService;
+    private NavigationService $navigationService;
+    private PermissionService $permissionService;
+    private ISession $session;
 
     public function __construct(
         string $appName,
@@ -57,19 +70,25 @@ class ApiController extends Controller {
         SetupService $setupService,
         EngagementSettingsService $engagementSettings,
         PublicationSettingsService $publicationSettings,
+        PublicShareService $publicShareService,
         TelemetryService $telemetryService,
         ImportService $importService,
         LoggerInterface $logger,
         IConfig $config,
         IGroupManager $groupManager,
         IUserSession $userSession,
-        ITempManager $tempManager
+        ITempManager $tempManager,
+        SystemFileService $systemFileService,
+        NavigationService $navigationService,
+        PermissionService $permissionService,
+        ISession $session
     ) {
         parent::__construct($appName, $request);
         $this->pageService = $pageService;
         $this->setupService = $setupService;
         $this->engagementSettings = $engagementSettings;
         $this->publicationSettings = $publicationSettings;
+        $this->publicShareService = $publicShareService;
         $this->telemetryService = $telemetryService;
         $this->importService = $importService;
         $this->logger = $logger;
@@ -77,6 +96,10 @@ class ApiController extends Controller {
         $this->groupManager = $groupManager;
         $this->userSession = $userSession;
         $this->tempManager = $tempManager;
+        $this->systemFileService = $systemFileService;
+        $this->navigationService = $navigationService;
+        $this->permissionService = $permissionService;
+        $this->session = $session;
     }
 
     /**
@@ -1066,10 +1089,12 @@ class ApiController extends Controller {
             // Use Nextcloud's native filesystem permissions
             $permissions = $this->pageService->getFolderPermissions($checkPath);
 
-            return new DataResponse([
+            $response = [
                 'path' => $checkPath,
                 'permissions' => $permissions
-            ]);
+            ];
+
+            return new DataResponse($response);
         } catch (\Exception $e) {
             return new DataResponse(
                 ['error' => $e->getMessage()],
@@ -1844,5 +1869,1118 @@ class ApiController extends Controller {
         }
 
         return $path;
+    }
+
+    /**
+     * Get share info for a page (NC Files share detection).
+     *
+     * Checks if an NC Files share link exists for the page or its parent folder.
+     * Used by the ShareButton component to determine if the share button should be shown.
+     *
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     * @param string $uniqueId The page's unique ID
+     * @return JSONResponse
+     */
+    public function getShareInfo(string $uniqueId): JSONResponse {
+        try {
+            // Get the page to verify it exists and get its language
+            $page = $this->pageService->getPage($uniqueId);
+
+            // Check read permission
+            if (!($page['permissions']['canRead'] ?? false)) {
+                return new JSONResponse([
+                    'error' => 'Access denied'
+                ], Http::STATUS_FORBIDDEN);
+            }
+
+            $language = $page['language'] ?? 'en';
+            $user = $this->userSession->getUser();
+            $userId = $user ? $user->getUID() : null;
+
+            // Get share info from PublicShareService
+            $shareInfo = $this->publicShareService->getShareInfoForPage($uniqueId, $language, $userId);
+
+            return new JSONResponse($shareInfo);
+        } catch (\Exception $e) {
+            $this->logger->error('[ApiController] Failed to get share info', [
+                'uniqueId' => $uniqueId,
+                'error' => $e->getMessage()
+            ]);
+            return new JSONResponse([
+                'hasShare' => false,
+                'reason' => 'error',
+                'error' => $e->getMessage()
+            ], Http::STATUS_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Get all active public share links on IntraVox content.
+     * Admin-only endpoint for the sharing overview tab.
+     */
+    public function getActiveShares(): JSONResponse {
+        if (!$this->isAdmin()) {
+            return new JSONResponse(['error' => 'Admin access required'], Http::STATUS_FORBIDDEN);
+        }
+
+        try {
+            $shares = $this->publicShareService->getActiveShares();
+            return new JSONResponse($shares);
+        } catch (\Exception $e) {
+            $this->logger->error('[ApiController] Failed to get active shares', [
+                'error' => $e->getMessage()
+            ]);
+            return new JSONResponse(['error' => 'Failed to retrieve shares'], Http::STATUS_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Get page data via NC share token (anonymous access).
+     *
+     * This endpoint allows anonymous users to fetch page data when they have
+     * a valid NC Files share token. The share must cover the requested page.
+     *
+     * IMPORTANT: This returns READ-ONLY data. No write operations are possible
+     * through this endpoint regardless of NC share permissions.
+     *
+     * @PublicPage
+     * @NoCSRFRequired
+     * @AnonRateThrottle(limit=60, period=60)
+     * @BruteForceProtection(action="intravox_share_page")
+     * @param string $token The NC share token
+     * @param string $uniqueId The page's unique ID
+     * @return JSONResponse
+     */
+    #[PublicPage]
+    #[NoCSRFRequired]
+    #[AnonRateThrottle(limit: 60, period: 60)]
+    #[BruteForceProtection(action: 'intravox_share_page')]
+    public function getPageByShare(string $token, string $uniqueId): JSONResponse {
+        // Validate token format first (cheap check)
+        if (!$this->isValidShareTokenFormat($token)) {
+            $this->registerShareBruteForceAttempt();
+            return $this->shareNotFoundResponse();
+        }
+
+        // NC sharing must be enabled
+        $ncAllowsLinks = $this->config->getAppValue('core', 'shareapi_allow_links', 'yes') === 'yes';
+        if (!$ncAllowsLinks) {
+            return $this->shareNotFoundResponse();
+        }
+
+        // Check share password
+        $pwDenied = $this->checkSharePasswordOrDeny($token);
+        if ($pwDenied !== null) {
+            return $pwDenied;
+        }
+
+        try {
+            // Determine language from page or use default
+            // First try to get language from existing page data
+            $language = 'en'; // Default
+            try {
+                $existingPage = $this->pageService->getPage($uniqueId);
+                $language = $existingPage['language'] ?? 'en';
+            } catch (\Exception $e) {
+                // Page not found yet, will be handled by validateShareAccess
+            }
+
+            // Validate share access (password already verified via session)
+            $sessionPw = $this->getSharePasswordFromSession($token);
+            $validation = $this->publicShareService->validateShareAccess($token, $uniqueId, $language, $sessionPw);
+
+            if (!$validation['valid']) {
+                $reason = $validation['reason'] ?? '';
+                if ($reason === 'password_required' || $reason === 'invalid_password') {
+                    return new JSONResponse([
+                        'error' => 'Password required',
+                        'passwordRequired' => true,
+                    ], Http::STATUS_UNAUTHORIZED);
+                }
+                $this->registerShareBruteForceAttempt();
+                return $this->shareNotFoundResponse();
+            }
+
+            // Get the page data - this comes from validateShareAccess
+            $pageData = $validation['pageData'] ?? null;
+
+            if ($pageData === null) {
+                $this->registerShareBruteForceAttempt();
+                return $this->shareNotFoundResponse();
+            }
+
+            // Sanitize the response - only include safe fields for public access
+            $sanitizedPage = $this->sanitizePageForPublicAccess($pageData);
+
+            // Audit: log successful public page access
+            $this->logger->info('[PublicShare] Page accessed', [
+                'uniqueId' => $uniqueId,
+                'ip' => $this->request->getRemoteAddress(),
+            ]);
+
+            // Add public access metadata
+            $sanitizedPage['isPublicShare'] = true;
+            $sanitizedPage['shareToken'] = $token;
+            $sanitizedPage['permissions'] = [
+                'canRead' => true,
+                'canWrite' => false,
+                'canDelete' => false,
+                'canCreate' => false,
+            ];
+
+            // Add share-scoped breadcrumb
+            try {
+                $share = $this->publicShareService->getShareByToken($token);
+                if ($share !== null) {
+                    $shareScopePath = $this->publicShareService->resolveShareScopePath($share);
+                    if ($shareScopePath !== null) {
+                        $relPath = $shareScopePath;
+                        if (str_starts_with($relPath, 'files/')) {
+                            $relPath = substr($relPath, 6);
+                        }
+                        // Compute the page's relative path from the filesystem path
+                        // pagePath is like "/__groupfolders/1/files/nl/afdeling/marketing/campagnes/campagnes.json"
+                        // We need: "nl/afdeling/marketing/campagnes"
+                        $pagePath = $validation['pagePath'] ?? '';
+                        $pageRelPath = $pagePath;
+                        // Strip __groupfolders/{id}/files/ prefix
+                        if (preg_match('#__groupfolders/\d+/files/(.+)$#', $pageRelPath, $m)) {
+                            $pageRelPath = $m[1];
+                        }
+                        // Remove filename (e.g., campagnes.json) to get folder path
+                        $pageRelPath = dirname($pageRelPath);
+                        if ($pageRelPath === '.') {
+                            $pageRelPath = '';
+                        }
+                        // Add path to pageData for breadcrumb builder
+                        $pageDataWithPath = $pageData;
+                        $pageDataWithPath['path'] = $pageRelPath;
+                        $sanitizedPage['breadcrumb'] = $this->buildShareScopedBreadcrumb($pageDataWithPath, $relPath, $language);
+                    }
+                }
+            } catch (\Exception $e) {
+                $this->logger->debug('[ApiController] Could not build share breadcrumb', [
+                    'error' => $e->getMessage()
+                ]);
+                $sanitizedPage['breadcrumb'] = [];
+            }
+
+            return new JSONResponse($sanitizedPage);
+
+        } catch (\Exception $e) {
+            $this->logger->error('[ApiController] Error in getPageByShare', [
+                'token' => '***',
+                'uniqueId' => $uniqueId,
+                'error' => $e->getMessage()
+            ]);
+            return $this->shareNotFoundResponse();
+        }
+    }
+
+    /**
+     * Get navigation for a public share, filtered by share scope.
+     *
+     * Only navigation items whose pages fall within the share target path are returned.
+     * External URL items are always included.
+     *
+     * @PublicPage
+     * @NoCSRFRequired
+     * @AnonRateThrottle(limit=60, period=60)
+     * @param string $token The NC share token
+     * @return JSONResponse
+     */
+    #[PublicPage]
+    #[NoCSRFRequired]
+    #[AnonRateThrottle(limit: 60, period: 60)]
+    public function getNavigationByShare(string $token): JSONResponse {
+        // Validate token format
+        if (!$this->isValidShareTokenFormat($token)) {
+            return $this->shareNotFoundResponse();
+        }
+
+        // NC sharing must be enabled
+        $ncAllowsLinks = $this->config->getAppValue('core', 'shareapi_allow_links', 'yes') === 'yes';
+        if (!$ncAllowsLinks) {
+            return $this->shareNotFoundResponse();
+        }
+
+        // Check share password
+        $pwDenied = $this->checkSharePasswordOrDeny($token);
+        if ($pwDenied !== null) {
+            return $pwDenied;
+        }
+
+        try {
+            // Get the share to determine scope
+            $share = $this->publicShareService->getShareByToken($token);
+            if ($share === null) {
+                return $this->shareNotFoundResponse();
+            }
+
+            // Resolve the share's actual path via file_source on the GF storage.
+            // file_target (e.g. "/afdeling") is unreliable for GroupFolders.
+            $shareScopePath = $this->publicShareService->resolveShareScopePath($share);
+            if ($shareScopePath === null) {
+                $this->logger->debug('[ApiController] getNavigationByShare: could not resolve share scope path');
+                return new JSONResponse(['navigation' => ['type' => 'dropdown', 'items' => []]]);
+            }
+
+            // shareScopePath is like "files/nl/afdeling" — extract language from it
+            // Strip "files/" prefix to get "nl/afdeling"
+            $relPath = $shareScopePath;
+            if (str_starts_with($relPath, 'files/')) {
+                $relPath = substr($relPath, 6);
+            }
+
+            $segments = explode('/', $relPath);
+            $language = $segments[0] ?? null;
+
+            if ($language === null || strlen($language) < 2 || strlen($language) > 3) {
+                $this->logger->debug('[ApiController] getNavigationByShare: could not detect language from scope path', [
+                    'shareScopePath' => $shareScopePath
+                ]);
+                return new JSONResponse(['navigation' => ['type' => 'dropdown', 'items' => []]]);
+            }
+
+            // Read navigation.json via system context (no user session needed)
+            $navigation = $this->systemFileService->getNavigation($language);
+            if ($navigation === null) {
+                return new JSONResponse(['navigation' => ['type' => 'dropdown', 'items' => []]]);
+            }
+
+            // Normalize navigation items (pageId -> uniqueId)
+            if (isset($navigation['items']) && is_array($navigation['items'])) {
+                $navigation['items'] = $this->navigationService->normalizeNavigationItems($navigation['items']);
+            }
+
+            // Build page path map (uniqueId -> relative path within language folder)
+            // Values are like "afdeling/afdeling.json" or "afdeling/hr/hr.json"
+            $pagePathMap = $this->permissionService->buildPagePathMap($language);
+
+            // Filter navigation items by share scope
+            // shareScopeRelative is the path after "files/{language}/" — e.g. "afdeling"
+            $shareScopeRelative = count($segments) > 1 ? implode('/', array_slice($segments, 1)) : '';
+
+            if (isset($navigation['items']) && is_array($navigation['items'])) {
+                $navigation['items'] = $this->publicShareService->filterNavigationByShareScope(
+                    $navigation['items'],
+                    $shareScopeRelative,
+                    $pagePathMap
+                );
+            }
+
+            $this->logger->info('[PublicShare] Navigation accessed', [
+                'language' => $language,
+                'ip' => $this->request->getRemoteAddress(),
+            ]);
+
+            return new JSONResponse([
+                'navigation' => $navigation,
+                'language' => $language,
+            ]);
+
+        } catch (\Exception $e) {
+            $this->logger->error('[ApiController] Error in getNavigationByShare', [
+                'token' => '***',
+                'error' => $e->getMessage()
+            ]);
+            return new JSONResponse(['navigation' => ['type' => 'dropdown', 'items' => []]]);
+        }
+    }
+
+    /**
+     * Get page tree for a public share, filtered by share scope.
+     *
+     * Returns a hierarchical tree of pages within the share target folder.
+     * The share root becomes the tree root — ancestors above it are not included.
+     *
+     * @PublicPage
+     * @NoCSRFRequired
+     * @AnonRateThrottle(limit=60, period=60)
+     * @param string $token The NC share token
+     * @return JSONResponse
+     */
+    #[PublicPage]
+    #[NoCSRFRequired]
+    #[AnonRateThrottle(limit: 60, period: 60)]
+    public function getPageTreeByShare(string $token): JSONResponse {
+        if (!$this->isValidShareTokenFormat($token)) {
+            return $this->shareNotFoundResponse();
+        }
+
+        $ncAllowsLinks = $this->config->getAppValue('core', 'shareapi_allow_links', 'yes') === 'yes';
+        if (!$ncAllowsLinks) {
+            return $this->shareNotFoundResponse();
+        }
+
+        // Check share password
+        $pwDenied = $this->checkSharePasswordOrDeny($token);
+        if ($pwDenied !== null) {
+            return $pwDenied;
+        }
+
+        try {
+            $share = $this->publicShareService->getShareByToken($token);
+            if ($share === null) {
+                return $this->shareNotFoundResponse();
+            }
+
+            $shareScopePath = $this->publicShareService->resolveShareScopePath($share);
+            if ($shareScopePath === null) {
+                return new JSONResponse(['tree' => []]);
+            }
+
+            // shareScopePath is like "files/nl/afdeling" — extract language
+            $relPath = $shareScopePath;
+            if (str_starts_with($relPath, 'files/')) {
+                $relPath = substr($relPath, 6);
+            }
+
+            $segments = explode('/', $relPath);
+            $language = $segments[0] ?? null;
+
+            if ($language === null || strlen($language) < 2 || strlen($language) > 3) {
+                return new JSONResponse(['tree' => []]);
+            }
+
+            // Build full tree via system context (no user session needed)
+            $tree = $this->systemFileService->getPageTree($language);
+
+            // Extract subtree matching the share scope
+            // scopePath is the full relative path like "nl/afdeling/hr"
+            $scopePath = $relPath;
+            $filteredTree = $this->extractSubtreeByScope($tree, $scopePath);
+
+            // Strip permissions from all nodes (public = read-only)
+            $filteredTree = $this->stripPermissionsFromTree($filteredTree);
+
+            $this->logger->info('[PublicShare] Page tree accessed', [
+                'language' => $language,
+                'ip' => $this->request->getRemoteAddress(),
+            ]);
+
+            return new JSONResponse(['tree' => $filteredTree]);
+
+        } catch (\Exception $e) {
+            $this->logger->error('[ApiController] Error in getPageTreeByShare', [
+                'token' => '***',
+                'error' => $e->getMessage()
+            ]);
+            return new JSONResponse(['tree' => []]);
+        }
+    }
+
+    /**
+     * Get news items for a public share.
+     *
+     * @PublicPage
+     * @NoCSRFRequired
+     * @AnonRateThrottle(limit=60, period=60)
+     * @param string $token The NC share token
+     * @return JSONResponse
+     */
+    #[PublicPage]
+    #[NoCSRFRequired]
+    #[AnonRateThrottle(limit: 60, period: 60)]
+    public function getNewsByShare(string $token): JSONResponse {
+        if (!$this->isValidShareTokenFormat($token)) {
+            return $this->shareNotFoundResponse();
+        }
+
+        $ncAllowsLinks = $this->config->getAppValue('core', 'shareapi_allow_links', 'yes') === 'yes';
+        if (!$ncAllowsLinks) {
+            return $this->shareNotFoundResponse();
+        }
+
+        // Check share password
+        $pwDenied = $this->checkSharePasswordOrDeny($token);
+        if ($pwDenied !== null) {
+            return $pwDenied;
+        }
+
+        try {
+            $share = $this->publicShareService->getShareByToken($token);
+            if ($share === null) {
+                return $this->shareNotFoundResponse();
+            }
+
+            $shareScopePath = $this->publicShareService->resolveShareScopePath($share);
+            if ($shareScopePath === null) {
+                return new JSONResponse(['items' => [], 'total' => 0]);
+            }
+
+            // shareScopePath is like "files/nl/afdeling" — extract language
+            $relPath = $shareScopePath;
+            if (str_starts_with($relPath, 'files/')) {
+                $relPath = substr($relPath, 6);
+            }
+
+            $segments = explode('/', $relPath);
+            $language = $segments[0] ?? null;
+
+            if ($language === null || strlen($language) < 2 || strlen($language) > 3) {
+                return new JSONResponse(['items' => [], 'total' => 0]);
+            }
+
+            // Parse request parameters
+            $sourcePageId = $this->request->getParam('sourcePageId', '');
+            $sourcePath = $this->request->getParam('sourcePath', '');
+            $limit = max(1, min((int) $this->request->getParam('limit', 5), 50));
+            $sortBy = in_array($this->request->getParam('sortBy', 'modified'), ['modified', 'title'])
+                ? $this->request->getParam('sortBy', 'modified') : 'modified';
+            $sortOrder = in_array($this->request->getParam('sortOrder', 'desc'), ['asc', 'desc'])
+                ? $this->request->getParam('sortOrder', 'desc') : 'desc';
+
+            // Get news pages via system file service (no user session needed)
+            $result = $this->systemFileService->getNewsPagesForShare(
+                $language,
+                !empty($sourcePageId) ? $sourcePageId : null,
+                !empty($sourcePath) ? $sourcePath : null,
+                $relPath,
+                $token,
+                $limit,
+                $sortBy,
+                $sortOrder
+            );
+
+            $this->logger->info('[PublicShare] News accessed', [
+                'language' => $language,
+                'itemCount' => count($result['items'] ?? []),
+                'ip' => $this->request->getRemoteAddress(),
+            ]);
+
+            return new JSONResponse($result);
+
+        } catch (\Exception $e) {
+            $this->logger->error('[ApiController] Error in getNewsByShare', [
+                'token' => '***',
+                'error' => $e->getMessage()
+            ]);
+            return new JSONResponse(['items' => [], 'total' => 0]);
+        }
+    }
+
+    /**
+     * Extract a subtree matching the share scope path.
+     *
+     * Finds the node whose path matches the scope and returns it as the root.
+     * If the scope is the language root (e.g., "nl"), returns the full tree.
+     */
+    private function extractSubtreeByScope(array $tree, string $scopePath): array {
+        // If scopePath is just a language code (e.g., "en"), the entire language is shared.
+        // Return the full tree — the home page and all subfolders are siblings at root level.
+        if (!str_contains($scopePath, '/')) {
+            return $tree;
+        }
+
+        foreach ($tree as $node) {
+            if ($node['path'] === $scopePath) {
+                return [$node];
+            }
+            if (!empty($node['children'])) {
+                $found = $this->extractSubtreeByScope($node['children'], $scopePath);
+                if (!empty($found) && count($found) === 1 && ($found[0]['path'] ?? '') === $scopePath) {
+                    return $found;
+                }
+            }
+        }
+        // Fallback: no exact match found, return full tree
+        return $tree;
+    }
+
+    /**
+     * Recursively strip permissions from tree nodes.
+     */
+    private function stripPermissionsFromTree(array $tree): array {
+        return array_map(function ($node) {
+            unset($node['permissions']);
+            if (!empty($node['children'])) {
+                $node['children'] = $this->stripPermissionsFromTree($node['children']);
+            }
+            return $node;
+        }, $tree);
+    }
+
+    /**
+     * Build a breadcrumb scoped to a share target.
+     *
+     * Starts from the share root instead of "Home". Ancestors above the share
+     * scope are not included.
+     */
+    private function buildShareScopedBreadcrumb(array $pageData, string $shareScopePath, string $language): array {
+        $pagePath = $pageData['path'] ?? '';
+        if (empty($pagePath)) {
+            return [];
+        }
+
+        // Normalize paths for Unicode-safe comparison
+        if (function_exists('normalizer_normalize')) {
+            $pagePath = \Normalizer::normalize($pagePath, \Normalizer::FORM_C) ?: $pagePath;
+            $shareScopePath = \Normalizer::normalize($shareScopePath, \Normalizer::FORM_C) ?: $shareScopePath;
+        }
+
+        // shareScopePath is relative path like "nl" or "nl/afdeling" or "nl/afdeling/hr"
+        $pathParts = explode('/', $pagePath);
+
+        $breadcrumb = [];
+
+        // Get GroupFolder for system-level page lookup
+        $groupFolder = null;
+        try {
+            $groupFolder = $this->setupService->getSharedFolder();
+        } catch (\Exception $e) {
+            // Fall back to folder names only
+        }
+
+        // Determine if this is a language-root share (scope is just the language, e.g. "en")
+        $isLanguageRootShare = !str_contains($shareScopePath, '/');
+
+        if ($isLanguageRootShare) {
+            // Language-root share: add actual Home page as first breadcrumb item
+            $homeUniqueId = null;
+            $homeTitle = 'Home';
+            if ($groupFolder !== null) {
+                // Read home breadcrumb label from navigation.json (first item title)
+                try {
+                    $navPath = $language . '/navigation.json';
+                    if ($groupFolder->nodeExists($navPath)) {
+                        $navFile = $groupFolder->get($navPath);
+                        $navData = json_decode($navFile->getContent(), true, 64);
+                        if ($navData && !empty($navData['items'][0]['title'])) {
+                            $homeTitle = $navData['items'][0]['title'];
+                        }
+                        if ($navData && !empty($navData['items'][0]['uniqueId'])) {
+                            $homeUniqueId = $navData['items'][0]['uniqueId'];
+                        }
+                    }
+                } catch (\Exception $e) {
+                    // Fall through, Home without uniqueId
+                }
+                // Get home uniqueId from home.json if not found in navigation
+                if ($homeUniqueId === null) {
+                    try {
+                        $homeJsonPath = $language . '/home.json';
+                        if ($groupFolder->nodeExists($homeJsonPath)) {
+                            $homeFile = $groupFolder->get($homeJsonPath);
+                            $homeData = json_decode($homeFile->getContent(), true, 64);
+                            if ($homeData && isset($homeData['uniqueId'])) {
+                                $homeUniqueId = $homeData['uniqueId'];
+                            }
+                        }
+                    } catch (\Exception $e) {
+                        // Fall through
+                    }
+                }
+            }
+
+            // Check if the current page IS the home page
+            $isHomePage = ($pagePath === $language || $pagePath === $language . '/home');
+
+            $breadcrumb[] = [
+                'uniqueId' => $homeUniqueId,
+                'title' => $homeTitle,
+                'path' => $language,
+                'url' => $isHomePage ? null : ($homeUniqueId ? '#' . $homeUniqueId : null),
+                'current' => $isHomePage,
+            ];
+
+            if ($isHomePage) {
+                return $breadcrumb;
+            }
+        } else {
+            // Subfolder share: add the share scope root page as "Home" breadcrumb
+            $scopeRootUniqueId = null;
+            $scopeFolderName = basename($shareScopePath);
+            $scopeRootTitle = ucfirst(str_replace('-', ' ', $scopeFolderName));
+            if ($groupFolder !== null) {
+                try {
+                    $scopeJsonPath = $shareScopePath . '/' . $scopeFolderName . '.json';
+                    if ($groupFolder->nodeExists($scopeJsonPath)) {
+                        $scopeFile = $groupFolder->get($scopeJsonPath);
+                        $scopeContent = $scopeFile->getContent();
+                        $scopeData = json_decode($scopeContent, true, 64);
+                        if ($scopeData && isset($scopeData['uniqueId'])) {
+                            $scopeRootUniqueId = $scopeData['uniqueId'];
+                            $scopeRootTitle = $scopeData['title'] ?? $scopeRootTitle;
+                        }
+                    }
+                } catch (\Exception $e) {
+                    // Fall through
+                }
+            }
+
+            // Check if the current page IS the scope root page
+            $isScopeRoot = ($pagePath === $shareScopePath);
+
+            $breadcrumb[] = [
+                'uniqueId' => $scopeRootUniqueId,
+                'title' => $scopeRootTitle,
+                'path' => $shareScopePath,
+                'url' => $isScopeRoot ? null : ($scopeRootUniqueId ? '#' . $scopeRootUniqueId : null),
+                'current' => $isScopeRoot,
+            ];
+
+            if ($isScopeRoot) {
+                return $breadcrumb;
+            }
+        }
+
+        // Walk through page path parts, only include items within the share scope
+        $accumulatedPath = '';
+        $scopeReached = false;
+
+        foreach ($pathParts as $index => $part) {
+            if (!empty($accumulatedPath)) {
+                $accumulatedPath .= '/';
+            }
+            $accumulatedPath .= $part;
+
+            // Skip language folder (already covered by root breadcrumb)
+            if ($index === 0 && strlen($part) >= 2 && strlen($part) <= 3) {
+                continue;
+            }
+
+            // For language-root shares, all items after the language are in scope
+            // For subfolder shares, wait until we PASS the share scope (root is already in breadcrumb)
+            if (!$isLanguageRootShare) {
+                if ($accumulatedPath === $shareScopePath) {
+                    // This is the scope root, already added as first breadcrumb — skip
+                    continue;
+                }
+                if (!str_starts_with($accumulatedPath, $shareScopePath . '/')) {
+                    // Not yet within share scope
+                    continue;
+                }
+            }
+
+            $isLastItem = ($index === count($pathParts) - 1);
+
+            if ($isLastItem) {
+                // Current page
+                $breadcrumb[] = [
+                    'uniqueId' => $pageData['uniqueId'] ?? null,
+                    'title' => $pageData['title'] ?? ucfirst(str_replace('-', ' ', $part)),
+                    'path' => $pagePath,
+                    'url' => null,
+                    'current' => true,
+                ];
+            } else {
+                // Parent — try to find the page JSON in the GroupFolder
+                $parentPage = null;
+                if ($groupFolder !== null) {
+                    try {
+                        $jsonPath = $accumulatedPath . '/' . $part . '.json';
+                        if ($groupFolder->nodeExists($jsonPath)) {
+                            $jsonFile = $groupFolder->get($jsonPath);
+                            $content = $jsonFile->getContent();
+                            $data = json_decode($content, true, 64);
+                            if ($data && isset($data['uniqueId'], $data['title'])) {
+                                $parentPage = $data;
+                            }
+                        }
+                    } catch (\Exception $e) {
+                        // Fall through to folder name fallback
+                    }
+                }
+
+                if ($parentPage) {
+                    $breadcrumb[] = [
+                        'uniqueId' => $parentPage['uniqueId'],
+                        'title' => $parentPage['title'],
+                        'path' => $accumulatedPath,
+                        'url' => '#' . $parentPage['uniqueId'],
+                        'current' => false,
+                    ];
+                } else {
+                    $breadcrumb[] = [
+                        'uniqueId' => null,
+                        'title' => ucfirst(str_replace('-', ' ', $part)),
+                        'path' => $accumulatedPath,
+                        'url' => null,
+                        'current' => false,
+                    ];
+                }
+            }
+        }
+
+        return $breadcrumb;
+    }
+
+    /**
+     * Validate share token format.
+     */
+    private function isValidShareTokenFormat(?string $token): bool {
+        if ($token === null || $token === '') {
+            return false;
+        }
+        // NC share tokens are alphanumeric, typically 15-20 chars
+        return strlen($token) >= 10 && strlen($token) <= 32 && ctype_alnum($token);
+    }
+
+    /**
+     * Register a failed share access attempt.
+     */
+    private function registerShareBruteForceAttempt(): void {
+        /** @var IThrottler */
+        $throttler = \OC::$server->get(IThrottler::class);
+        $throttler->registerAttempt(
+            'intravox_share_page',
+            $this->request->getRemoteAddress()
+        );
+    }
+
+    /**
+     * Return a generic "not found" response for share access.
+     */
+    private function shareNotFoundResponse(): JSONResponse {
+        // Add random delay to mask timing differences
+        usleep(random_int(10000, 50000)); // 10-50ms
+
+        return new JSONResponse([
+            'error' => 'Page not found or not accessible via this share link'
+        ], Http::STATUS_NOT_FOUND);
+    }
+
+    /**
+     * Get share password from session (stored after password challenge).
+     */
+    private function getSharePasswordFromSession(string $token): ?string {
+        return $this->session->get('intravox_share_pw_' . $token);
+    }
+
+    /**
+     * Check if share password is required and validate session password.
+     * Returns null if OK (no password needed or session password valid).
+     * Returns a JSONResponse if access should be denied.
+     */
+    private function checkSharePasswordOrDeny(string $token): ?JSONResponse {
+        try {
+            if (!$this->publicShareService->shareRequiresPassword($token)) {
+                return null; // No password needed
+            }
+        } catch (\Exception $e) {
+            // Share not found — let the normal validation handle it
+            return null;
+        }
+
+        $sessionPw = $this->getSharePasswordFromSession($token);
+        if ($sessionPw === null || $sessionPw === '') {
+            return new JSONResponse([
+                'error' => 'Password required',
+                'passwordRequired' => true,
+            ], Http::STATUS_UNAUTHORIZED);
+        }
+
+        if (!$this->publicShareService->checkSharePassword($token, $sessionPw)) {
+            return new JSONResponse([
+                'error' => 'Password required',
+                'passwordRequired' => true,
+            ], Http::STATUS_UNAUTHORIZED);
+        }
+
+        return null; // Session password is valid
+    }
+
+    /**
+     * Sanitize page data for public (anonymous) access.
+     *
+     * Only includes safe fields - removes internal metadata like uniqueId path, author info, etc.
+     */
+    private function sanitizePageForPublicAccess(array $pageData): array {
+        // Whitelist approach - only include explicitly safe fields
+        $safe = [
+            'uniqueId' => $pageData['uniqueId'] ?? null,
+            'title' => $pageData['title'] ?? '',
+            'layout' => $pageData['layout'] ?? [],
+            'language' => $pageData['language'] ?? 'en',
+            'lastModified' => $pageData['lastModified'] ?? null,
+        ];
+
+        // Include publication dates if available (for public info)
+        if (isset($pageData['metadata'])) {
+            $safeMeta = [];
+            // Only include non-sensitive metadata
+            if (isset($pageData['metadata']['publishDate'])) {
+                $safeMeta['publishDate'] = $pageData['metadata']['publishDate'];
+            }
+            if (!empty($safeMeta)) {
+                $safe['metadata'] = $safeMeta;
+            }
+        }
+
+        return $safe;
+    }
+
+    /**
+     * Get media (image) for a page via NC share token.
+     *
+     * Validates the share token and serves media if the page is within the share scope.
+     *
+     * @PublicPage
+     * @NoCSRFRequired
+     * @AnonRateThrottle(limit=60, period=60)
+     * @param string $token The NC share token
+     * @param string $uniqueId The page's unique ID
+     * @param string $filename The media filename
+     * @return Response
+     */
+    #[PublicPage]
+    #[NoCSRFRequired]
+    #[AnonRateThrottle(limit: 60, period: 60)]
+    public function getMediaByShare(string $token, string $uniqueId, string $filename) {
+        // Validate token format first (cheap check)
+        if (!$this->isValidShareTokenFormat($token)) {
+            return new DataResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
+        }
+
+        // NC sharing must be enabled
+        $ncAllowsLinks = $this->config->getAppValue('core', 'shareapi_allow_links', 'yes') === 'yes';
+        if (!$ncAllowsLinks) {
+            return new DataResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
+        }
+
+        // Check share password
+        $pwDenied = $this->checkSharePasswordOrDeny($token);
+        if ($pwDenied !== null) {
+            return $pwDenied;
+        }
+
+        // Sanitize filename to prevent directory traversal
+        $filename = basename($filename);
+
+        try {
+            // Validate share access - this checks if the page is within share scope
+            // We use 'en' as default language, but validateShareAccess will search all languages
+            $sessionPw = $this->getSharePasswordFromSession($token);
+            $validation = $this->publicShareService->validateShareAccess($token, $uniqueId, 'en', $sessionPw);
+
+            if (!$validation['valid']) {
+                return new DataResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
+            }
+
+            // Get the page path from validation result
+            // pagePath is like: /__groupfolders/1/files/nl/documentatie/documentatie.json
+            $pagePath = $validation['pagePath'] ?? null;
+            if ($pagePath === null) {
+                return new DataResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
+            }
+
+            // Get the page folder (parent of the .json file)
+            // From: /__groupfolders/1/files/nl/documentatie/documentatie.json
+            // To:   /__groupfolders/1/files/nl/documentatie
+            $pageFolder = dirname($pagePath);
+
+            // Get the IntraVox folder via system context
+            $folder = $this->setupService->getSharedFolder();
+            if ($folder === null) {
+                return new DataResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
+            }
+
+            // Calculate the relative path from IntraVox root to the page folder
+            // IntraVox path: /__groupfolders/1/files
+            // Page folder:   /__groupfolders/1/files/nl/documentatie
+            // Relative:      nl/documentatie
+            $intraVoxPath = $folder->getPath();
+            $relativePath = ltrim(substr($pageFolder, strlen($intraVoxPath)), '/');
+
+            $this->logger->debug('[ApiController] getMediaByShare: looking for media', [
+                'pagePath' => $pagePath,
+                'pageFolder' => $pageFolder,
+                'relativePath' => $relativePath,
+                'filename' => $filename
+            ]);
+
+            // Navigate to the page folder
+            $targetFolder = $folder->get($relativePath);
+
+            // Get the _media folder
+            $mediaFolder = $targetFolder->get('_media');
+
+            // Get the file
+            $file = $mediaFolder->get($filename);
+
+            if ($file->getType() !== \OCP\Files\FileInfo::TYPE_FILE) {
+                return new DataResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
+            }
+
+            // Get mime type
+            $mimeType = $file->getMimeType();
+
+            // Validate it's an allowed media type
+            $allowedTypes = [
+                'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml', 'image/bmp',
+                'video/mp4', 'video/webm', 'video/ogg', 'video/quicktime'
+            ];
+            if (!in_array($mimeType, $allowedTypes)) {
+                return new DataResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
+            }
+
+            // Create stream response with security headers
+            $response = new \OCP\AppFramework\Http\StreamResponse($file->fopen('rb'));
+            $response->addHeader('Content-Type', $mimeType);
+            $response->addHeader('Content-Disposition', 'inline; filename="' . $file->getName() . '"');
+            $response->addHeader('X-Content-Type-Options', 'nosniff');
+            $response->addHeader('X-Frame-Options', 'DENY');
+            $isVideo = strpos($mimeType, 'video/') === 0;
+            $cacheTime = $isVideo ? 86400 : 31536000;
+            $response->addHeader('Cache-Control', 'public, max-age=' . $cacheTime);
+
+            return $response;
+
+        } catch (\OCP\Files\NotFoundException $e) {
+            $this->logger->debug('[ApiController] Media file not found in getMediaByShare', [
+                'token' => '***',
+                'uniqueId' => $uniqueId,
+                'filename' => $filename
+            ]);
+            return new DataResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
+        } catch (\Exception $e) {
+            $this->logger->debug('[ApiController] Error in getMediaByShare', [
+                'token' => '***',
+                'uniqueId' => $uniqueId,
+                'filename' => $filename,
+                'error' => $e->getMessage()
+            ]);
+            return new DataResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
+        }
+    }
+
+    /**
+     * Get resources media via NC share token.
+     *
+     * Validates the share token and serves shared resources.
+     * Note: _resources is a language-level shared folder (not per-scope).
+     * Pages within any scope may reference these shared resources (backgrounds, icons, etc.).
+     * Access is granted to all resources within the language, not limited to share scope.
+     *
+     * @PublicPage
+     * @NoCSRFRequired
+     * @AnonRateThrottle(limit=60, period=60)
+     * @param string $token The NC share token
+     * @param string $filename The resource filename
+     * @return Response
+     */
+    #[PublicPage]
+    #[NoCSRFRequired]
+    #[AnonRateThrottle(limit: 60, period: 60)]
+    public function getResourcesMediaByShare(string $token, string $filename) {
+        // Validate token format first (cheap check)
+        if (!$this->isValidShareTokenFormat($token)) {
+            return new DataResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
+        }
+
+        // NC sharing must be enabled
+        $ncAllowsLinks = $this->config->getAppValue('core', 'shareapi_allow_links', 'yes') === 'yes';
+        if (!$ncAllowsLinks) {
+            return new DataResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
+        }
+
+        // Check share password
+        $pwDenied = $this->checkSharePasswordOrDeny($token);
+        if ($pwDenied !== null) {
+            return $pwDenied;
+        }
+
+        // Sanitize path to prevent directory traversal
+        try {
+            $safePath = $this->sanitizePath($filename);
+        } catch (\InvalidArgumentException $e) {
+            return new DataResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
+        }
+
+        try {
+            // Validate that the share token is valid (belongs to something in IntraVox)
+            $share = $this->publicShareService->getShareByToken($token);
+            if ($share === null) {
+                return new DataResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
+            }
+
+            // Get the share target to determine the language
+            $shareTarget = $share->getTarget();
+            $language = $this->detectLanguageFromShareTarget($shareTarget);
+            if ($language === null) {
+                $language = 'nl'; // Default fallback
+            }
+
+            // Get the IntraVox folder via system context
+            $folder = $this->setupService->getSharedFolder();
+            if ($folder === null) {
+                return new DataResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
+            }
+
+            // Get the _resources folder in the language folder
+            $languageFolder = $folder->get($language);
+            $resourcesFolder = $languageFolder->get('_resources');
+
+            // Get the file
+            $file = $resourcesFolder->get($safePath);
+
+            if ($file->getType() !== \OCP\Files\FileInfo::TYPE_FILE) {
+                return new DataResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
+            }
+
+            // Get mime type
+            $mimeType = $file->getMimeType();
+
+            // Create stream response with security headers
+            $response = new \OCP\AppFramework\Http\StreamResponse($file->fopen('rb'));
+            $response->addHeader('Content-Type', $mimeType);
+            $response->addHeader('Content-Disposition', 'inline; filename="' . basename($safePath) . '"');
+            $response->addHeader('X-Content-Type-Options', 'nosniff');
+            $response->addHeader('X-Frame-Options', 'DENY');
+            $response->addHeader('Cache-Control', 'public, max-age=31536000'); // 1 year cache
+
+            return $response;
+
+        } catch (\OCP\Files\NotFoundException $e) {
+            $this->logger->debug('[ApiController] Resources file not found in getResourcesMediaByShare', [
+                'filename' => $filename
+            ]);
+            return new DataResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
+        } catch (\Exception $e) {
+            $this->logger->debug('[ApiController] Error in getResourcesMediaByShare', [
+                'filename' => $filename,
+                'error' => $e->getMessage()
+            ]);
+            return new DataResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
+        }
+    }
+
+    /**
+     * Detect language from share target path.
+     * E.g., "/nl" or "/nl/about" -> "nl"
+     */
+    private function detectLanguageFromShareTarget(string $shareTarget): ?string {
+        $path = ltrim($shareTarget, '/');
+        $segments = explode('/', $path);
+
+        if (empty($segments) || empty($segments[0])) {
+            return null;
+        }
+
+        $potentialLanguage = $segments[0];
+
+        // Validate it's a valid language code (2-3 chars)
+        if (strlen($potentialLanguage) >= 2 && strlen($potentialLanguage) <= 3 && ctype_alpha($potentialLanguage)) {
+            return $potentialLanguage;
+        }
+
+        return null;
+    }
+
+    /**
+     * Get resources media with folder via NC share token.
+     *
+     * @PublicPage
+     * @NoCSRFRequired
+     * @AnonRateThrottle(limit=60, period=60)
+     */
+    #[PublicPage]
+    #[NoCSRFRequired]
+    #[AnonRateThrottle(limit: 60, period: 60)]
+    public function getResourcesMediaWithFolderByShare(string $token, string $folder, string $filename) {
+        $path = $folder . '/' . $filename;
+        return $this->getResourcesMediaByShare($token, $path);
     }
 }

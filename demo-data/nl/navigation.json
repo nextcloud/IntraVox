@@ -68,14 +68,6 @@
             ]
         },
         {
-            "id": "nav_ai",
-            "title": "AI in Nextcloud",
-            "uniqueId": "page-a1b2c3d4-e5f6-7890-abcd-000000000001",
-            "url": null,
-            "target": null,
-            "children": []
-        },
-        {
             "id": "nav_afdelingen",
             "title": "Afdelingen",
             "uniqueId": "page-b2c3d4e5-f6a7-8901-bcde-f12345678901",
@@ -100,7 +92,7 @@
                         {
                             "id": "nav_social",
                             "title": "Social Media",
-                            "uniqueId": "page-social-a1b2c3d4-e5f6-7890-abcd-666666666666",
+                            "uniqueId": "page-2dab467d-0d0b-4e24-93f1-0f32448f8402",
                             "url": null,
                             "target": null,
                             "children": []
@@ -108,7 +100,7 @@
                         {
                             "id": "nav_branding",
                             "title": "Branding",
-                            "uniqueId": "page-brand-a1b2c3d4-e5f6-7890-abcd-777777777777",
+                            "uniqueId": "page-7627c303-1418-4591-b4ec-3d2df36eea77",
                             "url": null,
                             "target": null,
                             "children": []
@@ -125,7 +117,7 @@
                         {
                             "id": "nav_crm",
                             "title": "CRM & Klantbeheer",
-                            "uniqueId": "page-sales-crm-1111-2222-3333-444444444444",
+                            "uniqueId": "page-358c18ec-d4b7-4a40-b3ac-d4a789940f93",
                             "url": null,
                             "target": null,
                             "children": []
@@ -133,7 +125,7 @@
                         {
                             "id": "nav_pipeline",
                             "title": "Sales Pipeline",
-                            "uniqueId": "page-sales-pipe-2222-3333-4444-555555555555",
+                            "uniqueId": "page-26a9db41-47d5-432c-bab9-3e3981034773",
                             "url": null,
                             "target": null,
                             "children": []
@@ -141,7 +133,7 @@
                         {
                             "id": "nav_targets",
                             "title": "Sales Targets",
-                            "uniqueId": "page-sales-targ-3333-4444-5555-666666666666",
+                            "uniqueId": "page-0ccd2e03-7341-4887-8504-41b9e58b5081",
                             "url": null,
                             "target": null,
                             "children": []
@@ -151,14 +143,14 @@
                 {
                     "id": "nav_hr",
                     "title": "HR",
-                    "uniqueId": "page-hr-a1b2c3d4-e5f6-7890-abcd-444444444444",
+                    "uniqueId": "page-16912b75-4094-4e21-a27a-bed61e73886d",
                     "url": null,
                     "target": null,
                     "children": [
                         {
                             "id": "nav_vacatures",
                             "title": "Vacatures",
-                            "uniqueId": "page-hr-vaca-1111-2222-3333-777777777777",
+                            "uniqueId": "page-b3f1aa64-bda8-47c1-9ffb-d42971b12b07",
                             "url": null,
                             "target": null,
                             "children": []
@@ -166,7 +158,7 @@
                         {
                             "id": "nav_onboarding",
                             "title": "Onboarding",
-                            "uniqueId": "page-hr-onbo-2222-3333-4444-888888888888",
+                            "uniqueId": "page-ae64b904-48f6-411a-8b0d-5372ac04e27b",
                             "url": null,
                             "target": null,
                             "children": []
@@ -174,7 +166,7 @@
                         {
                             "id": "nav_policies",
                             "title": "HR Policies",
-                            "uniqueId": "page-hr-poli-3333-4444-5555-999999999999",
+                            "uniqueId": "page-323254e4-fed7-4831-a861-18b5f4060798",
                             "url": null,
                             "target": null,
                             "children": []
@@ -184,14 +176,14 @@
                 {
                     "id": "nav_it",
                     "title": "IT",
-                    "uniqueId": "page-it-a1b2c3d4-e5f6-7890-abcd-555555555555",
+                    "uniqueId": "page-c13a9c89-ee0f-453c-b5b1-5a7cabf86794",
                     "url": null,
                     "target": null,
                     "children": [
                         {
                             "id": "nav_helpdesk",
                             "title": "IT Helpdesk",
-                            "uniqueId": "page-it-help-1111-2222-3333-aaaaaaaaaaaa",
+                            "uniqueId": "page-58af68c7-d89f-4465-b6bf-72d4b870270a",
                             "url": null,
                             "target": null,
                             "children": []
@@ -199,7 +191,7 @@
                         {
                             "id": "nav_systemen",
                             "title": "Systemen & Tools",
-                            "uniqueId": "page-it-syst-2222-3333-4444-bbbbbbbbbbbb",
+                            "uniqueId": "page-1f66225f-c19e-4b9f-a270-9d5ac8c0914d",
                             "url": null,
                             "target": null,
                             "children": []
@@ -207,7 +199,7 @@
                         {
                             "id": "nav_security",
                             "title": "Security & Privacy",
-                            "uniqueId": "page-it-secu-3333-4444-5555-cccccccccccc",
+                            "uniqueId": "page-ca972d39-20c1-46c3-9b49-1dad9468a627",
                             "url": null,
                             "target": null,
                             "children": []
@@ -226,7 +218,7 @@
                 {
                     "id": "nav_installatie",
                     "title": "Installatie",
-                    "uniqueId": "page-install-a1b2c3d4-e5f6-7890-abcd-aaaaaaaaaaaa",
+                    "uniqueId": "page-c2405b32-a41a-4b4a-a3fb-b1ee35b7ca10",
                     "url": null,
                     "target": null,
                     "children": []
@@ -242,7 +234,7 @@
                 {
                     "id": "nav_api",
                     "title": "API",
-                    "uniqueId": "page-api-a1b2c3d4-e5f6-7890-abcd-bbbbbbbbbbbb",
+                    "uniqueId": "page-d1b81397-e765-4412-9e8d-c7a33853a6c1",
                     "url": null,
                     "target": null,
                     "children": []
@@ -275,7 +267,7 @@
                 {
                     "id": "nav_updates",
                     "title": "Product Updates",
-                    "uniqueId": "page-updates-a1b2c3d4-e5f6-7890-abcd-888888888888",
+                    "uniqueId": "page-47c230b6-a0bd-4d95-9ba4-8cb8ec5a1f4e",
                     "url": null,
                     "target": null,
                     "children": []
@@ -283,7 +275,7 @@
                 {
                     "id": "nav_evenementen",
                     "title": "Evenementen",
-                    "uniqueId": "page-events-a1b2c3d4-e5f6-7890-abcd-999999999999",
+                    "uniqueId": "page-4ab987ae-afc7-4cc4-8190-1cd1bfac2887",
                     "url": null,
                     "target": null,
                     "children": []

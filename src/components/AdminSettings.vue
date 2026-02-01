@@ -33,6 +33,12 @@
 				{{ t('intravox', 'Export/Import') }}
 			</button>
 			<button
+				:class="['tab-button', { active: activeTab === 'sharing' }]"
+				@click="activeTab = 'sharing'; loadActiveShares()">
+				<LinkVariant :size="16" />
+				{{ t('intravox', 'Sharing') }}
+			</button>
+			<button
 				:class="['tab-button', { active: activeTab === 'license' }]"
 				@click="activeTab = 'license'">
 				<ChartBox :size="16" />
@@ -653,9 +659,64 @@
 					</template>
 				</div>
 			</div>
-		</div>
+
+			</div>
 
 		<!-- License Tab -->
+		<!-- Sharing Tab -->
+		<div v-if="activeTab === 'sharing'" class="tab-content">
+			<div class="settings-section">
+				<h2>{{ t('intravox', 'Public Share Links') }}</h2>
+				<p class="settings-section-desc">
+					{{ t('intravox', 'Overview of all active Nextcloud share links on IntraVox content.') }}
+				</p>
+
+				<div v-if="loadingShares" class="shares-loading">
+					<span class="icon-loading-small"></span>
+					{{ t('intravox', 'Loading shares...') }}
+				</div>
+
+				<NcNoteCard v-else-if="activeShares.length === 0" type="info">
+					{{ t('intravox', 'No active public share links found. Share links can be created in the Files app on IntraVox folders or pages.') }}
+				</NcNoteCard>
+
+				<table v-else class="shares-table">
+					<thead>
+						<tr>
+							<th>{{ t('intravox', 'Scope') }}</th>
+							<th>{{ t('intravox', 'Path') }}</th>
+							<th>{{ t('intravox', 'Created') }}</th>
+							<th>{{ t('intravox', 'Expires') }}</th>
+							<th>{{ t('intravox', 'Action') }}</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr v-for="share in activeShares" :key="share.token" :class="{ 'share-expired': share.expired }">
+							<td class="scope-cell">
+								<FolderOutline v-if="share.scope === 'folder' || share.scope === 'language'" :size="16" />
+								<FileDocumentOutline v-else :size="16" />
+								<span class="scope-label">{{ share.scopeLabel }}</span>
+								<span v-if="share.scope === 'language'" class="scope-badge language-badge">{{ t('intravox', 'All pages') }}</span>
+								<span v-if="share.expired" class="scope-badge expired-badge">{{ t('intravox', 'Expired') }}</span>
+							</td>
+							<td class="path-cell">{{ share.path }}</td>
+							<td class="date-cell">{{ share.createdAt || '—' }}</td>
+							<td class="date-cell" :class="{ 'expired-text': share.expired }">
+								{{ share.expirationDate || t('intravox', 'Never') }}
+							</td>
+							<td class="action-cell">
+								<a :href="getFilesUrl(share.filesUrl)" target="_blank" class="share-files-link">
+									<FolderOutline :size="14" />
+									{{ t('intravox', 'Open in Files') }}
+									<OpenInNew :size="12" />
+								</a>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+
 		<div v-if="activeTab === 'license'" class="tab-content">
 			<!-- Page Statistics Section -->
 			<div class="settings-section">
@@ -726,7 +787,7 @@
 							@update:model-value="toggleTelemetry($event)">
 							<div class="option-info">
 								<span class="option-label">{{ t('intravox', 'Share anonymous usage statistics') }}</span>
-								<span class="option-desc">{{ t('intravox', 'We collect: page counts per language, user counts, and version info (IntraVox, Nextcloud, PHP). No personal data or page content is shared.') }}</span>
+								<span class="option-desc">{{ t('intravox', 'We collect: page counts per language, user counts, version info (IntraVox, Nextcloud, PHP), and basic server configuration. No personal data or page content is shared.') }}</span>
 							</div>
 						</NcCheckboxRadioSwitch>
 					</div>
@@ -737,6 +798,11 @@
 							<p v-if="telemetryLastReport">
 								{{ t('intravox', 'Last report sent') }}: {{ formatTelemetryDate(telemetryLastReport) }}
 							</p>
+							<NcButton type="secondary"
+								:disabled="sendingTelemetry"
+								@click="sendTelemetryNow">
+								{{ sendingTelemetry ? t('intravox', 'Sending...') : t('intravox', 'Send report now') }}
+							</NcButton>
 						</NcNoteCard>
 					</div>
 
@@ -747,6 +813,7 @@
 							<li>{{ t('intravox', 'Total user count and active users') }}</li>
 							<li>{{ t('intravox', 'IntraVox, Nextcloud, and PHP version numbers') }}</li>
 							<li>{{ t('intravox', 'A unique hash of your instance URL (privacy-friendly identifier)') }}</li>
+							<li>{{ t('intravox', 'Basic server configuration (database, OS, web server, language, timezone, country)') }}</li>
 						</ul>
 						<h4>{{ t('intravox', 'What we never collect') }}:</h4>
 						<ul class="not-collected">
@@ -777,6 +844,10 @@ import Upload from 'vue-material-design-icons/Upload.vue'
 import CloudDownload from 'vue-material-design-icons/CloudDownload.vue'
 import Broom from 'vue-material-design-icons/Broom.vue'
 import ChartBox from 'vue-material-design-icons/ChartBox.vue'
+import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
+import LinkVariant from 'vue-material-design-icons/LinkVariant.vue'
+import FolderOutline from 'vue-material-design-icons/FolderOutline.vue'
+import FileDocumentOutline from 'vue-material-design-icons/FileDocumentOutline.vue'
 import ConfluenceImport from '../admin/components/ConfluenceImport.vue'
 
 export default {
@@ -797,6 +868,10 @@ export default {
 		CloudDownload,
 		Broom,
 		ChartBox,
+		ContentCopy,
+		LinkVariant,
+		FolderOutline,
+		FileDocumentOutline,
 		ConfluenceImport,
 	},
 	props: {
@@ -882,6 +957,10 @@ export default {
 			// Telemetry settings
 			telemetryEnabled: this.initialState.telemetryEnabled || false,
 			telemetryLastReport: this.initialState.telemetryLastReport || null,
+			sendingTelemetry: false,
+			// Sharing overview
+			activeShares: [],
+			loadingShares: false,
 			// Known video services with metadata
 			knownServices: [
 				// Privacy-friendly (no/minimal tracking)
@@ -957,6 +1036,27 @@ export default {
 		},
 	},
 	methods: {
+		// Sharing overview methods
+		async loadActiveShares() {
+			if (this.loadingShares) return
+			this.loadingShares = true
+			try {
+				const response = await axios.get(generateUrl('/apps/intravox/api/admin/shares'))
+				this.activeShares = response.data || []
+			} catch (err) {
+				console.error('[AdminSettings] Failed to load shares:', err)
+				showError(this.t('intravox', 'Failed to load share links'))
+				this.activeShares = []
+			} finally {
+				this.loadingShares = false
+			}
+		},
+		getFilesUrl(url) {
+			if (!url) return '#'
+			const [path, query] = url.split('?')
+			const base = generateUrl(path)
+			return query ? base + '?' + query : base
+		},
 		// Service toggle methods
 		getServicesByCategory(categoryId) {
 			return this.knownServices.filter(s => s.category === categoryId)
@@ -1553,6 +1653,19 @@ export default {
 				this.validatingLicense = false
 			}
 		},
+		async sendTelemetryNow() {
+			this.sendingTelemetry = true
+			try {
+				await axios.post(generateUrl('/apps/intravox/api/license/telemetry'))
+				this.telemetryLastReport = Math.floor(Date.now() / 1000)
+				showSuccess(this.t('intravox', 'Report sent successfully'))
+			} catch (error) {
+				console.error('Failed to send telemetry:', error)
+				showError(this.t('intravox', 'Failed to send report'))
+			} finally {
+				this.sendingTelemetry = false
+			}
+		},
 		async toggleTelemetry(enabled) {
 			try {
 				await axios.post(
@@ -1857,6 +1970,23 @@ export default {
 }
 
 @media (max-width: 768px) {
+	.tab-navigation {
+		flex-direction: column;
+		gap: 0;
+	}
+
+	.tab-button {
+		width: 100%;
+		justify-content: flex-start;
+		border-bottom: none;
+		border-left: 2px solid transparent;
+	}
+
+	.tab-button.active {
+		border-bottom: none;
+		border-left-color: var(--color-primary);
+	}
+
 	.services-grid {
 		grid-template-columns: 1fr;
 	}
@@ -2618,4 +2748,94 @@ export default {
 	color: var(--color-text-maxcontrast);
 	font-style: italic;
 }
+
+/* Sharing tab styles */
+.shares-loading {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 16px 0;
+	color: var(--color-text-maxcontrast);
+}
+
+.shares-table {
+	width: 100%;
+	border-collapse: collapse;
+	margin-bottom: 20px;
+}
+
+.shares-table th,
+.shares-table td {
+	padding: 12px;
+	text-align: left;
+	border-bottom: 1px solid var(--color-border);
+}
+
+.shares-table th {
+	font-weight: bold;
+	color: var(--color-text-maxcontrast);
+}
+
+.share-expired {
+	opacity: 0.6;
+}
+
+.scope-cell {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.scope-label {
+	font-weight: 500;
+}
+
+.scope-badge {
+	display: inline-block;
+	padding: 2px 6px;
+	border-radius: 4px;
+	font-size: 0.75em;
+	font-weight: 600;
+}
+
+.language-badge {
+	background-color: var(--color-primary-element-light);
+	color: var(--color-primary-element);
+}
+
+.expired-badge {
+	background-color: var(--color-error);
+	color: white;
+}
+
+.path-cell {
+	font-family: monospace;
+	font-size: 0.9em;
+	color: var(--color-text-maxcontrast);
+}
+
+.date-cell {
+	white-space: nowrap;
+}
+
+.expired-text {
+	color: var(--color-error);
+}
+
+.share-files-link {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	font-size: 13px;
+	color: var(--color-primary-element);
+	text-decoration: none;
+	padding: 4px 8px;
+	border-radius: var(--border-radius);
+	transition: background-color 0.1s ease;
+}
+
+.share-files-link:hover {
+	background-color: var(--color-background-hover);
+}
+
 </style>

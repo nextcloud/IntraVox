@@ -7,6 +7,7 @@
 		<!-- Hidden element to capture initial focus and blur it -->
 		<div ref="focusTrap" tabindex="-1" class="focus-trap" />
 		<div class="page-settings">
+			<!-- Engagement Section -->
 			<div class="settings-section">
 				<h3 class="settings-section-header">
 					<span class="settings-icon">💬</span>
@@ -104,6 +105,10 @@ export default {
 		NcSelect,
 	},
 	props: {
+		pageUniqueId: {
+			type: String,
+			required: true,
+		},
 		settings: {
 			type: Object,
 			default: () => ({

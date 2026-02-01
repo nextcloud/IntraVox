@@ -420,11 +420,11 @@ class PageService {
         // Get user's folder (this respects GroupFolder ACL)
         $userFolder = $this->rootFolder->getUserFolder($this->userId);
 
-        // Get IntraVox folder from user's perspective (mounted GroupFolder)
+        // Get folder from user's perspective (mounted GroupFolder)
         try {
             return $userFolder->get('IntraVox');
         } catch (NotFoundException $e) {
-            throw new \Exception('IntraVox folder not found. Please check that you have access to the IntraVox GroupFolder.');
+            throw new \Exception("IntraVox folder not found. Please check that you have access to the IntraVox GroupFolder.");
         }
     }
 
@@ -1125,11 +1125,31 @@ class PageService {
                        preg_match('/^[a-z]{2}\/home$/', $page['path']) ||
                        preg_match('/^[a-z]{2}$/', $page['path']));
 
+        // Read home breadcrumb label from navigation.json (first item title)
+        // This allows users to customize the label via the navigation editor
+        $homeTitle = 'Home';
+        $homeUniqueId = $isHomePage ? $page['uniqueId'] : null;
+        try {
+            $folder = $this->getLanguageFolder();
+            if ($folder->nodeExists('navigation.json')) {
+                $navFile = $folder->get('navigation.json');
+                $navData = json_decode($navFile->getContent(), true, 64);
+                if ($navData && !empty($navData['items'][0]['title'])) {
+                    $homeTitle = $navData['items'][0]['title'];
+                }
+                if (!$isHomePage && $navData && !empty($navData['items'][0]['uniqueId'])) {
+                    $homeUniqueId = $navData['items'][0]['uniqueId'];
+                }
+            }
+        } catch (\Exception $e) {
+            // fallback to 'Home'
+        }
+
         // Always start with Home
         $breadcrumb[] = [
             'id' => 'home',
-            'uniqueId' => $isHomePage ? $page['uniqueId'] : null,
-            'title' => 'Home',
+            'uniqueId' => $homeUniqueId,
+            'title' => $homeTitle,
             'path' => $language . '/home',
             'url' => $isHomePage ? null : '#home',
             'current' => $isHomePage

@@ -53,9 +53,9 @@ class PermissionService {
     }
 
     /**
-     * Get the GroupFolder ID for IntraVox
+     * Get the GroupFolder ID for IntraVox (or IntraVox Site)
      */
-    private function getGroupFolderId(): ?int {
+    private function getGroupFolderId(string $folderName = 'IntraVox'): ?int {
         try {
             if (!\OC::$server->getAppManager()->isEnabledForUser('groupfolders')) {
                 return null;
@@ -63,6 +63,8 @@ class PermissionService {
 
             $groupfolderManager = \OC::$server->get(\OCA\GroupFolders\Folder\FolderManager::class);
             $folders = $groupfolderManager->getAllFolders();
+            $highestId = 0;
+            $folderId = null;
 
             foreach ($folders as $id => $folderData) {
                 $mountPoint = null;
@@ -73,10 +75,13 @@ class PermissionService {
                     $mountPoint = $folderData['mount_point'] ?? null;
                 }
 
-                if ($mountPoint === 'IntraVox') {
-                    return (int)$id;
+                if ($mountPoint === $folderName && $id > $highestId) {
+                    $folderId = (int)$id;
+                    $highestId = $id;
                 }
             }
+
+            return $folderId;
         } catch (\Exception $e) {
             $this->logger->error('Failed to get GroupFolder ID: ' . $e->getMessage());
         }
@@ -517,40 +522,140 @@ class PermissionService {
     /**
      * Filter navigation items to only include accessible pages.
      *
+     * Items are filtered based on the user's actual permissions:
+     * - Items with uniqueId: Check if user has read access to that page
+     * - Items with external URL: Always include
+     * - Parent items without link: Include only if they have accessible children
+     *
      * @param array $items Navigation items
      * @param string $language Current language
+     * @param array|null $pagePathMap Optional pre-built map of uniqueId => path for performance
      * @return array Filtered navigation items
      */
-    public function filterNavigation(array $items, string $language): array {
+    public function filterNavigation(array $items, string $language, ?array $pagePathMap = null): array {
         $filtered = [];
 
         foreach ($items as $item) {
+            $includeItem = true;
+
             // If item has a uniqueId, check permissions for that page
             if (!empty($item['uniqueId'])) {
-                // We'll include the item and let the page load check permissions
-                $filteredItem = $item;
-            } elseif (!empty($item['url'])) {
-                // External URL, always include
-                $filteredItem = $item;
-            } else {
-                // No link, include for structure
-                $filteredItem = $item;
+                $pagePath = null;
+
+                // Try to get path from pre-built map first (faster)
+                if ($pagePathMap !== null && isset($pagePathMap[$item['uniqueId']])) {
+                    $pagePath = $pagePathMap[$item['uniqueId']];
+                }
+
+                // If we have a path, check permissions
+                if ($pagePath !== null) {
+                    if (!$this->canRead($pagePath)) {
+                        $includeItem = false;
+                    }
+                }
+                // If no path found, item might be orphaned - include it and let page load handle it
             }
+            // External URLs are always included
+            // Items without link are included if they have accessible children (checked below)
+
+            if (!$includeItem) {
+                continue;
+            }
+
+            $filteredItem = $item;
 
             // Recursively filter children
             if (isset($item['children']) && is_array($item['children'])) {
-                $filteredChildren = $this->filterNavigation($item['children'], $language);
-                // Only include parent if it has accessible children or is accessible itself
-                if (empty($filteredChildren) && empty($item['uniqueId']) && empty($item['url'])) {
+                $filteredChildren = $this->filterNavigation($item['children'], $language, $pagePathMap);
+                $filteredItem['children'] = $filteredChildren;
+
+                // If this item has no link (no uniqueId and no url), only include if it has accessible children
+                if (empty($item['uniqueId']) && empty($item['url']) && empty($filteredChildren)) {
                     continue;
                 }
-                $filteredItem['children'] = $filteredChildren;
             }
 
             $filtered[] = $filteredItem;
         }
 
         return $filtered;
+    }
+
+    /**
+     * Build a map of uniqueId => path for all pages in a language.
+     *
+     * This is used to efficiently filter navigation items by pre-loading all page paths.
+     * The map is built by scanning the groupfolder structure.
+     *
+     * @param string $language Language code (nl, en, de, fr)
+     * @return array Map of uniqueId => relative path
+     */
+    public function buildPagePathMap(string $language): array {
+        $map = [];
+
+        try {
+            $folder = $this->setupService->getSharedFolder();
+            if ($folder === null || !$folder->nodeExists($language)) {
+                return $map;
+            }
+
+            $languageFolder = $folder->get($language);
+            $this->scanFolderForPaths($languageFolder, $language, $map);
+        } catch (\Exception $e) {
+            $this->logger->warning('[PermissionService] Failed to build page path map', [
+                'language' => $language,
+                'error' => $e->getMessage()
+            ]);
+        }
+
+        return $map;
+    }
+
+    /**
+     * Recursively scan a folder to build the page path map.
+     *
+     * @param mixed $folder Folder to scan
+     * @param string $currentPath Current path relative to IntraVox root
+     * @param array &$map Reference to the map being built
+     */
+    private function scanFolderForPaths($folder, string $currentPath, array &$map): void {
+        try {
+            $items = $folder->getDirectoryListing();
+        } catch (\Exception $e) {
+            return;
+        }
+
+        foreach ($items as $item) {
+            $name = $item->getName();
+
+            if ($item->getType() === \OCP\Files\FileInfo::TYPE_FOLDER) {
+                // Skip special folders
+                if (in_array($name, ['_media', '_resources', 'images', '.nomedia'], true)) {
+                    continue;
+                }
+
+                // Recurse into subfolder
+                $this->scanFolderForPaths($item, $currentPath . '/' . $name, $map);
+            } elseif (substr($name, -5) === '.json') {
+                // Skip navigation and footer files at language root
+                if ($name === 'navigation.json' || $name === 'footer.json') {
+                    continue;
+                }
+
+                try {
+                    $content = $item->getContent();
+                    $data = json_decode($content, true);
+
+                    if ($data && isset($data['uniqueId'])) {
+                        // Store the path for this uniqueId
+                        $map[$data['uniqueId']] = $currentPath;
+                    }
+                } catch (\Exception $e) {
+                    // Skip files we can't read
+                    continue;
+                }
+            }
+        }
     }
 
     /**

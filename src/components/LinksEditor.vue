@@ -27,6 +27,7 @@
               @click="setBackgroundColor(null)"
               class="color-preset-btn"
             >
+              <span class="color-swatch color-swatch--none"></span>
               {{ t('None') }}
             </button>
             <button
@@ -35,7 +36,17 @@
               @click="setBackgroundColor('var(--color-background-hover)')"
               class="color-preset-btn"
             >
+              <span class="color-swatch color-swatch--light"></span>
               {{ t('Light') }}
+            </button>
+            <button
+              type="button"
+              :class="{ active: localWidget.backgroundColor === 'var(--color-primary-element-light)' }"
+              @click="setBackgroundColor('var(--color-primary-element-light)')"
+              class="color-preset-btn"
+            >
+              <span class="color-swatch color-swatch--accent"></span>
+              {{ t('Accent') }}
             </button>
             <button
               type="button"
@@ -43,6 +54,7 @@
               @click="setBackgroundColor('var(--color-primary-element)')"
               class="color-preset-btn"
             >
+              <span class="color-swatch color-swatch--primary"></span>
               {{ t('Primary') }}
             </button>
           </div>
@@ -145,7 +157,17 @@
                         @click="setLinkBackground(index, null)"
                         class="color-preset-btn small"
                       >
+                        <span class="color-swatch color-swatch--none"></span>
                         {{ t('Default') }}
+                      </button>
+                      <button
+                        type="button"
+                        :class="{ active: link.backgroundColor === 'var(--color-background-hover)' }"
+                        @click="setLinkBackground(index, 'var(--color-background-hover)')"
+                        class="color-preset-btn small"
+                      >
+                        <span class="color-swatch color-swatch--light"></span>
+                        {{ t('Light') }}
                       </button>
                       <button
                         type="button"
@@ -153,6 +175,7 @@
                         @click="setLinkBackground(index, 'var(--color-primary-element)')"
                         class="color-preset-btn small"
                       >
+                        <span class="color-swatch color-swatch--primary"></span>
                         {{ t('Primary') }}
                       </button>
                     </div>
@@ -496,7 +519,11 @@ export default {
 
 .color-preset-btn {
   flex: 1;
-  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 10px;
   border: 2px solid var(--color-border);
   border-radius: var(--border-radius);
   background: var(--color-main-background);
@@ -507,7 +534,7 @@ export default {
 }
 
 .color-preset-btn.small {
-  padding: 6px 12px;
+  padding: 6px 10px;
   font-size: 12px;
 }
 
@@ -518,6 +545,34 @@ export default {
 .color-preset-btn.active {
   border-color: var(--color-primary);
   background: var(--color-primary-element-light);
+}
+
+.color-swatch {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 1px solid var(--color-border-dark);
+}
+
+.color-swatch--none {
+  background: var(--color-main-background);
+  background-image: linear-gradient(135deg, transparent 45%, var(--color-error) 45%, var(--color-error) 55%, transparent 55%);
+}
+
+.color-swatch--light {
+  background: var(--color-background-hover);
+}
+
+.color-swatch--accent {
+  background: var(--color-primary-element-light);
+  border-color: var(--color-primary-element);
+}
+
+.color-swatch--primary {
+  background: var(--color-primary-element);
+  border-color: var(--color-primary-element);
 }
 
 .links-list {
