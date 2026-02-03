@@ -50,6 +50,20 @@ class DemoDataService {
     }
 
     /**
+     * Get user-friendly error message for setup failures
+     */
+    private function getSetupErrorMessage(string $errorKey): string {
+        $messages = [
+            'groupfolders_app_not_enabled' => 'Setup failed: The Team Folders app is not installed or enabled. Please install and enable the Team Folders app in Nextcloud first.',
+            'groupfolder_creation_failed' => 'Setup failed: Could not create the IntraVox Team Folder. Please check if the Team Folders app is working correctly.',
+            'groupfolder_access_failed' => 'Setup failed: Could not access the IntraVox Team Folder. Please check file system permissions.',
+            'setup_exception' => 'Setup failed: An unexpected error occurred while setting up the IntraVox Team Folder. Please check the Nextcloud logs for details.',
+        ];
+
+        return $messages[$errorKey] ?? 'Setup failed: Could not create IntraVox Team Folder';
+    }
+
+    /**
      * Check if demo data has already been imported
      */
     public function isDemoDataImported(): bool {
@@ -551,11 +565,12 @@ class DemoDataService {
             // Ensure setup is complete before importing
             if (!$this->setupService->isSetupComplete()) {
                 $this->logger->info("[DemoData] Setup not complete, running setup first...");
-                $setupSuccess = $this->setupService->setupSharedFolder();
-                if (!$setupSuccess) {
+                $setupResult = $this->setupService->setupSharedFolder();
+                if (!$setupResult['success']) {
+                    $errorMessage = $this->getSetupErrorMessage($setupResult['error'] ?? 'unknown');
                     return [
                         'success' => false,
-                        'message' => 'Setup failed: Could not create IntraVox GroupFolder',
+                        'message' => $errorMessage,
                     ];
                 }
                 $this->logger->info("[DemoData] Setup completed successfully");
@@ -851,11 +866,12 @@ class DemoDataService {
             // Ensure setup is complete before cleaning
             if (!$this->setupService->isSetupComplete()) {
                 $this->logger->info("[CleanStart] Setup not complete, running setup first...");
-                $setupSuccess = $this->setupService->setupSharedFolder();
-                if (!$setupSuccess) {
+                $setupResult = $this->setupService->setupSharedFolder();
+                if (!$setupResult['success']) {
+                    $errorMessage = $this->getSetupErrorMessage($setupResult['error'] ?? 'unknown');
                     return [
                         'success' => false,
-                        'message' => 'Setup failed: Could not create IntraVox GroupFolder',
+                        'message' => $errorMessage,
                     ];
                 }
                 $this->logger->info("[CleanStart] Setup completed successfully");

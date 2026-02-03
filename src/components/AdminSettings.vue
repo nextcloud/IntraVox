@@ -56,7 +56,7 @@
 
 			<div class="demo-data-info">
 				<p v-if="!setupComplete" class="info-note info-setup">
-					{{ t('intravox', 'The IntraVox GroupFolder will be created automatically when you install demo data.') }}
+					{{ t('intravox', 'The IntraVox Team Folder will be created automatically when you install demo data.') }}
 				</p>
 			</div>
 

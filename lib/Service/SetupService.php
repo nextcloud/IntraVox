@@ -50,11 +50,28 @@ class SetupService {
     }
 
     /**
-     * Setup IntraVox groupfolder
+     * Check if the GroupFolders app is installed and enabled
      */
-    public function setupSharedFolder(): bool {
+    public function isGroupFoldersAppEnabled(): bool {
+        return \OC::$server->getAppManager()->isEnabledForUser('groupfolders');
+    }
+
+    /**
+     * Setup IntraVox groupfolder
+     * @return array{success: bool, error?: string} Returns success status and optional error key for translation
+     */
+    public function setupSharedFolder(): array {
         try {
             $this->logger->info('=== STEP 1: Starting IntraVox groupfolder setup ===');
+
+            // Check if GroupFolders app is enabled first
+            if (!$this->isGroupFoldersAppEnabled()) {
+                $this->logger->error('GroupFolders app is not installed or enabled');
+                return [
+                    'success' => false,
+                    'error' => 'groupfolders_app_not_enabled',
+                ];
+            }
 
             // First, ensure the required groups exist
             $this->logger->info('=== STEP 2: Ensuring groups exist ===');
@@ -68,7 +85,10 @@ class SetupService {
 
             if ($folderId === null) {
                 $this->logger->error('Failed to create or get groupfolder');
-                return false;
+                return [
+                    'success' => false,
+                    'error' => 'groupfolder_creation_failed',
+                ];
             }
 
             // Configure groupfolder permissions
@@ -83,7 +103,10 @@ class SetupService {
 
             if ($folder === null) {
                 $this->logger->error('Failed to access groupfolder');
-                return false;
+                return [
+                    'success' => false,
+                    'error' => 'groupfolder_access_failed',
+                ];
             }
 
             // Create default content
@@ -97,13 +120,16 @@ class SetupService {
             $this->logger->info('=== STEP 7: Async scan initiated ===');
 
             $this->logger->info('=== SETUP COMPLETE: IntraVox groupfolder setup completed successfully ===');
-            return true;
+            return ['success' => true];
 
         } catch (\Exception $e) {
             $this->logger->error('=== SETUP FAILED: Exception caught ===');
             $this->logger->error('Failed to setup IntraVox groupfolder: ' . $e->getMessage());
             $this->logger->error('Stack trace: ' . $e->getTraceAsString());
-            return false;
+            return [
+                'success' => false,
+                'error' => 'setup_exception',
+            ];
         }
     }
 

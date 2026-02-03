@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.9] - 2026-02-03 - Improved Team Folders Error Messages
+
+### Improved
+- **Team Folders Error Messages**: Renamed "GroupFolders" to "Team Folders" to match Nextcloud App Store naming
+  - More specific error messages when the Team Folders app is not installed or enabled
+  - Separate error messages for different failure scenarios (app not installed, folder creation failed, access denied, unexpected error)
+  - Full translations in Dutch, German, and French
+
+### Fixed
+- Generic "Could not create IntraVox GroupFolder" error now shows specific guidance based on the actual problem
+
 ## [0.9.8] - 2026-01-30 - Public Sharing & Password Protection
 
 ### Added
