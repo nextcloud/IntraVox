@@ -185,9 +185,13 @@ function elementToMarkdown(element, listDepth = 0) {
       // Empty paragraph (with or without <br>) should produce a blank line
       // content will be '\n' if it contains only <br>, or '' if truly empty
       // Zero-width space (\u200B) is used as a placeholder for preserved empty lines
-      // All of these should result in an empty line in the markdown
       const trimmedContent = content.replace(/\u200B/g, '').trim();
-      // If content is only zero-width spaces or empty, treat as empty paragraph
+      // Zero-width space paragraph = preserved empty line from round-trip
+      // Emit single \n to prevent doubling on each save
+      if (content.includes('\u200B') && trimmedContent === '') {
+        return '\n';
+      }
+      // Truly empty paragraph (no zero-width space) = paragraph break
       if (trimmedContent === '' || trimmedContent === '\n') {
         return '\n\n';
       }
