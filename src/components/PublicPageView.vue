@@ -227,7 +227,7 @@ export default {
 		async getHomepageUniqueId() {
 			try {
 				const response = await axios.get(
-					generateUrl('/apps/intravox/api/share/{token}/pagetree', { token: this.token }),
+					generateUrl('/apps/intravox/api/share/{token}/tree', { token: this.token }),
 				)
 				const tree = response.data?.tree || []
 				// First item in the tree is typically the homepage

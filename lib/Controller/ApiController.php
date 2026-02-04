@@ -2255,6 +2255,12 @@ class ApiController extends Controller {
             // Strip permissions from all nodes (public = read-only)
             $filteredTree = $this->stripPermissionsFromTree($filteredTree);
 
+            // Mark current page if provided (for page structure navigation highlighting)
+            $currentPageId = $this->request->getParam('currentPageId');
+            if ($currentPageId !== null && is_string($currentPageId) && $currentPageId !== '') {
+                $filteredTree = $this->markCurrentPageInTree($filteredTree, $currentPageId);
+            }
+
             $this->logger->info('[PublicShare] Page tree accessed', [
                 'language' => $language,
                 'ip' => $this->request->getRemoteAddress(),
@@ -2400,6 +2406,23 @@ class ApiController extends Controller {
             }
             return $node;
         }, $tree);
+    }
+
+    /**
+     * Recursively mark the current page in a tree structure.
+     * Sets 'isCurrent' to true for the matching uniqueId.
+     */
+    private function markCurrentPageInTree(array $tree, string $currentPageId): array {
+        $result = [];
+        foreach ($tree as $node) {
+            $newNode = $node;
+            $newNode['isCurrent'] = ($node['uniqueId'] ?? '') === $currentPageId;
+            if (!empty($node['children'])) {
+                $newNode['children'] = $this->markCurrentPageInTree($node['children'], $currentPageId);
+            }
+            $result[] = $newNode;
+        }
+        return $result;
     }
 
     /**

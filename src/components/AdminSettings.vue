@@ -44,6 +44,12 @@
 				<ChartBox :size="16" />
 				{{ t('intravox', 'Statistics') }}
 			</button>
+			<button
+				:class="['tab-button', { active: activeTab === 'maintenance' }]"
+				@click="activeTab = 'maintenance'; scanOrphanedFolders()">
+				<DatabaseAlert :size="16" />
+				{{ t('intravox', 'Maintenance') }}
+			</button>
 		</div>
 
 		<!-- Demo Data Tab -->
@@ -826,6 +832,170 @@
 				</div>
 			</div>
 		</div>
+
+		<!-- Maintenance Tab -->
+		<div v-if="activeTab === 'maintenance'" class="tab-content">
+			<div class="settings-section">
+				<h2>{{ t('intravox', 'Orphaned GroupFolder Data') }}</h2>
+				<p class="settings-section-desc">
+					{{ t('intravox', 'Detect and manage orphaned data from previous IntraVox installations.') }}
+				</p>
+
+				<NcNoteCard type="info">
+					{{ t('intravox', 'When the Team Folders app is reinstalled, previous data may become orphaned. This tool helps you recover or clean up that data.') }}
+				</NcNoteCard>
+
+				<div class="scan-section">
+					<NcButton
+						type="primary"
+						:disabled="scanningOrphaned"
+						@click="scanOrphanedFolders">
+						<template #icon>
+							<span v-if="scanningOrphaned" class="icon-loading-small"></span>
+							<DatabaseSearch v-else :size="20" />
+						</template>
+						{{ scanningOrphaned ? t('intravox', 'Scanning...') : t('intravox', 'Scan for Orphaned Data') }}
+					</NcButton>
+				</div>
+
+				<!-- No orphaned data found -->
+				<div v-if="orphanedFolders.length === 0 && orphanedScanned" class="no-orphaned">
+					<NcNoteCard type="success">
+						{{ t('intravox', 'No orphaned GroupFolder data found. Your installation is clean.') }}
+					</NcNoteCard>
+				</div>
+
+				<!-- Orphaned folders table -->
+				<table v-else-if="orphanedFolders.length > 0" class="orphaned-table">
+					<thead>
+						<tr>
+							<th>{{ t('intravox', 'Folder ID') }}</th>
+							<th>{{ t('intravox', 'Content') }}</th>
+							<th>{{ t('intravox', 'Size') }}</th>
+							<th>{{ t('intravox', 'Last Modified') }}</th>
+							<th>{{ t('intravox', 'Actions') }}</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr v-for="folder in orphanedFolders" :key="folder.id">
+							<td class="id-cell">{{ folder.id }}</td>
+							<td class="content-cell">
+								<span v-if="folder.hasIntraVoxContent" class="content-badge intravox">
+									{{ t('intravox', 'IntraVox') }}: {{ folder.languages.join(', ') }}
+									<span class="page-count">({{ folder.pageCount }} {{ t('intravox', 'pages') }})</span>
+								</span>
+								<span v-else class="content-badge unknown">
+									{{ t('intravox', 'Unknown data') }}
+								</span>
+							</td>
+							<td class="size-cell">{{ folder.sizeFormatted }}</td>
+							<td class="date-cell">{{ folder.lastModifiedFormatted }}</td>
+							<td class="action-cell">
+								<NcButton
+									v-if="folder.hasIntraVoxContent"
+									type="primary"
+									:disabled="migratingOrphaned || cleaningOrphaned"
+									@click="showMigrateDialog(folder)">
+									{{ t('intravox', 'Recover') }}
+								</NcButton>
+								<NcButton
+									type="error"
+									:disabled="migratingOrphaned || cleaningOrphaned"
+									@click="showOrphanedCleanupDialog(folder)">
+									{{ t('intravox', 'Delete') }}
+								</NcButton>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+
+		<!-- Orphaned data migrate dialog -->
+		<NcDialog
+			v-if="migrateDialogVisible"
+			:name="t('intravox', 'Recover Orphaned Data')"
+			@closing="migrateDialogVisible = false">
+			<template #default>
+				<div class="migrate-dialog-content">
+					<p>{{ t('intravox', 'Recover data from orphaned folder #{id} to your active IntraVox installation.', { id: migrateFolder?.id }) }}</p>
+
+					<div class="migrate-option">
+						<label>{{ t('intravox', 'Language to recover') }}</label>
+						<select v-model="migrateLanguage" class="migrate-select">
+							<option v-for="lang in migrateFolder?.languages" :key="lang" :value="lang">
+								{{ getLanguageFlag(lang) }} {{ getLanguageName(lang) }} ({{ lang }})
+							</option>
+						</select>
+					</div>
+
+					<div class="migrate-option">
+						<label>{{ t('intravox', 'Recovery mode') }}</label>
+						<NcCheckboxRadioSwitch
+							v-model="migrateMode"
+							value="merge"
+							type="radio"
+							name="migrateMode">
+							{{ t('intravox', 'Merge (keep existing, add missing)') }}
+						</NcCheckboxRadioSwitch>
+						<NcCheckboxRadioSwitch
+							v-model="migrateMode"
+							value="replace"
+							type="radio"
+							name="migrateMode">
+							{{ t('intravox', 'Replace (overwrite existing content)') }}
+						</NcCheckboxRadioSwitch>
+					</div>
+
+					<NcNoteCard v-if="migrateMode === 'replace'" type="warning">
+						{{ t('intravox', 'Warning: This will overwrite all existing content for the selected language!') }}
+					</NcNoteCard>
+				</div>
+			</template>
+			<template #actions>
+				<NcButton type="tertiary" @click="migrateDialogVisible = false">
+					{{ t('intravox', 'Cancel') }}
+				</NcButton>
+				<NcButton type="primary" :disabled="migratingOrphaned" @click="executeMigrate">
+					{{ migratingOrphaned ? t('intravox', 'Recovering...') : t('intravox', 'Start Recovery') }}
+				</NcButton>
+			</template>
+		</NcDialog>
+
+		<!-- Orphaned data cleanup confirmation dialog -->
+		<NcDialog
+			v-if="orphanedCleanupDialogVisible"
+			:name="t('intravox', 'Delete Orphaned Data')"
+			@closing="orphanedCleanupDialogVisible = false">
+			<template #default>
+				<div class="cleanup-dialog-content">
+					<NcNoteCard type="error">
+						<p><strong>{{ t('intravox', 'Warning: This will permanently delete all data!') }}</strong></p>
+					</NcNoteCard>
+					<p>{{ t('intravox', 'You are about to delete orphaned folder #{id}:', { id: cleanupFolder?.id }) }}</p>
+					<ul>
+						<li>{{ t('intravox', 'Size') }}: {{ cleanupFolder?.sizeFormatted }}</li>
+						<li v-if="cleanupFolder?.hasIntraVoxContent">
+							{{ t('intravox', 'Contains IntraVox data for') }}: {{ cleanupFolder?.languages.join(', ') }}
+						</li>
+						<li v-if="cleanupFolder?.pageCount">
+							{{ t('intravox', 'Approximately {count} pages', { count: cleanupFolder?.pageCount }) }}
+						</li>
+					</ul>
+					<NcNoteCard type="warning">
+						{{ t('intravox', 'This action cannot be undone!') }}
+					</NcNoteCard>
+				</div>
+			</template>
+			<template #actions>
+				<NcButton type="tertiary" @click="orphanedCleanupDialogVisible = false">
+					{{ t('intravox', 'Cancel') }}
+				</NcButton>
+				<NcButton type="error" :disabled="cleaningOrphaned" @click="executeOrphanedCleanup">
+					{{ cleaningOrphaned ? t('intravox', 'Deleting...') : t('intravox', 'Delete Permanently') }}
+				</NcButton>
+			</template>
+		</NcDialog>
 	</div>
 </template>
 
@@ -848,6 +1018,8 @@ import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
 import LinkVariant from 'vue-material-design-icons/LinkVariant.vue'
 import FolderOutline from 'vue-material-design-icons/FolderOutline.vue'
 import FileDocumentOutline from 'vue-material-design-icons/FileDocumentOutline.vue'
+import DatabaseAlert from 'vue-material-design-icons/DatabaseAlert.vue'
+import DatabaseSearch from 'vue-material-design-icons/DatabaseSearch.vue'
 import ConfluenceImport from '../admin/components/ConfluenceImport.vue'
 
 export default {
@@ -872,6 +1044,8 @@ export default {
 		LinkVariant,
 		FolderOutline,
 		FileDocumentOutline,
+		DatabaseAlert,
+		DatabaseSearch,
 		ConfluenceImport,
 	},
 	props: {
@@ -961,6 +1135,20 @@ export default {
 			// Sharing overview
 			activeShares: [],
 			loadingShares: false,
+			// Orphaned data management
+			orphanedFolders: [],
+			orphanedScanned: false,
+			scanningOrphaned: false,
+			// Migrate dialog
+			migrateDialogVisible: false,
+			migrateFolder: null,
+			migrateLanguage: null,
+			migrateMode: 'merge',
+			migratingOrphaned: false,
+			// Cleanup dialog
+			orphanedCleanupDialogVisible: false,
+			cleanupFolder: null,
+			cleaningOrphaned: false,
 			// Known video services with metadata
 			knownServices: [
 				// Privacy-friendly (no/minimal tracking)
@@ -1693,6 +1881,83 @@ export default {
 				hour: '2-digit',
 				minute: '2-digit'
 			})
+		},
+		// Orphaned data management methods
+		async scanOrphanedFolders() {
+			this.scanningOrphaned = true
+			try {
+				const response = await axios.get(generateUrl('/apps/intravox/api/orphaned/scan'))
+				this.orphanedFolders = response.data.folders || []
+				this.orphanedScanned = true
+				if (this.orphanedFolders.length === 0) {
+					showSuccess(this.t('intravox', 'No orphaned data found'))
+				} else {
+					showWarning(this.t('intravox', 'Found {count} orphaned folder(s)', { count: this.orphanedFolders.length }))
+				}
+			} catch (error) {
+				showError(this.t('intravox', 'Failed to scan for orphaned data'))
+				console.error('[AdminSettings] Orphaned scan failed:', error)
+			} finally {
+				this.scanningOrphaned = false
+			}
+		},
+		showMigrateDialog(folder) {
+			this.migrateFolder = folder
+			this.migrateLanguage = folder.languages?.[0] || 'nl'
+			this.migrateMode = 'merge'
+			this.migrateDialogVisible = true
+		},
+		async executeMigrate() {
+			if (!this.migrateFolder || !this.migrateLanguage) return
+			this.migratingOrphaned = true
+			try {
+				const response = await axios.post(
+					generateUrl(`/apps/intravox/api/orphaned/${this.migrateFolder.id}/migrate`),
+					{ language: this.migrateLanguage, mode: this.migrateMode }
+				)
+				if (response.data.success) {
+					showSuccess(this.t('intravox', 'Data recovered successfully: {files} files migrated', {
+						files: response.data.migratedFiles
+					}))
+					this.migrateDialogVisible = false
+					await this.scanOrphanedFolders()
+					await this.refreshStatus()
+				} else {
+					showError(response.data.message || this.t('intravox', 'Recovery failed'))
+				}
+			} catch (error) {
+				showError(this.t('intravox', 'Recovery failed'))
+				console.error('[AdminSettings] Migration failed:', error)
+			} finally {
+				this.migratingOrphaned = false
+			}
+		},
+		showOrphanedCleanupDialog(folder) {
+			this.cleanupFolder = folder
+			this.orphanedCleanupDialogVisible = true
+		},
+		async executeOrphanedCleanup() {
+			if (!this.cleanupFolder) return
+			this.cleaningOrphaned = true
+			try {
+				const response = await axios.delete(
+					generateUrl(`/apps/intravox/api/orphaned/${this.cleanupFolder.id}`)
+				)
+				if (response.data.success) {
+					showSuccess(this.t('intravox', 'Orphaned data deleted successfully ({space} freed)', {
+						space: response.data.freedSpaceFormatted
+					}))
+					this.orphanedCleanupDialogVisible = false
+					await this.scanOrphanedFolders()
+				} else {
+					showError(response.data.message || this.t('intravox', 'Deletion failed'))
+				}
+			} catch (error) {
+				showError(this.t('intravox', 'Deletion failed'))
+				console.error('[AdminSettings] Cleanup failed:', error)
+			} finally {
+				this.cleaningOrphaned = false
+			}
 		},
 	},
 	mounted() {
@@ -2836,6 +3101,101 @@ export default {
 
 .share-files-link:hover {
 	background-color: var(--color-background-hover);
+}
+
+/* Maintenance Tab Styles */
+.scan-section {
+	margin: 20px 0;
+}
+
+.no-orphaned {
+	margin-top: 20px;
+}
+
+.orphaned-table {
+	width: 100%;
+	border-collapse: collapse;
+	margin-top: 20px;
+}
+
+.orphaned-table th,
+.orphaned-table td {
+	padding: 12px;
+	text-align: left;
+	border-bottom: 1px solid var(--color-border);
+}
+
+.orphaned-table th {
+	font-weight: bold;
+	color: var(--color-text-maxcontrast);
+}
+
+.orphaned-table .id-cell {
+	font-family: monospace;
+	font-weight: bold;
+}
+
+.orphaned-table .content-badge.intravox {
+	background-color: var(--color-primary-element-light);
+	color: var(--color-primary-element-text);
+	padding: 4px 8px;
+	border-radius: 4px;
+	font-size: 0.85em;
+}
+
+.orphaned-table .content-badge.unknown {
+	background-color: var(--color-background-hover);
+	color: var(--color-text-maxcontrast);
+	padding: 4px 8px;
+	border-radius: 4px;
+	font-size: 0.85em;
+}
+
+.orphaned-table .page-count {
+	margin-left: 4px;
+	opacity: 0.8;
+}
+
+.orphaned-table .action-cell {
+	display: flex;
+	gap: 8px;
+}
+
+/* Migrate dialog */
+.migrate-dialog-content {
+	padding: 10px 0;
+}
+
+.migrate-option {
+	margin: 16px 0;
+}
+
+.migrate-option label {
+	display: block;
+	font-weight: bold;
+	margin-bottom: 8px;
+}
+
+.migrate-select {
+	width: 100%;
+	padding: 8px;
+	border: 1px solid var(--color-border);
+	border-radius: var(--border-radius);
+	background-color: var(--color-main-background);
+}
+
+/* Cleanup dialog */
+.cleanup-dialog-content {
+	padding: 10px 0;
+}
+
+.cleanup-dialog-content ul {
+	margin: 12px 0;
+	padding-left: 20px;
+}
+
+.cleanup-dialog-content li {
+	margin: 4px 0;
 }
 
 </style>

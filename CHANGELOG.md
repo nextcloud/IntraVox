@@ -7,7 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.9.9] - 2026-02-03 - Improved Team Folders Error Messages
+## [0.9.9] - 2026-02-04 - Maintenance Tools & Public Share Fixes
+
+### Added
+- **Orphaned GroupFolder Data Management**: New "Maintenance" tab in admin settings
+  - Scan for orphaned groupfolder data (from reinstalled Team Folders app)
+  - Recover content by migrating to the active IntraVox groupfolder
+  - Delete orphaned data permanently
+  - Useful for production environments recovering from Team Folders reinstallation
 
 ### Improved
 - **Team Folders Error Messages**: Renamed "GroupFolders" to "Team Folders" to match Nextcloud App Store naming
@@ -16,6 +23,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Full translations in Dutch, German, and French
 
 ### Fixed
+- **Public Share Page Tree**: Fixed current page not being highlighted in page structure popup when viewing via public share link
+- **Public Share Page Tree URL**: Fixed 404 error on page structure in public share view (was calling `/pagetree` instead of `/tree`)
+- **Password-Protected Share Navigation**: Fixed "page not found" error after entering password on public share links
 - Generic "Could not create IntraVox GroupFolder" error now shows specific guidance based on the actual problem
 
 ## [0.9.8] - 2026-01-30 - Public Sharing & Password Protection

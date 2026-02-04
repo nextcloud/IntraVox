@@ -109,6 +109,12 @@ return [
         ['name' => 'bulk#movePages', 'url' => '/api/bulk/move', 'verb' => 'POST'],
         ['name' => 'bulk#updatePages', 'url' => '/api/bulk/update', 'verb' => 'POST'],
 
+        // Orphaned data management routes (admin only)
+        ['name' => 'orphanedData#scan', 'url' => '/api/orphaned/scan', 'verb' => 'GET'],
+        ['name' => 'orphanedData#getDetails', 'url' => '/api/orphaned/{id}/details', 'verb' => 'GET'],
+        ['name' => 'orphanedData#cleanup', 'url' => '/api/orphaned/{id}', 'verb' => 'DELETE'],
+        ['name' => 'orphanedData#migrate', 'url' => '/api/orphaned/{id}/migrate', 'verb' => 'POST'],
+
         // License API routes (admin only)
         ['name' => 'license#getStats', 'url' => '/api/license/stats', 'verb' => 'GET'],
         ['name' => 'license#sendTelemetry', 'url' => '/api/license/telemetry', 'verb' => 'POST'],
