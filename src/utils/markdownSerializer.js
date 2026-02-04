@@ -92,8 +92,22 @@ function preserveEmptyLines(markdown) {
       // First empty line is the normal paragraph separator (keep as is)
       // Additional empty lines need to become actual content to be preserved
       if (consecutiveEmpty > 1) {
-        // Use a zero-width space (invisible but creates a paragraph)
-        result.push('\u200B');
+        // Check if the next non-empty line starts a table.
+        // Tables need a real blank line before them (\n\n), not a ZWS paragraph,
+        // otherwise marked won't parse them as tables.
+        let nextNonEmpty = '';
+        for (let j = i + 1; j < lines.length; j++) {
+          if (lines[j].trim() !== '') {
+            nextNonEmpty = lines[j].trim();
+            break;
+          }
+        }
+        const nextIsTable = nextNonEmpty.startsWith('|') && nextNonEmpty.endsWith('|');
+        if (nextIsTable) {
+          result.push('');
+        } else {
+          result.push('\u200B');
+        }
       } else {
         result.push(line);
       }
@@ -440,12 +454,12 @@ function convertList(listElement, listDepth, ordered) {
 export function cleanMarkdown(markdown) {
   if (!markdown) return '';
 
-  // Normalize: collapse 3+ consecutive newlines into exactly 2.
-  // \n\n = standard markdown paragraph break.
-  // Extra newlines grow on each save because TipTap inserts empty <p> elements
-  // between block-level nodes (tables, etc.) that generate additional \n\n.
-  // Collapsing to \n\n keeps the round-trip idempotent.
-  let cleaned = markdown.replace(/\n{3,}/g, '\n\n');
+  // Normalize: collapse 4+ consecutive newlines into exactly 3.
+  // \n\n = standard paragraph break (no visual blank line)
+  // \n\n\n = one visual blank line (user intentionally added spacing)
+  // \n\n\n\n+ = too many — TipTap adds phantom <p> between block nodes on each
+  //   save cycle, which generates an extra \n\n. Cap at \n\n\n to stop growth.
+  let cleaned = markdown.replace(/\n{4,}/g, '\n\n\n');
 
   return cleaned.trim();
 }
