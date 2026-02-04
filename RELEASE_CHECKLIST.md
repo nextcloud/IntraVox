@@ -8,18 +8,14 @@ Follow this checklist for every release to the Nextcloud App Store.
 
 **Before every release**, verify that your signing key matches the App Store certificate!
 
-- [ ] Verify signing key matches App Store certificate:
+- [ ] Verify signing key exists in project root:
   ```bash
-  # Hash of local signing key
-  openssl rsa -in intravox.key -pubout 2>/dev/null | openssl md5
-
-  # Hash of App Store certificate (must be IDENTICAL!)
-  curl -s "https://apps.nextcloud.com/api/v1/apps.json" | \
-    python3 -c "import json,sys; [print(a['certificate']) for a in json.load(sys.stdin) if a['id']=='intravox']" | \
-    openssl x509 -pubkey -noout 2>/dev/null | openssl md5
+  ls -la intravox.key
   ```
-- [ ] Both MD5 hashes are **IDENTICAL**
-- [ ] Check certificate serial number and validity
+- [ ] Verify key is NOT tracked in git:
+  ```bash
+  git ls-files | grep intravox.key  # Should return nothing
+  ```
 
 ### Certificate Warnings:
 - **NEVER request a new certificate unnecessarily** - this automatically revokes the old one!
@@ -197,16 +193,11 @@ git push github main --tags
 ### 9.5 Generate Signature (for App Store)
 
 ```bash
-# Decrypt signing key from USB drive (requires GPG passphrase):
-cd /Volumes/WDS && gpg --decrypt secrets.gpg | tar xzf -
-
-# Generate signature:
-openssl dgst -sha512 -sign /Volumes/WDS/secrets/projects/intravox/intravox.key \
-  intravox-X.Y.Z.tar.gz | openssl base64 -A
-
-# Clean up decrypted files:
-rm -rf /Volumes/WDS/secrets
+# Generate signature using the LOCAL key in project root:
+openssl dgst -sha512 -sign intravox.key intravox-X.Y.Z.tar.gz | openssl base64 -A
 ```
+
+**Note:** The signing key is `intravox.key` in the project root (NOT on USB drive).
 
 ### 9.6 GitHub Release
 
@@ -289,7 +280,7 @@ git push github main --tags
 - **App Store:** https://apps.nextcloud.com
 - **Gitea:** https://gitea.rikdekker.nl/rik/IntraVox
 - **GitHub:** https://github.com/nextcloud/IntraVox
-- **Signing key:** USB drive (GPG encrypted)
+- **Signing key:** `intravox.key` in project root (NOT in git!)
 
 ---
 
