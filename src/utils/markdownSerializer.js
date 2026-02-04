@@ -22,6 +22,20 @@ const markdownCache = new Map();
 const MAX_CACHE_SIZE = 100;
 
 /**
+ * Escape HTML special characters to prevent XSS and raw markdown display
+ */
+function escapeHtml(text) {
+  const map = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;'
+  };
+  return text.replace(/[&<>"']/g, char => map[char]);
+}
+
+/**
  * Normalize markdown to ensure tables parse correctly
  * Tables need blank lines before them, but NOT between rows
  */
@@ -116,6 +130,15 @@ export function markdownToHtml(markdown) {
     // Parse markdown (GFM configured globally above)
     const html = marked.parse(preservedMarkdown);
 
+    // Validate that marked returned HTML, not raw markdown
+    // If the result looks like raw markdown (contains unprocessed emphasis markers),
+    // escape it to prevent asterisks from showing up
+    if (typeof html !== 'string' || html === preservedMarkdown) {
+      // Parse failed silently - escape the content to prevent raw markdown display
+      const escaped = escapeHtml(markdown);
+      return `<p>${escaped}</p>`;
+    }
+
     const result = DOMPurify.sanitize(html, {
       ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 's', 'ul', 'ol', 'li', 'a', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'code', 'pre', 'hr',
                      'table', 'thead', 'tbody', 'tr', 'th', 'td',
@@ -133,7 +156,9 @@ export function markdownToHtml(markdown) {
     return result;
   } catch (err) {
     console.error('Markdown parsing error:', err);
-    return markdown;
+    // On error, escape the content to prevent raw markdown/asterisks from showing
+    const escaped = escapeHtml(markdown);
+    return `<p>${escaped}</p>`;
   }
 }
 
