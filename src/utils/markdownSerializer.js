@@ -211,12 +211,6 @@ function elementToMarkdown(element, listDepth = 0) {
       // content will be '\n' if it contains only <br>, or '' if truly empty
       // Zero-width space (\u200B) is used as a placeholder for preserved empty lines
       const trimmedContent = content.replace(/\u200B/g, '').trim();
-      // Zero-width space paragraph = preserved empty line from round-trip
-      // Emit single \n to prevent doubling on each save
-      if (content.includes('\u200B') && trimmedContent === '') {
-        return '\n';
-      }
-      // Truly empty paragraph (no zero-width space) = paragraph break
       if (trimmedContent === '' || trimmedContent === '\n') {
         return '\n\n';
       }
@@ -380,8 +374,7 @@ function convertDetails(detailsElement) {
 }
 
 function convertTable(tableElement) {
-  // Tables need a blank line before them in Markdown for proper parsing
-  let markdown = '\n\n';
+  let markdown = '';
   const rows = tableElement.querySelectorAll('tr');
 
   rows.forEach((row, rowIndex) => {
@@ -447,8 +440,11 @@ function convertList(listElement, listDepth, ordered) {
 export function cleanMarkdown(markdown) {
   if (!markdown) return '';
 
-  // Normalize: collapse 3+ consecutive newlines into exactly 2 (one blank line)
-  // This prevents spacing from growing on each save cycle
+  // Normalize: collapse 3+ consecutive newlines into exactly 2.
+  // \n\n = standard markdown paragraph break.
+  // Extra newlines grow on each save because TipTap inserts empty <p> elements
+  // between block-level nodes (tables, etc.) that generate additional \n\n.
+  // Collapsing to \n\n keeps the round-trip idempotent.
   let cleaned = markdown.replace(/\n{3,}/g, '\n\n');
 
   return cleaned.trim();
