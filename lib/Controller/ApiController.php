@@ -2495,6 +2495,27 @@ class ApiController extends Controller {
                         // Fall through
                     }
                 }
+                // Fallback: scan language folder for any page-*.json file at root level
+                if ($homeUniqueId === null) {
+                    try {
+                        $langFolder = $groupFolder->get($language);
+                        if ($langFolder instanceof \OCP\Files\Folder) {
+                            foreach ($langFolder->getDirectoryListing() as $node) {
+                                $name = $node->getName();
+                                if (str_starts_with($name, 'page-') && str_ends_with($name, '.json')) {
+                                    $content = $node->getContent();
+                                    $data = json_decode($content, true, 64);
+                                    if ($data && isset($data['uniqueId'])) {
+                                        $homeUniqueId = $data['uniqueId'];
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    } catch (\Exception $e) {
+                        // Fall through
+                    }
+                }
             }
 
             // Check if the current page IS the home page

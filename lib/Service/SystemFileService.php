@@ -202,23 +202,38 @@ class SystemFileService {
             $tree = [];
 
             // Check for home.json in root
+            $homeData = null;
             try {
                 $homeFile = $languageFolder->get('home.json');
                 $content = $homeFile->getContent();
-                $data = $this->safeJsonDecode($content);
-
-                if ($data && isset($data['uniqueId'], $data['title'])) {
-                    $tree[] = [
-                        'uniqueId' => $data['uniqueId'],
-                        'title' => $data['title'],
-                        'path' => $language,
-                        'language' => $language,
-                        'isCurrent' => false,
-                        'children' => [],
-                    ];
-                }
+                $homeData = $this->safeJsonDecode($content);
             } catch (NotFoundException $e) {
-                // No home page
+                // home.json not found, try page-*.json fallback
+                try {
+                    foreach ($languageFolder->getDirectoryListing() as $node) {
+                        $name = $node->getName();
+                        if (str_starts_with($name, 'page-') && str_ends_with($name, '.json')) {
+                            $content = $node->getContent();
+                            $homeData = $this->safeJsonDecode($content);
+                            if ($homeData && isset($homeData['uniqueId'])) {
+                                break;
+                            }
+                        }
+                    }
+                } catch (\Exception $e2) {
+                    // Fall through
+                }
+            }
+
+            if ($homeData && isset($homeData['uniqueId'], $homeData['title'])) {
+                $tree[] = [
+                    'uniqueId' => $homeData['uniqueId'],
+                    'title' => $homeData['title'],
+                    'path' => $language,
+                    'language' => $language,
+                    'isCurrent' => false,
+                    'children' => [],
+                ];
             }
 
             // Recursively build tree from subfolders

@@ -6,7 +6,7 @@
 			    class="breadcrumb-item">
 
 				<a :href="item.url"
-				   @click.prevent="navigateToPage(item.id || item.uniqueId)"
+				   @click.prevent="navigateToPage(item.uniqueId || item.id)"
 				   :class="{'breadcrumb-link': true, 'breadcrumb-current-page': item.current}">
 					{{ item.title }}
 				</a>
