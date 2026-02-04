@@ -227,10 +227,18 @@ function elementToMarkdown(element, listDepth = 0) {
 
     case 'strong':
     case 'b':
+      // Use HTML tags when content contains HTML (e.g., <u>) to avoid
+      // mixing markdown emphasis markers with HTML tags, which breaks parsing
+      if (content.includes('<')) {
+        return `<strong>${content}</strong>`;
+      }
       return `**${content}**`;
 
     case 'em':
     case 'i':
+      if (content.includes('<')) {
+        return `<em>${content}</em>`;
+      }
       return `*${content}*`;
 
     case 'u':
@@ -434,32 +442,14 @@ function convertList(listElement, listDepth, ordered) {
 
 /**
  * Clean up markdown formatting
- * Preserves table structure and user-intended blank lines
+ * Normalizes spacing around tables to prevent doubling on each save
  */
 export function cleanMarkdown(markdown) {
   if (!markdown) return '';
 
-  // Split into lines and process
-  const lines = markdown.split('\n');
-  const result = [];
-  let inTable = false;
+  // Normalize: collapse 3+ consecutive newlines into exactly 2 (one blank line)
+  // This prevents spacing from growing on each save cycle
+  let cleaned = markdown.replace(/\n{3,}/g, '\n\n');
 
-  for (const line of lines) {
-    const isTableRow = line.trim().startsWith('|') && line.trim().endsWith('|');
-
-    if (isTableRow) {
-      inTable = true;
-      result.push(line);
-    } else {
-      if (inTable && line.trim() === '') {
-        // End of table
-        inTable = false;
-      }
-      // Preserve all lines including empty ones (user-intended spacing)
-      result.push(line);
-    }
-  }
-
-  // Join lines and only trim leading/trailing whitespace, but preserve internal blank lines
-  return result.join('\n').trim();
+  return cleaned.trim();
 }
