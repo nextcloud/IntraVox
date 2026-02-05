@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.10] - 2026-02-05 - Text Editor Fixes
+
+### Fixed
+- **Text Editor Table Spacing**: Fixed blank lines between tables doubling on each save cycle
+  - TipTap inserts phantom `<p>` elements between block-level nodes, causing newline growth
+  - `cleanMarkdown()` now caps consecutive newlines at 3 (one visual blank line max)
+  - Preserves user-added blank lines while preventing accumulation
+- **Text Editor Asterisks**: Fixed `*` and `**` appearing in text after saving bold/italic combined with underline
+  - Mixed markdown + HTML (`**text<u>underlined</u>**`) now correctly serialized as pure HTML tags
+  - Error fallback now escapes content instead of returning raw markdown
+
 ## [0.9.9] - 2026-02-04 - Maintenance Tools & Public Share Fixes
 
 ### Added
