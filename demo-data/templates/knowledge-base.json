@@ -1,0 +1,362 @@
+{
+    "uniqueId": "template-knowledge-base",
+    "title": "Knowledge Base",
+    "description": "Documentation hub with categories, FAQ, and popular articles",
+    "isTemplate": true,
+    "language": "en",
+    "layout": {
+        "columns": 1,
+        "rows": [
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Knowledge Base",
+                        "level": 1
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Find answers, guides, and documentation. Browse by category or explore popular articles below."
+                    }
+                ]
+            },
+            {
+                "columns": 3,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "guides-icon.jpg",
+                        "alt": "Guides and tutorials",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Guides & Tutorials",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 3,
+                        "content": "Step-by-step instructions and how-to guides for common tasks and processes."
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 4,
+                        "columns": 1,
+                        "items": [
+                            {
+                                "title": "Getting Started",
+                                "text": "New user guide",
+                                "url": "#",
+                                "icon": "rocket-launch",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Advanced Topics",
+                                "text": "Deep dive guides",
+                                "url": "#",
+                                "icon": "school",
+                                "target": "_self"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "image",
+                        "column": 2,
+                        "order": 1,
+                        "src": "faq-icon.jpg",
+                        "alt": "Frequently asked questions",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 2,
+                        "content": "FAQ",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 3,
+                        "content": "Answers to the most frequently asked questions from our community."
+                    },
+                    {
+                        "type": "links",
+                        "column": 2,
+                        "order": 4,
+                        "columns": 1,
+                        "items": [
+                            {
+                                "title": "General FAQ",
+                                "text": "Common questions",
+                                "url": "#",
+                                "icon": "help-circle",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Technical FAQ",
+                                "text": "Technical answers",
+                                "url": "#",
+                                "icon": "cog",
+                                "target": "_self"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "image",
+                        "column": 3,
+                        "order": 1,
+                        "src": "policy-icon.jpg",
+                        "alt": "Policies and procedures",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 3,
+                        "order": 2,
+                        "content": "Policies",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 3,
+                        "order": 3,
+                        "content": "Official policies, procedures, and guidelines for the organization."
+                    },
+                    {
+                        "type": "links",
+                        "column": 3,
+                        "order": 4,
+                        "columns": 1,
+                        "items": [
+                            {
+                                "title": "Company Policies",
+                                "text": "Rules and regulations",
+                                "url": "#",
+                                "icon": "file-document",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Procedures",
+                                "text": "Standard processes",
+                                "url": "#",
+                                "icon": "clipboard-list",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "",
+                        "height": "2px"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Popular Articles",
+                        "level": 2
+                    },
+                    {
+                        "type": "news",
+                        "column": 1,
+                        "order": 2,
+                        "title": "",
+                        "sourcePath": "documentation",
+                        "sourcePageId": "",
+                        "layout": "grid",
+                        "columns": 3,
+                        "limit": 6,
+                        "sortBy": "modified",
+                        "sortOrder": "desc",
+                        "showImage": true,
+                        "showDate": true,
+                        "showExcerpt": true,
+                        "excerptLength": 80,
+                        "autoplayInterval": 0,
+                        "filters": [],
+                        "filterOperator": "AND"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Frequently Asked Questions",
+                        "level": 2
+                    }
+                ]
+            },
+            {
+                "id": "row-faq-1",
+                "columns": 1,
+                "backgroundColor": "var(--color-background-hover)",
+                "collapsible": true,
+                "sectionTitle": "How do I get started?",
+                "defaultCollapsed": false,
+                "widgets": [
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Getting started is easy! Follow these simple steps:\n\n1. **Read the getting started guide** - Start with our comprehensive introduction\n2. **Explore the categories** - Browse documentation by topic\n3. **Search for specific topics** - Use the search function to find what you need\n4. **Contact support** - Reach out if you need additional help\n\nMost new users are up and running within minutes."
+                    }
+                ]
+            },
+            {
+                "id": "row-faq-2",
+                "columns": 1,
+                "backgroundColor": "var(--color-background-hover)",
+                "collapsible": true,
+                "sectionTitle": "Where can I find more information?",
+                "defaultCollapsed": true,
+                "widgets": [
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 1,
+                        "content": "We have several resources available:\n\n- **Documentation** - Comprehensive guides and tutorials\n- **FAQ section** - Answers to common questions\n- **Support team** - Available via email or chat\n- **Community forum** - Connect with other users\n\nDon't hesitate to reach out if you can't find what you're looking for!"
+                    }
+                ]
+            },
+            {
+                "id": "row-faq-3",
+                "columns": 1,
+                "backgroundColor": "var(--color-background-hover)",
+                "collapsible": true,
+                "sectionTitle": "How do I contact support?",
+                "defaultCollapsed": true,
+                "widgets": [
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 1,
+                        "content": "You can reach our support team through multiple channels:\n\n**Email:** support@company.com\n**Phone:** +31 20 123 4567\n**Chat:** Available on our website during business hours\n\n**Response times:**\n- Urgent issues: Within 2 hours\n- Normal requests: Within 24 hours\n- General inquiries: Within 48 hours"
+                    }
+                ]
+            },
+            {
+                "columns": 2,
+                "backgroundColor": "var(--color-primary-element-light)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Need More Help?",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Can't find what you're looking for? Our support team is here to help.\n\n**Contact us:**\n- Email: support@company.com\n- Phone: +31 20 123 4567"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 1,
+                        "content": "Quick Links",
+                        "level": 2
+                    },
+                    {
+                        "type": "links",
+                        "column": 2,
+                        "order": 2,
+                        "columns": 2,
+                        "items": [
+                            {
+                                "title": "Submit a Ticket",
+                                "text": "Create support request",
+                                "url": "#",
+                                "icon": "ticket",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Live Chat",
+                                "text": "Chat with support",
+                                "url": "#",
+                                "icon": "chat",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Community",
+                                "text": "Join discussions",
+                                "url": "#",
+                                "icon": "forum",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Feedback",
+                                "text": "Share your thoughts",
+                                "url": "#",
+                                "icon": "comment-text",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "transparent",
+                        "height": "20px"
+                    }
+                ]
+            }
+        ],
+        "sideColumns": {
+            "left": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            },
+            "right": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            }
+        }
+    }
+}

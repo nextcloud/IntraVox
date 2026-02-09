@@ -1,0 +1,291 @@
+{
+    "uniqueId": "template-project",
+    "title": "Project",
+    "description": "Project page with status, milestones, team, and documents",
+    "isTemplate": true,
+    "language": "en",
+    "layout": {
+        "columns": 1,
+        "rows": [
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Project Name",
+                        "level": 1
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Brief description of the project, its goals, and expected outcomes. This page serves as the central hub for all project-related information."
+                    }
+                ]
+            },
+            {
+                "columns": 2,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Project Status",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "**Status:** In Progress\n\n**Phase:** Development\n\n**Start Date:** January 15, 2025\n\n**Target Completion:** June 30, 2025\n\n**Budget Status:** On Track\n\n**Last Updated:** February 1, 2025"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 1,
+                        "content": "Quick Links",
+                        "level": 2
+                    },
+                    {
+                        "type": "links",
+                        "column": 2,
+                        "order": 2,
+                        "columns": 1,
+                        "items": [
+                            {
+                                "title": "Project Plan",
+                                "text": "View detailed timeline",
+                                "url": "#",
+                                "icon": "calendar-text",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Status Report",
+                                "text": "Latest progress report",
+                                "url": "#",
+                                "icon": "file-chart",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Meeting Notes",
+                                "text": "Recent meeting minutes",
+                                "url": "#",
+                                "icon": "note-multiple",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Risk Register",
+                                "text": "Identified risks",
+                                "url": "#",
+                                "icon": "alert-circle",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "",
+                        "height": "2px"
+                    }
+                ]
+            },
+            {
+                "id": "row-objectives",
+                "columns": 1,
+                "backgroundColor": "var(--color-background-hover)",
+                "collapsible": true,
+                "sectionTitle": "Project Objectives",
+                "defaultCollapsed": false,
+                "widgets": [
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 1,
+                        "content": "**Primary Goals:**\n\n1. **Objective 1** - Description of the first main objective and its success criteria.\n\n2. **Objective 2** - Description of the second main objective and its success criteria.\n\n3. **Objective 3** - Description of the third main objective and its success criteria.\n\n**Key Results:**\n- Measurable outcome 1\n- Measurable outcome 2\n- Measurable outcome 3\n\n**Success Criteria:**\nDefine how success will be measured for this project."
+                    }
+                ]
+            },
+            {
+                "id": "row-milestones",
+                "columns": 1,
+                "backgroundColor": "var(--color-background-hover)",
+                "collapsible": true,
+                "sectionTitle": "Milestones & Timeline",
+                "defaultCollapsed": true,
+                "widgets": [
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 1,
+                        "content": "**Phase 1: Planning** (January - February)\n- [x] Project kickoff\n- [x] Requirements gathering\n- [x] Stakeholder alignment\n\n**Phase 2: Development** (March - April)\n- [ ] Design completion\n- [ ] Development sprint 1\n- [ ] Development sprint 2\n\n**Phase 3: Testing** (May)\n- [ ] Integration testing\n- [ ] User acceptance testing\n- [ ] Bug fixes\n\n**Phase 4: Launch** (June)\n- [ ] Final review\n- [ ] Deployment\n- [ ] Post-launch support"
+                    }
+                ]
+            },
+            {
+                "id": "row-risks",
+                "columns": 1,
+                "backgroundColor": "var(--color-background-hover)",
+                "collapsible": true,
+                "sectionTitle": "Risks & Mitigation",
+                "defaultCollapsed": true,
+                "widgets": [
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 1,
+                        "content": "**Key Risks:**\n\n| Risk | Impact | Likelihood | Mitigation |\n|------|--------|------------|------------|\n| Resource availability | High | Medium | Cross-training team members |\n| Technical complexity | Medium | Low | Regular architecture reviews |\n| Scope creep | Medium | Medium | Strict change control process |\n\n**Contingency Plans:**\n- Plan A: Prioritize core features if timeline pressure\n- Plan B: Additional resources from partner team\n- Plan C: Phase 2 release for non-critical features"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Project Team",
+                        "level": 2
+                    }
+                ]
+            },
+            {
+                "columns": 3,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "team1.jpg",
+                        "alt": "Team member 1",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "**Project Manager**\nName Surname\n\nEmail: pm@company.com\nPhone: +31 20 123 4567"
+                    },
+                    {
+                        "type": "image",
+                        "column": 2,
+                        "order": 1,
+                        "src": "team2.jpg",
+                        "alt": "Team member 2",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 2,
+                        "content": "**Technical Lead**\nName Surname\n\nEmail: tech@company.com\nPhone: +31 20 123 4568"
+                    },
+                    {
+                        "type": "image",
+                        "column": 3,
+                        "order": 1,
+                        "src": "team3.jpg",
+                        "alt": "Team member 3",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "text",
+                        "column": 3,
+                        "order": 2,
+                        "content": "**Business Analyst**\nName Surname\n\nEmail: ba@company.com\nPhone: +31 20 123 4569"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element-light)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Project Documents",
+                        "level": 2
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 2,
+                        "columns": 4,
+                        "items": [
+                            {
+                                "title": "Project Charter",
+                                "text": "Official project document",
+                                "url": "#",
+                                "icon": "file-document",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Requirements",
+                                "text": "Detailed requirements",
+                                "url": "#",
+                                "icon": "clipboard-list",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Design Docs",
+                                "text": "Technical designs",
+                                "url": "#",
+                                "icon": "drawing",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "All Documents",
+                                "text": "Document library",
+                                "url": "#",
+                                "icon": "folder-open",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "transparent",
+                        "height": "20px"
+                    }
+                ]
+            }
+        ],
+        "sideColumns": {
+            "left": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            },
+            "right": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            }
+        }
+    }
+}

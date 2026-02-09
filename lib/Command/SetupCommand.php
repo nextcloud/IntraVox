@@ -85,6 +85,28 @@ class SetupCommand extends Command {
             $output->writeln('<comment>⚠ Warning: _resources folder migration had issues (check logs)</comment>');
         }
 
+        // Ensure _templates folders exist and install default templates
+        $output->writeln('');
+        $output->writeln('<info>Setting up templates...</info>');
+        if ($this->setupService->migrateTemplatesFolders()) {
+            $output->writeln('<info>✓ _templates folders verified/created</info>');
+        } else {
+            $output->writeln('<comment>⚠ Warning: _templates folder migration had issues (check logs)</comment>');
+        }
+
+        // Install default templates
+        $templateResult = $this->setupService->installDefaultTemplates();
+        if ($templateResult['success']) {
+            if ($templateResult['installed'] > 0) {
+                $output->writeln("<info>✓ Default templates installed: {$templateResult['installed']} new</info>");
+            }
+            if ($templateResult['skipped'] > 0) {
+                $output->writeln("<comment>  {$templateResult['skipped']} templates already exist (skipped)</comment>");
+            }
+        } else {
+            $output->writeln('<comment>⚠ Warning: Default templates installation had issues (check logs)</comment>');
+        }
+
         $output->writeln('');
         $output->writeln('<comment>The IntraVox groupfolder is now available in the Files app</comment>');
         $output->writeln('<comment>Admins in "IntraVox Admins" have full access</comment>');

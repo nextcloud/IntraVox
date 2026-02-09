@@ -1,0 +1,235 @@
+{
+    "uniqueId": "template-news-hub",
+    "title": "News Hub",
+    "description": "Central news page with carousel, featured articles, and category navigation",
+    "isTemplate": true,
+    "language": "en",
+    "layout": {
+        "columns": 1,
+        "rows": [
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element)",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "news-hero.jpg",
+                        "alt": "News and updates",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 2,
+                        "content": "News & Updates",
+                        "level": 1
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 3,
+                        "content": "Stay informed with the latest company news, announcements, and updates from across the organization."
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Latest News",
+                        "level": 2
+                    },
+                    {
+                        "type": "news",
+                        "column": 1,
+                        "order": 2,
+                        "title": "",
+                        "sourcePath": "news",
+                        "sourcePageId": "",
+                        "layout": "carousel",
+                        "columns": 3,
+                        "limit": 5,
+                        "sortBy": "modified",
+                        "sortOrder": "desc",
+                        "showImage": true,
+                        "showDate": true,
+                        "showExcerpt": true,
+                        "excerptLength": 120,
+                        "autoplayInterval": 5,
+                        "filters": [],
+                        "filterOperator": "AND"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Browse by Category",
+                        "level": 2
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 2,
+                        "columns": 4,
+                        "items": [
+                            {
+                                "title": "Company News",
+                                "text": "Official announcements and updates",
+                                "url": "#",
+                                "icon": "newspaper",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Product Updates",
+                                "text": "New features and releases",
+                                "url": "#",
+                                "icon": "update",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Events",
+                                "text": "Upcoming company events",
+                                "url": "#",
+                                "icon": "calendar",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Archive",
+                                "text": "Past news articles",
+                                "url": "#",
+                                "icon": "archive",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "",
+                        "height": "2px"
+                    }
+                ]
+            },
+            {
+                "columns": 2,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Featured Story",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "**Highlight your most important news here.**\n\nUse this section for major announcements that deserve extra attention. Include key points, context, and a call-to-action.\n\n- Main highlight point\n- Supporting information\n- Next steps or action items"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 1,
+                        "content": "Quick Updates",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 2,
+                        "content": "**Brief updates and reminders:**\n\n1. **Office hours** - New schedule starts next week\n2. **System maintenance** - Planned for this weekend\n3. **Training sessions** - Sign up now open\n4. **Feedback survey** - Please complete by Friday"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element-light)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Related Resources",
+                        "level": 2
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 2,
+                        "columns": 3,
+                        "items": [
+                            {
+                                "title": "Documentation",
+                                "text": "Guides and tutorials",
+                                "url": "#",
+                                "icon": "book-open-variant",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Contact",
+                                "text": "Get in touch",
+                                "url": "#",
+                                "icon": "email",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Support",
+                                "text": "Help and FAQ",
+                                "url": "#",
+                                "icon": "help-circle",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "transparent",
+                        "height": "20px"
+                    }
+                ]
+            }
+        ],
+        "sideColumns": {
+            "left": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            },
+            "right": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            }
+        }
+    }
+}

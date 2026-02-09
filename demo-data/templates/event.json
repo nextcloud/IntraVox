@@ -1,0 +1,327 @@
+{
+    "uniqueId": "template-event",
+    "title": "Event",
+    "description": "Event page with program, speakers, and registration",
+    "isTemplate": true,
+    "language": "en",
+    "layout": {
+        "columns": 1,
+        "rows": [
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element)",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "event-hero.jpg",
+                        "alt": "Event banner",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Annual Company Event 2025",
+                        "level": 1
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 3,
+                        "content": "Join us for an inspiring day of learning, networking, and collaboration. Don't miss this opportunity to connect with colleagues and industry experts."
+                    }
+                ]
+            },
+            {
+                "columns": 2,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Event Details",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "**Date:** Thursday, March 15, 2025\n\n**Time:** 09:00 - 17:00\n\n**Location:** Conference Center\nMain Street 123\nAmsterdam, Netherlands\n\n**Registration deadline:** March 1, 2025\n\n**Dress code:** Business casual"
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 3,
+                        "columns": 1,
+                        "items": [
+                            {
+                                "title": "Register Now",
+                                "text": "Secure your spot today",
+                                "url": "#",
+                                "icon": "ticket-confirmation",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "View Map",
+                                "text": "Location and directions",
+                                "url": "#",
+                                "icon": "map-marker",
+                                "target": "_blank"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 1,
+                        "content": "Event Highlights",
+                        "level": 2
+                    },
+                    {
+                        "type": "video",
+                        "column": 2,
+                        "order": 2,
+                        "src": "",
+                        "title": "Event Promo Video",
+                        "autoplay": false,
+                        "loop": false
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Program",
+                        "level": 2
+                    }
+                ]
+            },
+            {
+                "id": "row-program-1",
+                "columns": 1,
+                "backgroundColor": "var(--color-background-hover)",
+                "collapsible": true,
+                "sectionTitle": "Morning Session (09:00 - 12:00)",
+                "defaultCollapsed": false,
+                "widgets": [
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 1,
+                        "content": "**09:00 - 09:30** | Registration & Welcome Coffee\n\n**09:30 - 10:00** | Opening Keynote\nWelcome address and vision for the year ahead.\n\n**10:00 - 11:00** | Session 1: Innovation & Technology\nDiscover the latest trends and how they impact our industry.\n\n**11:00 - 11:15** | Coffee Break\n\n**11:15 - 12:00** | Session 2: Best Practices\nLearn from successful case studies and implementations."
+                    }
+                ]
+            },
+            {
+                "id": "row-program-2",
+                "columns": 1,
+                "backgroundColor": "var(--color-background-hover)",
+                "collapsible": true,
+                "sectionTitle": "Afternoon Session (13:00 - 17:00)",
+                "defaultCollapsed": true,
+                "widgets": [
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 1,
+                        "content": "**13:00 - 14:00** | Workshop A: Hands-on Learning\nInteractive workshop for practical skill development.\n\n**14:00 - 15:00** | Workshop B: Collaboration\nTeam exercises and group activities.\n\n**15:00 - 15:15** | Coffee Break\n\n**15:15 - 16:00** | Panel Discussion\nExpert panel addressing key industry questions.\n\n**16:00 - 16:45** | Closing Keynote\nKey takeaways and next steps.\n\n**16:45 - 17:00** | Wrap-up & Networking"
+                    }
+                ]
+            },
+            {
+                "id": "row-program-3",
+                "columns": 1,
+                "backgroundColor": "var(--color-background-hover)",
+                "collapsible": true,
+                "sectionTitle": "Evening Program (17:00 onwards)",
+                "defaultCollapsed": true,
+                "widgets": [
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 1,
+                        "content": "**17:00 - 18:00** | Networking Drinks\nJoin us for drinks and informal networking.\n\n**18:00 - 20:00** | Dinner (optional)\nReserve your spot for the networking dinner.\n\n*Note: Dinner requires separate registration.*"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "",
+                        "height": "2px"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Speakers",
+                        "level": 2
+                    }
+                ]
+            },
+            {
+                "columns": 3,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "speaker1.jpg",
+                        "alt": "Speaker 1",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Dr. Jane Smith",
+                        "level": 4
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 3,
+                        "content": "**Chief Innovation Officer**\nTech Company Inc.\n\nLeading expert in digital transformation with 15+ years of experience."
+                    },
+                    {
+                        "type": "image",
+                        "column": 2,
+                        "order": 1,
+                        "src": "speaker2.jpg",
+                        "alt": "Speaker 2",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 2,
+                        "content": "John Davis",
+                        "level": 4
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 3,
+                        "content": "**CEO**\nInnovation Labs\n\nSerial entrepreneur and thought leader in sustainable business practices."
+                    },
+                    {
+                        "type": "image",
+                        "column": 3,
+                        "order": 1,
+                        "src": "speaker3.jpg",
+                        "alt": "Speaker 3",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 3,
+                        "order": 2,
+                        "content": "Maria Garcia",
+                        "level": 4
+                    },
+                    {
+                        "type": "text",
+                        "column": 3,
+                        "order": 3,
+                        "content": "**Head of Strategy**\nGlobal Consulting\n\nExpert in organizational change and employee engagement."
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element-light)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Register Now",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Don't miss this opportunity! Registration is free for all employees. Spots are limited, so register early to secure your place."
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 3,
+                        "columns": 3,
+                        "items": [
+                            {
+                                "title": "Register",
+                                "text": "Sign up now",
+                                "url": "#",
+                                "icon": "ticket-confirmation",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Add to Calendar",
+                                "text": "Save the date",
+                                "url": "#",
+                                "icon": "calendar-plus",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Contact Organizers",
+                                "text": "Questions?",
+                                "url": "#",
+                                "icon": "email",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "transparent",
+                        "height": "20px"
+                    }
+                ]
+            }
+        ],
+        "sideColumns": {
+            "left": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            },
+            "right": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            }
+        }
+    }
+}

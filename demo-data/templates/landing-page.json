@@ -1,0 +1,366 @@
+{
+    "uniqueId": "template-landing-page",
+    "title": "Landing Page",
+    "description": "Visual homepage with hero, features, and call-to-action sections",
+    "isTemplate": true,
+    "language": "en",
+    "layout": {
+        "columns": 1,
+        "rows": [
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element)",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "landing-hero.jpg",
+                        "alt": "Welcome banner",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Welcome to Our Intranet",
+                        "level": 1
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 3,
+                        "content": "**Your central hub for information, collaboration, and connection.** Find everything you need to stay informed and productive."
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "What's New",
+                        "level": 2
+                    },
+                    {
+                        "type": "news",
+                        "column": 1,
+                        "order": 2,
+                        "title": "",
+                        "sourcePath": "news",
+                        "sourcePageId": "",
+                        "layout": "carousel",
+                        "columns": 3,
+                        "limit": 5,
+                        "sortBy": "modified",
+                        "sortOrder": "desc",
+                        "showImage": true,
+                        "showDate": true,
+                        "showExcerpt": true,
+                        "excerptLength": 100,
+                        "autoplayInterval": 5,
+                        "filters": [],
+                        "filterOperator": "AND"
+                    }
+                ]
+            },
+            {
+                "columns": 3,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "feature1.jpg",
+                        "alt": "Feature 1",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Stay Informed",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 3,
+                        "content": "Access the latest news, announcements, and updates from across the organization. Never miss important information."
+                    },
+                    {
+                        "type": "image",
+                        "column": 2,
+                        "order": 1,
+                        "src": "feature2.jpg",
+                        "alt": "Feature 2",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 2,
+                        "content": "Connect & Collaborate",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 3,
+                        "content": "Find colleagues, share knowledge, and work together more effectively. Build connections across teams and departments."
+                    },
+                    {
+                        "type": "image",
+                        "column": 3,
+                        "order": 1,
+                        "src": "feature3.jpg",
+                        "alt": "Feature 3",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 3,
+                        "order": 2,
+                        "content": "Find Resources",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 3,
+                        "order": 3,
+                        "content": "Access documents, tools, and resources you need to do your job. Everything organized and easy to find."
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "",
+                        "height": "2px"
+                    }
+                ]
+            },
+            {
+                "columns": 2,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "about-image.jpg",
+                        "alt": "About our organization",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 1,
+                        "content": "About Us",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 2,
+                        "content": "We are a team of dedicated professionals committed to excellence. Our mission is to deliver outstanding results while fostering a positive and inclusive work environment.\n\n**Our Values:**\n- Innovation and creativity\n- Collaboration and teamwork\n- Integrity and transparency\n- Customer focus"
+                    },
+                    {
+                        "type": "links",
+                        "column": 2,
+                        "order": 3,
+                        "columns": 2,
+                        "items": [
+                            {
+                                "title": "Our Story",
+                                "text": "Learn about our history",
+                                "url": "#",
+                                "icon": "book-open-variant",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Leadership",
+                                "text": "Meet our leaders",
+                                "url": "#",
+                                "icon": "account-group",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Get Started",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Explore our intranet and discover everything it has to offer. Find the information you need, connect with colleagues, and stay up to date."
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 3,
+                        "columns": 4,
+                        "items": [
+                            {
+                                "title": "Departments",
+                                "text": "Find your team",
+                                "url": "#",
+                                "icon": "domain",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "News",
+                                "text": "Latest updates",
+                                "url": "#",
+                                "icon": "newspaper",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Knowledge Base",
+                                "text": "Find answers",
+                                "url": "#",
+                                "icon": "book-search",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Contact",
+                                "text": "Get in touch",
+                                "url": "#",
+                                "icon": "email",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "transparent",
+                        "height": "20px"
+                    }
+                ]
+            }
+        ],
+        "sideColumns": {
+            "left": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            },
+            "right": {
+                "enabled": true,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Quick Access",
+                        "level": 3
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 2,
+                        "columns": 1,
+                        "items": [
+                            {
+                                "title": "IT Helpdesk",
+                                "text": "Tech support",
+                                "url": "#",
+                                "icon": "laptop",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "HR Services",
+                                "text": "HR requests",
+                                "url": "#",
+                                "icon": "account",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Expense Claims",
+                                "text": "Submit expenses",
+                                "url": "#",
+                                "icon": "receipt",
+                                "target": "_self"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 3,
+                        "style": "solid",
+                        "color": "",
+                        "height": "1px"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 4,
+                        "content": "Useful Links",
+                        "level": 4
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 5,
+                        "columns": 1,
+                        "items": [
+                            {
+                                "title": "Calendar",
+                                "text": "Company calendar",
+                                "url": "#",
+                                "icon": "calendar",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Documents",
+                                "text": "Shared files",
+                                "url": "#",
+                                "icon": "folder",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Directory",
+                                "text": "Find colleagues",
+                                "url": "#",
+                                "icon": "account-search",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    }
+}

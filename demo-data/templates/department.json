@@ -1,0 +1,325 @@
+{
+    "uniqueId": "template-department",
+    "title": "Department",
+    "description": "Department homepage with team info, services, and resources",
+    "isTemplate": true,
+    "language": "en",
+    "layout": {
+        "columns": 1,
+        "rows": [
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element)",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "department-hero.jpg",
+                        "alt": "Department team",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Department Name",
+                        "level": 1
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 3,
+                        "content": "Welcome to our department. We are dedicated to providing excellent service and support to the entire organization."
+                    }
+                ]
+            },
+            {
+                "columns": 3,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "service1.jpg",
+                        "alt": "Service 1",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Service Area 1",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 3,
+                        "content": "Description of the first main service or responsibility of this department."
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 4,
+                        "columns": 1,
+                        "items": [
+                            {
+                                "title": "Request Service",
+                                "text": "Submit a request",
+                                "url": "#",
+                                "icon": "plus-circle",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Learn More",
+                                "text": "Details and info",
+                                "url": "#",
+                                "icon": "information",
+                                "target": "_self"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "image",
+                        "column": 2,
+                        "order": 1,
+                        "src": "service2.jpg",
+                        "alt": "Service 2",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 2,
+                        "content": "Service Area 2",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 3,
+                        "content": "Description of the second main service or responsibility of this department."
+                    },
+                    {
+                        "type": "links",
+                        "column": 2,
+                        "order": 4,
+                        "columns": 1,
+                        "items": [
+                            {
+                                "title": "Request Service",
+                                "text": "Submit a request",
+                                "url": "#",
+                                "icon": "plus-circle",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Learn More",
+                                "text": "Details and info",
+                                "url": "#",
+                                "icon": "information",
+                                "target": "_self"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "image",
+                        "column": 3,
+                        "order": 1,
+                        "src": "service3.jpg",
+                        "alt": "Service 3",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 3,
+                        "order": 2,
+                        "content": "Service Area 3",
+                        "level": 3
+                    },
+                    {
+                        "type": "text",
+                        "column": 3,
+                        "order": 3,
+                        "content": "Description of the third main service or responsibility of this department."
+                    },
+                    {
+                        "type": "links",
+                        "column": 3,
+                        "order": 4,
+                        "columns": 1,
+                        "items": [
+                            {
+                                "title": "Request Service",
+                                "text": "Submit a request",
+                                "url": "#",
+                                "icon": "plus-circle",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Learn More",
+                                "text": "Details and info",
+                                "url": "#",
+                                "icon": "information",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "",
+                        "height": "2px"
+                    }
+                ]
+            },
+            {
+                "columns": 2,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Documents & Resources",
+                        "level": 2
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 2,
+                        "columns": 2,
+                        "items": [
+                            {
+                                "title": "Policies",
+                                "text": "Department policies",
+                                "url": "#",
+                                "icon": "file-document",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Procedures",
+                                "text": "Standard procedures",
+                                "url": "#",
+                                "icon": "clipboard-list",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Templates",
+                                "text": "Document templates",
+                                "url": "#",
+                                "icon": "file-multiple",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Forms",
+                                "text": "Request forms",
+                                "url": "#",
+                                "icon": "form-textbox",
+                                "target": "_self"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 1,
+                        "content": "Contact Us",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 2,
+                        "content": "Get in touch with our team:\n\n**Email:** department@company.com\n**Phone:** +31 20 123 4567\n**Office:** Building A, Room 2.01\n\n**Opening hours:**\nMonday - Friday\n09:00 - 17:00"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Other Departments",
+                        "level": 2
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 2,
+                        "columns": 4,
+                        "items": [
+                            {
+                                "title": "Human Resources",
+                                "text": "HR services",
+                                "url": "#",
+                                "icon": "account-group",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "IT",
+                                "text": "Tech support",
+                                "url": "#",
+                                "icon": "laptop",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Finance",
+                                "text": "Financial services",
+                                "url": "#",
+                                "icon": "cash",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "All Departments",
+                                "text": "Complete overview",
+                                "url": "#",
+                                "icon": "domain",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "transparent",
+                        "height": "20px"
+                    }
+                ]
+            }
+        ],
+        "sideColumns": {
+            "left": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            },
+            "right": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            }
+        }
+    }
+}

@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.11] - 2026-02-09 - Page Templates
+
+### Added
+- **Default Page Templates**: 7 professional page templates installed automatically during setup
+  - **Department**: Team info, services, and resources layout
+  - **Event**: Program schedule, speakers, and registration sections
+  - **Knowledge Base**: Documentation hub with categories, FAQ, and popular articles
+  - **Landing Page**: Visual homepage with hero, features, sidebar, and call-to-action
+  - **News Article**: Single article layout with hero image and related links
+  - **News Hub**: Central news page with carousel, featured articles, and categories
+  - **Project**: Project management page with status, milestones, team, and documents
+- **Template Preview Cards**: Visual layout previews when creating pages from templates
+  - SVG-based schematic showing column layout, header rows, sidebars, and collapsible sections
+  - Widget type badges showing which components are used (heading, text, image, video, news, links, divider)
+  - Complexity indicator (Simple/Medium/Advanced) based on layout structure
+  - Column count and widget count statistics
+- **Enlarged Template Modal**: Larger "Create new page" dialog with improved template gallery
+  - Grid layout with 220px minimum card width
+  - Scrollable gallery area (450px max height)
+- **Template Translations**: All template titles and descriptions translated
+  - Dutch, English, German, and French translations
+  - Automatic fallback to original text for custom user templates
+- **Template Stock Images**: Professional placeholder images included with each template
+  - Hero images, feature images, team photos, speaker portraits
+  - Images automatically copied when creating pages from templates
+
+### Changed
+- Template installation now runs automatically during `occ intravox:setup`
+- Templates are installed to `{lang}/_templates/` for each language folder
+
 ## [0.9.10] - 2026-02-05 - Text Editor Fixes
 
 ### Fixed

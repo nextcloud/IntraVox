@@ -1382,6 +1382,11 @@ class PageService {
             }
 
             $this->scanPageFolder($pageFolder);
+
+            // Cache the folder reference for immediate reuse (e.g., when copying media from template)
+            if (isset($data['uniqueId'])) {
+                $this->pageFolderCache[$data['uniqueId']] = $pageFolder;
+            }
         }
 
         // Return data with id for frontend (id is derived from folder name)
@@ -5127,5 +5132,494 @@ class PageService {
         }
 
         return false;
+    }
+
+    // =========================================================================
+    // TEMPLATE METHODS
+    // =========================================================================
+
+    /**
+     * Find a page folder by its uniqueId
+     *
+     * @param string $uniqueId Page uniqueId
+     * @return \OCP\Files\Folder|null The page folder or null if not found
+     */
+    private function findPageFolder(string $uniqueId): ?\OCP\Files\Folder {
+        // Check cache first
+        if (isset($this->pageFolderCache[$uniqueId])) {
+            return $this->pageFolderCache[$uniqueId];
+        }
+
+        try {
+            $langFolder = $this->getLanguageFolder();
+            $result = $this->findPageByUniqueId($langFolder, $uniqueId);
+            if ($result !== null && isset($result['folder'])) {
+                $folder = $result['folder'];
+                $this->pageFolderCache[$uniqueId] = $folder;
+                return $folder;
+            }
+        } catch (\Exception $e) {
+            $this->logger->warning('Could not find page folder for: ' . $uniqueId . ' - ' . $e->getMessage());
+        }
+
+        return null;
+    }
+
+    /**
+     * Get the templates folder for the current user's language
+     *
+     * @return \OCP\Files\Folder|null The templates folder or null if not accessible
+     */
+    private function getTemplatesFolder(): ?\OCP\Files\Folder {
+        try {
+            $langFolder = $this->getLanguageFolder();
+            if ($langFolder->nodeExists('_templates')) {
+                $templatesFolder = $langFolder->get('_templates');
+                if ($templatesFolder instanceof \OCP\Files\Folder) {
+                    return $templatesFolder;
+                }
+            }
+            return null;
+        } catch (\Exception $e) {
+            $this->logger->warning('Could not access templates folder: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * List all available page templates
+     *
+     * @return array List of template metadata
+     */
+    public function listTemplates(): array {
+        $templatesFolder = $this->getTemplatesFolder();
+        if ($templatesFolder === null) {
+            return [];
+        }
+
+        $templates = [];
+
+        try {
+            foreach ($templatesFolder->getDirectoryListing() as $item) {
+                if (!($item instanceof \OCP\Files\Folder)) {
+                    continue;
+                }
+
+                $templateId = $item->getName();
+
+                // Skip special folders
+                if (str_starts_with($templateId, '.') || $templateId === '_media') {
+                    continue;
+                }
+
+                // Try to read the template JSON file
+                try {
+                    $jsonFile = $item->get($templateId . '.json');
+                    if (!($jsonFile instanceof \OCP\Files\File)) {
+                        continue;
+                    }
+
+                    $content = json_decode($jsonFile->getContent(), true);
+                    if (!$content) {
+                        continue;
+                    }
+
+                    // Extract preview metadata
+                    $preview = $this->extractTemplatePreviewMetadata($content);
+
+                    $templates[] = [
+                        'id' => $templateId,
+                        'uniqueId' => $content['uniqueId'] ?? 'template-' . $templateId,
+                        'title' => $content['title'] ?? $templateId,
+                        'description' => $content['description'] ?? '',
+                        'created' => $content['created'] ?? $jsonFile->getMTime(),
+                        'modified' => $jsonFile->getMTime(),
+                        'createdBy' => $content['createdBy'] ?? '',
+                        'preview' => $preview,
+                    ];
+                } catch (NotFoundException $e) {
+                    // Template folder exists but no JSON file, skip
+                    continue;
+                }
+            }
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to list templates: ' . $e->getMessage());
+        }
+
+        // Sort by title
+        usort($templates, fn($a, $b) => strcasecmp($a['title'], $b['title']));
+
+        return $templates;
+    }
+
+    /**
+     * Extract preview metadata from template content for display in template picker
+     *
+     * @param array $content Template content data
+     * @return array Preview metadata
+     */
+    private function extractTemplatePreviewMetadata(array $content): array {
+        $layout = $content['layout'] ?? [];
+        $rows = $layout['rows'] ?? [];
+        $sideColumns = $layout['sideColumns'] ?? [];
+
+        // Collect all widget types
+        $widgetTypes = [];
+        $widgetCount = 0;
+        $maxColumns = 1;
+        $hasCollapsible = false;
+        $firstBackgroundColor = '';
+
+        // Process main rows
+        foreach ($rows as $row) {
+            $rowColumns = $row['columns'] ?? 1;
+            $maxColumns = max($maxColumns, $rowColumns);
+
+            if (!empty($row['collapsible'])) {
+                $hasCollapsible = true;
+            }
+
+            if (empty($firstBackgroundColor) && !empty($row['backgroundColor'])) {
+                $firstBackgroundColor = $row['backgroundColor'];
+            }
+
+            if (isset($row['widgets'])) {
+                foreach ($row['widgets'] as $widget) {
+                    if (isset($widget['type'])) {
+                        $widgetTypes[] = $widget['type'];
+                        $widgetCount++;
+                    }
+                }
+            }
+        }
+
+        // Check side columns
+        $hasSidebars = false;
+        foreach ($sideColumns as $side => $column) {
+            if (!empty($column['enabled']) && !empty($column['widgets'])) {
+                $hasSidebars = true;
+                foreach ($column['widgets'] as $widget) {
+                    if (isset($widget['type'])) {
+                        $widgetTypes[] = $widget['type'];
+                        $widgetCount++;
+                    }
+                }
+            }
+        }
+
+        // Determine complexity
+        $complexity = 'simple';
+        if ($widgetCount > 10 || $hasCollapsible || $hasSidebars) {
+            $complexity = 'complex';
+        } elseif ($widgetCount > 5 || $maxColumns > 2) {
+            $complexity = 'moderate';
+        }
+
+        return [
+            'hasHeaderRow' => isset($rows[0]) && !empty($rows[0]['backgroundColor']),
+            'columnCount' => $maxColumns,
+            'rowCount' => count($rows),
+            'widgetTypes' => array_values(array_unique($widgetTypes)),
+            'widgetCount' => $widgetCount,
+            'backgroundColor' => $firstBackgroundColor,
+            'hasSidebars' => $hasSidebars,
+            'hasCollapsible' => $hasCollapsible,
+            'complexity' => $complexity,
+        ];
+    }
+
+    /**
+     * Get a specific template by ID
+     *
+     * @param string $templateId Template ID (folder name)
+     * @return array|null Template data or null if not found
+     */
+    public function getTemplate(string $templateId): ?array {
+        $templatesFolder = $this->getTemplatesFolder();
+        if ($templatesFolder === null) {
+            return null;
+        }
+
+        try {
+            if (!$templatesFolder->nodeExists($templateId)) {
+                return null;
+            }
+
+            $templateFolder = $templatesFolder->get($templateId);
+            if (!($templateFolder instanceof \OCP\Files\Folder)) {
+                return null;
+            }
+
+            $jsonFile = $templateFolder->get($templateId . '.json');
+            if (!($jsonFile instanceof \OCP\Files\File)) {
+                return null;
+            }
+
+            $content = json_decode($jsonFile->getContent(), true);
+            if (!$content) {
+                return null;
+            }
+
+            return $content;
+        } catch (NotFoundException $e) {
+            return null;
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to get template: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Save a page as a template
+     *
+     * @param string $pageUniqueId The uniqueId of the page to save as template
+     * @param string $templateTitle Title for the template
+     * @param string|null $templateDescription Optional description
+     * @return array Result with success status and template data or error message
+     */
+    public function saveAsTemplate(string $pageUniqueId, string $templateTitle, ?string $templateDescription = null): array {
+        try {
+            // Get the source page
+            $pageData = $this->getPage($pageUniqueId);
+            if (!$pageData) {
+                return ['success' => false, 'error' => 'Page not found'];
+            }
+
+            // Get or create templates folder
+            $langFolder = $this->getLanguageFolder();
+            if (!$langFolder->nodeExists('_templates')) {
+                $langFolder->newFolder('_templates');
+            }
+            $templatesFolder = $langFolder->get('_templates');
+
+            // Generate template ID from title
+            $templateId = $this->sanitizeId($templateTitle);
+
+            // Handle duplicate names by appending number
+            $originalId = $templateId;
+            $counter = 1;
+            while ($templatesFolder->nodeExists($templateId)) {
+                $counter++;
+                $templateId = $originalId . '-' . $counter;
+            }
+
+            // Create template folder
+            $templateFolder = $templatesFolder->newFolder($templateId);
+
+            // Create _media folder in template
+            $templateMediaFolder = $templateFolder->newFolder('_media');
+
+            // Prepare template data
+            $templateData = $pageData;
+            $templateData['uniqueId'] = 'template-' . $this->generateUUID();
+            $templateData['title'] = $templateTitle;
+            $templateData['description'] = $templateDescription ?? '';
+            $templateData['isTemplate'] = true;
+            $templateData['created'] = time();
+            $templateData['createdBy'] = $this->userId;
+            $templateData['sourcePageId'] = $pageUniqueId;
+
+            // Remove page-specific data
+            unset($templateData['path']);
+            unset($templateData['parentPath']);
+
+            // Copy media files from source page to template
+            $pageFolder = $this->findPageFolder($pageUniqueId);
+            if ($pageFolder && $pageFolder->nodeExists('_media')) {
+                $sourceMediaFolder = $pageFolder->get('_media');
+                if ($sourceMediaFolder instanceof \OCP\Files\Folder) {
+                    $this->copyMediaFolderContents($sourceMediaFolder, $templateMediaFolder);
+                }
+            }
+
+            // Write template JSON
+            $jsonFile = $templateFolder->newFile($templateId . '.json');
+            $jsonFile->putContent(json_encode($templateData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+
+            $this->logger->info('Created template: ' . $templateId . ' from page: ' . $pageUniqueId);
+
+            return [
+                'success' => true,
+                'templateId' => $templateId,
+                'template' => [
+                    'id' => $templateId,
+                    'uniqueId' => $templateData['uniqueId'],
+                    'title' => $templateData['title'],
+                    'description' => $templateData['description'],
+                    'created' => $templateData['created'],
+                    'createdBy' => $templateData['createdBy'],
+                ],
+            ];
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to save as template: ' . $e->getMessage());
+            return ['success' => false, 'error' => $e->getMessage()];
+        }
+    }
+
+    /**
+     * Delete a template
+     *
+     * @param string $templateId Template ID (folder name)
+     * @return array Result with success status
+     */
+    public function deleteTemplate(string $templateId): array {
+        try {
+            $templatesFolder = $this->getTemplatesFolder();
+            if ($templatesFolder === null) {
+                return ['success' => false, 'error' => 'Templates folder not accessible'];
+            }
+
+            if (!$templatesFolder->nodeExists($templateId)) {
+                return ['success' => false, 'error' => 'Template not found'];
+            }
+
+            $templateFolder = $templatesFolder->get($templateId);
+            $templateFolder->delete();
+
+            $this->logger->info('Deleted template: ' . $templateId);
+
+            return ['success' => true];
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to delete template: ' . $e->getMessage());
+            return ['success' => false, 'error' => $e->getMessage()];
+        }
+    }
+
+    /**
+     * Create a new page from a template
+     *
+     * @param string $templateId Template ID to use
+     * @param string $pageTitle Title for the new page
+     * @param string|null $parentPath Optional parent path for nested pages
+     * @return array Result with success status and page data
+     */
+    public function createPageFromTemplate(string $templateId, string $pageTitle, ?string $parentPath = null): array {
+        try {
+            // Get template data
+            $templateData = $this->getTemplate($templateId);
+            if ($templateData === null) {
+                return ['success' => false, 'error' => 'Template not found'];
+            }
+
+            // Prepare page data from template
+            $pageData = $templateData;
+
+            // Generate new page ID and uniqueId
+            $pageId = $this->sanitizeId($pageTitle);
+            $pageData['id'] = $pageId;
+            $pageData['title'] = $pageTitle;
+            $pageData['uniqueId'] = 'page-' . $this->generateUUID();
+            $pageData['created'] = time();
+            $pageData['modified'] = time();
+
+            // Remove template-specific fields
+            unset($pageData['isTemplate']);
+            unset($pageData['description']);
+            unset($pageData['createdBy']);
+            unset($pageData['sourcePageId']);
+
+            // Create the page using existing method
+            $createdPage = $this->createPage($pageData, $parentPath);
+
+            // Copy media files from template to new page
+            $templatesFolder = $this->getTemplatesFolder();
+            if ($templatesFolder && $templatesFolder->nodeExists($templateId)) {
+                $templateFolder = $templatesFolder->get($templateId);
+                if ($templateFolder instanceof \OCP\Files\Folder && $templateFolder->nodeExists('_media')) {
+                    $templateMediaFolder = $templateFolder->get('_media');
+
+                    // Get the new page's folder (should be in cache from createPage)
+                    $newPageFolder = $this->findPageFolder($createdPage['uniqueId']);
+                    $this->logger->info('Template media copy: page folder found = ' . ($newPageFolder ? 'yes' : 'no') . ' for ' . $createdPage['uniqueId']);
+                    if ($newPageFolder && $templateMediaFolder instanceof \OCP\Files\Folder) {
+                        // Create _media folder if not exists
+                        if (!$newPageFolder->nodeExists('_media')) {
+                            $newPageFolder->newFolder('_media');
+                        }
+                        $pageMediaFolder = $newPageFolder->get('_media');
+                        if ($pageMediaFolder instanceof \OCP\Files\Folder) {
+                            $this->copyMediaFolderContents($templateMediaFolder, $pageMediaFolder);
+                        }
+                    }
+                }
+            }
+
+            $this->logger->info('Created page from template: ' . $templateId . ' -> ' . $createdPage['uniqueId']);
+
+            return [
+                'success' => true,
+                'page' => $createdPage,
+            ];
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to create page from template: ' . $e->getMessage());
+            return ['success' => false, 'error' => $e->getMessage()];
+        }
+    }
+
+    /**
+     * Copy all files from one media folder to another (within Nextcloud storage)
+     *
+     * @param \OCP\Files\Folder $source Source folder
+     * @param \OCP\Files\Folder $target Target folder
+     */
+    private function copyMediaFolderContents(\OCP\Files\Folder $source, \OCP\Files\Folder $target): void {
+        try {
+            foreach ($source->getDirectoryListing() as $item) {
+                $name = $item->getName();
+
+                // Skip hidden files
+                if (str_starts_with($name, '.')) {
+                    continue;
+                }
+
+                if ($item instanceof \OCP\Files\File) {
+                    // Copy file
+                    try {
+                        $newFile = $target->newFile($name);
+                        $newFile->putContent($item->getContent());
+                    } catch (\Exception $e) {
+                        $this->logger->warning('Failed to copy media file: ' . $name . ' - ' . $e->getMessage());
+                    }
+                } elseif ($item instanceof \OCP\Files\Folder) {
+                    // Recursively copy subfolder
+                    try {
+                        if (!$target->nodeExists($name)) {
+                            $newSubFolder = $target->newFolder($name);
+                        } else {
+                            $newSubFolder = $target->get($name);
+                        }
+                        if ($newSubFolder instanceof \OCP\Files\Folder) {
+                            $this->copyMediaFolderContents($item, $newSubFolder);
+                        }
+                    } catch (\Exception $e) {
+                        $this->logger->warning('Failed to copy media subfolder: ' . $name . ' - ' . $e->getMessage());
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to copy media folder contents: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Check if the user can create templates (has write access to _templates folder)
+     *
+     * @return bool
+     */
+    public function canCreateTemplates(): bool {
+        try {
+            $langFolder = $this->getLanguageFolder();
+
+            // Check if _templates folder exists
+            if (!$langFolder->nodeExists('_templates')) {
+                // Check if user can create it
+                return $langFolder->isCreatable();
+            }
+
+            $templatesFolder = $langFolder->get('_templates');
+            return $templatesFolder->isCreatable();
+        } catch (\Exception $e) {
+            return false;
+        }
     }
 }

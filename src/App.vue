@@ -37,7 +37,8 @@
                          :permissions="pagePermissions"
                          @edit-navigation="showNavigationEditor = true"
                          @create-page="createNewPage"
-                         @page-settings="showPageSettingsModal = true" />
+                         @page-settings="showPageSettingsModal = true"
+                         @save-as-template="showSaveAsTemplateModal = true" />
 
         <!-- Edit Mode Actions (Save/Cancel) -->
         <template v-else>
@@ -146,6 +147,7 @@
       :current-page-path="currentPage?.path || null"
       @close="showNewPageModal = false"
       @create="handleCreatePage"
+      @create-from-template="handleCreatePageFromTemplate"
     />
 
     <NavigationEditor
@@ -163,6 +165,14 @@
       :global-settings="globalEngagementSettings"
       @close="showPageSettingsModal = false"
       @save="handlePageSettingsSave"
+    />
+
+    <SaveAsTemplateModal
+      v-if="showSaveAsTemplateModal"
+      :page-unique-id="currentPage?.uniqueId"
+      :page-title="currentPage?.title"
+      @close="showSaveAsTemplateModal = false"
+      @saved="handleTemplateSaved"
     />
 
     <!-- Footer -->
@@ -208,6 +218,7 @@ const NavigationEditor = defineAsyncComponent(() => import('./components/Navigat
 const PageDetailsSidebar = defineAsyncComponent(() => import('./components/PageDetailsSidebar.vue'));
 const WelcomeScreen = defineAsyncComponent(() => import('./components/WelcomeScreen.vue'));
 const PageSettingsModal = defineAsyncComponent(() => import('./components/PageSettingsModal.vue'));
+const SaveAsTemplateModal = defineAsyncComponent(() => import('./components/SaveAsTemplateModal.vue'));
 
 // Helper function to find home page
 const findHomePage = (pages) => {
@@ -236,6 +247,7 @@ export default {
     Breadcrumb,
     WelcomeScreen,
     PageSettingsModal,
+    SaveAsTemplateModal,
     ShareButton
   },
   data() {
@@ -250,6 +262,7 @@ export default {
       showPages: false,
       showPageTree: false,
       showNewPageModal: false,
+      showSaveAsTemplateModal: false,
       showDetailsSidebar: false,
       breadcrumb: [],
       navigation: {
@@ -292,7 +305,10 @@ export default {
         // Creating a page requires both write and create permissions
         createPage: (perms.canWrite && perms.canCreate) || false,
         editPage: perms.canWrite || false,
-        deletePage: perms.canDelete || false
+        deletePage: perms.canDelete || false,
+        // Save as template requires read on the page (to copy content)
+        // Note: The backend also checks if user can write to _templates folder
+        saveAsTemplate: perms.canRead !== false
       };
     },
     /**
@@ -740,6 +756,46 @@ export default {
       } catch (err) {
         showError(this.t('Could not create page: {error}', { error: err.message }));
       }
+    },
+    async handleCreatePageFromTemplate(data) {
+      const { templateId, title } = data;
+
+      if (!templateId || !title) {
+        showError(this.t('Missing template or title'));
+        return;
+      }
+
+      try {
+        const url = generateUrl('/apps/intravox/api/pages/from-template');
+        const response = await axios.post(url, {
+          templateId,
+          pageTitle: title,
+          parentPath: this.currentPage?.path || null
+        });
+
+        if (response.data.success) {
+          showSuccess(this.t('Page created from template'));
+
+          // Reload pages
+          await this.loadPages();
+
+          // Navigate to the new page
+          const newPage = response.data.page;
+          if (newPage?.uniqueId) {
+            await this.selectPage(newPage.uniqueId);
+            // Open in edit mode
+            this.isEditMode = true;
+          }
+        } else {
+          showError(this.t('Could not create page: {error}', { error: response.data.error || 'Unknown error' }));
+        }
+      } catch (err) {
+        console.error('[handleCreatePageFromTemplate] Error:', err);
+        showError(this.t('Could not create page from template: {error}', { error: err.message }));
+      }
+    },
+    handleTemplateSaved(template) {
+      showSuccess(this.t('Template saved: {name}', { name: template.title }));
     },
     async addPageToNavigation(pageId, pageTitle) {
       try {

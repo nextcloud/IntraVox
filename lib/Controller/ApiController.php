@@ -3027,4 +3027,158 @@ class ApiController extends Controller {
         $path = $folder . '/' . $filename;
         return $this->getResourcesMediaByShare($token, $path);
     }
+
+    // =========================================================================
+    // TEMPLATE ENDPOINTS
+    // =========================================================================
+
+    /**
+     * List all available page templates
+     *
+     * @NoAdminRequired
+     */
+    #[NoAdminRequired]
+    public function listTemplates(): DataResponse {
+        try {
+            $templates = $this->pageService->listTemplates();
+            $canCreate = $this->pageService->canCreateTemplates();
+
+            return new DataResponse([
+                'templates' => $templates,
+                'canCreate' => $canCreate,
+            ]);
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to list templates: ' . $e->getMessage());
+            return new DataResponse([
+                'error' => $e->getMessage(),
+            ], Http::STATUS_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Get a specific template by ID
+     *
+     * @NoAdminRequired
+     */
+    #[NoAdminRequired]
+    public function getTemplate(string $id): DataResponse {
+        try {
+            $template = $this->pageService->getTemplate($id);
+
+            if ($template === null) {
+                return new DataResponse([
+                    'error' => 'Template not found',
+                ], Http::STATUS_NOT_FOUND);
+            }
+
+            return new DataResponse($template);
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to get template: ' . $e->getMessage());
+            return new DataResponse([
+                'error' => $e->getMessage(),
+            ], Http::STATUS_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Save a page as a template
+     *
+     * @NoAdminRequired
+     */
+    #[NoAdminRequired]
+    public function saveAsTemplate(): DataResponse {
+        try {
+            $pageUniqueId = $this->request->getParam('pageUniqueId');
+            $templateTitle = $this->request->getParam('templateTitle');
+            $templateDescription = $this->request->getParam('templateDescription');
+
+            if (!$pageUniqueId || !$templateTitle) {
+                return new DataResponse([
+                    'error' => 'Missing required parameters: pageUniqueId, templateTitle',
+                ], Http::STATUS_BAD_REQUEST);
+            }
+
+            // Check if user can create templates
+            if (!$this->pageService->canCreateTemplates()) {
+                return new DataResponse([
+                    'error' => 'You do not have permission to create templates',
+                ], Http::STATUS_FORBIDDEN);
+            }
+
+            $result = $this->pageService->saveAsTemplate($pageUniqueId, $templateTitle, $templateDescription);
+
+            if (!$result['success']) {
+                return new DataResponse([
+                    'error' => $result['error'] ?? 'Failed to save template',
+                ], Http::STATUS_BAD_REQUEST);
+            }
+
+            return new DataResponse($result, Http::STATUS_CREATED);
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to save as template: ' . $e->getMessage());
+            return new DataResponse([
+                'error' => $e->getMessage(),
+            ], Http::STATUS_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Delete a template
+     *
+     * @NoAdminRequired
+     */
+    #[NoAdminRequired]
+    public function deleteTemplate(string $id): DataResponse {
+        try {
+            $result = $this->pageService->deleteTemplate($id);
+
+            if (!$result['success']) {
+                return new DataResponse([
+                    'error' => $result['error'] ?? 'Failed to delete template',
+                ], Http::STATUS_BAD_REQUEST);
+            }
+
+            return new DataResponse(['success' => true]);
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to delete template: ' . $e->getMessage());
+            return new DataResponse([
+                'error' => $e->getMessage(),
+            ], Http::STATUS_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Create a new page from a template
+     *
+     * @NoAdminRequired
+     */
+    #[NoAdminRequired]
+    public function createPageFromTemplate(): DataResponse {
+        try {
+            $templateId = $this->request->getParam('templateId');
+            $pageTitle = $this->request->getParam('pageTitle');
+            $parentPath = $this->request->getParam('parentPath');
+
+            if (!$templateId || !$pageTitle) {
+                return new DataResponse([
+                    'error' => 'Missing required parameters: templateId, pageTitle',
+                ], Http::STATUS_BAD_REQUEST);
+            }
+
+            $result = $this->pageService->createPageFromTemplate($templateId, $pageTitle, $parentPath);
+
+            if (!$result['success']) {
+                return new DataResponse([
+                    'error' => $result['error'] ?? 'Failed to create page from template',
+                ], Http::STATUS_BAD_REQUEST);
+            }
+
+            return new DataResponse($result, Http::STATUS_CREATED);
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to create page from template: ' . $e->getMessage());
+            return new DataResponse([
+                'error' => $e->getMessage(),
+            ], Http::STATUS_INTERNAL_SERVER_ERROR);
+        }
+    }
 }

@@ -124,6 +124,13 @@ return [
         ['name' => 'license#updateUsage', 'url' => '/api/license/update-usage', 'verb' => 'POST'],
         ['name' => 'api#setTelemetrySettings', 'url' => '/api/settings/telemetry', 'verb' => 'POST'],
 
+        // Template routes
+        ['name' => 'api#listTemplates', 'url' => '/api/templates', 'verb' => 'GET'],
+        ['name' => 'api#getTemplate', 'url' => '/api/templates/{id}', 'verb' => 'GET'],
+        ['name' => 'api#saveAsTemplate', 'url' => '/api/templates', 'verb' => 'POST'],
+        ['name' => 'api#deleteTemplate', 'url' => '/api/templates/{id}', 'verb' => 'DELETE'],
+        ['name' => 'api#createPageFromTemplate', 'url' => '/api/pages/from-template', 'verb' => 'POST'],
+
         // NC Share link detection routes (for ShareButton)
         ['name' => 'api#getShareInfo', 'url' => '/api/pages/{uniqueId}/share-info', 'verb' => 'GET'],
         ['name' => 'api#getActiveShares', 'url' => '/api/admin/shares', 'verb' => 'GET'],

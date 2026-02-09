@@ -310,6 +310,15 @@ class SetupService {
                     $langFolder->newFolder('_resources');
                     $this->logger->info("Created _resources folder in {$lang}");
                 }
+
+                // Create _templates folder for page templates
+                try {
+                    $langFolder->get('_templates');
+                    $this->logger->info("_templates folder already exists in {$lang}");
+                } catch (NotFoundException $e) {
+                    $langFolder->newFolder('_templates');
+                    $this->logger->info("Created _templates folder in {$lang}");
+                }
             }
 
             $this->logger->info('Created default content in IntraVox folder');
@@ -628,6 +637,217 @@ class SetupService {
             $this->logger->error('Stack trace: ' . $e->getTraceAsString());
             return false;
         }
+    }
+
+    /**
+     * Migrate existing installations to add _templates folders
+     * Idempotent: safe to run multiple times
+     */
+    public function migrateTemplatesFolders(): bool {
+        try {
+            $this->logger->info('Starting _templates folder migration');
+
+            // Get the IntraVox groupfolder
+            $folder = $this->getSharedFolder();
+
+            // Create _templates folder for each language
+            foreach (self::SUPPORTED_LANGUAGES as $lang) {
+                try {
+                    $langFolder = $folder->get($lang);
+                    $this->logger->info("Checking language folder: {$lang}");
+
+                    // Check if _templates folder exists
+                    try {
+                        $langFolder->get('_templates');
+                        $this->logger->info("_templates folder already exists in {$lang}");
+                    } catch (NotFoundException $e) {
+                        // Create _templates folder
+                        $langFolder->newFolder('_templates');
+                        $this->logger->info("Created _templates folder in {$lang}");
+                    }
+                } catch (NotFoundException $e) {
+                    $this->logger->warning("Language folder {$lang} not found, skipping");
+                    continue;
+                }
+            }
+
+            $this->logger->info('_templates folder migration completed successfully');
+            return true;
+
+        } catch (\Exception $e) {
+            $this->logger->error('_templates folder migration failed: ' . $e->getMessage());
+            $this->logger->error('Stack trace: ' . $e->getTraceAsString());
+            return false;
+        }
+    }
+
+    /**
+     * Install default templates from demo-data/templates
+     * Idempotent: skips templates that already exist
+     *
+     * @return array{success: bool, installed: int, skipped: int, error?: string}
+     */
+    public function installDefaultTemplates(): array {
+        try {
+            $this->logger->info('Starting default templates installation');
+
+            $folder = $this->getSharedFolder();
+            $appPath = \OC::$server->getAppManager()->getAppPath('intravox');
+            $templatesSourcePath = $appPath . '/demo-data/templates';
+
+            if (!is_dir($templatesSourcePath)) {
+                $this->logger->warning('Templates source folder not found: ' . $templatesSourcePath);
+                return [
+                    'success' => false,
+                    'installed' => 0,
+                    'skipped' => 0,
+                    'error' => 'Templates source folder not found'
+                ];
+            }
+
+            // Get list of template JSON files
+            $templateFiles = glob($templatesSourcePath . '/*.json');
+            if (empty($templateFiles)) {
+                $this->logger->info('No template files found in source folder');
+                return [
+                    'success' => true,
+                    'installed' => 0,
+                    'skipped' => 0
+                ];
+            }
+
+            $installed = 0;
+            $skipped = 0;
+
+            // Install templates for each language
+            foreach (self::SUPPORTED_LANGUAGES as $lang) {
+                try {
+                    $langFolder = $folder->get($lang);
+
+                    // Ensure _templates folder exists
+                    try {
+                        $templatesFolder = $langFolder->get('_templates');
+                    } catch (NotFoundException $e) {
+                        $templatesFolder = $langFolder->newFolder('_templates');
+                        $this->logger->info("Created _templates folder in {$lang}");
+                    }
+
+                    // Install each template
+                    foreach ($templateFiles as $templateFile) {
+                        $templateId = basename($templateFile, '.json');
+
+                        // Skip if template folder already exists
+                        if ($templatesFolder->nodeExists($templateId)) {
+                            $this->logger->debug("Template {$templateId} already exists in {$lang}, skipping");
+                            $skipped++;
+                            continue;
+                        }
+
+                        // Read and parse template JSON
+                        $templateContent = file_get_contents($templateFile);
+                        $templateData = json_decode($templateContent, true);
+
+                        if (!$templateData) {
+                            $this->logger->warning("Invalid JSON in template file: {$templateFile}");
+                            continue;
+                        }
+
+                        // Update template metadata for this language
+                        $templateData['language'] = $lang;
+                        $templateData['uniqueId'] = 'template-' . $templateId . '-' . $lang;
+
+                        // Create template folder
+                        $templateFolder = $templatesFolder->newFolder($templateId);
+
+                        // Create template JSON file
+                        $templateFolder->newFile($templateId . '.json', json_encode($templateData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+
+                        // Copy _media folder if exists
+                        $sourceMediaPath = $templatesSourcePath . '/_media';
+                        if (is_dir($sourceMediaPath)) {
+                            try {
+                                $mediaFolder = $templateFolder->newFolder('_media');
+
+                                // Get image references from template
+                                $imageRefs = $this->extractImageReferencesFromTemplate($templateData);
+
+                                // Copy only referenced images
+                                foreach ($imageRefs as $imageName) {
+                                    $sourceImage = $sourceMediaPath . '/' . $imageName;
+                                    if (file_exists($sourceImage)) {
+                                        $mediaFolder->newFile($imageName, file_get_contents($sourceImage));
+                                    }
+                                }
+                            } catch (\Exception $e) {
+                                $this->logger->warning("Failed to copy media for template {$templateId}: " . $e->getMessage());
+                            }
+                        }
+
+                        $this->logger->info("Installed template {$templateId} in {$lang}");
+                        $installed++;
+                    }
+                } catch (NotFoundException $e) {
+                    $this->logger->warning("Language folder {$lang} not found, skipping");
+                    continue;
+                }
+            }
+
+            $this->logger->info("Default templates installation completed: {$installed} installed, {$skipped} skipped");
+            return [
+                'success' => true,
+                'installed' => $installed,
+                'skipped' => $skipped
+            ];
+
+        } catch (\Exception $e) {
+            $this->logger->error('Default templates installation failed: ' . $e->getMessage());
+            $this->logger->error('Stack trace: ' . $e->getTraceAsString());
+            return [
+                'success' => false,
+                'installed' => 0,
+                'skipped' => 0,
+                'error' => $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Extract image references from template data
+     * Looks for 'src' properties in image widgets
+     *
+     * @param array $templateData
+     * @return array List of image filenames
+     */
+    private function extractImageReferencesFromTemplate(array $templateData): array {
+        $images = [];
+
+        // Check layout rows
+        if (isset($templateData['layout']['rows'])) {
+            foreach ($templateData['layout']['rows'] as $row) {
+                if (isset($row['widgets'])) {
+                    foreach ($row['widgets'] as $widget) {
+                        if (isset($widget['type']) && $widget['type'] === 'image' && isset($widget['src'])) {
+                            $images[] = $widget['src'];
+                        }
+                    }
+                }
+            }
+        }
+
+        // Check side columns
+        if (isset($templateData['layout']['sideColumns'])) {
+            foreach ($templateData['layout']['sideColumns'] as $side) {
+                if (isset($side['widgets'])) {
+                    foreach ($side['widgets'] as $widget) {
+                        if (isset($widget['type']) && $widget['type'] === 'image' && isset($widget['src'])) {
+                            $images[] = $widget['src'];
+                        }
+                    }
+                }
+            }
+        }
+
+        return array_unique($images);
     }
 
 }

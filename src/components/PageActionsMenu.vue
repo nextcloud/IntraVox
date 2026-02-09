@@ -26,6 +26,15 @@
       </template>
       {{ t('Page Settings') }}
     </NcActionButton>
+
+    <!-- Save as Template -->
+    <NcActionButton v-if="canPerformAction('saveAsTemplate')"
+                    @click="$emit('save-as-template')">
+      <template #icon>
+        <FileDocumentMultipleOutline :size="20" />
+      </template>
+      {{ t('Save as Template') }}
+    </NcActionButton>
   </NcActions>
 </template>
 
@@ -35,6 +44,7 @@ import { NcActions, NcActionButton } from '@nextcloud/vue';
 import Cog from 'vue-material-design-icons/Cog.vue';
 import Plus from 'vue-material-design-icons/Plus.vue';
 import TuneVertical from 'vue-material-design-icons/TuneVertical.vue';
+import FileDocumentMultipleOutline from 'vue-material-design-icons/FileDocumentMultipleOutline.vue';
 
 export default {
   name: 'PageActionsMenu',
@@ -43,7 +53,8 @@ export default {
     NcActionButton,
     Cog,
     Plus,
-    TuneVertical
+    TuneVertical,
+    FileDocumentMultipleOutline
   },
   props: {
     isEditMode: {
@@ -61,7 +72,7 @@ export default {
       })
     }
   },
-  emits: ['edit-navigation', 'create-page', 'page-settings'],
+  emits: ['edit-navigation', 'create-page', 'page-settings', 'save-as-template'],
   methods: {
     t(key, vars = {}) {
       return t('intravox', key, vars);

@@ -1,0 +1,167 @@
+{
+    "uniqueId": "template-news-article",
+    "title": "News Article",
+    "description": "Single news article with hero image, content, and related links",
+    "isTemplate": true,
+    "language": "en",
+    "layout": {
+        "columns": 1,
+        "rows": [
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "article-hero.jpg",
+                        "alt": "Article header image",
+                        "objectFit": "cover"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Article Title Goes Here",
+                        "level": 1
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 1,
+                        "content": "**Lead paragraph:** Start with a compelling introduction that summarizes the key points of your article. This should capture the reader's attention and give them a reason to continue reading.\n\nThe body of your article continues here. Write clear, engaging content that informs your readers about the topic at hand. Use short paragraphs to improve readability.\n\n## Key Points\n\nBreak up your content with subheadings to make it easier to scan. Here are some formatting options:\n\n- **Bold text** for emphasis\n- *Italic text* for titles or special terms\n- Bullet points for lists\n- Numbered lists for step-by-step instructions\n\n## More Details\n\nContinue with additional sections as needed. Include relevant information, quotes, or data that supports your story.\n\n> \"Quotes can be used to highlight important statements or testimonials from sources.\"\n\n## Conclusion\n\nWrap up your article with a summary or call-to-action. Let readers know what they should do next or what to expect in follow-up articles."
+                    }
+                ]
+            },
+            {
+                "columns": 2,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "article-image1.jpg",
+                        "alt": "Supporting image 1",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "*Caption: Add a description for this image*"
+                    },
+                    {
+                        "type": "image",
+                        "column": 2,
+                        "order": 1,
+                        "src": "article-image2.jpg",
+                        "alt": "Supporting image 2",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 2,
+                        "content": "*Caption: Add a description for this image*"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "",
+                        "height": "2px"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-primary-element-light)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Related Articles",
+                        "level": 3
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 2,
+                        "columns": 3,
+                        "items": [
+                            {
+                                "title": "Related Article 1",
+                                "text": "Brief description",
+                                "url": "#",
+                                "icon": "newspaper",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Related Article 2",
+                                "text": "Brief description",
+                                "url": "#",
+                                "icon": "newspaper",
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Back to News",
+                                "text": "View all articles",
+                                "url": "#",
+                                "icon": "arrow-left",
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "transparent",
+                        "height": "20px"
+                    }
+                ]
+            }
+        ],
+        "sideColumns": {
+            "left": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            },
+            "right": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            }
+        }
+    }
+}
