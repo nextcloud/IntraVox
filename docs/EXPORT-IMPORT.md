@@ -1011,12 +1011,12 @@ The current architecture supports extensions through:
 
 The following workflow was successfully tested:
 
-1. **Export** from source server (1dev - 145.38.193.235):
+1. **Export** from source server:
    - Export Dutch (nl) language with 135 pages
    - Include comments and reactions
    - MetaVox metadata included automatically
 
-2. **Import** to target server (3dev - 145.38.188.218):
+2. **Import** to target server:
    - Upload exported ZIP
    - Enable comments import
    - Enable overwrite for updates

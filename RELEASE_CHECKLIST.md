@@ -278,7 +278,7 @@ git push github main --tags
 - **PHP version:** >= 8.1
 - **Supported languages:** EN, NL, DE, FR
 - **App Store:** https://apps.nextcloud.com
-- **Gitea:** https://gitea.rikdekker.nl/rik/IntraVox
+- **Gitea:** (private repository)
 - **GitHub:** https://github.com/nextcloud/IntraVox
 - **Signing key:** `intravox.key` in project root (NOT in git!)
 

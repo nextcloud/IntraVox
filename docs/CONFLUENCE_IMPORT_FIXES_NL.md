@@ -172,7 +172,7 @@ TypeError: can't access property "call", n[e] is undefined
 Als er problemen zijn na de hard refresh:
 
 ```bash
-ssh rdekker@145.38.193.235 'sudo tail -100 /var/www/nextcloud/data/nextcloud.log' | grep -i intravox
+ssh user@your-server 'sudo tail -100 /var/www/nextcloud/data/nextcloud.log' | grep -i intravox
 ```
 
 ## Bestanden aangepast

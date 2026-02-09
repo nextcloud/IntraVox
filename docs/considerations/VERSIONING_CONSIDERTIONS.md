@@ -318,7 +318,7 @@ Collectives solves this with:
 | Nextcloud | 32.0.3 |
 | GroupFolders | 20.1.7 |
 | files_versions | 1.25.0 |
-| Test Server | 3dev (145.38.188.218) |
+| Test Server | (your test server) |
 
 ### Issue Status Update
 
