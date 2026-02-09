@@ -66,5 +66,24 @@ class SetupDemoData implements IRepairStep {
         } else {
             $output->info('Demo data already imported, skipping');
         }
+
+        // Install default templates (idempotent - skips existing templates)
+        $output->info('Installing default templates...');
+        try {
+            $result = $this->setupService->installDefaultTemplates();
+            if ($result['success']) {
+                if ($result['installed'] > 0) {
+                    $output->info("Default templates installed: {$result['installed']} new");
+                }
+                if ($result['skipped'] > 0) {
+                    $output->info("Default templates skipped: {$result['skipped']} already exist");
+                }
+            } else {
+                $output->warning('Default templates installation had issues: ' . ($result['error'] ?? 'unknown error'));
+            }
+        } catch (\Exception $e) {
+            $this->logger->warning('[IntraVox] Template installation failed: ' . $e->getMessage());
+            $output->warning('Template installation failed: ' . $e->getMessage());
+        }
     }
 }

@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.12] - 2026-02-09 - Auto Template Installation
+
+### Changed
+- **Automatic Template Installation**: Default templates are now automatically installed during app install/update
+  - No longer requires manual `occ intravox:setup` command for templates
+  - Existing templates are preserved (idempotent installation)
+  - Templates are installed after demo data import completes
+
 ## [0.9.11] - 2026-02-09 - Page Templates
 
 ### Added
