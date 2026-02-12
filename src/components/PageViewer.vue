@@ -474,6 +474,7 @@ export default {
   gap: 12px;
   width: 100%;
   box-sizing: border-box;
+  align-items: start; /* Align columns to top */
 }
 
 .page-column {

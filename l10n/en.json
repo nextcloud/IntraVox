@@ -763,7 +763,25 @@
     "template_news-hub_title": "News Hub",
     "template_news-hub_description": "Central news page with carousel, featured articles, and categories",
     "template_project_title": "Project",
-    "template_project_description": "Project page with status, milestones, team, and documents"
+    "template_project_description": "Project page with status, milestones, team, and documents",
+    "No people found": "No people found",
+    "Select people in edit mode": "Select people in edit mode",
+    "No users match the current filters": "No users match the current filters",
+    "Showing {shown} of {total} people": "Showing {shown} of {total} people",
+    "Show more": "Show more",
+    "Failed to load people": "Failed to load people",
+    "Filter by attributes": "Filter by attributes",
+    "Select group": "Select group",
+    "Select people": "Select people",
+    "Maximum people to show": "Maximum people to show",
+    "e.g., Our Team": "e.g., Our Team",
+    "show users matching these criteria": "show users matching these criteria",
+    "Social links (X/Fediverse)": "Social links (X/Fediverse)",
+    "Custom fields (LDAP/OIDC)": "Custom fields (LDAP/OIDC)",
+    "Basic information": "Basic information",
+    "Cards": "Cards",
+    "Headline": "Headline",
+    "Selection mode": "Selection mode"
   },
   "pluralForm": "nplurals=2; plural=(n != 1);"
 }

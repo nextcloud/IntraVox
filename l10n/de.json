@@ -783,7 +783,25 @@
     "template_news-hub_title": "Nachrichtenübersicht",
     "template_news-hub_description": "Zentrale Nachrichtenseite mit Karussell, ausgewählten Artikeln und Kategorien",
     "template_project_title": "Projekt",
-    "template_project_description": "Projektseite mit Status, Meilensteinen, Team und Dokumenten"
+    "template_project_description": "Projektseite mit Status, Meilensteinen, Team und Dokumenten",
+    "No people found": "Keine Personen gefunden",
+    "Select people in edit mode": "Personen im Bearbeitungsmodus auswählen",
+    "No users match the current filters": "Keine Benutzer entsprechen den aktuellen Filtern",
+    "Showing {shown} of {total} people": "{shown} von {total} Personen angezeigt",
+    "Show more": "Mehr anzeigen",
+    "Failed to load people": "Personen konnten nicht geladen werden",
+    "Filter by attributes": "Nach Attributen filtern",
+    "Select group": "Gruppe auswählen",
+    "Select people": "Personen auswählen",
+    "Maximum people to show": "Maximale Anzahl der Personen",
+    "e.g., Our Team": "z.B. Unser Team",
+    "show users matching these criteria": "Benutzer anzeigen, die diesen Kriterien entsprechen",
+    "Social links (X/Fediverse)": "Soziale Links (X/Fediverse)",
+    "Custom fields (LDAP/OIDC)": "Benutzerdefinierte Felder (LDAP/OIDC)",
+    "Basic information": "Grundlegende Informationen",
+    "Cards": "Karten",
+    "Headline": "Überschrift",
+    "Selection mode": "Auswahlmodus"
   },
   "pluralForm": "nplurals=2; plural=(n != 1);"
 }

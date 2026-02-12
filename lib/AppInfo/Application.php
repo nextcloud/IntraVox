@@ -6,10 +6,13 @@ namespace OCA\IntraVox\AppInfo;
 use OCA\IntraVox\Activity\Provider as ActivityProvider;
 use OCA\IntraVox\Activity\Setting as ActivitySetting;
 use OCA\IntraVox\Command\SetupCommand;
+use OCA\IntraVox\Command\AddDemoFieldsCommand;
+use OCA\IntraVox\Command\DebugShareCommand;
 use OCA\IntraVox\Event\PageDeletedEvent;
 use OCA\IntraVox\Listener\CommentsEntityListener;
 use OCA\IntraVox\Listener\PageDeletedListener;
 use OCA\IntraVox\Search\PageSearchProvider;
+use OCA\IntraVox\Search\UserSearchProvider;
 use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IBootstrap;
@@ -30,8 +33,9 @@ class Application extends App implements IBootstrap {
     }
 
     public function register(IRegistrationContext $context): void {
-        // Register search provider
+        // Register search providers
         $context->registerSearchProvider(PageSearchProvider::class);
+        $context->registerSearchProvider(UserSearchProvider::class);
 
         // Register Comments Entity Listener (enables comments on IntraVox pages)
         $context->registerEventListener(
@@ -54,11 +58,25 @@ class Application extends App implements IBootstrap {
             $context->registerActivitySetting(ActivitySetting::class);
         }
 
-        // Register OCC command
+        // Register OCC commands
         $context->registerService(SetupCommand::class, function ($c) {
             return new SetupCommand(
                 $c->get(\OCA\IntraVox\Service\SetupService::class),
                 $c->get(\OCA\IntraVox\Service\DemoDataService::class)
+            );
+        });
+
+        $context->registerService(AddDemoFieldsCommand::class, function ($c) {
+            return new AddDemoFieldsCommand(
+                $c->get(\OCP\IUserManager::class),
+                $c->get(\OCP\Accounts\IAccountManager::class),
+                $c->get(\OCP\IConfig::class)
+            );
+        });
+
+        $context->registerService(DebugShareCommand::class, function ($c) {
+            return new DebugShareCommand(
+                $c->get(\OCA\IntraVox\Service\PublicShareService::class)
             );
         });
 

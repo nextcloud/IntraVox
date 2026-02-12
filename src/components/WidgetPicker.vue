@@ -29,6 +29,7 @@ import Minus from 'vue-material-design-icons/Minus.vue';
 import ViewGrid from 'vue-material-design-icons/ViewGrid.vue';
 import Video from 'vue-material-design-icons/Video.vue';
 import Newspaper from 'vue-material-design-icons/Newspaper.vue';
+import AccountGroup from 'vue-material-design-icons/AccountGroup.vue';
 
 export default {
   name: 'WidgetPicker',
@@ -41,6 +42,7 @@ export default {
     ViewGrid,
     Video,
     Newspaper,
+    AccountGroup,
   },
   emits: ['close', 'select'],
   computed: {
@@ -90,6 +92,12 @@ export default {
           name: this.$t('News'),
           icon: 'newspaper',
           description: this.$t('Show news from a folder')
+        },
+        {
+          type: 'people',
+          name: this.$t('People'),
+          icon: 'account-group',
+          description: this.$t('Show team members or people')
         }
       ];
     }
@@ -104,6 +112,7 @@ export default {
         'view-grid': 'ViewGrid',
         'video': 'Video',
         'newspaper': 'Newspaper',
+        'account-group': 'AccountGroup',
       };
       return iconMap[iconName] || 'Text';
     }

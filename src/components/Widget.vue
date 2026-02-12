@@ -86,6 +86,15 @@
       @navigate="$emit('navigate', $event)"
     />
 
+    <!-- People Widget -->
+    <PeopleWidget
+      v-else-if="widget.type === 'people'"
+      :widget="widget"
+      :share-token="shareToken"
+      :page-id="pageId"
+      :row-background-color="rowBackgroundColor"
+    />
+
     <!-- Video Widget -->
     <div v-else-if="widget.type === 'video'" class="widget-video">
       <!-- Blocked Video - domain not in whitelist -->
@@ -166,6 +175,7 @@ import { generateUrl } from '@nextcloud/router';
 import InlineTextEditor from './InlineTextEditor.vue';
 import LinksWidget from './LinksWidget.vue';
 import NewsWidget from './NewsWidget.vue';
+import PeopleWidget from './PeopleWidget.vue';
 import { markdownToHtml } from '../utils/markdownSerializer.js';
 
 export default {
@@ -174,6 +184,7 @@ export default {
     InlineTextEditor,
     LinksWidget,
     NewsWidget,
+    PeopleWidget,
   },
   props: {
     widget: {

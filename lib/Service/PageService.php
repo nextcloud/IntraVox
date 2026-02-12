@@ -18,7 +18,7 @@ use OCA\Files_Versions\Versions\IVersionManager;
 use OCA\Files_Versions\Versions\IVersion;
 
 class PageService {
-    private const ALLOWED_WIDGET_TYPES = ['text', 'heading', 'image', 'links', 'file', 'divider', 'spacer', 'video', 'news'];
+    private const ALLOWED_WIDGET_TYPES = ['text', 'heading', 'image', 'links', 'file', 'divider', 'spacer', 'video', 'news', 'people'];
     private const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
     private const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/ogg'];
     private const ALLOWED_MEDIA_TYPES = [
@@ -2355,6 +2355,101 @@ class PageService {
                 // Publication date filter (show only published pages)
                 $sanitized['filterPublished'] = (bool)($widget['filterPublished'] ?? false);
                 break;
+
+            case 'people':
+                // People widget - displays user profiles
+                $sanitized['title'] = $this->sanitizeText($widget['title'] ?? '');
+
+                // Selection mode
+                $allowedModes = ['manual', 'filter'];
+                $sanitized['selectionMode'] = in_array($widget['selectionMode'] ?? 'manual', $allowedModes)
+                    ? $widget['selectionMode']
+                    : 'manual';
+
+                // Selected users (array of user IDs for manual mode)
+                $sanitized['selectedUsers'] = [];
+                if (isset($widget['selectedUsers']) && is_array($widget['selectedUsers'])) {
+                    foreach ($widget['selectedUsers'] as $userId) {
+                        // User IDs are alphanumeric strings
+                        $sanitizedUserId = preg_replace('/[^a-zA-Z0-9_-]/', '', (string)$userId);
+                        if (!empty($sanitizedUserId)) {
+                            $sanitized['selectedUsers'][] = $sanitizedUserId;
+                        }
+                    }
+                }
+
+                // Filters (for filter mode)
+                $sanitized['filters'] = [];
+                if (isset($widget['filters']) && is_array($widget['filters'])) {
+                    foreach ($widget['filters'] as $filter) {
+                        if (isset($filter['fieldName']) && !empty($filter['fieldName'])) {
+                            $allowedOperators = ['equals', 'contains', 'in', 'not_empty', 'empty'];
+                            $sanitizedFilter = [
+                                'fieldName' => $this->sanitizeText($filter['fieldName']),
+                                'operator' => in_array($filter['operator'] ?? 'equals', $allowedOperators)
+                                    ? $filter['operator']
+                                    : 'equals',
+                                'value' => $this->sanitizeText($filter['value'] ?? ''),
+                                'values' => [],
+                            ];
+
+                            // Sanitize values array (for 'in' operator)
+                            if (isset($filter['values']) && is_array($filter['values'])) {
+                                $sanitizedFilter['values'] = array_map(
+                                    fn($v) => $this->sanitizeText((string)$v),
+                                    $filter['values']
+                                );
+                            }
+
+                            $sanitized['filters'][] = $sanitizedFilter;
+                        }
+                    }
+                }
+
+                $allowedFilterOperators = ['AND', 'OR'];
+                $sanitized['filterOperator'] = in_array($widget['filterOperator'] ?? 'AND', $allowedFilterOperators)
+                    ? $widget['filterOperator']
+                    : 'AND';
+
+                // Layout options
+                $allowedLayouts = ['card', 'list', 'grid'];
+                $sanitized['layout'] = in_array($widget['layout'] ?? 'card', $allowedLayouts)
+                    ? $widget['layout']
+                    : 'card';
+
+                // Grid/card columns (2-4)
+                $sanitized['columns'] = max(2, min((int)($widget['columns'] ?? 3), 4));
+
+                // Limit (1-50 people)
+                $sanitized['limit'] = max(1, min((int)($widget['limit'] ?? 12), 50));
+
+                // Sort options
+                $allowedSortBy = ['displayName', 'email'];
+                $sanitized['sortBy'] = in_array($widget['sortBy'] ?? 'displayName', $allowedSortBy)
+                    ? $widget['sortBy']
+                    : 'displayName';
+
+                $allowedSortOrder = ['asc', 'desc'];
+                $sanitized['sortOrder'] = in_array($widget['sortOrder'] ?? 'asc', $allowedSortOrder)
+                    ? $widget['sortOrder']
+                    : 'asc';
+
+                // Display options (showFields object)
+                $sanitized['showFields'] = [
+                    'avatar' => (bool)($widget['showFields']['avatar'] ?? true),
+                    'displayName' => (bool)($widget['showFields']['displayName'] ?? true),
+                    'email' => (bool)($widget['showFields']['email'] ?? true),
+                    'phone' => (bool)($widget['showFields']['phone'] ?? true),
+                    'department' => (bool)($widget['showFields']['department'] ?? true),
+                    'title' => (bool)($widget['showFields']['title'] ?? true),
+                    'biography' => (bool)($widget['showFields']['biography'] ?? false),
+                ];
+
+                // Background color
+                if (isset($widget['backgroundColor'])) {
+                    $sanitized['backgroundColor'] = $this->sanitizeBackgroundColor($widget['backgroundColor']);
+                }
+                break;
         }
 
         return $sanitized;
@@ -3831,34 +3926,40 @@ class PageService {
             }
 
             // Search in content - layout is already loaded
+            // Collect all widgets from all layout areas
+            $allWidgets = [];
+
+            // Main rows
             if (isset($pageData['layout']['rows'])) {
                 foreach ($pageData['layout']['rows'] as $row) {
                     if (isset($row['widgets'])) {
-                        foreach ($row['widgets'] as $widget) {
-                            // Search in text widgets
-                            if ($widget['type'] === 'text' && isset($widget['content'])) {
-                                if (mb_stripos($widget['content'], $query) !== false) {
-                                    $score += 3;
-                                    // Extract snippet around match
-                                    $snippet = $this->extractSnippet($widget['content'], $query);
-                                    $matches[] = [
-                                        'type' => 'content',
-                                        'text' => $snippet
-                                    ];
-                                }
-                            }
-                            // Search in heading widgets
-                            if ($widget['type'] === 'heading' && isset($widget['text'])) {
-                                if (mb_stripos($widget['text'], $query) !== false) {
-                                    $score += 5;
-                                    $matches[] = [
-                                        'type' => 'heading',
-                                        'text' => $widget['text']
-                                    ];
-                                }
-                            }
-                        }
+                        $allWidgets = array_merge($allWidgets, $row['widgets']);
                     }
+                }
+            }
+
+            // Header row
+            if (isset($pageData['layout']['headerRow']['widgets'])) {
+                $allWidgets = array_merge($allWidgets, $pageData['layout']['headerRow']['widgets']);
+            }
+
+            // Side columns
+            if (isset($pageData['layout']['sideColumns']['left']['widgets'])) {
+                $allWidgets = array_merge($allWidgets, $pageData['layout']['sideColumns']['left']['widgets']);
+            }
+            if (isset($pageData['layout']['sideColumns']['right']['widgets'])) {
+                $allWidgets = array_merge($allWidgets, $pageData['layout']['sideColumns']['right']['widgets']);
+            }
+
+            // Search through all collected widgets
+            foreach ($allWidgets as $widget) {
+                $widgetMatches = $this->searchWidget($widget, $query);
+                foreach ($widgetMatches as $match) {
+                    $score += $match['score'];
+                    $matches[] = [
+                        'type' => $match['type'],
+                        'text' => $match['text']
+                    ];
                 }
             }
 
@@ -3909,6 +4010,95 @@ class PageService {
         $suffix = (mb_strlen($text) > $start + $contextLength) ? '...' : '';
 
         return $prefix . trim($snippet) . $suffix;
+    }
+
+    /**
+     * Search a single widget for matches
+     *
+     * @param array $widget Widget data
+     * @param string $query Search query (lowercase)
+     * @return array Array of matches with type, text, and score
+     */
+    private function searchWidget(array $widget, string $query): array {
+        $matches = [];
+        $type = $widget['type'] ?? '';
+
+        // Text widgets
+        if ($type === 'text' && isset($widget['content'])) {
+            if (mb_stripos($widget['content'], $query) !== false) {
+                $matches[] = [
+                    'type' => 'content',
+                    'text' => $this->extractSnippet($widget['content'], $query),
+                    'score' => 3
+                ];
+            }
+        }
+
+        // Heading widgets
+        if ($type === 'heading' && isset($widget['content'])) {
+            if (mb_stripos($widget['content'], $query) !== false) {
+                $matches[] = [
+                    'type' => 'heading',
+                    'text' => $widget['content'],
+                    'score' => 5
+                ];
+            }
+        }
+
+        // Image widgets (alt text)
+        if ($type === 'image' && !empty($widget['alt'])) {
+            if (mb_stripos($widget['alt'], $query) !== false) {
+                $matches[] = [
+                    'type' => 'image',
+                    'text' => $widget['alt'],
+                    'score' => 2
+                ];
+            }
+        }
+
+        // Links widgets (title and text)
+        if ($type === 'links' && !empty($widget['items'])) {
+            foreach ($widget['items'] as $link) {
+                $linkTitle = $link['title'] ?? '';
+                $linkText = strip_tags($link['text'] ?? '');
+                $linkSearchText = $linkTitle . ' ' . $linkText;
+                if (mb_stripos($linkSearchText, $query) !== false) {
+                    $displayText = $linkTitle;
+                    if (!empty($linkText)) {
+                        $displayText .= ' - ' . $this->extractSnippet($linkText, $query, 60);
+                    }
+                    $matches[] = [
+                        'type' => 'link',
+                        'text' => $displayText,
+                        'score' => 3
+                    ];
+                }
+            }
+        }
+
+        // File widgets (filename)
+        if ($type === 'file' && !empty($widget['name'])) {
+            if (mb_stripos($widget['name'], $query) !== false) {
+                $matches[] = [
+                    'type' => 'file',
+                    'text' => $widget['name'],
+                    'score' => 2
+                ];
+            }
+        }
+
+        // Video widgets (title)
+        if ($type === 'video' && !empty($widget['title'])) {
+            if (mb_stripos($widget['title'], $query) !== false) {
+                $matches[] = [
+                    'type' => 'video',
+                    'text' => $widget['title'],
+                    'score' => 2
+                ];
+            }
+        }
+
+        return $matches;
     }
 
     /**

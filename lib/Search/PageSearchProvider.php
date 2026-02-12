@@ -80,12 +80,34 @@ class PageSearchProvider implements IProvider {
 
                 if (!empty($result['matches'])) {
                     $firstMatch = $result['matches'][0];
+                    $matchType = $firstMatch['type'];
+                    $matchText = $firstMatch['text'];
 
-                    // Use match text as subline
-                    if ($firstMatch['type'] === 'content' || $firstMatch['type'] === 'heading') {
-                        $subline = $this->truncate($firstMatch['text'], 100);
-                    } elseif ($firstMatch['type'] === 'title') {
-                        $subline = $this->l10n->t('IntraVox Page');
+                    // Format subline with widget type prefix for clarity
+                    switch ($matchType) {
+                        case 'title':
+                            $subline = $this->l10n->t('IntraVox Page');
+                            break;
+                        case 'content':
+                            $subline = $this->truncate($matchText, 100);
+                            break;
+                        case 'heading':
+                            $subline = $this->l10n->t('Heading') . ': ' . $this->truncate($matchText, 90);
+                            break;
+                        case 'image':
+                            $subline = $this->l10n->t('Image') . ': ' . $this->truncate($matchText, 90);
+                            break;
+                        case 'link':
+                            $subline = $this->l10n->t('Link') . ': ' . $this->truncate($matchText, 90);
+                            break;
+                        case 'file':
+                            $subline = $this->l10n->t('File') . ': ' . $this->truncate($matchText, 90);
+                            break;
+                        case 'video':
+                            $subline = $this->l10n->t('Video') . ': ' . $this->truncate($matchText, 90);
+                            break;
+                        default:
+                            $subline = $this->truncate($matchText, 100);
                     }
                 }
 

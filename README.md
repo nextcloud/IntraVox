@@ -49,6 +49,7 @@ IntraVox brings SharePoint-style page creation to Nextcloud, enabling teams to b
 | **Video** | Embed videos from YouTube, Vimeo, PeerTube, or upload local videos |
 | **Links** | Multi-link grid widget (1-5 columns) with Material Design icons |
 | **News** | Display pages from a folder as news items with List, Grid, or Carousel layout |
+| **People** | User profiles with Card, List, or Grid layout - filter by group or select manually |
 | **Divider** | Visual separator that adapts to row background color |
 | **Spacer** | Add empty space between content |
 
@@ -70,6 +71,17 @@ The News Widget displays pages from a selected folder as dynamic news items:
 ![News Widget Editor](https://raw.githubusercontent.com/nextcloud/intravox/main/screenshots/Newswidget-edit.png)
 
 *News widget configuration with MetaVox filters*
+
+### People Widget
+
+The People Widget displays Nextcloud user profiles - perfect for team pages, organization directories, and department overviews:
+
+- **Three Layouts**: Card (detailed), List (compact), or Grid (minimal)
+- **Selection Modes**: Manual selection or filter by attributes
+- **Group Filtering**: Show all users from specific Nextcloud groups
+- **Field Filtering**: Filter by role, department, organisation, or any profile field
+- **Customizable Display**: Choose which fields to show (avatar, name, email, phone, title, etc.)
+- **Nextcloud Integration**: Click avatars to view profiles, send email, or check availability
 
 ### Collapsible Rows
 
@@ -400,6 +412,7 @@ npm run build
 - [Authorization Guide](docs/AUTHORIZATION.md) - User and administrator permissions guide
 - [Architecture](docs/ARCHITECTURE.md) - Technical architecture documentation
 - [News Widget Guide](docs/NEWS_WIDGET.md) - How to use the News widget
+- [People Widget Guide](docs/PEOPLE_WIDGET.md) - How to use the People widget
 - [Export/Import Guide](docs/EXPORT-IMPORT.md) - Export and import content
 - [Engagement User Guide](docs/ENGAGEMENT_GUIDE.md) - How to use reactions and comments
 - [Engagement Admin Guide](docs/ENGAGEMENT_ADMIN.md) - Configure engagement settings

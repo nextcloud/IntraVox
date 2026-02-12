@@ -662,7 +662,7 @@ export default {
     },
     needsEditButton(widgetType) {
       // Show edit button for widgets that aren't inline-editable
-      return ['image', 'link', 'links', 'file', 'heading', 'video', 'news'].includes(widgetType);
+      return ['image', 'link', 'links', 'file', 'heading', 'video', 'news', 'people'].includes(widgetType);
     },
     initializeWidgetIds() {
       // Collect ALL widgets from all zones for duplicate detection
@@ -953,7 +953,7 @@ export default {
         this.showWidgetPicker = false;
 
         // Open editor modal for widgets that need configuration
-        if (widgetType === 'image' || widgetType === 'links' || widgetType === 'file' || widgetType === 'heading' || widgetType === 'video' || widgetType === 'news') {
+        if (widgetType === 'image' || widgetType === 'links' || widgetType === 'file' || widgetType === 'heading' || widgetType === 'video' || widgetType === 'news' || widgetType === 'people') {
           this.editHeaderRowWidget(newWidget);
         }
 
@@ -971,7 +971,7 @@ export default {
         this.showWidgetPicker = false;
 
         // Open editor modal for widgets that need configuration
-        if (widgetType === 'image' || widgetType === 'links' || widgetType === 'file' || widgetType === 'heading' || widgetType === 'video' || widgetType === 'news') {
+        if (widgetType === 'image' || widgetType === 'links' || widgetType === 'file' || widgetType === 'heading' || widgetType === 'video' || widgetType === 'news' || widgetType === 'people') {
           this.editSideColumnWidget(newWidget, side);
         }
 
@@ -999,7 +999,7 @@ export default {
       this.showWidgetPicker = false;
 
       // Open editor modal for widgets that need configuration
-      if (widgetType === 'image' || widgetType === 'links' || widgetType === 'file' || widgetType === 'heading' || widgetType === 'video' || widgetType === 'news') {
+      if (widgetType === 'image' || widgetType === 'links' || widgetType === 'file' || widgetType === 'heading' || widgetType === 'video' || widgetType === 'news' || widgetType === 'people') {
         this.editWidget(newWidget, rowIndex);
       }
 
@@ -1066,6 +1066,28 @@ export default {
           widget.autoplayInterval = 5;
           widget.filters = [];
           widget.filterOperator = 'AND';
+          break;
+        case 'people':
+          widget.title = '';
+          widget.backgroundColor = null;
+          widget.selectionMode = 'manual';
+          widget.selectedUsers = [];
+          widget.filters = [];
+          widget.filterOperator = 'AND';
+          widget.layout = 'card';
+          widget.columns = 3;
+          widget.limit = 12;
+          widget.sortBy = 'displayName';
+          widget.sortOrder = 'asc';
+          widget.showFields = {
+            avatar: true,
+            displayName: true,
+            email: true,
+            phone: true,
+            department: true,
+            title: true,
+            biography: false,
+          };
           break;
       }
 
@@ -1995,6 +2017,7 @@ export default {
   display: grid;
   gap: 12px;
   width: 100%;
+  align-items: start; /* Align columns to top */
 }
 
 .page-column {

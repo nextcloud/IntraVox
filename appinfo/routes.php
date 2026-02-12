@@ -135,6 +135,13 @@ return [
         ['name' => 'api#getShareInfo', 'url' => '/api/pages/{uniqueId}/share-info', 'verb' => 'GET'],
         ['name' => 'api#getActiveShares', 'url' => '/api/admin/shares', 'verb' => 'GET'],
 
+        // People widget API routes
+        ['name' => 'people#searchUsers', 'url' => '/api/users/search', 'verb' => 'GET'],
+        ['name' => 'people#getUsers', 'url' => '/api/users', 'verb' => 'POST'],
+        ['name' => 'people#getGroups', 'url' => '/api/users/groups', 'verb' => 'GET'],
+        ['name' => 'people#getUserFields', 'url' => '/api/users/fields', 'verb' => 'GET'],
+        ['name' => 'people#getPeople', 'url' => '/api/people', 'verb' => 'GET'],
+
         // Public share access routes (anonymous access via NC share links)
         ['name' => 'api#getPageByShare', 'url' => '/api/share/{token}/page/{uniqueId}', 'verb' => 'GET'],
         ['name' => 'api#getMediaByShare', 'url' => '/api/share/{token}/page/{uniqueId}/media/{filename}', 'verb' => 'GET'],
@@ -143,6 +150,7 @@ return [
         ['name' => 'api#getNavigationByShare', 'url' => '/api/share/{token}/navigation', 'verb' => 'GET'],
         ['name' => 'api#getPageTreeByShare', 'url' => '/api/share/{token}/tree', 'verb' => 'GET'],
         ['name' => 'api#getNewsByShare', 'url' => '/api/share/{token}/news', 'verb' => 'GET'],
+        ['name' => 'people#getPeopleByShare', 'url' => '/api/share/{token}/people', 'verb' => 'GET'],
 
         // Page routes
         ['name' => 'page#index', 'url' => '/', 'verb' => 'GET'],

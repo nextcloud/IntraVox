@@ -64,3 +64,6 @@ CLAUDE.md
 
 # Internal documentation (for Gitea only, not GitHub)
 docs/internal/
+
+# Test data (local development only)
+testdata/

@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.13] - 2026-02-12 - People Widget
+
+### Added
+- **People Widget**: New widget to display Nextcloud user profiles on pages
+  - **Three layouts**: Card (detailed with contact info), List (compact rows), Grid (avatar gallery)
+  - **Two selection modes**: Manual user selection or filter-based (by group, role, department, etc.)
+  - **Group filtering**: Show all users from specific Nextcloud groups automatically
+  - **Field filtering**: Filter users by any profile field with operators (equals, contains, does not contain, is one of, etc.)
+  - **Customizable display**: Toggle which fields to show (avatar, name, email, phone, role, headline, department, biography, social links)
+  - **Display options grouped**: Basic Information, Contact, and Extended categories for easier configuration
+  - **Role and Headline fields**: Separate fields for official job title (Role) and personal tagline (Headline)
+  - **LDAP/OIDC support**: Custom fields from LDAP or OIDC are automatically detected and can be displayed
+  - **Nextcloud integration**: Clicking avatars opens Nextcloud's contact menu (view profile, send email, check availability)
+  - **Privacy-first defaults**: Phone numbers and addresses are hidden by default
+  - **Sorting options**: Sort by name or email, ascending or descending
+  - **Column configuration**: 2, 3, or 4 columns for Card and Grid layouts
+  - **Pagination**: "Show more" button when there are more people than the configured limit
+  - **Dark background support**: Proper text contrast on colored widget backgrounds
+- **People Widget Guide**: Comprehensive documentation at `docs/PEOPLE_WIDGET.md`
+
+### Changed
+- **Filter field order**: Filter fields now match the Display Options order (Group, Name, Pronouns, Role, Headline, Organisation, Email, Phone, Address, Website, Biography, Twitter/X, Fediverse)
+- **Filter operators**: Added "does not contain" operator for text fields
+- **Column alignment**: Fixed page columns aligning to different heights (now uses `align-items: start`)
+
+### Fixed
+- **Dark background text contrast**: Pagination footer text now readable on dark widget backgrounds
+- **Widget title alignment**: Widgets with background color now align with widgets without background
+- **profileEnabled filter**: Internal Nextcloud field no longer appears as a filter option
+- **Avatar filter**: Avatar field removed from filter options (not useful as a filter)
+
+### Documentation
+- **README Updated**: Added People widget to features list and documentation links
+- **Internal Docs**: Updated Additions.md roadmap to reflect People widget completion
+
 ## [0.9.12] - 2026-02-09 - Auto Template Installation
 
 ### Changed

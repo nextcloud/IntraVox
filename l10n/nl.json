@@ -763,7 +763,25 @@
     "template_news-hub_title": "Nieuwsoverzicht",
     "template_news-hub_description": "Centrale nieuwspagina met carrousel, uitgelichte artikelen en categorieën",
     "template_project_title": "Project",
-    "template_project_description": "Projectpagina met status, mijlpalen, team en documenten"
+    "template_project_description": "Projectpagina met status, mijlpalen, team en documenten",
+    "No people found": "Geen personen gevonden",
+    "Select people in edit mode": "Selecteer personen in bewerkingsmodus",
+    "No users match the current filters": "Geen gebruikers voldoen aan de huidige filters",
+    "Showing {shown} of {total} people": "{shown} van {total} personen getoond",
+    "Show more": "Toon meer",
+    "Failed to load people": "Kon personen niet laden",
+    "Filter by attributes": "Filteren op kenmerken",
+    "Select group": "Selecteer groep",
+    "Select people": "Selecteer personen",
+    "Maximum people to show": "Maximum aantal personen",
+    "e.g., Our Team": "bijv. Ons Team",
+    "show users matching these criteria": "toon gebruikers die voldoen aan deze criteria",
+    "Social links (X/Fediverse)": "Sociale links (X/Fediverse)",
+    "Custom fields (LDAP/OIDC)": "Aangepaste velden (LDAP/OIDC)",
+    "Basic information": "Basisgegevens",
+    "Cards": "Kaarten",
+    "Headline": "Koptekst",
+    "Selection mode": "Selectiemodus"
   },
   "pluralForm": "nplurals=2; plural=(n != 1);"
 }

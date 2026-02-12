@@ -254,6 +254,13 @@
           @update="handleNewsWidgetUpdate"
         />
 
+        <!-- People Widget -->
+        <PeopleWidgetEditor
+          v-else-if="localWidget.type === 'people'"
+          :widget="localWidget"
+          @update="handlePeopleWidgetUpdate"
+        />
+
         <!-- Video Widget -->
         <div v-else-if="localWidget.type === 'video'">
           <!-- Provider keuze -->
@@ -432,6 +439,7 @@ import { NcButton, NcModal } from '@nextcloud/vue';
 import PageTreeSelect from './PageTreeSelect.vue';
 import MediaPicker from './MediaPicker.vue';
 import NewsWidgetEditor from './NewsWidgetEditor.vue';
+import PeopleWidgetEditor from './PeopleWidgetEditor.vue';
 import { showError, showSuccess } from '@nextcloud/dialogs';
 import ImageIcon from 'vue-material-design-icons/Image.vue';
 import VideoIcon from 'vue-material-design-icons/Video.vue';
@@ -446,6 +454,7 @@ export default {
     PageTreeSelect,
     MediaPicker,
     NewsWidgetEditor,
+    PeopleWidgetEditor,
     ImageIcon,
     VideoIcon
   },
@@ -598,6 +607,10 @@ export default {
     },
     handleNewsWidgetUpdate(updatedWidget) {
       // Merge the updated news widget properties into localWidget
+      Object.assign(this.localWidget, updatedWidget);
+    },
+    handlePeopleWidgetUpdate(updatedWidget) {
+      // Merge the updated people widget properties into localWidget
       Object.assign(this.localWidget, updatedWidget);
     },
     save() {
