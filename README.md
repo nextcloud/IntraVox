@@ -43,7 +43,7 @@ IntraVox brings SharePoint-style page creation to Nextcloud, enabling teams to b
 
 | Widget | Description |
 |--------|-------------|
-| **Text** | Rich text with full Markdown support (bold, italic, lists, links, tables) |
+| **Text** | Rich text with full Markdown support (bold, italic, lists, links, tables) and a built-in dummy text generator |
 | **Heading** | H1-H6 headers with customizable styling |
 | **Image** | Visual content with flexible sizing, optional clickable links to pages or external URLs |
 | **Video** | Embed videos from YouTube, Vimeo, PeerTube, or upload local videos |
@@ -76,12 +76,19 @@ The News Widget displays pages from a selected folder as dynamic news items:
 
 The People Widget displays Nextcloud user profiles - perfect for team pages, organization directories, and department overviews:
 
-- **Three Layouts**: Card (detailed), List (compact), or Grid (minimal)
+- **Three Layouts**: Card (detailed), List (compact), or Grid — all with identical display options
 - **Selection Modes**: Manual selection or filter by attributes
 - **Group Filtering**: Show all users from specific Nextcloud groups
 - **Field Filtering**: Filter by role, department, organisation, or any profile field
+- **Date Filters**: "Is today" and "within next days" operators for birthday widgets
+- **Birthdate Support**: Display birthdates with a cake icon
+- **Social Links**: Twitter/X, Fediverse, and Bluesky profiles
 - **Customizable Display**: Choose which fields to show (avatar, name, email, phone, title, etc.)
 - **Nextcloud Integration**: Click avatars to view profiles, send email, or check availability
+
+![People Widget Birthday](https://raw.githubusercontent.com/nextcloud/intravox/main/screenshots/People-Birthday.png)
+
+*People widget showing birthdate and social links*
 
 ### Collapsible Rows
 
@@ -95,6 +102,21 @@ Create SharePoint-style collapsible sections for better content organization:
 ![Collapsible Sections](https://raw.githubusercontent.com/nextcloud/intravox/main/screenshots/Collapsible-sections.png)
 
 *Collapsible rows for organized content sections*
+
+### Dummy Text Generator (Easter Egg)
+
+![Dad Jokes Generator](https://raw.githubusercontent.com/nextcloud/intravox/main/screenshots/dadjokes.gif)
+
+*Type `=dad()` and press Enter to generate placeholder text with dad jokes*
+
+Need placeholder text? Type a command in the text widget and press Enter:
+
+| Command | Result |
+|---------|--------|
+| `=dad(3,5)` | 3 paragraphs of 5 dad jokes |
+| `=lorem(2,4)` | 2 paragraphs of 4 Lorem Ipsum sentences |
+
+Inspired by Microsoft Word's `=rand()` command. Built-in jokes, no internet required.
 
 ### Table Support
 
@@ -409,6 +431,7 @@ npm run build
 
 ## Documentation
 
+- [Editor Guide](docs/EDITOR_GUIDE.md) - How to create and edit pages, widgets, and content
 - [Authorization Guide](docs/AUTHORIZATION.md) - User and administrator permissions guide
 - [Architecture](docs/ARCHITECTURE.md) - Technical architecture documentation
 - [News Widget Guide](docs/NEWS_WIDGET.md) - How to use the News widget

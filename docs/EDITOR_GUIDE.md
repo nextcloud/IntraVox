@@ -129,10 +129,27 @@ Rich text content with formatting.
 - Numbered lists
 - Links
 
-**Best practices:**
-- Keep paragraphs short
-- Use lists for multiple items
-- Add links to relevant pages
+**Dummy text generator (Easter Egg):**
+
+Need placeholder text while designing your page? Type a special command on an empty line and press **Enter** to generate dummy content — inspired by Microsoft Word's `=rand()` command.
+
+![Dummy Text Generator](../screenshots/dadjokes.gif)
+
+| Command | Description | Example |
+|---------|-------------|---------|
+| `=dad()` | Generate dad jokes | `=dad(3,5)` → 3 paragraphs of 5 jokes |
+| `=dadjokes()` | Alias for =dad() | `=dadjokes(2,4)` → 2 paragraphs of 4 jokes |
+| `=lorem()` | Classic Lorem Ipsum | `=lorem(2,3)` → 2 paragraphs of 3 sentences |
+
+**Parameters:** `=(command)(paragraphs, sentences)` — both optional, default is 3 paragraphs with 3 sentences each. Maximum is 20 for both values.
+
+**How it works:**
+1. Click in a text widget in edit mode
+2. Type `=dad()` (or any command from the table above) on an empty line
+3. Press **Enter**
+4. The command is replaced with generated text
+
+The jokes are built into IntraVox (no internet connection required) and are randomly shuffled each time, so you get different content every time.
 
 #### Image
 

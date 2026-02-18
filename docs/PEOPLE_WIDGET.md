@@ -7,10 +7,13 @@ The People Widget displays user profiles from your Nextcloud instance. It's perf
 ## Features
 
 - **Multiple layouts**: Card, List, or Grid view
+- **Unified display options**: All display options work consistently across all layouts
 - **Selection modes**: Manual selection or filter-based
 - **Group filtering**: Show users from specific groups
-- **Field filtering**: Filter by any user profile field
+- **Field filtering**: Filter by any user profile field, including date-based filters
 - **Customizable display**: Choose which profile fields to show
+- **Birthdate support**: Display birthdates with a cake icon
+- **Social links**: Twitter/X, Fediverse, and Bluesky profiles
 - **Sorting options**: Sort by name or email
 - **Pagination**: "Show more" button when there are more people than the configured limit
 - **Nextcloud integration**: Click avatars to see profiles, email, and availability
@@ -28,7 +31,7 @@ Compact horizontal layout showing avatar, name, and key details in a row. Ideal 
 
 ### Grid Layout
 
-Minimal grid showing only avatars and names. Perfect for quick visual overviews of teams or departments.
+Grid layout with avatars and key details. All display options (contact info, social links, custom fields, etc.) are supported in every layout, including Grid. Perfect for quick visual overviews of teams or departments.
 
 ## Configuration
 
@@ -83,8 +86,8 @@ Fields are organized in logical order matching the Display Options:
 | **Group** | Nextcloud group membership |
 | **Basic Information** | Name, Pronouns, Role, Headline, Organisation |
 | **Contact** | Email, Phone, Address, Website |
-| **Extended** | Biography, Twitter/X, Fediverse |
-| **Custom** | Additional LDAP/OIDC fields (Bluesky, Birthdate, etc.) |
+| **Extended** | Biography, Birthdate, Twitter/X, Fediverse, Bluesky |
+| **Custom** | Additional LDAP/OIDC fields |
 
 #### Filter Operators
 
@@ -96,6 +99,8 @@ Fields are organized in logical order matching the Display Options:
 | **is one of** | Match any of multiple values | Group field |
 | **is not empty** | Field has any value | All fields |
 | **is empty** | Field has no value | All fields |
+| **is today** | Date matches today's date (month + day) | Date fields (e.g., Birthdate) |
+| **within next days** | Date falls within the next N days | Date fields (e.g., Birthdate) |
 
 #### Multiple Filters
 
@@ -119,9 +124,23 @@ When using multiple filters, choose how they combine:
 1. Add filter: **Role** → **does not contain** → "Intern"
 2. Result: Shows users without "Intern" in their role
 
+#### Example: Show Today's Birthdays
+
+![Birthday Widget](../screenshots/Peopl-WhereIsTheCake.png)
+
+1. Add filter: **Birthdate** → **is today**
+2. Result: Shows users whose birthday is today
+
+#### Example: Show Upcoming Birthdays
+
+1. Add filter: **Birthdate** → **within next days** → "7"
+2. Result: Shows users with birthdays in the next 7 days
+
+> **Note**: The "is today" and "within next days" operators compare month and day only (ignoring year), which is ideal for recurring events like birthdays. Year-end wrapping is handled automatically (e.g., a filter set on December 30 with "within next 7 days" will correctly include January birthdays).
+
 ## Display Options
 
-Control which information is shown for each user. Options are grouped into categories:
+Control which information is shown for each user. All display options are available in every layout (Card, List, and Grid).
 
 ![People Widget Display Options](../screenshots/People-Display-options.png)
 
@@ -149,11 +168,16 @@ Control which information is shown for each user. Options are grouped into categ
 
 | Field | Description | Default |
 |-------|-------------|---------|
-| **Biography** | User bio (Card layout only) | Off |
-| **Social links** | Twitter/X and Fediverse links | Off |
+| **Biography** | User bio | Off |
+| **Birthdate** | Birthday with cake icon | Off |
+| **Social links** | Twitter/X, Fediverse, and Bluesky links | Off |
 | **Custom fields** | Additional LDAP/OIDC fields | Off |
 
-> **Note**: Some options are only available for certain layouts. For example, Address, Website, Social links, and Custom fields are hidden in Grid layout due to space constraints.
+### Birthdate Display
+
+![People Widget with Birthdays](../screenshots/People-Birthday.png)
+
+When the **Birthdate** field is enabled, each user's birthday is displayed with a cake icon. The date is formatted according to the user's locale. This pairs well with the date filter operators to create birthday widgets (see [Show Today's Birthdays](#example-show-todays-birthdays)).
 
 ## Custom Fields (LDAP/OIDC)
 
@@ -168,10 +192,10 @@ Common custom fields include:
 - Office Location
 - Employee Type
 - Manager
-- Bluesky handle
-- Birthdate
 
 Enable "Custom fields (LDAP/OIDC)" in Display Options to show these fields on user cards. The widget automatically formats field names for readability (e.g., `employee_id` becomes "Employee Id").
+
+> **Note**: Birthdate and Bluesky are now first-class fields with dedicated display options and don't require the custom fields toggle.
 
 ## Pagination
 
@@ -209,11 +233,13 @@ These fields are available in all Nextcloud installations:
 - Website
 - Twitter/X handle
 - Fediverse handle
+- Bluesky handle
 - Organisation
 - Role (job title)
 - Headline (personal tagline)
 - Biography
 - Pronouns
+- Birthdate
 
 ### LDAP/Active Directory Fields
 
@@ -277,7 +303,7 @@ When using a dark background (Primary), text colors automatically adjust for pro
 
 ## Requirements
 
-- IntraVox 0.9.13 or higher
+- IntraVox 0.9.14 or higher
 - Users must have Nextcloud accounts
 - Group filtering requires users to be members of Nextcloud groups
 - Calendar app required for "Show availability" in avatar popup
