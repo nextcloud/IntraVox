@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Nextcloud 33 Support**: IntraVox now supports both Nextcloud 32 and 33
+
+### Changed
+- **PHP Minimum Version**: Raised from PHP 8.1 to PHP 8.2 (required by Nextcloud 33)
+
+### Fixed
+- **Comment Cascade Delete**: Deleting a parent comment now properly deletes all replies and updates the comment count correctly ([#20](https://github.com/nextcloud/IntraVox/issues/20))
+  - Previously, deleting a comment with replies left orphaned child comments in the database
+  - Frontend count now correctly subtracts parent + all replies when deleting
+
 ## [0.9.13] - 2026-02-12 - People Widget
 
 ### Added

@@ -248,8 +248,8 @@ If you want to reset demo content to its original state:
 
 | Component | Minimum | Recommended |
 |-----------|---------|-------------|
-| Nextcloud | 32+ | 32+ |
-| PHP | 8.1+ | 8.2+ |
+| Nextcloud | 32-33 | 33+ |
+| PHP | 8.2+ | 8.3+ |
 | PHP memory_limit | 256MB | 512MB |
 | GroupFolders app | Required | Required |
 

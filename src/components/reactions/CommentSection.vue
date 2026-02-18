@@ -270,10 +270,12 @@ export default {
 			// Remove from comments list
 			const index = this.comments.findIndex(c => c.id === commentId)
 			if (index !== -1) {
+				// Count parent + all replies (backend deletes them too)
+				const deletedCount = 1 + (this.comments[index].replies?.length || 0)
 				this.comments.splice(index, 1)
-				this.totalComments--
+				this.totalComments -= deletedCount
 			} else {
-				// Check in replies
+				// Check in replies (single reply deleted)
 				for (const comment of this.comments) {
 					if (comment.replies) {
 						const replyIndex = comment.replies.findIndex(r => r.id === commentId)

@@ -179,7 +179,7 @@ class CommentService {
     }
 
     /**
-     * Delete a comment
+     * Delete a comment and all its children (replies and reactions)
      *
      * @param string $commentId The comment ID
      * @param bool $isAdmin Whether the current user is admin
@@ -201,13 +201,50 @@ class CommentService {
             throw new \RuntimeException('Not authorized to delete this comment');
         }
 
+        // Get page ID before deleting
+        $pageId = $comment->getObjectId();
+
+        // Delete all child comments first (replies and reactions)
+        $deletedCount = $this->deleteChildComments($pageId, $commentId);
+
+        // Delete the parent comment
         $this->commentsManager->delete($commentId);
 
-        $this->logger->info('IntraVox: Comment deleted', [
+        $this->logger->info('IntraVox: Comment deleted with children', [
             'commentId' => $commentId,
             'userId' => $userId,
-            'isAdmin' => $isAdmin
+            'isAdmin' => $isAdmin,
+            'childrenDeleted' => $deletedCount
         ]);
+    }
+
+    /**
+     * Recursively delete all child comments/reactions of a parent
+     *
+     * @param string $pageId The page ID
+     * @param string $parentId The parent comment ID
+     * @return int Number of children deleted
+     */
+    private function deleteChildComments(string $pageId, string $parentId): int {
+        $allComments = $this->commentsManager->getForObject(
+            self::OBJECT_TYPE,
+            $pageId,
+            1000,
+            0
+        );
+
+        $deletedCount = 0;
+        foreach ($allComments as $comment) {
+            if ($comment->getParentId() === $parentId) {
+                // Recursively delete children of this child first
+                $deletedCount += $this->deleteChildComments($pageId, $comment->getId());
+                // Delete this child (reply or reaction)
+                $this->commentsManager->delete($comment->getId());
+                $deletedCount++;
+            }
+        }
+
+        return $deletedCount;
     }
 
     /**
