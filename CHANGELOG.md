@@ -2,725 +2,561 @@
 
 All notable changes to IntraVox will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+IntraVox is a Nextcloud intranet page builder.
 
-## [Unreleased]
-
-### Added
-- **Nextcloud 33 Support**: IntraVox now supports both Nextcloud 32 and 33
-
-### Changed
-- **PHP Minimum Version**: Raised from PHP 8.1 to PHP 8.2 (required by Nextcloud 33)
-- **Page Nesting Depth**: Increased maximum page depth from 3 to 5 levels for all page types ([#19](https://github.com/nextcloud/IntraVox/issues/19))
-  - Allows deeper page hierarchies (e.g., Organisation → Teams → Team → Subteam → Content)
-  - Import service updated to support 5 levels
-  - Public share recursion safety limit raised accordingly
-
-### Fixed
-- **Comment Cascade Delete**: Deleting a parent comment now properly deletes all replies and updates the comment count correctly ([#20](https://github.com/nextcloud/IntraVox/issues/20))
-  - Previously, deleting a comment with replies left orphaned child comments in the database
-  - Frontend count now correctly subtracts parent + all replies when deleting
-
-## [0.9.13] - 2026-02-12 - People Widget
+## [0.9.14] - 2026-02-18
 
 ### Added
-- **People Widget**: New widget to display Nextcloud user profiles on pages
-  - **Three layouts**: Card (detailed with contact info), List (compact rows), Grid (avatar gallery)
-  - **Two selection modes**: Manual user selection or filter-based (by group, role, department, etc.)
-  - **Group filtering**: Show all users from specific Nextcloud groups automatically
-  - **Field filtering**: Filter users by any profile field with operators (equals, contains, does not contain, is one of, etc.)
-  - **Customizable display**: Toggle which fields to show (avatar, name, email, phone, role, headline, department, biography, social links)
-  - **Display options grouped**: Basic Information, Contact, and Extended categories for easier configuration
-  - **Role and Headline fields**: Separate fields for official job title (Role) and personal tagline (Headline)
-  - **LDAP/OIDC support**: Custom fields from LDAP or OIDC are automatically detected and can be displayed
-  - **Nextcloud integration**: Clicking avatars opens Nextcloud's contact menu (view profile, send email, check availability)
-  - **Privacy-first defaults**: Phone numbers and addresses are hidden by default
-  - **Sorting options**: Sort by name or email, ascending or descending
-  - **Column configuration**: 2, 3, or 4 columns for Card and Grid layouts
-  - **Pagination**: "Show more" button when there are more people than the configured limit
-  - **Dark background support**: Proper text contrast on colored widget backgrounds
-- **People Widget Guide**: Comprehensive documentation at `docs/PEOPLE_WIDGET.md`
-
-### Changed
-- **Filter field order**: Filter fields now match the Display Options order (Group, Name, Pronouns, Role, Headline, Organisation, Email, Phone, Address, Website, Biography, Twitter/X, Fediverse)
-- **Filter operators**: Added "does not contain" operator for text fields
-- **Column alignment**: Fixed page columns aligning to different heights (now uses `align-items: start`)
+- **Nextcloud 33 support** - App now supports Nextcloud 32 and 33 (PHP 8.2+ required)
+- **Page nesting depth** increased from 3 to 5 levels for deeper page hierarchies
+- **Dummy text generator** (easter egg) - Type `=dad()`, `=dadjokes(3,5)`, or `=lorem(2,4)` in a text widget and press Enter to generate dummy content (inspired by MS Word's `=rand()`)
+- **Birthdate field** support in People widget - display, filter (`is_today`, `within_next_days`)
+- **Bluesky** social link support in People widget
+- **Date filter operators** for People widget: `is today`, `within next X days`
 
 ### Fixed
-- **Dark background text contrast**: Pagination footer text now readable on dark widget backgrounds
-- **Widget title alignment**: Widgets with background color now align with widgets without background
-- **profileEnabled filter**: Internal Nextcloud field no longer appears as a filter option
-- **Avatar filter**: Avatar field removed from filter options (not useful as a filter)
-
-### Documentation
-- **README Updated**: Added People widget to features list and documentation links
-- **Internal Docs**: Updated Additions.md roadmap to reflect People widget completion
-
-## [0.9.12] - 2026-02-09 - Auto Template Installation
+- **People widget display options** now correctly control rendered fields in grid layout
+  - Removed `gridShowFields` override that forced fields off
+  - Removed hardcoded `layout !== 'grid'` template restrictions
+  - Removed CSS rule that hid headline in grid layout
+  - `showFields` is now the single source of truth across all layouts
+- All display option checkboxes now always visible in editor (no longer hidden per layout)
+- `showFields` whitelist expanded in backend (PageService.php) to support all 15 field types
+- Legacy `title` field synced with `role` for backwards compatibility
+- Heading widget bottom spacing increased
+- Comment cascade delete now properly deletes replies and updates count
+- Security: markdown-it updated to 14.1.1 (ReDoS fix in linkify inline rule)
+- Security: ajv updated to 8.18.0 (CVE-2025-69873 ReDoS fix)
 
 ### Changed
-- **Automatic Template Installation**: Default templates are now automatically installed during app install/update
-  - No longer requires manual `occ intravox:setup` command for templates
-  - Existing templates are preserved (idempotent installation)
-  - Templates are installed after demo data import completes
+- Twitter links now point to x.com instead of twitter.com
+- Dependency updates: axios 1.13.5, qs 6.14.2, webpack 5.105.0, ajv 8.18.0
 
-## [0.9.11] - 2026-02-09 - Page Templates
+## [0.9.13] - 2026-02-12
 
 ### Added
-- **Default Page Templates**: 7 professional page templates installed automatically during setup
-  - **Department**: Team info, services, and resources layout
-  - **Event**: Program schedule, speakers, and registration sections
-  - **Knowledge Base**: Documentation hub with categories, FAQ, and popular articles
-  - **Landing Page**: Visual homepage with hero, features, sidebar, and call-to-action
-  - **News Article**: Single article layout with hero image and related links
-  - **News Hub**: Central news page with carousel, featured articles, and categories
-  - **Project**: Project management page with status, milestones, team, and documents
-- **Template Preview Cards**: Visual layout previews when creating pages from templates
-  - SVG-based schematic showing column layout, header rows, sidebars, and collapsible sections
-  - Widget type badges showing which components are used (heading, text, image, video, news, links, divider)
-  - Complexity indicator (Simple/Medium/Advanced) based on layout structure
-  - Column count and widget count statistics
-- **Enlarged Template Modal**: Larger "Create new page" dialog with improved template gallery
-  - Grid layout with 220px minimum card width
-  - Scrollable gallery area (450px max height)
-- **Template Translations**: All template titles and descriptions translated
-  - Dutch, English, German, and French translations
-  - Automatic fallback to original text for custom user templates
-- **Template Stock Images**: Professional placeholder images included with each template
-  - Hero images, feature images, team photos, speaker portraits
-  - Images automatically copied when creating pages from templates
+- **People widget** for displaying user profiles with Card, List, and Grid layouts
+- Manual selection or filter-based user selection
+- Group filtering with "is one of" operator for multiple groups
+- Field filtering with equals, contains, does not contain, is not empty, is empty operators
+- Customizable display options (avatar, name, role, headline, email, etc.)
+- Pagination with "Show more" when more users match filters
+- LDAP/OIDC custom field support (auto-detected)
+- User search in Nextcloud Unified Search
 
 ### Changed
-- Template installation now runs automatically during `occ intravox:setup`
-- Templates are installed to `{lang}/_templates/` for each language folder
-
-## [0.9.10] - 2026-02-05 - Text Editor Fixes
-
-### Fixed
-- **Text Editor Table Spacing**: Fixed blank lines between tables doubling on each save cycle
-  - TipTap inserts phantom `<p>` elements between block-level nodes, causing newline growth
-  - `cleanMarkdown()` now caps consecutive newlines at 3 (one visual blank line max)
-  - Preserves user-added blank lines while preventing accumulation
-- **Text Editor Asterisks**: Fixed `*` and `**` appearing in text after saving bold/italic combined with underline
-  - Mixed markdown + HTML (`**text<u>underlined</u>**`) now correctly serialized as pure HTML tags
-  - Error fallback now escapes content instead of returning raw markdown
-
-## [0.9.9] - 2026-02-04 - Maintenance Tools & Public Share Fixes
-
-### Added
-- **Orphaned GroupFolder Data Management**: New "Maintenance" tab in admin settings
-  - Scan for orphaned groupfolder data (from reinstalled Team Folders app)
-  - Recover content by migrating to the active IntraVox groupfolder
-  - Delete orphaned data permanently
-  - Useful for production environments recovering from Team Folders reinstallation
-
-### Improved
-- **Team Folders Error Messages**: Renamed "GroupFolders" to "Team Folders" to match Nextcloud App Store naming
-  - More specific error messages when the Team Folders app is not installed or enabled
-  - Separate error messages for different failure scenarios (app not installed, folder creation failed, access denied, unexpected error)
-  - Full translations in Dutch, German, and French
+- Filter fields ordered to match Display Options structure
+- Social links combined into single toggle (X/Fediverse)
+- Phone number display default changed to off (privacy)
 
 ### Fixed
-- **Public Share Page Tree**: Fixed current page not being highlighted in page structure popup when viewing via public share link
-- **Public Share Page Tree URL**: Fixed 404 error on page structure in public share view (was calling `/pagetree` instead of `/tree`)
-- **Password-Protected Share Navigation**: Fixed "page not found" error after entering password on public share links
-- Generic "Could not create IntraVox GroupFolder" error now shows specific guidance based on the actual problem
+- `profileEnabled` excluded from custom fields display
+- Dark background text contrast in People widget
+- Column alignment in card layout
 
-## [0.9.8] - 2026-01-30 - Public Sharing & Password Protection
-
-### Added
-- **Public Share Links**: Full anonymous access to IntraVox pages via Nextcloud share links
-  - Share any folder scope (language root or subfolder) as a public link
-  - Anonymous users see pages, navigation, footer, page tree, and breadcrumbs without login
-  - Share scope enforced: only pages within the shared folder are accessible
-  - Rate limiting on all public endpoints to prevent abuse
-- **Public Page Viewer**: Dedicated read-only view for anonymous visitors
-  - Full page rendering with all widget types (text, images, video, links, news)
-  - Navigation menu with mega-menu support
-  - Page tree sidebar for browsing available pages
-  - Breadcrumb navigation
-  - Footer display
-  - Responsive layout for mobile and desktop
-- **Password-Protected Shares**: Full support for Nextcloud share link passwords
-  - Server-side password challenge screen (rendered before JavaScript loads)
-  - Session-based authentication — enter password once, navigate freely within scope
-  - Brute force protection (10 attempts/min per IP) with random timing delays
-  - Password verified via Nextcloud's `IHasher` (bcrypt) — plain text never stored
-  - API endpoints return 401 with `passwordRequired` flag for expired sessions
-  - Vue.js fallback password form for session expiry during navigation
-- **Share Dialog**: Redesigned public link modal with full share context
-  - Scope indicator shows whether link shares a page, folder, or language root
-  - "Password protected" badge with lock icon when share has a password
-  - Navigation tree showing shared pages structure
-  - Clickable "Manage share in Files" link opens Nextcloud Files sharing sidebar
-  - Copy public link button
-- **Share Button**: Always visible in page toolbar with two states
-  - Active state (theme color): share link exists — click to open share dialog
-  - Inactive state (muted): no share link — click for guidance on creating one
-  - Detects existing Nextcloud share links for the current scope
-- **Admin Shares Overview**: New "Sharing" tab in IntraVox admin settings
-  - Lists all active Nextcloud share links on IntraVox content
-  - Shows scope, file path, creation date, and expiration
-  - Direct link to manage each share in the Files app
-  - Useful for auditing public access
-- **Sharing Disabled Warning**: Clear feedback when NC link sharing is disabled
-  - Warning dialog with link to Nextcloud Sharing settings
-  - Explains the prerequisite for public sharing
-- **Public News Widget**: News widget works in anonymous share view
-  - New API endpoint `/api/share/{token}/news` for fetching news without authentication
-  - Supports both `sourcePageId` and legacy `sourcePath` filtering
-  - Share-aware image URLs for media in news items
-  - Only shows pages within the share scope
-- **Public Media Access**: Images and resources accessible via share token
-  - Page media: `/api/share/{token}/page/{uniqueId}/media/{filename}`
-  - Shared resources: `/api/share/{token}/resources/media/{filename}`
-  - Resource subfolders: `/api/share/{token}/resources/media/{folder}/{filename}`
-- **Links Widget Color System**: Redesigned color options for intuitive background control
-  - Container background: 4 options — None, Light, Accent, Primary (with visual color swatches)
-  - Individual link background: 3 options — Default, Light, Primary (with visual color swatches)
-  - Default links blend transparently into their container/row background
-  - Automatic contrast detection: white text/icons on dark backgrounds, dark text on light
-- **Telemetry expansion**: Added 7 new server configuration fields to anonymous usage statistics
-  - Country code, database type, default language, timezone, OS family, web server, Docker detection
-- **Send report now button**: Manual telemetry report trigger in admin Statistics tab
-- **Breadcrumb Home label from navigation.json**: Home breadcrumb now reads its label from the first item in `navigation.json` instead of hardcoded "Home"
-- **Public sharing documentation**: Comprehensive guide covering setup, scope, password protection, security, and admin overview
+## [0.9.12] - 2026-02-09
 
 ### Changed
-- **SystemFileService**: Extended with news page retrieval for public context
-  - `getNewsPagesForShare()` uses system-level GroupFolder access (no user session)
-  - Recursive page discovery with share scope filtering
-  - Excerpt extraction from first text widget
-  - First image detection with share-aware URL rewriting
-- **Color Utilities Refactored**: Separated `DARK_BACKGROUNDS` and `LIGHT_BACKGROUNDS` arrays in `colorUtils.js`
-  - New `isLightBackground()` function for accurate contrast detection
-  - `--color-primary-element-light` correctly classified as light background (was incorrectly dark)
-  - News widget layouts (List, Grid) updated to use new light background detection
+- Templates now install automatically during app install/update (no longer requires manual `occ intravox:setup`)
+- Existing templates are preserved (idempotent)
+
+## [0.9.11] - 2026-02-09
+
+### Added
+- **Page templates** - 7 default templates (Department, Event, Knowledge Base, Landing Page, News Article, News Hub, Project)
+- Visual template preview cards with SVG layout schematic
+- Complexity indicator (Simple/Medium/Advanced) and widget count statistics
+- Template translations for NL, EN, DE, FR
+- Stock images for all templates
+- Enlarged template modal with improved gallery
+
+## [0.9.10] - 2026-02-05
 
 ### Fixed
-- **Public Share Page Tree**: Fixed page tree only showing homepage when sharing a language root folder
-  - `extractSubtreeByScope()` now correctly returns the full tree for language-root shares
-  - All subfolders and pages are visible in the sidebar navigation
-- **Links Widget Contrast**: Fixed white text/icons on light backgrounds (Accent, Light)
-  - Links without explicit background now blend transparently into their container
-  - Correct contrast for all container/link background combinations
-- **Webpack Chunk Caching**: Fixed `TypeError: n[e] is undefined` when opening page editor after rebuild
-  - Added content hash to chunk filenames (`[contenthash:8]`) to prevent stale cached chunks
-- **Telemetry countryCode and timezone**: Country code now derived from `default_phone_region` instead of `default_language`. Timezone uses smarter fallback: Nextcloud config → php.ini → UTC
-- **Telemetry sending to wrong URL**: Fixed telemetry using deprecated endpoint. Now correctly uses `TelemetryService::sendReport()`
-- **Homepage breadcrumb label**: Fixed breadcrumb showing page title instead of navigation label on the homepage itself
-- **Files URL in Share Dialog**: Fixed file ID using internal GroupFolder storage ID instead of user-mounted ID, and corrected URL format to include `index.php` prefix
+- **Text editor table spacing** - Tables no longer double-space or corrupt formatting on save
+- Asterisks no longer appear after saving bold/italic combined with underline
+- Preserved user blank lines between tables while preventing spacing growth
+- Home breadcrumb link in public share view
+
+## [0.9.9] - 2026-02-04
+
+### Added
+- **Maintenance tab** in admin settings to scan, recover, and delete orphaned GroupFolder data
+
+### Changed
+- Renamed "GroupFolders" to "Team Folders" to match Nextcloud App Store naming
+- Specific error messages for different Team Folders failure scenarios
+- Full translations in Dutch, German, and French
+
+## [0.9.8] - 2026-02-01
+
+### Added
+- **Public sharing** via Nextcloud share links with full anonymous page access
+- **Password-protected shares** with session-based auth and brute force protection
+- Share dialog with scope indicator and password badge
+- Admin shares overview in admin settings
+- Public news widget and media access via share token
+- Links widget color system redesign with container and per-link background options
+- Telemetry expansion (country code, database type, OS family, web server, Docker detection)
+
+### Fixed
+- Public share page tree only showing homepage for language-root shares
+- Links widget contrast issues on light backgrounds
+- Webpack chunk caching (`TypeError: n[e] is undefined` after rebuild)
+
+### Security
+- Share token validation before any data access
+- Share scope path enforcement prevents access outside shared folder
+- Anonymous rate throttling (60 req/min) on all public endpoints
+- Password brute force protection (10 attempts/min per IP)
 
 ### Removed
-- **HMAC token system**: Removed unused `PublicPageService`, `PublicPageController`, and `templates/public.php` — dead code from an earlier public sharing approach that was never used
+- Unused HMAC token system (dead code from earlier approach)
+
+## [0.9.7] - 2026-01-26
+
+### Fixed
+- **Code blocks** no longer corrupt after editing - backticks no longer accumulate when saving and re-editing
+- Fixed double-processing of nested `<code>` tags inside `<pre>` elements
+
+## [0.9.6] - 2026-01-20
+
+### Changed
+- Use `OCP\DB\Exception` with `getReason()` instead of Doctrine exceptions (Nextcloud coding standards)
 
 ### Security
-- All public endpoints use `#[PublicPage]` and `#[NoCSRFRequired]` attributes
-- Share token validation before any data access
-- Share scope path enforcement prevents access to pages outside the shared folder
-- Anonymous rate throttling (60 requests/minute) on all public endpoints
-- Password brute force protection (10 attempts/minute per IP) with random delays (100–300ms)
-- Session-based password auth — password never sent to browser or exposed in API responses
-- Nextcloud share link settings respected (`shareapi_allow_links`)
+- Updated enshrined/svg-sanitize from ^0.20 to ^0.22 (medium severity fix)
 
-## [0.9.7] - 2026-01-26 - Code Block Fix
+## [0.9.5] - 2026-01-20
 
 ### Fixed
-- **Code Block Rendering**: Fixed code blocks corrupting after editing ([#15](https://github.com/nextcloud/IntraVox/issues/15))
-  - Backticks no longer accumulate when saving and re-editing code blocks
-  - Fixed double-processing of nested `<code>` tags inside `<pre>` elements
-  - Code block content now correctly preserved through save/load cycles
+- **PostgreSQL compatibility** - Handle duplicate key errors (SQLSTATE 23505) in SetupService
+- LicenseService null check for shared folder to prevent crashes
+- AnalyticsService improved exception handling for unique constraints
 
-## [0.9.6] - 2026-01-20 - Database Exception Handling
+## [0.9.2 - 0.9.4] - 2026-01-19 to 2026-01-20
 
-### Changed
-- **Database Exception Handling**: Use `OCP\DB\Exception` instead of Doctrine exceptions
-  - Follows Nextcloud coding standards for database-agnostic error handling
-  - Cleaner code without string-based error detection
+Certificate updates and App Store re-registration. No functional changes.
+
+## [0.9.1] - 2026-01-19
+
+### Added
+- **Statistics tab** in admin settings with page counts per language
+- **Anonymous telemetry** with opt-in usage statistics (page counts, Nextcloud/PHP version info)
+- Translation script (`npm run l10n`) for generating JavaScript translation files
+
+### Fixed
+- PHP 8.4 implicit nullable parameter deprecation warning
+
+## [0.9.0] - 2026-01-17
+
+### Added
+- **Analytics API** for tracking page views and statistics
+- **Bulk Operations API** for batch delete, move, update (admin only, max 100 pages)
+- **OCS Media Routes** for external API access via Basic Auth
+- **API Error Handling** with consistent responses, `errorId` for support correlation, and `ApiErrorTrait`
 
 ### Security
-- **svg-sanitize**: Updated from ^0.20 to ^0.22 to fix medium severity vulnerability (GHSA bypass)
-
-## [0.9.5] - 2026-01-20 - PostgreSQL Compatibility
-
-### Fixed
-- **PostgreSQL Support**: Fixed database compatibility issues for PostgreSQL users
-  - SetupService: Now correctly handles PostgreSQL duplicate key errors (SQLSTATE 23505)
-  - LicenseService: Added null check for shared folder to prevent crashes during setup
-  - AnalyticsService: Improved exception handling for unique constraint violations
-- **Installation on PostgreSQL**: Setup no longer fails when re-running or retrying installation
-
-## [0.9.4] - 2026-01-20 - Cache Bypass Release
+- File upload extension whitelist with MIME type validation and `getimagesize()` cross-check
+- SVG sanitization with dangerous element detection
+- Path traversal protection (URL-encoded, Unicode, null bytes)
+- Admin-only endpoints properly secured
 
 ### Fixed
-- **App Store Cache**: New version to bypass cached signature data in Nextcloud App Store
-  - No functional changes from 0.9.3
+- Sidebar closes on page navigation (prevents stale data display)
 
-## [0.9.3] - 2026-01-20 - App Store Re-registration
-
-### Fixed
-- **App Store Certificate Sync**: Re-registered app with new certificate (serial 4824) to sync with App Store database
-  - Previous releases were signed correctly but App Store database had outdated certificate reference
-  - Resolves "Certificate 4822 has been revoked" error for all users
-  - No functional changes from 0.9.2
-
-### Documentation
-- Added certificate verification section to RELEASE_CHECKLIST.md
-- Added warnings about certificate management best practices
-
-## [0.9.2] - 2026-01-19 - Certificate Update
+## [0.8.9] - 2026-01-15
 
 ### Fixed
-- **App Store Certificate**: Updated to new code signing certificate after previous certificate was revoked
-  - Resolves "Certificate has been revoked" error when installing from App Store
-  - No functional changes from 0.9.1
-
-## [0.9.1] - 2026-01-19 - Statistics & PHP 8.4 Fix
-
-### Added
-- **Statistics Tab**: New admin settings tab showing page counts per language
-  - Overview of pages per language in your IntraVox installation
-  - Visual progress indicators for each language
-  - Total page count across all languages
-- **Anonymous Telemetry**: Opt-in usage statistics to help improve IntraVox
-  - Collects: page counts, user counts, Nextcloud/PHP version info
-  - No personal data, usernames, or page content collected
-  - Can be disabled in Admin Settings
-  - Background job runs every 24 hours (with random jitter)
-- **Translation Script**: New `npm run l10n` command to generate JavaScript translation files from JSON
-
-### Fixed
-- **PHP 8.4 Compatibility**: Fixed implicit nullable parameter deprecation warning ([#14](https://github.com/nextcloud/intravox/issues/14))
-  - Changed `string $language = null` to `?string $language = null` in `PageService::buildPageTree()`
-  - Resolves "Could not update app" error on PHP 8.4 systems
-
-### Technical
-- New `lib/Service/TelemetryService.php` for telemetry collection
-- New `lib/Service/LicenseService.php` for usage statistics
-- New `lib/BackgroundJob/TelemetryJob.php` (24h interval + random jitter)
-- New `lib/BackgroundJob/LicenseUsageJob.php` (24h interval + random jitter)
-- New `scripts/generate-l10n.js` for translation file generation
-- Updated `AdminSettings.vue` with Statistics and Telemetry tabs
-
-## [0.9.0] - 2026-01-17 - API Security & Error Handling
-
-### Added
-- **Analytics API**: New endpoints for page view tracking and statistics
-  - `POST /api/analytics/track/{pageId}` - Track page views
-  - `GET /api/analytics/page/{pageId}` - Get page statistics
-  - `GET /api/analytics/top` - Get top viewed pages
-  - `GET /api/analytics/dashboard` - Admin dashboard with aggregate stats
-  - `GET/POST /api/analytics/settings` - Admin analytics configuration
-- **Bulk Operations API**: New endpoints for batch page management (admin only)
-  - `POST /api/bulk/validate` - Dry-run validation before execution
-  - `POST /api/bulk/delete` - Bulk delete pages with optional child deletion
-  - `POST /api/bulk/move` - Bulk move pages to new parent
-  - `POST /api/bulk/update` - Bulk update page metadata
-  - Maximum 100 pages per operation to prevent DoS
-- **OCS Media Routes**: External API access for media uploads via Basic Auth
-  - `POST /ocs/v2.php/apps/intravox/api/v1/pages/{pageId}/media` - Upload media
-  - `GET /ocs/v2.php/apps/intravox/api/v1/pages/{pageId}/media` - List media
-  - `GET /ocs/v2.php/apps/intravox/api/v1/pages/{pageId}/media/{filename}` - Get media file
-- **API Error Handling**: Consistent error responses across all controllers
-  - New `ApiErrorTrait` for standardized error handling
-  - All responses include `success: true/false` field
-  - Error responses include `errorId` for support correlation
-  - Generic error messages prevent information disclosure
-  - Full error details logged server-side for debugging
-- **Versioning Documentation**: New section "What Triggers a New Version?" in VERSIONING.md
-  - Clear table showing what actions create versions and what don't
-  - Detailed explanation of MetaVox metadata and versioning relationship
-  - Visual diagram showing separation between JSON content and MetaVox database
+- **Widget color consistency** - Centralized `colorUtils.js` for consistent dark background detection
+- Links widget row background inheritance and Primary color variable
+- News widget text contrast on dark row backgrounds
 
 ### Changed
-- **API Response Format**: All API responses now consistently include `success` field
-- **Admin-Only Endpoints**: Settings, import, and bulk operations require admin privileges
-  - Removed `@NoAdminRequired` annotation from sensitive endpoints
-  - Runtime admin checks as secondary protection layer
+- All widgets refactored to use consistent background handling pattern
+
+## [0.8.8] - 2026-01-15
+
+### Added
+- **Version History UI** redesigned with Files App styling and relative time formatting
+- News widget background color support (None/Light/Primary)
+- Field-type specific filter operators for MetaVox (date, number, select, multiselect, checkbox)
+- Dynamic value inputs adapting to field type (date picker, number input, dropdown)
 
 ### Fixed
-- **Sidebar Closes on Page Navigation**: The page details sidebar now automatically closes when navigating to a different page
-  - Prevents stale data from previous page being displayed
-  - Resolves issue where Versions tab showed "No versions available" after navigation
-  - Resolves issue where MetaVox tab showed metadata from previous page
-  - Consistent behavior: sidebar always shows fresh data when reopened
-- **Simplified Sidebar State Management**: Cleaned up the `pageId` watcher in PageDetailsSidebar
-  - Removed complex refresh logic that was causing race conditions
-  - Sidebar now relies on clean open/close cycle for data loading
+- Sidebar state preservation during refresh (uses `v-show` instead of `v-if`)
+
+## [0.8.7] - 2025-12-30
+
+### Added
+- **Links widget page selector** - Select internal pages from dropdown with auto-fill
+- **Links widget drag-and-drop** - Reorder links by dragging
+
+### Fixed
+- Row drag-and-drop: prevent rows from being dropped into columns
+- News widget excerpts: strip markdown from preview text
+- News widget shared library images from `_resources`
+- Links widget data persistence for internal page links
+
+## [0.8.6] - 2025-12-29
+
+### Added
+- **Clean Start** option in Demo Data settings to reset a language to empty content
+
+### Fixed
+- Added ~80 missing translation keys for row controls, widgets, and versions
+- Row controls styling on colored backgrounds
+
+## [0.8.5] - 2025-12-29
+
+### Added
+- **Publication date filtering** for News widget using MetaVox date fields
+- **Collapsible rows** - SharePoint-style collapsible sections with customizable titles and default collapse state
+
+### Changed
+- Editor consolidated: WidgetEditor now uses InlineTextEditor component
+
+### Fixed
+- Nested list styling visual hierarchy (cycling list markers per indent level)
+- Row controls visibility on colored row backgrounds
+
+## [0.8.4] - 2025-12-27
+
+### Added
+- **News widget** with List, Grid, and Carousel layouts
+- MetaVox filtering support for news items
+- Complete OpenAPI specification for OCS API Viewer
+- News widget translations for EN, NL, DE, FR
+
+## [0.8.2] - 2025-12-27
+
+### Added
+- **Table support** in text widgets (insert, edit, resize, add/remove rows and columns)
+- Compact toolbar mode for narrow columns (auto-detects <400px width)
+- Material Design icons for toolbar
+
+### Fixed
+- Row drag-and-drop widget type preservation (stable row IDs instead of volatile indices)
+- Shared media library 500 error (route parameter mismatch)
+- Links editor UI consistency and delete action visibility
+
+## [0.8.1] - 2025-12-21
+
+### Changed
+- English demo homepage updated to match Dutch layout structure
+
+## [0.8.0] - 2025-12-21
+
+### Added
+- **Row drag-and-drop** reordering in page editor
+- **Export/Import system** with ZIP files for full site backup and migration
+- **Confluence HTML import** for Atlassian migration
+- **MetaVox metadata** export/import integration
+- **Shared Media Library** with `_resources` folder and hierarchical folder navigation
+- **SVG image support** with server-side sanitization (enshrined/svg-sanitize)
+- MediaPicker component with 3-tab interface (Upload, Page Media, Shared Library)
+
+### Changed
+- Header row default transparency
+- Navigation horizontal scrollbar for long menus
+- Toolbar active state contrast improved (WCAG compliant)
+- Dynamic link/selection colors per row background
 
 ### Security
-- **File Upload Security**: Enhanced validation for uploaded files
-  - Extension whitelist for allowed file types (jpg, png, gif, webp, svg, mp4, webm, ogg, pdf)
-  - MIME type validation with `getimagesize()` cross-check for images
-  - SVG sanitization with dangerous element detection (iframe, embed, object, script)
-- **Path Traversal Protection**: Hardened path validation
-  - URL-encoded bypass prevention
-  - Unicode normalization
-  - Null byte detection
-- **API Documentation**: Updated API_REFERENCE.md with security section
-  - Admin-only endpoints table
-  - File upload restrictions
-  - Error response format
-
-### Technical
-- New `lib/Controller/ApiErrorTrait.php` for reusable error handling
-- Updated BulkController, AnalyticsController, ApiController with trait
-- Sidebar close logic added to `selectPage()` method in App.vue
-- PageDetailsSidebar `pageId` watcher simplified to fallback-only reset
-- Event handlers for page save (`handlePageSaved`) preserved for version refresh
-
-## [0.8.9] - 2026-01-15 - Widget Color Consistency & Row Background Inheritance
-
-### Added
-- **Centralized Color Utilities**: New `colorUtils.js` module for consistent dark background detection
-  - Single source of truth for dark background colors across all widgets
-  - `isDarkBackground()` and `getEffectiveBackgroundColor()` helper functions
-  - Easier to maintain and extend color handling
+- `@PublicPage` removal (all pages require authentication)
+- `parentPageId` validation
+- Enhanced path sanitization and ZIP slip prevention
+- Import authorization checks
+- Comment IDOR prevention
+- iframe sandboxing
+- Sensitive log masking
 
 ### Fixed
-- **Links Widget Row Background**: Links widget now correctly inherits row background color
-  - Added `rowBackgroundColor` prop to LinksWidget component
-  - Links on dark row backgrounds (Primary, Error, Success) now show white text
-  - Consistent behavior with News widget
-- **Links Widget Primary Color**: Fixed individual link "Primary" background using wrong color
-  - Changed from `--color-primary-element-light` to `--color-primary-element`
-  - Links with Primary background now have correct dark blue color
-- **News Widget Text Contrast**: Fixed black text on dark row backgrounds
-  - News items without widget background now check row background for styling
-  - Items on dark row backgrounds correctly show white text
-  - Applies to List, Grid, and Carousel layouts
-- **Backwards Compatibility**: Added `--color-primary-element-light` to dark color detection
-  - Existing links with old color value still render correctly with white text
+- Import folder structure preservation for nested pages
+- MediaPicker SVG preview loading
+- GroupFolder setup idempotency
+- Page settings persistence
+
+## [0.7.1] - 2025-12-13
+
+### Fixed
+- Added 60+ missing engagement-related translation keys for DE, FR, and NL
+
+## [0.7.0] - 2025-12-13
+
+### Added
+- **Emoji reactions** on pages (18 emoji options)
+- **Comments system** with threaded replies and comment reactions
+- Admin engagement settings (global enable/disable)
+- Page-level engagement settings (per-page overrides)
+- Image link target option (open in same/new tab)
 
 ### Changed
-- **Consistent Widget Pattern**: All widgets now use the same pattern for background handling
-  - `effectiveBackgroundColor` computed property (widget bg takes precedence over row bg)
-  - `isDarkBackground` check using centralized utility
-  - Uniform prop passing from Widget.vue to child widgets
+- Smart cache refresh (50% fewer API calls)
+- localStorage persistence (75% faster initial load)
+- Lazy loading sidebar (67% faster)
 
-### Technical
-- Refactored NewsLayoutList, NewsLayoutGrid, NewsLayoutCarousel to use colorUtils
-- Added rowBackgroundColor prop passthrough in Widget.vue for LinksWidget
-
-## [0.8.8] - 2026-01-05 - Version History UI, Widget Background Colors & Field-Type Filters
-
-### Added
-- **Files App Style Version History**: Complete redesign of the version history tab in the sidebar
-  - Displays "Current version" with real file metadata (modified time, size, author)
-  - Relative time formatting like Nextcloud Files app ("36 sec. ago", "2 min. ago", "3 hours ago")
-  - Server-side time calculation to avoid timezone issues
-  - Version list shows all available versions with author and relative time
-  - Click any version to preview its content
-  - Restore button to revert to a previous version
-  - Custom labels can be added to mark important versions
-- **Version History Auto-Refresh**: Version list automatically updates when page is saved
-- **Edit Mode Version Focus**: When entering edit mode, version selection resets to "Current version"
-  - Prevents confusion about which version is being edited
-- **News Widget Background Color**: News widgets now support container background colors
-  - Three options: None (transparent), Light (gray), Primary (dark blue)
-  - Background color can be set independently from row background
-  - Consistent with Links widget styling
-- **Consistent Item Styling**: Both News and Links widgets now have consistent item background behavior
-  - **None**: Transparent items that inherit parent/row background
-  - **Light**: Gray container with white items for contrast
-  - **Primary**: Dark blue container with semi-transparent white items and white text
-- **Field-Type Specific Filter Operators**: MetaVox filters in the News widget now show operators appropriate for each field type
-  - **Date fields**: equals, is before, is after, is not empty, is empty
-  - **Number fields**: equals, greater than, less than, greater or equal, less or equal, is not empty, is empty
-  - **Select fields**: equals, is one of (multiple selection), is not empty, is empty
-  - **Multiselect fields**: contains, contains all, is not empty, is empty
-  - **Checkbox fields**: is true, is false, is not empty
-  - **Text/Textarea fields**: equals, contains, does not contain, is not empty, is empty
-- **Dynamic Value Inputs**: Filter value inputs now adapt to the field type
-  - Date fields show a date picker
-  - Number fields show a number input
-  - Select/Multiselect fields show a dropdown with the field's options from MetaVox
-  - Checkbox fields require no value input (operator determines the filter)
-- **Multi-Select Filter Values**: "Is one of" operator for select fields allows selecting multiple allowed values
+## [0.6.1] - 2025-12-11
 
 ### Fixed
-- **Links Widget Individual Link Backgrounds**: Fixed contrast issues when individual links have a dark background color
-  - Links with "Primary" background now correctly show white text and icons
-  - Individual link background takes precedence over container background for styling
-- **News Item Backgrounds**: Fixed inconsistent item backgrounds between News and Links widgets
-  - News items now use the same background logic as Links items
-
-### Changed
-- **Sidebar State Preservation**: Sidebar tab focus is preserved during page refresh and version restore
-  - Uses `v-show` instead of `v-if` to keep component mounted
-  - No more unexpected tab switches when saving or restoring versions
-
-### Translations
-- Added translations for all new filter operators in all 4 languages (nl, en, de, fr)
-
-## [0.8.7] - 2025-12-30 - Links Widget Page Selector & News Widget Fixes
-
-### Added
-- **Links Widget Page Selector**: Internal pages can now be selected from a page tree dropdown
-  - New PageTreeSelect component integrated in Links Editor
-  - Choose between internal page or external URL (mutually exclusive)
-  - Auto-fills link text with page title when selecting a page
-  - Backwards compatible with existing links
-- **Links Widget Drag-and-Drop**: Links can now be reordered by dragging
-  - Drag handle added to each link item in the editor
-  - Uses same drag-and-drop pattern as row reordering
-  - Smooth animation during drag operations
-
-### Fixed
-- **Row Drag-and-Drop**: Fixed issue where dragging a row into a column would cause the row to disappear
-  - Added explicit drag group to prevent rows from being dropped into widget zones
-  - Rows can now only be reordered within the rows container
-- **News Widget Excerpts**: Markdown syntax is now stripped from excerpts
-  - Excerpts no longer show raw markdown like `**bold**` or `[link](url)`
-  - Supports stripping: bold, italic, strikethrough, links, images, code, headers, blockquotes, lists, horizontal rules
-  - Results in clean, readable preview text
-- **News Widget Shared Library Images**: Fixed images from Shared Library not displaying in news widget
-  - Images added from Shared Library (`_resources` folder) now display correctly
-  - `getPageFirstImage()` now returns both `src` and `mediaFolder` properties
-  - Image path is correctly constructed based on media source (page media vs shared library)
-- **Links Widget Data Persistence**: Fixed internal page links not being saved after page refresh
-  - Added `uniqueId` property to link sanitization in backend
-  - Legacy `#uniqueId` URLs are automatically converted to the new format
-
-### Translations
-- Added missing translations for Links Widget in all 4 languages (nl, en, de, fr)
-- Added translations for widget descriptions, icon labels, and background options
-- Added missing translations for other widgets (Background color, Video widget description)
-
-## [0.8.6] - 2025-12-29 - Clean Start & Translation Fixes
-
-### Added
-- **Clean Start**: New option in Demo Data settings to start fresh with empty content
-  - "Clean Start" button per language in Admin Settings → Demo Data
-  - Deletes all pages, navigation, footer, comments, reactions, and media for selected language
-  - Creates fresh homepage with newly generated unique ID (prevents conflicts)
-  - Creates empty navigation with only Home link
-  - Creates empty footer
-  - Confirmation dialog with clear warning about permanent deletion
-  - Useful for starting over without demo content or resetting after testing
-
-### Fixed
-- **Translations**: Fixed missing translations in v0.8.5 for Publication dates and Collapsible rows features
-  - Added ~80 new translation keys for row controls, widget actions, background colors, video/image widgets, versions, MetaVox integration
-  - Regenerated .js translation files from .json sources for all languages (nl, en, de, fr)
-- **Row Controls Styling**: Fixed inconsistent styling of row header controls on colored backgrounds
-  - Unified font colors, sizes, and backgrounds across all row control elements
-  - Fixed "Collapsed by default" label to match other control labels
-  - Fixed section title input to use correct system font
-
-## [0.8.5] - 2025-12-29 - Publication Dates, Collapsible Rows & Editor Consolidation
-
-### Added
-- **Publication Date Filtering**: News widget can now filter pages based on publication dates
-  - Configure MetaVox date fields in Settings → IntraVox → Publication
-  - "Show only published pages" checkbox in News widget editor
-  - Pages filtered based on publish date (visible from) and expiration date (hidden after)
-  - Dropdown selection shows available date fields from MetaVox with display names
-  - Warnings shown when MetaVox not available or fields not configured
-  - Supports multiple date formats (YYYY-MM-DD, DD-MM-YYYY, ISO 8601, etc.)
-- **Collapsible Rows (SharePoint-style)**: Rows can now be made collapsible
-  - Checkbox "Collapsible section" in row controls to enable
-  - Customizable section title shown in the header
-  - Option to collapse by default in view mode
-  - Click header to expand/collapse in view mode
-  - All widgets in the row collapse together
-
-### Changed
-- **Editor Consolidation**: WidgetEditor now uses InlineTextEditor component
-  - Consistent editing experience in modal and inline editing modes
-  - All toolbar features (tables, links, headings, etc.) available everywhere
-  - Single codebase for rich text editing
-
-### Fixed
-- **Nested List Styling**: Fixed visual hierarchy for nested lists
-  - Ordered lists: 1. → a. → i. → 1. (cycling through levels)
-  - Unordered lists: • → ○ → ▪ → • (cycling through levels)
-  - Consistent styling in both edit and view modes
-- **Row Controls Visibility**: Fixed row drag handle and controls visibility on colored row backgrounds
-  - Uses inherited colors for proper contrast on any background color
-
-## [0.8.4] - 2025-12-27 - News Widget & API Documentation
-
-### Added
-- **News Widget**: New widget type to display pages as news items
-  - Select a source folder to pull pages from
-  - Filter pages using MetaVox metadata fields (if MetaVox is installed)
-  - Three layout options: List, Grid, and Carousel
-  - Configurable number of items, sorting (date/title), and display options
-  - Shows page thumbnail, title, date, and excerpt
-  - Graceful fallback when MetaVox is not available
-- **OpenAPI Specification**: Complete API documentation for third-party integration
-  - Compatible with OCS API Viewer app for interactive documentation
-  - Documents all IntraVox API endpoints with request/response schemas
-  - Includes schemas for pages, widgets, media, navigation, comments, and news
-
-## [0.8.3] - 2025-12-27 - Empty Line Preservation
-
-### Fixed
-- **Empty Lines in Text Editor**: Fixed issue where empty lines (hard returns) were being collapsed when saving
-  - Multiple consecutive empty lines are now preserved in text widgets
-  - Uses zero-width space placeholders to prevent Markdown from collapsing blank lines
-  - Works correctly for both editing and viewing modes
-
-## [0.8.2] - 2025-12-27 - Tables & Editor Improvements
-
-### Added
-- **Table Support**: Full table editing in text widgets
-  - Insert, edit, and delete tables with the toolbar
-  - Add/remove rows and columns
-  - Resize columns by dragging
-  - Tables saved as Markdown for portability
-- **Compact Toolbar Mode**: Automatic compact toolbar for narrow columns
-  - Shows B/I/U buttons with "More" dropdown for additional options
-  - Auto-detects container width (<400px triggers compact mode)
-
-### Changed
-- **Table Header Rows**: Header rows now styled identically to body rows
-  - Users can apply their own formatting (bold, etc.) if desired
-- **Toolbar Icons**: Material Design icons for all toolbar buttons
-  - Consistent icon style across the application
-
-### Fixed
-- **Row Drag-and-Drop**: Fixed issue where dragging rows caused widgets to lose their type after reordering
-  - Uses stable row IDs instead of volatile row indices for cache keys
-  - Reliable row reordering even with repeated drags in the same session
-- **Shared Media Library**: Fixed 500 error when loading images from shared resources folder
-  - Route parameter name mismatch corrected in API controller
-- **Links Editor UI**: Delete button now uses consistent NcButton styling
-  - Matches row and widget toolbar delete buttons for visual consistency
-- **Delete Actions Visibility**: Improved contrast for delete actions in dropdown menus
-
-## [0.8.1] - 2025-12-21 - Demo Data Improvements
-
-### Changed
-- **English Demo Homepage**: Updated structure to match Dutch homepage layout
-  - Consistent sidebar with "Get Started" and "Resources" sections
-  - Same visual layout across all language versions
-
-## [0.8.0] - 2025-12-21 - Export/Import, Security & Editor Improvements
-
-### Added
-
-#### Export/Import System
-- **Full IntraVox Export/Import**: Export entire IntraVox installations to ZIP and import on other servers
-  - Export pages, navigation, footer, comments, and reactions per language
-  - Confluence HTML import support for migrating from Atlassian
-  - Parent page selection for targeted imports
-  - Page hierarchy preserved during export/import
-
-#### MetaVox Integration
-- **MetaVox Metadata Export/Import**: Full integration with MetaVox file metadata
-  - Metadata exported with pages when MetaVox is installed
-  - Automatic field definition validation and optional auto-creation
-  - Version compatibility handling between installations
-  - Works seamlessly with or without MetaVox installed
-
-#### Media Management
-- **Shared Media Library**: New `_resources` folder per language for reusable media
-  - Hierarchical folder structure with subfolder navigation
-  - MediaPicker with 3 tabs: Upload, Page media, Shared library
-- **SVG Image Support**: Upload and display SVG files with automatic sanitization
-
-#### Editor Improvements
-- **Row Drag-and-Drop**: Reorder rows by dragging the handle in the row toolbar
-- **Header Row Transparency**: Default header row background is now transparent
-
-#### Other Features
-- **Nextcloud Unified Search**: IntraVox pages searchable via Ctrl+K
-- **Version History**: View and restore previous page versions
-
-### Changed
-- **Export Format v1.3**: Enhanced format with guaranteed `_exportPath` and metadata support
-- **Navigation Scrolling**: Horizontal scrollbar for long navigation menus
-- **Performance**: Smart cache refresh, localStorage persistence, lazy loading sidebar
-- **Admin Interface**: Tabbed navigation for export/import/settings
-- **Toolbar Contrast**: Improved visibility for active toolbar buttons (WCAG compliant)
-- **Widget Text Contrast**: Dynamic link and selection colors based on row background
-
-### Fixed
-- Export/Import reliability with proper page hierarchy handling
-- Navigation dropdown visibility on all screen sizes
-- Confluence import with page ordering
-
-### Security
-- **@PublicPage Removal**: All pages now require Nextcloud authentication
-- **parentPageId Validation**: Pages can only be created within authorized groupfolders
-- **Enhanced Path Sanitization**: Improved protection against path traversal attacks
-- **ZIP Slip Prevention**: Secure ZIP extraction with path validation
-- **Temp File Security**: Cryptographically secure filenames with restrictive permissions
-- **Import Authorization**: Permission checks before import operations
-- **Sensitive Log Masking**: PII and credentials excluded from logs
-
-## [0.7.1] - 2025-12-13 - Translation Fixes
-
-### Fixed
-- Added missing engagement translations for German, French, and Dutch
-
-## [0.7.0] - 2025-12-13 - Reactions, Comments & Performance
-
-### Added
-- Emoji reactions on pages
-- Comments system with threaded replies
-- Comment reactions
-- Admin and per-page engagement settings
-
-### Changed
-- Performance optimizations (50% fewer API calls, localStorage caching)
-
-## [0.6.0] - 2025-12-09 - Video Widget & Media Management
-
-### Added
-- Welcome screen for fresh installations
-- Video widget with platform whitelist
 - Clickable image links
-- Local video upload
+- Image crop position (top/center/bottom)
+
+## [0.6.0] - 2025-12-09
+
+### Added
+- **Welcome screen** for fresh installations with setup instructions
+- **Clickable image links** (to internal pages or external URLs)
+- **Video widget** with multi-platform support (YouTube, Vimeo, PeerTube, local files)
+- Admin settings with Video Domains management (presets + custom servers)
+- Unified media folder structure (`_media/` instead of `images/`)
+- New search icon for Nextcloud unified search integration
 
 ### Changed
-- Media folder renamed to `_media`
-- Admin settings redesign with tabs
+- Complete translations for NL, DE, FR languages
+- Default video domains include privacy-friendly platforms
+- Performance optimizations for page loading
 
-## [0.5.0] - 2025-11-29 - Navigation & Links
+## [0.5.20] - 2025-12-05
+
+### Added
+- **Widget duplicate** button for header row and side column widget toolbars
+- Generic `duplicateWidgetGeneric()` helper for all zones
+
+## [0.5.19] - 2025-12-05
+
+### Changed
+- **Performance Optimization v2** - Request-level caching for directory listings and folder permissions
+- Replaced `setInterval` language polling with MutationObserver
+- Replaced `JSON.parse`/`stringify` with `structuredClone()` for faster deep cloning
+
+## [0.5.x Patch Releases] - 2025-12-03 to 2025-12-05
 
 ### Fixed
-- Links widget text saving
-- Navigation links after editing
+- **v0.5.16** - Admin translations: regenerated l10n `.js` files from `.json` files
+- **v0.5.15** - Performance: reduced page load time from ~11s to ~1-2s; fixed admin settings translations
+- **v0.5.14** - Header row widgets no longer silently lost when saving a page
+- **v0.5.13** - Navigation save handling for both wrapped/unwrapped data formats; admin demo data translations
+- **v0.5.12** - Demo data path detection for custom apps directories, Docker, and non-standard setups
+- **v0.5.11** - Permission groups created correctly during App Store installation; sync all admins to IntraVox Admins group
+- **v0.5.10** - GroupFolders dependency clarification in app description
+- **v0.5.9** - App Store release: added app icons, fixed "image not found" error
+- **v0.5.8** - Clean build for App Store submission
 
-### Changed
-- Simplified new page creation
-
-## [0.4.0] - 2025-11-16 - Enhanced UI
-
-### Added
-- Links widget with grid layout
-- Import pages CLI command
-- Demo data scripts
-
-### Changed
-- Reduced vertical spacing
-- Fixed HTML entity display in navigation
-
-## [0.3.0] - 2025-11-13 - UI Refinements
-
-### Changed
-- Dropdown navigation redesign
-- Removed debug logging
-
-## [0.2.0] - 2025-11-08 - Multi-language Support
+## [0.5.7] - 2025-12-03
 
 ### Added
-- URL routing with language paths
-- Footer infrastructure
-- Multi-language support (nl, en, de, fr)
+- **GroupFolder ACL authorization** - PermissionService integration with Nextcloud GroupFolder ACLs
+- Users without folder access cannot see content in navigation
+- Direct URL links blocked for unauthorized users
+- Read-only users don't see Edit/New Page buttons
+- All API endpoints enforce server-side permission checks
 
-## [0.1.0] - 2025-11-07 - Initial Release
+## [0.5.6] - 2025-12-01
 
 ### Added
-- SharePoint-like page creation with drag-and-drop
-- Flexible grid layout (1-5 columns)
-- Widget types: text, images, headings, links, files, dividers
-- Rich text editor with TipTap
-- Page and navigation management
-- Secure JSON-based storage
-- Nextcloud Files and Groups integration
-- Team folder support
+- **PageTreeSelect** - Hierarchical page selector in navigation editor
+- Promote/Demote buttons to move navigation items up/down hierarchy levels
+- Mutually exclusive page/URL fields in navigation items
+
+### Fixed
+- External URL target selector
+
+## [0.5.5] - 2025-11-30
+
+### Added
+- **Page Tree modal** for hierarchical page navigation
+- **Side column** support for page layouts
+- Improved breadcrumb navigation
+
+### Changed
+- Removed all debug statements from Vue components and PHP controllers
+- Improved widget sanitization (preserve id, image properties, links, dividers)
+- Extended background color support in sanitizer
+- Restructured demo data with proper image organization
+
+## [0.5.0] - 2025-11-29
+
+### Changed
+- Fixed LinksWidget link names (use `text` property)
+- Removed "Add to navigation" option from new page creation modal
+- Standardized on `uniqueId` everywhere, removed legacy `pageId` usage
+- Fixed navigation links after editing (uniqueId normalization)
+- Removed unused search indexing code
+
+## [0.4.13] - 2025-11-24
+
+### Added
+- **Folder-level permission filtering** in navigation
+- Users only see navigation items for pages they have access to
+- External/custom URL links remain visible to all users
+- Request-level permission caching for performance
+- Recursive filtering: parent items without accessible children are hidden
+
+## [0.4.12] - 2025-11-24
+
+### Added
+- **Frontend Cache Service** with in-memory caching (5-minute TTL)
+- Parallel API calls for initial page load (pages, navigation, footer)
+- Breadcrumb included in page API response (reduces API calls by 50%)
+
+### Changed
+- Breadcrumb shows current page as clickable item
+- New page creation creates siblings instead of children
+
+### Performance
+- 50% reduction in API calls during navigation
+- ~95% faster page loads for cached content
+- ~60% faster initial application load
+
+## [0.4.10] - 2025-11-24
+
+### Changed
+- **Filesystem timestamps** replace manual timestamp management in JSON files
+- Page metadata now uses `getMTime()` directly
+
+### Fixed
+- Metadata API for uniqueId-based lookups
+- Details panel page metadata loading
+
+## [0.4.6] - 2025-11-22
+
+### Added
+- **Footer editing** on homepage with full markdown support
+- **Granular ACL-based permission system** at folder level (department-specific editing)
+- Enhanced Dutch translations for all UI elements
+- Path-based home page detection (language-agnostic)
+
+## [0.4.1] - 2025-11-18
+
+### Added
+- **Nextcloud Unified Search** integration - IntraVox pages searchable via Ctrl+K
+- Searches in titles, headings, and content with direct navigation
+
+### Removed
+- Custom search UI (replaced by native Nextcloud search)
+
+## [0.4.0] - 2025-11-16
+
+### Added
+- **Links widget** with grid layout support and Material Design icons
+- Import pages command for bulk page creation from JSON files
+- Demo data deployment scripts
+
+### Changed
+- Reduced vertical spacing throughout page viewer and editor for better content density
+- Fixed HTML entity encoding in navigation
+
+## [0.3.0] - 2025-11-13
+
+### Changed
+- **Dropdown navigation redesign** with custom HTML dropdowns and clean styling
+- Increased border-radius on page rows for better visual hierarchy
+- Removed PageCacheNotification component
+- Debug logging cleanup
+
+## [0.2.9] - 2025-11-12
+
+### Added
+- **Navigation system rewrite** with three-level hierarchy support
+- Mobile hamburger menu with collapsible levels
+- Desktop cascading dropdown using NcActions
+- Desktop megamenu with grid-based layout
+
+### Changed
+- Nextcloud-compliant styling (removed gradients, transform effects)
+- All navigation types use Nextcloud Vue 3 components
+
+## [0.2.8] - 2025-11-11
+
+### Added
+- **UniqueId-based URLs** for permanent page identification
+- `/p/{uniqueId}` route for shareable links
+- Automatic uniqueId generation for legacy pages
+- Open Graph meta tags
+
+### Changed
+- Removed all debug logging (production readiness)
+
+## [0.2.7] - 2025-11-11
+
+### Added
+- **Version history** with automatic version creation on save and one-click restoration
+- Page Details sidebar with version tracking
+
+## [0.2.6] - 2025-11-11
+
+### Added
+- **Markdown storage** for content (WYSIWYG editor with markdown backend)
+- UUID v4 for page uniqueIds
+
+### Changed
+- New pages open in edit mode automatically
+- Text widgets start empty (no placeholder text)
+
+## [0.2.5] - 2025-11-10
+
+### Added
+- **Readable page IDs** generated from titles (e.g., "Welcome" becomes "welcome")
+- Clean, readable URLs (e.g., `/apps/intravox#/welcome`)
+- Automatic duplicate handling with numbered suffixes
+- New pages immediately visible in Files app via scanner integration
+
+### Fixed
+- 400 Bad Request errors on page creation/saving
+- Text selection contrast with theme colors
+- Divider widgets adapt to row background colors
+
+## [0.2.4] - 2025-11-10
+
+### Changed
+- Simplified row background color palette to 4 essential theme colors
+- Complete overhaul of text color inheritance for proper contrast
+
+## [0.2.3] - 2025-11-10
+
+### Added
+- Automated release creation and rollback scripts
+
+## [0.2.2] - 2025-11-10
+
+### Added
+- **Row background colors** with theme-based color picker
+- **Footer component** with rich text editing for homepage
+- PageActionsMenu component with 3-dot menu
+- Link support in InlineTextEditor
+
+## [0.2.1] - 2025-11-10
+
+### Fixed
+- Column layout persistence (row.columns now saved correctly)
+- Cache-busting TypeError in PageController
+
+### Changed
+- Default column count changed from 3 to 1
+- Removed URL routing (reverted to simple navigation)
+
+## [0.2.0] - 2025-11-09
+
+### Added
+- **URL routing** with language support (`/apps/intravox/{language}/{pageId}`)
+- Browser back/forward button navigation support
+- Footer infrastructure (temporarily disabled)
+
+### Fixed
+- Column layout bug where widgets were spread across multiple columns
+
+## [0.1.0] - 2025-11-09
+
+### Added
+- **Initial release** of IntraVox
+- Multi-language support (Dutch, English, German, French)
+- Drag-and-drop page editor with flexible grid layouts (1-5 columns)
+- Rich widget types: text, headings, images, links, files, dividers
+- Megamenu and dropdown navigation systems
+- Real-time collaborative editing via GroupFolders
+- Language-aware content management
+- Responsive design for mobile, tablet, and desktop
+- Vue.js 3 frontend with Nextcloud integration
+- PHP backend with CSRF protection
+- Comprehensive i18n support with .po files

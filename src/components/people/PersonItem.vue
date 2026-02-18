@@ -34,8 +34,8 @@
         {{ user.organisation || user.department }}
       </p>
 
-      <!-- Contact info for card/list layouts -->
-      <div v-if="layout !== 'grid'" class="person-contact">
+      <!-- Contact info -->
+      <div v-if="hasContactInfo" class="person-contact">
         <a
           v-if="showField('email') && user.email"
           :href="`mailto:${user.email}`"
@@ -72,10 +72,18 @@
           <Web :size="16" />
           <span>{{ formatWebsite(user.website) }}</span>
         </a>
+
+        <span
+          v-if="showField('birthdate') && user.birthdate"
+          class="person-contact-item person-birthdate"
+        >
+          <CakeVariant :size="16" />
+          <span>{{ formatBirthdate(user.birthdate) }}</span>
+        </span>
       </div>
 
       <!-- Social links -->
-      <div v-if="layout !== 'grid' && hasSocialLinks" class="person-social">
+      <div v-if="hasSocialLinks" class="person-social">
         <a
           v-if="user.twitter"
           :href="getTwitterUrl(user.twitter)"
@@ -85,6 +93,17 @@
           :title="user.twitter"
         >
           <Twitter :size="18" />
+        </a>
+
+        <a
+          v-if="user.bluesky"
+          :href="getBlueskyUrl(user.bluesky)"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="person-social-item"
+          :title="user.bluesky"
+        >
+          <CloudOutline :size="18" />
         </a>
 
         <a
@@ -107,9 +126,9 @@
         {{ truncateBio(user.biography) }}
       </p>
 
-      <!-- Custom fields from LDAP/OIDC (card/list layouts only) -->
+      <!-- Custom fields from LDAP/OIDC -->
       <div
-        v-if="layout !== 'grid' && showField('customFields') && customFields.length > 0"
+        v-if="showField('customFields') && customFields.length > 0"
         class="person-custom-fields"
       >
         <div
@@ -133,7 +152,9 @@ import Phone from 'vue-material-design-icons/Phone.vue';
 import MapMarker from 'vue-material-design-icons/MapMarker.vue';
 import Web from 'vue-material-design-icons/Web.vue';
 import Twitter from 'vue-material-design-icons/Twitter.vue';
+import CloudOutline from 'vue-material-design-icons/CloudOutline.vue';
 import Mastodon from 'vue-material-design-icons/Mastodon.vue';
+import CakeVariant from 'vue-material-design-icons/CakeVariant.vue';
 
 export default {
   name: 'PersonItem',
@@ -144,7 +165,9 @@ export default {
     MapMarker,
     Web,
     Twitter,
+    CloudOutline,
     Mastodon,
+    CakeVariant,
   },
   props: {
     user: {
@@ -172,6 +195,7 @@ export default {
         phone: false,
         address: false,
         website: false,
+        birthdate: false,
         // Extended
         biography: false,
         socialLinks: false,
@@ -200,20 +224,25 @@ export default {
     itemBackgroundClass() {
       return `background-${this.itemBackground}`;
     },
+    hasContactInfo() {
+      return (this.showField('email') && this.user.email)
+        || (this.showField('phone') && this.user.phone)
+        || (this.showField('address') && this.user.address)
+        || (this.showField('website') && this.user.website)
+        || (this.showField('birthdate') && this.user.birthdate);
+    },
     hasSocialLinks() {
       // Support both new socialLinks and legacy twitter/fediverse fields
       const showSocial = this.showField('socialLinks')
         || this.showField('twitter')
         || this.showField('fediverse');
-      return showSocial && (this.user.twitter || this.user.fediverse);
+      return showSocial && (this.user.twitter || this.user.bluesky || this.user.fediverse);
     },
     showRole() {
-      // Support new 'role' field and legacy 'title' field
-      return this.showField('role') || this.showField('title');
+      return this.showField('role');
     },
     showHeadline() {
-      // Support new 'headline' field and legacy 'title' field
-      return this.showField('headline') || this.showField('title');
+      return this.showField('headline');
     },
     customFields() {
       // Known/standard fields that are handled separately
@@ -221,7 +250,7 @@ export default {
       // which converts PROPERTY_NAME to lowercase with underscores (e.g., profile_enabled)
       const knownFields = [
         'uid', 'displayName', 'displayname', 'pronouns', 'email', 'phone', 'address', 'website',
-        'twitter', 'fediverse', 'organisation', 'department', 'role',
+        'twitter', 'bluesky', 'fediverse', 'organisation', 'department', 'role', 'birthdate',
         'headline', 'biography', 'avatarUrl', 'groups', 'status',
         // Nextcloud internal fields - all possible naming variants
         'profileEnabled', 'profileenabled', 'profile_enabled',
@@ -262,7 +291,24 @@ export default {
     getTwitterUrl(handle) {
       // Handle can be @username or just username
       const username = handle.replace(/^@/, '');
-      return `https://twitter.com/${username}`;
+      return `https://x.com/${username}`;
+    },
+    getBlueskyUrl(handle) {
+      // Handle can be @user.bsky.social, user.bsky.social, or a full URL
+      if (handle.startsWith('http')) {
+        return handle;
+      }
+      const username = handle.replace(/^@/, '');
+      return `https://bsky.app/profile/${username}`;
+    },
+    formatBirthdate(dateStr) {
+      if (!dateStr) return '';
+      try {
+        const date = new Date(dateStr + 'T00:00:00');
+        return date.toLocaleDateString(undefined, { month: 'long', day: 'numeric' });
+      } catch {
+        return dateStr;
+      }
     },
     getFediverseUrl(handle) {
       // Handle format: @user@instance.social
@@ -456,9 +502,6 @@ export default {
   overflow: hidden;
 }
 
-.layout-grid .person-headline {
-  display: none; /* Hide headline in grid to save space */
-}
 
 /* Legacy .person-title for backwards compatibility */
 .person-title {
@@ -515,7 +558,8 @@ export default {
   font-size: 13px;
 }
 
-.person-contact-item.person-address {
+.person-contact-item.person-address,
+.person-contact-item.person-birthdate {
   color: var(--color-text-maxcontrast);
 }
 

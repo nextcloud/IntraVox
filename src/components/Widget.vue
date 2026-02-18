@@ -767,7 +767,7 @@ export default {
 
 /* Heading Widget */
 .widget-heading {
-  margin: 16px 0 8px 0;
+  margin: 16px 0 16px 0;
   color: inherit;
   font-weight: 600;
 }

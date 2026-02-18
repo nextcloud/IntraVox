@@ -127,6 +127,18 @@
               </option>
             </select>
 
+            <!-- Date field with within_next_days operator (number input) -->
+            <input
+              v-else-if="filter.operator === 'within_next_days'"
+              type="number"
+              v-model="filter.value"
+              class="filter-value filter-value--days"
+              :placeholder="t('Days')"
+              min="1"
+              max="365"
+              @input="emitUpdate"
+            />
+
             <!-- Text field (default) -->
             <input
               v-else
@@ -262,7 +274,7 @@
             <span>{{ t('Pronouns') }}</span>
           </label>
           <label class="checkbox-option">
-            <input type="checkbox" v-model="localWidget.showFields.role" @change="emitUpdate" />
+            <input type="checkbox" v-model="localWidget.showFields.role" @change="syncTitleWithRole" />
             <span>{{ t('Role') }}</span>
           </label>
           <label class="checkbox-option">
@@ -286,28 +298,32 @@
             <input type="checkbox" v-model="localWidget.showFields.phone" @change="emitUpdate" />
             <span>{{ t('Phone') }}</span>
           </label>
-          <label v-if="localWidget.layout !== 'grid'" class="checkbox-option">
+          <label class="checkbox-option">
             <input type="checkbox" v-model="localWidget.showFields.address" @change="emitUpdate" />
             <span>{{ t('Address') }}</span>
           </label>
-          <label v-if="localWidget.layout !== 'grid'" class="checkbox-option">
+          <label class="checkbox-option">
             <input type="checkbox" v-model="localWidget.showFields.website" @change="emitUpdate" />
             <span>{{ t('Website') }}</span>
+          </label>
+          <label class="checkbox-option">
+            <input type="checkbox" v-model="localWidget.showFields.birthdate" @change="emitUpdate" />
+            <span>{{ t('Date of birth') }}</span>
           </label>
         </div>
 
         <!-- Extended -->
         <div class="display-group">
           <span class="display-group-header">{{ t('Extended') }}</span>
-          <label v-if="localWidget.layout === 'card'" class="checkbox-option">
+          <label class="checkbox-option">
             <input type="checkbox" v-model="localWidget.showFields.biography" @change="emitUpdate" />
             <span>{{ t('Biography') }}</span>
           </label>
-          <label v-if="localWidget.layout !== 'grid'" class="checkbox-option">
+          <label class="checkbox-option">
             <input type="checkbox" v-model="localWidget.showFields.socialLinks" @change="emitUpdate" />
-            <span>{{ t('Social links (X/Fediverse)') }}</span>
+            <span>{{ t('Social links (X/Bluesky/Fediverse)') }}</span>
           </label>
-          <label v-if="localWidget.layout !== 'grid'" class="checkbox-option">
+          <label class="checkbox-option">
             <input type="checkbox" v-model="localWidget.showFields.customFields" @change="emitUpdate" />
             <span>{{ t('Custom fields (LDAP/OIDC)') }}</span>
           </label>
@@ -371,6 +387,12 @@ export default {
           { value: 'equals', label: 'equals' },
           { value: 'in', label: 'is one of' },
           { value: 'not_empty', label: 'is not empty' },
+        ],
+        date: [
+          { value: 'is_today', label: 'is today' },
+          { value: 'within_next_days', label: 'is within next X days' },
+          { value: 'not_empty', label: 'is not empty' },
+          { value: 'empty', label: 'is empty' },
         ],
       },
     };
@@ -439,6 +461,7 @@ export default {
           phone: false,
           address: false,
           website: false,
+          birthdate: false,
           // Extended
           biography: false,
           socialLinks: false,
@@ -447,6 +470,11 @@ export default {
           title: true,
         },
       };
+    },
+    syncTitleWithRole() {
+      // Keep legacy 'title' field in sync with 'role'
+      this.localWidget.showFields.title = this.localWidget.showFields.role;
+      this.emitUpdate();
     },
     emitUpdate() {
       this.localWidget.filters = this.filters;
@@ -533,7 +561,7 @@ export default {
       return this.operatorsByFieldType[fieldType] || this.operatorsByFieldType.text;
     },
     requiresNoValue(operator) {
-      return ['not_empty', 'empty'].includes(operator);
+      return ['not_empty', 'empty', 'is_today'].includes(operator);
     },
     setFilterOperator(op) {
       this.localWidget.filterOperator = op;

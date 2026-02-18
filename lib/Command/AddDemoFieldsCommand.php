@@ -37,6 +37,7 @@ class AddDemoFieldsCommand extends Command {
         'website' => IAccountManager::PROPERTY_WEBSITE,
         'twitter' => IAccountManager::PROPERTY_TWITTER,
         'fediverse' => IAccountManager::PROPERTY_FEDIVERSE,
+        'birthdate' => IAccountManager::PROPERTY_BIRTHDATE,
     ];
 
     public function __construct(

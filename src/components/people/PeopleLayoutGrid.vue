@@ -5,7 +5,7 @@
       :key="user.uid"
       :user="user"
       layout="grid"
-      :show-fields="gridShowFields"
+      :show-fields="widget.showFields || {}"
       :item-background="itemBackgroundMode"
       class="people-grid-item"
     />
@@ -61,20 +61,6 @@ export default {
       }
 
       return 'default';
-    },
-    // Grid layout shows limited fields: avatar, name, and optionally title
-    gridShowFields() {
-      const baseFields = this.widget.showFields || {};
-      return {
-        avatar: baseFields.avatar !== false,
-        displayName: baseFields.displayName !== false,
-        title: baseFields.title !== false,
-        // Hide these in grid layout for compactness
-        email: false,
-        phone: false,
-        department: false,
-        biography: false,
-      };
     },
   },
 };

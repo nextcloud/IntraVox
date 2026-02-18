@@ -2330,7 +2330,7 @@ class PageService {
                                 'operator' => in_array($filter['operator'] ?? 'equals', $allowedOperators)
                                     ? $filter['operator']
                                     : 'equals',
-                                'value' => $this->sanitizeText($filter['value'] ?? ''),
+                                'value' => $this->sanitizeText((string)($filter['value'] ?? '')),
                                 'values' => [],
                             ];
 
@@ -2383,13 +2383,17 @@ class PageService {
                 if (isset($widget['filters']) && is_array($widget['filters'])) {
                     foreach ($widget['filters'] as $filter) {
                         if (isset($filter['fieldName']) && !empty($filter['fieldName'])) {
-                            $allowedOperators = ['equals', 'contains', 'in', 'not_empty', 'empty'];
+                            $allowedOperators = [
+                                'equals', 'contains', 'in', 'not_empty', 'empty',
+                                // Date operators
+                                'is_today', 'within_next_days', 'before', 'after',
+                            ];
                             $sanitizedFilter = [
                                 'fieldName' => $this->sanitizeText($filter['fieldName']),
                                 'operator' => in_array($filter['operator'] ?? 'equals', $allowedOperators)
                                     ? $filter['operator']
                                     : 'equals',
-                                'value' => $this->sanitizeText($filter['value'] ?? ''),
+                                'value' => $this->sanitizeText((string)($filter['value'] ?? '')),
                                 'values' => [],
                             ];
 
@@ -2436,13 +2440,24 @@ class PageService {
 
                 // Display options (showFields object)
                 $sanitized['showFields'] = [
+                    // Basic information
                     'avatar' => (bool)($widget['showFields']['avatar'] ?? true),
                     'displayName' => (bool)($widget['showFields']['displayName'] ?? true),
-                    'email' => (bool)($widget['showFields']['email'] ?? true),
-                    'phone' => (bool)($widget['showFields']['phone'] ?? true),
+                    'pronouns' => (bool)($widget['showFields']['pronouns'] ?? false),
+                    'role' => (bool)($widget['showFields']['role'] ?? true),
+                    'headline' => (bool)($widget['showFields']['headline'] ?? false),
                     'department' => (bool)($widget['showFields']['department'] ?? true),
-                    'title' => (bool)($widget['showFields']['title'] ?? true),
+                    'title' => (bool)($widget['showFields']['title'] ?? ($widget['showFields']['role'] ?? true)),
+                    // Contact
+                    'email' => (bool)($widget['showFields']['email'] ?? true),
+                    'phone' => (bool)($widget['showFields']['phone'] ?? false),
+                    'address' => (bool)($widget['showFields']['address'] ?? false),
+                    'website' => (bool)($widget['showFields']['website'] ?? false),
+                    'birthdate' => (bool)($widget['showFields']['birthdate'] ?? false),
+                    // Extended
                     'biography' => (bool)($widget['showFields']['biography'] ?? false),
+                    'socialLinks' => (bool)($widget['showFields']['socialLinks'] ?? false),
+                    'customFields' => (bool)($widget['showFields']['customFields'] ?? false),
                 ];
 
                 // Background color

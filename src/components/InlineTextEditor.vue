@@ -352,6 +352,7 @@ import { TableHeader } from '@tiptap/extension-table-header';
 import { TableCell } from '@tiptap/extension-table-cell';
 import { NcModal, NcButton } from '@nextcloud/vue';
 import { markdownToHtml, htmlToMarkdown, cleanMarkdown } from '../utils/markdownSerializer.js';
+import { DummyTextExtension } from '../utils/dummyTextGenerator.js';
 
 // Material Design Icons
 import FormatBold from 'vue-material-design-icons/FormatBold.vue';
@@ -460,7 +461,8 @@ export default {
         }),
         TableRow,
         TableHeader,
-        TableCell
+        TableCell,
+        DummyTextExtension,
       ],
       onUpdate: () => {
         // Convert HTML back to Markdown for storage

@@ -36,13 +36,15 @@ class UserService {
         IAccountManager::PROPERTY_PHONE => ['label' => 'Phone', 'type' => 'phone'],
         IAccountManager::PROPERTY_ADDRESS => ['label' => 'Address', 'type' => 'text'],
         IAccountManager::PROPERTY_WEBSITE => ['label' => 'Website', 'type' => 'url'],
-        IAccountManager::PROPERTY_TWITTER => ['label' => 'Twitter', 'type' => 'text'],
+        IAccountManager::PROPERTY_TWITTER => ['label' => 'X (Twitter)', 'type' => 'text'],
+        IAccountManager::PROPERTY_BLUESKY => ['label' => 'Bluesky', 'type' => 'text'],
         IAccountManager::PROPERTY_FEDIVERSE => ['label' => 'Fediverse', 'type' => 'text'],
         IAccountManager::PROPERTY_ORGANISATION => ['label' => 'Organisation', 'type' => 'text'],
         IAccountManager::PROPERTY_ROLE => ['label' => 'Role', 'type' => 'text'],
         IAccountManager::PROPERTY_HEADLINE => ['label' => 'Headline', 'type' => 'text'],
         IAccountManager::PROPERTY_BIOGRAPHY => ['label' => 'Biography', 'type' => 'textarea'],
         IAccountManager::PROPERTY_PRONOUNS => ['label' => 'Pronouns', 'type' => 'text'],
+        IAccountManager::PROPERTY_BIRTHDATE => ['label' => 'Date of birth', 'type' => 'date'],
     ];
 
     public function __construct(
@@ -299,10 +301,12 @@ class UserService {
             IAccountManager::PROPERTY_PHONE => ['label' => 'Phone', 'type' => 'text'],
             IAccountManager::PROPERTY_ADDRESS => ['label' => 'Address', 'type' => 'text'],
             IAccountManager::PROPERTY_WEBSITE => ['label' => 'Website', 'type' => 'text'],
+            IAccountManager::PROPERTY_BIRTHDATE => ['label' => 'Date of birth', 'type' => 'date'],
 
             // Extended
             IAccountManager::PROPERTY_BIOGRAPHY => ['label' => 'Biography', 'type' => 'text'],
-            IAccountManager::PROPERTY_TWITTER => ['label' => 'Twitter/X', 'type' => 'text'],
+            IAccountManager::PROPERTY_TWITTER => ['label' => 'X (Twitter)', 'type' => 'text'],
+            IAccountManager::PROPERTY_BLUESKY => ['label' => 'Bluesky', 'type' => 'text'],
             IAccountManager::PROPERTY_FEDIVERSE => ['label' => 'Fediverse', 'type' => 'text'],
         ];
 
@@ -578,6 +582,43 @@ class UserService {
                     return empty($actualValue);
                 }
                 return $actualValue === null || $actualValue === '';
+
+            case 'is_today':
+                // Compare month and day only (for birthdays)
+                if (empty($actualValue)) {
+                    return false;
+                }
+                try {
+                    $date = new \DateTime($actualValue);
+                    $today = new \DateTime();
+                    return $date->format('m-d') === $today->format('m-d');
+                } catch (\Exception $e) {
+                    return false;
+                }
+
+            case 'within_next_days':
+                // Check if month-day falls within next X days (for upcoming birthdays)
+                if (empty($actualValue) || !is_numeric($filterValue)) {
+                    return false;
+                }
+                try {
+                    $date = new \DateTime($actualValue);
+                    $today = new \DateTime();
+                    $currentYear = (int)$today->format('Y');
+
+                    // Create a date in the current year with the same month-day
+                    $birthdayThisYear = new \DateTime($currentYear . '-' . $date->format('m-d'));
+
+                    // If the birthday already passed this year, check next year
+                    if ($birthdayThisYear < $today) {
+                        $birthdayThisYear = new \DateTime(($currentYear + 1) . '-' . $date->format('m-d'));
+                    }
+
+                    $daysUntil = (int)$today->diff($birthdayThisYear)->days;
+                    return $daysUntil <= (int)$filterValue;
+                } catch (\Exception $e) {
+                    return false;
+                }
 
             default:
                 return false;
