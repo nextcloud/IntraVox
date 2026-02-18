@@ -831,7 +831,7 @@ class PublicShareService {
      * Recursively collect child pages.
      */
     private function collectChildPages($folder, array &$children, int $depth, int $maxChildren): void {
-        if (count($children) >= $maxChildren || $depth > 5) {
+        if (count($children) >= $maxChildren || $depth > 7) {
             return;
         }
 

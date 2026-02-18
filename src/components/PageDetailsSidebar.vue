@@ -740,8 +740,8 @@ export default {
       });
     },
     getDepartmentMaxDepth() {
-      // Department pages have max depth 2
-      return 2;
+      // Department pages have max depth 5
+      return 5;
     },
     getPageTypeLabel(type) {
       const labels = {

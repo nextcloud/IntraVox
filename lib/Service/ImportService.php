@@ -1247,8 +1247,8 @@ class ImportService {
             }
         }
 
-        // Maximum depth for imported tree = 2 (3 levels total) - parentDepth
-        $maxImportDepth = 2 - $parentDepth;
+        // Maximum depth for imported tree = 4 (5 levels total) - parentDepth
+        $maxImportDepth = 4 - $parentDepth;
 
         // Build a tree structure of imported pages with depth limit
         $pageTree = $this->buildPageTree($sortedPages, $maxImportDepth);
@@ -1272,13 +1272,13 @@ class ImportService {
 
     /**
      * Build a tree structure from flat page list
-     * Limits depth to maximum levels allowed in navigation (3 levels total)
+     * Limits depth to maximum levels allowed in navigation (5 levels total)
      *
      * @param array $pages Flat list of pages
-     * @param int $maxDepth Maximum depth to include (default 2 = 3 levels total with root)
+     * @param int $maxDepth Maximum depth to include (default 4 = 5 levels total with root)
      * @return array Tree structure limited to maxDepth
      */
-    private function buildPageTree(array $pages, int $maxDepth = 2): array {
+    private function buildPageTree(array $pages, int $maxDepth = 4): array {
         $tree = [];
         $lookup = [];
 

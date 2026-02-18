@@ -329,7 +329,7 @@ Navigation
 
 ### Best Practices
 
-- Keep navigation depth to 3 levels maximum
+- Keep navigation depth to 5 levels maximum
 - Use clear, concise labels
 - Group related items together
 - Test on mobile devices

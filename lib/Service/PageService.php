@@ -993,18 +993,18 @@ class PageService {
             array_shift($pathParts);
         }
 
-        // Public pages: max depth 3
+        // Public pages: max depth 5
         if (count($pathParts) > 0 && $pathParts[0] === 'public') {
-            return 3;
+            return 5;
         }
 
-        // Department pages: max depth 2
+        // Department pages: max depth 5
         if (count($pathParts) > 0 && $pathParts[0] === 'departments') {
-            return 2;
+            return 5;
         }
 
-        // Default: max depth 3
-        return 3;
+        // Default: max depth 5
+        return 5;
     }
 
     /**

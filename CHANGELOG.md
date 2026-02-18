@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - **PHP Minimum Version**: Raised from PHP 8.1 to PHP 8.2 (required by Nextcloud 33)
+- **Page Nesting Depth**: Increased maximum page depth from 3 to 5 levels for all page types ([#19](https://github.com/nextcloud/IntraVox/issues/19))
+  - Allows deeper page hierarchies (e.g., Organisation → Teams → Team → Subteam → Content)
+  - Import service updated to support 5 levels
+  - Public share recursion safety limit raised accordingly
 
 ### Fixed
 - **Comment Cascade Delete**: Deleting a parent comment now properly deletes all replies and updates the comment count correctly ([#20](https://github.com/nextcloud/IntraVox/issues/20))
