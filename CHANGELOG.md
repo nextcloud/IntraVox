@@ -4,6 +4,12 @@ All notable changes to IntraVox will be documented in this file.
 
 IntraVox is a Nextcloud intranet page builder.
 
+## [0.9.15] - 2026-02-19
+
+### Fixed
+- **MetaVox sidebar on NC33** - MetaVox metadata tab now works in IntraVox on Nextcloud 33, where MetaVox registers via the new scoped globals API instead of the legacy OCA.Files.Sidebar API
+- MetaVox mock Node object now passes correct `mountType` and `mountPoint` attributes (camelCase) so groupfolder detection works properly
+
 ## [0.9.14] - 2026-02-18
 
 ### Added
