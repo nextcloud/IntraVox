@@ -305,6 +305,9 @@ export default {
       if (!dateStr) return '';
       try {
         const date = new Date(dateStr + 'T00:00:00');
+        if (isNaN(date.getTime())) {
+          return dateStr;
+        }
         return date.toLocaleDateString(undefined, { month: 'long', day: 'numeric' });
       } catch {
         return dateStr;

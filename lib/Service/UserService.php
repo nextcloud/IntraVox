@@ -367,6 +367,13 @@ class UserService {
                     $value = $prop->getValue();
                     // Use a simplified key name
                     $key = $this->propertyToKey($property);
+
+                    // Normalize birthdate to ISO 8601 (YYYY-MM-DD) format
+                    // Nextcloud may store locale-specific formats (e.g. DD-MM-YYYY)
+                    if ($property === IAccountManager::PROPERTY_BIRTHDATE && !empty($value)) {
+                        $value = $this->normalizeDateToISO($value);
+                    }
+
                     $profile[$key] = $value ?: null;
                 } catch (\Exception $e) {
                     // Property not available for this user
@@ -490,6 +497,36 @@ class UserService {
 
         // Convert to lowercase
         return strtolower($key);
+    }
+
+    /**
+     * Normalize a date string to ISO 8601 (YYYY-MM-DD) format.
+     * Handles locale-specific formats like DD-MM-YYYY, DD/MM/YYYY, DD.MM.YYYY.
+     *
+     * @param string $value The date string to normalize
+     * @return string|null ISO date string or null if unparseable
+     */
+    private function normalizeDateToISO(string $value): ?string {
+        // Already in ISO format (YYYY-MM-DD)
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)) {
+            return $value;
+        }
+
+        // DD-MM-YYYY or DD/MM/YYYY or DD.MM.YYYY (European formats)
+        if (preg_match('/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})$/', $value, $matches)) {
+            $date = \DateTime::createFromFormat('d-m-Y', $matches[1] . '-' . $matches[2] . '-' . $matches[3]);
+            if ($date !== false) {
+                return $date->format('Y-m-d');
+            }
+        }
+
+        // Fallback: let PHP try to parse it
+        try {
+            $date = new \DateTime($value);
+            return $date->format('Y-m-d');
+        } catch (\Exception $e) {
+            return null;
+        }
     }
 
     /**

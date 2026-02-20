@@ -4,6 +4,11 @@ All notable changes to IntraVox will be documented in this file.
 
 IntraVox is a Nextcloud intranet page builder.
 
+## [0.9.16] - Unreleased
+
+### Fixed
+- **People widget "Invalid Date"** - Birthdate now correctly displayed regardless of Nextcloud locale settings. Added backend normalization of locale-specific date formats (DD-MM-YYYY, DD/MM/YYYY, DD.MM.YYYY) to ISO 8601 before sending to frontend, with additional frontend fallback for edge cases.
+
 ## [0.9.15] - 2026-02-19
 
 ### Fixed
