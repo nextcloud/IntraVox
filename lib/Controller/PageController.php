@@ -123,10 +123,8 @@ class PageController extends Controller {
         $isShareAccess = $shareToken !== null && $shareToken !== '';
 
         $this->logger->debug('[PageController] index() called', [
-            'shareToken' => $shareToken,
             'isAnonymous' => $isAnonymous,
             'isShareAccess' => $isShareAccess,
-            'queryString' => $queryString,
         ]);
 
         // If share token is provided, validate it (for both anonymous and logged-in users)
@@ -179,11 +177,6 @@ class PageController extends Controller {
             $response->addHeader('X-Frame-Options', 'SAMEORIGIN');
             $response->addHeader('X-Content-Type-Options', 'nosniff');
         }
-
-        // Disable caching for development
-        $response->addHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-        $response->addHeader('Pragma', 'no-cache');
-        $response->addHeader('Expires', '0');
 
         return $response;
     }
@@ -378,10 +371,8 @@ class PageController extends Controller {
         return $response;
     }
 
-    /**
-     * @NoAdminRequired
-     * @NoCSRFRequired
-     */
+    #[NoAdminRequired]
+    #[NoCSRFRequired]
     public function show(string $id): TemplateResponse {
         Util::addScript('intravox', 'intravox-main');
         Util::addStyle('intravox', 'main');
@@ -392,10 +383,8 @@ class PageController extends Controller {
         return $response;
     }
 
-    /**
-     * @NoAdminRequired
-     * @NoCSRFRequired
-     */
+    #[NoAdminRequired]
+    #[NoCSRFRequired]
     public function languagePage(string $language, string $pageId): TemplateResponse {
         // This route handles URLs like /en/home
         // Return the same template as index - Vue.js will handle routing client-side
@@ -413,10 +402,9 @@ class PageController extends Controller {
      *
      * Note: @PublicPage removed for security - all pages require Nextcloud authentication.
      * Public sharing feature can be implemented in future with explicit isPublic flag validation.
-     *
-     * @NoAdminRequired
-     * @NoCSRFRequired
      */
+    #[NoAdminRequired]
+    #[NoCSRFRequired]
     public function showByUniqueId(string $uniqueId): TemplateResponse {
         Util::addScript('intravox', 'intravox-main');
         Util::addStyle('intravox', 'main');

@@ -72,6 +72,8 @@ module.exports = {
             'fs': false,
             'crypto': false,
             'stream': false,
+            'string_decoder': false,
+            'buffer': false,
             'os': false,
             'http': false,
             'https': false,

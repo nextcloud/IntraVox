@@ -840,6 +840,30 @@ class PageService {
             $result = $this->findPageById($folder, $id);
         }
 
+        // Cross-language fallback: search other language folders
+        // This enables feed links and shared links to work across languages
+        if ($result === null && strpos($originalId, 'page-') === 0) {
+            $baseFolder = $this->getIntraVoxFolder();
+            $currentLang = $this->getUserLanguage();
+
+            foreach (self::SUPPORTED_LANGUAGES as $lang) {
+                if ($lang === $currentLang) {
+                    continue; // Already searched
+                }
+                try {
+                    $langFolder = $baseFolder->get($lang);
+                    if ($langFolder instanceof \OCP\Files\Folder) {
+                        $result = $this->findPageByUniqueId($langFolder, $originalId);
+                        if ($result !== null) {
+                            break;
+                        }
+                    }
+                } catch (NotFoundException $e) {
+                    continue;
+                }
+            }
+        }
+
         if ($result === null) {
             throw new \Exception('Page not found');
         }
@@ -1769,8 +1793,8 @@ class PageService {
                     throw new \Exception('Not a file');
                 }
 
-                // Get mime type
-                $mimeType = $file->getMimeType();
+                // Get mime type (with fallback for incorrect GroupFolder cache)
+                $mimeType = $this->resolveMediaMimeType($file);
 
                 // Validate it's an allowed media type
                 if (!in_array($mimeType, self::ALLOWED_MEDIA_TYPES)) {
@@ -1826,8 +1850,8 @@ class PageService {
                 throw new \Exception('Not a file');
             }
 
-            // Get mime type
-            $mimeType = $file->getMimeType();
+            // Get mime type (with fallback for incorrect GroupFolder cache)
+            $mimeType = $this->resolveMediaMimeType($file);
 
             // Validate it's an allowed media type
             if (!in_array($mimeType, self::ALLOWED_MEDIA_TYPES)) {
@@ -1847,6 +1871,33 @@ class PageService {
         } catch (NotFoundException $e) {
             throw new \Exception('Media not found');
         }
+    }
+
+    /**
+     * Resolve MIME type for a media file, with extension-based fallback.
+     *
+     * GroupFolders can store incorrect MIME types (application/octet-stream)
+     * in the file cache. When that happens, fall back to extension detection.
+     */
+    private function resolveMediaMimeType(\OCP\Files\File $file): string {
+        $mimeType = $file->getMimeType();
+
+        if ($mimeType === 'application/octet-stream') {
+            $ext = strtolower(pathinfo($file->getName(), PATHINFO_EXTENSION));
+            $mimeType = match ($ext) {
+                'jpg', 'jpeg' => 'image/jpeg',
+                'png' => 'image/png',
+                'gif' => 'image/gif',
+                'webp' => 'image/webp',
+                'svg' => 'image/svg+xml',
+                'mp4' => 'video/mp4',
+                'webm' => 'video/webm',
+                'ogg' => 'video/ogg',
+                default => $mimeType,
+            };
+        }
+
+        return $mimeType;
     }
 
     /**

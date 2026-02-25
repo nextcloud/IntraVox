@@ -4,10 +4,24 @@ All notable changes to IntraVox will be documented in this file.
 
 IntraVox is a Nextcloud intranet page builder.
 
-## [0.9.16] - Unreleased
+## [0.9.16] - 2026-02-23
+
+### Added
+- **RSS feed** - Personal RSS feed for each user with token-based authentication, feed media endpoint, conditional requests (ETag/Last-Modified), and brute force protection
+- **RSS feed settings UI** - Generate, regenerate, and revoke feed tokens with configurable scope (my language / all languages) and item limit
+- **RSS feed sharing policy** - Feed respects Nextcloud's "Allow users to share via link" admin setting; shows clear error when disabled
+- **RSS feed cross-language links** - Feed items link via `#page-{uniqueId}` format, automatically resolving pages across language folders
+
+### Changed
+- **Dummy text generator** - Removed `=dad()` alias, only `=dadjokes()` and `=lorem()` are now supported
+- **`=lorem()` rich formatting** - Now generates richly formatted content showcasing all text widget capabilities: headings, blockquotes, bullet lists, tables, ordered lists, and mixed inline marks (bold, italic, code, underline, strikethrough)
+- **Dummy text multilingual labels** - `=lorem()` section headings, table columns, and status labels are now localized for EN, NL, DE, and FR
+- **Documentation** - Added RSS feed admin setup guide with GroupFolder permission requirements (Read + Share), ACL examples, and troubleshooting
 
 ### Fixed
-- **People widget "Invalid Date"** - Birthdate now correctly displayed regardless of Nextcloud locale settings. Added backend normalization of locale-specific date formats (DD-MM-YYYY, DD/MM/YYYY, DD.MM.YYYY) to ISO 8601 before sending to frontend, with additional frontend fallback for edge cases.
+- **People widget "Invalid Date"** - Birthdate now correctly displayed regardless of Nextcloud locale settings. Added backend normalization of locale-specific date formats (DD-MM-YYYY, DD/MM/YYYY, DD.MM.YYYY) to ISO 8601 before sending to frontend, with additional frontend fallback for edge cases
+- **RSS feed empty for ACL users** - Documented that GroupFolders requires both Read and Share permissions for public feed endpoints; updated all permission tables and recommendations
+- **Webpack build failure** - Added `string_decoder` and `buffer` to webpack resolve.fallback to fix build error caused by `@nextcloud/dialogs` 7.3.0 pulling in Node.js core modules via sax/is-svg
 
 ## [0.9.15] - 2026-02-19
 
@@ -20,7 +34,7 @@ IntraVox is a Nextcloud intranet page builder.
 ### Added
 - **Nextcloud 33 support** - App now supports Nextcloud 32 and 33 (PHP 8.2+ required)
 - **Page nesting depth** increased from 3 to 5 levels for deeper page hierarchies
-- **Dummy text generator** (easter egg) - Type `=dad()`, `=dadjokes(3,5)`, or `=lorem(2,4)` in a text widget and press Enter to generate dummy content (inspired by MS Word's `=rand()`)
+- **Dummy text generator** (easter egg) - Type `=dadjokes(3,5)` or `=lorem(2,4)` in a text widget and press Enter to generate dummy content (inspired by MS Word's `=rand()`)
 - **Birthdate field** support in People widget - display, filter (`is_today`, `within_next_days`)
 - **Bluesky** social link support in People widget
 - **Date filter operators** for People widget: `is today`, `within next X days`

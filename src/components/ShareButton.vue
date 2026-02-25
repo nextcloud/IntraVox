@@ -115,11 +115,8 @@ export default {
             uniqueId: this.pageUniqueId
           })
         );
-        // console.log('[ShareButton] Share info response:', response.data);
         this.shareInfo = response.data;
       } catch (err) {
-        // Don't show error - just hide the button silently
-        // console.error('[ShareButton] Error loading share info:', err.response?.data || err.message);
         this.shareInfo = null;
         this.error = err.message;
       } finally {

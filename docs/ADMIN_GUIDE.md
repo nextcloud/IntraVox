@@ -51,7 +51,7 @@ IntraVox automatically creates two permission groups during installation:
 | Group | Purpose | Permissions |
 |-------|---------|-------------|
 | **IntraVox Admins** | Full administrative access | Read, Write, Create, Delete, Share |
-| **IntraVox Users** | Standard read access | Read |
+| **IntraVox Users** | Standard read access | Read, Share |
 
 ### Automatic Admin Synchronization
 
@@ -104,9 +104,11 @@ If automatic setup fails, create the GroupFolder manually:
 
 | Group | Purpose | Permissions |
 |-------|---------|-------------|
-| everyone / all-users | All employees | Read |
-| intranet-editors | Content creators | Read, Write, Create |
+| everyone / all-users | All employees | Read, Share |
+| intranet-editors | Content creators | Read, Write, Create, Share |
 | intranet-admins | Full administrators | All |
+
+> **Important**: User groups need both **Read** and **Share** permission. The Share permission is required for the RSS feed to work — without it, GroupFolders hides folders from public feed requests. This also applies to ACL rules on subfolders.
 
 ### Enabling ACL (Advanced Permissions)
 
@@ -298,6 +300,47 @@ IntraVox includes a Video Widget for embedding videos from external platforms or
 - Only HTTPS sources allowed
 
 See [ADMIN_SETTINGS.md](ADMIN_SETTINGS.md) for detailed video configuration.
+
+## RSS Feed Configuration
+
+IntraVox provides a personal RSS feed for each user. The feed is a public endpoint secured by a personal token. As an administrator, you need to configure two things for feeds to work.
+
+### Prerequisites
+
+1. **Enable link sharing**: Go to **Nextcloud Admin Settings** → **Sharing** and enable **"Allow users to share via link and emails"**
+2. **Grant Share permission**: Ensure user groups have both **Read** and **Share** permissions on the IntraVox GroupFolder
+
+Without link sharing enabled, feeds are completely blocked. Without Share permission, feeds return empty.
+
+### GroupFolder Permission Setup
+
+The feed endpoint runs without an authenticated user session. In this context, GroupFolders requires both Read and Share permissions for folders to be visible. This applies to both base GroupFolder permissions and ACL rules.
+
+**Without ACL:** Set the base permissions for each user group to include Read and Share.
+
+**With ACL:** Ensure Read + Share is set on every folder in the hierarchy that should be visible in the feed. A subfolder is only reachable if all its parent folders are also visible.
+
+Example: To make Marketing pages visible in the feed for `IntraVox Users`:
+
+```
+IntraVox (base: Read + Share)
+└── en/                      → ACL: Read + Share
+    └── departments/         → ACL: Read + Share
+        ├── marketing/       → ACL: Read + Share  ✓ visible in feed
+        ├── hr/              → ACL: Deny all       ✗ hidden
+        └── sales/           → ACL: Deny all       ✗ hidden
+```
+
+### Troubleshooting
+
+| Problem | Solution |
+|---------|----------|
+| Users see empty feed | Add Share permission to the user group on the language folder(s) |
+| Feed returns 404 | Enable "Allow users to share via link and emails" in Sharing settings |
+| Feed works for admins but not regular users | Admin group has all permissions; add Share to the user group |
+| Some pages missing from feed | Check ACL rules on the specific subfolder and all parent folders |
+
+See [RSS_FEED.md](RSS_FEED.md#administrator-setup) for the full technical details.
 
 ## Security Considerations
 

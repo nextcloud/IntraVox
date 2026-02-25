@@ -142,6 +142,16 @@ return [
         ['name' => 'people#getUserFields', 'url' => '/api/users/fields', 'verb' => 'GET'],
         ['name' => 'people#getPeople', 'url' => '/api/people', 'verb' => 'GET'],
 
+        // RSS Feed routes (public, token-based)
+        ['name' => 'feed#getFeed', 'url' => '/feed/{token}', 'verb' => 'GET'],
+        ['name' => 'feed#getFeedMedia', 'url' => '/feed/{token}/media/{pageId}/{filename}', 'verb' => 'GET'],
+
+        // RSS Feed token management routes (authenticated)
+        ['name' => 'feed#getToken', 'url' => '/api/feed/token', 'verb' => 'GET'],
+        ['name' => 'feed#regenerateToken', 'url' => '/api/feed/token', 'verb' => 'POST'],
+        ['name' => 'feed#revokeToken', 'url' => '/api/feed/token', 'verb' => 'DELETE'],
+        ['name' => 'feed#updateConfig', 'url' => '/api/feed/config', 'verb' => 'PUT'],
+
         // Public share access routes (anonymous access via NC share links)
         ['name' => 'api#getPageByShare', 'url' => '/api/share/{token}/page/{uniqueId}', 'verb' => 'GET'],
         ['name' => 'api#getMediaByShare', 'url' => '/api/share/{token}/page/{uniqueId}/media/{filename}', 'verb' => 'GET'],

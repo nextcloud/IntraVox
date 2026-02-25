@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "IntraVox API",
-    "version": "0.9.15",
+    "version": "0.9.16",
     "description": "IntraVox is a modern intranet page builder for Nextcloud. This API provides endpoints for managing pages, media, navigation, comments, and more.",
     "license": {
       "name": "AGPL-3.0",
@@ -1604,6 +1604,244 @@
                     "publicUrl": { "type": "string" },
                     "filesUrl": { "type": "string" },
                     "navigation": { "type": "array" }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/feed/{token}": {
+      "get": {
+        "operationId": "get-feed",
+        "summary": "Get RSS feed",
+        "description": "Returns an RSS 2.0 feed of IntraVox pages accessible to the token owner. Supports conditional requests via ETag and If-Modified-Since headers.",
+        "tags": ["RSS Feed"],
+        "security": [],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "minLength": 64, "maxLength": 64 },
+            "description": "64-character alphanumeric feed token"
+          },
+          {
+            "name": "If-None-Match",
+            "in": "header",
+            "schema": { "type": "string" },
+            "description": "ETag from a previous response for conditional request"
+          },
+          {
+            "name": "If-Modified-Since",
+            "in": "header",
+            "schema": { "type": "string" },
+            "description": "Last-Modified value from a previous response"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "RSS 2.0 XML feed",
+            "headers": {
+              "ETag": { "schema": { "type": "string" } },
+              "Last-Modified": { "schema": { "type": "string" } },
+              "Cache-Control": { "schema": { "type": "string", "example": "public, max-age=300, must-revalidate" } }
+            },
+            "content": {
+              "application/rss+xml": {
+                "schema": { "type": "string" }
+              }
+            }
+          },
+          "304": {
+            "description": "Not modified (conditional request)"
+          },
+          "404": {
+            "description": "Invalid token or feed not found"
+          }
+        }
+      }
+    },
+    "/feed/{token}/media/{pageId}/{filename}": {
+      "get": {
+        "operationId": "get-feed-media",
+        "summary": "Get feed media file",
+        "description": "Serves media files (images) referenced in feed items, authenticated by the feed token.",
+        "tags": ["RSS Feed"],
+        "security": [],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "minLength": 64, "maxLength": 64 },
+            "description": "64-character alphanumeric feed token"
+          },
+          {
+            "name": "pageId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Unique ID of the page"
+          },
+          {
+            "name": "filename",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Media filename"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Media file",
+            "content": {
+              "image/*": {
+                "schema": { "type": "string", "format": "binary" }
+              }
+            }
+          },
+          "404": {
+            "description": "Invalid token or media not found"
+          }
+        }
+      }
+    },
+    "/api/feed/token": {
+      "get": {
+        "operationId": "get-feed-token",
+        "summary": "Get current user's feed token",
+        "description": "Returns the user's feed token information including the feed URL, configuration, and last accessed timestamp.",
+        "tags": ["RSS Feed"],
+        "responses": {
+          "200": {
+            "description": "Feed token info",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "hasToken": { "type": "boolean" },
+                    "linkSharingDisabled": { "type": "boolean" },
+                    "feedUrl": { "type": "string" },
+                    "last_accessed": { "type": "string", "format": "date-time", "nullable": true },
+                    "config": {
+                      "type": "object",
+                      "properties": {
+                        "scope": { "type": "string", "enum": ["all", "language"] },
+                        "limit": { "type": "integer", "minimum": 1, "maximum": 50 }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      },
+      "post": {
+        "operationId": "regenerate-feed-token",
+        "summary": "Generate or regenerate feed token",
+        "description": "Creates a new feed token (or replaces the existing one). The old feed URL stops working immediately.",
+        "tags": ["RSS Feed"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "scope": { "type": "string", "enum": ["all", "language"], "default": "language" },
+                  "limit": { "type": "integer", "minimum": 1, "maximum": 50, "default": 20 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "New feed token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "feedUrl": { "type": "string" },
+                    "config": {
+                      "type": "object",
+                      "properties": {
+                        "scope": { "type": "string" },
+                        "limit": { "type": "integer" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "Link sharing is disabled by the administrator"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "revoke-feed-token",
+        "summary": "Revoke feed token",
+        "description": "Deletes the user's feed token. The feed URL becomes invalid immediately.",
+        "tags": ["RSS Feed"],
+        "responses": {
+          "200": {
+            "description": "Token revoked"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/feed/config": {
+      "put": {
+        "operationId": "update-feed-config",
+        "summary": "Update feed configuration",
+        "description": "Updates feed scope and item limit without changing the token.",
+        "tags": ["RSS Feed"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "scope": { "type": "string", "enum": ["all", "language"] },
+                  "limit": { "type": "integer", "minimum": 1, "maximum": 50 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Configuration updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "config": {
+                      "type": "object",
+                      "properties": {
+                        "scope": { "type": "string" },
+                        "limit": { "type": "integer" }
+                      }
+                    }
                   }
                 }
               }

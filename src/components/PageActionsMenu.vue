@@ -35,6 +35,14 @@
       </template>
       {{ t('Save as Template') }}
     </NcActionButton>
+
+    <!-- RSS Feed -->
+    <NcActionButton @click="$emit('feed-settings')">
+      <template #icon>
+        <Rss :size="20" />
+      </template>
+      {{ t('RSS Feed') }}
+    </NcActionButton>
   </NcActions>
 </template>
 
@@ -45,6 +53,7 @@ import Cog from 'vue-material-design-icons/Cog.vue';
 import Plus from 'vue-material-design-icons/Plus.vue';
 import TuneVertical from 'vue-material-design-icons/TuneVertical.vue';
 import FileDocumentMultipleOutline from 'vue-material-design-icons/FileDocumentMultipleOutline.vue';
+import Rss from 'vue-material-design-icons/Rss.vue';
 
 export default {
   name: 'PageActionsMenu',
@@ -54,7 +63,8 @@ export default {
     Cog,
     Plus,
     TuneVertical,
-    FileDocumentMultipleOutline
+    FileDocumentMultipleOutline,
+    Rss
   },
   props: {
     isEditMode: {
@@ -72,7 +82,7 @@ export default {
       })
     }
   },
-  emits: ['edit-navigation', 'create-page', 'page-settings', 'save-as-template'],
+  emits: ['edit-navigation', 'create-page', 'page-settings', 'save-as-template', 'feed-settings'],
   methods: {
     t(key, vars = {}) {
       return t('intravox', key, vars);

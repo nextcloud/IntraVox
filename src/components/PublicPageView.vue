@@ -181,8 +181,6 @@ export default {
 					}
 				}
 
-				// console.log('[PublicPageView] Loading page via share token', { token: this.token, uniqueId })
-
 				const response = await axios.get(
 					generateUrl('/apps/intravox/api/share/{token}/page/{uniqueId}', {
 						token: this.token,
@@ -194,9 +192,7 @@ export default {
 				this.error = null
 				// Update URL hash for back/forward navigation
 				this.updateUrl(uniqueId)
-				// console.log('[PublicPageView] Page loaded:', this.pageData?.title)
 			} catch (err) {
-				// console.error('[PublicPageView] Error loading page:', err.response?.data || err.message)
 				if (err.response?.status === 401 && err.response?.data?.passwordRequired) {
 					this.passwordRequired = true
 					this.$nextTick(() => this.$refs.passwordInput?.focus())
@@ -235,7 +231,7 @@ export default {
 					return tree[0].uniqueId
 				}
 			} catch (err) {
-				// console.error('[PublicPageView] Error loading page tree for homepage:', err.message)
+				// Page tree is optional, fail silently
 			}
 			return ''
 		},
@@ -251,14 +247,11 @@ export default {
 		},
 		async loadNavigation() {
 			try {
-				// console.log('[PublicPageView] Loading navigation for share token:', this.token)
 				const response = await axios.get(
 					generateUrl('/apps/intravox/api/share/{token}/navigation', { token: this.token }),
 				)
 				this.navigation = response.data.navigation
-				// console.log('[PublicPageView] Navigation loaded:', this.navigation?.type, 'items:', this.navigation?.items?.length)
 			} catch (err) {
-				// console.error('[PublicPageView] Error loading navigation:', err.response?.data || err.message)
 				// Navigation is optional, fail silently
 				this.navigation = null
 			}
@@ -311,7 +304,6 @@ export default {
 				this.updateUrl(uniqueId)
 				window.scrollTo(0, 0)
 			} catch (err) {
-				// console.error('[PublicPageView] Error navigating to page:', err.response?.data || err.message)
 				if (err.response?.status === 401 && err.response?.data?.passwordRequired) {
 					this.passwordRequired = true
 					this.$nextTick(() => this.$refs.passwordInput?.focus())
@@ -339,7 +331,6 @@ export default {
 				// Password accepted — reload the page to pick up the session cookie
 				window.location.reload()
 			} catch (err) {
-				// console.error('[PublicPageView] Password authentication failed:', err.message)
 				this.passwordError = true
 				this.password = ''
 				this.$nextTick(() => this.$refs.passwordInput?.focus())

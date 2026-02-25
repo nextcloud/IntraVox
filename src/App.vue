@@ -38,7 +38,8 @@
                          @edit-navigation="showNavigationEditor = true"
                          @create-page="createNewPage"
                          @page-settings="showPageSettingsModal = true"
-                         @save-as-template="showSaveAsTemplateModal = true" />
+                         @save-as-template="showSaveAsTemplateModal = true"
+                         @feed-settings="showFeedSettings = true" />
 
         <!-- Edit Mode Actions (Save/Cancel) -->
         <template v-else>
@@ -175,6 +176,11 @@
       @saved="handleTemplateSaved"
     />
 
+    <FeedSettings
+      v-if="showFeedSettings"
+      @close="showFeedSettings = false"
+    />
+
     <!-- Footer -->
     <Footer
       v-if="!loading && !error"
@@ -219,6 +225,7 @@ const PageDetailsSidebar = defineAsyncComponent(() => import('./components/PageD
 const WelcomeScreen = defineAsyncComponent(() => import('./components/WelcomeScreen.vue'));
 const PageSettingsModal = defineAsyncComponent(() => import('./components/PageSettingsModal.vue'));
 const SaveAsTemplateModal = defineAsyncComponent(() => import('./components/SaveAsTemplateModal.vue'));
+const FeedSettings = defineAsyncComponent(() => import('./components/FeedSettings.vue'));
 
 // Helper function to find home page
 const findHomePage = (pages) => {
@@ -248,7 +255,8 @@ export default {
     WelcomeScreen,
     PageSettingsModal,
     SaveAsTemplateModal,
-    ShareButton
+    ShareButton,
+    FeedSettings
   },
   data() {
     return {
@@ -282,6 +290,8 @@ export default {
       sidebarInitialTab: 'details-tab',
       // Page settings modal
       showPageSettingsModal: false,
+      // RSS Feed settings modal
+      showFeedSettings: false,
       // Global engagement settings (loaded from API)
       globalEngagementSettings: {
         allowPageReactions: true,

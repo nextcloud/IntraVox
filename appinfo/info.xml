@@ -3,39 +3,34 @@
       xsi:noNamespaceSchemaLocation="https://apps.nextcloud.com/schema/apps/info.xsd">
     <id>intravox</id>
     <name>IntraVox</name>
-    <summary>SharePoint-like pages for Nextcloud</summary>
-    <description><![CDATA[**⚠️ EVALUATION VERSION - NOT FOR PRODUCTION USE**
+    <summary>Build a modern intranet with drag-and-drop pages</summary>
+    <description><![CDATA[IntraVox transforms Nextcloud into a full-featured intranet platform. Create professional pages with a visual drag-and-drop editor — no coding required.
 
-This is an evaluation version intended for testing and demonstration purposes only. Do not use in production environments.
+**Key features:**
+* Visual page editor with drag-and-drop widget placement
+* Flexible grid layouts (1–5 columns)
+* Rich widget library: text, images, videos, links, people, files, and more
+* Multi-language support with per-language content folders
+* Navigation editor with megamenu and sidebar options
+* Personal RSS feed for following page updates
+* Department-based access control via GroupFolders ACL
+* Demo content to get started quickly
+* Seamless Nextcloud integration (theming, users, groups, files)
 
----
-
-IntraVox brings SharePoint-style page creation to Nextcloud with a powerful drag-and-drop interface.
-
-**📋 Requirements:**
-* **GroupFolders app must be installed and enabled BEFORE installing IntraVox!**
-* PHP 8.2 or higher
+**Requirements:**
 * Nextcloud 32 or 33
+* PHP 8.2 or higher
+* GroupFolders app (installed and enabled)
 
-**Features:**
-* Create rich, interactive pages with a visual editor
-* Flexible grid layout system (1-5 columns)
-* Drag-and-drop widget placement
-* Multiple widget types: text, images, headings, links, files
-* Secure JSON-based storage preventing code injection
-* Integration with Nextcloud Files
-* Top navigation bar button for easy access
-* Default homepage for quick start
+**Ideal for:**
+* Company intranets and news portals
+* Department knowledge bases
+* Internal communication and documentation
+* SharePoint-to-Nextcloud migrations
 
-**Perfect for:**
-* Company intranets and knowledge bases
-* Team collaboration spaces
-* Internal documentation and wikis
-* SharePoint migrations to Nextcloud
-
-Built with Vue 3 and modern web technologies for a smooth, secure experience.
+Built with Vue 3 for a fast, modern, and secure experience.
     ]]></description>
-    <version>0.9.15</version>
+    <version>0.9.16</version>
     <licence>agpl</licence>
     <author mail="rik@shalution.nl">Rik Dekker</author>
     <namespace>IntraVox</namespace>
@@ -65,7 +60,6 @@ Built with Vue 3 and modern web technologies for a smooth, secure experience.
         <command>OCA\IntraVox\Command\ImportPagesCommand</command>
         <command>OCA\IntraVox\Command\ImportDemoDataCommand</command>
         <command>OCA\IntraVox\Command\AddDemoFieldsCommand</command>
-        <command>OCA\IntraVox\Command\DebugShareCommand</command>
     </commands>
     <settings>
         <admin>OCA\IntraVox\Settings\AdminSettings</admin>

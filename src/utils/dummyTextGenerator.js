@@ -1,97 +1,15 @@
 import { Extension } from '@tiptap/core';
 import { Plugin, PluginKey } from '@tiptap/pm/state';
+import { getJokes } from '../data/jokes/index.js';
 
 /**
  * Dummy Text Generator — Easter Egg for IntraVox Text Widget
  *
- * Type =dad(), =dadjokes(3,5), or =lorem(2,4) on an empty line
+ * Type =dadjokes(3,5) or =lorem(2,4) on an empty line
  * and press Enter to generate dummy content.
  *
  * Inspired by Microsoft Word's =rand(p,s) command.
  */
-
-const dadJokes = [
-	"I'm afraid for the calendar. Its days are numbered.",
-	'Why do fathers take an extra pair of socks when they go golfing? In case they get a hole in one!',
-	'What do you call a fake noodle? An impasta!',
-	"I wouldn't buy anything with velcro. It's a total rip-off.",
-	'What did the ocean say to the beach? Nothing, it just waved.',
-	"Why don't eggs tell jokes? They'd crack each other up.",
-	'I used to hate facial hair, but then it grew on me.',
-	'What do you call a bear with no teeth? A gummy bear!',
-	"I'm reading a book about anti-gravity. It's impossible to put down!",
-	'Did you hear about the claustrophobic astronaut? He just needed a little space.',
-	'Why did the scarecrow win an award? He was outstanding in his field!',
-	"I told my wife she was drawing her eyebrows too high. She looked surprised.",
-	"What do you call a dog that does magic tricks? A Labracadabrador.",
-	"I used to play piano by ear, but now I use my hands.",
-	"Why couldn't the bicycle stand up by itself? It was two tired!",
-	"What did the grape do when he got stepped on? He let out a little wine.",
-	"I got a job at a bakery because I kneaded dough.",
-	"What do you call a sleeping dinosaur? A dino-snore!",
-	"Why did the math book look so sad? Because of all of its problems.",
-	"How do you organize a space party? You planet!",
-	"What do you call cheese that isn't yours? Nacho cheese!",
-	"Why did the coffee file a police report? It got mugged.",
-	"I'm on a seafood diet. I see food and I eat it.",
-	"What do you call a factory that makes okay products? A satisfactory!",
-	"Why don't scientists trust atoms? Because they make up everything!",
-	"What do you call a can opener that doesn't work? A can't opener!",
-	"I told a chemistry joke, but I got no reaction.",
-	"What did the janitor say when he jumped out of the closet? Supplies!",
-	"Why did the golfer bring two pairs of pants? In case he got a hole in one!",
-	"What do you call a fish without eyes? A fsh!",
-	"I used to be a banker, but I lost interest.",
-	"Why do chicken coops only have two doors? Because if they had four, they would be chicken sedans!",
-	"What did one wall say to the other wall? I'll meet you at the corner!",
-	"Why did the invisible man turn down the job offer? He couldn't see himself doing it.",
-	"What do you call a boomerang that won't come back? A stick.",
-	"I once got fired from a canned juice company. Apparently I couldn't concentrate.",
-	"What do you call a belt made of watches? A waist of time!",
-	"Why did the stadium get hot after the game? All of the fans left!",
-	"How does a penguin build its house? Igloos it together!",
-	"What did the buffalo say to his son when he left for school? Bison!",
-	"I was going to tell a time-traveling joke, but you didn't like it.",
-	"What do you call a group of disorganized cats? A cat-astrophe!",
-	"Why do bees have sticky hair? Because they use honeycombs!",
-	"What do you call a lazy kangaroo? A pouch potato!",
-	"I'm so good at sleeping, I can do it with my eyes closed.",
-	"What did the left eye say to the right eye? Between you and me, something smells.",
-	"Why did the bicycle fall over? Because it was two tired!",
-	"What do you call a pig that does karate? A pork chop!",
-	"I used to be addicted to the hokey pokey, but I turned myself around.",
-	"What do you call a snowman with a six-pack? An abdominal snowman!",
-	"Why did the tomato turn red? Because it saw the salad dressing!",
-	"I asked my dog what's two minus two. He said nothing.",
-	"What do you call a cow with no legs? Ground beef!",
-	"Why can't you hear a pterodactyl going to the bathroom? Because the P is silent!",
-	"What do you call a deer with no eyes? No idea!",
-	"I just watched a documentary about beavers. It was the best dam show I ever saw!",
-	"Why don't skeletons fight each other? They don't have the guts!",
-	"What do you call a computer that sings? A-Dell!",
-	"I only know 25 letters of the alphabet. I don't know Y.",
-	"What did the fish say when he swam into a wall? Dam!",
-	"Why did the student eat his homework? Because his teacher told him it was a piece of cake!",
-	"What do you call a sleeping bull? A bulldozer!",
-	"I told my computer I needed a break, and now it won't stop sending me Kit Kat ads.",
-	"What do you call a dinosaur that crashes their car? Tyrannosaurus Wrecks!",
-	"Why did the banker switch careers? He lost interest.",
-	"What do you call an alligator in a vest? An investigator!",
-	"I'm terrified of elevators, so I'm going to start taking steps to avoid them.",
-	"What kind of music do mummies listen to? Wrap music!",
-	"Why did the yoga instructor get fired? She was caught in too many compromising positions.",
-	"What do you call a man with a rubber toe? Roberto!",
-	"I used to run a dating service for chickens, but I was struggling to make hens meet.",
-	"What do you call a magician who lost their magic? Ian.",
-	"Why did the scarecrow become a successful motivational speaker? He was outstanding in his field.",
-	"What do you call a parade of rabbits hopping backwards? A receding hare-line!",
-	"I went to buy some camo pants but I couldn't find any.",
-	"What do you call a bee that can't make up its mind? A maybe!",
-	"I used to be a personal trainer, but then I gave my too-weak notice.",
-	"What do sprinters eat before a race? Nothing, they fast!",
-	"Why don't oysters share their pearls? Because they're shellfish!",
-	"What do you call a pony with a cough? A little horse!",
-];
 
 const loremSentences = [
 	'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
@@ -116,6 +34,120 @@ const loremSentences = [
 	'Faucibus interdum posuere lorem ipsum dolor sit amet consectetur adipiscing.',
 ];
 
+const sectionLabels = {
+	en: 'Dad Jokes',
+	nl: 'Flauwe Grappen',
+	de: 'Flachwitze',
+	fr: 'Blagues de Papa',
+};
+
+/**
+ * Localized labels for lorem ipsum rich formatting sections.
+ */
+const loremLabels = {
+	en: {
+		heading: 'Section',
+		quote: 'Notable Quote',
+		items: 'Key Points',
+		table: 'Overview',
+		colA: 'Category',
+		colB: 'Description',
+		colC: 'Status',
+		statuses: ['Active', 'Pending', 'Complete', 'In Review', 'Scheduled'],
+		steps: 'Steps',
+		note: 'Additional Notes',
+	},
+	nl: {
+		heading: 'Sectie',
+		quote: 'Opvallend Citaat',
+		items: 'Kernpunten',
+		table: 'Overzicht',
+		colA: 'Categorie',
+		colB: 'Beschrijving',
+		colC: 'Status',
+		statuses: ['Actief', 'In afwachting', 'Voltooid', 'In beoordeling', 'Gepland'],
+		steps: 'Stappen',
+		note: 'Aanvullende Opmerkingen',
+	},
+	de: {
+		heading: 'Abschnitt',
+		quote: 'Bemerkenswertes Zitat',
+		items: 'Kernpunkte',
+		table: 'Übersicht',
+		colA: 'Kategorie',
+		colB: 'Beschreibung',
+		colC: 'Status',
+		statuses: ['Aktiv', 'Ausstehend', 'Abgeschlossen', 'In Prüfung', 'Geplant'],
+		steps: 'Schritte',
+		note: 'Zusätzliche Hinweise',
+	},
+	fr: {
+		heading: 'Section',
+		quote: 'Citation Notable',
+		items: 'Points Clés',
+		table: 'Aperçu',
+		colA: 'Catégorie',
+		colB: 'Description',
+		colC: 'Statut',
+		statuses: ['Actif', 'En attente', 'Terminé', 'En révision', 'Planifié'],
+		steps: 'Étapes',
+		note: 'Notes Complémentaires',
+	},
+};
+
+function getLoremLabels(lang) {
+	const normalized = lang?.split(/[-_]/)[0]?.toLowerCase() || 'en';
+	return loremLabels[normalized] || loremLabels.en;
+}
+
+/**
+ * Escape HTML special characters
+ */
+function escapeHtml(text) {
+	return text
+		.replace(/&/g, '&amp;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;')
+		.replace(/"/g, '&quot;');
+}
+
+/**
+ * Get localized section label for dad jokes
+ */
+function getSectionLabel(lang) {
+	const normalized = lang?.split(/[-_]/)[0]?.toLowerCase() || 'en';
+	return sectionLabels[normalized] || sectionLabels.en;
+}
+
+/**
+ * Split a joke into setup and punchline for rich formatting.
+ * Question-answer jokes split on "?", statement jokes on first comma/period.
+ */
+function splitJoke(joke) {
+	const questionIndex = joke.indexOf('?');
+	if (questionIndex !== -1 && questionIndex < joke.length - 1) {
+		return {
+			setup: joke.substring(0, questionIndex + 1),
+			punchline: joke.substring(questionIndex + 1).trim(),
+		};
+	}
+
+	// Statement jokes: split on first period, comma+space, or semicolon in the first 60%
+	const midpoint = Math.floor(joke.length * 0.6);
+	for (const delimiter of ['. ', ', ', '; ']) {
+		const idx = joke.indexOf(delimiter);
+		if (idx !== -1 && idx < midpoint) {
+			return {
+				setup: joke.substring(0, idx + delimiter.trimEnd().length),
+				punchline: joke.substring(idx + delimiter.length).trim(),
+			};
+		}
+	}
+
+	// Fallback: no split
+	return { setup: joke, punchline: '' };
+}
+
 /**
  * Shuffle array using Fisher-Yates algorithm (returns new array)
  */
@@ -129,11 +161,11 @@ function shuffle(arr) {
 }
 
 /**
- * Parse a dummy text command like =dad(3,5) or =lorem()
+ * Parse a dummy text command like =dadjokes(3,5) or =lorem()
  * Returns null if text is not a valid command.
  */
 export function matchDummyCommand(text) {
-	const match = text.trim().match(/^=(dadjokes|dad|lorem)\((\d*),?\s*(\d*)\)$/i);
+	const match = text.trim().match(/^=(dadjokes|lorem)\((\d*),?\s*(\d*)\)$/i);
 	if (!match) return null;
 
 	const type = match[1].toLowerCase();
@@ -144,27 +176,198 @@ export function matchDummyCommand(text) {
 }
 
 /**
- * Generate dummy text paragraphs.
- * Returns an array of paragraph strings.
+ * Generate a single lorem sentence with inline formatting marks.
+ * Applies bold, italic, underline, strikethrough, code, or link to a fragment.
  */
-export function generateDummyText(command) {
+function formatLoremSentence(sentence, markType) {
+	const escaped = escapeHtml(sentence);
+	// Find a word boundary roughly in the middle to wrap a fragment
+	const words = escaped.split(' ');
+	if (words.length < 4) return escaped;
+
+	const start = Math.floor(words.length * 0.25);
+	const end = Math.min(start + 2, words.length - 1);
+	const before = words.slice(0, start).join(' ');
+	const fragment = words.slice(start, end).join(' ');
+	const after = words.slice(end).join(' ');
+
+	switch (markType) {
+	case 'strong':
+		return `${before} <strong>${fragment}</strong> ${after}`;
+	case 'em':
+		return `${before} <em>${fragment}</em> ${after}`;
+	case 'u':
+		return `${before} <u>${fragment}</u> ${after}`;
+	case 's':
+		return `${before} <s>${fragment}</s> ${after}`;
+	case 'code':
+		return `${before} <code>${fragment}</code> ${after}`;
+	default:
+		return escaped;
+	}
+}
+
+/**
+ * Generate dummy text as HTML with rich formatting.
+ * Both commands showcase the text widget's formatting capabilities.
+ *
+ * =dadjokes: headings, numbered lists, bold/italic
+ * =lorem: headings, blockquotes, bullet lists, tables, ordered lists, inline marks
+ *
+ * @param {object} command - { type, paragraphs, sentences }
+ * @param {string} [lang='en'] - Language code
+ * @returns {string} HTML string
+ */
+export function generateDummyText(command, lang = 'en') {
 	const { type, paragraphs, sentences } = command;
-	const source = (type === 'lorem') ? loremSentences : dadJokes;
 
-	const result = [];
-	const shuffled = shuffle(source);
-	let idx = 0;
-
-	for (let p = 0; p < paragraphs; p++) {
-		const parts = [];
-		for (let s = 0; s < sentences; s++) {
-			parts.push(shuffled[idx % shuffled.length]);
-			idx++;
-		}
-		result.push(parts.join(' '));
+	if (type === 'lorem') {
+		return generateRichLorem(paragraphs, sentences, lang);
 	}
 
-	return result;
+	// Dad jokes: rich formatting
+	return generateDadJokes(paragraphs, sentences, lang);
+}
+
+/**
+ * Generate rich Lorem Ipsum content that showcases all text widget formatting.
+ * Each paragraph uses a different formatting pattern that rotates through:
+ * 1. h2 heading + paragraph with bold/italic
+ * 2. blockquote
+ * 3. bullet list (ul)
+ * 4. table with header
+ * 5. h3 heading + ordered list (ol)
+ * 6. paragraph with mixed inline marks (code, underline, strikethrough)
+ */
+function generateRichLorem(paragraphs, sentences, lang) {
+	const shuffled = shuffle(loremSentences);
+	const labels = getLoremLabels(lang);
+	let idx = 0;
+	let sectionNum = 0;
+	let html = '';
+
+	function nextSentences(count) {
+		const result = [];
+		for (let i = 0; i < count; i++) {
+			result.push(shuffled[idx % shuffled.length]);
+			idx++;
+		}
+		return result;
+	}
+
+	for (let p = 0; p < paragraphs; p++) {
+		const pattern = p % 6;
+		sectionNum++;
+
+		switch (pattern) {
+		case 0: {
+			// h2 heading + paragraph with bold and italic fragments
+			const sents = nextSentences(sentences);
+			html += `<h2>${escapeHtml(labels.heading)} ${sectionNum}</h2>`;
+			html += '<p>';
+			html += sents.map((s, i) => {
+				if (i === 0) return formatLoremSentence(s, 'strong');
+				if (i === 1) return formatLoremSentence(s, 'em');
+				return escapeHtml(s);
+			}).join(' ');
+			html += '</p>';
+			break;
+		}
+		case 1: {
+			// blockquote
+			const sents = nextSentences(sentences);
+			html += '<blockquote><p>';
+			html += sents.map(s => escapeHtml(s)).join(' ');
+			html += '</p></blockquote>';
+			break;
+		}
+		case 2: {
+			// h3 heading + unordered list
+			const sents = nextSentences(sentences);
+			html += `<h3>${escapeHtml(labels.items)}</h3>`;
+			html += '<ul>';
+			html += sents.map(s => `<li>${formatLoremSentence(s, 'strong')}</li>`).join('');
+			html += '</ul>';
+			break;
+		}
+		case 3: {
+			// table with header and data rows
+			const rowCount = Math.max(sentences, 2);
+			const sents = nextSentences(rowCount);
+			const statuses = shuffle(labels.statuses);
+			html += `<h3>${escapeHtml(labels.table)}</h3>`;
+			html += '<table><thead><tr>';
+			html += `<th>${escapeHtml(labels.colA)}</th>`;
+			html += `<th>${escapeHtml(labels.colB)}</th>`;
+			html += `<th>${escapeHtml(labels.colC)}</th>`;
+			html += '</tr></thead><tbody>';
+			for (let r = 0; r < rowCount; r++) {
+				const words = sents[r].split(' ');
+				const cat = words.slice(0, 2).join(' ').replace(/[.,]/g, '');
+				const desc = words.slice(2).join(' ');
+				html += '<tr>';
+				html += `<td><strong>${escapeHtml(cat)}</strong></td>`;
+				html += `<td>${escapeHtml(desc)}</td>`;
+				html += `<td><em>${escapeHtml(statuses[r % statuses.length])}</em></td>`;
+				html += '</tr>';
+			}
+			html += '</tbody></table>';
+			break;
+		}
+		case 4: {
+			// h3 heading + ordered list
+			const sents = nextSentences(sentences);
+			html += `<h3>${escapeHtml(labels.steps)}</h3>`;
+			html += '<ol>';
+			html += sents.map(s => `<li>${formatLoremSentence(s, 'em')}</li>`).join('');
+			html += '</ol>';
+			break;
+		}
+		case 5: {
+			// paragraph with mixed inline marks: code, underline, strikethrough
+			const sents = nextSentences(Math.max(sentences, 3));
+			html += `<h3>${escapeHtml(labels.note)}</h3>`;
+			html += '<p>';
+			html += sents.map((s, i) => {
+				const marks = ['code', 'u', 's', 'strong', 'em'];
+				return formatLoremSentence(s, marks[i % marks.length]);
+			}).join(' ');
+			html += '</p>';
+			break;
+		}
+		}
+	}
+
+	return html;
+}
+
+/**
+ * Generate dad jokes with rich formatting.
+ */
+function generateDadJokes(paragraphs, sentences, lang) {
+	const jokes = getJokes(lang);
+	const shuffled = shuffle(jokes);
+	const label = escapeHtml(getSectionLabel(lang));
+	let idx = 0;
+	let html = '';
+
+	for (let p = 0; p < paragraphs; p++) {
+		html += `<h3>${label} #${p + 1}</h3>`;
+		html += '<ol>';
+		for (let s = 0; s < sentences; s++) {
+			const joke = shuffled[idx % shuffled.length];
+			const { setup, punchline } = splitJoke(joke);
+			if (punchline) {
+				html += `<li><strong>${escapeHtml(setup)}</strong> <em>${escapeHtml(punchline)}</em></li>`;
+			} else {
+				html += `<li><strong>${escapeHtml(setup)}</strong></li>`;
+			}
+			idx++;
+		}
+		html += '</ol>';
+	}
+
+	return html;
 }
 
 /**
@@ -172,7 +375,7 @@ export function generateDummyText(command) {
  *
  * Uses a ProseMirror plugin to intercept Enter key with high priority,
  * before StarterKit's handlers. Checks if the current paragraph contains
- * a dummy text command (=dad(), =lorem(), etc.) and replaces it
+ * a dummy text command (=dadjokes(), =lorem()) and replaces it
  * with generated content.
  */
 export const DummyTextExtension = Extension.create({
@@ -206,9 +409,11 @@ export const DummyTextExtension = Extension.create({
 						const from = $from.before();
 						const to = $from.after();
 
-						// Generate content as HTML paragraphs
-						const paragraphs = generateDummyText(command);
-						const html = paragraphs.map(p => `<p>${p}</p>`).join('');
+						// Detect language from Nextcloud's document lang attribute
+						const lang = document.documentElement.lang || 'en';
+
+						// Generate rich HTML content
+						const html = generateDummyText(command, lang);
 
 						// Replace the command paragraph with generated content
 						editor.chain()

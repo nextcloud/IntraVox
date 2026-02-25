@@ -385,8 +385,10 @@ class DemoDataService {
                         $file = $mediaFolder->get($imageName);
                         $file->putContent($content);
                     } else {
-                        $mediaFolder->newFile($imageName, $content);
+                        $file = $mediaFolder->newFile($imageName, $content);
                     }
+                    // Touch to trigger MIME type re-detection in GroupFolder cache
+                    $file->touch();
                     $imported++;
                     $this->logger->info("[DemoData] Imported media: _media/{$imageName}");
                 }
@@ -478,8 +480,10 @@ class DemoDataService {
                                 $imgFile = $mediaFolder->get($imageName);
                                 $imgFile->putContent($imageContent);
                             } else {
-                                $mediaFolder->newFile($imageName, $imageContent);
+                                $imgFile = $mediaFolder->newFile($imageName, $imageContent);
                             }
+                            // Touch to trigger MIME type re-detection in GroupFolder cache
+                            $imgFile->touch();
                             $this->logger->info("[DemoData] Imported media: {$pagePath}/_media/{$imageName}");
                         }
                     }

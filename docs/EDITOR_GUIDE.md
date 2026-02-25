@@ -133,23 +133,63 @@ Rich text content with formatting.
 
 Need placeholder text while designing your page? Type a special command on an empty line and press **Enter** to generate dummy content — inspired by Microsoft Word's `=rand()` command.
 
-![Dummy Text Generator](../screenshots/dadjokes.gif)
+![Dummy Text Generator - Dad Jokes](../screenshots/dadjokes.gif)
+
+*Dad jokes with rich formatting: headings, numbered lists, bold setup and italic punchlines*
+
+![Dummy Text Generator - Lorem Ipsum](../screenshots/lorem-demo.gif)
+
+*Lorem Ipsum showcase: headings, paragraphs, blockquotes, lists, tables, and inline marks*
 
 | Command | Description | Example |
 |---------|-------------|---------|
-| `=dad()` | Generate dad jokes | `=dad(3,5)` → 3 paragraphs of 5 jokes |
-| `=dadjokes()` | Alias for =dad() | `=dadjokes(2,4)` → 2 paragraphs of 4 jokes |
-| `=lorem()` | Classic Lorem Ipsum | `=lorem(2,3)` → 2 paragraphs of 3 sentences |
+| `=dadjokes()` | Generate dad jokes | `=dadjokes(3,5)` → 3 sections of 5 jokes |
+| `=lorem()` | Rich Lorem Ipsum showcase | `=lorem(6,3)` → 6 sections with varied formatting |
 
-**Parameters:** `=(command)(paragraphs, sentences)` — both optional, default is 3 paragraphs with 3 sentences each. Maximum is 20 for both values.
+**Parameters:** `=(command)(sections, items)` — both optional, default is 3 sections with 3 items each. Maximum is 20 for both values.
 
 **How it works:**
 1. Click in a text widget in edit mode
-2. Type `=dad()` (or any command from the table above) on an empty line
+2. Type `=dadjokes()` or `=lorem()` on an empty line
 3. Press **Enter**
-4. The command is replaced with generated text
+4. The command is replaced with generated content
 
-The jokes are built into IntraVox (no internet connection required) and are randomly shuffled each time, so you get different content every time.
+**Rich formatting:**
+
+Both commands generate richly formatted content that showcases the text widget's capabilities:
+
+`=dadjokes()` generates:
+- **Section headings** (e.g., "Dad Jokes #1", "Dad Jokes #2")
+- **Numbered lists** with each joke as a list item
+- **Bold** setup text and *italic* punchlines
+
+`=lorem()` rotates through 6 formatting patterns to demonstrate all widget features:
+
+| Pattern | Elements used |
+|---------|-------------|
+| Heading + paragraph | `<h2>` heading, **bold** and *italic* text |
+| Blockquote | Indented quote block |
+| Bullet list | `<ul>` with **bold** fragments |
+| Table | 3-column table with header, bold categories, italic statuses |
+| Ordered list | `<h3>` heading + `<ol>` numbered list with *italic* |
+| Mixed inline | `code`, <u>underline</u>, ~~strikethrough~~, **bold**, *italic* |
+
+With `=lorem(6,3)` you get one of each pattern — perfect for demonstrating the full text widget to users.
+
+**Multilingual support:**
+
+Both commands automatically adapt to the user's Nextcloud language:
+
+| Language | Dad jokes heading | Lorem headings |
+|----------|------------------|----------------|
+| English | Dad Jokes | Section, Key Points, Overview, Steps, Additional Notes |
+| Nederlands | Flauwe Grappen | Sectie, Kernpunten, Overzicht, Stappen, Aanvullende Opmerkingen |
+| Deutsch | Flachwitze | Abschnitt, Kernpunkte, Übersicht, Schritte, Zusätzliche Hinweise |
+| Français | Blagues de Papa | Section, Points Clés, Aperçu, Étapes, Notes Complémentaires |
+
+Each language has its own collection of ~80 dad jokes. Table column headers and status labels are also localized. If no translation is available for the user's language, English is used as fallback.
+
+All content is built into IntraVox (no internet connection required) and is randomly shuffled each time, so you get different content every time.
 
 #### Image
 

@@ -37,7 +37,7 @@ IntraVox respects the standard Nextcloud permission bits:
 | Update | 2 | Edit existing pages |
 | Create | 4 | Create new pages |
 | Delete | 8 | Delete pages |
-| Share | 16 | Share pages (reserved for future use) |
+| Share | 16 | Required for RSS feed access (public endpoints require Read + Share) |
 
 ## How Permissions Work
 
@@ -79,10 +79,12 @@ For each group, set the appropriate permission level:
 
 | Role | Recommended Permissions |
 |------|------------------------|
-| All Employees | Read |
-| Content Editors | Read, Write, Create |
-| Department Managers | Read, Write, Create, Delete |
+| All Employees | Read, Share |
+| Content Editors | Read, Write, Create, Share |
+| Department Managers | Read, Write, Create, Delete, Share |
 | Administrators | All |
+
+> **Why Share?** The RSS feed is a public endpoint (no user session). GroupFolders requires both Read and Share permissions for folders to be visible in public requests. Without Share, user feeds will be empty.
 
 ### Step 3: Enable ACL (Optional)
 
@@ -139,6 +141,12 @@ Navigation items are filtered based on page permissions - users only see pages t
 2. Check if ACL rules restrict Write access on that path
 3. Check parent folder permissions (child cannot exceed parent)
 
+### User's RSS feed is empty
+1. Check that the user's group has **Share** permission on the GroupFolder (base level)
+2. If using ACL: verify Share permission on the language folder (`en/`, `nl/`, etc.) and all parent folders
+3. Verify that "Allow users to share via link and emails" is enabled in Nextcloud Admin → Sharing
+4. See [RSS_FEED.md](RSS_FEED.md#administrator-setup) for the full setup guide
+
 ### Navigation shows pages user cannot access
 This should not happen if permissions are configured correctly. Check:
 1. Navigation file permissions vs page file permissions
@@ -173,3 +181,4 @@ The service:
 3. **Document Your Structure** - Keep a record of which groups have access to what
 4. **Test Thoroughly** - After setting up permissions, test with users from each group
 5. **Regular Audits** - Periodically review group memberships and ACL rules
+6. **RSS Feed requires Share** - The RSS feed is a public endpoint. GroupFolders requires both Read and Share permissions for folders to be visible in public (unauthenticated) requests. If users report empty feeds, check that their group has Share permission on the relevant folders.

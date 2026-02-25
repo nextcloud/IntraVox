@@ -172,6 +172,64 @@ Click the info icon to see:
 2. Share the link with colleagues
 3. They'll see the page (if they have access)
 
+## RSS Feed
+
+IntraVox can generate a personal RSS feed so you can follow page updates in your favorite RSS reader (such as Nextcloud News, Feedly, or any other RSS client).
+
+![RSS Feed menu option](../screenshots/rss-settings1.png)
+
+*Access RSS Feed from the page menu (three dots)*
+
+### Setting Up Your Feed
+
+1. Click the **three dots menu** (⋯) in the top-right corner of any IntraVox page
+2. Select **RSS Feed**
+3. Configure your feed settings:
+   - **Feed scope**: Choose "My language" (only pages in your Nextcloud language) or "All languages" (pages from all available languages)
+   - **Maximum items**: How many items to include in the feed (10, 20, 30, or 50)
+4. Click **Generate Feed URL**
+
+![RSS Feed settings dialog](../screenshots/rss-settings2.png)
+
+*Feed settings with scope, limit, and your personal feed URL*
+
+### Using Your Feed
+
+1. Copy the generated feed URL using the copy button
+2. Open your RSS reader
+3. Add a new feed subscription and paste the URL
+4. Your reader will show IntraVox page updates with titles, content previews, and images
+
+![RSS Feed in Nextcloud News](../screenshots/rss-result.png)
+
+*IntraVox feed displayed in Nextcloud News with page content and images*
+
+### Feed Features
+
+- **Personal token**: Each feed URL contains a secure personal token — only you can access your feed
+- **Page images**: Feed items include page images as thumbnails and inline content
+- **Rich content**: Full page content is included via `content:encoded`, showing headings, text, and images
+- **Conditional requests**: Supports `ETag` and `If-Modified-Since` for efficient polling
+- **Access control**: The feed only shows pages you have permission to view
+
+### Managing Your Feed
+
+- **Save settings**: Change scope or limit and click "Save settings" to update
+- **Regenerate**: Create a new feed URL (the old URL stops working)
+- **Revoke**: Delete your feed token entirely — the URL becomes invalid
+
+### Security Note
+
+Your feed URL contains a personal token. Anyone with this link can read your feed. Do not share it publicly.
+
+### Feed Disabled by Administrator
+
+If your Nextcloud administrator has disabled public link sharing, RSS feeds are not available. The feed settings dialog will show an error message:
+
+![RSS Feed disabled](../screenshots/rss-disabled.png)
+
+*Contact your administrator if you need RSS feed access*
+
 ## Mobile Usage
 
 IntraVox works on mobile devices:
