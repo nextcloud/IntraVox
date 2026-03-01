@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "IntraVox API",
-    "version": "0.9.16",
+    "version": "0.9.17",
     "description": "IntraVox is a modern intranet page builder for Nextcloud. This API provides endpoints for managing pages, media, navigation, comments, and more.",
     "license": {
       "name": "AGPL-3.0",
@@ -61,6 +61,10 @@
     {
       "name": "Public Share",
       "description": "Anonymous access to shared content via Nextcloud share links. No authentication required — access is controlled by the share token. Password-protected shares require session-based authentication via the /s/{token}/authenticate endpoint."
+    },
+    {
+      "name": "Templates",
+      "description": "Page template management - create pages from templates, save custom templates, and manage template library"
     }
   ],
   "paths": {
@@ -1211,6 +1215,261 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/templates": {
+      "get": {
+        "operationId": "list-templates",
+        "summary": "List all templates",
+        "description": "Returns a list of all available page templates including built-in and custom templates",
+        "tags": ["Templates"],
+        "responses": {
+          "200": {
+            "description": "Template list with metadata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "templates": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/TemplatePreview"
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "templates": [
+                    {
+                      "id": "department",
+                      "name": "Department",
+                      "description": "Team information, services, and resources",
+                      "columnCount": 3,
+                      "widgetCount": 12,
+                      "widgetTypes": ["heading", "text", "image", "links"],
+                      "complexity": "medium",
+                      "hasHeaderRow": true,
+                      "hasSidebars": false
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      },
+      "post": {
+        "operationId": "save-as-template",
+        "summary": "Save page as template",
+        "description": "Saves an existing page as a reusable template. Copies the page structure and media to the templates folder.",
+        "tags": ["Templates"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TemplateSaveRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Template saved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "templateId": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      }
+    },
+    "/api/templates/{id}": {
+      "get": {
+        "operationId": "get-template",
+        "summary": "Get template details",
+        "description": "Returns the full template data including layout and widgets",
+        "tags": ["Templates"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Template ID (e.g., 'department', 'event')",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Template data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "template": {
+                      "$ref": "#/components/schemas/Page"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "delete-template",
+        "summary": "Delete template",
+        "description": "Deletes a custom template. Built-in templates cannot be deleted.",
+        "tags": ["Templates"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Template ID to delete",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Template deleted successfully"
+          },
+          "400": {
+            "description": "Cannot delete built-in template",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/pages/from-template": {
+      "post": {
+        "operationId": "create-page-from-template",
+        "summary": "Create page from template",
+        "description": "Creates a new page based on an existing template. Clones the template's layout, widgets, and media files.",
+        "tags": ["Templates"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TemplateCreateFromRequest"
+              },
+              "examples": {
+                "department": {
+                  "summary": "Create HR department page",
+                  "value": {
+                    "templateId": "department",
+                    "pageTitle": "HR Department",
+                    "parentPath": "/teams"
+                  }
+                },
+                "event": {
+                  "summary": "Create company event page",
+                  "value": {
+                    "templateId": "event",
+                    "pageTitle": "Annual Conference 2026"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Page created from template successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "page": {
+                      "$ref": "#/components/schemas/Page"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid template ID or missing parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
           }
         }
       }
@@ -2395,6 +2654,93 @@
           "depublishedOnField": {
             "type": "string",
             "description": "MetaVox field name for expiration date"
+          }
+        }
+      },
+      "TemplatePreview": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Template identifier (folder name)"
+          },
+          "name": {
+            "type": "string",
+            "description": "Template display name"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "created": {
+            "type": "integer",
+            "description": "Creation timestamp"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "columnCount": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5
+          },
+          "widgetCount": {
+            "type": "integer"
+          },
+          "widgetTypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of widget types used in template"
+          },
+          "complexity": {
+            "type": "string",
+            "enum": ["simple", "medium", "advanced"]
+          },
+          "hasHeaderRow": {
+            "type": "boolean"
+          },
+          "hasSidebars": {
+            "type": "boolean"
+          }
+        }
+      },
+      "TemplateCreateFromRequest": {
+        "type": "object",
+        "required": ["templateId", "pageTitle"],
+        "properties": {
+          "templateId": {
+            "type": "string",
+            "description": "Template folder name (e.g., 'department', 'event')"
+          },
+          "pageTitle": {
+            "type": "string",
+            "description": "Title for the new page"
+          },
+          "parentPath": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional parent folder path (e.g., '/teams')"
+          }
+        }
+      },
+      "TemplateSaveRequest": {
+        "type": "object",
+        "required": ["pageId", "name"],
+        "properties": {
+          "pageId": {
+            "type": "string",
+            "description": "Unique ID of page to save as template"
+          },
+          "name": {
+            "type": "string",
+            "description": "Template name"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional template description"
           }
         }
       }
