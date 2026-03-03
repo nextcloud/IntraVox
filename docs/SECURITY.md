@@ -205,8 +205,6 @@ This implementation follows:
 
 For security concerns or bug reports:
 - **GitHub Issues**: https://github.com/nextcloud/intravox/issues
-- **Security Email**: security@shalution.com
-
 ---
 
 **Last Updated**: 2025-12-16

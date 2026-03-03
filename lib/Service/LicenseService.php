@@ -546,7 +546,7 @@ class LicenseService {
         $telemetryUrl = $this->config->getAppValue(
             Application::APP_ID,
             'telemetry_url',
-            'https://license.shalution.nl/api/telemetry/intravox'
+            'https://licenses.voxcloud.nl/api/telemetry/intravox'
         );
 
         // Check if telemetry is enabled
