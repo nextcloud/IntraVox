@@ -304,11 +304,11 @@ If you encounter issues not covered in this guide:
    - Look for "Confluence import" entries
 
 2. **GitHub Issues**:
-   - Report bugs: [IntraVox GitHub Issues](https://github.com/shalution/IntraVox/issues)
+   - Report bugs: [IntraVox GitHub Issues](https://github.com/nextcloud/IntraVox/issues)
    - Include error messages and Confluence version
 
 3. **Documentation**:
-   - [IntraVox Documentation](https://github.com/shalution/IntraVox/wiki)
+   - [IntraVox Documentation](https://github.com/nextcloud/IntraVox/wiki)
    - [Confluence API Documentation](https://developer.atlassian.com/cloud/confluence/rest/v1/)
 
 ## FAQ

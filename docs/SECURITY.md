@@ -204,7 +204,7 @@ This implementation follows:
 ## Contact
 
 For security concerns or bug reports:
-- **GitHub Issues**: https://github.com/shalution/intravox/issues
+- **GitHub Issues**: https://github.com/nextcloud/intravox/issues
 - **Security Email**: security@shalution.com
 
 ---
