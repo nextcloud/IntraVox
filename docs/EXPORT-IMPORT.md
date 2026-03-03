@@ -1034,8 +1034,8 @@ The following workflow was successfully tested:
 ## Contact
 
 For questions or feature requests:
-- **GitHub Issues**: https://github.com/shalution/intravox/issues
-- **Documentation**: https://github.com/shalution/intravox/tree/main/docs
+- **GitHub Issues**: https://github.com/nextcloud/intravox/issues
+- **Documentation**: https://github.com/nextcloud/intravox/tree/main/docs
 
 ---
 

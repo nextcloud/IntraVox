@@ -571,7 +571,7 @@ private function enforceRateLimit(): void {
 
 - **User Guide**: `/docs/confluence-import-guide.md`
 - **API Docs**: This file
-- **IntraVox Wiki**: https://github.com/shalution/IntraVox/wiki
+- **IntraVox Wiki**: https://github.com/nextcloud/IntraVox/wiki
 
 ### Confluence API References
 
