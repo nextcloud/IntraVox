@@ -52,7 +52,7 @@
     "@vue/compiler-sfc": "^3.5.22",
     "cancelable-promise": "^4.3.1",
     "diff": "^8.0.3",
-    "dompurify": "^3.3.0",
+    "dompurify": "^3.3.2",
     "marked": "^17.0.0",
     "prosemirror-markdown": "^1.13.2",
     "sortablejs": "^1.15.6",
