@@ -1,0 +1,88 @@
+{
+    "type": "megamenu",
+    "items": [
+        {
+            "id": "nav_home",
+            "title": "Home",
+            "uniqueId": "page-a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+            "url": null,
+            "target": null,
+            "children": []
+        },
+        {
+            "id": "nav_afdelingen",
+            "title": "Afdelingen",
+            "uniqueId": "page-b2c3d4e5-f6a7-8901-bcde-f12345678901",
+            "url": null,
+            "target": null,
+            "children": [
+                {
+                    "id": "nav_hr",
+                    "title": "HR & Personeel",
+                    "uniqueId": "page-c3d4e5f6-a7b8-9012-cdef-123456789012",
+                    "url": null,
+                    "target": null,
+                    "children": []
+                },
+                {
+                    "id": "nav_it",
+                    "title": "IT & Support",
+                    "uniqueId": "page-d4e5f6a7-b8c9-0123-defa-234567890123",
+                    "url": null,
+                    "target": null,
+                    "children": []
+                }
+            ]
+        },
+        {
+            "id": "nav_handleidingen",
+            "title": "Handleidingen",
+            "uniqueId": "page-e5f6a7b8-c9d0-1234-efab-345678901234",
+            "url": null,
+            "target": null,
+            "children": [
+                {
+                    "id": "nav_nieuwe_medewerkers",
+                    "title": "Nieuwe Medewerkers",
+                    "uniqueId": "page-f6a7b8c9-d0e1-2345-fabc-456789012345",
+                    "url": null,
+                    "target": null,
+                    "children": []
+                },
+                {
+                    "id": "nav_it_handleidingen",
+                    "title": "IT Handleidingen",
+                    "uniqueId": "page-a7b8c9d0-e1f2-3456-abcd-567890123456",
+                    "url": null,
+                    "target": null,
+                    "children": []
+                }
+            ]
+        },
+        {
+            "id": "nav_externe_links",
+            "title": "Externe Links",
+            "uniqueId": null,
+            "url": null,
+            "target": null,
+            "children": [
+                {
+                    "id": "nav_website",
+                    "title": "Bedrijfswebsite",
+                    "uniqueId": null,
+                    "url": "https://example.com",
+                    "target": "_blank",
+                    "children": []
+                },
+                {
+                    "id": "nav_helpdesk",
+                    "title": "IT Helpdesk",
+                    "uniqueId": null,
+                    "url": "https://example.com/helpdesk",
+                    "target": "_blank",
+                    "children": []
+                }
+            ]
+        }
+    ]
+}

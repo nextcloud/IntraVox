@@ -1,0 +1,552 @@
+{
+    "exportVersion": "1.3",
+    "schemaVersion": "1.3",
+    "exportDate": "2026-03-07T12:00:00.000Z",
+    "exportedBy": "IntraVox Showcase - Van der Berg & Partners",
+    "requiresMinVersion": "0.8.11",
+    "language": "nl",
+    "pages": [
+        {
+            "_exportPath": "home",
+            "uniqueId": "page-law-1234-5678-9abc-def012345678",
+            "title": "Advocatenkantoor Van der Berg & Partners",
+            "content": {
+                "uniqueId": "page-law-1234-5678-9abc-def012345678",
+                "title": "Advocatenkantoor Van der Berg & Partners",
+                "language": "nl",
+                "layout": {
+                    "columns": 1,
+                    "headerRow": {
+                        "enabled": true,
+                        "backgroundColor": "var(--color-primary-element)",
+                        "widgets": [
+                            {
+                                "type": "image",
+                                "column": 1,
+                                "order": 1,
+                                "src": "kantoor-header.jpg",
+                                "alt": "Kantoor Van der Berg & Partners",
+                                "objectFit": "cover",
+                                "objectPosition": "center"
+                            }
+                        ]
+                    },
+                    "rows": [
+                        {
+                            "columns": 2,
+                            "backgroundColor": "var(--color-background-hover)",
+                            "widgets": [
+                                {
+                                    "type": "heading",
+                                    "column": 1,
+                                    "order": 1,
+                                    "content": "Van der Berg & Partners",
+                                    "level": 2
+                                },
+                                {
+                                    "type": "text",
+                                    "column": 1,
+                                    "order": 2,
+                                    "content": "Uw digitale werkplek voor veilig samenwerken aan dossiers, declaraties en kennisdeling."
+                                },
+                                {
+                                    "type": "links",
+                                    "column": 2,
+                                    "order": 1,
+                                    "layout": "tiles",
+                                    "columns": 2,
+                                    "items": [
+                                        {
+                                            "title": "Dossiers",
+                                            "text": "Cliëntdossiers",
+                                            "url": "/apps/files",
+                                            "icon": "folder",
+                                            "target": "_self",
+                                            "backgroundColor": "var(--color-primary-element)"
+                                        },
+                                        {
+                                            "title": "Agenda",
+                                            "text": "Planning",
+                                            "url": "/apps/calendar",
+                                            "icon": "calendar",
+                                            "target": "_self",
+                                            "backgroundColor": "var(--color-primary-element)"
+                                        },
+                                        {
+                                            "title": "Declaraties",
+                                            "text": "Uren & kosten",
+                                            "url": "/apps/forms",
+                                            "icon": "currency-eur",
+                                            "target": "_self",
+                                            "backgroundColor": "var(--color-primary-element)"
+                                        },
+                                        {
+                                            "title": "Kennisbank",
+                                            "text": "Juridische kennis",
+                                            "url": "/apps/intravox",
+                                            "icon": "book-open-variant",
+                                            "target": "_self",
+                                            "backgroundColor": "var(--color-primary-element)"
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "columns": 1,
+                            "backgroundColor": "",
+                            "widgets": [
+                                {
+                                    "type": "divider",
+                                    "column": 1,
+                                    "order": 1,
+                                    "style": "solid",
+                                    "color": "transparent",
+                                    "height": "8px"
+                                }
+                            ]
+                        },
+                        {
+                            "columns": 1,
+                            "backgroundColor": "var(--color-background-hover)",
+                            "widgets": [
+                                {
+                                    "type": "heading",
+                                    "column": 1,
+                                    "order": 1,
+                                    "content": "Mijn Apps",
+                                    "level": 3
+                                },
+                                {
+                                    "type": "links",
+                                    "column": 1,
+                                    "order": 2,
+                                    "layout": "tiles",
+                                    "columns": 4,
+                                    "items": [
+                                        {
+                                            "title": "Dossiers",
+                                            "text": "Zaakbeheer",
+                                            "url": "/apps/files",
+                                            "icon": "folder",
+                                            "target": "_self",
+                                            "backgroundColor": "var(--color-primary-element)"
+                                        },
+                                        {
+                                            "title": "Chat",
+                                            "text": "Intern overleg",
+                                            "url": "/apps/spreed",
+                                            "icon": "chat",
+                                            "target": "_self",
+                                            "backgroundColor": "var(--color-background-hover)"
+                                        },
+                                        {
+                                            "title": "Agenda",
+                                            "text": "Zittingen & besprekingen",
+                                            "url": "/apps/calendar",
+                                            "icon": "calendar",
+                                            "target": "_self",
+                                            "backgroundColor": "var(--color-background-hover)"
+                                        },
+                                        {
+                                            "title": "Taken",
+                                            "text": "Deadlines & to-do",
+                                            "url": "/apps/tasks",
+                                            "icon": "clipboard-check",
+                                            "target": "_self",
+                                            "backgroundColor": "var(--color-primary-element)"
+                                        },
+                                        {
+                                            "title": "Declaraties",
+                                            "text": "Uren & kosten",
+                                            "url": "/apps/forms",
+                                            "icon": "currency-eur",
+                                            "target": "_self",
+                                            "backgroundColor": "var(--color-primary-element)"
+                                        },
+                                        {
+                                            "title": "Contacten",
+                                            "text": "Cliënten & relaties",
+                                            "url": "/apps/contacts",
+                                            "icon": "account-multiple",
+                                            "target": "_self",
+                                            "backgroundColor": "var(--color-background-hover)"
+                                        },
+                                        {
+                                            "title": "Kennisbank",
+                                            "text": "Modellen & arresten",
+                                            "url": "/apps/intravox",
+                                            "icon": "book-open-variant",
+                                            "target": "_self",
+                                            "backgroundColor": "var(--color-background-hover)"
+                                        },
+                                        {
+                                            "title": "Dashboard",
+                                            "text": "Kantooroverzicht",
+                                            "url": "/apps/dashboard",
+                                            "icon": "view-dashboard",
+                                            "target": "_self",
+                                            "backgroundColor": "var(--color-primary-element)"
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "columns": 1,
+                            "backgroundColor": "",
+                            "widgets": [
+                                {
+                                    "type": "divider",
+                                    "column": 1,
+                                    "order": 1,
+                                    "style": "solid",
+                                    "color": "",
+                                    "height": "1px"
+                                }
+                            ]
+                        },
+                        {
+                            "columns": 3,
+                            "backgroundColor": "",
+                            "widgets": [
+                                {
+                                    "type": "heading",
+                                    "column": 1,
+                                    "order": 1,
+                                    "content": "Kantoorberichten",
+                                    "level": 4
+                                },
+                                {
+                                    "type": "news",
+                                    "column": 1,
+                                    "order": 2,
+                                    "title": "",
+                                    "layout": "grid",
+                                    "columns": 2,
+                                    "limit": 4,
+                                    "sortBy": "modified",
+                                    "sortOrder": "desc",
+                                    "showImage": true,
+                                    "showDate": true,
+                                    "showExcerpt": true,
+                                    "excerptLength": 120,
+                                    "sourcePath": "",
+                                    "sourcePageId": "",
+                                    "autoplayInterval": 0,
+                                    "filters": [],
+                                    "filterOperator": "AND",
+                                    "filterPublished": false,
+                                    "backgroundColor": ""
+                                },
+                                {
+                                    "type": "heading",
+                                    "column": 2,
+                                    "order": 1,
+                                    "content": "Documenten",
+                                    "level": 4
+                                },
+                                {
+                                    "type": "file",
+                                    "column": 2,
+                                    "order": 2,
+                                    "path": "Documenten/Model_dagvaarding.docx",
+                                    "name": "Model Dagvaarding"
+                                },
+                                {
+                                    "type": "file",
+                                    "column": 2,
+                                    "order": 3,
+                                    "path": "Documenten/Kantoorhandboek_2026.pdf",
+                                    "name": "Kantoorhandboek 2026"
+                                },
+                                {
+                                    "type": "file",
+                                    "column": 2,
+                                    "order": 4,
+                                    "path": "Documenten/Proceskostenformulier.xlsx",
+                                    "name": "Proceskostenformulier"
+                                },
+                                {
+                                    "type": "heading",
+                                    "column": 3,
+                                    "order": 1,
+                                    "content": "Vergaderruimte",
+                                    "level": 4
+                                },
+                                {
+                                    "type": "image",
+                                    "column": 3,
+                                    "order": 2,
+                                    "src": "vergaderruimte.jpg",
+                                    "alt": "Vergaderruimte",
+                                    "objectFit": "cover"
+                                },
+                                {
+                                    "type": "text",
+                                    "column": 3,
+                                    "order": 3,
+                                    "content": "Boek een vergaderruimte via de Agenda-app."
+                                }
+                            ]
+                        },
+                        {
+                            "columns": 1,
+                            "backgroundColor": "",
+                            "widgets": [
+                                {
+                                    "type": "divider",
+                                    "column": 1,
+                                    "order": 1,
+                                    "style": "dashed",
+                                    "color": "",
+                                    "height": "1px"
+                                }
+                            ]
+                        },
+                        {
+                            "columns": 2,
+                            "backgroundColor": "",
+                            "widgets": [
+                                {
+                                    "type": "heading",
+                                    "column": 1,
+                                    "order": 1,
+                                    "content": "Externe Bronnen",
+                                    "level": 4
+                                },
+                                {
+                                    "type": "links",
+                                    "column": 1,
+                                    "order": 2,
+                                    "layout": "list",
+                                    "columns": 1,
+                                    "items": [
+                                        {
+                                            "text": "Rechtspraak.nl",
+                                            "url": "https://www.rechtspraak.nl",
+                                            "icon": "web",
+                                            "target": "_blank"
+                                        },
+                                        {
+                                            "text": "Kamer van Koophandel",
+                                            "url": "https://www.kvk.nl",
+                                            "icon": "web",
+                                            "target": "_blank"
+                                        },
+                                        {
+                                            "text": "Belastingdienst",
+                                            "url": "https://www.belastingdienst.nl",
+                                            "icon": "web",
+                                            "target": "_blank"
+                                        },
+                                        {
+                                            "text": "Kadaster",
+                                            "url": "https://www.kadaster.nl",
+                                            "icon": "web",
+                                            "target": "_blank"
+                                        },
+                                        {
+                                            "text": "Overheid.nl",
+                                            "url": "https://www.overheid.nl",
+                                            "icon": "web",
+                                            "target": "_blank"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "image",
+                                    "column": 2,
+                                    "order": 1,
+                                    "src": "kantoor.jpg",
+                                    "alt": "Kantoor interieur",
+                                    "objectFit": "cover"
+                                }
+                            ]
+                        },
+                        {
+                            "columns": 1,
+                            "backgroundColor": "",
+                            "widgets": [
+                                {
+                                    "type": "divider",
+                                    "column": 1,
+                                    "order": 1,
+                                    "style": "solid",
+                                    "color": "transparent",
+                                    "height": "8px"
+                                }
+                            ]
+                        },
+                        {
+                            "columns": 2,
+                            "backgroundColor": "rgba(0,0,0,0.05)",
+                            "widgets": [
+                                {
+                                    "type": "heading",
+                                    "column": 1,
+                                    "order": 1,
+                                    "content": "Contact",
+                                    "level": 4
+                                },
+                                {
+                                    "type": "text",
+                                    "column": 1,
+                                    "order": 2,
+                                    "content": "**Receptie Amsterdam** (Hoofdkantoor)\nKeizersgracht 412\n020-555 1234\nreceptie@vanderberg.nl\n\n**Rotterdam**\nCoolsingel 89\n010-555 5678\nrotterdam@vanderberg.nl\n\n**Den Haag**\nLange Voorhout 15\n070-555 9012\ndenhaag@vanderberg.nl"
+                                },
+                                {
+                                    "type": "heading",
+                                    "column": 2,
+                                    "order": 1,
+                                    "content": "Praktijkgebieden",
+                                    "level": 4
+                                },
+                                {
+                                    "type": "text",
+                                    "column": 2,
+                                    "order": 2,
+                                    "content": "**Ondernemingsrecht** — Fusies, overnames, vennootschapsrecht en commerciële contracten.\n\n**Arbeidsrecht** — Ontslagzaken, arbeidsovereenkomsten en cao-vraagstukken.\n\n**Vastgoedrecht** — Huur, koop, bouwrecht en gebiedsontwikkeling.\n\n**Fiscaal recht** — Belastingadvies, btw-vraagstukken en internationale fiscale structuren."
+                                }
+                            ]
+                        },
+                        {
+                            "columns": 1,
+                            "backgroundColor": "",
+                            "widgets": [
+                                {
+                                    "type": "divider",
+                                    "column": 1,
+                                    "order": 1,
+                                    "style": "solid",
+                                    "color": "transparent",
+                                    "height": "8px"
+                                }
+                            ]
+                        }
+                    ],
+                    "sideColumns": {
+                        "left": {
+                            "enabled": false,
+                            "backgroundColor": "",
+                            "widgets": []
+                        },
+                        "right": {
+                            "enabled": false,
+                            "backgroundColor": "",
+                            "widgets": []
+                        }
+                    }
+                }
+            }
+        }
+    ],
+    "navigation": {
+        "type": "megamenu",
+        "items": [
+            {
+                "id": "nav_home",
+                "title": "Home",
+                "uniqueId": "page-law-1234-5678-9abc-def012345678",
+                "url": null,
+                "target": null,
+                "children": []
+            },
+            {
+                "id": "nav_praktijkgebieden",
+                "title": "Praktijkgebieden",
+                "uniqueId": "page-law-2001-0000-0000-000000000001",
+                "url": null,
+                "target": null,
+                "children": [
+                    {
+                        "id": "nav_ondernemingsrecht",
+                        "title": "Ondernemingsrecht",
+                        "uniqueId": "page-law-2001-0000-0000-000000000002",
+                        "url": null,
+                        "target": null,
+                        "children": []
+                    },
+                    {
+                        "id": "nav_arbeidsrecht",
+                        "title": "Arbeidsrecht",
+                        "uniqueId": "page-law-2001-0000-0000-000000000003",
+                        "url": null,
+                        "target": null,
+                        "children": []
+                    },
+                    {
+                        "id": "nav_vastgoedrecht",
+                        "title": "Vastgoedrecht",
+                        "uniqueId": "page-law-2001-0000-0000-000000000004",
+                        "url": null,
+                        "target": null,
+                        "children": []
+                    }
+                ]
+            },
+            {
+                "id": "nav_organisatie",
+                "title": "Organisatie",
+                "uniqueId": "page-law-3001-0000-0000-000000000001",
+                "url": null,
+                "target": null,
+                "children": [
+                    {
+                        "id": "nav_hr",
+                        "title": "HR",
+                        "uniqueId": "page-law-3001-0000-0000-000000000002",
+                        "url": null,
+                        "target": null,
+                        "children": []
+                    },
+                    {
+                        "id": "nav_it",
+                        "title": "IT & Werkplek",
+                        "uniqueId": "page-law-3001-0000-0000-000000000003",
+                        "url": null,
+                        "target": null,
+                        "children": []
+                    },
+                    {
+                        "id": "nav_financien",
+                        "title": "Financiën",
+                        "uniqueId": "page-law-3001-0000-0000-000000000004",
+                        "url": null,
+                        "target": null,
+                        "children": []
+                    }
+                ]
+            },
+            {
+                "id": "nav_externe_links",
+                "title": "Externe Links",
+                "uniqueId": null,
+                "url": null,
+                "target": null,
+                "children": [
+                    {
+                        "id": "nav_rechtspraak",
+                        "title": "Rechtspraak.nl",
+                        "uniqueId": null,
+                        "url": "https://www.rechtspraak.nl",
+                        "target": "_blank",
+                        "children": []
+                    },
+                    {
+                        "id": "nav_kvk",
+                        "title": "KvK",
+                        "uniqueId": null,
+                        "url": "https://www.kvk.nl",
+                        "target": "_blank",
+                        "children": []
+                    }
+                ]
+            }
+        ]
+    },
+    "footer": {
+        "content": "© 2026 Van der Berg & Partners — Vertrouwelijk"
+    },
+    "comments": []
+}

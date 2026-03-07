@@ -4,6 +4,39 @@ All notable changes to IntraVox will be documented in this file.
 
 IntraVox is a Nextcloud intranet page builder.
 
+## [0.9.18] - 2026-03-07
+
+### Added
+- **Spacer widget rendering** - Spacer widget now renders correctly in view mode with configurable height (10-200px). Previously fell through to "Unknown Widget Type" error display
+- **Links widget tiles layout** - Links widget now supports a `tiles` layout alongside the existing `list` layout. Tiles display a larger icon (36px) with a separate title and subtitle on two lines, creating a card-style presentation. Editors can switch between layouts and set title/subtitle per link in tile mode
+- **30+ extra link icons** - Added icons for common intranet use cases: folders, chat, dashboard, contacts, forms, code, support, security, organization, news, and more
+- **5 unique demo showcases** with rich, diverse layouts demonstrating all widget types:
+  - **de-linden** (Universiteit) — 4 photos, 1/2/3/4-column rows, video, people grid, SURF services, right sidebar
+  - **van-der-berg** (Advocatenkantoor) — 3 photos, header row, news grid, file widgets, no sidebars
+  - **gemeente-duin** (Gemeente) — 3 photos, 1/2/3/5-column rows, left sidebar, news list
+  - **de-bron** (Zorggroep) — 3 photos, 4-column department overview, people cards, video, file widgets, right sidebar
+  - **horizon-labs** (Tech startup) — 2 photos, news carousel, culture row, right sidebar
+
+### Documentation
+- **Showcases guide** (`SHOWCASES.md`) — Complete documentation of all 5 showcases: widget coverage matrix, technical structure, background color guidelines, image handling, and people widget portability
+- **Editor guide updated** — Added documentation for file, spacer, news, and people widgets; updated column support from 1-3 to 1-5; documented collapsible rows, header rows, and side columns
+- **Export/import updated** — Widget types list expanded from 6 to 10 (added links, file, news, people)
+
+## [0.9.17] - 2026-03-01
+
+### Added
+- **OpenAPI documentation for template endpoints** - Five template API endpoints now fully documented in OpenAPI spec (`GET /api/templates`, `GET /api/templates/{id}`, `POST /api/pages/from-template`, `POST /api/templates`, `DELETE /api/templates/{id}`)
+- Template request/response schemas (TemplatePreview, TemplateCreateFromRequest, TemplateSaveRequest) with examples for all endpoints
+- "Templates" tag in OpenAPI spec for better API organization and discoverability
+
+### Documentation
+- **Template API Quickstart** (`TEMPLATE_API_QUICKSTART.md`) - 5-minute guide with code examples in cURL, JavaScript, Python, and PHP for getting started with template API
+- **OpenAPI Tooling Guide** (`OPENAPI_TOOLING.md`) - Complete guide for Swagger UI, Postman integration, code generation, and API testing tools
+- **API Development Guide** (`API_DEVELOPMENT_GUIDE.md`) - Best practices for adding endpoints and maintaining OpenAPI spec, with template endpoints as case study
+
+### Security
+- **serialize-javascript upgraded to 7.0.3** - Fixed HIGH severity RCE vulnerability (CVE, CVSS 8.1) via npm override. Addresses code injection risk in RegExp.flags and Date.toISOString() during webpack build process
+
 ## [0.9.16] - 2026-02-23
 
 ### Added

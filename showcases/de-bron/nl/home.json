@@ -1,0 +1,595 @@
+{
+    "uniqueId": "page-zorg-1234-5678-9abc-def012345678",
+    "title": "Zorggroep De Bron",
+    "language": "nl",
+    "layout": {
+        "columns": 1,
+        "rows": [
+            {
+                "columns": 2,
+                "backgroundColor": "var(--color-primary-element)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Welkom bij Zorggroep De Bron",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Samen zorgen we voor de beste zorg. Hier vind je protocollen, roosters en alles wat je nodig hebt.\n\n180 medewerkers | 3 locaties | 24/7 zorg"
+                    },
+                    {
+                        "type": "image",
+                        "column": 2,
+                        "order": 1,
+                        "src": "zorgteam.jpg",
+                        "alt": "Zorgteam De Bron",
+                        "objectFit": "cover"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "",
+                        "height": "1px"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Mijn Apps",
+                        "level": 3
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 2,
+                        "layout": "tiles",
+                        "columns": 4,
+                        "items": [
+                            {
+                                "title": "Protocollen",
+                                "text": "Richtlijnen",
+                                "url": "/apps/files",
+                                "icon": "file-document",
+                                "target": "_self",
+                                "backgroundColor": "var(--color-primary-element)"
+                            },
+                            {
+                                "title": "Chat",
+                                "text": "Teamoverleg",
+                                "url": "/apps/spreed",
+                                "icon": "chat",
+                                "target": "_self",
+                                "backgroundColor": "var(--color-background-hover)"
+                            },
+                            {
+                                "title": "Rooster",
+                                "text": "Diensten",
+                                "url": "/apps/calendar",
+                                "icon": "calendar-clock",
+                                "target": "_self",
+                                "backgroundColor": "var(--color-primary-element)"
+                            },
+                            {
+                                "title": "Taken",
+                                "text": "Actiepunten",
+                                "url": "/apps/tasks",
+                                "icon": "clipboard-check",
+                                "target": "_self",
+                                "backgroundColor": "var(--color-background-hover)"
+                            },
+                            {
+                                "title": "Collega's",
+                                "text": "Contacten",
+                                "url": "/apps/contacts",
+                                "icon": "account-multiple",
+                                "target": "_self",
+                                "backgroundColor": "var(--color-background-hover)"
+                            },
+                            {
+                                "title": "Meldingen",
+                                "text": "MIC/MIP",
+                                "url": "/apps/forms",
+                                "icon": "alert-circle",
+                                "target": "_self",
+                                "backgroundColor": "var(--color-primary-element)"
+                            },
+                            {
+                                "title": "Scholing",
+                                "text": "E-learning",
+                                "url": "/apps/intravox",
+                                "icon": "school",
+                                "target": "_self",
+                                "backgroundColor": "var(--color-primary-element)"
+                            },
+                            {
+                                "title": "Dashboard",
+                                "text": "Overzicht",
+                                "url": "/apps/dashboard",
+                                "icon": "view-dashboard",
+                                "target": "_self",
+                                "backgroundColor": "var(--color-background-hover)"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "",
+                        "height": "1px"
+                    }
+                ]
+            },
+            {
+                "columns": 4,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Verpleging",
+                        "level": 5
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Afd. 1A t/m 1D\n48 bedden\nTeamleider: overleg ma 10:00"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 1,
+                        "content": "Revalidatie",
+                        "level": 5
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 2,
+                        "content": "Afd. 2A-2B\n24 plaatsen\nTeamleider: overleg di 10:00"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 3,
+                        "order": 1,
+                        "content": "Dagbesteding",
+                        "level": 5
+                    },
+                    {
+                        "type": "text",
+                        "column": 3,
+                        "order": 2,
+                        "content": "3 groepen\n36 cliënten\nCoördinator: overleg wo 9:00"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 4,
+                        "order": 1,
+                        "content": "Thuiszorg",
+                        "level": 5
+                    },
+                    {
+                        "type": "text",
+                        "column": 4,
+                        "order": 2,
+                        "content": "8 wijkteams\n120 cliënten\nOverleg: do 8:30"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "",
+                        "height": "1px"
+                    }
+                ]
+            },
+            {
+                "columns": 2,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Nieuws & Updates",
+                        "level": 4
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "**Nieuw valpreventieprotocol per direct van kracht**\nHet vernieuwde valpreventieprotocol is beschikbaar in Protocollen. Alle verpleegkundigen en verzorgenden worden verzocht dit binnen 2 weken door te nemen en de bijbehorende e-learning te voltooien.\n\n**Griepvaccinatie medewerkers — 18 maart**\nDe jaarlijkse griepvaccinatie vindt plaats op alle drie locaties. Aanmelden via Meldingen > Vaccinatie-aanmelding. Deelname is vrijwillig maar wordt sterk aanbevolen.\n\n**Externe audit kwaliteitskeurmerk — april 2026**\nDe voorbereiding voor de HKZ-audit is gestart. Controleer of jouw afdelingsdocumenten actueel zijn en neem contact op met de kwaliteitscoördinator bij vragen."
+                    },
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 3,
+                        "style": "dashed",
+                        "color": "",
+                        "height": "1px"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 4,
+                        "content": "Instructievideo",
+                        "level": 5
+                    },
+                    {
+                        "type": "video",
+                        "column": 1,
+                        "order": 5,
+                        "provider": "embed",
+                        "src": "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ",
+                        "title": "Instructie Tilprotocol",
+                        "autoplay": false,
+                        "loop": false,
+                        "muted": false
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 1,
+                        "content": "Ons Zorgteam",
+                        "level": 4
+                    },
+                    {
+                        "type": "people",
+                        "column": 2,
+                        "order": 2,
+                        "title": "",
+                        "selectionMode": "filter",
+                        "filters": [],
+                        "filterOperator": "AND",
+                        "layout": "card",
+                        "columns": 2,
+                        "limit": 4,
+                        "sortBy": "displayName",
+                        "sortOrder": "asc",
+                        "showFields": {
+                            "avatar": true,
+                            "displayName": true,
+                            "role": true,
+                            "department": true,
+                            "phone": true,
+                            "email": false,
+                            "pronouns": false,
+                            "headline": false,
+                            "title": false,
+                            "address": false,
+                            "website": false,
+                            "birthdate": false,
+                            "biography": false,
+                            "socialLinks": false,
+                            "customFields": false
+                        }
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "",
+                        "height": "1px"
+                    }
+                ]
+            },
+            {
+                "columns": 2,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Onze Locatie",
+                        "level": 4
+                    },
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 2,
+                        "src": "locatie.jpg",
+                        "alt": "Locatie De Bron",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 1,
+                        "content": "Belangrijke Documenten",
+                        "level": 4
+                    },
+                    {
+                        "type": "file",
+                        "column": 2,
+                        "order": 2,
+                        "path": "Protocollen/Medicatieprotocol_2026.pdf",
+                        "name": "Medicatieprotocol 2026"
+                    },
+                    {
+                        "type": "file",
+                        "column": 2,
+                        "order": 3,
+                        "path": "BHV/BHV_Handleiding.pdf",
+                        "name": "BHV Handleiding"
+                    },
+                    {
+                        "type": "file",
+                        "column": 2,
+                        "order": 4,
+                        "path": "Protocollen/Hygieneprotocol.pdf",
+                        "name": "Hygiëneprotocol"
+                    },
+                    {
+                        "type": "file",
+                        "column": 2,
+                        "order": 5,
+                        "path": "HR/Ziekteverzuimbeleid.pdf",
+                        "name": "Ziekteverzuimbeleid"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "",
+                        "height": "1px"
+                    }
+                ]
+            },
+            {
+                "id": "row-onboarding",
+                "columns": 1,
+                "backgroundColor": "var(--color-background-hover)",
+                "collapsible": true,
+                "sectionTitle": "Nieuwe Medewerker? Start Hier",
+                "defaultCollapsed": true,
+                "widgets": [
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Welkom bij Zorggroep De Bron! Doorloop deze stappen om snel op weg te zijn:\n\n1. **Toegangsbadge ophalen** — meld je bij de receptie van je locatie voor je persoonlijke toegangspas en kluissleutel\n2. **BHV-training inplannen** — schrijf je in voor de eerstvolgende BHV-training via Scholing > Verplichte cursussen\n3. **Protocollen doorlezen** — open Protocollen en lees de basisrichtlijnen voor jouw afdeling (minimaal: medicatie, hygiëne, valpreventie)\n4. **Intranet rondleiding** — verken de tegels en apps op deze startpagina om je weg te vinden\n5. **Mentor ontmoeten** — je mentor neemt binnen je eerste week contact op voor een kennismakingsgesprek\n\nVragen? Neem contact op met **P&O** via po@debron-zorg.nl of stuur een bericht via Chat."
+                    }
+                ]
+            },
+            {
+                "id": "row-faq",
+                "columns": 1,
+                "backgroundColor": "var(--color-background-hover)",
+                "collapsible": true,
+                "sectionTitle": "Veelgestelde Vragen",
+                "defaultCollapsed": true,
+                "widgets": [
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 1,
+                        "content": "**Ik ben mijn toegangspas kwijt — wat moet ik doen?**\nMeld dit direct bij de receptie van je locatie. Zij blokkeren je oude pas en geven een vervangende pas uit. Kosten: €15.\n\n**Hoe vraag ik een dienstwissel aan?**\nOpen de Rooster-app, selecteer de dienst die je wilt ruilen en dien een wisselverzoek in. Je leidinggevende moet akkoord geven.\n\n**Hoe meld ik mij ziek?**\nBel vóór aanvang van je dienst je leidinggevende. Registreer je verzuim daarna via Meldingen > Ziekteverzuim.\n\n**Waar kan ik mijn scholingspunten inzien?**\nGa naar Scholing in de Kennisbank. Onder 'Mijn profiel' zie je een overzicht van gevolgde cursussen en behaalde accreditatiepunten.\n\n**Hoe meld ik een incident (MIC/MIP)?**\nGa naar Meldingen en kies het juiste formulier (MIC voor cliëntincidenten, MIP voor bijna-incidenten). De kwaliteitscoördinator neemt contact op."
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "transparent",
+                        "height": "8px"
+                    }
+                ]
+            }
+        ],
+        "sideColumns": {
+            "left": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            },
+            "right": {
+                "enabled": true,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "image",
+                        "column": 1,
+                        "order": 1,
+                        "src": "verpleging.jpg",
+                        "alt": "Verpleging De Bron",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 2,
+                        "style": "solid",
+                        "color": "",
+                        "height": "1px"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 3,
+                        "content": "Over De Bron",
+                        "level": 4
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 4,
+                        "content": "Zorggroep De Bron telt **180 medewerkers** verdeeld over 3 locaties:\n\n- **Hoofdlocatie** — verpleging en verzorging\n- **Revalidatiecentrum** — herstel en therapie\n- **Dagbesteding** — activiteiten en begeleiding"
+                    },
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 5,
+                        "style": "solid",
+                        "color": "",
+                        "height": "1px"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 6,
+                        "content": "Kwaliteit",
+                        "level": 5
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 7,
+                        "layout": "list",
+                        "columns": 1,
+                        "items": [
+                            {
+                                "text": "ISO 9001:2015 Certificaat",
+                                "url": "/apps/files",
+                                "icon": "shield-check",
+                                "target": "_self"
+                            },
+                            {
+                                "text": "HKZ Keurmerk Zorg",
+                                "url": "/apps/files",
+                                "icon": "star",
+                                "target": "_self"
+                            },
+                            {
+                                "text": "Kwaliteitsrapport 2025",
+                                "url": "/apps/files",
+                                "icon": "file-document",
+                                "target": "_self"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 8,
+                        "style": "solid",
+                        "color": "",
+                        "height": "1px"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 9,
+                        "content": "Contact",
+                        "level": 5
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 10,
+                        "content": "**Receptie Hoofdlocatie**\nreceptie@debron-zorg.nl\n030-555 1234\n\n**ICT-desk**\nict@debron-zorg.nl\n030-555 1235\n\n**P&O**\npo@debron-zorg.nl\n030-555 1236"
+                    },
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 11,
+                        "style": "solid",
+                        "color": "",
+                        "height": "1px"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 12,
+                        "content": "Externe Links",
+                        "level": 5
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 13,
+                        "layout": "list",
+                        "columns": 1,
+                        "items": [
+                            {
+                                "text": "RIVM",
+                                "url": "https://www.rivm.nl",
+                                "icon": "web",
+                                "target": "_blank"
+                            },
+                            {
+                                "text": "V&VN",
+                                "url": "https://www.venvn.nl",
+                                "icon": "web",
+                                "target": "_blank"
+                            },
+                            {
+                                "text": "IGJ",
+                                "url": "https://www.igj.nl",
+                                "icon": "web",
+                                "target": "_blank"
+                            },
+                            {
+                                "text": "Vilans",
+                                "url": "https://www.vilans.nl",
+                                "icon": "web",
+                                "target": "_blank"
+                            },
+                            {
+                                "text": "ActiZ",
+                                "url": "https://www.actiz.nl",
+                                "icon": "web",
+                                "target": "_blank"
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    }
+}

@@ -1,0 +1,729 @@
+{
+    "exportVersion": "1.3",
+    "schemaVersion": "1.3",
+    "exportDate": "2026-03-07T12:00:00.000Z",
+    "exportedBy": "IntraVox Showcase - Gemeente Duinvoorde",
+    "requiresMinVersion": "0.8.11",
+    "language": "nl",
+    "pages": [
+        {
+            "_exportPath": "home",
+            "uniqueId": "page-gem-1234-5678-9abc-def012345678",
+            "title": "Gemeente Duinvoorde",
+            "content": {
+                "uniqueId": "page-gem-1234-5678-9abc-def012345678",
+                "title": "Gemeente Duinvoorde",
+                "language": "nl",
+                "layout": {
+                    "columns": 1,
+                    "rows": [
+                        {
+                            "columns": 2,
+                            "backgroundColor": "var(--color-primary-element)",
+                            "widgets": [
+                                {
+                                    "type": "heading",
+                                    "column": 1,
+                                    "order": 1,
+                                    "content": "Gemeente Duinvoorde",
+                                    "level": 2
+                                },
+                                {
+                                    "type": "text",
+                                    "column": 1,
+                                    "order": 2,
+                                    "content": "Welkom op het medewerkersportaal. Samen werken we aan een sterke gemeente voor onze 42.000 inwoners."
+                                },
+                                {
+                                    "type": "image",
+                                    "column": 2,
+                                    "order": 1,
+                                    "src": "gemeentehuis.jpg",
+                                    "alt": "Gemeentehuis Duinvoorde",
+                                    "objectFit": "cover"
+                                }
+                            ]
+                        },
+                        {
+                            "columns": 1,
+                            "backgroundColor": "",
+                            "widgets": [
+                                {
+                                    "type": "divider",
+                                    "column": 1,
+                                    "order": 1,
+                                    "style": "solid",
+                                    "color": "",
+                                    "height": "1px"
+                                }
+                            ]
+                        },
+                        {
+                            "columns": 5,
+                            "backgroundColor": "",
+                            "widgets": [
+                                {
+                                    "type": "heading",
+                                    "column": 1,
+                                    "order": 1,
+                                    "content": "Bestuur",
+                                    "level": 5
+                                },
+                                {
+                                    "type": "text",
+                                    "column": 1,
+                                    "order": 2,
+                                    "content": "Burgemeester Van Dijk\n3 Wethouders\nGemeentesecretaris Bakker"
+                                },
+                                {
+                                    "type": "heading",
+                                    "column": 2,
+                                    "order": 1,
+                                    "content": "Inwoners",
+                                    "level": 5
+                                },
+                                {
+                                    "type": "text",
+                                    "column": 2,
+                                    "order": 2,
+                                    "content": "42.000 inwoners\n18.500 huishoudens\n3 kernen"
+                                },
+                                {
+                                    "type": "heading",
+                                    "column": 3,
+                                    "order": 1,
+                                    "content": "Medewerkers",
+                                    "level": 5
+                                },
+                                {
+                                    "type": "text",
+                                    "column": 3,
+                                    "order": 2,
+                                    "content": "320 medewerkers\n12 afdelingen\n2 locaties"
+                                },
+                                {
+                                    "type": "heading",
+                                    "column": 4,
+                                    "order": 1,
+                                    "content": "Financiën",
+                                    "level": 5
+                                },
+                                {
+                                    "type": "text",
+                                    "column": 4,
+                                    "order": 2,
+                                    "content": "Begroting €89 mln\nWOZ-waarde €3,2 mrd\nOZB-tarief 0,12%"
+                                },
+                                {
+                                    "type": "heading",
+                                    "column": 5,
+                                    "order": 1,
+                                    "content": "Contact",
+                                    "level": 5
+                                },
+                                {
+                                    "type": "text",
+                                    "column": 5,
+                                    "order": 2,
+                                    "content": "Telefoon: 14 070\nEmail: info@duinvoorde.nl\nBalie: ma-vr 9-17"
+                                }
+                            ]
+                        },
+                        {
+                            "columns": 1,
+                            "backgroundColor": "",
+                            "widgets": [
+                                {
+                                    "type": "divider",
+                                    "column": 1,
+                                    "order": 1,
+                                    "style": "solid",
+                                    "color": "transparent",
+                                    "height": "8px"
+                                }
+                            ]
+                        },
+                        {
+                            "columns": 3,
+                            "backgroundColor": "",
+                            "widgets": [
+                                {
+                                    "type": "heading",
+                                    "column": 1,
+                                    "order": 1,
+                                    "content": "Actueel",
+                                    "level": 4
+                                },
+                                {
+                                    "type": "news",
+                                    "column": 1,
+                                    "order": 2,
+                                    "title": "",
+                                    "layout": "list",
+                                    "columns": 1,
+                                    "limit": 5,
+                                    "sortBy": "modified",
+                                    "sortOrder": "desc",
+                                    "showImage": false,
+                                    "showDate": true,
+                                    "showExcerpt": true,
+                                    "excerptLength": 80,
+                                    "sourcePath": "",
+                                    "sourcePageId": "",
+                                    "autoplayInterval": 0,
+                                    "filters": [],
+                                    "filterOperator": "AND",
+                                    "filterPublished": false,
+                                    "backgroundColor": ""
+                                },
+                                {
+                                    "type": "heading",
+                                    "column": 2,
+                                    "order": 1,
+                                    "content": "Vergaderkalender",
+                                    "level": 4
+                                },
+                                {
+                                    "type": "text",
+                                    "column": 2,
+                                    "order": 2,
+                                    "content": "**Raadsvergadering**\n25 maart, 19:30 — Raadzaal\n\n**Commissie Ruimte**\n18 maart, 20:00 — Vergaderzaal 1\n\n**Collegevergadering**\nWekelijks dinsdag, 9:00 — B&W-kamer\n\n**Teamdag Sociaal Domein**\n28 maart — Locatie volgt\n\n**Informatiebijeenkomst Omgevingswet**\n2 april — Raadzaal"
+                                },
+                                {
+                                    "type": "heading",
+                                    "column": 3,
+                                    "order": 1,
+                                    "content": "Publieksbalie",
+                                    "level": 4
+                                },
+                                {
+                                    "type": "image",
+                                    "column": 3,
+                                    "order": 2,
+                                    "src": "balie.jpg",
+                                    "alt": "Publieksbalie gemeentehuis",
+                                    "objectFit": "cover"
+                                },
+                                {
+                                    "type": "text",
+                                    "column": 3,
+                                    "order": 3,
+                                    "content": "Openingstijden:\nMa-vr 9:00-17:00\nDo avond 17:00-20:00"
+                                }
+                            ]
+                        },
+                        {
+                            "columns": 1,
+                            "backgroundColor": "",
+                            "widgets": [
+                                {
+                                    "type": "divider",
+                                    "column": 1,
+                                    "order": 1,
+                                    "style": "solid",
+                                    "color": "",
+                                    "height": "1px"
+                                }
+                            ]
+                        },
+                        {
+                            "columns": 1,
+                            "backgroundColor": "var(--color-background-hover)",
+                            "widgets": [
+                                {
+                                    "type": "heading",
+                                    "column": 1,
+                                    "order": 1,
+                                    "content": "Mijn Apps",
+                                    "level": 3
+                                },
+                                {
+                                    "type": "links",
+                                    "column": 1,
+                                    "order": 2,
+                                    "layout": "tiles",
+                                    "columns": 4,
+                                    "items": [
+                                        {
+                                            "title": "Bestanden",
+                                            "text": "Documenten & besluiten",
+                                            "url": "/apps/files",
+                                            "icon": "folder",
+                                            "target": "_self",
+                                            "backgroundColor": "var(--color-primary-element)"
+                                        },
+                                        {
+                                            "title": "Chat",
+                                            "text": "Intern berichtenverkeer",
+                                            "url": "/apps/spreed",
+                                            "icon": "chat",
+                                            "target": "_self",
+                                            "backgroundColor": "var(--color-background-hover)"
+                                        },
+                                        {
+                                            "title": "Agenda",
+                                            "text": "Vergaderingen & raad",
+                                            "url": "/apps/calendar",
+                                            "icon": "calendar",
+                                            "target": "_self",
+                                            "backgroundColor": "var(--color-primary-element)"
+                                        },
+                                        {
+                                            "title": "Taken",
+                                            "text": "Actiepunten",
+                                            "url": "/apps/tasks",
+                                            "icon": "clipboard-check",
+                                            "target": "_self",
+                                            "backgroundColor": "var(--color-background-hover)"
+                                        },
+                                        {
+                                            "title": "Contacten",
+                                            "text": "Medewerkers & afdelingen",
+                                            "url": "/apps/contacts",
+                                            "icon": "account-multiple",
+                                            "target": "_self",
+                                            "backgroundColor": "var(--color-background-hover)"
+                                        },
+                                        {
+                                            "title": "Formulieren",
+                                            "text": "Aanvragen & meldingen",
+                                            "url": "/apps/forms",
+                                            "icon": "form-select",
+                                            "target": "_self",
+                                            "backgroundColor": "var(--color-primary-element)"
+                                        },
+                                        {
+                                            "title": "Dashboard",
+                                            "text": "Overzicht",
+                                            "url": "/apps/dashboard",
+                                            "icon": "view-dashboard",
+                                            "target": "_self",
+                                            "backgroundColor": "var(--color-primary-element)"
+                                        },
+                                        {
+                                            "title": "Activiteit",
+                                            "text": "Recente wijzigingen",
+                                            "url": "/apps/activity",
+                                            "icon": "chart-line",
+                                            "target": "_self",
+                                            "backgroundColor": "var(--color-background-hover)"
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "columns": 1,
+                            "backgroundColor": "",
+                            "widgets": [
+                                {
+                                    "type": "divider",
+                                    "column": 1,
+                                    "order": 1,
+                                    "style": "solid",
+                                    "color": "",
+                                    "height": "1px"
+                                }
+                            ]
+                        },
+                        {
+                            "columns": 2,
+                            "backgroundColor": "",
+                            "widgets": [
+                                {
+                                    "type": "heading",
+                                    "column": 1,
+                                    "order": 1,
+                                    "content": "Tools & Documenten",
+                                    "level": 4
+                                },
+                                {
+                                    "type": "links",
+                                    "column": 1,
+                                    "order": 2,
+                                    "layout": "tiles",
+                                    "columns": 3,
+                                    "items": [
+                                        {
+                                            "title": "Collabora",
+                                            "text": "Documenten bewerken",
+                                            "url": "/apps/richdocuments",
+                                            "icon": "file-document",
+                                            "target": "_self"
+                                        },
+                                        {
+                                            "title": "Notulen",
+                                            "text": "Verslaglegging",
+                                            "url": "/apps/files",
+                                            "icon": "file-document",
+                                            "target": "_self"
+                                        },
+                                        {
+                                            "title": "Beleidsnotities",
+                                            "text": "Beleidsstukken",
+                                            "url": "/apps/intravox",
+                                            "icon": "book-open-variant",
+                                            "target": "_self"
+                                        },
+                                        {
+                                            "title": "Urenregistratie",
+                                            "text": "Tijdschrijven",
+                                            "url": "/apps/deck",
+                                            "icon": "calendar-clock",
+                                            "target": "_self"
+                                        },
+                                        {
+                                            "title": "Archief",
+                                            "text": "Oud materiaal",
+                                            "url": "/apps/files",
+                                            "icon": "archive",
+                                            "target": "_self"
+                                        },
+                                        {
+                                            "title": "Help",
+                                            "text": "Documentatie",
+                                            "url": "/apps/help",
+                                            "icon": "help",
+                                            "target": "_self"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "heading",
+                                    "column": 2,
+                                    "order": 1,
+                                    "content": "Gemeenteberichten",
+                                    "level": 4
+                                },
+                                {
+                                    "type": "text",
+                                    "column": 2,
+                                    "order": 2,
+                                    "content": "**Nieuwe huisstijl per 1 april**\nHet vernieuwde huisstijlhandboek is beschikbaar in Bestanden. Alle afdelingen worden verzocht de nieuwe richtlijnen te volgen.\n\n**Teamdag 28 maart**\nDe jaarlijkse teamdag voor alle medewerkers vindt plaats op 28 maart. Locatie en programma volgen via e-mail.\n\n**Digitale handtekening beschikbaar**\nAlle medewerkers kunnen vanaf nu documenten digitaal ondertekenen. Instructies bij Help > Digitale handtekening.\n\n**Omgevingswet update mei 2026**\nDe implementatie van de Omgevingswet wordt in mei geëvalueerd. Informatiebijeenkomst op 2 april in de Raadzaal."
+                                }
+                            ]
+                        },
+                        {
+                            "columns": 1,
+                            "backgroundColor": "",
+                            "widgets": [
+                                {
+                                    "type": "divider",
+                                    "column": 1,
+                                    "order": 1,
+                                    "style": "solid",
+                                    "color": "",
+                                    "height": "1px"
+                                }
+                            ]
+                        },
+                        {
+                            "id": "row-onboarding",
+                            "columns": 1,
+                            "backgroundColor": "var(--color-background-hover)",
+                            "collapsible": true,
+                            "sectionTitle": "Nieuwe Collega? Start Hier",
+                            "defaultCollapsed": true,
+                            "widgets": [
+                                {
+                                    "type": "text",
+                                    "column": 1,
+                                    "order": 1,
+                                    "content": "Welkom bij Gemeente Duinvoorde! Doorloop deze stappen:\n\n1. **Gemeentepas ophalen** — meld je bij de receptie op het Raadhuisplein voor je gemeentepas en toegangstag\n2. **Toegangsrechten aanvragen** — vraag via Formulieren de juiste rechten aan voor systemen, mappen en applicaties\n3. **Intranet verkennen** — bekijk de apps en tools op deze startpagina\n4. **Afdelingsintroductie** — plan een kennismakingsgesprek met je leidinggevende en directe collega's\n5. **BHV-instructie volgen** — volg de verplichte bedrijfshulpverlening-instructie binnen je eerste werkweek\n\nVragen? Bel de Servicedesk op toestel 1234 of mail servicedesk@duinvoorde.nl."
+                                }
+                            ]
+                        },
+                        {
+                            "id": "row-faq",
+                            "columns": 1,
+                            "backgroundColor": "var(--color-background-hover)",
+                            "collapsible": true,
+                            "sectionTitle": "Veelgestelde Vragen",
+                            "defaultCollapsed": true,
+                            "widgets": [
+                                {
+                                    "type": "text",
+                                    "column": 1,
+                                    "order": 1,
+                                    "content": "**Hoe verbind ik met VPN vanuit huis?**\nDownload de VPN-client via de Servicedesk-pagina en log in met je gemeenteaccount. De VPN is verplicht voor toegang tot interne systemen.\n\n**Waar dien ik declaraties in?**\nGa naar Formulieren > Declaraties. Voeg bonnen als bijlage toe. Je leidinggevende keurt de declaratie goed.\n\n**Hoe reserveer ik een vergaderzaal?**\nOpen de Agenda-app en maak een afspraak. Voeg de gewenste zaal toe als locatie — beschikbare zalen worden automatisch getoond.\n\n**Hoe vraag ik een parkeerpas aan?**\nVul het formulier in via Formulieren > Facilitair. De pas wordt binnen 5 werkdagen op je werkplek bezorgd.\n\n**Hoe bestel ik catering voor een vergadering?**\nGa naar Formulieren > Catering. Bestel minimaal 2 werkdagen van tevoren."
+                                }
+                            ]
+                        },
+                        {
+                            "columns": 1,
+                            "backgroundColor": "",
+                            "widgets": [
+                                {
+                                    "type": "divider",
+                                    "column": 1,
+                                    "order": 1,
+                                    "style": "solid",
+                                    "color": "transparent",
+                                    "height": "8px"
+                                }
+                            ]
+                        }
+                    ],
+                    "sideColumns": {
+                        "left": {
+                            "enabled": true,
+                            "backgroundColor": "var(--color-background-hover)",
+                            "widgets": [
+                                {
+                                    "type": "image",
+                                    "column": 1,
+                                    "order": 1,
+                                    "src": "vergadering.jpg",
+                                    "alt": "Vergadering gemeentehuis",
+                                    "objectFit": "cover"
+                                },
+                                {
+                                    "type": "divider",
+                                    "column": 1,
+                                    "order": 2,
+                                    "style": "solid",
+                                    "color": "",
+                                    "height": "1px"
+                                },
+                                {
+                                    "type": "heading",
+                                    "column": 1,
+                                    "order": 3,
+                                    "content": "Snelkoppelingen",
+                                    "level": 4
+                                },
+                                {
+                                    "type": "links",
+                                    "column": 1,
+                                    "order": 4,
+                                    "layout": "list",
+                                    "columns": 1,
+                                    "items": [
+                                        {
+                                            "text": "Verlofaanvraag",
+                                            "url": "/apps/forms",
+                                            "icon": "calendar-clock",
+                                            "target": "_self"
+                                        },
+                                        {
+                                            "text": "Declaraties",
+                                            "url": "/apps/forms",
+                                            "icon": "currency-eur",
+                                            "target": "_self"
+                                        },
+                                        {
+                                            "text": "Vergaderzaal boeken",
+                                            "url": "/apps/calendar",
+                                            "icon": "door",
+                                            "target": "_self"
+                                        },
+                                        {
+                                            "text": "Parkeerpas",
+                                            "url": "/apps/intravox",
+                                            "icon": "car",
+                                            "target": "_self"
+                                        },
+                                        {
+                                            "text": "Ziekteverzuim melden",
+                                            "url": "/apps/forms",
+                                            "icon": "hospital-box",
+                                            "target": "_self"
+                                        },
+                                        {
+                                            "text": "BHV info",
+                                            "url": "/apps/intravox",
+                                            "icon": "fire-extinguisher",
+                                            "target": "_self"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "divider",
+                                    "column": 1,
+                                    "order": 5,
+                                    "style": "solid",
+                                    "color": "",
+                                    "height": "1px"
+                                },
+                                {
+                                    "type": "heading",
+                                    "column": 1,
+                                    "order": 6,
+                                    "content": "Contact",
+                                    "level": 5
+                                },
+                                {
+                                    "type": "text",
+                                    "column": 1,
+                                    "order": 7,
+                                    "content": "**Servicedesk**\nservicedesk@duinvoorde.nl\nToestel 1234\n\n**P&O**\npo@duinvoorde.nl\nToestel 2345\n\n**Facilitair**\nfacilitair@duinvoorde.nl\nToestel 3456"
+                                },
+                                {
+                                    "type": "divider",
+                                    "column": 1,
+                                    "order": 8,
+                                    "style": "solid",
+                                    "color": "",
+                                    "height": "1px"
+                                },
+                                {
+                                    "type": "heading",
+                                    "column": 1,
+                                    "order": 9,
+                                    "content": "Externe Links",
+                                    "level": 5
+                                },
+                                {
+                                    "type": "links",
+                                    "column": 1,
+                                    "order": 10,
+                                    "layout": "list",
+                                    "columns": 1,
+                                    "items": [
+                                        {
+                                            "text": "VNG",
+                                            "url": "https://vng.nl",
+                                            "icon": "web",
+                                            "target": "_blank"
+                                        },
+                                        {
+                                            "text": "Overheid.nl",
+                                            "url": "https://overheid.nl",
+                                            "icon": "web",
+                                            "target": "_blank"
+                                        },
+                                        {
+                                            "text": "KING",
+                                            "url": "https://kinggemeenten.nl",
+                                            "icon": "web",
+                                            "target": "_blank"
+                                        },
+                                        {
+                                            "text": "Waarstaatjegemeente.nl",
+                                            "url": "https://waarstaatjegemeente.nl",
+                                            "icon": "web",
+                                            "target": "_blank"
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        "right": {
+                            "enabled": false,
+                            "backgroundColor": "",
+                            "widgets": []
+                        }
+                    }
+                }
+            }
+        }
+    ],
+    "navigation": {
+        "type": "megamenu",
+        "items": [
+            {
+                "id": "nav_home",
+                "title": "Home",
+                "uniqueId": "page-gem-1234-5678-9abc-def012345678",
+                "url": null,
+                "target": null,
+                "children": []
+            },
+            {
+                "id": "nav_afdelingen",
+                "title": "Afdelingen",
+                "uniqueId": "page-gem-2001-aaaa-bbbb-ccccddddeeee",
+                "url": null,
+                "target": null,
+                "children": [
+                    {
+                        "id": "nav_burgerzaken",
+                        "title": "Burgerzaken",
+                        "uniqueId": "page-gem-2002-aaaa-bbbb-ccccddddeeee",
+                        "url": null,
+                        "target": null,
+                        "children": []
+                    },
+                    {
+                        "id": "nav_ruimtelijk",
+                        "title": "Ruimtelijk Domein",
+                        "uniqueId": "page-gem-2003-aaaa-bbbb-ccccddddeeee",
+                        "url": null,
+                        "target": null,
+                        "children": []
+                    },
+                    {
+                        "id": "nav_sociaal",
+                        "title": "Sociaal Domein",
+                        "uniqueId": "page-gem-2004-aaaa-bbbb-ccccddddeeee",
+                        "url": null,
+                        "target": null,
+                        "children": []
+                    }
+                ]
+            },
+            {
+                "id": "nav_beleid",
+                "title": "Beleid",
+                "uniqueId": "page-gem-3001-aaaa-bbbb-ccccddddeeee",
+                "url": null,
+                "target": null,
+                "children": [
+                    {
+                        "id": "nav_po",
+                        "title": "P&O",
+                        "uniqueId": "page-gem-3002-aaaa-bbbb-ccccddddeeee",
+                        "url": null,
+                        "target": null,
+                        "children": []
+                    },
+                    {
+                        "id": "nav_infosec",
+                        "title": "Informatiebeveiliging",
+                        "uniqueId": "page-gem-3003-aaaa-bbbb-ccccddddeeee",
+                        "url": null,
+                        "target": null,
+                        "children": []
+                    },
+                    {
+                        "id": "nav_privacy",
+                        "title": "Privacy",
+                        "uniqueId": "page-gem-3004-aaaa-bbbb-ccccddddeeee",
+                        "url": null,
+                        "target": null,
+                        "children": []
+                    }
+                ]
+            },
+            {
+                "id": "nav_externe_links",
+                "title": "Externe Links",
+                "uniqueId": null,
+                "url": null,
+                "target": null,
+                "children": [
+                    {
+                        "id": "nav_vng",
+                        "title": "VNG",
+                        "uniqueId": null,
+                        "url": "https://vng.nl",
+                        "target": "_blank",
+                        "children": []
+                    },
+                    {
+                        "id": "nav_overheid",
+                        "title": "Overheid.nl",
+                        "uniqueId": null,
+                        "url": "https://overheid.nl",
+                        "target": "_blank",
+                        "children": []
+                    }
+                ]
+            }
+        ]
+    },
+    "footer": {
+        "content": "\u00a9 2026 Gemeente Duinvoorde \u2014 Intern gebruik"
+    },
+    "comments": []
+}

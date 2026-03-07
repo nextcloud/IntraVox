@@ -1,0 +1,104 @@
+{
+    "type": "megamenu",
+    "items": [
+        {
+            "id": "nav_home",
+            "title": "Home",
+            "uniqueId": "page-gem-1234-5678-9abc-def012345678",
+            "url": null,
+            "target": null,
+            "children": []
+        },
+        {
+            "id": "nav_afdelingen",
+            "title": "Afdelingen",
+            "uniqueId": "page-gem-2001-aaaa-bbbb-ccccddddeeee",
+            "url": null,
+            "target": null,
+            "children": [
+                {
+                    "id": "nav_burgerzaken",
+                    "title": "Burgerzaken",
+                    "uniqueId": "page-gem-2002-aaaa-bbbb-ccccddddeeee",
+                    "url": null,
+                    "target": null,
+                    "children": []
+                },
+                {
+                    "id": "nav_ruimtelijk",
+                    "title": "Ruimtelijk Domein",
+                    "uniqueId": "page-gem-2003-aaaa-bbbb-ccccddddeeee",
+                    "url": null,
+                    "target": null,
+                    "children": []
+                },
+                {
+                    "id": "nav_sociaal",
+                    "title": "Sociaal Domein",
+                    "uniqueId": "page-gem-2004-aaaa-bbbb-ccccddddeeee",
+                    "url": null,
+                    "target": null,
+                    "children": []
+                }
+            ]
+        },
+        {
+            "id": "nav_beleid",
+            "title": "Beleid",
+            "uniqueId": "page-gem-3001-aaaa-bbbb-ccccddddeeee",
+            "url": null,
+            "target": null,
+            "children": [
+                {
+                    "id": "nav_po",
+                    "title": "P&O",
+                    "uniqueId": "page-gem-3002-aaaa-bbbb-ccccddddeeee",
+                    "url": null,
+                    "target": null,
+                    "children": []
+                },
+                {
+                    "id": "nav_infosec",
+                    "title": "Informatiebeveiliging",
+                    "uniqueId": "page-gem-3003-aaaa-bbbb-ccccddddeeee",
+                    "url": null,
+                    "target": null,
+                    "children": []
+                },
+                {
+                    "id": "nav_privacy",
+                    "title": "Privacy",
+                    "uniqueId": "page-gem-3004-aaaa-bbbb-ccccddddeeee",
+                    "url": null,
+                    "target": null,
+                    "children": []
+                }
+            ]
+        },
+        {
+            "id": "nav_externe_links",
+            "title": "Externe Links",
+            "uniqueId": null,
+            "url": null,
+            "target": null,
+            "children": [
+                {
+                    "id": "nav_vng",
+                    "title": "VNG",
+                    "uniqueId": null,
+                    "url": "https://vng.nl",
+                    "target": "_blank",
+                    "children": []
+                },
+                {
+                    "id": "nav_overheid",
+                    "title": "Overheid.nl",
+                    "uniqueId": null,
+                    "url": "https://overheid.nl",
+                    "target": "_blank",
+                    "children": []
+                }
+            ]
+        }
+    ]
+}

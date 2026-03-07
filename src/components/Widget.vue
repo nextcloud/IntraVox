@@ -162,6 +162,13 @@
       <p v-if="widget.title && !widget.blocked" class="video-title">{{ widget.title }}</p>
     </div>
 
+    <!-- Spacer Widget -->
+    <div
+      v-else-if="widget.type === 'spacer'"
+      class="widget-spacer"
+      :style="{ height: (widget.height || 20) + 'px' }"
+    ></div>
+
     <!-- Unknown Widget Type -->
     <div v-else class="widget-unknown">
       {{ t('Unknown widget type: {type}', { type: widget.type }) }}

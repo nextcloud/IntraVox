@@ -771,11 +771,15 @@ IntraVox/
 Supported widget types in export/import:
 
 1. **heading**: Heading text (h1-h6)
-2. **text**: Rich text content (TipTap)
-3. **image**: Image with caption
-4. **video**: Video (local or YouTube)
-5. **spacer**: Vertical spacing
-6. **divider**: Horizontal line
+2. **text**: Rich text content (Markdown)
+3. **image**: Image with optional link, objectFit, objectPosition
+4. **video**: Video (local upload or embed from YouTube/Vimeo/PeerTube)
+5. **links**: Collection of links displayed as tiles or list, with icons and colors
+6. **file**: Link to a downloadable file (path + display name)
+7. **divider**: Horizontal line (solid, dashed, or transparent spacer)
+8. **spacer**: Vertical spacing (height 10-200px)
+9. **news**: Dynamic news feed (layouts: list, grid, carousel)
+10. **people**: User directory widget (layouts: card, list, grid)
 
 ### Media Handling
 

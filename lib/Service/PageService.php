@@ -2225,6 +2225,10 @@ class PageService {
                     }
                 }
                 $sanitized['columns'] = max(1, min((int)($widget['columns'] ?? 2), 4));
+                if (isset($widget['layout'])) {
+                    $allowedLayouts = ['list', 'tiles'];
+                    $sanitized['layout'] = in_array($widget['layout'], $allowedLayouts) ? $widget['layout'] : 'list';
+                }
                 if (isset($widget['backgroundColor'])) {
                     $sanitized['backgroundColor'] = $this->sanitizeBackgroundColor($widget['backgroundColor']);
                 }

@@ -51,9 +51,12 @@ To edit content, you need:
 ### Rows
 
 Pages are organized in rows. Each row can have:
-- 1, 2, or 3 columns
+- 1-5 columns
 - A background color
 - Multiple widgets
+- Collapsible section (with title, default collapsed/expanded)
+
+Pages can also have a **header row** (full-width banner at the top) and optional **side columns** (left or right sidebar).
 
 **Adding a row:**
 1. Click "Add Row" at the bottom of the page
@@ -72,13 +75,15 @@ Pages are organized in rows. Each row can have:
 
 ### Columns
 
-Rows can have 1-3 columns:
+Rows can have 1-5 columns:
 
 | Layout | Description |
 |--------|-------------|
 | 1 column | Full width content |
 | 2 columns | Split 50/50 |
 | 3 columns | Three equal columns |
+| 4 columns | Four equal columns |
+| 5 columns | Five equal columns |
 
 ### Side Columns
 
@@ -255,14 +260,72 @@ Collections of links displayed as cards or lists.
 - Use descriptive titles
 - Indicate external links
 
+#### File
+
+Link to a downloadable file.
+
+**Options:**
+- Path: File path within IntraVox storage
+- Name: Display name for the file link
+
+**Best practices:**
+- Use descriptive file names
+- Keep file paths organized in folders
+
 #### Divider
 
 Visual separators between content sections.
 
 **Options:**
-- Style: Solid line or transparent spacer
+- Style: Solid, dashed, or transparent
 - Color: Line color (or inherit)
 - Height: Line thickness or space height
+
+#### Spacer
+
+Adds vertical space between content sections.
+
+**Options:**
+- Height: 10-200 pixels (default: 20)
+
+#### News
+
+Dynamic news feed showing the latest pages.
+
+**Layout options:**
+- List: Vertical list of articles
+- Grid: Card grid with configurable columns
+- Carousel: Auto-scrolling slider
+
+**Options:**
+- Limit: Maximum number of articles (default: 5)
+- Show image, date, excerpt: Toggle visibility
+- Excerpt length: Characters to show
+- Sort by: Modified date, created date, or title
+- Autoplay interval (carousel only): Seconds between slides
+
+For detailed documentation, see [NEWS_WIDGET.md](NEWS_WIDGET.md).
+
+#### People
+
+User directory widget showing team members.
+
+**Layout options:**
+- Card: Profile cards with avatar and details
+- List: Compact list view
+- Grid: Avatar grid with configurable columns
+
+**Selection modes:**
+- Filter: Show users matching filter criteria (recommended for portability)
+- Manual: Select specific users by ID
+
+**Options:**
+- Columns: 1-4 columns
+- Limit: Maximum users to display
+- Show fields: Toggle avatar, name, role, department, phone, email, etc.
+- Sort by: Display name, last login, etc.
+
+For detailed documentation, see [PEOPLE_WIDGET.md](PEOPLE_WIDGET.md).
 
 ### Editing Widgets
 

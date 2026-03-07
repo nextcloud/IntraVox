@@ -1,0 +1,112 @@
+{
+    "type": "megamenu",
+    "items": [
+        {
+            "id": "nav_home",
+            "title": "Home",
+            "uniqueId": "page-univ-1234-5678-9abc-def012345678",
+            "url": null,
+            "target": null,
+            "children": []
+        },
+        {
+            "id": "nav_faculteiten",
+            "title": "Faculteiten",
+            "uniqueId": "page-univ-2001-aaaa-bbbb-ccccddddeeee",
+            "url": null,
+            "target": null,
+            "children": [
+                {
+                    "id": "nav_geesteswetenschappen",
+                    "title": "Geesteswetenschappen",
+                    "uniqueId": "page-univ-2002-aaaa-bbbb-ccccddddeeee",
+                    "url": null,
+                    "target": null,
+                    "children": []
+                },
+                {
+                    "id": "nav_betawetenschappen",
+                    "title": "Bètawetenschappen",
+                    "uniqueId": "page-univ-2003-aaaa-bbbb-ccccddddeeee",
+                    "url": null,
+                    "target": null,
+                    "children": []
+                },
+                {
+                    "id": "nav_sociale_wetenschappen",
+                    "title": "Sociale Wetenschappen",
+                    "uniqueId": "page-univ-2004-aaaa-bbbb-ccccddddeeee",
+                    "url": null,
+                    "target": null,
+                    "children": []
+                }
+            ]
+        },
+        {
+            "id": "nav_diensten",
+            "title": "Diensten",
+            "uniqueId": "page-univ-3001-aaaa-bbbb-ccccddddeeee",
+            "url": null,
+            "target": null,
+            "children": [
+                {
+                    "id": "nav_ict",
+                    "title": "ICT",
+                    "uniqueId": "page-univ-3002-aaaa-bbbb-ccccddddeeee",
+                    "url": null,
+                    "target": null,
+                    "children": []
+                },
+                {
+                    "id": "nav_bibliotheek",
+                    "title": "Bibliotheek",
+                    "uniqueId": "page-univ-3003-aaaa-bbbb-ccccddddeeee",
+                    "url": null,
+                    "target": null,
+                    "children": []
+                },
+                {
+                    "id": "nav_facilitair",
+                    "title": "Facilitair",
+                    "uniqueId": "page-univ-3004-aaaa-bbbb-ccccddddeeee",
+                    "url": null,
+                    "target": null,
+                    "children": []
+                }
+            ]
+        },
+        {
+            "id": "nav_externe_links",
+            "title": "Externe Links",
+            "uniqueId": null,
+            "url": null,
+            "target": null,
+            "children": [
+                {
+                    "id": "nav_surf",
+                    "title": "SURF",
+                    "uniqueId": null,
+                    "url": "https://www.surf.nl",
+                    "target": "_blank",
+                    "children": []
+                },
+                {
+                    "id": "nav_duo",
+                    "title": "DUO",
+                    "uniqueId": null,
+                    "url": "https://www.duo.nl",
+                    "target": "_blank",
+                    "children": []
+                },
+                {
+                    "id": "nav_uvnl",
+                    "title": "Universiteiten van Nederland",
+                    "uniqueId": null,
+                    "url": "https://www.universiteitenvannederland.nl",
+                    "target": "_blank",
+                    "children": []
+                }
+            ]
+        }
+    ]
+}

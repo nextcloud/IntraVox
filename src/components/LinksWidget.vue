@@ -8,17 +8,21 @@
         :target="isInternalLink(link) ? '_self' : '_blank'"
         :rel="isInternalLink(link) ? '' : 'noopener noreferrer'"
         class="link-item"
-        :class="getLinkItemClass(link)"
+        :class="[getLinkItemClass(link), { 'link-item--tile': isTileLayout }]"
         :style="getLinkStyle(link)"
         @click="handleLinkClick($event, link)"
       >
         <component
           v-if="link.icon"
           :is="getIconComponent(link.icon)"
-          :size="24"
+          :size="isTileLayout ? 36 : 24"
           class="link-icon"
         />
-        <span class="link-text" v-html="sanitizeHtml(link.text || link.title)"></span>
+        <span v-if="isTileLayout && link.title && link.text" class="link-tile-content">
+          <span class="link-tile-title" v-html="sanitizeHtml(link.title)"></span>
+          <span class="link-tile-subtitle" v-html="sanitizeHtml(link.text)"></span>
+        </span>
+        <span v-else class="link-text" v-html="sanitizeHtml(link.text || link.title)"></span>
       </a>
     </div>
     <div v-else class="empty-links-placeholder">
@@ -76,6 +80,31 @@ import Palette from 'vue-material-design-icons/Palette.vue';
 import CodeTags from 'vue-material-design-icons/CodeTags.vue';
 import Lifebuoy from 'vue-material-design-icons/Lifebuoy.vue';
 import CurrencyUsd from 'vue-material-design-icons/CurrencyUsd.vue';
+import Folder from 'vue-material-design-icons/Folder.vue';
+import FolderMultiple from 'vue-material-design-icons/FolderMultiple.vue';
+import Chat from 'vue-material-design-icons/Chat.vue';
+import ViewColumn from 'vue-material-design-icons/ViewColumn.vue';
+import FormSelect from 'vue-material-design-icons/FormSelect.vue';
+import ClipboardCheck from 'vue-material-design-icons/ClipboardCheck.vue';
+import ViewDashboard from 'vue-material-design-icons/ViewDashboard.vue';
+import ImageMultiple from 'vue-material-design-icons/ImageMultiple.vue';
+import Draw from 'vue-material-design-icons/Draw.vue';
+import Puzzle from 'vue-material-design-icons/Puzzle.vue';
+import Robot from 'vue-material-design-icons/Robot.vue';
+import TableLarge from 'vue-material-design-icons/TableLarge.vue';
+import BookOpenVariant from 'vue-material-design-icons/BookOpenVariant.vue';
+import Poll from 'vue-material-design-icons/Poll.vue';
+import CalendarClock from 'vue-material-design-icons/CalendarClock.vue';
+import Earth from 'vue-material-design-icons/Earth.vue';
+import ShieldAccount from 'vue-material-design-icons/ShieldAccount.vue';
+import Apps from 'vue-material-design-icons/Apps.vue';
+import Cloud from 'vue-material-design-icons/Cloud.vue';
+import InformationOutline from 'vue-material-design-icons/InformationOutline.vue';
+import LinkBoxVariant from 'vue-material-design-icons/LinkBoxVariant.vue';
+import FormatText from 'vue-material-design-icons/FormatText.vue';
+import Minus from 'vue-material-design-icons/Minus.vue';
+import Contacts from 'vue-material-design-icons/Contacts.vue';
+import MessageText from 'vue-material-design-icons/MessageText.vue';
 
 export default {
   name: 'LinksWidget',
@@ -121,7 +150,32 @@ export default {
     Palette,
     CodeTags,
     Lifebuoy,
-    CurrencyUsd
+    CurrencyUsd,
+    Folder,
+    FolderMultiple,
+    Chat,
+    ViewColumn,
+    FormSelect,
+    ClipboardCheck,
+    ViewDashboard,
+    ImageMultiple,
+    Draw,
+    Puzzle,
+    Robot,
+    TableLarge,
+    BookOpenVariant,
+    Poll,
+    CalendarClock,
+    Earth,
+    ShieldAccount,
+    Apps,
+    Cloud,
+    InformationOutline,
+    LinkBoxVariant,
+    FormatText,
+    Minus,
+    Contacts,
+    MessageText
   },
   props: {
     widget: {
@@ -137,6 +191,9 @@ export default {
   computed: {
     effectiveBackgroundColor() {
       return getEffectiveBackgroundColor(this.widget.backgroundColor, this.rowBackgroundColor);
+    },
+    isTileLayout() {
+      return this.widget.layout === 'tiles';
     },
   },
   methods: {
@@ -211,7 +268,32 @@ export default {
         'palette': 'Palette',
         'code-tags': 'CodeTags',
         'lifebuoy': 'Lifebuoy',
-        'currency-usd': 'CurrencyUsd'
+        'currency-usd': 'CurrencyUsd',
+        'folder': 'Folder',
+        'folder-multiple': 'FolderMultiple',
+        'chat': 'Chat',
+        'view-column': 'ViewColumn',
+        'form-select': 'FormSelect',
+        'clipboard-check': 'ClipboardCheck',
+        'view-dashboard': 'ViewDashboard',
+        'image-multiple': 'ImageMultiple',
+        'draw': 'Draw',
+        'puzzle': 'Puzzle',
+        'robot': 'Robot',
+        'table-large': 'TableLarge',
+        'book-open-variant': 'BookOpenVariant',
+        'poll': 'Poll',
+        'calendar-clock': 'CalendarClock',
+        'earth': 'Earth',
+        'shield-account': 'ShieldAccount',
+        'apps': 'Apps',
+        'cloud': 'Cloud',
+        'information-outline': 'InformationOutline',
+        'link-box-variant': 'LinkBoxVariant',
+        'format-text': 'FormatText',
+        'minus': 'Minus',
+        'contacts': 'Contacts',
+        'message-text': 'MessageText'
       };
       return iconMap[iconName] || 'OpenInNew';
     },
@@ -368,6 +450,36 @@ export default {
   color: var(--color-primary-element-text);
 }
 
+/* Tile layout — centered icon above text */
+.link-item--tile {
+  flex-direction: column;
+  text-align: center;
+  padding: 20px 12px;
+  min-height: 100px;
+  justify-content: center;
+  gap: 8px;
+}
+
+.link-item--tile .link-icon {
+  margin-bottom: 4px;
+}
+
+.link-tile-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.link-tile-title {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.link-tile-subtitle {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
 .link-text {
   font-weight: 500;
   font-size: 14px;
@@ -399,8 +511,17 @@ export default {
     grid-template-columns: 1fr !important;
   }
 
+  .links-grid:has(.link-item--tile) {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
   .link-item {
     padding: 14px;
+  }
+
+  .link-item--tile {
+    padding: 16px 8px;
+    min-height: 80px;
   }
 }
 </style>

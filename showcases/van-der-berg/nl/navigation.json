@@ -1,0 +1,104 @@
+{
+    "type": "megamenu",
+    "items": [
+        {
+            "id": "nav_home",
+            "title": "Home",
+            "uniqueId": "page-law-1234-5678-9abc-def012345678",
+            "url": null,
+            "target": null,
+            "children": []
+        },
+        {
+            "id": "nav_praktijkgebieden",
+            "title": "Praktijkgebieden",
+            "uniqueId": "page-law-2001-0000-0000-000000000001",
+            "url": null,
+            "target": null,
+            "children": [
+                {
+                    "id": "nav_ondernemingsrecht",
+                    "title": "Ondernemingsrecht",
+                    "uniqueId": "page-law-2001-0000-0000-000000000002",
+                    "url": null,
+                    "target": null,
+                    "children": []
+                },
+                {
+                    "id": "nav_arbeidsrecht",
+                    "title": "Arbeidsrecht",
+                    "uniqueId": "page-law-2001-0000-0000-000000000003",
+                    "url": null,
+                    "target": null,
+                    "children": []
+                },
+                {
+                    "id": "nav_vastgoedrecht",
+                    "title": "Vastgoedrecht",
+                    "uniqueId": "page-law-2001-0000-0000-000000000004",
+                    "url": null,
+                    "target": null,
+                    "children": []
+                }
+            ]
+        },
+        {
+            "id": "nav_organisatie",
+            "title": "Organisatie",
+            "uniqueId": "page-law-3001-0000-0000-000000000001",
+            "url": null,
+            "target": null,
+            "children": [
+                {
+                    "id": "nav_hr",
+                    "title": "HR",
+                    "uniqueId": "page-law-3001-0000-0000-000000000002",
+                    "url": null,
+                    "target": null,
+                    "children": []
+                },
+                {
+                    "id": "nav_it",
+                    "title": "IT & Werkplek",
+                    "uniqueId": "page-law-3001-0000-0000-000000000003",
+                    "url": null,
+                    "target": null,
+                    "children": []
+                },
+                {
+                    "id": "nav_financien",
+                    "title": "Financiën",
+                    "uniqueId": "page-law-3001-0000-0000-000000000004",
+                    "url": null,
+                    "target": null,
+                    "children": []
+                }
+            ]
+        },
+        {
+            "id": "nav_externe_links",
+            "title": "Externe Links",
+            "uniqueId": null,
+            "url": null,
+            "target": null,
+            "children": [
+                {
+                    "id": "nav_rechtspraak",
+                    "title": "Rechtspraak.nl",
+                    "uniqueId": null,
+                    "url": "https://www.rechtspraak.nl",
+                    "target": "_blank",
+                    "children": []
+                },
+                {
+                    "id": "nav_kvk",
+                    "title": "KvK",
+                    "uniqueId": null,
+                    "url": "https://www.kvk.nl",
+                    "target": "_blank",
+                    "children": []
+                }
+            ]
+        }
+    ]
+}

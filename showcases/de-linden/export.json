@@ -1,0 +1,661 @@
+{
+    "exportVersion": "1.3",
+    "schemaVersion": "1.3",
+    "exportDate": "2026-03-07T12:00:00.000Z",
+    "exportedBy": "IntraVox Showcase - Universiteit De Linden",
+    "requiresMinVersion": "0.8.11",
+    "language": "nl",
+    "pages": [
+        {
+            "_exportPath": "home",
+            "uniqueId": "page-uni-1234-5678-9abc-def012345678",
+            "title": "Universiteit De Linden",
+            "content": {
+                "uniqueId": "page-uni-1234-5678-9abc-def012345678",
+                "title": "Universiteit De Linden",
+                "language": "nl",
+                "layout": {
+                    "columns": 1,
+                    "rows": [
+                        {
+                            "columns": 2,
+                            "backgroundColor": "var(--color-primary-element)",
+                            "widgets": [
+                                {
+                                    "type": "heading",
+                                    "column": 1,
+                                    "order": 1,
+                                    "content": "Welkom bij Universiteit De Linden",
+                                    "level": 2
+                                },
+                                {
+                                    "type": "text",
+                                    "column": 1,
+                                    "order": 2,
+                                    "content": "Welkom op het intranet van Universiteit De Linden. Met **4.200 studenten**, **380 medewerkers** en **6 faculteiten** vormen wij een hechte academische gemeenschap.\n\nHier vind je al je tools voor onderwijs, onderzoek en samenwerking. Gebruik de tegels hieronder om snel bij Brightspace, OSIRIS of SURFdrive te komen. Vragen? Mail de **Servicedesk** of stuur een bericht via **Chat**."
+                                },
+                                {
+                                    "type": "image",
+                                    "column": 2,
+                                    "order": 1,
+                                    "src": "campus.jpg",
+                                    "alt": "Campus Universiteit De Linden",
+                                    "objectFit": "cover"
+                                }
+                            ]
+                        },
+                        {
+                            "columns": 1,
+                            "backgroundColor": "",
+                            "widgets": [
+                                {
+                                    "type": "divider",
+                                    "column": 1,
+                                    "order": 1,
+                                    "style": "solid",
+                                    "color": "",
+                                    "height": "1px"
+                                }
+                            ]
+                        },
+                        {
+                            "columns": 1,
+                            "backgroundColor": "var(--color-background-hover)",
+                            "widgets": [
+                                {
+                                    "type": "heading",
+                                    "column": 1,
+                                    "order": 1,
+                                    "content": "Mijn Apps",
+                                    "level": 3
+                                },
+                                {
+                                    "type": "links",
+                                    "column": 1,
+                                    "order": 2,
+                                    "layout": "tiles",
+                                    "columns": 4,
+                                    "items": [
+                                        {
+                                            "title": "Brightspace",
+                                            "text": "ELO",
+                                            "url": "/apps/intravox",
+                                            "icon": "school",
+                                            "target": "_self",
+                                            "backgroundColor": "var(--color-primary-element)"
+                                        },
+                                        {
+                                            "title": "OSIRIS",
+                                            "text": "Cijfers",
+                                            "url": "/apps/intravox",
+                                            "icon": "clipboard-text",
+                                            "target": "_self",
+                                            "backgroundColor": "var(--color-background-hover)"
+                                        },
+                                        {
+                                            "title": "SURFdrive",
+                                            "text": "Bestanden",
+                                            "url": "/apps/files",
+                                            "icon": "cloud",
+                                            "target": "_self",
+                                            "backgroundColor": "var(--color-primary-element)"
+                                        },
+                                        {
+                                            "title": "TimeEdit",
+                                            "text": "Rooster",
+                                            "url": "/apps/calendar",
+                                            "icon": "calendar",
+                                            "target": "_self",
+                                            "backgroundColor": "var(--color-background-hover)"
+                                        },
+                                        {
+                                            "title": "PURE",
+                                            "text": "Onderzoek",
+                                            "url": "/apps/intravox",
+                                            "icon": "flask",
+                                            "target": "_self",
+                                            "backgroundColor": "var(--color-primary-element)"
+                                        },
+                                        {
+                                            "title": "WorldCat",
+                                            "text": "Bibliotheek",
+                                            "url": "/apps/intravox",
+                                            "icon": "book-open-variant",
+                                            "target": "_self",
+                                            "backgroundColor": "var(--color-background-hover)"
+                                        },
+                                        {
+                                            "title": "Chat",
+                                            "text": "Overleg",
+                                            "url": "/apps/spreed",
+                                            "icon": "chat",
+                                            "target": "_self",
+                                            "backgroundColor": "var(--color-primary-element)"
+                                        },
+                                        {
+                                            "title": "Dashboard",
+                                            "text": "Overzicht",
+                                            "url": "/apps/dashboard",
+                                            "icon": "view-dashboard",
+                                            "target": "_self",
+                                            "backgroundColor": "var(--color-background-hover)"
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "columns": 1,
+                            "backgroundColor": "",
+                            "widgets": [
+                                {
+                                    "type": "divider",
+                                    "column": 1,
+                                    "order": 1,
+                                    "style": "solid",
+                                    "color": "",
+                                    "height": "1px"
+                                }
+                            ]
+                        },
+                        {
+                            "columns": 4,
+                            "backgroundColor": "",
+                            "widgets": [
+                                {
+                                    "type": "heading",
+                                    "column": 1,
+                                    "order": 1,
+                                    "content": "Faculteitsnieuws",
+                                    "level": 4
+                                },
+                                {
+                                    "type": "text",
+                                    "column": 1,
+                                    "order": 2,
+                                    "content": "**NWO-subsidie voor AI-onderzoek toegekend**\nDe faculteit Bètawetenschappen heeft een NWO Vidi-beurs ontvangen voor onderzoek naar verantwoorde kunstmatige intelligentie.\n\n**Nieuwe hoogleraar Duurzaamheid benoemd**\nProf. dr. Bakker treedt per 1 april aan als hoogleraar Circulaire Economie bij de faculteit Sociale Wetenschappen.\n\n**Uitwisselingsprogramma met KU Leuven**\nVanaf september 2026 kunnen studenten een semester studeren aan de KU Leuven via het nieuwe bilaterale akkoord."
+                                },
+                                {
+                                    "type": "heading",
+                                    "column": 2,
+                                    "order": 1,
+                                    "content": "Agenda",
+                                    "level": 4
+                                },
+                                {
+                                    "type": "text",
+                                    "column": 2,
+                                    "order": 2,
+                                    "content": "- **Collegeweek 12** — start 17 maart\n- **Inaugurele rede Prof. De Vries** — 20 maart\n- **Deadline paper Q2** — 1 april\n- **Open dag aankomende studenten** — 22 maart\n- **Diplomauitreiking** — 27 juni"
+                                },
+                                {
+                                    "type": "heading",
+                                    "column": 3,
+                                    "order": 1,
+                                    "content": "Bibliotheek",
+                                    "level": 4
+                                },
+                                {
+                                    "type": "image",
+                                    "column": 3,
+                                    "order": 2,
+                                    "src": "library.jpg",
+                                    "alt": "Universiteitsbibliotheek",
+                                    "objectFit": "cover"
+                                },
+                                {
+                                    "type": "heading",
+                                    "column": 4,
+                                    "order": 1,
+                                    "content": "Introductie",
+                                    "level": 4
+                                },
+                                {
+                                    "type": "video",
+                                    "column": 4,
+                                    "order": 2,
+                                    "provider": "embed",
+                                    "src": "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ",
+                                    "title": "Rondleiding Campus",
+                                    "autoplay": false,
+                                    "loop": false,
+                                    "muted": false
+                                }
+                            ]
+                        },
+                        {
+                            "columns": 1,
+                            "backgroundColor": "",
+                            "widgets": [
+                                {
+                                    "type": "divider",
+                                    "column": 1,
+                                    "order": 1,
+                                    "style": "solid",
+                                    "color": "",
+                                    "height": "1px"
+                                }
+                            ]
+                        },
+                        {
+                            "columns": 3,
+                            "backgroundColor": "var(--color-background-hover)",
+                            "widgets": [
+                                {
+                                    "type": "heading",
+                                    "column": 1,
+                                    "order": 1,
+                                    "content": "Meer Tools",
+                                    "level": 4
+                                },
+                                {
+                                    "type": "links",
+                                    "column": 1,
+                                    "order": 2,
+                                    "layout": "tiles",
+                                    "columns": 2,
+                                    "items": [
+                                        {
+                                            "title": "Collabora",
+                                            "text": "Documenten bewerken",
+                                            "url": "/apps/richdocuments",
+                                            "icon": "file-document-edit",
+                                            "target": "_self"
+                                        },
+                                        {
+                                            "title": "SURFfilesender",
+                                            "text": "Grote bestanden delen",
+                                            "url": "/apps/intravox",
+                                            "icon": "upload",
+                                            "target": "_self"
+                                        },
+                                        {
+                                            "title": "AFAS",
+                                            "text": "HR",
+                                            "url": "/apps/forms",
+                                            "icon": "account-group",
+                                            "target": "_self"
+                                        },
+                                        {
+                                            "title": "Unit4",
+                                            "text": "Financieel",
+                                            "url": "/apps/deck",
+                                            "icon": "currency-eur",
+                                            "target": "_self"
+                                        },
+                                        {
+                                            "title": "Archief",
+                                            "text": "Oud materiaal",
+                                            "url": "/apps/files",
+                                            "icon": "archive",
+                                            "target": "_self"
+                                        },
+                                        {
+                                            "title": "Help",
+                                            "text": "Handleidingen",
+                                            "url": "/apps/help",
+                                            "icon": "help-circle",
+                                            "target": "_self"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "heading",
+                                    "column": 2,
+                                    "order": 1,
+                                    "content": "Onze Onderzoekers",
+                                    "level": 4
+                                },
+                                {
+                                    "type": "people",
+                                    "column": 2,
+                                    "order": 2,
+                                    "title": "",
+                                    "selectionMode": "filter",
+                                    "filters": [],
+                                    "filterOperator": "AND",
+                                    "layout": "grid",
+                                    "columns": 3,
+                                    "limit": 6,
+                                    "sortBy": "displayName",
+                                    "sortOrder": "asc",
+                                    "showFields": {
+                                        "avatar": true,
+                                        "displayName": true,
+                                        "role": true,
+                                        "department": true,
+                                        "email": false,
+                                        "phone": false,
+                                        "pronouns": false,
+                                        "headline": false,
+                                        "title": false,
+                                        "address": false,
+                                        "website": false,
+                                        "birthdate": false,
+                                        "biography": false,
+                                        "socialLinks": false,
+                                        "customFields": false
+                                    }
+                                },
+                                {
+                                    "type": "heading",
+                                    "column": 3,
+                                    "order": 1,
+                                    "content": "Studentenleven",
+                                    "level": 4
+                                },
+                                {
+                                    "type": "image",
+                                    "column": 3,
+                                    "order": 2,
+                                    "src": "studenten.jpg",
+                                    "alt": "Studenten op campus",
+                                    "objectFit": "cover"
+                                },
+                                {
+                                    "type": "text",
+                                    "column": 3,
+                                    "order": 3,
+                                    "content": "Onze campus biedt een bruisend studentenleven met meer dan 30 studentenverenigingen."
+                                }
+                            ]
+                        },
+                        {
+                            "columns": 1,
+                            "backgroundColor": "",
+                            "widgets": [
+                                {
+                                    "type": "divider",
+                                    "column": 1,
+                                    "order": 1,
+                                    "style": "solid",
+                                    "color": "",
+                                    "height": "1px"
+                                }
+                            ]
+                        },
+                        {
+                            "id": "row-onboarding",
+                            "columns": 1,
+                            "backgroundColor": "var(--color-background-hover)",
+                            "collapsible": true,
+                            "sectionTitle": "Nieuwe Medewerker? Start Hier",
+                            "defaultCollapsed": true,
+                            "widgets": [
+                                {
+                                    "type": "text",
+                                    "column": 1,
+                                    "order": 1,
+                                    "content": "Welkom bij Universiteit De Linden! Doorloop deze stappen:\n\n1. **Campuskaart ophalen** — meld je bij de receptie van het Linnaeus-gebouw voor je campuskaart\n2. **Eduroam instellen** — configureer wifi op laptop en telefoon via de ICT-handleiding\n3. **SURFconext activeren** — log in op surfconext.nl om toegang te krijgen tot Brightspace, OSIRIS en andere diensten\n4. **Introductiedag bijwonen** — elke eerste maandag van de maand, aanmelden via Formulieren\n5. **Mentor ontmoeten** — je faculteit koppelt je aan een ervaren collega\n\nVragen? Mail **servicedesk@delinden.nl** of bel toestel 1234."
+                                }
+                            ]
+                        },
+                        {
+                            "id": "row-faq",
+                            "columns": 1,
+                            "backgroundColor": "var(--color-background-hover)",
+                            "collapsible": true,
+                            "sectionTitle": "Veelgestelde Vragen",
+                            "defaultCollapsed": true,
+                            "widgets": [
+                                {
+                                    "type": "text",
+                                    "column": 1,
+                                    "order": 1,
+                                    "content": "**Hoe verbind ik met eduroam?**\nKies 'eduroam' in je wifi-instellingen en log in met je volledige e-mailadres en universitair wachtwoord. Zie de ICT-pagina voor een installatiehandleiding per besturingssysteem.\n\n**Hoe gebruik ik VPN van buitenaf?**\nDownload de VPN-client via de ICT-pagina. Met VPN heb je toegang tot licentiesoftware, de universiteitsbibliotheek en interne systemen.\n\n**Waar vraag ik softwarelicenties aan?**\nVia Formulieren > ICT-aanvragen. MATLAB, SPSS en NVivo zijn gratis beschikbaar voor medewerkers. Verwerking binnen 2 werkdagen.\n\n**Hoe krijg ik een sleutelpas?**\nMeld je bij de receptie van het Linnaeus-gebouw met je campuskaart. Sleutelpassen worden dezelfde dag geactiveerd.\n\n**Hoe vraag ik een parkeerpas aan?**\nVia Formulieren > Facilitaire aanvragen. Parkeerpassen zijn beschikbaar voor medewerkers met een aanstelling van minimaal 0,5 fte."
+                                }
+                            ]
+                        },
+                        {
+                            "columns": 1,
+                            "backgroundColor": "",
+                            "widgets": [
+                                {
+                                    "type": "divider",
+                                    "column": 1,
+                                    "order": 1,
+                                    "style": "solid",
+                                    "color": "transparent",
+                                    "height": "8px"
+                                }
+                            ]
+                        }
+                    ],
+                    "sideColumns": {
+                        "left": {
+                            "enabled": false,
+                            "backgroundColor": "",
+                            "widgets": []
+                        },
+                        "right": {
+                            "enabled": true,
+                            "backgroundColor": "var(--color-background-hover)",
+                            "widgets": [
+                                {
+                                    "type": "image",
+                                    "column": 1,
+                                    "order": 1,
+                                    "src": "aula.jpg",
+                                    "alt": "Aula Universiteit De Linden",
+                                    "objectFit": "cover"
+                                },
+                                {
+                                    "type": "divider",
+                                    "column": 1,
+                                    "order": 2,
+                                    "style": "solid",
+                                    "color": "",
+                                    "height": "1px"
+                                },
+                                {
+                                    "type": "heading",
+                                    "column": 1,
+                                    "order": 3,
+                                    "content": "Over De Linden",
+                                    "level": 4
+                                },
+                                {
+                                    "type": "text",
+                                    "column": 1,
+                                    "order": 4,
+                                    "content": "Universiteit De Linden is een brede universiteit met **4.200 studenten**, **380 medewerkers** en **6 faculteiten** in het hart van Nederland.\n\nOpgericht in **1923**, combineren wij een rijke academische traditie met moderne onderwijsmethoden. Ons intranet draait op Nextcloud — al je data blijft op onze eigen servers."
+                                },
+                                {
+                                    "type": "divider",
+                                    "column": 1,
+                                    "order": 5,
+                                    "style": "solid",
+                                    "color": "",
+                                    "height": "1px"
+                                },
+                                {
+                                    "type": "heading",
+                                    "column": 1,
+                                    "order": 6,
+                                    "content": "Contact",
+                                    "level": 5
+                                },
+                                {
+                                    "type": "text",
+                                    "column": 1,
+                                    "order": 7,
+                                    "content": "**Servicedesk ICT**\nservicedesk@delinden.nl\nToestel 1234\n\n**HR & Personeel**\nhr@delinden.nl\nToestel 2345\n\n**Facilitaire Zaken**\nfacilitair@delinden.nl\nToestel 3456"
+                                },
+                                {
+                                    "type": "divider",
+                                    "column": 1,
+                                    "order": 8,
+                                    "style": "solid",
+                                    "color": "",
+                                    "height": "1px"
+                                },
+                                {
+                                    "type": "heading",
+                                    "column": 1,
+                                    "order": 9,
+                                    "content": "SURF Diensten",
+                                    "level": 5
+                                },
+                                {
+                                    "type": "links",
+                                    "column": 1,
+                                    "order": 10,
+                                    "layout": "list",
+                                    "columns": 1,
+                                    "items": [
+                                        {
+                                            "text": "SURFnet",
+                                            "url": "https://www.surf.nl",
+                                            "icon": "web",
+                                            "target": "_blank"
+                                        },
+                                        {
+                                            "text": "SURFdrive",
+                                            "url": "https://www.surfdrive.nl",
+                                            "icon": "web",
+                                            "target": "_blank"
+                                        },
+                                        {
+                                            "text": "SURFconext",
+                                            "url": "https://www.surfconext.nl",
+                                            "icon": "web",
+                                            "target": "_blank"
+                                        },
+                                        {
+                                            "text": "eduroam",
+                                            "url": "https://eduroam.nl",
+                                            "icon": "web",
+                                            "target": "_blank"
+                                        },
+                                        {
+                                            "text": "SURFfilesender",
+                                            "url": "https://filesender.surf.nl",
+                                            "icon": "web",
+                                            "target": "_blank"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        }
+    ],
+    "navigation": {
+        "type": "megamenu",
+        "items": [
+            {
+                "id": "nav_home",
+                "title": "Home",
+                "uniqueId": "page-uni-1234-5678-9abc-def012345678",
+                "url": null,
+                "target": null,
+                "children": []
+            },
+            {
+                "id": "nav_faculteiten",
+                "title": "Faculteiten",
+                "uniqueId": "page-univ-2001-aaaa-bbbb-ccccddddeeee",
+                "url": null,
+                "target": null,
+                "children": [
+                    {
+                        "id": "nav_geesteswetenschappen",
+                        "title": "Geesteswetenschappen",
+                        "uniqueId": "page-univ-2002-aaaa-bbbb-ccccddddeeee",
+                        "url": null,
+                        "target": null,
+                        "children": []
+                    },
+                    {
+                        "id": "nav_betawetenschappen",
+                        "title": "Bètawetenschappen",
+                        "uniqueId": "page-univ-2003-aaaa-bbbb-ccccddddeeee",
+                        "url": null,
+                        "target": null,
+                        "children": []
+                    },
+                    {
+                        "id": "nav_sociale_wetenschappen",
+                        "title": "Sociale Wetenschappen",
+                        "uniqueId": "page-univ-2004-aaaa-bbbb-ccccddddeeee",
+                        "url": null,
+                        "target": null,
+                        "children": []
+                    }
+                ]
+            },
+            {
+                "id": "nav_diensten",
+                "title": "Diensten",
+                "uniqueId": "page-univ-3001-aaaa-bbbb-ccccddddeeee",
+                "url": null,
+                "target": null,
+                "children": [
+                    {
+                        "id": "nav_ict",
+                        "title": "ICT",
+                        "uniqueId": "page-univ-3002-aaaa-bbbb-ccccddddeeee",
+                        "url": null,
+                        "target": null,
+                        "children": []
+                    },
+                    {
+                        "id": "nav_bibliotheek",
+                        "title": "Bibliotheek",
+                        "uniqueId": "page-univ-3003-aaaa-bbbb-ccccddddeeee",
+                        "url": null,
+                        "target": null,
+                        "children": []
+                    },
+                    {
+                        "id": "nav_facilitair",
+                        "title": "Facilitair",
+                        "uniqueId": "page-univ-3004-aaaa-bbbb-ccccddddeeee",
+                        "url": null,
+                        "target": null,
+                        "children": []
+                    }
+                ]
+            },
+            {
+                "id": "nav_externe_links",
+                "title": "Externe Links",
+                "uniqueId": null,
+                "url": null,
+                "target": null,
+                "children": [
+                    {
+                        "id": "nav_surf",
+                        "title": "SURF",
+                        "uniqueId": null,
+                        "url": "https://www.surf.nl",
+                        "target": "_blank",
+                        "children": []
+                    },
+                    {
+                        "id": "nav_duo",
+                        "title": "DUO",
+                        "uniqueId": null,
+                        "url": "https://www.duo.nl",
+                        "target": "_blank",
+                        "children": []
+                    },
+                    {
+                        "id": "nav_uvnl",
+                        "title": "Universiteiten van Nederland",
+                        "uniqueId": null,
+                        "url": "https://www.universiteitenvannederland.nl",
+                        "target": "_blank",
+                        "children": []
+                    }
+                ]
+            }
+        ]
+    },
+    "footer": {
+        "content": "© 2026 Universiteit De Linden — Medewerkersintranet powered by IntraVox"
+    },
+    "comments": []
+}

@@ -30,7 +30,7 @@
 				:class="['tab-button', { active: activeTab === 'export' }]"
 				@click="activeTab = 'export'">
 				<Download :size="16" />
-				{{ t('intravox', 'Export/Import') }}
+				{{ t('intravox', 'Import/Export') }}
 			</button>
 			<button
 				:class="['tab-button', { active: activeTab === 'sharing' }]"
@@ -330,10 +330,16 @@
 			</div>
 		</div>
 
-		<!-- Export/Import Tab -->
+		<!-- Import/Export Tab -->
 		<div v-if="activeTab === 'export'" class="tab-content">
 			<!-- Sub-tab Navigation -->
 			<div class="sub-tab-navigation">
+				<button
+					:class="['sub-tab-button', { active: exportSubTab === 'import' }]"
+					@click="exportSubTab = 'import'">
+					<Upload :size="16" />
+					{{ t('intravox', 'Import') }}
+				</button>
 				<button
 					:class="['sub-tab-button', { active: exportSubTab === 'export' }]"
 					@click="exportSubTab = 'export'">
@@ -345,12 +351,6 @@
 					@click="exportSubTab = 'confluence'">
 					<CloudDownload :size="16" />
 					{{ t('intravox', 'Confluence') }}
-				</button>
-				<button
-					:class="['sub-tab-button', { active: exportSubTab === 'import' }]"
-					@click="exportSubTab = 'import'">
-					<Upload :size="16" />
-					{{ t('intravox', 'Import') }}
 				</button>
 			</div>
 
@@ -1057,7 +1057,7 @@ export default {
 	data() {
 		return {
 			activeTab: 'video', // Default to video tab
-			exportSubTab: 'export', // Default export sub-tab
+			exportSubTab: 'import', // Default import sub-tab
 			languages: this.initialState.languages || [],
 			setupComplete: this.initialState.setupComplete !== false,
 			installing: null,

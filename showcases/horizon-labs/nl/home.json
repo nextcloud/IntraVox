@@ -1,0 +1,442 @@
+{
+    "uniqueId": "page-a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "title": "Horizon Labs",
+    "language": "nl",
+    "layout": {
+        "columns": 1,
+        "rows": [
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Mijn Apps",
+                        "level": 3
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 2,
+                        "layout": "tiles",
+                        "columns": 4,
+                        "items": [
+                            {
+                                "title": "Bestanden",
+                                "url": "/apps/files",
+                                "icon": "folder",
+                                "target": "_self",
+                                "backgroundColor": "var(--color-primary-element)"
+                            },
+                            {
+                                "title": "Chat",
+                                "url": "/apps/spreed",
+                                "icon": "chat",
+                                "target": "_self",
+                                "backgroundColor": "var(--color-background-hover)"
+                            },
+                            {
+                                "title": "Projecten",
+                                "url": "/apps/deck",
+                                "icon": "view-column",
+                                "target": "_self",
+                                "backgroundColor": "var(--color-primary-element)"
+                            },
+                            {
+                                "title": "Taken",
+                                "url": "/apps/tasks",
+                                "icon": "clipboard-check",
+                                "target": "_self",
+                                "backgroundColor": "var(--color-background-hover)"
+                            },
+                            {
+                                "title": "Contacten",
+                                "url": "/apps/contacts",
+                                "icon": "account-multiple",
+                                "target": "_self",
+                                "backgroundColor": "var(--color-primary-element)"
+                            },
+                            {
+                                "title": "Formulieren",
+                                "url": "/apps/forms",
+                                "icon": "form-select",
+                                "target": "_self",
+                                "backgroundColor": "var(--color-background-hover)"
+                            },
+                            {
+                                "title": "Dashboard",
+                                "url": "/apps/dashboard",
+                                "icon": "view-dashboard",
+                                "target": "_self",
+                                "backgroundColor": "var(--color-primary-element)"
+                            },
+                            {
+                                "title": "Activiteit",
+                                "url": "/apps/activity",
+                                "icon": "bell",
+                                "target": "_self",
+                                "backgroundColor": "var(--color-background-hover)"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "columns": 2,
+                "backgroundColor": "var(--color-primary-element)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Welkom bij Horizon Labs",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "We bouwen de toekomst van software. 120 collega's verspreid over Amsterdam, Utrecht en Eindhoven werken elke dag aan innovatieve oplossingen."
+                    },
+                    {
+                        "type": "image",
+                        "column": 2,
+                        "order": 1,
+                        "src": "team.jpg",
+                        "alt": "Team Horizon Labs",
+                        "objectFit": "cover"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "",
+                        "height": "1px"
+                    }
+                ]
+            },
+            {
+                "columns": 3,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Meer Tools",
+                        "level": 4
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 2,
+                        "layout": "tiles",
+                        "columns": 2,
+                        "items": [
+                            {
+                                "title": "Collabora",
+                                "url": "/apps/richdocuments",
+                                "icon": "file-document-edit",
+                                "target": "_self",
+                                "backgroundColor": "var(--color-primary-element)"
+                            },
+                            {
+                                "title": "Diagrammen",
+                                "url": "/apps/drawio",
+                                "icon": "vector-square",
+                                "target": "_self",
+                                "backgroundColor": "var(--color-background-hover)"
+                            },
+                            {
+                                "title": "Tabellen",
+                                "url": "/apps/tables",
+                                "icon": "table-large",
+                                "target": "_self",
+                                "backgroundColor": "var(--color-primary-element)"
+                            },
+                            {
+                                "title": "Peilingen",
+                                "url": "/apps/polls",
+                                "icon": "poll",
+                                "target": "_self",
+                                "backgroundColor": "var(--color-background-hover)"
+                            },
+                            {
+                                "title": "IntraVox",
+                                "url": "/apps/intravox",
+                                "icon": "rocket-launch",
+                                "target": "_self",
+                                "backgroundColor": "var(--color-primary-element)"
+                            },
+                            {
+                                "title": "Help",
+                                "url": "/apps/intravox",
+                                "icon": "help-circle",
+                                "target": "_self",
+                                "backgroundColor": "var(--color-background-hover)"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 1,
+                        "content": "Laatste Nieuws",
+                        "level": 4
+                    },
+                    {
+                        "type": "news",
+                        "column": 2,
+                        "order": 2,
+                        "title": "",
+                        "layout": "carousel",
+                        "columns": 1,
+                        "limit": 5,
+                        "sortBy": "modified",
+                        "sortOrder": "desc",
+                        "showImage": true,
+                        "showDate": true,
+                        "showExcerpt": true,
+                        "excerptLength": 150,
+                        "autoplayInterval": 5,
+                        "sourcePath": "",
+                        "sourcePageId": "",
+                        "filters": [],
+                        "filterOperator": "AND",
+                        "filterPublished": false,
+                        "backgroundColor": ""
+                    },
+                    {
+                        "type": "heading",
+                        "column": 3,
+                        "order": 1,
+                        "content": "Ons Kantoor",
+                        "level": 4
+                    },
+                    {
+                        "type": "image",
+                        "column": 3,
+                        "order": 2,
+                        "src": "workspace.jpg",
+                        "alt": "Workspace Horizon Labs",
+                        "objectFit": "cover"
+                    },
+                    {
+                        "type": "text",
+                        "column": 3,
+                        "order": 3,
+                        "content": "Onze kantoren zijn ingericht voor samenwerking: open werkplekken, focusruimtes en brainstormkamers."
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "",
+                        "height": "1px"
+                    }
+                ]
+            },
+            {
+                "columns": 2,
+                "backgroundColor": "var(--color-primary-element-light)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Onze Cultuur",
+                        "level": 4
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Bij Horizon Labs geloven we in open samenwerking en transparantie. Elke vrijdag houden we een demo-sessie waar teams hun voortgang delen."
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 1,
+                        "content": "Komende Events",
+                        "level": 4
+                    },
+                    {
+                        "type": "text",
+                        "column": 2,
+                        "order": 2,
+                        "content": "**Sprint Review** — Vrijdag 14 maart, 15:00\n**Hackathon Q2** — 28-29 maart\n**Team Outing** — 11 april, Amsterdam\n**All-Hands** — 25 maart, 10:00\n**Tech Talk: AI** — 3 april, 16:00"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "",
+                        "height": "1px"
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-background-hover)",
+                "collapsible": true,
+                "sectionTitle": "Nieuwe Medewerker? Start Hier",
+                "defaultCollapsed": true,
+                "widgets": [
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Welkom bij Horizon Labs! Zo kom je snel op gang:\n\n1. **Laptop ophalen** — meld je bij IT Support voor je werkplek en laptop\n2. **Accounts activeren** — stel je Nextcloud, e-mail en Git-account in\n3. **Buddy ontmoeten** — je krijgt een buddy toegewezen die je de eerste weken begeleidt\n4. **Eerste sprint** — sluit aan bij het standup-overleg van je team\n5. **1-on-1 plannen** — plan een kennismaking met je teamlead in de eerste week\n\nVragen? Mail **hr@horizonlabs.nl** of stuur een berichtje via Chat."
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "var(--color-background-hover)",
+                "collapsible": true,
+                "sectionTitle": "Veelgestelde Vragen",
+                "defaultCollapsed": true,
+                "widgets": [
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 1,
+                        "content": "**Hoe maak ik verbinding met het VPN?**\nDownload de WireGuard-app en importeer het configuratiebestand dat IT Support je heeft gemaild.\n\n**Hoe declareer ik onkosten?**\nGa naar het HR-portaal en dien een declaratie in via het formulier. Voeg altijd een bon toe.\n\n**Wat is het thuiswerkbeleid?**\nJe mag maximaal 3 dagen per week thuiswerken in overleg met je team. Zorg dat je bereikbaar bent via Chat.\n\n**Hoeveel vakantiedagen heb ik?**\nIedereen heeft 25 vakantiedagen per jaar. Aanvragen doe je via het HR-portaal.\n\n**Hoe laat is de dagelijkse standup?**\nDe standup is elke werkdag om 09:30 via Chat. Duur: maximaal 15 minuten."
+                    }
+                ]
+            },
+            {
+                "columns": 1,
+                "backgroundColor": "",
+                "widgets": [
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 1,
+                        "style": "solid",
+                        "color": "transparent",
+                        "height": "8px"
+                    }
+                ]
+            }
+        ],
+        "sideColumns": {
+            "left": {
+                "enabled": false,
+                "backgroundColor": "",
+                "widgets": []
+            },
+            "right": {
+                "enabled": true,
+                "backgroundColor": "var(--color-background-hover)",
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Over Horizon Labs",
+                        "level": 4
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 2,
+                        "content": "Opgericht in 2019. 120 medewerkers. Kantoren in Amsterdam, Utrecht en Eindhoven. Specialisatie: SaaS-platforms en data-engineering."
+                    },
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 3,
+                        "style": "solid",
+                        "color": "",
+                        "height": "1px"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 4,
+                        "content": "Contact",
+                        "level": 5
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 5,
+                        "content": "**HR & Personeel**\nhr@horizonlabs.nl\n\n**IT Support**\nsupport@horizonlabs.nl\n\n**Office Manager**\noffice@horizonlabs.nl"
+                    },
+                    {
+                        "type": "divider",
+                        "column": 1,
+                        "order": 6,
+                        "style": "solid",
+                        "color": "",
+                        "height": "1px"
+                    },
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 7,
+                        "content": "Externe Links",
+                        "level": 5
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 8,
+                        "layout": "list",
+                        "columns": 1,
+                        "items": [
+                            {
+                                "text": "GitHub",
+                                "url": "https://github.com/horizon-labs",
+                                "icon": "web",
+                                "target": "_blank"
+                            },
+                            {
+                                "text": "Notion",
+                                "url": "https://notion.so/horizon-labs",
+                                "icon": "web",
+                                "target": "_blank"
+                            },
+                            {
+                                "text": "Figma",
+                                "url": "https://figma.com/horizon-labs",
+                                "icon": "web",
+                                "target": "_blank"
+                            },
+                            {
+                                "text": "Slack",
+                                "url": "https://horizon-labs.slack.com",
+                                "icon": "web",
+                                "target": "_blank"
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    }
+}

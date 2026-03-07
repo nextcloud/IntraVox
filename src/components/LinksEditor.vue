@@ -19,6 +19,14 @@
         </div>
 
         <div class="form-group">
+          <label>{{ t('Layout:') }}</label>
+          <select v-model="localWidget.layout" class="widget-input">
+            <option value="list">{{ t('List') }}</option>
+            <option value="tiles">{{ t('Tiles') }}</option>
+          </select>
+        </div>
+
+        <div class="form-group">
           <label>{{ t('Background color:') }}</label>
           <div class="color-presets">
             <button
@@ -88,13 +96,24 @@
               </div>
 
               <div class="link-fields">
+                <div v-if="localWidget.layout === 'tiles'" class="form-row">
+                  <div class="form-group flex-1">
+                    <label>{{ t('Title:') }}</label>
+                    <input
+                      v-model="link.title"
+                      type="text"
+                      :placeholder="t('Tile title')"
+                      class="widget-input"
+                    />
+                  </div>
+                </div>
                 <div class="form-row">
                   <div class="form-group flex-1">
-                    <label>{{ t('Link text:') }}</label>
+                    <label>{{ localWidget.layout === 'tiles' ? t('Subtitle:') : t('Link text:') }}</label>
                     <input
                       v-model="link.text"
                       type="text"
-                      :placeholder="t('Click here')"
+                      :placeholder="localWidget.layout === 'tiles' ? t('Short description') : t('Click here')"
                       class="widget-input"
                     />
                   </div>
@@ -245,6 +264,40 @@ import LightbulbOn from 'vue-material-design-icons/LightbulbOn.vue';
 import Rocket from 'vue-material-design-icons/Rocket.vue';
 import Archive from 'vue-material-design-icons/Archive.vue';
 import OpenInNew from 'vue-material-design-icons/OpenInNew.vue';
+import HelpCircle from 'vue-material-design-icons/HelpCircle.vue';
+import AccountMultiple from 'vue-material-design-icons/AccountMultiple.vue';
+import AccountTie from 'vue-material-design-icons/AccountTie.vue';
+import RocketLaunch from 'vue-material-design-icons/RocketLaunch.vue';
+import ShieldCheck from 'vue-material-design-icons/ShieldCheck.vue';
+import OfficeBuilding from 'vue-material-design-icons/OfficeBuilding.vue';
+import Newspaper from 'vue-material-design-icons/Newspaper.vue';
+import Bullhorn from 'vue-material-design-icons/Bullhorn.vue';
+import Forum from 'vue-material-design-icons/Forum.vue';
+import Palette from 'vue-material-design-icons/Palette.vue';
+import CodeTags from 'vue-material-design-icons/CodeTags.vue';
+import Lifebuoy from 'vue-material-design-icons/Lifebuoy.vue';
+import Folder from 'vue-material-design-icons/Folder.vue';
+import FolderMultiple from 'vue-material-design-icons/FolderMultiple.vue';
+import Chat from 'vue-material-design-icons/Chat.vue';
+import ViewColumn from 'vue-material-design-icons/ViewColumn.vue';
+import FormSelect from 'vue-material-design-icons/FormSelect.vue';
+import ClipboardCheck from 'vue-material-design-icons/ClipboardCheck.vue';
+import ViewDashboard from 'vue-material-design-icons/ViewDashboard.vue';
+import ImageMultiple from 'vue-material-design-icons/ImageMultiple.vue';
+import Draw from 'vue-material-design-icons/Draw.vue';
+import Puzzle from 'vue-material-design-icons/Puzzle.vue';
+import Robot from 'vue-material-design-icons/Robot.vue';
+import TableLarge from 'vue-material-design-icons/TableLarge.vue';
+import BookOpenVariant from 'vue-material-design-icons/BookOpenVariant.vue';
+import Poll from 'vue-material-design-icons/Poll.vue';
+import CalendarClock from 'vue-material-design-icons/CalendarClock.vue';
+import Earth from 'vue-material-design-icons/Earth.vue';
+import ShieldAccount from 'vue-material-design-icons/ShieldAccount.vue';
+import Apps from 'vue-material-design-icons/Apps.vue';
+import Cloud from 'vue-material-design-icons/Cloud.vue';
+import InformationOutline from 'vue-material-design-icons/InformationOutline.vue';
+import Contacts from 'vue-material-design-icons/Contacts.vue';
+import MessageText from 'vue-material-design-icons/MessageText.vue';
 
 export default {
   name: 'LinksEditor',
@@ -278,7 +331,41 @@ export default {
     LightbulbOn,
     Rocket,
     Archive,
-    OpenInNew
+    OpenInNew,
+    HelpCircle,
+    AccountMultiple,
+    AccountTie,
+    RocketLaunch,
+    ShieldCheck,
+    OfficeBuilding,
+    Newspaper,
+    Bullhorn,
+    Forum,
+    Palette,
+    CodeTags,
+    Lifebuoy,
+    Folder,
+    FolderMultiple,
+    Chat,
+    ViewColumn,
+    FormSelect,
+    ClipboardCheck,
+    ViewDashboard,
+    ImageMultiple,
+    Draw,
+    Puzzle,
+    Robot,
+    TableLarge,
+    BookOpenVariant,
+    Poll,
+    CalendarClock,
+    Earth,
+    ShieldAccount,
+    Apps,
+    Cloud,
+    InformationOutline,
+    Contacts,
+    MessageText
   },
   props: {
     widget: {
@@ -314,8 +401,42 @@ export default {
         { value: 'heart', label: this.t('Like') },
         { value: 'lightbulb-on', label: this.t('Idea') },
         { value: 'rocket', label: this.t('Launch') },
+        { value: 'rocket-launch', label: this.t('Rocket launch') },
         { value: 'archive', label: this.t('Archive') },
-        { value: 'open-in-new', label: this.t('External link') }
+        { value: 'open-in-new', label: this.t('External link') },
+        { value: 'help-circle', label: this.t('Help circle') },
+        { value: 'account-multiple', label: this.t('People') },
+        { value: 'account-tie', label: this.t('Manager') },
+        { value: 'shield-check', label: this.t('Security') },
+        { value: 'shield-account', label: this.t('Admin') },
+        { value: 'office-building', label: this.t('Organization') },
+        { value: 'newspaper', label: this.t('News') },
+        { value: 'bullhorn', label: this.t('Announcement') },
+        { value: 'forum', label: this.t('Forum') },
+        { value: 'palette', label: this.t('Design') },
+        { value: 'code-tags', label: this.t('Code') },
+        { value: 'lifebuoy', label: this.t('Support') },
+        { value: 'folder', label: this.t('Folder') },
+        { value: 'folder-multiple', label: this.t('Folders') },
+        { value: 'chat', label: this.t('Chat') },
+        { value: 'message-text', label: this.t('Message') },
+        { value: 'view-column', label: this.t('Kanban') },
+        { value: 'form-select', label: this.t('Form') },
+        { value: 'clipboard-check', label: this.t('Tasks') },
+        { value: 'view-dashboard', label: this.t('Dashboard') },
+        { value: 'image-multiple', label: this.t('Photos') },
+        { value: 'draw', label: this.t('Draw') },
+        { value: 'puzzle', label: this.t('Plugin') },
+        { value: 'robot', label: this.t('AI / Robot') },
+        { value: 'table-large', label: this.t('Table') },
+        { value: 'book-open-variant', label: this.t('Knowledge base') },
+        { value: 'poll', label: this.t('Poll') },
+        { value: 'calendar-clock', label: this.t('Appointment') },
+        { value: 'earth', label: this.t('Globe') },
+        { value: 'apps', label: this.t('Apps') },
+        { value: 'cloud', label: this.t('Cloud') },
+        { value: 'information-outline', label: this.t('Info') },
+        { value: 'contacts', label: this.t('Contacts') }
       ];
     }
   },
@@ -327,6 +448,10 @@ export default {
     // Set default columns if not set
     if (!this.localWidget.columns) {
       this.localWidget.columns = 2;
+    }
+    // Set default layout if not set
+    if (!this.localWidget.layout) {
+      this.localWidget.layout = 'list';
     }
     // Initialize iconObject for each link from the icon string value
     // Also ensure text field exists (fallback from title for backwards compatibility)
@@ -380,8 +505,42 @@ export default {
         'heart': 'Heart',
         'lightbulb-on': 'LightbulbOn',
         'rocket': 'Rocket',
+        'rocket-launch': 'RocketLaunch',
         'archive': 'Archive',
-        'open-in-new': 'OpenInNew'
+        'open-in-new': 'OpenInNew',
+        'help-circle': 'HelpCircle',
+        'account-multiple': 'AccountMultiple',
+        'account-tie': 'AccountTie',
+        'shield-check': 'ShieldCheck',
+        'shield-account': 'ShieldAccount',
+        'office-building': 'OfficeBuilding',
+        'newspaper': 'Newspaper',
+        'bullhorn': 'Bullhorn',
+        'forum': 'Forum',
+        'palette': 'Palette',
+        'code-tags': 'CodeTags',
+        'lifebuoy': 'Lifebuoy',
+        'folder': 'Folder',
+        'folder-multiple': 'FolderMultiple',
+        'chat': 'Chat',
+        'message-text': 'MessageText',
+        'view-column': 'ViewColumn',
+        'form-select': 'FormSelect',
+        'clipboard-check': 'ClipboardCheck',
+        'view-dashboard': 'ViewDashboard',
+        'image-multiple': 'ImageMultiple',
+        'draw': 'Draw',
+        'puzzle': 'Puzzle',
+        'robot': 'Robot',
+        'table-large': 'TableLarge',
+        'book-open-variant': 'BookOpenVariant',
+        'poll': 'Poll',
+        'calendar-clock': 'CalendarClock',
+        'earth': 'Earth',
+        'apps': 'Apps',
+        'cloud': 'Cloud',
+        'information-outline': 'InformationOutline',
+        'contacts': 'Contacts'
       };
       return iconMap[iconName] || 'OpenInNew';
     },
@@ -391,6 +550,7 @@ export default {
       }
       this.localWidget.items.push({
         id: Date.now() + Math.random().toString(36).substr(2, 9),
+        title: '',
         text: '',
         url: '',
         uniqueId: null,
