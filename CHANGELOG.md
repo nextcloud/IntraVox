@@ -21,6 +21,9 @@ IntraVox 1.0 marks the first stable release. After 19 iterative releases, the ap
 - **Draft/duplicate translations** — Draft, Published, and Duplicate row strings translated to English, Dutch, German, and French
 - **New pages default to Draft** — Newly created pages (both blank and from template) start as Draft and automatically open in edit mode so editors can begin working immediately
 
+### Fixed
+- **Links widget tile overflow** — Tiles in narrow containers (sidebar, small columns) no longer shrink to unreadable vertical text. Tiles auto-wrap to the next row when there isn't enough horizontal space, while respecting the configured column count when space allows
+
 ### Documentation
 - **Editor guide** — Added sections for sticky toolbar, page locking, draft/published status with visibility table, duplicate rows, and updated creating new pages workflow
 - **Admin guide** — Added page locking and draft pages sections, updated security considerations

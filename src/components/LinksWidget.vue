@@ -308,8 +308,9 @@ export default {
     },
     getGridStyle() {
       const columns = this.widget.columns || 2;
+      const minWidth = Math.floor(100 / columns);
       return {
-        gridTemplateColumns: `repeat(${columns}, 1fr)`
+        gridTemplateColumns: `repeat(auto-fill, minmax(max(100px, calc(${minWidth}% - 12px)), 1fr))`
       };
     },
     getLinkStyle(link) {
@@ -367,6 +368,7 @@ export default {
   align-items: center;
   gap: 12px;
   padding: 16px;
+  min-width: 0;
   border: 1px solid var(--color-border);
   border-radius: var(--border-radius-container-large);
   color: var(--color-main-text);
@@ -473,16 +475,23 @@ export default {
 .link-tile-title {
   font-weight: 600;
   font-size: 14px;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .link-tile-subtitle {
   font-size: 12px;
   opacity: 0.7;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .link-text {
   font-weight: 500;
   font-size: 14px;
+  min-width: 0;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 /* Empty placeholder */
