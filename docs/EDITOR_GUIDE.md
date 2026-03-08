@@ -68,6 +68,29 @@ Pages can also have a **header row** (full-width banner at the top) and optional
 2. Click the settings icon
 3. Change columns or background color
 
+#### Collapsible Sections
+
+Rows can be made collapsible, allowing users to expand and collapse content sections. This is useful for FAQ pages, long content, or optional details.
+
+![Collapsible section settings in edit mode](../screenshots/row-collapsible.png)
+
+*Edit mode: enable "Collapsible section", set a section title, and optionally check "Collapsed by default"*
+
+**Setting up a collapsible row:**
+1. Hover over the row and click the settings icon
+2. Check **Collapsible section**
+3. Enter a **Section title** (displayed as the clickable header)
+4. Optionally check **Collapsed by default** to hide content on page load
+
+![Collapsible section in view mode — expanded (left) and collapsed (right)](../screenshots/row-collapsible-details.png)
+
+*View mode: users click the arrow to toggle the section open or closed*
+
+**Best practices:**
+- Use descriptive section titles so users know what to expect
+- Use "Collapsed by default" for supplementary content that not everyone needs
+- Keep frequently accessed content expanded by default
+
 **Deleting a row:**
 1. Hover over the row
 2. Click the delete icon
