@@ -46,6 +46,54 @@ To edit content, you need:
 - Click **Cancel** to discard changes and exit edit mode
 - Changes are not visible to others until you save
 
+The Save and Cancel buttons stay fixed at the top of the page when you scroll down, so you can always reach them — even on long pages.
+
+![Sticky save toolbar](../screenshots/page-stickysave.gif)
+
+*The toolbar stays visible at the top while scrolling through a long page in edit mode*
+
+### Page Locking
+
+When you start editing a page, IntraVox automatically locks it to prevent other users from making changes at the same time. Other users see who is editing and cannot enter edit mode until you save, cancel, or the lock expires.
+
+- Locks auto-expire after **15 minutes** of inactivity
+- A heartbeat keeps the lock alive while you are actively editing
+- Locks are released when you save, cancel, navigate away, or close the tab
+- If your lock expires (e.g. lost connection), you receive a warning to save your work
+
+**IntraVox Admins** can force-unlock a page if a lock was left behind (e.g. after a browser crash). They see an "Unlock" button next to the lock indicator.
+
+### Draft and Published Status
+
+Pages have a status: **Draft** or **Published**. This controls who can see the page.
+
+![Draft and Published status in edit mode](../screenshots/page-draft-published.png)
+
+*In edit mode, the Draft/Published button is shown in the toolbar. Click it to toggle between Draft and Published.*
+
+**How it works:**
+
+| Status | Visible to editors | Visible to readers | In search | In RSS feed | Via public share link |
+|--------|-------------------|-------------------|-----------|-------------|----------------------|
+| **Published** | Yes | Yes | Yes | Yes | Yes |
+| **Draft** | Yes | No | No | No | No |
+
+- **Editors** are users with write permission on the page folder (IntraVox Admins and users with write access via GroupFolder ACL)
+- **Readers** are users with read-only permission (regular IntraVox Users)
+- A draft page is completely invisible to readers — it does not appear in navigation, search results, the page tree, RSS feeds, or public share links
+
+**New pages start as Draft.** When you create a new page (blank or from a template), it is automatically set to Draft and opens in edit mode. This way you can build your page before making it visible to readers.
+
+**Toggling the status:**
+1. Enter edit mode
+2. Click the **Draft** or **Published** button in the toolbar (with the eye icon)
+3. The status changes immediately — save the page to apply
+
+**Best practices:**
+- Use Draft to prepare new pages or major updates before publishing
+- Remember that setting a published page to Draft makes it immediately invisible to readers
+- Only editors (users with write permission) can see and change the page status
+
 ## Page Structure
 
 ### Rows
@@ -90,6 +138,21 @@ Rows can be made collapsible, allowing users to expand and collapse content sect
 - Use descriptive section titles so users know what to expect
 - Use "Collapsed by default" for supplementary content that not everyone needs
 - Keep frequently accessed content expanded by default
+
+**Duplicating a row:**
+
+You can duplicate a complete row, including all its columns and widgets.
+
+![Duplicate row button in row controls](../screenshots/row-copy.png)
+
+*Click the copy icon in the row controls to duplicate the row*
+
+1. Hover over the row
+2. Click the copy icon (next to the delete icon)
+3. A copy of the row appears directly below, with all widgets duplicated
+4. Edit the copy independently — changes do not affect the original
+
+This is useful for pages with repeating layouts, such as department cards or FAQ sections.
 
 **Deleting a row:**
 1. Hover over the row
@@ -499,6 +562,8 @@ Example:
 
 ## Creating New Pages
 
+New pages are always created as **Draft** and open directly in edit mode, so you can start building your content right away. The page is invisible to readers until you set the status to Published and save.
+
 ### From Navigation
 
 1. Edit navigation
@@ -506,7 +571,7 @@ Example:
 3. Leave uniqueId empty
 4. Save navigation
 5. Navigate to the new item
-6. IntraVox creates the page automatically
+6. IntraVox creates the page automatically (as Draft, in edit mode)
 
 ### Page Files
 

@@ -342,6 +342,27 @@ IntraVox (base: Read + Share)
 
 See [RSS_FEED.md](RSS_FEED.md#administrator-setup) for the full technical details.
 
+## Page Locking
+
+IntraVox uses pessimistic locking to prevent concurrent edits. When a user starts editing a page, it is locked for other users.
+
+- Locks auto-expire after **15 minutes** without activity
+- A heartbeat signal keeps the lock alive during active editing
+- Locks are released on save, cancel, navigation, or tab close
+
+**Admin override:** IntraVox Admins can force-unlock a page locked by another user. This is useful when a lock was left behind (e.g. after a browser crash). The "Unlock" button appears next to the lock indicator for admins.
+
+## Draft Pages
+
+New pages are created as **Draft** by default. Draft pages are only visible to users with write permission on the page folder.
+
+- **Editors** (write permission) can see and edit draft pages
+- **Readers** (read-only permission) cannot see draft pages at all
+- Draft pages are excluded from: search results, RSS feeds, public share links, and the page tree for readers
+- Editors toggle the status via the Draft/Published button in the edit toolbar
+
+No additional configuration is required. The draft system uses the existing GroupFolder ACL permissions to determine visibility.
+
 ## Security Considerations
 
 1. **Permissions**: Use principle of least privilege
@@ -349,6 +370,8 @@ See [RSS_FEED.md](RSS_FEED.md#administrator-setup) for the full technical detail
 3. **Media files**: Be aware that uploaded images and videos are accessible to all users with read permission
 4. **External links**: Content editors can add external links - review navigation regularly
 5. **Video embeds**: Only allow trusted video platforms via the admin settings
+6. **Page locking**: Locks prevent concurrent edits but auto-expire after 15 minutes — admins can force-unlock if needed
+7. **Draft pages**: Draft pages are hidden from readers but visible to all users with write permission on the folder
 
 ## Integration
 

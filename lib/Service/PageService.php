@@ -652,6 +652,7 @@ class PageService {
                     'uniqueId' => $data['uniqueId'],
                     'title' => $data['title'],
                     'modified' => $data['modified'] ?? $homeFile->getMTime(),
+                    'status' => $data['status'] ?? 'published',
                     'permissions' => [
                         'canRead' => ($folderPerms & 1) !== 0,
                         'canWrite' => ($folderPerms & 2) !== 0,
@@ -713,6 +714,7 @@ class PageService {
                             'uniqueId' => $data['uniqueId'],
                             'title' => $data['title'],
                             'modified' => $data['modified'] ?? $jsonFile->getMTime(),
+                            'status' => $data['status'] ?? 'published',
                             'permissions' => [
                                 'canRead' => ($folderPerms & 1) !== 0,
                                 'canWrite' => ($folderPerms & 2) !== 0,
@@ -2004,6 +2006,11 @@ class PageService {
                 'allowComments' => isset($data['settings']['allowComments']) ? (bool)$data['settings']['allowComments'] : true,
                 'allowCommentReactions' => isset($data['settings']['allowCommentReactions']) ? (bool)$data['settings']['allowCommentReactions'] : true,
             ];
+        }
+
+        // Preserve page status (draft/published). Default to "published" for backward compatibility.
+        if (isset($data['status']) && in_array($data['status'], ['draft', 'published'], true)) {
+            $sanitized['status'] = $data['status'];
         }
 
         if (isset($data['layout']['rows']) && is_array($data['layout']['rows'])) {
@@ -3827,6 +3834,7 @@ class PageService {
                 $tree[] = [
                     'uniqueId' => $data['uniqueId'],
                     'title' => $data['title'],
+                    'status' => $data['status'] ?? 'published',
                     'path' => $lang,
                     'language' => $lang,
                     'isCurrent' => false, // Will be set by markCurrentPageInTree
@@ -3932,6 +3940,7 @@ class PageService {
                     $pageNode = [
                         'uniqueId' => $data['uniqueId'],
                         'title' => $data['title'],
+                        'status' => $data['status'] ?? 'published',
                         'path' => $this->getRelativePathFromRoot($item),
                         'language' => $language ?? $this->getUserLanguage(),
                         'isCurrent' => ($currentPageId === $data['uniqueId']),
@@ -5777,6 +5786,9 @@ class PageService {
             unset($pageData['description']);
             unset($pageData['createdBy']);
             unset($pageData['sourcePageId']);
+
+            // New pages from templates always start as draft
+            $pageData['status'] = 'draft';
 
             // Create the page using existing method
             $createdPage = $this->createPage($pageData, $parentPath);

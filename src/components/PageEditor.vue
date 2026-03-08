@@ -274,6 +274,15 @@
           </NcActionButton>
         </NcActions>
 
+        <NcButton @click="duplicateRow(rowIndex)"
+                  type="secondary"
+                  class="row-action-button"
+                  :aria-label="t('Duplicate row')">
+          <template #icon>
+            <ContentDuplicate :size="20" />
+          </template>
+        </NcButton>
+
         <NcButton @click="deleteRow(rowIndex)"
                   type="error"
                   class="row-action-button"
@@ -934,6 +943,18 @@ export default {
         this.initializeColumnArrays();
         this.$emit('update', this.localPage);
       };
+    },
+    duplicateRow(rowIndex) {
+      const row = this.localPage.layout.rows[rowIndex];
+      const clonedRow = structuredClone(row);
+      clonedRow.id = this.generateRowId();
+      // Generate new IDs for all widgets in the cloned row
+      for (const widget of clonedRow.widgets) {
+        widget.id = `widget-${this.nextWidgetId++}`;
+      }
+      this.localPage.layout.rows.splice(rowIndex + 1, 0, clonedRow);
+      this.initializeColumnArrays();
+      this.$emit('update', this.localPage);
     },
     showWidgetPickerForColumn(rowIndex, column) {
       this.targetRowIndex = rowIndex;

@@ -13,6 +13,7 @@ use OCA\IntraVox\Service\TelemetryService;
 use OCA\IntraVox\Service\Import\ConfluenceHtmlImporter;
 use OCA\IntraVox\Service\Import\ConfluenceImporter;
 use OCA\IntraVox\Service\NavigationService;
+use OCA\IntraVox\Service\PageLockService;
 use OCA\IntraVox\Service\PageService;
 use OCA\IntraVox\Service\PermissionService;
 use OCA\IntraVox\Service\SetupService;
@@ -61,6 +62,7 @@ class ApiController extends Controller {
     private SystemFileService $systemFileService;
     private NavigationService $navigationService;
     private PermissionService $permissionService;
+    private PageLockService $pageLockService;
     private ISession $session;
 
     public function __construct(
@@ -81,6 +83,7 @@ class ApiController extends Controller {
         SystemFileService $systemFileService,
         NavigationService $navigationService,
         PermissionService $permissionService,
+        PageLockService $pageLockService,
         ISession $session
     ) {
         parent::__construct($appName, $request);
@@ -99,6 +102,7 @@ class ApiController extends Controller {
         $this->systemFileService = $systemFileService;
         $this->navigationService = $navigationService;
         $this->permissionService = $permissionService;
+        $this->pageLockService = $pageLockService;
         $this->session = $session;
     }
 
@@ -188,11 +192,16 @@ class ApiController extends Controller {
 
             // PageService already includes permissions from Nextcloud's filesystem
             // Filter pages to only include those the user can read
+            // Draft pages are only visible to users with write permission
             $filteredPages = [];
             foreach ($pages as $page) {
-                if ($page['permissions']['canRead'] ?? false) {
-                    $filteredPages[] = $page;
+                if (!($page['permissions']['canRead'] ?? false)) {
+                    continue;
                 }
+                if (($page['status'] ?? 'published') === 'draft' && !($page['permissions']['canWrite'] ?? false)) {
+                    continue;
+                }
+                $filteredPages[] = $page;
             }
 
             return new DataResponse($filteredPages);
@@ -225,6 +234,14 @@ class ApiController extends Controller {
                 return new DataResponse(
                     ['error' => 'Access denied'],
                     Http::STATUS_FORBIDDEN
+                );
+            }
+
+            // Draft pages are only accessible to users with write permission
+            if (($page['status'] ?? 'published') === 'draft' && !($page['permissions']['canWrite'] ?? false)) {
+                return new DataResponse(
+                    ['error' => 'Page not found'],
+                    Http::STATUS_NOT_FOUND
                 );
             }
 
@@ -297,6 +314,18 @@ class ApiController extends Controller {
                     ['error' => 'Permission denied: cannot edit this page'],
                     Http::STATUS_FORBIDDEN
                 );
+            }
+
+            // Check page lock — prevent saving if locked by another user
+            $user = $this->userSession->getUser();
+            if ($user !== null) {
+                $lockByOther = $this->pageLockService->isLockedByOther($id, $user->getUID());
+                if ($lockByOther !== null) {
+                    return new DataResponse(
+                        ['error' => 'Page is locked by ' . $lockByOther['displayName']],
+                        Http::STATUS_CONFLICT
+                    );
+                }
             }
 
             $data = $this->request->getParams();
@@ -988,11 +1017,16 @@ class ApiController extends Controller {
             $results = $this->pageService->searchPages($query);
 
             // Filter results based on Nextcloud's permissions (already in the results)
+            // Draft pages are only visible to users with write permission
             $filteredResults = [];
             foreach ($results as $result) {
-                if ($result['permissions']['canRead'] ?? false) {
-                    $filteredResults[] = $result;
+                if (!($result['permissions']['canRead'] ?? false)) {
+                    continue;
                 }
+                if (($result['status'] ?? 'published') === 'draft' && !($result['permissions']['canWrite'] ?? false)) {
+                    continue;
+                }
+                $filteredResults[] = $result;
             }
 
             return new DataResponse([
@@ -1067,12 +1101,17 @@ class ApiController extends Controller {
     private function filterTreeByPermissions(array $tree): array {
         $filtered = [];
         foreach ($tree as $item) {
-            if ($item['permissions']['canRead'] ?? false) {
-                if (!empty($item['children'])) {
-                    $item['children'] = $this->filterTreeByPermissions($item['children']);
-                }
-                $filtered[] = $item;
+            if (!($item['permissions']['canRead'] ?? false)) {
+                continue;
             }
+            // Draft pages are only visible to users with write permission
+            if (($item['status'] ?? 'published') === 'draft' && !($item['permissions']['canWrite'] ?? false)) {
+                continue;
+            }
+            if (!empty($item['children'])) {
+                $item['children'] = $this->filterTreeByPermissions($item['children']);
+            }
+            $filtered[] = $item;
         }
         return $filtered;
     }
@@ -2010,6 +2049,11 @@ class ApiController extends Controller {
                 return $this->shareNotFoundResponse();
             }
 
+            // Draft pages are never accessible via public share
+            if (($pageData['status'] ?? 'published') === 'draft') {
+                return $this->shareNotFoundResponse();
+            }
+
             // Sanitize the response - only include safe fields for public access
             $sanitizedPage = $this->sanitizePageForPublicAccess($pageData);
 
@@ -2252,6 +2296,9 @@ class ApiController extends Controller {
             $scopePath = $relPath;
             $filteredTree = $this->extractSubtreeByScope($tree, $scopePath);
 
+            // Remove draft pages from public tree
+            $filteredTree = $this->filterDraftsFromTree($filteredTree);
+
             // Strip permissions from all nodes (public = read-only)
             $filteredTree = $this->stripPermissionsFromTree($filteredTree);
 
@@ -2406,6 +2453,23 @@ class ApiController extends Controller {
             }
             return $node;
         }, $tree);
+    }
+
+    /**
+     * Remove draft pages from a tree structure.
+     */
+    private function filterDraftsFromTree(array $tree): array {
+        $filtered = [];
+        foreach ($tree as $node) {
+            if (($node['status'] ?? 'published') === 'draft') {
+                continue;
+            }
+            if (!empty($node['children'])) {
+                $node['children'] = $this->filterDraftsFromTree($node['children']);
+            }
+            $filtered[] = $node;
+        }
+        return $filtered;
     }
 
     /**

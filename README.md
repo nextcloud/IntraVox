@@ -31,9 +31,13 @@ IntraVox brings SharePoint-style page creation to Nextcloud, enabling teams to b
 - **Visual Drag-and-Drop Editor** - Create pages without coding. Drag widgets where you need them
 - **Flexible Grid System** - Build layouts with 1-5 columns per row
 - **Row Background Colors** - Theme-aware colors that adapt to your Nextcloud theme
+- **Duplicate Rows** - Copy a complete row with all columns and widgets in one click
 - **Header Row** - Full-width header section above the main content
 - **Side Columns** - Optional left and/or right side columns for additional content
 - **Unlimited Rows** - Add as many content rows as needed
+- **Sticky Toolbar** - Save/Cancel buttons stay visible when scrolling long pages
+- **Page Locking** - Prevents concurrent edits with automatic lock expiry and admin override
+- **Draft/Published Status** - Prepare pages as draft before publishing to readers
 
 ### Available Widgets
 
@@ -103,6 +107,37 @@ Create SharePoint-style collapsible sections for better content organization:
 
 *Collapsible rows for organized content sections*
 
+### Draft & Published Pages
+
+![Draft and Published](https://raw.githubusercontent.com/nextcloud/intravox/main/screenshots/page-draft-published.png)
+
+*Toggle between Draft and Published in edit mode*
+
+Control page visibility with a simple status toggle:
+
+- **New pages start as Draft** — build your content before making it visible
+- **Draft pages** are only visible to editors (users with write permission)
+- **Published pages** are visible to all users with read access
+- Draft pages are hidden from search, RSS feeds, page tree, and public share links
+- Click the Draft/Published button in the edit toolbar to toggle
+
+### Page Locking
+
+Prevents conflicting edits when multiple editors work on the same site:
+
+- **Automatic locking** — entering edit mode locks the page for other users
+- **Lock indicator** — other editors see who is editing and since when
+- **Auto-expiry** — locks expire after 15 minutes of inactivity
+- **Admin override** — IntraVox Admins can force-unlock a page
+
+### Duplicate Rows
+
+![Duplicate Row](https://raw.githubusercontent.com/nextcloud/intravox/main/screenshots/row-copy.png)
+
+*Click the copy icon to duplicate a row with all its widgets*
+
+Speed up page building by duplicating rows: click the copy icon in the row controls to create an exact copy of a row including all columns and widgets. Edit the copy independently.
+
 ### Dummy Text Generator (Easter Egg)
 
 ![Dad Jokes Generator](https://raw.githubusercontent.com/nextcloud/intravox/main/screenshots/dadjokes.gif)
@@ -163,6 +198,8 @@ Full table editing in text widgets:
 - **Nextcloud Native Permissions** - Uses GroupFolder ACL for access control
 - **Folder-Level Permissions** - Set different permissions per folder/page
 - **Permission-Based Filtering** - Navigation only shows pages the user can access
+- **Draft Page Visibility** - Draft pages are only visible to users with write permission
+- **Page Locking** - Prevents concurrent edits with automatic expiry and admin override
 - **Real-Time Permission Checks** - Changes take effect immediately
 
 ### Admin Settings

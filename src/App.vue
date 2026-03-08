@@ -14,16 +14,33 @@
       </div>
 
       <div class="header-right">
+        <!-- Draft indicator (visible to editors in view mode) -->
+        <span v-if="!isEditMode && currentPage?.status === 'draft'" class="draft-badge draft">
+          {{ t('Draft') }}
+        </span>
+
         <!-- Share Button (only visible when NC share exists) -->
         <ShareButton v-if="!isEditMode && currentPage?.uniqueId"
                      :page-unique-id="currentPage.uniqueId"
                      :page-title="currentPage.title"
                      :language="currentLanguage" />
 
+        <!-- Lock indicator (when another user is editing this page) -->
+        <span v-if="!isEditMode && pageLock" class="page-lock-indicator">
+          {{ t('{displayName} is editing this page', { displayName: pageLock.displayName }) }}
+          <NcButton v-if="canEditNavigation"
+                    @click="forceUnlock"
+                    type="tertiary"
+                    :aria-label="t('Unlock')">
+            {{ t('Unlock') }}
+          </NcButton>
+        </span>
+
         <!-- Edit Page Button (only visible when user has edit permissions for this page) -->
         <NcButton v-if="!isEditMode && canEditCurrentPage"
                   @click="startEditMode"
                   type="secondary"
+                  :disabled="!!pageLock"
                   :aria-label="t('Edit this page')">
           <template #icon>
             <Pencil :size="20" />
@@ -43,6 +60,15 @@
 
         <!-- Edit Mode Actions (Save/Cancel) -->
         <template v-else>
+          <NcButton @click="toggleDraftStatus"
+                    :type="currentPage?.status === 'draft' ? 'warning' : 'secondary'"
+                    :aria-label="currentPage?.status === 'draft' ? t('Draft — click to publish') : t('Published — click to unpublish')">
+            <template #icon>
+              <EyeOff :size="20" v-if="currentPage?.status === 'draft'" />
+              <Eye :size="20" v-else />
+            </template>
+            {{ currentPage?.status === 'draft' ? t('Draft') : t('Published') }}
+          </NcButton>
           <NcButton @click="cancelEditMode"
                     type="secondary"
                     :aria-label="t('Cancel editing')">
@@ -202,6 +228,8 @@ import { showSuccess, showError } from '@nextcloud/dialogs';
 import { NcButton } from '@nextcloud/vue';
 import ContentSave from 'vue-material-design-icons/ContentSave.vue';
 import Close from 'vue-material-design-icons/Close.vue';
+import Eye from 'vue-material-design-icons/Eye.vue';
+import EyeOff from 'vue-material-design-icons/EyeOff.vue';
 import Pencil from 'vue-material-design-icons/Pencil.vue';
 import Information from 'vue-material-design-icons/Information.vue';
 import { defineAsyncComponent } from 'vue';
@@ -239,6 +267,8 @@ export default {
     NcButton,
     ContentSave,
     Close,
+    Eye,
+    EyeOff,
     Pencil,
     Information,
     PageViewer,
@@ -292,6 +322,9 @@ export default {
       showPageSettingsModal: false,
       // RSS Feed settings modal
       showFeedSettings: false,
+      // Page locking
+      pageLock: null,
+      lockHeartbeatTimer: null,
       // Global engagement settings (loaded from API)
       globalEngagementSettings: {
         allowPageReactions: true,
@@ -380,6 +413,9 @@ export default {
     // Setup hash-based navigation
     window.addEventListener('hashchange', this.handleHashChange);
 
+    // Release page lock on tab/window close
+    window.addEventListener('beforeunload', this.handleBeforeUnload);
+
     // Use MutationObserver to watch for HTML lang attribute changes
     // (more efficient than setInterval polling)
     this.langObserver = new MutationObserver(() => {
@@ -397,6 +433,8 @@ export default {
   },
   beforeUnmount() {
     window.removeEventListener('hashchange', this.handleHashChange);
+    window.removeEventListener('beforeunload', this.handleBeforeUnload);
+    this.stopLockHeartbeat();
     if (this.langObserver) {
       this.langObserver.disconnect();
     }
@@ -485,6 +523,16 @@ export default {
           return;
         }
 
+        // Release any active lock when navigating away from a page being edited
+        if (this.isEditMode && this.currentPage?.uniqueId !== pageId) {
+          await this.releaseLock();
+          if (this.originalPage) {
+            this.currentPage = structuredClone(this.originalPage);
+          }
+          this.isEditMode = false;
+          this.originalPage = null;
+        }
+
         // Close sidebar when navigating to a different page
         if (this.showDetailsSidebar && this.currentPage?.uniqueId !== pageId) {
           this.showDetailsSidebar = false;
@@ -515,6 +563,9 @@ export default {
             }
           }
           this.updatePageMetadata();
+
+          // Check if this page is locked by another user
+          this.checkPageLock(pageId);
 
           // Smart background refresh - only if cache is older than 2 minutes
           const cacheAge = CacheService.getAge(cacheKey);
@@ -552,6 +603,9 @@ export default {
 
         // Update page title and meta tags for better link previews
         this.updatePageMetadata();
+
+        // Check if this page is locked by another user
+        this.checkPageLock(pageId);
       } catch (err) {
         console.error('IntraVox: Error selecting page:', err);
         showError(this.t('Could not load page: {error}', { error: err.message }));
@@ -608,19 +662,45 @@ export default {
 
       meta.setAttribute('content', content);
     },
-    startEditMode() {
-      // Store original state for rollback (structuredClone is faster than JSON parse/stringify)
-      this.originalPage = structuredClone(this.currentPage);
-      this.editableTitle = this.currentPage?.title || '';
-      this.isEditMode = true;
+    async startEditMode() {
+      const pageId = this.currentPage?.uniqueId;
+      if (!pageId) return;
 
-      // Clear any version preview - user should edit current version
-      this.clearVersionPreview();
+      try {
+        // Acquire page lock before entering edit mode
+        const lockUrl = generateUrl(`/apps/intravox/api/pages/${pageId}/lock`);
+        const response = await axios.post(lockUrl);
 
-      // Notify sidebar to reset to current version selection
-      window.dispatchEvent(new CustomEvent('intravox:edit:started', {
-        detail: { pageId: this.currentPage?.uniqueId }
-      }));
+        if (response.data.success) {
+          // Lock acquired — enter edit mode
+          this.originalPage = structuredClone(this.currentPage);
+          this.editableTitle = this.currentPage?.title || '';
+          this.isEditMode = true;
+          this.pageLock = null;
+
+          // Clear any version preview - user should edit current version
+          this.clearVersionPreview();
+
+          // Start heartbeat to keep lock alive
+          this.startLockHeartbeat(pageId);
+
+          // Notify sidebar to reset to current version selection
+          window.dispatchEvent(new CustomEvent('intravox:edit:started', {
+            detail: { pageId }
+          }));
+        }
+      } catch (err) {
+        if (err.response?.status === 409) {
+          // Lock denied — another user is editing
+          const lock = err.response.data.lock;
+          this.pageLock = lock;
+          showError(this.t('{displayName} is editing this page', {
+            displayName: lock?.displayName || 'Someone',
+          }));
+        } else {
+          showError(this.t('Could not start editing: {error}', { error: err.message }));
+        }
+      }
     },
     async saveAndExitEditMode() {
       try {
@@ -633,6 +713,9 @@ export default {
 
         this.isEditMode = false;
         this.originalPage = null;
+
+        // Release lock after successful save
+        await this.releaseLock();
       } catch (err) {
         console.error('[saveAndExitEditMode] Error:', err);
         showError(this.t('Failed to save: {error}', { error: err.message }));
@@ -646,6 +729,107 @@ export default {
       this.isEditMode = false;
       this.originalPage = null;
       showSuccess(this.t('Changes cancelled'));
+
+      // Release lock after cancelling
+      this.releaseLock();
+    },
+    toggleDraftStatus() {
+      if (!this.currentPage) return;
+      this.currentPage.status = this.currentPage.status === 'draft' ? 'published' : 'draft';
+    },
+    /**
+     * Check if a page is locked by another user (called on page load)
+     */
+    async checkPageLock(pageId) {
+      try {
+        const url = generateUrl(`/apps/intravox/api/pages/${pageId}/lock`);
+        const response = await axios.get(url);
+        this.pageLock = response.data.lock || null;
+      } catch (err) {
+        this.pageLock = null;
+      }
+    },
+    /**
+     * Release the current page lock
+     */
+    async releaseLock() {
+      this.stopLockHeartbeat();
+      const pageId = this.currentPage?.uniqueId;
+      if (!pageId) return;
+
+      try {
+        const url = generateUrl(`/apps/intravox/api/pages/${pageId}/lock`);
+        await axios.delete(url);
+        this.pageLock = null;
+      } catch (err) {
+        // Best effort — lock will auto-expire after 15 minutes
+        console.warn('[IntraVox] Failed to release lock:', err.message);
+      }
+    },
+    /**
+     * Start heartbeat to keep the page lock alive
+     */
+    startLockHeartbeat(pageId) {
+      this.stopLockHeartbeat();
+      this.lockHeartbeatTimer = setInterval(async () => {
+        try {
+          const url = generateUrl(`/apps/intravox/api/pages/${pageId}/lock`);
+          const response = await axios.put(url);
+          if (!response.data.success) {
+            showError(this.t('Your edit lock has expired. Please save your work.'));
+            this.stopLockHeartbeat();
+          }
+        } catch (err) {
+          if (err.response?.status === 409) {
+            showError(this.t('Your edit lock has expired. Please save your work.'));
+            this.stopLockHeartbeat();
+          }
+          // On network error, keep trying — lock expires after 15 min
+        }
+      }, 60 * 1000); // Every 60 seconds
+    },
+    /**
+     * Stop the lock heartbeat interval
+     */
+    stopLockHeartbeat() {
+      if (this.lockHeartbeatTimer) {
+        clearInterval(this.lockHeartbeatTimer);
+        this.lockHeartbeatTimer = null;
+      }
+    },
+    /**
+     * Release lock when the browser tab/window is being closed
+     */
+    handleBeforeUnload() {
+      if (this.isEditMode && this.currentPage?.uniqueId) {
+        const url = generateUrl(`/apps/intravox/api/pages/${this.currentPage.uniqueId}/lock`);
+        fetch(window.location.origin + url, {
+          method: 'DELETE',
+          keepalive: true,
+          headers: { requesttoken: OC.requestToken },
+        });
+      }
+    },
+    /**
+     * Force-unlock a page (admin only)
+     */
+    async forceUnlock() {
+      const pageId = this.currentPage?.uniqueId;
+      const lockedBy = this.pageLock?.displayName || 'Someone';
+      if (!pageId) return;
+
+      if (!confirm(this.t('Are you sure you want to unlock this page? {displayName} may lose unsaved changes.', { displayName: lockedBy }))) {
+        return;
+      }
+
+      try {
+        const url = generateUrl(`/apps/intravox/api/pages/${pageId}/lock/force-release`);
+        await axios.post(url);
+        this.pageLock = null;
+        showSuccess(this.t('Page unlocked'));
+      } catch (err) {
+        showError(this.t('Could not unlock page: {error}', { error: err.message }));
+      }
     },
     async savePage() {
       if (!this.currentPage || !this.currentPage.uniqueId) {
@@ -722,6 +906,7 @@ export default {
           id: slug, // Use slug as the page ID (folder name)
           uniqueId: uniqueId, // Store unique ID for internal references
           title: title,
+          status: 'draft', // New pages start as draft
           layout: {
             columns: 1,
             rows: [
@@ -761,8 +946,8 @@ export default {
         }
 
         await this.selectPage(slug);
-        // Open the new page in edit mode
-        this.isEditMode = true;
+        // Open the new page in edit mode (with lock)
+        await this.startEditMode();
       } catch (err) {
         showError(this.t('Could not create page: {error}', { error: err.message }));
       }
@@ -793,8 +978,8 @@ export default {
           const newPage = response.data.page;
           if (newPage?.uniqueId) {
             await this.selectPage(newPage.uniqueId);
-            // Open in edit mode
-            this.isEditMode = true;
+            // Open in edit mode (with lock)
+            await this.startEditMode();
           }
         } else {
           showError(this.t('Could not create page: {error}', { error: response.data.error || 'Unknown error' }));
@@ -1145,7 +1330,7 @@ export default {
   max-width: 100vw;
   min-height: 100vh;
   background: var(--color-main-background);
-  overflow-x: hidden;
+  overflow-x: clip;
   box-sizing: border-box;
 }
 
@@ -1182,6 +1367,9 @@ export default {
   gap: 20px;
   width: 100%;
   box-sizing: border-box;
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
 
 .header-left {
@@ -1195,6 +1383,25 @@ export default {
   display: flex;
   gap: 10px;
   align-items: center;
+}
+
+.draft-badge.draft {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: var(--color-warning-light, #fff3cd);
+  color: var(--color-warning-text, #856404);
+  border: 1px solid var(--color-warning, #ffc107);
+}
+
+.page-lock-indicator {
+  color: var(--color-warning-text);
+  font-size: 13px;
+  white-space: nowrap;
 }
 
 .header-left h1 {
@@ -1295,7 +1502,7 @@ export default {
 /* Mobile styles */
 @media (max-width: 768px) {
   #intravox-app {
-    overflow-x: hidden;
+    overflow-x: clip;
   }
 
   .intravox-header {

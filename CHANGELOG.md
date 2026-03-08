@@ -4,6 +4,28 @@ All notable changes to IntraVox will be documented in this file.
 
 IntraVox is a Nextcloud intranet page builder.
 
+## [1.0.0] - 2026-03-08 — First stable release
+
+IntraVox 1.0 marks the first stable release. After 19 iterative releases, the app offers a complete intranet platform: a full page builder with 10+ widget types, page versioning, templates, public sharing, RSS feeds, engagement (reactions & comments), draft/published workflow, concurrent edit protection, and multi-language support. The JSON page format and REST API are considered stable from this version onward.
+
+### Added
+- **Page locking** — Pessimistic locking prevents concurrent edits. When a user starts editing a page, other users see who is editing and the Edit button is disabled. Locks auto-expire after 15 minutes of inactivity, with a 60-second heartbeat to keep active sessions alive. Locks are released on save, cancel, navigation, and tab close
+- **Lock safety net in API** — Backend `updatePage()` rejects saves with HTTP 409 if the page is locked by another user, preventing data loss even if the frontend check is bypassed
+- **Force unlock for admins** — IntraVox Admins can force-release a page lock held by another user (e.g. after a browser crash). Includes confirmation dialog to warn about potential unsaved changes
+- **Draft pages** ([#32](https://github.com/nextcloud/IntraVox/issues/32)) — Pages can be saved as "Draft" or "Published". Draft pages are only visible to users with write permission and are hidden from read-only users, public shares, search results, RSS feeds, and the page tree. Editors see a clickable status badge in edit mode to toggle between Draft and Published, and a "Draft" indicator in view mode. Backward compatible: existing pages without a status field default to Published
+- **Duplicate row** ([#32](https://github.com/nextcloud/IntraVox/issues/32)) — Editors can duplicate a complete row (including all columns and widgets) with a single click. The duplicate button appears in the row controls next to the delete button
+- **Sticky edit toolbar** ([#32](https://github.com/nextcloud/IntraVox/issues/32)) — The header toolbar with Save/Cancel buttons stays fixed at the top of the viewport when scrolling, making it accessible on long pages
+
+### Changed
+- **Page lock translations** — Lock-related UI strings translated to English, Dutch, German, and French
+- **Draft/duplicate translations** — Draft, Published, and Duplicate row strings translated to English, Dutch, German, and French
+- **New pages default to Draft** — Newly created pages (both blank and from template) start as Draft and automatically open in edit mode so editors can begin working immediately
+
+### Documentation
+- **Editor guide** — Added sections for sticky toolbar, page locking, draft/published status with visibility table, duplicate rows, and updated creating new pages workflow
+- **Admin guide** — Added page locking and draft pages sections, updated security considerations
+- **README** — Added page editor features (duplicate rows, sticky toolbar, page locking, draft/published), new feature sections with screenshots, updated security section
+
 ## [0.9.18] - 2026-03-07
 
 ### Added

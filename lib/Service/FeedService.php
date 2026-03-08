@@ -226,6 +226,12 @@ class FeedService {
                     continue;
                 }
 
+                // Skip draft pages — feeds should only contain published content
+                if (($data['status'] ?? 'published') === 'draft') {
+                    $this->findPagesRecursive($item, $pages, $language);
+                    continue;
+                }
+
                 $imageData = $this->extractFirstImage($data);
 
                 $pages[] = [

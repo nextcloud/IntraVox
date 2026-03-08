@@ -39,6 +39,14 @@ return [
         ['name' => 'api#getCurrentPageContent', 'url' => '/api/pages/{pageId}/content', 'verb' => 'GET'],
         ['name' => 'api#getPageMetadata', 'url' => '/api/pages/{pageId}/metadata', 'verb' => 'GET'],
         ['name' => 'api#updatePageMetadata', 'url' => '/api/pages/{pageId}/metadata', 'verb' => 'PUT'],
+
+        // Page lock routes
+        ['name' => 'pageLock#getLock', 'url' => '/api/pages/{pageId}/lock', 'verb' => 'GET'],
+        ['name' => 'pageLock#acquireLock', 'url' => '/api/pages/{pageId}/lock', 'verb' => 'POST'],
+        ['name' => 'pageLock#refreshLock', 'url' => '/api/pages/{pageId}/lock', 'verb' => 'PUT'],
+        ['name' => 'pageLock#releaseLock', 'url' => '/api/pages/{pageId}/lock', 'verb' => 'DELETE'],
+        ['name' => 'pageLock#forceReleaseLock', 'url' => '/api/pages/{pageId}/lock/force-release', 'verb' => 'POST'],
+
         ['name' => 'api#checkPageCacheStatus', 'url' => '/api/page/{pageId}/cache-status', 'verb' => 'GET'],
         ['name' => 'api#searchPages', 'url' => '/api/search', 'verb' => 'GET'],
         ['name' => 'api#getNews', 'url' => '/api/news', 'verb' => 'GET'],
