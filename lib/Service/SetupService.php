@@ -18,6 +18,7 @@ use Symfony\Component\Process\Process;
 class SetupService {
     private const GROUPFOLDER_NAME = 'IntraVox';
     private const ADMIN_GROUP = 'IntraVox Admins';
+    private const EDITOR_GROUP = 'IntraVox Editors';
     private const USER_GROUP = 'IntraVox Users';
     private const SUPPORTED_LANGUAGES = ['nl', 'en', 'de', 'fr'];
     private const DEFAULT_LANGUAGE = 'en';
@@ -137,7 +138,7 @@ class SetupService {
      * Ensure required groups exist and add current user to admin group
      */
     private function ensureGroupsExist(): void {
-        foreach ([self::ADMIN_GROUP, self::USER_GROUP] as $groupId) {
+        foreach ([self::ADMIN_GROUP, self::EDITOR_GROUP, self::USER_GROUP] as $groupId) {
             $this->logger->info("Checking if group exists: {$groupId}");
             if (!$this->groupManager->groupExists($groupId)) {
                 $this->logger->info("Group does not exist, creating: {$groupId}");
@@ -182,6 +183,7 @@ class SetupService {
             $groupsToAdd = [
                 ['name' => 'admin', 'permissions' => \OCP\Constants::PERMISSION_ALL],
                 ['name' => self::ADMIN_GROUP, 'permissions' => \OCP\Constants::PERMISSION_ALL],
+                ['name' => self::EDITOR_GROUP, 'permissions' => \OCP\Constants::PERMISSION_READ | \OCP\Constants::PERMISSION_UPDATE | \OCP\Constants::PERMISSION_CREATE],
                 ['name' => self::USER_GROUP, 'permissions' => \OCP\Constants::PERMISSION_READ],
             ];
 

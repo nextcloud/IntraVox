@@ -4,6 +4,15 @@ All notable changes to IntraVox will be documented in this file.
 
 IntraVox is a Nextcloud intranet page builder.
 
+## [1.0.1] - 2026-03-09 — Editor group & scenarios
+
+### Added
+- **IntraVox Editors group** — A third permission group (`IntraVox Editors`) is now automatically created during setup with Read + Write + Create permissions. This provides a three-tier permission model out of the box: Users (read), Editors (read/write/create), Admins (full access)
+- **Scenarios documentation** — New [SCENARIOS.md](docs/SCENARIOS.md) guide with step-by-step recipes for content approval workflows (using the Nextcloud Approval app and MetaVox) and department-based intranets
+
+### Documentation
+- Updated ADMIN_GUIDE, AUTHORIZATION, EDITOR_GUIDE, and README to reflect the new three-group permission model
+
 ## [1.0.0] - 2026-03-08 — First stable release
 
 IntraVox 1.0 marks the first stable release. After 19 iterative releases, the app offers a complete intranet platform: a full page builder with 10+ widget types, page versioning, templates, public sharing, RSS feeds, engagement (reactions & comments), draft/published workflow, concurrent edit protection, and multi-language support. The JSON page format and REST API are considered stable from this version onward.

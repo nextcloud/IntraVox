@@ -77,12 +77,12 @@ Permissions are inherited from parent to child folders:
 
 For each group, set the appropriate permission level:
 
-| Role | Recommended Permissions |
-|------|------------------------|
-| All Employees | Read, Share |
-| Content Editors | Read, Write, Create, Share |
-| Department Managers | Read, Write, Create, Delete, Share |
-| Administrators | All |
+| Group | Recommended Permissions | Created automatically? |
+|-------|------------------------|----------------------|
+| IntraVox Users | Read, Share | Yes |
+| IntraVox Editors | Read, Write, Create | Yes |
+| IntraVox Admins | All | Yes |
+| Custom groups (e.g. Department Managers) | Read, Write, Create, Delete, Share | No — add manually |
 
 > **Why Share?** The RSS feed is a public endpoint (no user session). GroupFolders requires both Read and Share permissions for folders to be visible in public requests. Without Share, user feeds will be empty.
 

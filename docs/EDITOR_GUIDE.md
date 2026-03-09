@@ -78,7 +78,7 @@ Pages have a status: **Draft** or **Published**. This controls who can see the p
 | **Published** | Yes | Yes | Yes | Yes | Yes |
 | **Draft** | Yes | No | No | No | No |
 
-- **Editors** are users with write permission on the page folder (IntraVox Admins and users with write access via GroupFolder ACL)
+- **Editors** are users with write permission on the page folder (IntraVox Admins, IntraVox Editors, and users with write access via GroupFolder ACL)
 - **Readers** are users with read-only permission (regular IntraVox Users)
 - A draft page is completely invisible to readers — it does not appear in navigation, search results, the page tree, RSS feeds, or public share links
 

@@ -470,6 +470,7 @@ npm run build
 
 - [Editor Guide](docs/EDITOR_GUIDE.md) - How to create and edit pages, widgets, and content
 - [Authorization Guide](docs/AUTHORIZATION.md) - User and administrator permissions guide
+- [Scenarios](docs/SCENARIOS.md) - Practical recipes for approval workflows, department intranets, and more
 - [Architecture](docs/ARCHITECTURE.md) - Technical architecture documentation
 - [News Widget Guide](docs/NEWS_WIDGET.md) - How to use the News widget
 - [People Widget Guide](docs/PEOPLE_WIDGET.md) - How to use the People widget

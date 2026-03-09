@@ -6,6 +6,7 @@ This guide covers installation, configuration, and maintenance of IntraVox for N
 - [Admin Settings Guide](ADMIN_SETTINGS.md) - Demo data and video services configuration
 - [Engagement Admin Guide](ENGAGEMENT_ADMIN.md) - Reactions and comments configuration
 - [Authorization Guide](AUTHORIZATION.md) - Permissions and access control
+- [Scenarios](SCENARIOS.md) - Practical recipes (approval workflows, department intranets)
 - [Architecture](ARCHITECTURE.md) - Technical architecture
 - [Engagement Architecture](ENGAGEMENT_ARCHITECTURE.md) - Engagement system technical details
 
@@ -46,11 +47,12 @@ sudo -u www-data php /var/www/nextcloud/occ app:enable intravox
 
 ## Permission Groups
 
-IntraVox automatically creates two permission groups during installation:
+IntraVox automatically creates three permission groups during installation:
 
 | Group | Purpose | Permissions |
 |-------|---------|-------------|
 | **IntraVox Admins** | Full administrative access | Read, Write, Create, Delete, Share |
+| **IntraVox Editors** | Content editing access | Read, Write, Create |
 | **IntraVox Users** | Standard read access | Read, Share |
 
 ### Automatic Admin Synchronization
@@ -66,18 +68,19 @@ When IntraVox is installed or re-enabled, **all Nextcloud administrators** (memb
 To give users access to IntraVox:
 
 1. **For read access**: Add users to the `IntraVox Users` group
-2. **For admin access**: Add users to the `IntraVox Admins` group (or make them a Nextcloud admin)
+2. **For editing access**: Add users to the `IntraVox Editors` group (can create and edit pages, but not delete)
+3. **For admin access**: Add users to the `IntraVox Admins` group (or make them a Nextcloud admin)
 
 You can manage group membership via:
 - Nextcloud Admin → Users → Edit user → Groups
-- Command line: `occ group:adduser "IntraVox Users" username`
+- Command line: `occ group:adduser "IntraVox Editors" username`
 
 ## Initial Setup
 
 ### Automatic Setup
 
 When IntraVox is first accessed, it automatically:
-1. Creates the permission groups (`IntraVox Admins` and `IntraVox Users`)
+1. Creates the permission groups (`IntraVox Admins`, `IntraVox Editors`, and `IntraVox Users`)
 2. Syncs Nextcloud admins to `IntraVox Admins`
 3. Creates a GroupFolder named "IntraVox"
 4. Sets up the basic folder structure
