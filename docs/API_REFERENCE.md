@@ -400,6 +400,24 @@ All widgets have these common properties:
 - `layout`: "grid", "carousel", "list"
 - `sortBy`: "modified", "created", "title"
 
+#### Calendar Widget
+```json
+{
+  "type": "calendar",
+  "column": 1,
+  "order": 1,
+  "title": "Upcoming Events",
+  "calendarIds": [1, 106],
+  "dateRange": "upcoming",
+  "limit": 5,
+  "showTime": true,
+  "showLocation": false,
+  "backgroundColor": null
+}
+```
+- `calendarIds`: Array of Nextcloud calendar IDs
+- `dateRange`: "upcoming", "this_week", "next_two_weeks", "this_month", "next_three_months", "next_six_months", "next_year", "past_week", "past_month", "past_three_months"
+
 ### Complete Page Example
 
 ```bash
@@ -1377,6 +1395,84 @@ POST /api/demo-data/clean-start
 ```
 
 Removes all IntraVox content and starts fresh. Admin only.
+
+---
+
+## Calendar API
+
+Requires authentication (session). Private and confidential events (`CLASS:PRIVATE`, `CLASS:CONFIDENTIAL`) are automatically filtered out. Date range is capped at 1 year maximum.
+
+### List Calendars
+
+```
+GET /api/calendar/calendars
+```
+
+Returns all calendars available to the current user (personal + shared).
+
+**Responses:** `200` OK, `401` Authentication required, `500` Server error
+
+**Response:**
+```json
+{
+  "calendars": [
+    {
+      "id": 106,
+      "uri": "org-events",
+      "displayName": "Org events",
+      "color": "#D6B461",
+      "isReadOnly": false
+    }
+  ]
+}
+```
+
+### Get Calendar Events
+
+```
+GET /api/calendar/events?calendarIds={ids}&rangeStart={iso}&rangeEnd={iso}&limit={n}
+```
+
+Returns events from one or more calendars within a time range. Recurring events (RRULE) are expanded into individual occurrences.
+
+**Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `calendarIds` | string | Yes | Comma-separated calendar IDs (e.g., `1,106`) |
+| `rangeStart` | string | No | ISO 8601 start date. Defaults to now |
+| `rangeEnd` | string | No | ISO 8601 end date. Defaults to 30 days from now |
+| `limit` | integer | No | Maximum events (1-20, default: 5) |
+
+**Responses:** `200` OK, `400` Invalid date format, `401` Authentication required, `500` Server error
+
+**Response:**
+```json
+{
+  "events": [
+    {
+      "uid": "f602fd5a-a355-4c98-87c4-c6ea30d8e405-2026-03-26T07:00:00+01:00",
+      "summary": "Team meeting A",
+      "location": "Utrecht office",
+      "start": "2026-03-26T07:00:00+01:00",
+      "end": "2026-03-26T09:30:00+01:00",
+      "isAllDay": false,
+      "calendarColor": "#D6B461",
+      "calendarName": "Org events"
+    }
+  ]
+}
+```
+
+### Get Calendar Events (Public Share)
+
+```
+GET /api/share/{token}/calendar/events?calendarIds={ids}&rangeStart={iso}&rangeEnd={iso}&limit={n}
+```
+
+Same parameters and response as above, but uses the share owner's calendar context. No authentication required — only a valid share token.
+
+**Responses:** `200` OK, `400` Invalid date format, `403` Invalid or expired share token, `500` Server error
 
 ---
 

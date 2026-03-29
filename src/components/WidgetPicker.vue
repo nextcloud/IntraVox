@@ -30,6 +30,7 @@ import ViewGrid from 'vue-material-design-icons/ViewGrid.vue';
 import Video from 'vue-material-design-icons/Video.vue';
 import Newspaper from 'vue-material-design-icons/Newspaper.vue';
 import AccountGroup from 'vue-material-design-icons/AccountGroup.vue';
+import Calendar from 'vue-material-design-icons/Calendar.vue';
 
 export default {
   name: 'WidgetPicker',
@@ -43,6 +44,7 @@ export default {
     Video,
     Newspaper,
     AccountGroup,
+    Calendar,
   },
   emits: ['close', 'select'],
   computed: {
@@ -98,6 +100,12 @@ export default {
           name: this.$t('People'),
           icon: 'account-group',
           description: this.$t('Show team members or people')
+        },
+        {
+          type: 'calendar',
+          name: this.$t('Calendar'),
+          icon: 'calendar',
+          description: this.$t('Show events from shared calendars')
         }
       ];
     }
@@ -113,6 +121,7 @@ export default {
         'video': 'Video',
         'newspaper': 'Newspaper',
         'account-group': 'AccountGroup',
+        'calendar': 'Calendar',
       };
       return iconMap[iconName] || 'Text';
     }

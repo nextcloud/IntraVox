@@ -98,6 +98,9 @@ Supported languages: **EN, NL, DE, FR**
   - [ ] Public share links (with and without password)
   - [ ] Share dialog, share button states
   - [ ] News widget (authenticated and public)
+  - [ ] Calendar widget (select calendars, verify events, recurring events, date ranges)
+  - [ ] Calendar widget in side column (compact layout) and main content (multi-column)
+  - [ ] Calendar widget with Light and Primary background colors
   - [ ] Comments and reactions
   - [ ] Demo data import
 - [ ] Check browser console for errors

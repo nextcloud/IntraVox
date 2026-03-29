@@ -671,7 +671,7 @@ export default {
     },
     needsEditButton(widgetType) {
       // Show edit button for widgets that aren't inline-editable
-      return ['image', 'link', 'links', 'file', 'heading', 'video', 'news', 'people'].includes(widgetType);
+      return ['image', 'link', 'links', 'file', 'heading', 'video', 'news', 'people', 'calendar'].includes(widgetType);
     },
     initializeWidgetIds() {
       // Collect ALL widgets from all zones for duplicate detection
@@ -974,7 +974,7 @@ export default {
         this.showWidgetPicker = false;
 
         // Open editor modal for widgets that need configuration
-        if (widgetType === 'image' || widgetType === 'links' || widgetType === 'file' || widgetType === 'heading' || widgetType === 'video' || widgetType === 'news' || widgetType === 'people') {
+        if (widgetType === 'image' || widgetType === 'links' || widgetType === 'file' || widgetType === 'heading' || widgetType === 'video' || widgetType === 'news' || widgetType === 'people' || widgetType === 'calendar') {
           this.editHeaderRowWidget(newWidget);
         }
 
@@ -992,7 +992,7 @@ export default {
         this.showWidgetPicker = false;
 
         // Open editor modal for widgets that need configuration
-        if (widgetType === 'image' || widgetType === 'links' || widgetType === 'file' || widgetType === 'heading' || widgetType === 'video' || widgetType === 'news' || widgetType === 'people') {
+        if (widgetType === 'image' || widgetType === 'links' || widgetType === 'file' || widgetType === 'heading' || widgetType === 'video' || widgetType === 'news' || widgetType === 'people' || widgetType === 'calendar') {
           this.editSideColumnWidget(newWidget, side);
         }
 
@@ -1020,7 +1020,7 @@ export default {
       this.showWidgetPicker = false;
 
       // Open editor modal for widgets that need configuration
-      if (widgetType === 'image' || widgetType === 'links' || widgetType === 'file' || widgetType === 'heading' || widgetType === 'video' || widgetType === 'news' || widgetType === 'people') {
+      if (widgetType === 'image' || widgetType === 'links' || widgetType === 'file' || widgetType === 'heading' || widgetType === 'video' || widgetType === 'news' || widgetType === 'people' || widgetType === 'calendar') {
         this.editWidget(newWidget, rowIndex);
       }
 
@@ -1109,6 +1109,15 @@ export default {
             title: true,
             biography: false,
           };
+          break;
+        case 'calendar':
+          widget.title = '';
+          widget.backgroundColor = null;
+          widget.calendarIds = [];
+          widget.dateRange = 'upcoming';
+          widget.limit = 5;
+          widget.showTime = true;
+          widget.showLocation = false;
           break;
       }
 

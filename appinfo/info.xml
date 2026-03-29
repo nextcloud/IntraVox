@@ -9,7 +9,7 @@
 **Key features:**
 * Visual page editor with drag-and-drop widget placement
 * Flexible grid layouts (1–5 columns)
-* Rich widget library: text, images, videos, links, people, files, and more
+* Rich widget library: text, images, videos, links, people, calendar, files, and more
 * Multi-language support with per-language content folders
 * Navigation editor with megamenu and sidebar options
 * Personal RSS feed for following page updates
@@ -30,7 +30,7 @@
 
 Built with Vue 3 for a fast, modern, and secure experience.
     ]]></description>
-    <version>1.0.1</version>
+    <version>1.1.0</version>
     <licence>agpl</licence>
     <author mail="rik@shalution.nl">Rik Dekker</author>
     <namespace>IntraVox</namespace>

@@ -126,7 +126,7 @@ See [AUTHORIZATION.md](AUTHORIZATION.md) for detailed permission setup.
 
 ## Language Configuration
 
-IntraVox supports multiple languages. Each language has its own content folder:
+IntraVox supports multiple languages. Each language has its own content folder. **Important:** Each user sees the content folder that matches their Nextcloud language setting (Settings → Personal → Language). If a user's language doesn't match any available content folder, they will see an empty intranet instead of the expected content.
 
 ```
 IntraVox/
@@ -161,6 +161,8 @@ IntraVox includes demo content to help you get started quickly. Demo data can be
 1. Go to **Nextcloud Admin Settings** → **IntraVox**
 2. Click **Install** next to your preferred language
 3. The GroupFolder and permission groups are created automatically
+
+> **Important:** Your Nextcloud language setting must match the demo data language. For example, if you install the Dutch demo data, set your language to Nederlands (Settings → Personal → Language). Otherwise you will see an empty Welcome page instead of the demo content.
 
 ### Available Languages
 
@@ -338,6 +340,7 @@ IntraVox (base: Read + Share)
 
 | Problem | Solution |
 |---------|----------|
+| Admin sees empty Welcome page after demo import | Your Nextcloud language setting doesn't match the demo data language. Change it at Settings → Personal → Language, then clear browser cache or use an incognito window |
 | Users see empty feed | Add Share permission to the user group on the language folder(s) |
 | Feed returns 404 | Enable "Allow users to share via link and emails" in Sharing settings |
 | Feed works for admins but not regular users | Admin group has all permissions; add Share to the user group |

@@ -18,7 +18,7 @@ use OCA\Files_Versions\Versions\IVersionManager;
 use OCA\Files_Versions\Versions\IVersion;
 
 class PageService {
-    private const ALLOWED_WIDGET_TYPES = ['text', 'heading', 'image', 'links', 'file', 'divider', 'spacer', 'video', 'news', 'people'];
+    private const ALLOWED_WIDGET_TYPES = ['text', 'heading', 'image', 'links', 'file', 'divider', 'spacer', 'video', 'news', 'people', 'calendar'];
     private const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
     private const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/ogg'];
     private const ALLOWED_MEDIA_TYPES = [
@@ -2433,7 +2433,7 @@ class PageService {
                 if (isset($widget['selectedUsers']) && is_array($widget['selectedUsers'])) {
                     foreach ($widget['selectedUsers'] as $userId) {
                         // User IDs are alphanumeric strings
-                        $sanitizedUserId = preg_replace('/[^a-zA-Z0-9_-]/', '', (string)$userId);
+                        $sanitizedUserId = preg_replace('/[^a-zA-Z0-9_.@\-]/', '', (string)$userId);
                         if (!empty($sanitizedUserId)) {
                             $sanitized['selectedUsers'][] = $sanitizedUserId;
                         }
@@ -2521,6 +2521,40 @@ class PageService {
                     'socialLinks' => (bool)($widget['showFields']['socialLinks'] ?? false),
                     'customFields' => (bool)($widget['showFields']['customFields'] ?? false),
                 ];
+
+                // Background color
+                if (isset($widget['backgroundColor'])) {
+                    $sanitized['backgroundColor'] = $this->sanitizeBackgroundColor($widget['backgroundColor']);
+                }
+                break;
+
+            case 'calendar':
+                // Calendar widget - displays events from shared calendars
+                $sanitized['title'] = $this->sanitizeText($widget['title'] ?? '');
+
+                // Calendar IDs (array of integers)
+                $sanitized['calendarIds'] = [];
+                if (isset($widget['calendarIds']) && is_array($widget['calendarIds'])) {
+                    foreach ($widget['calendarIds'] as $id) {
+                        $intId = (int) $id;
+                        if ($intId > 0) {
+                            $sanitized['calendarIds'][] = $intId;
+                        }
+                    }
+                }
+
+                // Date range
+                $allowedRanges = ['upcoming', 'this_week', 'next_two_weeks', 'this_month', 'next_three_months', 'next_six_months', 'next_year', 'past_week', 'past_month', 'past_three_months'];
+                $sanitized['dateRange'] = in_array($widget['dateRange'] ?? 'upcoming', $allowedRanges)
+                    ? $widget['dateRange']
+                    : 'upcoming';
+
+                // Limit (1-20 events)
+                $sanitized['limit'] = max(1, min((int) ($widget['limit'] ?? 5), 20));
+
+                // Display options
+                $sanitized['showTime'] = (bool) ($widget['showTime'] ?? true);
+                $sanitized['showLocation'] = (bool) ($widget['showLocation'] ?? false);
 
                 // Background color
                 if (isset($widget['backgroundColor'])) {

@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "IntraVox API",
-    "version": "1.0.1",
+    "version": "1.1.0",
     "description": "IntraVox is a modern intranet page builder for Nextcloud. This API provides endpoints for managing pages, media, navigation, comments, and more.",
     "license": {
       "name": "AGPL-3.0",
@@ -73,7 +73,9 @@
         "operationId": "list-pages",
         "summary": "List all pages",
         "description": "Returns a list of all pages the current user has access to",
-        "tags": ["Pages"],
+        "tags": [
+          "Pages"
+        ],
         "responses": {
           "200": {
             "description": "List of pages",
@@ -97,7 +99,9 @@
         "operationId": "create-page",
         "summary": "Create a new page",
         "description": "Creates a new page with the given data",
-        "tags": ["Pages"],
+        "tags": [
+          "Pages"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -136,7 +140,9 @@
         "operationId": "get-page-tree",
         "summary": "Get page tree",
         "description": "Returns the hierarchical page tree structure",
-        "tags": ["Pages"],
+        "tags": [
+          "Pages"
+        ],
         "responses": {
           "200": {
             "description": "Page tree",
@@ -167,7 +173,9 @@
         "operationId": "get-page",
         "summary": "Get a page",
         "description": "Returns a single page by its unique ID",
-        "tags": ["Pages"],
+        "tags": [
+          "Pages"
+        ],
         "parameters": [
           {
             "name": "id",
@@ -202,7 +210,9 @@
         "operationId": "update-page",
         "summary": "Update a page",
         "description": "Updates an existing page",
-        "tags": ["Pages"],
+        "tags": [
+          "Pages"
+        ],
         "parameters": [
           {
             "name": "id",
@@ -250,7 +260,9 @@
         "operationId": "delete-page",
         "summary": "Delete a page",
         "description": "Deletes a page and all its children",
-        "tags": ["Pages"],
+        "tags": [
+          "Pages"
+        ],
         "parameters": [
           {
             "name": "id",
@@ -283,7 +295,9 @@
         "operationId": "get-breadcrumb",
         "summary": "Get page breadcrumb",
         "description": "Returns the breadcrumb path for a page",
-        "tags": ["Pages"],
+        "tags": [
+          "Pages"
+        ],
         "parameters": [
           {
             "name": "id",
@@ -321,7 +335,9 @@
         "operationId": "get-page-versions",
         "summary": "Get page versions",
         "description": "Returns version history for a page",
-        "tags": ["Pages"],
+        "tags": [
+          "Pages"
+        ],
         "parameters": [
           {
             "name": "pageId",
@@ -359,7 +375,9 @@
         "operationId": "restore-page-version",
         "summary": "Restore page version",
         "description": "Restores a page to a previous version",
-        "tags": ["Pages"],
+        "tags": [
+          "Pages"
+        ],
         "parameters": [
           {
             "name": "pageId",
@@ -390,7 +408,9 @@
         "operationId": "upload-media",
         "summary": "Upload media file",
         "description": "Uploads a media file to a page",
-        "tags": ["Media"],
+        "tags": [
+          "Media"
+        ],
         "parameters": [
           {
             "name": "pageId",
@@ -414,7 +434,9 @@
                     "description": "File to upload"
                   }
                 },
-                "required": ["file"]
+                "required": [
+                  "file"
+                ]
               }
             }
           }
@@ -458,7 +480,9 @@
         "operationId": "list-media",
         "summary": "List media files",
         "description": "Returns a list of media files for a page",
-        "tags": ["Media"],
+        "tags": [
+          "Media"
+        ],
         "parameters": [
           {
             "name": "pageId",
@@ -496,7 +520,9 @@
         "operationId": "get-media",
         "summary": "Get media file",
         "description": "Returns a media file",
-        "tags": ["Media"],
+        "tags": [
+          "Media"
+        ],
         "parameters": [
           {
             "name": "pageId",
@@ -544,7 +570,9 @@
         "operationId": "search-pages",
         "summary": "Search pages",
         "description": "Search pages by title and content",
-        "tags": ["Pages"],
+        "tags": [
+          "Pages"
+        ],
         "parameters": [
           {
             "name": "query",
@@ -590,7 +618,9 @@
         "operationId": "get-news",
         "summary": "Get news items",
         "description": "Returns news items for the News widget with optional filtering",
-        "tags": ["News"],
+        "tags": [
+          "News"
+        ],
         "parameters": [
           {
             "name": "sourcePath",
@@ -614,7 +644,10 @@
             "description": "How to combine filters",
             "schema": {
               "type": "string",
-              "enum": ["AND", "OR"],
+              "enum": [
+                "AND",
+                "OR"
+              ],
               "default": "AND"
             }
           },
@@ -635,7 +668,10 @@
             "description": "Field to sort by",
             "schema": {
               "type": "string",
-              "enum": ["modified", "title"],
+              "enum": [
+                "modified",
+                "title"
+              ],
               "default": "modified"
             }
           },
@@ -645,7 +681,10 @@
             "description": "Sort direction",
             "schema": {
               "type": "string",
-              "enum": ["asc", "desc"],
+              "enum": [
+                "asc",
+                "desc"
+              ],
               "default": "desc"
             }
           }
@@ -683,7 +722,9 @@
         "operationId": "get-navigation",
         "summary": "Get navigation",
         "description": "Returns the navigation structure",
-        "tags": ["Navigation"],
+        "tags": [
+          "Navigation"
+        ],
         "responses": {
           "200": {
             "description": "Navigation data",
@@ -701,7 +742,9 @@
         "operationId": "save-navigation",
         "summary": "Save navigation",
         "description": "Saves the navigation structure",
-        "tags": ["Navigation"],
+        "tags": [
+          "Navigation"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -727,7 +770,9 @@
         "operationId": "get-footer",
         "summary": "Get footer",
         "description": "Returns the footer configuration",
-        "tags": ["Navigation"],
+        "tags": [
+          "Navigation"
+        ],
         "responses": {
           "200": {
             "description": "Footer data",
@@ -745,7 +790,9 @@
         "operationId": "save-footer",
         "summary": "Save footer",
         "description": "Saves the footer configuration",
-        "tags": ["Navigation"],
+        "tags": [
+          "Navigation"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -768,7 +815,9 @@
         "operationId": "get-comments",
         "summary": "Get page comments",
         "description": "Returns comments for a page",
-        "tags": ["Comments"],
+        "tags": [
+          "Comments"
+        ],
         "parameters": [
           {
             "name": "pageId",
@@ -804,7 +853,9 @@
         "operationId": "create-comment",
         "summary": "Create comment",
         "description": "Creates a new comment on a page",
-        "tags": ["Comments"],
+        "tags": [
+          "Comments"
+        ],
         "parameters": [
           {
             "name": "pageId",
@@ -831,7 +882,9 @@
                     "description": "Parent comment ID for replies"
                   }
                 },
-                "required": ["content"]
+                "required": [
+                  "content"
+                ]
               }
             }
           }
@@ -854,7 +907,9 @@
       "put": {
         "operationId": "update-comment",
         "summary": "Update comment",
-        "tags": ["Comments"],
+        "tags": [
+          "Comments"
+        ],
         "parameters": [
           {
             "name": "commentId",
@@ -876,7 +931,9 @@
                     "type": "string"
                   }
                 },
-                "required": ["content"]
+                "required": [
+                  "content"
+                ]
               }
             }
           }
@@ -890,7 +947,9 @@
       "delete": {
         "operationId": "delete-comment",
         "summary": "Delete comment",
-        "tags": ["Comments"],
+        "tags": [
+          "Comments"
+        ],
         "parameters": [
           {
             "name": "commentId",
@@ -912,7 +971,9 @@
       "get": {
         "operationId": "get-page-reactions",
         "summary": "Get page reactions",
-        "tags": ["Comments"],
+        "tags": [
+          "Comments"
+        ],
         "parameters": [
           {
             "name": "pageId",
@@ -941,7 +1002,9 @@
       "post": {
         "operationId": "add-page-reaction",
         "summary": "Add page reaction",
-        "tags": ["Comments"],
+        "tags": [
+          "Comments"
+        ],
         "parameters": [
           {
             "name": "pageId",
@@ -969,7 +1032,9 @@
       "delete": {
         "operationId": "remove-page-reaction",
         "summary": "Remove page reaction",
-        "tags": ["Comments"],
+        "tags": [
+          "Comments"
+        ],
         "parameters": [
           {
             "name": "pageId",
@@ -999,7 +1064,9 @@
       "get": {
         "operationId": "get-video-domains",
         "summary": "Get video domains whitelist",
-        "tags": ["Settings"],
+        "tags": [
+          "Settings"
+        ],
         "responses": {
           "200": {
             "description": "Video domains",
@@ -1025,7 +1092,9 @@
         "operationId": "set-video-domains",
         "summary": "Set video domains whitelist",
         "description": "Admin only",
-        "tags": ["Settings"],
+        "tags": [
+          "Settings"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -1058,7 +1127,9 @@
       "get": {
         "operationId": "get-engagement-settings",
         "summary": "Get engagement settings",
-        "tags": ["Settings"],
+        "tags": [
+          "Settings"
+        ],
         "responses": {
           "200": {
             "description": "Engagement settings",
@@ -1076,7 +1147,9 @@
         "operationId": "set-engagement-settings",
         "summary": "Set engagement settings",
         "description": "Admin only",
-        "tags": ["Settings"],
+        "tags": [
+          "Settings"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -1098,7 +1171,9 @@
       "get": {
         "operationId": "get-publication-settings",
         "summary": "Get publication settings",
-        "tags": ["Settings"],
+        "tags": [
+          "Settings"
+        ],
         "responses": {
           "200": {
             "description": "Publication settings",
@@ -1116,7 +1191,9 @@
         "operationId": "set-publication-settings",
         "summary": "Set publication settings",
         "description": "Admin only",
-        "tags": ["Settings"],
+        "tags": [
+          "Settings"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -1138,7 +1215,9 @@
       "get": {
         "operationId": "get-exportable-languages",
         "summary": "Get exportable languages",
-        "tags": ["Export"],
+        "tags": [
+          "Export"
+        ],
         "responses": {
           "200": {
             "description": "Available languages",
@@ -1165,7 +1244,9 @@
       "get": {
         "operationId": "export-language-zip",
         "summary": "Export language as ZIP",
-        "tags": ["Export"],
+        "tags": [
+          "Export"
+        ],
         "parameters": [
           {
             "name": "language",
@@ -1196,7 +1277,9 @@
         "operationId": "get-metavox-status",
         "summary": "Get MetaVox status",
         "description": "Check if MetaVox app is installed and enabled",
-        "tags": ["Settings"],
+        "tags": [
+          "Settings"
+        ],
         "responses": {
           "200": {
             "description": "MetaVox status",
@@ -1224,7 +1307,9 @@
         "operationId": "list-templates",
         "summary": "List all templates",
         "description": "Returns a list of all available page templates including built-in and custom templates",
-        "tags": ["Templates"],
+        "tags": [
+          "Templates"
+        ],
         "responses": {
           "200": {
             "description": "Template list with metadata",
@@ -1249,7 +1334,12 @@
                       "description": "Team information, services, and resources",
                       "columnCount": 3,
                       "widgetCount": 12,
-                      "widgetTypes": ["heading", "text", "image", "links"],
+                      "widgetTypes": [
+                        "heading",
+                        "text",
+                        "image",
+                        "links"
+                      ],
                       "complexity": "medium",
                       "hasHeaderRow": true,
                       "hasSidebars": false
@@ -1268,7 +1358,9 @@
         "operationId": "save-as-template",
         "summary": "Save page as template",
         "description": "Saves an existing page as a reusable template. Copies the page structure and media to the templates folder.",
-        "tags": ["Templates"],
+        "tags": [
+          "Templates"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -1315,7 +1407,9 @@
         "operationId": "get-template",
         "summary": "Get template details",
         "description": "Returns the full template data including layout and widgets",
-        "tags": ["Templates"],
+        "tags": [
+          "Templates"
+        ],
         "parameters": [
           {
             "name": "id",
@@ -1355,7 +1449,9 @@
         "operationId": "delete-template",
         "summary": "Delete template",
         "description": "Deletes a custom template. Built-in templates cannot be deleted.",
-        "tags": ["Templates"],
+        "tags": [
+          "Templates"
+        ],
         "parameters": [
           {
             "name": "id",
@@ -1403,7 +1499,9 @@
         "operationId": "create-page-from-template",
         "summary": "Create page from template",
         "description": "Creates a new page based on an existing template. Clones the template's layout, widgets, and media files.",
-        "tags": ["Templates"],
+        "tags": [
+          "Templates"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -1479,7 +1577,9 @@
         "operationId": "get-permissions",
         "summary": "Get user permissions",
         "description": "Returns the current user's permissions",
-        "tags": ["Settings"],
+        "tags": [
+          "Settings"
+        ],
         "responses": {
           "200": {
             "description": "Permission data",
@@ -1510,21 +1610,27 @@
         "operationId": "get-page-by-share",
         "summary": "Get a page via share token",
         "description": "Returns a page's content for anonymous access via a Nextcloud share link. The page must be within the share's scope. Password-protected shares require a valid session (see /s/{token}/authenticate).",
-        "tags": ["Public Share"],
+        "tags": [
+          "Public Share"
+        ],
         "security": [],
         "parameters": [
           {
             "name": "token",
             "in": "path",
             "required": true,
-            "schema": { "type": "string" },
+            "schema": {
+              "type": "string"
+            },
             "description": "Nextcloud share token (15-20 alphanumeric characters)"
           },
           {
             "name": "uniqueId",
             "in": "path",
             "required": true,
-            "schema": { "type": "string" },
+            "schema": {
+              "type": "string"
+            },
             "description": "Unique ID of the page to retrieve"
           }
         ],
@@ -1546,8 +1652,12 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "error": { "type": "string" },
-                    "passwordRequired": { "type": "boolean" }
+                    "error": {
+                      "type": "string"
+                    },
+                    "passwordRequired": {
+                      "type": "boolean"
+                    }
                   }
                 }
               }
@@ -1567,14 +1677,18 @@
         "operationId": "get-navigation-by-share",
         "summary": "Get navigation for a share",
         "description": "Returns the navigation menu filtered to the share's scope. Only items within the shared folder are included.",
-        "tags": ["Public Share"],
+        "tags": [
+          "Public Share"
+        ],
         "security": [],
         "parameters": [
           {
             "name": "token",
             "in": "path",
             "required": true,
-            "schema": { "type": "string" },
+            "schema": {
+              "type": "string"
+            },
             "description": "Nextcloud share token"
           }
         ],
@@ -1608,14 +1722,18 @@
         "operationId": "get-page-tree-by-share",
         "summary": "Get page tree for a share",
         "description": "Returns the page tree structure filtered to the share's scope.",
-        "tags": ["Public Share"],
+        "tags": [
+          "Public Share"
+        ],
         "security": [],
         "parameters": [
           {
             "name": "token",
             "in": "path",
             "required": true,
-            "schema": { "type": "string" },
+            "schema": {
+              "type": "string"
+            },
             "description": "Nextcloud share token"
           }
         ],
@@ -1652,32 +1770,47 @@
         "operationId": "get-news-by-share",
         "summary": "Get news items for a share",
         "description": "Returns news items from pages within the share scope. Supports filtering by source page and sorting.",
-        "tags": ["Public Share"],
+        "tags": [
+          "Public Share"
+        ],
         "security": [],
         "parameters": [
           {
             "name": "token",
             "in": "path",
             "required": true,
-            "schema": { "type": "string" },
+            "schema": {
+              "type": "string"
+            },
             "description": "Nextcloud share token"
           },
           {
             "name": "sourcePageId",
             "in": "query",
-            "schema": { "type": "string" },
+            "schema": {
+              "type": "string"
+            },
             "description": "Filter news to a specific source page"
           },
           {
             "name": "limit",
             "in": "query",
-            "schema": { "type": "integer", "default": 10 },
+            "schema": {
+              "type": "integer",
+              "default": 10
+            },
             "description": "Maximum number of news items"
           },
           {
             "name": "sort",
             "in": "query",
-            "schema": { "type": "string", "enum": ["date", "title"] },
+            "schema": {
+              "type": "string",
+              "enum": [
+                "date",
+                "title"
+              ]
+            },
             "description": "Sort order for news items"
           }
         ],
@@ -1699,28 +1832,36 @@
         "operationId": "get-media-by-share",
         "summary": "Get page media via share token",
         "description": "Returns a media file (image, video, etc.) attached to a page within the share scope.",
-        "tags": ["Public Share"],
+        "tags": [
+          "Public Share"
+        ],
         "security": [],
         "parameters": [
           {
             "name": "token",
             "in": "path",
             "required": true,
-            "schema": { "type": "string" },
+            "schema": {
+              "type": "string"
+            },
             "description": "Nextcloud share token"
           },
           {
             "name": "uniqueId",
             "in": "path",
             "required": true,
-            "schema": { "type": "string" },
+            "schema": {
+              "type": "string"
+            },
             "description": "Unique ID of the page"
           },
           {
             "name": "filename",
             "in": "path",
             "required": true,
-            "schema": { "type": "string" },
+            "schema": {
+              "type": "string"
+            },
             "description": "Media filename"
           }
         ],
@@ -1729,7 +1870,10 @@
             "description": "Media file content",
             "content": {
               "application/octet-stream": {
-                "schema": { "type": "string", "format": "binary" }
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
               }
             }
           },
@@ -1747,21 +1891,27 @@
         "operationId": "get-resources-media-by-share",
         "summary": "Get shared resource media via share token",
         "description": "Returns a media file from the shared resources library (_resources folder).",
-        "tags": ["Public Share"],
+        "tags": [
+          "Public Share"
+        ],
         "security": [],
         "parameters": [
           {
             "name": "token",
             "in": "path",
             "required": true,
-            "schema": { "type": "string" },
+            "schema": {
+              "type": "string"
+            },
             "description": "Nextcloud share token"
           },
           {
             "name": "filename",
             "in": "path",
             "required": true,
-            "schema": { "type": "string" },
+            "schema": {
+              "type": "string"
+            },
             "description": "Resource media filename"
           }
         ],
@@ -1770,7 +1920,10 @@
             "description": "Media file content",
             "content": {
               "application/octet-stream": {
-                "schema": { "type": "string", "format": "binary" }
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
               }
             }
           },
@@ -1788,28 +1941,36 @@
         "operationId": "get-resources-media-with-folder-by-share",
         "summary": "Get shared resource media from subfolder via share token",
         "description": "Returns a media file from a subfolder within the shared resources library.",
-        "tags": ["Public Share"],
+        "tags": [
+          "Public Share"
+        ],
         "security": [],
         "parameters": [
           {
             "name": "token",
             "in": "path",
             "required": true,
-            "schema": { "type": "string" },
+            "schema": {
+              "type": "string"
+            },
             "description": "Nextcloud share token"
           },
           {
             "name": "folder",
             "in": "path",
             "required": true,
-            "schema": { "type": "string" },
+            "schema": {
+              "type": "string"
+            },
             "description": "Subfolder name (e.g. 'backgrounds')"
           },
           {
             "name": "filename",
             "in": "path",
             "required": true,
-            "schema": { "type": "string" },
+            "schema": {
+              "type": "string"
+            },
             "description": "Resource media filename"
           }
         ],
@@ -1818,7 +1979,10 @@
             "description": "Media file content",
             "content": {
               "application/octet-stream": {
-                "schema": { "type": "string", "format": "binary" }
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
               }
             }
           },
@@ -1836,13 +2000,17 @@
         "operationId": "get-share-info",
         "summary": "Get share info for a page",
         "description": "Returns information about whether and how a page is shared via Nextcloud share links. Includes scope, password status, and public URL.",
-        "tags": ["Public Share"],
+        "tags": [
+          "Public Share"
+        ],
         "parameters": [
           {
             "name": "uniqueId",
             "in": "path",
             "required": true,
-            "schema": { "type": "string" },
+            "schema": {
+              "type": "string"
+            },
             "description": "Unique ID of the page"
           }
         ],
@@ -1854,15 +2022,37 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "hasShare": { "type": "boolean" },
-                    "scope": { "type": "string", "enum": ["page", "folder"] },
-                    "scopeName": { "type": "string" },
-                    "scopeLabel": { "type": "string" },
-                    "isLanguageRoot": { "type": "boolean" },
-                    "hasPassword": { "type": "boolean" },
-                    "publicUrl": { "type": "string" },
-                    "filesUrl": { "type": "string" },
-                    "navigation": { "type": "array" }
+                    "hasShare": {
+                      "type": "boolean"
+                    },
+                    "scope": {
+                      "type": "string",
+                      "enum": [
+                        "page",
+                        "folder"
+                      ]
+                    },
+                    "scopeName": {
+                      "type": "string"
+                    },
+                    "scopeLabel": {
+                      "type": "string"
+                    },
+                    "isLanguageRoot": {
+                      "type": "boolean"
+                    },
+                    "hasPassword": {
+                      "type": "boolean"
+                    },
+                    "publicUrl": {
+                      "type": "string"
+                    },
+                    "filesUrl": {
+                      "type": "string"
+                    },
+                    "navigation": {
+                      "type": "array"
+                    }
                   }
                 }
               }
@@ -1879,26 +2069,36 @@
         "operationId": "get-feed",
         "summary": "Get RSS feed",
         "description": "Returns an RSS 2.0 feed of IntraVox pages accessible to the token owner. Supports conditional requests via ETag and If-Modified-Since headers.",
-        "tags": ["RSS Feed"],
+        "tags": [
+          "RSS Feed"
+        ],
         "security": [],
         "parameters": [
           {
             "name": "token",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "minLength": 64, "maxLength": 64 },
+            "schema": {
+              "type": "string",
+              "minLength": 64,
+              "maxLength": 64
+            },
             "description": "64-character alphanumeric feed token"
           },
           {
             "name": "If-None-Match",
             "in": "header",
-            "schema": { "type": "string" },
+            "schema": {
+              "type": "string"
+            },
             "description": "ETag from a previous response for conditional request"
           },
           {
             "name": "If-Modified-Since",
             "in": "header",
-            "schema": { "type": "string" },
+            "schema": {
+              "type": "string"
+            },
             "description": "Last-Modified value from a previous response"
           }
         ],
@@ -1906,13 +2106,28 @@
           "200": {
             "description": "RSS 2.0 XML feed",
             "headers": {
-              "ETag": { "schema": { "type": "string" } },
-              "Last-Modified": { "schema": { "type": "string" } },
-              "Cache-Control": { "schema": { "type": "string", "example": "public, max-age=300, must-revalidate" } }
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Last-Modified": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "example": "public, max-age=300, must-revalidate"
+                }
+              }
             },
             "content": {
               "application/rss+xml": {
-                "schema": { "type": "string" }
+                "schema": {
+                  "type": "string"
+                }
               }
             }
           },
@@ -1930,28 +2145,38 @@
         "operationId": "get-feed-media",
         "summary": "Get feed media file",
         "description": "Serves media files (images) referenced in feed items, authenticated by the feed token.",
-        "tags": ["RSS Feed"],
+        "tags": [
+          "RSS Feed"
+        ],
         "security": [],
         "parameters": [
           {
             "name": "token",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "minLength": 64, "maxLength": 64 },
+            "schema": {
+              "type": "string",
+              "minLength": 64,
+              "maxLength": 64
+            },
             "description": "64-character alphanumeric feed token"
           },
           {
             "name": "pageId",
             "in": "path",
             "required": true,
-            "schema": { "type": "string" },
+            "schema": {
+              "type": "string"
+            },
             "description": "Unique ID of the page"
           },
           {
             "name": "filename",
             "in": "path",
             "required": true,
-            "schema": { "type": "string" },
+            "schema": {
+              "type": "string"
+            },
             "description": "Media filename"
           }
         ],
@@ -1960,7 +2185,10 @@
             "description": "Media file",
             "content": {
               "image/*": {
-                "schema": { "type": "string", "format": "binary" }
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
               }
             }
           },
@@ -1975,7 +2203,9 @@
         "operationId": "get-feed-token",
         "summary": "Get current user's feed token",
         "description": "Returns the user's feed token information including the feed URL, configuration, and last accessed timestamp.",
-        "tags": ["RSS Feed"],
+        "tags": [
+          "RSS Feed"
+        ],
         "responses": {
           "200": {
             "description": "Feed token info",
@@ -1984,15 +2214,35 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "hasToken": { "type": "boolean" },
-                    "linkSharingDisabled": { "type": "boolean" },
-                    "feedUrl": { "type": "string" },
-                    "last_accessed": { "type": "string", "format": "date-time", "nullable": true },
+                    "hasToken": {
+                      "type": "boolean"
+                    },
+                    "linkSharingDisabled": {
+                      "type": "boolean"
+                    },
+                    "feedUrl": {
+                      "type": "string"
+                    },
+                    "last_accessed": {
+                      "type": "string",
+                      "format": "date-time",
+                      "nullable": true
+                    },
                     "config": {
                       "type": "object",
                       "properties": {
-                        "scope": { "type": "string", "enum": ["all", "language"] },
-                        "limit": { "type": "integer", "minimum": 1, "maximum": 50 }
+                        "scope": {
+                          "type": "string",
+                          "enum": [
+                            "all",
+                            "language"
+                          ]
+                        },
+                        "limit": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 50
+                        }
                       }
                     }
                   }
@@ -2009,15 +2259,29 @@
         "operationId": "regenerate-feed-token",
         "summary": "Generate or regenerate feed token",
         "description": "Creates a new feed token (or replaces the existing one). The old feed URL stops working immediately.",
-        "tags": ["RSS Feed"],
+        "tags": [
+          "RSS Feed"
+        ],
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
                 "properties": {
-                  "scope": { "type": "string", "enum": ["all", "language"], "default": "language" },
-                  "limit": { "type": "integer", "minimum": 1, "maximum": 50, "default": 20 }
+                  "scope": {
+                    "type": "string",
+                    "enum": [
+                      "all",
+                      "language"
+                    ],
+                    "default": "language"
+                  },
+                  "limit": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 50,
+                    "default": 20
+                  }
                 }
               }
             }
@@ -2031,12 +2295,18 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "feedUrl": { "type": "string" },
+                    "feedUrl": {
+                      "type": "string"
+                    },
                     "config": {
                       "type": "object",
                       "properties": {
-                        "scope": { "type": "string" },
-                        "limit": { "type": "integer" }
+                        "scope": {
+                          "type": "string"
+                        },
+                        "limit": {
+                          "type": "integer"
+                        }
                       }
                     }
                   }
@@ -2056,7 +2326,9 @@
         "operationId": "revoke-feed-token",
         "summary": "Revoke feed token",
         "description": "Deletes the user's feed token. The feed URL becomes invalid immediately.",
-        "tags": ["RSS Feed"],
+        "tags": [
+          "RSS Feed"
+        ],
         "responses": {
           "200": {
             "description": "Token revoked"
@@ -2072,15 +2344,27 @@
         "operationId": "update-feed-config",
         "summary": "Update feed configuration",
         "description": "Updates feed scope and item limit without changing the token.",
-        "tags": ["RSS Feed"],
+        "tags": [
+          "RSS Feed"
+        ],
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
                 "properties": {
-                  "scope": { "type": "string", "enum": ["all", "language"] },
-                  "limit": { "type": "integer", "minimum": 1, "maximum": 50 }
+                  "scope": {
+                    "type": "string",
+                    "enum": [
+                      "all",
+                      "language"
+                    ]
+                  },
+                  "limit": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 50
+                  }
                 }
               }
             }
@@ -2097,8 +2381,12 @@
                     "config": {
                       "type": "object",
                       "properties": {
-                        "scope": { "type": "string" },
-                        "limit": { "type": "integer" }
+                        "scope": {
+                          "type": "string"
+                        },
+                        "limit": {
+                          "type": "integer"
+                        }
                       }
                     }
                   }
@@ -2108,6 +2396,283 @@
           },
           "401": {
             "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/calendar/calendars": {
+      "get": {
+        "operationId": "get-calendars",
+        "summary": "List available calendars",
+        "description": "Returns all calendars available to the current user (personal + shared)",
+        "tags": [
+          "Calendar"
+        ],
+        "responses": {
+          "200": {
+            "description": "List of calendars",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "calendars": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer"
+                          },
+                          "uri": {
+                            "type": "string"
+                          },
+                          "displayName": {
+                            "type": "string"
+                          },
+                          "color": {
+                            "type": "string"
+                          },
+                          "isReadOnly": {
+                            "type": "boolean"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Failed to get calendars"
+          }
+        }
+      }
+    },
+    "/api/calendar/events": {
+      "get": {
+        "operationId": "get-calendar-events",
+        "summary": "Get calendar events",
+        "description": "Returns events from one or more calendars within a time range. Recurring events are expanded into individual occurrences. Private/confidential events are filtered out.",
+        "tags": [
+          "Calendar"
+        ],
+        "parameters": [
+          {
+            "name": "calendarIds",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Comma-separated calendar IDs"
+          },
+          {
+            "name": "rangeStart",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "description": "Start of date range (ISO 8601). Defaults to now"
+          },
+          {
+            "name": "rangeEnd",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "description": "End of date range (ISO 8601). Defaults to 30 days from now"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 5,
+              "minimum": 1,
+              "maximum": 20
+            },
+            "description": "Maximum events to return"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of events",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "events": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "uid": {
+                            "type": "string"
+                          },
+                          "summary": {
+                            "type": "string"
+                          },
+                          "location": {
+                            "type": "string"
+                          },
+                          "start": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "end": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "isAllDay": {
+                            "type": "boolean"
+                          },
+                          "calendarColor": {
+                            "type": "string"
+                          },
+                          "calendarName": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid date format"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Failed to get calendar events"
+          }
+        }
+      }
+    },
+    "/api/share/{token}/calendar/events": {
+      "get": {
+        "operationId": "get-calendar-events-by-share",
+        "summary": "Get calendar events via public share",
+        "description": "Returns calendar events using the share owner's context. Requires a valid share token.",
+        "tags": [
+          "Calendar",
+          "Public Share"
+        ],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Share token"
+          },
+          {
+            "name": "calendarIds",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Comma-separated calendar IDs"
+          },
+          {
+            "name": "rangeStart",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "description": "Start of date range (ISO 8601)"
+          },
+          {
+            "name": "rangeEnd",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "description": "End of date range (ISO 8601)"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 5,
+              "minimum": 1,
+              "maximum": 20
+            },
+            "description": "Maximum events to return"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of events",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "events": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "uid": {
+                            "type": "string"
+                          },
+                          "summary": {
+                            "type": "string"
+                          },
+                          "location": {
+                            "type": "string"
+                          },
+                          "start": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "end": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "isAllDay": {
+                            "type": "boolean"
+                          },
+                          "calendarColor": {
+                            "type": "string"
+                          },
+                          "calendarName": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid date format"
+          },
+          "403": {
+            "description": "Invalid or expired share token"
+          },
+          "500": {
+            "description": "Failed to get calendar events"
           }
         }
       }
@@ -2217,7 +2782,12 @@
           },
           "language": {
             "type": "string",
-            "enum": ["nl", "en", "de", "fr"]
+            "enum": [
+              "nl",
+              "en",
+              "de",
+              "fr"
+            ]
           },
           "layout": {
             "$ref": "#/components/schemas/PageLayout"
@@ -2235,7 +2805,9 @@
       },
       "PageCreate": {
         "type": "object",
-        "required": ["title"],
+        "required": [
+          "title"
+        ],
         "properties": {
           "title": {
             "type": "string"
@@ -2340,14 +2912,26 @@
       },
       "Widget": {
         "type": "object",
-        "required": ["type"],
+        "required": [
+          "type"
+        ],
         "properties": {
           "id": {
             "type": "string"
           },
           "type": {
             "type": "string",
-            "enum": ["text", "heading", "image", "links", "divider", "video", "file", "spacer", "news"]
+            "enum": [
+              "text",
+              "heading",
+              "image",
+              "links",
+              "divider",
+              "video",
+              "file",
+              "spacer",
+              "news"
+            ]
           },
           "column": {
             "type": "integer"
@@ -2696,7 +3280,11 @@
           },
           "complexity": {
             "type": "string",
-            "enum": ["simple", "medium", "advanced"]
+            "enum": [
+              "simple",
+              "medium",
+              "advanced"
+            ]
           },
           "hasHeaderRow": {
             "type": "boolean"
@@ -2708,7 +3296,10 @@
       },
       "TemplateCreateFromRequest": {
         "type": "object",
-        "required": ["templateId", "pageTitle"],
+        "required": [
+          "templateId",
+          "pageTitle"
+        ],
         "properties": {
           "templateId": {
             "type": "string",
@@ -2727,7 +3318,10 @@
       },
       "TemplateSaveRequest": {
         "type": "object",
-        "required": ["pageId", "name"],
+        "required": [
+          "pageId",
+          "name"
+        ],
         "properties": {
           "pageId": {
             "type": "string",

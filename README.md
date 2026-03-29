@@ -54,6 +54,7 @@ IntraVox brings SharePoint-style page creation to Nextcloud, enabling teams to b
 | **Links** | Multi-link grid widget (1-5 columns) with Material Design icons |
 | **News** | Display pages from a folder as news items with List, Grid, or Carousel layout |
 | **People** | User profiles with Card, List, or Grid layout - filter by group or select manually |
+| **Calendar** | Upcoming events from shared Nextcloud calendars with colored date badges and responsive grid |
 | **Divider** | Visual separator that adapts to row background color |
 | **Spacer** | Add empty space between content |
 
@@ -93,6 +94,23 @@ The People Widget displays Nextcloud user profiles - perfect for team pages, org
 ![People Widget Birthday](https://raw.githubusercontent.com/nextcloud/intravox/main/screenshots/People-Birthday.png)
 
 *People widget showing birthdate and social links*
+
+### Calendar Widget
+
+The Calendar Widget displays upcoming events from shared Nextcloud calendars with automatic responsive layout:
+
+- **Multi-Calendar Display**: Select multiple calendars for a merged view with color-coded date badges
+- **Responsive Grid**: Automatically adapts to 1, 2, or 3 columns based on available space
+- **Recurring Events**: Weekly meetings, monthly reviews, etc. are expanded into individual occurrences
+- **Clickable Events**: Click to open the event in Nextcloud Calendar
+- **Past & Future**: Show events from the past week/month or up to a year ahead
+- **Background Themes**: None, Light, or Primary with automatic text contrast
+
+![Calendar Widget](https://raw.githubusercontent.com/nextcloud/intravox/main/screenshots/calendarwidget-intro.gif)
+
+*Calendar widget with colored date badges, responsive layout, and background themes*
+
+See [Calendar Widget documentation](docs/CALENDAR_WIDGET.md) for full details.
 
 ### Collapsible Rows
 

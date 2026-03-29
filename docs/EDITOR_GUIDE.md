@@ -413,6 +413,24 @@ User directory widget showing team members.
 
 For detailed documentation, see [PEOPLE_WIDGET.md](PEOPLE_WIDGET.md).
 
+#### Calendar
+
+Display upcoming events from shared Nextcloud calendars with colored date badges and responsive grid layout.
+
+**Options:**
+- Calendars: Select one or more calendars (merged view with color coding)
+- Date range: Future (this week to next year) or past (past week to past 3 months)
+- Limit: Maximum number of events to display (1-20)
+- Show time: Toggle event time visibility
+- Show location: Toggle event location visibility
+
+**Features:**
+- Recurring events are automatically expanded into individual occurrences
+- Events are clickable and open in Nextcloud Calendar
+- Layout adapts automatically: 1 column in side columns, 2-3 columns in wider areas
+
+For detailed documentation, see [CALENDAR_WIDGET.md](CALENDAR_WIDGET.md).
+
 ### Editing Widgets
 
 1. Click on a widget to select it

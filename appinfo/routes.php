@@ -150,6 +150,10 @@ return [
         ['name' => 'people#getUserFields', 'url' => '/api/users/fields', 'verb' => 'GET'],
         ['name' => 'people#getPeople', 'url' => '/api/people', 'verb' => 'GET'],
 
+        // Calendar widget API routes
+        ['name' => 'calendar#getCalendars', 'url' => '/api/calendar/calendars', 'verb' => 'GET'],
+        ['name' => 'calendar#getEvents', 'url' => '/api/calendar/events', 'verb' => 'GET'],
+
         // RSS Feed routes (public, token-based)
         ['name' => 'feed#getFeed', 'url' => '/feed/{token}', 'verb' => 'GET'],
         ['name' => 'feed#getFeedMedia', 'url' => '/feed/{token}/media/{pageId}/{filename}', 'verb' => 'GET'],
@@ -169,6 +173,7 @@ return [
         ['name' => 'api#getPageTreeByShare', 'url' => '/api/share/{token}/tree', 'verb' => 'GET'],
         ['name' => 'api#getNewsByShare', 'url' => '/api/share/{token}/news', 'verb' => 'GET'],
         ['name' => 'people#getPeopleByShare', 'url' => '/api/share/{token}/people', 'verb' => 'GET'],
+        ['name' => 'calendar#getEventsByShare', 'url' => '/api/share/{token}/calendar/events', 'verb' => 'GET'],
 
         // Page routes
         ['name' => 'page#index', 'url' => '/', 'verb' => 'GET'],

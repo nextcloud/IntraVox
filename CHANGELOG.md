@@ -4,6 +4,22 @@ All notable changes to IntraVox will be documented in this file.
 
 IntraVox is a Nextcloud intranet page builder.
 
+## [1.1.0] - 2026-03-29 — Calendar widget & security fixes
+
+### Added
+- **Calendar widget** — New widget that displays upcoming events from shared Nextcloud calendars. Supports multi-calendar selection (merged view), configurable date range, event limit, and show/hide time and location. Events are shown with colored date badges matching the calendar color. Recurring events (RRULE) are correctly expanded into individual occurrences
+- **Responsive calendar layout** — Calendar widget automatically adapts to available space: 1 column in side columns, 2 columns in medium containers, 3 columns in wide content areas (via CSS container queries)
+
+### Fixed
+- **People widget users lost on reload** — User IDs containing dots, `@` signs, or spaces (common in LDAP/SAML/OIDC environments) were silently stripped during save, causing selected users to disappear after page reload ([#41](https://github.com/nextcloud/IntraVox/issues/41))
+- **Deploy script OPcache** — Added Apache/PHP-FPM restart to deploy script to clear OPcache after deploying new PHP controllers
+
+### Security
+- **Rate limiting on public People API** — Added `AnonRateThrottle` to the public share endpoint for the People widget to prevent user enumeration
+
+### Documentation
+- **Language & demo data** — Added guidance that Nextcloud language setting must match the imported demo data language. Added troubleshooting entry for "Admin sees empty Welcome page after demo import" ([#37](https://github.com/nextcloud/IntraVox/issues/37))
+
 ## [1.0.1] - 2026-03-09 — Editor group & scenarios
 
 ### Added

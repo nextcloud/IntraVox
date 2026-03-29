@@ -261,6 +261,13 @@
           @update="handlePeopleWidgetUpdate"
         />
 
+        <!-- Calendar Widget -->
+        <CalendarWidgetEditor
+          v-else-if="localWidget.type === 'calendar'"
+          :widget="localWidget"
+          @update="handleCalendarWidgetUpdate"
+        />
+
         <!-- Video Widget -->
         <div v-else-if="localWidget.type === 'video'">
           <!-- Provider keuze -->
@@ -440,6 +447,7 @@ import PageTreeSelect from './PageTreeSelect.vue';
 import MediaPicker from './MediaPicker.vue';
 import NewsWidgetEditor from './NewsWidgetEditor.vue';
 import PeopleWidgetEditor from './PeopleWidgetEditor.vue';
+import CalendarWidgetEditor from './CalendarWidgetEditor.vue';
 import { showError, showSuccess } from '@nextcloud/dialogs';
 import ImageIcon from 'vue-material-design-icons/Image.vue';
 import VideoIcon from 'vue-material-design-icons/Video.vue';
@@ -455,6 +463,7 @@ export default {
     MediaPicker,
     NewsWidgetEditor,
     PeopleWidgetEditor,
+    CalendarWidgetEditor,
     ImageIcon,
     VideoIcon
   },
@@ -611,6 +620,10 @@ export default {
     },
     handlePeopleWidgetUpdate(updatedWidget) {
       // Merge the updated people widget properties into localWidget
+      Object.assign(this.localWidget, updatedWidget);
+    },
+    handleCalendarWidgetUpdate(updatedWidget) {
+      // Merge the updated calendar widget properties into localWidget
       Object.assign(this.localWidget, updatedWidget);
     },
     save() {
