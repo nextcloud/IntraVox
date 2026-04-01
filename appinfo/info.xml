@@ -32,11 +32,11 @@ Built with Vue 3 for a fast, modern, and secure experience.
     ]]></description>
     <version>1.1.0</version>
     <licence>agpl</licence>
-    <author mail="rik@shalution.nl">Rik Dekker</author>
+    <author mail="info@voxcloud.nl">Rik Dekker</author>
     <namespace>IntraVox</namespace>
     <category>organization</category>
     <category>office</category>
-    <website>https://github.com/nextcloud/intravox</website>
+    <website>https://voxcloud.nl</website>
     <bugs>https://github.com/nextcloud/intravox/issues</bugs>
     <repository type="git">https://github.com/nextcloud/intravox.git</repository>
     <screenshot>https://raw.githubusercontent.com/nextcloud/intravox/main/screenshots/intravox%20home.png</screenshot>
