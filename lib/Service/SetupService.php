@@ -51,6 +51,21 @@ class SetupService {
     }
 
     /**
+     * Detect the default language based on Nextcloud system configuration.
+     * Returns 'nl' if the system language is Dutch, otherwise 'en'.
+     */
+    public function detectDefaultLanguage(): string {
+        $systemLanguage = $this->config->getSystemValue('default_language', 'en');
+        $langCode = substr($systemLanguage, 0, 2);
+
+        if ($langCode === 'nl') {
+            return 'nl';
+        }
+
+        return 'en';
+    }
+
+    /**
      * Check if the GroupFolders app is installed and enabled
      */
     public function isGroupFoldersAppEnabled(): bool {
@@ -283,11 +298,15 @@ class SetupService {
 
     /**
      * Create default content in the IntraVox folder
+     *
+     * @param Folder $folder The IntraVox groupfolder
+     * @param string|null $language If provided, only create content for this language. If null, uses detected default language.
      */
-    private function createDefaultContent($folder): void {
+    private function createDefaultContent($folder, ?string $language = null): void {
         try {
-            // Create language folders
-            foreach (self::SUPPORTED_LANGUAGES as $lang) {
+            $languages = $language !== null ? [$language] : [$this->detectDefaultLanguage()];
+
+            foreach ($languages as $lang) {
                 try {
                     $langFolder = $folder->get($lang);
                     $this->logger->info("Language folder '{$lang}' already exists");
@@ -721,7 +740,7 @@ class SetupService {
             $installed = 0;
             $skipped = 0;
 
-            // Install templates for each language
+            // Install templates only for languages that have a folder
             foreach (self::SUPPORTED_LANGUAGES as $lang) {
                 try {
                     $langFolder = $folder->get($lang);

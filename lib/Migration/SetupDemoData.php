@@ -49,16 +49,15 @@ class SetupDemoData implements IRepairStep {
 
         // Import demo data if not already imported
         if (!$this->demoDataService->isDemoDataImported()) {
-            $output->info('Importing demo data...');
+            $language = $this->setupService->detectDefaultLanguage();
+            $output->info("Importing demo data for language: {$language}...");
 
-            foreach (['nl', 'en'] as $language) {
-                if ($this->demoDataService->hasBundledDemoData($language)) {
-                    $result = $this->demoDataService->importBundledDemoData($language);
-                    if ($result['success']) {
-                        $output->info("{$language}: {$result['imported']} items imported");
-                    } else {
-                        $output->warning("{$language}: {$result['message']}");
-                    }
+            if ($this->demoDataService->hasBundledDemoData($language)) {
+                $result = $this->demoDataService->importBundledDemoData($language);
+                if ($result['success']) {
+                    $output->info("{$language}: {$result['imported']} items imported");
+                } else {
+                    $output->warning("{$language}: {$result['message']}");
                 }
             }
 

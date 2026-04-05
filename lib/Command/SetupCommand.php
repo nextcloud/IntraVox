@@ -24,6 +24,12 @@ class SetupCommand extends Command {
         $this->setName('intravox:setup')
             ->setDescription('Setup IntraVox groupfolder structure and import demo data')
             ->addOption(
+                'language',
+                'l',
+                InputOption::VALUE_REQUIRED,
+                'Language code for demo data (nl, en). Defaults to detected system language.'
+            )
+            ->addOption(
                 'skip-demo',
                 null,
                 InputOption::VALUE_NONE,
@@ -40,7 +46,8 @@ class SetupCommand extends Command {
     protected function execute(InputInterface $input, OutputInterface $output): int {
         $output->writeln('<info>Setting up IntraVox groupfolder...</info>');
 
-        if (!$this->setupService->setupSharedFolder()) {
+        $setupResult = $this->setupService->setupSharedFolder();
+        if (!$setupResult['success']) {
             $output->writeln('<error>✗ Failed to setup IntraVox groupfolder</error>');
             $output->writeln('<error>  Please check logs for details</error>');
             $output->writeln('<error>  Make sure the groupfolders app is installed and enabled</error>');
@@ -57,20 +64,19 @@ class SetupCommand extends Command {
         $shouldImport = !$skipDemo && ($forceDemo || !$this->demoDataService->isDemoDataImported());
 
         if ($shouldImport) {
+            $language = $input->getOption('language') ?? $this->setupService->detectDefaultLanguage();
             $output->writeln('');
-            $output->writeln('<info>Importing demo data...</info>');
+            $output->writeln("<info>Importing demo data for language: {$language}...</info>");
 
-            // Import both NL and EN demo data if available
-            foreach (['nl', 'en'] as $language) {
-                if ($this->demoDataService->hasBundledDemoData($language)) {
-                    $output->writeln("<info>  Importing {$language} demo data...</info>");
-                    $result = $this->demoDataService->importBundledDemoData($language);
-                    if ($result['success']) {
-                        $output->writeln("<info>  ✓ {$language}: {$result['imported']} items imported</info>");
-                    } else {
-                        $output->writeln("<comment>  ⚠ {$language}: {$result['message']}</comment>");
-                    }
+            if ($this->demoDataService->hasBundledDemoData($language)) {
+                $result = $this->demoDataService->importBundledDemoData($language);
+                if ($result['success']) {
+                    $output->writeln("<info>  ✓ {$language}: {$result['imported']} items imported</info>");
+                } else {
+                    $output->writeln("<comment>  ⚠ {$language}: {$result['message']}</comment>");
                 }
+            } else {
+                $output->writeln("<comment>  ⚠ No bundled demo data available for '{$language}'</comment>");
             }
 
             $output->writeln('<info>✓ Demo data imported</info>');

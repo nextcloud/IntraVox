@@ -450,7 +450,7 @@ class LicenseService {
                 $folderName = $node->getName();
 
                 // Skip special folders
-                if (in_array($folderName, ['_media', '_resources', '_versions'])) {
+                if (in_array($folderName, ['_media', '_resources', '_versions', '_templates'])) {
                     continue;
                 }
 
