@@ -4,6 +4,23 @@ All notable changes to IntraVox will be documented in this file.
 
 IntraVox is a Nextcloud intranet page builder.
 
+## [1.1.1] - 2026-04-08 — Support settings & demo data fix
+
+### Added
+- **Support contact settings** — New admin settings section for configuring organization name and support contact details. Contact information is included in telemetry for easier support identification
+- **App Store screenshots** — Added calendar widget screenshots (layout, editor, primary, sidebar) and updated admin demo data and edit mode screenshots
+
+### Changed
+- **Contact info updated** — Author email changed to info@voxcloud.nl and website URL to voxcloud.nl
+- **Admin settings refactored** — Extracted support/contact settings into dedicated `SupportSettings` component for cleaner code organization
+
+### Security
+- **serialize-javascript upgraded to 7.0.5** — Fixes excessive CPU usage vulnerability in array-like object serialization during webpack build process ([#42](https://github.com/nextcloud/IntraVox/issues/42))
+- **brace-expansion upgraded to 5.0.5** — Fixes bracket handling vulnerability ([#40](https://github.com/nextcloud/IntraVox/issues/40))
+
+### Fixed
+- **Demo data imports all languages** — Demo data setup now detects the single active language and imports only that language's content, instead of importing all available languages regardless of configuration
+
 ## [1.1.0] - 2026-03-29 — Calendar widget & security fixes
 
 ### Added
