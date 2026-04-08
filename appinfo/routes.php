@@ -132,6 +132,10 @@ return [
         ['name' => 'license#updateUsage', 'url' => '/api/license/update-usage', 'verb' => 'POST'],
         ['name' => 'api#setTelemetrySettings', 'url' => '/api/settings/telemetry', 'verb' => 'POST'],
 
+        // Organization settings routes (admin only)
+        ['name' => 'license#getSettings', 'url' => '/api/settings', 'verb' => 'GET'],
+        ['name' => 'license#saveOrganizationSettings', 'url' => '/api/settings', 'verb' => 'POST'],
+
         // Template routes
         ['name' => 'api#listTemplates', 'url' => '/api/templates', 'verb' => 'GET'],
         ['name' => 'api#getTemplate', 'url' => '/api/templates/{id}', 'verb' => 'GET'],

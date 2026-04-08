@@ -1,5 +1,16 @@
 <template>
 	<div class="intravox-admin-settings">
+		<!-- License Warning Banner -->
+		<div v-if="licenseBanner && !bannerDismissed" :class="['license-banner', licenseBanner.type]">
+			<span class="license-banner-text">
+				{{ licenseBanner.message }}
+				<a href="#" @click.prevent="activeTab = 'support'">
+					{{ licenseBanner.linkText }}
+				</a>
+			</span>
+			<button class="license-banner-close" @click="bannerDismissed = true">&times;</button>
+		</div>
+
 		<!-- Tab Navigation - MetaVox style -->
 		<div class="tab-navigation">
 			<button
@@ -39,10 +50,10 @@
 				{{ t('intravox', 'Sharing') }}
 			</button>
 			<button
-				:class="['tab-button', { active: activeTab === 'license' }]"
-				@click="activeTab = 'license'">
-				<ChartBox :size="16" />
-				{{ t('intravox', 'Statistics') }}
+				:class="['tab-button', { active: activeTab === 'support' }]"
+				@click="activeTab = 'support'">
+				<HeartOutline :size="16" />
+				{{ t('intravox', 'Support') }}
 			</button>
 			<button
 				:class="['tab-button', { active: activeTab === 'maintenance' }]"
@@ -723,114 +734,11 @@
 			</div>
 		</div>
 
-		<div v-if="activeTab === 'license'" class="tab-content">
-			<!-- Page Statistics Section -->
-			<div class="settings-section">
-				<h2>{{ t('intravox', 'Page Statistics') }}</h2>
-				<p class="settings-section-desc">
-					{{ t('intravox', 'Overview of pages per language in your IntraVox installation.') }}
-				</p>
-
-				<div class="license-stats">
-					<!-- Language stats with progress bars -->
-					<div class="language-stats">
-						<div
-							v-for="lang in licenseStats.supportedLanguages"
-							:key="lang"
-							class="language-stat-row">
-							<div class="language-info">
-								<span class="language-flag">{{ getLanguageFlag(lang) }}</span>
-								<span class="language-name">{{ getLanguageName(lang) }}</span>
-								<span class="language-code">({{ lang }})</span>
-							</div>
-							<div class="progress-container">
-								<div class="progress-bar">
-									<div
-										class="progress-fill"
-										:style="{ width: getProgressWidth(lang) + '%' }">
-									</div>
-								</div>
-								<span class="page-count">
-									{{ licenseStats.pageCounts[lang] || 0 }} {{ t('intravox', 'pages') }}
-								</span>
-							</div>
-						</div>
-					</div>
-
-					<!-- Total pages -->
-					<div class="total-pages">
-						<strong>{{ t('intravox', 'Total') }}:</strong>
-						{{ licenseStats.totalPages }} {{ t('intravox', 'pages') }}
-					</div>
-
-					<!-- Future licensing info -->
-					<div class="future-licensing-info">
-						<h4>{{ t('intravox', 'The Future of IntraVox') }}</h4>
-						<p>{{ t('intravox', 'IntraVox is and will remain free for most users. To keep IntraVox actively maintained and improved, we\'re introducing a licensing model for larger organizations.') }}</p>
-						<p><strong>{{ t('intravox', 'Our promise') }}:</strong></p>
-						<ul class="promise-list">
-							<li>{{ t('intravox', 'A free tier for small and medium installations') }}</li>
-							<li>{{ t('intravox', 'All current features remain available') }}</li>
-							<li>{{ t('intravox', 'Transparent pricing based on actual usage') }}</li>
-						</ul>
-						<p class="feedback-note">{{ t('intravox', 'We\'re currently collecting anonymous statistics to establish fair limits that work for everyone. Your feedback matters – together we\'re building a sustainable future for IntraVox.') }}</p>
-					</div>
-				</div>
-			</div>
-
-			<!-- Telemetry Section -->
-			<div class="settings-section">
-				<h2>{{ t('intravox', 'Anonymous Usage Statistics') }}</h2>
-				<p class="settings-section-desc">
-					{{ t('intravox', 'Help improve IntraVox by sharing anonymous usage statistics.') }}
-				</p>
-
-				<div class="telemetry-settings">
-					<div class="engagement-option">
-						<NcCheckboxRadioSwitch
-							type="switch"
-							:model-value="telemetryEnabled"
-							@update:model-value="toggleTelemetry($event)">
-							<div class="option-info">
-								<span class="option-label">{{ t('intravox', 'Share anonymous usage statistics') }}</span>
-								<span class="option-desc">{{ t('intravox', 'We collect: page counts per language, user counts, version info (IntraVox, Nextcloud, PHP), and basic server configuration. No personal data or page content is shared.') }}</span>
-							</div>
-						</NcCheckboxRadioSwitch>
-					</div>
-
-					<div v-if="telemetryEnabled" class="telemetry-info">
-						<NcNoteCard type="success">
-							<p>{{ t('intravox', 'Thank you for helping improve IntraVox!') }}</p>
-							<p v-if="telemetryLastReport">
-								{{ t('intravox', 'Last report sent') }}: {{ formatTelemetryDate(telemetryLastReport) }}
-							</p>
-							<NcButton type="secondary"
-								:disabled="sendingTelemetry"
-								@click="sendTelemetryNow">
-								{{ sendingTelemetry ? t('intravox', 'Sending...') : t('intravox', 'Send report now') }}
-							</NcButton>
-						</NcNoteCard>
-					</div>
-
-					<div class="telemetry-details">
-						<h4>{{ t('intravox', 'What we collect') }}:</h4>
-						<ul>
-							<li>{{ t('intravox', 'Page counts per language (e.g., EN: 45, NL: 32)') }}</li>
-							<li>{{ t('intravox', 'Total user count and active users') }}</li>
-							<li>{{ t('intravox', 'IntraVox, Nextcloud, and PHP version numbers') }}</li>
-							<li>{{ t('intravox', 'A unique hash of your instance URL (privacy-friendly identifier)') }}</li>
-							<li>{{ t('intravox', 'Basic server configuration (database, OS, web server, language, timezone, country)') }}</li>
-						</ul>
-						<h4>{{ t('intravox', 'What we never collect') }}:</h4>
-						<ul class="not-collected">
-							<li>{{ t('intravox', 'Page content or titles') }}</li>
-							<li>{{ t('intravox', 'User names or email addresses') }}</li>
-							<li>{{ t('intravox', 'Your actual server URL') }}</li>
-							<li>{{ t('intravox', 'Any personal or sensitive data') }}</li>
-						</ul>
-					</div>
-				</div>
-			</div>
+		<div v-if="activeTab === 'support'" class="tab-content">
+			<SupportSettings
+				:initial-telemetry-enabled="telemetryEnabled"
+				:initial-telemetry-last-report="telemetryLastReport"
+				@license-changed="loadLicenseStats" />
 		</div>
 
 		<!-- Maintenance Tab -->
@@ -1013,14 +921,15 @@ import Download from 'vue-material-design-icons/Download.vue'
 import Upload from 'vue-material-design-icons/Upload.vue'
 import CloudDownload from 'vue-material-design-icons/CloudDownload.vue'
 import Broom from 'vue-material-design-icons/Broom.vue'
-import ChartBox from 'vue-material-design-icons/ChartBox.vue'
 import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
 import LinkVariant from 'vue-material-design-icons/LinkVariant.vue'
 import FolderOutline from 'vue-material-design-icons/FolderOutline.vue'
 import FileDocumentOutline from 'vue-material-design-icons/FileDocumentOutline.vue'
 import DatabaseAlert from 'vue-material-design-icons/DatabaseAlert.vue'
 import DatabaseSearch from 'vue-material-design-icons/DatabaseSearch.vue'
+import HeartOutline from 'vue-material-design-icons/HeartOutline.vue'
 import ConfluenceImport from '../admin/components/ConfluenceImport.vue'
+import SupportSettings from './SupportSettings.vue'
 
 export default {
 	name: 'AdminSettings',
@@ -1039,8 +948,9 @@ export default {
 		Upload,
 		CloudDownload,
 		Broom,
-		ChartBox,
+		HeartOutline,
 		ContentCopy,
+		SupportSettings,
 		LinkVariant,
 		FolderOutline,
 		FileDocumentOutline,
@@ -1116,6 +1026,8 @@ export default {
 			importTimeoutId: null,
 			// Bound event handler for proper cleanup
 			boundBeforeUnloadHandler: null,
+			// Banner dismiss state
+			bannerDismissed: false,
 			// License stats
 			licenseStats: this.initialState.licenseStats || {
 				pageCounts: {},
@@ -1206,6 +1118,29 @@ export default {
 			if (this.licenseValidation && !this.licenseValidation.valid) return true
 			return false
 		},
+		licenseBanner() {
+			if (!this.licenseStats) return null
+			const s = this.licenseStats
+			const hasKey = !!s.hasLicense
+
+			// Invalid/expired subscription key
+			if (hasKey && s.licenseValid === false) {
+				return { type: 'info', message: this.t('intravox', 'Your IntraVox subscription key needs attention.'), linkText: this.t('intravox', 'Visit Support') }
+			}
+			// No subscription + page limit exceeded (>=50 pages in any language)
+			if (!hasKey && s.pageCounts) {
+				const exceeded = Object.values(s.pageCounts).some(count => count >= s.freeLimit)
+				if (exceeded) {
+					return { type: 'warning', message: this.t('intravox', 'Page limit reached for one or more languages. Upgrade for unlimited pages.'), linkText: this.t('intravox', 'Learn more') }
+				}
+				// Approaching limit (>=80% = 40 pages)
+				const approaching = Object.values(s.pageCounts).some(count => count >= s.freeLimit * 0.8)
+				if (approaching) {
+					return { type: 'info', message: this.t('intravox', 'You\'re approaching the free tier limit. Consider a subscription to support continued development.'), linkText: this.t('intravox', 'Learn more') }
+				}
+			}
+			return null
+		},
 	},
 	watch: {
 		// Clear success messages when switching tabs
@@ -1224,6 +1159,16 @@ export default {
 		},
 	},
 	methods: {
+		// License stats for banner
+		async loadLicenseStats() {
+			try {
+				const response = await axios.get(generateUrl('/apps/intravox/api/license/stats'))
+				if (response.data.success) {
+					this.licenseStats = response.data
+					this.bannerDismissed = false
+				}
+			} catch (e) { /* silently fail — banner just won't show */ }
+		},
 		// Sharing overview methods
 		async loadActiveShares() {
 			if (this.loadingShares) return
@@ -1789,99 +1734,6 @@ export default {
 			}
 			return names[lang] || lang
 		},
-		getProgressWidth(lang) {
-			const count = this.licenseStats.pageCounts[lang] || 0
-			const limit = this.licenseStats.freeLimit
-			// Cap at 100% for display, but allow exceeded styling
-			return Math.min((count / limit) * 100, 100)
-		},
-		async saveLicenseSettings() {
-			this.savingLicense = true
-
-			try {
-				await axios.post(
-					generateUrl('/apps/intravox/api/settings/license'),
-					{
-						licenseKey: this.licenseKey,
-					}
-				)
-				showSuccess(this.t('intravox', 'License settings saved'))
-
-				// Validate after saving if we have a key
-				if (this.licenseKey) {
-					await this.validateLicenseNow()
-				} else {
-					this.licenseValidation = null
-				}
-			} catch (error) {
-				console.error('Failed to save license settings:', error)
-				showError(this.t('intravox', 'Failed to save license settings'))
-			} finally {
-				this.savingLicense = false
-			}
-		},
-		async validateLicenseNow() {
-			if (!this.licenseKey) return
-
-			this.validatingLicense = true
-			this.licenseValidation = null
-
-			try {
-				const response = await axios.post(
-					generateUrl('/apps/intravox/api/license/validate')
-				)
-				this.licenseValidation = response.data
-			} catch (error) {
-				console.error('Failed to validate license:', error)
-				this.licenseValidation = {
-					valid: false,
-					reason: error.response?.data?.error || this.t('intravox', 'Failed to validate license'),
-				}
-			} finally {
-				this.validatingLicense = false
-			}
-		},
-		async sendTelemetryNow() {
-			this.sendingTelemetry = true
-			try {
-				await axios.post(generateUrl('/apps/intravox/api/license/telemetry'))
-				this.telemetryLastReport = Math.floor(Date.now() / 1000)
-				showSuccess(this.t('intravox', 'Report sent successfully'))
-			} catch (error) {
-				console.error('Failed to send telemetry:', error)
-				showError(this.t('intravox', 'Failed to send report'))
-			} finally {
-				this.sendingTelemetry = false
-			}
-		},
-		async toggleTelemetry(enabled) {
-			try {
-				await axios.post(
-					generateUrl('/apps/intravox/api/settings/telemetry'),
-					{ enabled }
-				)
-				this.telemetryEnabled = enabled
-				if (enabled) {
-					showSuccess(this.t('intravox', 'Thank you! Anonymous usage statistics enabled.'))
-				} else {
-					showSuccess(this.t('intravox', 'Anonymous usage statistics disabled.'))
-				}
-			} catch (error) {
-				console.error('Failed to toggle telemetry:', error)
-				showError(this.t('intravox', 'Failed to update telemetry settings'))
-			}
-		},
-		formatTelemetryDate(timestamp) {
-			if (!timestamp) return ''
-			const date = new Date(timestamp * 1000)
-			return date.toLocaleDateString(undefined, {
-				year: 'numeric',
-				month: 'long',
-				day: 'numeric',
-				hour: '2-digit',
-				minute: '2-digit'
-			})
-		},
 		// Orphaned data management methods
 		async scanOrphanedFolders() {
 			this.scanningOrphaned = true
@@ -1962,6 +1814,7 @@ export default {
 	},
 	mounted() {
 		this.loadExportLanguages()
+		this.loadLicenseStats()
 		// Prevent accidental navigation during export (use bound handler for proper cleanup)
 		this.boundBeforeUnloadHandler = this.handleBeforeUnload.bind(this)
 		window.addEventListener('beforeunload', this.boundBeforeUnloadHandler)
@@ -1989,6 +1842,60 @@ export default {
 .intravox-admin-settings {
 	max-width: 900px;
 	padding: 20px;
+}
+
+/* License Banner */
+.license-banner {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 12px 16px;
+	border-radius: var(--border-radius-large);
+	margin-bottom: 16px;
+	font-size: 14px;
+	border-left: 4px solid;
+}
+
+.license-banner.info {
+	background: var(--color-background-hover);
+	color: var(--color-main-text);
+	border-left-color: var(--color-primary-element);
+}
+
+.license-banner.warning {
+	background: var(--color-background-hover);
+	color: var(--color-main-text);
+	border-left-color: var(--color-warning);
+}
+
+.license-banner-text {
+	flex: 1;
+}
+
+.license-banner-text a {
+	color: var(--color-primary-element);
+	font-weight: 600;
+	text-decoration: none;
+	margin-left: 4px;
+}
+
+.license-banner-text a:hover {
+	text-decoration: underline;
+}
+
+.license-banner-close {
+	background: none;
+	border: none;
+	font-size: 20px;
+	cursor: pointer;
+	color: var(--color-text-maxcontrast);
+	padding: 0 4px;
+	margin-left: 12px;
+	opacity: 0.7;
+}
+
+.license-banner-close:hover {
+	opacity: 1;
 }
 
 /* Tab Navigation - MetaVox style */
@@ -2784,234 +2691,6 @@ export default {
 	gap: 8px;
 	padding: 16px;
 	color: var(--color-text-maxcontrast);
-}
-
-/* License tab styles */
-.license-stats {
-	margin-top: 20px;
-}
-
-.language-stats {
-	display: flex;
-	flex-direction: column;
-	gap: 16px;
-	margin-bottom: 24px;
-}
-
-.language-stat-row {
-	display: flex;
-	align-items: center;
-	gap: 16px;
-	padding: 12px 16px;
-	background: var(--color-background-hover);
-	border-radius: var(--border-radius-large);
-}
-
-.language-info {
-	display: flex;
-	align-items: center;
-	gap: 8px;
-	min-width: 160px;
-}
-
-.language-flag {
-	font-size: 1.5em;
-}
-
-.language-name {
-	font-weight: 500;
-	color: var(--color-main-text);
-}
-
-.language-code {
-	color: var(--color-text-maxcontrast);
-	font-size: 13px;
-}
-
-.progress-container {
-	flex: 1;
-	display: flex;
-	align-items: center;
-	gap: 12px;
-}
-
-.progress-bar {
-	flex: 1;
-	height: 8px;
-	background: var(--color-background-dark);
-	border-radius: 4px;
-	overflow: hidden;
-}
-
-.progress-fill {
-	height: 100%;
-	background: var(--color-primary-element);
-	border-radius: 4px;
-	transition: width 0.3s ease;
-}
-
-.page-count {
-	min-width: 100px;
-	text-align: right;
-	font-weight: 500;
-	color: var(--color-main-text);
-}
-
-.total-pages {
-	padding: 16px;
-	background: var(--color-background-dark);
-	border-radius: var(--border-radius-large);
-	margin-bottom: 20px;
-	font-size: 16px;
-}
-
-.license-info-card {
-	margin-top: 16px;
-}
-
-.license-info-card p {
-	margin: 4px 0;
-}
-
-.license-info-card p:last-child {
-	margin-bottom: 0;
-}
-
-/* License configuration */
-.license-config {
-	margin-top: 20px;
-	max-width: 500px;
-}
-
-.license-key-input {
-	font-family: var(--font-monospace, monospace);
-	letter-spacing: 0.5px;
-}
-
-.license-status {
-	margin-top: 16px;
-}
-
-.status-checking {
-	display: flex;
-	align-items: center;
-	gap: 8px;
-	padding: 12px;
-	background: var(--color-background-hover);
-	border-radius: var(--border-radius);
-	color: var(--color-text-maxcontrast);
-}
-
-.status-result {
-	margin-top: 8px;
-}
-
-.license-save {
-	display: flex;
-	gap: 12px;
-	align-items: center;
-}
-
-/* Telemetry section */
-.telemetry-settings {
-	margin-top: 20px;
-}
-
-.telemetry-info {
-	margin-top: 16px;
-}
-
-.telemetry-details {
-	margin-top: 24px;
-	padding: 16px;
-	background: var(--color-background-hover);
-	border-radius: var(--border-radius-large);
-}
-
-.telemetry-details h4 {
-	margin: 0 0 12px 0;
-	font-size: 14px;
-	font-weight: 600;
-	color: var(--color-main-text);
-}
-
-.telemetry-details h4:not(:first-child) {
-	margin-top: 20px;
-}
-
-.telemetry-details ul {
-	margin: 0;
-	padding-left: 24px;
-	color: var(--color-text-maxcontrast);
-}
-
-.telemetry-details ul li {
-	margin-bottom: 6px;
-	line-height: 1.4;
-}
-
-.telemetry-details ul.not-collected {
-	color: var(--color-main-text);
-}
-
-.telemetry-details ul.not-collected li {
-	display: flex;
-	align-items: flex-start;
-	gap: 8px;
-}
-
-.telemetry-details ul.not-collected li::before {
-	content: '✓';
-	color: var(--color-success-text, #2d7b43);
-	font-weight: 600;
-	flex-shrink: 0;
-}
-
-.telemetry-details ul.not-collected li::marker {
-	content: '';
-}
-
-/* Future licensing info */
-.future-licensing-info {
-	margin-top: 24px;
-	padding: 20px;
-	background: var(--color-background-hover);
-	border-radius: var(--border-radius-large);
-	border-left: 4px solid var(--color-primary-element);
-}
-
-.future-licensing-info h4 {
-	margin: 0 0 12px 0;
-	font-size: 16px;
-	font-weight: 600;
-	color: var(--color-main-text);
-}
-
-.future-licensing-info p {
-	margin: 0 0 12px 0;
-	color: var(--color-main-text);
-	line-height: 1.5;
-}
-
-.future-licensing-info p:last-child {
-	margin-bottom: 0;
-}
-
-.promise-list {
-	margin: 8px 0 16px 0;
-	padding-left: 24px;
-	color: var(--color-main-text);
-}
-
-.promise-list li {
-	margin-bottom: 6px;
-	line-height: 1.4;
-}
-
-.feedback-note {
-	font-size: 13px;
-	color: var(--color-text-maxcontrast);
-	font-style: italic;
 }
 
 /* Sharing tab styles */

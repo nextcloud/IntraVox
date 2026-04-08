@@ -9,6 +9,7 @@ use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\DataResponse;
+use OCP\IConfig;
 use OCP\IGroupManager;
 use OCP\IRequest;
 use OCP\IUserSession;
@@ -26,11 +27,14 @@ use Psr\Log\LoggerInterface;
 class LicenseController extends Controller {
     use ApiErrorTrait;
 
+    private const APP_ID = 'intravox';
+
     public function __construct(
         string $appName,
         IRequest $request,
         private LicenseService $licenseService,
         private TelemetryService $telemetryService,
+        private IConfig $config,
         private IUserSession $userSession,
         private IGroupManager $groupManager,
         private LoggerInterface $logger
@@ -239,5 +243,48 @@ class LicenseController extends Controller {
                 Http::STATUS_INTERNAL_SERVER_ERROR
             );
         }
+    }
+
+    /**
+     * Get admin settings (organization info)
+     *
+     * @NoCSRFRequired
+     *
+     * @return DataResponse
+     */
+    public function getSettings(): DataResponse {
+        if (!$this->isAdmin()) {
+            return $this->forbiddenResponse('Admin privileges required');
+        }
+
+        return new DataResponse([
+            'success' => true,
+            'settings' => [
+                'organization_name' => $this->config->getAppValue(self::APP_ID, 'organization_name', ''),
+                'contact_email' => $this->config->getAppValue(self::APP_ID, 'contact_email', ''),
+            ],
+        ]);
+    }
+
+    /**
+     * Save admin settings (organization info)
+     *
+     * @return DataResponse
+     */
+    public function saveOrganizationSettings(): DataResponse {
+        if (!$this->isAdmin()) {
+            return $this->forbiddenResponse('Admin privileges required');
+        }
+
+        $organizationName = substr($this->request->getParam('organization_name', ''), 0, 255);
+        $contactEmail = substr($this->request->getParam('contact_email', ''), 0, 255);
+
+        $this->config->setAppValue(self::APP_ID, 'organization_name', $organizationName);
+        $this->config->setAppValue(self::APP_ID, 'contact_email', $contactEmail);
+
+        return new DataResponse([
+            'success' => true,
+            'message' => 'Settings saved successfully',
+        ]);
     }
 }

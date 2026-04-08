@@ -147,6 +147,8 @@ class TelemetryService {
             'osFamily' => PHP_OS_FAMILY,
             'webServer' => $this->getWebServer(),
             'isDocker' => $this->isDocker(),
+            'organizationName' => $this->config->getAppValue(Application::APP_ID, 'organization_name', ''),
+            'contactEmail' => $this->config->getAppValue(Application::APP_ID, 'contact_email', ''),
         ];
     }
 

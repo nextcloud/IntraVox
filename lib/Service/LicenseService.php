@@ -599,15 +599,28 @@ class LicenseService {
         $validation = $this->validateLicense();
         $limits = $this->checkPageLimit();
         $pageCounts = $this->getPageCountsPerLanguage();
+        $hasLicense = !empty($this->getLicenseKey());
+
+        // Mask license key for display
+        $maskedKey = '';
+        if ($hasLicense) {
+            $key = $this->getLicenseKey();
+            if (strlen($key) > 8) {
+                $maskedKey = substr($key, 0, 4) . '-••••-••••-' . substr($key, -4);
+            } else {
+                $maskedKey = '••••••••';
+            }
+        }
 
         return [
             'pageCounts' => $pageCounts,
             'totalPages' => $this->getTotalPageCount(),
             'freeLimit' => self::FREE_LIMIT,
             'supportedLanguages' => self::SUPPORTED_LANGUAGES,
-            'hasLicense' => !empty($this->getLicenseKey()),
+            'hasLicense' => $hasLicense,
             'licenseValid' => $validation['valid'],
             'licenseInfo' => $validation['license'] ?? null,
+            'licenseKeyMasked' => $maskedKey,
             'maxPagesPerLanguage' => $limits['max'] ?? self::FREE_LIMIT,
             'exceededLanguages' => $limits['exceededLanguages'] ?? [],
             'pagesExceeded' => !$limits['allowed'],
