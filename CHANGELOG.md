@@ -4,10 +4,11 @@ All notable changes to IntraVox will be documented in this file.
 
 IntraVox is a Nextcloud intranet page builder.
 
-## [1.1.2] - Unreleased — App Store listing improvements
+## [1.1.2] - 2026-04-10 — App Store listing improvements
 
 ### Fixed
 - **Telemetry error feedback**: The "Send report now" button now shows the actual server error message (e.g., rate limit, connectivity issue) instead of silently failing
+- **MetaVox icon dynamic loaded** — MetaVox sidebar tab icon is no longer a hardcoded SVG copy. Now loads dynamically from the MetaVox app via `imagePath('metavox', 'app.svg')`, so logo changes in MetaVox are automatically reflected in IntraVox. Dark mode handled by Nextcloud's automatic `app-dark.svg` serving
 
 ### Changed
 - **App Store description rewritten** — Expanded from ~150 to ~250 words, structured in 6 sections: page editor, widgets, collaboration, content management, enterprise, and requirements
@@ -18,6 +19,9 @@ IntraVox is a Nextcloud intranet page builder.
 
 ### Added
 - **Documentation links in App Store** — Editor Guide, Admin Guide, and API Development Guide now linked from the app listing
+
+### Security
+- **axios upgraded to 1.15.0+** — Fixes critical SSRF vulnerability via NO_PROXY hostname normalization bypass ([GHSA-3p68-rc4w-qgx5](https://github.com/advisories/GHSA-3p68-rc4w-qgx5))
 
 ## [1.1.1] - 2026-04-08 — Support settings & demo data fix
 

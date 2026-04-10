@@ -3,19 +3,37 @@
       xsi:noNamespaceSchemaLocation="https://apps.nextcloud.com/schema/apps/info.xsd">
     <id>intravox</id>
     <name>IntraVox</name>
-    <summary>Build a modern intranet with drag-and-drop pages</summary>
-    <description><![CDATA[IntraVox transforms Nextcloud into a full-featured intranet platform. Create professional pages with a visual drag-and-drop editor — no coding required.
+    <summary>SharePoint-style intranet pages for Nextcloud — no code required</summary>
+    <description><![CDATA[IntraVox transforms Nextcloud into a full-featured intranet platform. Build professional pages with a visual drag-and-drop editor — no coding required. A complete, open-source alternative to SharePoint.
 
-**Key features:**
-* Visual page editor with drag-and-drop widget placement
-* Flexible grid layouts (1–5 columns)
-* Rich widget library: text, images, videos, links, people, calendar, files, and more
+**Page editor:**
+* Drag-and-drop widget placement with flexible grid layouts (1–5 columns)
+* 7 ready-made page templates to get started quickly
+* Collapsible sections, sticky toolbar, and row duplication
+* Draft/Published workflow with page locking to prevent conflicts
+
+**Rich widget library:**
+* Text (with tables and markdown), images, video, links, files, dividers
+* Calendar widget with multi-calendar merged view and recurring events
+* People widget with user profiles, filters, and birthday tracking
+* News widget with list, grid, and carousel layouts
+
+**Collaboration & engagement:**
+* Emoji reactions and threaded comments on pages
+* Version history with one-click restore
+* Personal RSS feed for following page updates
+* Public sharing with optional password protection
+
+**Content management:**
 * Multi-language support with per-language content folders
 * Navigation editor with megamenu and sidebar options
-* Personal RSS feed for following page updates
+* Full export/import to ZIP — including Confluence HTML import
+* Demo content to get started in minutes
+
+**Enterprise ready:**
 * Department-based access control via GroupFolders ACL
-* Demo content to get started quickly
-* Seamless Nextcloud integration (theming, users, groups, files)
+* Nextcloud Unified Search integration (Ctrl+K)
+* Seamless theming, users, groups, and files integration
 
 **Requirements:**
 * Nextcloud 32 or 33
@@ -27,21 +45,29 @@
 * Department knowledge bases
 * Internal communication and documentation
 * SharePoint-to-Nextcloud migrations
-
-Built with Vue 3 for a fast, modern, and secure experience.
     ]]></description>
-    <version>1.1.1</version>
+    <version>1.1.2</version>
     <licence>agpl</licence>
-    <author mail="info@voxcloud.nl">Rik Dekker</author>
+    <author mail="info@voxcloud.nl" homepage="https://voxcloud.nl">VoxCloud</author>
     <namespace>IntraVox</namespace>
+    <documentation>
+        <user>https://github.com/nextcloud/IntraVox/blob/main/docs/EDITOR_GUIDE.md</user>
+        <admin>https://github.com/nextcloud/IntraVox/blob/main/docs/ADMIN_GUIDE.md</admin>
+        <developer>https://github.com/nextcloud/IntraVox/blob/main/docs/API_DEVELOPMENT_GUIDE.md</developer>
+    </documentation>
     <category>organization</category>
     <category>office</category>
+    <category>social</category>
     <website>https://voxcloud.nl</website>
-    <bugs>https://github.com/nextcloud/intravox/issues</bugs>
-    <repository type="git">https://github.com/nextcloud/intravox.git</repository>
-    <screenshot>https://raw.githubusercontent.com/nextcloud/intravox/main/screenshots/intravox%20home.png</screenshot>
-    <screenshot>https://raw.githubusercontent.com/nextcloud/intravox/main/screenshots/Intravox%20edit.png</screenshot>
-    <screenshot>https://raw.githubusercontent.com/nextcloud/intravox/main/screenshots/IntraVox-MetaVox.png</screenshot>
+    <bugs>https://github.com/nextcloud/IntraVox/issues</bugs>
+    <repository type="git">https://github.com/nextcloud/IntraVox.git</repository>
+    <screenshot>https://raw.githubusercontent.com/nextcloud/IntraVox/main/screenshots/intravox%20home.png</screenshot>
+    <screenshot>https://raw.githubusercontent.com/nextcloud/IntraVox/main/screenshots/Intravox%20edit-page.png</screenshot>
+    <screenshot>https://raw.githubusercontent.com/nextcloud/IntraVox/main/screenshots/calendarwidget-intro.gif</screenshot>
+    <screenshot>https://raw.githubusercontent.com/nextcloud/IntraVox/main/screenshots/People-overview.png</screenshot>
+    <screenshot>https://raw.githubusercontent.com/nextcloud/IntraVox/main/screenshots/Newswidget-carrousel.gif</screenshot>
+    <screenshot>https://raw.githubusercontent.com/nextcloud/IntraVox/main/screenshots/Templates-Select-template.png</screenshot>
+    <screenshot>https://raw.githubusercontent.com/nextcloud/IntraVox/main/screenshots/Engagement.png</screenshot>
     <dependencies>
         <php min-version="8.2"/>
         <nextcloud min-version="32" max-version="33"/>
