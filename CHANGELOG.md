@@ -4,6 +4,21 @@ All notable changes to IntraVox will be documented in this file.
 
 IntraVox is a Nextcloud intranet page builder.
 
+## [1.1.2] - Unreleased — App Store listing improvements
+
+### Fixed
+- **Telemetry error feedback**: The "Send report now" button now shows the actual server error message (e.g., rate limit, connectivity issue) instead of silently failing
+
+### Changed
+- **App Store description rewritten** — Expanded from ~150 to ~250 words, structured in 6 sections: page editor, widgets, collaboration, content management, enterprise, and requirements
+- **App Store summary** — Changed to "SharePoint-style intranet pages for Nextcloud — no code required"
+- **Author updated to VoxCloud** — Author name, email (info@voxcloud.nl), and homepage (voxcloud.nl) now reflect VoxCloud branding
+- **Screenshots expanded from 3 to 7** — Added calendar widget, people widget, news carousel, templates, and engagement screenshots
+- **Category `social` added** — Reflects engagement features (reactions, comments, people widget)
+
+### Added
+- **Documentation links in App Store** — Editor Guide, Admin Guide, and API Development Guide now linked from the app listing
+
 ## [1.1.1] - 2026-04-08 — Support settings & demo data fix
 
 ### Added
