@@ -849,7 +849,9 @@
     "Tomorrow": "Tomorrow",
     "Upcoming (30 days)": "Upcoming (30 days)",
     "e.g., Upcoming Events": "e.g., Upcoming Events",
-    "read-only": "read-only"
+    "read-only": "read-only",
+    "The telemetry server returned an error:": "The telemetry server returned an error:",
+    "Could not reach the telemetry server. Please try again later.": "Could not reach the telemetry server. Please try again later."
   },
   "pluralForm": "nplurals=2; plural=(n != 1);"
 }

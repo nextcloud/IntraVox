@@ -106,19 +106,13 @@ class LicenseController extends Controller {
         }
 
         try {
-            $success = $this->telemetryService->sendReport();
+            $result = $this->telemetryService->sendReportWithDetails();
 
-            if ($success) {
-                return new DataResponse([
-                    'success' => true,
-                    'message' => 'Telemetry sent successfully'
-                ]);
-            } else {
-                return new DataResponse([
-                    'success' => false,
-                    'message' => 'Telemetry is disabled or failed to send'
-                ]);
-            }
+            return new DataResponse([
+                'success' => $result['success'],
+                'reason' => $result['reason'] ?? null,
+                'message' => $result['message'] ?? null,
+            ]);
         } catch (\Exception $e) {
             return $this->safeErrorResponse(
                 $e,

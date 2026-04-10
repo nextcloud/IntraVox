@@ -234,6 +234,9 @@
 							{{ sendingTelemetry ? t('intravox', 'Sending...') : t('intravox', 'Send report now') }}
 						</NcButton>
 					</NcNoteCard>
+					<NcNoteCard v-if="telemetryMessage" :type="telemetryMessageType" class="telemetry-result">
+						{{ telemetryMessage }}
+					</NcNoteCard>
 				</div>
 
 				<div class="telemetry-details">
@@ -300,6 +303,8 @@ export default {
 			telemetryEnabled: this.initialTelemetryEnabled,
 			telemetryLastReport: this.initialTelemetryLastReport,
 			sendingTelemetry: false,
+			telemetryMessage: '',
+			telemetryMessageType: 'success',
 			message: '',
 			messageType: 'success',
 		}
@@ -414,11 +419,32 @@ export default {
 
 		async sendTelemetryNow() {
 			this.sendingTelemetry = true
+			this.telemetryMessage = ''
 			try {
-				await axios.post(generateUrl('/apps/intravox/api/license/telemetry'))
-				this.telemetryLastReport = Math.floor(Date.now() / 1000)
+				const response = await axios.post(generateUrl('/apps/intravox/api/license/telemetry'))
+				const data = response.data
+				if (data.success) {
+					this.telemetryLastReport = Math.floor(Date.now() / 1000)
+					this.telemetryMessage = this.t('intravox', 'Report sent successfully')
+					this.telemetryMessageType = 'success'
+				} else if (data.reason === 'server_error' || data.reason === 'error') {
+					const serverMsg = data.message || ''
+					if (serverMsg.startsWith('HTTP ') || serverMsg.includes('error')) {
+						this.telemetryMessage = this.t('intravox', 'The telemetry server returned an error:') + ' ' + serverMsg
+					} else if (serverMsg.includes('cURL') || serverMsg.includes('connect') || serverMsg.includes('timeout') || serverMsg.includes('resolve')) {
+						this.telemetryMessage = this.t('intravox', 'Could not reach the telemetry server. Please try again later.')
+					} else {
+						this.telemetryMessage = this.t('intravox', 'Failed to send report') + (serverMsg ? ': ' + serverMsg : '')
+					}
+					this.telemetryMessageType = 'error'
+				} else {
+					this.telemetryMessage = this.t('intravox', 'Failed to send report')
+					this.telemetryMessageType = 'error'
+				}
 			} catch (error) {
 				console.error('Failed to send telemetry:', error)
+				this.telemetryMessage = this.t('intravox', 'Could not reach the telemetry server. Please try again later.')
+				this.telemetryMessageType = 'error'
 			} finally {
 				this.sendingTelemetry = false
 			}

@@ -849,7 +849,9 @@
     "Tomorrow": "Demain",
     "Upcoming (30 days)": "À venir (30 jours)",
     "e.g., Upcoming Events": "ex. Événements à venir",
-    "read-only": "lecture seule"
+    "read-only": "lecture seule",
+    "The telemetry server returned an error:": "Le serveur de télémétrie a renvoyé une erreur :",
+    "Could not reach the telemetry server. Please try again later.": "Impossible de joindre le serveur de télémétrie. Veuillez réessayer plus tard."
   },
   "pluralForm": "nplurals=2; plural=(n > 1);"
 }

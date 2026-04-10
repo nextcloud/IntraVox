@@ -849,7 +849,9 @@
     "Tomorrow": "Morgen",
     "Upcoming (30 days)": "Anstehend (30 Tage)",
     "e.g., Upcoming Events": "z.B. Anstehende Termine",
-    "read-only": "schreibgeschützt"
+    "read-only": "schreibgeschützt",
+    "The telemetry server returned an error:": "Der Telemetrie-Server hat einen Fehler zurückgegeben:",
+    "Could not reach the telemetry server. Please try again later.": "Der Telemetrie-Server ist nicht erreichbar. Bitte versuchen Sie es später erneut."
   },
   "pluralForm": "nplurals=2; plural=(n != 1);"
 }
