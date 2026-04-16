@@ -620,10 +620,13 @@ IntraVox/
 
 ### Accessibility
 
-1. Always add alt text to images
-2. Use proper heading hierarchy (H1 → H2 → H3)
+IntraVox meets [WCAG 2.1 Level AA](ACCESSIBILITY.md) requirements. As an editor, you can help maintain accessibility:
+
+1. Always add alt text to images (describes the image for screen readers)
+2. Use proper heading hierarchy (H1 → H2 → H3, don't skip levels)
 3. Ensure sufficient color contrast
 4. Make link text descriptive ("Read the policy" not "Click here")
+5. Add titles to video widgets
 
 ### Performance
 

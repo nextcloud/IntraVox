@@ -1,9 +1,10 @@
 <template>
-  <div class="news-layout-carousel">
+  <div class="news-layout-carousel" role="region" :aria-roledescription="t('intravox', 'Carousel')" :aria-label="t('intravox', 'News carousel')">
     <div class="carousel-container">
       <button
         class="carousel-nav carousel-nav--prev"
         :style="navButtonStyle"
+        :aria-label="t('intravox', 'Previous slide')"
         @click="prev"
       >
         <ChevronLeft :size="24" />
@@ -48,6 +49,7 @@
       <button
         class="carousel-nav carousel-nav--next"
         :style="navButtonStyle"
+        :aria-label="t('intravox', 'Next slide')"
         @click="next"
       >
         <ChevronRight :size="24" />
@@ -222,6 +224,10 @@ export default {
     },
     startAutoplay() {
       this.stopAutoplay();
+      // Respect prefers-reduced-motion: skip autoplay for users who prefer reduced motion
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        return;
+      }
       if (this.items.length > 1 && this.widget.autoplayInterval > 0) {
         this.autoplayTimer = setInterval(() => {
           if (!this.isPaused) {

@@ -2,8 +2,9 @@
   <div class="news-widget-editor">
     <!-- Widget Title -->
     <div class="editor-section">
-      <label class="editor-label">{{ t('Widget title (optional)') }}</label>
+      <label class="editor-label" for="news-widget-title">{{ t('Widget title (optional)') }}</label>
       <input
+        id="news-widget-title"
         type="text"
         v-model="localWidget.title"
         :placeholder="t('e.g., Latest News')"
@@ -90,9 +91,10 @@
 
     <!-- Autoplay Interval (only for carousel layout) -->
     <div v-if="localWidget.layout === 'carousel'" class="editor-section">
-      <label class="editor-label">{{ t('Autoplay interval (seconds)') }}</label>
+      <label class="editor-label" for="news-widget-autoplay">{{ t('Autoplay interval (seconds)') }}</label>
       <div class="limit-selector">
         <input
+          id="news-widget-autoplay"
           type="range"
           v-model.number="localWidget.autoplayInterval"
           min="0"
@@ -107,9 +109,10 @@
 
     <!-- Number of items -->
     <div class="editor-section">
-      <label class="editor-label">{{ t('Number of items') }}</label>
+      <label class="editor-label" for="news-widget-limit">{{ t('Number of items') }}</label>
       <div class="limit-selector">
         <input
+          id="news-widget-limit"
           type="range"
           v-model.number="localWidget.limit"
           min="1"
@@ -123,9 +126,9 @@
 
     <!-- Sort Options -->
     <div class="editor-section">
-      <label class="editor-label">{{ t('Sort by') }}</label>
+      <label class="editor-label" for="news-widget-sort-by">{{ t('Sort by') }}</label>
       <div class="sort-options">
-        <select v-model="localWidget.sortBy" class="editor-select" @change="emitUpdate">
+        <select id="news-widget-sort-by" v-model="localWidget.sortBy" class="editor-select" @change="emitUpdate">
           <option value="modified">{{ t('Date modified') }}</option>
           <option value="title">{{ t('Title') }}</option>
         </select>
@@ -187,13 +190,13 @@
 
       <div v-if="filters.length > 0" class="filters-list">
         <div v-for="(filter, index) in filters" :key="index" class="filter-row">
-          <select v-model="filter.fieldName" class="filter-field" @change="handleFieldChange(filter)">
+          <select v-model="filter.fieldName" class="filter-field" :aria-label="t('Filter field')" @change="handleFieldChange(filter)">
             <option value="">{{ t('Select field') }}</option>
             <option v-for="field in metavoxFields" :key="field.field_name" :value="field.field_name">
               {{ field.field_label || field.field_name }}
             </option>
           </select>
-          <select v-model="filter.operator" class="filter-operator" @change="handleOperatorChange(filter)">
+          <select v-model="filter.operator" class="filter-operator" :aria-label="t('Filter operator')" @change="handleOperatorChange(filter)">
             <option v-for="op in getOperatorsForField(filter.fieldName)" :key="op.value" :value="op.value">
               {{ t(op.label) }}
             </option>
@@ -207,6 +210,7 @@
               type="date"
               v-model="filter.value"
               class="filter-value"
+              :aria-label="t('Filter value')"
               @input="emitUpdate"
             />
 
@@ -217,6 +221,7 @@
               v-model="filter.value"
               class="filter-value"
               :placeholder="t('Value')"
+              :aria-label="t('Filter value')"
               @input="emitUpdate"
             />
 
@@ -225,6 +230,7 @@
               v-else-if="getFieldType(filter.fieldName) === 'select' && filter.operator === 'equals'"
               v-model="filter.value"
               class="filter-value"
+              :aria-label="t('Filter value')"
               @change="emitUpdate"
             >
               <option value="">{{ t('Select value') }}</option>
@@ -239,6 +245,7 @@
               v-model="filter.values"
               class="filter-value filter-value--multi"
               multiple
+              :aria-label="t('Filter values')"
               @change="emitUpdate"
             >
               <option v-for="option in getFieldOptions(filter.fieldName)" :key="option" :value="option">
@@ -252,6 +259,7 @@
               v-model="filter.values"
               class="filter-value filter-value--multi"
               multiple
+              :aria-label="t('Filter values')"
               @change="emitUpdate"
             >
               <option v-for="option in getFieldOptions(filter.fieldName)" :key="option" :value="option">
@@ -266,6 +274,7 @@
               v-model="filter.value"
               class="filter-value"
               :placeholder="t('Value')"
+              :aria-label="t('Filter value')"
               @input="emitUpdate"
             />
           </template>

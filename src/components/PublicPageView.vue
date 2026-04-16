@@ -1,7 +1,9 @@
 <template>
 	<div id="intravox-public-page">
+		<a href="#intravox-main-content" class="skip-link">{{ t('intravox', 'Skip to main content') }}</a>
+
 		<!-- Loading state -->
-		<div v-if="loading" class="public-loading">
+		<div v-if="loading" class="public-loading" role="status" aria-live="polite">
 			<div class="loading-spinner" />
 			<span>{{ t('intravox', 'Loading...') }}</span>
 		</div>
@@ -13,14 +15,16 @@
 				<h2>{{ t('intravox', 'Password Required') }}</h2>
 				<p>{{ t('intravox', 'This shared page is password protected. Enter the password to continue.') }}</p>
 				<form @submit.prevent="submitPassword">
+					<label for="intravox-public-password" class="visually-hidden">{{ t('intravox', 'Password') }}</label>
 					<input
+						id="intravox-public-password"
 						ref="passwordInput"
 						v-model="password"
 						type="password"
 						:placeholder="t('intravox', 'Password')"
 						autocomplete="off"
 						required>
-					<p v-if="passwordError" class="password-error">
+					<p v-if="passwordError" class="password-error" role="alert">
 						{{ t('intravox', 'Incorrect password. Please try again.') }}
 					</p>
 					<button type="submit" :disabled="submittingPassword">
@@ -31,7 +35,7 @@
 		</div>
 
 		<!-- Error state -->
-		<div v-else-if="error" class="public-error">
+		<div v-else-if="error" class="public-error" role="alert">
 			<h1>{{ t('intravox', 'Page Not Available') }}</h1>
 			<p>{{ error }}</p>
 		</div>
@@ -39,9 +43,9 @@
 		<!-- Page content -->
 		<template v-else-if="pageData">
 			<!-- Header -->
-			<div class="public-header">
+			<header class="public-header">
 				<h1 class="page-title">{{ pageData.title }}</h1>
-			</div>
+			</header>
 
 			<!-- Navigation (if available) -->
 			<div v-if="navigation && navigation.items && navigation.items.length > 0" class="public-nav-bar">
@@ -69,14 +73,14 @@
 				@close="showPageTree = false" />
 
 			<!-- Main content -->
-			<div class="public-content">
+			<main class="public-content" id="intravox-main-content">
 				<PageViewer
 					:page="pageData"
 					:is-public="true"
 					:share-token="token"
 					:engagement-settings="engagementSettings"
 					@navigate="handleNavigation" />
-			</div>
+			</main>
 
 			<!-- Footer -->
 			<div v-if="footerContent" class="public-footer">

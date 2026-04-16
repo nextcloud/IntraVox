@@ -1,7 +1,7 @@
 <template>
   <div class="page-editor-wrapper">
     <!-- Header Row (spans full width above everything) -->
-    <div v-if="hasHeaderRow" class="header-row-editor" :style="getHeaderRowStyle()">
+    <div v-if="hasHeaderRow" class="header-row-editor" :class="{ 'dark-bg': isDarkBackground(getHeaderRowBgColor()) }" :style="getHeaderRowStyle()">
       <div class="header-row-header">
         <span class="header-row-title">{{ t('Header row') }}</span>
         <div class="header-row-actions">
@@ -70,7 +70,7 @@
             </div>
           </template>
         </draggable>
-        <NcButton @click="showHeaderRowWidgetPicker()" type="primary" class="add-widget-btn">
+        <NcButton @click="showHeaderRowWidgetPicker()" :type="isDarkBackground(getHeaderRowBgColor()) ? 'secondary' : 'primary'" class="add-widget-btn">
           <template #icon>
             <Plus :size="20" />
           </template>
@@ -91,7 +91,7 @@
 
   <div class="page-editor-container">
     <!-- Left Side Column -->
-    <div v-if="hasSideColumn('left')" class="side-column-editor side-column-left" :style="getSideColumnStyle('left')">
+    <div v-if="hasSideColumn('left')" class="side-column-editor side-column-left" :class="{ 'dark-bg': isDarkBackground(getSideColumnBgColor('left')) }" :style="getSideColumnStyle('left')">
       <div class="side-column-header">
         <span class="side-column-title">{{ t('Left column') }}</span>
         <div class="side-column-actions">
@@ -160,7 +160,7 @@
             </div>
           </template>
         </draggable>
-        <NcButton @click="showSideColumnWidgetPicker('left')" type="primary" class="add-widget-btn">
+        <NcButton @click="showSideColumnWidgetPicker('left')" :type="isDarkBackground(getSideColumnBgColor('left')) ? 'secondary' : 'primary'" class="add-widget-btn">
           <template #icon>
             <Plus :size="20" />
           </template>
@@ -207,6 +207,7 @@
     <div class="row-wrapper">
     <div
       class="page-row editable"
+      :class="{ 'dark-bg': isDarkBackground(row.backgroundColor) }"
       :style="getRowStyle(row)"
     >
       <div class="row-controls">
@@ -231,6 +232,7 @@
             v-model="row.sectionTitle"
             class="row-section-title"
             :placeholder="t('Section title...')"
+            :aria-label="t('Section title')"
             @input="onSectionTitleChange(row)"
             @click.stop
           />
@@ -353,7 +355,7 @@
               </template>
             </draggable>
             <div class="column-add-widget">
-              <NcButton @click="showWidgetPickerForColumn(rowIndex, column)" type="primary" class="add-widget-btn">
+              <NcButton @click="showWidgetPickerForColumn(rowIndex, column)" :type="isDarkBackground(row.backgroundColor) ? 'secondary' : 'primary'" class="add-widget-btn">
                 <template #icon>
                   <Plus :size="20" />
                 </template>
@@ -421,7 +423,7 @@
     </div>
 
     <!-- Right Side Column -->
-    <div v-if="hasSideColumn('right')" class="side-column-editor side-column-right" :style="getSideColumnStyle('right')">
+    <div v-if="hasSideColumn('right')" class="side-column-editor side-column-right" :class="{ 'dark-bg': isDarkBackground(getSideColumnBgColor('right')) }" :style="getSideColumnStyle('right')">
       <div class="side-column-header">
         <span class="side-column-title">{{ t('Right column') }}</span>
         <div class="side-column-actions">
@@ -490,7 +492,7 @@
             </div>
           </template>
         </draggable>
-        <NcButton @click="showSideColumnWidgetPicker('right')" type="primary" class="add-widget-btn">
+        <NcButton @click="showSideColumnWidgetPicker('right')" :type="isDarkBackground(getSideColumnBgColor('right')) ? 'secondary' : 'primary'" class="add-widget-btn">
           <template #icon>
             <Plus :size="20" />
           </template>
@@ -650,6 +652,9 @@ export default {
         this.initializeColumnArrays();
         this.$emit('update', this.localPage);
       });
+    },
+    isDarkBackground(bgColor) {
+      return bgColor === 'var(--color-primary-element)';
     },
     getRowStyle(row) {
       const style = {};
@@ -2193,5 +2198,18 @@ export default {
   height: 20px;
   border-radius: var(--border-radius-large);
   border: 1px solid var(--color-border);
+}
+
+/* Dark background adaptations for editor UI */
+.dark-bg .column-label {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.dark-bg .page-column {
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.dark-bg .column-add-widget {
+  border-top-color: rgba(255, 255, 255, 0.3);
 }
 </style>

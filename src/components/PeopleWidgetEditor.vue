@@ -2,8 +2,9 @@
   <div class="people-widget-editor">
     <!-- Widget Title -->
     <div class="editor-section">
-      <label class="editor-label">{{ t('Widget title (optional)') }}</label>
+      <label class="editor-label" for="people-widget-title">{{ t('Widget title (optional)') }}</label>
       <input
+        id="people-widget-title"
         type="text"
         v-model="localWidget.title"
         :placeholder="t('e.g., Our Team')"
@@ -86,14 +87,14 @@
 
       <div v-if="filters.length > 0" class="filters-list">
         <div v-for="(filter, index) in filters" :key="index" class="filter-row">
-          <select v-model="filter.fieldName" class="filter-field" @change="handleFieldChange(filter)">
+          <select v-model="filter.fieldName" class="filter-field" :aria-label="t('Filter field')" @change="handleFieldChange(filter)">
             <option value="">{{ t('Select field') }}</option>
             <option v-for="field in availableFields" :key="field.fieldName" :value="field.fieldName">
               {{ field.label }}
             </option>
           </select>
 
-          <select v-model="filter.operator" class="filter-operator" @change="emitUpdate">
+          <select v-model="filter.operator" class="filter-operator" :aria-label="t('Filter operator')" @change="emitUpdate">
             <option v-for="op in getOperatorsForField(filter.fieldName)" :key="op.value" :value="op.value">
               {{ t(op.label) }}
             </option>
@@ -106,6 +107,7 @@
               v-if="filter.fieldName === 'group' && filter.operator !== 'in'"
               v-model="filter.value"
               class="filter-value"
+              :aria-label="t('Filter value')"
               @change="emitUpdate"
             >
               <option value="">{{ t('Select group') }}</option>
@@ -120,6 +122,7 @@
               v-model="filter.values"
               class="filter-value filter-value--multi"
               multiple
+              :aria-label="t('Filter values')"
               @change="emitUpdate"
             >
               <option v-for="group in groups" :key="group.id" :value="group.id">
@@ -134,6 +137,7 @@
               v-model="filter.value"
               class="filter-value filter-value--days"
               :placeholder="t('Days')"
+              :aria-label="t('Filter value')"
               min="1"
               max="365"
               @input="emitUpdate"
@@ -146,6 +150,7 @@
               v-model="filter.value"
               class="filter-value"
               :placeholder="t('Value')"
+              :aria-label="t('Filter value')"
               @input="emitUpdate"
             />
           </template>
@@ -220,9 +225,10 @@
 
     <!-- Number of people -->
     <div class="editor-section">
-      <label class="editor-label">{{ t('Maximum people to show') }}</label>
+      <label class="editor-label" for="people-widget-limit">{{ t('Maximum people to show') }}</label>
       <div class="limit-selector">
         <input
+          id="people-widget-limit"
           type="range"
           v-model.number="localWidget.limit"
           min="1"
@@ -236,9 +242,9 @@
 
     <!-- Sort Options -->
     <div class="editor-section">
-      <label class="editor-label">{{ t('Sort by') }}</label>
+      <label class="editor-label" for="people-widget-sort-by">{{ t('Sort by') }}</label>
       <div class="sort-options">
-        <select v-model="localWidget.sortBy" class="editor-select" @change="emitUpdate">
+        <select id="people-widget-sort-by" v-model="localWidget.sortBy" class="editor-select" @change="emitUpdate">
           <option value="displayName">{{ t('Name') }}</option>
           <option value="email">{{ t('Email') }}</option>
         </select>

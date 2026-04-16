@@ -6,6 +6,9 @@
       class="select-trigger"
       :class="{ 'is-open': isOpen, 'has-value': selectedPage, 'is-disabled': disabled }"
       :disabled="disabled"
+      role="combobox"
+      :aria-expanded="isOpen"
+      aria-haspopup="listbox"
       @click="toggleDropdown"
       ref="trigger"
     >
@@ -29,12 +32,13 @@
           type="text"
           class="search-input"
           :placeholder="t('Search pages...')"
+          :aria-label="t('Search pages')"
           @keydown.escape="closeDropdown"
           @keydown.down.prevent="focusNext"
           @keydown.up.prevent="focusPrev"
           @keydown.enter.prevent="selectFocused"
         />
-        <button v-if="searchQuery" class="clear-search" @click="searchQuery = ''">
+        <button v-if="searchQuery" class="clear-search" @click="searchQuery = ''" :aria-label="t('Clear search')">
           <Close :size="14" />
         </button>
       </div>
@@ -49,7 +53,7 @@
           {{ searchQuery ? t('No pages found') : t('No pages available') }}
         </div>
 
-        <ul v-else class="tree-list">
+        <ul v-else class="tree-list" role="listbox">
           <PageTreeSelectItem
             v-for="item in filteredTree"
             :key="item.uniqueId"

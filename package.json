@@ -1,6 +1,6 @@
 {
   "name": "nextcloud-intravox",
-  "version": "1.1.2",
+  "version": "1.2.0",
   "description": "SharePoint-like pages for Nextcloud",
   "repository": {
     "type": "git",

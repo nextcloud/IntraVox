@@ -22,8 +22,9 @@
         <!-- Heading Widget -->
         <div v-else-if="localWidget.type === 'heading'">
           <div class="form-group">
-            <label>{{ t('Heading:') }}</label>
+            <label for="widget-heading-text">{{ t('Heading:') }}</label>
             <input
+              id="widget-heading-text"
               v-model="localWidget.content"
               type="text"
               :placeholder="t('Enter your heading...')"
@@ -31,8 +32,8 @@
             />
           </div>
           <div class="form-group">
-            <label>{{ t('Level:') }}</label>
-            <select v-model.number="localWidget.level" class="heading-level-select">
+            <label for="widget-heading-level">{{ t('Level:') }}</label>
+            <select id="widget-heading-level" v-model.number="localWidget.level" class="heading-level-select">
               <option :value="1">{{ t('H1 - Largest') }}</option>
               <option :value="2">{{ t('H2') }}</option>
               <option :value="3">{{ t('H3') }}</option>
@@ -61,8 +62,9 @@
             <img :src="getImageUrl(localWidget.src)" :alt="localWidget.alt" />
           </div>
           <div class="form-group">
-            <label>{{ t('Alt text:') }}</label>
+            <label for="widget-image-alt">{{ t('Alt text:') }}</label>
             <input
+              id="widget-image-alt"
               v-model="localWidget.alt"
               type="text"
               :placeholder="t('Description of the image...')"
@@ -107,8 +109,9 @@
             </div>
           </div>
           <div v-if="localWidget.width" class="form-group">
-            <label>{{ t('Custom width (pixels):') }}</label>
+            <label for="widget-image-width">{{ t('Custom width (pixels):') }}</label>
             <input
+              id="widget-image-width"
               v-model.number="localWidget.width"
               type="number"
               min="50"
@@ -190,8 +193,9 @@
           </div>
           <!-- External URL input -->
           <div v-if="localWidget.linkType === 'external'" class="form-group">
-            <label>{{ t('URL:') }}</label>
+            <label for="widget-image-link-url">{{ t('URL:') }}</label>
             <input
+              id="widget-image-link-url"
               v-model="localWidget.linkUrl"
               type="url"
               :placeholder="t('https://example.com')"
@@ -213,8 +217,9 @@
         <!-- File Widget -->
         <div v-else-if="localWidget.type === 'file'">
           <div class="form-group">
-            <label>{{ t('File name:') }}</label>
+            <label for="widget-file-name">{{ t('File name:') }}</label>
             <input
+              id="widget-file-name"
               v-model="localWidget.name"
               type="text"
               placeholder="Document.pdf"
@@ -222,8 +227,9 @@
             />
           </div>
           <div class="form-group">
-            <label>{{ t('File path (in IntraVox folder):') }}</label>
+            <label for="widget-file-path">{{ t('File path (in IntraVox folder):') }}</label>
             <input
+              id="widget-file-path"
               v-model="localWidget.path"
               type="text"
               placeholder="documents/file.pdf"
@@ -235,8 +241,9 @@
         <!-- Spacer Widget -->
         <div v-else-if="localWidget.type === 'spacer'">
           <div class="form-group">
-            <label>{{ t('Height (pixels):') }}</label>
+            <label for="widget-spacer-height">{{ t('Height (pixels):') }}</label>
             <input
+              id="widget-spacer-height"
               v-model.number="localWidget.height"
               type="number"
               min="10"
@@ -295,8 +302,9 @@
 
           <!-- Video URL (YouTube, Vimeo, PeerTube, etc.) -->
           <div v-if="localWidget.provider !== 'local'" class="form-group">
-            <label>{{ t('Video URL:') }}</label>
+            <label for="widget-video-url">{{ t('Video URL:') }}</label>
             <input
+              id="widget-video-url"
               v-model="localWidget.src"
               type="url"
               placeholder="https://www.youtube.com/watch?v=... or https://vimeo.com/..."
@@ -329,8 +337,8 @@
 
           <!-- Titel -->
           <div class="form-group">
-            <label>{{ t('Title (optional):') }}</label>
-            <input v-model="localWidget.title" type="text" class="widget-input" />
+            <label for="widget-video-title">{{ t('Title (optional):') }}</label>
+            <input id="widget-video-title" v-model="localWidget.title" type="text" class="widget-input" />
           </div>
 
           <!-- Playback Options -->

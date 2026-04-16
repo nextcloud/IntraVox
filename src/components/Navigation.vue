@@ -108,7 +108,9 @@
           <a :href="getItemUrl(item)"
              :target="item.target || '_self'"
              @click.prevent="handleItemClick(item)"
-             class="dropdown-trigger">
+             class="dropdown-trigger"
+             aria-haspopup="true"
+             :aria-expanded="activeDropdown === getItemKey(item)">
             {{ decodeHtmlEntities(item.title) }}
             <ChevronDown :size="16" class="chevron-icon" />
           </a>
@@ -193,7 +195,9 @@
           <a :href="getItemUrl(item)"
              :target="item.target || '_self'"
              @click.prevent="handleItemClick(item)"
-             class="megamenu-trigger">
+             class="megamenu-trigger"
+             aria-haspopup="true"
+             :aria-expanded="activeMegaMenu === getItemKey(item)">
             {{ decodeHtmlEntities(item.title) }}
             <ChevronDown :size="16" class="chevron-icon" />
           </a>
@@ -343,8 +347,6 @@ export default {
       return '#';
     },
     handleTreeClick(event) {
-      // Remove focus from button to prevent "active" state after modal closes
-      event.target.blur();
       this.$emit('show-tree');
     },
     handleItemClick(item) {

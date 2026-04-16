@@ -5,7 +5,7 @@
            class="navigation-editor-modal">
     <div class="navigation-editor">
       <!-- Hidden element to capture autofocus -->
-      <input type="text" style="position: absolute; opacity: 0; pointer-events: none;" autofocus />
+      <input type="text" style="position: absolute; opacity: 0; pointer-events: none;" autofocus aria-label="Focus trap" />
 
       <!-- Actions at top with type selector on left -->
       <div class="modal-actions-top">

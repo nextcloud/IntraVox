@@ -274,49 +274,56 @@ export default {
           link: 'var(--color-primary-element-text)', // White links on dark blue
           linkHover: 'rgba(255, 255, 255, 0.8)',
           selection: 'rgba(255, 255, 255, 0.3)',
-          selectionText: 'var(--color-primary-element-text)'
+          selectionText: 'var(--color-primary-element-text)',
+          placeholder: 'rgba(255, 255, 255, 0.5)'
         },
         'var(--color-primary-element-light)': {
           text: 'var(--color-primary-element-light-text)',
           link: 'var(--color-primary-element)', // Primary blue links on light blue
           linkHover: 'var(--color-primary-element-hover)',
           selection: 'var(--color-primary-element)',
-          selectionText: 'var(--color-primary-element-text)'
+          selectionText: 'var(--color-primary-element-text)',
+          placeholder: 'var(--color-text-maxcontrast)'
         },
         'var(--color-error)': {
           text: 'var(--color-error-text)',
           link: 'var(--color-error-text)',
           linkHover: 'rgba(255, 255, 255, 0.8)',
           selection: 'rgba(255, 255, 255, 0.3)',
-          selectionText: 'var(--color-error-text)'
+          selectionText: 'var(--color-error-text)',
+          placeholder: 'rgba(255, 255, 255, 0.5)'
         },
         'var(--color-warning)': {
           text: 'var(--color-warning-text)',
           link: 'var(--color-warning-text)',
           linkHover: 'rgba(0, 0, 0, 0.7)',
           selection: 'rgba(0, 0, 0, 0.2)',
-          selectionText: 'var(--color-warning-text)'
+          selectionText: 'var(--color-warning-text)',
+          placeholder: 'var(--color-text-maxcontrast)'
         },
         'var(--color-success)': {
           text: 'var(--color-success-text)',
           link: 'var(--color-success-text)',
           linkHover: 'rgba(255, 255, 255, 0.8)',
           selection: 'rgba(255, 255, 255, 0.3)',
-          selectionText: 'var(--color-success-text)'
+          selectionText: 'var(--color-success-text)',
+          placeholder: 'rgba(255, 255, 255, 0.5)'
         },
         'var(--color-background-dark)': {
           text: 'var(--color-main-text)',
           link: 'var(--color-primary-element)',
           linkHover: 'var(--color-primary-element-hover)',
           selection: 'var(--color-primary-element-light)',
-          selectionText: 'var(--color-main-text)'
+          selectionText: 'var(--color-main-text)',
+          placeholder: 'var(--color-text-maxcontrast)'
         },
         'var(--color-background-hover)': {
           text: 'var(--color-main-text)',
           link: 'var(--color-primary-element)',
           linkHover: 'var(--color-primary-element-hover)',
           selection: 'var(--color-primary-element-light)',
-          selectionText: 'var(--color-main-text)'
+          selectionText: 'var(--color-main-text)',
+          placeholder: 'var(--color-text-maxcontrast)'
         }
       };
 
@@ -326,7 +333,8 @@ export default {
         link: 'var(--color-primary-element)',
         linkHover: 'var(--color-primary-element-hover)',
         selection: 'var(--color-primary-element-light)',
-        selectionText: 'var(--color-main-text)'
+        selectionText: 'var(--color-main-text)',
+        placeholder: 'var(--color-text-maxcontrast)'
       };
 
       const colors = colorMappings[bgColor] || defaultColors;
@@ -336,7 +344,8 @@ export default {
         '--widget-link-color': colors.link,
         '--widget-link-hover-color': colors.linkHover,
         '--widget-selection-bg': colors.selection,
-        '--widget-selection-text': colors.selectionText
+        '--widget-selection-text': colors.selectionText,
+        '--widget-placeholder-color': colors.placeholder
       };
     }
   },

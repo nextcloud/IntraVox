@@ -2446,7 +2446,7 @@ class PageService {
                     foreach ($widget['filters'] as $filter) {
                         if (isset($filter['fieldName']) && !empty($filter['fieldName'])) {
                             $allowedOperators = [
-                                'equals', 'contains', 'in', 'not_empty', 'empty',
+                                'equals', 'contains', 'not_contains', 'in', 'not_empty', 'empty',
                                 // Date operators
                                 'is_today', 'within_next_days', 'before', 'after',
                             ];
@@ -2455,14 +2455,14 @@ class PageService {
                                 'operator' => in_array($filter['operator'] ?? 'equals', $allowedOperators)
                                     ? $filter['operator']
                                     : 'equals',
-                                'value' => $this->sanitizeText((string)($filter['value'] ?? '')),
+                                'value' => $this->sanitizeFilterValue((string)($filter['value'] ?? '')),
                                 'values' => [],
                             ];
 
                             // Sanitize values array (for 'in' operator)
                             if (isset($filter['values']) && is_array($filter['values'])) {
                                 $sanitizedFilter['values'] = array_map(
-                                    fn($v) => $this->sanitizeText((string)$v),
+                                    fn($v) => $this->sanitizeFilterValue((string)$v),
                                     $filter['values']
                                 );
                             }
@@ -2571,6 +2571,51 @@ class PageService {
      */
     private function sanitizeText(string $text): string {
         return htmlspecialchars($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    }
+
+    /**
+     * Sanitize a filter value for safe storage.
+     * Unlike sanitizeText(), this does NOT HTML-encode because filter values
+     * are used for programmatic comparison against raw user profile data.
+     */
+    private function sanitizeFilterValue(string $value): string {
+        $value = strip_tags($value);
+        $value = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $value);
+        return trim($value);
+    }
+
+    /**
+     * Decode HTML entities in people widget filter values.
+     * Fixes data corrupted by prior use of sanitizeText() (htmlspecialchars)
+     * on filter values that are used for programmatic comparison.
+     */
+    private function decodeFilterValues(array &$widget): void {
+        if (!isset($widget['filters']) || !is_array($widget['filters'])) {
+            return;
+        }
+        foreach ($widget['filters'] as &$filter) {
+            if (isset($filter['value']) && is_string($filter['value'])) {
+                $filter['value'] = $this->decodeHtmlEntitiesRecursive($filter['value']);
+            }
+            if (isset($filter['values']) && is_array($filter['values'])) {
+                $filter['values'] = array_map(
+                    fn($v) => is_string($v) ? $this->decodeHtmlEntitiesRecursive($v) : $v,
+                    $filter['values']
+                );
+            }
+        }
+    }
+
+    /**
+     * Decode HTML entities repeatedly until stable (handles multiple encoding rounds).
+     */
+    private function decodeHtmlEntitiesRecursive(string $value): string {
+        $prev = null;
+        while ($prev !== $value) {
+            $prev = $value;
+            $value = html_entity_decode($value, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        }
+        return $value;
     }
 
     /**
@@ -2910,12 +2955,13 @@ class PageService {
             foreach ($data['layout']['rows'] as $rowIndex => $row) {
                 if (isset($row['widgets']) && is_array($row['widgets'])) {
                     foreach ($row['widgets'] as $widgetIndex => $widget) {
-                        // Only re-sanitize video widgets to check against current whitelist
                         if (($widget['type'] ?? '') === 'video') {
                             $sanitized = $this->sanitizeWidget($widget);
                             if ($sanitized) {
                                 $data['layout']['rows'][$rowIndex]['widgets'][$widgetIndex] = $sanitized;
                             }
+                        } elseif (($widget['type'] ?? '') === 'people') {
+                            $this->decodeFilterValues($data['layout']['rows'][$rowIndex]['widgets'][$widgetIndex]);
                         }
                     }
                 }
@@ -2932,6 +2978,8 @@ class PageService {
                             if ($sanitized) {
                                 $data['layout']['sideColumns'][$side]['widgets'][$widgetIndex] = $sanitized;
                             }
+                        } elseif (($widget['type'] ?? '') === 'people') {
+                            $this->decodeFilterValues($data['layout']['sideColumns'][$side]['widgets'][$widgetIndex]);
                         }
                     }
                 }
@@ -2946,6 +2994,8 @@ class PageService {
                     if ($sanitized) {
                         $data['layout']['headerRow']['widgets'][$widgetIndex] = $sanitized;
                     }
+                } elseif (($widget['type'] ?? '') === 'people') {
+                    $this->decodeFilterValues($data['layout']['headerRow']['widgets'][$widgetIndex]);
                 }
             }
         }

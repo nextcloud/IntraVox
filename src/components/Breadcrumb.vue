@@ -7,7 +7,8 @@
 
 				<a :href="item.url"
 				   @click.prevent="navigateToPage(item.uniqueId || item.id)"
-				   :class="{'breadcrumb-link': true, 'breadcrumb-current-page': item.current}">
+				   :class="{'breadcrumb-link': true, 'breadcrumb-current-page': item.current}"
+				   :aria-current="item.current ? 'page' : undefined">
 					{{ item.title }}
 				</a>
 

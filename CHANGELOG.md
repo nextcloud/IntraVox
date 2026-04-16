@@ -4,6 +4,42 @@ All notable changes to IntraVox will be documented in this file.
 
 IntraVox is a Nextcloud intranet page builder.
 
+## [1.2.0] - 2026-04-16 — Accessibility & bug fixes
+
+### Fixed
+- **People widget filter persistence** — Filters using the "does not contain" operator were silently converted to "equals" on save because `not_contains` was missing from the backend operator whitelist. After a page refresh the filter showed different results. The operator is now correctly preserved
+- **People widget filter value encoding** — Filter values containing special characters (`&`, `<`, `>`, quotes) were HTML-encoded on save via `htmlspecialchars()`, causing them to no longer match user profile data (e.g., "R&D" became "R&amp;D"). Filter values now use a dedicated `sanitizeFilterValue()` that strips tags and control characters without HTML-encoding. Existing corrupted values are automatically decoded on read
+- **Editor contrast on colored rows** — Column labels, placeholder text ("Enter text..."), column borders, and "Add Widget" buttons now adapt to dark row backgrounds (Primary color). Previously these elements were nearly invisible on dark backgrounds
+
+### Added
+- **Skip-to-content link** — Keyboard users can skip past the navigation to reach the main content directly (App.vue, PublicPageView.vue)
+- **Semantic landmarks** — `<header>`, `<main>` elements replace generic `<div>` wrappers for better screen reader navigation
+- **ARIA tab patterns** — Proper `role="tablist/tab/tabpanel"` with `aria-selected` on NewPageModal and MediaPicker tab interfaces
+- **ARIA combobox pattern** — PageTreeSelect now announces as a combobox with `aria-expanded` and `role="listbox"` on the dropdown
+- **Carousel accessibility** — News carousel has `role="region"`, `aria-roledescription`, `aria-label`, `aria-live="polite"` for slide announcements, and respects `prefers-reduced-motion`
+- **Live regions** — Loading states use `role="status"` with `aria-live="polite"`, error states use `role="alert"` (App.vue, PublicPageView.vue, CalendarWidget.vue)
+- **Focus-visible styles** — Global `*:focus-visible` outline for keyboard navigation visibility
+- **Reduced motion support** — Global `prefers-reduced-motion` media query disables all CSS animations and transitions. Carousel autoplay is skipped when the user prefers reduced motion
+- **Visually-hidden utility class** — `.visually-hidden` CSS class for screen reader-only content
+- **Breadcrumb current page** — `aria-current="page"` marks the active page in breadcrumb navigation
+- **Accessibility documentation** — New [ACCESSIBILITY.md](docs/ACCESSIBILITY.md) documenting WCAG 2.1 AA compliance status, legal framework (Wet Digitale Overheid), and implemented measures
+
+### Changed
+- **Form labels associated with inputs** — All form inputs across 15+ components now have programmatically associated labels via `for`/`id` pairs or `aria-label` attributes (WidgetEditor, NewPageModal, PageTreeSelect, CommentSection, MediaPicker, AdminSettings, PageEditor, NewsWidgetEditor, PeopleWidgetEditor, CalendarWidgetEditor, LinksEditor, NavigationEditor, PublicPageView)
+- **Icon buttons accessible** — All icon-only buttons in InlineTextEditor toolbar, carousel navigation, MediaPicker, and AdminSettings now have `aria-label` attributes
+- **Draft badge contrast improved** — Fallback text color darkened from `#856404` to `#6d5003` for a 5.5:1 contrast ratio (WCAG AA requires 4.5:1)
+- **Dropdown accessibility** — Navigation dropdowns have `aria-haspopup` and `aria-expanded` attributes
+- **WelcomeScreen heading** — Changed from `<h1>` to `<h2>` to prevent duplicate h1 on the page
+- **Password error announced** — Public page password error message has `role="alert"` for screen reader announcement
+- **MediaPicker strings translated** — All hardcoded English strings wrapped in `t()` translation function
+
+### Fixed
+- **Focus anti-pattern removed** — Removed `event.target.blur()` in Navigation.vue that was stripping keyboard focus after clicking the page structure button
+
+### Documentation
+- Added [ACCESSIBILITY.md](docs/ACCESSIBILITY.md) with full WCAG 2.1 AA compliance matrix
+- Added accessibility link to README documentation section
+
 ## [1.1.2] - 2026-04-10 — App Store listing improvements
 
 ### Fixed

@@ -2,12 +2,12 @@
   <div class="calendar-widget" :class="{ 'has-background': !!effectiveBackgroundColor, 'has-dark-background': hasDarkBackground }" :style="getContainerStyle()">
     <h3 v-if="widget.title" class="calendar-widget-title" :style="titleStyle">{{ widget.title }}</h3>
 
-    <div v-if="loading" class="calendar-loading">
+    <div v-if="loading" class="calendar-loading" role="status" aria-live="polite">
       <NcLoadingIcon :size="32" />
       <span>{{ t('Loading events...') }}</span>
     </div>
 
-    <div v-else-if="error" class="calendar-error">
+    <div v-else-if="error" class="calendar-error" role="alert">
       <AlertCircle :size="24" />
       <span>{{ error }}</span>
     </div>

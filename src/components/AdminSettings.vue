@@ -8,7 +8,7 @@
 					{{ licenseBanner.linkText }}
 				</a>
 			</span>
-			<button class="license-banner-close" @click="bannerDismissed = true">&times;</button>
+			<button class="license-banner-close" @click="bannerDismissed = true" :aria-label="t('intravox', 'Dismiss banner')">&times;</button>
 		</div>
 
 		<!-- Tab Navigation - MetaVox style -->
@@ -309,6 +309,7 @@
 									type="text"
 									class="domain-input"
 									:placeholder="t('intravox', 'video.example.org (HTTPS required)')"
+									:aria-label="t('intravox', 'Custom video domain')"
 									@keyup.enter="addCustomDomain"
 								/>
 								<NcButton type="secondary" @click="addCustomDomain" :disabled="!newDomain.trim()">
@@ -374,8 +375,8 @@
 
 				<div class="export-options">
 					<div class="export-row">
-						<label class="export-label">{{ t('intravox', 'Language') }}</label>
-						<select v-model="exportLanguage" class="export-select">
+						<label class="export-label" for="export-language">{{ t('intravox', 'Language') }}</label>
+						<select id="export-language" v-model="exportLanguage" class="export-select">
 							<option :value="null" disabled>{{ t('intravox', 'Select language') }}</option>
 							<option
 								v-for="lang in exportLanguages"
@@ -459,8 +460,9 @@
 
 				<div class="import-options">
 					<div class="import-row">
-						<label class="import-label">{{ t('intravox', 'Select ZIP file') }}</label>
+						<label class="import-label" for="import-zip-file">{{ t('intravox', 'Select ZIP file') }}</label>
 						<input
+							id="import-zip-file"
 							ref="importFileInput"
 							type="file"
 							accept=".zip"
@@ -829,8 +831,8 @@
 					<p>{{ t('intravox', 'Recover data from orphaned folder #{id} to your active IntraVox installation.', { id: migrateFolder?.id }) }}</p>
 
 					<div class="migrate-option">
-						<label>{{ t('intravox', 'Language to recover') }}</label>
-						<select v-model="migrateLanguage" class="migrate-select">
+						<label for="migrate-language">{{ t('intravox', 'Language to recover') }}</label>
+						<select id="migrate-language" v-model="migrateLanguage" class="migrate-select">
 							<option v-for="lang in migrateFolder?.languages" :key="lang" :value="lang">
 								{{ getLanguageFlag(lang) }} {{ getLanguageName(lang) }} ({{ lang }})
 							</option>

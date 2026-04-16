@@ -2,8 +2,9 @@
   <div class="calendar-widget-editor">
     <!-- Widget Title -->
     <div class="editor-section">
-      <label class="editor-label">{{ t('Widget title (optional)') }}</label>
+      <label class="editor-label" for="calendar-widget-title">{{ t('Widget title (optional)') }}</label>
       <input
+        id="calendar-widget-title"
         type="text"
         v-model="localWidget.title"
         :placeholder="t('e.g., Upcoming Events')"
@@ -80,8 +81,8 @@
 
     <!-- Date Range -->
     <div class="editor-section">
-      <label class="editor-label">{{ t('Date range') }}</label>
-      <select v-model="localWidget.dateRange" class="editor-select" @change="emitUpdate">
+      <label class="editor-label" for="calendar-widget-date-range">{{ t('Date range') }}</label>
+      <select id="calendar-widget-date-range" v-model="localWidget.dateRange" class="editor-select" @change="emitUpdate">
         <optgroup :label="t('Future')">
           <option value="upcoming">{{ t('Upcoming (30 days)') }}</option>
           <option value="this_week">{{ t('This week') }}</option>
@@ -101,9 +102,10 @@
 
     <!-- Number of events -->
     <div class="editor-section">
-      <label class="editor-label">{{ t('Number of events') }}</label>
+      <label class="editor-label" for="calendar-widget-limit">{{ t('Number of events') }}</label>
       <div class="limit-selector">
         <input
+          id="calendar-widget-limit"
           type="range"
           v-model.number="localWidget.limit"
           min="1"

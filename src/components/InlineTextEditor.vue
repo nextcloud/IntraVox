@@ -8,6 +8,7 @@
         @mousedown.prevent="editor.chain().focus().toggleBold().run()"
         :class="{ 'is-active': editor.isActive('bold') }"
         :title="t('Bold (Ctrl+B)')"
+        :aria-label="t('Bold (Ctrl+B)')"
         class="menubar-button"
       >
         <FormatBold :size="18" />
@@ -17,6 +18,7 @@
         @mousedown.prevent="editor.chain().focus().toggleItalic().run()"
         :class="{ 'is-active': editor.isActive('italic') }"
         :title="t('Italic (Ctrl+I)')"
+        :aria-label="t('Italic (Ctrl+I)')"
         class="menubar-button"
       >
         <FormatItalic :size="18" />
@@ -26,6 +28,7 @@
         @mousedown.prevent="editor.chain().focus().toggleUnderline().run()"
         :class="{ 'is-active': editor.isActive('underline') }"
         :title="t('Underline (Ctrl+U)')"
+        :aria-label="t('Underline (Ctrl+U)')"
         class="menubar-button"
       >
         <FormatUnderline :size="18" />
@@ -37,6 +40,7 @@
           type="button"
           @mousedown.prevent="toggleMoreMenu"
           :title="t('More options')"
+          :aria-label="t('More options')"
           class="menubar-button"
         >
           <DotsHorizontal :size="18" />
@@ -142,6 +146,7 @@
           @mousedown.prevent="editor.chain().focus().toggleStrike().run()"
           :class="{ 'is-active': editor.isActive('strike') }"
           :title="t('Strikethrough')"
+          :aria-label="t('Strikethrough')"
           class="menubar-button"
         >
           <FormatStrikethrough :size="18" />
@@ -156,6 +161,7 @@
             @mousedown.prevent="toggleHeadingMenu"
             class="menubar-button heading-button"
             :title="t('Heading')"
+            :aria-label="t('Heading')"
           >
             {{ getCurrentHeadingLabel() }}
             <ChevronDown :size="14" />
@@ -182,6 +188,7 @@
           @mousedown.prevent="editor.chain().focus().toggleBulletList().run()"
           :class="{ 'is-active': editor.isActive('bulletList') }"
           :title="t('Bullet list')"
+          :aria-label="t('Bullet list')"
           class="menubar-button"
         >
           <FormatListBulleted :size="18" />
@@ -191,6 +198,7 @@
           @mousedown.prevent="editor.chain().focus().toggleOrderedList().run()"
           :class="{ 'is-active': editor.isActive('orderedList') }"
           :title="t('Numbered list')"
+          :aria-label="t('Numbered list')"
           class="menubar-button"
         >
           <FormatListNumbered :size="18" />
@@ -204,6 +212,7 @@
           @mousedown.prevent="showLinkModalHandler"
           :class="{ 'is-active': editor.isActive('link') }"
           :title="t('Insert link')"
+          :aria-label="t('Insert link')"
           class="menubar-button"
         >
           <LinkVariant :size="18" />
@@ -216,6 +225,7 @@
             @mousedown.prevent="toggleTableMenu"
             :class="{ 'is-active': editor.isActive('table') }"
             :title="t('Table')"
+            :aria-label="t('Table')"
             class="menubar-button"
           >
             <TableIcon :size="18" />
@@ -941,7 +951,7 @@ export default {
 .editor-content :deep(.ProseMirror p.is-editor-empty:first-child::before) {
   content: attr(data-placeholder);
   float: left;
-  color: var(--color-text-maxcontrast);
+  color: var(--widget-placeholder-color, var(--color-text-maxcontrast));
   pointer-events: none;
   height: 0;
 }

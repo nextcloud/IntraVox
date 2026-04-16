@@ -486,6 +486,7 @@ npm run build
 
 ## Documentation
 
+- [Accessibility](docs/ACCESSIBILITY.md) - WCAG 2.1 AA compliance and accessibility features
 - [Editor Guide](docs/EDITOR_GUIDE.md) - How to create and edit pages, widgets, and content
 - [Authorization Guide](docs/AUTHORIZATION.md) - User and administrator permissions guide
 - [Scenarios](docs/SCENARIOS.md) - Practical recipes for approval workflows, department intranets, and more

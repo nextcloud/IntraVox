@@ -11,6 +11,7 @@
 				:options="sortOptions"
 				:clearable="false"
 				:searchable="false"
+				:aria-label="t('intravox', 'Sort comments')"
 				class="comment-section__sort" />
 		</div>
 
@@ -23,6 +24,7 @@
 					v-model="newComment"
 					class="comment-section__textarea"
 					:placeholder="t('intravox', 'Write a comment...')"
+					:aria-label="t('intravox', 'Write a comment')"
 					rows="2"
 					@keydown.enter.ctrl="submitComment"
 					@focus="inputFocused = true"
@@ -78,6 +80,7 @@
 							v-model="replyText"
 							class="comment-section__reply-textarea"
 							:placeholder="t('intravox', 'Write a reply...')"
+							:aria-label="t('intravox', 'Write a reply')"
 							rows="2"
 							@keydown.enter.ctrl="submitReply"
 							@keydown.escape="cancelReply" />

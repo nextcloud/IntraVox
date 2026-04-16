@@ -4,10 +4,12 @@
            size="large">
     <div class="new-page-modal-content">
       <!-- Mode Tabs -->
-      <div class="mode-tabs">
+      <div class="mode-tabs" role="tablist">
         <button
           class="mode-tab"
           :class="{ active: mode === 'blank' }"
+          role="tab"
+          :aria-selected="mode === 'blank'"
           @click="mode = 'blank'"
         >
           <FileOutline :size="18" />
@@ -16,6 +18,8 @@
         <button
           class="mode-tab"
           :class="{ active: mode === 'template' }"
+          role="tab"
+          :aria-selected="mode === 'template'"
           @click="mode = 'template'; loadTemplates()"
         >
           <FileDocumentMultipleOutline :size="18" />
@@ -24,9 +28,10 @@
       </div>
 
       <!-- Blank Page Mode -->
-      <div v-if="mode === 'blank'" class="mode-content">
-        <p class="modal-description">{{ t('Enter a title for the new page') }}</p>
+      <div v-if="mode === 'blank'" class="mode-content" role="tabpanel">
+        <label for="new-page-title" class="modal-description">{{ t('Enter a title for the new page') }}</label>
         <input
+          id="new-page-title"
           ref="titleInput"
           v-model="newPageTitle"
           type="text"
@@ -37,7 +42,7 @@
       </div>
 
       <!-- Template Mode -->
-      <div v-else class="mode-content">
+      <div v-else class="mode-content" role="tabpanel">
         <!-- Loading state -->
         <div v-if="loadingTemplates" class="templates-loading">
           <NcLoadingIcon :size="32" />
@@ -64,8 +69,9 @@
 
         <!-- Page title input (when template selected) -->
         <div v-if="selectedTemplate && templates.length > 0" class="template-title-section">
-          <label>{{ t('Page title') }}</label>
+          <label for="template-page-title">{{ t('Page title') }}</label>
           <input
+            id="template-page-title"
             ref="templateTitleInput"
             v-model="newPageTitle"
             type="text"

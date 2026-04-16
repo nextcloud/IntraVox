@@ -1,5 +1,36 @@
 /* IntraVox Main Styles */
 
+/* Skip to main content link (accessibility) */
+.skip-link {
+    position: absolute;
+    top: -100%;
+    left: 16px;
+    background: var(--color-primary-element);
+    color: var(--color-primary-element-text);
+    padding: 8px 16px;
+    border-radius: var(--border-radius);
+    z-index: 10000;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.skip-link:focus {
+    top: 8px;
+}
+
+/* Visually hidden but accessible to screen readers */
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
 /* App navigation icon */
 .icon-intravox {
     background-image: url('../img/app.svg');
@@ -20,6 +51,21 @@
 #app-intravox {
     overflow-y: auto !important;
     height: auto !important;
+}
+
+/* Focus-visible styles for keyboard navigation (accessibility) */
+*:focus-visible {
+    outline: 2px solid var(--color-primary-element);
+    outline-offset: 2px;
+}
+
+/* Reduced motion preference (accessibility) */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
 }
 
 /* Responsive design */

@@ -9,8 +9,8 @@
         <h3>{{ t('Container settings') }}</h3>
 
         <div class="form-group">
-          <label>{{ t('Grid columns:') }}</label>
-          <select v-model.number="localWidget.columns" class="widget-input">
+          <label for="links-grid-columns">{{ t('Grid columns:') }}</label>
+          <select id="links-grid-columns" v-model.number="localWidget.columns" class="widget-input">
             <option :value="1">1 {{ t('column') }}</option>
             <option :value="2">2 {{ t('columns') }}</option>
             <option :value="3">3 {{ t('columns') }}</option>
@@ -19,8 +19,8 @@
         </div>
 
         <div class="form-group">
-          <label>{{ t('Layout:') }}</label>
-          <select v-model="localWidget.layout" class="widget-input">
+          <label for="links-layout">{{ t('Layout:') }}</label>
+          <select id="links-layout" v-model="localWidget.layout" class="widget-input">
             <option value="list">{{ t('List') }}</option>
             <option value="tiles">{{ t('Tiles') }}</option>
           </select>
@@ -98,8 +98,9 @@
               <div class="link-fields">
                 <div v-if="localWidget.layout === 'tiles'" class="form-row">
                   <div class="form-group flex-1">
-                    <label>{{ t('Title:') }}</label>
+                    <label :for="`link-title-${index}`">{{ t('Title:') }}</label>
                     <input
+                      :id="`link-title-${index}`"
                       v-model="link.title"
                       type="text"
                       :placeholder="t('Tile title')"
@@ -109,8 +110,9 @@
                 </div>
                 <div class="form-row">
                   <div class="form-group flex-1">
-                    <label>{{ localWidget.layout === 'tiles' ? t('Subtitle:') : t('Link text:') }}</label>
+                    <label :for="`link-text-${index}`">{{ localWidget.layout === 'tiles' ? t('Subtitle:') : t('Link text:') }}</label>
                     <input
+                      :id="`link-text-${index}`"
                       v-model="link.text"
                       type="text"
                       :placeholder="localWidget.layout === 'tiles' ? t('Short description') : t('Click here')"
@@ -119,7 +121,7 @@
                   </div>
 
                   <div class="form-group flex-1">
-                    <label>{{ t('Link to:') }}</label>
+                    <label :for="`link-url-${index}`">{{ t('Link to:') }}</label>
                     <div class="link-target-options">
                       <PageTreeSelect
                         :model-value="link.uniqueId"
@@ -131,6 +133,7 @@
                       />
                       <span class="or-separator">{{ t('or') }}</span>
                       <input
+                        :id="`link-url-${index}`"
                         v-model="link.url"
                         type="url"
                         placeholder="https://example.com"

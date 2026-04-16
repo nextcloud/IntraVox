@@ -241,12 +241,14 @@ IntraVox works on mobile devices:
 
 ## Accessibility
 
-IntraVox supports accessibility features:
+IntraVox is designed to meet [WCAG 2.1 Level AA](ACCESSIBILITY.md) requirements, as mandated by the Dutch Wet Digitale Overheid for government intranets:
 
-- Keyboard navigation (Tab, Enter, Escape)
-- Screen reader compatible
+- Keyboard navigation (Tab, Enter, Escape, arrow keys)
+- Screen reader compatible (landmarks, ARIA roles, live regions)
+- Skip-to-content link for bypassing navigation
 - High contrast with Nextcloud dark mode
 - Scalable text (use browser zoom)
+- Reduced motion support (respects system preference)
 
 ### Keyboard Shortcuts
 

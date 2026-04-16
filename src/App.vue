@@ -1,7 +1,9 @@
 <template>
   <div id="intravox-app">
+    <a href="#intravox-main-content" class="skip-link">{{ t('Skip to main content') }}</a>
+
     <!-- Header with page title and actions -->
-    <div class="intravox-header">
+    <header class="intravox-header">
       <div class="header-left">
         <h1 v-if="!isEditMode">{{ currentPage?.title || 'IntraVox' }}</h1>
         <input
@@ -10,6 +12,7 @@
           type="text"
           class="page-title-input"
           :placeholder="t('Page title')"
+          :aria-label="t('Page title')"
         />
       </div>
 
@@ -87,7 +90,7 @@
           </NcButton>
         </template>
       </div>
-    </div>
+    </header>
 
     <!-- Navigation -->
     <div class="intravox-nav-bar">
@@ -99,18 +102,18 @@
 
     <!-- Main content area with sidebar -->
     <div class="app-content-wrapper">
-      <div v-if="loading" class="loading">
+      <div v-if="loading" class="loading" role="status" aria-live="polite">
         {{ t('Loading...') }}
       </div>
 
       <!-- Welcome screen when no pages exist (first install) -->
       <WelcomeScreen v-else-if="showWelcomeScreen" />
 
-      <div v-else-if="error" class="error">
+      <div v-else-if="error" class="error" role="alert">
         {{ error }}
       </div>
 
-      <div v-else class="intravox-content">
+      <main v-else class="intravox-content" id="intravox-main-content">
         <!-- Breadcrumb row with Details button -->
         <div v-if="breadcrumb.length > 0 || !isEditMode" class="breadcrumb-row">
           <Breadcrumb v-if="breadcrumb.length > 0"
@@ -139,7 +142,7 @@
           :page="currentPage"
           @update="updatePage"
         />
-      </div>
+      </main>
 
       <!-- Page Details Sidebar (inside content wrapper) -->
       <PageDetailsSidebar
@@ -1394,7 +1397,7 @@ export default {
   text-transform: uppercase;
   letter-spacing: 0.5px;
   background: var(--color-warning-light, #fff3cd);
-  color: var(--color-warning-text, #856404);
+  color: var(--color-warning-text, #6d5003);
   border: 1px solid var(--color-warning, #ffc107);
 }
 

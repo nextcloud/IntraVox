@@ -7,44 +7,51 @@
     @update:open="handleClose"
   >
     <!-- Tab Navigation -->
-    <div class="media-picker-tabs">
+    <div class="media-picker-tabs" role="tablist">
       <button
         :class="['tab-button', { active: activeTab === 'upload' }]"
+        role="tab"
+        :aria-selected="activeTab === 'upload'"
         @click="activeTab = 'upload'"
       >
-        Upload
+        {{ t('Upload') }}
       </button>
       <button
         :class="['tab-button', { active: activeTab === 'page' }]"
+        role="tab"
+        :aria-selected="activeTab === 'page'"
         @click="switchToTab('page')"
       >
-        Page Media
+        {{ t('Page Media') }}
       </button>
       <button
         :class="['tab-button', { active: activeTab === 'resources' }]"
+        role="tab"
+        :aria-selected="activeTab === 'resources'"
         @click="switchToTab('resources')"
       >
-        Shared Library
+        {{ t('Shared Library') }}
       </button>
     </div>
 
     <!-- Tab Content -->
     <div class="media-picker-content">
       <!-- Upload Tab -->
-      <div v-if="activeTab === 'upload'" class="tab-panel">
+      <div v-if="activeTab === 'upload'" class="tab-panel" role="tabpanel">
         <div class="upload-section">
           <input
             ref="fileInput"
             type="file"
             :accept="acceptTypes"
             class="file-input"
+            :aria-label="mediaType === 'image' ? t('Select image file') : t('Select video file')"
             @change="handleFileSelect"
           />
 
           <div v-if="!selectedFile" class="upload-prompt" @click="$refs.fileInput.click()">
             <div class="upload-icon">📁</div>
-            <p>Click to select {{ mediaType === 'image' ? 'an image' : 'a video' }}</p>
-            <p class="hint">or drag and drop</p>
+            <p>{{ mediaType === 'image' ? t('Click to select an image') : t('Click to select a video') }}</p>
+            <p class="hint">{{ t('or drag and drop') }}</p>
           </div>
 
           <div v-else class="file-selected">
@@ -55,23 +62,23 @@
                 <div class="file-size">{{ formatFileSize(selectedFile.size) }}</div>
               </div>
             </div>
-            <button type="button" @click="clearFile" class="btn-remove">✕</button>
+            <button type="button" @click="clearFile" class="btn-remove" :aria-label="t('Remove file')">✕</button>
           </div>
 
         </div>
       </div>
 
       <!-- Page Media Tab -->
-      <div v-if="activeTab === 'page'" class="tab-panel">
+      <div v-if="activeTab === 'page'" class="tab-panel" role="tabpanel">
         <div v-if="isLoadingMedia" class="loading-state">
           <span class="loading-spinner"></span>
-          <p>Loading media...</p>
+          <p>{{ t('Loading media...') }}</p>
         </div>
 
         <div v-else-if="filteredPageMedia.length === 0" class="empty-state">
           <div class="empty-icon">📭</div>
-          <p>No media files in this page yet</p>
-          <p class="hint">Upload files to see them here</p>
+          <p>{{ t('No media files in this page yet') }}</p>
+          <p class="hint">{{ t('Upload files to see them here') }}</p>
         </div>
 
         <div v-else class="media-grid">
@@ -100,14 +107,14 @@
       </div>
 
       <!-- Resources Tab -->
-      <div v-if="activeTab === 'resources'" class="tab-panel">
+      <div v-if="activeTab === 'resources'" class="tab-panel" role="tabpanel">
         <!-- Breadcrumb Navigation -->
         <div v-if="currentResourcesPath" class="breadcrumb-nav">
           <button
             class="breadcrumb-item"
             @click="navigateToFolder('')"
           >
-            📚 Shared Library
+            📚 {{ t('Shared Library') }}
           </button>
           <span v-for="(segment, index) in breadcrumbSegments" :key="index">
             <span class="breadcrumb-separator">/</span>
@@ -122,13 +129,13 @@
 
         <div v-if="isLoadingMedia" class="loading-state">
           <span class="loading-spinner"></span>
-          <p>Loading shared media...</p>
+          <p>{{ t('Loading shared media...') }}</p>
         </div>
 
         <div v-else-if="filteredResourcesMedia.length === 0" class="empty-state">
           <div class="empty-icon">📚</div>
-          <p>No media in shared library yet</p>
-          <p class="hint">Upload to shared library to see files here</p>
+          <p>{{ t('No media in shared library yet') }}</p>
+          <p class="hint">{{ t('Upload to shared library to see files here') }}</p>
         </div>
 
         <div v-else class="media-grid">
@@ -157,7 +164,7 @@
             <div class="media-info">
               <div class="media-name" :title="item.name">{{ item.name }}</div>
               <div v-if="item.type === 'file'" class="media-size">{{ formatFileSize(item.size) }}</div>
-              <div v-else class="media-type">Folder</div>
+              <div v-else class="media-type">{{ t('Folder') }}</div>
             </div>
           </div>
         </div>
@@ -167,7 +174,7 @@
     <!-- Dialog Actions -->
     <template #actions>
       <NcButton @click="handleClose">
-        Cancel
+        {{ t('Cancel') }}
       </NcButton>
       <NcButton
         type="primary"
@@ -185,25 +192,25 @@
     <NcDialog
       v-if="showDuplicateDialog"
       :open="showDuplicateDialog"
-      name="File Already Exists"
+      :name="t('File Already Exists')"
       size="small"
       @update:open="showDuplicateDialog = false"
     >
-      <p>A file with the name "{{ duplicateFilename }}" already exists.</p>
-      <p>What would you like to do?</p>
+      <p>{{ t('A file with the name "{filename}" already exists.', { filename: duplicateFilename }) }}</p>
+      <p>{{ t('What would you like to do?') }}</p>
 
       <template #actions>
         <NcButton @click="handleDuplicateCancel">
-          Cancel
+          {{ t('Cancel') }}
         </NcButton>
         <NcButton @click="handleDuplicateRename">
-          Use different name
+          {{ t('Use different name') }}
         </NcButton>
         <NcButton
           type="error"
           @click="handleDuplicateOverwrite"
         >
-          Overwrite
+          {{ t('Overwrite') }}
         </NcButton>
       </template>
     </NcDialog>
@@ -214,6 +221,7 @@
 import { NcDialog, NcButton } from '@nextcloud/vue'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
+import { translate as t } from '@nextcloud/l10n'
 import { showError } from '@nextcloud/dialogs'
 
 export default {
@@ -240,7 +248,7 @@ export default {
     },
     title: {
       type: String,
-      default: 'Select Media'
+      default: () => t('intravox', 'Select Media')
     }
   },
 
@@ -274,12 +282,12 @@ export default {
 
     confirmButtonLabel() {
       if (this.isUploading) {
-        return 'Uploading...'
+        return this.t('Uploading...')
       }
       if (this.activeTab === 'upload' && this.selectedFile) {
-        return 'Upload'
+        return this.t('Upload')
       }
-      return 'Select'
+      return this.t('Select')
     },
 
     filteredPageMedia() {
@@ -305,6 +313,10 @@ export default {
   },
 
   methods: {
+    t(key, vars = {}) {
+      return t('intravox', key, vars)
+    },
+
     handleClose() {
       this.$emit('close')
     },
@@ -488,7 +500,7 @@ export default {
 
       } catch (error) {
         console.error('Upload failed:', error)
-        showError('Upload failed: ' + (error.response?.data?.error || error.message))
+        showError(this.t('Upload failed: ') + (error.response?.data?.error || error.message))
       } finally {
         this.isUploading = false
       }
@@ -502,7 +514,7 @@ export default {
     handleDuplicateRename() {
       this.showDuplicateDialog = false
       this.duplicateFilename = ''
-      alert('Please rename the file and try again')
+      alert(this.t('Please rename the file and try again'))
     },
 
     async handleDuplicateOverwrite() {

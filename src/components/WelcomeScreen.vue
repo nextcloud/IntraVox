@@ -5,7 +5,7 @@
 				<img :src="logoUrl" alt="IntraVox" class="welcome-logo">
 			</div>
 
-			<h1 class="welcome-title">{{ t('Welcome to IntraVox') }}</h1>
+			<h2 class="welcome-title">{{ t('Welcome to IntraVox') }}</h2>
 
 			<p class="welcome-description">
 				{{ t('IntraVox is not yet configured. To get started, you can install demo data or create your own pages.') }}
