@@ -676,7 +676,7 @@ export default {
     },
     needsEditButton(widgetType) {
       // Show edit button for widgets that aren't inline-editable
-      return ['image', 'link', 'links', 'file', 'heading', 'video', 'news', 'people', 'calendar'].includes(widgetType);
+      return ['image', 'link', 'links', 'file', 'heading', 'video', 'news', 'people', 'calendar', 'feed'].includes(widgetType);
     },
     initializeWidgetIds() {
       // Collect ALL widgets from all zones for duplicate detection
@@ -979,7 +979,7 @@ export default {
         this.showWidgetPicker = false;
 
         // Open editor modal for widgets that need configuration
-        if (widgetType === 'image' || widgetType === 'links' || widgetType === 'file' || widgetType === 'heading' || widgetType === 'video' || widgetType === 'news' || widgetType === 'people' || widgetType === 'calendar') {
+        if (widgetType === 'image' || widgetType === 'links' || widgetType === 'file' || widgetType === 'heading' || widgetType === 'video' || widgetType === 'news' || widgetType === 'people' || widgetType === 'calendar' || widgetType === 'feed') {
           this.editHeaderRowWidget(newWidget);
         }
 
@@ -997,7 +997,7 @@ export default {
         this.showWidgetPicker = false;
 
         // Open editor modal for widgets that need configuration
-        if (widgetType === 'image' || widgetType === 'links' || widgetType === 'file' || widgetType === 'heading' || widgetType === 'video' || widgetType === 'news' || widgetType === 'people' || widgetType === 'calendar') {
+        if (widgetType === 'image' || widgetType === 'links' || widgetType === 'file' || widgetType === 'heading' || widgetType === 'video' || widgetType === 'news' || widgetType === 'people' || widgetType === 'calendar' || widgetType === 'feed') {
           this.editSideColumnWidget(newWidget, side);
         }
 
@@ -1025,7 +1025,7 @@ export default {
       this.showWidgetPicker = false;
 
       // Open editor modal for widgets that need configuration
-      if (widgetType === 'image' || widgetType === 'links' || widgetType === 'file' || widgetType === 'heading' || widgetType === 'video' || widgetType === 'news' || widgetType === 'people' || widgetType === 'calendar') {
+      if (widgetType === 'image' || widgetType === 'links' || widgetType === 'file' || widgetType === 'heading' || widgetType === 'video' || widgetType === 'news' || widgetType === 'people' || widgetType === 'calendar' || widgetType === 'feed') {
         this.editWidget(newWidget, rowIndex);
       }
 
@@ -1119,10 +1119,27 @@ export default {
           widget.title = '';
           widget.backgroundColor = null;
           widget.calendarIds = [];
+          widget.externalIcsUrls = [];
           widget.dateRange = 'upcoming';
           widget.limit = 5;
           widget.showTime = true;
           widget.showLocation = false;
+          break;
+        case 'feed':
+          widget.title = '';
+          widget.sourceType = 'rss';
+          widget.feedUrl = '';
+          widget.connectionId = '';
+          widget.courseId = '';
+          widget.layout = 'list';
+          widget.columns = 3;
+          widget.limit = 5;
+          widget.showImage = true;
+          widget.showDate = true;
+          widget.showExcerpt = true;
+          widget.showSource = false;
+          widget.excerptLength = 150;
+          widget.openInNewTab = true;
           break;
       }
 
@@ -2057,6 +2074,7 @@ export default {
 
 .page-column {
   min-height: 100px;
+  min-width: 0;
   padding: 10px;
   border: 2px dashed var(--color-border);
   border-radius: var(--border-radius-large);
@@ -2077,6 +2095,8 @@ export default {
 
 .widget-drop-zone {
   min-height: 80px;
+  min-width: 0;
+  overflow-x: clip;
   transition: background-color 0.2s;
 }
 
@@ -2091,6 +2111,7 @@ export default {
 
 .widget-wrapper {
   position: relative;
+  min-width: 0;
   margin-bottom: 15px;
   padding: 10px;
   border: 1px solid transparent;

@@ -79,6 +79,45 @@
       </div>
     </div>
 
+    <!-- External ICS Feeds -->
+    <div class="editor-section">
+      <label class="editor-label">{{ t('External ICS feeds') }}</label>
+      <p class="editor-hint">{{ t('Add ICS calendar URLs (e.g. from Moodle, Canvas, Brightspace). Visible to all page visitors.') }}</p>
+
+      <div v-if="localWidget.externalIcsUrls && localWidget.externalIcsUrls.length > 0" class="ics-url-list">
+        <div
+          v-for="(url, index) in localWidget.externalIcsUrls"
+          :key="index"
+          class="ics-url-item"
+        >
+          <span class="ics-url-text" :title="url">{{ truncateUrl(url) }}</span>
+          <button
+            type="button"
+            class="ics-url-remove"
+            :aria-label="t('Remove')"
+            @click="removeIcsUrl(index)"
+          >x</button>
+        </div>
+      </div>
+
+      <div v-if="!localWidget.externalIcsUrls || localWidget.externalIcsUrls.length < 5" class="ics-url-add">
+        <input
+          type="url"
+          v-model="newIcsUrl"
+          :placeholder="t('https://example.com/calendar.ics')"
+          class="editor-input ics-url-input"
+          @keydown.enter.prevent="addIcsUrl"
+        />
+        <button
+          type="button"
+          class="ics-url-add-btn"
+          :disabled="!isValidIcsUrl"
+          @click="addIcsUrl"
+        >{{ t('Add') }}</button>
+      </div>
+      <p v-if="icsUrlError" class="ics-url-error">{{ icsUrlError }}</p>
+    </div>
+
     <!-- Date Range -->
     <div class="editor-section">
       <label class="editor-label" for="calendar-widget-date-range">{{ t('Date range') }}</label>
@@ -157,6 +196,8 @@ export default {
       localWidget: this.createDefaultWidget(),
       calendars: [],
       loadingCalendars: true,
+      newIcsUrl: '',
+      icsUrlError: '',
     };
   },
   watch: {
@@ -167,10 +208,21 @@ export default {
         this.localWidget = {
           ...this.createDefaultWidget(),
           ...newWidget,
-          // Ensure calendarIds is always an array
           calendarIds: [...(newWidget.calendarIds || [])],
+          externalIcsUrls: [...(newWidget.externalIcsUrls || [])],
         };
       },
+    },
+  },
+  computed: {
+    isValidIcsUrl() {
+      if (!this.newIcsUrl) return false;
+      try {
+        const url = new URL(this.newIcsUrl);
+        return url.protocol === 'https:';
+      } catch {
+        return false;
+      }
     },
   },
   mounted() {
@@ -186,6 +238,7 @@ export default {
         title: '',
         backgroundColor: null,
         calendarIds: [],
+        externalIcsUrls: [],
         dateRange: 'upcoming',
         limit: 5,
         showTime: true,
@@ -208,6 +261,38 @@ export default {
     setBackgroundColor(color) {
       this.localWidget.backgroundColor = color;
       this.emitUpdate();
+    },
+    addIcsUrl() {
+      this.icsUrlError = '';
+      if (!this.isValidIcsUrl) {
+        this.icsUrlError = this.t('Please enter a valid HTTPS URL');
+        return;
+      }
+      if (!this.localWidget.externalIcsUrls) {
+        this.localWidget.externalIcsUrls = [];
+      }
+      if (this.localWidget.externalIcsUrls.includes(this.newIcsUrl)) {
+        this.icsUrlError = this.t('This URL has already been added');
+        return;
+      }
+      this.localWidget.externalIcsUrls.push(this.newIcsUrl);
+      this.newIcsUrl = '';
+      this.emitUpdate();
+    },
+    removeIcsUrl(index) {
+      this.localWidget.externalIcsUrls.splice(index, 1);
+      this.emitUpdate();
+    },
+    truncateUrl(url) {
+      try {
+        const parsed = new URL(url);
+        const path = parsed.pathname.length > 30
+          ? parsed.pathname.substring(0, 30) + '...'
+          : parsed.pathname;
+        return parsed.hostname + path;
+      } catch {
+        return url.substring(0, 50) + '...';
+      }
     },
     emitUpdate() {
       this.$emit('update', { ...this.localWidget });
@@ -363,5 +448,83 @@ export default {
   cursor: pointer;
   font-size: 14px;
   color: var(--color-main-text);
+}
+
+.editor-hint {
+  font-size: 12px;
+  color: var(--color-text-maxcontrast);
+  margin: 0;
+}
+
+.ics-url-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ics-url-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  background: var(--color-background-hover);
+  border-radius: var(--border-radius);
+  font-size: 13px;
+}
+
+.ics-url-text {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-main-text);
+}
+
+.ics-url-remove {
+  background: none;
+  border: none;
+  color: var(--color-text-maxcontrast);
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: var(--border-radius);
+  font-size: 13px;
+  line-height: 1;
+}
+
+.ics-url-remove:hover {
+  background: var(--color-error);
+  color: white;
+}
+
+.ics-url-add {
+  display: flex;
+  gap: 8px;
+}
+
+.ics-url-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.ics-url-add-btn {
+  padding: 8px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  background: var(--color-primary-element);
+  color: var(--color-primary-element-text);
+  cursor: pointer;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.ics-url-add-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ics-url-error {
+  font-size: 12px;
+  color: var(--color-error);
+  margin: 0;
 }
 </style>

@@ -101,6 +101,9 @@ export default {
   text-decoration: none;
   color: inherit;
   transition: all 0.2s ease;
+  min-width: 0;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 /* Default background (light gray) - for backwards compatibility */
@@ -176,6 +179,7 @@ export default {
 .news-item-image {
   flex-shrink: 0;
   width: 120px;
+  max-width: 100%;
   height: 80px;
   border-radius: var(--border-radius);
   overflow: hidden;
@@ -184,6 +188,7 @@ export default {
 
 .news-item--compact .news-item-image {
   width: 80px;
+  max-width: 100%;
   height: 60px;
 }
 

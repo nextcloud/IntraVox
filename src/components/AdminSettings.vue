@@ -50,6 +50,12 @@
 				{{ t('intravox', 'Sharing') }}
 			</button>
 			<button
+				:class="['tab-button', { active: activeTab === 'feeds' }]"
+				@click="activeTab = 'feeds'">
+				<RssBox :size="16" />
+				{{ t('intravox', 'External Feeds') }}
+			</button>
+			<button
 				:class="['tab-button', { active: activeTab === 'support' }]"
 				@click="activeTab = 'support'">
 				<HeartOutline :size="16" />
@@ -743,6 +749,91 @@
 				@license-changed="loadLicenseStats" />
 		</div>
 
+		<!-- External Feeds Tab -->
+		<div v-if="activeTab === 'feeds'" class="tab-content">
+			<div class="settings-section">
+				<h2>{{ t('intravox', 'External Feed Connections') }}</h2>
+				<p class="settings-section-desc">
+					{{ t('intravox', 'Configure connections to external systems (LMS, RSS sources). These connections can be used by the Feed widget on any page.') }}
+				</p>
+
+				<div v-for="(conn, index) in feedConnections" :key="conn.id || index" class="feed-connection-card">
+					<div class="feed-connection-header">
+						<h3>{{ conn.name || t('intravox', 'New connection') }}</h3>
+						<NcButton type="tertiary" @click="removeFeedConnection(index)">
+							{{ t('intravox', 'Remove') }}
+						</NcButton>
+					</div>
+					<div class="feed-connection-fields">
+						<div class="form-group">
+							<label :for="'conn-name-' + index">{{ t('intravox', 'Name') }}</label>
+							<input :id="'conn-name-' + index" v-model="conn.name" type="text" :placeholder="t('intravox', 'e.g. Canvas University')" />
+						</div>
+						<div class="form-group">
+							<label :for="'conn-type-' + index">{{ t('intravox', 'Type') }}</label>
+							<select :id="'conn-type-' + index" v-model="conn.type">
+								<option v-for="lms in lmsTypes" :key="lms.value" :value="lms.value">{{ lms.label }}</option>
+							</select>
+						</div>
+						<div class="form-group">
+							<label :for="'conn-url-' + index">{{ t('intravox', 'Base URL') }}</label>
+							<input :id="'conn-url-' + index" v-model="conn.baseUrl" type="url" :placeholder="t('intravox', 'https://lms.example.com')" />
+						</div>
+						<div class="form-group">
+							<label :for="'conn-token-' + index">{{ t('intravox', 'API Token (admin fallback)') }}</label>
+							<input :id="'conn-token-' + index" v-model="conn.token" type="password" :placeholder="conn.hasToken ? t('intravox', '(unchanged)') : t('intravox', 'Enter API token')" />
+						</div>
+						<div class="form-group">
+							<label :for="'conn-authmode-' + index">{{ t('intravox', 'User authentication') }}</label>
+							<select :id="'conn-authmode-' + index" v-model="conn.authMode">
+								<option value="token">{{ t('intravox', 'Admin token only (shared)') }}</option>
+								<option value="oauth2">{{ t('intravox', 'OAuth2 (per-user, personalized)') }}</option>
+								<option value="both">{{ t('intravox', 'Both (OAuth2 with admin fallback)') }}</option>
+							</select>
+						</div>
+						<template v-if="conn.authMode === 'oauth2' || conn.authMode === 'both'">
+							<div class="form-group">
+								<label :for="'conn-clientid-' + index">{{ t('intravox', 'OAuth2 Client ID') }}</label>
+								<input :id="'conn-clientid-' + index" v-model="conn.clientId" type="text" :placeholder="t('intravox', 'Client ID from LMS')" />
+							</div>
+							<div class="form-group">
+								<label :for="'conn-clientsecret-' + index">{{ t('intravox', 'OAuth2 Client Secret') }}</label>
+								<input :id="'conn-clientsecret-' + index" v-model="conn.clientSecret" type="password" :placeholder="conn.hasClientCredentials ? t('intravox', '(unchanged)') : t('intravox', 'Client secret from LMS')" />
+							</div>
+							<div class="form-group full-width">
+								<label class="field-hint">
+									{{ t('intravox', 'Redirect URI:') }}
+									<code>{{ callbackUrl }}</code>
+								</label>
+							</div>
+							<div class="form-group">
+								<label class="checkbox-label">
+									<input type="checkbox" v-model="conn.oidcAutoConnect" />
+									{{ t('intravox', 'OIDC auto-connect (zero-click SSO)') }}
+								</label>
+								<span class="field-hint">{{ t('intravox', 'Enable if the LMS uses the same identity provider as Nextcloud.') }}</span>
+							</div>
+						</template>
+						<div class="form-group">
+							<label class="checkbox-label">
+								<input type="checkbox" v-model="conn.active" />
+								{{ t('intravox', 'Active') }}
+							</label>
+						</div>
+					</div>
+				</div>
+
+				<div class="feed-connection-actions">
+					<NcButton type="secondary" @click="addFeedConnection">
+						{{ t('intravox', '+ Add connection') }}
+					</NcButton>
+					<NcButton type="primary" @click="saveFeedConnections" :disabled="feedConnectionsSaving">
+						{{ feedConnectionsSaving ? t('intravox', 'Saving...') : t('intravox', 'Save connections') }}
+					</NcButton>
+				</div>
+			</div>
+		</div>
+
 		<!-- Maintenance Tab -->
 		<div v-if="activeTab === 'maintenance'" class="tab-content">
 			<div class="settings-section">
@@ -927,6 +1018,7 @@ import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
 import LinkVariant from 'vue-material-design-icons/LinkVariant.vue'
 import FolderOutline from 'vue-material-design-icons/FolderOutline.vue'
 import FileDocumentOutline from 'vue-material-design-icons/FileDocumentOutline.vue'
+import RssBox from 'vue-material-design-icons/RssBox.vue'
 import DatabaseAlert from 'vue-material-design-icons/DatabaseAlert.vue'
 import DatabaseSearch from 'vue-material-design-icons/DatabaseSearch.vue'
 import HeartOutline from 'vue-material-design-icons/HeartOutline.vue'
@@ -956,6 +1048,7 @@ export default {
 		LinkVariant,
 		FolderOutline,
 		FileDocumentOutline,
+		RssBox,
 		DatabaseAlert,
 		DatabaseSearch,
 		ConfluenceImport,
@@ -969,6 +1062,11 @@ export default {
 	data() {
 		return {
 			activeTab: 'video', // Default to video tab
+			lmsTypes: [
+				{ value: 'moodle', label: 'Moodle' },
+				{ value: 'canvas', label: 'Canvas' },
+				{ value: 'brightspace', label: 'Brightspace' },
+			],
 			exportSubTab: 'import', // Default import sub-tab
 			languages: this.initialState.languages || [],
 			setupComplete: this.initialState.setupComplete !== false,
@@ -1049,6 +1147,9 @@ export default {
 			// Sharing overview
 			activeShares: [],
 			loadingShares: false,
+			// External feed connections
+			feedConnections: [],
+			feedConnectionsSaving: false,
 			// Orphaned data management
 			orphanedFolders: [],
 			orphanedScanned: false,
@@ -1086,6 +1187,9 @@ export default {
 		}
 	},
 	computed: {
+		callbackUrl() {
+			return window.location.origin + generateUrl('/apps/intravox/api/lms/callback')
+		},
 		reinstallLanguageName() {
 			if (!this.reinstallLanguageCode) return ''
 			const langData = this.languages.find(l => l.code === this.reinstallLanguageCode)
@@ -1161,6 +1265,58 @@ export default {
 		},
 	},
 	methods: {
+		// Feed connections management
+		async loadFeedConnections() {
+			try {
+				const response = await axios.get(generateUrl('/apps/intravox/api/settings/feed-connections'))
+				const connections = response.data.connections || []
+				this.feedConnections = connections.map(c => ({
+					...c,
+					token: '',
+					hasToken: true,
+					clientSecret: '',
+					hasClientCredentials: c.hasClientCredentials || false,
+					authMode: c.authMode || 'token',
+					clientId: c.clientId || '',
+					oidcAutoConnect: c.oidcAutoConnect || false,
+				}))
+			} catch (e) {
+				this.feedConnections = []
+			}
+		},
+		addFeedConnection() {
+			this.feedConnections.push({
+				id: '',
+				name: '',
+				type: 'moodle',
+				baseUrl: '',
+				token: '',
+				active: true,
+				hasToken: false,
+				authMode: 'token',
+				clientId: '',
+				clientSecret: '',
+				hasClientCredentials: false,
+				oidcAutoConnect: false,
+			})
+		},
+		removeFeedConnection(index) {
+			this.feedConnections.splice(index, 1)
+		},
+		async saveFeedConnections() {
+			this.feedConnectionsSaving = true
+			try {
+				await axios.post(generateUrl('/apps/intravox/api/settings/feed-connections'), {
+					connections: this.feedConnections,
+				})
+				showSuccess(t('intravox', 'Feed connections saved'))
+				await this.loadFeedConnections()
+			} catch (e) {
+				showError(t('intravox', 'Failed to save feed connections'))
+			} finally {
+				this.feedConnectionsSaving = false
+			}
+		},
 		// License stats for banner
 		async loadLicenseStats() {
 			try {
@@ -1817,6 +1973,7 @@ export default {
 	mounted() {
 		this.loadExportLanguages()
 		this.loadLicenseStats()
+		this.loadFeedConnections()
 		// Prevent accidental navigation during export (use bound handler for proper cleanup)
 		this.boundBeforeUnloadHandler = this.handleBeforeUnload.bind(this)
 		window.addEventListener('beforeunload', this.boundBeforeUnloadHandler)
@@ -2877,6 +3034,85 @@ export default {
 
 .cleanup-dialog-content li {
 	margin: 4px 0;
+}
+
+/* Feed connection cards */
+.feed-connection-card {
+	border: 1px solid var(--color-border);
+	border-radius: var(--border-radius-large);
+	padding: 16px;
+	margin-bottom: 12px;
+	background: var(--color-background-hover);
+}
+
+.feed-connection-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 12px;
+}
+
+.feed-connection-header h3 {
+	margin: 0;
+	font-size: 15px;
+}
+
+.feed-connection-fields {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 12px;
+}
+
+.feed-connection-fields .form-group {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.feed-connection-fields label {
+	font-size: 13px;
+	font-weight: 600;
+}
+
+.feed-connection-fields input,
+.feed-connection-fields select {
+	padding: 8px 12px;
+	border: 1px solid var(--color-border);
+	border-radius: var(--border-radius);
+	background: var(--color-main-background);
+	font-size: 14px;
+}
+
+.feed-connection-fields .checkbox-label {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-weight: normal;
+	cursor: pointer;
+}
+
+.feed-connection-fields .form-group.full-width {
+	grid-column: 1 / -1;
+}
+
+.feed-connection-fields .field-hint {
+	font-size: 12px;
+	color: var(--color-text-maxcontrast);
+	font-style: italic;
+}
+
+.feed-connection-fields .field-hint code {
+	font-style: normal;
+	background: var(--color-background-dark);
+	padding: 2px 6px;
+	border-radius: var(--border-radius-small);
+	user-select: all;
+}
+
+.feed-connection-actions {
+	display: flex;
+	gap: 8px;
+	margin-top: 12px;
 }
 
 </style>

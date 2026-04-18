@@ -158,6 +158,20 @@ return [
         ['name' => 'calendar#getCalendars', 'url' => '/api/calendar/calendars', 'verb' => 'GET'],
         ['name' => 'calendar#getEvents', 'url' => '/api/calendar/events', 'verb' => 'GET'],
 
+        // Feed widget API routes
+        ['name' => 'feedReader#getFeed', 'url' => '/api/feed/external', 'verb' => 'GET'],
+        ['name' => 'feedReader#getPreview', 'url' => '/api/feed/preview', 'verb' => 'GET'],
+        ['name' => 'feedReader#getCourses', 'url' => '/api/feed/courses/{connectionId}', 'verb' => 'GET'],
+        ['name' => 'feedReader#getConnections', 'url' => '/api/settings/feed-connections', 'verb' => 'GET'],
+        ['name' => 'feedReader#setConnections', 'url' => '/api/settings/feed-connections', 'verb' => 'POST'],
+
+        // LMS OAuth2 / per-user token routes
+        ['name' => 'lmsOAuth#getUserConnections', 'url' => '/api/lms/connections', 'verb' => 'GET'],
+        ['name' => 'lmsOAuth#startOAuth', 'url' => '/api/lms/connect/{connectionId}', 'verb' => 'POST'],
+        ['name' => 'lmsOAuth#callback', 'url' => '/api/lms/callback', 'verb' => 'GET'],
+        ['name' => 'lmsOAuth#saveManualToken', 'url' => '/api/lms/token/{connectionId}', 'verb' => 'POST'],
+        ['name' => 'lmsOAuth#disconnect', 'url' => '/api/lms/token/{connectionId}', 'verb' => 'DELETE'],
+
         // RSS Feed routes (public, token-based)
         ['name' => 'feed#getFeed', 'url' => '/feed/{token}', 'verb' => 'GET'],
         ['name' => 'feed#getFeedMedia', 'url' => '/feed/{token}/media/{pageId}/{filename}', 'verb' => 'GET'],
@@ -178,6 +192,7 @@ return [
         ['name' => 'api#getNewsByShare', 'url' => '/api/share/{token}/news', 'verb' => 'GET'],
         ['name' => 'people#getPeopleByShare', 'url' => '/api/share/{token}/people', 'verb' => 'GET'],
         ['name' => 'calendar#getEventsByShare', 'url' => '/api/share/{token}/calendar/events', 'verb' => 'GET'],
+        ['name' => 'feedReader#getFeedByShare', 'url' => '/api/share/{token}/feed/external', 'verb' => 'GET'],
 
         // Page routes
         ['name' => 'page#index', 'url' => '/', 'verb' => 'GET'],

@@ -4,41 +4,52 @@ declare(strict_types=1);
 
 namespace OCA\IntraVox\Service;
 
-use OCA\DAV\CalDAV\CalDavBackend;
+use OCP\Calendar\IManager;
+use OCP\Calendar\ICalendar;
 use Psr\Log\LoggerInterface;
-use Sabre\VObject\Component\VCalendar;
-use Sabre\VObject\Reader;
 
 class CalendarService {
     public function __construct(
-        private CalDavBackend $calDavBackend,
+        private IManager $calendarManager,
+        private ExternalIcsService $externalIcsService,
         private LoggerInterface $logger,
     ) {
     }
 
     /**
-     * Get all calendars for a user (personal + shared)
+     * Get all calendars for a user (personal + shared, excluding ICS subscriptions).
+     * ICS subscriptions are handled separately via the external ICS URL feature.
      */
     public function getCalendarsForUser(string $userId): array {
         $principalUri = 'principals/users/' . $userId;
-        $calendars = $this->calDavBackend->getCalendarsForUser($principalUri);
+        $calendars = $this->calendarManager->getCalendarsForPrincipal($principalUri);
 
-        return array_map(function ($calendar) {
+        return array_values(array_filter(array_map(function (ICalendar $calendar) {
+            if ($calendar->isDeleted()) {
+                return null;
+            }
+            if (method_exists($calendar, 'isEnabled') && $calendar->isEnabled() === false) {
+                return null;
+            }
+            // Hide ICS subscriptions — these are managed via the external ICS URL field instead
+            if (str_contains(get_class($calendar), 'Subscription')) {
+                return null;
+            }
+
             return [
-                'id' => (int) $calendar['id'],
-                'uri' => $calendar['uri'],
-                'displayName' => $calendar['{DAV:}displayname'] ?? $calendar['uri'],
-                'color' => self::sanitizeColor($calendar['{http://apple.com/ns/ical/}calendar-color'] ?? '#0082c9'),
-                'isReadOnly' => isset($calendar['{http://owncloud.org/ns}read-only']) && $calendar['{http://owncloud.org/ns}read-only'],
+                'id' => $calendar->getKey(),
+                'uri' => $calendar->getUri(),
+                'displayName' => $calendar->getDisplayName() ?? $calendar->getUri(),
+                'color' => self::sanitizeColor($calendar->getDisplayColor() ?? '#0082c9'),
+                'isReadOnly' => $calendar->getPermissions() === 1,
             ];
-        }, $calendars);
+        }, $calendars)));
     }
 
     /**
      * Validate and sanitize a color value to prevent CSS injection
      */
     private static function sanitizeColor(string $color): string {
-        // Accept hex colors (#rgb, #rrggbb, #rrggbbaa)
         if (preg_match('/^#[0-9a-fA-F]{3,8}$/', $color)) {
             return $color;
         }
@@ -46,165 +57,165 @@ class CalendarService {
     }
 
     /**
-     * Get events from multiple calendars within a time range, merged and sorted
+     * Get events from multiple calendars within a time range, merged and sorted.
+     * Works with both regular calendars and ICS subscriptions.
      *
      * @param string $userId
-     * @param int[] $calendarIds
+     * @param string[] $calendarKeys Calendar keys (from getKey())
      * @param \DateTimeImmutable $rangeStart
      * @param \DateTimeImmutable $rangeEnd
      * @param int $limit
      * @return array
      */
-    public function getEvents(string $userId, array $calendarIds, \DateTimeImmutable $rangeStart, \DateTimeImmutable $rangeEnd, int $limit = 5): array {
-        // Build a map of calendarId => color for enriching events
+    public function getEvents(string $userId, array $calendarKeys, \DateTimeImmutable $rangeStart, \DateTimeImmutable $rangeEnd, int $limit = 5, array $externalIcsUrls = []): array {
+        $principalUri = 'principals/users/' . $userId;
+        $calendars = $this->calendarManager->getCalendarsForPrincipal($principalUri);
+
+        // Build map of key => ICalendar
         $calendarMap = [];
-        $userCalendars = $this->getCalendarsForUser($userId);
-        foreach ($userCalendars as $cal) {
-            $calendarMap[$cal['id']] = $cal;
-        }
-
-        // Validate that user has access to all requested calendars
-        $validCalendarIds = array_filter($calendarIds, function ($id) use ($calendarMap) {
-            return isset($calendarMap[$id]);
-        });
-
-        if (empty($validCalendarIds)) {
-            return [];
+        foreach ($calendars as $calendar) {
+            $calendarMap[$calendar->getKey()] = $calendar;
         }
 
         $allEvents = [];
 
-        foreach ($validCalendarIds as $calendarId) {
-            $events = $this->getCalendarEvents($calendarId, $rangeStart, $rangeEnd);
-            $calendarColor = $calendarMap[$calendarId]['color'] ?? '#0082c9';
-            $calendarName = $calendarMap[$calendarId]['displayName'] ?? '';
-
-            foreach ($events as &$event) {
-                $event['calendarColor'] = $calendarColor;
-                $event['calendarName'] = $calendarName;
+        foreach ($calendarKeys as $key) {
+            if (!isset($calendarMap[$key])) {
+                continue;
             }
 
-            $allEvents = array_merge($allEvents, $events);
+            $calendar = $calendarMap[$key];
+            if ($calendar->isDeleted()) {
+                continue;
+            }
+
+            try {
+                $results = $calendar->search('', [], [
+                    'timerange' => [
+                        'start' => $rangeStart,
+                        'end' => $rangeEnd,
+                    ],
+                ], $limit * 3);
+
+                $calendarColor = self::sanitizeColor($calendar->getDisplayColor() ?? '#0082c9');
+                $calendarName = $calendar->getDisplayName() ?? '';
+
+                foreach ($results as $result) {
+                    foreach ($result['objects'] as $object) {
+                        $events = $this->parseSearchResult($object, $calendarColor, $calendarName, $rangeStart, $rangeEnd);
+                        $allEvents = array_merge($allEvents, $events);
+                    }
+                }
+            } catch (\Exception $e) {
+                $this->logger->error('IntraVox: Failed to search calendar', [
+                    'calendarKey' => $key,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        // Fetch events from external ICS feeds
+        foreach ($externalIcsUrls as $icsUrl) {
+            try {
+                $icsEvents = $this->externalIcsService->getEvents($icsUrl, $rangeStart, $rangeEnd);
+                $allEvents = array_merge($allEvents, $icsEvents);
+            } catch (\Exception $e) {
+                $this->logger->warning('IntraVox: Failed to fetch external ICS', [
+                    'error' => $e->getMessage(),
+                ]);
+            }
         }
 
         // Sort by start date ascending
-        usort($allEvents, function ($a, $b) {
-            $startA = $a['start'] ?? '';
-            $startB = $b['start'] ?? '';
-            return strcmp($startA, $startB);
-        });
+        usort($allEvents, fn($a, $b) => strcmp($a['start'] ?? '', $b['start'] ?? ''));
 
-        // Apply limit
         return array_slice($allEvents, 0, $limit);
     }
 
     /**
-     * Get events from a single calendar using calendarQuery with time-range filter.
-     * Recurring events are expanded into individual occurrences.
+     * Parse a search result object into event arrays.
      */
-    private function getCalendarEvents(int $calendarId, \DateTimeImmutable $rangeStart, \DateTimeImmutable $rangeEnd): array {
-        $filters = [
-            'name' => 'VCALENDAR',
-            'comp-filters' => [
-                [
-                    'name' => 'VEVENT',
-                    'comp-filters' => [],
-                    'prop-filters' => [],
-                    'is-not-defined' => false,
-                    'time-range' => [
-                        'start' => $rangeStart,
-                        'end' => $rangeEnd,
-                    ],
-                ],
-            ],
-            'prop-filters' => [],
-            'is-not-defined' => false,
-            'time-range' => null,
-        ];
+    private function parseSearchResult(array $object, string $calendarColor, string $calendarName, \DateTimeImmutable $rangeStart, \DateTimeImmutable $rangeEnd): array {
+        $events = [];
 
-        try {
-            $uris = $this->calDavBackend->calendarQuery($calendarId, $filters);
-        } catch (\Exception $e) {
-            $this->logger->error('IntraVox: Failed to query calendar', [
-                'calendarId' => $calendarId,
-                'error' => $e->getMessage(),
-            ]);
+        $uid = (string) ($object['UID'][0] ?? '');
+        $summary = (string) ($object['SUMMARY'][0] ?? '');
+        $location = (string) ($object['LOCATION'][0] ?? '');
+
+        // Skip private/confidential events
+        $class = strtoupper((string) ($object['CLASS'][0] ?? 'PUBLIC'));
+        if ($class === 'PRIVATE' || $class === 'CONFIDENTIAL') {
             return [];
         }
 
-        $events = [];
-        foreach ($uris as $uri) {
-            $eventData = $this->calDavBackend->getCalendarObject($calendarId, $uri);
-            if ($eventData === null) {
-                continue;
-            }
-
-            $parsed = $this->parseEvent($eventData, $rangeStart, $rangeEnd);
-            foreach ($parsed as $event) {
-                $events[] = $event;
-            }
+        // Handle DTSTART — can be a DateTime or an array of DateTimes for recurring events
+        $dtStarts = $object['DTSTART'] ?? [];
+        if (empty($dtStarts)) {
+            return [];
         }
 
-        return $events;
-    }
+        // For non-recurring events, wrap in array
+        if (!is_array($dtStarts) || $dtStarts instanceof \DateTimeInterface) {
+            $dtStarts = [$dtStarts];
+        }
 
-    /**
-     * Parse iCalendar data into event arrays.
-     * Recurring events are expanded into individual occurrences within the time range.
-     *
-     * @return array[] Array of event arrays (multiple for recurring events)
-     */
-    private function parseEvent(array $eventData, \DateTimeImmutable $rangeStart, \DateTimeImmutable $rangeEnd): array {
-        try {
-            $vcalendar = Reader::read($eventData['calendardata']);
-            if (!$vcalendar instanceof VCalendar) {
+        $dtEnds = $object['DTEND'] ?? [];
+        if (!is_array($dtEnds) || $dtEnds instanceof \DateTimeInterface) {
+            $dtEnds = [$dtEnds];
+        }
+
+        // The search result may return a single occurrence or multiple
+        // For single events: DTSTART is [DateTime, params]
+        // We need to handle both formats
+        $start = null;
+        $end = null;
+        $isAllDay = false;
+
+        if (isset($dtStarts[0]) && $dtStarts[0] instanceof \DateTimeInterface) {
+            $start = $dtStarts[0];
+            $isAllDay = isset($dtStarts[1]['VALUE']) && $dtStarts[1]['VALUE'] === 'DATE';
+        } elseif (isset($dtStarts[0]) && is_string($dtStarts[0])) {
+            try {
+                $start = new \DateTimeImmutable($dtStarts[0]);
+            } catch (\Exception $e) {
                 return [];
             }
+        }
 
-            // Expand recurring events into individual occurrences
-            $vcalendar = $vcalendar->expand(
-                new \DateTime($rangeStart->format('Y-m-d H:i:s'), new \DateTimeZone('UTC')),
-                new \DateTime($rangeEnd->format('Y-m-d H:i:s'), new \DateTimeZone('UTC'))
-            );
-
-            $events = [];
-            foreach ($vcalendar->VEVENT ?? [] as $vevent) {
-                // Skip private/confidential events
-                $eventClass = strtoupper((string) ($vevent->CLASS ?? 'PUBLIC'));
-                if ($eventClass === 'PRIVATE' || $eventClass === 'CONFIDENTIAL') {
-                    continue;
-                }
-
-                $event = [
-                    'uid' => (string) ($vevent->UID ?? ''),
-                    'summary' => (string) ($vevent->SUMMARY ?? ''),
-                    'location' => (string) ($vevent->LOCATION ?? ''),
-                ];
-
-                if ($vevent->DTSTART) {
-                    $dt = $vevent->DTSTART->getDateTime();
-                    $event['start'] = $dt->format('c');
-                    $event['isAllDay'] = !$vevent->DTSTART->hasTime();
-                }
-
-                if ($vevent->DTEND) {
-                    $event['end'] = $vevent->DTEND->getDateTime()->format('c');
-                } elseif ($vevent->DURATION && isset($dt)) {
-                    $event['end'] = $dt->add($vevent->DURATION->getDateInterval())->format('c');
-                }
-
-                // Add unique key for recurring occurrences (uid + start date)
-                $event['uid'] = $event['uid'] . '-' . ($event['start'] ?? '');
-
-                $events[] = $event;
-            }
-
-            return $events;
-        } catch (\Exception $e) {
-            $this->logger->warning('IntraVox: Failed to parse calendar event', [
-                'error' => $e->getMessage(),
-            ]);
+        if ($start === null) {
             return [];
         }
+
+        if (isset($dtEnds[0]) && $dtEnds[0] instanceof \DateTimeInterface) {
+            $end = $dtEnds[0];
+        } elseif (isset($dtEnds[0]) && is_string($dtEnds[0])) {
+            try {
+                $end = new \DateTimeImmutable($dtEnds[0]);
+            } catch (\Exception $e) {
+                // no end time
+            }
+        }
+
+        // Filter to time range
+        if ($start > $rangeEnd || ($end !== null && $end < $rangeStart)) {
+            return [];
+        }
+
+        $event = [
+            'uid' => $uid . '-' . $start->format('c'),
+            'summary' => $summary,
+            'location' => $location,
+            'start' => $start->format('c'),
+            'isAllDay' => $isAllDay,
+            'calendarColor' => $calendarColor,
+            'calendarName' => $calendarName,
+        ];
+
+        if ($end !== null) {
+            $event['end'] = $end->format('c');
+        }
+
+        $events[] = $event;
+        return $events;
     }
 }

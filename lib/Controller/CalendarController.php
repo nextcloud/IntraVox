@@ -79,12 +79,15 @@ class CalendarController extends Controller {
             $rangeEnd = $this->request->getParam('rangeEnd', '');
             $limit = (int) $this->request->getParam('limit', 5);
 
-            if (empty($calendarIdsParam)) {
+            // Parse external ICS URLs
+            $externalIcsUrls = $this->parseExternalIcsUrls($this->request->getParam('externalIcsUrls', ''));
+
+            if (empty($calendarIdsParam) && empty($externalIcsUrls)) {
                 return new DataResponse(['events' => []]);
             }
 
-            // Parse and validate calendar IDs
-            $calendarIds = array_map('intval', array_filter(explode(',', (string) $calendarIdsParam)));
+            // Parse calendar keys (string identifiers)
+            $calendarIds = array_filter(explode(',', (string) $calendarIdsParam), fn($s) => $s !== '');
             $limit = min(max($limit, 1), 20);
 
             // Validate date parameters
@@ -104,7 +107,7 @@ class CalendarController extends Controller {
                 $end = $maxEnd;
             }
 
-            $events = $this->calendarService->getEvents($this->userId, $calendarIds, $start, $end, $limit);
+            $events = $this->calendarService->getEvents($this->userId, $calendarIds, $start, $end, $limit, $externalIcsUrls);
 
             return new DataResponse([
                 'events' => $events,
@@ -145,11 +148,15 @@ class CalendarController extends Controller {
             $rangeEnd = $this->request->getParam('rangeEnd', '');
             $limit = (int) $this->request->getParam('limit', 5);
 
-            if (empty($calendarIdsParam)) {
+            // Parse external ICS URLs
+            $externalIcsUrls = $this->parseExternalIcsUrls($this->request->getParam('externalIcsUrls', ''));
+
+            if (empty($calendarIdsParam) && empty($externalIcsUrls)) {
                 return new DataResponse(['events' => []]);
             }
 
-            $calendarIds = array_map('intval', array_filter(explode(',', (string) $calendarIdsParam)));
+            // Parse calendar keys (string identifiers)
+            $calendarIds = array_filter(explode(',', (string) $calendarIdsParam), fn($s) => $s !== '');
             $limit = min(max($limit, 1), 20);
 
             // Validate date parameters
@@ -178,7 +185,7 @@ class CalendarController extends Controller {
                 );
             }
 
-            $events = $this->calendarService->getEvents($ownerId, $calendarIds, $start, $end, $limit);
+            $events = $this->calendarService->getEvents($ownerId, $calendarIds, $start, $end, $limit, $externalIcsUrls);
 
             return new DataResponse([
                 'events' => $events,
@@ -193,5 +200,30 @@ class CalendarController extends Controller {
                 Http::STATUS_INTERNAL_SERVER_ERROR
             );
         }
+    }
+
+    /**
+     * Parse and validate external ICS URLs from request parameter.
+     *
+     * @return string[] Valid HTTPS URLs (max 5)
+     */
+    private function parseExternalIcsUrls(string $param): array {
+        if (empty($param)) {
+            return [];
+        }
+
+        $urls = json_decode($param, true);
+        if (!is_array($urls)) {
+            return [];
+        }
+
+        $valid = [];
+        foreach (array_slice($urls, 0, 5) as $url) {
+            if (is_string($url) && filter_var($url, FILTER_VALIDATE_URL) && parse_url($url, PHP_URL_SCHEME) === 'https') {
+                $valid[] = $url;
+            }
+        }
+
+        return $valid;
     }
 }

@@ -79,10 +79,16 @@ export default {
   display: grid;
   gap: 16px;
   grid-template-columns: repeat(3, 1fr);
+  min-width: 0;
+  overflow: hidden;
+  container-type: inline-size;
+  container-name: news-grid;
 }
 
 .news-grid-item {
   flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .news-grid-item :deep(.news-item-image) {
@@ -94,6 +100,20 @@ export default {
   padding: 0;
 }
 
+/* Container query: reduce columns in narrow containers */
+@container news-grid (max-width: 400px) {
+  .news-layout-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@container news-grid (min-width: 401px) and (max-width: 600px) {
+  .news-layout-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+/* Fallback media queries for browsers without container query support */
 @media (max-width: 900px) {
   .news-layout-grid {
     grid-template-columns: repeat(2, 1fr) !important;

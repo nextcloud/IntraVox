@@ -49,6 +49,7 @@ class Application extends App implements IBootstrap {
             PageDeletedListener::class
         );
 
+
         // Register Activity Provider and Setting for Nextcloud Activity integration
         // Note: These methods may not be available in all Nextcloud versions
         if (method_exists($context, 'registerActivityProvider')) {

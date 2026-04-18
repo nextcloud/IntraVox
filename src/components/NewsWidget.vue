@@ -235,6 +235,8 @@ export default {
 <style scoped>
 .news-widget {
   width: 100%;
+  min-width: 0;
+  overflow: hidden;
   margin: 12px 0;
   container-type: inline-size; /* Enable container queries for child layouts */
 }

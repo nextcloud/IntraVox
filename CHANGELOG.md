@@ -4,6 +4,11 @@ All notable changes to IntraVox will be documented in this file.
 
 IntraVox is a Nextcloud intranet page builder.
 
+## [Unreleased]
+
+### Fixed
+- **Calendar widget missing subscriptions** — ICS calendar subscriptions (e.g. from Moodle, Canvas, Brightspace) were not shown in the calendar widget selector. The widget only called `getCalendarsForUser()` which returns regular calendars. Now also calls `getSubscriptionsForUser()` to include external calendar subscriptions (`CalendarService.php`)
+
 ## [1.2.0] - 2026-04-16 — Accessibility & bug fixes
 
 ### Fixed

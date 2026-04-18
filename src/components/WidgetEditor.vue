@@ -275,6 +275,13 @@
           @update="handleCalendarWidgetUpdate"
         />
 
+        <!-- Feed Widget -->
+        <FeedWidgetEditor
+          v-else-if="localWidget.type === 'feed'"
+          :widget="localWidget"
+          @update="handleFeedWidgetUpdate"
+        />
+
         <!-- Video Widget -->
         <div v-else-if="localWidget.type === 'video'">
           <!-- Provider keuze -->
@@ -456,6 +463,7 @@ import MediaPicker from './MediaPicker.vue';
 import NewsWidgetEditor from './NewsWidgetEditor.vue';
 import PeopleWidgetEditor from './PeopleWidgetEditor.vue';
 import CalendarWidgetEditor from './CalendarWidgetEditor.vue';
+import FeedWidgetEditor from './FeedWidgetEditor.vue';
 import { showError, showSuccess } from '@nextcloud/dialogs';
 import ImageIcon from 'vue-material-design-icons/Image.vue';
 import VideoIcon from 'vue-material-design-icons/Video.vue';
@@ -472,6 +480,7 @@ export default {
     NewsWidgetEditor,
     PeopleWidgetEditor,
     CalendarWidgetEditor,
+    FeedWidgetEditor,
     ImageIcon,
     VideoIcon
   },
@@ -632,6 +641,9 @@ export default {
     },
     handleCalendarWidgetUpdate(updatedWidget) {
       // Merge the updated calendar widget properties into localWidget
+      Object.assign(this.localWidget, updatedWidget);
+    },
+    handleFeedWidgetUpdate(updatedWidget) {
       Object.assign(this.localWidget, updatedWidget);
     },
     save() {

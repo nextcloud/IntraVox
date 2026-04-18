@@ -24,11 +24,15 @@
     </div>
 
     <div v-else class="calendar-event-list">
-      <a
+      <component
+        :is="getEventUrl(event) ? 'a' : 'div'"
         v-for="event in events"
         :key="event.uid"
-        :href="getEventUrl(event)"
+        :href="getEventUrl(event) || undefined"
+        :target="event.isExternal && getEventUrl(event) ? '_blank' : undefined"
+        :rel="event.isExternal && getEventUrl(event) ? 'noopener noreferrer' : undefined"
         class="calendar-event"
+        :class="{ 'calendar-event--no-link': !getEventUrl(event) }"
       >
         <div class="event-date-badge" :style="{ backgroundColor: event.calendarColor }">
           <span class="event-date-day">{{ getDayNumber(event.start) }}</span>
@@ -49,7 +53,7 @@
             {{ event.location }}
           </span>
         </div>
-      </a>
+      </component>
     </div>
   </div>
 </template>
@@ -100,7 +104,8 @@ export default {
   },
   computed: {
     hasCalendars() {
-      return this.widget.calendarIds && this.widget.calendarIds.length > 0;
+      return (this.widget.calendarIds && this.widget.calendarIds.length > 0)
+        || (this.widget.externalIcsUrls && this.widget.externalIcsUrls.length > 0);
     },
     effectiveBackgroundColor() {
       return this.widget.backgroundColor || this.rowBackgroundColor || '';
@@ -151,7 +156,10 @@ export default {
         const { rangeStart, rangeEnd } = this.getDateRange();
 
         const params = new URLSearchParams();
-        params.set('calendarIds', this.widget.calendarIds.join(','));
+        params.set('calendarIds', (this.widget.calendarIds || []).join(','));
+        if (this.widget.externalIcsUrls && this.widget.externalIcsUrls.length > 0) {
+          params.set('externalIcsUrls', JSON.stringify(this.widget.externalIcsUrls));
+        }
         params.set('rangeStart', rangeStart);
         params.set('rangeEnd', rangeEnd);
         params.set('limit', String(this.widget.limit || 5));
@@ -280,6 +288,10 @@ export default {
       });
     },
     getEventUrl(event) {
+      // External events: use their URL if available, otherwise no link
+      if (event.isExternal) {
+        return event.url || undefined;
+      }
       // In public share mode, calendar app is not available
       if (this.shareToken) return undefined;
       if (!event.start) return undefined;

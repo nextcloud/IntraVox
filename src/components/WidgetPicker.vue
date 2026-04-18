@@ -31,6 +31,7 @@ import Video from 'vue-material-design-icons/Video.vue';
 import Newspaper from 'vue-material-design-icons/Newspaper.vue';
 import AccountGroup from 'vue-material-design-icons/AccountGroup.vue';
 import Calendar from 'vue-material-design-icons/Calendar.vue';
+import RssBox from 'vue-material-design-icons/RssBox.vue';
 
 export default {
   name: 'WidgetPicker',
@@ -45,6 +46,7 @@ export default {
     Newspaper,
     AccountGroup,
     Calendar,
+    RssBox,
   },
   emits: ['close', 'select'],
   computed: {
@@ -106,6 +108,12 @@ export default {
           name: this.$t('Calendar'),
           icon: 'calendar',
           description: this.$t('Show events from shared calendars')
+        },
+        {
+          type: 'feed',
+          name: this.$t('Feed'),
+          icon: 'rss-box',
+          description: this.$t('Show items from an external feed or LMS')
         }
       ];
     }
@@ -122,6 +130,7 @@ export default {
         'newspaper': 'Newspaper',
         'account-group': 'AccountGroup',
         'calendar': 'Calendar',
+        'rss-box': 'RssBox',
       };
       return iconMap[iconName] || 'Text';
     }

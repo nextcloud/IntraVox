@@ -481,6 +481,7 @@ export default {
   min-height: 50px;
   box-sizing: border-box;
   min-width: 0;
+  overflow: hidden;
 }
 
 /* Reactions & Comments Section */

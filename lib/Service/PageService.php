@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace OCA\IntraVox\Service;
 
+use OCA\IntraVox\AppInfo\Application;
 use OCA\IntraVox\Constants;
 use OCA\IntraVox\Event\PageDeletedEvent;
 use OCP\EventDispatcher\IEventDispatcher;
@@ -18,7 +19,7 @@ use OCA\Files_Versions\Versions\IVersionManager;
 use OCA\Files_Versions\Versions\IVersion;
 
 class PageService {
-    private const ALLOWED_WIDGET_TYPES = ['text', 'heading', 'image', 'links', 'file', 'divider', 'spacer', 'video', 'news', 'people', 'calendar'];
+    private const ALLOWED_WIDGET_TYPES = ['text', 'heading', 'image', 'links', 'file', 'divider', 'spacer', 'video', 'news', 'people', 'calendar', 'feed'];
     private const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
     private const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/ogg'];
     private const ALLOWED_MEDIA_TYPES = [
@@ -2532,13 +2533,24 @@ class PageService {
                 // Calendar widget - displays events from shared calendars
                 $sanitized['title'] = $this->sanitizeText($widget['title'] ?? '');
 
-                // Calendar IDs (array of integers)
+                // Calendar keys (array of strings)
                 $sanitized['calendarIds'] = [];
                 if (isset($widget['calendarIds']) && is_array($widget['calendarIds'])) {
                     foreach ($widget['calendarIds'] as $id) {
-                        $intId = (int) $id;
-                        if ($intId > 0) {
-                            $sanitized['calendarIds'][] = $intId;
+                        $strId = trim((string) $id);
+                        if ($strId !== '') {
+                            $sanitized['calendarIds'][] = $strId;
+                        }
+                    }
+                }
+
+                // External ICS URLs (array of HTTPS URLs, max 5)
+                $sanitized['externalIcsUrls'] = [];
+                if (isset($widget['externalIcsUrls']) && is_array($widget['externalIcsUrls'])) {
+                    foreach (array_slice($widget['externalIcsUrls'], 0, 5) as $url) {
+                        $url = trim((string) $url);
+                        if ($url !== '' && filter_var($url, FILTER_VALIDATE_URL) && parse_url($url, PHP_URL_SCHEME) === 'https') {
+                            $sanitized['externalIcsUrls'][] = $url;
                         }
                     }
                 }
@@ -2555,6 +2567,58 @@ class PageService {
                 // Display options
                 $sanitized['showTime'] = (bool) ($widget['showTime'] ?? true);
                 $sanitized['showLocation'] = (bool) ($widget['showLocation'] ?? false);
+
+                // Background color
+                if (isset($widget['backgroundColor'])) {
+                    $sanitized['backgroundColor'] = $this->sanitizeBackgroundColor($widget['backgroundColor']);
+                }
+                break;
+
+            case 'feed':
+                // Feed widget - displays items from external RSS/Atom feeds or LMS APIs
+                $sanitized['title'] = $this->sanitizeText($widget['title'] ?? '');
+
+                // Source type — dynamically accept configured LMS types
+                $configuredTypes = array_unique(array_column(
+                    json_decode($this->config->getAppValue(Application::APP_ID, 'feed_connections', '[]'), true) ?: [],
+                    'type'
+                ));
+                $allowedSourceTypes = array_unique(array_merge(['rss'], $configuredTypes));
+                $sanitized['sourceType'] = in_array($widget['sourceType'] ?? 'rss', $allowedSourceTypes)
+                    ? $widget['sourceType']
+                    : 'rss';
+
+                // Feed URL (for RSS type)
+                $sanitized['feedUrl'] = $this->sanitizeText($widget['feedUrl'] ?? '');
+
+                // LMS connection ID and course ID
+                $sanitized['connectionId'] = $this->sanitizeText($widget['connectionId'] ?? '');
+                $sanitized['courseId'] = $this->sanitizeText($widget['courseId'] ?? '');
+
+                // Content type (for LMS types)
+                $allowedContentTypes = ['', 'news', 'my-courses', 'deadlines'];
+                $sanitized['contentType'] = in_array($widget['contentType'] ?? '', $allowedContentTypes, true)
+                    ? ($widget['contentType'] ?? '')
+                    : '';
+
+                // Layout
+                $sanitized['layout'] = in_array($widget['layout'] ?? 'list', ['list', 'grid'])
+                    ? $widget['layout']
+                    : 'list';
+
+                // Columns (for grid layout, 2-4)
+                $sanitized['columns'] = max(2, min((int) ($widget['columns'] ?? 3), 4));
+
+                // Limit (1-20 items)
+                $sanitized['limit'] = max(1, min((int) ($widget['limit'] ?? 5), 20));
+
+                // Display options
+                $sanitized['showImage'] = (bool) ($widget['showImage'] ?? true);
+                $sanitized['showDate'] = (bool) ($widget['showDate'] ?? true);
+                $sanitized['showExcerpt'] = (bool) ($widget['showExcerpt'] ?? true);
+                $sanitized['showSource'] = (bool) ($widget['showSource'] ?? false);
+                $sanitized['excerptLength'] = max(50, min((int) ($widget['excerptLength'] ?? 150), 500));
+                $sanitized['openInNewTab'] = (bool) ($widget['openInNewTab'] ?? true);
 
                 // Background color
                 if (isset($widget['backgroundColor'])) {

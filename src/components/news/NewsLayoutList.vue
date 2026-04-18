@@ -73,10 +73,12 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  min-width: 0;
+  overflow: hidden;
 }
 
-/* Compact card layout voor smalle containers (side columns) */
-@container news-list (max-width: 280px) {
+/* Compact card layout voor smalle containers (multi-column rows, side columns) */
+@container news-list (max-width: 360px) {
   .news-layout-list :deep(.news-item) {
     flex-direction: column;
     padding: 0;
@@ -86,6 +88,7 @@ export default {
   .news-layout-list :deep(.news-item-image) {
     width: 100%;
     height: 120px;
+    flex-shrink: 1;
     border-radius: var(--border-radius-large) var(--border-radius-large) 0 0;
   }
 
@@ -98,7 +101,7 @@ export default {
   }
 
   .news-layout-list :deep(.news-item-excerpt) {
-    display: none; /* Verberg excerpt in compact mode */
+    display: none;
   }
 }
 
