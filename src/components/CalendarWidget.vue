@@ -396,14 +396,14 @@ export default {
   width: 48px;
   height: 48px;
   min-width: 48px;
-  border-radius: 8px;
-  color: #fff;
+  border-radius: var(--border-radius-large);
+  color: var(--color-primary-element-text);
   flex-shrink: 0;
 }
 
 .event-date-day {
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.1;
 }
 
@@ -426,7 +426,7 @@ export default {
 
 .event-proximity {
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.3px;
 }
@@ -468,7 +468,7 @@ export default {
 }
 
 .has-dark-background .event-proximity {
-  color: #fff !important;
+  color: var(--color-primary-element-text) !important;
   opacity: 0.9;
 }
 

@@ -155,13 +155,13 @@ export default {
 }
 
 .feed-item--bg-dark {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.2);
+  background: var(--color-primary-element-light);
+  border-color: var(--color-primary-element-light);
 }
 
 .feed-item--bg-dark:hover {
-  background: rgba(255, 255, 255, 0.15);
-  border-color: rgba(255, 255, 255, 0.4);
+  background: var(--color-primary-element-hover);
+  border-color: var(--color-primary-element-hover);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
@@ -175,7 +175,8 @@ export default {
 
 .feed-item--bg-dark .feed-item-meta,
 .feed-item--bg-dark .feed-item-excerpt {
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--color-primary-element-text);
+  opacity: 0.8;
 }
 
 .feed-item--compact {
@@ -218,7 +219,7 @@ export default {
 
 .feed-item-title {
   margin: 0;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--color-main-text);
   line-height: 1.3;
@@ -230,7 +231,7 @@ export default {
 }
 
 .feed-item--compact .feed-item-title {
-  font-size: 14px;
+  font-size: 13px;
   -webkit-line-clamp: 1;
 }
 
@@ -264,7 +265,7 @@ export default {
 .feed-item-excerpt {
   margin: 4px 0 0 0;
   font-size: 13px;
-  color: var(--color-text-light);
+  color: var(--color-text-maxcontrast);
   line-height: 1.4;
   overflow: hidden;
   text-overflow: ellipsis;

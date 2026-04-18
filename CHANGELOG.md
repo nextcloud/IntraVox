@@ -6,8 +6,21 @@ IntraVox is a Nextcloud intranet page builder.
 
 ## [Unreleased]
 
+### Added
+- **Feed widget** — New widget type for displaying external content on intranet pages. Supports RSS/Atom feeds and direct LMS API integration with Canvas, Moodle, and Brightspace. Features include: list and grid layouts (2-4 columns), configurable display options (image, date, excerpt, source, author), per-user OAuth2 personalization for LMS content (see enrolled courses, personal deadlines), OIDC auto-connect for zero-click SSO, manual token fallback for Moodle/Brightspace, 15-minute server-side caching, and public share support (`FeedWidget.vue`, `FeedWidgetEditor.vue`, `FeedReaderService.php`, `FeedItem.vue`)
+- **Feed widget: LMS content types** — Each LMS connection supports three content types: News/Announcements (default), My Courses (enrolled courses), and Upcoming Deadlines (assignments due in next 30 days). Content types use native LMS APIs for accurate, real-time data
+- **Feed widget: OAuth2 account linking** — Users can connect their personal LMS account via OAuth2 popup flow (Canvas, Moodle with local_oauth2 plugin, Brightspace). Connected users see personalized content from their own courses. Token refresh is automatic (`LmsOAuthService.php`, `LmsOAuthController.php`, `LmsTokenService.php`, `OidcTokenBridge.php`)
+- **Feed widget: admin LMS connections** — Administrators configure LMS connections in IntraVox Admin Settings with connection name, type, base URL, API token, and optional OAuth2 credentials. Supports auth modes: shared token, OAuth2 only, or both with fallback
+- **Calendar widget: external ICS feeds** — Editors can add external ICS calendar URLs (e.g. from Moodle, Canvas, Brightspace) directly in the calendar widget. Events from these feeds are visible to all page visitors, including public share viewers. No Nextcloud Calendar subscription required per user. Supports up to 5 ICS feeds per widget with 30-minute caching (`ExternalIcsService.php`, `CalendarWidgetEditor.vue`)
+- **Calendar widget: LMS event deep links** — Clicking an external calendar event opens the event in the source LMS. Supports Canvas (native URL field), Brightspace (URL constructed from UID), and Moodle (URL constructed from UID). Unknown sources link to the feed domain
+
+### Changed
+- **Calendar widget: IManager refactor** — Replaced `CalDavBackend` with `OCP\Calendar\IManager` for fetching calendars. This properly handles both regular calendars and ICS subscriptions. Calendar identifiers changed from numeric IDs to string keys (`CalendarService.php`, `CalendarController.php`, `PageService.php`)
+- **Calendar widget: hide ICS subscriptions from selector** — Nextcloud ICS subscriptions are no longer shown in the calendar selector since external feeds are now managed via the dedicated ICS URL field
+- **CSS theming compliance** — Replaced non-standard `--color-text-light` with `--color-text-maxcontrast` in Feed and News widgets. Replaced hardcoded `#fff`/`white` with `var(--color-primary-element-text)`. Replaced hardcoded `border-radius` values with NC variables. Standardized font-weight to 600 (NC convention). Dark theme backgrounds now use `var(--color-primary-element-light)` instead of hardcoded rgba values. Affects: `FeedItem.vue`, `NewsItem.vue`, `CalendarWidget.vue`, `FeedWidgetEditor.vue`
+
 ### Fixed
-- **Calendar widget missing subscriptions** — ICS calendar subscriptions (e.g. from Moodle, Canvas, Brightspace) were not shown in the calendar widget selector. The widget only called `getCalendarsForUser()` which returns regular calendars. Now also calls `getSubscriptionsForUser()` to include external calendar subscriptions (`CalendarService.php`)
+- **Calendar widget wrong events shown** — When an ICS subscription had the same numeric ID as a regular calendar, the widget showed events from the wrong calendar. Fixed by switching to unique string keys via IManager
 
 ## [1.2.0] - 2026-04-16 — Accessibility & bug fixes
 

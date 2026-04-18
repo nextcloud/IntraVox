@@ -104,8 +104,9 @@ class ExternalIcsService {
                 return [];
             }
 
-            // Get calendar name for display
+            // Get calendar name and base URL for display/linking
             $calendarName = (string) ($vcalendar->{'X-WR-CALNAME'} ?? parse_url($sourceUrl, PHP_URL_HOST) ?? '');
+            $sourceBaseUrl = parse_url($sourceUrl, PHP_URL_SCHEME) . '://' . parse_url($sourceUrl, PHP_URL_HOST);
 
             // Expand recurring events
             $vcalendar = $vcalendar->expand(
@@ -124,7 +125,7 @@ class ExternalIcsService {
                     'uid' => (string) ($vevent->UID ?? ''),
                     'summary' => (string) ($vevent->SUMMARY ?? ''),
                     'location' => (string) ($vevent->LOCATION ?? ''),
-                    'url' => (string) ($vevent->URL ?? ''),
+                    'url' => (string) ($vevent->URL ?? '') ?: $this->buildEventUrl($vevent, $sourceBaseUrl),
                     'calendarName' => $calendarName,
                     'calendarColor' => '#8B5CF6', // distinct purple for external feeds
                     'isExternal' => true,
@@ -154,6 +155,35 @@ class ExternalIcsService {
             ]);
             return [];
         }
+    }
+
+    /**
+     * Try to build a direct event URL from the UID.
+     *
+     * Supported UID formats:
+     * - Brightspace: "{orgUnitId}-{eventId}@{host}" → /d2l/le/calendar/{orgUnitId}/event/{eventId}/detailsview
+     * - Moodle: "{eventId}@{host}" → /calendar/view.php?view=day#event_{eventId}
+     * - Unknown: falls back to base URL of the ICS feed
+     */
+    private function buildEventUrl(\Sabre\VObject\Component\VEvent $vevent, string $sourceBaseUrl): string {
+        $uid = (string) ($vevent->UID ?? '');
+        $host = parse_url($sourceBaseUrl, PHP_URL_HOST) ?? '';
+
+        // Brightspace: "6606-70434@hetrynow.brightspace.com"
+        if (preg_match('/^(\d+)-(\d+)@(.+)$/', $uid, $m) && str_contains($m[3], $host)) {
+            return $sourceBaseUrl . '/d2l/le/calendar/' . $m[1] . '/event/' . $m[2] . '/detailsview';
+        }
+
+        // Moodle: "6@moodle.rikdekker.nl"
+        if (preg_match('/^(\d+)@(.+)$/', $uid, $m) && str_contains($m[2], $host)) {
+            $timestamp = '';
+            if ($vevent->DTSTART) {
+                $timestamp = '&time=' . $vevent->DTSTART->getDateTime()->getTimestamp();
+            }
+            return $sourceBaseUrl . '/calendar/view.php?view=day' . $timestamp . '#event_' . $m[1];
+        }
+
+        return $sourceBaseUrl;
     }
 
     private function validateUrl(string $url): void {

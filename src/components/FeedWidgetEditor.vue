@@ -666,19 +666,19 @@ export default {
   display: inline-flex;
   align-items: center;
   padding: 4px 10px;
-  border-radius: 12px;
+  border-radius: var(--border-radius-large);
   font-size: 12px;
   font-weight: 600;
 }
 
 .status-badge.connected {
   background: var(--color-success);
-  color: white;
+  color: var(--color-primary-element-text);
 }
 
 .status-badge.disconnected {
   background: var(--color-warning);
-  color: white;
+  color: var(--color-primary-element-text);
 }
 
 .status-badge.loading {
