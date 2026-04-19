@@ -93,15 +93,30 @@ Displays personalized content from a Brightspace (Desire2Learn) instance.
 
 ### Nextcloud
 
-Displays personalized data from a Nextcloud instance — either the local server or a remote Nextcloud. Each user sees only their own data (security-trimmed via per-user authentication).
+Connects to a Nextcloud instance (local or remote) to display activity and notifications. Each user sees only their own data (security-trimmed via per-user authentication).
+
+> **Design principle: IntraVox vs Nextcloud Dashboard**
+>
+> The Nextcloud Dashboard is a *personal productivity overview* — it shows my mail, my tasks, my recent files, my Talk mentions. IntraVox is an *organizational communication platform* — it shows company news, team updates, shared resources, and external system data.
+>
+> IntraVox should not duplicate what the Dashboard already provides. The Nextcloud source type in IntraVox focuses on **organizational context** (activity streams, notifications) rather than personal task management (Deck cards, unread mail, recent files). For personal data, users use the Dashboard. For organizational content, they use IntraVox.
 
 **Content types:**
 
 | Content type | What it shows | API used |
 |---|---|---|
-| **My Activity** (default) | File changes, shares, comments, group events from the user's activity stream | `/ocs/v2.php/apps/activity/api/v2/activity` |
-| **My Shares** | Files shared with the user (received shares) | `/ocs/v2.php/apps/files_sharing/api/v1/shares` |
-| **My Notifications** | Personal notifications (app updates, mentions, invitations) | `/ocs/v2.php/apps/notifications/api/v2/notifications` |
+| **Activity** (default) | File changes, shares, comments, and events — useful as an organizational activity stream when shown on shared intranet pages | `/ocs/v2.php/apps/activity/api/v2/activity` |
+| **Notifications** | System notifications, mentions, and invitations | `/ocs/v2.php/apps/notifications/api/v2/notifications` |
+
+**What is NOT included (and why):**
+
+| Data | Why not in IntraVox | Where to find it |
+|------|-------------------|------------------|
+| Recent/recommended files | Personal productivity — algorithmic per-user recommendations | Nextcloud Dashboard (Recommendations widget) |
+| Talk mentions & conversations | Personal messaging | Nextcloud Dashboard (Talk widget) |
+| Deck cards (due today/tomorrow) | Personal task management | Nextcloud Dashboard (Deck widget) |
+| Unread/important mail | Personal email | Nextcloud Dashboard (Mail widget) |
+| My shares (received files) | Personal file management, not organizational content | Nextcloud Files sidebar |
 
 **Authentication:**
 

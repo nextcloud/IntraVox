@@ -1223,7 +1223,6 @@ class FeedReaderService {
         // Determine endpoint based on content type
         $endpoint = match ($contentType) {
             'news' => '/ocs/v2.php/apps/activity/api/v2/activity?format=json&limit=50',
-            'my-courses' => '/ocs/v2.php/apps/files_sharing/api/v1/shares?format=json&shared_with_me=true',
             'deadlines' => '/ocs/v2.php/apps/notifications/api/v2/notifications?format=json',
             default => '/ocs/v2.php/apps/activity/api/v2/activity?format=json&limit=50',
         };
@@ -1266,7 +1265,6 @@ class FeedReaderService {
         // Parse based on content type
         $items = match ($contentType) {
             'news' => $this->parseNextcloudActivity($body, $baseUrl, $sourceName),
-            'my-courses' => $this->parseNextcloudShares($body, $baseUrl, $sourceName),
             'deadlines' => $this->parseNextcloudNotifications($body, $baseUrl, $sourceName),
             default => $this->parseNextcloudActivity($body, $baseUrl, $sourceName),
         };
@@ -1292,26 +1290,6 @@ class FeedReaderService {
                 'date' => $activity['datetime'] ?? date('c'),
                 'source' => $sourceName,
                 'author' => $activity['user'] ?? null,
-            ];
-        }
-        return $items;
-    }
-
-    private function parseNextcloudShares(array $body, string $baseUrl, string $sourceName): array {
-        $data = $body['ocs']['data'] ?? [];
-        $items = [];
-        foreach ($data as $share) {
-            $shareTypes = ['user' => 'User', 'group' => 'Group', 'link' => 'Link', 'email' => 'Email'];
-            $items[] = [
-                'id' => 'nc-share-' . ($share['id'] ?? ''),
-                'title' => $share['file_target'] ?? $share['path'] ?? '',
-                'url' => $baseUrl . '/f/' . ($share['file_source'] ?? ''),
-                'excerpt' => 'Shared by ' . ($share['displayname_owner'] ?? $share['uid_owner'] ?? '') .
-                    ($share['share_with_displayname'] ? ' with ' . $share['share_with_displayname'] : ''),
-                'image' => null,
-                'date' => date('c', $share['stime'] ?? time()),
-                'source' => $sourceName,
-                'author' => $share['displayname_owner'] ?? $share['uid_owner'] ?? null,
             ];
         }
         return $items;

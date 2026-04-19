@@ -86,9 +86,8 @@
       <label for="feed-content-type">{{ t('Content type') }}</label>
       <select id="feed-content-type" v-model="localWidget.contentType" @change="emitUpdate">
         <template v-if="localWidget.sourceType === 'nextcloud'">
-          <option value="news">{{ t('My Activity') }}</option>
-          <option value="my-courses">{{ t('My Shares') }}</option>
-          <option value="deadlines">{{ t('My Notifications') }}</option>
+          <option value="news">{{ t('Activity') }}</option>
+          <option value="deadlines">{{ t('Notifications') }}</option>
         </template>
         <template v-else>
           <option value="news">{{ t('News / Announcements') }}</option>
