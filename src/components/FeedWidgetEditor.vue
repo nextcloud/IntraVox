@@ -5,9 +5,7 @@
       <label for="feed-source-type">{{ t('Source type') }}</label>
       <select id="feed-source-type" v-model="localWidget.sourceType" @change="onSourceTypeChange">
         <option value="rss">{{ t('RSS / Atom feed') }}</option>
-        <option v-for="lmsType in availableLmsTypes" :key="lmsType" :value="lmsType">
-          {{ getSourceTypeLabel(lmsType) }}
-        </option>
+        <option v-if="availableConnections.length > 0" value="connection">{{ t('Connection') }}</option>
       </select>
     </div>
 
@@ -30,20 +28,20 @@
       <p v-if="previewError" class="field-error">{{ previewError }}</p>
     </div>
 
-    <!-- LMS connection selection -->
-    <div v-else class="form-group">
+    <!-- Connection selection -->
+    <div v-if="localWidget.sourceType === 'connection'" class="form-group">
       <label for="feed-connection">{{ t('Connection') }}</label>
       <select id="feed-connection" v-model="localWidget.connectionId" @change="onConnectionChange">
         <option value="">{{ t('Select a connection...') }}</option>
         <option
-          v-for="conn in connectionsForType"
+          v-for="conn in availableConnections"
           :key="conn.id"
           :value="conn.id"
         >
           {{ conn.name }}
         </option>
       </select>
-      <p v-if="connectionsForType.length === 0" class="field-hint">
+      <p v-if="availableConnections.length === 0" class="field-hint">
         {{ t('No connections configured. Ask an administrator to add one in IntraVox settings.') }}
       </p>
     </div>
@@ -251,8 +249,9 @@ export default {
   },
   computed: {
     isLmsType() {
-      const type = this.localWidget.sourceType;
-      return type !== 'rss' && type !== 'custom_rest_api';
+      if (!this.selectedConnection) return false;
+      const connType = this.selectedConnection.type;
+      return ['moodle', 'canvas', 'brightspace'].includes(connType);
     },
     availableConnections() {
       return this.connections.filter(c => c.active);
@@ -285,10 +284,6 @@ export default {
         return !this.localWidget.contentType || this.localWidget.contentType === 'news';
       }
       return true;
-    },
-    availableLmsTypes() {
-      const types = new Set(this.availableConnections.map(c => c.type));
-      return [...types];
     },
   },
   watch: {

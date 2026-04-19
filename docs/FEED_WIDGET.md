@@ -1,11 +1,12 @@
 # Feed Widget
 
-The Feed Widget displays content from external sources on your intranet pages. It supports RSS/Atom feeds and learning management systems (Canvas, Moodle, Brightspace), with optional per-user personalization through OAuth2.
+The Feed Widget displays content from external sources on your intranet pages. It supports RSS/Atom feeds and admin-configured connections to any REST API — including LMS platforms (Canvas, Moodle, Brightspace), project management (Jira, OpenProject), knowledge bases (Confluence), HR systems (AFAS), service desks (TOPdesk), and more.
 
 ## Features
 
-- **Multiple source types** — RSS/Atom feeds, Canvas LMS, Moodle, and Brightspace
-- **Content types** — News/announcements, My Courses, and Upcoming Deadlines for all LMS platforms
+- **Two source types** — RSS/Atom feed (paste a URL) or Connection (admin-configured)
+- **Presets for popular systems** — Jira, Confluence, SharePoint, OpenProject, AFAS, TOPdesk, Canvas, Moodle, Brightspace, or fully custom
+- **LMS content types** — News/announcements, My Courses, and Upcoming Deadlines for LMS connections
 - **Two layouts** — List or Grid view (2-4 columns)
 - **Personalized content** — Users connect their own LMS account to see only their courses, deadlines, and announcements
 - **OAuth2 integration** — One-click account linking with Canvas, Moodle, and Brightspace via popup flow

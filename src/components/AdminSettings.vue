@@ -771,8 +771,8 @@
 						</div>
 						<div class="form-group">
 							<label :for="'conn-type-' + index">{{ t('intravox', 'Type') }}</label>
-							<select :id="'conn-type-' + index" v-model="conn.type">
-								<option v-for="lms in lmsTypes" :key="lms.value" :value="lms.value">{{ lms.label }}</option>
+							<select :id="'conn-type-' + index" v-model="conn.type" @change="applyPreset(conn)">
+								<option v-for="lms in connectionPresets" :key="lms.value" :value="lms.value">{{ lms.label }}</option>
 							</select>
 						</div>
 						<div class="form-group">
@@ -780,7 +780,7 @@
 							<input :id="'conn-url-' + index" v-model="conn.baseUrl" type="url" :placeholder="t('intravox', 'https://lms.example.com')" />
 						</div>
 						<!-- REST API specific fields -->
-						<template v-if="conn.type === 'custom_rest_api'">
+						<template v-if="!['moodle', 'canvas', 'brightspace'].includes(conn.type)">
 							<div class="form-group">
 								<label :for="'conn-endpoint-' + index">{{ t('intravox', 'Endpoint path') }}</label>
 								<input :id="'conn-endpoint-' + index" v-model="conn.customEndpoint" type="text" :placeholder="t('intravox', '/api/v1/announcements')" />
@@ -839,11 +839,11 @@
 							<button type="button" class="link-button" @click="conn.customHeaders.push({ key: '', value: '' })">{{ t('intravox', '+ Add header') }}</button>
 						</template>
 
-						<div v-if="conn.type !== 'custom_rest_api' || conn.authMethod === 'bearer'" class="form-group">
-							<label :for="'conn-token-' + index">{{ t('intravox', 'API Token (admin fallback)') }}</label>
+						<div v-if="['moodle', 'canvas', 'brightspace'].includes(conn.type) || conn.authMethod === 'bearer'" class="form-group">
+							<label :for="'conn-token-' + index">{{ t('intravox', 'API Token') }}</label>
 							<input :id="'conn-token-' + index" v-model="conn.token" type="password" :placeholder="conn.hasToken ? t('intravox', '(unchanged)') : t('intravox', 'Enter API token')" />
 						</div>
-						<div v-if="conn.type !== 'custom_rest_api'" class="form-group">
+						<div v-if="['moodle', 'canvas', 'brightspace'].includes(conn.type)" class="form-group">
 							<label :for="'conn-authmode-' + index">{{ t('intravox', 'User authentication') }}</label>
 							<select :id="'conn-authmode-' + index" v-model="conn.authMode">
 								<option value="token">{{ t('intravox', 'Admin token only (shared)') }}</option>
@@ -1122,11 +1122,17 @@ export default {
 	data() {
 		return {
 			activeTab: 'video', // Default to video tab
-			lmsTypes: [
+			connectionPresets: [
 				{ value: 'moodle', label: 'Moodle' },
 				{ value: 'canvas', label: 'Canvas' },
 				{ value: 'brightspace', label: 'Brightspace' },
-				{ value: 'custom_rest_api', label: 'REST API (custom)' },
+				{ value: 'jira', label: 'Jira' },
+				{ value: 'confluence', label: 'Confluence' },
+				{ value: 'sharepoint', label: 'SharePoint (Graph API)' },
+				{ value: 'openproject', label: 'OpenProject' },
+				{ value: 'afas', label: 'AFAS' },
+				{ value: 'topdesk', label: 'TOPdesk' },
+				{ value: 'custom', label: 'Custom' },
 			],
 			exportSubTab: 'import', // Default import sub-tab
 			languages: this.initialState.languages || [],
@@ -1373,6 +1379,51 @@ export default {
 		},
 		removeFeedConnection(index) {
 			this.feedConnections.splice(index, 1)
+		},
+		applyPreset(conn) {
+			const presets = {
+				jira: {
+					authMethod: 'bearer',
+					customEndpoint: '/rest/api/2/search?jql=ORDER+BY+updated+DESC&maxResults=20',
+					responseMapping: { items: 'issues', title: 'fields.summary', url: 'self', excerpt: 'fields.description', date: 'fields.updated', author: 'fields.assignee.displayName', image: '' },
+				},
+				confluence: {
+					authMethod: 'bearer',
+					customEndpoint: '/rest/api/content?type=page&orderby=lastmodified&limit=10&expand=history.lastUpdated',
+					responseMapping: { items: 'results', title: 'title', url: '_links.webui', excerpt: '', date: 'history.lastUpdated.when', author: 'history.lastUpdated.by.displayName', image: '' },
+				},
+				sharepoint: {
+					authMethod: 'bearer',
+					customEndpoint: '/v1.0/sites/root/pages?$orderby=lastModifiedDateTime+desc&$top=10',
+					responseMapping: { items: 'value', title: 'title', url: 'webUrl', excerpt: '', date: 'lastModifiedDateTime', author: 'lastModifiedBy.user.displayName', image: '' },
+				},
+				openproject: {
+					authMethod: 'bearer',
+					customEndpoint: '/api/v3/work_packages?sortBy=[["updatedAt","desc"]]&pageSize=20',
+					responseMapping: { items: '_embedded.elements', title: 'subject', url: '_links.self.href', excerpt: 'description.raw', date: 'updatedAt', author: '_links.assignee.title', image: '' },
+				},
+				afas: {
+					authMethod: 'bearer',
+					customEndpoint: '/profitrestservices/connectors/',
+					responseMapping: { items: 'rows', title: 'Naam', url: '', excerpt: '', date: '', author: '', image: '' },
+				},
+				topdesk: {
+					authMethod: 'bearer',
+					customEndpoint: '/tas/api/incidents?pageSize=20&order_by=creation_date+desc',
+					responseMapping: { items: '', title: 'briefDescription', url: '_links.self.href', excerpt: '', date: 'creationDate', author: 'caller.dynamicName', image: '' },
+				},
+			}
+			const preset = presets[conn.type]
+			if (preset) {
+				conn.authMethod = preset.authMethod || 'bearer'
+				conn.customEndpoint = preset.customEndpoint || ''
+				conn.responseMapping = { ...conn.responseMapping, ...preset.responseMapping }
+			}
+			// Reset custom fields for LMS types (they don't use custom endpoint/mapping)
+			if (['moodle', 'canvas', 'brightspace'].includes(conn.type)) {
+				conn.customEndpoint = ''
+				conn.responseMapping = { items: '', title: 'title', url: 'url', excerpt: '', date: '', image: '', author: '' }
+			}
 		},
 		async saveFeedConnections() {
 			this.feedConnectionsSaving = true

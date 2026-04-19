@@ -24,6 +24,50 @@ class FeedReaderService {
     private const MAX_ITEMS = 50;
     private const EXCERPT_LENGTH = 300;
 
+    /** @var array Connection type presets with default configuration */
+    public const PRESETS = [
+        'moodle' => ['label' => 'Moodle', 'hasContentTypes' => true],
+        'canvas' => ['label' => 'Canvas', 'hasContentTypes' => true],
+        'brightspace' => ['label' => 'Brightspace', 'hasContentTypes' => true],
+        'jira' => [
+            'label' => 'Jira',
+            'authMethod' => 'bearer',
+            'customEndpoint' => '/rest/api/2/search?jql=ORDER+BY+updated+DESC&maxResults=20',
+            'responseMapping' => ['items' => 'issues', 'title' => 'fields.summary', 'url' => 'self', 'excerpt' => 'fields.description', 'date' => 'fields.updated', 'author' => 'fields.assignee.displayName'],
+        ],
+        'confluence' => [
+            'label' => 'Confluence',
+            'authMethod' => 'bearer',
+            'customEndpoint' => '/rest/api/content?type=page&orderby=lastmodified&limit=10&expand=history.lastUpdated',
+            'responseMapping' => ['items' => 'results', 'title' => 'title', 'url' => '_links.webui', 'date' => 'history.lastUpdated.when', 'author' => 'history.lastUpdated.by.displayName'],
+        ],
+        'sharepoint' => [
+            'label' => 'SharePoint (Graph API)',
+            'authMethod' => 'bearer',
+            'customEndpoint' => '/v1.0/sites/root/pages?$orderby=lastModifiedDateTime+desc&$top=10',
+            'responseMapping' => ['items' => 'value', 'title' => 'title', 'url' => 'webUrl', 'date' => 'lastModifiedDateTime', 'author' => 'lastModifiedBy.user.displayName'],
+        ],
+        'openproject' => [
+            'label' => 'OpenProject',
+            'authMethod' => 'bearer',
+            'customEndpoint' => '/api/v3/work_packages?sortBy=[["updatedAt","desc"]]&pageSize=20',
+            'responseMapping' => ['items' => '_embedded.elements', 'title' => 'subject', 'url' => '_links.self.href', 'excerpt' => 'description.raw', 'date' => 'updatedAt', 'author' => '_links.assignee.title'],
+        ],
+        'afas' => [
+            'label' => 'AFAS',
+            'authMethod' => 'bearer',
+            'customEndpoint' => '/profitrestservices/connectors/',
+            'responseMapping' => ['items' => 'rows', 'title' => 'Naam'],
+        ],
+        'topdesk' => [
+            'label' => 'TOPdesk',
+            'authMethod' => 'bearer',
+            'customEndpoint' => '/tas/api/incidents?pageSize=20&order_by=creation_date+desc',
+            'responseMapping' => ['items' => '', 'title' => 'briefDescription', 'url' => '_links.self.href', 'date' => 'creationDate', 'author' => 'caller.dynamicName'],
+        ],
+        'custom' => ['label' => 'Custom'],
+    ];
+
     private ?ICache $cache = null;
 
     public function __construct(
@@ -76,11 +120,7 @@ class FeedReaderService {
         try {
             $result = match ($sourceType) {
                 'rss' => $this->fetchRss($config['url'] ?? ''),
-                'moodle' => $this->fetchMoodle($config, $userId),
-                'canvas' => $this->fetchCanvas($config, $userId),
-                'brightspace' => $this->fetchBrightspace($config, $userId),
-                'custom_rest_api' => $this->fetchCustomRestApi($config, $userId),
-                default => throw new \InvalidArgumentException("Unsupported source type: $sourceType"),
+                default => $this->fetchConnection($sourceType, $config, $userId),
             };
 
             // Cache the full unfiltered result
@@ -198,6 +238,28 @@ class FeedReaderService {
         }
 
         return null;
+    }
+
+    /**
+     * Route a connection-based feed request to the appropriate fetch strategy.
+     * LMS types (moodle, canvas, brightspace) use dedicated logic.
+     * All other types use the generic REST API approach.
+     */
+    private function fetchConnection(string $sourceType, array $config, ?string $userId): array {
+        $connectionId = $config['connectionId'] ?? '';
+        $connection = $this->getConnection($connectionId);
+        if ($connection === null) {
+            throw new \RuntimeException('Connection not found');
+        }
+
+        $connectionType = $connection['type'] ?? 'custom';
+
+        return match ($connectionType) {
+            'moodle' => $this->fetchMoodle($config, $userId),
+            'canvas' => $this->fetchCanvas($config, $userId),
+            'brightspace' => $this->fetchBrightspace($config, $userId),
+            default => $this->fetchGenericRestApi($config, $userId),
+        };
     }
 
     /**
@@ -1137,7 +1199,7 @@ class FeedReaderService {
     /**
      * Fetch items from a custom REST API using admin-configured connection settings.
      */
-    private function fetchCustomRestApi(array $config, ?string $userId = null): array {
+    private function fetchGenericRestApi(array $config, ?string $userId = null): array {
         $connectionId = $config['connectionId'] ?? '';
         $connection = $this->getConnection($connectionId);
         if ($connection === null) {
