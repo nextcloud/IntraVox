@@ -68,12 +68,6 @@ class LmsOAuthService {
                 'state' => $state,
                 'scope' => 'core:*:*',
             ]),
-            'nextcloud' => $baseUrl . '/apps/oauth2/authorize?' . http_build_query([
-                'client_id' => $clientId,
-                'response_type' => 'code',
-                'redirect_uri' => $redirectUri,
-                'state' => $state,
-            ]),
             default => throw new \InvalidArgumentException("OAuth2 not supported for type: $type"),
         };
     }
@@ -103,7 +97,6 @@ class LmsOAuthService {
             'canvas' => $baseUrl . '/login/oauth2/token',
             'moodle' => $baseUrl . '/local/oauth2/token.php',
             'brightspace' => $baseUrl . '/d2l/lp/auth/oauth2/token',
-            'nextcloud' => $baseUrl . '/apps/oauth2/api/v1/token',
             default => throw new \RuntimeException("OAuth2 not supported for type: $type"),
         };
 
@@ -152,7 +145,6 @@ class LmsOAuthService {
             'canvas' => $baseUrl . '/login/oauth2/token',
             'moodle' => $baseUrl . '/local/oauth2/token.php',
             'brightspace' => $baseUrl . '/d2l/lp/auth/oauth2/token',
-            'nextcloud' => $baseUrl . '/apps/oauth2/api/v1/token',
             default => throw new \RuntimeException("Token refresh not supported for type: $type"),
         };
 

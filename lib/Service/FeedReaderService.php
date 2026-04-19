@@ -80,7 +80,6 @@ class FeedReaderService {
                 'canvas' => $this->fetchCanvas($config, $userId),
                 'brightspace' => $this->fetchBrightspace($config, $userId),
                 'custom_rest_api' => $this->fetchCustomRestApi($config, $userId),
-                'nextcloud' => $this->fetchNextcloud($config, $userId),
                 default => throw new \InvalidArgumentException("Unsupported source type: $sourceType"),
             };
 
@@ -1202,115 +1201,6 @@ class FeedReaderService {
             'items' => array_slice($items, 0, self::MAX_ITEMS),
             'source' => $connection['name'] ?? 'REST API',
         ];
-    }
-
-    /**
-     * Fetch personalized data from a Nextcloud instance (local or remote).
-     * Local: uses internal OCS calls with current user session.
-     * Remote: uses per-user OAuth2 Bearer token.
-     */
-    private function fetchNextcloud(array $config, ?string $userId = null): array {
-        $connectionId = $config['connectionId'] ?? '';
-        $connection = $this->getConnection($connectionId);
-        if ($connection === null) {
-            throw new \RuntimeException('Nextcloud connection not found');
-        }
-
-        $baseUrl = rtrim($connection['baseUrl'], '/');
-        $contentType = $config['contentType'] ?? 'news';
-        $sourceName = $connection['name'] ?? 'Nextcloud';
-
-        // Determine endpoint based on content type
-        $endpoint = match ($contentType) {
-            'news' => '/ocs/v2.php/apps/activity/api/v2/activity?format=json&limit=50',
-            'deadlines' => '/ocs/v2.php/apps/notifications/api/v2/notifications?format=json',
-            default => '/ocs/v2.php/apps/activity/api/v2/activity?format=json&limit=50',
-        };
-
-        $url = $baseUrl . $endpoint;
-
-        // Build auth headers
-        $headers = [
-            'Accept' => 'application/json',
-            'OCS-APIRequest' => 'true',
-        ];
-
-        // Detect local instance
-        $localUrl = $this->config->getSystemValueString('overwrite.cli.url', '');
-        $isLocal = !empty($localUrl) && str_starts_with($baseUrl, rtrim($localUrl, '/'));
-
-        if (!$isLocal) {
-            $this->validateUrl($url);
-            $resolved = $this->resolveToken($connectionId, $userId);
-            if ($resolved === null) {
-                throw new \RuntimeException('No Nextcloud token available. Please connect your account.');
-            }
-            $headers['Authorization'] = 'Bearer ' . $resolved['token'];
-        } else {
-            // Local instance: use app password from connection if available, or session
-            $resolved = $this->resolveToken($connectionId, $userId);
-            if ($resolved !== null) {
-                $headers['Authorization'] = 'Bearer ' . $resolved['token'];
-            }
-        }
-
-        $client = $this->httpClient->newClient();
-        $response = $client->get($url, [
-            'timeout' => self::HTTP_TIMEOUT,
-            'headers' => $headers,
-        ]);
-
-        $body = json_decode($response->getBody(), true);
-
-        // Parse based on content type
-        $items = match ($contentType) {
-            'news' => $this->parseNextcloudActivity($body, $baseUrl, $sourceName),
-            'deadlines' => $this->parseNextcloudNotifications($body, $baseUrl, $sourceName),
-            default => $this->parseNextcloudActivity($body, $baseUrl, $sourceName),
-        };
-
-        usort($items, fn($a, $b) => strtotime($b['date']) - strtotime($a['date']));
-
-        return [
-            'items' => array_slice($items, 0, self::MAX_ITEMS),
-            'source' => $sourceName,
-        ];
-    }
-
-    private function parseNextcloudActivity(array $body, string $baseUrl, string $sourceName): array {
-        $data = $body['ocs']['data'] ?? [];
-        $items = [];
-        foreach ($data as $activity) {
-            $items[] = [
-                'id' => 'nc-activity-' . ($activity['activity_id'] ?? md5($activity['subject'] ?? '')),
-                'title' => $activity['subject'] ?? '',
-                'url' => $activity['link'] ?? '',
-                'excerpt' => $activity['message'] ?? '',
-                'image' => $activity['icon'] ?? null,
-                'date' => $activity['datetime'] ?? date('c'),
-                'source' => $sourceName,
-                'author' => $activity['user'] ?? null,
-            ];
-        }
-        return $items;
-    }
-
-    private function parseNextcloudNotifications(array $body, string $baseUrl, string $sourceName): array {
-        $data = $body['ocs']['data'] ?? [];
-        $items = [];
-        foreach ($data as $notification) {
-            $items[] = [
-                'id' => 'nc-notification-' . ($notification['notification_id'] ?? ''),
-                'title' => $notification['subject'] ?? '',
-                'url' => $notification['link'] ?? '',
-                'excerpt' => $notification['message'] ?? '',
-                'image' => $notification['icon'] ?? null,
-                'date' => $notification['datetime'] ?? date('c'),
-                'source' => $sourceName,
-                'author' => null,
-            ];
-        }
-        return $items;
     }
 
     /**

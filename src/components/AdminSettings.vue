@@ -1127,7 +1127,6 @@ export default {
 				{ value: 'canvas', label: 'Canvas' },
 				{ value: 'brightspace', label: 'Brightspace' },
 				{ value: 'custom_rest_api', label: 'REST API (custom)' },
-				{ value: 'nextcloud', label: 'Nextcloud' },
 			],
 			exportSubTab: 'import', // Default import sub-tab
 			languages: this.initialState.languages || [],

@@ -91,50 +91,24 @@ Displays personalized content from a Brightspace (Desire2Learn) instance.
 - Administrator configures a Brightspace connection in IntraVox Admin Settings
 - For OAuth2: register an OAuth2 application in Brightspace with the redirect URI shown in IntraVox
 
-### Nextcloud
-
-Connects to a Nextcloud instance (local or remote) to display activity and notifications. Each user sees only their own data (security-trimmed via per-user authentication).
+### Why there is no "Nextcloud" source type
 
 > **Design principle: IntraVox vs Nextcloud Dashboard**
 >
-> The Nextcloud Dashboard is a *personal productivity overview* — it shows my mail, my tasks, my recent files, my Talk mentions. IntraVox is an *organizational communication platform* — it shows company news, team updates, shared resources, and external system data.
+> The Nextcloud Dashboard is a *personal productivity overview* — it shows my mail, my tasks, my recent files, my Talk mentions, my notifications. IntraVox is an *organizational communication platform* — it shows company news, team updates, shared resources, and data from external systems.
 >
-> IntraVox should not duplicate what the Dashboard already provides. The Nextcloud source type in IntraVox focuses on **organizational context** (activity streams, notifications) rather than personal task management (Deck cards, unread mail, recent files). For personal data, users use the Dashboard. For organizational content, they use IntraVox.
+> These are complementary, not competing. IntraVox deliberately does not duplicate what the Dashboard already provides:
 
-**Content types:**
-
-| Content type | What it shows | API used |
+| Personal data | Where it belongs | Why not in IntraVox |
 |---|---|---|
-| **Activity** (default) | File changes, shares, comments, and events — useful as an organizational activity stream when shown on shared intranet pages | `/ocs/v2.php/apps/activity/api/v2/activity` |
-| **Notifications** | System notifications, mentions, and invitations | `/ocs/v2.php/apps/notifications/api/v2/notifications` |
+| My recent files | Dashboard (Recommendations widget) | Personal productivity, algorithmic per-user |
+| My Talk mentions | Dashboard (Talk widget) | Personal messaging |
+| My Deck cards | Dashboard (Deck widget) | Personal task management |
+| My mail | Dashboard (Mail widget) | Personal email |
+| My notifications | Dashboard (Notifications) | Personal alerts |
+| My activity stream | Dashboard (Activity widget) | Personal event log |
 
-**What is NOT included (and why):**
-
-| Data | Why not in IntraVox | Where to find it |
-|------|-------------------|------------------|
-| Recent/recommended files | Personal productivity — algorithmic per-user recommendations | Nextcloud Dashboard (Recommendations widget) |
-| Talk mentions & conversations | Personal messaging | Nextcloud Dashboard (Talk widget) |
-| Deck cards (due today/tomorrow) | Personal task management | Nextcloud Dashboard (Deck widget) |
-| Unread/important mail | Personal email | Nextcloud Dashboard (Mail widget) |
-| My shares (received files) | Personal file management, not organizational content | Nextcloud Files sidebar |
-
-**Authentication:**
-
-| Scenario | Setup |
-|----------|-------|
-| **Local instance** (IntraVox on the same server) | Admin creates connection with base URL. Auth via stored app password or per-user OAuth2 |
-| **Remote instance** (different Nextcloud server) | Admin registers OAuth2 client on the remote NC (Settings > Security > OAuth 2.0 clients), enters client_id + client_secret in IntraVox. Each user clicks "Connect" for per-user access |
-
-**Setup requirements:**
-- Administrator configures a Nextcloud connection in IntraVox Admin Settings
-- For remote instances: register an OAuth2 client on the target Nextcloud with the redirect URI shown in IntraVox
-- The `OCS-APIRequest: true` header is sent automatically (no manual configuration needed)
-
-**Why this is better than admin app passwords:**
-- Each user sees only their own data — no shared admin view
-- Tokens are per-user and encrypted
-- OAuth2 tokens auto-refresh
-- Follows the same pattern as Entra ID / Microsoft Graph (client registration + per-user authorization)
+**For organizational Nextcloud data** (e.g. shared folder activity from a remote Nextcloud instance), use the **REST API (custom)** source type with the Nextcloud OCS API endpoints. This gives you full control over which data to show and how to authenticate (Bearer token, OAuth2, or custom headers with `OCS-APIRequest: true`).
 
 ### REST API (custom)
 
