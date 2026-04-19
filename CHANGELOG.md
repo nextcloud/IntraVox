@@ -11,6 +11,8 @@ IntraVox is a Nextcloud intranet page builder.
 - **Feed widget: LMS content types** — Each LMS connection supports three content types: News/Announcements (default), My Courses (enrolled courses), and Upcoming Deadlines (assignments due in next 30 days). Content types use native LMS APIs for accurate, real-time data
 - **Feed widget: OAuth2 account linking** — Users can connect their personal LMS account via OAuth2 popup flow (Canvas, Moodle with local_oauth2 plugin, Brightspace). Connected users see personalized content from their own courses. Token refresh is automatic (`LmsOAuthService.php`, `LmsOAuthController.php`, `LmsTokenService.php`, `OidcTokenBridge.php`)
 - **Feed widget: admin LMS connections** — Administrators configure LMS connections in IntraVox Admin Settings with connection name, type, base URL, API token, and optional OAuth2 credentials. Supports auth modes: shared token, OAuth2 only, or both with fallback
+- **Feed widget: REST API (custom) source type** — Connect to any system with a REST/JSON API (Jira, Confluence, AFAS, TOPdesk, OpenProject, ZGW APIs). Admin configures endpoint, auth method (bearer/apikey/basic/none), and response field mapping via dot-notation JSON paths. No code changes needed per system (`FeedReaderService.php`, `AdminSettings.vue`)
+- **Feed widget: sort and filter** — Feed items can be sorted by date or title (ascending/descending) and filtered by keyword. Filter searches in title, excerpt, and author (case-insensitive). Applied server-side after caching for instant response
 - **Calendar widget: external ICS feeds** — Editors can add external ICS calendar URLs (e.g. from Moodle, Canvas, Brightspace) directly in the calendar widget. Events from these feeds are visible to all page visitors, including public share viewers. No Nextcloud Calendar subscription required per user. Supports up to 5 ICS feeds per widget with 30-minute caching (`ExternalIcsService.php`, `CalendarWidgetEditor.vue`)
 - **Calendar widget: LMS event deep links** — Clicking an external calendar event opens the event in the source LMS. Supports Canvas (native URL field), Brightspace (URL constructed from UID), and Moodle (URL constructed from UID). Unknown sources link to the feed domain
 
@@ -21,6 +23,7 @@ IntraVox is a Nextcloud intranet page builder.
 
 ### Fixed
 - **Calendar widget wrong events shown** — When an ICS subscription had the same numeric ID as a regular calendar, the widget showed events from the wrong calendar. Fixed by switching to unique string keys via IManager
+- **REST API SSRF hardening** — Connection base URL is now re-validated on every fetch request, not just at save time. Prevents SSRF if an admin account is compromised and a malicious URL is injected into stored connection config
 
 ## [1.2.0] - 2026-04-16 — Accessibility & bug fixes
 

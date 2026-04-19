@@ -779,11 +779,63 @@
 							<label :for="'conn-url-' + index">{{ t('intravox', 'Base URL') }}</label>
 							<input :id="'conn-url-' + index" v-model="conn.baseUrl" type="url" :placeholder="t('intravox', 'https://lms.example.com')" />
 						</div>
-						<div class="form-group">
+						<!-- REST API specific fields -->
+						<template v-if="conn.type === 'custom_rest_api'">
+							<div class="form-group">
+								<label :for="'conn-endpoint-' + index">{{ t('intravox', 'Endpoint path') }}</label>
+								<input :id="'conn-endpoint-' + index" v-model="conn.customEndpoint" type="text" :placeholder="t('intravox', '/api/v1/announcements')" />
+								<span class="field-hint">{{ t('intravox', 'Path appended to the base URL.') }}</span>
+							</div>
+							<div class="form-group">
+								<label :for="'conn-authmethod-' + index">{{ t('intravox', 'Auth method') }}</label>
+								<select :id="'conn-authmethod-' + index" v-model="conn.authMethod">
+									<option value="bearer">{{ t('intravox', 'Bearer token') }}</option>
+									<option value="apikey">{{ t('intravox', 'API key (custom header)') }}</option>
+									<option value="basic">{{ t('intravox', 'Basic auth') }}</option>
+									<option value="none">{{ t('intravox', 'No authentication') }}</option>
+								</select>
+							</div>
+							<div v-if="conn.authMethod === 'apikey'" class="form-group">
+								<label :for="'conn-apikeyheader-' + index">{{ t('intravox', 'API key header name') }}</label>
+								<input :id="'conn-apikeyheader-' + index" v-model="conn.apiKeyHeader" type="text" :placeholder="t('intravox', 'X-API-Key')" />
+							</div>
+							<div class="form-group-heading">{{ t('intravox', 'Response mapping') }}</div>
+							<span class="field-hint">{{ t('intravox', 'Map JSON fields from the API response to feed items. Use dot notation for nested fields (e.g. data.items, author.name).') }}</span>
+							<div class="form-group">
+								<label :for="'conn-map-items-' + index">{{ t('intravox', 'Items path') }}</label>
+								<input :id="'conn-map-items-' + index" v-model="conn.responseMapping.items" type="text" :placeholder="t('intravox', 'data or results or leave empty for root array')" />
+							</div>
+							<div class="form-group">
+								<label :for="'conn-map-title-' + index">{{ t('intravox', 'Title field') }}</label>
+								<input :id="'conn-map-title-' + index" v-model="conn.responseMapping.title" type="text" placeholder="title" />
+							</div>
+							<div class="form-group">
+								<label :for="'conn-map-url-' + index">{{ t('intravox', 'URL field') }}</label>
+								<input :id="'conn-map-url-' + index" v-model="conn.responseMapping.url" type="text" placeholder="url" />
+							</div>
+							<div class="form-group">
+								<label :for="'conn-map-excerpt-' + index">{{ t('intravox', 'Excerpt field') }}</label>
+								<input :id="'conn-map-excerpt-' + index" v-model="conn.responseMapping.excerpt" type="text" placeholder="body" />
+							</div>
+							<div class="form-group">
+								<label :for="'conn-map-date-' + index">{{ t('intravox', 'Date field') }}</label>
+								<input :id="'conn-map-date-' + index" v-model="conn.responseMapping.date" type="text" placeholder="created_at" />
+							</div>
+							<div class="form-group">
+								<label :for="'conn-map-image-' + index">{{ t('intravox', 'Image field') }}</label>
+								<input :id="'conn-map-image-' + index" v-model="conn.responseMapping.image" type="text" :placeholder="t('intravox', 'thumbnail (optional)')" />
+							</div>
+							<div class="form-group">
+								<label :for="'conn-map-author-' + index">{{ t('intravox', 'Author field') }}</label>
+								<input :id="'conn-map-author-' + index" v-model="conn.responseMapping.author" type="text" :placeholder="t('intravox', 'author (optional)')" />
+							</div>
+						</template>
+
+						<div v-if="conn.type !== 'custom_rest_api' || conn.authMethod === 'bearer'" class="form-group">
 							<label :for="'conn-token-' + index">{{ t('intravox', 'API Token (admin fallback)') }}</label>
 							<input :id="'conn-token-' + index" v-model="conn.token" type="password" :placeholder="conn.hasToken ? t('intravox', '(unchanged)') : t('intravox', 'Enter API token')" />
 						</div>
-						<div class="form-group">
+						<div v-if="conn.type !== 'custom_rest_api'" class="form-group">
 							<label :for="'conn-authmode-' + index">{{ t('intravox', 'User authentication') }}</label>
 							<select :id="'conn-authmode-' + index" v-model="conn.authMode">
 								<option value="token">{{ t('intravox', 'Admin token only (shared)') }}</option>
@@ -1066,6 +1118,7 @@ export default {
 				{ value: 'moodle', label: 'Moodle' },
 				{ value: 'canvas', label: 'Canvas' },
 				{ value: 'brightspace', label: 'Brightspace' },
+				{ value: 'custom_rest_api', label: 'REST API (custom)' },
 			],
 			exportSubTab: 'import', // Default import sub-tab
 			languages: this.initialState.languages || [],
@@ -1279,6 +1332,10 @@ export default {
 					authMode: c.authMode || 'token',
 					clientId: c.clientId || '',
 					oidcAutoConnect: c.oidcAutoConnect || false,
+					customEndpoint: c.customEndpoint || '',
+					authMethod: c.authMethod || 'bearer',
+					apiKeyHeader: c.apiKeyHeader || '',
+					responseMapping: c.responseMapping || { items: '', title: 'title', url: 'url', excerpt: '', date: '', image: '', author: '' },
 				}))
 			} catch (e) {
 				this.feedConnections = []
@@ -1298,6 +1355,10 @@ export default {
 				clientSecret: '',
 				hasClientCredentials: false,
 				oidcAutoConnect: false,
+				customEndpoint: '',
+				authMethod: 'bearer',
+				apiKeyHeader: '',
+				responseMapping: { items: '', title: 'title', url: 'url', excerpt: '', date: '', image: '', author: '' },
 			})
 		},
 		removeFeedConnection(index) {
@@ -3072,6 +3133,15 @@ export default {
 .feed-connection-fields label {
 	font-size: 13px;
 	font-weight: 600;
+}
+
+.feed-connection-fields .form-group-heading {
+	font-size: 14px;
+	font-weight: 600;
+	color: var(--color-main-text);
+	margin-top: 8px;
+	padding-top: 8px;
+	border-top: 1px solid var(--color-border);
 }
 
 .feed-connection-fields input,

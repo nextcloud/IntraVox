@@ -91,6 +91,68 @@ Displays personalized content from a Brightspace (Desire2Learn) instance.
 - Administrator configures a Brightspace connection in IntraVox Admin Settings
 - For OAuth2: register an OAuth2 application in Brightspace with the redirect URI shown in IntraVox
 
+### REST API (custom)
+
+Connect to any system with a REST/JSON API — Jira, Confluence, AFAS, TOPdesk, OpenProject, ZGW APIs, or any other REST endpoint.
+
+**How to use:**
+
+1. Go to IntraVox **Admin Settings** → Feed Connections
+2. Add a connection with type **REST API (custom)**
+3. Configure:
+   - **Base URL** — the API root (e.g., `https://jira.example.com`)
+   - **Endpoint path** — the API path (e.g., `/rest/api/2/search?jql=project=KEY`)
+   - **Auth method** — Bearer token, API key (custom header), Basic auth, or No authentication
+   - **Response mapping** — map JSON fields to feed items (title, URL, excerpt, date, image, author)
+4. Save the connection
+5. Add a Feed widget and select your REST API connection
+
+**Response mapping:**
+
+The admin maps JSON fields from the API response to feed item properties using dot-notation paths:
+
+| Feed field | JSON path example | Description |
+|-----------|------------------|-------------|
+| Items path | `results` or `issues` or `data.items` | Where the array of items lives in the JSON response. Leave empty if the response itself is an array |
+| Title | `title` or `fields.summary` | Item title (required) |
+| URL | `url` or `_links.webui` | Clickable link. Relative URLs are made absolute using the base URL |
+| Excerpt | `body` or `fields.description` | Text excerpt (HTML is stripped, max 300 chars) |
+| Date | `created_at` or `history.lastUpdated.when` | Publication/update date |
+| Image | `thumbnail` or `avatar_url` | Image URL (optional) |
+| Author | `author` or `history.lastUpdated.by.displayName` | Author name (optional) |
+
+**Example configurations:**
+
+| System | Endpoint | Items path | Title | URL |
+|--------|----------|-----------|-------|-----|
+| Jira | `/rest/api/2/search?jql=ORDER+BY+updated` | `issues` | `fields.summary` | `self` |
+| Confluence | `/rest/api/content?spaceKey=WIKI&expand=history.lastUpdated` | `results` | `title` | `_links.webui` |
+| AFAS | `/profitrestservices/connectors/Employees` | `rows` | `Naam` | — |
+| TOPdesk | `/tas/api/incidents?status=open` | — | `briefDescription` | `_links.self.href` |
+| OpenProject | `/api/v3/work_packages` | `_embedded.elements` | `subject` | `_links.self.href` |
+| ZGW (Open Zaak) | `/zaken/api/v1/zaken` | `results` | `omschrijving` | `url` |
+
+**Authentication & personalization:**
+
+REST API connections support the same three authentication levels as LMS connections. This is how security-trimmed, personalized feeds work:
+
+1. **Admin token (shared)** — One API token configured by the admin. All users see the same data, limited to what the service account has access to. Good for public APIs or shared dashboards.
+
+2. **OAuth2 (per-user)** — Each user connects their own account via OAuth2. The API returns only data that user has access to. Fully security-trimmed. Requires the external system to support OAuth2 and the admin to configure Client ID + Secret.
+
+3. **OIDC auto-connect (zero-click SSO)** — If Nextcloud and the external system share the same identity provider (e.g., SURFconext, Keycloak, Azure AD), IntraVox automatically uses the user's existing SSO token. No clicks needed — fully personalized, fully security-trimmed, fully transparent.
+
+The widget resolves tokens in this priority order: OIDC auto-connect → per-user OAuth2 → admin fallback. If no token is available and authMode is `oauth2`, the widget shows a "Connect your account" prompt.
+
+**When to use which auth level:**
+
+| Scenario | Auth level | Example |
+|----------|-----------|---------|
+| Public API, no login needed | No authentication | SURF Confluence (public spaces) |
+| Shared dashboard, same view for everyone | Admin token | Company-wide Jira board |
+| Personal feed, each user sees their own data | OAuth2 (per-user) | My Jira tickets, my TOPdesk incidents |
+| SSO environment, zero friction | OIDC auto-connect | SURFconext + Jira, Azure AD + M365 |
+
 ## Layouts
 
 ### List Layout
@@ -116,11 +178,21 @@ Shows items in a responsive grid. Configure between 2, 3, or 4 columns.
 
 | Setting | Description | Applies to |
 |---------|-------------|------------|
-| **Source type** | RSS/Atom feed, or any configured LMS type (Canvas, Moodle, Brightspace) | All |
+| **Source type** | RSS/Atom feed, LMS type (Canvas, Moodle, Brightspace), or REST API (custom) | All |
 | **Feed URL** | URL of the RSS or Atom feed | RSS only |
-| **Connection** | Admin-configured LMS connection to use | LMS only |
+| **Connection** | Admin-configured connection to use | LMS + REST API |
 | **Content type** | News/Announcements, My Courses, or Upcoming Deadlines | LMS only |
 | **Course** | Limit results to a specific course (optional, only shown for News content type) | LMS only |
+
+### Sort & Filter
+
+| Setting | Description | Default |
+|---------|-------------|---------|
+| **Sort by** | Date or Title | Date |
+| **Sort order** | Newest first or Oldest first | Newest first |
+| **Filter by keyword** | Only show items containing this word in title, excerpt, or author | *(empty — no filter)* |
+
+Sorting and filtering are applied server-side after caching. The cache stores all items; sort/filter selects from the cached set. This means changing sort/filter is instant (no re-fetch from external API).
 
 ### Layout Settings
 

@@ -2620,6 +2620,12 @@ class PageService {
                 $sanitized['excerptLength'] = max(50, min((int) ($widget['excerptLength'] ?? 150), 500));
                 $sanitized['openInNewTab'] = (bool) ($widget['openInNewTab'] ?? true);
 
+                // Sort and filter
+                $sanitized['sortBy'] = in_array($widget['sortBy'] ?? 'date', ['date', 'title'], true) ? $widget['sortBy'] : 'date';
+                $sanitized['sortOrder'] = in_array($widget['sortOrder'] ?? 'desc', ['asc', 'desc'], true) ? $widget['sortOrder'] : 'desc';
+                $filterKeyword = trim((string) ($widget['filterKeyword'] ?? ''));
+                $sanitized['filterKeyword'] = mb_substr($filterKeyword, 0, 100);
+
                 // Background color
                 if (isset($widget['backgroundColor'])) {
                     $sanitized['backgroundColor'] = $this->sanitizeBackgroundColor($widget['backgroundColor']);

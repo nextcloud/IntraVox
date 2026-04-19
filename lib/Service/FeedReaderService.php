@@ -50,7 +50,12 @@ class FeedReaderService {
      * @param string|null $userId Current user ID for personalized feeds
      * @return array{items: array, source: string, cached: bool}
      */
-    public function fetchFeed(string $sourceType, array $config, int $limit = 5, ?string $userId = null): array {
+    /**
+     * @param string $sortBy Sort field: 'date' (default), 'title'
+     * @param string $sortOrder Sort order: 'desc' (default), 'asc'
+     * @param string $filterKeyword Filter items by keyword in title/excerpt (case-insensitive)
+     */
+    public function fetchFeed(string $sourceType, array $config, int $limit = 5, ?string $userId = null, string $sortBy = 'date', string $sortOrder = 'desc', string $filterKeyword = ''): array {
         $limit = min(max($limit, 1), self::MAX_ITEMS);
         $cacheKey = $this->buildCacheKey($sourceType, $config, $userId);
 
@@ -60,6 +65,7 @@ class FeedReaderService {
             if ($cached !== null) {
                 $decoded = json_decode($cached, true);
                 if ($decoded !== null) {
+                    $decoded['items'] = $this->filterAndSortItems($decoded['items'], $sortBy, $sortOrder, $filterKeyword);
                     $decoded['items'] = array_slice($decoded['items'], 0, $limit);
                     $decoded['cached'] = true;
                     return $decoded;
@@ -73,14 +79,17 @@ class FeedReaderService {
                 'moodle' => $this->fetchMoodle($config, $userId),
                 'canvas' => $this->fetchCanvas($config, $userId),
                 'brightspace' => $this->fetchBrightspace($config, $userId),
+                'custom_rest_api' => $this->fetchCustomRestApi($config, $userId),
                 default => throw new \InvalidArgumentException("Unsupported source type: $sourceType"),
             };
 
-            // Cache the full result
+            // Cache the full unfiltered result
             if ($this->cache !== null) {
                 $this->cache->set($cacheKey, json_encode($result), self::CACHE_TTL);
             }
 
+            // Apply filter and sort after caching (so cache contains all items)
+            $result['items'] = $this->filterAndSortItems($result['items'], $sortBy, $sortOrder, $filterKeyword);
             $result['items'] = array_slice($result['items'], 0, $limit);
             $result['cached'] = false;
             return $result;
@@ -96,6 +105,35 @@ class FeedReaderService {
                 'error' => $e->getMessage(),
             ];
         }
+    }
+
+    /**
+     * Filter items by keyword and sort by field/order.
+     */
+    private function filterAndSortItems(array $items, string $sortBy, string $sortOrder, string $filterKeyword): array {
+        // Filter by keyword (case-insensitive search in title + excerpt)
+        if ($filterKeyword !== '') {
+            $keyword = mb_strtolower($filterKeyword);
+            $items = array_values(array_filter($items, function ($item) use ($keyword) {
+                $title = mb_strtolower($item['title'] ?? '');
+                $excerpt = mb_strtolower($item['excerpt'] ?? '');
+                $author = mb_strtolower($item['author'] ?? '');
+                return str_contains($title, $keyword) || str_contains($excerpt, $keyword) || str_contains($author, $keyword);
+            }));
+        }
+
+        // Sort
+        usort($items, function ($a, $b) use ($sortBy, $sortOrder) {
+            if ($sortBy === 'title') {
+                $cmp = strcasecmp($a['title'] ?? '', $b['title'] ?? '');
+            } else {
+                // Default: sort by date
+                $cmp = strtotime($a['date'] ?? '0') - strtotime($b['date'] ?? '0');
+            }
+            return $sortOrder === 'asc' ? $cmp : -$cmp;
+        });
+
+        return $items;
     }
 
     /**
@@ -1097,6 +1135,145 @@ class FeedReaderService {
     }
 
     /**
+     * Fetch items from a custom REST API using admin-configured connection settings.
+     */
+    private function fetchCustomRestApi(array $config, ?string $userId = null): array {
+        $connectionId = $config['connectionId'] ?? '';
+        $connection = $this->getConnection($connectionId);
+        if ($connection === null) {
+            throw new \RuntimeException('REST API connection not found');
+        }
+
+        $baseUrl = rtrim($connection['baseUrl'], '/');
+        $this->validateUrl($baseUrl);
+        $endpoint = $connection['customEndpoint'] ?? '';
+        $url = $baseUrl . '/' . ltrim($endpoint, '/');
+        $this->validateUrl($url);
+
+        $authMethod = $connection['authMethod'] ?? 'bearer';
+        $headers = ['Accept' => 'application/json'];
+
+        // Build auth header
+        if ($authMethod === 'bearer') {
+            $resolved = $this->resolveToken($connectionId, $userId);
+            if ($resolved !== null) {
+                $headers['Authorization'] = 'Bearer ' . $resolved['token'];
+            }
+        } elseif ($authMethod === 'apikey') {
+            $resolved = $this->resolveToken($connectionId, $userId);
+            $headerName = $connection['apiKeyHeader'] ?? 'X-API-Key';
+            if ($resolved !== null && preg_match('/^[a-zA-Z0-9\-]+$/', $headerName)) {
+                $headers[$headerName] = $resolved['token'];
+            }
+        } elseif ($authMethod === 'basic') {
+            $resolved = $this->resolveToken($connectionId, $userId);
+            if ($resolved !== null) {
+                $headers['Authorization'] = 'Basic ' . $resolved['token'];
+            }
+        }
+
+        $client = $this->httpClient->newClient();
+        $response = $client->get($url, [
+            'timeout' => self::HTTP_TIMEOUT,
+            'headers' => $headers,
+        ]);
+
+        $data = json_decode($response->getBody(), true);
+        if (!is_array($data)) {
+            return ['items' => [], 'source' => $connection['name'] ?? 'REST API'];
+        }
+
+        $mapping = $connection['responseMapping'] ?? [];
+        $items = $this->mapJsonResponse($data, $mapping, $baseUrl, $connection['name'] ?? 'REST API');
+
+        usort($items, fn($a, $b) => strtotime($b['date']) - strtotime($a['date']));
+
+        return [
+            'items' => array_slice($items, 0, self::MAX_ITEMS),
+            'source' => $connection['name'] ?? 'REST API',
+        ];
+    }
+
+    /**
+     * Map a JSON API response to normalized feed items using a field mapping config.
+     */
+    private function mapJsonResponse(array $data, array $mapping, string $baseUrl, string $sourceName): array {
+        // Extract items array from response using items path
+        $itemsPath = $mapping['items'] ?? '';
+        $rawItems = $itemsPath ? $this->resolveJsonPath($data, $itemsPath) : $data;
+
+        if (!is_array($rawItems)) {
+            return [];
+        }
+
+        // If the result is an associative array (single item), wrap it
+        if (!empty($rawItems) && !array_is_list($rawItems)) {
+            $rawItems = [$rawItems];
+        }
+
+        $items = [];
+        foreach ($rawItems as $raw) {
+            if (!is_array($raw)) {
+                continue;
+            }
+
+            $title = $this->resolveJsonPath($raw, $mapping['title'] ?? 'title');
+            if (empty($title)) {
+                continue; // skip items without a title
+            }
+
+            $url = $this->resolveJsonPath($raw, $mapping['url'] ?? 'url') ?? '';
+            // Make relative URLs absolute
+            if ($url && !str_starts_with($url, 'http')) {
+                $url = $baseUrl . '/' . ltrim($url, '/');
+            }
+
+            $excerpt = $this->resolveJsonPath($raw, $mapping['excerpt'] ?? '') ?? '';
+            $date = $this->resolveJsonPath($raw, $mapping['date'] ?? '') ?? '';
+            $image = $this->resolveJsonPath($raw, $mapping['image'] ?? '') ?? null;
+            $author = $this->resolveJsonPath($raw, $mapping['author'] ?? '') ?? null;
+
+            $items[] = [
+                'id' => 'rest-' . md5($title . $url . $date),
+                'title' => (string) $title,
+                'url' => (string) $url,
+                'excerpt' => $this->sanitizeExcerpt((string) $excerpt),
+                'image' => is_string($image) && filter_var($image, FILTER_VALIDATE_URL) ? $image : null,
+                'date' => $this->parseDate((string) $date),
+                'source' => $sourceName,
+                'author' => is_string($author) ? $author : null,
+            ];
+        }
+
+        return $items;
+    }
+
+    /**
+     * Resolve a dot-notation path in a JSON array.
+     * E.g., "data.items" resolves $data['data']['items'].
+     * E.g., "author.name" resolves $item['author']['name'].
+     *
+     * @return mixed The resolved value, or null if path doesn't exist
+     */
+    private function resolveJsonPath(array $data, string $path): mixed {
+        if ($path === '') {
+            return null;
+        }
+
+        $keys = explode('.', $path);
+        $current = $data;
+
+        foreach ($keys as $key) {
+            if (!is_array($current) || !array_key_exists($key, $current)) {
+                return null;
+            }
+            $current = $current[$key];
+        }
+
+        return $current;
+    }
+
+    /**
      * Get available LMS connections (without exposing tokens or secrets).
      */
     public function getConnections(): array {
@@ -1104,7 +1281,7 @@ class FeedReaderService {
         $connections = json_decode($json, true) ?: [];
 
         return array_map(function ($conn) {
-            return [
+            $result = [
                 'id' => $conn['id'] ?? '',
                 'name' => $conn['name'] ?? '',
                 'type' => $conn['type'] ?? '',
@@ -1114,6 +1291,14 @@ class FeedReaderService {
                 'oidcAutoConnect' => $conn['oidcAutoConnect'] ?? false,
                 'hasClientCredentials' => !empty($conn['clientId']) && !empty($conn['clientSecret']),
             ];
+            // Include REST API-specific fields
+            if (($conn['type'] ?? '') === 'custom_rest_api') {
+                $result['customEndpoint'] = $conn['customEndpoint'] ?? '';
+                $result['authMethod'] = $conn['authMethod'] ?? 'bearer';
+                $result['apiKeyHeader'] = $conn['apiKeyHeader'] ?? '';
+                $result['responseMapping'] = $conn['responseMapping'] ?? [];
+            }
+            return $result;
         }, $connections);
     }
 
@@ -1157,7 +1342,7 @@ class FeedReaderService {
                 $encryptedClientSecret = '';
             }
 
-            $toSave[] = [
+            $entry = [
                 'id' => $id,
                 'name' => $conn['name'] ?? '',
                 'type' => $conn['type'] ?? 'rss',
@@ -1169,6 +1354,25 @@ class FeedReaderService {
                 'clientSecret' => $encryptedClientSecret,
                 'oidcAutoConnect' => $conn['oidcAutoConnect'] ?? false,
             ];
+
+            // REST API-specific fields
+            if (($conn['type'] ?? '') === 'custom_rest_api') {
+                $entry['customEndpoint'] = $conn['customEndpoint'] ?? '';
+                $entry['authMethod'] = in_array($conn['authMethod'] ?? '', ['bearer', 'apikey', 'basic', 'none']) ? $conn['authMethod'] : 'bearer';
+                $entry['apiKeyHeader'] = preg_match('/^[a-zA-Z0-9\-]{1,64}$/', $conn['apiKeyHeader'] ?? '') ? $conn['apiKeyHeader'] : '';
+                $mapping = $conn['responseMapping'] ?? [];
+                $entry['responseMapping'] = [
+                    'items' => $this->sanitizeJsonPath($mapping['items'] ?? ''),
+                    'title' => $this->sanitizeJsonPath($mapping['title'] ?? 'title'),
+                    'url' => $this->sanitizeJsonPath($mapping['url'] ?? ''),
+                    'excerpt' => $this->sanitizeJsonPath($mapping['excerpt'] ?? ''),
+                    'date' => $this->sanitizeJsonPath($mapping['date'] ?? ''),
+                    'image' => $this->sanitizeJsonPath($mapping['image'] ?? ''),
+                    'author' => $this->sanitizeJsonPath($mapping['author'] ?? ''),
+                ];
+            }
+
+            $toSave[] = $entry;
         }
 
         $this->config->setAppValue(Application::APP_ID, 'feed_connections', json_encode($toSave));
@@ -1255,6 +1459,21 @@ class FeedReaderService {
             return date('c');
         }
         return date('c', $timestamp);
+    }
+
+    /**
+     * Sanitize a JSON dot-notation path to prevent injection.
+     * Only allows alphanumeric characters, dots, and underscores.
+     */
+    private function sanitizeJsonPath(string $path): string {
+        $path = trim($path);
+        if ($path === '') {
+            return '';
+        }
+        if (!preg_match('/^[a-zA-Z0-9_.]+$/', $path)) {
+            return '';
+        }
+        return $path;
     }
 
     private function buildCacheKey(string $sourceType, array $config, ?string $userId = null): string {

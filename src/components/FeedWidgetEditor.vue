@@ -49,7 +49,7 @@
     </div>
 
     <!-- User LMS connection status -->
-    <div v-if="localWidget.sourceType !== 'rss' && localWidget.connectionId && selectedConnectionAuthMode !== 'token'" class="form-group">
+    <div v-if="isLmsType && localWidget.connectionId && selectedConnectionAuthMode !== 'token'" class="form-group">
       <div v-if="userConnectionStatus === 'connected'" class="lms-status lms-status-connected">
         <span class="status-badge connected">{{ userConnectionTokenType === 'oidc' ? t('Connected via SSO') : t('Connected') }}</span>
         <button class="disconnect-button" @click="disconnectLms">{{ t('Disconnect') }}</button>
@@ -82,7 +82,7 @@
     </div>
 
     <!-- Brightspace content type -->
-    <div v-if="localWidget.sourceType !== 'rss' && localWidget.connectionId" class="form-group">
+    <div v-if="isLmsType && localWidget.connectionId" class="form-group">
       <label for="feed-content-type">{{ t('Content type') }}</label>
       <select id="feed-content-type" v-model="localWidget.contentType" @change="emitUpdate">
         <option value="news">{{ t('News / Announcements') }}</option>
@@ -92,7 +92,7 @@
     </div>
 
     <!-- Course selection (for LMS types) -->
-    <div v-if="localWidget.sourceType !== 'rss' && localWidget.connectionId && showCourseIdField" class="form-group">
+    <div v-if="isLmsType && localWidget.connectionId && showCourseIdField" class="form-group">
       <label for="feed-course-id">{{ t('Course (optional)') }}</label>
       <div v-if="coursesLoading" class="field-hint">{{ t('Loading courses...') }}</div>
       <template v-else-if="courses.length > 0 && !manualCourseId">
@@ -146,6 +146,34 @@
         <option :value="3">3</option>
         <option :value="4">4</option>
       </select>
+    </div>
+
+    <!-- Sort -->
+    <div class="form-group">
+      <label for="feed-sort-by">{{ t('Sort by') }}</label>
+      <div class="sort-row">
+        <select id="feed-sort-by" v-model="localWidget.sortBy" @change="emitUpdate">
+          <option value="date">{{ t('Date') }}</option>
+          <option value="title">{{ t('Title') }}</option>
+        </select>
+        <select id="feed-sort-order" v-model="localWidget.sortOrder" @change="emitUpdate" :aria-label="t('Sort order')">
+          <option value="desc">{{ t('Newest first') }}</option>
+          <option value="asc">{{ t('Oldest first') }}</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Filter -->
+    <div class="form-group">
+      <label for="feed-filter">{{ t('Filter by keyword (optional)') }}</label>
+      <input
+        id="feed-filter"
+        v-model="localWidget.filterKeyword"
+        type="text"
+        :placeholder="t('e.g. announcement, update')"
+        @input="emitUpdate"
+      />
+      <span class="field-hint">{{ t('Only show items containing this word in title, excerpt, or author.') }}</span>
     </div>
 
     <!-- Limit -->
@@ -222,6 +250,10 @@ export default {
     };
   },
   computed: {
+    isLmsType() {
+      const type = this.localWidget.sourceType;
+      return type !== 'rss' && type !== 'custom_rest_api';
+    },
     availableConnections() {
       return this.connections.filter(c => c.active);
     },
@@ -299,6 +331,9 @@ export default {
         showSource: false,
         excerptLength: 150,
         openInNewTab: true,
+        sortBy: 'date',
+        sortOrder: 'desc',
+        filterKeyword: '',
       };
     },
     getSourceTypeLabel(type) {
@@ -306,6 +341,7 @@ export default {
         moodle: 'Moodle',
         canvas: 'Canvas',
         brightspace: 'Brightspace',
+        custom_rest_api: 'REST API (custom)',
       };
       return labels[type] || type;
     },
@@ -532,9 +568,14 @@ export default {
   box-sizing: border-box;
 }
 
-.url-input-group {
+.url-input-group,
+.sort-row {
   display: flex;
   gap: 8px;
+}
+
+.sort-row select {
+  flex: 1;
 }
 
 .url-input-group input {

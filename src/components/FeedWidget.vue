@@ -96,6 +96,15 @@ export default {
     'widget.limit'() {
       this.fetchFeed();
     },
+    'widget.sortBy'() {
+      this.fetchFeed();
+    },
+    'widget.sortOrder'() {
+      this.fetchFeed();
+    },
+    'widget.filterKeyword'() {
+      this.fetchFeed();
+    },
   },
   mounted() {
     this.fetchFeed();
@@ -135,6 +144,17 @@ export default {
           if (this.widget.contentType) {
             params.append('contentType', this.widget.contentType);
           }
+        }
+
+        // Sort and filter
+        if (this.widget.sortBy) {
+          params.append('sortBy', this.widget.sortBy);
+        }
+        if (this.widget.sortOrder) {
+          params.append('sortOrder', this.widget.sortOrder);
+        }
+        if (this.widget.filterKeyword) {
+          params.append('filterKeyword', this.widget.filterKeyword);
         }
 
         const url = this.shareToken

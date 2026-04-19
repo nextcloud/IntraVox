@@ -47,7 +47,8 @@ class FeedReaderController extends Controller {
             $limit = (int)$this->request->getParam('limit', 5);
 
             $config = $this->buildConfigFromRequest($sourceType);
-            $result = $this->feedReaderService->fetchFeed($sourceType, $config, $limit, $this->userId);
+            [$sortBy, $sortOrder, $filterKeyword] = $this->parseSortAndFilter();
+            $result = $this->feedReaderService->fetchFeed($sourceType, $config, $limit, $this->userId, $sortBy, $sortOrder, $filterKeyword);
 
             return new DataResponse($result);
         } catch (\Exception $e) {
@@ -80,7 +81,8 @@ class FeedReaderController extends Controller {
         try {
             $sourceType = $this->request->getParam('sourceType', 'rss');
             $config = $this->buildConfigFromRequest($sourceType);
-            $result = $this->feedReaderService->fetchFeed($sourceType, $config, 3, $this->userId);
+            [$sortBy, $sortOrder, $filterKeyword] = $this->parseSortAndFilter();
+            $result = $this->feedReaderService->fetchFeed($sourceType, $config, 3, $this->userId, $sortBy, $sortOrder, $filterKeyword);
 
             return new DataResponse($result);
         } catch (\Exception $e) {
@@ -114,7 +116,8 @@ class FeedReaderController extends Controller {
             $limit = (int)$this->request->getParam('limit', 5);
 
             $config = $this->buildConfigFromRequest($sourceType);
-            $result = $this->feedReaderService->fetchFeed($sourceType, $config, $limit);
+            [$sortBy, $sortOrder, $filterKeyword] = $this->parseSortAndFilter();
+            $result = $this->feedReaderService->fetchFeed($sourceType, $config, $limit, null, $sortBy, $sortOrder, $filterKeyword);
 
             return new DataResponse($result);
         } catch (\Exception $e) {
@@ -227,6 +230,24 @@ class FeedReaderController extends Controller {
                 Http::STATUS_INTERNAL_SERVER_ERROR
             );
         }
+    }
+
+    /**
+     * Parse sort and filter parameters from request.
+     * @return array{string, string, string} [sortBy, sortOrder, filterKeyword]
+     */
+    private function parseSortAndFilter(): array {
+        $sortBy = $this->request->getParam('sortBy', 'date');
+        $sortBy = in_array($sortBy, ['date', 'title'], true) ? $sortBy : 'date';
+
+        $sortOrder = $this->request->getParam('sortOrder', 'desc');
+        $sortOrder = in_array($sortOrder, ['asc', 'desc'], true) ? $sortOrder : 'desc';
+
+        $filterKeyword = trim((string) $this->request->getParam('filterKeyword', ''));
+        // Limit keyword length to prevent abuse
+        $filterKeyword = mb_substr($filterKeyword, 0, 100);
+
+        return [$sortBy, $sortOrder, $filterKeyword];
     }
 
     private function buildConfigFromRequest(string $sourceType): array {
