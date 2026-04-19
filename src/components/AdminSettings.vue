@@ -829,6 +829,14 @@
 								<label :for="'conn-map-author-' + index">{{ t('intravox', 'Author field') }}</label>
 								<input :id="'conn-map-author-' + index" v-model="conn.responseMapping.author" type="text" :placeholder="t('intravox', 'author (optional)')" />
 							</div>
+							<div class="form-group-heading">{{ t('intravox', 'Custom request headers') }}</div>
+							<span class="field-hint">{{ t('intravox', 'Extra HTTP headers sent with every request. E.g. OCS-APIRequest: true for Nextcloud APIs.') }}</span>
+							<div v-for="(header, hIndex) in conn.customHeaders" :key="hIndex" class="custom-header-row">
+								<input v-model="header.key" type="text" :placeholder="t('intravox', 'Header name')" class="header-key" />
+								<input v-model="header.value" type="text" :placeholder="t('intravox', 'Value')" class="header-value" />
+								<button type="button" class="header-remove" @click="conn.customHeaders.splice(hIndex, 1)">&times;</button>
+							</div>
+							<button type="button" class="link-button" @click="conn.customHeaders.push({ key: '', value: '' })">{{ t('intravox', '+ Add header') }}</button>
 						</template>
 
 						<div v-if="conn.type !== 'custom_rest_api' || conn.authMethod === 'bearer'" class="form-group">
@@ -1336,6 +1344,7 @@ export default {
 					authMethod: c.authMethod || 'bearer',
 					apiKeyHeader: c.apiKeyHeader || '',
 					responseMapping: c.responseMapping || { items: '', title: 'title', url: 'url', excerpt: '', date: '', image: '', author: '' },
+					customHeaders: (c.customHeaders || []).map(h => ({ key: h.key || '', value: h.value || '' })),
 				}))
 			} catch (e) {
 				this.feedConnections = []
@@ -1359,6 +1368,7 @@ export default {
 				authMethod: 'bearer',
 				apiKeyHeader: '',
 				responseMapping: { items: '', title: 'title', url: 'url', excerpt: '', date: '', image: '', author: '' },
+				customHeaders: [],
 			})
 		},
 		removeFeedConnection(index) {
@@ -3142,6 +3152,35 @@ export default {
 	margin-top: 8px;
 	padding-top: 8px;
 	border-top: 1px solid var(--color-border);
+}
+
+.custom-header-row {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+}
+
+.custom-header-row .header-key {
+	flex: 2;
+}
+
+.custom-header-row .header-value {
+	flex: 3;
+}
+
+.custom-header-row .header-remove {
+	background: none;
+	border: none;
+	color: var(--color-text-maxcontrast);
+	cursor: pointer;
+	font-size: 18px;
+	padding: 4px 8px;
+	border-radius: var(--border-radius);
+}
+
+.custom-header-row .header-remove:hover {
+	background: var(--color-error);
+	color: var(--color-primary-element-text);
 }
 
 .feed-connection-fields input,

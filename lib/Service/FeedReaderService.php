@@ -1172,6 +1172,15 @@ class FeedReaderService {
             }
         }
 
+        // Merge custom headers (admin-configured, e.g. OCS-APIRequest: true)
+        foreach ($connection['customHeaders'] ?? [] as $header) {
+            $key = $header['key'] ?? '';
+            $value = $header['value'] ?? '';
+            if ($key !== '' && !isset($headers[$key])) {
+                $headers[$key] = $value;
+            }
+        }
+
         $client = $this->httpClient->newClient();
         $response = $client->get($url, [
             'timeout' => self::HTTP_TIMEOUT,
@@ -1297,6 +1306,7 @@ class FeedReaderService {
                 $result['authMethod'] = $conn['authMethod'] ?? 'bearer';
                 $result['apiKeyHeader'] = $conn['apiKeyHeader'] ?? '';
                 $result['responseMapping'] = $conn['responseMapping'] ?? [];
+                $result['customHeaders'] = $conn['customHeaders'] ?? [];
             }
             return $result;
         }, $connections);
@@ -1370,6 +1380,17 @@ class FeedReaderService {
                     'image' => $this->sanitizeJsonPath($mapping['image'] ?? ''),
                     'author' => $this->sanitizeJsonPath($mapping['author'] ?? ''),
                 ];
+
+                // Custom request headers (sanitize keys and values)
+                $customHeaders = [];
+                foreach ($conn['customHeaders'] ?? [] as $header) {
+                    $key = trim((string) ($header['key'] ?? ''));
+                    $value = trim((string) ($header['value'] ?? ''));
+                    if ($key !== '' && preg_match('/^[a-zA-Z0-9\-]{1,64}$/', $key)) {
+                        $customHeaders[] = ['key' => $key, 'value' => mb_substr($value, 0, 256)];
+                    }
+                }
+                $entry['customHeaders'] = array_slice($customHeaders, 0, 10);
             }
 
             $toSave[] = $entry;
