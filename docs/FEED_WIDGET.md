@@ -91,6 +91,36 @@ Displays personalized content from a Brightspace (Desire2Learn) instance.
 - Administrator configures a Brightspace connection in IntraVox Admin Settings
 - For OAuth2: register an OAuth2 application in Brightspace with the redirect URI shown in IntraVox
 
+### Nextcloud
+
+Displays personalized data from a Nextcloud instance — either the local server or a remote Nextcloud. Each user sees only their own data (security-trimmed via per-user authentication).
+
+**Content types:**
+
+| Content type | What it shows | API used |
+|---|---|---|
+| **My Activity** (default) | File changes, shares, comments, group events from the user's activity stream | `/ocs/v2.php/apps/activity/api/v2/activity` |
+| **My Shares** | Files shared with the user (received shares) | `/ocs/v2.php/apps/files_sharing/api/v1/shares` |
+| **My Notifications** | Personal notifications (app updates, mentions, invitations) | `/ocs/v2.php/apps/notifications/api/v2/notifications` |
+
+**Authentication:**
+
+| Scenario | Setup |
+|----------|-------|
+| **Local instance** (IntraVox on the same server) | Admin creates connection with base URL. Auth via stored app password or per-user OAuth2 |
+| **Remote instance** (different Nextcloud server) | Admin registers OAuth2 client on the remote NC (Settings > Security > OAuth 2.0 clients), enters client_id + client_secret in IntraVox. Each user clicks "Connect" for per-user access |
+
+**Setup requirements:**
+- Administrator configures a Nextcloud connection in IntraVox Admin Settings
+- For remote instances: register an OAuth2 client on the target Nextcloud with the redirect URI shown in IntraVox
+- The `OCS-APIRequest: true` header is sent automatically (no manual configuration needed)
+
+**Why this is better than admin app passwords:**
+- Each user sees only their own data — no shared admin view
+- Tokens are per-user and encrypted
+- OAuth2 tokens auto-refresh
+- Follows the same pattern as Entra ID / Microsoft Graph (client registration + per-user authorization)
+
 ### REST API (custom)
 
 Connect to any system with a REST/JSON API — Jira, Confluence, AFAS, TOPdesk, OpenProject, ZGW APIs, or any other REST endpoint.

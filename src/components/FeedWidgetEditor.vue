@@ -85,9 +85,16 @@
     <div v-if="isLmsType && localWidget.connectionId" class="form-group">
       <label for="feed-content-type">{{ t('Content type') }}</label>
       <select id="feed-content-type" v-model="localWidget.contentType" @change="emitUpdate">
-        <option value="news">{{ t('News / Announcements') }}</option>
-        <option value="my-courses">{{ t('My Courses') }}</option>
-        <option value="deadlines">{{ t('Upcoming Deadlines') }}</option>
+        <template v-if="localWidget.sourceType === 'nextcloud'">
+          <option value="news">{{ t('My Activity') }}</option>
+          <option value="my-courses">{{ t('My Shares') }}</option>
+          <option value="deadlines">{{ t('My Notifications') }}</option>
+        </template>
+        <template v-else>
+          <option value="news">{{ t('News / Announcements') }}</option>
+          <option value="my-courses">{{ t('My Courses') }}</option>
+          <option value="deadlines">{{ t('Upcoming Deadlines') }}</option>
+        </template>
       </select>
     </div>
 
@@ -281,6 +288,9 @@ export default {
       return this.userConnectionForSelected?.tokenType || null;
     },
     showCourseIdField() {
+      if (this.localWidget.sourceType === 'nextcloud') {
+        return false; // Nextcloud has no course concept
+      }
       if (this.localWidget.sourceType !== 'rss') {
         return !this.localWidget.contentType || this.localWidget.contentType === 'news';
       }
@@ -342,6 +352,7 @@ export default {
         canvas: 'Canvas',
         brightspace: 'Brightspace',
         custom_rest_api: 'REST API (custom)',
+        nextcloud: 'Nextcloud',
       };
       return labels[type] || type;
     },
