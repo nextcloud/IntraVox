@@ -54,7 +54,12 @@ class FooterController extends Controller {
             $footer['permissions'] = $permissions;
             $footer['canEdit'] = $permissions['canWrite'];
 
-            return new JSONResponse($footer);
+            $response = new JSONResponse($footer);
+            $etag = '"' . md5(json_encode($footer)) . '"';
+            $response->addHeader('Cache-Control', 'private, max-age=300, must-revalidate');
+            $response->addHeader('ETag', $etag);
+
+            return $response;
         } catch (\Exception $e) {
             return new JSONResponse(
                 ['error' => $e->getMessage()],
@@ -65,7 +70,6 @@ class FooterController extends Controller {
 
     /**
      * @NoAdminRequired
-     * @NoCSRFRequired
      */
     public function save(): JSONResponse {
         try {

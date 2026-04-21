@@ -11,6 +11,7 @@ use OCA\IntraVox\Command\DebugShareCommand;
 use OCA\IntraVox\Event\PageDeletedEvent;
 use OCA\IntraVox\Listener\CommentsEntityListener;
 use OCA\IntraVox\Listener\PageDeletedListener;
+use OCA\IntraVox\Listener\UserDeletedListener;
 use OCA\IntraVox\Search\PageSearchProvider;
 use OCA\IntraVox\Search\UserSearchProvider;
 use OCP\AppFramework\App;
@@ -18,6 +19,7 @@ use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IBootstrap;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 use OCP\Comments\CommentsEntityEvent;
+use OCP\User\Events\UserDeletedEvent;
 
 class Application extends App implements IBootstrap {
     public const APP_ID = 'intravox';
@@ -47,6 +49,12 @@ class Application extends App implements IBootstrap {
         $context->registerEventListener(
             PageDeletedEvent::class,
             PageDeletedListener::class
+        );
+
+        // GDPR: cleanup user data when Nextcloud user is deleted
+        $context->registerEventListener(
+            UserDeletedEvent::class,
+            UserDeletedListener::class
         );
 
 

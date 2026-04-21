@@ -25,6 +25,7 @@ use OCP\AppFramework\Http\Attribute\BruteForceProtection;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\Attribute\PublicPage;
+use OCP\AppFramework\Http\Attribute\UserRateThrottle;
 use OCP\Security\Bruteforce\IThrottler;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\Http\JSONResponse;
@@ -264,8 +265,8 @@ class ApiController extends Controller {
 
     /**
      * @NoAdminRequired
-     * @NoCSRFRequired
      */
+    #[UserRateThrottle(limit: 10, period: 60)]
     public function createPage(): DataResponse {
         try {
             $data = $this->request->getParams();
@@ -301,7 +302,6 @@ class ApiController extends Controller {
 
     /**
      * @NoAdminRequired
-     * @NoCSRFRequired
      */
     public function updatePage(string $id): DataResponse {
         try {
@@ -354,8 +354,8 @@ class ApiController extends Controller {
 
     /**
      * @NoAdminRequired
-     * @NoCSRFRequired
      */
+    #[UserRateThrottle(limit: 10, period: 60)]
     public function deletePage(string $id): DataResponse {
         try {
             // First get the page to check permissions (from Nextcloud filesystem)
@@ -383,7 +383,6 @@ class ApiController extends Controller {
      * Upload media (image or video) for a page
      * Unified endpoint that stores all media in a single 'media' folder
      * @NoAdminRequired
-     * @NoCSRFRequired
      */
     public function uploadMedia(string $pageId): DataResponse {
         try {
@@ -433,7 +432,6 @@ class ApiController extends Controller {
     /**
      * Check if media file with given name already exists
      * @NoAdminRequired
-     * @NoCSRFRequired
      */
     public function checkMediaDuplicate(string $pageId): DataResponse {
         try {
@@ -461,7 +459,6 @@ class ApiController extends Controller {
     /**
      * Upload media with original filename
      * @NoAdminRequired
-     * @NoCSRFRequired
      */
     public function uploadMediaWithName(string $pageId): DataResponse {
         try {
@@ -694,7 +691,6 @@ class ApiController extends Controller {
 
     /**
      * @NoAdminRequired
-     * @NoCSRFRequired
      */
     public function restorePageVersion(string $pageId, string $timestamp): DataResponse {
         try {
@@ -721,7 +717,6 @@ class ApiController extends Controller {
 
     /**
      * @NoAdminRequired
-     * @NoCSRFRequired
      */
     public function updateVersionLabel(string $pageId, string $timestamp): DataResponse {
         try {
@@ -830,7 +825,6 @@ class ApiController extends Controller {
 
     /**
      * @NoAdminRequired
-     * @NoCSRFRequired
      */
     public function updatePageMetadata(string $pageId): DataResponse {
         try {
@@ -1143,6 +1137,22 @@ class ApiController extends Controller {
     }
 
     /**
+     * Health check endpoint for monitoring and orchestration.
+     *
+     * @PublicPage
+     * @NoCSRFRequired
+     */
+    #[PublicPage]
+    #[NoCSRFRequired]
+    public function health(): DataResponse {
+        return new DataResponse([
+            'status' => 'ok',
+            'app' => Application::APP_ID,
+            'version' => \OC::$server->getAppManager()->getAppVersion(Application::APP_ID),
+        ]);
+    }
+
+    /**
      * Run IntraVox setup (create GroupFolder)
      * Admin only - creates the IntraVox GroupFolder
      */
@@ -1277,8 +1287,6 @@ class ApiController extends Controller {
      * Set video domain whitelist
      * Warning-based system: all domains allowed, but with category warnings
      * Admin only
-     *
-     * @NoCSRFRequired
      */
     public function setVideoDomains(): DataResponse {
         // Manual admin check since @AuthorizedAdminSetting has dependency issues
@@ -1393,8 +1401,6 @@ class ApiController extends Controller {
     /**
      * Update engagement settings
      * Admin only
-     *
-     * @NoCSRFRequired
      */
     public function setEngagementSettings(): DataResponse {
         // Only admins can change engagement settings
@@ -1412,7 +1418,7 @@ class ApiController extends Controller {
         try {
             $updated = $this->engagementSettings->updateAll($settings);
 
-            $this->logger->info('[ApiController] Engagement settings updated', $settings);
+            $this->logger->info('IntraVox Audit: Engagement settings updated by admin', $settings);
 
             return new DataResponse([
                 'success' => true,
@@ -1440,8 +1446,6 @@ class ApiController extends Controller {
     /**
      * Update publication settings
      * Admin only
-     *
-     * @NoCSRFRequired
      */
     public function setPublicationSettings(): DataResponse {
         // Only admins can change publication settings
@@ -1516,7 +1520,6 @@ class ApiController extends Controller {
      * Import from uploaded ZIP file
      * Admin only
      *
-     * @NoCSRFRequired
      * @return JSONResponse
      */
     public function importZip(): JSONResponse {
@@ -1601,7 +1604,6 @@ class ApiController extends Controller {
      * Import from Confluence HTML export ZIP file
      * Admin only
      *
-     * @NoCSRFRequired
      * @return JSONResponse
      */
     public function importConfluenceHtml(): JSONResponse {

@@ -11,6 +11,7 @@
       :excerpt-length="widget.excerptLength || 150"
       :open-in-new-tab="widget.openInNewTab !== false"
       :item-background="itemBackgroundMode"
+      :feed-image="feedImage"
     />
   </div>
 </template>
@@ -32,6 +33,10 @@ export default {
     widget: {
       type: Object,
       required: true,
+    },
+    feedImage: {
+      type: String,
+      default: null,
     },
     rowBackgroundColor: {
       type: String,
@@ -57,8 +62,9 @@ export default {
 .feed-layout-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
   min-width: 0;
   overflow: hidden;
+  container-type: inline-size;
 }
 </style>

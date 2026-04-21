@@ -172,6 +172,7 @@ class LicenseController extends Controller {
             // Save license key if provided
             if ($licenseKey !== null) {
                 $this->licenseService->setLicenseKey($licenseKey);
+                $this->logger->info('IntraVox Audit: License key updated by admin');
             }
 
             return new DataResponse([
@@ -275,6 +276,11 @@ class LicenseController extends Controller {
 
         $this->config->setAppValue(self::APP_ID, 'organization_name', $organizationName);
         $this->config->setAppValue(self::APP_ID, 'contact_email', $contactEmail);
+
+        $this->logger->info('IntraVox Audit: Organization settings updated', [
+            'organization_name' => $organizationName,
+            'contact_email' => $contactEmail,
+        ]);
 
         return new DataResponse([
             'success' => true,

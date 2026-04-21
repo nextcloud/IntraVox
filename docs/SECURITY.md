@@ -180,11 +180,53 @@ When SVG sanitization fails:
 3. **External Resources**: Remote images, fonts, and stylesheets removed
 4. **DOCTYPE**: Any DOCTYPE declaration causes rejection (security measure)
 
+## Content Security Policy
+
+IntraVox sets a strict CSP on all page responses:
+
+```
+script-src: 'self'
+frame-src: 'self' [admin-configured video domains]
+```
+
+No `unsafe-eval` or `unsafe-inline` directives are used. The Vue 3 runtime-only build and TipTap editor are fully CSP-compliant.
+
+## Feed Widget Security
+
+### Image Proxy HMAC
+
+External feed images are served through a server-side proxy to bypass CSP restrictions. Each image URL is signed with an HMAC-SHA256 signature derived from the Nextcloud system secret. Only signed URLs are proxied — unsigned or tampered URLs are rejected with HTTP 403. The proxy sets `Content-Security-Policy: default-src 'none'`, `X-Content-Type-Options: nosniff`, and `Referrer-Policy: no-referrer` on all responses.
+
+### SSRF Protection
+
+All outbound HTTP requests from the feed system validate target URLs against private/reserved IP ranges using `gethostbynamel()` with `FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE`. This applies to RSS feeds, REST API connections, LMS API calls, SharePoint Graph API, and the image proxy.
+
+### Response Size Limit
+
+API responses larger than 10 MB are rejected before JSON decoding to prevent out-of-memory conditions. This protects against misconfigured or malicious external APIs returning excessively large payloads.
+
+### Token Storage
+
+API tokens and OAuth2 client secrets are encrypted at rest using Nextcloud's `ICrypto` service. Per-user OAuth2 tokens are stored in encrypted user preferences and automatically cleaned up when a user is deleted. Tokens are never included in feed connection exports, API responses, or log messages.
+
+## Rate Limiting
+
+All mutating API endpoints are rate-limited using Nextcloud's built-in throttle attributes. See [Scalability & Enterprise Readiness](SCALABILITY.md#rate-limiting) for the full rate limit table.
+
+## GDPR User Deletion
+
+When a Nextcloud user is deleted, IntraVox's `UserDeletedListener` automatically removes all associated data: analytics records, page locks, feed tokens, and LMS OAuth tokens.
+
+## Audit Logging
+
+Administrative operations (bulk delete/move, license changes, settings updates) are logged with the `IntraVox Audit:` prefix at `info` level for SIEM integration.
+
 ## Compliance
 
 This implementation follows:
-- **OWASP Top 10**: Protection against XSS and XXE attacks
-- **CSP Best Practices**: img tag rendering prevents script execution
+- **OWASP Top 10**: Protection against XSS, XXE, and injection attacks
+- **CSP Best Practices**: Strict CSP without unsafe-eval, img tag rendering prevents script execution
+- **GDPR**: Automated user data cleanup on account deletion
 - **Industry Standards**: Same approach used by WordPress, Drupal, GitHub
 
 ## References

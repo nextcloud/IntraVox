@@ -5,27 +5,20 @@
       <label for="feed-source-type">{{ t('Source type') }}</label>
       <select id="feed-source-type" v-model="localWidget.sourceType" @change="onSourceTypeChange">
         <option value="rss">{{ t('RSS / Atom feed') }}</option>
-        <option v-if="availableConnections.length > 0" value="connection">{{ t('Connection') }}</option>
+        <option v-if="availableConnections.length > 0 || localWidget.sourceType === 'connection'" value="connection">{{ t('Connection') }}</option>
       </select>
     </div>
 
     <!-- RSS URL input -->
     <div v-if="localWidget.sourceType === 'rss'" class="form-group">
       <label for="feed-url">{{ t('Feed URL') }}</label>
-      <div class="url-input-group">
-        <input
-          id="feed-url"
-          v-model="localWidget.feedUrl"
-          type="url"
-          :placeholder="t('https://example.com/feed.xml')"
-          @blur="emitUpdate"
-          @keydown.enter="loadPreview"
-        />
-        <button class="preview-button" @click="loadPreview" :disabled="!localWidget.feedUrl || previewLoading">
-          {{ previewLoading ? t('Loading...') : t('Preview') }}
-        </button>
-      </div>
-      <p v-if="previewError" class="field-error">{{ previewError }}</p>
+      <input
+        id="feed-url"
+        v-model="localWidget.feedUrl"
+        type="url"
+        :placeholder="t('https://example.com/feed.xml')"
+        @input="debouncedEmitUpdate"
+      />
     </div>
 
     <!-- Connection selection -->
@@ -40,8 +33,18 @@
         >
           {{ conn.name }}
         </option>
+        <option
+          v-if="inactiveSelectedConnection"
+          :value="inactiveSelectedConnection.id"
+          disabled
+        >
+          {{ inactiveSelectedConnection.name }} ({{ t('inactive') }})
+        </option>
       </select>
-      <p v-if="availableConnections.length === 0" class="field-hint">
+      <p v-if="inactiveSelectedConnection" class="field-hint field-hint--warning">
+        {{ t('This connection is currently disabled by an administrator.') }}
+      </p>
+      <p v-else-if="availableConnections.length === 0" class="field-hint">
         {{ t('No connections configured. Ask an administrator to add one in IntraVox settings.') }}
       </p>
     </div>
@@ -82,11 +85,82 @@
     <!-- Brightspace content type -->
     <div v-if="isLmsType && localWidget.connectionId" class="form-group">
       <label for="feed-content-type">{{ t('Content type') }}</label>
-      <select id="feed-content-type" v-model="localWidget.contentType" @change="emitUpdate">
+      <select id="feed-content-type" v-model="localWidget.contentType" @change="onLmsContentTypeChange">
         <option value="news">{{ t('News / Announcements') }}</option>
-        <option value="my-courses">{{ t('My Courses') }}</option>
+        <option value="courses">{{ t('Available Courses') }}</option>
+        <option value="assignments">{{ t('Assignments') }}</option>
         <option value="deadlines">{{ t('Upcoming Deadlines') }}</option>
       </select>
+    </div>
+
+    <!-- Moodle forum selector (when News + course selected) -->
+    <div v-if="isMoodleType && localWidget.connectionId && localWidget.contentType === 'news' && localWidget.courseId" class="form-group">
+      <label for="feed-moodle-forum">{{ t('Forum (optional)') }}</label>
+      <div v-if="moodleForumsLoading" class="field-hint">{{ t('Loading...') }}</div>
+      <template v-else>
+        <select id="feed-moodle-forum" v-model="localWidget.moodleForumId" @change="emitUpdate">
+          <option value="">{{ t('All forums') }}</option>
+          <option v-for="forum in moodleForums" :key="forum.id" :value="forum.id">{{ forum.name }}</option>
+        </select>
+      </template>
+    </div>
+
+    <!-- OpenProject content type -->
+    <div v-if="isOpenProjectType && localWidget.connectionId" class="form-group">
+      <label for="feed-content-type-op">{{ t('Content type') }}</label>
+      <select id="feed-content-type-op" v-model="localWidget.contentType" @change="emitUpdate">
+        <option value="">{{ t('All work packages') }}</option>
+        <option value="open">{{ t('Open work packages') }}</option>
+        <option value="overdue">{{ t('Overdue') }}</option>
+        <option value="milestones">{{ t('Milestones') }}</option>
+        <option value="recently-updated">{{ t('Recently updated') }}</option>
+      </select>
+    </div>
+
+    <!-- Jira project selector -->
+    <div v-if="isJiraType && localWidget.connectionId" class="form-group">
+      <label for="feed-jira-project">{{ t('Project') }}</label>
+      <div v-if="jiraProjectsLoading" class="field-hint">{{ t('Loading...') }}</div>
+      <template v-else>
+        <select id="feed-jira-project" v-model="localWidget.jiraProject" @change="emitUpdate">
+          <option value="">{{ t('All projects') }}</option>
+          <option v-for="proj in jiraProjects" :key="proj.key" :value="proj.key">{{ proj.name }} ({{ proj.key }})</option>
+        </select>
+      </template>
+    </div>
+    <div v-if="isJiraType && localWidget.connectionId" class="form-group">
+      <label for="feed-content-type-jira">{{ t('Content type') }}</label>
+      <select id="feed-content-type-jira" v-model="localWidget.contentType" @change="emitUpdate">
+        <option value="">{{ t('All issues') }}</option>
+        <option value="open">{{ t('Open issues') }}</option>
+        <option value="recent">{{ t('Recently updated (7 days)') }}</option>
+        <option value="created-recent">{{ t('Recently created (7 days)') }}</option>
+        <option value="bugs">{{ t('Bugs') }}</option>
+      </select>
+    </div>
+
+    <!-- SharePoint content type -->
+    <div v-if="isSharePointType && localWidget.connectionId" class="form-group">
+      <label for="feed-content-type-sp">{{ t('Content type') }}</label>
+      <select id="feed-content-type-sp" v-model="localWidget.contentType" @change="onSharePointContentTypeChange">
+        <option value="pages">{{ t('All pages') }}</option>
+        <option value="news">{{ t('News posts') }}</option>
+        <option value="documents">{{ t('Documents') }}</option>
+        <option value="list">{{ t('List items') }}</option>
+      </select>
+    </div>
+
+    <!-- SharePoint list/library selector -->
+    <div v-if="isSharePointType && localWidget.connectionId && (localWidget.contentType === 'documents' || localWidget.contentType === 'list')" class="form-group">
+      <label for="feed-sp-list">{{ localWidget.contentType === 'documents' ? t('Document library') : t('List') }}</label>
+      <div v-if="spListsLoading" class="field-hint">{{ t('Loading...') }}</div>
+      <template v-else>
+        <select id="feed-sp-list" v-model="localWidget.listId" @change="emitUpdate">
+          <option value="">{{ t('Select...') }}</option>
+          <option v-for="item in spListsForType" :key="item.id" :value="item.id">{{ item.name }}</option>
+        </select>
+        <span v-if="spListsError" class="field-hint" style="color: var(--color-error)">{{ spListsError }}</span>
+      </template>
     </div>
 
     <!-- Course selection (for LMS types) -->
@@ -94,7 +168,7 @@
       <label for="feed-course-id">{{ t('Course (optional)') }}</label>
       <div v-if="coursesLoading" class="field-hint">{{ t('Loading courses...') }}</div>
       <template v-else-if="courses.length > 0 && !manualCourseId">
-        <select id="feed-course-id" v-model="localWidget.courseId" @change="emitUpdate">
+        <select id="feed-course-id" v-model="localWidget.courseId" @change="onCourseChange">
           <option value="">{{ t('All courses') }}</option>
           <option v-for="course in courses" :key="course.id" :value="course.id">
             {{ course.name }}
@@ -112,17 +186,6 @@
         />
         <button v-if="courses.length > 0" class="link-button" @click="manualCourseId = false">{{ t('Select from list') }}</button>
       </template>
-    </div>
-
-    <!-- Preview -->
-    <div v-if="previewItems.length > 0" class="preview-section">
-      <h4>{{ t('Preview') }}</h4>
-      <div class="preview-items">
-        <div v-for="item in previewItems" :key="item.id" class="preview-item">
-          <strong>{{ item.title }}</strong>
-          <span v-if="item.date" class="preview-date">{{ formatDate(item.date) }}</span>
-        </div>
-      </div>
     </div>
 
     <hr class="editor-divider" />
@@ -154,10 +217,9 @@
           <option value="date">{{ t('Date') }}</option>
           <option value="title">{{ t('Title') }}</option>
         </select>
-        <select id="feed-sort-order" v-model="localWidget.sortOrder" @change="emitUpdate" :aria-label="t('Sort order')">
-          <option value="desc">{{ t('Newest first') }}</option>
-          <option value="asc">{{ t('Oldest first') }}</option>
-        </select>
+        <button type="button" class="sort-order-toggle" :title="sortOrderLabel" @click="toggleSortOrder">
+          {{ sortOrderLabel }}
+        </button>
       </div>
     </div>
 
@@ -169,7 +231,7 @@
         v-model="localWidget.filterKeyword"
         type="text"
         :placeholder="t('e.g. announcement, update')"
-        @input="emitUpdate"
+        @input="debouncedEmitUpdate"
       />
       <span class="field-hint">{{ t('Only show items containing this word in title, excerpt, or author.') }}</span>
     </div>
@@ -183,7 +245,7 @@
         type="range"
         min="1"
         max="20"
-        @input="emitUpdate"
+        @input="debouncedEmitUpdate"
       />
     </div>
 
@@ -213,15 +275,27 @@
         </label>
       </div>
     </div>
+
+    <!-- Live preview -->
+    <div v-if="hasValidSource" class="feed-preview-container">
+      <div class="feed-preview-header">{{ t('Preview') }}</div>
+      <div class="feed-preview-content">
+        <FeedWidget :widget="localWidget" :key="previewKey" />
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
 import axios from '@nextcloud/axios';
 import { generateUrl } from '@nextcloud/router';
+import FeedWidget from './FeedWidget.vue';
 
 export default {
   name: 'FeedWidgetEditor',
+  components: {
+    FeedWidget,
+  },
   props: {
     widget: {
       type: Object,
@@ -234,11 +308,15 @@ export default {
       localWidget: this.createDefaultWidget(),
       connections: [],
       userConnections: [],
-      previewItems: [],
-      previewLoading: false,
-      previewError: null,
       courses: [],
       coursesLoading: false,
+      spLists: { libraries: [], lists: [] },
+      spListsLoading: false,
+      spListsError: '',
+      jiraProjects: [],
+      jiraProjectsLoading: false,
+      moodleForums: [],
+      moodleForumsLoading: false,
       manualCourseId: false,
       oauthLoading: false,
       showManualToken: false,
@@ -248,10 +326,56 @@ export default {
     };
   },
   computed: {
+    hasValidSource() {
+      if (this.localWidget.sourceType === 'rss') {
+        return !!this.localWidget.feedUrl;
+      }
+      return !!this.localWidget.connectionId;
+    },
+    previewKey() {
+      return [
+        this.localWidget.sourceType,
+        this.localWidget.connectionId,
+        this.localWidget.feedUrl,
+        this.localWidget.contentType,
+        this.localWidget.courseId,
+        this.localWidget.jiraProject,
+        this.localWidget.listId,
+        this.localWidget.moodleForumId,
+      ].join('-');
+    },
+    sortOrderLabel() {
+      if (this.localWidget.sortBy === 'title') {
+        return this.localWidget.sortOrder === 'asc' ? 'A → Z' : 'Z → A';
+      }
+      return this.localWidget.sortOrder === 'desc' ? this.t('Newest first') : this.t('Oldest first');
+    },
     isLmsType() {
       if (!this.selectedConnection) return false;
       const connType = this.selectedConnection.type;
       return ['moodle', 'canvas', 'brightspace'].includes(connType);
+    },
+    isMoodleType() {
+      if (!this.selectedConnection) return false;
+      return this.selectedConnection.type === 'moodle';
+    },
+    isJiraType() {
+      if (!this.selectedConnection) return false;
+      return this.selectedConnection.type === 'jira';
+    },
+    isOpenProjectType() {
+      if (!this.selectedConnection) return false;
+      return this.selectedConnection.type === 'openproject';
+    },
+    isSharePointType() {
+      if (!this.selectedConnection) return false;
+      return this.selectedConnection.type === 'sharepoint';
+    },
+    spListsForType() {
+      if (this.localWidget.contentType === 'documents') {
+        return this.spLists.libraries || [];
+      }
+      return this.spLists.lists || [];
     },
     availableConnections() {
       return this.connections.filter(c => c.active);
@@ -260,7 +384,12 @@ export default {
       return this.availableConnections.filter(c => c.type === this.localWidget.sourceType);
     },
     selectedConnection() {
-      return this.availableConnections.find(c => c.id === this.localWidget.connectionId) || null;
+      return this.connections.find(c => c.id === this.localWidget.connectionId) || null;
+    },
+    inactiveSelectedConnection() {
+      const conn = this.selectedConnection;
+      if (!conn) return null;
+      return conn.active === false ? conn : null;
     },
     selectedConnectionAuthMode() {
       return this.selectedConnection?.authMode || 'token';
@@ -290,23 +419,45 @@ export default {
     widget: {
       handler(newWidget) {
         this.localWidget = { ...this.createDefaultWidget(), ...newWidget };
+        // Normalize legacy sourceType values — old widgets stored LMS type names instead of 'connection'
+        if (this.localWidget.sourceType && this.localWidget.sourceType !== 'rss' && this.localWidget.sourceType !== 'connection') {
+          this.localWidget.sourceType = 'connection';
+        }
+        // Reload type-specific data when widget changes (e.g. switching between widgets)
+        if (this.connections.length > 0) {
+          this.loadTypeSpecificData();
+        }
       },
       deep: true,
       immediate: true,
     },
   },
   mounted() {
-    this.loadConnections();
+    this.loadConnections().then(() => {
+      this.loadTypeSpecificData();
+    });
     this.loadUserConnections();
     this.loadCourses();
     window.addEventListener('message', this.handleOAuthMessage);
   },
   beforeUnmount() {
     window.removeEventListener('message', this.handleOAuthMessage);
+    clearTimeout(this._debounceTimer);
   },
   methods: {
     t(text) {
       return window.t ? window.t('intravox', text) : text;
+    },
+    loadTypeSpecificData() {
+      if (this.isSharePointType) {
+        this.loadSharePointLists();
+      }
+      if (this.isJiraType) {
+        this.loadJiraProjects();
+      }
+      if (this.isMoodleType) {
+        this.loadMoodleForums();
+      }
     },
     createDefaultWidget() {
       return {
@@ -317,6 +468,9 @@ export default {
         connectionId: '',
         courseId: '',
         contentType: '',
+        jiraProject: '',
+        moodleForumId: '',
+        listId: '',
         layout: 'list',
         columns: 3,
         limit: 5,
@@ -361,50 +515,6 @@ export default {
         this.connections = [];
       }
     },
-    async loadPreview() {
-      if (!this.localWidget.feedUrl && this.localWidget.sourceType === 'rss') return;
-
-      this.previewLoading = true;
-      this.previewError = null;
-
-      try {
-        const params = new URLSearchParams({
-          sourceType: this.localWidget.sourceType,
-        });
-
-        if (this.localWidget.sourceType === 'rss') {
-          params.append('url', this.localWidget.feedUrl);
-        } else {
-          params.append('connectionId', this.localWidget.connectionId);
-          if (this.localWidget.courseId) {
-            params.append('courseId', this.localWidget.courseId);
-          }
-          if (this.localWidget.contentType) {
-            params.append('contentType', this.localWidget.contentType);
-          }
-        }
-
-        const url = generateUrl(`/apps/intravox/api/feed/preview?${params}`);
-        const response = await axios.get(url);
-
-        if (response.data.error) {
-          this.previewError = response.data.error;
-          this.previewItems = [];
-        } else {
-          this.previewItems = response.data.items || [];
-          if (this.previewItems.length === 0) {
-            this.previewError = this.t('Feed returned no items');
-          }
-        }
-      } catch (err) {
-        this.previewError = err.response?.data?.error || this.t('Failed to load preview');
-        this.previewItems = [];
-      } finally {
-        this.previewLoading = false;
-      }
-
-      this.emitUpdate();
-    },
     formatDate(dateString) {
       try {
         return new Date(dateString).toLocaleDateString();
@@ -412,8 +522,83 @@ export default {
         return dateString;
       }
     },
+    onSharePointContentTypeChange() {
+      this.localWidget.listId = '';
+      this.emitUpdate();
+      if (this.localWidget.contentType === 'documents' || this.localWidget.contentType === 'list') {
+        this.loadSharePointLists();
+      }
+    },
+    onCourseChange() {
+      this.localWidget.moodleForumId = '';
+      this.moodleForums = [];
+      this.emitUpdate();
+      this.loadMoodleForums();
+    },
+    onLmsContentTypeChange() {
+      this.localWidget.moodleForumId = '';
+      this.moodleForums = [];
+      this.emitUpdate();
+    },
+    async loadMoodleForums() {
+      if (!this.localWidget.connectionId || !this.isMoodleType || !this.localWidget.courseId || this.localWidget.contentType !== 'news') return;
+      this.moodleForumsLoading = true;
+      try {
+        const url = generateUrl(`/apps/intravox/api/feed/moodle-forums/${this.localWidget.connectionId}?courseId=${this.localWidget.courseId}`);
+        const response = await axios.get(url);
+        this.moodleForums = response.data.forums || [];
+      } catch {
+        this.moodleForums = [];
+      } finally {
+        this.moodleForumsLoading = false;
+      }
+    },
+    async loadJiraProjects() {
+      if (!this.localWidget.connectionId || !this.isJiraType) return;
+      this.jiraProjectsLoading = true;
+      try {
+        const url = generateUrl(`/apps/intravox/api/feed/jira-projects/${this.localWidget.connectionId}`);
+        const response = await axios.get(url);
+        this.jiraProjects = response.data.projects || [];
+      } catch {
+        this.jiraProjects = [];
+      } finally {
+        this.jiraProjectsLoading = false;
+      }
+    },
+    async loadSharePointLists() {
+      if (!this.localWidget.connectionId || !this.isSharePointType) return;
+      this.spListsLoading = true;
+      this.spListsError = '';
+      try {
+        const url = generateUrl(`/apps/intravox/api/feed/sharepoint-lists/${this.localWidget.connectionId}`);
+        const response = await axios.get(url);
+        if (response.data.error) {
+          this.spListsError = response.data.error;
+          this.spLists = { libraries: [], lists: [] };
+        } else {
+          this.spLists = {
+            libraries: response.data.libraries || [],
+            lists: response.data.lists || [],
+          };
+        }
+      } catch {
+        this.spListsError = t('intravox', 'Failed to load SharePoint lists');
+        this.spLists = { libraries: [], lists: [] };
+      } finally {
+        this.spListsLoading = false;
+      }
+    },
     emitUpdate() {
       this.$emit('update', { ...this.localWidget });
+    },
+    toggleSortOrder() {
+      this.localWidget.sortOrder = this.localWidget.sortOrder === 'desc' ? 'asc' : 'desc';
+      this.emitUpdate();
+    },
+    debouncedEmitUpdate() {
+      clearTimeout(this._debounceTimer);
+      this._debounceTimer = setTimeout(() => this.emitUpdate(), 500);
     },
     onConnectionChange() {
       this.connectError = null;
@@ -421,9 +606,27 @@ export default {
       this.manualToken = '';
       this.courses = [];
       this.manualCourseId = false;
+      this.spLists = { libraries: [], lists: [] };
+      // Ensure sourceType is 'connection' when a connection is selected
+      if (this.localWidget.connectionId) {
+        this.localWidget.sourceType = 'connection';
+      }
+      // Reset content type and sub-selections when switching connections
+      this.localWidget.contentType = '';
+      this.localWidget.courseId = '';
+      this.localWidget.listId = '';
+      this.localWidget.jiraProject = '';
+      this.localWidget.moodleForumId = '';
       this.emitUpdate();
       this.loadUserConnections();
       this.loadCourses();
+      this.moodleForums = [];
+      if (this.isSharePointType) {
+        this.loadSharePointLists();
+      }
+      if (this.isJiraType) {
+        this.loadJiraProjects();
+      }
     },
     async loadUserConnections() {
       try {
@@ -483,11 +686,14 @@ export default {
         return;
       }
       if (event.data?.type === 'intravox-lms-connected') {
+        // Only handle messages for the connection this editor is managing
+        if (event.data.connectionId && event.data.connectionId !== this.localWidget.connectionId) {
+          return;
+        }
         this.loadUserConnections();
         this.connectError = null;
         if (event.data.success) {
           this.loadCourses();
-          this.loadPreview();
         } else if (event.data.error) {
           this.connectError = event.data.error;
         }
@@ -507,7 +713,6 @@ export default {
         this.showManualToken = false;
         await this.loadUserConnections();
         this.loadCourses();
-        this.loadPreview();
       } catch (err) {
         this.connectError = err.response?.data?.error || this.t('Failed to save token');
       } finally {
@@ -563,36 +768,29 @@ export default {
   box-sizing: border-box;
 }
 
-.url-input-group,
 .sort-row {
   display: flex;
   gap: 8px;
+  align-items: center;
 }
 
 .sort-row select {
   flex: 1;
 }
 
-.url-input-group input {
-  flex: 1;
-  min-width: 0;
-}
-
-.preview-button {
-  padding: 8px 16px;
+.sort-order-toggle {
+  padding: 6px 12px;
   border: 1px solid var(--color-border);
   border-radius: var(--border-radius);
-  background: var(--color-primary-element);
-  color: var(--color-primary-element-text);
+  background: var(--color-main-background);
   cursor: pointer;
-  font-size: 14px;
+  font-size: 13px;
   white-space: nowrap;
   flex-shrink: 0;
 }
 
-.preview-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+.sort-order-toggle:hover {
+  background: var(--color-background-hover);
 }
 
 .field-error {
@@ -608,47 +806,32 @@ export default {
   font-style: italic;
 }
 
-.preview-section {
-  border: 1px solid var(--color-border);
-  border-radius: var(--border-radius);
-  padding: 12px;
-  background: var(--color-background-hover);
+.field-hint--warning {
+  color: var(--color-warning-text, var(--color-warning));
+  font-style: normal;
 }
 
-.preview-section h4 {
-  margin: 0 0 8px;
+.feed-preview-container {
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  background: var(--color-background-hover);
+  margin-top: 8px;
+  overflow: hidden;
+}
+
+.feed-preview-header {
+  padding: 8px 12px;
   font-size: 13px;
+  font-weight: 600;
   color: var(--color-text-maxcontrast);
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--color-border);
 }
 
-.preview-items {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.preview-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-}
-
-.preview-item strong {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  flex: 1;
-  min-width: 0;
-}
-
-.preview-date {
-  color: var(--color-text-maxcontrast);
-  font-size: 12px;
-  white-space: nowrap;
+.feed-preview-content {
+  max-height: 400px;
+  overflow-y: auto;
 }
 
 .editor-divider {
@@ -708,13 +891,15 @@ export default {
 }
 
 .status-badge.connected {
-  background: var(--color-success);
-  color: var(--color-primary-element-text);
+  background: color-mix(in srgb, var(--color-success) 15%, transparent);
+  color: var(--color-success-text, var(--color-success));
+  border: 1px solid color-mix(in srgb, var(--color-success) 30%, transparent);
 }
 
 .status-badge.disconnected {
-  background: var(--color-warning);
-  color: var(--color-primary-element-text);
+  background: color-mix(in srgb, var(--color-warning) 15%, transparent);
+  color: var(--color-warning-text, var(--color-warning));
+  border: 1px solid color-mix(in srgb, var(--color-warning) 30%, transparent);
 }
 
 .status-badge.loading {

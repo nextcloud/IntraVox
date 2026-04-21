@@ -1,4 +1,5 @@
 <?php
+script('intravox', 'intravox-vendors');
 script('intravox', 'intravox-main');
 style('intravox', 'main');
 

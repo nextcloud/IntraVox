@@ -96,6 +96,9 @@ class AdminSettings implements IDelegatedSettings {
         Util::addTranslations(Application::APP_ID);
 
         // Load the admin settings JavaScript
+        // Webpack splits into: vendors (node_modules) → shared (code used by both main+admin) → admin
+        Util::addScript(Application::APP_ID, 'intravox-vendors');
+        Util::addScript(Application::APP_ID, 'intravox-shared');
         Util::addScript(Application::APP_ID, 'intravox-admin');
 
         return new TemplateResponse(Application::APP_ID, 'settings/admin', [], '');

@@ -34,7 +34,6 @@ class ImportController extends Controller {
      * Requires admin permissions on the IntraVox folder
      *
      * @NoAdminRequired
-     * @NoCSRFRequired
      * @return JSONResponse
      */
     public function importZip(string $type = 'file'): JSONResponse {
@@ -123,7 +122,6 @@ class ImportController extends Controller {
      * Requires admin permissions on the IntraVox folder
      *
      * @NoAdminRequired
-     * @NoCSRFRequired
      * @return JSONResponse
      */
     public function importFromConfluenceHtml(string $type = 'upload'): JSONResponse {

@@ -8,6 +8,9 @@ use OCA\IntraVox\Service\FeedReaderService;
 use OCA\IntraVox\Service\PublicShareService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\Attribute\AnonRateThrottle;
+use OCP\AppFramework\Http\Attribute\UserRateThrottle;
+use OCP\AppFramework\Http\DataDownloadResponse;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\IGroupManager;
 use OCP\IRequest;
@@ -34,6 +37,7 @@ class FeedReaderController extends Controller {
      *
      * @return DataResponse
      */
+    #[UserRateThrottle(limit: 30, period: 60)]
     public function getFeed(): DataResponse {
         if ($this->userId === null) {
             return new DataResponse(
@@ -70,6 +74,7 @@ class FeedReaderController extends Controller {
      *
      * @return DataResponse
      */
+    #[UserRateThrottle(limit: 30, period: 60)]
     public function getPreview(): DataResponse {
         if ($this->userId === null) {
             return new DataResponse(
@@ -102,6 +107,7 @@ class FeedReaderController extends Controller {
      * @param string $token Share token
      * @return DataResponse
      */
+    #[AnonRateThrottle(limit: 30, period: 60)]
     public function getFeedByShare(string $token): DataResponse {
         try {
             $share = $this->publicShareService->getShareByToken($token);
@@ -128,6 +134,83 @@ class FeedReaderController extends Controller {
             return new DataResponse(
                 ['error' => 'Failed to fetch feed', 'items' => []],
                 Http::STATUS_INTERNAL_SERVER_ERROR
+            );
+        }
+    }
+
+    /**
+     * Proxy an external image to bypass CSP restrictions.
+     * Only serves images whose URL was signed by the backend (HMAC).
+     *
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     *
+     * @return DataDownloadResponse|DataResponse
+     */
+    public function proxyImage(): DataDownloadResponse|DataResponse {
+        return $this->handleProxyImage();
+    }
+
+    /**
+     * Proxy an external image via public share link.
+     *
+     * @PublicPage
+     * @NoCSRFRequired
+     *
+     * @param string $token Share token
+     * @return DataDownloadResponse|DataResponse
+     */
+    public function proxyImageByShare(string $token): DataDownloadResponse|DataResponse {
+        $share = $this->publicShareService->getShareByToken($token);
+        if ($share === null) {
+            return new DataResponse(
+                ['error' => 'Invalid or expired share token'],
+                Http::STATUS_FORBIDDEN
+            );
+        }
+        return $this->handleProxyImage();
+    }
+
+    private function handleProxyImage(): DataDownloadResponse|DataResponse {
+        $url = $this->request->getParam('url', '');
+        $sig = $this->request->getParam('sig', '');
+
+        if (empty($url) || empty($sig)) {
+            return new DataResponse(
+                ['error' => 'Missing parameters'],
+                Http::STATUS_BAD_REQUEST
+            );
+        }
+
+        if (!$this->feedReaderService->verifyImageSignature($url, $sig)) {
+            return new DataResponse(
+                ['error' => 'Invalid signature'],
+                Http::STATUS_FORBIDDEN
+            );
+        }
+
+        try {
+            $result = $this->feedReaderService->proxyImage($url);
+
+            $response = new DataDownloadResponse(
+                $result['body'],
+                '', // no filename — inline display, not download
+                $result['contentType']
+            );
+            $response->addHeader('Cache-Control', 'public, max-age=86400, immutable');
+            $response->addHeader('X-Content-Type-Options', 'nosniff');
+            $response->addHeader('Referrer-Policy', 'no-referrer');
+            $response->addHeader('Content-Security-Policy', "default-src 'none'");
+            // Override Content-Disposition to inline (DataDownloadResponse sets attachment)
+            $response->addHeader('Content-Disposition', 'inline');
+            return $response;
+        } catch (\Exception $e) {
+            $this->logger->warning('IntraVox: Image proxy failed', [
+                'error' => $e->getMessage(),
+            ]);
+            return new DataResponse(
+                ['error' => 'Failed to fetch image'],
+                Http::STATUS_BAD_GATEWAY
             );
         }
     }
@@ -188,9 +271,100 @@ class FeedReaderController extends Controller {
     }
 
     /**
-     * Save LMS connections (admin only).
+     * Get available lists and document libraries for a SharePoint connection.
      *
+     * @NoAdminRequired
      * @NoCSRFRequired
+     *
+     * @param string $connectionId
+     * @return DataResponse
+     */
+    public function getSharePointLists(string $connectionId): DataResponse {
+        if ($this->userId === null) {
+            return new DataResponse(
+                ['error' => 'Authentication required'],
+                Http::STATUS_UNAUTHORIZED
+            );
+        }
+
+        try {
+            $result = $this->feedReaderService->getSharePointLists($connectionId);
+            return new DataResponse($result);
+        } catch (\Exception $e) {
+            $this->logger->error('IntraVox: SharePoint lists fetch failed', [
+                'connectionId' => $connectionId,
+                'error' => $e->getMessage(),
+            ]);
+            return new DataResponse(
+                ['libraries' => [], 'lists' => [], 'error' => $e->getMessage()],
+                Http::STATUS_OK
+            );
+        }
+    }
+
+    /**
+     * Get available Jira projects for a connection.
+     *
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     *
+     * @param string $connectionId
+     * @return DataResponse
+     */
+    public function getJiraProjects(string $connectionId): DataResponse {
+        if ($this->userId === null) {
+            return new DataResponse(
+                ['error' => 'Authentication required'],
+                Http::STATUS_UNAUTHORIZED
+            );
+        }
+
+        try {
+            $result = $this->feedReaderService->getJiraProjects($connectionId);
+            return new DataResponse($result);
+        } catch (\Exception $e) {
+            return new DataResponse(
+                ['projects' => []],
+                Http::STATUS_OK
+            );
+        }
+    }
+
+    /**
+     * Get available Moodle forums for a course in a connection.
+     *
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     *
+     * @param string $connectionId
+     * @return DataResponse
+     */
+    public function getMoodleForums(string $connectionId): DataResponse {
+        if ($this->userId === null) {
+            return new DataResponse(
+                ['error' => 'Authentication required'],
+                Http::STATUS_UNAUTHORIZED
+            );
+        }
+
+        $courseId = $this->request->getParam('courseId', '');
+        if (empty($courseId) || !preg_match('/^[a-zA-Z0-9_-]{1,64}$/', $courseId)) {
+            return new DataResponse(['forums' => []], Http::STATUS_OK);
+        }
+
+        try {
+            $result = $this->feedReaderService->getMoodleForums($connectionId, $courseId);
+            return new DataResponse($result);
+        } catch (\Exception $e) {
+            return new DataResponse(
+                ['forums' => []],
+                Http::STATUS_OK
+            );
+        }
+    }
+
+    /**
+     * Save LMS connections (admin only).
      *
      * @return DataResponse
      */
@@ -266,10 +440,29 @@ class FeedReaderController extends Controller {
 
             $contentType = $this->request->getParam('contentType', '');
             // Whitelist allowed content types to prevent injection
-            if (!in_array($contentType, ['', 'news', 'my-courses', 'deadlines'], true)) {
+            if (!in_array($contentType, ['', 'news', 'my-courses', 'courses', 'assignments', 'deadlines', 'pages', 'documents', 'list', 'open', 'overdue', 'milestones', 'recently-updated', 'bugs', 'recent', 'created-recent'], true)) {
                 $contentType = '';
             }
             $config['contentType'] = $contentType;
+
+            $jiraProject = $this->request->getParam('jiraProject', '');
+            if (!empty($jiraProject) && !preg_match('/^[A-Z][A-Z0-9_]{1,20}$/', $jiraProject)) {
+                $jiraProject = '';
+            }
+            $config['jiraProject'] = $jiraProject;
+
+            $moodleForumId = $this->request->getParam('moodleForumId', '');
+            if (!empty($moodleForumId) && !preg_match('/^[0-9]{1,10}$/', $moodleForumId)) {
+                $moodleForumId = '';
+            }
+            $config['moodleForumId'] = $moodleForumId;
+
+            $listId = $this->request->getParam('listId', '');
+            // Only allow GUID-format list IDs
+            if (!empty($listId) && !preg_match('/^[a-zA-Z0-9-]{1,64}$/', $listId)) {
+                $listId = '';
+            }
+            $config['listId'] = $listId;
         }
 
         return $config;

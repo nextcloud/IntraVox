@@ -11,6 +11,7 @@
       :excerpt-length="widget.excerptLength || 150"
       :open-in-new-tab="widget.openInNewTab !== false"
       :item-background="itemBackgroundMode"
+      :feed-image="feedImage"
       :compact="true"
     />
   </div>
@@ -34,6 +35,10 @@ export default {
       type: Object,
       required: true,
     },
+    feedImage: {
+      type: String,
+      default: null,
+    },
     rowBackgroundColor: {
       type: String,
       default: '',
@@ -41,7 +46,7 @@ export default {
   },
   computed: {
     gridStyle() {
-      const columns = this.widget.columns || 3;
+      const columns = Math.max(2, Math.min(Number(this.widget.columns) || 3, 4));
       return {
         gridTemplateColumns: `repeat(${columns}, 1fr)`,
       };
@@ -63,9 +68,22 @@ export default {
 <style scoped>
 .feed-layout-grid {
   display: grid;
-  gap: 8px;
+  gap: 16px;
   min-width: 0;
   overflow: hidden;
+  container-type: inline-size;
+}
+
+@container (max-width: 500px) {
+  .feed-layout-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@container (min-width: 501px) and (max-width: 800px) {
+  .feed-layout-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
 }
 
 @media (max-width: 600px) {

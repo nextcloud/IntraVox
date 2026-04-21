@@ -30,10 +30,10 @@
       </button>
     </div>
 
-    <!-- Children -->
+    <!-- Children (progressive rendering) -->
     <ul v-if="hasChildren && isExpanded" class="children-list">
       <PageTreeSelectItem
-        v-for="child in item.children"
+        v-for="child in visibleChildren"
         :key="child.uniqueId"
         :item="child"
         :expanded-nodes="expandedNodes"
@@ -44,6 +44,11 @@
         @select="(page) => $emit('select', page)"
         @focus="(id) => $emit('focus', id)"
       />
+      <li v-if="hasMoreChildren" class="tree-show-more">
+        <button class="show-more-button" @click="showMoreChildren">
+          Show {{ item.children.length - visibleChildCount }} more...
+        </button>
+      </li>
     </ul>
   </li>
 </template>
@@ -87,6 +92,11 @@ export default {
     }
   },
   emits: ['toggle', 'select', 'focus'],
+  data() {
+    return {
+      visibleChildCount: 50,
+    };
+  },
   computed: {
     hasChildren() {
       return this.item.children && this.item.children.length > 0;
@@ -99,8 +109,20 @@ export default {
     },
     isFocused() {
       return this.item.uniqueId === this.focusedId;
-    }
-  }
+    },
+    visibleChildren() {
+      if (!this.hasChildren) return [];
+      return this.item.children.slice(0, this.visibleChildCount);
+    },
+    hasMoreChildren() {
+      return this.hasChildren && this.item.children.length > this.visibleChildCount;
+    },
+  },
+  methods: {
+    showMoreChildren() {
+      this.visibleChildCount += 50;
+    },
+  },
 };
 </script>
 
@@ -200,5 +222,26 @@ export default {
   list-style: none;
   margin: 0;
   padding: 0 0 0 22px;
+}
+
+.tree-show-more {
+  list-style: none;
+}
+
+.show-more-button {
+  display: block;
+  width: 100%;
+  padding: 5px 8px 5px 28px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  color: var(--color-primary-element);
+  font-size: 12px;
+  border-radius: 4px;
+}
+
+.show-more-button:hover {
+  background: var(--color-background-hover);
 }
 </style>

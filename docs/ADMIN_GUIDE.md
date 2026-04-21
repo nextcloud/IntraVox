@@ -6,6 +6,7 @@ This guide covers installation, configuration, and maintenance of IntraVox for N
 - [Admin Settings Guide](ADMIN_SETTINGS.md) - Demo data and video services configuration
 - [Engagement Admin Guide](ENGAGEMENT_ADMIN.md) - Reactions and comments configuration
 - [Authorization Guide](AUTHORIZATION.md) - Permissions and access control
+- [Scalability & Enterprise Readiness](SCALABILITY.md) - Performance, caching, rate limiting, GDPR
 - [Scenarios](SCENARIOS.md) - Practical recipes (approval workflows, department intranets)
 - [Architecture](ARCHITECTURE.md) - Technical architecture
 - [Engagement Architecture](ENGAGEMENT_ARCHITECTURE.md) - Engagement system technical details
@@ -199,6 +200,25 @@ The IntraVox GroupFolder contains all content. Backup strategies:
 1. **File backup**: Include the GroupFolder in your file backups
 2. **Nextcloud backup**: Standard Nextcloud backup includes GroupFolders
 3. **Export**: Copy the IntraVox folder structure for migration
+
+### Health Check
+
+A public endpoint is available for monitoring and orchestration (e.g., Kubernetes liveness probes, uptime monitoring):
+
+```
+GET /apps/intravox/api/health
+→ {"status": "ok", "app": "intravox", "version": "1.3.0"}
+```
+
+### Audit Logs
+
+Administrative operations are logged with the `IntraVox Audit:` prefix. Filter for these in your SIEM or log aggregator:
+
+```bash
+grep "IntraVox Audit" /var/www/nextcloud/data/nextcloud.log
+```
+
+Logged operations: bulk delete/move/update (with page IDs and acting user), license key changes, organization settings, engagement settings.
 
 ### Log Files
 

@@ -157,12 +157,21 @@ export default {
     widget: {
       deep: true,
       handler() {
-        this.fetchNews();
+        clearTimeout(this._debounceTimer);
+        this._debounceTimer = setTimeout(() => this.fetchNews(), 300);
       },
     },
   },
   mounted() {
-    this.fetchNews();
+    // Defer initial fetch to avoid blocking main thread during page render
+    if (typeof requestIdleCallback === 'function') {
+      requestIdleCallback(() => this.fetchNews());
+    } else {
+      this.fetchNews();
+    }
+  },
+  beforeUnmount() {
+    clearTimeout(this._debounceTimer);
   },
   methods: {
     t(key, vars = {}) {

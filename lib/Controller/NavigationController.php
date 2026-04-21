@@ -82,12 +82,19 @@ class NavigationController extends Controller {
                 );
             }
 
-            return new JSONResponse([
+            $responseData = [
                 'navigation' => $navigation,
                 'canEdit' => $canEdit,
                 'language' => $currentLang,
                 'permissions' => $permissions
-            ]);
+            ];
+
+            $response = new JSONResponse($responseData);
+            $etag = '"' . md5(json_encode($responseData)) . '"';
+            $response->addHeader('Cache-Control', 'private, max-age=300, must-revalidate');
+            $response->addHeader('ETag', $etag);
+
+            return $response;
         } catch (\Exception $e) {
             $this->logger->error('IntraVox: Error loading navigation: ' . $e->getMessage());
             return new JSONResponse([
@@ -98,7 +105,6 @@ class NavigationController extends Controller {
 
     /**
      * @NoAdminRequired
-     * @NoCSRFRequired
      */
     public function save(): JSONResponse {
         try {

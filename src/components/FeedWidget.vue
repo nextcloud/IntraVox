@@ -1,6 +1,6 @@
 <template>
-  <div class="feed-widget">
-    <div v-if="loading" class="feed-widget-loading">
+  <div class="feed-widget" aria-live="polite">
+    <div v-if="loading" class="feed-widget-loading" role="status">
       <NcLoadingIcon :size="32" />
       <p>{{ t('Loading feed...') }}</p>
     </div>
@@ -12,7 +12,8 @@
 
     <div v-else-if="items.length === 0" class="feed-widget-empty">
       <RssBox :size="32" />
-      <p>{{ t('No items found') }}</p>
+      <p v-if="widget.filterKeyword">{{ t('No items match your filter.') }}</p>
+      <p v-else>{{ t('No items found') }}</p>
     </div>
 
     <component
@@ -20,6 +21,7 @@
       :is="layoutComponent"
       :items="items"
       :widget="widget"
+      :feed-image="feedImage"
       :row-background-color="rowBackgroundColor"
     />
   </div>
@@ -64,6 +66,7 @@ export default {
   data() {
     return {
       items: [],
+      feedImage: null,
       loading: true,
       error: null,
     };
@@ -78,36 +81,26 @@ export default {
     },
   },
   watch: {
-    'widget.sourceType'() {
-      this.fetchFeed();
-    },
-    'widget.feedUrl'() {
-      this.fetchFeed();
-    },
-    'widget.connectionId'() {
-      this.fetchFeed();
-    },
-    'widget.courseId'() {
-      this.fetchFeed();
-    },
-    'widget.contentType'() {
-      this.fetchFeed();
-    },
-    'widget.limit'() {
-      this.fetchFeed();
-    },
-    'widget.sortBy'() {
-      this.fetchFeed();
-    },
-    'widget.sortOrder'() {
-      this.fetchFeed();
-    },
-    'widget.filterKeyword'() {
-      this.fetchFeed();
+    widget: {
+      handler() {
+        clearTimeout(this._debounceTimer);
+        this._debounceTimer = setTimeout(() => this.fetchFeed(), 300);
+      },
+      deep: true,
     },
   },
   mounted() {
-    this.fetchFeed();
+    if (typeof requestIdleCallback === 'function') {
+      requestIdleCallback(() => this.fetchFeed());
+    } else {
+      this.fetchFeed();
+    }
+    // Auto-refresh every 15 minutes (matches backend cache TTL)
+    this._refreshInterval = setInterval(() => this.fetchFeed(), 15 * 60 * 1000);
+  },
+  beforeUnmount() {
+    clearTimeout(this._debounceTimer);
+    clearInterval(this._refreshInterval);
   },
   methods: {
     t(text) {
@@ -118,7 +111,11 @@ export default {
       this.error = null;
 
       try {
-        const sourceType = this.widget.sourceType || 'rss';
+        let sourceType = this.widget.sourceType || 'rss';
+        // Auto-detect: if a connectionId is set but sourceType is 'rss', treat as connection
+        if (sourceType === 'rss' && this.widget.connectionId) {
+          sourceType = 'connection';
+        }
         const params = new URLSearchParams({
           sourceType,
           limit: String(this.widget.limit || 5),
@@ -144,6 +141,15 @@ export default {
           if (this.widget.contentType) {
             params.append('contentType', this.widget.contentType);
           }
+          if (this.widget.jiraProject) {
+            params.append('jiraProject', this.widget.jiraProject);
+          }
+          if (this.widget.moodleForumId) {
+            params.append('moodleForumId', this.widget.moodleForumId);
+          }
+          if (this.widget.listId) {
+            params.append('listId', this.widget.listId);
+          }
         }
 
         // Sort and filter
@@ -164,15 +170,30 @@ export default {
         const response = await axios.get(url);
 
         if (response.data.error) {
-          this.error = response.data.error;
+          const err = response.data.error;
+          if (err.includes('inactive') || err.includes('disabled')) {
+            this.error = this.t('This connection is currently disabled by an administrator.');
+          } else if (err.includes('not found') || err.includes('404')) {
+            this.error = this.t('Connection no longer exists. Please reconfigure this widget.');
+          } else if (err.includes('token') || err.includes('401') || err.includes('Authentication')) {
+            this.error = this.t('Authentication required. Please connect your account.');
+          } else if (err.includes('403') || err.includes('Access denied')) {
+            this.error = this.t('Access denied. Check the connection permissions.');
+          } else if (err.includes('429') || err.includes('Rate limited')) {
+            this.error = this.t('Too many requests. Please try again later.');
+          } else {
+            this.error = this.t('Could not load feed. Check the connection settings.');
+          }
           this.items = [];
+          this.feedImage = null;
         } else {
           this.items = response.data.items || [];
+          this.feedImage = response.data.feedImage || null;
         }
       } catch (err) {
-        console.error('[FeedWidget] Failed to fetch feed:', err);
-        this.error = this.t('Failed to load feed');
+        this.error = this.t('Could not load feed. The external system may be unavailable.');
         this.items = [];
+        this.feedImage = null;
       } finally {
         this.loading = false;
       }
@@ -202,6 +223,18 @@ export default {
 }
 
 .feed-widget-error {
-  color: var(--color-error);
+  color: var(--color-main-text);
+  background: var(--color-error);
+  background: color-mix(in srgb, var(--color-error) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-error) 30%, transparent);
+  border-radius: var(--border-radius-large);
+  padding: 20px 24px;
+  margin: 8px;
+}
+
+.feed-widget-error p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-main-text);
 }
 </style>

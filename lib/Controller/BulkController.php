@@ -6,6 +6,7 @@ namespace OCA\IntraVox\Controller;
 use OCA\IntraVox\Service\BulkOperationService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\Attribute\UserRateThrottle;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\IGroupManager;
 use OCP\IRequest;
@@ -61,8 +62,6 @@ class BulkController extends Controller {
      * Returns which pages can be operated on and which will fail.
      * Admin only.
      *
-     * @NoCSRFRequired
-     *
      * @param array $pageIds Array of page unique IDs
      * @param string $operation Operation type: 'delete', 'move', 'update'
      * @return DataResponse
@@ -108,8 +107,6 @@ class BulkController extends Controller {
      * Bulk delete pages
      * Admin only.
      *
-     * @NoCSRFRequired
-     *
      * Request body:
      * {
      *   "pageIds": ["page-xxx", "page-yyy"],
@@ -119,6 +116,7 @@ class BulkController extends Controller {
      *
      * @return DataResponse
      */
+    #[UserRateThrottle(limit: 5, period: 60)]
     public function deletePages(): DataResponse {
         if (!$this->isAdmin()) {
             return $this->forbiddenResponse('Admin access required for bulk operations');
@@ -140,7 +138,9 @@ class BulkController extends Controller {
 
             $result = $this->bulkService->bulkDelete($pageIds, $deleteChildren);
 
-            $this->logger->info('IntraVox Bulk: Delete operation completed', [
+            $user = $this->userSession->getUser();
+            $this->logger->info('IntraVox Audit: Bulk delete by ' . ($user ? $user->getUID() : 'unknown'), [
+                'pageIds' => $pageIds,
                 'total' => $result->successCount + $result->failCount,
                 'deleted' => $result->successCount,
                 'failed' => $result->failCount
@@ -166,8 +166,6 @@ class BulkController extends Controller {
      * Bulk move pages to a new parent
      * Admin only.
      *
-     * @NoCSRFRequired
-     *
      * Request body:
      * {
      *   "pageIds": ["page-xxx", "page-yyy"],
@@ -177,6 +175,7 @@ class BulkController extends Controller {
      *
      * @return DataResponse
      */
+    #[UserRateThrottle(limit: 5, period: 60)]
     public function movePages(): DataResponse {
         if (!$this->isAdmin()) {
             return $this->forbiddenResponse('Admin access required for bulk operations');
@@ -202,7 +201,10 @@ class BulkController extends Controller {
 
             $result = $this->bulkService->bulkMove($pageIds, $targetParentId);
 
-            $this->logger->info('IntraVox Bulk: Move operation completed', [
+            $user = $this->userSession->getUser();
+            $this->logger->info('IntraVox Audit: Bulk move by ' . ($user ? $user->getUID() : 'unknown'), [
+                'pageIds' => $pageIds,
+                'targetParentId' => $targetParentId,
                 'total' => $result->successCount + $result->failCount,
                 'moved' => $result->successCount,
                 'failed' => $result->failCount,
@@ -228,8 +230,6 @@ class BulkController extends Controller {
     /**
      * Bulk update page properties
      * Admin only.
-     *
-     * @NoCSRFRequired
      *
      * Request body:
      * {
@@ -267,7 +267,9 @@ class BulkController extends Controller {
 
             $result = $this->bulkService->bulkUpdate($pageIds, $updates);
 
-            $this->logger->info('IntraVox Bulk: Update operation completed', [
+            $user = $this->userSession->getUser();
+            $this->logger->info('IntraVox Audit: Bulk update by ' . ($user ? $user->getUID() : 'unknown'), [
+                'pageIds' => $pageIds,
                 'total' => $result->successCount + $result->failCount,
                 'updated' => $result->successCount,
                 'failed' => $result->failCount,

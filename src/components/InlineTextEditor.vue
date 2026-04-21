@@ -306,7 +306,7 @@
     </div>
 
     <!-- Editor Content -->
-    <editor-content :editor="editor" class="editor-content" />
+    <component :is="editorContentComponent" v-if="editorContentComponent && editor" :editor="editor" class="editor-content" />
 
     <!-- Link Modal -->
     <NcModal v-if="showLinkModal" @close="closeLinkModal" :name="t('Insert link')" size="normal">
@@ -351,18 +351,40 @@
 
 <script>
 import { translate as t } from '@nextcloud/l10n';
-import { Editor, EditorContent } from '@tiptap/vue-3';
-import StarterKit from '@tiptap/starter-kit';
-import Underline from '@tiptap/extension-underline';
-import Link from '@tiptap/extension-link';
-import Placeholder from '@tiptap/extension-placeholder';
-import { Table } from '@tiptap/extension-table';
-import { TableRow } from '@tiptap/extension-table-row';
-import { TableHeader } from '@tiptap/extension-table-header';
-import { TableCell } from '@tiptap/extension-table-cell';
 import { NcModal, NcButton } from '@nextcloud/vue';
 import { markdownToHtml, htmlToMarkdown, cleanMarkdown } from '../utils/markdownSerializer.js';
-import { DummyTextExtension } from '../utils/dummyTextGenerator.js';
+
+// TipTap and extensions are loaded lazily on first editor mount to reduce initial bundle size (~500KB)
+let _tiptapModules = null;
+async function loadTipTap() {
+    if (_tiptapModules) return _tiptapModules;
+    const [vue3, starterKit, underline, link, placeholder, table, tableRow, tableHeader, tableCell, dummyText] = await Promise.all([
+        import('@tiptap/vue-3'),
+        import('@tiptap/starter-kit'),
+        import('@tiptap/extension-underline'),
+        import('@tiptap/extension-link'),
+        import('@tiptap/extension-placeholder'),
+        import('@tiptap/extension-table'),
+        import('@tiptap/extension-table-row'),
+        import('@tiptap/extension-table-header'),
+        import('@tiptap/extension-table-cell'),
+        import('../utils/dummyTextGenerator.js'),
+    ]);
+    _tiptapModules = {
+        Editor: vue3.Editor,
+        EditorContent: vue3.EditorContent,
+        StarterKit: starterKit.default,
+        Underline: underline.default,
+        Link: link.default,
+        Placeholder: placeholder.default,
+        Table: table.Table,
+        TableRow: tableRow.TableRow,
+        TableHeader: tableHeader.TableHeader,
+        TableCell: tableCell.TableCell,
+        DummyTextExtension: dummyText.DummyTextExtension,
+    };
+    return _tiptapModules;
+}
 
 // Material Design Icons
 import FormatBold from 'vue-material-design-icons/FormatBold.vue';
@@ -386,7 +408,6 @@ import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue';
 export default {
   name: 'InlineTextEditor',
   components: {
-    EditorContent,
     NcModal,
     NcButton,
     FormatBold,
@@ -429,6 +450,7 @@ export default {
   data() {
     return {
       editor: null,
+      editorContentComponent: null,
       isFocused: false,
       showToolbar: true,
       showLinkModal: false,
@@ -439,40 +461,44 @@ export default {
       showMoreMenu: false
     };
   },
-  mounted() {
+  async mounted() {
+    // Lazy-load TipTap (~500KB) only when editor is actually mounted
+    const modules = await loadTipTap();
+    this.editorContentComponent = modules.EditorContent;
+
     // Convert Markdown to HTML for TipTap editor
     const htmlContent = markdownToHtml(this.modelValue);
 
-    this.editor = new Editor({
+    this.editor = new modules.Editor({
       content: htmlContent,
       editable: this.editable,
       extensions: [
-        StarterKit.configure({
+        modules.StarterKit.configure({
           // Disable built-in extensions we configure separately
           link: false,
           underline: false,
         }),
-        Underline,
-        Link.configure({
+        modules.Underline,
+        modules.Link.configure({
           openOnClick: false,
           HTMLAttributes: {
             target: '_blank',
             rel: 'noopener noreferrer'
           }
         }),
-        Placeholder.configure({
+        modules.Placeholder.configure({
           placeholder: this.placeholder || this.t('Enter text...')
         }),
-        Table.configure({
+        modules.Table.configure({
           resizable: true,
           handleWidth: 4,
           cellMinWidth: 50,
           lastColumnResizable: true
         }),
-        TableRow,
-        TableHeader,
-        TableCell,
-        DummyTextExtension,
+        modules.TableRow,
+        modules.TableHeader,
+        modules.TableCell,
+        modules.DummyTextExtension,
       ],
       onUpdate: () => {
         // Convert HTML back to Markdown for storage

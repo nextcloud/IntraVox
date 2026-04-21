@@ -167,12 +167,13 @@ class ConfluenceImporter extends AbstractImporter {
             '</div>';
 
         // Use loadXML instead of loadHTML for proper namespace support
-        $loaded = @$dom->loadXML($wrappedXml);
+        // LIBXML_NONET prevents external entity resolution (XXE protection)
+        $loaded = @$dom->loadXML($wrappedXml, LIBXML_NONET);
 
         if (!$loaded) {
             // Fallback to HTML parser if XML parsing fails
             $this->logger->debug('XML parsing failed, falling back to HTML parser');
-            $dom->loadHTML($wrappedXml, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+            $dom->loadHTML($wrappedXml, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD | LIBXML_NONET);
         }
 
         libxml_clear_errors();

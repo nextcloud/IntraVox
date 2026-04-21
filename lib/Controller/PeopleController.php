@@ -76,7 +76,6 @@ class PeopleController extends Controller {
      * Get user profiles by IDs
      *
      * @NoAdminRequired
-     * @NoCSRFRequired
      *
      * @param array $userIds Array of user IDs
      * @return DataResponse

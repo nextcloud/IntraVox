@@ -7,6 +7,7 @@ use OCA\IntraVox\Service\CommentService;
 use OCA\IntraVox\Service\PageService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\Attribute\UserRateThrottle;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\IGroupManager;
 use OCP\IRequest;
@@ -104,8 +105,8 @@ class CommentController extends Controller {
      * Create a new comment
      *
      * @NoAdminRequired
-     * @NoCSRFRequired
      */
+    #[UserRateThrottle(limit: 20, period: 60)]
     public function createComment(string $pageId, string $message, ?string $parentId = null): DataResponse {
         try {
             if (!$this->checkPageAccess($pageId)) {
@@ -141,7 +142,6 @@ class CommentController extends Controller {
      * Update an existing comment
      *
      * @NoAdminRequired
-     * @NoCSRFRequired
      */
     public function updateComment(string $commentId, string $message): DataResponse {
         try {
@@ -186,7 +186,6 @@ class CommentController extends Controller {
      * Delete a comment
      *
      * @NoAdminRequired
-     * @NoCSRFRequired
      */
     public function deleteComment(string $commentId): DataResponse {
         try {
@@ -256,8 +255,8 @@ class CommentController extends Controller {
      * Add a reaction to a page
      *
      * @NoAdminRequired
-     * @NoCSRFRequired
      */
+    #[UserRateThrottle(limit: 30, period: 60)]
     public function addPageReaction(string $pageId, string $emoji): DataResponse {
         try {
             if (!$this->checkPageAccess($pageId)) {
@@ -287,7 +286,6 @@ class CommentController extends Controller {
      * Remove a reaction from a page
      *
      * @NoAdminRequired
-     * @NoCSRFRequired
      */
     public function removePageReaction(string $pageId, string $emoji): DataResponse {
         try {
@@ -351,8 +349,8 @@ class CommentController extends Controller {
      * Add a reaction to a comment
      *
      * @NoAdminRequired
-     * @NoCSRFRequired
      */
+    #[UserRateThrottle(limit: 30, period: 60)]
     public function addCommentReaction(string $commentId, string $emoji): DataResponse {
         try {
             // Security: verify user has access to the page this comment belongs to
@@ -383,7 +381,6 @@ class CommentController extends Controller {
      * Remove a reaction from a comment
      *
      * @NoAdminRequired
-     * @NoCSRFRequired
      */
     public function removeCommentReaction(string $commentId, string $emoji): DataResponse {
         try {

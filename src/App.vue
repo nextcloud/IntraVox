@@ -579,9 +579,12 @@ export default {
           return;
         }
 
-        // No cache - show loading and wait for response
+        // No cache - fetch page and lock status in parallel
         this.loading = true;
-        const response = await axios.get(generateUrl(`/apps/intravox/api/pages/${pageId}`));
+        const [response] = await Promise.all([
+          axios.get(generateUrl(`/apps/intravox/api/pages/${pageId}`)),
+          this.checkPageLock(pageId),
+        ]);
         this.currentPage = response.data;
 
         // Breadcrumb is now included in page response
@@ -606,9 +609,6 @@ export default {
 
         // Update page title and meta tags for better link previews
         this.updatePageMetadata();
-
-        // Check if this page is locked by another user
-        this.checkPageLock(pageId);
       } catch (err) {
         console.error('IntraVox: Error selecting page:', err);
         showError(this.t('Could not load page: {error}', { error: err.message }));
@@ -1209,6 +1209,10 @@ export default {
         // Re-fetch the page to get the fully restored content
         await this.selectPage(currentPageId, false);
 
+        // Ensure version preview is cleared - prevents race condition
+        // where sidebar's version-selected event could re-set versionPage
+        this.clearVersionPreview();
+
         // Open sidebar with Versions tab
         this.sidebarInitialTab = 'versions-tab';
         this.showDetailsSidebar = true;
@@ -1296,8 +1300,14 @@ export default {
     },
     async loadEngagementSettings() {
       try {
+        const cached = CacheService.get('engagement-settings');
+        if (cached) {
+          this.globalEngagementSettings = cached;
+          return;
+        }
         const response = await axios.get(generateUrl('/apps/intravox/api/settings/engagement'));
         this.globalEngagementSettings = response.data;
+        CacheService.set('engagement-settings', response.data);
       } catch (err) {
         // Silent fail - use defaults
       }

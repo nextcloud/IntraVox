@@ -474,7 +474,7 @@ export default {
   gap: 12px;
   width: 100%;
   box-sizing: border-box;
-  align-items: start; /* Align columns to top */
+  align-items: start;
 }
 
 .page-column {
@@ -482,6 +482,9 @@ export default {
   box-sizing: border-box;
   min-width: 0;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 /* Reactions & Comments Section */
@@ -550,7 +553,7 @@ export default {
 
   .page-grid {
     gap: 12px;
-    grid-template-columns: 1fr !important; /* Single column on mobile */
+    grid-template-columns: 1fr !important;
     width: 100%;
     max-width: 100%;
   }

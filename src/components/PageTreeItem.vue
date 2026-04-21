@@ -21,16 +21,21 @@
       </button>
     </div>
 
-    <!-- Children -->
+    <!-- Children (progressive rendering: show up to visibleChildCount, expand on demand) -->
     <ul v-if="hasChildren && isExpanded" class="tree-children">
       <PageTreeItem
-        v-for="child in item.children"
+        v-for="child in visibleChildren"
         :key="child.uniqueId"
         :item="child"
         :expanded-nodes="expandedNodes"
         @toggle="(id) => $emit('toggle', id)"
         @navigate="(id) => $emit('navigate', id)"
       />
+      <li v-if="hasMoreChildren" class="tree-show-more">
+        <button class="show-more-button" @click="showMoreChildren">
+          {{ t('Show {count} more...', { count: item.children.length - visibleChildCount }) }}
+        </button>
+      </li>
     </ul>
   </li>
 </template>
@@ -59,18 +64,33 @@ export default {
     }
   },
   emits: ['toggle', 'navigate'],
+  data() {
+    return {
+      visibleChildCount: 50,
+    };
+  },
   computed: {
     hasChildren() {
       return this.item.children && this.item.children.length > 0;
     },
     isExpanded() {
       return this.expandedNodes.has(this.item.uniqueId);
-    }
+    },
+    visibleChildren() {
+      if (!this.hasChildren) return [];
+      return this.item.children.slice(0, this.visibleChildCount);
+    },
+    hasMoreChildren() {
+      return this.hasChildren && this.item.children.length > this.visibleChildCount;
+    },
   },
   methods: {
     t(key, vars = {}) {
       return translate('intravox', key, vars);
-    }
+    },
+    showMoreChildren() {
+      this.visibleChildCount += 50;
+    },
   }
 };
 </script>
@@ -166,5 +186,26 @@ export default {
   list-style: none;
   margin: 0;
   padding: 0 0 0 24px;
+}
+
+.tree-show-more {
+  list-style: none;
+}
+
+.show-more-button {
+  display: block;
+  width: 100%;
+  padding: 6px 8px 6px 32px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  color: var(--color-primary-element);
+  font-size: 13px;
+  border-radius: 4px;
+}
+
+.show-more-button:hover {
+  background: var(--color-background-hover);
 }
 </style>

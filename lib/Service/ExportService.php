@@ -351,19 +351,116 @@ class ExportService {
         // 1. Create temporary directory
         $tempDir = $this->tempManager->getTemporaryFolder();
 
-        // 2. Get export data
-        $exportData = $this->exportLanguage($language, $includeComments);
+        // 2. Stream export.json to disk incrementally to reduce peak memory usage.
+        //    Instead of building the entire export array in memory, we write the
+        //    header, then each page individually, then close the JSON structure.
+        $jsonPath = $tempDir . '/export.json';
+        $fh = fopen($jsonPath, 'w');
+        if ($fh === false) {
+            throw new \Exception('Failed to create export.json');
+        }
 
-        // 3. Write export.json
-        file_put_contents(
-            $tempDir . '/export.json',
-            json_encode($exportData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
-        );
+        $jsonFlags = JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES;
 
-        // 4. Copy media files
+        try {
+        // Write header fields
+        $header = [
+            'exportVersion' => '1.3',
+            'schemaVersion' => '1.3',
+            'exportDate' => (new \DateTime())->format('c'),
+            'language' => $language,
+            'exportedBy' => 'IntraVox/' . $this->getAppVersion(),
+            'requiresMinVersion' => '0.8.11',
+            'navigation' => $this->navigationService->getNavigation($language),
+            'footer' => $this->footerService->getFooter($language),
+        ];
+
+        // Add MetaVox field definitions if available
+        if ($this->isMetaVoxAvailable()) {
+            $header['metavox'] = [
+                'version' => $this->metaVoxVersion,
+                'fieldDefinitions' => $this->getMetaVoxFieldDefinitions()
+            ];
+        }
+
+        // Write opening JSON (everything except "pages")
+        $headerJson = json_encode($header, $jsonFlags);
+        // Remove closing "}" and append "pages" array start
+        $headerJson = rtrim($headerJson, "\n}");
+        fwrite($fh, $headerJson . ",\n  \"pages\": [\n");
+
+        // Get pages and stream them one by one
+        $pages = $this->getPagesFromLanguageFolder($language);
+
+        if ($this->isMetaVoxAvailable()) {
+            try {
+                $groupfolderId = $this->setupService->getGroupFolderId();
+                $pages = $this->attachMetadataToPages($pages, $groupfolderId);
+            } catch (\Exception $e) {
+                $this->logger->error('Failed to attach metadata to pages: ' . $e->getMessage());
+            }
+        }
+
+        $first = true;
+        $pageCount = 0;
+        foreach ($pages as $page) {
+            $uniqueId = $page['uniqueId'] ?? '';
+            if (empty($uniqueId)) {
+                continue;
+            }
+
+            $exportPath = $page['_exportPath'] ?? null;
+            $metadata = $page['metadata'] ?? null;
+
+            $pageContent = $page;
+            unset($pageContent['_fileId'], $pageContent['_folderFileId'], $pageContent['_exportPath'], $pageContent['metadata']);
+
+            $data = [
+                'uniqueId' => $uniqueId,
+                'title' => $page['title'] ?? '',
+                'content' => $pageContent,
+                '_exportPath' => $exportPath,
+            ];
+
+            if (!empty($metadata)) {
+                $data['metadata'] = $metadata;
+            }
+
+            if ($includeComments) {
+                $data['comments'] = $this->exportComments($uniqueId);
+                $data['pageReactions'] = $this->exportPageReactions($uniqueId);
+            }
+
+            // Write page JSON, preceded by comma if not first
+            if (!$first) {
+                fwrite($fh, ",\n");
+            }
+            fwrite($fh, '    ' . json_encode($data, $jsonFlags));
+            $first = false;
+            $pageCount++;
+
+            // Allow PHP to free memory for processed page
+            unset($data, $pageContent, $metadata);
+        }
+
+        // Close JSON structure
+        fwrite($fh, "\n  ]\n}");
+
+        // Free pages array before creating ZIP
+        unset($pages);
+
+        } finally {
+            if (is_resource($fh)) {
+                fclose($fh);
+            }
+        }
+
+        $this->logger->info('Streamed export.json with ' . $pageCount . ' pages');
+
+        // 3. Copy media files
         $this->copyMediaFiles($language, $tempDir);
 
-        // 5. Create ZIP
+        // 4. Create ZIP
         $zipPath = $tempDir . '/export.zip';
         $this->createZip($tempDir, $zipPath);
 

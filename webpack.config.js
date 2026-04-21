@@ -36,7 +36,22 @@ module.exports = {
         clean: true
     },
     optimization: {
-        splitChunks: false
+        splitChunks: {
+            chunks: 'all',
+            cacheGroups: {
+                vendors: {
+                    test: /[\\/]node_modules[\\/]/,
+                    name: 'vendors',
+                    priority: -10,
+                },
+                shared: {
+                    name: 'shared',
+                    minChunks: 2,
+                    priority: -20,
+                    reuseExistingChunk: true,
+                },
+            },
+        },
     },
     module: {
         rules: [

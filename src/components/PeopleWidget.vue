@@ -169,16 +169,22 @@ export default {
     widget: {
       deep: true,
       handler() {
-        // Reset pagination when widget config changes
-        this.users = [];
-        this.total = 0;
-        this.hasMore = false;
-        this.fetchPeople();
+        clearTimeout(this._debounceTimer);
+        this._debounceTimer = setTimeout(() => {
+          // Reset pagination when widget config changes
+          this.users = [];
+          this.total = 0;
+          this.hasMore = false;
+          this.fetchPeople();
+        }, 300);
       },
     },
   },
   mounted() {
     this.fetchPeople();
+  },
+  beforeUnmount() {
+    clearTimeout(this._debounceTimer);
   },
   methods: {
     t(key, vars = {}) {

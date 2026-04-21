@@ -12,6 +12,8 @@ use OCP\Files\NotFoundException;
 use OCP\IUserSession;
 use OCP\IConfig;
 use OCP\IDBConnection;
+use OCP\ICacheFactory;
+use OCP\ICache;
 use Psr\Log\LoggerInterface;
 use OCP\Files\Cache\ICacheEntry;
 use enshrined\svgSanitize\Sanitizer;
@@ -47,7 +49,9 @@ class PageService {
     private LoggerInterface $logger;
     private IEventDispatcher $eventDispatcher;
     private PublicationSettingsService $publicationSettings;
+    private PageIndexService $pageIndexService;
     private ?IVersionManager $versionManager = null;
+    private ?ICache $distributedCache = null;
     private array $pageFolderCache = [];
 
     /** @var array Request-level cache for page data */
@@ -126,6 +130,11 @@ class PageService {
         // Also clear the static page tree cache for this user/language
         $cacheKey = $this->userId . '_' . $this->getUserLanguage();
         unset(self::$pageTreeCache[$cacheKey]);
+
+        // Invalidate distributed cache so other requests/workers pick up the change
+        if ($this->distributedCache !== null) {
+            $this->distributedCache->remove('tree_' . $cacheKey);
+        }
     }
 
     /**
@@ -303,6 +312,8 @@ class PageService {
         LoggerInterface $logger,
         IEventDispatcher $eventDispatcher,
         PublicationSettingsService $publicationSettings,
+        ICacheFactory $cacheFactory,
+        PageIndexService $pageIndexService,
         ?string $userId
     ) {
         $this->rootFolder = $rootFolder;
@@ -313,7 +324,12 @@ class PageService {
         $this->logger = $logger;
         $this->eventDispatcher = $eventDispatcher;
         $this->publicationSettings = $publicationSettings;
+        $this->pageIndexService = $pageIndexService;
         $this->userId = $userId ?? '';
+
+        if ($cacheFactory->isAvailable()) {
+            $this->distributedCache = $cacheFactory->createDistributed('intravox-pages');
+        }
 
         // Lazy load version manager (files_versions may not be enabled)
         try {
@@ -1416,6 +1432,15 @@ class PageService {
             }
         }
 
+        // Update page metadata index (non-blocking — page was already saved)
+        try {
+            $language = $this->getUserLanguage();
+            $path = $parentPath ?? $language;
+            $this->pageIndexService->indexPage($data, $language, $path, $file->getId());
+        } catch (\Exception $e) {
+            $this->logger->warning('Failed to index new page', ['error' => $e->getMessage()]);
+        }
+
         // Return data with id for frontend (id is derived from folder name)
         return array_merge(['id' => $pageId], $data);
     }
@@ -1629,6 +1654,15 @@ class PageService {
             $this->clearCache($validatedData['uniqueId']);
         }
 
+        // Update page metadata index (non-blocking — page was already saved)
+        try {
+            $language = $this->getUserLanguage();
+            $folderPath = $result['folder']->getPath();
+            $this->pageIndexService->indexPage($validatedData, $language, $folderPath, $file->getId());
+        } catch (\Exception $e) {
+            $this->logger->warning('Failed to update page index', ['error' => $e->getMessage()]);
+        }
+
         // Return data with id for frontend (id is derived from folder name)
         // Get id from folder name (for home page it's 'home', otherwise folder basename)
         $pageId = ($result['isHome'] ?? false) ? 'home' : $result['folder']->getName();
@@ -1663,6 +1697,15 @@ class PageService {
         } catch (\Exception $e) {
             // Log but don't block deletion if event dispatch fails
             $this->logger->warning('Failed to dispatch PageDeletedEvent for page ' . $id . ': ' . $e->getMessage());
+        }
+
+        // Remove from page metadata index before deleting files (non-blocking)
+        if (!empty($uniqueId)) {
+            try {
+                $this->pageIndexService->removePage($uniqueId);
+            } catch (\Exception $e) {
+                $this->logger->warning('Failed to remove page from index', ['error' => $e->getMessage()]);
+            }
         }
 
         // Delete the entire folder (includes .json, images/, files/)
@@ -2583,7 +2626,7 @@ class PageService {
                     json_decode($this->config->getAppValue(Application::APP_ID, 'feed_connections', '[]'), true) ?: [],
                     'type'
                 ));
-                $allowedSourceTypes = array_unique(array_merge(['rss'], $configuredTypes));
+                $allowedSourceTypes = array_unique(array_merge(['rss', 'connection'], $configuredTypes));
                 $sanitized['sourceType'] = in_array($widget['sourceType'] ?? 'rss', $allowedSourceTypes)
                     ? $widget['sourceType']
                     : 'rss';
@@ -2596,10 +2639,15 @@ class PageService {
                 $sanitized['courseId'] = $this->sanitizeText($widget['courseId'] ?? '');
 
                 // Content type (for LMS types)
-                $allowedContentTypes = ['', 'news', 'my-courses', 'deadlines'];
+                $allowedContentTypes = ['', 'news', 'my-courses', 'deadlines', 'courses', 'assignments', 'open', 'overdue', 'milestones', 'recently-updated', 'pages', 'documents', 'list', 'bugs', 'recent', 'created-recent'];
                 $sanitized['contentType'] = in_array($widget['contentType'] ?? '', $allowedContentTypes, true)
                     ? ($widget['contentType'] ?? '')
                     : '';
+
+                // SharePoint list/library ID, Jira project key, Moodle forum ID
+                $sanitized['listId'] = $this->sanitizeText($widget['listId'] ?? '');
+                $sanitized['jiraProject'] = $this->sanitizeText($widget['jiraProject'] ?? '');
+                $sanitized['moodleForumId'] = $this->sanitizeText($widget['moodleForumId'] ?? '');
 
                 // Layout
                 $sanitized['layout'] = in_array($widget['layout'] ?? 'list', ['list', 'grid'])
@@ -3336,8 +3384,10 @@ class PageService {
             // Rollback via IVersionManager
             $this->versionManager->rollback($targetVersion);
 
-            // Re-read the file content after rollback
-            $content = $file->getContent();
+            // Re-obtain a fresh file node after rollback - the original $file
+            // may have stale internal state after the storage-level rollback
+            $freshFile = $result['folder']->get($file->getName());
+            $content = $freshFile->getContent();
             $restoredData = json_decode($content, true);
 
             if (json_last_error() !== JSON_ERROR_NONE) {
@@ -3961,14 +4011,30 @@ class PageService {
 
         // Build cache key based on user and language
         $cacheKey = $this->userId . '_' . $lang;
+        $distributedCacheKey = 'tree_' . $cacheKey;
         $now = time();
 
-        // Check if we have a valid cached tree (without currentPageId marking)
+        // Check in-process static cache first (fastest)
         if (isset(self::$pageTreeCache[$cacheKey])) {
             $cached = self::$pageTreeCache[$cacheKey];
             if (($now - $cached['time']) < self::PAGE_TREE_CACHE_TTL) {
-                // Return cached tree with updated currentPageId marking
                 return $this->markCurrentPageInTree($cached['tree'], $currentPageId);
+            }
+        }
+
+        // Check distributed cache (shared across PHP processes/requests)
+        if ($this->distributedCache !== null) {
+            $distributedCached = $this->distributedCache->get($distributedCacheKey);
+            if ($distributedCached !== null) {
+                $decoded = json_decode($distributedCached, true);
+                if ($decoded !== null) {
+                    // Populate static cache too for subsequent calls in same request
+                    self::$pageTreeCache[$cacheKey] = [
+                        'tree' => $decoded,
+                        'time' => $now
+                    ];
+                    return $this->markCurrentPageInTree($decoded, $currentPageId);
+                }
             }
         }
 
@@ -4010,11 +4076,16 @@ class PageService {
         // Recursively build tree from subfolders
         $this->buildPageTree($folder, $tree, null, $lang); // Pass null, marking done separately
 
-        // Store in cache
+        // Store in static cache
         self::$pageTreeCache[$cacheKey] = [
             'tree' => $tree,
             'time' => $now
         ];
+
+        // Store in distributed cache (shared across requests)
+        if ($this->distributedCache !== null) {
+            $this->distributedCache->set($distributedCacheKey, json_encode($tree), self::PAGE_TREE_CACHE_TTL);
+        }
 
         // Return with current page marked
         return $this->markCurrentPageInTree($tree, $currentPageId);
@@ -4882,8 +4953,10 @@ class PageService {
             }
         }
 
-        // Recursively collect pages from the source folder
-        $this->findNewsPagesInFolder($folder, $pages, $language);
+        // Recursively collect pages from the source folder.
+        // Pass a hard cap to allow early-exit and prevent unbounded filesystem scans.
+        $collectLimit = max($limit * 4, 200); // collect enough for filtering/sorting, cap at 200 minimum
+        $this->findNewsPagesInFolder($folder, $pages, $language, $collectLimit);
 
         // Add the selected source page itself to the results (if sourcePageId was provided)
         if ($sourcePageData !== null && isset($sourcePageData['file'])) {
@@ -4963,9 +5036,15 @@ class PageService {
 
     /**
      * Recursively find news pages in a folder
+     *
+     * @param int $maxCollect Hard cap on items to collect (0 = unlimited)
      */
-    private function findNewsPagesInFolder($folder, array &$pages, string $language): void {
+    private function findNewsPagesInFolder($folder, array &$pages, string $language, int $maxCollect = 0): void {
         foreach ($this->getCachedDirectoryListing($folder) as $item) {
+            // Early-exit when we have collected enough items
+            if ($maxCollect > 0 && count($pages) >= $maxCollect) {
+                return;
+            }
             if ($item->getType() !== \OCP\Files\FileInfo::TYPE_FOLDER) {
                 continue;
             }
@@ -5051,7 +5130,12 @@ class PageService {
             }
 
             // Recursively search subfolders
-            $this->findNewsPagesInFolder($item, $pages, $language);
+            $this->findNewsPagesInFolder($item, $pages, $language, $maxCollect);
+
+            // Re-check limit after recursion to avoid scanning more siblings
+            if ($maxCollect > 0 && count($pages) >= $maxCollect) {
+                return;
+            }
         }
     }
 

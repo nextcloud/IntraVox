@@ -44,7 +44,7 @@ The 3 criteria with partial compliance (1.2.1, 1.2.2, 1.2.5) concern captions an
 
 | Criterion | Implementation |
 |---|---|
-| **2.1.1 Keyboard** | All interactions are keyboard-accessible. 15+ keyboard handlers (Enter, Escape, arrow keys, Ctrl+Enter). |
+| **2.1.1 Keyboard** | All interactions are keyboard-accessible. 15+ keyboard handlers (Enter, Escape, arrow keys, Ctrl+Enter). Feed connection cards in admin settings are keyboard-navigable (`tabindex`, Enter/Space toggle). Feed items have `focus-visible` outline. |
 | **2.1.2 No keyboard trap** | Escape closes modals and dropdowns. NcModal has built-in focus trap. |
 | **2.2.2 Pause, stop, hide** | Carousel autoplay stops with `prefers-reduced-motion`. Global CSS reduces all animations. |
 | **2.3.1 Three flashes** | No flashing content. |
@@ -71,7 +71,7 @@ The 3 criteria with partial compliance (1.2.1, 1.2.2, 1.2.5) concern captions an
 |---|---|
 | **4.1.1 Parsing** | Valid HTML via Vue compiler. No duplicate IDs or ARIA conflicts. |
 | **4.1.2 Name, role, value** | ARIA roles on tabs (`role="tablist/tab/tabpanel"`), combobox (`role="combobox/listbox"`), carousel (`role="region"`). `aria-expanded` on dropdowns. |
-| **4.1.3 Status messages** | `aria-live="polite"` on loading states. `role="alert"` on error messages. |
+| **4.1.3 Status messages** | `aria-live="polite"` on loading states (including Feed widget). `role="alert"` on error messages. `role="status"` on loading spinners in admin settings. |
 
 ## Technical details
 

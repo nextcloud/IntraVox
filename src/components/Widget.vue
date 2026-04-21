@@ -195,25 +195,20 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import { translate as t } from '@nextcloud/l10n';
 import { generateUrl } from '@nextcloud/router';
-import InlineTextEditor from './InlineTextEditor.vue';
-import LinksWidget from './LinksWidget.vue';
-import NewsWidget from './NewsWidget.vue';
-import PeopleWidget from './PeopleWidget.vue';
-import CalendarWidget from './CalendarWidget.vue';
-import FeedWidget from './FeedWidget.vue';
 import { markdownToHtml } from '../utils/markdownSerializer.js';
 
 export default {
   name: 'Widget',
   components: {
-    InlineTextEditor,
-    LinksWidget,
-    NewsWidget,
-    PeopleWidget,
-    CalendarWidget,
-    FeedWidget,
+    InlineTextEditor: defineAsyncComponent(() => import('./InlineTextEditor.vue')),
+    LinksWidget: defineAsyncComponent(() => import('./LinksWidget.vue')),
+    NewsWidget: defineAsyncComponent(() => import('./NewsWidget.vue')),
+    PeopleWidget: defineAsyncComponent(() => import('./PeopleWidget.vue')),
+    CalendarWidget: defineAsyncComponent(() => import('./CalendarWidget.vue')),
+    FeedWidget: defineAsyncComponent(() => import('./FeedWidget.vue')),
   },
   props: {
     widget: {

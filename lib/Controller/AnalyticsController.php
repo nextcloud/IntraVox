@@ -9,6 +9,7 @@ use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
+use OCP\AppFramework\Http\Attribute\UserRateThrottle;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\IConfig;
 use OCP\IGroupManager;
@@ -241,6 +242,7 @@ class AnalyticsController extends Controller {
      * @param string $pageId The unique ID of the page
      * @return DataResponse
      */
+    #[UserRateThrottle(limit: 60, period: 60)]
     public function trackView(string $pageId): DataResponse {
         try {
             // Verify page exists

@@ -212,7 +212,6 @@ class FeedController extends Controller {
      * Generate or regenerate a feed token.
      */
     #[NoAdminRequired]
-    #[NoCSRFRequired]
     public function regenerateToken(): DataResponse {
         $userId = $this->getCurrentUserId();
         if ($userId === null) {
@@ -251,7 +250,6 @@ class FeedController extends Controller {
      * Revoke the current user's feed token.
      */
     #[NoAdminRequired]
-    #[NoCSRFRequired]
     public function revokeToken(): DataResponse {
         $userId = $this->getCurrentUserId();
         if ($userId === null) {
@@ -267,7 +265,6 @@ class FeedController extends Controller {
      * Update feed configuration for the current user.
      */
     #[NoAdminRequired]
-    #[NoCSRFRequired]
     public function updateConfig(): DataResponse {
         $userId = $this->getCurrentUserId();
         if ($userId === null) {

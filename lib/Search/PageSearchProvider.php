@@ -3,7 +3,9 @@ declare(strict_types=1);
 
 namespace OCA\IntraVox\Search;
 
+use OCA\IntraVox\Service\PageIndexService;
 use OCA\IntraVox\Service\PageService;
+use OCP\IConfig;
 use OCP\IL10N;
 use OCP\IURLGenerator;
 use OCP\IUser;
@@ -14,15 +16,21 @@ use OCP\Search\SearchResultEntry;
 
 class PageSearchProvider implements IProvider {
     private PageService $pageService;
+    private PageIndexService $pageIndexService;
+    private IConfig $config;
     private IL10N $l10n;
     private IURLGenerator $urlGenerator;
 
     public function __construct(
         PageService $pageService,
+        PageIndexService $pageIndexService,
+        IConfig $config,
         IL10N $l10n,
         IURLGenerator $urlGenerator
     ) {
         $this->pageService = $pageService;
+        $this->pageIndexService = $pageIndexService;
+        $this->config = $config;
         $this->l10n = $l10n;
         $this->urlGenerator = $urlGenerator;
     }
@@ -56,6 +64,33 @@ class PageSearchProvider implements IProvider {
         }
 
         try {
+            // Try fast indexed search first (DB query, ~1ms)
+            $language = $this->config->getUserValue($user->getUID(), 'core', 'lang', 'en');
+            $indexedResults = $this->pageIndexService->searchByTitle($term, $language, $query->getLimit());
+
+            // If we got results from the index, use those for fast response
+            if (!empty($indexedResults)) {
+                $entries = [];
+                foreach ($indexedResults as $row) {
+                    $url = $this->urlGenerator->linkToRouteAbsolute(
+                        'intravox.page.index',
+                        ['page' => $row['unique_id']]
+                    ) . '#' . $row['unique_id'];
+
+                    $thumbnailUrl = $this->urlGenerator->imagePath('intravox', 'app-search.svg');
+                    $entries[] = new SearchResultEntry(
+                        $thumbnailUrl,
+                        $row['title'],
+                        $this->l10n->t('IntraVox Page'),
+                        $url,
+                        '',
+                        true
+                    );
+                }
+                return SearchResult::complete($this->l10n->t('IntraVox Pages'), $entries);
+            }
+
+            // Fallback to full-text search (slower, reads all JSON files)
             $results = $this->pageService->searchPages($term);
             $entries = [];
 

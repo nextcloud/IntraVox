@@ -64,7 +64,6 @@ class PageController extends Controller {
     private function buildContentSecurityPolicy(): ContentSecurityPolicy {
         $csp = new ContentSecurityPolicy();
         $csp->addAllowedScriptDomain('\'self\'');
-        $csp->addAllowedScriptDomain('\'unsafe-eval\'');
         $csp->addAllowedFrameDomain('\'self\'');
 
         // Add whitelisted video domains from config

@@ -11,6 +11,17 @@
 			<button class="license-banner-close" @click="bannerDismissed = true" :aria-label="t('intravox', 'Dismiss banner')">&times;</button>
 		</div>
 
+		<!-- Orphaned Data Banner -->
+		<div v-if="orphanedBannerCount > 0 && !orphanedBannerDismissed" class="license-banner warning">
+			<span class="license-banner-text">
+				{{ t('intravox', 'Found {count} orphaned data folder(s) from a previous installation.', { count: orphanedBannerCount }) }}
+				<a href="#" @click.prevent="activeTab = 'maintenance'; scanOrphanedFolders()">
+					{{ t('intravox', 'Go to Maintenance') }}
+				</a>
+			</span>
+			<button class="license-banner-close" @click="orphanedBannerDismissed = true" :aria-label="t('intravox', 'Dismiss banner')">&times;</button>
+		</div>
+
 		<!-- Tab Navigation - MetaVox style -->
 		<div class="tab-navigation">
 			<button
@@ -119,7 +130,7 @@
 									type="primary"
 									@click="installDemoData(lang.code)">
 									<template #icon>
-										<span v-if="installing === lang.code" class="icon-loading-small"></span>
+										<span v-if="installing === lang.code" class="icon-loading-small" role="status" :aria-label="t('intravox', 'Loading')"></span>
 									</template>
 									{{ installing === lang.code ? t('intravox', 'Installing...') : t('intravox', 'Install') }}
 								</NcButton>
@@ -131,7 +142,7 @@
 									type="secondary"
 									@click="showReinstallDialog(lang.code)">
 									<template #icon>
-										<span v-if="installing === lang.code" class="icon-loading-small"></span>
+										<span v-if="installing === lang.code" class="icon-loading-small" role="status" :aria-label="t('intravox', 'Loading')"></span>
 									</template>
 									{{ installing === lang.code ? t('intravox', 'Reinstalling...') : t('intravox', 'Reinstall') }}
 								</NcButton>
@@ -146,7 +157,7 @@
 								type="tertiary"
 								@click="showCleanStartDialog(lang.code)">
 								<template #icon>
-									<span v-if="cleaningStart === lang.code" class="icon-loading-small"></span>
+									<span v-if="cleaningStart === lang.code" class="icon-loading-small" role="status" :aria-label="t('intravox', 'Loading')"></span>
 									<Broom v-else :size="16" />
 								</template>
 								{{ cleaningStart === lang.code ? t('intravox', 'Resetting...') : t('intravox', 'Clean Start') }}
@@ -213,14 +224,69 @@
 					<NcNoteCard type="warning">
 						{{ t('intravox', 'This action cannot be undone!') }}
 					</NcNoteCard>
+					<div class="clean-start-confirm">
+						<label for="clean-start-confirm-input">{{ t('intravox', 'Type DELETE to confirm:') }}</label>
+						<input id="clean-start-confirm-input" v-model="cleanStartConfirmText" type="text" class="clean-start-confirm-input" placeholder="DELETE" autocomplete="off" />
+					</div>
 				</div>
 			</template>
 			<template #actions>
 				<NcButton type="tertiary" @click="cleanStartDialogVisible = false">
 					{{ t('intravox', 'Cancel') }}
 				</NcButton>
-				<NcButton type="error" @click="confirmCleanStart">
+				<NcButton type="error" @click="confirmCleanStart" :disabled="cleanStartConfirmText !== 'DELETE'">
 					{{ t('intravox', 'Delete All & Start Fresh') }}
+				</NcButton>
+			</template>
+		</NcDialog>
+
+		<!-- Remove connection confirmation dialog -->
+		<NcDialog
+			v-if="removeConnectionDialogVisible"
+			:name="t('intravox', 'Remove connection')"
+			@closing="removeConnectionDialogVisible = false">
+			<template #default>
+				<p>{{ t('intravox', 'Remove "{name}"? This cannot be undone after saving.', { name: removeConnectionName }) }}</p>
+			</template>
+			<template #actions>
+				<NcButton type="tertiary" @click="removeConnectionDialogVisible = false">
+					{{ t('intravox', 'Cancel') }}
+				</NcButton>
+				<NcButton type="error" @click="confirmRemoveConnection">
+					{{ t('intravox', 'Remove') }}
+				</NcButton>
+			</template>
+		</NcDialog>
+
+		<!-- Import connections confirmation dialog -->
+		<NcDialog
+			v-if="importDialogVisible && importPreview"
+			:name="t('intravox', 'Import connections')"
+			@closing="importDialogVisible = false; importPreview = null">
+			<template #default>
+				<p>{{ t('intravox', 'Found {total} connection(s) in file:', { total: importPreview.total }) }}</p>
+				<ul class="import-preview-list">
+					<li v-for="conn in importPreview.items" :key="conn.name" :class="{ 'is-duplicate': conn.duplicate }">
+						<strong>{{ conn.name }}</strong> ({{ conn.type }})
+						<span v-if="conn.duplicate" class="import-duplicate-badge">{{ t('intravox', 'already exists') }}</span>
+					</li>
+				</ul>
+				<p v-if="importPreview.newCount > 0">
+					{{ t('intravox', '{count} new connection(s) will be added.', { count: importPreview.newCount }) }}
+				</p>
+				<p v-else>
+					{{ t('intravox', 'All connections already exist. Nothing to import.') }}
+				</p>
+				<NcNoteCard v-if="importPreview.newCount > 0" type="info">
+					{{ t('intravox', 'Tokens and secrets are not included in the export. You will need to enter them after importing.') }}
+				</NcNoteCard>
+			</template>
+			<template #actions>
+				<NcButton type="tertiary" @click="importDialogVisible = false; importPreview = null">
+					{{ t('intravox', 'Cancel') }}
+				</NcButton>
+				<NcButton type="primary" @click="confirmImportConnections" :disabled="importPreview.newCount === 0">
+					{{ t('intravox', 'Import {count} connection(s)', { count: importPreview.newCount }) }}
 				</NcButton>
 			</template>
 		</NcDialog>
@@ -615,7 +681,7 @@
 
 					<!-- Loading state -->
 					<div v-if="loadingMetavoxFields" class="loading-fields">
-						<span class="icon-loading-small"></span>
+						<span class="icon-loading-small" role="status" :aria-label="t('intravox', 'Loading')"></span>
 						{{ t('intravox', 'Loading MetaVox fields...') }}
 					</div>
 
@@ -697,7 +763,7 @@
 				</p>
 
 				<div v-if="loadingShares" class="shares-loading">
-					<span class="icon-loading-small"></span>
+					<span class="icon-loading-small" role="status" :aria-label="t('intravox', 'Loading')"></span>
 					{{ t('intravox', 'Loading shares...') }}
 				</div>
 
@@ -757,129 +823,213 @@
 					{{ t('intravox', 'Configure connections to external systems (LMS, RSS sources). These connections can be used by the Feed widget on any page.') }}
 				</p>
 
-				<div v-for="(conn, index) in feedConnections" :key="conn.id || index" class="feed-connection-card">
-					<div class="feed-connection-header">
-						<h3>{{ conn.name || t('intravox', 'New connection') }}</h3>
-						<NcButton type="tertiary" @click="removeFeedConnection(index)">
-							{{ t('intravox', 'Remove') }}
-						</NcButton>
+				<div v-for="(conn, index) in feedConnections" :key="conn.id || index" class="connection-card" :class="{ 'connection-card--expanded': conn._expanded, 'connection-card--inactive': !conn.active }">
+					<div class="connection-header"
+						@click="handleHeaderClick(conn, $event)"
+						@keydown.enter="conn._expanded = !conn._expanded"
+						@keydown.space.prevent="conn._expanded = !conn._expanded"
+						tabindex="0"
+						role="button"
+						:aria-expanded="conn._expanded"
+						:aria-label="t('intravox', 'Toggle connection details')">
+						<span class="connection-name">{{ conn.name || t('intravox', 'New connection') }}</span>
+						<span class="connection-type">{{ getPresetLabel(conn.type) }}</span>
+						<span :class="['connection-badge', getConfigStatus(conn).class]">{{ getConfigStatus(conn).icon }} {{ getConfigStatus(conn).label }}</span>
+						<NcCheckboxRadioSwitch
+							:model-value="conn.active !== false"
+							type="switch"
+							@update:model-value="toggleConnectionActive(conn, $event)"
+							:aria-label="conn.active !== false ? t('intravox', 'Active') : t('intravox', 'Inactive')"
+						/>
+
+						<span class="connection-chevron">{{ conn._expanded ? '▾' : '▸' }}</span>
+						<button type="button" class="connection-remove" @click.stop="removeFeedConnection(index)" :title="t('intravox', 'Remove connection')">×</button>
 					</div>
-					<div class="feed-connection-fields">
-						<div class="form-group">
-							<label :for="'conn-name-' + index">{{ t('intravox', 'Name') }}</label>
-							<input :id="'conn-name-' + index" v-model="conn.name" type="text" :placeholder="t('intravox', 'e.g. Canvas University')" />
-						</div>
-						<div class="form-group">
-							<label :for="'conn-type-' + index">{{ t('intravox', 'Type') }}</label>
-							<select :id="'conn-type-' + index" v-model="conn.type" @change="applyPreset(conn)">
-								<option v-for="lms in connectionPresets" :key="lms.value" :value="lms.value">{{ lms.label }}</option>
-							</select>
-						</div>
-						<div class="form-group">
-							<label :for="'conn-url-' + index">{{ t('intravox', 'Base URL') }}</label>
-							<input :id="'conn-url-' + index" v-model="conn.baseUrl" type="url" :placeholder="t('intravox', 'https://lms.example.com')" />
-						</div>
-						<!-- REST API specific fields -->
-						<template v-if="!['moodle', 'canvas', 'brightspace'].includes(conn.type)">
+					<div v-if="conn._expanded" class="connection-body">
+					<div class="connection-fields">
+						<!-- Basis -->
+						<div class="fields-grid">
 							<div class="form-group">
-								<label :for="'conn-endpoint-' + index">{{ t('intravox', 'Endpoint path') }}</label>
-								<input :id="'conn-endpoint-' + index" v-model="conn.customEndpoint" type="text" :placeholder="t('intravox', '/api/v1/announcements')" />
-								<span class="field-hint">{{ t('intravox', 'Path appended to the base URL.') }}</span>
+								<label :for="'conn-name-' + index">{{ t('intravox', 'Name') }}</label>
+								<input :id="'conn-name-' + index" v-model="conn.name" type="text" :placeholder="t('intravox', 'e.g. Canvas University')" />
 							</div>
 							<div class="form-group">
-								<label :for="'conn-authmethod-' + index">{{ t('intravox', 'Auth method') }}</label>
-								<select :id="'conn-authmethod-' + index" v-model="conn.authMethod">
-									<option value="bearer">{{ t('intravox', 'Bearer token') }}</option>
-									<option value="apikey">{{ t('intravox', 'API key (custom header)') }}</option>
-									<option value="basic">{{ t('intravox', 'Basic auth') }}</option>
-									<option value="none">{{ t('intravox', 'No authentication') }}</option>
+								<label :for="'conn-type-' + index">{{ t('intravox', 'Type') }}</label>
+								<select :id="'conn-type-' + index" v-model="conn.type" @change="applyPreset(conn)">
+									<option v-for="lms in connectionPresets" :key="lms.value" :value="lms.value">{{ lms.label }}</option>
 								</select>
 							</div>
-							<div v-if="conn.authMethod === 'apikey'" class="form-group">
-								<label :for="'conn-apikeyheader-' + index">{{ t('intravox', 'API key header name') }}</label>
-								<input :id="'conn-apikeyheader-' + index" v-model="conn.apiKeyHeader" type="text" :placeholder="t('intravox', 'X-API-Key')" />
+							<div v-if="conn.type === 'sharepoint'" class="form-group full-width">
+								<label :for="'conn-siteurl-' + index">{{ t('intravox', 'SharePoint site URL') }}</label>
+								<input :id="'conn-siteurl-' + index" v-model="conn.siteUrl" type="url" placeholder="https://contoso.sharepoint.com/sites/intranet" />
+								<span class="field-hint">{{ t('intravox', 'The full URL of your SharePoint site. Found in your browser address bar.') }}</span>
 							</div>
-							<div class="form-group-heading">{{ t('intravox', 'Response mapping') }}</div>
-							<span class="field-hint">{{ t('intravox', 'Map JSON fields from the API response to feed items. Use dot notation for nested fields (e.g. data.items, author.name).') }}</span>
-							<div class="form-group">
-								<label :for="'conn-map-items-' + index">{{ t('intravox', 'Items path') }}</label>
-								<input :id="'conn-map-items-' + index" v-model="conn.responseMapping.items" type="text" :placeholder="t('intravox', 'data or results or leave empty for root array')" />
+							<div v-else class="form-group full-width">
+								<label :for="'conn-url-' + index">{{ t('intravox', 'Base URL') }}</label>
+								<input :id="'conn-url-' + index" v-model="conn.baseUrl" type="url" :placeholder="conn.type === 'jira' ? 'https://your-org.atlassian.net' : t('intravox', 'https://lms.example.com')" @input="onBaseUrlInput(conn)" />
 							</div>
-							<div class="form-group">
-								<label :for="'conn-map-title-' + index">{{ t('intravox', 'Title field') }}</label>
-								<input :id="'conn-map-title-' + index" v-model="conn.responseMapping.title" type="text" placeholder="title" />
+						</div>
+						<!-- Endpoint, Auth & Mapping (non-LMS, non-SharePoint) -->
+						<template v-if="!['moodle', 'canvas', 'brightspace', 'sharepoint'].includes(conn.type)">
+							<button type="button" class="advanced-toggle" @click="conn._showAdvanced = !conn._showAdvanced">
+								{{ conn._showAdvanced ? '▾' : '▸' }} {{ t('intravox', 'Advanced options') }}
+							</button>
+							<div v-if="conn._showAdvanced" class="advanced-fields">
+							<div class="field-section">
+								<div class="fields-grid">
+									<div class="form-group full-width">
+										<label :for="'conn-endpoint-' + index">{{ t('intravox', 'Endpoint path') }}</label>
+										<input :id="'conn-endpoint-' + index" v-model="conn.customEndpoint" type="text" :placeholder="t('intravox', '/api/v1/announcements')" />
+										<span class="field-hint">{{ t('intravox', 'Path appended to the base URL.') }}</span>
+									</div>
+									<div v-if="conn.authMethod !== 'client_credentials'" class="form-group">
+										<label :for="'conn-authmethod-' + index">{{ t('intravox', 'Auth method') }}</label>
+										<select :id="'conn-authmethod-' + index" v-model="conn.authMethod">
+											<option value="bearer">{{ t('intravox', 'Bearer token') }}</option>
+											<option value="apikey">{{ t('intravox', 'API key (custom header)') }}</option>
+											<option value="basic">{{ t('intravox', 'Basic auth') }}</option>
+											<option value="none">{{ t('intravox', 'No authentication') }}</option>
+										</select>
+									</div>
+									<div v-if="conn.authMethod === 'apikey'" class="form-group">
+										<label :for="'conn-apikeyheader-' + index">{{ t('intravox', 'API key header name') }}</label>
+										<input :id="'conn-apikeyheader-' + index" v-model="conn.apiKeyHeader" type="text" :placeholder="t('intravox', 'X-API-Key')" />
+									</div>
+								</div>
 							</div>
-							<div class="form-group">
-								<label :for="'conn-map-url-' + index">{{ t('intravox', 'URL field') }}</label>
-								<input :id="'conn-map-url-' + index" v-model="conn.responseMapping.url" type="text" placeholder="url" />
+
+							<!-- Response mapping -->
+							<div class="field-section">
+								<div class="field-section-title">{{ t('intravox', 'Response mapping') }}</div>
+								<span class="field-hint">{{ t('intravox', 'Map JSON fields from the API response to feed items. Use dot notation for nested fields (e.g. data.items, author.name).') }}</span>
+								<div class="fields-grid">
+									<div class="form-group full-width">
+										<label :for="'conn-map-items-' + index">{{ t('intravox', 'Items path') }}</label>
+										<input :id="'conn-map-items-' + index" v-model="conn.responseMapping.items" type="text" :placeholder="t('intravox', 'data or results or leave empty for root array')" />
+									</div>
+									<div class="form-group">
+										<label :for="'conn-map-title-' + index">{{ t('intravox', 'Title field') }}</label>
+										<input :id="'conn-map-title-' + index" v-model="conn.responseMapping.title" type="text" placeholder="title" />
+									</div>
+									<div class="form-group">
+										<label :for="'conn-map-url-' + index">{{ t('intravox', 'URL field') }}</label>
+										<input :id="'conn-map-url-' + index" v-model="conn.responseMapping.url" type="text" placeholder="url" />
+									</div>
+									<div class="form-group">
+										<label :for="'conn-map-excerpt-' + index">{{ t('intravox', 'Excerpt field') }}</label>
+										<input :id="'conn-map-excerpt-' + index" v-model="conn.responseMapping.excerpt" type="text" placeholder="body" />
+									</div>
+									<div class="form-group">
+										<label :for="'conn-map-date-' + index">{{ t('intravox', 'Date field') }}</label>
+										<input :id="'conn-map-date-' + index" v-model="conn.responseMapping.date" type="text" placeholder="created_at" />
+									</div>
+									<div class="form-group">
+										<label :for="'conn-map-image-' + index">{{ t('intravox', 'Image field') }}</label>
+										<input :id="'conn-map-image-' + index" v-model="conn.responseMapping.image" type="text" :placeholder="t('intravox', 'thumbnail (optional)')" />
+									</div>
+									<div class="form-group">
+										<label :for="'conn-map-author-' + index">{{ t('intravox', 'Author field') }}</label>
+										<input :id="'conn-map-author-' + index" v-model="conn.responseMapping.author" type="text" :placeholder="t('intravox', 'author (optional)')" />
+									</div>
+								</div>
 							</div>
-							<div class="form-group">
-								<label :for="'conn-map-excerpt-' + index">{{ t('intravox', 'Excerpt field') }}</label>
-								<input :id="'conn-map-excerpt-' + index" v-model="conn.responseMapping.excerpt" type="text" placeholder="body" />
+
+							<!-- Custom headers -->
+							<div class="field-section">
+								<div class="field-section-title">{{ t('intravox', 'Custom request headers') }}</div>
+								<span class="field-hint">{{ t('intravox', 'Extra HTTP headers sent with every request. E.g. OCS-APIRequest: true for Nextcloud APIs.') }}</span>
+								<div v-for="(header, hIndex) in conn.customHeaders" :key="hIndex" class="custom-header-row">
+									<input v-model="header.key" type="text" :placeholder="t('intravox', 'Header name')" class="header-key" />
+									<input v-model="header.value" type="text" :placeholder="t('intravox', 'Value')" class="header-value" />
+									<button type="button" class="header-remove" @click="conn.customHeaders.splice(hIndex, 1)">&times;</button>
+								</div>
+								<button type="button" class="link-button" @click="conn.customHeaders.push({ key: '', value: '' })">{{ t('intravox', '+ Add header') }}</button>
 							</div>
-							<div class="form-group">
-								<label :for="'conn-map-date-' + index">{{ t('intravox', 'Date field') }}</label>
-								<input :id="'conn-map-date-' + index" v-model="conn.responseMapping.date" type="text" placeholder="created_at" />
 							</div>
-							<div class="form-group">
-								<label :for="'conn-map-image-' + index">{{ t('intravox', 'Image field') }}</label>
-								<input :id="'conn-map-image-' + index" v-model="conn.responseMapping.image" type="text" :placeholder="t('intravox', 'thumbnail (optional)')" />
-							</div>
-							<div class="form-group">
-								<label :for="'conn-map-author-' + index">{{ t('intravox', 'Author field') }}</label>
-								<input :id="'conn-map-author-' + index" v-model="conn.responseMapping.author" type="text" :placeholder="t('intravox', 'author (optional)')" />
-							</div>
-							<div class="form-group-heading">{{ t('intravox', 'Custom request headers') }}</div>
-							<span class="field-hint">{{ t('intravox', 'Extra HTTP headers sent with every request. E.g. OCS-APIRequest: true for Nextcloud APIs.') }}</span>
-							<div v-for="(header, hIndex) in conn.customHeaders" :key="hIndex" class="custom-header-row">
-								<input v-model="header.key" type="text" :placeholder="t('intravox', 'Header name')" class="header-key" />
-								<input v-model="header.value" type="text" :placeholder="t('intravox', 'Value')" class="header-value" />
-								<button type="button" class="header-remove" @click="conn.customHeaders.splice(hIndex, 1)">&times;</button>
-							</div>
-							<button type="button" class="link-button" @click="conn.customHeaders.push({ key: '', value: '' })">{{ t('intravox', '+ Add header') }}</button>
 						</template>
 
-						<div v-if="['moodle', 'canvas', 'brightspace'].includes(conn.type) || conn.authMethod === 'bearer'" class="form-group">
-							<label :for="'conn-token-' + index">{{ t('intravox', 'API Token') }}</label>
-							<input :id="'conn-token-' + index" v-model="conn.token" type="password" :placeholder="conn.hasToken ? t('intravox', '(unchanged)') : t('intravox', 'Enter API token')" />
+						<!-- Authentication -->
+						<div class="field-section">
+							<div class="field-section-title">{{ t('intravox', 'Authentication') }}</div>
+							<div class="fields-grid">
+								<div v-if="isJiraCloud(conn)" class="form-group">
+									<label :for="'conn-jira-email-' + index">{{ t('intravox', 'Atlassian account email') }}</label>
+									<input :id="'conn-jira-email-' + index" v-model="conn.jiraEmail" type="email" :placeholder="t('intravox', 'you@example.com')" />
+								</div>
+								<div v-if="['moodle', 'canvas', 'brightspace'].includes(conn.type) || ['bearer', 'basic', 'apikey'].includes(conn.authMethod)" class="form-group">
+									<label :for="'conn-token-' + index">{{ t('intravox', 'API Token') }}</label>
+									<input :id="'conn-token-' + index" v-model="conn.token" type="password" :placeholder="conn.hasToken ? t('intravox', '(unchanged)') : t('intravox', 'Enter API token')" />
+								</div>
+								<div v-if="['moodle', 'canvas', 'brightspace'].includes(conn.type)" class="form-group">
+									<label :for="'conn-authmode-' + index">{{ t('intravox', 'User authentication') }}</label>
+									<select :id="'conn-authmode-' + index" v-model="conn.authMode">
+										<option value="token">{{ t('intravox', 'Admin token only (shared)') }}</option>
+										<option value="oauth2">{{ t('intravox', 'OAuth2 (per-user, personalized)') }}</option>
+										<option value="both">{{ t('intravox', 'Both (OAuth2 with admin fallback)') }}</option>
+									</select>
+								</div>
+								<template v-if="conn.authMode === 'oauth2' || conn.authMode === 'both'">
+									<div class="form-group">
+										<label :for="'conn-clientid-' + index">{{ t('intravox', 'OAuth2 Client ID') }}</label>
+										<input :id="'conn-clientid-' + index" v-model="conn.clientId" type="text" :placeholder="t('intravox', 'Client ID from LMS')" />
+									</div>
+									<div class="form-group">
+										<label :for="'conn-clientsecret-' + index">{{ t('intravox', 'OAuth2 Client Secret') }}</label>
+										<input :id="'conn-clientsecret-' + index" v-model="conn.clientSecret" type="password" :placeholder="conn.hasClientCredentials ? t('intravox', '(unchanged)') : t('intravox', 'Client secret from LMS')" />
+									</div>
+									<div class="form-group full-width">
+										<label class="field-hint">
+											{{ t('intravox', 'Redirect URI:') }}
+											<code>{{ callbackUrl }}</code>
+										</label>
+									</div>
+									<div class="form-group full-width">
+										<NcCheckboxRadioSwitch
+											v-model="conn.oidcAutoConnect"
+											type="checkbox">
+											{{ t('intravox', 'OIDC auto-connect (zero-click SSO)') }}
+										</NcCheckboxRadioSwitch>
+										<span class="field-hint">{{ t('intravox', 'Enable if this system uses the same identity provider as Nextcloud (e.g. SURFconext, Keycloak, Azure AD).') }}</span>
+									</div>
+								</template>
+								<!-- Client credentials (e.g. SharePoint / Microsoft Graph) -->
+								<template v-if="conn.authMethod === 'client_credentials'">
+									<div class="form-group">
+										<label :for="'conn-tenantid-' + index">{{ t('intravox', 'Tenant ID') }}</label>
+										<input :id="'conn-tenantid-' + index" v-model="conn.tenantId" type="text" :placeholder="t('intravox', 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx')" />
+										<span class="field-hint">{{ t('intravox', 'Azure AD / Entra ID Tenant ID. Found in Azure Portal → App registrations.') }}</span>
+									</div>
+									<div class="form-group">
+										<label :for="'conn-cc-clientid-' + index">{{ t('intravox', 'Client ID') }}</label>
+										<input :id="'conn-cc-clientid-' + index" v-model="conn.clientId" type="text" :placeholder="t('intravox', 'Application (client) ID')" />
+									</div>
+									<div class="form-group">
+										<label :for="'conn-cc-clientsecret-' + index">{{ t('intravox', 'Client Secret') }}</label>
+										<input :id="'conn-cc-clientsecret-' + index" v-model="conn.clientSecret" type="password" :placeholder="conn.hasClientCredentials ? t('intravox', '(unchanged)') : t('intravox', 'Client secret value')" />
+									</div>
+								</template>
+							</div>
 						</div>
-						<div v-if="['moodle', 'canvas', 'brightspace'].includes(conn.type)" class="form-group">
-							<label :for="'conn-authmode-' + index">{{ t('intravox', 'User authentication') }}</label>
-							<select :id="'conn-authmode-' + index" v-model="conn.authMode">
-								<option value="token">{{ t('intravox', 'Admin token only (shared)') }}</option>
-								<option value="oauth2">{{ t('intravox', 'OAuth2 (per-user, personalized)') }}</option>
-								<option value="both">{{ t('intravox', 'Both (OAuth2 with admin fallback)') }}</option>
-							</select>
-						</div>
-						<template v-if="conn.authMode === 'oauth2' || conn.authMode === 'both'">
-							<div class="form-group">
-								<label :for="'conn-clientid-' + index">{{ t('intravox', 'OAuth2 Client ID') }}</label>
-								<input :id="'conn-clientid-' + index" v-model="conn.clientId" type="text" :placeholder="t('intravox', 'Client ID from LMS')" />
-							</div>
-							<div class="form-group">
-								<label :for="'conn-clientsecret-' + index">{{ t('intravox', 'OAuth2 Client Secret') }}</label>
-								<input :id="'conn-clientsecret-' + index" v-model="conn.clientSecret" type="password" :placeholder="conn.hasClientCredentials ? t('intravox', '(unchanged)') : t('intravox', 'Client secret from LMS')" />
-							</div>
-							<div class="form-group full-width">
-								<label class="field-hint">
-									{{ t('intravox', 'Redirect URI:') }}
-									<code>{{ callbackUrl }}</code>
-								</label>
-							</div>
-							<div class="form-group">
-								<label class="checkbox-label">
-									<input type="checkbox" v-model="conn.oidcAutoConnect" />
-									{{ t('intravox', 'OIDC auto-connect (zero-click SSO)') }}
-								</label>
-								<span class="field-hint">{{ t('intravox', 'Enable if the LMS uses the same identity provider as Nextcloud.') }}</span>
-							</div>
-						</template>
-						<div class="form-group">
-							<label class="checkbox-label">
-								<input type="checkbox" v-model="conn.active" />
-								{{ t('intravox', 'Active') }}
-							</label>
-						</div>
+					</div>
+					<!-- Test connection -->
+					<div class="connection-test">
+						<NcButton type="tertiary" :disabled="!conn.id || testingConnection === index" @click="testFeedConnection(index)">
+							<template #icon>
+								<span v-if="testingConnection === index" class="icon-loading-small" role="status" :aria-label="t('intravox', 'Loading')"></span>
+							</template>
+							{{ testingConnection === index ? t('intravox', 'Testing...') : t('intravox', 'Test connection') }}
+						</NcButton>
+						<span v-if="!conn.id" class="field-hint">{{ t('intravox', 'Save connections first to test') }}</span>
+					</div>
+					<NcNoteCard v-if="testResults[conn.id] && testResults[conn.id].success" type="success" class="connection-test-result">
+						{{ t('intravox', 'Connection OK') }} — {{ testResults[conn.id].count }} {{ t('intravox', 'items') }}
+					</NcNoteCard>
+					<NcNoteCard v-if="testResults[conn.id] && testResults[conn.id].warning" type="warning" class="connection-test-result">
+						{{ testResults[conn.id].warning }}
+					</NcNoteCard>
+					<NcNoteCard v-if="testResults[conn.id] && !testResults[conn.id].success" type="error" class="connection-test-result">
+						{{ testResults[conn.id].error }}
+					</NcNoteCard>
 					</div>
 				</div>
 
@@ -890,6 +1040,14 @@
 					<NcButton type="primary" @click="saveFeedConnections" :disabled="feedConnectionsSaving">
 						{{ feedConnectionsSaving ? t('intravox', 'Saving...') : t('intravox', 'Save connections') }}
 					</NcButton>
+					<span class="feed-connection-actions-spacer"></span>
+					<NcButton type="tertiary" @click="exportFeedConnections" :disabled="feedConnections.length === 0">
+						{{ t('intravox', 'Export') }}
+					</NcButton>
+					<NcButton type="tertiary" @click="$refs.importConnectionsFile.click()">
+						{{ t('intravox', 'Import') }}
+					</NcButton>
+					<input ref="importConnectionsFile" type="file" accept=".json" style="display:none" @change="importFeedConnections" />
 				</div>
 			</div>
 		</div>
@@ -912,7 +1070,7 @@
 						:disabled="scanningOrphaned"
 						@click="scanOrphanedFolders">
 						<template #icon>
-							<span v-if="scanningOrphaned" class="icon-loading-small"></span>
+							<span v-if="scanningOrphaned" class="icon-loading-small" role="status" :aria-label="t('intravox', 'Loading')"></span>
 							<DatabaseSearch v-else :size="20" />
 						</template>
 						{{ scanningOrphaned ? t('intravox', 'Scanning...') : t('intravox', 'Scan for Orphaned Data') }}
@@ -1061,7 +1219,7 @@
 </template>
 
 <script>
-import { NcButton, NcDialog, NcNoteCard, NcCheckboxRadioSwitch, NcProgressBar } from '@nextcloud/vue'
+import { NcButton, NcDialog, NcNoteCard, NcCheckboxRadioSwitch, NcProgressBar, NcActions, NcActionButton } from '@nextcloud/vue'
 import { showSuccess, showError, showWarning } from '@nextcloud/dialogs'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
@@ -1093,6 +1251,8 @@ export default {
 		NcNoteCard,
 		NcCheckboxRadioSwitch,
 		NcProgressBar,
+		NcActions,
+		NcActionButton,
 		PackageVariant,
 		Video,
 		OpenInNew,
@@ -1130,8 +1290,9 @@ export default {
 				{ value: 'confluence', label: 'Confluence' },
 				{ value: 'sharepoint', label: 'SharePoint (Graph API)' },
 				{ value: 'openproject', label: 'OpenProject' },
-				{ value: 'afas', label: 'AFAS' },
-				{ value: 'topdesk', label: 'TOPdesk' },
+				// Tijdelijk verborgen - nog niet getest:
+				// { value: 'afas', label: 'AFAS' },
+				// { value: 'topdesk', label: 'TOPdesk' },
 				{ value: 'custom', label: 'Custom' },
 			],
 			exportSubTab: 'import', // Default import sub-tab
@@ -1146,6 +1307,11 @@ export default {
 			cleaningStart: null,
 			cleanStartDialogVisible: false,
 			cleanStartLanguageCode: null,
+			cleanStartConfirmText: '',
+			removeConnectionDialogVisible: false,
+			removeConnectionIndex: null,
+			importDialogVisible: false,
+			importPreview: null,
 			// Video domains from server
 			videoDomains: Array.isArray(this.initialState.videoDomains)
 				? [...this.initialState.videoDomains]
@@ -1217,10 +1383,14 @@ export default {
 			// External feed connections
 			feedConnections: [],
 			feedConnectionsSaving: false,
+			testingConnection: null,
+			testResults: {},
 			// Orphaned data management
 			orphanedFolders: [],
 			orphanedScanned: false,
 			scanningOrphaned: false,
+			orphanedBannerCount: 0,
+			orphanedBannerDismissed: false,
 			// Migrate dialog
 			migrateDialogVisible: false,
 			migrateFolder: null,
@@ -1266,6 +1436,11 @@ export default {
 			if (!this.cleanStartLanguageCode) return ''
 			const langData = this.languages.find(l => l.code === this.cleanStartLanguageCode)
 			return langData?.name || this.cleanStartLanguageCode
+		},
+		removeConnectionName() {
+			if (this.removeConnectionIndex === null) return ''
+			const conn = this.feedConnections[this.removeConnectionIndex]
+			return conn?.name || this.t('intravox', 'this connection')
 		},
 		// Get custom domains (domains not in knownServices)
 		customDomains() {
@@ -1320,9 +1495,13 @@ export default {
 		activeTab(newTab) {
 			this.exportComplete = false
 			this.importResult = null
-			// Load MetaVox fields when switching to publication tab
 			if (newTab === 'publication' && this.metavoxAvailable && this.metavoxFields.length === 0) {
 				this.loadMetavoxFields()
+			}
+			// Auto-test saved connections once when first opening External Feeds tab
+			if (newTab === 'feeds' && !this._connectionsTested) {
+				this._connectionsTested = true
+				this.testAllConnections()
 			}
 		},
 		// Clear success messages when switching export sub-tabs
@@ -1340,17 +1519,22 @@ export default {
 				this.feedConnections = connections.map(c => ({
 					...c,
 					token: '',
-					hasToken: true,
+					hasToken: c.hasToken || false,
 					clientSecret: '',
 					hasClientCredentials: c.hasClientCredentials || false,
 					authMode: c.authMode || 'token',
 					clientId: c.clientId || '',
 					oidcAutoConnect: c.oidcAutoConnect || false,
+					tenantId: c.tenantId || '',
+					siteUrl: c.siteUrl || '',
 					customEndpoint: c.customEndpoint || '',
+					jiraEmail: c.jiraEmail || '',
 					authMethod: c.authMethod || 'bearer',
 					apiKeyHeader: c.apiKeyHeader || '',
 					responseMapping: c.responseMapping || { items: '', title: 'title', url: 'url', excerpt: '', date: '', image: '', author: '' },
 					customHeaders: (c.customHeaders || []).map(h => ({ key: h.key || '', value: h.value || '' })),
+					_expanded: false,
+					_showAdvanced: false,
 				}))
 			} catch (e) {
 				this.feedConnections = []
@@ -1370,22 +1554,214 @@ export default {
 				clientSecret: '',
 				hasClientCredentials: false,
 				oidcAutoConnect: false,
+				tenantId: '',
+				siteUrl: '',
 				customEndpoint: '',
+				jiraEmail: '',
 				authMethod: 'bearer',
 				apiKeyHeader: '',
 				responseMapping: { items: '', title: 'title', url: 'url', excerpt: '', date: '', image: '', author: '' },
 				customHeaders: [],
+				_expanded: true,
+				_showAdvanced: false,
 			})
 		},
+		async testAllConnections() {
+			// Sequentially test saved connections in the background (no UI blocking)
+			for (let i = 0; i < this.feedConnections.length; i++) {
+				const conn = this.feedConnections[i]
+				if (!conn.id) continue // skip unsaved
+				if (this.testResults[conn.id] !== undefined) continue // skip already tested
+				await this.testFeedConnection(i)
+			}
+		},
+		async testFeedConnection(index) {
+			const conn = this.feedConnections[index]
+			if (!conn.id) return
+			this.testingConnection = index
+			this.testResults = { ...this.testResults, [conn.id]: undefined }
+			try {
+				const params = new URLSearchParams({
+					sourceType: 'connection',
+					connectionId: conn.id,
+				})
+				const response = await axios.get(generateUrl(`/apps/intravox/api/feed/preview?${params}`))
+				if (response.data.error) {
+					this.testResults = { ...this.testResults, [conn.id]: { success: false, error: response.data.error } }
+				} else {
+					const items = response.data.items || []
+					// Warn if auth is configured but no token is set — data may be public-only
+					const needsToken = conn.authMethod && conn.authMethod !== 'none' && conn.authMethod !== 'client_credentials'
+					const noToken = !conn.hasToken && !conn.token
+					const warning = (needsToken && noToken)
+						? this.t('intravox', 'No API token configured — showing public data only.')
+						: null
+					this.testResults = { ...this.testResults, [conn.id]: { success: true, count: items.length, warning } }
+				}
+			} catch (e) {
+				this.testResults = { ...this.testResults, [conn.id]: { success: false, error: e.response?.data?.error || e.message } }
+			} finally {
+				this.testingConnection = null
+			}
+		},
 		removeFeedConnection(index) {
-			this.feedConnections.splice(index, 1)
+			this.removeConnectionIndex = index
+			this.removeConnectionDialogVisible = true
+		},
+		confirmRemoveConnection() {
+			if (this.removeConnectionIndex !== null) {
+				this.feedConnections.splice(this.removeConnectionIndex, 1)
+			}
+			this.removeConnectionDialogVisible = false
+			this.removeConnectionIndex = null
+		},
+		exportFeedConnections() {
+			// Export connections as JSON (strip internal/sensitive fields)
+			const exportData = this.feedConnections.map(conn => ({
+				name: conn.name,
+				type: conn.type,
+				baseUrl: conn.baseUrl,
+				active: conn.active,
+				authMode: conn.authMode,
+				oidcAutoConnect: conn.oidcAutoConnect,
+				tenantId: conn.tenantId,
+				siteUrl: conn.siteUrl,
+				customEndpoint: conn.customEndpoint,
+				jiraEmail: conn.jiraEmail,
+				authMethod: conn.authMethod,
+				apiKeyHeader: conn.apiKeyHeader,
+				responseMapping: conn.responseMapping,
+				customHeaders: (conn.customHeaders || []).filter(h => h.key),
+			}))
+			const json = JSON.stringify(exportData, null, 2)
+			const blob = new Blob([json], { type: 'application/json' })
+			const url = URL.createObjectURL(blob)
+			const a = document.createElement('a')
+			a.href = url
+			a.download = 'intravox-feed-connections.json'
+			a.click()
+			URL.revokeObjectURL(url)
+			showSuccess(this.t('intravox', 'Exported {count} connection(s)', { count: exportData.length }))
+		},
+		importFeedConnections(event) {
+			const file = event.target.files?.[0]
+			if (!file) return
+			const reader = new FileReader()
+			reader.onload = (e) => {
+				try {
+					const data = JSON.parse(e.target.result)
+					if (!Array.isArray(data)) {
+						showError(this.t('intravox', 'Invalid file: expected an array of connections'))
+						return
+					}
+					// Build preview with duplicate detection
+					const existingNames = new Set(this.feedConnections.map(c => c.name.toLowerCase()))
+					const items = data.map(conn => ({
+						...conn,
+						name: conn.name || '',
+						type: conn.type || 'custom',
+						duplicate: existingNames.has((conn.name || '').toLowerCase()),
+					}))
+					this.importPreview = {
+						total: items.length,
+						newCount: items.filter(c => !c.duplicate).length,
+						items,
+						rawData: data,
+					}
+					this.importDialogVisible = true
+				} catch (err) {
+					showError(this.t('intravox', 'Failed to parse file: {error}', { error: err.message }))
+				}
+			}
+			reader.readAsText(file)
+			event.target.value = ''
+		},
+		confirmImportConnections() {
+			if (!this.importPreview) return
+			const existingNames = new Set(this.feedConnections.map(c => c.name.toLowerCase()))
+			let added = 0
+			for (const conn of this.importPreview.rawData) {
+				const name = (conn.name || '').toLowerCase()
+				if (name && existingNames.has(name)) continue
+				existingNames.add(name)
+				this.feedConnections.push({
+					id: '',
+					name: conn.name || '',
+					type: conn.type || 'custom',
+					baseUrl: conn.baseUrl || '',
+					token: '',
+					active: conn.active ?? true,
+					hasToken: false,
+					authMode: conn.authMode || 'token',
+					clientId: '',
+					clientSecret: '',
+					hasClientCredentials: false,
+					oidcAutoConnect: conn.oidcAutoConnect ?? false,
+					tenantId: conn.tenantId || '',
+					siteUrl: conn.siteUrl || '',
+					customEndpoint: conn.customEndpoint || '',
+					jiraEmail: conn.jiraEmail || '',
+					authMethod: conn.authMethod || 'bearer',
+					apiKeyHeader: conn.apiKeyHeader || '',
+					responseMapping: conn.responseMapping || { items: '', title: 'title', url: 'url', excerpt: '', date: '', image: '', author: '' },
+					customHeaders: (conn.customHeaders || []).map(h => ({ key: h.key || '', value: h.value || '' })),
+					_expanded: false,
+					_showAdvanced: false,
+				})
+				added++
+			}
+			this.importDialogVisible = false
+			this.importPreview = null
+			showSuccess(this.t('intravox', 'Imported {count} connection(s). Enter API tokens and save.', { count: added }))
+		},
+		isConnectionConfigured(conn) {
+			return this.getConfigStatus(conn).configured
+		},
+		getConfigStatus(conn) {
+			// Test succeeded
+			if (conn.id && this.testResults[conn.id]?.success) {
+				return { configured: true, class: 'configured', icon: '✓', label: this.t('intravox', 'Configured') }
+			}
+			// No auth needed
+			if (conn.authMethod === 'none') {
+				return { configured: true, class: 'configured', icon: '✓', label: this.t('intravox', 'Configured') }
+			}
+			// Client credentials (SharePoint)
+			if (conn.authMethod === 'client_credentials') {
+				const ok = conn.hasClientCredentials || (conn.clientId && conn.clientSecret && conn.tenantId)
+				return ok
+					? { configured: true, class: 'configured', icon: '✓', label: this.t('intravox', 'Configured') }
+					: { configured: false, class: 'not-configured', icon: '✗', label: this.t('intravox', 'Credentials missing') }
+			}
+			// LMS with OAuth2 — check if at least clientId+secret or admin token
+			if (['moodle', 'canvas', 'brightspace'].includes(conn.type)) {
+				if (conn.authMode === 'oauth2' || conn.authMode === 'both') {
+					const hasOAuth = conn.hasClientCredentials || (conn.clientId && conn.clientSecret)
+					const hasToken = conn.hasToken || !!conn.token
+					if (hasOAuth || hasToken) {
+						return { configured: true, class: 'configured', icon: '✓', label: this.t('intravox', 'Configured') }
+					}
+					return { configured: false, class: 'not-configured', icon: '✗', label: this.t('intravox', 'Credentials missing') }
+				}
+			}
+			// Bearer token / API key / basic auth
+			if (conn.hasToken || !!conn.token) {
+				return { configured: true, class: 'configured', icon: '✓', label: this.t('intravox', 'Configured') }
+			}
+			return { configured: false, class: 'not-configured', icon: '✗', label: this.t('intravox', 'Token missing') }
+		},
+		getPresetLabel(type) {
+			const preset = this.connectionPresets.find(p => p.value === type)
+			if (preset) return preset.label
+			// Backwards compat for old 'custom_rest_api' type
+			if (type === 'custom_rest_api') return 'Custom'
+			return type
 		},
 		applyPreset(conn) {
 			const presets = {
 				jira: {
-					authMethod: 'bearer',
 					customEndpoint: '/rest/api/2/search?jql=ORDER+BY+updated+DESC&maxResults=20',
-					responseMapping: { items: 'issues', title: 'fields.summary', url: 'self', excerpt: 'fields.description', date: 'fields.updated', author: 'fields.assignee.displayName', image: '' },
+					responseMapping: { items: 'issues', title: 'fields.summary', url: 'key', excerpt: 'fields.description', date: 'fields.updated', author: 'fields.assignee.displayName', image: '' },
 				},
 				confluence: {
 					authMethod: 'bearer',
@@ -1393,12 +1769,11 @@ export default {
 					responseMapping: { items: 'results', title: 'title', url: '_links.webui', excerpt: '', date: 'history.lastUpdated.when', author: 'history.lastUpdated.by.displayName', image: '' },
 				},
 				sharepoint: {
-					authMethod: 'bearer',
-					customEndpoint: '/v1.0/sites/root/pages?$orderby=lastModifiedDateTime+desc&$top=10',
-					responseMapping: { items: 'value', title: 'title', url: 'webUrl', excerpt: '', date: 'lastModifiedDateTime', author: 'lastModifiedBy.user.displayName', image: '' },
+					baseUrl: 'https://graph.microsoft.com',
+					authMethod: 'client_credentials',
 				},
 				openproject: {
-					authMethod: 'bearer',
+					authMethod: 'basic',
 					customEndpoint: '/api/v3/work_packages?sortBy=[["updatedAt","desc"]]&pageSize=20',
 					responseMapping: { items: '_embedded.elements', title: 'subject', url: '_links.self.href', excerpt: 'description.raw', date: 'updatedAt', author: '_links.assignee.title', image: '' },
 				},
@@ -1415,15 +1790,44 @@ export default {
 			}
 			const preset = presets[conn.type]
 			if (preset) {
-				conn.authMethod = preset.authMethod || 'bearer'
+				conn.authMethod = preset.authMethod || this.detectJiraAuth(conn) || 'bearer'
 				conn.customEndpoint = preset.customEndpoint || ''
 				conn.responseMapping = { ...conn.responseMapping, ...preset.responseMapping }
+				if (preset.baseUrl) {
+					conn.baseUrl = preset.baseUrl
+				}
 			}
 			// Reset custom fields for LMS types (they don't use custom endpoint/mapping)
 			if (['moodle', 'canvas', 'brightspace'].includes(conn.type)) {
 				conn.customEndpoint = ''
 				conn.responseMapping = { items: '', title: 'title', url: 'url', excerpt: '', date: '', image: '', author: '' }
 			}
+		},
+		isJiraCloud(conn) {
+			return conn.type === 'jira' && (conn.baseUrl || '').toLowerCase().includes('.atlassian.net')
+		},
+		detectJiraAuth(conn) {
+			if (conn.type !== 'jira') return null
+			return this.isJiraCloud(conn) ? 'basic' : 'bearer'
+		},
+		onBaseUrlInput(conn) {
+			if (conn.type === 'jira') {
+				conn.authMethod = this.detectJiraAuth(conn)
+				conn.customEndpoint = this.isJiraCloud(conn)
+					? '/rest/api/3/search/jql?jql=updated+>=+-30d+ORDER+BY+updated+DESC&maxResults=20'
+					: '/rest/api/2/search?jql=ORDER+BY+updated+DESC&maxResults=20'
+			}
+		},
+		handleHeaderClick(conn, event) {
+			// Don't toggle expand when clicking interactive elements (toggle switch, remove button)
+			if (event.target.closest('.checkbox-radio-switch, .checkbox-radio-switch__input, .checkbox-radio-switch__icon, .checkbox-radio-switch__content, .connection-remove')) {
+				return
+			}
+			conn._expanded = !conn._expanded
+		},
+		async toggleConnectionActive(conn, value) {
+			conn.active = value
+			await this.saveFeedConnections()
 		},
 		async saveFeedConnections() {
 			this.feedConnectionsSaving = true
@@ -1672,6 +2076,7 @@ export default {
 		},
 		showCleanStartDialog(language) {
 			this.cleanStartLanguageCode = language
+			this.cleanStartConfirmText = ''
 			this.cleanStartDialogVisible = true
 		},
 		async confirmCleanStart() {
@@ -2015,6 +2420,15 @@ export default {
 			return names[lang] || lang
 		},
 		// Orphaned data management methods
+		async checkOrphanedData() {
+			try {
+				const response = await axios.get(generateUrl('/apps/intravox/api/orphaned/scan'))
+				const folders = response.data.folders || []
+				this.orphanedBannerCount = folders.length
+			} catch (e) {
+				// Silent — banner just won't show
+			}
+		},
 		async scanOrphanedFolders() {
 			this.scanningOrphaned = true
 			try {
@@ -2096,6 +2510,7 @@ export default {
 		this.loadExportLanguages()
 		this.loadLicenseStats()
 		this.loadFeedConnections()
+		this.checkOrphanedData()
 		// Prevent accidental navigation during export (use bound handler for proper cleanup)
 		this.boundBeforeUnloadHandler = this.handleBeforeUnload.bind(this)
 		window.addEventListener('beforeunload', this.boundBeforeUnloadHandler)
@@ -3158,57 +3573,225 @@ export default {
 	margin: 4px 0;
 }
 
-/* Feed connection cards */
-.feed-connection-card {
+/* Connection cards */
+.connection-card {
 	border: 1px solid var(--color-border);
 	border-radius: var(--border-radius-large);
-	padding: 16px;
-	margin-bottom: 12px;
+	margin-bottom: 8px;
+	background: var(--color-main-background);
+	overflow: hidden;
+}
+
+.connection-card--expanded {
 	background: var(--color-background-hover);
 }
 
-.feed-connection-header {
+.connection-card--inactive {
+	opacity: 0.6;
+}
+
+.connection-card--inactive .connection-name {
+	text-decoration: line-through;
+}
+
+.connection-header {
 	display: flex;
-	justify-content: space-between;
 	align-items: center;
-	margin-bottom: 12px;
+	gap: 10px;
+	padding: 10px 12px;
+	cursor: pointer;
+	user-select: none;
 }
 
-.feed-connection-header h3 {
-	margin: 0;
-	font-size: 15px;
+.connection-header:hover {
+	background: var(--color-background-hover);
 }
 
-.feed-connection-fields {
-	display: grid;
-	grid-template-columns: 1fr 1fr;
+.connection-badge.configured {
+	color: var(--color-success-text, #2d7a3a);
+	background: var(--color-success-element-light, color-mix(in srgb, var(--color-success) 15%, transparent));
+}
+
+.connection-badge.not-configured {
+	color: var(--color-warning-text, #945a00);
+	background: var(--color-warning-element-light, color-mix(in srgb, var(--color-warning) 15%, transparent));
+}
+
+
+.connection-name {
+	font-weight: 600;
+	font-size: 14px;
+	color: var(--color-main-text);
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.connection-type {
+	font-size: 12px;
+	color: var(--color-text-maxcontrast);
+	flex-shrink: 0;
+}
+
+.connection-badge {
+	font-size: 11px;
+	font-weight: 500;
+	flex-shrink: 0;
+	padding: 2px 8px;
+	border-radius: var(--border-radius-pill, 12px);
+	color: var(--color-text-maxcontrast);
+	white-space: nowrap;
+}
+
+.connection-chevron {
+	font-size: 12px;
+	color: var(--color-text-maxcontrast);
+	flex-shrink: 0;
+	width: 16px;
+	text-align: center;
+}
+
+.connection-remove {
+	background: none;
+	border: none;
+	color: var(--color-text-maxcontrast);
+	cursor: pointer;
+	font-size: 20px;
+	line-height: 1;
+	padding: 0 4px;
+	border-radius: var(--border-radius);
+	flex-shrink: 0;
+}
+
+.connection-remove:hover {
+	color: var(--color-error);
+	background: var(--color-background-hover);
+}
+
+.connection-body {
+	padding: 0 16px 16px;
+}
+
+.connection-test {
+	display: flex;
+	align-items: center;
 	gap: 12px;
+	padding: 12px 0 4px;
+	border-top: 1px solid var(--color-border);
+	margin-top: 12px;
 }
 
-.feed-connection-fields .form-group {
+.connection-test-result {
+	margin-top: 8px;
+}
+
+.feed-connection-actions-spacer {
+	flex: 1;
+}
+
+.import-preview-list {
+	margin: 8px 0 12px;
+	padding-left: 20px;
+}
+
+.import-preview-list li {
+	padding: 4px 0;
+}
+
+.import-preview-list .is-duplicate {
+	opacity: 0.5;
+	text-decoration: line-through;
+}
+
+.import-duplicate-badge {
+	font-size: 11px;
+	color: var(--color-text-maxcontrast);
+	font-style: italic;
+	margin-left: 6px;
+}
+
+.advanced-toggle {
+	display: inline-block;
+	padding: 8px 0;
+	margin-top: 8px;
+	background: none;
+	border: none;
+	cursor: pointer;
+	color: var(--color-primary-element);
+	font-size: 13px;
+	font-weight: 500;
+}
+
+.advanced-toggle:hover {
+	text-decoration: underline;
+}
+
+.advanced-fields {
+	margin-top: 4px;
+}
+
+.clean-start-confirm {
+	margin-top: 16px;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.clean-start-confirm-input {
+	max-width: 200px;
+	padding: 6px 10px;
+	border: 2px solid var(--color-error);
+	border-radius: var(--border-radius);
+	font-size: 14px;
+	font-weight: 600;
+	letter-spacing: 2px;
+	text-transform: uppercase;
+}
+
+.connection-fields .form-group {
 	display: flex;
 	flex-direction: column;
 	gap: 4px;
 }
 
-.feed-connection-fields label {
+.connection-fields label {
 	font-size: 13px;
 	font-weight: 600;
 }
 
-.feed-connection-fields .form-group-heading {
+.fields-grid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 12px;
+}
+
+.fields-grid .full-width {
+	grid-column: 1 / -1;
+}
+
+.field-section {
+	border-top: 1px solid var(--color-border);
+	padding-top: 12px;
+	margin-top: 12px;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.field-section-title {
 	font-size: 14px;
 	font-weight: 600;
 	color: var(--color-main-text);
-	margin-top: 8px;
-	padding-top: 8px;
-	border-top: 1px solid var(--color-border);
+	margin-bottom: 4px;
 }
 
 .custom-header-row {
 	display: flex;
 	gap: 8px;
 	align-items: center;
+	margin-top: 4px;
 }
 
 .custom-header-row .header-key {
@@ -3234,16 +3817,25 @@ export default {
 	color: var(--color-primary-element-text);
 }
 
-.feed-connection-fields input,
-.feed-connection-fields select {
+.connection-fields input,
+.connection-fields select {
+	width: 100%;
 	padding: 8px 12px;
 	border: 1px solid var(--color-border);
 	border-radius: var(--border-radius);
 	background: var(--color-main-background);
+	color: var(--color-main-text);
 	font-size: 14px;
+	box-sizing: border-box;
 }
 
-.feed-connection-fields .checkbox-label {
+.connection-fields input[type="password"],
+.connection-fields input[type="url"],
+.connection-fields input[type="text"] {
+	min-width: 0;
+}
+
+.connection-fields .checkbox-label {
 	display: flex;
 	align-items: center;
 	gap: 8px;
@@ -3251,22 +3843,44 @@ export default {
 	cursor: pointer;
 }
 
-.feed-connection-fields .form-group.full-width {
-	grid-column: 1 / -1;
+.connection-fields :deep(.checkbox-radio-switch) {
+	width: auto !important;
 }
 
-.feed-connection-fields .field-hint {
+.connection-fields :deep(.checkbox-radio-switch__label) {
+	min-height: auto !important;
+	padding: 4px 0 !important;
+}
+
+.connection-fields .field-hint {
 	font-size: 12px;
 	color: var(--color-text-maxcontrast);
 	font-style: italic;
 }
 
-.feed-connection-fields .field-hint code {
+.connection-fields .field-hint code {
 	font-style: normal;
 	background: var(--color-background-dark);
 	padding: 2px 6px;
 	border-radius: var(--border-radius-small);
 	user-select: all;
+}
+
+.connection-fields .link-button {
+	align-self: flex-start;
+	background: none;
+	border: 1px solid var(--color-border);
+	border-radius: var(--border-radius);
+	color: var(--color-main-text);
+	cursor: pointer;
+	font-size: 13px;
+	padding: 6px 12px;
+}
+
+.connection-fields .link-button:hover {
+	background: var(--color-background-hover);
+	border-color: var(--color-primary);
+	color: var(--color-primary);
 }
 
 .feed-connection-actions {

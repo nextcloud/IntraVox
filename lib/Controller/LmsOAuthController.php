@@ -100,7 +100,6 @@ class LmsOAuthController extends Controller {
      * Returns the authorization URL for the frontend to redirect to.
      *
      * @NoAdminRequired
-     * @NoCSRFRequired
      *
      * @return DataResponse
      */
@@ -239,7 +238,6 @@ class LmsOAuthController extends Controller {
      * Save a manually entered API token (e.g. Moodle web service token).
      *
      * @NoAdminRequired
-     * @NoCSRFRequired
      *
      * @return DataResponse
      */
@@ -311,7 +309,6 @@ class LmsOAuthController extends Controller {
      * Disconnect a user's LMS account (delete their token).
      *
      * @NoAdminRequired
-     * @NoCSRFRequired
      *
      * @return DataResponse
      */

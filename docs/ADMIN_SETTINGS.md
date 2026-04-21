@@ -115,25 +115,97 @@ Editors can configure these options per video:
 
 ## External Feeds Tab
 
-The External Feeds tab lets administrators configure connections to learning management systems (Canvas, Moodle, Brightspace) and manage how users authenticate with these systems. These connections are used by the [Feed Widget](FEED_WIDGET.md) on IntraVox pages.
+The External Feeds tab lets administrators configure connections to external systems — learning management systems (Canvas, Moodle, Brightspace), project management (Jira, OpenProject), knowledge bases (Confluence), collaboration (SharePoint), and any custom REST API. These connections are used by the [Feed Widget](FEED_WIDGET.md) on IntraVox pages.
+
+> **Why configure feed connections when Nextcloud integration apps exist?**
+>
+> Many of these systems (OpenProject, Jira, etc.) have their own Nextcloud integration apps. Those apps serve *individual users* — linking files, searching tasks, receiving personal notifications. Feed connections serve a different purpose: they let you show data from these systems on *intranet pages* visible to entire teams or departments. This is organizational awareness, not personal productivity. See the [Architecture design principles](ARCHITECTURE.md#organizational-communication-not-personal-productivity) for details.
 
 ### Adding a Connection
 
 1. Go to **Admin Settings** → **IntraVox** → **External Feeds**
 2. Click **+ Add connection**
-3. Fill in the connection details
+3. Fill in the connection details (for non-LMS types, advanced options like endpoint path, response mapping, and custom headers are behind the **Advanced options** toggle)
 4. Click **Save connections**
+
+### Testing a Connection
+
+After saving, click **Test connection** on any connection card to verify the credentials and endpoint work. The result shows:
+- **Connection OK — N items** if the connection works
+- An error message describing the issue (authentication, permissions, network) if it fails
+
+Connections must be saved before testing (the server needs the stored configuration to make the API call).
+
+### Removing a Connection
+
+Click the **×** button on a connection card. A confirmation dialog shows the connection name — removal takes effect after clicking **Save connections**.
+
+### Enabling and Disabling Connections
+
+Each connection has an **active/inactive toggle** in the connection header. Use this to temporarily disable a connection without deleting it.
+
+**When a connection is disabled:**
+- The toggle appears as off (grey) and the connection card is visually dimmed
+- Existing widgets using this connection show the message: *"This connection is currently disabled by an administrator."*
+- The connection is not available for new widgets in the widget editor
+- All connection settings (tokens, URLs, mappings) are preserved
+
+**When a connection is re-enabled:**
+- All widgets that were configured with this connection automatically resume showing data
+- No reconfiguration of widgets is needed — they keep their connectionId reference
+- Data appears after the next refresh (up to 15 minutes due to server-side caching, or immediately after a page reload)
+
+Toggling the active state saves immediately — no need to click **Save connections** separately.
+
+![Disabling a Canvas connection and the resulting message on the page](../screenshots/feed-disable-feed.png)
+
+### Exporting and Importing Connections
+
+Use the **Export** and **Import** buttons at the bottom of the External Feeds tab to transfer connection configurations between Nextcloud instances.
+
+**Export** downloads all connections as `intravox-feed-connections.json`. This includes configuration only — **API tokens, client secrets, and client IDs are never exported** for security reasons.
+
+**Import** opens a preview dialog showing:
+- All connections found in the file
+- Which ones already exist (matched by name, shown as duplicates)
+- How many new connections will be added
+
+After confirming, the new connections are added with empty token fields. Enter API tokens and click **Save connections**.
 
 ### Connection Fields
 
 | Field | Description | Required |
 |-------|-------------|----------|
 | **Name** | Display name for this connection (e.g., "Canvas University") | Yes |
-| **Type** | LMS platform: Moodle, Canvas, or Brightspace | Yes |
-| **Base URL** | The root URL of the LMS instance (e.g., `https://canvas.example.com`) | Yes |
-| **API Token (admin fallback)** | A shared API token used as fallback when users haven't connected their own account | No |
-| **User authentication** | How users authenticate — see below | Yes |
+| **Type** | Platform type: Canvas, Moodle, Brightspace, Jira, Confluence, SharePoint, OpenProject, or Custom | Yes |
+| **Base URL** | The root URL of the system (e.g., `https://canvas.example.com`) | Yes |
 | **Active** | Enable or disable this connection | Yes |
+
+For **LMS types** (Canvas, Moodle, Brightspace), additional fields appear:
+
+| Field | Description |
+|-------|-------------|
+| **API Token (admin fallback)** | A shared API token used as fallback when users haven't connected their own account |
+| **User authentication** | How users authenticate — see [Authentication Modes](#user-authentication-modes) below |
+
+For **REST API types** (Jira, Confluence, OpenProject, Custom), additional fields appear:
+
+| Field | Description |
+|-------|-------------|
+| **Endpoint path** | API path appended to the base URL (pre-filled by preset) |
+| **Auth method** | Bearer token, Basic auth, API key (custom header), or No authentication |
+| **API Token** | The API token or credentials. Format depends on auth method (see below) |
+| **Response mapping** | JSON field mapping for title, URL, excerpt, date, image, author (pre-filled by preset) |
+| **Custom request headers** | Extra HTTP headers sent with every request (e.g., `OCS-APIRequest: true`) |
+
+### Auth Method Details (REST API types)
+
+| Auth method | Token format | Example |
+|-------------|-------------|---------|
+| **Bearer token** | Plain API token | `ghp_abc123...` |
+| **Basic auth** | `username:password` (auto-encoded to base64) | `apikey:abc123...` (OpenProject) |
+| **API key** | Plain key + custom header name | Key: `abc123`, Header: `X-API-Key` |
+| **No authentication** | — | Public APIs |
 
 ### User Authentication Modes
 
@@ -186,6 +258,20 @@ Moodle requires the [local_oauth2 plugin](https://moodle.org/plugins/local_oauth
 6. Enter the Client ID and Client Secret in IntraVox
 
 **Alternative: manual tokens.** Set the authentication mode to **Both** and leave OAuth2 fields empty. Users can then enter a personal bearer token from their Brightspace Account Settings.
+
+### Setting Up OpenProject
+
+OpenProject uses Basic authentication with the API v3. The preset pre-fills the endpoint, auth method, and response mapping.
+
+1. In OpenProject, go to **My Account** → **Access tokens**
+2. Click **+ API token** and copy the token (shown only once)
+3. In IntraVox Admin Settings → External Feeds, click **+ Add connection**
+4. Select type **OpenProject**
+5. Enter the **Base URL** (e.g., `https://openproject.example.com`)
+6. Enter the **API Token** as `apikey:<your-token>` (e.g., `apikey:7def51d5...`)
+7. Click **Save connections**
+
+The Feed widget will then show a **Content type** dropdown with options: All work packages, Open, Overdue, Milestones, and Recently updated.
 
 ### OIDC Auto-Connect
 
@@ -244,7 +330,11 @@ To reset demo content to its original state:
 2. Confirm the action
 3. All existing content for that language will be replaced with fresh demo data
 
-> ⚠️ **Warning**: Reinstalling will delete all customizations made to the demo content.
+> **Warning**: Reinstalling will delete all customizations made to the demo content.
+
+### Clean Start
+
+The **Clean Start** button deletes all content for a language and creates a fresh empty homepage. This is an irreversible destructive operation — you must type `DELETE` in the confirmation dialog to proceed.
 
 ---
 

@@ -5,6 +5,8 @@ namespace OCA\IntraVox\Service;
 
 use OCP\Accounts\IAccountManager;
 use OCP\Activity\IManager as IActivityManager;
+use OCP\ICache;
+use OCP\ICacheFactory;
 use OCP\IConfig;
 use OCP\IDBConnection;
 use OCP\IGroupManager;
@@ -47,6 +49,14 @@ class UserService {
         IAccountManager::PROPERTY_BIRTHDATE => ['label' => 'Date of birth', 'type' => 'date'],
     ];
 
+    private ?ICache $cache = null;
+
+    /** Hard cap on users processed in the no-group filter path to prevent OOM/timeouts */
+    private const MAX_FILTER_SCAN = 5000;
+
+    /** Cache TTL for filter results (1 hour) */
+    private const FILTER_CACHE_TTL = 3600;
+
     public function __construct(
         private IUserManager $userManager,
         private IGroupManager $groupManager,
@@ -56,8 +66,13 @@ class UserService {
         private ?IUserStatusManager $userStatusManager = null,
         private ?IConfig $config = null,
         private ?IActivityManager $activityManager = null,
-        private ?IDBConnection $db = null
-    ) {}
+        private ?IDBConnection $db = null,
+        ?ICacheFactory $cacheFactory = null
+    ) {
+        if ($cacheFactory !== null && $cacheFactory->isAvailable()) {
+            $this->cache = $cacheFactory->createDistributed('intravox-people');
+        }
+    }
 
     /**
      * Search users by display name or UID
@@ -144,11 +159,21 @@ class UserService {
             return [];
         }
 
-        $users = [];
+        // Collect user IDs first, then prefetch statuses in batch
+        $groupUsers = [];
+        $userIds = [];
         foreach ($group->getUsers() as $user) {
-            if (count($users) >= $limit) {
+            if (count($groupUsers) >= $limit) {
                 break;
             }
+            $groupUsers[] = $user;
+            $userIds[] = $user->getUID();
+        }
+
+        $this->prefetchStatuses($userIds);
+
+        $users = [];
+        foreach ($groupUsers as $user) {
             $users[] = $this->buildUserProfile($user);
         }
         return $users;
@@ -220,18 +245,47 @@ class UserService {
                 }
             }
         } else {
-            // No group filter - need to iterate all users (less efficient)
-            // Use callForAllUsers instead of callForSeenUsers to include users who haven't logged in yet
-            $maxToCollect = $returnTotal ? PHP_INT_MAX : ($limit + $offset) * 2;
-            $this->userManager->callForAllUsers(function (IUser $user) use (&$users, $filters, $operator, $maxToCollect) {
-                if (count($users) >= $maxToCollect) {
-                    return;
+            // No group filter - need to iterate all users (less efficient).
+            // Apply a hard cap to prevent OOM/timeout on large instances.
+            $maxToCollect = $returnTotal ? self::MAX_FILTER_SCAN : min(($limit + $offset) * 2, self::MAX_FILTER_SCAN);
+
+            // Try cache for this filter combination
+            // Cache is shared, but results depend on which users the requesting user can see
+            // (Nextcloud account visibility settings). Cache is short-lived (1h) and shared
+            // to avoid N×5k profile builds, which is an acceptable trade-off.
+            $filterCacheKey = 'filter_shared_' . md5(json_encode($filters) . $operator . $sortBy . $sortOrder);
+            if ($this->cache !== null) {
+                $cached = $this->cache->get($filterCacheKey);
+                if ($cached !== null) {
+                    $decoded = json_decode($cached, true);
+                    if ($decoded !== null) {
+                        $users = $decoded;
+                    }
                 }
-                $profile = $this->buildUserProfile($user);
-                if ($this->matchesFilters($profile, $filters, $operator)) {
-                    $users[] = $profile;
+            }
+
+            if (empty($users)) {
+                $scanned = 0;
+                $this->userManager->callForAllUsers(function (IUser $user) use (&$users, &$scanned, $filters, $operator, $maxToCollect) {
+                    $scanned++;
+                    if (count($users) >= $maxToCollect) {
+                        return;
+                    }
+                    $profile = $this->buildUserProfile($user);
+                    if ($this->matchesFilters($profile, $filters, $operator)) {
+                        $users[] = $profile;
+                    }
+                });
+
+                // Cache results for subsequent requests
+                if ($this->cache !== null && !empty($users)) {
+                    $this->cache->set($filterCacheKey, json_encode($users), self::FILTER_CACHE_TTL);
                 }
-            });
+
+                if ($scanned >= self::MAX_FILTER_SCAN && count($users) >= $maxToCollect) {
+                    $this->logger->warning('IntraVox: People widget filter scan hit hard cap of ' . self::MAX_FILTER_SCAN . ' users. Consider adding a group filter for better performance.');
+                }
+            }
         }
 
         // Sort results
@@ -449,7 +503,54 @@ class UserService {
      * @param string $userId User ID
      * @return array|null Status info or null if not available
      */
+    /** @var array Request-level cache for user statuses */
+    private array $statusCache = [];
+
+    /**
+     * Prefetch statuses for multiple users in a single call.
+     * Call this before building profiles to populate the cache.
+     *
+     * @param string[] $userIds User IDs to prefetch
+     */
+    public function prefetchStatuses(array $userIds): void {
+        if ($this->userStatusManager === null || empty($userIds)) {
+            return;
+        }
+
+        // Only fetch for uncached users
+        $uncached = array_filter($userIds, fn($id) => !isset($this->statusCache[$id]));
+        if (empty($uncached)) {
+            return;
+        }
+
+        try {
+            $statuses = $this->userStatusManager->getUserStatuses(array_values($uncached));
+            foreach ($statuses as $userId => $status) {
+                $this->statusCache[$userId] = [
+                    'status' => $status->getStatus(),
+                    'message' => $status->getMessage(),
+                    'icon' => $status->getIcon(),
+                ];
+            }
+            // Mark missing users so we don't re-fetch
+            foreach ($uncached as $userId) {
+                if (!isset($this->statusCache[$userId])) {
+                    $this->statusCache[$userId] = null;
+                }
+            }
+        } catch (\Exception $e) {
+            $this->logger->debug('Could not prefetch statuses: {message}', [
+                'message' => $e->getMessage(),
+            ]);
+        }
+    }
+
     private function getUserStatus(string $userId): ?array {
+        // Return from cache if available
+        if (array_key_exists($userId, $this->statusCache)) {
+            return $this->statusCache[$userId];
+        }
+
         if ($this->userStatusManager === null) {
             return null;
         }
@@ -458,11 +559,13 @@ class UserService {
             $statuses = $this->userStatusManager->getUserStatuses([$userId]);
             if (isset($statuses[$userId])) {
                 $status = $statuses[$userId];
-                return [
-                    'status' => $status->getStatus(), // online, away, dnd, invisible, offline
+                $result = [
+                    'status' => $status->getStatus(),
                     'message' => $status->getMessage(),
                     'icon' => $status->getIcon(),
                 ];
+                $this->statusCache[$userId] = $result;
+                return $result;
             }
         } catch (\Exception $e) {
             $this->logger->debug('Could not get status for user {userId}: {message}', [
@@ -471,6 +574,7 @@ class UserService {
             ]);
         }
 
+        $this->statusCache[$userId] = null;
         return null;
     }
 

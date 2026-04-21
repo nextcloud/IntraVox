@@ -4,21 +4,56 @@ All notable changes to IntraVox will be documented in this file.
 
 IntraVox is a Nextcloud intranet page builder.
 
-## [Unreleased]
+## [1.3.0] - 2026-04-21 — Feed widget & performance
 
 ### Added
-- **Feed widget** — New widget type for displaying external content on intranet pages. Supports RSS/Atom feeds and direct LMS API integration with Canvas, Moodle, and Brightspace. Features include: list and grid layouts (2-4 columns), configurable display options (image, date, excerpt, source, author), per-user OAuth2 personalization for LMS content (see enrolled courses, personal deadlines), OIDC auto-connect for zero-click SSO, manual token fallback for Moodle/Brightspace, 15-minute server-side caching, and public share support (`FeedWidget.vue`, `FeedWidgetEditor.vue`, `FeedReaderService.php`, `FeedItem.vue`)
-- **Feed widget: LMS content types** — Each LMS connection supports three content types: News/Announcements (default), My Courses (enrolled courses), and Upcoming Deadlines (assignments due in next 30 days). Content types use native LMS APIs for accurate, real-time data
+- **Feed widget** — New widget type for displaying external content on intranet pages. Supports RSS/Atom feeds and admin-configured connections to external systems (Canvas, Moodle, Brightspace, Jira, Confluence, SharePoint, OpenProject, and custom REST APIs). Features include: list and grid layouts (2-4 columns), configurable display options (image, date, excerpt, source, author), per-user OAuth2 personalization for LMS content, OIDC auto-connect for zero-click SSO, manual token fallback, 15-minute server-side caching, and public share support (`FeedWidget.vue`, `FeedWidgetEditor.vue`, `FeedReaderService.php`, `FeedItem.vue`)
+- **Feed widget: connection presets** — Administrators configure connections in Admin Settings using platform presets that auto-fill endpoint paths, auth methods, and response field mapping. Presets available for Canvas, Moodle, Brightspace, Jira, Confluence, SharePoint, OpenProject, AFAS, TOPdesk, and Custom REST API. Each preset supports platform-specific content types (e.g. News/Courses/Deadlines for LMS, Pages/Documents/Lists for SharePoint, Bugs/Recent/Created for Jira)
+- **Feed widget: content type selection** — Widget editors choose what content to display per connection type. LMS connections offer News/Announcements, My Courses, and Upcoming Deadlines. SharePoint offers Pages/News, Documents, and List items (with library/list selector). Jira offers project filtering and content types (bugs, recent, created). Content type selection happens in the widget editor, not admin settings
+- **Feed widget: SharePoint integration** — Full Microsoft Graph API integration via OAuth2 client_credentials flow. Automatic token acquisition and caching using tenant ID, client ID, and client secret. Supports SharePoint site ID resolution (hostname:/path: format), page/news listing, document libraries, and list items. Admin configures site URL + Entra ID credentials; editors choose content type and library in the widget
+- **Feed widget: image proxy** — Secure HMAC-signed image proxy bypasses Nextcloud CSP restrictions for feed images. Supports JPEG, PNG, GIF, WebP, AVIF, SVG (with sanitization via enshrined/svg-sanitize), and ICO. Daily signature rotation with yesterday grace window. All feed images (RSS, LMS, SharePoint, Jira) are proxied automatically (`FeedReaderController.php`, `FeedReaderService.php`)
 - **Feed widget: OAuth2 account linking** — Users can connect their personal LMS account via OAuth2 popup flow (Canvas, Moodle with local_oauth2 plugin, Brightspace). Connected users see personalized content from their own courses. Token refresh is automatic (`LmsOAuthService.php`, `LmsOAuthController.php`, `LmsTokenService.php`, `OidcTokenBridge.php`)
-- **Feed widget: admin LMS connections** — Administrators configure LMS connections in IntraVox Admin Settings with connection name, type, base URL, API token, and optional OAuth2 credentials. Supports auth modes: shared token, OAuth2 only, or both with fallback
-- **Feed widget: REST API (custom) source type** — Connect to any system with a REST/JSON API (Jira, Confluence, AFAS, TOPdesk, OpenProject, ZGW APIs). Admin configures endpoint, auth method (bearer/apikey/basic/none), and response field mapping via dot-notation JSON paths. No code changes needed per system (`FeedReaderService.php`, `AdminSettings.vue`)
 - **Feed widget: sort and filter** — Feed items can be sorted by date or title (ascending/descending) and filtered by keyword. Filter searches in title, excerpt, and author (case-insensitive). Applied server-side after caching for instant response
 - **Feed widget: custom request headers** — REST API connections support configurable HTTP headers (key-value pairs). Enables Nextcloud OCS API integration (`OCS-APIRequest: true`) and other systems requiring custom headers
 - **Feed widget: design principle** — IntraVox focuses on organizational content (news, team updates, external feeds). Personal Nextcloud data (activities, notifications, recent files, Talk, Deck, Mail) belongs on the Nextcloud Dashboard. IntraVox does not duplicate Dashboard functionality. For organizational Nextcloud data from remote instances, use the REST API (custom) source type with OCS API endpoints
 - **Calendar widget: external ICS feeds** — Editors can add external ICS calendar URLs (e.g. from Moodle, Canvas, Brightspace) directly in the calendar widget. Events from these feeds are visible to all page visitors, including public share viewers. No Nextcloud Calendar subscription required per user. Supports up to 5 ICS feeds per widget with 30-minute caching (`ExternalIcsService.php`, `CalendarWidgetEditor.vue`)
 - **Calendar widget: LMS event deep links** — Clicking an external calendar event opens the event in the source LMS. Supports Canvas (native URL field), Brightspace (URL constructed from UID), and Moodle (URL constructed from UID). Unknown sources link to the feed domain
+- **Feed widget: singleflight lock** — Prevents thundering herd on cache expiry. When the feed cache expires, only the first request fetches from the external source; concurrent requests wait and read from the freshly populated cache. Uses a distributed lock with unique request ID verification (`FeedReaderService.php`)
+- **Feed widget: circuit breaker** — After 3 consecutive failures for a feed source, the circuit breaker opens and returns immediately with "temporarily unavailable". Resets automatically after 5 minutes or on first successful fetch. Prevents cascade failures from unstable external sources
+- **Feed widget: background refresh** — New `FeedRefreshJob` background job proactively refreshes configured feed connections every 10 minutes, before cache expiry. Users almost never trigger a cold fetch. Includes its own circuit breaker to skip failing sources
+- **Feed widget: rate limiting** — `UserRateThrottle(30/min)` on authenticated feed endpoints, `AnonRateThrottle(30/min)` on public share feed endpoint (`FeedReaderController.php`)
+- **Page metadata database index** — New `intravox_page_index` table stores pre-indexed page metadata (title, uniqueId, path, language, status, modification time). Eliminates O(N) filesystem traversals for page listing, tree, and search operations. Updated automatically on page create/update/delete (`PageIndexService.php`, `Version001300Date20260420000000.php`)
+- **Nextcloud search: index-first** — The unified search provider (Ctrl+K) now queries the page metadata index for fast title-based results (~1ms), with fallback to full-text filesystem search for content matches (`PageSearchProvider.php`)
+- **Distributed page tree cache** — Page tree is cached in Redis/APCu (distributed) in addition to the existing in-process static cache. Shared across PHP processes/requests for ~70% reduction in tree response time. Invalidated automatically on page create/update/delete (`PageService.php`)
+- **People widget: scalability guardrails** — Hard cap of 5,000 users on the unscoped filter path to prevent OOM/timeout on large Nextcloud instances. Filter results cached in Redis/APCu for 1 hour. Batch status prefetching reduces API calls from N to 1 (`UserService.php`)
+- **Rate limiting on mutating endpoints** — `UserRateThrottle` added to page create/delete (10/min), bulk operations (5/min), comments (20/min), reactions (30/min), and analytics tracking (60/min). Covers `ApiController`, `BulkController`, `CommentController`, `AnalyticsController`
+- **GDPR user deletion handler** — `UserDeletedListener` automatically cleans up analytics records, page locks, feed tokens, and LMS OAuth tokens when a Nextcloud user is deleted (`UserDeletedListener.php`, `Application.php`)
+- **Audit logging** — Administrative operations logged with `IntraVox Audit:` prefix for SIEM integration: bulk delete/move/update (with page IDs and user), license key changes, organization settings, engagement settings (`BulkController.php`, `LicenseController.php`, `ApiController.php`)
+- **Health check endpoint** — `GET /apps/intravox/api/health` returns app status and version for monitoring and orchestration (Kubernetes, uptime monitoring)
+- **Scalability documentation** — New [SCALABILITY.md](docs/SCALABILITY.md) documenting all performance, caching, resilience, rate limiting, and enterprise features
+- **Admin: connection test button** — "Test connection" button on each feed connection card verifies credentials and endpoint by fetching a preview from the external API
+- **Admin: connection export/import** — Export all feed connections as JSON (without tokens/secrets). Import on another instance with duplicate detection and preview dialog
+- **Admin: connection active/inactive toggle** — Each connection has an NcCheckboxRadioSwitch toggle to temporarily disable it without deleting. Inactive connections show a specific message in widgets ("This connection is currently disabled by an administrator.") and are excluded from the widget editor dropdown. Re-enabling restores all widgets automatically — no reconfiguration needed. Toggle saves immediately
+- **Admin: connection status badges** — Connection cards show configuration status as text badges: "Configured" (green), "Not configured" (orange), "Token missing" (orange), "Credentials missing" (orange). Replaces the previous green/grey dots for better visibility
+- **Admin: connection remove confirmation** — Removing a feed connection shows a Nextcloud-style confirmation dialog instead of a browser prompt
+- **Admin: Clean Start DELETE confirmation** — Destructive "Clean Start" action now requires typing `DELETE` to confirm
+- **Admin: orphaned data banner** — Automatically detects orphaned data on admin panel load and shows a warning banner with link to Maintenance tab
+- **Admin: advanced options collapse** — Endpoint path, response mapping, and custom headers for custom REST API connections are behind an "Advanced options" toggle
+- **Admin: column width warning** — Shows a warning when the configured number of page columns may be too narrow for the available width, with a recommendation for fewer columns
+- **Feed widget: error messages** — Specific error messages for inactive connections, 404 (connection not found), 401 (authentication required), 403 (access denied), and 429 (rate limited) instead of generic "Could not load feed"
 
 ### Changed
+- **Feed widget: HTTP timeout reduced** — Outbound HTTP timeout reduced from 10s to 5s to prevent PHP worker blocking when external sources are slow (`FeedReaderService.php`)
+- **Bundle splitting** — Enabled webpack `splitChunks` to separate vendor code (~2.9 MB) from application code (~220 KB). Main bundle reduced from 3.7 MB to 220 KB. Vendor chunk is shared between main and admin entry points and cached separately by browsers (`webpack.config.js`)
+- **TipTap lazy-loaded** — TipTap editor and all 8 extensions (~240 KB) are loaded dynamically via `import()` on first editor mount. Pages viewed in read-only mode never download the editor code (`InlineTextEditor.vue`)
+- **Widget components lazy-loaded** — All widget components (News, People, Calendar, Feed, Links, InlineTextEditor) loaded via `defineAsyncComponent`. Pages only download the widget types they actually use (`Widget.vue`)
+- **Widget watchers debounced** — Deep watchers on News, People, and Feed widgets debounced with 300ms delay to prevent API call bursts during editor configuration changes (`NewsWidget.vue`, `PeopleWidget.vue`, `FeedWidget.vue`)
+- **Widget initial fetch deferred** — News and Feed widgets use `requestIdleCallback` for initial data fetch, improving perceived page load performance
+- **Page + lock fetch parallelized** — Page content and lock status are now fetched in parallel via `Promise.all` instead of sequentially, eliminating ~100ms waterfall (`App.vue`)
+- **Engagement settings cached** — Engagement settings now use `CacheService` with 5-minute TTL, consistent with navigation and footer caching (`App.vue`)
+- **News widget: collection limit** — Recursive folder scan stops after collecting enough items (default: `max(limit * 4, 200)`) instead of scanning all folders before applying `array_slice` (`PageService.php`)
+- **Tree components: progressive rendering** — PageTreeItem and PageTreeSelectItem render max 50 children per node initially with a "Show more" button for additional items. Prevents DOM bloat with large page hierarchies (`PageTreeItem.vue`, `PageTreeSelectItem.vue`)
+- **Navigation/footer HTTP caching** — Added `Cache-Control: private, max-age=300, must-revalidate` and `ETag` headers to navigation and footer API responses, consistent with the existing feed API pattern (`NavigationController.php`, `FooterController.php`)
 - **Feed widget: unified connection architecture** — Replaced separate source types (Moodle, Canvas, Brightspace, REST API custom) with a single "Connection" concept. Editors choose RSS or Connection; the admin configures connections with presets (Jira, Confluence, SharePoint, OpenProject, AFAS, TOPdesk, Custom, plus LMS types). Presets auto-fill endpoint, auth method, and response mapping. LMS-specific logic (Moodle POST body auth, Canvas context_codes, Brightspace org unit) is preserved internally but hidden from the user. Backwards-compatible with existing connections
 - **Calendar widget: IManager refactor** — Replaced `CalDavBackend` with `OCP\Calendar\IManager` for fetching calendars. This properly handles both regular calendars and ICS subscriptions. Calendar identifiers changed from numeric IDs to string keys (`CalendarService.php`, `CalendarController.php`, `PageService.php`)
 - **Calendar widget: hide ICS subscriptions from selector** — Nextcloud ICS subscriptions are no longer shown in the calendar selector since external feeds are now managed via the dedicated ICS URL field
@@ -27,6 +62,34 @@ IntraVox is a Nextcloud intranet page builder.
 ### Fixed
 - **Calendar widget wrong events shown** — When an ICS subscription had the same numeric ID as a regular calendar, the widget showed events from the wrong calendar. Fixed by switching to unique string keys via IManager
 - **REST API SSRF hardening** — Connection base URL is now re-validated on every fetch request, not just at save time. Prevents SSRF if an admin account is compromised and a malicious URL is injected into stored connection config
+- **Version restore not persisting** — Restoring a page version appeared to work but reverted after a hard refresh. Root cause: the backend reused a stale file node after `IVersionManager::rollback()`, and the frontend masked the issue by showing a version preview instead of the actual restored page. Fixed by re-obtaining a fresh file node after rollback and clearing the version preview after restore
+- **SSRF hardening: LMS connectors** — Added `validateUrl()` with private IP range blocking to Moodle, Canvas, and Brightspace fetch methods. Previously only the generic REST API connector validated URLs at fetch time
+- **SSRF hardening: ICS calendar feeds** — Added private/reserved IP range blocking to `ExternalIcsService::validateUrl()`. Previously only enforced HTTPS without checking for internal network addresses
+- **SSRF hardening: SharePoint & Jira** — Added `validateUrl()` to `resolveSharePointSiteId()` and `getJiraProjects()` to block requests to private IP ranges
+- **SSRF hardening: Confluence API importer** — Added URL validation with private IP range blocking to the Confluence REST API importer's base URL
+- **XXE hardening: Confluence importer** — Added `LIBXML_NONET` flag to `DOMDocument::loadXML()` and `loadHTML()` in the Confluence Storage Format parser to prevent external entity resolution
+- **Token handling: Jira project listing** — Replaced direct admin token decryption with `resolveToken()` for consistent token resolution across all connector methods
+
+### Security
+- **CSP hardened** — Removed `unsafe-eval` from Content Security Policy. The Vue 3 runtime-only build and TipTap editor do not require `eval()`. This was a historical precaution that is no longer needed (`PageController.php`)
+- **HMAC key hardened** — Image proxy signature key now uses `hash('sha256', ...)` for proper 256-bit key derivation instead of string concatenation (`FeedReaderService.php`)
+- **API response size limit** — External API responses larger than 10 MB are rejected before JSON parsing to prevent out-of-memory conditions (`FeedReaderService.php`)
+
+### Accessibility
+- **Feed widget aria-live** — Loading and content states announced to screen readers via `aria-live="polite"` and `role="status"` (`FeedWidget.vue`)
+- **Feed item semantics** — Removed conflicting `role="article"` from feed item `<a>` tags. Added `focus-visible` outline for keyboard navigation (`FeedItem.vue`)
+- **Admin loading spinners** — All loading spinners in admin settings now have `role="status"` and `aria-label="Loading"` for screen reader users (`AdminSettings.vue`)
+- **Connection card keyboard nav** — Feed connection expand/collapse headers are keyboard-accessible with `tabindex`, `role="button"`, `aria-expanded`, and Enter/Space handlers (`AdminSettings.vue`)
+- **Status dot contrast** — Disconnected connection status indicator has a visible border for better contrast on light backgrounds (`AdminSettings.vue`)
+
+### Documentation
+- New [SCALABILITY.md](docs/SCALABILITY.md) — Comprehensive guide to performance, caching, resilience, rate limiting, GDPR, and enterprise features
+- Updated [ARCHITECTURE.md](docs/ARCHITECTURE.md) with scalability section
+- Updated [SECURITY.md](docs/SECURITY.md) with CSP, rate limiting, GDPR, audit logging, and feed widget security sections
+- Updated [ADMIN_GUIDE.md](docs/ADMIN_GUIDE.md) with health check and audit log sections
+- Updated [ADMIN_SETTINGS.md](docs/ADMIN_SETTINGS.md) with connection testing, export/import, enabling/disabling connections, Clean Start confirmation, and advanced options collapse
+- Updated [FEED_WIDGET.md](docs/FEED_WIDGET.md) with RSS example screenshot, SharePoint setup guide (Entra ID app registration), content type selection, error messages table, and screenshots for all connection types
+- Updated [ACCESSIBILITY.md](docs/ACCESSIBILITY.md) with feed widget and admin panel accessibility improvements
 
 ## [1.2.0] - 2026-04-16 — Accessibility & bug fixes
 

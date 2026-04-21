@@ -161,7 +161,11 @@ return [
         // Feed widget API routes
         ['name' => 'feedReader#getFeed', 'url' => '/api/feed/external', 'verb' => 'GET'],
         ['name' => 'feedReader#getPreview', 'url' => '/api/feed/preview', 'verb' => 'GET'],
+        ['name' => 'feedReader#proxyImage', 'url' => '/api/feed/image', 'verb' => 'GET'],
         ['name' => 'feedReader#getCourses', 'url' => '/api/feed/courses/{connectionId}', 'verb' => 'GET'],
+        ['name' => 'feedReader#getSharePointLists', 'url' => '/api/feed/sharepoint-lists/{connectionId}', 'verb' => 'GET'],
+        ['name' => 'feedReader#getJiraProjects', 'url' => '/api/feed/jira-projects/{connectionId}', 'verb' => 'GET'],
+        ['name' => 'feedReader#getMoodleForums', 'url' => '/api/feed/moodle-forums/{connectionId}', 'verb' => 'GET'],
         ['name' => 'feedReader#getConnections', 'url' => '/api/settings/feed-connections', 'verb' => 'GET'],
         ['name' => 'feedReader#setConnections', 'url' => '/api/settings/feed-connections', 'verb' => 'POST'],
 
@@ -193,6 +197,10 @@ return [
         ['name' => 'people#getPeopleByShare', 'url' => '/api/share/{token}/people', 'verb' => 'GET'],
         ['name' => 'calendar#getEventsByShare', 'url' => '/api/share/{token}/calendar/events', 'verb' => 'GET'],
         ['name' => 'feedReader#getFeedByShare', 'url' => '/api/share/{token}/feed/external', 'verb' => 'GET'],
+        ['name' => 'feedReader#proxyImageByShare', 'url' => '/api/share/{token}/feed/image', 'verb' => 'GET'],
+
+        // Health check (for monitoring/orchestration)
+        ['name' => 'api#health', 'url' => '/api/health', 'verb' => 'GET'],
 
         // Page routes
         ['name' => 'page#index', 'url' => '/', 'verb' => 'GET'],

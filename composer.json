@@ -1,5 +1,5 @@
 {
-  "name": "intravox",
+  "name": "voxcloud/intravox",
   "description": "SharePoint-like pages for Nextcloud",
   "type": "nextcloud-app",
   "license": "AGPL-3.0",

@@ -2,17 +2,25 @@
 
 The Feed Widget displays content from external sources on your intranet pages. It supports RSS/Atom feeds and admin-configured connections to any REST API — including LMS platforms (Canvas, Moodle, Brightspace), project management (Jira, OpenProject), knowledge bases (Confluence), HR systems (AFAS), service desks (TOPdesk), and more.
 
+![Feed widgets from multiple sources displayed on an IntraVox page](../screenshots/feed-examples.png)
+
+![Feed widgets showing Confluence, OpenProject, Canvas, Moodle, SharePoint, Jira, Brightspace](../screenshots/feed-examples-2.png)
+
 ## Features
 
 - **Two source types** — RSS/Atom feed (paste a URL) or Connection (admin-configured)
-- **Presets for popular systems** — Jira, Confluence, SharePoint, OpenProject, AFAS, TOPdesk, Canvas, Moodle, Brightspace, or fully custom
-- **LMS content types** — News/announcements, My Courses, and Upcoming Deadlines for LMS connections
+- **Presets for popular systems** — Jira, Confluence, SharePoint, OpenProject, Canvas, Moodle, Brightspace, AFAS, TOPdesk, or fully custom
+- **LMS content types** — News/announcements (with forum selector), Available Courses, Assignments, and Upcoming Deadlines
+- **Jira content types** — All issues, Open, Recently updated, Recently created, Bugs — with project selector
+- **OpenProject content types** — All work packages, Open, Overdue, Milestones, or Recently updated
 - **Two layouts** — List or Grid view (2-4 columns)
 - **Personalized content** — Users connect their own LMS account to see only their courses, deadlines, and announcements
 - **OAuth2 integration** — One-click account linking with Canvas, Moodle, and Brightspace via popup flow
 - **Manual token fallback** — Users can paste an API token for Moodle or Brightspace without requiring OAuth2 setup
 - **OIDC auto-connect** — Zero-click personalization when Nextcloud and the LMS share the same identity provider
 - **Configurable display** — Show/hide images, dates, excerpts, source name, and author
+- **Live preview** — See how the feed looks while configuring, with real data
+- **Automatic language negotiation** — External APIs receive the user's language preference via the `Accept-Language` HTTP header
 - **15-minute server-side cache** — Reduces API calls to external systems
 - **Public share support** — Feed widgets work on publicly shared IntraVox pages
 
@@ -32,6 +40,8 @@ The simplest source type. Enter a feed URL and the widget fetches and displays t
 
 The widget automatically detects RSS 2.0 and Atom feed formats. Images are extracted from feed enclosures, `media:content`, `media:thumbnail`, or inline `<img>` tags.
 
+![RSS feeds from multiple sources displayed in list and grid layouts](../screenshots/feed-example-rss.png)
+
 ### Canvas LMS
 
 Displays personalized content from a Canvas LMS instance. Supports both shared (admin token) and personalized (per-user OAuth2) access.
@@ -47,21 +57,30 @@ Displays personalized content from a Canvas LMS instance. Supports both shared (
 **Personalization:**
 When the connection uses OAuth2 (`authMode: oauth2` or `both`), each user connects their own Canvas account. The widget then shows only content from courses the user is enrolled in.
 
+![Canvas OAuth2 connection flow — Connect your account → Authorize → Connected](../screenshots/feed-canvas-connection.png)
+
 **Setup requirements:**
 - Administrator configures a Canvas connection in IntraVox Admin Settings (see [Admin Settings Guide](ADMIN_SETTINGS.md))
 - For OAuth2: a Developer Key must be created in Canvas Admin
 
 ### Moodle
 
-Displays personalized content from a Moodle instance.
+Displays content from a Moodle instance. Supports both shared (admin token) and personalized (per-user OAuth2/manual token) access.
+
+![Moodle connection configuration in IntraVox Admin Settings](../screenshots/feed-connections-moodle.png)
 
 **Content types:**
 
 | Content type | What it shows | API used |
 |---|---|---|
-| **News / Announcements** (default) | Forum discussions (with course ID) or course listings (without). | `mod_forum_get_forum_discussions` / `core_course_get_courses` |
-| **My Courses** | The user's enrolled courses | `core_enrol_get_users_courses` |
+| **News / Announcements** (default) | Forum discussions. Optionally filtered by course and forum. | `mod_forum_get_forum_discussions` / `core_course_get_courses` |
+| **Available Courses** | Course catalog — all available courses (admin token) or enrolled courses (per-user token) | `core_enrol_get_users_courses` / `core_course_get_courses` |
+| **Assignments** | Assignments overview per course with deadlines | `mod_assign_get_assignments` |
 | **Upcoming Deadlines** | Upcoming calendar events across all courses | `core_calendar_get_calendar_upcoming_view` |
+
+![Three Moodle Feed widgets on one page: All courses, Assignments, and Upcoming deadlines](../screenshots/feed-moodle.png)
+
+**Forum selector:** When "News / Announcements" is selected and a course is chosen, a forum selector appears. This lets admins pick a specific forum (e.g., "Announcements" or "General Discussion") instead of showing all forums in the course.
 
 **Personalization options:**
 1. **OAuth2** — Requires the [local_oauth2 plugin](https://moodle.org/plugins/local_oauth2) installed on Moodle
@@ -70,7 +89,9 @@ Displays personalized content from a Moodle instance.
 **Setup requirements:**
 - Administrator configures a Moodle connection in IntraVox Admin Settings
 - Moodle web services must be enabled with the REST protocol activated
-- For manual tokens: the web service must expose `core_course_get_courses`, `core_enrol_get_users_courses`, `core_calendar_get_calendar_upcoming_view`, `core_webservice_get_site_info`, `mod_forum_get_forums_by_courses`, and `mod_forum_get_forum_discussions` functions
+- For manual tokens: the web service must expose `core_course_get_courses`, `core_enrol_get_users_courses`, `core_calendar_get_calendar_upcoming_view`, `core_webservice_get_site_info`, `mod_forum_get_forums_by_courses`, `mod_forum_get_forum_discussions`, and `mod_assign_get_assignments` functions
+
+**Note:** "Available Courses" replaces the previous "My Courses" label to reflect that this is organizational content (course catalog), not personal data. Existing widgets using the old `my-courses` value continue to work.
 
 ### Brightspace (D2L)
 
@@ -92,13 +113,141 @@ Displays personalized content from a Brightspace (Desire2Learn) instance.
 - Administrator configures a Brightspace connection in IntraVox Admin Settings
 - For OAuth2: register an OAuth2 application in Brightspace with the redirect URI shown in IntraVox
 
-### Why there is no "Nextcloud" source type
+### OpenProject
 
-> **Design principle: IntraVox vs Nextcloud Dashboard**
->
-> The Nextcloud Dashboard is a *personal productivity overview* — it shows my mail, my tasks, my recent files, my Talk mentions, my notifications. IntraVox is an *organizational communication platform* — it shows company news, team updates, shared resources, and data from external systems.
->
-> These are complementary, not competing. IntraVox deliberately does not duplicate what the Dashboard already provides:
+Displays work packages from an OpenProject instance. Uses the OpenProject API v3 with Basic authentication (`apikey:<token>`).
+
+**Content types:**
+
+| Content type | What it shows | API filter |
+|---|---|---|
+| **All work packages** (default) | All work packages, sorted by last updated | None |
+| **Open work packages** | Only work packages with an open status | Status operator `o` |
+| **Overdue** | Open work packages past their due date | Due date before today + open status |
+| **Milestones** | Milestone-type work packages (releases, deadlines) | Type = Milestone |
+| **Recently updated** | Work packages updated in the last 7 days | Updated in last 7 days |
+
+**Setup:**
+
+1. In OpenProject, go to **My Account** → **Access tokens** → **+ API token**
+
+![Creating an API token in OpenProject](../screenshots/feed-openproject-accesstoken.png)
+
+2. Copy the token (shown only once)
+3. In IntraVox Admin Settings, add a connection with type **OpenProject**
+4. Enter the Base URL (e.g., `https://openproject.example.com`)
+5. The endpoint, auth method (Basic), and response mapping are pre-filled by the preset
+6. Enter the API token as `apikey:<your-token>` (e.g., `apikey:abc123def456...`)
+7. Save the connection
+
+**Links:** Work package links in the feed open directly in OpenProject's web interface (e.g., `https://openproject.example.com/work_packages/42`), not the API.
+
+**Note:** The Milestone content type filters by the work package type with ID `2` (the default "Milestone" type in OpenProject). If your instance uses a different type ID for milestones, use the REST API (custom) type instead and configure the filter manually.
+
+### Jira
+
+Displays issues from a Jira instance. Supports both Jira Data Center (on-premises) and Jira Cloud (Atlassian Cloud).
+
+![Jira feed widget with project selector and content type filter](../screenshots/feed-jira-selection.png)
+
+**Content types:**
+
+| Content type | What it shows | JQL filter |
+|---|---|---|
+| **All issues** (default) | All issues, sorted by last updated | `updated >= -30d ORDER BY updated DESC` |
+| **Open issues** | Issues that are not done | `status != Done` |
+| **Recently updated (7 days)** | Issues updated in the last week | `updated >= -7d` |
+| **Recently created (7 days)** | Issues created in the last week | `created >= -7d` |
+| **Bugs** | Bug-type issues only | `type = Bug` |
+
+**Project selector:** A dropdown lets you filter by a specific Jira project. The available projects are fetched automatically from the Jira API.
+
+**Cloud vs. Data Center:**
+
+| | Jira Data Center | Jira Cloud |
+|---|---|---|
+| **Auth method** | Bearer token (PAT) | Basic auth (email:api-token) |
+| **API version** | v2 (`/rest/api/2/search`) | v3 (`/rest/api/3/search/jql`) |
+| **Auto-detected** | Yes, from Base URL | Yes, `.atlassian.net` URLs |
+
+The preset auto-detects Cloud vs. Data Center based on the Base URL and adjusts the API version and auth method accordingly. For Jira Cloud, an **Atlassian account email** field appears automatically for the Basic auth `email:api-token` format.
+
+**Setup:**
+
+1. **Jira Data Center:** Create a Personal Access Token in Jira (Profile → Personal Access Tokens)
+2. **Jira Cloud:** Create an API token at [id.atlassian.com/manage-profile/security/api-tokens](https://id.atlassian.com/manage-profile/security/api-tokens)
+3. In IntraVox Admin Settings, add a connection with type **Jira**
+4. Enter the Base URL (e.g., `https://jira.example.com` or `https://your-org.atlassian.net`)
+5. The auth method, endpoint, and response mapping are auto-configured by the preset
+6. Enter your token (Cloud: also fill in your Atlassian email)
+7. Save the connection
+
+**Links:** Issue links open directly in the Jira web interface (e.g., `https://jira.example.com/browse/PROJ-123`), not the API URL.
+
+![Clicking a Jira issue in IntraVox opens it in Jira](../screenshots/feed-jira-online.png)
+
+### Confluence
+
+Displays recently modified pages from a Confluence instance. Uses Bearer token authentication with the Confluence REST API.
+
+The preset configures the endpoint (`/rest/api/content`) and response mapping automatically. Pages are sorted by last modified date.
+
+### SharePoint (Microsoft Graph)
+
+Displays pages, news posts, documents, or list items from a SharePoint site via the Microsoft Graph API. Uses OAuth2 client credentials (app-only) authentication.
+
+**Content types:**
+
+| Content type | What it shows |
+|---|---|
+| **All pages** (default) | All site pages sorted by last modified |
+| **News posts** | SharePoint news posts only |
+| **Documents** | Files from a specific document library |
+| **List items** | Items from a specific SharePoint list |
+
+**Setup — Microsoft Entra app registration:**
+
+1. Go to [Microsoft Entra admin center](https://entra.microsoft.com) → **App registrations** → **+ New registration**
+
+![Register an application in Microsoft Entra](../screenshots/feed-appregistration-entra.png)
+
+2. Add **API permissions**: `Sites.Read.All` (Application) and `User.Read` (Delegated), then grant admin consent
+
+![API permissions for IntraVox SharePoint integration](../screenshots/feed-appregistration-entra-api-permissions.png)
+
+3. Create a **Client secret** under Certificates & secrets
+
+![Creating a client secret in Microsoft Entra](../screenshots/feed-appregistration-entra-api-secret.png)
+
+4. Copy the **Application (client) ID** and **Directory (tenant) ID** from the Overview page
+
+![Application and tenant IDs in Microsoft Entra](../screenshots/feed-appregistration-entra-aplication-tenantid.png)
+
+5. In IntraVox Admin Settings, add a connection with type **SharePoint (Graph API)** and enter the Client ID, Client Secret, Tenant ID, and your SharePoint site URL
+
+### How Feed Widgets complement Nextcloud integration apps
+
+Many external systems that IntraVox connects to — OpenProject, Jira, Canvas LMS, Moodle — also have dedicated Nextcloud integration apps (e.g., `integration_openproject`, `integration_jira`). These are **complementary, not competing**. Each serves a different audience and purpose:
+
+| | Nextcloud integration app | IntraVox Feed Widget |
+|---|---|---|
+| **Audience** | Individual user | Team, department, or organization |
+| **Purpose** | Take action (link files, create items, manage tasks) | Build awareness (see what's happening at a glance) |
+| **Context** | Dashboard widget, unified search, file sidebar | Embedded in intranet page alongside news, calendar, people |
+| **Visibility** | Only the authenticated user | Everyone with page access, including public shares |
+| **Layout** | Fixed widget format | Configurable list or grid, 1-20 items |
+
+**Example: OpenProject.** The `integration_openproject` app lets individual developers link Nextcloud files to work packages, search for tasks, and receive personal notifications. The IntraVox Feed Widget shows a project status overview on a department intranet page — visible to managers, stakeholders, and team members who may not even have OpenProject accounts. One is for *working in* the system, the other is for *communicating about* the work.
+
+The same principle applies to all supported systems. A university can use the Moodle integration app for students to access their personal courses, while using IntraVox's Feed Widget to show upcoming deadlines on a faculty intranet page for all staff.
+
+See the [Architecture documentation](ARCHITECTURE.md#organizational-communication-not-personal-productivity) for the design principle behind this approach.
+
+#### Why there is no "Nextcloud" source type
+
+The Nextcloud Dashboard is a *personal productivity overview* — it shows my mail, my tasks, my recent files, my Talk mentions, my notifications. IntraVox is an *organizational communication platform* — it shows company news, team updates, shared resources, and data from external systems.
+
+IntraVox deliberately does not duplicate what the Dashboard already provides:
 
 | Personal data | Where it belongs | Why not in IntraVox |
 |---|---|---|
@@ -113,7 +262,9 @@ Displays personalized content from a Brightspace (Desire2Learn) instance.
 
 ### REST API (custom)
 
-Connect to any system with a REST/JSON API — Jira, Confluence, AFAS, TOPdesk, OpenProject, ZGW APIs, or any other REST endpoint.
+Connect to any system with a REST/JSON API — Jira, Confluence, OpenProject, ZGW APIs, or any other REST endpoint.
+
+![Custom REST API connection configuration with response mapping and headers](../screenshots/feed-connections-custom.png)
 
 **How to use:**
 
@@ -147,9 +298,7 @@ The admin maps JSON fields from the API response to feed item properties using d
 |--------|----------|-----------|-------|-----|
 | Jira | `/rest/api/2/search?jql=ORDER+BY+updated` | `issues` | `fields.summary` | `self` |
 | Confluence | `/rest/api/content?spaceKey=WIKI&expand=history.lastUpdated` | `results` | `title` | `_links.webui` |
-| AFAS | `/profitrestservices/connectors/Employees` | `rows` | `Naam` | — |
-| TOPdesk | `/tas/api/incidents?status=open` | — | `briefDescription` | `_links.self.href` |
-| OpenProject | `/api/v3/work_packages` | `_embedded.elements` | `subject` | `_links.self.href` |
+| OpenProject | `/api/v3/work_packages` | `_embedded.elements` | `subject` | `_links.self.href` (auto-converted to web URL) |
 | ZGW (Open Zaak) | `/zaken/api/v1/zaken` | `results` | `omschrijving` | `url` |
 
 **Authentication & personalization:**
@@ -192,27 +341,60 @@ Shows items in a responsive grid. Configure between 2, 3, or 4 columns.
 5. Adjust layout and display options
 6. Click **Save**
 
+Administrators configure feed connections in **Admin Settings → External Feeds**. Presets are available for popular systems:
+
+![Available connection presets in IntraVox Admin Settings](../screenshots/feed-presets.png)
+
 ## Configuration
 
 ### Source Settings
 
 | Setting | Description | Applies to |
 |---------|-------------|------------|
-| **Source type** | RSS/Atom feed, LMS type (Canvas, Moodle, Brightspace), or REST API (custom) | All |
+| **Source type** | RSS/Atom feed or Connection (admin-configured) | All |
 | **Feed URL** | URL of the RSS or Atom feed | RSS only |
-| **Connection** | Admin-configured connection to use | LMS + REST API |
-| **Content type** | News/Announcements, My Courses, or Upcoming Deadlines | LMS only |
-| **Course** | Limit results to a specific course (optional, only shown for News content type) | LMS only |
+| **Connection** | Admin-configured connection to use | Connections |
+| **Content type** | Depends on connection type (see sections above) | LMS, Jira, OpenProject, SharePoint |
+| **Project** | Jira project filter (auto-populated dropdown) | Jira |
+| **Forum** | Moodle forum filter within a course | Moodle (News) |
+| **Course** | Limit results to a specific course | LMS only |
+| **Document library / List** | SharePoint library or list selector | SharePoint |
+
+![Widget editor with Jira connection, project selector, content type, sort, filter, and live preview](../screenshots/feed-widget-config.png)
+
+![SharePoint widget editor with content type and document library selector](../screenshots/feed-sharepoint-selection.png)
 
 ### Sort & Filter
 
 | Setting | Description | Default |
 |---------|-------------|---------|
 | **Sort by** | Date or Title | Date |
-| **Sort order** | Newest first or Oldest first | Newest first |
+| **Sort order** | Context-dependent toggle: "Newest first / Oldest first" for date, "A → Z / Z → A" for title | Newest first |
 | **Filter by keyword** | Only show items containing this word in title, excerpt, or author | *(empty — no filter)* |
 
 Sorting and filtering are applied server-side after caching. The cache stores all items; sort/filter selects from the cached set. This means changing sort/filter is instant (no re-fetch from external API).
+
+![Keyword filter and sort order in the widget editor with live preview](../screenshots/feed-search.png)
+
+### Language
+
+Feed requests automatically include the `Accept-Language` HTTP header based on the current user's Nextcloud language preference. For example, a user with Dutch (`nl`) as their language setting causes all feed API requests to include:
+
+```
+Accept-Language: nl,en;q=0.9
+```
+
+This tells the external system to return content in Dutch if available, with English as fallback. This follows the [HTTP content negotiation standard](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept-Language) — the same mechanism browsers use.
+
+**How it works:**
+
+- The language is determined per-request from the viewing user's Nextcloud setting (Settings → Personal → Language)
+- No admin configuration needed — this is automatic, standard HTTP behavior
+- English (`en`) is used as fallback when the user's language is not set or for anonymous/public page visitors
+- Systems that respect `Accept-Language` include Jira, Confluence, SharePoint (Microsoft Graph), OpenProject, Moodle, Canvas, and Brightspace
+- RSS/Atom feeds receive the header too, though most feeds serve content in a fixed language
+
+**Note:** The language header affects system-generated strings (e.g., issue type names, status labels, UI text from APIs) — not user-created content. A Jira issue's title and description are always in the language they were written in, but field labels like "Bug" vs. "Fout" may change.
 
 ### Layout Settings
 
@@ -269,11 +451,27 @@ Manual tokens (Moodle and Brightspace) do not expire automatically.
 
 ## Tips
 
-- **Test with Preview** — For RSS feeds, use the Preview button in the editor to verify the feed before saving
-- **Content types** — Use "My Courses" to show enrolled courses, "Upcoming Deadlines" for assignment deadlines, or "News" for announcements
-- **Course filter** — Only shown for the "News" content type. Leave empty for all courses, or select a specific course to filter
+- **Live preview** — The editor shows a live preview of the feed while you configure it. Changes to source, filters, layout, and display options are reflected immediately
+- **Content types** — Use "Available Courses" to show the course catalog, "Assignments" for assignment overviews, "Upcoming Deadlines" for calendar events, or "News" for announcements
+- **Course filter** — Shown for "News" and "Assignments" content types. Leave empty for all courses, or select a specific course
+- **Forum selector** — When "News" is selected with a specific course, pick a specific forum (e.g., "Announcements") instead of all forums
+- **Jira project filter** — Select a specific Jira project from the dropdown, or leave on "All projects" for a cross-project view
 - **Multiple feeds** — Add multiple Feed widgets to a page for different sources or content types (e.g., one for Canvas deadlines, one for Brightspace announcements, one for RSS)
 - **Public pages** — Feed widgets on publicly shared pages use the admin token (if available). Per-user tokens are not used for anonymous visitors
+
+## Error Messages
+
+The widget shows specific error messages based on what went wrong:
+
+| Message | Meaning | Action |
+|---------|---------|--------|
+| "This connection is currently disabled by an administrator" | The connection exists but has been set to inactive | No action needed — the widget resumes automatically when the admin re-enables the connection |
+| "Connection no longer exists" | The admin-configured connection was deleted | Reconfigure the widget with a different connection |
+| "Authentication required" | No valid API token or OAuth2 token available | Connect your account or ask the admin to configure a token |
+| "Access denied" | The API token lacks permissions for this content | Check the connection credentials in Admin Settings |
+| "Too many requests" | The external API rate limit was hit | Wait and try again — the widget caches results to avoid this |
+| "Could not load feed" | Generic connection error | Check the connection URL and credentials in Admin Settings |
+| "Source temporarily unavailable" | The circuit breaker opened after repeated failures | The external system is down — the widget retries automatically after 5 minutes |
 
 ## Troubleshooting
 

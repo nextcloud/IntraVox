@@ -194,6 +194,19 @@ class ExternalIcsService {
         if ($scheme !== 'https') {
             throw new \InvalidArgumentException('Only HTTPS URLs are allowed for ICS feeds');
         }
+
+        // SSRF protection: block private/internal IP ranges
+        $host = parse_url($url, PHP_URL_HOST);
+        if ($host !== null) {
+            $ips = gethostbynamel($host);
+            if (is_array($ips)) {
+                foreach ($ips as $ip) {
+                    if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) {
+                        throw new \InvalidArgumentException('URLs pointing to private or reserved IP addresses are not allowed');
+                    }
+                }
+            }
+        }
     }
 
     /**

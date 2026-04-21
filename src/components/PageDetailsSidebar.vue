@@ -564,17 +564,11 @@ export default {
         // Reload versions list
         await this.loadVersions();
 
-        // After restore, the restored version should be selected
-        // It will be the second item (index 1) because a new backup was created (index 0)
+        // Show the current page (which now contains the restored content)
+        // Don't select a historical version - that would show a preview
+        // instead of the actual restored page
         this.$nextTick(() => {
-          const restoredVersion = this.versions.find(v => v.timestamp === restoredTimestamp);
-          if (restoredVersion) {
-            this.selectVersion(restoredVersion);
-          } else if (this.versions.length > 1) {
-            // Fallback: select second version (the one that was just restored)
-            this.selectVersion(this.versions[1]);
-          }
-          // Reset flag after selection
+          this.selectCurrentVersion();
           this.isRestoring = false;
         });
 

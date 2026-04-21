@@ -177,7 +177,7 @@
 				<NcButton type="primary"
 					:disabled="savingLicense"
 					@click="saveLicenseKey">
-					{{ savingLicense ? t('intravox', 'Saving...') : t('intravox', 'Save & activate') }}
+					{{ licenseStep === 'saving' ? t('intravox', 'Saving...') : licenseStep === 'validating' ? t('intravox', 'Validating...') : licenseStep === 'activating' ? t('intravox', 'Activating...') : t('intravox', 'Save & activate') }}
 				</NcButton>
 				<NcButton v-if="licenseStats && licenseStats.hasLicense"
 					type="tertiary"
@@ -296,6 +296,7 @@ export default {
 			licenseStats: null,
 			licenseKey: '',
 			savingLicense: false,
+			licenseStep: '',
 			_userEditedLicenseKey: false,
 			organizationName: '',
 			contactEmail: '',
@@ -356,6 +357,7 @@ export default {
 				return
 			}
 			this.savingLicense = true
+			this.licenseStep = 'saving'
 			try {
 				const saveRes = await axios.post(generateUrl('/apps/intravox/api/settings/license'), {
 					licenseKey: key,
@@ -365,8 +367,10 @@ export default {
 					return
 				}
 
+				this.licenseStep = 'validating'
 				const valRes = await axios.post(generateUrl('/apps/intravox/api/license/validate'))
 				if (valRes.data.success && valRes.data.validation?.valid) {
+					this.licenseStep = 'activating'
 					await axios.post(generateUrl('/apps/intravox/api/license/update-usage'))
 					this.showMessage(this.t('intravox', 'Subscription activated!'), 'success')
 				} else {
@@ -380,6 +384,7 @@ export default {
 				this.showMessage(this.t('intravox', 'Failed to save subscription key'), 'error')
 			} finally {
 				this.savingLicense = false
+				this.licenseStep = ''
 			}
 		},
 

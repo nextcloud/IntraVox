@@ -260,6 +260,9 @@
             {{ n }}
           </button>
         </div>
+        <p v-if="getColumnWarning(row)" class="column-warning">
+          {{ getColumnWarning(row) }}
+        </p>
 
         <!-- Background Color Picker -->
         <NcActions class="row-action-button">
@@ -849,6 +852,33 @@ export default {
 
       this.initializeColumnArrays();
     },
+    getColumnWarning(row) {
+      const cols = (row.columns || this.localPage.layout.columns) ?? 1;
+      if (cols <= 1) return null;
+
+      const hasSideColumns = !!(
+        this.localPage.layout.sideColumns?.left?.enabled ||
+        this.localPage.layout.sideColumns?.right?.enabled
+      );
+      const sideColumnWidth = hasSideColumns
+        ? (this.localPage.layout.sideColumns?.left?.enabled ? 270 : 0) +
+          (this.localPage.layout.sideColumns?.right?.enabled ? 270 : 0)
+        : 0;
+
+      // Estimate available width (typical screen ~1280px, minus padding)
+      const availableWidth = 1280 - sideColumnWidth - 80;
+      const colWidth = Math.floor(availableWidth / cols);
+
+      if (colWidth < 180) {
+        const recommended = Math.max(1, Math.floor(availableWidth / 200));
+        return this.t('{n} columns may be too narrow{side}. Consider {rec} or fewer.', {
+          n: cols,
+          side: hasSideColumns ? this.t(' with side columns') : '',
+          rec: recommended,
+        });
+      }
+      return null;
+    },
     setRowColumns(rowIndex, n) {
       const row = this.localPage.layout.rows[rowIndex];
       const oldColumns = (row.columns || this.localPage.layout.columns) ?? 1;
@@ -856,12 +886,28 @@ export default {
       // Set row-specific column count
       row.columns = n;
 
-      // If reducing columns, move widgets from removed columns to last available column
+      // If reducing columns, move widgets from removed columns to the last available column.
+      // Widgets are appended in order: existing last-column widgets first,
+      // then removed columns left-to-right, each preserving their internal order.
       if (n < oldColumns) {
-        row.widgets.forEach(widget => {
-          if (widget.column > n) {
-            widget.column = n; // Move to last column
+        // Find the highest order in the target column (the new last column)
+        let maxOrder = 0;
+        row.widgets.forEach(w => {
+          if (w.column === n && w.order > maxOrder) {
+            maxOrder = w.order;
           }
+        });
+
+        // Collect displaced widgets, sorted by column then order
+        const displaced = row.widgets
+          .filter(w => w.column > n)
+          .sort((a, b) => a.column - b.column || a.order - b.order);
+
+        // Re-assign: move to last column with sequential order after existing widgets
+        displaced.forEach(widget => {
+          maxOrder++;
+          widget.column = n;
+          widget.order = maxOrder;
         });
       }
 
@@ -1974,6 +2020,14 @@ export default {
   white-space: nowrap;
 }
 
+/* Column warning */
+.column-warning {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--color-warning-text, #945a00);
+  width: 100%;
+}
+
 /* Column buttons container */
 .column-buttons {
   display: flex;
@@ -2069,7 +2123,7 @@ export default {
   display: grid;
   gap: 12px;
   width: 100%;
-  align-items: start; /* Align columns to top */
+  align-items: start;
 }
 
 .page-column {

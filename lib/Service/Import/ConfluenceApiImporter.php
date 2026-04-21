@@ -32,8 +32,9 @@ class ConfluenceApiImporter {
         private string $authUser,
         private string $authToken
     ) {
-        // Normalize base URL
+        // Normalize and validate base URL (SSRF protection)
         $this->baseUrl = rtrim($baseUrl, '/');
+        $this->validateBaseUrl($this->baseUrl);
 
         // Initialize HTTP client
         $this->httpClient = new Client([
@@ -379,6 +380,27 @@ class ConfluenceApiImporter {
      *
      * @return array Headers
      */
+    private function validateBaseUrl(string $url): void {
+        if (!filter_var($url, FILTER_VALIDATE_URL)) {
+            throw new \InvalidArgumentException('Invalid Confluence URL');
+        }
+        $scheme = parse_url($url, PHP_URL_SCHEME);
+        if ($scheme !== 'https' && $scheme !== 'http') {
+            throw new \InvalidArgumentException('Only HTTP(S) URLs are supported');
+        }
+        $host = parse_url($url, PHP_URL_HOST);
+        if ($host !== null) {
+            $ips = gethostbynamel($host);
+            if (is_array($ips)) {
+                foreach ($ips as $ip) {
+                    if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) {
+                        throw new \InvalidArgumentException('URLs pointing to private or reserved IP addresses are not allowed');
+                    }
+                }
+            }
+        }
+    }
+
     private function buildAuthHeaders(): array {
         $headers = [
             'Accept' => 'application/json',
