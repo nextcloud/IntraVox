@@ -683,6 +683,7 @@ export default {
   line-height: 1.5;
   margin-top: 0;
   margin-bottom: 12px;
+  overflow-x: auto;
 }
 
 .widget-text :deep(p) {
@@ -797,6 +798,19 @@ export default {
 .widget-text :deep(h4) { font-size: 20px !important; }
 .widget-text :deep(h5) { font-size: 18px !important; }
 .widget-text :deep(h6) { font-size: 16px !important; }
+
+/* Text alignment */
+.widget-text :deep(.text-align-center) { text-align: center; }
+.widget-text :deep(.text-align-right) { text-align: right; }
+
+/* Blockquote */
+.widget-text :deep(blockquote) {
+  border-left: 4px solid var(--color-primary-element);
+  padding-left: 1em;
+  margin: 1em 0;
+  color: inherit !important;
+  font-style: italic;
+}
 
 /* Heading Widget */
 .widget-heading {
@@ -1051,16 +1065,13 @@ export default {
 .widget-text :deep(table) {
   width: 100%;
   border-collapse: collapse;
-  table-layout: fixed;
   margin: 1em 0;
-  overflow: hidden;
   background: transparent;
   color: inherit;
 }
 
 .widget-text :deep(th),
 .widget-text :deep(td) {
-  min-width: 1em;
   border: 1px solid var(--color-border-dark, #bbb);
   padding: 8px 12px;
   text-align: left;
@@ -1068,6 +1079,8 @@ export default {
   box-sizing: border-box;
   color: inherit;
   background: transparent;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
 }
 
 /* th now styled same as td - user can customize via content */
@@ -1131,19 +1144,16 @@ export default {
   margin: 0.75em 1em;
   width: calc(100% - 2em);
   border-collapse: collapse;
-  table-layout: fixed;
 }
 
 .widget-text :deep(details > *:not(summary) table) {
   margin: 0;
   width: 100%;
   border-collapse: collapse;
-  table-layout: fixed;
 }
 
 .widget-text :deep(details th),
 .widget-text :deep(details td) {
-  min-width: 1em;
   border: 1px solid var(--color-border-dark, #bbb);
   padding: 8px 12px;
   text-align: left;
@@ -1151,6 +1161,8 @@ export default {
   box-sizing: border-box;
   color: inherit;
   background: transparent;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
 }
 
 .widget-text :deep(details p:first-child),

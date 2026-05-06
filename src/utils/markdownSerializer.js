@@ -142,22 +142,30 @@ export function markdownToHtml(markdown) {
     const preservedMarkdown = preserveEmptyLines(normalizedMarkdown);
 
     // Parse markdown (GFM configured globally above)
-    const html = marked.parse(preservedMarkdown);
+    let html = marked.parse(preservedMarkdown);
 
     // Validate that marked returned HTML, not raw markdown
     // If the result looks like raw markdown (contains unprocessed emphasis markers),
-    // escape it to prevent asterisks from showing up
-    if (typeof html !== 'string' || html === preservedMarkdown) {
+    // escape it to prevent asterisks from showing up.
+    // Skip this check if content is already HTML (starts with <) — marked passes
+    // HTML blocks through unchanged, which is correct behavior, not a parse failure.
+    if (typeof html !== 'string' || (html === preservedMarkdown && !html.trimStart().startsWith('<'))) {
       // Parse failed silently - escape the content to prevent raw markdown display
       const escaped = escapeHtml(markdown);
       return `<p>${escaped}</p>`;
     }
 
+    // Convert alignment comment markers to CSS classes on the following element.
+    // Format: <!-- align:center -->\n<p>text</p> → <p class="text-align-center">text</p>
+    // Also handle legacy HTML block format: <p class="text-align-center">text</p>
+    html = html.replace(/<!--\s*align:(center|right)\s*-->\s*<(p|h[1-6])>/g,
+      (_, align, tag) => `<${tag} class="text-align-${align}">`);
+
     const result = DOMPurify.sanitize(html, {
       ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 's', 'ul', 'ol', 'li', 'a', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'code', 'pre', 'hr',
-                     'table', 'thead', 'tbody', 'tr', 'th', 'td',
+                     'table', 'thead', 'tbody', 'tr', 'th', 'td', 'colgroup', 'col',
                      'details', 'summary', 'details-content'],
-      ALLOWED_ATTR: ['href', 'target', 'rel', 'class', 'open']
+      ALLOWED_ATTR: ['href', 'target', 'rel', 'class', 'open', 'style', 'colspan', 'rowspan', 'colwidth', 'data-colwidth']
     });
 
     // Store in cache with LRU eviction
@@ -204,6 +212,16 @@ function nodeToMarkdown(node, listDepth = 0) {
   return markdown;
 }
 
+/**
+ * Check if element has a non-default text alignment class
+ * Returns 'center' or 'right', or null for default (left)
+ */
+function getAlignmentFromClass(element) {
+  if (element.classList?.contains('text-align-center')) return 'center';
+  if (element.classList?.contains('text-align-right')) return 'right';
+  return null;
+}
+
 function elementToMarkdown(element, listDepth = 0) {
   const tag = element.tagName.toLowerCase();
 
@@ -220,7 +238,7 @@ function elementToMarkdown(element, listDepth = 0) {
   const content = nodeToMarkdown(element, listDepth);
 
   switch (tag) {
-    case 'p':
+    case 'p': {
       // Empty paragraph (with or without <br>) should produce a blank line
       // content will be '\n' if it contains only <br>, or '' if truly empty
       // Zero-width space (\u200B) is used as a placeholder for preserved empty lines
@@ -228,7 +246,15 @@ function elementToMarkdown(element, listDepth = 0) {
       if (trimmedContent === '' || trimmedContent === '\n') {
         return '\n\n';
       }
+      const pAlign = getAlignmentFromClass(element);
+      if (pAlign) {
+        // Store aligned content as HTML block with innerHTML (not markdown).
+        // We use innerHTML because marked doesn't process markdown syntax
+        // inside HTML blocks — so the content must already be HTML.
+        return `<p class="text-align-${pAlign}">${element.innerHTML}</p>\n\n`;
+      }
       return content.replace(/\u200B/g, '') + '\n\n';
+    }
 
     case 'br':
       return '\n';
@@ -258,23 +284,41 @@ function elementToMarkdown(element, listDepth = 0) {
     case 'strike':
       return `~~${content}~~`;
 
-    case 'h1':
+    case 'h1': {
+      const h1Align = getAlignmentFromClass(element);
+      if (h1Align) return `<h1 class="text-align-${h1Align}">${element.innerHTML}</h1>\n\n`;
       return `# ${content}\n\n`;
+    }
 
-    case 'h2':
+    case 'h2': {
+      const h2Align = getAlignmentFromClass(element);
+      if (h2Align) return `<h2 class="text-align-${h2Align}">${element.innerHTML}</h2>\n\n`;
       return `## ${content}\n\n`;
+    }
 
-    case 'h3':
+    case 'h3': {
+      const h3Align = getAlignmentFromClass(element);
+      if (h3Align) return `<h3 class="text-align-${h3Align}">${element.innerHTML}</h3>\n\n`;
       return `### ${content}\n\n`;
+    }
 
-    case 'h4':
+    case 'h4': {
+      const h4Align = getAlignmentFromClass(element);
+      if (h4Align) return `<h4 class="text-align-${h4Align}">${element.innerHTML}</h4>\n\n`;
       return `#### ${content}\n\n`;
+    }
 
-    case 'h5':
+    case 'h5': {
+      const h5Align = getAlignmentFromClass(element);
+      if (h5Align) return `<h5 class="text-align-${h5Align}">${element.innerHTML}</h5>\n\n`;
       return `##### ${content}\n\n`;
+    }
 
-    case 'h6':
+    case 'h6': {
+      const h6Align = getAlignmentFromClass(element);
+      if (h6Align) return `<h6 class="text-align-${h6Align}">${element.innerHTML}</h6>\n\n`;
       return `###### ${content}\n\n`;
+    }
 
     case 'ul':
       return convertList(element, listDepth, false);
@@ -388,23 +432,9 @@ function convertDetails(detailsElement) {
 }
 
 function convertTable(tableElement) {
-  let markdown = '';
-  const rows = tableElement.querySelectorAll('tr');
-
-  rows.forEach((row, rowIndex) => {
-    const cells = row.querySelectorAll('th, td');
-    const cellContents = Array.from(cells).map(cell => nodeToMarkdown(cell).trim());
-
-    // Table row
-    markdown += '| ' + cellContents.join(' | ') + ' |\n';
-
-    // Header separator after first row
-    if (rowIndex === 0) {
-      markdown += '| ' + cellContents.map(() => '---').join(' | ') + ' |\n';
-    }
-  });
-
-  return markdown + '\n';
+  // Store tables as HTML to preserve column widths, line breaks,
+  // and formatting that GFM markdown cannot represent
+  return tableElement.outerHTML + '\n\n';
 }
 
 function convertList(listElement, listDepth, ordered) {

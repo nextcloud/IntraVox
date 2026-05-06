@@ -4,6 +4,29 @@ All notable changes to IntraVox will be documented in this file.
 
 IntraVox is a Nextcloud intranet page builder.
 
+## [1.3.3] - 2026-05-06 — Telemetry: send license key for Enterprise claim verification
+
+### Changed
+- **License key included in telemetry payload** — `TelemetryService::collectData()` now adds the configured license key (or empty string for community instances). The license server uses it to verify `hasExtendedSupport` claims against the bound `license_usage` row before honoring them; without this binding anyone could anonymously POST `hasExtendedSupport=true` for arbitrary instance hashes. The key is the same value the app already sends to license validation/usage endpoints, so this introduces no new disclosure (`TelemetryService.php`)
+
+## [1.3.2] - 2026-05-06 — Telemetry: Nextcloud Extended Support detection
+
+### Added
+- **Nextcloud subscription telemetry field** — Telemetry payload now includes `hasExtendedSupport` (boolean), sourced from Nextcloud's public `OCP\Util::hasExtendedSupport()` API. Helps us understand which share of IntraVox installations runs on Nextcloud Enterprise / Extended Support — relevant for compatibility prioritization and the Nextcloud ISV partnership. Falls under the existing telemetry opt-out (no separate consent), and is listed in the admin "What we collect" overview for transparency. No personal data, just a single yes/no per instance (`TelemetryService.php`, `SupportSettings.vue`)
+
+## [1.3.1] - 2026-04-22 — Text editor enhancements
+
+### Added
+- **Text alignment** — New alignment dropdown in the text editor toolbar (left, center, right). Alignment persists through save/reload using CSS classes in markdown storage. Supports paragraphs and headings. Keyboard shortcuts: `Ctrl+Shift+L/E/R`. Custom TipTap extension uses CSS classes instead of inline styles for DOMPurify compatibility (`textAlignExtension.js`, `InlineTextEditor.vue`, `markdownSerializer.js`)
+- **Blockquote button** — New blockquote toggle button in the text editor toolbar. Uses the existing StarterKit blockquote extension — only the toolbar button and read-only styling were missing (`InlineTextEditor.vue`, `Widget.vue`, `Footer.vue`)
+
+### Changed
+- **Toolbar reordered** — Text editor toolbar reorganized into logical groups based on analysis of 10 popular editors: (1) Inline formatting: B, I, U, S (2) Block structure: Heading, Lists, Blockquote (3) Alignment dropdown (4) Insert actions: Link, Table. Compact mode follows the same grouping in the "More" dropdown (`InlineTextEditor.vue`)
+- **Alignment as dropdown** — Text alignment uses a single dropdown button (like the heading dropdown) instead of 3 separate buttons. The button icon dynamically reflects the active alignment. Keeps the toolbar compact on all screen sizes (`InlineTextEditor.vue`)
+
+### Fixed
+- **Aligned text not surviving save/reload** — Content with text alignment was escaped to raw HTML after saving and reloading. Root cause: `markdownToHtml()` had a validation check (`html === preservedMarkdown`) that incorrectly treated HTML blocks passed through by `marked` as a parse failure, triggering `escapeHtml()`. Fixed by skipping this check when content starts with `<` (`markdownSerializer.js`)
+
 ## [1.3.0] - 2026-04-21 — Feed widget & performance
 
 ### Added

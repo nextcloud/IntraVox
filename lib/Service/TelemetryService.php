@@ -161,7 +161,34 @@ class TelemetryService {
             'isDocker' => $this->isDocker(),
             'organizationName' => $this->config->getAppValue(Application::APP_ID, 'organization_name', ''),
             'contactEmail' => $this->config->getAppValue(Application::APP_ID, 'contact_email', ''),
+            'hasExtendedSupport' => $this->hasExtendedSupport(),
+            // Sent so the license server can verify hasExtendedSupport claims —
+            // the boolean alone is unauthenticated and could be spoofed by anyone
+            // posting to /api/telemetry/report. The server only honors the claim
+            // when this key + the instance hash match an active license_usage row.
+            // Empty string for community instances (no license) — server treats
+            // those as 'never Enterprise' which is correct.
+            'licenseKey' => $this->licenseService->getLicenseKey() ?? '',
         ];
+    }
+
+    /**
+     * Detect whether the host Nextcloud has an Extended Support / Enterprise
+     * subscription. Uses Nextcloud's public API (OCP\Util::hasExtendedSupport,
+     * available since NC 17). Returns false on any failure so a Community
+     * instance is never reported as Enterprise.
+     */
+    private function hasExtendedSupport(): bool {
+        try {
+            if (class_exists(\OCP\Util::class) && method_exists(\OCP\Util::class, 'hasExtendedSupport')) {
+                return \OCP\Util::hasExtendedSupport();
+            }
+        } catch (\Throwable $e) {
+            $this->logger->debug('TelemetryService: hasExtendedSupport() check failed', [
+                'error' => $e->getMessage()
+            ]);
+        }
+        return false;
     }
 
     /**
@@ -172,20 +199,20 @@ class TelemetryService {
             // First try the IntraVox group if it exists
             $group = $this->groupManager->get('intravox');
             if ($group !== null) {
-                return count($group->getUsers());
+                return max(1, count($group->getUsers()));
             }
 
             // Fall back to counting all users
             $count = 0;
-            $this->userManager->callForSeenUsers(function ($user) use (&$count) {
+            $this->userManager->callForAllUsers(function ($user) use (&$count) {
                 $count++;
             });
-            return $count;
+            return max(1, $count);
         } catch (\Exception $e) {
             $this->logger->warning('TelemetryService: Failed to count users', [
                 'error' => $e->getMessage()
             ]);
-            return 0;
+            return 1;
         }
     }
 

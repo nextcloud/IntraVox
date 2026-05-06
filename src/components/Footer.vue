@@ -237,6 +237,19 @@ export default {
   color: inherit !important;
 }
 
+/* Text alignment */
+.footer-content :deep(.text-align-center) { text-align: center; }
+.footer-content :deep(.text-align-right) { text-align: right; }
+
+/* Blockquote */
+.footer-content :deep(blockquote) {
+  border-left: 4px solid var(--color-primary-element);
+  padding-left: 1em;
+  margin: 1em 0;
+  color: inherit !important;
+  font-style: italic;
+}
+
 .footer-editor {
   min-height: 100px;
   background: var(--color-main-background);

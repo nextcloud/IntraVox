@@ -37,6 +37,7 @@
       <!-- COMPACT MODE: "More" dropdown with all other options -->
       <div v-if="compact" class="more-dropdown">
         <button
+          ref="moreButton"
           type="button"
           @mousedown.prevent="toggleMoreMenu"
           :title="t('More options')"
@@ -69,7 +70,7 @@
             {{ getHeadingLabel(level) }}
           </button>
           <div class="dropdown-divider"></div>
-          <!-- Lists -->
+          <!-- Lists & Blockquote -->
           <button
             type="button"
             @mousedown.prevent="editor.chain().focus().toggleBulletList().run(); showMoreMenu = false"
@@ -87,6 +88,44 @@
           >
             <FormatListNumbered :size="16" />
             {{ t('Numbered list') }}
+          </button>
+          <button
+            type="button"
+            @mousedown.prevent="editor.chain().focus().toggleBlockquote().run(); showMoreMenu = false"
+            :class="{ 'is-active': editor.isActive('blockquote') }"
+            class="dropdown-menu-item"
+          >
+            <FormatQuoteClose :size="16" />
+            {{ t('Blockquote') }}
+          </button>
+          <div class="dropdown-divider"></div>
+          <!-- Text Alignment -->
+          <button
+            type="button"
+            @mousedown.prevent="setAlignment('left'); showMoreMenu = false"
+            :class="{ 'is-active': isAlignmentActive('left') }"
+            class="dropdown-menu-item"
+          >
+            <FormatAlignLeft :size="16" />
+            {{ t('Align left') }}
+          </button>
+          <button
+            type="button"
+            @mousedown.prevent="setAlignment('center'); showMoreMenu = false"
+            :class="{ 'is-active': isAlignmentActive('center') }"
+            class="dropdown-menu-item"
+          >
+            <FormatAlignCenter :size="16" />
+            {{ t('Align center') }}
+          </button>
+          <button
+            type="button"
+            @mousedown.prevent="setAlignment('right'); showMoreMenu = false"
+            :class="{ 'is-active': isAlignmentActive('right') }"
+            class="dropdown-menu-item"
+          >
+            <FormatAlignRight :size="16" />
+            {{ t('Align right') }}
           </button>
           <div class="dropdown-divider"></div>
           <!-- Link -->
@@ -140,6 +179,7 @@
       </div>
 
       <!-- FULL MODE: All buttons visible -->
+      <!-- Group 1: Inline formatting | Group 2: Block structure | Group 3: Alignment | Group 4: Insert -->
       <template v-else>
         <button
           type="button"
@@ -154,6 +194,7 @@
 
         <span class="menubar-divider"></span>
 
+        <!-- Group 2: Block structure -->
         <!-- Heading Dropdown -->
         <div class="heading-dropdown">
           <button
@@ -180,8 +221,6 @@
           </div>
         </div>
 
-        <span class="menubar-divider"></span>
-
         <!-- Lists -->
         <button
           type="button"
@@ -204,8 +243,50 @@
           <FormatListNumbered :size="18" />
         </button>
 
+        <!-- Blockquote -->
+        <button
+          type="button"
+          @mousedown.prevent="editor.chain().focus().toggleBlockquote().run()"
+          :class="{ 'is-active': editor.isActive('blockquote') }"
+          :title="t('Blockquote')"
+          :aria-label="t('Blockquote')"
+          class="menubar-button"
+        >
+          <FormatQuoteClose :size="18" />
+        </button>
+
         <span class="menubar-divider"></span>
 
+        <!-- Group 3: Alignment Dropdown -->
+        <div class="alignment-dropdown">
+          <button
+            type="button"
+            @mousedown.prevent="toggleAlignmentMenu"
+            class="menubar-button alignment-button"
+            :title="t('Text alignment')"
+            :aria-label="t('Text alignment')"
+          >
+            <component :is="currentAlignmentIcon" :size="18" />
+            <ChevronDown :size="14" />
+          </button>
+          <div v-if="showAlignmentMenu" class="dropdown-menu">
+            <button
+              v-for="align in ['left', 'center', 'right']"
+              :key="align"
+              type="button"
+              @mousedown.prevent="setAlignment(align)"
+              :class="{ 'is-active': isAlignmentActive(align) }"
+              class="dropdown-menu-item"
+            >
+              <component :is="alignmentIcons[align]" :size="16" />
+              {{ getAlignmentLabel(align) }}
+            </button>
+          </div>
+        </div>
+
+        <span class="menubar-divider"></span>
+
+        <!-- Group 4: Insert actions -->
         <!-- Link -->
         <button
           type="button"
@@ -358,7 +439,7 @@ import { markdownToHtml, htmlToMarkdown, cleanMarkdown } from '../utils/markdown
 let _tiptapModules = null;
 async function loadTipTap() {
     if (_tiptapModules) return _tiptapModules;
-    const [vue3, starterKit, underline, link, placeholder, table, tableRow, tableHeader, tableCell, dummyText] = await Promise.all([
+    const [vue3, starterKit, underline, link, placeholder, table, tableRow, tableHeader, tableCell, textAlign, dummyText] = await Promise.all([
         import('@tiptap/vue-3'),
         import('@tiptap/starter-kit'),
         import('@tiptap/extension-underline'),
@@ -368,6 +449,7 @@ async function loadTipTap() {
         import('@tiptap/extension-table-row'),
         import('@tiptap/extension-table-header'),
         import('@tiptap/extension-table-cell'),
+        import('../utils/textAlignExtension.js'),
         import('../utils/dummyTextGenerator.js'),
     ]);
     _tiptapModules = {
@@ -381,6 +463,7 @@ async function loadTipTap() {
         TableRow: tableRow.TableRow,
         TableHeader: tableHeader.TableHeader,
         TableCell: tableCell.TableCell,
+        TextAlign: textAlign.TextAlign,
         DummyTextExtension: dummyText.DummyTextExtension,
     };
     return _tiptapModules;
@@ -402,6 +485,10 @@ import TableColumnPlusBefore from 'vue-material-design-icons/TableColumnPlusBefo
 import TableRowRemove from 'vue-material-design-icons/TableRowRemove.vue';
 import TableColumnRemove from 'vue-material-design-icons/TableColumnRemove.vue';
 import TableRemove from 'vue-material-design-icons/TableRemove.vue';
+import FormatAlignLeft from 'vue-material-design-icons/FormatAlignLeft.vue';
+import FormatAlignCenter from 'vue-material-design-icons/FormatAlignCenter.vue';
+import FormatAlignRight from 'vue-material-design-icons/FormatAlignRight.vue';
+import FormatQuoteClose from 'vue-material-design-icons/FormatQuoteClose.vue';
 import ChevronDown from 'vue-material-design-icons/ChevronDown.vue';
 import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue';
 
@@ -425,6 +512,10 @@ export default {
     TableRowRemove,
     TableColumnRemove,
     TableRemove,
+    FormatAlignLeft,
+    FormatAlignCenter,
+    FormatAlignRight,
+    FormatQuoteClose,
     ChevronDown,
     DotsHorizontal
   },
@@ -458,7 +549,13 @@ export default {
       linkText: '',
       showHeadingMenu: false,
       showTableMenu: false,
-      showMoreMenu: false
+      showAlignmentMenu: false,
+      showMoreMenu: false,
+      alignmentIcons: {
+        left: FormatAlignLeft,
+        center: FormatAlignCenter,
+        right: FormatAlignRight,
+      }
     };
   },
   async mounted() {
@@ -498,6 +595,11 @@ export default {
         modules.TableRow,
         modules.TableHeader,
         modules.TableCell,
+        modules.TextAlign.configure({
+          types: ['heading', 'paragraph'],
+          alignments: ['left', 'center', 'right'],
+          defaultAlignment: 'left',
+        }),
         modules.DummyTextExtension,
       ],
       onUpdate: () => {
@@ -568,6 +670,13 @@ export default {
       this.editor.setEditable(newValue);
     }
   },
+  computed: {
+    currentAlignmentIcon() {
+      if (this.editor?.isActive({ textAlign: 'center' })) return FormatAlignCenter;
+      if (this.editor?.isActive({ textAlign: 'right' })) return FormatAlignRight;
+      return FormatAlignLeft;
+    },
+  },
   methods: {
     t(key, vars = {}) {
       return t('intravox', key, vars);
@@ -594,6 +703,8 @@ export default {
     },
     toggleHeadingMenu() {
       this.showHeadingMenu = !this.showHeadingMenu;
+      this.showAlignmentMenu = false;
+      this.showTableMenu = false;
     },
     setHeadingLevel(level) {
       if (level === 0) {
@@ -695,6 +806,10 @@ export default {
       if (!event.target.closest('.table-dropdown')) {
         this.showTableMenu = false;
       }
+      // Close alignment menu if clicking outside the dropdown
+      if (!event.target.closest('.alignment-dropdown')) {
+        this.showAlignmentMenu = false;
+      }
       // Close more menu if clicking outside the dropdown
       if (!event.target.closest('.more-dropdown')) {
         this.showMoreMenu = false;
@@ -702,9 +817,56 @@ export default {
     },
     toggleMoreMenu() {
       this.showMoreMenu = !this.showMoreMenu;
+      if (this.showMoreMenu) {
+        this.$nextTick(() => {
+          const btn = this.$refs.moreButton;
+          const menu = this.$el.querySelector('.more-menu');
+          if (btn && menu) {
+            const rect = btn.getBoundingClientRect();
+            menu.style.top = (rect.bottom + 4) + 'px';
+            menu.style.left = rect.left + 'px';
+            // Constrain height to available viewport space
+            const availableHeight = window.innerHeight - rect.bottom - 16;
+            if (availableHeight < menu.scrollHeight) {
+              menu.style.maxHeight = availableHeight + 'px';
+            }
+          }
+        });
+      }
     },
     toggleTableMenu() {
       this.showTableMenu = !this.showTableMenu;
+      this.showHeadingMenu = false;
+      this.showAlignmentMenu = false;
+    },
+    toggleAlignmentMenu() {
+      this.showAlignmentMenu = !this.showAlignmentMenu;
+      this.showHeadingMenu = false;
+      this.showTableMenu = false;
+    },
+    setAlignment(align) {
+      if (align === 'left') {
+        this.editor.chain().focus().unsetTextAlign().run();
+      } else {
+        this.editor.chain().focus().setTextAlign(align).run();
+      }
+      this.showAlignmentMenu = false;
+    },
+    isAlignmentActive(alignment) {
+      if (!this.editor) return false;
+      if (alignment === 'left') {
+        return !this.editor.isActive({ textAlign: 'center' })
+            && !this.editor.isActive({ textAlign: 'right' });
+      }
+      return this.editor.isActive({ textAlign: alignment });
+    },
+    getAlignmentLabel(align) {
+      const labels = {
+        left: this.t('Align left'),
+        center: this.t('Align center'),
+        right: this.t('Align right'),
+      };
+      return labels[align];
     },
     insertTable() {
       this.editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
@@ -798,13 +960,19 @@ export default {
 
 /* Dropdown Containers */
 .heading-dropdown,
-.table-dropdown {
+.table-dropdown,
+.alignment-dropdown {
   position: relative;
 }
 
-.heading-button {
+.heading-button,
+.alignment-button {
   min-width: 90px !important;
   gap: 4px;
+}
+
+.alignment-button {
+  min-width: 60px !important;
 }
 
 /* Dropdown Menu */
@@ -819,6 +987,7 @@ export default {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   z-index: 1001;
   min-width: 140px;
+  max-width: min(280px, calc(100vw - 32px));
   padding: 4px 0;
 }
 
@@ -844,11 +1013,12 @@ export default {
 }
 
 .more-menu {
-  right: 0;
-  left: auto;
+  position: fixed;
   min-width: 180px;
-  max-height: 400px;
+  max-width: min(280px, calc(100vw - 32px));
+  max-height: calc(100vh - 100px);
   overflow-y: auto;
+  z-index: 1002;
 }
 
 .dropdown-menu-item {
@@ -944,6 +1114,7 @@ export default {
   width: 100%;
   display: block;
   background: transparent;
+  overflow-x: auto;
 }
 
 .editor-content :deep(.ProseMirror) {
@@ -1010,6 +1181,10 @@ export default {
 .editor-content :deep(.ProseMirror h4) { font-size: 20px; }
 .editor-content :deep(.ProseMirror h5) { font-size: 18px; }
 .editor-content :deep(.ProseMirror h6) { font-size: 16px; }
+
+/* Text alignment */
+.editor-content :deep(.ProseMirror .text-align-center) { text-align: center; }
+.editor-content :deep(.ProseMirror .text-align-right) { text-align: right; }
 
 .editor-content :deep(.ProseMirror ul),
 .editor-content :deep(.ProseMirror ol) {
@@ -1134,20 +1309,29 @@ export default {
 .editor-content :deep(.ProseMirror table) {
   border-collapse: collapse;
   table-layout: fixed;
-  width: 100%;
+  min-width: 100%;
   margin: 1em 0;
-  overflow: hidden;
 }
 
 .editor-content :deep(.ProseMirror table td),
 .editor-content :deep(.ProseMirror table th) {
-  min-width: 1em;
   border: 1px solid var(--color-border-dark, #bbb);
   padding: 8px 12px;
   vertical-align: top;
   box-sizing: border-box;
   position: relative;
   color: inherit !important;
+  /* Force text wrapping inside fixed-layout table cells */
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+/* Force text wrapping on paragraphs inside table cells —
+   TipTap wraps cell content in <p> tags which need their own wrap constraint */
+.editor-content :deep(.ProseMirror table td p),
+.editor-content :deep(.ProseMirror table th p) {
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 /* th now styled same as td - user can customize via content */
@@ -1156,14 +1340,16 @@ export default {
   background: var(--color-primary-element-light);
 }
 
+/* Column resize handle — subtle line on cell border */
 .editor-content :deep(.ProseMirror table .column-resize-handle) {
   position: absolute;
   right: -2px;
   top: 0;
-  bottom: -2px;
+  bottom: 0;
   width: 4px;
   background-color: var(--color-primary-element);
   pointer-events: none;
+  z-index: 10;
 }
 
 /* Task List */

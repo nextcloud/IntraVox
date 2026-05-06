@@ -247,6 +247,7 @@
 						<li>{{ t('intravox', 'IntraVox, Nextcloud, and PHP version numbers') }}</li>
 						<li>{{ t('intravox', 'A unique hash of your instance URL (privacy-friendly identifier)') }}</li>
 						<li>{{ t('intravox', 'Basic server configuration (database, OS, web server, language, timezone, country)') }}</li>
+						<li>{{ t('intravox', 'Whether your Nextcloud has an Extended Support / Enterprise subscription (a single yes/no, sourced from Nextcloud\'s public API)') }}</li>
 					</ul>
 					<h4>{{ t('intravox', 'What we never collect') }}:</h4>
 					<ul class="not-collected">
