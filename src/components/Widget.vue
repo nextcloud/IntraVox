@@ -375,7 +375,8 @@ export default {
     },
     sanitizeHtml(content) {
       if (!content) return '';
-      // Convert Markdown to HTML for display (includes sanitization)
+      // markdownToHtml handles sanitization and table hydration (colgroup
+      // normalization + .tableWrapper for horizontal scroll).
       return markdownToHtml(content);
     },
     onBlur() {
@@ -683,7 +684,9 @@ export default {
   line-height: 1.5;
   margin-top: 0;
   margin-bottom: 12px;
-  overflow-x: auto;
+  /* Geen overflow-x: auto hier — een tabel die buiten de widget loopt is een
+     bug die we willen oplossen, niet wegscrollen. Wide tabellen krijgen wel
+     hun eigen scroll via .tableWrapper. */
 }
 
 .widget-text :deep(p) {
@@ -1061,13 +1064,29 @@ export default {
   font-style: italic;
 }
 
-/* Table styling in text widgets - matches edit mode styling exactly */
+/* All widget-text tables: fixed layout pins each column to its share of the
+   table width so a long token in one cell can never push other columns out.
+   max-width is a belt-and-braces guarantee that the table cannot grow past
+   its widget container, regardless of any nested min-content child. */
 .widget-text :deep(table) {
+  table-layout: fixed;
   width: 100%;
+  max-width: 100%;
   border-collapse: collapse;
   margin: 1em 0;
   background: transparent;
   color: inherit;
+}
+
+/* Horizontal scroll wrapper added by hydrateTables in markdownSerializer.js.
+   Same class name as TipTap's edit-mode wrapper for consistency. */
+.widget-text :deep(.tableWrapper) {
+  overflow-x: auto;
+  margin: 1em 0;
+}
+
+.widget-text :deep(.tableWrapper > table) {
+  margin: 0;
 }
 
 .widget-text :deep(th),
@@ -1079,11 +1098,22 @@ export default {
   box-sizing: border-box;
   color: inherit;
   background: transparent;
-  overflow-wrap: break-word;
-  word-wrap: break-word;
+  /* min-width: 0 lets fixed-layout cells shrink to their column share;
+     white-space: normal overrides a Nextcloud core nowrap rule. */
+  overflow-wrap: anywhere;
+  min-width: 0;
+  hyphens: auto;
+  white-space: normal;
 }
 
-/* th now styled same as td - user can customize via content */
+/* Pin cell children to the column width so wrap actually engages. */
+.widget-text :deep(td > *),
+.widget-text :deep(th > *) {
+  overflow-wrap: anywhere;
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
+}
 
 /* Geen hover effect op rijen */
 .widget-text :deep(tr),

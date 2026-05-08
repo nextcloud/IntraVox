@@ -124,6 +124,110 @@ function preserveEmptyLines(markdown) {
  * Convert Markdown to HTML for TipTap
  * OPTIMIZED: Results are cached to avoid repeated parsing
  */
+/**
+ * Read-mode table post-processor. Runs after DOMPurify on the rendered HTML.
+ *
+ * - Strips TipTap's auto-generated `style="width: …px"` from <table> (TipTap
+ *   writes that on every save based on summed colwidths) and rebuilds a
+ *   minimal style from the user-set `data-table-width` / `data-table-align`
+ *   attributes set by the custom Table extension.
+ * - Collects column widths from cell `data-colwidth`/`colwidth` attributes
+ *   AND from any existing <col style="width: Xpx">, then converts them to
+ *   percentages so the table always fits its container — pixel widths can
+ *   sum higher than the container in narrow page-rows and would otherwise
+ *   overflow even with `table-layout: fixed`.
+ * - Wraps every table in a `<div class="tableWrapper">` (same class TipTap
+ *   uses in edit-mode) so wide tables get horizontal scroll inside the widget
+ *   instead of pushing the page layout sideways.
+ *
+ * Idempotent: a tableWrapper already in place is reused.
+ */
+function hydrateTables(html) {
+  if (!html || html.indexOf('<table') === -1) return html;
+  const doc = new DOMParser().parseFromString(`<div>${html}</div>`, 'text/html');
+  const root = doc.body.firstElementChild;
+  if (!root) return html;
+
+  for (const table of Array.from(root.querySelectorAll('table'))) {
+    // 1. Reset <table> inline style; rebuild only from user-set attributes.
+    const userWidth = table.getAttribute('data-table-width');
+    const userAlign = table.getAttribute('data-table-align');
+    const styles = [];
+    if (userWidth) styles.push(`width: ${userWidth}`);
+    if (userAlign === 'center') styles.push('margin-left: auto', 'margin-right: auto');
+    else if (userAlign === 'right') styles.push('margin-left: auto', 'margin-right: 0');
+    else if (userAlign === 'left') styles.push('margin-left: 0', 'margin-right: auto');
+    if (styles.length > 0) table.setAttribute('style', styles.join('; '));
+    else table.removeAttribute('style');
+
+    // 2. Normalize colgroup. Read widths from BOTH cell-level data-colwidth and
+    //    existing <col style="width:Xpx">, convert to percentages so the table
+    //    always fits its container regardless of stored pixel widths.
+    const existingColgroup = table.querySelector('colgroup');
+    const existingCols = existingColgroup ? Array.from(existingColgroup.children) : [];
+    const firstRow = table.querySelector('tr');
+    if (firstRow) {
+      const cells = Array.from(firstRow.children);
+      const widths = cells.map((cell, i) => {
+        // Modern data-colwidth or legacy colwidth on the cell
+        const cellRaw = cell.getAttribute('data-colwidth') || cell.getAttribute('colwidth');
+        if (cellRaw) {
+          const first = String(cellRaw).split(',')[0].trim();
+          const px = Number.parseInt(first, 10);
+          if (Number.isFinite(px) && px > 0) return px;
+        }
+        // Fallback to existing <col style="width: Xpx">
+        const col = existingCols[i];
+        if (col) {
+          const m = (col.getAttribute('style') || '').match(/width\s*:\s*(\d+(?:\.\d+)?)\s*px/);
+          if (m) {
+            const px = Number.parseFloat(m[1]);
+            if (Number.isFinite(px) && px > 0) return px;
+          }
+        }
+        return null;
+      });
+
+      if (widths.some((w) => w !== null)) {
+        // Convert to percentages relative to total share. Empty cols get a
+        // proportional fallback share so a 3-col table with 1 empty col still
+        // sums to 100%.
+        const knownSum = widths.reduce((s, w) => s + (w ?? 0), 0);
+        const knownCount = widths.filter((w) => w !== null).length;
+        const emptyCount = widths.length - knownCount;
+        const totalShare = knownSum + emptyCount * (knownSum / Math.max(1, knownCount));
+        const colgroup = doc.createElement('colgroup');
+        for (const w of widths) {
+          const col = doc.createElement('col');
+          if (w !== null) {
+            col.setAttribute('style', `width: ${(w / totalShare * 100).toFixed(2)}%`);
+          } else if (knownCount > 0) {
+            col.setAttribute('style', `width: ${(knownSum / knownCount / totalShare * 100).toFixed(2)}%`);
+          }
+          colgroup.appendChild(col);
+        }
+        if (existingColgroup) existingColgroup.replaceWith(colgroup);
+        else table.insertBefore(colgroup, table.firstChild);
+      } else if (existingColgroup) {
+        // Empty <col>s without widths — drop the colgroup so CSS distributes evenly.
+        const allEmpty = existingCols.every((c) => !c.getAttribute('style') && !c.getAttribute('width'));
+        if (allEmpty) existingColgroup.remove();
+      }
+    }
+
+    // 3. Wrap in scroll container (idempotent).
+    const parent = table.parentElement;
+    if (!parent || !parent.classList.contains('tableWrapper')) {
+      const wrap = doc.createElement('div');
+      wrap.className = 'tableWrapper';
+      table.parentNode.insertBefore(wrap, table);
+      wrap.appendChild(table);
+    }
+  }
+
+  return root.innerHTML;
+}
+
 export function markdownToHtml(markdown) {
   if (!markdown) return '';
 
@@ -161,12 +265,16 @@ export function markdownToHtml(markdown) {
     html = html.replace(/<!--\s*align:(center|right)\s*-->\s*<(p|h[1-6])>/g,
       (_, align, tag) => `<${tag} class="text-align-${align}">`);
 
-    const result = DOMPurify.sanitize(html, {
+    const sanitized = DOMPurify.sanitize(html, {
       ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 's', 'ul', 'ol', 'li', 'a', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'code', 'pre', 'hr',
                      'table', 'thead', 'tbody', 'tr', 'th', 'td', 'colgroup', 'col',
-                     'details', 'summary', 'details-content'],
-      ALLOWED_ATTR: ['href', 'target', 'rel', 'class', 'open', 'style', 'colspan', 'rowspan', 'colwidth', 'data-colwidth']
+                     'details', 'summary', 'details-content', 'div'],
+      ALLOWED_ATTR: ['href', 'target', 'rel', 'class', 'open', 'style', 'colspan', 'rowspan',
+                     'colwidth', 'data-colwidth', 'data-table-width', 'data-table-align']
     });
+
+    // Post-process tables for read-mode (colgroup hydration + scroll wrapper).
+    const result = hydrateTables(sanitized);
 
     // Store in cache with LRU eviction
     if (markdownCache.size >= MAX_CACHE_SIZE) {

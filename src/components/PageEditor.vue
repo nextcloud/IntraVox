@@ -306,7 +306,7 @@
       >
         <div
           class="page-grid"
-          :style="{ gridTemplateColumns: `repeat(${(row.columns || localPage.layout.columns) ?? 1}, 1fr)` }"
+          :style="{ gridTemplateColumns: `repeat(${(row.columns || localPage.layout.columns) ?? 1}, minmax(0, 1fr))` }"
         >
           <div
             v-for="column in ((row.columns || localPage.layout.columns) ?? 1)"
@@ -1876,6 +1876,9 @@ export default {
   padding: 16px;
   border: 2px dashed transparent;
   border-radius: var(--border-radius-large);
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .page-row.editable {

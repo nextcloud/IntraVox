@@ -63,7 +63,7 @@
         >
           <div
             class="page-grid"
-            :style="{ gridTemplateColumns: `repeat(${(row.columns || page.layout.columns) ?? 1}, 1fr)` }"
+            :style="{ gridTemplateColumns: `repeat(${(row.columns || page.layout.columns) ?? 1}, minmax(0, 1fr))` }"
           >
             <div
               v-for="column in ((row.columns || page.layout.columns) ?? 1)"
@@ -414,6 +414,12 @@ export default {
   padding: 16px;
   border-radius: var(--border-radius-container-large);
   box-sizing: border-box;
+  /* Without these, a wide child (table with min-content larger than its
+     column track) can blow the row past the viewport. min-width: 0 lets
+     the row shrink below its min-content, max-width: 100% keeps it inside
+     its parent. */
+  min-width: 0;
+  max-width: 100%;
 }
 
 /* Collapsible row styling */
@@ -459,6 +465,9 @@ export default {
 /* Row content container */
 .row-content {
   padding: 16px;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .page-row.collapsible-row .row-content {

@@ -1,89 +1,26 @@
 <template>
 	<div class="support-settings">
-		<!-- Section 1: About IntraVox -->
+		<!-- Section 1: About IntraVox + CTA -->
 		<div class="settings-section">
 			<h2>{{ t('intravox', 'Support IntraVox') }}</h2>
 			<p class="settings-section-desc">
-				{{ t('intravox', 'IntraVox is free and open source (AGPL-3.0). You can use all features without a subscription — no limits on functionality, no restrictions, no catch.') }}
+				{{ t('intravox', 'IntraVox is free and open source (AGPL-3.0). All features work without a subscription. If IntraVox is valuable to your organization, a subscription supports active development and gives you guaranteed Nextcloud compatibility and email support.') }}
 			</p>
-			<p class="settings-section-desc">
-				{{ t('intravox', 'If IntraVox is valuable to your organization, consider subscribing. Your subscription funds active development, guaranteed Nextcloud compatibility, and email support.') }}
+			<p class="settings-section-desc subscription-includes">
+				{{ t('intravox', 'A subscription includes: guaranteed Nextcloud compatibility, email support, priority bug fixes, and active development.') }}
 			</p>
-		</div>
-
-		<!-- Section 2: What's included -->
-		<div class="settings-section">
-			<h2>{{ t('intravox', 'What a subscription includes') }}</h2>
-
-			<div class="includes-list">
-				<div class="includes-item">
-					<span class="includes-check">&#x2705;</span>
-					<div class="includes-text">
-						<span class="includes-label">{{ t('intravox', 'Guaranteed compatibility') }}</span>
-						<span class="includes-desc">{{ t('intravox', 'Tested with every new Nextcloud release') }}</span>
-					</div>
-				</div>
-				<div class="includes-item">
-					<span class="includes-check">&#x2705;</span>
-					<div class="includes-text">
-						<span class="includes-label">{{ t('intravox', 'Email support') }}</span>
-						<span class="includes-desc">{{ t('intravox', 'Direct support from the developers') }}</span>
-					</div>
-				</div>
-				<div class="includes-item">
-					<span class="includes-check">&#x2705;</span>
-					<div class="includes-text">
-						<span class="includes-label">{{ t('intravox', 'Priority bug fixes') }}</span>
-						<span class="includes-desc">{{ t('intravox', 'Your issues get priority attention') }}</span>
-					</div>
-				</div>
-				<div class="includes-item">
-					<span class="includes-check">&#x2705;</span>
-					<div class="includes-text">
-						<span class="includes-label">{{ t('intravox', 'Active development') }}</span>
-						<span class="includes-desc">{{ t('intravox', 'New features and improvements') }}</span>
-					</div>
-				</div>
+			<div class="cta-block">
+				<NcButton type="primary"
+					:href="pricingUrl"
+					target="_blank"
+					rel="noopener noreferrer">
+					{{ t('intravox', 'View pricing & plans') }}
+				</NcButton>
+				<p class="cta-contact">
+					{{ t('intravox', 'Questions?') }}
+					<a href="mailto:info@voxcloud.nl">info@voxcloud.nl</a>
+				</p>
 			</div>
-		</div>
-
-		<!-- Section 3: Pricing -->
-		<div class="settings-section">
-			<h2>{{ t('intravox', 'Pricing') }}</h2>
-
-			<div class="pricing-table">
-				<div class="pricing-row pricing-row--free">
-					<span class="pricing-tier">{{ t('intravox', 'Free') }}</span>
-					<span class="pricing-price pricing-price--free">{{ t('intravox', 'Free — 50 pages per language') }}</span>
-				</div>
-				<div class="pricing-row">
-					<span class="pricing-tier">{{ t('intravox', '1–50 users') }}</span>
-					<span class="pricing-price">{{ t('intravox', '€39/year') }}</span>
-				</div>
-				<div class="pricing-row">
-					<span class="pricing-tier">{{ t('intravox', '51–250 users') }}</span>
-					<span class="pricing-price">{{ t('intravox', '€119/year') }}</span>
-				</div>
-				<div class="pricing-row">
-					<span class="pricing-tier">{{ t('intravox', '251–1000 users') }}</span>
-					<span class="pricing-price">{{ t('intravox', '€279/year') }}</span>
-				</div>
-				<div class="pricing-row">
-					<span class="pricing-tier">{{ t('intravox', '1000+ users') }}</span>
-					<span class="pricing-price">{{ t('intravox', 'Contact us') }}</span>
-				</div>
-			</div>
-
-			<p class="pricing-note">
-				{{ t('intravox', 'Excl. VAT, per instance, per year. All paid tiers include unlimited pages.') }}
-			</p>
-
-			<NcButton type="primary"
-				:href="pricingUrl"
-				target="_blank"
-				rel="noopener noreferrer">
-				{{ t('intravox', 'View pricing & subscribe') }}
-			</NcButton>
 		</div>
 
 		<!-- Section 4: Your installation -->
@@ -129,38 +66,6 @@
 			</NcNoteCard>
 		</div>
 
-		<!-- Section 5: Your organization -->
-		<div class="settings-section">
-			<div class="contact-fields">
-				<h2>{{ t('intravox', 'Your organization (optional)') }}</h2>
-				<p class="field-desc">{{ t('intravox', 'These details help us reach you if needed. They are never shared.') }}</p>
-
-				<div class="field-row">
-					<label for="organization-name">{{ t('intravox', 'Organization name') }}</label>
-					<input id="organization-name"
-						v-model="organizationName"
-						type="text"
-						:placeholder="t('intravox', 'e.g. Acme Corporation')"
-						class="contact-input">
-				</div>
-
-				<div class="field-row">
-					<label for="contact-email">{{ t('intravox', 'Contact email') }}</label>
-					<input id="contact-email"
-						v-model="contactEmail"
-						type="email"
-						:placeholder="t('intravox', 'e.g. admin@example.com')"
-						class="contact-input">
-				</div>
-
-				<NcButton type="primary"
-					:disabled="savingContact"
-					@click="saveContactInfo">
-					{{ savingContact ? t('intravox', 'Saving...') : t('intravox', 'Save') }}
-				</NcButton>
-			</div>
-		</div>
-
 		<!-- Section 6: Subscription key -->
 		<div class="settings-section">
 			<h2>{{ t('intravox', 'Subscription key') }}</h2>
@@ -185,20 +90,6 @@
 					@click="removeLicenseKey">
 					{{ t('intravox', 'Remove subscription key') }}
 				</NcButton>
-			</div>
-		</div>
-
-		<!-- Section 7: Contact -->
-		<div class="settings-section">
-			<div class="contact-info-block">
-				<p>
-					{{ t('intravox', 'Learn more about IntraVox') }}:
-					<a href="https://voxcloud.nl" target="_blank" rel="noopener noreferrer">voxcloud.nl</a>
-				</p>
-				<p>
-					{{ t('intravox', 'Questions or feedback?') }}
-					<a href="mailto:info@voxcloud.nl">info@voxcloud.nl</a>
-				</p>
 			</div>
 		</div>
 
@@ -299,9 +190,6 @@ export default {
 			savingLicense: false,
 			licenseStep: '',
 			_userEditedLicenseKey: false,
-			organizationName: '',
-			contactEmail: '',
-			savingContact: false,
 			telemetryEnabled: this.initialTelemetryEnabled,
 			telemetryLastReport: this.initialTelemetryLastReport,
 			sendingTelemetry: false,
@@ -320,23 +208,10 @@ export default {
 	},
 
 	mounted() {
-		this.loadSettings()
 		this.loadLicenseStats()
 	},
 
 	methods: {
-		async loadSettings() {
-			try {
-				const res = await axios.get(generateUrl('/apps/intravox/api/settings'))
-				if (res.data.success) {
-					this.organizationName = res.data.settings.organization_name || ''
-					this.contactEmail = res.data.settings.contact_email || ''
-				}
-			} catch (error) {
-				console.error('Failed to load settings:', error)
-			}
-		},
-
 		async loadLicenseStats() {
 			try {
 				const response = await axios.get(generateUrl('/apps/intravox/api/license/stats'))
@@ -404,22 +279,6 @@ export default {
 				this.showMessage(this.t('intravox', 'Failed to remove subscription key'), 'error')
 			} finally {
 				this.savingLicense = false
-			}
-		},
-
-		async saveContactInfo() {
-			this.savingContact = true
-			try {
-				await axios.post(generateUrl('/apps/intravox/api/settings'), {
-					organization_name: this.organizationName,
-					contact_email: this.contactEmail,
-				})
-				this.showMessage(this.t('intravox', 'Contact information saved.'), 'success')
-			} catch (error) {
-				console.error('Failed to save contact info:', error)
-				this.showMessage(this.t('intravox', 'Failed to save contact information'), 'error')
-			} finally {
-				this.savingContact = false
 			}
 		},
 
@@ -552,85 +411,9 @@ export default {
 	margin-bottom: 20px;
 }
 
-/* What's included list */
-.includes-list {
-	display: flex;
-	flex-direction: column;
-	gap: 12px;
-	margin-bottom: 24px;
-}
-
-.includes-item {
-	display: flex;
-	align-items: flex-start;
-	gap: 12px;
-	padding: 12px 20px;
-	background: var(--color-background-hover);
-	border-radius: var(--border-radius-large);
-}
-
-.includes-check {
-	font-size: 1.2em;
-	flex-shrink: 0;
-}
-
-.includes-text {
-	display: flex;
-	flex-direction: column;
-	gap: 2px;
-}
-
-.includes-label {
-	font-weight: 600;
-	color: var(--color-main-text);
-}
-
-.includes-desc {
+.subscription-includes {
 	font-size: 13px;
 	color: var(--color-text-maxcontrast);
-}
-
-/* Pricing table */
-.pricing-table {
-	display: flex;
-	flex-direction: column;
-	gap: 8px;
-	margin-bottom: 16px;
-}
-
-.pricing-row {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	padding: 12px 20px;
-	background: var(--color-background-hover);
-	border-radius: var(--border-radius-large);
-}
-
-.pricing-row--free {
-	border: 2px solid var(--color-primary-element-light);
-}
-
-.pricing-tier {
-	font-weight: 500;
-	color: var(--color-main-text);
-}
-
-.pricing-price {
-	font-size: 16px;
-	font-weight: 700;
-	color: var(--color-primary);
-}
-
-.pricing-price--free {
-	font-weight: 500;
-	font-size: 14px;
-}
-
-.pricing-note {
-	color: var(--color-text-maxcontrast);
-	margin-bottom: 16px;
-	font-size: 14px;
 }
 
 /* Language stats */
@@ -707,43 +490,29 @@ export default {
 	margin-bottom: 24px;
 }
 
-/* Contact info block */
-.contact-info-block {
-	margin-bottom: 20px;
-	padding: 16px 20px;
-	background: var(--color-background-hover);
-	border-radius: var(--border-radius-large);
+/* CTA block */
+.cta-block {
+	display: flex;
+	align-items: center;
+	gap: 16px;
+	flex-wrap: wrap;
+	margin-top: 16px;
 }
 
-.contact-info-block p {
-	margin: 0 0 8px 0;
-	line-height: 1.5;
+.cta-contact {
+	margin: 0;
+	color: var(--color-text-maxcontrast);
+	font-size: 14px;
 }
 
-.contact-info-block p:last-child {
-	margin-bottom: 0;
-}
-
-.contact-info-block a {
+.cta-contact a {
 	color: var(--color-primary-element);
 	font-weight: 500;
 	text-decoration: none;
 }
 
-.contact-info-block a:hover {
+.cta-contact a:hover {
 	text-decoration: underline;
-}
-
-.contact-fields h2 {
-	margin: 0 0 8px 0;
-	font-size: 20px;
-	font-weight: bold;
-}
-
-.contact-fields .field-desc {
-	font-size: 13px;
-	color: var(--color-text-maxcontrast);
-	margin-bottom: 16px;
 }
 
 .field-row {

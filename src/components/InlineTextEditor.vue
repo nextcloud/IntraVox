@@ -356,6 +356,50 @@
                 {{ t('Add column right') }}
               </button>
               <div class="dropdown-divider"></div>
+              <div class="dropdown-menu-section-label">{{ t('Width') }}</div>
+              <div class="dropdown-menu-row">
+                <button
+                  v-for="w in tableWidthPresets"
+                  :key="w"
+                  type="button"
+                  @mousedown.prevent="setTableWidth(w)"
+                  :class="{ 'is-active': isTableWidth(w) }"
+                  class="dropdown-menu-pill"
+                >
+                  {{ w === null ? t('Auto') : w }}
+                </button>
+              </div>
+              <div class="dropdown-menu-section-label">{{ t('Alignment') }}</div>
+              <div class="dropdown-menu-row">
+                <button
+                  type="button"
+                  @mousedown.prevent="setTableAlign('left')"
+                  :class="{ 'is-active': isTableAlign('left') }"
+                  :title="t('Align left')"
+                  class="dropdown-menu-pill"
+                >
+                  <FormatAlignLeft :size="16" />
+                </button>
+                <button
+                  type="button"
+                  @mousedown.prevent="setTableAlign('center')"
+                  :class="{ 'is-active': isTableAlign('center') }"
+                  :title="t('Align center')"
+                  class="dropdown-menu-pill"
+                >
+                  <FormatAlignCenter :size="16" />
+                </button>
+                <button
+                  type="button"
+                  @mousedown.prevent="setTableAlign('right')"
+                  :class="{ 'is-active': isTableAlign('right') }"
+                  :title="t('Align right')"
+                  class="dropdown-menu-pill"
+                >
+                  <FormatAlignRight :size="16" />
+                </button>
+              </div>
+              <div class="dropdown-divider"></div>
               <button
                 type="button"
                 @mousedown.prevent="deleteRow"
@@ -439,7 +483,7 @@ import { markdownToHtml, htmlToMarkdown, cleanMarkdown } from '../utils/markdown
 let _tiptapModules = null;
 async function loadTipTap() {
     if (_tiptapModules) return _tiptapModules;
-    const [vue3, starterKit, underline, link, placeholder, table, tableRow, tableHeader, tableCell, textAlign, dummyText] = await Promise.all([
+    const [vue3, starterKit, underline, link, placeholder, table, tableRow, tableHeader, tableCell, textAlign, dummyText, tableResize] = await Promise.all([
         import('@tiptap/vue-3'),
         import('@tiptap/starter-kit'),
         import('@tiptap/extension-underline'),
@@ -451,6 +495,7 @@ async function loadTipTap() {
         import('@tiptap/extension-table-cell'),
         import('../utils/textAlignExtension.js'),
         import('../utils/dummyTextGenerator.js'),
+        import('../utils/tableResizeHandle.js'),
     ]);
     _tiptapModules = {
         Editor: vue3.Editor,
@@ -465,6 +510,7 @@ async function loadTipTap() {
         TableCell: tableCell.TableCell,
         TextAlign: textAlign.TextAlign,
         DummyTextExtension: dummyText.DummyTextExtension,
+        TableResizeHandle: tableResize.TableResizeHandle,
     };
     return _tiptapModules;
 }
@@ -549,6 +595,9 @@ export default {
       linkText: '',
       showHeadingMenu: false,
       showTableMenu: false,
+      // Width presets shown in the table dropdown — null means "auto"
+      // (default: fill the widget container).
+      tableWidthPresets: [null, '25%', '50%', '75%', '100%'],
       showAlignmentMenu: false,
       showMoreMenu: false,
       alignmentIcons: {
@@ -586,15 +635,59 @@ export default {
         modules.Placeholder.configure({
           placeholder: this.placeholder || this.t('Enter text...')
         }),
-        modules.Table.configure({
+        // Custom Table node — adds `width` and `align` attributes so editors
+        // can make a table narrower than the widget container and align it
+        // (left, center, right). The base Table.renderHTML composes the colgroup
+        // and a default `style` for column-resize; if we hand it a `style`
+        // here it short-circuits and uses ours, which is what we want for
+        // explicit width/align. We deliberately keep the parent renderHTML so
+        // the colgroup keeps working — only the attribute-level renderHTMLs
+        // contribute to the merged style.
+        modules.Table.extend({
+          addAttributes() {
+            const parent = this.parent?.() || {};
+            return {
+              ...parent,
+              width: {
+                default: null,
+                parseHTML: (el) => {
+                  const w = (el.style && el.style.width) || el.getAttribute('width') || null;
+                  return w && w !== '100%' ? w : null;
+                },
+                renderHTML: (attrs) => (attrs.width ? { style: `width: ${attrs.width}` } : {}),
+              },
+              align: {
+                default: null,
+                parseHTML: (el) => {
+                  if (!el.style) return null;
+                  const ml = el.style.marginLeft;
+                  const mr = el.style.marginRight;
+                  if (ml === 'auto' && mr === 'auto') return 'center';
+                  if (ml === 'auto' && mr !== 'auto') return 'right';
+                  if (mr === 'auto' && ml !== 'auto') return 'left';
+                  return null;
+                },
+                renderHTML: (attrs) => {
+                  if (attrs.align === 'center') return { style: 'margin-left: auto; margin-right: auto' };
+                  if (attrs.align === 'right') return { style: 'margin-left: auto; margin-right: 0' };
+                  if (attrs.align === 'left') return { style: 'margin-left: 0; margin-right: auto' };
+                  return {};
+                },
+              },
+            };
+          },
+        }).configure({
           resizable: true,
           handleWidth: 4,
-          cellMinWidth: 50,
-          lastColumnResizable: true
+          // 80px is wide enough for ~3-4 short words plus padding; below
+          // that the cell becomes effectively unusable for prose content.
+          cellMinWidth: 80,
+          lastColumnResizable: true,
         }),
         modules.TableRow,
         modules.TableHeader,
         modules.TableCell,
+        modules.TableResizeHandle,
         modules.TextAlign.configure({
           types: ['heading', 'paragraph'],
           alignments: ['left', 'center', 'right'],
@@ -899,7 +992,31 @@ export default {
     deleteTable() {
       this.editor.chain().focus().deleteTable().run();
       this.showTableMenu = false;
-    }
+    },
+
+    /**
+     * Set the table width. `value` is a CSS length (e.g. '50%', '600px') or
+     * null to clear the explicit width and fall back to the default
+     * (full-container width with TipTap's column-resize behaviour).
+     */
+    setTableWidth(value) {
+      this.editor.chain().focus().updateAttributes('table', { width: value }).run();
+    },
+    isTableWidth(value) {
+      if (!this.editor || !this.editor.isActive('table')) return false;
+      return this.editor.getAttributes('table').width === value;
+    },
+
+    /**
+     * Set the table alignment via CSS margin shorthand. Pass null to clear.
+     */
+    setTableAlign(value) {
+      this.editor.chain().focus().updateAttributes('table', { align: value }).run();
+    },
+    isTableAlign(value) {
+      if (!this.editor || !this.editor.isActive('table')) return false;
+      return this.editor.getAttributes('table').align === value;
+    },
   }
 };
 </script>
@@ -1060,6 +1177,49 @@ export default {
   height: 1px;
   background: var(--color-border);
   margin: 4px 0;
+}
+
+/* Section label inside a dropdown — small, muted heading above a row of pills */
+.dropdown-menu-section-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-maxcontrast, #6b7280);
+  padding: 6px 12px 2px;
+}
+
+/* Horizontal row of compact buttons inside a dropdown (width presets, align) */
+.dropdown-menu-row {
+  display: flex;
+  gap: 4px;
+  padding: 2px 8px 6px;
+  flex-wrap: wrap;
+}
+
+.dropdown-menu-pill {
+  flex: 1 1 auto;
+  min-width: 36px;
+  padding: 4px 6px;
+  border: 1px solid var(--color-border, #ccc);
+  background: var(--color-main-background, #fff);
+  color: inherit;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dropdown-menu-pill:hover {
+  background: var(--color-background-hover, #f3f4f6);
+}
+
+.dropdown-menu-pill.is-active {
+  background: var(--color-primary-element, #2563eb);
+  color: var(--color-primary-element-text, #fff);
+  border-color: var(--color-primary-element, #2563eb);
 }
 
 .menubar-divider {
@@ -1305,7 +1465,14 @@ export default {
   color: inherit !important;
 }
 
-/* Table */
+/* Tables wider than the page column scroll horizontally inside this wrapper
+   instead of pushing the page sideways (TipTap injects the wrapper). */
+.editor-content :deep(.ProseMirror .tableWrapper) {
+  overflow-x: auto;
+  max-width: 100%;
+  margin: 1em 0;
+}
+
 .editor-content :deep(.ProseMirror table) {
   border-collapse: collapse;
   table-layout: fixed;
@@ -1313,6 +1480,42 @@ export default {
   margin: 1em 0;
 }
 
+.editor-content :deep(.ProseMirror .tableWrapper > table) {
+  margin: 0;
+}
+
+/* When the user sets an explicit width via the Table extension, drop the
+   min-width: 100% so the table can shrink to that width. */
+.editor-content :deep(.ProseMirror table[style*="width:"]) {
+  min-width: 0;
+}
+
+/* Right-edge resize handle for the active table. The TableResizeHandle plugin
+   adds the data attribute via a node decoration; this CSS gives the handle a
+   visible affordance so editors notice they can drag-resize the table. */
+.editor-content :deep(.ProseMirror table[data-table-resize-active]) {
+  position: relative;
+}
+
+.editor-content :deep(.ProseMirror table[data-table-resize-active])::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: -4px;
+  bottom: 0;
+  width: 8px;
+  background: linear-gradient(to right, transparent 0, var(--color-primary-element, #2563eb) 50%, transparent 100%);
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.editor-content :deep(.ProseMirror table[data-table-resize-active]):hover::after {
+  opacity: 0.7;
+}
+
+/* Mirrors the read-mode wrap policy in Widget.vue: cells shrink to their
+   column share, content wraps anywhere if needed, white-space: normal
+   overrides a Nextcloud core nowrap rule. */
 .editor-content :deep(.ProseMirror table td),
 .editor-content :deep(.ProseMirror table th) {
   border: 1px solid var(--color-border-dark, #bbb);
@@ -1321,20 +1524,19 @@ export default {
   box-sizing: border-box;
   position: relative;
   color: inherit !important;
-  /* Force text wrapping inside fixed-layout table cells */
-  overflow: hidden;
   overflow-wrap: anywhere;
+  min-width: 0;
+  hyphens: auto;
+  white-space: normal;
 }
 
-/* Force text wrapping on paragraphs inside table cells —
-   TipTap wraps cell content in <p> tags which need their own wrap constraint */
-.editor-content :deep(.ProseMirror table td p),
-.editor-content :deep(.ProseMirror table th p) {
+.editor-content :deep(.ProseMirror table td > *),
+.editor-content :deep(.ProseMirror table th > *) {
   overflow-wrap: anywhere;
-  word-break: break-word;
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
 }
-
-/* th now styled same as td - user can customize via content */
 
 .editor-content :deep(.ProseMirror table .selectedCell) {
   background: var(--color-primary-element-light);
