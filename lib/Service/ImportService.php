@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace OCA\IntraVox\Service;
 
+use OCA\IntraVox\Exception\InvalidImportException;
 use OCP\Files\File;
 use OCP\Files\Folder;
 use OCP\ITempManager;
@@ -49,7 +50,7 @@ class ImportService {
         // 2. Extract ZIP safely (prevent ZIP Slip vulnerability)
         $zip = new \ZipArchive();
         if ($zip->open($zipPath) !== true) {
-            throw new \Exception('Invalid ZIP file');
+            throw new InvalidImportException('Invalid ZIP file — the upload could not be opened as a ZIP archive.');
         }
         $this->safeExtractZip($zip, $tempDir);
         $zip->close();
@@ -57,18 +58,24 @@ class ImportService {
         // 3. Read export.json
         $exportJsonPath = $tempDir . '/export.json';
         if (!file_exists($exportJsonPath)) {
-            throw new \Exception('export.json not found in ZIP');
+            throw new InvalidImportException(
+                'No export.json found in the ZIP. Make sure you uploaded an IntraVox export ' .
+                '(Settings → Export), not a Nextcloud Files backup or a different app\'s archive.'
+            );
         }
         $exportData = json_decode(file_get_contents($exportJsonPath), true);
 
         if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new \Exception('Invalid JSON in export.json: ' . json_last_error_msg());
+            throw new InvalidImportException('export.json is not valid JSON: ' . json_last_error_msg());
         }
 
         // 4. Validate export version
         $version = $exportData['exportVersion'] ?? '0';
         if (version_compare($version, '1.0', '<')) {
-            throw new \Exception('Unsupported export version: ' . $version);
+            throw new InvalidImportException(
+                'Unsupported export version: ' . $version .
+                '. Please re-export from a recent IntraVox install.'
+            );
         }
 
         // 5. Detect if this is a Confluence import (has confluenceOrder metadata)
@@ -97,9 +104,9 @@ class ImportService {
                     'totalPages' => count($pages),
                     'pagesWithoutPath' => count($pagesWithoutPath)
                 ]);
-                throw new \Exception(
-                    'Export is incomplete - ' . count($pagesWithoutPath) . ' pages missing _exportPath. ' .
-                    'Please re-export from source system with IntraVox v0.8.11 or higher.'
+                throw new InvalidImportException(
+                    'Export is incomplete — ' . count($pagesWithoutPath) . ' pages are missing _exportPath. ' .
+                    'Please re-export from the source system with IntraVox v0.8.11 or higher.'
                 );
             }
 

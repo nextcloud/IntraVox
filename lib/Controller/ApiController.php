@@ -1618,6 +1618,16 @@ class ApiController extends Controller {
                 'success' => true,
                 'stats' => $stats,
             ]);
+        } catch (\OCA\IntraVox\Exception\InvalidImportException $e) {
+            // Validation errors are safe to forward to the client verbatim —
+            // they describe the upload, never internal paths or IDs. See #52.
+            $this->logger->info('IntraVox Import: ZIP rejected during validation', [
+                'message' => $e->getMessage(),
+            ]);
+            return new JSONResponse(
+                ['error' => $e->getMessage()],
+                Http::STATUS_BAD_REQUEST
+            );
         } catch (\Exception $e) {
             $errorId = uniqid('err_');
             $this->logger->error('IntraVox Import: ZIP import failed', [
@@ -1775,6 +1785,14 @@ class ApiController extends Controller {
                 'pages' => count($intermediateFormat->pages),
                 'message' => 'Confluence HTML export imported successfully',
             ]);
+        } catch (\OCA\IntraVox\Exception\InvalidImportException $e) {
+            $this->logger->info('Confluence HTML import: validation failed', [
+                'message' => $e->getMessage(),
+            ]);
+            return new JSONResponse(
+                ['error' => $e->getMessage()],
+                Http::STATUS_BAD_REQUEST
+            );
         } catch (\Exception $e) {
             $errorId = uniqid('err_');
             $this->logger->error('Confluence HTML import failed', [

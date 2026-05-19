@@ -530,6 +530,10 @@
 					{{ t('intravox', 'Import pages and media from an IntraVox ZIP export file.') }}
 				</p>
 
+				<NcNoteCard type="info" class="import-format-hint">
+					{{ t('intravox', 'Only ZIP files produced by IntraVox (Settings → Export) are accepted. Nextcloud Files backups, cloudron backups, or other apps\' archives will not work — they don\'t contain the export.json IntraVox needs.') }}
+				</NcNoteCard>
+
 				<div class="import-options">
 					<div class="import-row">
 						<label class="import-label" for="import-zip-file">{{ t('intravox', 'Select ZIP file') }}</label>
