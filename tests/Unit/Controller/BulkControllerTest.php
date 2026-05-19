@@ -6,6 +6,8 @@ namespace OCA\IntraVox\Tests\Unit\Controller;
 use OCA\IntraVox\Controller\BulkController;
 use OCA\IntraVox\Service\BulkOperationService;
 use OCA\IntraVox\Service\BulkOperationResult;
+use OCA\IntraVox\Tests\Mocks\MockGroupManager;
+use OCA\IntraVox\Tests\Mocks\MockUserSession;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
 use PHPUnit\Framework\TestCase;
@@ -27,6 +29,8 @@ class BulkControllerTest extends TestCase {
     private BulkOperationService $bulkService;
     private LoggerInterface $logger;
     private IRequest $request;
+    private MockUserSession $userSession;
+    private MockGroupManager $groupManager;
 
     protected function setUp(): void {
         parent::setUp();
@@ -34,11 +38,15 @@ class BulkControllerTest extends TestCase {
         $this->bulkService = $this->createMock(BulkOperationService::class);
         $this->logger = $this->createMock(LoggerInterface::class);
         $this->request = $this->createMock(IRequest::class);
+        $this->userSession = MockUserSession::loggedInAs('admin');
+        $this->groupManager = MockGroupManager::withAdmin('admin');
 
         $this->controller = new BulkController(
             'intravox',
             $this->request,
             $this->bulkService,
+            $this->userSession,
+            $this->groupManager,
             $this->logger
         );
     }

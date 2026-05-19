@@ -6,14 +6,21 @@ namespace OCA\IntraVox\Tests\Unit\Controller;
 use OCA\IntraVox\Controller\ApiController;
 use OCA\IntraVox\Service\EngagementSettingsService;
 use OCA\IntraVox\Service\ImportService;
+use OCA\IntraVox\Service\NavigationService;
+use OCA\IntraVox\Service\PageLockService;
 use OCA\IntraVox\Service\PageService;
+use OCA\IntraVox\Service\PermissionService;
 use OCA\IntraVox\Service\PublicationSettingsService;
+use OCA\IntraVox\Service\PublicShareService;
 use OCA\IntraVox\Service\SetupService;
+use OCA\IntraVox\Service\SystemFileService;
+use OCA\IntraVox\Service\TelemetryService;
 use OCA\IntraVox\Tests\Mocks\MockGroupManager;
 use OCA\IntraVox\Tests\Mocks\MockUserSession;
 use OCP\AppFramework\Http;
 use OCP\IConfig;
 use OCP\IRequest;
+use OCP\ISession;
 use OCP\ITempManager;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -33,6 +40,8 @@ class ApiControllerTest extends TestCase {
     private SetupService $setupService;
     private EngagementSettingsService $engagementSettings;
     private PublicationSettingsService $publicationSettings;
+    private PublicShareService $publicShareService;
+    private TelemetryService $telemetryService;
     private ImportService $importService;
     private LoggerInterface $logger;
     private IConfig $config;
@@ -40,6 +49,11 @@ class ApiControllerTest extends TestCase {
     private MockUserSession $userSession;
     private IRequest $request;
     private ITempManager $tempManager;
+    private SystemFileService $systemFileService;
+    private NavigationService $navigationService;
+    private PermissionService $permissionService;
+    private PageLockService $pageLockService;
+    private ISession $session;
 
     protected function setUp(): void {
         parent::setUp();
@@ -49,11 +63,18 @@ class ApiControllerTest extends TestCase {
         $this->setupService = $this->createMock(SetupService::class);
         $this->engagementSettings = $this->createMock(EngagementSettingsService::class);
         $this->publicationSettings = $this->createMock(PublicationSettingsService::class);
+        $this->publicShareService = $this->createMock(PublicShareService::class);
+        $this->telemetryService = $this->createMock(TelemetryService::class);
         $this->importService = $this->createMock(ImportService::class);
         $this->logger = $this->createMock(LoggerInterface::class);
         $this->config = $this->createMock(IConfig::class);
         $this->request = $this->createMock(IRequest::class);
         $this->tempManager = $this->createMock(ITempManager::class);
+        $this->systemFileService = $this->createMock(SystemFileService::class);
+        $this->navigationService = $this->createMock(NavigationService::class);
+        $this->permissionService = $this->createMock(PermissionService::class);
+        $this->pageLockService = $this->createMock(PageLockService::class);
+        $this->session = $this->createMock(ISession::class);
 
         // Use real mock implementations for user/group
         $this->userSession = MockUserSession::loggedInAs('testuser');
@@ -66,12 +87,19 @@ class ApiControllerTest extends TestCase {
             $this->setupService,
             $this->engagementSettings,
             $this->publicationSettings,
+            $this->publicShareService,
+            $this->telemetryService,
             $this->importService,
             $this->logger,
             $this->config,
             $this->groupManager,
             $this->userSession,
-            $this->tempManager
+            $this->tempManager,
+            $this->systemFileService,
+            $this->navigationService,
+            $this->permissionService,
+            $this->pageLockService,
+            $this->session
         );
     }
 
@@ -391,12 +419,19 @@ class ApiControllerTest extends TestCase {
             $this->setupService,
             $this->engagementSettings,
             $this->publicationSettings,
+            $this->publicShareService,
+            $this->telemetryService,
             $this->importService,
             $this->logger,
             $this->config,
             $this->groupManager,
             $this->userSession,
-            $this->tempManager
+            $this->tempManager,
+            $this->systemFileService,
+            $this->navigationService,
+            $this->permissionService,
+            $this->pageLockService,
+            $this->session
         );
 
         // Use reflection to test private method
@@ -426,12 +461,19 @@ class ApiControllerTest extends TestCase {
             $this->setupService,
             $this->engagementSettings,
             $this->publicationSettings,
+            $this->publicShareService,
+            $this->telemetryService,
             $this->importService,
             $this->logger,
             $this->config,
             $this->groupManager,
             $this->userSession,
-            $this->tempManager
+            $this->tempManager,
+            $this->systemFileService,
+            $this->navigationService,
+            $this->permissionService,
+            $this->pageLockService,
+            $this->session
         );
 
         $reflection = new \ReflectionClass($this->controller);

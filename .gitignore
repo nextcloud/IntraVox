@@ -67,3 +67,4 @@ docs/internal/
 
 # Test data (local development only)
 testdata/
+.phpunit.cache/

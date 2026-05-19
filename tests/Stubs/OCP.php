@@ -45,6 +45,14 @@ interface ITempManager {
     public function getTemporaryFolder(string $postFix = ''): string;
 }
 
+interface ISession {
+    public function set(string $key, $value): void;
+    public function get(string $key);
+    public function exists(string $key): bool;
+    public function remove(string $key): void;
+    public function clear(): void;
+}
+
 interface IDBConnection {
     public function getQueryBuilder();
     public function beginTransaction(): void;

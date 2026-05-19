@@ -100,7 +100,7 @@ class AnalyticsControllerTest extends TestCase {
         $response = $this->controller->getPageStats($pageId);
 
         $this->assertEquals(Http::STATUS_OK, $response->getStatus());
-        $this->assertEquals($stats, $response->getData());
+        $this->assertEquals(array_merge($stats, ['success' => true]), $response->getData());
     }
 
     public function testGetPageStatsReturnsNotFoundForInvalidPage(): void {
@@ -235,7 +235,8 @@ class AnalyticsControllerTest extends TestCase {
             'permissions' => ['canRead' => true]
         ]);
 
-        $response = $this->controller->getDashboard();
+        $adminController = $this->createAdminController();
+        $response = $adminController->getDashboard();
 
         $this->assertEquals(Http::STATUS_OK, $response->getStatus());
         $data = $response->getData();
@@ -247,7 +248,8 @@ class AnalyticsControllerTest extends TestCase {
         $this->analyticsService->method('getDashboardStats')
             ->willThrowException(new \Exception('Database error'));
 
-        $response = $this->controller->getDashboard();
+        $adminController = $this->createAdminController();
+        $response = $adminController->getDashboard();
 
         $this->assertEquals(Http::STATUS_INTERNAL_SERVER_ERROR, $response->getStatus());
     }
