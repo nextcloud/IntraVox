@@ -9,6 +9,7 @@ use OCA\IntraVox\Event\PageDeletedEvent;
 use OCA\IntraVox\Service\GroupContextService;
 use OCA\IntraVox\Service\Sanitize\ColorSanitizer;
 use OCA\IntraVox\Service\Sanitize\HtmlSanitizer;
+use OCA\IntraVox\Service\Sanitize\MediaSanitizer;
 use OCA\IntraVox\Service\Sanitize\UrlSanitizer;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\Files\IRootFolder;
@@ -20,7 +21,6 @@ use OCP\ICacheFactory;
 use OCP\ICache;
 use Psr\Log\LoggerInterface;
 use OCP\Files\Cache\ICacheEntry;
-use enshrined\svgSanitize\Sanitizer;
 use OCA\Files_Versions\Versions\IVersionManager;
 use OCA\Files_Versions\Versions\IVersion;
 
@@ -317,6 +317,7 @@ class PageService {
     private HtmlSanitizer $htmlSanitizer;
     private UrlSanitizer $urlSanitizer;
     private ColorSanitizer $colorSanitizer;
+    private MediaSanitizer $mediaSanitizer;
     private GroupContextService $groupContext;
 
     public function __construct(
@@ -333,6 +334,7 @@ class PageService {
         HtmlSanitizer $htmlSanitizer,
         UrlSanitizer $urlSanitizer,
         ColorSanitizer $colorSanitizer,
+        MediaSanitizer $mediaSanitizer,
         GroupContextService $groupContext,
         ?string $userId
     ) {
@@ -348,6 +350,7 @@ class PageService {
         $this->htmlSanitizer = $htmlSanitizer;
         $this->urlSanitizer = $urlSanitizer;
         $this->colorSanitizer = $colorSanitizer;
+        $this->mediaSanitizer = $mediaSanitizer;
         $this->groupContext = $groupContext;
         $this->userId = $userId ?? '';
 
@@ -4349,55 +4352,12 @@ class PageService {
      * @return string Sanitized filename
      * @throws \InvalidArgumentException If extension is not allowed
      */
+    /**
+     * @deprecated Delegated to MediaSanitizer::sanitizeFilename.
+     * Thin wrapper for existing call-sites in ApiController and templates.
+     */
     public function sanitizeFilename(string $filename, bool $validateExtension = true): string {
-        // Get extension
-        $extension = '';
-        if (($dotPos = strrpos($filename, '.')) !== false) {
-            $ext = strtolower(substr($filename, $dotPos + 1));
-
-            // Whitelist check for allowed extensions
-            if ($validateExtension && !in_array($ext, self::ALLOWED_EXTENSIONS)) {
-                throw new \InvalidArgumentException(
-                    "File extension not allowed: $ext. Allowed: " .
-                    implode(', ', self::ALLOWED_EXTENSIONS)
-                );
-            }
-
-            $extension = '.' . $ext;
-            $filename = substr($filename, 0, $dotPos);
-        }
-
-        // Remove special characters, keep alphanumeric, dash, underscore
-        $filename = preg_replace('/[^a-zA-Z0-9_\-]/', '_', $filename);
-
-        // Replace multiple underscores with single underscore
-        $filename = preg_replace('/_+/', '_', $filename);
-
-        // Trim underscores from start and end
-        $filename = trim($filename, '_');
-
-        // Check for Windows reserved names (security measure)
-        $reserved = ['con', 'prn', 'aux', 'nul'];
-        for ($i = 1; $i <= 9; $i++) {
-            $reserved[] = "com$i";
-            $reserved[] = "lpt$i";
-        }
-        if (in_array(strtolower($filename), $reserved)) {
-            $filename = 'file_' . uniqid();
-        }
-
-        // Limit to safe length (255 - extension length for filesystem compatibility)
-        $maxLength = 255 - strlen($extension);
-        if (strlen($filename) > $maxLength) {
-            $filename = substr($filename, 0, $maxLength);
-        }
-
-        // Ensure we have a filename
-        if (empty($filename)) {
-            $filename = 'file_' . uniqid();
-        }
-
-        return $filename . $extension;
+        return $this->mediaSanitizer->sanitizeFilename($filename, $validateExtension);
     }
 
     /**
@@ -4409,46 +4369,11 @@ class PageService {
      * @return string Sanitized SVG content
      * @throws \Exception If SVG is malformed or contains disallowed content
      */
+    /**
+     * @deprecated Delegated to MediaSanitizer::sanitizeSVG.
+     */
     private function sanitizeSVG(string $svgContent): string {
-        try {
-            $sanitizer = new Sanitizer();
-            $sanitizer->removeRemoteReferences(true);
-
-            $cleanSvg = $sanitizer->sanitize($svgContent);
-
-            if ($cleanSvg === false || empty($cleanSvg)) {
-                throw new \Exception('SVG sanitization failed - file may contain malicious content');
-            }
-
-            // Additional security: reject DOCTYPE (XXE attack vector)
-            if (stripos($cleanSvg, '<!DOCTYPE') !== false) {
-                throw new \Exception('SVG contains DOCTYPE declaration (not allowed)');
-            }
-
-            // Check for dangerous elements that could bypass sanitizer
-            $dangerousPatterns = [
-                '<!ENTITY',      // XML entities (XXE)
-                '<iframe',       // Embedded frames
-                '<embed',        // Embedded content
-                '<object',       // Embedded objects
-                '<script',       // Scripts (should be caught by sanitizer, but double-check)
-                'javascript:',   // JavaScript URLs
-                'data:text/html', // Data URIs with HTML
-                'SYSTEM',        // External entity references
-                'PUBLIC',        // Public entity references
-            ];
-
-            foreach ($dangerousPatterns as $pattern) {
-                if (stripos($cleanSvg, $pattern) !== false) {
-                    throw new \Exception("SVG contains prohibited content: $pattern");
-                }
-            }
-
-            return $cleanSvg;
-        } catch (\Exception $e) {
-            $this->logger->error('SVG sanitization error: ' . $e->getMessage());
-            throw new \Exception('Invalid SVG file');
-        }
+        return $this->mediaSanitizer->sanitizeSVG($svgContent);
     }
 
     /**
@@ -4461,34 +4386,11 @@ class PageService {
      * @param string $detectedMime MIME type detected by finfo
      * @throws \InvalidArgumentException If image is invalid or MIME type doesn't match
      */
+    /**
+     * @deprecated Delegated to MediaSanitizer::validateImageFile.
+     */
     private function validateImageFile(string $tmpFile, string $detectedMime): void {
-        $imageInfo = @getimagesize($tmpFile);
-
-        if ($imageInfo === false) {
-            throw new \InvalidArgumentException(
-                'File appears to be an invalid or corrupted image'
-            );
-        }
-
-        // Map PHP's IMAGETYPE constants to MIME types
-        $expectedMime = match ($imageInfo[2]) {
-            IMAGETYPE_JPEG => 'image/jpeg',
-            IMAGETYPE_PNG => 'image/png',
-            IMAGETYPE_GIF => 'image/gif',
-            IMAGETYPE_WEBP => 'image/webp',
-            default => null
-        };
-
-        // Verify MIME type matches what getimagesize() detected
-        if ($expectedMime !== null && $expectedMime !== $detectedMime) {
-            $this->logger->warning('Image MIME type mismatch', [
-                'detected' => $detectedMime,
-                'actual' => $expectedMime
-            ]);
-            throw new \InvalidArgumentException(
-                'Image file appears to be corrupted or has incorrect extension'
-            );
-        }
+        $this->mediaSanitizer->validateImageFile($tmpFile, $detectedMime);
     }
 
     /**
