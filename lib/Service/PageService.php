@@ -3869,13 +3869,18 @@ class PageService {
      * @param string|null $currentPageId Optional: uniqueId of the current page to highlight
      * @return array Tree structure with pages and their children
      */
-    public function getPageTree(?string $currentPageId = null, ?string $language = null): array {
+    public function getPageTree(?string $currentPageId = null, ?string $language = null, ?string $rootPageId = null): array {
         // Use provided language or fall back to user's language
         $lang = $language ?? $this->getUserLanguage();
 
         // Cache key is groupHash + language. Users that share a group set
         // share a bucket — at enterprise scale (1k+ users, ~10 groups) that
         // turns 2000 entries into ~10.
+        //
+        // The full per-language tree is cached *whole*; subtree requests
+        // filter from that cached blob (issue #45). Caching subtrees
+        // separately would multiply key cardinality by the number of
+        // candidate roots without saving work.
         $cacheKey = $this->groupContext->getGroupHash() . '_' . $lang;
         $distributedCacheKey = 'tree_' . $cacheKey;
         $now = time();
@@ -3884,7 +3889,7 @@ class PageService {
         if (isset(self::$pageTreeCache[$cacheKey])) {
             $cached = self::$pageTreeCache[$cacheKey];
             if (($now - $cached['time']) < self::PAGE_TREE_CACHE_TTL) {
-                return $this->markCurrentPageInTree($cached['tree'], $currentPageId);
+                return $this->shapeTreeResponse($cached['tree'], $currentPageId, $rootPageId);
             }
         }
 
@@ -3899,7 +3904,7 @@ class PageService {
                         'tree' => $decoded,
                         'time' => $now
                     ];
-                    return $this->markCurrentPageInTree($decoded, $currentPageId);
+                    return $this->shapeTreeResponse($decoded, $currentPageId, $rootPageId);
                 }
             }
         }
@@ -3953,7 +3958,19 @@ class PageService {
             $this->distributedCache->set($distributedCacheKey, json_encode($tree), self::PAGE_TREE_CACHE_TTL);
         }
 
-        // Return with current page marked
+        return $this->shapeTreeResponse($tree, $currentPageId, $rootPageId);
+    }
+
+    /**
+     * Apply the response-shaping steps that come after cache lookup:
+     * optionally narrow to a subtree, then mark the current page.
+     * Centralised so the three cache paths (static, distributed, fresh)
+     * stay identical.
+     */
+    private function shapeTreeResponse(array $tree, ?string $currentPageId, ?string $rootPageId): array {
+        if ($rootPageId !== null && $rootPageId !== '') {
+            $tree = $this->pathHelper->findSubtree($tree, $rootPageId);
+        }
         return $this->markCurrentPageInTree($tree, $currentPageId);
     }
 

@@ -1093,14 +1093,19 @@ class ApiController extends Controller {
 
     /**
      * Get the full page tree structure
-     * Used for the "View structure" modal to show all accessible pages
+     * Used for the "View structure" modal to show all accessible pages.
+     *
+     * Optional `rootPageId` narrows the response to the subtree rooted at
+     * the page with that uniqueId — useful for third-party apps (e.g. a
+     * teamhub) that want only the pages below a specific anchor. See
+     * GitHub issue #45.
      *
      * @NoAdminRequired
      * @NoCSRFRequired
      */
-    public function getPageTree(?string $currentPageId = null, ?string $language = null): DataResponse {
+    public function getPageTree(?string $currentPageId = null, ?string $language = null, ?string $rootPageId = null): DataResponse {
         try {
-            $tree = $this->pageService->getPageTree($currentPageId, $language);
+            $tree = $this->pageService->getPageTree($currentPageId, $language, $rootPageId);
 
             // Filter tree to only include pages user can read
             // PageService already includes Nextcloud permissions in each page

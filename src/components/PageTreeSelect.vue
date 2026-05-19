@@ -119,6 +119,16 @@ export default {
     language: {
       type: String,
       default: null
+    },
+    /**
+     * Restrict the dropdown to the subtree rooted at this page uniqueId.
+     * Useful for picking a child page within a known section (e.g. a
+     * teamhub builder that only cares about pages under /teamhub/).
+     * When null, the full tree is shown.
+     */
+    rootPageId: {
+      type: String,
+      default: null
     }
   },
   emits: ['update:modelValue', 'select'],
@@ -173,6 +183,11 @@ export default {
       // Reload tree when language changes
       this.loadTree();
     },
+    rootPageId() {
+      // Switching the subtree anchor means we need a different slice
+      // of the tree — the backend handles the filtering, we just refetch.
+      this.loadTree();
+    },
     modelValue: {
       immediate: true,
       handler(newValue) {
@@ -200,6 +215,9 @@ export default {
         const params = {};
         if (this.language) {
           params.language = this.language;
+        }
+        if (this.rootPageId) {
+          params.rootPageId = this.rootPageId;
         }
         const response = await axios.get(generateUrl('/apps/intravox/api/pages/tree'), { params });
         const tree = response.data.tree || [];

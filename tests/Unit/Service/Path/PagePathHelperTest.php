@@ -131,4 +131,87 @@ class PagePathHelperTest extends TestCase {
         $this->helper->markCurrentPageInTree($tree, 'p1');
         $this->assertArrayNotHasKey('isCurrent', $tree[0]);
     }
+
+    // ---------- findSubtree (issue #45) ----------
+
+    public function testFindSubtreeReturnsEmptyForUnknownRoot(): void {
+        $tree = [['uniqueId' => 'p1', 'children' => []]];
+        $this->assertSame([], $this->helper->findSubtree($tree, 'does-not-exist'));
+    }
+
+    public function testFindSubtreeMatchesTopLevelNode(): void {
+        $tree = [
+            ['uniqueId' => 'p1', 'title' => 'Home', 'children' => []],
+            ['uniqueId' => 'p2', 'title' => 'About', 'children' => []],
+        ];
+
+        $result = $this->helper->findSubtree($tree, 'p2');
+
+        $this->assertCount(1, $result);
+        $this->assertSame('p2', $result[0]['uniqueId']);
+        $this->assertSame('About', $result[0]['title']);
+    }
+
+    public function testFindSubtreeReturnsNodeWithItsChildren(): void {
+        $tree = [
+            [
+                'uniqueId' => 'teamhub',
+                'title' => 'Teamhub',
+                'children' => [
+                    ['uniqueId' => 'team-a', 'title' => 'Team A', 'children' => []],
+                    ['uniqueId' => 'team-b', 'title' => 'Team B', 'children' => []],
+                ],
+            ],
+        ];
+
+        $result = $this->helper->findSubtree($tree, 'teamhub');
+
+        $this->assertCount(1, $result);
+        $this->assertSame('teamhub', $result[0]['uniqueId']);
+        $this->assertCount(2, $result[0]['children']);
+    }
+
+    public function testFindSubtreeRecursesIntoNestedChildren(): void {
+        $tree = [
+            [
+                'uniqueId' => 'root',
+                'children' => [
+                    [
+                        'uniqueId' => 'level1',
+                        'children' => [
+                            ['uniqueId' => 'target', 'title' => 'deep page', 'children' => []],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $result = $this->helper->findSubtree($tree, 'target');
+
+        $this->assertCount(1, $result);
+        $this->assertSame('target', $result[0]['uniqueId']);
+        $this->assertSame('deep page', $result[0]['title']);
+    }
+
+    public function testFindSubtreeOnEmptyTreeReturnsEmpty(): void {
+        $this->assertSame([], $this->helper->findSubtree([], 'anything'));
+    }
+
+    public function testFindSubtreeReturnsFirstMatchWhenIdAppearsTwice(): void {
+        // Pathological case: two nodes claim the same uniqueId. The walker
+        // walks depth-first, so the first hit (top-level p1 in this case)
+        // wins. Documents the behaviour rather than guarantees it.
+        $tree = [
+            ['uniqueId' => 'p1', 'title' => 'first', 'children' => []],
+            [
+                'uniqueId' => 'p2',
+                'children' => [
+                    ['uniqueId' => 'p1', 'title' => 'duplicate', 'children' => []],
+                ],
+            ],
+        ];
+
+        $result = $this->helper->findSubtree($tree, 'p1');
+        $this->assertSame('first', $result[0]['title']);
+    }
 }

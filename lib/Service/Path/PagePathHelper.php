@@ -71,6 +71,36 @@ final class PagePathHelper {
     }
 
     /**
+     * Locate the subtree whose root has `uniqueId === $rootPageId` and
+     * return it wrapped in a single-element list, so callers receive the
+     * same shape as `getPageTree` (a list of top-level nodes). Returns
+     * an empty list when the root is not found, which lets API callers
+     * treat "no such root" and "root has no children" uniformly.
+     *
+     * Pure tree-walk: no filesystem, no permission re-check — relies on
+     * the input tree already being filtered by ACL upstream (which it is,
+     * because PageService builds the tree through the user's mounted
+     * folder view).
+     *
+     * @param array<int, array<string, mixed>> $tree Full tree as returned by getPageTree
+     * @return array<int, array<string, mixed>> [] when not found, [subtreeRoot] otherwise
+     */
+    public function findSubtree(array $tree, string $rootPageId): array {
+        foreach ($tree as $node) {
+            if (($node['uniqueId'] ?? null) === $rootPageId) {
+                return [$node];
+            }
+            if (!empty($node['children']) && is_array($node['children'])) {
+                $found = $this->findSubtree($node['children'], $rootPageId);
+                if ($found !== []) {
+                    return $found;
+                }
+            }
+        }
+        return [];
+    }
+
+    /**
      * Recursively walk a page tree and set `isCurrent` on the node whose
      * `uniqueId` matches `$currentPageId`. Returns a new array (does not
      * mutate the input). When `$currentPageId` is null, returns the tree
