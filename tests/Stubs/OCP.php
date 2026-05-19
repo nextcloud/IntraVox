@@ -15,6 +15,7 @@ interface IRequest {
     public function getParam(string $key, $default = null);
     public function getParams(): array;
     public function getUploadedFile(string $key);
+    public function getHeader(string $name): string;
 }
 
 interface IConfig {
@@ -38,6 +39,7 @@ interface IUserSession {
 interface IGroupManager {
     public function isAdmin(string $uid): bool;
     public function isInGroup(string $uid, string $gid): bool;
+    public function getUserGroupIds(IUser $user): array;
 }
 
 interface ITempManager {
@@ -102,6 +104,7 @@ class Http {
     public const STATUS_CREATED = 201;
     public const STATUS_NO_CONTENT = 204;
     public const STATUS_MULTI_STATUS = 207;
+    public const STATUS_NOT_MODIFIED = 304;
     public const STATUS_BAD_REQUEST = 400;
     public const STATUS_UNAUTHORIZED = 401;
     public const STATUS_FORBIDDEN = 403;

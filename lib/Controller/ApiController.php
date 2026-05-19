@@ -5,6 +5,7 @@ namespace OCA\IntraVox\Controller;
 
 use OCA\IntraVox\AppInfo\Application;
 use OCA\IntraVox\Constants;
+use OCA\IntraVox\Http\EtagBuilder;
 use OCA\IntraVox\Service\EngagementSettingsService;
 use OCA\IntraVox\Service\ImportService;
 use OCA\IntraVox\Service\PublicationSettingsService;
@@ -47,6 +48,7 @@ use Psr\Log\LoggerInterface;
  */
 class ApiController extends Controller {
     use ApiErrorTrait;
+    use HasConditionalResponse;
 
     private PageService $pageService;
     private SetupService $setupService;
@@ -254,13 +256,39 @@ class ApiController extends Controller {
                 $page['breadcrumb'] = [];
             }
 
-            return new DataResponse($page);
+            // Conditional response: derive an ETag from the page payload + the
+            // user's group context. Including the group context keeps responses
+            // safe to revalidate per-user — a user removed from a group will
+            // get a fresh ETag and bypass cache automatically.
+            $resourceKey = $page['uniqueId'] ?? $id;
+            $version = md5(json_encode($page));
+            $etag = EtagBuilder::build($resourceKey, $version, $this->getUserGroupContext());
+
+            if ($notModified = $this->respondNotModifiedIfMatches($etag)) {
+                return $notModified;
+            }
+
+            return $this->withCacheHeaders(new DataResponse($page), $etag);
         } catch (\Exception $e) {
             return new DataResponse(
                 ['error' => $e->getMessage()],
                 Http::STATUS_NOT_FOUND
             );
         }
+    }
+
+    /**
+     * Per-user discriminator for the conditional response trait. Returns null
+     * when the user is unauthenticated so the ETag falls back to a purely
+     * resource-keyed value.
+     */
+    private function getUserGroupContext(): ?string {
+        $user = $this->userSession->getUser();
+        if ($user === null) {
+            return null;
+        }
+        $groupIds = $this->groupManager->getUserGroupIds($user);
+        return EtagBuilder::userContextFromGroups($groupIds);
     }
 
     /**

@@ -239,6 +239,92 @@ class ApiControllerTest extends TestCase {
         $this->assertEquals([], $data['breadcrumb']);
     }
 
+    public function testGetPageReturnsEtagAndCacheHeadersOnFreshResponse(): void {
+        $page = [
+            'id' => 'page-etag',
+            'uniqueId' => 'page-etag',
+            'title' => 'Cached Page',
+            'permissions' => ['canRead' => true]
+        ];
+
+        $this->pageService->method('getPage')->willReturn($page);
+        $this->pageService->method('getBreadcrumb')->willReturn([]);
+        $this->request->method('getHeader')->willReturn('');
+
+        $response = $this->controller->getPage('page-etag');
+
+        $this->assertEquals(Http::STATUS_OK, $response->getStatus());
+        $headers = $this->getResponseHeaders($response);
+        $this->assertArrayHasKey('ETag', $headers);
+        $this->assertMatchesRegularExpression('/^"[a-f0-9]{32}"$/', $headers['ETag']);
+        $this->assertArrayHasKey('Cache-Control', $headers);
+        $this->assertStringContainsString('must-revalidate', $headers['Cache-Control']);
+    }
+
+    public function testGetPageReturnsNotModifiedWhenIfNoneMatchMatches(): void {
+        $page = [
+            'id' => 'page-etag',
+            'uniqueId' => 'page-etag',
+            'title' => 'Cached Page',
+            'permissions' => ['canRead' => true]
+        ];
+
+        $this->pageService->method('getPage')->willReturn($page);
+        $this->pageService->method('getBreadcrumb')->willReturn([]);
+
+        // First request: capture the ETag the controller assigns.
+        $this->request->method('getHeader')->willReturn('');
+        $first = $this->controller->getPage('page-etag');
+        $etag = $this->getResponseHeaders($first)['ETag'];
+
+        // Second request: replay the ETag in If-None-Match. We rebuild the
+        // controller so the new mock for getHeader takes effect.
+        $newRequest = $this->createMock(\OCP\IRequest::class);
+        $newRequest->method('getHeader')->willReturn($etag);
+        $controller = new ApiController(
+            'intravox',
+            $newRequest,
+            $this->pageService,
+            $this->setupService,
+            $this->engagementSettings,
+            $this->publicationSettings,
+            $this->publicShareService,
+            $this->telemetryService,
+            $this->importService,
+            $this->logger,
+            $this->config,
+            $this->groupManager,
+            $this->userSession,
+            $this->tempManager,
+            $this->systemFileService,
+            $this->navigationService,
+            $this->permissionService,
+            $this->pageLockService,
+            $this->session
+        );
+
+        $second = $controller->getPage('page-etag');
+
+        $this->assertEquals(Http::STATUS_NOT_MODIFIED, $second->getStatus());
+        $this->assertEquals([], $second->getData());
+    }
+
+    /**
+     * Test-only accessor for protected headers on DataResponse.
+     *
+     * @return array<string, string>
+     */
+    private function getResponseHeaders($response): array {
+        $reflection = new \ReflectionClass($response);
+        // Headers property lives on Response (parent class), so walk up the
+        // hierarchy until we find it.
+        while ($reflection !== false && !$reflection->hasProperty('headers')) {
+            $reflection = $reflection->getParentClass();
+        }
+        $prop = $reflection->getProperty('headers');
+        return $prop->getValue($response);
+    }
+
     // ==========================================
     // createPage Tests
     // ==========================================
