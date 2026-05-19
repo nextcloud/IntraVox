@@ -1497,7 +1497,17 @@ class PageService {
         $validatedData = $this->validateAndSanitizePage($data);
 
         // Use the new createPageAtPath helper - pass id separately (not stored in JSON)
-        return $this->createPageAtPath($data['id'], $validatedData, $parentPath);
+        $created = $this->createPageAtPath($data['id'], $validatedData, $parentPath);
+
+        // Flush all cached page-tree + permission map entries so subsequent
+        // reads (loadPages, getPageTree) immediately see the new page.
+        // Historically only updatePage/deletePage did this; createPage
+        // relied on the static cache's TTL to age out, which became
+        // visible as "create page from template renders blank" once PR-3
+        // shifted to a 5-minute distributed tree cache.
+        $this->clearCache();
+
+        return $created;
     }
 
     /**
