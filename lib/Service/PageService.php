@@ -15,6 +15,7 @@ use OCA\IntraVox\Service\Sanitize\MediaSanitizer;
 use OCA\IntraVox\Service\Sanitize\UrlSanitizer;
 use OCA\IntraVox\Service\Search\PageSearchHelper;
 use OCA\IntraVox\Service\Template\TemplateMetadataExtractor;
+use OCA\IntraVox\Service\Util\PageIdUtils;
 use OCA\IntraVox\Service\Version\PageVersionFormatter;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\Files\IRootFolder;
@@ -103,21 +104,11 @@ class PageService {
     /**
      * Parse PHP size notation (e.g., '2M', '8M', '512K') to bytes
      */
+    /**
+     * @deprecated Delegated to PageIdUtils::parsePhpSize.
+     */
     private function parsePhpSize(string $size): int {
-        $size = trim($size);
-        $unit = strtoupper(substr($size, -1));
-        $value = (int) substr($size, 0, -1);
-
-        switch ($unit) {
-            case 'G':
-                return $value * 1024 * 1024 * 1024;
-            case 'M':
-                return $value * 1024 * 1024;
-            case 'K':
-                return $value * 1024;
-            default:
-                return (int) $size;
-        }
+        return $this->idUtils->parsePhpSize($size);
     }
 
     /**
@@ -328,6 +319,7 @@ class PageService {
     private NewsContentExtractor $newsContent;
     private PageSearchHelper $searchHelper;
     private PagePathHelper $pathHelper;
+    private PageIdUtils $idUtils;
     private GroupContextService $groupContext;
 
     public function __construct(
@@ -350,6 +342,7 @@ class PageService {
         NewsContentExtractor $newsContent,
         PageSearchHelper $searchHelper,
         PagePathHelper $pathHelper,
+        PageIdUtils $idUtils,
         GroupContextService $groupContext,
         ?string $userId
     ) {
@@ -371,6 +364,7 @@ class PageService {
         $this->newsContent = $newsContent;
         $this->searchHelper = $searchHelper;
         $this->pathHelper = $pathHelper;
+        $this->idUtils = $idUtils;
         $this->groupContext = $groupContext;
         $this->userId = $userId ?? '';
 
@@ -1948,15 +1942,11 @@ class PageService {
     /**
      * Sanitize page ID
      */
+    /**
+     * @deprecated Delegated to PageIdUtils::sanitizeId.
+     */
     private function sanitizeId(string $id): string {
-        // Only allow alphanumeric, hyphens, and underscores
-        $id = preg_replace('/[^a-zA-Z0-9_-]/', '', $id);
-
-        if (empty($id)) {
-            throw new \InvalidArgumentException('Invalid page ID');
-        }
-
-        return $id;
+        return $this->idUtils->sanitizeId($id);
     }
 
     /**
@@ -3314,15 +3304,11 @@ class PageService {
     /**
      * Generate a UUID v4
      */
+    /**
+     * @deprecated Delegated to PageIdUtils::generateUUID.
+     */
     private function generateUUID(): string {
-        $data = random_bytes(16);
-
-        // Set version to 4
-        $data[6] = chr(ord($data[6]) & 0x0f | 0x40);
-        // Set variant to RFC 4122
-        $data[8] = chr(ord($data[8]) & 0x3f | 0x80);
-
-        return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
+        return $this->idUtils->generateUUID();
     }
 
     /**
@@ -3631,16 +3617,11 @@ class PageService {
     /**
      * Format bytes to human readable format
      */
+    /**
+     * @deprecated Delegated to PageIdUtils::formatBytes.
+     */
     private function formatBytes(int $bytes): string {
-        if ($bytes < 1024) {
-            return $bytes . ' B';
-        } elseif ($bytes < 1048576) {
-            return round($bytes / 1024, 2) . ' KB';
-        } elseif ($bytes < 1073741824) {
-            return round($bytes / 1048576, 2) . ' MB';
-        } else {
-            return round($bytes / 1073741824, 2) . ' GB';
-        }
+        return $this->idUtils->formatBytes($bytes);
     }
 
     /**
