@@ -6,6 +6,9 @@ namespace OCA\IntraVox\Service;
 use OCA\IntraVox\AppInfo\Application;
 use OCA\IntraVox\Constants;
 use OCA\IntraVox\Event\PageDeletedEvent;
+use OCA\IntraVox\Service\Sanitize\ColorSanitizer;
+use OCA\IntraVox\Service\Sanitize\HtmlSanitizer;
+use OCA\IntraVox\Service\Sanitize\UrlSanitizer;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\Files\IRootFolder;
 use OCP\Files\NotFoundException;
@@ -303,6 +306,10 @@ class PageService {
         return $this->fileContentCache[$path];
     }
 
+    private HtmlSanitizer $htmlSanitizer;
+    private UrlSanitizer $urlSanitizer;
+    private ColorSanitizer $colorSanitizer;
+
     public function __construct(
         IRootFolder $rootFolder,
         IUserSession $userSession,
@@ -314,6 +321,9 @@ class PageService {
         PublicationSettingsService $publicationSettings,
         ICacheFactory $cacheFactory,
         PageIndexService $pageIndexService,
+        HtmlSanitizer $htmlSanitizer,
+        UrlSanitizer $urlSanitizer,
+        ColorSanitizer $colorSanitizer,
         ?string $userId
     ) {
         $this->rootFolder = $rootFolder;
@@ -325,6 +335,9 @@ class PageService {
         $this->eventDispatcher = $eventDispatcher;
         $this->publicationSettings = $publicationSettings;
         $this->pageIndexService = $pageIndexService;
+        $this->htmlSanitizer = $htmlSanitizer;
+        $this->urlSanitizer = $urlSanitizer;
+        $this->colorSanitizer = $colorSanitizer;
         $this->userId = $userId ?? '';
 
         if ($cacheFactory->isAvailable()) {
@@ -2725,83 +2738,19 @@ class PageService {
     }
 
     /**
-     * Decode HTML entities repeatedly until stable (handles multiple encoding rounds).
+     * @deprecated Use HtmlSanitizer::decodeEntitiesRecursive directly.
+     * Kept as a thin wrapper so internal call-sites continue to work; will be
+     * removed once all call-sites are migrated to the injected sanitizer.
      */
     private function decodeHtmlEntitiesRecursive(string $value): string {
-        $prev = null;
-        while ($prev !== $value) {
-            $prev = $value;
-            $value = html_entity_decode($value, ENT_QUOTES | ENT_HTML5, 'UTF-8');
-        }
-        return $value;
+        return $this->htmlSanitizer->decodeEntitiesRecursive($value);
     }
 
     /**
-     * Sanitize HTML content (allow safe formatting tags, prevent XSS)
+     * @deprecated Use HtmlSanitizer::sanitize directly. See note above.
      */
     private function sanitizeHtml(string $html): string {
-        // Define allowed tags - must match frontend sanitization.js ALLOWED_TAGS
-        // Text structure
-        $allowedTags = '<p><br><span><div>';
-        // Text formatting
-        $allowedTags .= '<strong><b><em><i><u><s><del><mark><sub><sup>';
-        // Headings
-        $allowedTags .= '<h1><h2><h3><h4><h5><h6>';
-        // Lists
-        $allowedTags .= '<ul><ol><li>';
-        // Links
-        $allowedTags .= '<a>';
-        // Block elements
-        $allowedTags .= '<blockquote><pre><code>';
-        // Tables - CRITICAL for TipTap table support
-        $allowedTags .= '<table><thead><tbody><tfoot><tr><th><td><caption><colgroup><col>';
-        // Task lists (TipTap uses data attributes)
-        $allowedTags .= '<input><label>';
-
-        // Strip all tags except allowed ones
-        $cleaned = strip_tags($html, $allowedTags);
-
-        // Additional XSS prevention: remove any event handlers or javascript
-        $cleaned = preg_replace('/on\w+\s*=\s*["\']?[^"\']*["\']?/i', '', $cleaned);
-        $cleaned = preg_replace('/javascript:/i', '', $cleaned);
-
-        // Sanitize style attributes - only allow safe CSS properties
-        // This allows background-color and text-align for table cells
-        $cleaned = preg_replace_callback(
-            '/style\s*=\s*["\']([^"\']*)["\']?/i',
-            function ($matches) {
-                $style = $matches[1];
-                $allowedProperties = [];
-
-                // Extract and validate each CSS property
-                preg_match_all('/([a-z-]+)\s*:\s*([^;]+)/i', $style, $props, PREG_SET_ORDER);
-
-                foreach ($props as $prop) {
-                    $property = strtolower(trim($prop[1]));
-                    $value = trim($prop[2]);
-
-                    // Only allow specific safe properties
-                    if (in_array($property, ['background-color', 'text-align', 'color', 'width'])) {
-                        // Validate values - no javascript or expressions
-                        if (!preg_match('/expression|javascript|url\s*\(/i', $value)) {
-                            $allowedProperties[] = $property . ': ' . $value;
-                        }
-                    }
-                }
-
-                if (empty($allowedProperties)) {
-                    return '';
-                }
-
-                return 'style="' . implode('; ', $allowedProperties) . '"';
-            },
-            $cleaned
-        );
-
-        // Clean up any malformed HTML entities
-        $cleaned = preg_replace('/&(?![a-z]+;|#[0-9]+;|#x[0-9a-f]+;)/i', '&amp;', $cleaned);
-
-        return $cleaned;
+        return $this->htmlSanitizer->sanitize($html);
     }
 
     /**
@@ -2878,17 +2827,11 @@ class PageService {
     }
 
     /**
-     * Sanitize URL
+     * @deprecated Use UrlSanitizer::sanitize directly. Thin wrapper for
+     * existing call-sites; remove when migrated.
      */
     private function sanitizeUrl(string $url): string {
-        $url = filter_var($url, FILTER_SANITIZE_URL);
-
-        // Only allow http, https, relative URLs, and hash links
-        if (!empty($url) && !preg_match('/^(https?:\/\/|\/|#)/i', $url)) {
-            return '';
-        }
-
-        return $url;
+        return $this->urlSanitizer->sanitize($url);
     }
 
     /**
@@ -3025,40 +2968,11 @@ class PageService {
     }
 
     /**
-     * Sanitize background color (allow theme CSS variables, hex colors, rgba, transparent)
+     * @deprecated Use ColorSanitizer::sanitize directly. Thin wrapper for
+     * existing call-sites; remove when migrated.
      */
     private function sanitizeBackgroundColor(string $color): string {
-        // Empty string is allowed (transparent/default)
-        if (empty($color)) {
-            return '';
-        }
-
-        // Allow Nextcloud theme CSS variables and specific safe values
-        $allowedColors = [
-            'var(--color-primary-element)',
-            'var(--color-primary-element-light)',
-            'var(--color-background-hover)',
-            'var(--color-border)',
-            'transparent',
-            'rgba(255,255,255,0.3)'
-        ];
-
-        if (in_array($color, $allowedColors)) {
-            return $color;
-        }
-
-        // Allow hex colors (#RGB or #RRGGBB)
-        if (preg_match('/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/', $color)) {
-            return $color;
-        }
-
-        // Allow rgba/rgb colors
-        if (preg_match('/^rgba?\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*(,\s*[\d.]+\s*)?\)$/', $color)) {
-            return $color;
-        }
-
-        // Invalid color, return empty (default)
-        return '';
+        return $this->colorSanitizer->sanitize($color);
     }
 
     /**
