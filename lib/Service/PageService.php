@@ -132,7 +132,10 @@ class PageService {
         // visible to any group that has read access via GroupFolder ACL, and
         // we have no efficient way to enumerate those from here. The bucket
         // count is small (≤ groups × languages, typically ~40), so a blanket
-        // clear is cheaper than tracking dependencies.
+        // clear is cheaper than tracking dependencies. This also clears the
+        // news-version counters (PR-13) and content caches (PR-12) for the
+        // same reason; subsequent reads re-initialize the counter at 0 and
+        // rebuild from source.
         self::$pageTreeCache = [];
         if ($this->distributedCache !== null) {
             $this->distributedCache->clear();
@@ -4581,6 +4584,36 @@ class PageService {
         $pages = [];
         $language = $this->getUserLanguage();
 
+        // Version-counter cache: the news widget result depends on all pages in
+        // the source folder plus user-supplied filters/sort/limit, plus the
+        // user's group context (permissions). We don't want to rebuild on every
+        // dashboard render, but invalidation must be instant on any page write.
+        //
+        // Strategy: a per-language counter that PageService::clearCache bumps
+        // on every mutation. Cache entries embed the current counter value;
+        // after a bump, every old entry is unreachable (no reader looks under
+        // the stale counter), so they age out via TTL without ever serving
+        // stale data. Plan B4 from the roadmap.
+        $newsVersionKey = 'news_version_' . $language;
+        $newsVersion = 0;
+        $newsCacheKey = null;
+        if ($this->distributedCache !== null) {
+            $newsVersion = (int) ($this->distributedCache->get($newsVersionKey) ?? 0);
+            $paramHash = md5(json_encode([
+                $sourcePath, $filters, $filterOperator, $limit, $sortBy,
+                $sortOrder, $sourcePageId, $filterPublished,
+            ]));
+            $newsCacheKey = 'news_' . $language . '_' . $this->groupContext->getGroupHash()
+                . '_v' . $newsVersion . '_' . $paramHash;
+            $cached = $this->distributedCache->get($newsCacheKey);
+            if (is_string($cached)) {
+                $decoded = json_decode($cached, true);
+                if (is_array($decoded)) {
+                    return $decoded;
+                }
+            }
+        }
+
         // If sourcePageId is provided, find that page and use its folder as source
         // Also include the selected page itself in the results
         $sourcePageData = null;
@@ -4687,11 +4720,20 @@ class PageService {
         // Limit results
         $pages = array_slice($pages, 0, $limit);
 
-        return [
+        $result = [
             'items' => $pages,
             'total' => $total,
-            'metavoxAvailable' => $this->isMetaVoxAvailable()
+            'metavoxAvailable' => $this->isMetaVoxAvailable(),
         ];
+
+        // Cache for 5 minutes — the version-counter scheme makes correctness
+        // independent of TTL (a counter bump renders this entry unreachable),
+        // so the TTL only bounds memory growth from orphaned entries.
+        if ($this->distributedCache !== null && $newsCacheKey !== null) {
+            $this->distributedCache->set($newsCacheKey, json_encode($result), 300);
+        }
+
+        return $result;
     }
 
     /**
