@@ -7,6 +7,7 @@ use OCA\IntraVox\AppInfo\Application;
 use OCA\IntraVox\Constants;
 use OCA\IntraVox\Event\PageDeletedEvent;
 use OCA\IntraVox\Service\GroupContextService;
+use OCA\IntraVox\Service\News\NewsContentExtractor;
 use OCA\IntraVox\Service\Sanitize\ColorSanitizer;
 use OCA\IntraVox\Service\Sanitize\HtmlSanitizer;
 use OCA\IntraVox\Service\Sanitize\MediaSanitizer;
@@ -322,6 +323,7 @@ class PageService {
     private MediaSanitizer $mediaSanitizer;
     private PageVersionFormatter $versionFormatter;
     private TemplateMetadataExtractor $templateMetadata;
+    private NewsContentExtractor $newsContent;
     private GroupContextService $groupContext;
 
     public function __construct(
@@ -341,6 +343,7 @@ class PageService {
         MediaSanitizer $mediaSanitizer,
         PageVersionFormatter $versionFormatter,
         TemplateMetadataExtractor $templateMetadata,
+        NewsContentExtractor $newsContent,
         GroupContextService $groupContext,
         ?string $userId
     ) {
@@ -359,6 +362,7 @@ class PageService {
         $this->mediaSanitizer = $mediaSanitizer;
         $this->versionFormatter = $versionFormatter;
         $this->templateMetadata = $templateMetadata;
+        $this->newsContent = $newsContent;
         $this->groupContext = $groupContext;
         $this->userId = $userId ?? '';
 
@@ -4937,125 +4941,29 @@ class PageService {
     /**
      * Extract an excerpt from page content (first text widget)
      */
+    /**
+     * @deprecated Delegated to NewsContentExtractor::getExcerpt.
+     */
     public function getPageExcerpt(array $pageData, int $length = 150): string {
-        if (!isset($pageData['layout']['rows']) || !is_array($pageData['layout']['rows'])) {
-            return '';
-        }
-
-        // Search through all rows for text widgets
-        foreach ($pageData['layout']['rows'] as $row) {
-            if (!isset($row['widgets']) || !is_array($row['widgets'])) {
-                continue;
-            }
-
-            foreach ($row['widgets'] as $widget) {
-                if (($widget['type'] ?? '') === 'text' && !empty($widget['content'])) {
-                    // Strip HTML tags and get plain text
-                    $text = strip_tags($widget['content']);
-                    // Strip markdown syntax for clean excerpts
-                    $text = $this->stripMarkdown($text);
-                    // Remove excessive whitespace
-                    $text = preg_replace('/\s+/', ' ', $text);
-                    $text = trim($text);
-
-                    if (!empty($text)) {
-                        // Truncate to desired length
-                        if (mb_strlen($text) > $length) {
-                            $text = mb_substr($text, 0, $length);
-                            // Cut at last word boundary
-                            $lastSpace = mb_strrpos($text, ' ');
-                            if ($lastSpace !== false && $lastSpace > $length * 0.7) {
-                                $text = mb_substr($text, 0, $lastSpace);
-                            }
-                            $text .= '...';
-                        }
-                        return $text;
-                    }
-                }
-            }
-        }
-
-        return '';
+        return $this->newsContent->getExcerpt($pageData, $length);
     }
 
     /**
-     * Strip markdown syntax from text for clean excerpts
+     * @deprecated Delegated to NewsContentExtractor::stripMarkdown.
      */
     private function stripMarkdown(string $text): string {
-        // Bold: **text** or __text__
-        $text = preg_replace('/\*\*(.+?)\*\*/', '$1', $text);
-        $text = preg_replace('/__(.+?)__/', '$1', $text);
-
-        // Italic: *text* or _text_
-        $text = preg_replace('/\*(.+?)\*/', '$1', $text);
-        $text = preg_replace('/_(.+?)_/', '$1', $text);
-
-        // Strikethrough: ~~text~~
-        $text = preg_replace('/~~(.+?)~~/', '$1', $text);
-
-        // Links: [text](url)
-        $text = preg_replace('/\[([^\]]+)\]\([^)]+\)/', '$1', $text);
-
-        // Images: ![alt](url)
-        $text = preg_replace('/!\[([^\]]*)\]\([^)]+\)/', '$1', $text);
-
-        // Inline code: `code`
-        $text = preg_replace('/`([^`]+)`/', '$1', $text);
-
-        // Headers: # ## ### etc
-        $text = preg_replace('/^#{1,6}\s+/m', '', $text);
-
-        // Blockquotes: > text
-        $text = preg_replace('/^>\s+/m', '', $text);
-
-        // Unordered list markers: - or * or +
-        $text = preg_replace('/^[\-\*\+]\s+/m', '', $text);
-
-        // Ordered list markers: 1. 2. etc
-        $text = preg_replace('/^\d+\.\s+/m', '', $text);
-
-        // Horizontal rules: --- or *** or ___
-        $text = preg_replace('/^[\-\*_]{3,}\s*$/m', '', $text);
-
-        return $text;
+        return $this->newsContent->stripMarkdown($text);
     }
 
     /**
      * Find the first image in a page's layout
      * Returns array with 'src' and 'mediaFolder' or null if no image found
      */
+    /**
+     * @deprecated Delegated to NewsContentExtractor::getFirstImage.
+     */
     public function getPageFirstImage(array $pageData): ?array {
-        // Check header row first
-        if (isset($pageData['layout']['headerRow']['widgets']) && is_array($pageData['layout']['headerRow']['widgets'])) {
-            foreach ($pageData['layout']['headerRow']['widgets'] as $widget) {
-                if (($widget['type'] ?? '') === 'image' && !empty($widget['src'])) {
-                    return [
-                        'src' => $widget['src'],
-                        'mediaFolder' => $widget['mediaFolder'] ?? 'page'
-                    ];
-                }
-            }
-        }
-
-        // Then check main rows
-        if (isset($pageData['layout']['rows']) && is_array($pageData['layout']['rows'])) {
-            foreach ($pageData['layout']['rows'] as $row) {
-                if (!isset($row['widgets']) || !is_array($row['widgets'])) {
-                    continue;
-                }
-
-                foreach ($row['widgets'] as $widget) {
-                    if (($widget['type'] ?? '') === 'image' && !empty($widget['src'])) {
-                        return [
-                            'src' => $widget['src'],
-                            'mediaFolder' => $widget['mediaFolder'] ?? 'page'
-                        ];
-                    }
-                }
-            }
-        }
-
-        return null;
+        return $this->newsContent->getFirstImage($pageData);
     }
 
     /**
