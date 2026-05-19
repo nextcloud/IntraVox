@@ -959,6 +959,25 @@ class PageService {
             $this->pageFolderCache[$id] = $pageFolder;
         }
 
+        // Distributed content cache. Key is content-addressable via mtime, so
+        // invalidation is automatic — a write bumps mtime, the next read
+        // misses cache and rebuilds. The sanitize+enrich pipeline is the
+        // expensive part (~500 lines of widget processing); cache stores
+        // the post-sanitize result keyed by `{uniqueId}_{mtime}`.
+        $mtime = $result['file']->getMTime();
+        $contentCacheKey = 'content_' . $uniqueId . '_' . $mtime;
+        if ($this->distributedCache !== null) {
+            $cached = $this->distributedCache->get($contentCacheKey);
+            if (is_string($cached)) {
+                $decoded = json_decode($cached, true);
+                if (is_array($decoded)) {
+                    $this->pageDataCache[$originalId] = $decoded;
+                    $this->pageDataCache[$uniqueId] = $decoded;
+                    return $decoded;
+                }
+            }
+        }
+
         // Enrich with real-time path data
         $data = $this->enrichWithPathData($data, $result['folder']);
 
@@ -968,6 +987,13 @@ class PageService {
         $this->pageDataCache[$originalId] = $sanitizedData;
         if (isset($data['uniqueId'])) {
             $this->pageDataCache[$data['uniqueId']] = $sanitizedData;
+        }
+
+        // Cache for cross-request reuse (1 hour TTL; older entries are
+        // naturally orphaned when mtime changes, distributed-cache GC will
+        // clean them up).
+        if ($this->distributedCache !== null) {
+            $this->distributedCache->set($contentCacheKey, json_encode($sanitizedData), 3600);
         }
 
         return $sanitizedData;
