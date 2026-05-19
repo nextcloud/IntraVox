@@ -411,6 +411,12 @@ class ImportService {
         // Cleanup
         $this->cleanupTempDir($tempDir);
 
+        // Flush distributed caches so the freshly imported pages appear
+        // in tree, navigation and permission lookups immediately. Without
+        // this the import "succeeds" but the new pages are invisible for
+        // up to 5 minutes (PR-3 distributed tree TTL).
+        $this->pageService->invalidateAllCaches();
+
         $this->logger->info(self::LOG_PREFIX . ' Import complete', $stats);
 
         return $stats;

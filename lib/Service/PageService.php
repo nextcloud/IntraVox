@@ -112,6 +112,17 @@ class PageService {
     }
 
     /**
+     * Public flush hook for callers that mutate the underlying filesystem
+     * outside of PageService (notably ImportService, NavigationService,
+     * BulkOperationService) and need the IntraVox cache layers to forget
+     * everything so a fresh read rebuilds. Equivalent to the internal
+     * clearCache() but exposed for cross-service invalidation.
+     */
+    public function invalidateAllCaches(): void {
+        $this->clearCache();
+    }
+
+    /**
      * Clear all request-level caches (call after mutations)
      */
     private function clearCache(?string $pageId = null): void {
@@ -1843,6 +1854,13 @@ class PageService {
 
         $newFile = $mediaFolder->newFile($filename);
         $newFile->putContent($content);
+
+        // Invalidate the per-page content cache so the next getPage()
+        // includes the freshly uploaded asset. Without this a save-then-
+        // navigate-back sequence served the cached page-render where the
+        // media reference was still missing — particularly visible on
+        // image widgets that just got their src bumped.
+        $this->clearCache($pageId);
 
         return $filename;
     }
@@ -4437,6 +4455,10 @@ class PageService {
             $newFile = $uploadFolder->newFile($filename);
             $newFile->putContent($content);
         }
+
+        // Invalidate the per-page content cache so the next getPage()
+        // reflects the new media file. See uploadMedia() for context.
+        $this->clearCache($pageId);
 
         return [
             'filename' => $filename,

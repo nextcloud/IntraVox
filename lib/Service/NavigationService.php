@@ -8,6 +8,8 @@ use OCP\Files\IRootFolder;
 use OCP\IUserSession;
 use OCP\Files\NotFoundException;
 use OCP\Files\NotPermittedException;
+use OCP\ICache;
+use OCP\ICacheFactory;
 use OCP\IL10N;
 
 class NavigationService {
@@ -19,12 +21,16 @@ class NavigationService {
     private string $userId;
     private const SUPPORTED_LANGUAGES = ['nl', 'en', 'de', 'fr'];
 
+    private ?ICache $pagesCache = null;
+    private ?ICache $permissionsCache = null;
+
     public function __construct(
         IRootFolder $rootFolder,
         IUserSession $userSession,
         SetupService $setupService,
         SystemFileService $systemFileService,
         IL10N $l10n,
+        ICacheFactory $cacheFactory,
         ?string $userId
     ) {
         $this->rootFolder = $rootFolder;
@@ -33,6 +39,15 @@ class NavigationService {
         $this->systemFileService = $systemFileService;
         $this->l10n = $l10n;
         $this->userId = $userId ?? '';
+
+        if ($cacheFactory->isAvailable()) {
+            // We don't own these caches but we mutate state they index
+            // (navigation.json drives nav rendering, which PermissionService
+            // path-maps and PageService trees pull through). Holding thin
+            // handles avoids circular DI with PageService / PermissionService.
+            $this->pagesCache = $cacheFactory->createDistributed('intravox-pages');
+            $this->permissionsCache = $cacheFactory->createDistributed('intravox-permissions');
+        }
     }
 
     /**
@@ -135,6 +150,14 @@ class NavigationService {
             } else {
                 $folder->newFile($navigationFile, $content);
             }
+
+            // A nav-save changes which uniqueIds are part of the menu, so
+            // the path-map (PermissionService) and tree (PageService) caches
+            // become stale immediately. Flushing both forces a rebuild on
+            // the next read; without it users see the old menu for up to
+            // 5 minutes (PR-3 distributed TTL).
+            $this->pagesCache?->clear();
+            $this->permissionsCache?->clear();
 
             return $validated;
         } catch (\Exception $e) {
