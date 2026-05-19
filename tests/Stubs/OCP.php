@@ -62,6 +62,20 @@ interface IDBConnection {
     public function rollBack(): void;
 }
 
+interface ICache {
+    public function get($key);
+    public function set($key, $value, $ttl = 0);
+    public function hasKey($key);
+    public function remove($key);
+    public function clear($prefix = '');
+}
+
+interface ICacheFactory {
+    public function isAvailable(): bool;
+    public function createDistributed(string $prefix = ''): ICache;
+    public function createLocal(string $prefix = ''): ICache;
+}
+
 interface IL10N {
     public function t(string $text, $parameters = []): string;
     public function n(string $text_singular, string $text_plural, int $count, array $parameters = []): string;
@@ -80,6 +94,39 @@ interface Folder {}
 interface Node {}
 
 class NotFoundException extends \Exception {}
+
+namespace OCP;
+
+interface IGroup {
+    public function getGID(): string;
+    public function getDisplayName(): string;
+}
+
+namespace OCP\EventDispatcher;
+
+abstract class Event {}
+
+interface IEventListener {
+    public function handle(Event $event): void;
+}
+
+namespace OCP\Group\Events;
+
+use OCP\EventDispatcher\Event;
+use OCP\IGroup;
+use OCP\IUser;
+
+abstract class GroupMembershipEvent extends Event {
+    public function __construct(
+        private IGroup $group,
+        private IUser $user,
+    ) {}
+    public function getGroup(): IGroup { return $this->group; }
+    public function getUser(): IUser { return $this->user; }
+}
+
+class UserAddedEvent extends GroupMembershipEvent {}
+class UserRemovedEvent extends GroupMembershipEvent {}
 
 namespace OCP\AppFramework;
 

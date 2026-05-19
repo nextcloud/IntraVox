@@ -5,6 +5,8 @@ namespace OCA\IntraVox\Service;
 
 use OCP\Files\IRootFolder;
 use OCP\Files\Node;
+use OCP\ICache;
+use OCP\ICacheFactory;
 use OCP\IUserSession;
 use OCP\IGroupManager;
 use OCP\IConfig;
@@ -32,7 +34,11 @@ class PermissionService {
     private SetupService $setupService;
     private IConfig $config;
     private LoggerInterface $logger;
+    private ?ICache $distributedCache = null;
     private ?string $userId;
+
+    /** Distributed cache TTL for the per-language page path map (5 minutes). */
+    private const PAGE_PATH_MAP_TTL = 300;
 
     public function __construct(
         IRootFolder $rootFolder,
@@ -41,6 +47,7 @@ class PermissionService {
         SetupService $setupService,
         IConfig $config,
         LoggerInterface $logger,
+        ICacheFactory $cacheFactory,
         ?string $userId
     ) {
         $this->rootFolder = $rootFolder;
@@ -50,6 +57,10 @@ class PermissionService {
         $this->config = $config;
         $this->logger = $logger;
         $this->userId = $userId;
+
+        if ($cacheFactory->isAvailable()) {
+            $this->distributedCache = $cacheFactory->createDistributed('intravox-permissions');
+        }
     }
 
     /**
@@ -591,8 +602,21 @@ class PermissionService {
      * @return array Map of uniqueId => relative path
      */
     public function buildPagePathMap(string $language): array {
-        $map = [];
+        // The path map is identical for every user (filesystem-derived, no
+        // permission filtering), so we cache it per-language. Saves an
+        // O(folders) walk on every navigation render at enterprise scale.
+        $cacheKey = 'path_map_' . $language;
+        if ($this->distributedCache !== null) {
+            $cached = $this->distributedCache->get($cacheKey);
+            if (is_string($cached)) {
+                $decoded = json_decode($cached, true);
+                if (is_array($decoded)) {
+                    return $decoded;
+                }
+            }
+        }
 
+        $map = [];
         try {
             $folder = $this->setupService->getSharedFolder();
             if ($folder === null || !$folder->nodeExists($language)) {
@@ -608,7 +632,34 @@ class PermissionService {
             ]);
         }
 
+        if ($this->distributedCache !== null) {
+            $this->distributedCache->set($cacheKey, json_encode($map), self::PAGE_PATH_MAP_TTL);
+        }
+
         return $map;
+    }
+
+    /**
+     * Invalidate the cached page-path map for a single language. Called by
+     * PageService on create/update/delete so the next nav render rebuilds.
+     */
+    public function invalidatePagePathMap(string $language): void {
+        if ($this->distributedCache !== null) {
+            $this->distributedCache->remove('path_map_' . $language);
+        }
+    }
+
+    /**
+     * Invalidate the cached page-path maps for all supported languages.
+     * Use sparingly — most mutations only affect one language at a time.
+     */
+    public function invalidateAllPagePathMaps(): void {
+        if ($this->distributedCache === null) {
+            return;
+        }
+        foreach (['nl', 'en', 'de', 'fr'] as $language) {
+            $this->distributedCache->remove('path_map_' . $language);
+        }
     }
 
     /**

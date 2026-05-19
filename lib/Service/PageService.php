@@ -6,6 +6,7 @@ namespace OCA\IntraVox\Service;
 use OCA\IntraVox\AppInfo\Application;
 use OCA\IntraVox\Constants;
 use OCA\IntraVox\Event\PageDeletedEvent;
+use OCA\IntraVox\Service\GroupContextService;
 use OCA\IntraVox\Service\Sanitize\ColorSanitizer;
 use OCA\IntraVox\Service\Sanitize\HtmlSanitizer;
 use OCA\IntraVox\Service\Sanitize\UrlSanitizer;
@@ -55,6 +56,7 @@ class PageService {
     private PageIndexService $pageIndexService;
     private ?IVersionManager $versionManager = null;
     private ?ICache $distributedCache = null;
+    private ?ICache $permissionsDistributedCache = null;
     private array $pageFolderCache = [];
 
     /** @var array Request-level cache for page data */
@@ -130,13 +132,19 @@ class PageService {
         }
         $this->listPagesCache = null;
 
-        // Also clear the static page tree cache for this user/language
-        $cacheKey = $this->userId . '_' . $this->getUserLanguage();
-        unset(self::$pageTreeCache[$cacheKey]);
-
-        // Invalidate distributed cache so other requests/workers pick up the change
+        // Clear *all* group-keyed tree caches: a single page mutation can be
+        // visible to any group that has read access via GroupFolder ACL, and
+        // we have no efficient way to enumerate those from here. The bucket
+        // count is small (≤ groups × languages, typically ~40), so a blanket
+        // clear is cheaper than tracking dependencies.
+        self::$pageTreeCache = [];
         if ($this->distributedCache !== null) {
-            $this->distributedCache->remove('tree_' . $cacheKey);
+            $this->distributedCache->clear();
+        }
+        // The per-language page-path map cached in PermissionService is also
+        // invalidated by any page create/update/delete.
+        if ($this->permissionsDistributedCache !== null) {
+            $this->permissionsDistributedCache->clear();
         }
     }
 
@@ -309,6 +317,7 @@ class PageService {
     private HtmlSanitizer $htmlSanitizer;
     private UrlSanitizer $urlSanitizer;
     private ColorSanitizer $colorSanitizer;
+    private GroupContextService $groupContext;
 
     public function __construct(
         IRootFolder $rootFolder,
@@ -324,6 +333,7 @@ class PageService {
         HtmlSanitizer $htmlSanitizer,
         UrlSanitizer $urlSanitizer,
         ColorSanitizer $colorSanitizer,
+        GroupContextService $groupContext,
         ?string $userId
     ) {
         $this->rootFolder = $rootFolder;
@@ -338,10 +348,15 @@ class PageService {
         $this->htmlSanitizer = $htmlSanitizer;
         $this->urlSanitizer = $urlSanitizer;
         $this->colorSanitizer = $colorSanitizer;
+        $this->groupContext = $groupContext;
         $this->userId = $userId ?? '';
 
         if ($cacheFactory->isAvailable()) {
             $this->distributedCache = $cacheFactory->createDistributed('intravox-pages');
+            // Mutations also invalidate the per-language path map cached
+            // alongside PermissionService; we hold a thin handle to it here
+            // rather than circular-injecting that service.
+            $this->permissionsDistributedCache = $cacheFactory->createDistributed('intravox-permissions');
         }
 
         // Lazy load version manager (files_versions may not be enabled)
@@ -3923,8 +3938,10 @@ class PageService {
         // Use provided language or fall back to user's language
         $lang = $language ?? $this->getUserLanguage();
 
-        // Build cache key based on user and language
-        $cacheKey = $this->userId . '_' . $lang;
+        // Cache key is groupHash + language. Users that share a group set
+        // share a bucket — at enterprise scale (1k+ users, ~10 groups) that
+        // turns 2000 entries into ~10.
+        $cacheKey = $this->groupContext->getGroupHash() . '_' . $lang;
         $distributedCacheKey = 'tree_' . $cacheKey;
         $now = time();
 
