@@ -95,6 +95,7 @@
         <job>OCA\IntraVox\BackgroundJob\LicenseUsageJob</job>
         <job>OCA\IntraVox\BackgroundJob\TelemetryJob</job>
         <job>OCA\IntraVox\BackgroundJob\FeedRefreshJob</job>
+        <job>OCA\IntraVox\BackgroundJob\CacheWarmupJob</job>
     </background-jobs>
     <repair-steps>
         <post-migration>
