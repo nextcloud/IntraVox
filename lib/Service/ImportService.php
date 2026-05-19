@@ -50,7 +50,10 @@ class ImportService {
         // 2. Extract ZIP safely (prevent ZIP Slip vulnerability)
         $zip = new \ZipArchive();
         if ($zip->open($zipPath) !== true) {
-            throw new InvalidImportException('Invalid ZIP file — the upload could not be opened as a ZIP archive.');
+            throw new InvalidImportException(
+                InvalidImportException::CODE_INVALID_ZIP,
+                'Invalid ZIP file — the upload could not be opened as a ZIP archive.'
+            );
         }
         $this->safeExtractZip($zip, $tempDir);
         $zip->close();
@@ -59,6 +62,7 @@ class ImportService {
         $exportJsonPath = $tempDir . '/export.json';
         if (!file_exists($exportJsonPath)) {
             throw new InvalidImportException(
+                InvalidImportException::CODE_MISSING_EXPORT_JSON,
                 'No export.json found in the ZIP. Make sure you uploaded an IntraVox export ' .
                 '(Settings → Export), not a Nextcloud Files backup or a different app\'s archive.'
             );
@@ -66,15 +70,20 @@ class ImportService {
         $exportData = json_decode(file_get_contents($exportJsonPath), true);
 
         if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new InvalidImportException('export.json is not valid JSON: ' . json_last_error_msg());
+            throw new InvalidImportException(
+                InvalidImportException::CODE_INVALID_JSON,
+                'export.json is not valid JSON: ' . json_last_error_msg(),
+                ['detail' => json_last_error_msg()]
+            );
         }
 
         // 4. Validate export version
         $version = $exportData['exportVersion'] ?? '0';
         if (version_compare($version, '1.0', '<')) {
             throw new InvalidImportException(
-                'Unsupported export version: ' . $version .
-                '. Please re-export from a recent IntraVox install.'
+                InvalidImportException::CODE_UNSUPPORTED_VERSION,
+                'Unsupported export version: ' . $version . '. Please re-export from a recent IntraVox install.',
+                ['version' => $version]
             );
         }
 
@@ -105,8 +114,10 @@ class ImportService {
                     'pagesWithoutPath' => count($pagesWithoutPath)
                 ]);
                 throw new InvalidImportException(
+                    InvalidImportException::CODE_INCOMPLETE_EXPORT,
                     'Export is incomplete — ' . count($pagesWithoutPath) . ' pages are missing _exportPath. ' .
-                    'Please re-export from the source system with IntraVox v0.8.11 or higher.'
+                    'Please re-export from the source system with IntraVox v0.8.11 or higher.',
+                    ['missingCount' => count($pagesWithoutPath)]
                 );
             }
 

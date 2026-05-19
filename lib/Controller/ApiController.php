@@ -1621,11 +1621,18 @@ class ApiController extends Controller {
         } catch (\OCA\IntraVox\Exception\InvalidImportException $e) {
             // Validation errors are safe to forward to the client verbatim —
             // they describe the upload, never internal paths or IDs. See #52.
+            // The frontend maps `errorCode` to a translated string; `error` is
+            // an English fallback for non-UI consumers (curl, scripts).
             $this->logger->info('IntraVox Import: ZIP rejected during validation', [
+                'errorCode' => $e->getErrorCode(),
                 'message' => $e->getMessage(),
             ]);
             return new JSONResponse(
-                ['error' => $e->getMessage()],
+                [
+                    'error' => $e->getMessage(),
+                    'errorCode' => $e->getErrorCode(),
+                    'params' => $e->getParams(),
+                ],
                 Http::STATUS_BAD_REQUEST
             );
         } catch (\Exception $e) {
@@ -1787,10 +1794,15 @@ class ApiController extends Controller {
             ]);
         } catch (\OCA\IntraVox\Exception\InvalidImportException $e) {
             $this->logger->info('Confluence HTML import: validation failed', [
+                'errorCode' => $e->getErrorCode(),
                 'message' => $e->getMessage(),
             ]);
             return new JSONResponse(
-                ['error' => $e->getMessage()],
+                [
+                    'error' => $e->getMessage(),
+                    'errorCode' => $e->getErrorCode(),
+                    'params' => $e->getParams(),
+                ],
                 Http::STATUS_BAD_REQUEST
             );
         } catch (\Exception $e) {

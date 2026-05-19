@@ -2383,7 +2383,7 @@ export default {
 				this.loadExportLanguages()
 			} catch (error) {
 				console.error('Import failed:', error)
-				showError(this.t('intravox', 'Import failed: ') + (error.response?.data?.error || error.message))
+				showError(this.t('intravox', 'Import failed: ') + this.importErrorMessageFor(error))
 			} finally {
 				// Reset after a short delay (with proper cleanup)
 				if (this.importTimeoutId) {
@@ -2394,6 +2394,31 @@ export default {
 					this.importProgress = 0
 					this.importTimeoutId = null
 				}, 1000)
+			}
+		},
+		/**
+		 * Map a backend import-error to a translated user-facing string.
+		 * Recognises the InvalidImportException error codes; falls back to
+		 * the English `error` message for anything else (network errors,
+		 * generic 500s).
+		 */
+		importErrorMessageFor(error) {
+			const data = error.response?.data || {}
+			const code = data.errorCode
+			const params = data.params || {}
+			switch (code) {
+			case 'INVALID_ZIP':
+				return this.t('intravox', 'The upload could not be opened as a ZIP archive.')
+			case 'MISSING_EXPORT_JSON':
+				return this.t('intravox', 'No export.json found in the ZIP. Make sure you uploaded an IntraVox export (Settings → Export), not a Nextcloud Files backup or a different app\'s archive.')
+			case 'INVALID_JSON':
+				return this.t('intravox', 'The export.json file is not valid JSON: {detail}', { detail: params.detail || '' })
+			case 'UNSUPPORTED_VERSION':
+				return this.t('intravox', 'Unsupported export version: {version}. Please re-export from a recent IntraVox install.', { version: params.version || '?' })
+			case 'INCOMPLETE_EXPORT':
+				return this.t('intravox', 'Export is incomplete — {count} pages are missing _exportPath. Please re-export with IntraVox v0.8.11 or higher.', { count: params.missingCount || '?' })
+			default:
+				return data.error || error.message
 			}
 		},
 		handleBeforeUnload(event) {

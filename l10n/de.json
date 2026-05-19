@@ -1079,7 +1079,13 @@
     "Credentials missing": "Zugangsdaten fehlen",
     "Token missing": "Token fehlt",
     "Disable connection": "Verbindung deaktivieren",
-    "Enable connection": "Verbindung aktivieren"
+    "Enable connection": "Verbindung aktivieren",
+    "Only ZIP files produced by IntraVox (Settings → Export) are accepted. Nextcloud Files backups, cloudron backups, or other apps' archives will not work — they don't contain the export.json IntraVox needs.": "Es werden nur ZIP-Dateien akzeptiert, die von IntraVox erstellt wurden (Einstellungen → Export). Nextcloud Files-Backups, Cloudron-Backups oder Archive anderer Apps funktionieren nicht — sie enthalten nicht die export.json, die IntraVox benötigt.",
+    "The upload could not be opened as a ZIP archive.": "Die hochgeladene Datei konnte nicht als ZIP-Archiv geöffnet werden.",
+    "No export.json found in the ZIP. Make sure you uploaded an IntraVox export (Settings → Export), not a Nextcloud Files backup or a different app's archive.": "Keine export.json in der ZIP-Datei gefunden. Stelle sicher, dass du einen IntraVox-Export hochgeladen hast (Einstellungen → Export), nicht ein Nextcloud Files-Backup oder ein Archiv einer anderen App.",
+    "The export.json file is not valid JSON: {detail}": "Die Datei export.json enthält kein gültiges JSON: {detail}",
+    "Unsupported export version: {version}. Please re-export from a recent IntraVox install.": "Nicht unterstützte Export-Version: {version}. Erstelle bitte einen neuen Export aus einer aktuellen IntraVox-Installation.",
+    "Export is incomplete — {count} pages are missing _exportPath. Please re-export with IntraVox v0.8.11 or higher.": "Export ist unvollständig — bei {count} Seiten fehlt _exportPath. Erstelle einen neuen Export mit IntraVox v0.8.11 oder höher."
   },
   "pluralForm": "nplurals=2; plural=(n != 1);"
 }

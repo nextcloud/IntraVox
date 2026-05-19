@@ -111,7 +111,11 @@ class ImportController extends Controller {
             ]);
         } catch (\OCA\IntraVox\Exception\InvalidImportException $e) {
             return new JSONResponse(
-                ['error' => $e->getMessage()],
+                [
+                    'error' => $e->getMessage(),
+                    'errorCode' => $e->getErrorCode(),
+                    'params' => $e->getParams(),
+                ],
                 Http::STATUS_BAD_REQUEST
             );
         } catch (\Exception $e) {
