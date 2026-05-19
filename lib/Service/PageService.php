@@ -5626,9 +5626,26 @@ class PageService {
 
             $this->logger->info('Created page from template: ' . $templateId . ' -> ' . $createdPage['uniqueId']);
 
+            // Re-fetch through getPage() so the response includes
+            // enrichWithPathData (path, breadcrumb info, permissions) and
+            // a sanitize pass — the same shape the frontend gets on a
+            // normal page load. Without this the editor mounts with a
+            // half-populated page and rendered blank until manual save +
+            // reload. Falls back to createdPage if the fresh read fails
+            // for any reason (e.g. ACL race on a brand-new folder).
+            try {
+                $fullPage = $this->getPage($createdPage['uniqueId']);
+            } catch (\Exception $e) {
+                $this->logger->warning(
+                    '[createPageFromTemplate] getPage failed on freshly created page, falling back to validated data',
+                    ['uniqueId' => $createdPage['uniqueId'], 'error' => $e->getMessage()]
+                );
+                $fullPage = $createdPage;
+            }
+
             return [
                 'success' => true,
-                'page' => $createdPage,
+                'page' => $fullPage,
             ];
         } catch (\Exception $e) {
             $this->logger->error('Failed to create page from template: ' . $e->getMessage());

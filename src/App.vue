@@ -974,14 +974,49 @@ export default {
         if (response.data.success) {
           showSuccess(this.t('Page created from template'));
 
-          // Reload pages
-          await this.loadPages();
-
-          // Navigate to the new page
           const newPage = response.data.page;
+
           if (newPage?.uniqueId) {
-            await this.selectPage(newPage.uniqueId);
-            // Open in edit mode (with lock)
+            // The backend already returned the freshly created page through
+            // PageService::getPage() (which runs enrichWithPathData + the
+            // sanitize pipeline) so we have a fully populated payload right
+            // here. Trying to re-fetch via selectPage() can race with
+            // pageDataCache / parent folder listings that haven't yet
+            // refreshed and intermittently 404 — sending the user back to
+            // the home page. Use the response directly and warm both the
+            // local pages array and the frontend CacheService so any
+            // subsequent navigation hits an immediate cache.
+
+            // 1. Append to local pages list (no loadPages refresh — that
+            //    re-runs its tail-end selectPage(home) which would steal
+            //    focus from the new page).
+            if (!this.pages.find(p => p.uniqueId === newPage.uniqueId)) {
+              this.pages.push({
+                uniqueId: newPage.uniqueId,
+                title: newPage.title,
+                path: newPage.path || null,
+                status: newPage.status || 'draft',
+                modified: newPage.modified || Math.floor(Date.now() / 1000),
+                permissions: newPage.permissions || { canRead: true, canWrite: true },
+              });
+              CacheService.delete('pages-list');
+            }
+
+            // 2. Warm the per-page cache with the backend response so
+            //    selectPage() finds it without an API roundtrip.
+            CacheService.set(`page-${newPage.uniqueId}`, newPage);
+
+            // 3. Update URL hash before navigating so any concurrent
+            //    page-list refresh doesn't redirect us home.
+            window.location.hash = `#${newPage.uniqueId}`;
+
+            // 4. Mount the editor.
+            this.currentPage = newPage;
+            this.breadcrumb = newPage.breadcrumb || [];
+            this.isEditMode = false;
+            this.showPages = false;
+
+            await this.$nextTick();
             await this.startEditMode();
           }
         } else {
