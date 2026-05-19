@@ -12,6 +12,7 @@ use OCA\IntraVox\Service\Sanitize\ColorSanitizer;
 use OCA\IntraVox\Service\Sanitize\HtmlSanitizer;
 use OCA\IntraVox\Service\Sanitize\MediaSanitizer;
 use OCA\IntraVox\Service\Sanitize\UrlSanitizer;
+use OCA\IntraVox\Service\Search\PageSearchHelper;
 use OCA\IntraVox\Service\Template\TemplateMetadataExtractor;
 use OCA\IntraVox\Service\Version\PageVersionFormatter;
 use OCP\EventDispatcher\IEventDispatcher;
@@ -324,6 +325,7 @@ class PageService {
     private PageVersionFormatter $versionFormatter;
     private TemplateMetadataExtractor $templateMetadata;
     private NewsContentExtractor $newsContent;
+    private PageSearchHelper $searchHelper;
     private GroupContextService $groupContext;
 
     public function __construct(
@@ -344,6 +346,7 @@ class PageService {
         PageVersionFormatter $versionFormatter,
         TemplateMetadataExtractor $templateMetadata,
         NewsContentExtractor $newsContent,
+        PageSearchHelper $searchHelper,
         GroupContextService $groupContext,
         ?string $userId
     ) {
@@ -363,6 +366,7 @@ class PageService {
         $this->versionFormatter = $versionFormatter;
         $this->templateMetadata = $templateMetadata;
         $this->newsContent = $newsContent;
+        $this->searchHelper = $searchHelper;
         $this->groupContext = $groupContext;
         $this->userId = $userId ?? '';
 
@@ -4192,28 +4196,11 @@ class PageService {
     /**
      * Extract a snippet of text around a search query match
      */
+    /**
+     * @deprecated Delegated to PageSearchHelper::extractSnippet.
+     */
     private function extractSnippet(string $text, string $query, int $contextLength = 100): string {
-        // Remove markdown formatting for cleaner snippets
-        $text = strip_tags($text);
-        $text = preg_replace('/[*_~`#]/', '', $text);
-
-        $pos = mb_stripos($text, $query);
-        if ($pos === false) {
-            // Fallback: return beginning of text
-            return mb_substr($text, 0, $contextLength) . '...';
-        }
-
-        // Calculate start position (with some context before)
-        $start = max(0, $pos - (int)($contextLength / 2));
-
-        // Extract snippet
-        $snippet = mb_substr($text, $start, $contextLength);
-
-        // Add ellipsis if needed
-        $prefix = $start > 0 ? '...' : '';
-        $suffix = (mb_strlen($text) > $start + $contextLength) ? '...' : '';
-
-        return $prefix . trim($snippet) . $suffix;
+        return $this->searchHelper->extractSnippet($text, $query, $contextLength);
     }
 
     /**
@@ -4223,86 +4210,11 @@ class PageService {
      * @param string $query Search query (lowercase)
      * @return array Array of matches with type, text, and score
      */
+    /**
+     * @deprecated Delegated to PageSearchHelper::searchWidget.
+     */
     private function searchWidget(array $widget, string $query): array {
-        $matches = [];
-        $type = $widget['type'] ?? '';
-
-        // Text widgets
-        if ($type === 'text' && isset($widget['content'])) {
-            if (mb_stripos($widget['content'], $query) !== false) {
-                $matches[] = [
-                    'type' => 'content',
-                    'text' => $this->extractSnippet($widget['content'], $query),
-                    'score' => 3
-                ];
-            }
-        }
-
-        // Heading widgets
-        if ($type === 'heading' && isset($widget['content'])) {
-            if (mb_stripos($widget['content'], $query) !== false) {
-                $matches[] = [
-                    'type' => 'heading',
-                    'text' => $widget['content'],
-                    'score' => 5
-                ];
-            }
-        }
-
-        // Image widgets (alt text)
-        if ($type === 'image' && !empty($widget['alt'])) {
-            if (mb_stripos($widget['alt'], $query) !== false) {
-                $matches[] = [
-                    'type' => 'image',
-                    'text' => $widget['alt'],
-                    'score' => 2
-                ];
-            }
-        }
-
-        // Links widgets (title and text)
-        if ($type === 'links' && !empty($widget['items'])) {
-            foreach ($widget['items'] as $link) {
-                $linkTitle = $link['title'] ?? '';
-                $linkText = strip_tags($link['text'] ?? '');
-                $linkSearchText = $linkTitle . ' ' . $linkText;
-                if (mb_stripos($linkSearchText, $query) !== false) {
-                    $displayText = $linkTitle;
-                    if (!empty($linkText)) {
-                        $displayText .= ' - ' . $this->extractSnippet($linkText, $query, 60);
-                    }
-                    $matches[] = [
-                        'type' => 'link',
-                        'text' => $displayText,
-                        'score' => 3
-                    ];
-                }
-            }
-        }
-
-        // File widgets (filename)
-        if ($type === 'file' && !empty($widget['name'])) {
-            if (mb_stripos($widget['name'], $query) !== false) {
-                $matches[] = [
-                    'type' => 'file',
-                    'text' => $widget['name'],
-                    'score' => 2
-                ];
-            }
-        }
-
-        // Video widgets (title)
-        if ($type === 'video' && !empty($widget['title'])) {
-            if (mb_stripos($widget['title'], $query) !== false) {
-                $matches[] = [
-                    'type' => 'video',
-                    'text' => $widget['title'],
-                    'score' => 2
-                ];
-            }
-        }
-
-        return $matches;
+        return $this->searchHelper->searchWidget($widget, $query);
     }
 
     /**
