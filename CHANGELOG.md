@@ -4,6 +4,40 @@ All notable changes to IntraVox will be documented in this file.
 
 IntraVox is a Nextcloud intranet page builder.
 
+## [1.4.0] - 2026-05-19 — Enterprise refactor + caching foundation
+
+This release lays down the foundation IntraVox needs to scale cleanly to Nextcloud Enterprise customers with thousands of users on multi-node deployments. Two themes: PageService gets split into focused, testable services, and the caching layer gains group-aware keys + a content-addressable distributed cache + a frontend prefetch pipeline.
+
+User-visible: pages and navigation are noticeably faster on warm caches, especially for groups of users that share the same permission profile. Cold-cache latency is bounded by a new background warmup job. No breaking changes; every public API is unchanged.
+
+### Added
+- **ETag / 304 conditional responses on `GET /api/pages/{id}`** — Browser revalidation now returns a 304 with zero body when the cached page is still current. Per-user group hash is included in the ETag so a permission change automatically invalidates the cached entry without leaking content across users (`lib/Http/EtagBuilder.php`, `lib/Controller/HasConditionalResponse.php`, `lib/Controller/ApiController.php`)
+- **Group-hash cache key for page tree + permission map** — Tree and navigation caches are now keyed by a hash of the user's group memberships instead of their user-id. At enterprise scale (1000+ users in ~10 groups) this turns thousands of cache entries into dozens — same correctness, two orders of magnitude less memory. Permission path-maps are cached per-language (one entry per supported language, shared across all users) (`lib/Service/GroupContextService.php`, `lib/Service/PageService.php`, `lib/Service/PermissionService.php`)
+- **Event-based cache invalidation on group changes** — Adding or removing a user from a group flushes the affected distributed caches via `UserAddedEvent` / `UserRemovedEvent` listeners. Group permission updates propagate within one request cycle instead of waiting for TTL expiry (`lib/Listener/GroupMembershipChangedListener.php`)
+- **Page-content distributed cache with mtime-indexed keys** — Sanitized page output is cached under `content_{uniqueId}_{mtime}`; a write bumps mtime, the next reader misses cache and rebuilds. The expensive sanitize-pipeline (~500 lines of widget processing) only runs on cache miss (`lib/Service/PageService.php`)
+- **News widget result cache with version counter** — `getNewsPages()` results are cached per `{lang}_{groupHash}_v{counter}_{paramHash}`. Mutations clear the cache; subsequent reads rebuild from a fresh counter state (`lib/Service/PageService.php`)
+- **Frontend prefetch service** — `src/services/PrefetchService.js` speculatively loads pages on hover (desktop, 100ms delay) and IntersectionObserver entry (mobile, 200px rootMargin). Respects `navigator.connection.saveData` so users on metered connections aren't surprised by extra requests; max 3 concurrent in-flight requests. Writes through the existing `CacheService` so real navigations pick up the prefetched data instantly
+- **LRU eviction on localStorage quota** — `CacheService.set()` now catches `QuotaExceededError`, drops the persistent entry with the earliest expiry, and retries once. Prevents silent cache-write failures on heavy intranets
+- **Background cache-warmup job** — Runs every 15 minutes (TIME_INSENSITIVE) and pre-warms the path-map + tree + navigation caches for each supported language. Prevents the cold-cache thundering herd after a deploy or after a page mutation (`lib/BackgroundJob/CacheWarmupJob.php`)
+- **`RequestTimer` infrastructure** — Light static utility for measuring p50/p95 latency of expensive operations. Used internally for ad-hoc profiling; not yet wired into TelemetryService (`lib/Performance/RequestTimer.php`)
+
+### Changed
+- **PageService.php is 615 lines smaller** — From 6135 to ~5520 lines. Ten pure helpers extracted into focused, individually-testable services. PageService remains the orchestrator for filesystem + cache + permissions, but the sanitize, format, search, path and template logic now live in dedicated modules:
+  - `lib/Service/Sanitize/HtmlSanitizer.php` (strip_tags + style-property whitelist + entity decode)
+  - `lib/Service/Sanitize/UrlSanitizer.php` (schema-whitelist for link URLs)
+  - `lib/Service/Sanitize/ColorSanitizer.php` (NC theme-vars + hex + rgb/rgba)
+  - `lib/Service/Sanitize/MediaSanitizer.php` (filename + SVG + image-header validation)
+  - `lib/Service/Version/PageVersionFormatter.php` (NC-style "X sec/min/hour/day ago" + metadata accessors)
+  - `lib/Service/Template/TemplateMetadataExtractor.php` (preview summary: column count, widget mix, complexity bucket)
+  - `lib/Service/News/NewsContentExtractor.php` (excerpt, first-image, markdown strip)
+  - `lib/Service/Search/PageSearchHelper.php` (snippet extraction, per-widget-type scoring)
+  - `lib/Service/Path/PagePathHelper.php` (depth, page-type, department slug, current-page marking)
+  - `lib/Service/Util/PageIdUtils.php` (sanitizeId, RFC 4122 v4 UUID, php.ini size parsing, formatBytes)
+- **Test suite grew from 78 (with 36 errors) to 252 / 401 assertions, all green** — Existing Controller tests were updated to match the current constructor signatures; a fresh unit-test layer covers every extracted service
+
+### Fixed
+- **Broken Controller test suite** — `ApiControllerTest`, `BulkControllerTest`, `AnalyticsControllerTest` now compile against the current Controller constructor signatures. The OCP stub gained `ISession`, `ICache`, `ICacheFactory`, `IGroup`, group-membership events and `Files_Versions\IVersion` to keep unit tests runnable without a full Nextcloud install
+
 ## [1.3.4] - 2026-05-08 — Version bump for upgrade path
 
 Identical content to 1.3.1 (released earlier today). The version number is bumped to 1.3.4 because an internal 1.3.3 build was published to the App Store on 2026-05-06; instances that picked up that build would not see 1.3.1 as an upgrade. 1.3.4 ensures every existing install gets the editor/table improvements and the privacy cleanup of [1.3.1] below.
