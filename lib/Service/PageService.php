@@ -8,6 +8,7 @@ use OCA\IntraVox\Constants;
 use OCA\IntraVox\Event\PageDeletedEvent;
 use OCA\IntraVox\Service\GroupContextService;
 use OCA\IntraVox\Service\News\NewsContentExtractor;
+use OCA\IntraVox\Service\Path\PagePathHelper;
 use OCA\IntraVox\Service\Sanitize\ColorSanitizer;
 use OCA\IntraVox\Service\Sanitize\HtmlSanitizer;
 use OCA\IntraVox\Service\Sanitize\MediaSanitizer;
@@ -326,6 +327,7 @@ class PageService {
     private TemplateMetadataExtractor $templateMetadata;
     private NewsContentExtractor $newsContent;
     private PageSearchHelper $searchHelper;
+    private PagePathHelper $pathHelper;
     private GroupContextService $groupContext;
 
     public function __construct(
@@ -347,6 +349,7 @@ class PageService {
         TemplateMetadataExtractor $templateMetadata,
         NewsContentExtractor $newsContent,
         PageSearchHelper $searchHelper,
+        PagePathHelper $pathHelper,
         GroupContextService $groupContext,
         ?string $userId
     ) {
@@ -367,6 +370,7 @@ class PageService {
         $this->templateMetadata = $templateMetadata;
         $this->newsContent = $newsContent;
         $this->searchHelper = $searchHelper;
+        $this->pathHelper = $pathHelper;
         $this->groupContext = $groupContext;
         $this->userId = $userId ?? '';
 
@@ -1043,33 +1047,11 @@ class PageService {
      * - nl/public/ (public pages)
      * - nl/departments/{dept}/ (department pages)
      */
+    /**
+     * @deprecated Delegated to PagePathHelper::calculateDepth.
+     */
     private function calculateDepth(string $path): int {
-        $pathParts = explode('/', trim($path, '/'));
-
-        // Remove language code
-        if (count($pathParts) > 0 && in_array($pathParts[0], self::SUPPORTED_LANGUAGES)) {
-            array_shift($pathParts);
-        }
-
-        if (count($pathParts) === 0) {
-            return 0;
-        }
-
-        // Check if public path
-        if ($pathParts[0] === 'public') {
-            // nl/public/home/contact -> depth 1
-            return count($pathParts) - 1;
-        }
-
-        // Check if department path
-        if ($pathParts[0] === 'departments' && count($pathParts) > 1) {
-            // nl/departments/marketing/campaigns/2024 -> depth 2
-            // (subtract 'departments' and dept name)
-            return count($pathParts) - 2;
-        }
-
-        // Legacy: pages directly under language folder
-        return count($pathParts) - 1;
+        return $this->pathHelper->calculateDepth($path);
     }
 
     /**
@@ -1156,48 +1138,18 @@ class PageService {
      *
      * @return string 'department'|'container'|'page'
      */
+    /**
+     * @deprecated Delegated to PagePathHelper::determinePageType.
+     */
     private function determinePageType(string $path, bool $hasChildren): string {
-        $pathParts = explode('/', trim($path, '/'));
-
-        // Remove language if present
-        if (count($pathParts) > 0 && in_array($pathParts[0], self::SUPPORTED_LANGUAGES)) {
-            array_shift($pathParts);
-        }
-
-        // Check if this is a department root: nl/departments/marketing
-        if (count($pathParts) >= 2 && $pathParts[0] === 'departments') {
-            // If it's exactly "departments/[name]", it's a department
-            if (count($pathParts) === 2) {
-                return 'department';
-            }
-        }
-
-        // If it has children, it's a container
-        if ($hasChildren) {
-            return 'container';
-        }
-
-        // Default: regular page
-        return 'page';
+        return $this->pathHelper->determinePageType($path, $hasChildren);
     }
 
     /**
-     * Parse department name from path
+     * @deprecated Delegated to PagePathHelper::parseDepartmentFromPath.
      */
     private function parseDepartmentFromPath(string $path): ?string {
-        $pathParts = explode('/', trim($path, '/'));
-
-        // Remove language code
-        if (count($pathParts) > 0 && in_array($pathParts[0], self::SUPPORTED_LANGUAGES)) {
-            array_shift($pathParts);
-        }
-
-        // Check if departments path: departments/{dept}/...
-        if (count($pathParts) >= 2 && $pathParts[0] === 'departments') {
-            return $pathParts[1];
-        }
-
-        return null;
+        return $this->pathHelper->parseDepartmentFromPath($path);
     }
 
     /**
@@ -3999,21 +3951,11 @@ class PageService {
      * Mark the current page in a tree structure
      * Creates a deep copy to avoid modifying cached data
      */
+    /**
+     * @deprecated Delegated to PagePathHelper::markCurrentPageInTree.
+     */
     private function markCurrentPageInTree(array $tree, ?string $currentPageId): array {
-        if ($currentPageId === null) {
-            return $tree;
-        }
-
-        $result = [];
-        foreach ($tree as $node) {
-            $newNode = $node;
-            $newNode['isCurrent'] = ($node['uniqueId'] === $currentPageId);
-            if (!empty($node['children'])) {
-                $newNode['children'] = $this->markCurrentPageInTree($node['children'], $currentPageId);
-            }
-            $result[] = $newNode;
-        }
-        return $result;
+        return $this->pathHelper->markCurrentPageInTree($tree, $currentPageId);
     }
 
     /**
