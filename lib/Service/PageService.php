@@ -11,6 +11,7 @@ use OCA\IntraVox\Service\Sanitize\ColorSanitizer;
 use OCA\IntraVox\Service\Sanitize\HtmlSanitizer;
 use OCA\IntraVox\Service\Sanitize\MediaSanitizer;
 use OCA\IntraVox\Service\Sanitize\UrlSanitizer;
+use OCA\IntraVox\Service\Template\TemplateMetadataExtractor;
 use OCA\IntraVox\Service\Version\PageVersionFormatter;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\Files\IRootFolder;
@@ -320,6 +321,7 @@ class PageService {
     private ColorSanitizer $colorSanitizer;
     private MediaSanitizer $mediaSanitizer;
     private PageVersionFormatter $versionFormatter;
+    private TemplateMetadataExtractor $templateMetadata;
     private GroupContextService $groupContext;
 
     public function __construct(
@@ -338,6 +340,7 @@ class PageService {
         ColorSanitizer $colorSanitizer,
         MediaSanitizer $mediaSanitizer,
         PageVersionFormatter $versionFormatter,
+        TemplateMetadataExtractor $templateMetadata,
         GroupContextService $groupContext,
         ?string $userId
     ) {
@@ -355,6 +358,7 @@ class PageService {
         $this->colorSanitizer = $colorSanitizer;
         $this->mediaSanitizer = $mediaSanitizer;
         $this->versionFormatter = $versionFormatter;
+        $this->templateMetadata = $templateMetadata;
         $this->groupContext = $groupContext;
         $this->userId = $userId ?? '';
 
@@ -5556,74 +5560,11 @@ class PageService {
      * @param array $content Template content data
      * @return array Preview metadata
      */
+    /**
+     * @deprecated Delegated to TemplateMetadataExtractor::extract.
+     */
     private function extractTemplatePreviewMetadata(array $content): array {
-        $layout = $content['layout'] ?? [];
-        $rows = $layout['rows'] ?? [];
-        $sideColumns = $layout['sideColumns'] ?? [];
-
-        // Collect all widget types
-        $widgetTypes = [];
-        $widgetCount = 0;
-        $maxColumns = 1;
-        $hasCollapsible = false;
-        $firstBackgroundColor = '';
-
-        // Process main rows
-        foreach ($rows as $row) {
-            $rowColumns = $row['columns'] ?? 1;
-            $maxColumns = max($maxColumns, $rowColumns);
-
-            if (!empty($row['collapsible'])) {
-                $hasCollapsible = true;
-            }
-
-            if (empty($firstBackgroundColor) && !empty($row['backgroundColor'])) {
-                $firstBackgroundColor = $row['backgroundColor'];
-            }
-
-            if (isset($row['widgets'])) {
-                foreach ($row['widgets'] as $widget) {
-                    if (isset($widget['type'])) {
-                        $widgetTypes[] = $widget['type'];
-                        $widgetCount++;
-                    }
-                }
-            }
-        }
-
-        // Check side columns
-        $hasSidebars = false;
-        foreach ($sideColumns as $side => $column) {
-            if (!empty($column['enabled']) && !empty($column['widgets'])) {
-                $hasSidebars = true;
-                foreach ($column['widgets'] as $widget) {
-                    if (isset($widget['type'])) {
-                        $widgetTypes[] = $widget['type'];
-                        $widgetCount++;
-                    }
-                }
-            }
-        }
-
-        // Determine complexity
-        $complexity = 'simple';
-        if ($widgetCount > 10 || $hasCollapsible || $hasSidebars) {
-            $complexity = 'complex';
-        } elseif ($widgetCount > 5 || $maxColumns > 2) {
-            $complexity = 'moderate';
-        }
-
-        return [
-            'hasHeaderRow' => isset($rows[0]) && !empty($rows[0]['backgroundColor']),
-            'columnCount' => $maxColumns,
-            'rowCount' => count($rows),
-            'widgetTypes' => array_values(array_unique($widgetTypes)),
-            'widgetCount' => $widgetCount,
-            'backgroundColor' => $firstBackgroundColor,
-            'hasSidebars' => $hasSidebars,
-            'hasCollapsible' => $hasCollapsible,
-            'complexity' => $complexity,
-        ];
+        return $this->templateMetadata->extract($content);
     }
 
     /**
