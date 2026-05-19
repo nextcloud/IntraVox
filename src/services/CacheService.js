@@ -83,12 +83,52 @@ class CacheService {
     };
     this.cache.set(key, item);
 
-    // Persist important keys to localStorage
+    // Persist important keys to localStorage with LRU eviction on quota
+    // pressure: when the browser refuses our write we drop the oldest
+    // persistent entry and retry once, rather than silently losing the
+    // current set call.
     if (this.persistentKeys.includes(key)) {
       try {
         localStorage.setItem(this.storagePrefix + key, JSON.stringify(item));
       } catch (e) {
-        // localStorage full or not available
+        if (e && e.name === 'QuotaExceededError') {
+          this.evictOldestPersistent();
+          try {
+            localStorage.setItem(this.storagePrefix + key, JSON.stringify(item));
+          } catch (e2) {
+            // Quota still full — give up silently, in-memory cache still holds it
+          }
+        }
+        // Other errors (localStorage disabled, etc) — silent fail
+      }
+    }
+  }
+
+  /**
+   * Remove the persistent entry with the soonest expiry. Used by set()
+   * when the browser rejects a write due to storage quota.
+   */
+  evictOldestPersistent() {
+    let oldestKey = null
+    let oldestExpiry = Infinity
+    this.persistentKeys.forEach((k) => {
+      try {
+        const stored = localStorage.getItem(this.storagePrefix + k);
+        if (!stored) return;
+        const parsed = JSON.parse(stored);
+        if (parsed && parsed.expiry < oldestExpiry) {
+          oldestExpiry = parsed.expiry;
+          oldestKey = k;
+        }
+      } catch (e) {
+        // Skip corrupt entries
+      }
+    });
+    if (oldestKey) {
+      try {
+        localStorage.removeItem(this.storagePrefix + oldestKey);
+      } catch (e) {
+        // localStorage gone — nothing left to do
       }
     }
   }
