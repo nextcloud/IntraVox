@@ -128,6 +128,17 @@ abstract class GroupMembershipEvent extends Event {
 class UserAddedEvent extends GroupMembershipEvent {}
 class UserRemovedEvent extends GroupMembershipEvent {}
 
+namespace OCA\Files_Versions\Versions;
+
+interface IVersion {
+    public function getTimestamp(): int;
+    public function getSize(): int;
+}
+
+interface IVersionBackend {}
+
+interface IVersionManager {}
+
 namespace OCP\AppFramework;
 
 use OCP\IRequest;

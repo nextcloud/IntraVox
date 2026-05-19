@@ -11,6 +11,7 @@ use OCA\IntraVox\Service\Sanitize\ColorSanitizer;
 use OCA\IntraVox\Service\Sanitize\HtmlSanitizer;
 use OCA\IntraVox\Service\Sanitize\MediaSanitizer;
 use OCA\IntraVox\Service\Sanitize\UrlSanitizer;
+use OCA\IntraVox\Service\Version\PageVersionFormatter;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\Files\IRootFolder;
 use OCP\Files\NotFoundException;
@@ -318,6 +319,7 @@ class PageService {
     private UrlSanitizer $urlSanitizer;
     private ColorSanitizer $colorSanitizer;
     private MediaSanitizer $mediaSanitizer;
+    private PageVersionFormatter $versionFormatter;
     private GroupContextService $groupContext;
 
     public function __construct(
@@ -335,6 +337,7 @@ class PageService {
         UrlSanitizer $urlSanitizer,
         ColorSanitizer $colorSanitizer,
         MediaSanitizer $mediaSanitizer,
+        PageVersionFormatter $versionFormatter,
         GroupContextService $groupContext,
         ?string $userId
     ) {
@@ -351,6 +354,7 @@ class PageService {
         $this->urlSanitizer = $urlSanitizer;
         $this->colorSanitizer = $colorSanitizer;
         $this->mediaSanitizer = $mediaSanitizer;
+        $this->versionFormatter = $versionFormatter;
         $this->groupContext = $groupContext;
         $this->userId = $userId ?? '';
 
@@ -3135,51 +3139,25 @@ class PageService {
     /**
      * Format versions from IVersionManager to array format for API response
      */
+    /**
+     * @deprecated Delegated to PageVersionFormatter::formatVersions.
+     */
     private function formatVersionsFromBackend(array $versions): array {
-        $formattedVersions = [];
-
-        foreach ($versions as $version) {
-            /** @var IVersion $version */
-            $timestamp = $version->getTimestamp();
-
-            $formattedVersions[] = [
-                'id' => $timestamp,
-                'timestamp' => $timestamp,
-                'size' => $version->getSize(),
-                'author' => $this->getVersionAuthor($version),
-                'label' => $this->getVersionLabel($version),
-                'formattedDate' => $this->formatVersionDate($timestamp),
-                'relativeTime' => $this->formatRelativeTime($timestamp),
-            ];
-        }
-
-        // Sort by timestamp descending (newest first)
-        usort($formattedVersions, fn($a, $b) => $b['timestamp'] - $a['timestamp']);
-
-        return $formattedVersions;
+        return $this->versionFormatter->formatVersions($versions);
     }
 
     /**
-     * Get author from version metadata (if available)
+     * @deprecated Delegated to PageVersionFormatter::getAuthor.
      */
     private function getVersionAuthor(IVersion $version): ?string {
-        // IVersion doesn't have getMetadata(), but GroupVersion does
-        if (method_exists($version, 'getMetadata')) {
-            $metadata = $version->getMetadata();
-            return $metadata['author'] ?? null;
-        }
-        return null;
+        return $this->versionFormatter->getAuthor($version);
     }
 
     /**
-     * Get label from version metadata (if available)
+     * @deprecated Delegated to PageVersionFormatter::getLabel.
      */
     private function getVersionLabel(IVersion $version): ?string {
-        if (method_exists($version, 'getMetadata')) {
-            $metadata = $version->getMetadata();
-            return $metadata['label'] ?? null;
-        }
-        return null;
+        return $this->versionFormatter->getLabel($version);
     }
 
     /**
@@ -3205,38 +3183,18 @@ class PageService {
      * Format a version timestamp for display
      * Uses relative time format like Nextcloud Files app
      */
+    /**
+     * @deprecated Delegated to PageVersionFormatter::formatRelativeTime.
+     */
     private function formatVersionDate(int $timestamp): string {
-        return $this->formatRelativeTime($timestamp);
+        return $this->versionFormatter->formatRelativeTime($timestamp);
     }
 
     /**
-     * Format timestamp as relative time like Nextcloud Files app
-     * Examples: "36 sec. ago", "2 min. ago", "1 hour ago", "3 days ago"
+     * @deprecated Delegated to PageVersionFormatter::formatRelativeTime.
      */
     private function formatRelativeTime(int $timestamp): string {
-        $now = time();
-        $diff = $now - $timestamp;
-
-        if ($diff < 0) {
-            // Future timestamp (shouldn't happen, but handle gracefully)
-            return 'just now';
-        } elseif ($diff < 60) {
-            return $diff . ' sec. ago';
-        } elseif ($diff < 3600) {
-            $mins = (int) floor($diff / 60);
-            return $mins . ' min. ago';
-        } elseif ($diff < 86400) {
-            $hours = (int) floor($diff / 3600);
-            return $hours . ' hour' . ($hours > 1 ? 's' : '') . ' ago';
-        } elseif ($diff < 604800) { // Less than 7 days
-            $days = (int) floor($diff / 86400);
-            return $days . ' day' . ($days > 1 ? 's' : '') . ' ago';
-        } else {
-            // Older than 7 days - show date
-            $date = new \DateTime();
-            $date->setTimestamp($timestamp);
-            return $date->format('j M Y');
-        }
+        return $this->versionFormatter->formatRelativeTime($timestamp);
     }
 
     /**
