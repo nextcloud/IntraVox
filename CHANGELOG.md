@@ -4,6 +4,21 @@ All notable changes to IntraVox will be documented in this file.
 
 IntraVox is a Nextcloud intranet page builder.
 
+## [1.4.1] - 2026-05-20 — Security dependency bumps
+
+Patch release that resolves all open frontend security advisories flagged by GitHub Dependabot shortly after the v1.4.0 push. No functional or API changes — `npm audit fix` lifted eight vulnerable transitive packages to patched versions within their declared semver ranges, no `package.json` edits required. Build, PHPUnit (258/413) and dev-server smoke tests all green.
+
+### Fixed
+- **axios** → 1.16.1 — resolves 11 advisories (prototype pollution gadgets, CRLF injection, header injection, NO_PROXY/SSRF bypasses, DoS via deep `toFormData` recursion, streamed upload/response body-size bypasses, null-byte injection in `URLSearchParams`, XSRF token cross-origin leak)
+- **dompurify** → 3.4.5 — resolves four XSS bypasses (`SAFE_FOR_TEMPLATES`/`RETURN_DOM`, `ADD_TAGS`/`FORBID_TAGS` short-circuit and function-form, prototype-pollution via `CUSTOM_ELEMENT_HANDLING`)
+- **fast-uri** → 3.1.2 — path-traversal via percent-encoded dot segments + host-confusion via percent-encoded authority delimiters
+- **fast-xml-builder** / **fast-xml-parser** — XML comment/CDATA injection and attribute-value quote-bypass
+- **brace-expansion** → 5.0.6 — DoS via numeric range that defeated documented `max` protection
+- **follow-redirects** → 1.16.1 — custom auth-header leak on cross-domain redirects
+- **postcss** → 8.5.15 — XSS via unescaped `</style>` in CSS stringify output
+
+After the bump `npm audit` reports zero vulnerabilities.
+
 ## [1.4.0] - 2026-05-19 — Enterprise refactor + caching foundation
 
 This release lays down the foundation IntraVox needs to scale cleanly to Nextcloud Enterprise customers with thousands of users on multi-node deployments. Two themes: PageService gets split into focused, testable services, and the caching layer gains group-aware keys + a content-addressable distributed cache + a frontend prefetch pipeline.
