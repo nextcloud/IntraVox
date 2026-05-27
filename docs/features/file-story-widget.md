@@ -22,7 +22,7 @@ The File Story Widget renders the documents in a Nextcloud folder as a rich, sor
 
 Documents are grouped by date with sticky headers per group. Granularity is configurable (default: per month).
 
-![File Story Widget — Timeline mode](../screenshots/FileStory-Timeline.png)
+![File Story Widget — Timeline mode](../../screenshots/FileStory-Timeline.png)
 
 | Granularity | Best for |
 |-------------|----------|
@@ -36,7 +36,7 @@ Rows show file-type icon + filename, with a `HH:MM` time, size and folder-path n
 
 A visual grid where each document is rendered as a tile with its first-page preview thumbnail. The fallback (mime-icon + uppercase extension badge) is rendered underneath the preview image, so 404s on documents without a registered preview-provider don't flicker.
 
-![File Story Widget — Tiles mode](../screenshots/FileStory-Tiles.png)
+![File Story Widget — Tiles mode](../../screenshots/FileStory-Tiles.png)
 
 Tile size is configurable:
 
@@ -52,13 +52,13 @@ Best for browsable document libraries where a visual hint helps recognition.
 
 A flat sortable list — no grouping. Rows use a longer `day month year, HH:MM` date format (unlike Timeline mode, which shows only the time, because the date already lives in the section header).
 
-![File Story Widget — List mode](../screenshots/FileStory-List.png)
+![File Story Widget — List mode](../../screenshots/FileStory-List.png)
 
 ### Grouped
 
 Documents are clustered into sections. Sections are ordered by count (desc), then by label (case-insensitive ascending).
 
-![File Story Widget — Grouped mode](../screenshots/FileStory-Grouped.png)
+![File Story Widget — Grouped mode](../../screenshots/FileStory-Grouped.png)
 
 The grouping key is configurable:
 
@@ -74,7 +74,7 @@ To add a File Story Widget to your page:
 1. Click **+ Add Widget** in edit mode
 2. Select **File Story** from the widget picker
 
-   ![File Story in the widget picker](../screenshots/FileStory.png)
+   ![File Story in the widget picker](../../screenshots/FileStory.png)
 
 3. Pick a source folder (multi-folder / cross-folder mode is not available — the server returns 400 for an empty folder)
 4. Tune layout, sorting, and display options
@@ -87,7 +87,7 @@ To add a File Story Widget to your page:
 | **MetaVox capability badge** | — | Three states: *MetaVox: rich metadata available* / *Federated share — MetaVox metadata is not available because the source lives on another Nextcloud instance. Files are shown with name, date and file type only.* / *MetaVox not available — basic file metadata only* |
 | **Filters** | `metaVoxFilters` | MetaVox field filters (hidden when MetaVox is unavailable or the source is federated). See [News Widget — MetaVox Integration](news-widget.md#metavox-integration) for filter mechanics. |
 
-![File Story Widget — MetaVox filters](../screenshots/FileStory-MetaVox-Filters.png)
+![File Story Widget — MetaVox filters](../../screenshots/FileStory-MetaVox-Filters.png)
 
 ### Layout
 

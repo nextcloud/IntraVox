@@ -25,7 +25,7 @@ It is the photo-centric counterpart to the [File Story Widget](file-story-widget
 
 Photos are grouped by the day they were taken, with sticky date headers. The default mode for narratives like trips, projects, or events.
 
-![Photo Story Widget — Timeline mode](../screenshots/PhotoStory-TimeLine.png)
+![Photo Story Widget — Timeline mode](../../screenshots/PhotoStory-TimeLine.png)
 
 Three visual styles are available:
 
@@ -47,7 +47,7 @@ Highlights has its own internal scorer and **does not show the sort dropdown** i
 
 A continuous masonry wall — no date grouping. Use this when chronology is less important than visual impact. Choose between 2, 3, 4 or 5 columns; roughly one in three photos spans two rows for a varied rhythm.
 
-![Photo Story Widget — Grid mode](../screenshots/PhotoStory-Grid.png)
+![Photo Story Widget — Grid mode](../../screenshots/PhotoStory-Grid.png)
 
 ### On this day
 
@@ -60,7 +60,7 @@ To add a Photo Story Widget to your page:
 1. Click **+ Add Widget** in edit mode
 2. Select **Photo Story** from the widget picker
 
-   ![Photo Story in the widget picker](../screenshots/PhotoStory.png)
+   ![Photo Story in the widget picker](../../screenshots/PhotoStory.png)
 
 3. Pick a source folder (or leave blank for cross-folder MetaVox search)
 4. Tune layout, sorting, and display options
