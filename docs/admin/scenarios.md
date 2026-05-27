@@ -147,7 +147,7 @@ A "Pending Reviews" page that publishers open as their daily landing spot. Two N
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
-│  IntraVox    Home  News  Departments  Pending Reviews        🔍 EN  │
+│  IntraVox    Home  News  Departments  Pending Reviews        🔍 EN   │
 ├──────────────────────────────────────────────────────────────────────┤
 │                                                                      │
 │   # Editorial dashboard                                              │
@@ -174,8 +174,8 @@ A "Pending Reviews" page that publishers open as their daily landing spot. Two N
 │  News widget · Grid (3 cols)                                         │
 │  filter: Review Status = "Rejected"                                  │
 │                                                                      │
-│  [ Onboarding ]   [ Travel policy ]   [ Q3 forecast ]               │
-│   Sales · 1d ago   HR · 3d ago         Finance · 5d ago             │
+│  [ Onboarding ]   [ Travel policy ]   [ Q3 forecast ]                │
+│   Sales · 1d ago   HR · 3d ago         Finance · 5d ago              │
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -304,7 +304,7 @@ The HR department's own homepage: HR-only news on the left, shared organisation-
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
-│  Acme Intranet   Home  News  Departments ▾  General         🔍 NL EN│
+│  Acme Intranet   Home  News  Departments ▾  General         🔍 NL EN │
 │                                                                      │
 │  Home › Departments › HR                              [ Edit Page ]  │
 ├──────────────────────────────────────────────────────────────────────┤
@@ -318,7 +318,7 @@ The HR department's own homepage: HR-only news on the left, shared organisation-
 │  News widget · Grid (2 cols)                      │  • 12 people     │
 │  source: /en/departments/hr/                      │  • Director:     │
 │                                                   │    Sam de Vries  │
-│  ┌──────────────┐ ┌──────────────┐                │  • hr@acme.example│
+│  ┌──────────────┐ ┌──────────────┐                │ • hr@acme.example│
 │  │ New office   │ │ Travel policy│                │                  │
 │  │ in Utrecht   │ │ refresh      │                │  Quick links     │
 │  │ Sam · today  │ │ Mira · 2d    │                │  ──────────────  │
@@ -357,25 +357,25 @@ Build a knowledge base where each topic (a procedure, a technique, a product, �
 - A grouped list of related documents (PDF, Word, drawings, …)
 - A photo gallery of practical examples
 
-All documents live in one shared folder; all photos stay in their original project folders. A single MetaVox tag (`onderwerp` / `topic`) is the only link between them.
+All documents live in one shared folder; all photos stay in their original project folders. A single MetaVox tag (`topic`) is the only link between them.
 
-Worked example: heritage restoration office *"Stichting Erfgoedwerk Maasdal"* with topic pages for *Restauratie van glas-in-lood-ramen*, *Voegwerk*, *Leien daken*, etc.
+Worked example: a heritage-restoration office with topic pages for *Stained-glass window restoration*, *Brick repointing*, *Slate roofing*, etc.
 
 ### Prerequisites
 
 - MetaVox app installed and configured
-- One **Select** or **Text** field in MetaVox named `onderwerp` (or `topic`), with values matching your topic pages — *glas-in-lood*, *voegwerk*, *leien*, …
-- Optionally a second field `documenttype` (bestek / inspectierapport / werktekening / vergunning) for the documents-section grouping
-- A central documents folder, e.g. `/Kennisbank/Documenten/`
+- One **Select** or **Text** field in MetaVox named `topic`, with values matching your topic pages — *stained-glass*, *repointing*, *slate-roofing*, …
+- Optionally a second field `document_type` (specification / inspection-report / drawing / permit) for the documents-section grouping
+- A central documents folder, e.g. `/KnowledgeBase/Documents/`
 - Photo folders anywhere — they will be picked up cross-folder
 
 ### Step 1: Tag documents with the topic field
 
-In the central documents folder, set MetaVox `onderwerp` on each file (and optionally `documenttype`). Tagging existing files in bulk is possible via the MetaVox bulk editor.
+In the central documents folder, set MetaVox `topic` on each file (and optionally `document_type`). Tagging existing files in bulk is possible via the MetaVox bulk editor.
 
 ### Step 2: Tag photos with the same field
 
-Set MetaVox `onderwerp` on the relevant photos in their existing project folders. No need to move or copy them.
+Set MetaVox `topic` on the relevant photos in their existing project folders. No need to move or copy them.
 
 ### Step 3: Create one topic page
 
@@ -391,16 +391,16 @@ Duplicate an existing topic page (or start fresh) for the new topic. The recipe 
 
 ### Step 4: Configure File Story (documents)
 
-- **Source folder**: the central documents folder (e.g. `/Kennisbank/Documenten/`)
+- **Source folder**: the central documents folder (e.g. `/KnowledgeBase/Documents/`)
 - **Mode**: Grouped
-- **Group by**: `documenttype` (or *Category (file type)* if you skipped the field)
+- **Group by**: `document_type` (or *Category (file type)* if you skipped the field)
 - **Sort by**: Date modified (desc)
-- **Filters**: `onderwerp equals <topic>` — the only line that differs between topic pages
+- **Filters**: `topic equals <topic-value>` — the only line that differs between topic pages
 
 ### Step 5: Configure Photo Story (gallery)
 
 - **Source folder**: *leave empty* — this activates cross-folder MetaVox search
-- **Filters**: `onderwerp equals <topic>` (required when source is empty)
+- **Filters**: `topic equals <topic-value>` (required when source is empty)
 - **Mode**: Grid (3 or 4 columns); Timeline if chronology matters
 - **Show captions**: on
 
@@ -408,72 +408,72 @@ Photos stay in their original project folders; cross-folder mode pulls every pho
 
 ### Step 6: Duplicate for each new topic
 
-Per topic: copy the page, rename it, change the `onderwerp` filter value in both widgets. No new folders, no copied files.
+Per topic: copy the page, rename it, change the `topic` filter value in both widgets. No new folders, no copied files.
 
-### Page mockup — Topic page (*Restauratie van glas-in-lood-ramen*)
+### Page mockup — Topic page (*Stained-glass window restoration*)
 
-A single topic page from the heritage knowledge base. Everything below the intro is filled by widgets that filter on `onderwerp = "glas-in-lood"` — change one value and you have a brand-new topic page.
+A single topic page from the heritage knowledge base. Everything below the intro is filled by widgets that filter on `topic = "stained-glass"` — change one value and you have a brand-new topic page.
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
-│  Erfgoedwerk Maasdal   Home  Kennisbank ▾  Projecten        🔍 NL EN│
+│  Heritage Restoration   Home  Knowledge Base ▾  Projects     🔍 EN   │
 │                                                                      │
-│  Home › Kennisbank › Glas-in-lood                     [ Edit Page ]  │
+│  Home › Knowledge Base › Stained glass                [ Edit Page ]  │
 ├──────────────────────────────────────────────────────────────────────┤
 │                                                                      │
-│   # Restauratie van glas-in-lood-ramen                               │
-│   Wanneer toepassen, waar op letten, welke vergunningen je nodig     │
-│   hebt en welke specialisten in onze regio dit doen.                 │
+│   # Stained-glass window restoration                                 │
+│   When to apply, what to watch out for, which permits you need,      │
+│   and which specialists in our region do this work.                  │
 │                                                                      │
 ├──────────────────────────────────────────────────────────────────────┤
-│  ▸ Werkwijze & aandachtspunten        (collapsible, closed)          │
-│  ▸ Materiaalkeuze & loodprofielen     (collapsible, closed)          │
-│  ▸ Vergunningen & monumentenstatus    (collapsible, closed)          │
+│  ▸ Method & key considerations         (collapsible, closed)         │
+│  ▸ Materials & lead profiles           (collapsible, closed)         │
+│  ▸ Permits & listed-building status    (collapsible, closed)         │
 ├───────────────────────────────────────────────────┬──────────────────┤
-│  📄 Dossierstukken                                │  Specialisten    │
+│  📄 Project documents                             │  Specialists     │
 │  ──────────────────────────                       │  ──────────────  │
-│  File Story · Grouped by `documenttype`           │  People widget   │
-│  source: /Kennisbank/Documenten/                  │  filter: group = │
-│  filter: onderwerp = "glas-in-lood"               │  "restauratoren- │
-│                                                   │   glas"          │
-│  ▸ Bestek                       3 files           │                  │
-│    Bestek-2024-073-Sint-Martinus.pdf  · 8 May     │  👤 Jan van Os   │
-│    Bestek-2023-051-OL-Vrouwekapel.pdf · 12 Apr    │     Glazenier    │
-│    Bestek-2022-018-Raadhuis-Venlo.pdf · 3 Mar     │  👤 Mira Patel   │
-│                                                   │     Loodspecialist│
-│  ▸ Inspectierapport             5 files           │  👤 Anna Kuipers │
-│  ▸ Werktekening                 2 files (.dwg)    │     Vergunningen │
-│  ▸ Vergunning                   2 files           │                  │
+│  File Story · Grouped by `document_type`          │  People widget   │
+│  source: /KnowledgeBase/Documents/                │  filter: group = │
+│  filter: topic = "stained-glass"                  │  "glass-         │
+│                                                   │   restorers"     │
+│  ▸ Specification               3 files            │                  │
+│    Spec-2024-073-St-Martin.pdf       · 8 May      │  👤 Jan van Os   │
+│    Spec-2023-051-Our-Lady.pdf        · 12 Apr     │     Glazier      │
+│    Spec-2022-018-Town-Hall.pdf       · 3 Mar      │  👤 Mira Patel   │
+│                                                   │     Lead expert  │
+│  ▸ Inspection report           5 files            │  👤 Anna Kuipers │
+│  ▸ Drawing                     2 files (.dwg)     │     Permits      │
+│  ▸ Permit                      2 files            │                  │
 │                                                   │  ──────────────  │
-│  *Klik een groep om te openen of te downloaden*   │  Externe bronnen │
+│  *Click a group to open or download*              │  External refs   │
 │                                                   │  ──────────────  │
-├───────────────────────────────────────────────────┤  → RCE.nl        │
-│  🖼  Praktijkvoorbeelden — vóór, tijdens, na      │  → Monumenten-   │
-│  ──────────────────────────                       │    wacht         │
-│  Photo Story · Grid (3 cols)                      │  → Restauratoren │
-│  source: (leeg — cross-folder MetaVox search)     │    Nederland     │
-│  filter: onderwerp = "glas-in-lood"               │                  │
-│                                                   │  ──────────────  │
-│  ┌───────┐ ┌───────┐ ┌───────┐                   │  Verwante items  │
-│  │ kerk1 │ │ kerk1 │ │ kerk1 │  Sint-Martinus    │  ──────────────  │
-│  │ vóór  │ │ proces│ │ na    │  · 8 May 2024     │  → Voegwerk      │
-│  └───────┘ └───────┘ └───────┘                   │  → Loodwerk      │
-│  ┌───────┐ ┌───────┐ ┌───────┐                   │  → Leien daken   │
-│  │ kapel │ │ kapel │ │ raad- │  Diverse projecten│  → Smeedijzer    │
-│  │ detail│ │ proces│ │ huis  │                   │                  │
-│  └───────┘ └───────┘ └───────┘                   │                  │
+├───────────────────────────────────────────────────┤  → ICOMOS        │
+│  🖼  Practical examples — before / during / after │  → Heritage      │
+│  ──────────────────────────                       │    Watch         │
+│  Photo Story · Grid (3 cols)                      │  → Glass         │
+│  source: (empty — cross-folder MetaVox search)    │    Restorers     │
+│  filter: topic = "stained-glass"                  │    Network       │
+│                                                   │                  │
+│  ┌───────┐ ┌───────┐ ┌───────┐                   │  ──────────────   │
+│  │ church│ │ church│ │ church│  St Martin's       │  Related topics  │
+│  │ before│ │ during│ │ after │  · 8 May 2024      │  ──────────────  │
+│  └───────┘ └───────┘ └───────┘                   │  → Repointing     │
+│  ┌───────┐ ┌───────┐ ┌───────┐                   │  → Leadwork       │
+│  │ chapel│ │ chapel│ │ town- │  Various projects  │  → Slate roofing │
+│  │ detail│ │ work  │ │ hall  │                   │  → Wrought iron   │
+│  └───────┘ └───────┘ └───────┘                   │                   │
 └───────────────────────────────────────────────────┴──────────────────┘
 ```
 
-Photos stay in their project folders (`/Projecten/2024-073-Sint-Martinus/foto's/`, `/Projecten/2023-051-OL-Vrouwekapel/...`, …). Adding the `onderwerp = "glas-in-lood"` tag in MetaVox is enough — the gallery picks them up automatically the next time the page is opened.
+Photos stay in their project folders (`/Projects/2024-073-St-Martin/photos/`, `/Projects/2023-051-Our-Lady/...`, …). Adding the `topic = "stained-glass"` tag in MetaVox is enough — the gallery picks them up automatically the next time the page is opened.
 
 ### Tips
 
 - **One MetaVox tag is all the maintenance** — drop a new document in the shared folder, tag it, and it appears on the right topic page.
 - **No folder-per-topic explosion** — the central documents folder stays a flat, browsable archive.
-- **Photos are reused for free** — a single project photo can appear on multiple topic pages (e.g. a window-restoration photo on both *glas-in-lood* and *loodwerk*) just by adding a second tag value.
-- **Documenttype grouping** turns the file list into a self-explaining index — readers immediately see *"3 bestekken, 5 inspectierapporten"* without filtering.
-- **Hub page**: add a News Widget on a parent page filtered by `onderwerp is not empty` to list all knowledge items, giving readers a single browsable entry point.
+- **Photos are reused for free** — a single project photo can appear on multiple topic pages (e.g. a window-restoration photo on both *stained-glass* and *leadwork*) just by adding a second tag value.
+- **`document_type` grouping** turns the file list into a self-explaining index — readers immediately see *"3 specifications, 5 inspection reports"* without filtering.
+- **Hub page**: add a News Widget on a parent page filtered by `topic is not empty` to list all knowledge items, giving readers a single browsable entry point.
 - **Editorial flow**: combine with [Scenario 1](#scenario-1-content-approval-workflow) if topic pages need a review/approval gate before publication.
 
 ---
