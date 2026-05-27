@@ -3,9 +3,9 @@
 Practical recipes for common use cases, combining IntraVox with other Nextcloud apps. These scenarios require no changes to IntraVox itself — they use existing Nextcloud features and IntraVox's native permission model.
 
 **Related documentation:**
-- [Administrator Guide](ADMIN_GUIDE.md) - Installation and configuration
-- [Authorization Guide](AUTHORIZATION.md) - Permissions and access control
-- [Editor Guide](EDITOR_GUIDE.md) - Content editing and publishing
+- [Administrator Guide](guide.md) - Installation and configuration
+- [Authorization Guide](authorization.md) - Permissions and access control
+- [Editor Guide](../user/editor.md) - Content editing and publishing
 
 ---
 
@@ -257,6 +257,82 @@ The main homepage can include a News widget showing organization-wide news from 
 | Sales team member | All pages | Only `departments/sales/` |
 | Communications Team | All pages | Only `news/` |
 | IntraVox Admins | All pages | Everything |
+
+---
+
+## Scenario 3: Knowledge Base with Documents + Photos
+
+A page-per-topic knowledge base where every topic page automatically shows the documents and photos that belong to that topic — without copying files, without folder-per-topic explosion, and without manual link curation.
+
+### Goal
+
+Build a knowledge base where each topic (a procedure, a technique, a product, …) lives on its own page. The page renders:
+
+- An introduction + collapsible work instructions (text)
+- A grouped list of related documents (PDF, Word, drawings, …)
+- A photo gallery of practical examples
+
+All documents live in one shared folder; all photos stay in their original project folders. A single MetaVox tag (`onderwerp` / `topic`) is the only link between them.
+
+Worked example: heritage restoration office *"Stichting Erfgoedwerk Maasdal"* with topic pages for *Restauratie van glas-in-lood-ramen*, *Voegwerk*, *Leien daken*, etc.
+
+### Prerequisites
+
+- MetaVox app installed and configured
+- One **Select** or **Text** field in MetaVox named `onderwerp` (or `topic`), with values matching your topic pages — *glas-in-lood*, *voegwerk*, *leien*, …
+- Optionally a second field `documenttype` (bestek / inspectierapport / werktekening / vergunning) for the documents-section grouping
+- A central documents folder, e.g. `/Kennisbank/Documenten/`
+- Photo folders anywhere — they will be picked up cross-folder
+
+### Step 1: Tag documents with the topic field
+
+In the central documents folder, set MetaVox `onderwerp` on each file (and optionally `documenttype`). Tagging existing files in bulk is possible via the MetaVox bulk editor.
+
+### Step 2: Tag photos with the same field
+
+Set MetaVox `onderwerp` on the relevant photos in their existing project folders. No need to move or copy them.
+
+### Step 3: Create one topic page
+
+Duplicate an existing topic page (or start fresh) for the new topic. The recipe per topic page:
+
+| Row | Layout | Widget(s) | Notes |
+|-----|--------|-----------|-------|
+| 1 | 1 col | Heading + Text | Topic title + short intro |
+| 2 | 1 col | Collapsible Section | Work instructions, FAQ-style |
+| 3 | 2 col | File Story (left) + Text (right) | Documents on the left, "how to read these" on the right |
+| 4 | 1 col | Photo Story | Examples gallery |
+| Right sidebar | — | People + Links | Specialists + external references |
+
+### Step 4: Configure File Story (documents)
+
+- **Source folder**: the central documents folder (e.g. `/Kennisbank/Documenten/`)
+- **Mode**: Grouped
+- **Group by**: `documenttype` (or *Category (file type)* if you skipped the field)
+- **Sort by**: Date modified (desc)
+- **Filters**: `onderwerp equals <topic>` — the only line that differs between topic pages
+
+### Step 5: Configure Photo Story (gallery)
+
+- **Source folder**: *leave empty* — this activates cross-folder MetaVox search
+- **Filters**: `onderwerp equals <topic>` (required when source is empty)
+- **Mode**: Grid (3 or 4 columns); Timeline if chronology matters
+- **Show captions**: on
+
+Photos stay in their original project folders; cross-folder mode pulls every photo with the matching tag.
+
+### Step 6: Duplicate for each new topic
+
+Per topic: copy the page, rename it, change the `onderwerp` filter value in both widgets. No new folders, no copied files.
+
+### Tips
+
+- **One MetaVox tag is all the maintenance** — drop a new document in the shared folder, tag it, and it appears on the right topic page.
+- **No folder-per-topic explosion** — the central documents folder stays a flat, browsable archive.
+- **Photos are reused for free** — a single project photo can appear on multiple topic pages (e.g. a window-restoration photo on both *glas-in-lood* and *loodwerk*) just by adding a second tag value.
+- **Documenttype grouping** turns the file list into a self-explaining index — readers immediately see *"3 bestekken, 5 inspectierapporten"* without filtering.
+- **Hub page**: add a News Widget on a parent page filtered by `onderwerp is not empty` to list all knowledge items, giving readers a single browsable entry point.
+- **Editorial flow**: combine with [Scenario 1](#scenario-1-content-approval-workflow) if topic pages need a review/approval gate before publication.
 
 ---
 
