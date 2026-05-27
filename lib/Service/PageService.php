@@ -31,7 +31,7 @@ use OCA\Files_Versions\Versions\IVersionManager;
 use OCA\Files_Versions\Versions\IVersion;
 
 class PageService {
-    private const ALLOWED_WIDGET_TYPES = ['text', 'heading', 'image', 'links', 'file', 'divider', 'spacer', 'video', 'news', 'people', 'calendar', 'feed'];
+    private const ALLOWED_WIDGET_TYPES = ['text', 'heading', 'image', 'links', 'divider', 'video', 'news', 'people', 'calendar', 'feed', 'photo-story', 'file-story'];
     private const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
     private const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/ogg'];
     private const ALLOWED_MEDIA_TYPES = [
@@ -2331,11 +2331,6 @@ class PageService {
                 }
                 break;
 
-            case 'file':
-                $sanitized['path'] = $this->sanitizePath($widget['path'] ?? '');
-                $sanitized['name'] = $this->sanitizeText($widget['name'] ?? '');
-                break;
-
             case 'divider':
                 // Preserve divider styling properties
                 if (isset($widget['style'])) {
@@ -2350,16 +2345,6 @@ class PageService {
                     $sanitized['height'] = preg_match('/^\d+(px|rem|em|%)$/', $widget['height'])
                         ? $widget['height']
                         : '2px';
-                }
-                break;
-
-            case 'spacer':
-                // Spacer widget - just adds vertical space
-                if (isset($widget['height'])) {
-                    $height = (int)$widget['height'];
-                    $sanitized['height'] = max(10, min($height, 200)); // 10-200px range
-                } else {
-                    $sanitized['height'] = 20; // default 20px
                 }
                 break;
 
@@ -2457,6 +2442,13 @@ class PageService {
 
                 // Carousel autoplay interval (0-30 seconds, 0 = disabled)
                 $sanitized['autoplayInterval'] = max(0, min((int)($widget['autoplayInterval'] ?? 5), 30));
+
+                // Background color — editor exposes a three-option toggle (default /
+                // hover / primary). Validated against the same whitelist used for
+                // rows and link items.
+                if (isset($widget['backgroundColor'])) {
+                    $sanitized['backgroundColor'] = $this->sanitizeBackgroundColor($widget['backgroundColor']);
+                }
 
                 // MetaVox filters
                 $sanitized['filters'] = [];
@@ -2661,6 +2653,164 @@ class PageService {
                 if (isset($widget['backgroundColor'])) {
                     $sanitized['backgroundColor'] = $this->sanitizeBackgroundColor($widget['backgroundColor']);
                 }
+                break;
+
+            case 'photo-story':
+                $config = is_array($widget['config'] ?? null) ? $widget['config'] : [];
+                $sanitizedConfig = [];
+                $sanitizedConfig['folderPath'] = $this->sanitizePath($config['folderPath'] ?? '');
+                $allowedModes = ['timeline', 'highlights', 'grid', 'on-this-day'];
+                $sanitizedConfig['mode'] = in_array($config['mode'] ?? 'timeline', $allowedModes, true)
+                    ? $config['mode']
+                    : 'timeline';
+                if (isset($config['limit']) && $config['limit'] !== '' && $config['limit'] !== null) {
+                    $sanitizedConfig['limit'] = max(1, min((int)$config['limit'], 500));
+                }
+                $sanitizedConfig['columns'] = max(2, min((int)($config['columns'] ?? 3), 5));
+                $sanitizedConfig['showCaptions'] = !isset($config['showCaptions']) || (bool)$config['showCaptions'];
+                $sanitizedConfig['showMap'] = !empty($config['showMap']);
+                // Phase 2.8 — per-day mini-map. Default true so existing pages get them.
+                $sanitizedConfig['showDayMaps'] = !isset($config['showDayMaps']) || (bool)$config['showDayMaps'];
+
+                // Sort direction. Default 'desc' (newest first).
+                $sanitizedConfig['sortOrder'] = (($config['sortOrder'] ?? 'desc') === 'asc') ? 'asc' : 'desc';
+
+                // Sort key. Accepts file-level columns (mtime/name/size), the
+                // virtual 'taken_at' (NC core), or any MetaVox field name. Pattern
+                // restriction prevents nonsense input from reaching the backend
+                // where it would be ignored anyway, but keeps the page-JSON tidy.
+                $rawSortBy = (string)($config['sortBy'] ?? 'mtime');
+                $sanitizedConfig['sortBy'] = preg_match('/^[a-z][a-z0-9_]{0,63}$/i', $rawSortBy)
+                    ? $rawSortBy : 'mtime';
+
+                // Phase 2.4 — cross-folder mode + MetaVox filter rows.
+                $sanitizedConfig['allMetaVoxFolders'] = !empty($config['allMetaVoxFolders']);
+                $rawFilters = is_array($config['metaVoxFilters'] ?? null) ? $config['metaVoxFilters'] : [];
+                $allowedOps = ['equals', 'contains', 'in', 'year_equals'];
+                $cleanFilters = [];
+                foreach ($rawFilters as $entry) {
+                    if (!is_array($entry)) {
+                        continue;
+                    }
+                    $field = isset($entry['field']) ? (string)$entry['field'] : '';
+                    $op = isset($entry['op']) ? (string)$entry['op'] : '';
+                    $val = $entry['value'] ?? '';
+                    if ($field === '' || !preg_match('/^exif_[a-z_]+$/', $field)) {
+                        continue;
+                    }
+                    if (!in_array($op, $allowedOps, true)) {
+                        continue;
+                    }
+                    if (is_array($val)) {
+                        $coerced = [];
+                        foreach ($val as $v) {
+                            $s = is_scalar($v) ? trim((string)$v) : '';
+                            if ($s !== '') {
+                                $coerced[] = mb_substr($s, 0, 200);
+                            }
+                        }
+                        if (empty($coerced)) {
+                            continue;
+                        }
+                        $val = array_values($coerced);
+                    } else {
+                        $s = is_scalar($val) ? trim((string)$val) : '';
+                        if ($s === '') {
+                            continue;
+                        }
+                        $val = mb_substr($s, 0, 200);
+                    }
+                    $cleanFilters[] = ['field' => $field, 'op' => $op, 'value' => $val];
+                }
+                $sanitizedConfig['metaVoxFilters'] = $cleanFilters;
+
+                // Visual style (already used in the editor but wasn't persisted yet — add it here)
+                $allowedStyles = ['magazine', 'apple', 'travelogue'];
+                $sanitizedConfig['style'] = in_array($config['style'] ?? 'apple', $allowedStyles, true)
+                    ? $config['style']
+                    : 'apple';
+
+                $sanitized['config'] = $sanitizedConfig;
+                break;
+
+            case 'file-story':
+                // FileStoryWidget — documents counterpart of photo-story.
+                // Lighter sanitization since it has fewer config knobs (no map,
+                // no visual styles, no day-maps, no cross-folder mode).
+                $config = is_array($widget['config'] ?? null) ? $widget['config'] : [];
+                $sanitizedConfig = [];
+                $sanitizedConfig['folderPath'] = $this->sanitizePath($config['folderPath'] ?? '');
+                $allowedModes = ['timeline', 'tiles', 'list', 'grouped'];
+                $sanitizedConfig['mode'] = in_array($config['mode'] ?? 'timeline', $allowedModes, true)
+                    ? $config['mode'] : 'timeline';
+                if (isset($config['limit']) && $config['limit'] !== '' && $config['limit'] !== null) {
+                    $sanitizedConfig['limit'] = max(1, min((int)$config['limit'], 500));
+                }
+                $sanitizedConfig['sortOrder'] = (($config['sortOrder'] ?? 'desc') === 'asc') ? 'asc' : 'desc';
+                $rawSortBy = (string)($config['sortBy'] ?? 'mtime');
+                $sanitizedConfig['sortBy'] = preg_match('/^[a-z][a-z0-9_]{0,63}$/i', $rawSortBy)
+                    ? $rawSortBy : 'mtime';
+                $rawGroupBy = (string)($config['groupBy'] ?? 'category');
+                $sanitizedConfig['groupBy'] = preg_match('/^[a-z][a-z0-9_]{0,63}$/i', $rawGroupBy)
+                    ? $rawGroupBy : 'category';
+
+                // Timeline granularity: day / month / year. Default "month" for
+                // documents because per-day buckets are usually too fine here.
+                $rawGran = (string)($config['granularity'] ?? 'month');
+                $sanitizedConfig['granularity'] = in_array($rawGran, ['day', 'month', 'year'], true)
+                    ? $rawGran : 'month';
+
+                // Date field preference: which timestamp to display in the row.
+                $rawDateField = (string)($config['dateField'] ?? 'mtime');
+                $sanitizedConfig['dateField'] = in_array($rawDateField, ['mtime', 'taken_at', 'created'], true)
+                    ? $rawDateField : 'mtime';
+
+                // Visible columns: whitelist-filter the user-supplied list.
+                $allowedCols = ['date', 'size', 'path'];
+                $rawCols = is_array($config['visibleColumns'] ?? null) ? $config['visibleColumns'] : ['date'];
+                $cleanCols = [];
+                foreach ($rawCols as $col) {
+                    if (is_string($col) && in_array($col, $allowedCols, true) && !in_array($col, $cleanCols, true)) {
+                        $cleanCols[] = $col;
+                    }
+                }
+                $sanitizedConfig['visibleColumns'] = $cleanCols;
+
+                // Tile size — only meaningful in tiles-mode but persisted across
+                // modes so toggling between modes keeps the user's previous choice.
+                $rawTileSize = (string)($config['tileSize'] ?? 'medium');
+                $sanitizedConfig['tileSize'] = in_array($rawTileSize, ['small', 'medium', 'large'], true)
+                    ? $rawTileSize : 'medium';
+
+                // Reuse the photo-story filter sanitization (same shape).
+                $rawFilters = is_array($config['metaVoxFilters'] ?? null) ? $config['metaVoxFilters'] : [];
+                $allowedOps = ['equals', 'contains', 'in', 'year_equals'];
+                $cleanFilters = [];
+                foreach ($rawFilters as $entry) {
+                    if (!is_array($entry)) continue;
+                    $field = isset($entry['field']) ? (string)$entry['field'] : '';
+                    $op = isset($entry['op']) ? (string)$entry['op'] : '';
+                    $val = $entry['value'] ?? '';
+                    if ($field === '' || !preg_match('/^[a-z][a-z0-9_]{0,63}$/i', $field)) continue;
+                    if (!in_array($op, $allowedOps, true)) continue;
+                    if (is_array($val)) {
+                        $coerced = [];
+                        foreach ($val as $v) {
+                            $s = is_scalar($v) ? trim((string)$v) : '';
+                            if ($s !== '') $coerced[] = mb_substr($s, 0, 200);
+                        }
+                        if (empty($coerced)) continue;
+                        $val = array_values($coerced);
+                    } else {
+                        $s = is_scalar($val) ? trim((string)$val) : '';
+                        if ($s === '') continue;
+                        $val = mb_substr($s, 0, 200);
+                    }
+                    $cleanFilters[] = ['field' => $field, 'op' => $op, 'value' => $val];
+                }
+                $sanitizedConfig['metaVoxFilters'] = $cleanFilters;
+
+                $sanitized['config'] = $sanitizedConfig;
                 break;
 
             case 'feed':

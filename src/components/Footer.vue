@@ -56,12 +56,15 @@
 <script>
 import { translate as t } from '@nextcloud/l10n';
 import { showSuccess } from '@nextcloud/dialogs';
+import { defineAsyncComponent } from 'vue';
 import { NcButton, NcActions, NcActionButton } from '@nextcloud/vue';
 import Pencil from 'vue-material-design-icons/Pencil.vue';
 import Close from 'vue-material-design-icons/Close.vue';
 import ContentSave from 'vue-material-design-icons/ContentSave.vue';
-import InlineTextEditor from './InlineTextEditor.vue';
 import { markdownToHtml } from '../utils/markdownSerializer.js';
+
+// Async to match Widget.vue's strategy.
+const InlineTextEditor = defineAsyncComponent(() => import('./InlineTextEditor.vue'));
 
 export default {
   name: 'Footer',

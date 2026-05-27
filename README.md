@@ -110,7 +110,7 @@ The Calendar Widget displays upcoming events from shared Nextcloud calendars wit
 
 *Calendar widget with colored date badges, responsive layout, and background themes*
 
-See [Calendar Widget documentation](docs/CALENDAR_WIDGET.md) for full details.
+See [Calendar Widget documentation](docs/features/calendar-widget.md) for full details.
 
 ### Collapsible Rows
 
@@ -259,6 +259,7 @@ Full table editing in text widgets:
 - **Nextcloud Unified Search** - Search pages via Ctrl+K with IntraVox app icon
 - **Nextcloud Comments API** - Reactions and comments use native Nextcloud infrastructure
 - **MetaVox Integration** - Add metadata to pages and filter News widgets (when MetaVox is installed)
+- **Photo Story Widget** - Rich photo-album presentation with date + location headers, three visual styles (Magazine / Apple / Travelogue), interactive lightbox, and cross-folder filtering via MetaVox metadata
 - **Files App Integration** - Pages stored as JSON files in GroupFolder
 - **OpenAPI Documentation** - Complete API specification for third-party integration
 - **OCS API Viewer** - Interactive API documentation when OCS API Viewer app is installed
@@ -331,6 +332,95 @@ If you want to reset demo content to its original state:
 | GroupFolders app | Required | Required |
 
 > ⚠️ **Important**: The default PHP memory_limit of 128MB is insufficient for IntraVox. Demo data installation requires at least 256MB. Update your `php.ini` if needed.
+
+### Optional companion apps
+
+| App | Purpose | Required for |
+|-----|---------|--------------|
+| **MetaVox** | Custom metadata fields on GroupFolders | Photo Story cross-folder filtering, News widget MetaVox filters, people/subjects/custom-location overlays. **Optional** — Photo Story works with just NC core FilesMetadata. |
+| **Recognize** | On-device face + object recognition | Photo Story people/subjects metadata via MetaVox (only used if MetaVox is also installed) |
+| **camerarawpreviews** | Thumbnails for RAW formats (CR2 / NEF / ARW / DNG / etc.) | Photo Story thumbnails for RAW files. Without it RAW tiles fall back to a styled placeholder. Install via `occ app:install camerarawpreviews`. |
+| **previewgenerator** | Pre-generates thumbnails in the background | Fast Photo Story loading on large folders. Strongly recommended for folders > 200 photos. Install via `occ app:install previewgenerator`. |
+
+### Performance recommendations
+
+For Photo Story widgets pointing at folders with **hundreds or thousands of photos**:
+
+1. **Pre-generate thumbnails** with the `previewgenerator` app:
+   ```bash
+   # One-time, run after a big import (can take hours on 100k+ photos):
+   occ preview:generate-all
+
+   # Then schedule via system cron (or systemd timer) for incremental updates:
+   */15 * * * * www-data php /var/www/html/occ preview:pre-generate
+   ```
+   Without this, RAW thumbnails are generated on first view (~1s per file). With it: cached, ~10ms.
+
+2. **Enable a Redis cache** in Nextcloud's `config.php`:
+   ```php
+   'memcache.distributed' => '\OC\Memcache\Redis',
+   'memcache.locking' => '\OC\Memcache\Redis',
+   ```
+   Photo Story uses `OCP\ICacheFactory` to memoize per-folder timeline + highlights computations. Repeat page-loads drop from ~500ms to ~10ms.
+
+3. **EXIF data sources (Photo Story)** — Photo Story reads photo EXIF from two sources, in this order:
+
+   1. **Nextcloud core FilesMetadata** (NC 28+). NC's own scanner indexes every uploaded photo into `oc_files_metadata` with well-known keys (`photos-original_date_time`, `photos-gps`, `photos-ifd0`, `photos-size`). **This is the primary source** — no app-specific field-name mapping needed.
+
+      Trigger a full scan once after installation or large bulk imports:
+      ```bash
+      occ files:scan --all
+      ```
+      Schedule incremental scans via NC's built-in cron. The scanner picks up new uploads automatically.
+
+   2. **MetaVox custom fields** (optional). MetaVox adds people, subjects, custom location-string, custom country labels — things NC core doesn't track. Photo Story uses these *in addition to* NC core data. If you want these enrichments, use the Python toolset in `Hetzner/scripts/metavox-exif/` in this repository. It writes to MetaVox via the OCS API and is designed to run from a server-side cron job.
+
+   You don't need MetaVox for the core experience. NC core alone gives you date, GPS, camera, and image dimensions for every scanned photo.
+
+4. **Tune EXIF behavior** via app config:
+   ```bash
+   # Default: skip per-file EXIF extraction in the API request (sparse rows, fastest).
+   # The lightbox lazily fetches EXIF per opened photo via /photo-story/photo-exif.
+   occ config:app:set intravox photostory.exif.eager_in_request --value="no"
+
+   # Emergency fallback for folders without MetaVox backfill: eagerly extract EXIF.
+   # Slower; capped at N files per request to avoid timeouts on large folders.
+   occ config:app:set intravox photostory.exif.eager_in_request --value="yes"
+   occ config:app:set intravox photostory.exif.eager_cap --value="200"
+   ```
+   Production setups should use the MetaVox backfill (#3 above) instead of eager EXIF.
+
+5. **Tune reverse-geocoding** (place-name resolution):
+   ```bash
+   # Default: enabled, caps new fetches at 20/request to avoid Nominatim rate-limit bans.
+   occ config:app:set intravox photostory.geocode.max_new_per_request --value="20"
+
+   # Use a self-hosted Nominatim if you have one:
+   occ config:app:set intravox photostory.geocode.endpoint --value="https://your-nominatim.example/reverse"
+   ```
+
+### Photo Story: map provider
+
+IntraVox does **not** bundle a map tile server. By default Photo Story uses OpenStreetMap's public tile server (`https://tile.openstreetmap.org/{z}/{x}/{y}.png`), which is fine for personal and small-team use but is rate-limited under [OSM's Tile Usage Policy](https://operations.osmfoundation.org/policies/tiles/) for heavier deployments.
+
+**Options for production**:
+
+- **Stick with OSM** for personal or low-traffic intranets. No configuration needed.
+
+- **Use your own tile server** (PMTiles, MapTiler, Stadia Maps, etc.) by setting:
+  ```bash
+  occ config:app:set intravox photostory.tiles.url --value="https://tiles.example.com/{z}/{x}/{y}.png"
+  occ config:app:set intravox photostory.tiles.attribution --value="© Your provider"
+  occ config:app:set intravox photostory.tiles.max_zoom --value="19"
+  ```
+
+- **Disable map features entirely** (privacy mode — no external network requests):
+  ```bash
+  occ config:app:set intravox photostory.map.enabled --value="no"
+  ```
+  This disables all `Show map` / `Show daily mini-map` toggles globally; users get a "Disabled by administrator" hint in the editor.
+
+Self-hosting PMTiles is a recommended option for production. See [Protomaps](https://docs.protomaps.com/) for setup instructions — a NL extract is ~250 MB and can be served as a static file from any HTTP server.
 
 ---
 
@@ -486,17 +576,22 @@ npm run build
 
 ## Documentation
 
-- [Accessibility](docs/ACCESSIBILITY.md) - WCAG 2.1 AA compliance and accessibility features
-- [Editor Guide](docs/EDITOR_GUIDE.md) - How to create and edit pages, widgets, and content
-- [Authorization Guide](docs/AUTHORIZATION.md) - User and administrator permissions guide
-- [Scenarios](docs/SCENARIOS.md) - Practical recipes for approval workflows, department intranets, and more
-- [Architecture](docs/ARCHITECTURE.md) - Technical architecture documentation
-- [News Widget Guide](docs/NEWS_WIDGET.md) - How to use the News widget
-- [People Widget Guide](docs/PEOPLE_WIDGET.md) - How to use the People widget
-- [Export/Import Guide](docs/EXPORT-IMPORT.md) - Export and import content
-- [Engagement User Guide](docs/ENGAGEMENT_GUIDE.md) - How to use reactions and comments
-- [Engagement Admin Guide](docs/ENGAGEMENT_ADMIN.md) - Configure engagement settings
-- [Engagement Architecture](docs/ENGAGEMENT_ARCHITECTURE.md) - Technical engagement details
+**Start here**: [Documentation Index](docs/index.md) — full table of contents organized by audience (users, admins, features, architects).
+
+**Quick links**:
+
+- [Getting Started](docs/getting-started.md) - Per-role quickstart
+- [Accessibility](docs/user/accessibility.md) - WCAG 2.1 AA compliance and accessibility features
+- [Editor Guide](docs/user/editor.md) - How to create and edit pages, widgets, and content
+- [Authorization Guide](docs/admin/authorization.md) - User and administrator permissions guide
+- [Scenarios](docs/admin/scenarios.md) - Practical recipes for approval workflows, department intranets, and more
+- [Architecture](docs/architecture/overview.md) - Technical architecture documentation
+- [News Widget Guide](docs/features/news-widget.md) - How to use the News widget
+- [People Widget Guide](docs/features/people-widget.md) - How to use the People widget
+- [Export/Import Guide](docs/admin/export-import.md) - Export and import content
+- [Engagement User Guide](docs/user/engagement.md) - How to use reactions and comments
+- [Engagement Admin Guide](docs/admin/engagement.md) - Configure engagement settings
+- [Engagement Architecture](docs/features/engagement-architecture.md) - Technical engagement details
 - [API Documentation](openapi.json) - OpenAPI 3.1 specification
 
 ---

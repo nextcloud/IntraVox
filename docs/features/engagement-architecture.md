@@ -5,9 +5,9 @@ Technical documentation for IntraVox's engagement system (reactions and comments
 **Audience:** Developers and technical administrators
 
 **Related documentation:**
-- [Engagement Admin Guide](ENGAGEMENT_ADMIN.md) - Configuration for administrators
-- [Engagement User Guide](ENGAGEMENT_GUIDE.md) - End-user documentation
-- [Authorization Guide](AUTHORIZATION.md) - Permission model
+- [Engagement Admin Guide](../admin/engagement.md) - Configuration for administrators
+- [Engagement User Guide](../user/engagement.md) - End-user documentation
+- [Authorization Guide](../admin/authorization.md) - Permission model
 
 ---
 

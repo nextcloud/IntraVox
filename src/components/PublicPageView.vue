@@ -94,6 +94,7 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue'
 import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import axios from '@nextcloud/axios'
@@ -101,7 +102,6 @@ import PageViewer from './PageViewer.vue'
 import Navigation from './Navigation.vue'
 import Footer from './Footer.vue'
 import Breadcrumb from './Breadcrumb.vue'
-import PageTreeModal from './PageTreeModal.vue'
 
 export default {
 	name: 'PublicPageView',
@@ -110,7 +110,8 @@ export default {
 		Navigation,
 		Footer,
 		Breadcrumb,
-		PageTreeModal,
+		// Async to match App.vue's strategy. See scripts/check-import-consistency.js.
+		PageTreeModal: defineAsyncComponent(() => import('./PageTreeModal.vue')),
 	},
 	props: {
 		initialPageData: {

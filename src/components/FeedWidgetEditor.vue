@@ -287,14 +287,15 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import axios from '@nextcloud/axios';
 import { generateUrl } from '@nextcloud/router';
-import FeedWidget from './FeedWidget.vue';
 
 export default {
   name: 'FeedWidgetEditor',
   components: {
-    FeedWidget,
+    // Async to match Widget.vue's strategy.
+    FeedWidget: defineAsyncComponent(() => import('./FeedWidget.vue')),
   },
   props: {
     widget: {

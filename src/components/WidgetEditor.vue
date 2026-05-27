@@ -214,46 +214,6 @@
           </div>
         </div>
 
-        <!-- File Widget -->
-        <div v-else-if="localWidget.type === 'file'">
-          <div class="form-group">
-            <label for="widget-file-name">{{ t('File name:') }}</label>
-            <input
-              id="widget-file-name"
-              v-model="localWidget.name"
-              type="text"
-              placeholder="Document.pdf"
-              class="widget-input"
-            />
-          </div>
-          <div class="form-group">
-            <label for="widget-file-path">{{ t('File path (in IntraVox folder):') }}</label>
-            <input
-              id="widget-file-path"
-              v-model="localWidget.path"
-              type="text"
-              placeholder="documents/file.pdf"
-              class="widget-input"
-            />
-          </div>
-        </div>
-
-        <!-- Spacer Widget -->
-        <div v-else-if="localWidget.type === 'spacer'">
-          <div class="form-group">
-            <label for="widget-spacer-height">{{ t('Height (pixels):') }}</label>
-            <input
-              id="widget-spacer-height"
-              v-model.number="localWidget.height"
-              type="number"
-              min="10"
-              max="200"
-              placeholder="20"
-              class="widget-input"
-            />
-          </div>
-        </div>
-
         <!-- News Widget -->
         <NewsWidgetEditor
           v-else-if="localWidget.type === 'news'"
@@ -280,6 +240,20 @@
           v-else-if="localWidget.type === 'feed'"
           :widget="localWidget"
           @update="handleFeedWidgetUpdate"
+        />
+
+        <!-- Photo Story Widget -->
+        <PhotoStoryWidgetEditor
+          v-else-if="localWidget.type === 'photo-story'"
+          :widget="localWidget"
+          @update="handlePhotoStoryWidgetUpdate"
+        />
+
+        <!-- File Story Widget -->
+        <FileStoryWidgetEditor
+          v-else-if="localWidget.type === 'file-story'"
+          :widget="localWidget"
+          @update="handleFileStoryWidgetUpdate"
         />
 
         <!-- Video Widget -->
@@ -464,23 +438,28 @@ import NewsWidgetEditor from './NewsWidgetEditor.vue';
 import PeopleWidgetEditor from './PeopleWidgetEditor.vue';
 import CalendarWidgetEditor from './CalendarWidgetEditor.vue';
 import FeedWidgetEditor from './FeedWidgetEditor.vue';
+import PhotoStoryWidgetEditor from './PhotoStoryWidgetEditor.vue';
+import FileStoryWidgetEditor from './FileStoryWidgetEditor.vue';
 import { showError, showSuccess } from '@nextcloud/dialogs';
+import { defineAsyncComponent } from 'vue';
 import ImageIcon from 'vue-material-design-icons/Image.vue';
 import VideoIcon from 'vue-material-design-icons/Video.vue';
-import InlineTextEditor from './InlineTextEditor.vue';
 
 export default {
   name: 'WidgetEditor',
   components: {
     NcButton,
     NcModal,
-    InlineTextEditor,
+    // Async to match Widget.vue's strategy.
+    InlineTextEditor: defineAsyncComponent(() => import('./InlineTextEditor.vue')),
     PageTreeSelect,
     MediaPicker,
     NewsWidgetEditor,
     PeopleWidgetEditor,
     CalendarWidgetEditor,
     FeedWidgetEditor,
+    PhotoStoryWidgetEditor,
+    FileStoryWidgetEditor,
     ImageIcon,
     VideoIcon
   },
@@ -644,6 +623,12 @@ export default {
       Object.assign(this.localWidget, updatedWidget);
     },
     handleFeedWidgetUpdate(updatedWidget) {
+      Object.assign(this.localWidget, updatedWidget);
+    },
+    handlePhotoStoryWidgetUpdate(updatedWidget) {
+      Object.assign(this.localWidget, updatedWidget);
+    },
+    handleFileStoryWidgetUpdate(updatedWidget) {
       Object.assign(this.localWidget, updatedWidget);
     },
     save() {

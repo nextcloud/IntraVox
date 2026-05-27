@@ -565,13 +565,13 @@ http --pretty=all GET https://your-nc.com/apps/intravox/api/templates \
 ## Next Steps
 
 **Quick Start:**
-- [TEMPLATE_API_QUICKSTART.md](TEMPLATE_API_QUICKSTART.md) - Get started with template API in 5 minutes
+- [TEMPLATE_API_QUICKSTART.md](template-api-quickstart.md) - Get started with template API in 5 minutes
 
 **API Reference:**
-- [API_REFERENCE.md](API_REFERENCE.md) - Complete endpoint documentation
+- [API_REFERENCE.md](api-reference.md) - Complete endpoint documentation
 
 **Developer Guide:**
-- [API_DEVELOPMENT_GUIDE.md](API_DEVELOPMENT_GUIDE.md) - Contributing to IntraVox API and maintaining OpenAPI spec
+- [API_DEVELOPMENT_GUIDE.md](api-development.md) - Contributing to IntraVox API and maintaining OpenAPI spec
 
 **Advanced Topics:**
 - **CI/CD Integration:** Run Schemathesis tests in GitHub Actions

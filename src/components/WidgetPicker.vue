@@ -32,6 +32,8 @@ import Newspaper from 'vue-material-design-icons/Newspaper.vue';
 import AccountGroup from 'vue-material-design-icons/AccountGroup.vue';
 import Calendar from 'vue-material-design-icons/Calendar.vue';
 import RssBox from 'vue-material-design-icons/RssBox.vue';
+import ImageMultiple from 'vue-material-design-icons/ImageMultiple.vue';
+import FileDocumentMultiple from 'vue-material-design-icons/FileDocumentMultiple.vue';
 
 export default {
   name: 'WidgetPicker',
@@ -47,6 +49,8 @@ export default {
     AccountGroup,
     Calendar,
     RssBox,
+    ImageMultiple,
+    FileDocumentMultiple,
   },
   emits: ['close', 'select'],
   computed: {
@@ -114,6 +118,18 @@ export default {
           name: this.$t('Feed'),
           icon: 'rss-box',
           description: this.$t('Show items from an external feed or LMS')
+        },
+        {
+          type: 'photo-story',
+          name: this.$t('Photo Story'),
+          icon: 'image-multiple',
+          description: this.$t('Show photos from a folder with rich layouts')
+        },
+        {
+          type: 'file-story',
+          name: this.$t('File Story'),
+          icon: 'file-document-multiple',
+          description: this.$t('Show documents from a folder with timeline, list, or grouped layouts')
         }
       ];
     }
@@ -131,6 +147,8 @@ export default {
         'account-group': 'AccountGroup',
         'calendar': 'Calendar',
         'rss-box': 'RssBox',
+        'image-multiple': 'ImageMultiple',
+        'file-document-multiple': 'FileDocumentMultiple',
       };
       return iconMap[iconName] || 'Text';
     }

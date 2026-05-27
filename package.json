@@ -1,6 +1,6 @@
 {
   "name": "nextcloud-intravox",
-  "version": "1.4.1",
+  "version": "1.5.0",
   "description": "SharePoint-like pages for Nextcloud",
   "repository": {
     "type": "git",
@@ -12,7 +12,8 @@
     "serialize-javascript": "^7.0.5"
   },
   "scripts": {
-    "prebuild": "node scripts/sync-version.js --check",
+    "prebuild": "node scripts/sync-version.js --check && node scripts/check-import-consistency.js",
+    "lint:imports": "node scripts/check-import-consistency.js",
     "build": "webpack",
     "build:dev": "NODE_ENV=development webpack",
     "watch": "webpack --watch",
@@ -54,6 +55,7 @@
     "cancelable-promise": "^4.3.1",
     "diff": "^8.0.3",
     "dompurify": "^3.3.2",
+    "leaflet": "^1.9.4",
     "marked": "^17.0.0",
     "prosemirror-markdown": "^1.13.2",
     "sortablejs": "^1.15.6",

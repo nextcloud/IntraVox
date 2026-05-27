@@ -898,9 +898,9 @@ See CHANGELOG v0.9.17:
 - API guidelines: https://docs.nextcloud.com/server/latest/developer_manual/basics/controllers.html
 
 **IntraVox Docs:**
-- Quick Start: [TEMPLATE_API_QUICKSTART.md](TEMPLATE_API_QUICKSTART.md)
-- OpenAPI Tooling: [OPENAPI_TOOLING.md](OPENAPI_TOOLING.md)
-- API Reference: [API_REFERENCE.md](API_REFERENCE.md)
+- Quick Start: [TEMPLATE_API_QUICKSTART.md](template-api-quickstart.md)
+- OpenAPI Tooling: [OPENAPI_TOOLING.md](openapi-tooling.md)
+- API Reference: [API_REFERENCE.md](api-reference.md)
 
 **Learning Resources:**
 - OpenAPI tutorial: https://oai.github.io/Documentation/

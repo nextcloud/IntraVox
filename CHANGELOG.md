@@ -4,6 +4,84 @@ All notable changes to IntraVox will be documented in this file.
 
 IntraVox is a Nextcloud intranet page builder.
 
+## [1.5.0] - 2026-05-27 — Photo Story + File Story widgets
+
+Major release. Introduces two new widgets — **Photo Story** for photo galleries with EXIF, location maps and an Apple-style lightbox; **File Story** for document libraries with multi-mode layouts, MetaVox-aware filtering and federated-share awareness. Adds a fresh wave of perf, security, accessibility and l10n polish across the photo + file widget surface.
+
+### Added — Photo Story Widget
+
+- **Four layout modes**: Timeline (Magazine, Apple or Travelogue style), Highlights (auto-curated top photos), Grid (masonry), and On-this-day (year-over-year retrospective).
+- **Lightbox** with keyboard navigation (Arrow/Home/End/Esc/Space), slideshow mode with adjustable speed, focus-trap and focus-restore for screen readers, semi-transparent date/location pill that toggles a mini-map for geo-tagged photos.
+- **OpenStreetMap integration** via Leaflet: optional overview map per widget, per-day mini-maps in Timeline mode, and a cross-folder cluster endpoint for browsable map-driven storytelling. Admin-config aware (NC admin can disable all map features instance-wide).
+- **EXIF metadata** rendered into a details flyout (people, subjects, camera, location). Reads from NC core `oc_files_metadata` when populated; falls back to the bundled `lsolesen/pel` reader as a last resort with a per-request eager-EXIF cap.
+- **MetaVox-driven filtering, grouping and sorting** when the MetaVox app is installed. Supports cross-folder discovery mode (empty folder + ≥1 filter) for "all my photos tagged X across the instance".
+- **Geocoding cache** with periodic warmup job for fast country/location lookup on GPS-bearing photos.
+
+### Added — File Story Widget
+
+- **Four layout modes**: Timeline (per-day / per-month / per-year granularity), List (flat sortable), Tiles (visual grid with first-page previews and three configurable sizes: Small/Medium/Large), and Grouped (by file-type or MetaVox field).
+- **Federated-share awareness** — incoming OCM shares are detected per-file via a single indexed SQL join (`oc_storages × oc_share_external`). Federated rows render with a subtle cloud-badge and silently skip MetaVox-fetch since the remote NC has its own metadata database we cannot reach cross-instance. Mixed sources (local + federated under one root) keep full controls; pure-federated sources hide the MetaVox UI with an explanatory banner.
+- **Configurable visible columns**: Date, File size, Folder path. Date column can render either filesystem mtime or EXIF/MetaVox `taken_at`. Filename + file-type icon are always present.
+- **MetaVox filter-builder, sort, group-by** identical to Photo Story but adapted to document use-cases (e.g. group-by `archief_categorie` for compliance views).
+- **Open-in-Files-viewer** click target on every row/tile with `role="button"`, Enter+Space keyboard activation and `aria-label` per item.
+
+### Added — Page editor & widget plumbing
+
+- **Widget registration** for Photo Story and File Story in the picker, with iconography and descriptive copy.
+- **Editors** for both widgets with folder picker (NC FilePicker dialog), live capability detection (MetaVox available?, source-federated?), sortable filter builder with type-aware operators (`equals`, `contains`, `in`, `year_equals`), and persisted widget config validated by `PageService::sanitizeWidget`.
+- **REST API** under `/api/photo-story/*` and `/api/file-story/*` covering paged listing, capabilities, MetaVox field discovery, location clusters, EXIF detail and range-aware video streaming (Photo Story only).
+
+### Performance
+
+- **Paged enumeration** via `oc_filecache` for all primary widget modes — no more full-tree `getDirectoryListing()` on large libraries. Hard caps (5000 cross-folder, 20k filtered, 200k count) prevent OOM on massive folders.
+- **Federated detection** is one preloaded SQL query per request, O(1) lookups per file. The previous `IMountManager::findIn('/')` per-file approach (cause of the 2026-05-27 saturation incident on nc-dev) is gone.
+- **`clusters`, `highlights` and `on-this-day` endpoints** now go through `listPhotosPaged` with sane caps instead of the unpaged legacy path that risked the same blast radius as the federated-detect outage.
+- **`filterFileIdsByScope` collapsed** from `chunks × scopes` SQL roundtrips to one ORed `WHERE` per chunk — at filtered-MetaVox-page scale this drops ~400 queries per page to ~40.
+- **`extractGroupfolderId`** memoised per node within a request.
+- **Frontend `AbortController`** on every fetch + fetchMore: rapid config changes no longer race stale responses overwriting fresh data, and pending requests cancel on widget unmount.
+
+### Security
+
+- **Per-file ACL guard** on the slice in MetaVox cross-folder hydration (`buildPagedResponseViaMetaVox`) using `$userFolder->getById()`. Bounded to ≤page-size lookups, so sub-folder ACLs inside groupfolders are honored.
+- **Filter payload caps**: 16 KB JSON pre-decode rejection on both controllers, value-length cap of 200 chars per filter, max 32 filters and 64 array values per filter — prevents pathological-input DoS.
+- **Generic 500 messages** on both controllers (no `$e->getMessage()` reaching client); folder-not-found mapped to clean 404 with empty-state payload instead of generic 500.
+
+### Accessibility (WCAG 2.1 AA)
+
+- **Tiles, rows and hero elements**: `role="button"`, `tabindex="0"`, Enter + Space activation, meaningful `aria-label` derived from caption/location.
+- **Lightbox**: focus-trap (Tab cycles within modal, no escape to background), focus-restore on close, counter announced via `aria-live="polite"`, icon-only buttons get descriptive `aria-label` + `aria-pressed` where appropriate.
+- **Editors**: orphan `<label>` without `for=` converted to `<div class="editor-label">` to avoid mis-association; form controls properly labelled.
+- **Reduced motion**: `@media (prefers-reduced-motion: reduce)` honored for Ken-Burns animation, pulse skeletons, and pill transitions.
+- **Status regions**: `role="status"` / `role="alert"` on loading, empty and error states; map-cluster list items keyboard-reachable; federated cloud-badge gets `role="img"` + `aria-label`.
+- **Alt-text**: meaningful (caption / location / numbered fallback) instead of filename for photos; decorative `alt=""` for tile previews where the parent already labels the action.
+
+### Internationalisation
+
+- **Backend month/category labels** now route through `IL10N::t()` (`PhotoStoryService::localizedMonth`, `FileStoryController::extractGroupKey`). No more hardcoded Dutch in API payloads.
+- **Frontend date formatters** use `getCanonicalLocale()` from `@nextcloud/l10n` everywhere — `toLocaleDateString` / `toLocaleString` / `Intl.DateTimeFormat` calls in PhotoStoryWidget, FileStoryWidget and PhotoLightbox no longer pin `nl-NL`.
+
+### UX polish
+
+- **Retry button** in the error-state of both widgets. Users recover from transient API failures without reloading the page.
+- **Context-aware empty messages**: distinguishes "no folder selected" / "no documents match current filters" / "folder is empty".
+- **Transparent date headers** in FileStoryWidget Timeline mode — replaces the opaque white sticky bar that clashed with themed/coloured rows. Count-badge uses `color-mix(in srgb, var(--color-primary-element) 14%, transparent)` for a subtle tinted chip that adapts to the active theme.
+
+### Developer-side hardening
+
+- **`scripts/check-import-consistency.js`** runs in `prebuild`: detects mixed sync/async imports of the same `.vue` component (the root cause of a runtime `TypeError` we hit on 2026-05-27) and fails the build before it ships.
+- **`scripts/auto-bump-dev.js`** auto-bumps the patch level on dev deploys so NC's `md5(appVersion)` cache-buster always changes — browsers never serve a stale bundle after a deploy.
+- **Translation files** (`en/nl/de/fr`) synced for all 122 new UI strings added by Photo Story + File Story.
+
+### Notes
+
+- **No DB migrations** required for the widget functionality itself; existing pages keep working.
+- **PhotoStory federated-share awareness** is on the roadmap but not yet implemented (single-storage photo libraries are the typical case). FileStory has the full federated-aware code path.
+- **MetaVox cross-instance sync** remains out of scope: NC core exposes no federation tokens or remote-file-id mapping. Roadmap item.
+
+New Vue components: `src/components/PhotoStoryWidget.vue`, `src/components/PhotoStoryWidgetEditor.vue`, `src/components/PhotoLightbox.vue`, `src/components/PhotoStoryMap.vue`, `src/components/PhotoStoryDayMap.vue`, `src/components/PhotoStoryFilterBuilder.vue`, `src/components/FileStoryWidget.vue`, `src/components/FileStoryWidgetEditor.vue`.
+
+Composer: `lsolesen/pel` added for the optional in-process EXIF reader.
+
 ## [1.4.1] - 2026-05-20 — Security dependency bumps
 
 Patch release that resolves all open frontend security advisories flagged by GitHub Dependabot shortly after the v1.4.0 push. No functional or API changes — `npm audit fix` lifted eight vulnerable transitive packages to patched versions within their declared semver ranges, no `package.json` edits required. Build, PHPUnit (258/413) and dev-server smoke tests all green.
@@ -124,7 +202,7 @@ No code changes vs. 1.3.1.
 - **GDPR user deletion handler** — `UserDeletedListener` automatically cleans up analytics records, page locks, feed tokens, and LMS OAuth tokens when a Nextcloud user is deleted (`UserDeletedListener.php`, `Application.php`)
 - **Audit logging** — Administrative operations logged with `IntraVox Audit:` prefix for SIEM integration: bulk delete/move/update (with page IDs and user), license key changes, organization settings, engagement settings (`BulkController.php`, `LicenseController.php`, `ApiController.php`)
 - **Health check endpoint** — `GET /apps/intravox/api/health` returns app status and version for monitoring and orchestration (Kubernetes, uptime monitoring)
-- **Scalability documentation** — New [SCALABILITY.md](docs/SCALABILITY.md) documenting all performance, caching, resilience, rate limiting, and enterprise features
+- **Scalability documentation** — New [SCALABILITY.md](docs/admin/scalability.md) documenting all performance, caching, resilience, rate limiting, and enterprise features
 - **Admin: connection test button** — "Test connection" button on each feed connection card verifies credentials and endpoint by fetching a preview from the external API
 - **Admin: connection export/import** — Export all feed connections as JSON (without tokens/secrets). Import on another instance with duplicate detection and preview dialog
 - **Admin: connection active/inactive toggle** — Each connection has an NcCheckboxRadioSwitch toggle to temporarily disable it without deleting. Inactive connections show a specific message in widgets ("This connection is currently disabled by an administrator.") and are excluded from the widget editor dropdown. Re-enabling restores all widgets automatically — no reconfiguration needed. Toggle saves immediately
@@ -177,13 +255,13 @@ No code changes vs. 1.3.1.
 - **Status dot contrast** — Disconnected connection status indicator has a visible border for better contrast on light backgrounds (`AdminSettings.vue`)
 
 ### Documentation
-- New [SCALABILITY.md](docs/SCALABILITY.md) — Comprehensive guide to performance, caching, resilience, rate limiting, GDPR, and enterprise features
-- Updated [ARCHITECTURE.md](docs/ARCHITECTURE.md) with scalability section
-- Updated [SECURITY.md](docs/SECURITY.md) with CSP, rate limiting, GDPR, audit logging, and feed widget security sections
-- Updated [ADMIN_GUIDE.md](docs/ADMIN_GUIDE.md) with health check and audit log sections
-- Updated [ADMIN_SETTINGS.md](docs/ADMIN_SETTINGS.md) with connection testing, export/import, enabling/disabling connections, Clean Start confirmation, and advanced options collapse
-- Updated [FEED_WIDGET.md](docs/FEED_WIDGET.md) with RSS example screenshot, SharePoint setup guide (Entra ID app registration), content type selection, error messages table, and screenshots for all connection types
-- Updated [ACCESSIBILITY.md](docs/ACCESSIBILITY.md) with feed widget and admin panel accessibility improvements
+- New [SCALABILITY.md](docs/admin/scalability.md) — Comprehensive guide to performance, caching, resilience, rate limiting, GDPR, and enterprise features
+- Updated [ARCHITECTURE.md](docs/architecture/overview.md) with scalability section
+- Updated [SECURITY.md](docs/admin/security.md) with CSP, rate limiting, GDPR, audit logging, and feed widget security sections
+- Updated [ADMIN_GUIDE.md](docs/admin/guide.md) with health check and audit log sections
+- Updated [ADMIN_SETTINGS.md](docs/admin/settings.md) with connection testing, export/import, enabling/disabling connections, Clean Start confirmation, and advanced options collapse
+- Updated [FEED_WIDGET.md](docs/features/feed-widget.md) with RSS example screenshot, SharePoint setup guide (Entra ID app registration), content type selection, error messages table, and screenshots for all connection types
+- Updated [ACCESSIBILITY.md](docs/user/accessibility.md) with feed widget and admin panel accessibility improvements
 
 ## [1.2.0] - 2026-04-16 — Accessibility & bug fixes
 
@@ -203,7 +281,7 @@ No code changes vs. 1.3.1.
 - **Reduced motion support** — Global `prefers-reduced-motion` media query disables all CSS animations and transitions. Carousel autoplay is skipped when the user prefers reduced motion
 - **Visually-hidden utility class** — `.visually-hidden` CSS class for screen reader-only content
 - **Breadcrumb current page** — `aria-current="page"` marks the active page in breadcrumb navigation
-- **Accessibility documentation** — New [ACCESSIBILITY.md](docs/ACCESSIBILITY.md) documenting WCAG 2.1 AA compliance status, legal framework (Wet Digitale Overheid), and implemented measures
+- **Accessibility documentation** — New [ACCESSIBILITY.md](docs/user/accessibility.md) documenting WCAG 2.1 AA compliance status, legal framework (Wet Digitale Overheid), and implemented measures
 
 ### Changed
 - **Form labels associated with inputs** — All form inputs across 15+ components now have programmatically associated labels via `for`/`id` pairs or `aria-label` attributes (WidgetEditor, NewPageModal, PageTreeSelect, CommentSection, MediaPicker, AdminSettings, PageEditor, NewsWidgetEditor, PeopleWidgetEditor, CalendarWidgetEditor, LinksEditor, NavigationEditor, PublicPageView)
@@ -218,7 +296,7 @@ No code changes vs. 1.3.1.
 - **Focus anti-pattern removed** — Removed `event.target.blur()` in Navigation.vue that was stripping keyboard focus after clicking the page structure button
 
 ### Documentation
-- Added [ACCESSIBILITY.md](docs/ACCESSIBILITY.md) with full WCAG 2.1 AA compliance matrix
+- Added [ACCESSIBILITY.md](docs/user/accessibility.md) with full WCAG 2.1 AA compliance matrix
 - Added accessibility link to README documentation section
 
 ## [1.1.2] - 2026-04-10 — App Store listing improvements
@@ -277,7 +355,7 @@ No code changes vs. 1.3.1.
 
 ### Added
 - **IntraVox Editors group** — A third permission group (`IntraVox Editors`) is now automatically created during setup with Read + Write + Create permissions. This provides a three-tier permission model out of the box: Users (read), Editors (read/write/create), Admins (full access)
-- **Scenarios documentation** — New [SCENARIOS.md](docs/SCENARIOS.md) guide with step-by-step recipes for content approval workflows (using the Nextcloud Approval app and MetaVox) and department-based intranets
+- **Scenarios documentation** — New [SCENARIOS.md](docs/admin/scenarios.md) guide with step-by-step recipes for content approval workflows (using the Nextcloud Approval app and MetaVox) and department-based intranets
 
 ### Documentation
 - Updated ADMIN_GUIDE, AUTHORIZATION, EDITOR_GUIDE, and README to reflect the new three-group permission model

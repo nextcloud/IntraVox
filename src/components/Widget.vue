@@ -61,14 +61,6 @@
       @navigate="$emit('navigate', $event)"
     />
 
-    <!-- File Widget -->
-    <div v-else-if="widget.type === 'file'" class="widget-file">
-      <a :href="getFileUrl(widget.path)" class="file-link">
-        <span class="file-icon">📄</span>
-        <span class="file-name">{{ widget.name }}</span>
-      </a>
-    </div>
-
     <!-- Divider Widget -->
     <div
       v-else-if="widget.type === 'divider'"
@@ -111,6 +103,18 @@
       :share-token="shareToken"
       :page-id="pageId"
       :row-background-color="rowBackgroundColor"
+    />
+
+    <!-- Photo Story Widget -->
+    <PhotoStoryWidget
+      v-else-if="widget.type === 'photo-story'"
+      :widget="widget"
+    />
+
+    <!-- File Story Widget -->
+    <FileStoryWidget
+      v-else-if="widget.type === 'file-story'"
+      :widget="widget"
     />
 
     <!-- Video Widget -->
@@ -180,13 +184,6 @@
       <p v-if="widget.title && !widget.blocked" class="video-title">{{ widget.title }}</p>
     </div>
 
-    <!-- Spacer Widget -->
-    <div
-      v-else-if="widget.type === 'spacer'"
-      class="widget-spacer"
-      :style="{ height: (widget.height || 20) + 'px' }"
-    ></div>
-
     <!-- Unknown Widget Type -->
     <div v-else class="widget-unknown">
       {{ t('Unknown widget type: {type}', { type: widget.type }) }}
@@ -209,6 +206,8 @@ export default {
     PeopleWidget: defineAsyncComponent(() => import('./PeopleWidget.vue')),
     CalendarWidget: defineAsyncComponent(() => import('./CalendarWidget.vue')),
     FeedWidget: defineAsyncComponent(() => import('./FeedWidget.vue')),
+    PhotoStoryWidget: defineAsyncComponent(() => import('./PhotoStoryWidget.vue')),
+    FileStoryWidget: defineAsyncComponent(() => import('./FileStoryWidget.vue')),
   },
   props: {
     widget: {
@@ -403,11 +402,6 @@ export default {
       }
       // Media served via unified API (default: page media)
       return generateUrl(`/apps/intravox/api/pages/${this.pageId}/media/${cleanFilename}`);
-    },
-    getFileUrl(filename) {
-      if (!filename) return '';
-      // Files are served via the IntraVox API with pageId
-      return generateUrl(`/apps/intravox/api/pages/${this.pageId}/files/${filename}`);
     },
     getVideoUrl(filename) {
       if (!filename) return '';
@@ -875,34 +869,6 @@ export default {
 
 .widget-image .image-link img {
   cursor: pointer;
-}
-
-/* File Widget */
-.widget-file {
-  padding: 12px;
-  background: var(--color-background-hover);
-  border-radius: var(--border-radius-large);
-  margin: 12px 0;
-}
-
-.file-link {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: inherit;
-  text-decoration: none;
-}
-
-.file-link:hover {
-  color: var(--color-primary);
-}
-
-.file-icon {
-  font-size: 24px;
-}
-
-.file-name {
-  font-weight: 500;
 }
 
 /* Divider Widget */

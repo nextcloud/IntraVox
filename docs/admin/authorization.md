@@ -145,7 +145,7 @@ Navigation items are filtered based on page permissions - users only see pages t
 1. Check that the user's group has **Share** permission on the GroupFolder (base level)
 2. If using ACL: verify Share permission on the language folder (`en/`, `nl/`, etc.) and all parent folders
 3. Verify that "Allow users to share via link and emails" is enabled in Nextcloud Admin → Sharing
-4. See [RSS_FEED.md](RSS_FEED.md#administrator-setup) for the full setup guide
+4. See [RSS_FEED.md](../user/rss-feeds.md#administrator-setup) for the full setup guide
 
 ### Navigation shows pages user cannot access
 This should not happen if permissions are configured correctly. Check:

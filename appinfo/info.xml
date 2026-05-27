@@ -17,6 +17,8 @@
 * Calendar widget with multi-calendar merged view and recurring events
 * People widget with user profiles, filters, and birthday tracking
 * News widget with list, grid, and carousel layouts
+* Photo Story widget — photo galleries with EXIF metadata, OpenStreetMap location clustering, and an accessible Apple-style lightbox
+* File Story widget — document libraries with timeline, list, tiles, and grouped layouts; MetaVox-aware filtering; federated-share awareness
 
 **Collaboration & engagement:**
 * Emoji reactions and threaded comments on pages
@@ -46,14 +48,14 @@
 * Internal communication and documentation
 * SharePoint-to-Nextcloud migrations
     ]]></description>
-    <version>1.4.1</version>
+    <version>1.5.0</version>
     <licence>agpl</licence>
     <author mail="info@voxcloud.nl" homepage="https://voxcloud.nl">VoxCloud</author>
     <namespace>IntraVox</namespace>
     <documentation>
-        <user>https://github.com/nextcloud/IntraVox/blob/main/docs/EDITOR_GUIDE.md</user>
-        <admin>https://github.com/nextcloud/IntraVox/blob/main/docs/ADMIN_GUIDE.md</admin>
-        <developer>https://github.com/nextcloud/IntraVox/blob/main/docs/API_DEVELOPMENT_GUIDE.md</developer>
+        <user>https://github.com/nextcloud/IntraVox/blob/main/docs/user/editor.md</user>
+        <admin>https://github.com/nextcloud/IntraVox/blob/main/docs/admin/guide.md</admin>
+        <developer>https://github.com/nextcloud/IntraVox/blob/main/docs/architecture/api-development.md</developer>
     </documentation>
     <category>organization</category>
     <category>office</category>
@@ -96,6 +98,7 @@
         <job>OCA\IntraVox\BackgroundJob\TelemetryJob</job>
         <job>OCA\IntraVox\BackgroundJob\FeedRefreshJob</job>
         <job>OCA\IntraVox\BackgroundJob\CacheWarmupJob</job>
+        <job>OCA\IntraVox\BackgroundJob\GeocodeWarmupJob</job>
     </background-jobs>
     <repair-steps>
         <post-migration>

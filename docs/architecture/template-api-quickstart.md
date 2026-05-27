@@ -41,7 +41,7 @@ curl -u "username:app-password-token" \
 
 **Built-in templates:** department, event, knowledge-base, landing-page, news-article, news-hub, project
 
-Full API Reference: [API_REFERENCE.md](API_REFERENCE.md)
+Full API Reference: [API_REFERENCE.md](api-reference.md)
 
 ## Use Case 1: List Templates
 
@@ -538,10 +538,10 @@ create_page_from_template "department" "HR Department" "/teams"
 ## Next Steps
 
 **Explore More:**
-- **Full API Reference:** [API_REFERENCE.md](API_REFERENCE.md) - Complete endpoint documentation with all parameters and responses
-- **Template Features:** [TEMPLATES.md](TEMPLATES.md) - Template system overview and built-in template descriptions
-- **OpenAPI Tooling:** [OPENAPI_TOOLING.md](OPENAPI_TOOLING.md) - Use Swagger UI, Postman, and code generators with IntraVox API
-- **Authorization:** [AUTHORIZATION.md](AUTHORIZATION.md) - GroupFolder permissions and access control
+- **Full API Reference:** [API_REFERENCE.md](api-reference.md) - Complete endpoint documentation with all parameters and responses
+- **Template Features:** [TEMPLATES.md](../user/templates.md) - Template system overview and built-in template descriptions
+- **OpenAPI Tooling:** [OPENAPI_TOOLING.md](openapi-tooling.md) - Use Swagger UI, Postman, and code generators with IntraVox API
+- **Authorization:** [AUTHORIZATION.md](../admin/authorization.md) - GroupFolder permissions and access control
 
 **Advanced Topics:**
 - **Bulk Operations:** Create multiple pages from templates programmatically

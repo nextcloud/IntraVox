@@ -44,7 +44,7 @@ This distinction extends to external system integrations. Many systems that Intr
 
 These are complementary, not competing. An organization can use `integration_openproject` for individual developers to link Nextcloud files to work packages, while simultaneously using IntraVox's Feed Widget to show a project status overview on a department intranet page — visible to managers, stakeholders, and team members who don't have OpenProject accounts.
 
-See the [Feed Widget documentation](FEED_WIDGET.md#how-feed-widgets-complement-nextcloud-integration-apps) for detailed guidance on when to use which approach.
+See the [Feed Widget documentation](../features/feed-widget.md#how-feed-widgets-complement-nextcloud-integration-apps) for detailed guidance on when to use which approach.
 
 ## Technology Stack
 
@@ -289,7 +289,7 @@ IntraVox supports multiple languages:
 
 ## Permission Model
 
-See [AUTHORIZATION.md](AUTHORIZATION.md) for detailed permission documentation.
+See [AUTHORIZATION.md](../admin/authorization.md) for detailed permission documentation.
 
 Key points:
 - Uses GroupFolder permissions
@@ -311,7 +311,7 @@ IntraVox uses a multi-layer caching strategy and resilience patterns to support 
 
 Rate limiting, audit logging, GDPR user deletion, and a health check endpoint provide enterprise-grade operational security.
 
-See [Scalability & Enterprise Readiness](SCALABILITY.md) for full details.
+See [Scalability & Enterprise Readiness](../admin/scalability.md) for full details.
 
 ## Build Process
 

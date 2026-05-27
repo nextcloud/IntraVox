@@ -679,7 +679,7 @@ export default {
     },
     needsEditButton(widgetType) {
       // Show edit button for widgets that aren't inline-editable
-      return ['image', 'link', 'links', 'file', 'heading', 'video', 'news', 'people', 'calendar', 'feed'].includes(widgetType);
+      return ['image', 'link', 'links', 'heading', 'video', 'news', 'people', 'calendar', 'feed', 'photo-story', 'file-story'].includes(widgetType);
     },
     initializeWidgetIds() {
       // Collect ALL widgets from all zones for duplicate detection
@@ -1025,7 +1025,7 @@ export default {
         this.showWidgetPicker = false;
 
         // Open editor modal for widgets that need configuration
-        if (widgetType === 'image' || widgetType === 'links' || widgetType === 'file' || widgetType === 'heading' || widgetType === 'video' || widgetType === 'news' || widgetType === 'people' || widgetType === 'calendar' || widgetType === 'feed') {
+        if (widgetType === 'image' || widgetType === 'links' || widgetType === 'heading' || widgetType === 'video' || widgetType === 'news' || widgetType === 'people' || widgetType === 'calendar' || widgetType === 'feed') {
           this.editHeaderRowWidget(newWidget);
         }
 
@@ -1043,7 +1043,7 @@ export default {
         this.showWidgetPicker = false;
 
         // Open editor modal for widgets that need configuration
-        if (widgetType === 'image' || widgetType === 'links' || widgetType === 'file' || widgetType === 'heading' || widgetType === 'video' || widgetType === 'news' || widgetType === 'people' || widgetType === 'calendar' || widgetType === 'feed') {
+        if (widgetType === 'image' || widgetType === 'links' || widgetType === 'heading' || widgetType === 'video' || widgetType === 'news' || widgetType === 'people' || widgetType === 'calendar' || widgetType === 'feed') {
           this.editSideColumnWidget(newWidget, side);
         }
 
@@ -1071,7 +1071,7 @@ export default {
       this.showWidgetPicker = false;
 
       // Open editor modal for widgets that need configuration
-      if (widgetType === 'image' || widgetType === 'links' || widgetType === 'file' || widgetType === 'heading' || widgetType === 'video' || widgetType === 'news' || widgetType === 'people' || widgetType === 'calendar' || widgetType === 'feed') {
+      if (widgetType === 'image' || widgetType === 'links' || widgetType === 'heading' || widgetType === 'video' || widgetType === 'news' || widgetType === 'people' || widgetType === 'calendar' || widgetType === 'feed') {
         this.editWidget(newWidget, rowIndex);
       }
 
@@ -1106,10 +1106,6 @@ export default {
           widget.columns = 2;
           widget.backgroundColor = null;
           break;
-        case 'file':
-          widget.path = '';
-          widget.name = this.t('File');
-          break;
         case 'video':
           widget.provider = 'embed';
           widget.src = '';
@@ -1119,7 +1115,6 @@ export default {
           widget.muted = false;
           break;
         case 'divider':
-        case 'spacer':
           // No additional properties needed for divider
           break;
         case 'news':

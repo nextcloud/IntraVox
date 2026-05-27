@@ -198,6 +198,19 @@ return [
         // Health check (for monitoring/orchestration)
         ['name' => 'api#health', 'url' => '/api/health', 'verb' => 'GET'],
 
+        // Photo Story widget API routes
+        ['name' => 'photoStory#photos', 'url' => '/api/photo-story/photos', 'verb' => 'GET'],
+        ['name' => 'photoStory#clusters', 'url' => '/api/photo-story/clusters', 'verb' => 'GET'],
+        ['name' => 'photoStory#capabilities', 'url' => '/api/photo-story/capabilities', 'verb' => 'GET'],
+        ['name' => 'photoStory#photoExif', 'url' => '/api/photo-story/photo-exif', 'verb' => 'GET'],
+        ['name' => 'photoStory#video', 'url' => '/api/photo-story/video', 'verb' => 'GET'],
+        ['name' => 'photoStory#metaVoxFields', 'url' => '/api/photo-story/metavox-fields', 'verb' => 'GET'],
+
+        // File Story widget API routes (documents-centric counterpart of photo-story)
+        ['name' => 'fileStory#files', 'url' => '/api/file-story/files', 'verb' => 'GET'],
+        ['name' => 'fileStory#capabilities', 'url' => '/api/file-story/capabilities', 'verb' => 'GET'],
+        ['name' => 'fileStory#metaVoxFields', 'url' => '/api/file-story/metavox-fields', 'verb' => 'GET'],
+
         // Page routes
         ['name' => 'page#index', 'url' => '/', 'verb' => 'GET'],
         ['name' => 'page#shareAccess', 'url' => '/s/{shareToken}', 'verb' => 'GET'],

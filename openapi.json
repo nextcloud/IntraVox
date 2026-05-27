@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "IntraVox API",
-    "version": "1.3.4",
-    "description": "IntraVox is a modern intranet page builder for Nextcloud. This API provides endpoints for managing pages, media, navigation, comments, and more.",
+    "version": "1.5.0",
+    "description": "IntraVox is a modern intranet page builder for Nextcloud. This API provides endpoints for managing pages, media, navigation, comments, reactions, the Photo Story widget (galleries with EXIF, maps and lightbox) and the File Story widget (document libraries with MetaVox-aware filtering and federated-share awareness).",
     "license": {
       "name": "AGPL-3.0",
       "url": "https://www.gnu.org/licenses/agpl-3.0.html"
@@ -2676,6 +2676,133 @@
           }
         }
       }
+    },
+    "/api/photo-story/photos": {
+      "get": {
+        "summary": "List photos in a folder (paged, mode-aware)",
+        "description": "Returns a paged list of photo rows enriched with NC core metadata + MetaVox metadata. Supports timeline/grid/highlights/on-this-day modes, MetaVox filters and cross-folder mode (empty folder + ≥1 filter).",
+        "parameters": [
+          { "name": "folder", "in": "query", "schema": { "type": "string" } },
+          { "name": "mode", "in": "query", "schema": { "type": "string", "enum": ["timeline", "highlights", "grid", "on-this-day"] } },
+          { "name": "filters", "in": "query", "schema": { "type": "string", "description": "JSON-encoded filter array (max 16 KB)" } },
+          { "name": "offset", "in": "query", "schema": { "type": "integer", "minimum": 0 } },
+          { "name": "pageSize", "in": "query", "schema": { "type": "integer", "minimum": 1, "maximum": 500 } },
+          { "name": "sortOrder", "in": "query", "schema": { "type": "string", "enum": ["asc", "desc"] } },
+          { "name": "sortBy", "in": "query", "schema": { "type": "string" } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Paged photo list with capabilities + map settings" },
+          "304": { "description": "Not Modified (matches If-None-Match)" },
+          "400": { "description": "Invalid mode / filter payload too large" },
+          "404": { "description": "Folder not found for this user" },
+          "500": { "description": "Unable to load photos" }
+        }
+      }
+    },
+    "/api/photo-story/clusters": {
+      "get": {
+        "summary": "GPS-cluster the photos in a folder (capped at 5000)",
+        "parameters": [
+          { "name": "folder", "in": "query", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Cluster list + capabilities + map settings" },
+          "400": { "description": "Missing folder parameter" },
+          "500": { "description": "Unable to load location clusters" }
+        }
+      }
+    },
+    "/api/photo-story/capabilities": {
+      "get": {
+        "summary": "Server-side capabilities for the Photo Story widget",
+        "responses": {
+          "200": { "description": "MetaVox availability + map settings + (admin) global toggles" },
+          "500": { "description": "Unable to load capabilities" }
+        }
+      }
+    },
+    "/api/photo-story/metavox-fields": {
+      "get": {
+        "summary": "MetaVox field discovery for filter-builder / sort / group-by",
+        "responses": {
+          "200": { "description": "List of MetaVox field definitions (name, label, type)" }
+        }
+      }
+    },
+    "/api/photo-story/photo-exif": {
+      "get": {
+        "summary": "Detailed EXIF for a single photo (used by the lightbox info-pane)",
+        "parameters": [
+          { "name": "file_id", "in": "query", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "EXIF dictionary" },
+          "400": { "description": "Missing or invalid file_id" },
+          "404": { "description": "File not found or no EXIF data" }
+        }
+      }
+    },
+    "/api/photo-story/video": {
+      "get": {
+        "summary": "Range-aware video streaming endpoint for the lightbox",
+        "parameters": [
+          { "name": "file_id", "in": "query", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Video stream (full)" },
+          "206": { "description": "Video stream (partial content)" },
+          "401": { "description": "Authentication required" },
+          "404": { "description": "Not found or no access" },
+          "416": { "description": "Range Not Satisfiable" },
+          "500": { "description": "Unable to stream video" }
+        }
+      }
+    },
+    "/api/file-story/files": {
+      "get": {
+        "summary": "List documents in a folder (paged, mode-aware)",
+        "description": "Mirrors the Photo Story photos endpoint but constrained to document mimetypes. Supports timeline/list/tiles/grouped modes and federated-share-aware MetaVox handling.",
+        "parameters": [
+          { "name": "folder", "in": "query", "required": true, "schema": { "type": "string" } },
+          { "name": "mode", "in": "query", "schema": { "type": "string", "enum": ["timeline", "tiles", "list", "grouped"] } },
+          { "name": "filters", "in": "query", "schema": { "type": "string", "description": "JSON-encoded filter array (max 16 KB)" } },
+          { "name": "groupBy", "in": "query", "schema": { "type": "string" } },
+          { "name": "granularity", "in": "query", "schema": { "type": "string", "enum": ["day", "month", "year"] } },
+          { "name": "offset", "in": "query", "schema": { "type": "integer", "minimum": 0 } },
+          { "name": "pageSize", "in": "query", "schema": { "type": "integer", "minimum": 1, "maximum": 500 } },
+          { "name": "sortOrder", "in": "query", "schema": { "type": "string", "enum": ["asc", "desc"] } },
+          { "name": "sortBy", "in": "query", "schema": { "type": "string" } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Paged document list + pagination + capabilities" },
+          "304": { "description": "Not Modified" },
+          "400": { "description": "Invalid mode / filter payload too large / folder required" },
+          "404": { "description": "Folder not found for this user" },
+          "500": { "description": "Unable to load files" }
+        }
+      }
+    },
+    "/api/file-story/capabilities": {
+      "get": {
+        "summary": "Server-side capabilities for the File Story widget (incl. federated-share detection)",
+        "parameters": [
+          { "name": "folder", "in": "query", "schema": { "type": "string", "description": "When provided, response includes sourceIsFederated + sourceFederatedInfo" } }
+        ],
+        "responses": {
+          "200": { "description": "MetaVox availability + federated-source info" },
+          "500": { "description": "Unable to load capabilities" }
+        }
+      }
+    },
+    "/api/file-story/metavox-fields": {
+      "get": {
+        "summary": "MetaVox field discovery for File Story filter-builder / sort / group-by",
+        "responses": {
+          "200": { "description": "List of MetaVox field definitions" }
+        }
+      }
     }
   },
   "components": {
@@ -2912,15 +3039,13 @@
       },
       "Widget": {
         "type": "object",
-        "required": [
-          "type"
-        ],
+        "description": "A widget on an IntraVox page. The set of properties that are honored by the server-side sanitizer depends on `type` — see `WidgetConfig` for the widget-specific schemas.",
+        "required": ["type"],
         "properties": {
-          "id": {
-            "type": "string"
-          },
+          "id": { "type": "string" },
           "type": {
             "type": "string",
+            "description": "Widget type — must be one of the values accepted by PageService::ALLOWED_WIDGET_TYPES. Unknown types are dropped on save.",
             "enum": [
               "text",
               "heading",
@@ -2928,29 +3053,170 @@
               "links",
               "divider",
               "video",
-              "file",
-              "spacer",
-              "news"
+              "news",
+              "people",
+              "calendar",
+              "feed",
+              "photo-story",
+              "file-story"
             ]
           },
           "column": {
-            "type": "integer"
+            "type": "integer",
+            "description": "Column position within the row (1-based, clamped to row width)."
           },
           "order": {
-            "type": "integer"
+            "type": "integer",
+            "description": "Sort order within the column."
           },
           "content": {
             "type": "string",
-            "description": "For text/heading widgets"
-          },
-          "src": {
-            "type": "string",
-            "description": "For image/video widgets"
+            "description": "Body — used by text/heading widgets only."
           },
           "level": {
             "type": "integer",
-            "description": "For heading widget (1-6)"
-          }
+            "minimum": 1,
+            "maximum": 6,
+            "description": "Heading level (1–6) — heading widget only."
+          },
+          "src": {
+            "type": "string",
+            "description": "Source URL/filename — image/video widgets."
+          },
+          "alt": {
+            "type": "string",
+            "description": "Alt text — image widget."
+          },
+          "url": {
+            "type": "string",
+            "description": "Target URL — link widget."
+          },
+          "text": {
+            "type": "string",
+            "description": "Display text — link widget."
+          },
+          "items": {
+            "type": "array",
+            "description": "List items — links widget.",
+            "items": { "type": "object" }
+          },
+          "columns": {
+            "type": "integer",
+            "description": "Column count — links / news / photo-story."
+          },
+          "backgroundColor": {
+            "type": "string",
+            "description": "Whitelisted CSS variable or 'transparent' — links / news / people / calendar / feed.",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "description": "Widget header — news / video / people / calendar / feed."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Max items to render — news / people / calendar / feed / photo-story / file-story."
+          },
+          "sortBy": {
+            "type": "string",
+            "description": "Sort field — news / people / photo-story / file-story."
+          },
+          "sortOrder": {
+            "type": "string",
+            "enum": ["asc", "desc"],
+            "description": "Sort direction."
+          },
+          "layout": {
+            "type": "string",
+            "description": "Layout variant — news (list/grid/carousel), feed (list/grid), people (card/list)."
+          },
+          "showImage": { "type": "boolean", "description": "news / feed." },
+          "showDate": { "type": "boolean", "description": "news / feed." },
+          "showExcerpt": { "type": "boolean", "description": "news / feed." },
+          "excerptLength": { "type": "integer", "description": "news / feed character cap." },
+          "autoplayInterval": { "type": "integer", "description": "Carousel autoplay seconds (0 = off) — news." },
+          "filters": {
+            "type": "array",
+            "description": "MetaVox filter rows — news / people.",
+            "items": { "type": "object" }
+          },
+          "filterOperator": {
+            "type": "string",
+            "enum": ["AND", "OR"],
+            "description": "MetaVox filter join logic — news / people."
+          },
+          "sourcePath": { "type": "string", "description": "Folder path — news source." },
+          "sourcePageId": { "type": "string", "nullable": true, "description": "Page UUID — news source via PageTreeSelect." },
+          "config": {
+            "$ref": "#/components/schemas/WidgetConfig",
+            "description": "Widget-specific nested config (photo-story / file-story)."
+          },
+          "provider": { "type": "string", "description": "video: embed / local." },
+          "autoplay": { "type": "boolean", "description": "video." },
+          "loop": { "type": "boolean", "description": "video." },
+          "muted": { "type": "boolean", "description": "video." },
+          "style": {
+            "type": "string",
+            "enum": ["solid", "dashed", "dotted"],
+            "description": "Divider line style."
+          },
+          "color": { "type": "string", "description": "Divider color (whitelisted CSS var)." },
+          "height": { "type": "string", "description": "Divider height (e.g. '2px', '1rem')." },
+          "calendarIds": { "type": "array", "items": { "type": "string" }, "description": "calendar." },
+          "externalIcsUrls": { "type": "array", "items": { "type": "string" }, "description": "calendar." },
+          "dateRange": { "type": "string", "description": "calendar." },
+          "showTime": { "type": "boolean", "description": "calendar." },
+          "showLocation": { "type": "boolean", "description": "calendar." },
+          "feedUrl": { "type": "string", "description": "feed." },
+          "connectionId": { "type": "string", "description": "feed (LMS / external connector)." },
+          "courseId": { "type": "string", "description": "feed (LMS)." },
+          "showSource": { "type": "boolean", "description": "feed." },
+          "openInNewTab": { "type": "boolean", "description": "feed." },
+          "sourceType": { "type": "string", "description": "feed (rss / lms / …)." },
+          "selectionMode": { "type": "string", "description": "people (manual / filter)." },
+          "selectedUsers": { "type": "array", "items": { "type": "string" }, "description": "people." },
+          "showFields": { "type": "object", "description": "people — per-field visibility booleans." }
+        }
+      },
+      "WidgetConfig": {
+        "type": "object",
+        "description": "Nested config used by widgets with rich configuration surfaces. Currently photo-story and file-story.",
+        "properties": {
+          "folderPath": { "type": "string", "description": "Source folder path." },
+          "mode": {
+            "type": "string",
+            "description": "Layout mode. photo-story: timeline/highlights/grid/on-this-day. file-story: timeline/tiles/list/grouped."
+          },
+          "style": {
+            "type": "string",
+            "enum": ["magazine", "apple", "travelogue"],
+            "description": "photo-story timeline style."
+          },
+          "limit": { "type": "integer", "description": "Maximum rows (both)." },
+          "columns": { "type": "integer", "minimum": 2, "maximum": 5, "description": "photo-story grid columns." },
+          "showCaptions": { "type": "boolean", "description": "photo-story." },
+          "showMap": { "type": "boolean", "description": "photo-story." },
+          "showDayMaps": { "type": "boolean", "description": "photo-story (per-day mini-maps in timeline)." },
+          "sortOrder": { "type": "string", "enum": ["asc", "desc"] },
+          "sortBy": { "type": "string", "description": "mtime / name / size / any MetaVox field name." },
+          "allMetaVoxFolders": { "type": "boolean", "description": "photo-story cross-folder mode (legacy flag, synced with empty folderPath)." },
+          "metaVoxFilters": {
+            "type": "array",
+            "description": "Filter rows.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "field": { "type": "string" },
+                "op": { "type": "string", "enum": ["equals", "contains", "in", "year_equals"] },
+                "value": { "description": "string or string[]" }
+              }
+            }
+          },
+          "granularity": { "type": "string", "enum": ["day", "month", "year"], "description": "file-story timeline bucket size." },
+          "groupBy": { "type": "string", "description": "file-story group-by field (category / MetaVox field name)." },
+          "dateField": { "type": "string", "description": "file-story: mtime or taken_at." },
+          "visibleColumns": { "type": "array", "items": { "type": "string" }, "description": "file-story visible-columns multi-select (date / size / path)." },
+          "tileSize": { "type": "string", "enum": ["small", "medium", "large"], "description": "file-story tiles mode." }
         }
       },
       "PageTreeNode": {

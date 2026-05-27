@@ -331,5 +331,5 @@ This approach provides the best balance of:
 - [Nextcloud Collectives GitHub](https://github.com/nextcloud/collectives)
 - [Collectives Documentation](https://nextcloud.github.io/collectives/)
 - [Collectives Development Guide](https://github.com/nextcloud/collectives/blob/main/DEVELOPING.md)
-- [IntraVox Authorization Documentation](../AUTHORIZATION.md)
-- [IntraVox Architecture Documentation](../ARCHITECTURE.md)
+- [IntraVox Authorization Documentation](../../admin/authorization.md)
+- [IntraVox Architecture Documentation](../overview.md)
