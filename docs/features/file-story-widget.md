@@ -73,6 +73,9 @@ To add a File Story Widget to your page:
 
 1. Click **+ Add Widget** in edit mode
 2. Select **File Story** from the widget picker
+
+   ![File Story in the widget picker](../screenshots/FileStory.png)
+
 3. Pick a source folder (multi-folder / cross-folder mode is not available — the server returns 400 for an empty folder)
 4. Tune layout, sorting, and display options
 

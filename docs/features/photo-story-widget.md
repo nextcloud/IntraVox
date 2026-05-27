@@ -59,6 +59,9 @@ To add a Photo Story Widget to your page:
 
 1. Click **+ Add Widget** in edit mode
 2. Select **Photo Story** from the widget picker
+
+   ![Photo Story in the widget picker](../screenshots/PhotoStory.png)
+
 3. Pick a source folder (or leave blank for cross-folder MetaVox search)
 4. Tune layout, sorting, and display options
 5. The bottom of the editor shows a **live preview** that updates as you change settings
