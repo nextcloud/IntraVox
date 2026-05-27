@@ -25,6 +25,9 @@ IntraVox provides comprehensive export and import functionality for managing con
 The export/import interface uses a tabbed navigation with three tabs:
 
 ### Tab 1: Export
+
+![Export tab in the IntraVox admin settings](../../screenshots/export.png)
+
 - Export pages by language
 - Option to include comments
 - Shows page count per language
@@ -37,6 +40,9 @@ The export/import interface uses a tabbed navigation with three tabs:
 - Preserves page hierarchy
 
 ### Tab 3: Import
+
+![Import tab in the IntraVox admin settings](../../screenshots/import.png)
+
 - Import IntraVox ZIP files
 - Upload previously exported ZIP
 - Options:

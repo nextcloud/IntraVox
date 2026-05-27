@@ -3,13 +3,13 @@
 This guide covers installation, configuration, and maintenance of IntraVox for Nextcloud administrators.
 
 **Related documentation:**
-- [Admin Settings Guide](ADMIN_SETTINGS.md) - Demo data and video services configuration
-- [Engagement Admin Guide](ENGAGEMENT_ADMIN.md) - Reactions and comments configuration
-- [Authorization Guide](AUTHORIZATION.md) - Permissions and access control
-- [Scalability & Enterprise Readiness](SCALABILITY.md) - Performance, caching, rate limiting, GDPR
-- [Scenarios](SCENARIOS.md) - Practical recipes (approval workflows, department intranets)
-- [Architecture](ARCHITECTURE.md) - Technical architecture
-- [Engagement Architecture](ENGAGEMENT_ARCHITECTURE.md) - Engagement system technical details
+- [Admin Settings Guide](settings.md) - Demo data and video services configuration
+- [Engagement Admin Guide](engagement.md) - Reactions and comments configuration
+- [Authorization Guide](authorization.md) - Permissions and access control
+- [Scalability & Enterprise Readiness](scalability.md) - Performance, caching, rate limiting, GDPR
+- [Scenarios](scenarios.md) - Practical recipes (approval workflows, department intranets)
+- [Architecture](../architecture/overview.md) - Technical architecture
+- [Engagement Architecture](../features/engagement-architecture.md) - Engagement system technical details
 
 ## System Requirements
 
@@ -123,7 +123,7 @@ For department-based access control:
 3. Navigate to subfolders in Nextcloud Files
 4. Use the sharing panel to set ACL rules
 
-See [AUTHORIZATION.md](AUTHORIZATION.md) for detailed permission setup.
+See [AUTHORIZATION.md](authorization.md) for detailed permission setup.
 
 ## Language Configuration
 
@@ -180,7 +180,7 @@ IntraVox includes demo content to help you get started quickly. Demo data can be
 sudo -u www-data php occ intravox:import-demo-data --language=en
 ```
 
-See [ADMIN_SETTINGS.md](ADMIN_SETTINGS.md) for detailed demo data management.
+See [ADMIN_SETTINGS.md](settings.md) for detailed demo data management.
 
 ## Maintenance
 
@@ -229,6 +229,28 @@ tail -f /var/www/nextcloud/data/nextcloud.log | grep -i intravox
 ```
 
 Or in Nextcloud Admin → Logging.
+
+### Anonymous Usage Statistics
+
+IntraVox can periodically send anonymous usage statistics to help improve the app. This is opt-in and can be toggled from **Settings → IntraVox**.
+
+![Anonymous usage statistics panel](../../screenshots/Statistics.png)
+
+*Toggle **Share anonymous usage statistics** to enable or disable telemetry. The panel shows when the last report was sent.*
+
+**What we collect:**
+- Page counts per language
+- Total user count and active users
+- IntraVox, Nextcloud and PHP version numbers
+- A unique hash of your instance URL (privacy-friendly identifier)
+
+**What we never collect:**
+- Page content or titles
+- User names or email addresses
+- Your actual server URL
+- Any personal or sensitive data
+
+No personally identifiable information leaves the server. Reports are sent at most once a day.
 
 ## Troubleshooting
 
@@ -324,7 +346,7 @@ IntraVox includes a Video Widget for embedding videos from external platforms or
 - Videos from unknown domains are blocked
 - Only HTTPS sources allowed
 
-See [ADMIN_SETTINGS.md](ADMIN_SETTINGS.md) for detailed video configuration.
+See [ADMIN_SETTINGS.md](settings.md) for detailed video configuration.
 
 ## RSS Feed Configuration
 
@@ -366,7 +388,7 @@ IntraVox (base: Read + Share)
 | Feed works for admins but not regular users | Admin group has all permissions; add Share to the user group |
 | Some pages missing from feed | Check ACL rules on the specific subfolder and all parent folders |
 
-See [RSS_FEED.md](RSS_FEED.md#administrator-setup) for the full technical details.
+See [RSS_FEED.md](../user/rss-feeds.md#administrator-setup) for the full technical details.
 
 ## Page Locking
 

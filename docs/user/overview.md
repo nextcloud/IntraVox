@@ -147,6 +147,12 @@ Click the info icon to see:
 - Modification history
 - Related pages
 
+If your administrator has installed the [MetaVox](https://apps.nextcloud.com/apps/metavox) app, the side panel also shows a **MetaVox** tab with custom metadata for the page — sensitivity, department, status, custom dates, and any other fields your organisation tracks.
+
+![MetaVox sidebar on an IntraVox page](../../screenshots/IntraVox-MetaVox.png)
+
+*The MetaVox tab in the side panel surfaces team-folder metadata (left, blue box) and per-page custom fields (right) without leaving the page.*
+
 ## Common Tasks
 
 ### Finding Information
@@ -241,7 +247,7 @@ IntraVox works on mobile devices:
 
 ## Accessibility
 
-IntraVox is designed to meet [WCAG 2.1 Level AA](ACCESSIBILITY.md) requirements, as mandated by the Dutch Wet Digitale Overheid for government intranets:
+IntraVox is designed to meet [WCAG 2.1 Level AA](accessibility.md) requirements, as mandated by the Dutch Wet Digitale Overheid for government intranets:
 
 - Keyboard navigation (Tab, Enter, Escape, arrow keys)
 - Screen reader compatible (landmarks, ARIA roles, live regions)

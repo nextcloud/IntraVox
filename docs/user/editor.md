@@ -139,6 +139,16 @@ Rows can be made collapsible, allowing users to expand and collapse content sect
 - Use "Collapsed by default" for supplementary content that not everyone needs
 - Keep frequently accessed content expanded by default
 
+**Real-world example — FAQ page with multiple collapsible sections:**
+
+![Collapsible sections in a published page](../../screenshots/Collapsible-sections.png)
+
+*A typical FAQ-style page: the first section is expanded with content visible, the rest stay collapsed until clicked.*
+
+![Multiple collapsible rows in the editor](../../screenshots/Collapsible-sectionsSettings.png)
+
+*Edit mode: stack several collapsible rows. Each has its own title and "Collapsed by default" setting.*
+
 **Duplicating a row:**
 
 You can duplicate a complete row, including all its columns and widgets.
@@ -310,6 +320,10 @@ Photos, diagrams, and graphics with optional clickable links.
 
 Embed videos from external platforms or upload local videos.
 
+![Video widget editor with platform detection](../../screenshots/videowidget.png)
+
+*Paste a YouTube / Vimeo / PeerTube URL and IntraVox detects the platform automatically. Switch to **Local file** for an MP4 upload.*
+
 **Supported platforms:**
 - YouTube (privacy-enhanced mode)
 - Vimeo
@@ -322,6 +336,18 @@ Embed videos from external platforms or upload local videos.
 - Title: Display title above the video
 - Autoplay: Start video automatically (muted)
 - Loop: Repeat video when finished
+
+![Video widget rendered on a published page](../../screenshots/videowidgethomepage.png)
+
+*A YouTube embed shown next to other widgets on a published homepage.*
+
+**Blocked domains:**
+
+If the administrator has not whitelisted the video platform you tried to embed, the widget shows a warning placeholder instead of the player:
+
+![Blocked video domain placeholder](../../screenshots/videowidgetblocked.png)
+
+Ask your administrator to enable the platform under **Settings → IntraVox → Video Services**.
 
 **Best practices:**
 - Use privacy-friendly platforms when possible
@@ -390,7 +416,7 @@ Dynamic news feed showing the latest pages.
 - Sort by: Modified date, created date, or title
 - Autoplay interval (carousel only): Seconds between slides
 
-For detailed documentation, see [NEWS_WIDGET.md](NEWS_WIDGET.md).
+For detailed documentation, see [NEWS_WIDGET.md](../features/news-widget.md).
 
 #### People
 
@@ -411,7 +437,7 @@ User directory widget showing team members.
 - Show fields: Toggle avatar, name, role, department, phone, email, etc.
 - Sort by: Display name, last login, etc.
 
-For detailed documentation, see [PEOPLE_WIDGET.md](PEOPLE_WIDGET.md).
+For detailed documentation, see [PEOPLE_WIDGET.md](../features/people-widget.md).
 
 #### Calendar
 
@@ -429,7 +455,7 @@ Display upcoming events from shared Nextcloud calendars with colored date badges
 - Events are clickable and open in Nextcloud Calendar
 - Layout adapts automatically: 1 column in side columns, 2-3 columns in wider areas
 
-For detailed documentation, see [CALENDAR_WIDGET.md](CALENDAR_WIDGET.md).
+For detailed documentation, see [CALENDAR_WIDGET.md](../features/calendar-widget.md).
 
 ### Editing Widgets
 
@@ -471,6 +497,16 @@ For detailed documentation, see [CALENDAR_WIDGET.md](CALENDAR_WIDGET.md).
 2. Navigate to IntraVox folder > your language > `_media/`
 3. Upload your image
 4. Return to IntraVox and select the image
+
+**Selecting an existing image — three tabs:**
+
+![Selecting from the page's own media folder](../../screenshots/Page-media.png)
+
+*The image picker has three tabs: **Upload** for new files, **Page Media** for images already in the current page's `_media/` folder, and **Shared Library** for site-wide assets.*
+
+![Shared Library tab with site-wide assets](../../screenshots/Shared-library.png)
+
+*The **Shared Library** keeps reusable assets like backgrounds, icons and logos that should be available across all pages.*
 
 ### Uploading Videos
 
@@ -620,7 +656,7 @@ IntraVox/
 
 ### Accessibility
 
-IntraVox meets [WCAG 2.1 Level AA](ACCESSIBILITY.md) requirements. As an editor, you can help maintain accessibility:
+IntraVox meets [WCAG 2.1 Level AA](accessibility.md) requirements. As an editor, you can help maintain accessibility:
 
 1. Always add alt text to images (describes the image for screen readers)
 2. Use proper heading hierarchy (H1 → H2 → H3, don't skip levels)

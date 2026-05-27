@@ -115,11 +115,11 @@ Editors can configure these options per video:
 
 ## External Feeds Tab
 
-The External Feeds tab lets administrators configure connections to external systems — learning management systems (Canvas, Moodle, Brightspace), project management (Jira, OpenProject), knowledge bases (Confluence), collaboration (SharePoint), and any custom REST API. These connections are used by the [Feed Widget](FEED_WIDGET.md) on IntraVox pages.
+The External Feeds tab lets administrators configure connections to external systems — learning management systems (Canvas, Moodle, Brightspace), project management (Jira, OpenProject), knowledge bases (Confluence), collaboration (SharePoint), and any custom REST API. These connections are used by the [Feed Widget](../features/feed-widget.md) on IntraVox pages.
 
 > **Why configure feed connections when Nextcloud integration apps exist?**
 >
-> Many of these systems (OpenProject, Jira, etc.) have their own Nextcloud integration apps. Those apps serve *individual users* — linking files, searching tasks, receiving personal notifications. Feed connections serve a different purpose: they let you show data from these systems on *intranet pages* visible to entire teams or departments. This is organizational awareness, not personal productivity. See the [Architecture design principles](ARCHITECTURE.md#organizational-communication-not-personal-productivity) for details.
+> Many of these systems (OpenProject, Jira, etc.) have their own Nextcloud integration apps. Those apps serve *individual users* — linking files, searching tasks, receiving personal notifications. Feed connections serve a different purpose: they let you show data from these systems on *intranet pages* visible to entire teams or departments. This is organizational awareness, not personal productivity. See the [Architecture design principles](../architecture/overview.md#organizational-communication-not-personal-productivity) for details.
 
 ### Adding a Connection
 
@@ -293,6 +293,10 @@ This is the most seamless experience for end users but requires a shared SSO inf
 ---
 
 ## Demo Data Tab
+
+![Demo Data tab in the IntraVox admin settings](../../screenshots/admin-demodata.png)
+
+*Per-language demo content: install, reinstall, or clean-start a complete demo intranet in any of the supported languages.*
 
 ### Installing Demo Data
 

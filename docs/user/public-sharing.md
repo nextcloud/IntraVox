@@ -100,6 +100,10 @@ If you set a password on a share link in the Files app, IntraVox fully respects 
 
 When a share link has a password, the Public Link dialog in IntraVox shows a **"Password protected"** badge between the scope indicator and the copy button. This lets editors know that visitors will need a password to access the link.
 
+![Password-protected badge in the Public Link dialog](../../screenshots/Public-PasswordProtected2.png)
+
+*The yellow **"Password protected"** notice sits directly above the **Copy public link** button, with a hint to manage the password in Files.*
+
 The password itself is never shown — it is stored as a bcrypt hash and cannot be retrieved after creation. The badge includes a hint: *"Visitors must enter a password to access this link. Manage in Files."*
 
 To change or remove the password, click **"Manage share in Files"** at the bottom of the dialog.

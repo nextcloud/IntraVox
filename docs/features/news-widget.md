@@ -135,14 +135,30 @@ First, create two date fields in MetaVox:
    - **Expiration date field**: The name of your expiration date field
 4. Click **Save publication settings**
 
+![Publication tab in IntraVox admin settings](../../screenshots/Newswidget-PublishingAdminSettings.png)
+
+*Admin settings — point IntraVox at the MetaVox date fields you created in Step 1. The dropdowns list every Date-typed field that MetaVox currently exposes.*
+
 > **Note**: The field names must match exactly with the names in MetaVox, including capitalization.
 
-#### Step 3: Enable in News Widget
+#### Step 3: Set publish / expiration dates on each page
+
+For pages that should be filtered, fill in the publish and expiration dates from the MetaVox sidebar:
+
+![Publish and expiration dates in the MetaVox sidebar](../../screenshots/Newswidget-PageSettings.png)
+
+*Open a page, click the MetaVox tab in the sidebar, and set **Publish date** / **Expiration date**. Pages outside that window are automatically hidden by the News Widget when publication filtering is enabled.*
+
+#### Step 4: Enable in News Widget
 
 1. Edit a page containing a News Widget
 2. Click on the News Widget to open the editor
 3. Check **Show only published pages**
 4. Save the page
+
+![Show only published pages toggle in the News Widget editor](../../screenshots/Newswidget-PublishedSelected.png)
+
+*Display options section: tick **Show only published pages** to activate publication filtering for this News Widget instance.*
 
 ### Warnings
 
