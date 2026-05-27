@@ -141,6 +141,46 @@ The IntraVox News widget supports MetaVox field filtering. This means you can cr
 
 This gives publishers a dashboard of all pages awaiting their review.
 
+### Page mockup — Publisher dashboard
+
+A "Pending Reviews" page that publishers open as their daily landing spot. Two News widgets side by side, both filtered on the MetaVox `Review Status` field.
+
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│  IntraVox    Home  News  Departments  Pending Reviews        🔍 EN  │
+├──────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│   # Editorial dashboard                                              │
+│   Pages waiting for review, plus what's recently been published.     │
+│                                                                      │
+├───────────────────────────────────┬──────────────────────────────────┤
+│  ⏳ Awaiting your review          │  ✅ Recently published           │
+│  ─────────────────────────────    │  ────────────────────────────    │
+│  News widget · List               │  News widget · List              │
+│  source: /en/                     │  source: /en/                    │
+│  filter: Review Status = "In      │  filter: Review Status =         │
+│          Review"                  │          "Published"             │
+│  sort:   Date modified desc       │  sort:   Date modified desc      │
+│                                   │                                  │
+│  • Q3 financial update            │  • New office in Utrecht         │
+│    Marketing · Anna · 2h ago      │    HR · Sam · today              │
+│  • Updated travel policy          │  • Code of conduct refresh       │
+│    HR · Mira · yesterday          │    HR · Anna · 2 days ago        │
+│  • Pilot results — Project X      │  • Q3 product launch             │
+│    R&D · Jan · 3 days ago         │    Marketing · Mira · last week  │
+│                                   │                                  │
+├───────────────────────────────────┴──────────────────────────────────┤
+│  ❌ Recently rejected — needs revision                               │
+│  News widget · Grid (3 cols)                                         │
+│  filter: Review Status = "Rejected"                                  │
+│                                                                      │
+│  [ Onboarding ]   [ Travel policy ]   [ Q3 forecast ]               │
+│   Sales · 1d ago   HR · 3d ago         Finance · 5d ago             │
+└──────────────────────────────────────────────────────────────────────┘
+```
+
+Each card on this dashboard links straight to the page; the publisher opens the page, clicks **Approve** in the Files sidebar (Approval app), and toggles **Published** in IntraVox. Same dashboard for editors works just as well — replace the filter values with `Draft` / `Rejected` to surface their own pending work.
+
 ### Tips
 
 - Communicate the workflow process to your team — the technology supports it, but people need to know the steps
@@ -258,6 +298,51 @@ The main homepage can include a News widget showing organization-wide news from 
 | Communications Team | All pages | Only `news/` |
 | IntraVox Admins | All pages | Everything |
 
+### Page mockup — Department homepage (HR)
+
+The HR department's own homepage: HR-only news on the left, shared organisation-wide news on the right, plus an "about the team" sidebar. Only HR team members see the *Edit Page* button.
+
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│  Acme Intranet   Home  News  Departments ▾  General         🔍 NL EN│
+│                                                                      │
+│  Home › Departments › HR                              [ Edit Page ]  │
+├──────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│   # HR — People & Culture                                            │
+│   Policies, onboarding, leave, training, and everything between.     │
+│                                                                      │
+├───────────────────────────────────────────────────┬──────────────────┤
+│  📣 Latest from HR                                │  About this team │
+│  ──────────────────────────                       │  ──────────────  │
+│  News widget · Grid (2 cols)                      │  • 12 people     │
+│  source: /en/departments/hr/                      │  • Director:     │
+│                                                   │    Sam de Vries  │
+│  ┌──────────────┐ ┌──────────────┐                │  • hr@acme.example│
+│  │ New office   │ │ Travel policy│                │                  │
+│  │ in Utrecht   │ │ refresh      │                │  Quick links     │
+│  │ Sam · today  │ │ Mira · 2d    │                │  ──────────────  │
+│  └──────────────┘ └──────────────┘                │  → Leave request │
+│  ┌──────────────┐ ┌──────────────┐                │  → Expense form  │
+│  │ Onboarding   │ │ Code of      │                │  → Org chart     │
+│  │ checklist v3 │ │ conduct      │                │  → Pay slips     │
+│  │ Anna · 3d    │ │ Anna · 1w    │                │                  │
+│  └──────────────┘ └──────────────┘                │  People (HR)     │
+│                                                   │  ──────────────  │
+├───────────────────────────────────────────────────┤  People widget   │
+│  🏢 Across the company                            │  filter: group = │
+│  ──────────────────────────                       │  "Department HR" │
+│  News widget · List                               │                  │
+│  source: /en/news/                                │  👤 Sam de Vries │
+│  • All-hands recap — last Friday                  │  👤 Mira Patel   │
+│  • Q3 results announced                           │  👤 Anna Kuipers │
+│  • Office reorganisation update                   │  👤 Jan van Os   │
+│                                                   │                  │
+└───────────────────────────────────────────────────┴──────────────────┘
+```
+
+Each department duplicates this exact page layout under its own folder, changing only the News widget's source folder. The right sidebar's People widget filter follows the corresponding `Department <name>` group automatically.
+
 ---
 
 ## Scenario 3: Knowledge Base with Documents + Photos
@@ -324,6 +409,63 @@ Photos stay in their original project folders; cross-folder mode pulls every pho
 ### Step 6: Duplicate for each new topic
 
 Per topic: copy the page, rename it, change the `onderwerp` filter value in both widgets. No new folders, no copied files.
+
+### Page mockup — Topic page (*Restauratie van glas-in-lood-ramen*)
+
+A single topic page from the heritage knowledge base. Everything below the intro is filled by widgets that filter on `onderwerp = "glas-in-lood"` — change one value and you have a brand-new topic page.
+
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│  Erfgoedwerk Maasdal   Home  Kennisbank ▾  Projecten        🔍 NL EN│
+│                                                                      │
+│  Home › Kennisbank › Glas-in-lood                     [ Edit Page ]  │
+├──────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│   # Restauratie van glas-in-lood-ramen                               │
+│   Wanneer toepassen, waar op letten, welke vergunningen je nodig     │
+│   hebt en welke specialisten in onze regio dit doen.                 │
+│                                                                      │
+├──────────────────────────────────────────────────────────────────────┤
+│  ▸ Werkwijze & aandachtspunten        (collapsible, closed)          │
+│  ▸ Materiaalkeuze & loodprofielen     (collapsible, closed)          │
+│  ▸ Vergunningen & monumentenstatus    (collapsible, closed)          │
+├───────────────────────────────────────────────────┬──────────────────┤
+│  📄 Dossierstukken                                │  Specialisten    │
+│  ──────────────────────────                       │  ──────────────  │
+│  File Story · Grouped by `documenttype`           │  People widget   │
+│  source: /Kennisbank/Documenten/                  │  filter: group = │
+│  filter: onderwerp = "glas-in-lood"               │  "restauratoren- │
+│                                                   │   glas"          │
+│  ▸ Bestek                       3 files           │                  │
+│    Bestek-2024-073-Sint-Martinus.pdf  · 8 May     │  👤 Jan van Os   │
+│    Bestek-2023-051-OL-Vrouwekapel.pdf · 12 Apr    │     Glazenier    │
+│    Bestek-2022-018-Raadhuis-Venlo.pdf · 3 Mar     │  👤 Mira Patel   │
+│                                                   │     Loodspecialist│
+│  ▸ Inspectierapport             5 files           │  👤 Anna Kuipers │
+│  ▸ Werktekening                 2 files (.dwg)    │     Vergunningen │
+│  ▸ Vergunning                   2 files           │                  │
+│                                                   │  ──────────────  │
+│  *Klik een groep om te openen of te downloaden*   │  Externe bronnen │
+│                                                   │  ──────────────  │
+├───────────────────────────────────────────────────┤  → RCE.nl        │
+│  🖼  Praktijkvoorbeelden — vóór, tijdens, na      │  → Monumenten-   │
+│  ──────────────────────────                       │    wacht         │
+│  Photo Story · Grid (3 cols)                      │  → Restauratoren │
+│  source: (leeg — cross-folder MetaVox search)     │    Nederland     │
+│  filter: onderwerp = "glas-in-lood"               │                  │
+│                                                   │  ──────────────  │
+│  ┌───────┐ ┌───────┐ ┌───────┐                   │  Verwante items  │
+│  │ kerk1 │ │ kerk1 │ │ kerk1 │  Sint-Martinus    │  ──────────────  │
+│  │ vóór  │ │ proces│ │ na    │  · 8 May 2024     │  → Voegwerk      │
+│  └───────┘ └───────┘ └───────┘                   │  → Loodwerk      │
+│  ┌───────┐ ┌───────┐ ┌───────┐                   │  → Leien daken   │
+│  │ kapel │ │ kapel │ │ raad- │  Diverse projecten│  → Smeedijzer    │
+│  │ detail│ │ proces│ │ huis  │                   │                  │
+│  └───────┘ └───────┘ └───────┘                   │                  │
+└───────────────────────────────────────────────────┴──────────────────┘
+```
+
+Photos stay in their project folders (`/Projecten/2024-073-Sint-Martinus/foto's/`, `/Projecten/2023-051-OL-Vrouwekapel/...`, …). Adding the `onderwerp = "glas-in-lood"` tag in MetaVox is enough — the gallery picks them up automatically the next time the page is opened.
 
 ### Tips
 
