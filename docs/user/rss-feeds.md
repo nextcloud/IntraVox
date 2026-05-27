@@ -2,7 +2,7 @@
 
 IntraVox provides a personal RSS feed for each user, allowing them to follow intranet page updates in any RSS reader.
 
-![RSS Feed in Nextcloud News](../screenshots/rss-result.png)
+![RSS Feed in Nextcloud News](../../screenshots/rss-result.png)
 
 *IntraVox feed displayed in Nextcloud News with page content and images*
 
@@ -21,14 +21,14 @@ IntraVox provides a personal RSS feed for each user, allowing them to follow int
 2. Click the three dots menu (⋯) in the top-right corner
 3. Select **RSS Feed**
 
-![RSS Feed menu option](../screenshots/rss-settings1.png)
+![RSS Feed menu option](../../screenshots/rss-settings1.png)
 
 4. Choose your preferred settings:
    - **Feed scope**: "My language" or "All languages"
    - **Maximum items**: 10, 20, 30, or 50
 5. Click **Generate Feed URL**
 
-![RSS Feed settings](../screenshots/rss-settings2.png)
+![RSS Feed settings](../../screenshots/rss-settings2.png)
 
 6. Copy the URL and add it to your RSS reader
 
@@ -109,7 +109,7 @@ If this setting is disabled:
 - Existing feed URLs return a 404 error
 - The feed settings dialog shows a clear error message
 
-![RSS Feed disabled](../screenshots/rss-disabled.png)
+![RSS Feed disabled](../../screenshots/rss-disabled.png)
 
 *When link sharing is disabled by the administrator, the feed settings dialog shows an error message*
 

@@ -182,7 +182,7 @@ If your administrator has installed the [MetaVox](https://apps.nextcloud.com/app
 
 IntraVox can generate a personal RSS feed so you can follow page updates in your favorite RSS reader (such as Nextcloud News, Feedly, or any other RSS client).
 
-![RSS Feed menu option](../screenshots/rss-settings1.png)
+![RSS Feed menu option](../../screenshots/rss-settings1.png)
 
 *Access RSS Feed from the page menu (three dots)*
 
@@ -195,7 +195,7 @@ IntraVox can generate a personal RSS feed so you can follow page updates in your
    - **Maximum items**: How many items to include in the feed (10, 20, 30, or 50)
 4. Click **Generate Feed URL**
 
-![RSS Feed settings dialog](../screenshots/rss-settings2.png)
+![RSS Feed settings dialog](../../screenshots/rss-settings2.png)
 
 *Feed settings with scope, limit, and your personal feed URL*
 
@@ -206,7 +206,7 @@ IntraVox can generate a personal RSS feed so you can follow page updates in your
 3. Add a new feed subscription and paste the URL
 4. Your reader will show IntraVox page updates with titles, content previews, and images
 
-![RSS Feed in Nextcloud News](../screenshots/rss-result.png)
+![RSS Feed in Nextcloud News](../../screenshots/rss-result.png)
 
 *IntraVox feed displayed in Nextcloud News with page content and images*
 
@@ -232,7 +232,7 @@ Your feed URL contains a personal token. Anyone with this link can read your fee
 
 If your Nextcloud administrator has disabled public link sharing, RSS feeds are not available. The feed settings dialog will show an error message:
 
-![RSS Feed disabled](../screenshots/rss-disabled.png)
+![RSS Feed disabled](../../screenshots/rss-disabled.png)
 
 *Contact your administrator if you need RSS feed access*
 

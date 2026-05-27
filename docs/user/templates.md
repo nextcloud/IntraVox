@@ -17,16 +17,16 @@ Page Templates allow you to quickly create new pages with pre-built layouts and 
 2. Click **+ New Page** in the navigation
 3. Select a template from the gallery
 
-![Template Selection Dialog](../screenshots/Templates-Select-template.png)
+![Template Selection Dialog](../../screenshots/Templates-Select-template.png)
 
 4. Enter a title for your new page
 5. Click **Create**
 
-![New Page Modal](../screenshots/Templates-New-page.png)
+![New Page Modal](../../screenshots/Templates-New-page.png)
 
 The page is created with all the template's content, layout, and images copied to the new location.
 
-![Page Created from Template](../screenshots/Templates-Page-created.png)
+![Page Created from Template](../../screenshots/Templates-Page-created.png)
 
 ## Default Templates
 

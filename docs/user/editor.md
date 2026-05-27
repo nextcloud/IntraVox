@@ -48,7 +48,7 @@ To edit content, you need:
 
 The Save and Cancel buttons stay fixed at the top of the page when you scroll down, so you can always reach them — even on long pages.
 
-![Sticky save toolbar](../screenshots/page-stickysave.gif)
+![Sticky save toolbar](../../screenshots/page-stickysave.gif)
 
 *The toolbar stays visible at the top while scrolling through a long page in edit mode*
 
@@ -67,7 +67,7 @@ When you start editing a page, IntraVox automatically locks it to prevent other 
 
 Pages have a status: **Draft** or **Published**. This controls who can see the page.
 
-![Draft and Published status in edit mode](../screenshots/page-draft-published.png)
+![Draft and Published status in edit mode](../../screenshots/page-draft-published.png)
 
 *In edit mode, the Draft/Published button is shown in the toolbar. Click it to toggle between Draft and Published.*
 
@@ -120,7 +120,7 @@ Pages can also have a **header row** (full-width banner at the top) and optional
 
 Rows can be made collapsible, allowing users to expand and collapse content sections. This is useful for FAQ pages, long content, or optional details.
 
-![Collapsible section settings in edit mode](../screenshots/row-collapsible.png)
+![Collapsible section settings in edit mode](../../screenshots/row-collapsible.png)
 
 *Edit mode: enable "Collapsible section", set a section title, and optionally check "Collapsed by default"*
 
@@ -130,7 +130,7 @@ Rows can be made collapsible, allowing users to expand and collapse content sect
 3. Enter a **Section title** (displayed as the clickable header)
 4. Optionally check **Collapsed by default** to hide content on page load
 
-![Collapsible section in view mode — expanded (left) and collapsed (right)](../screenshots/row-collapsible-details.png)
+![Collapsible section in view mode — expanded (left) and collapsed (right)](../../screenshots/row-collapsible-details.png)
 
 *View mode: users click the arrow to toggle the section open or closed*
 
@@ -153,7 +153,7 @@ Rows can be made collapsible, allowing users to expand and collapse content sect
 
 You can duplicate a complete row, including all its columns and widgets.
 
-![Duplicate row button in row controls](../screenshots/row-copy.png)
+![Duplicate row button in row controls](../../screenshots/row-copy.png)
 
 *Click the copy icon in the row controls to duplicate the row*
 
@@ -234,11 +234,11 @@ Rich text content with formatting.
 
 Need placeholder text while designing your page? Type a special command on an empty line and press **Enter** to generate dummy content — inspired by Microsoft Word's `=rand()` command.
 
-![Dummy Text Generator - Dad Jokes](../screenshots/dadjokes.gif)
+![Dummy Text Generator - Dad Jokes](../../screenshots/dadjokes.gif)
 
 *Dad jokes with rich formatting: headings, numbered lists, bold setup and italic punchlines*
 
-![Dummy Text Generator - Lorem Ipsum](../screenshots/lorem-demo.gif)
+![Dummy Text Generator - Lorem Ipsum](../../screenshots/lorem-demo.gif)
 
 *Lorem Ipsum showcase: headings, paragraphs, blockquotes, lists, tables, and inline marks*
 

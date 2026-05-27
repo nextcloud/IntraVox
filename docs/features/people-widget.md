@@ -2,7 +2,7 @@
 
 The People Widget displays user profiles from your Nextcloud instance. It's perfect for team pages, organization directories, department overviews, or any page where you want to showcase people.
 
-![People Widget Overview](../screenshots/People-overview.png)
+![People Widget Overview](../../screenshots/People-overview.png)
 
 ## Features
 
@@ -69,7 +69,7 @@ Select specific users to display:
 
 Automatically show users matching certain criteria:
 
-![People Widget Filter](../screenshots/People-filter.png)
+![People Widget Filter](../../screenshots/People-filter.png)
 
 1. Choose "Filter by attributes" mode
 2. Click **+ Add filter**
@@ -126,7 +126,7 @@ When using multiple filters, choose how they combine:
 
 #### Example: Show Today's Birthdays
 
-![Birthday Widget](../screenshots/Peopl-WhereIsTheCake.png)
+![Birthday Widget](../../screenshots/Peopl-WhereIsTheCake.png)
 
 1. Add filter: **Birthdate** → **is today**
 2. Result: Shows users whose birthday is today
@@ -142,7 +142,7 @@ When using multiple filters, choose how they combine:
 
 Control which information is shown for each user. All display options are available in every layout (Card, List, and Grid).
 
-![People Widget Display Options](../screenshots/People-Display-options.png)
+![People Widget Display Options](../../screenshots/People-Display-options.png)
 
 ### Basic Information
 
@@ -175,7 +175,7 @@ Control which information is shown for each user. All display options are availa
 
 ### Birthdate Display
 
-![People Widget with Birthdays](../screenshots/People-Birthday.png)
+![People Widget with Birthdays](../../screenshots/People-Birthday.png)
 
 When the **Birthdate** field is enabled, each user's birthday is displayed with a cake icon. The date is formatted according to the user's locale. This pairs well with the date filter operators to create birthday widgets (see [Show Today's Birthdays](#example-show-todays-birthdays)).
 
@@ -183,7 +183,7 @@ When the **Birthdate** field is enabled, each user's birthday is displayed with 
 
 When your Nextcloud is connected to LDAP, Active Directory, or OIDC, additional user profile fields may be available. The People Widget automatically detects these fields and makes them available for display.
 
-![People Widget Custom Properties](../screenshots/People-Custom-properties.png)
+![People Widget Custom Properties](../../screenshots/People-Custom-properties.png)
 
 Common custom fields include:
 

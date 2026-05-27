@@ -5,9 +5,9 @@ Configuration guide for IntraVox's engagement features (reactions and comments).
 **Audience:** Intranet administrators and content managers
 
 **Related documentation:**
-- [Engagement User Guide](ENGAGEMENT_GUIDE.md) - End-user documentation
-- [Engagement Architecture](ENGAGEMENT_ARCHITECTURE.md) - Technical details
-- [Admin Settings Guide](ADMIN_SETTINGS.md) - Other admin settings
+- [Engagement User Guide](../user/engagement.md) - End-user documentation
+- [Engagement Architecture](../features/engagement-architecture.md) - Technical details
+- [Admin Settings Guide](settings.md) - Other admin settings
 
 ---
 
@@ -18,7 +18,7 @@ IntraVox provides two levels of control for engagement features:
 1. **Global Settings** - Master switches for the entire intranet (admin only)
 2. **Page Settings** - Per-page overrides (editors with write access)
 
-![Admin engagement settings](../screenshots/Engagement-Adminsettings.png)
+![Admin engagement settings](../../screenshots/Engagement-Adminsettings.png)
 
 *The Engagement tab in IntraVox Admin Settings*
 
@@ -78,7 +78,7 @@ Editors with write access to a page can disable engagement features for specific
 3. Click the **Settings** button (gear icon) in the toolbar
 4. Find the **Engagement** section
 
-![Page engagement settings](../screenshots/Engagement-Pagesettings.png)
+![Page engagement settings](../../screenshots/Engagement-Pagesettings.png)
 
 *Page-specific engagement settings in the Page Settings modal*
 

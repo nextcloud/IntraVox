@@ -2,7 +2,7 @@
 
 The Calendar Widget displays upcoming (or past) events from Nextcloud calendars and external ICS feeds on your intranet pages. Events are shown with colored date badges, support recurring events, and the layout adapts automatically to the available space.
 
-![Calendar Widget](../screenshots/calendarwidget-intro.gif)
+![Calendar Widget](../../screenshots/calendarwidget-intro.gif)
 
 *Calendar widget with colored date badges, responsive multi-column layout, and background themes*
 
@@ -180,21 +180,21 @@ Text colors automatically adjust for proper contrast on each background.
 
 ## Screenshots
 
-![Calendar Widget Layout](../screenshots/Calendarwidget-layout.png)
+![Calendar Widget Layout](../../screenshots/Calendarwidget-layout.png)
 
 *2-column layout in main content with timed and all-day events*
 
-![Calendar Widget Sidebar](../screenshots/Calendarwidget-sidebar.png)
+![Calendar Widget Sidebar](../../screenshots/Calendarwidget-sidebar.png)
 
 *Compact 1-column layout in side column*
 
-![Calendar Widget Editor](../screenshots/Calendarwidget-editor.png)
+![Calendar Widget Editor](../../screenshots/Calendarwidget-editor.png)
 
 *Widget editor with calendar selection and date range options*
 
-![Calendar Widget 3-Column](../screenshots/Calendarwidget-3col.png)
+![Calendar Widget 3-Column](../../screenshots/Calendarwidget-primary.png)
 
-*Responsive 3-column grid in full-width row*
+*Responsive 3-column grid in a full-width row*
 
 ## Requirements
 

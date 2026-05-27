@@ -12,7 +12,7 @@ Public sharing allows you to make IntraVox pages accessible without login. Visit
 
 IntraVox uses Nextcloud's built-in share link system. You create a share link in the Files app on the IntraVox folder, and IntraVox automatically detects it and makes the content available.
 
-![Public sharing overview — Share dialog and public page view](../screenshots/Public-ShareLink.png)
+![Public sharing overview — Share dialog and public page view](../../screenshots/Public-ShareLink.png)
 
 *Left: The share dialog showing which pages are included. Right: The public view visitors see.*
 
@@ -26,13 +26,13 @@ Public sharing requires one Nextcloud setting to be enabled:
 
 If this setting is disabled, IntraVox will show a warning when you click the share button:
 
-![Sharing not allowed — warning dialog](../screenshots/Public-SharingNotAllowed.png)
+![Sharing not allowed — warning dialog](../../screenshots/Public-SharingNotAllowed.png)
 
 *When link sharing is disabled by the administrator, IntraVox shows a warning with a link to the Sharing settings.*
 
 If link sharing is disabled while share links already exist, those links will stop working and visitors will see a 404 page:
 
-![Disabled sharing results in 404](../screenshots/Public-DisableSharing.png)
+![Disabled sharing results in 404](../../screenshots/Public-DisableSharing.png)
 
 *Left: The Nextcloud admin setting. Right: Existing share links return a 404 when disabled.*
 
@@ -58,7 +58,7 @@ Navigate to **Files > IntraVox** (your GroupFolder) and find the folder or page 
 
 Go back to IntraVox and open a page within the shared scope. The share button in the top-right corner will now appear in the theme color, indicating the page is publicly shared.
 
-![Share button active — public link dialog](../screenshots/Public-SharingAllowed-link.png)
+![Share button active — public link dialog](../../screenshots/Public-SharingAllowed-link.png)
 
 *The share button (highlighted) shows the theme color when a share link exists. Click it to see the Public Link dialog with "Copy public link" button and a list of included pages.*
 
@@ -66,7 +66,7 @@ Go back to IntraVox and open a page within the shared scope. The share button in
 
 Click **"Manage share in Files"** at the bottom of the Public Link dialog to open the Files app where you can adjust settings like password protection, expiration dates, or remove the share entirely.
 
-![Managing shares — from IntraVox to Files](../screenshots/Public-ManageShare.png)
+![Managing shares — from IntraVox to Files](../../screenshots/Public-ManageShare.png)
 
 *Click "Manage share in Files" in IntraVox (left) to open the share settings in the Files app (right).*
 
@@ -92,7 +92,7 @@ Anonymous visitors can only navigate between pages within the share scope. They 
 
 If you set a password on a share link in the Files app, IntraVox fully respects this. Both the share dialog and the visitor experience reflect the password requirement.
 
-![Password-protected share — Files setup and visitor challenge](../screenshots/Public-PasswordProtected.png)
+![Password-protected share — Files setup and visitor challenge](../../screenshots/Public-PasswordProtected.png)
 
 *Left: Setting a password when creating a share link in the Files app. Right: The password challenge screen visitors see before accessing the content.*
 
@@ -134,7 +134,7 @@ If the session expires (e.g., the visitor returns later), they will need to ente
 
 If no share link exists for a page, the share button appears in a muted color. Clicking it opens a dialog explaining how to create a share link:
 
-![No share link — guidance dialog](../screenshots/Public-SharingAllowed-nolink.png)
+![No share link — guidance dialog](../../screenshots/Public-SharingAllowed-nolink.png)
 
 *When no share link exists, IntraVox shows guidance with a direct link to the Files app.*
 

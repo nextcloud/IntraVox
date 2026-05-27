@@ -8,7 +8,7 @@ IntraVox ships with 5 demo showcases that demonstrate the full range of widget t
 
 ### 1. de-linden — Universiteit De Linden
 
-![De Linden showcase](../screenshots/home-de-linden.png)
+![De Linden showcase](../../screenshots/home-de-linden.png)
 
 **Theme:** Higher education — academic, open, knowledge sharing
 
@@ -34,7 +34,7 @@ IntraVox ships with 5 demo showcases that demonstrate the full range of widget t
 
 ### 2. van-der-berg — Advocatenkantoor Van der Berg & Partners
 
-![Van der Berg showcase](../screenshots/home-van-der-berg.png)
+![Van der Berg showcase](../../screenshots/home-van-der-berg.png)
 
 **Theme:** Legal — professional, premium, confidential
 
@@ -60,7 +60,7 @@ IntraVox ships with 5 demo showcases that demonstrate the full range of widget t
 
 ### 3. gemeente-duin — Gemeente Duinvoorde
 
-![Gemeente Duinvoorde showcase](../screenshots/home-duinvoorde.png)
+![Gemeente Duinvoorde showcase](../../screenshots/home-duinvoorde.png)
 
 **Theme:** Government — transparent, service-oriented
 
@@ -86,7 +86,7 @@ IntraVox ships with 5 demo showcases that demonstrate the full range of widget t
 
 ### 4. de-bron — Zorggroep De Bron
 
-![De Bron showcase](../screenshots/home-de-bron.png)
+![De Bron showcase](../../screenshots/home-de-bron.png)
 
 **Theme:** Healthcare — warm, practical, patient-centered
 
@@ -114,7 +114,7 @@ IntraVox ships with 5 demo showcases that demonstrate the full range of widget t
 
 ### 5. horizon-labs — Horizon Labs
 
-![Horizon Labs showcase](../screenshots/home-horizon-labs.png)
+![Horizon Labs showcase](../../screenshots/home-horizon-labs.png)
 
 **Theme:** Tech startup — modern, dynamic, innovative
 

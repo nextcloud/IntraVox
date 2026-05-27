@@ -2,9 +2,9 @@
 
 The Feed Widget displays content from external sources on your intranet pages. It supports RSS/Atom feeds and admin-configured connections to any REST API — including LMS platforms (Canvas, Moodle, Brightspace), project management (Jira, OpenProject), knowledge bases (Confluence), HR systems (AFAS), service desks (TOPdesk), and more.
 
-![Feed widgets from multiple sources displayed on an IntraVox page](../screenshots/feed-examples.png)
+![Feed widgets from multiple sources displayed on an IntraVox page](../../screenshots/feed-examples.png)
 
-![Feed widgets showing Confluence, OpenProject, Canvas, Moodle, SharePoint, Jira, Brightspace](../screenshots/feed-examples-2.png)
+![Feed widgets showing Confluence, OpenProject, Canvas, Moodle, SharePoint, Jira, Brightspace](../../screenshots/feed-examples-2.png)
 
 ## Features
 
@@ -40,7 +40,7 @@ The simplest source type. Enter a feed URL and the widget fetches and displays t
 
 The widget automatically detects RSS 2.0 and Atom feed formats. Images are extracted from feed enclosures, `media:content`, `media:thumbnail`, or inline `<img>` tags.
 
-![RSS feeds from multiple sources displayed in list and grid layouts](../screenshots/feed-example-rss.png)
+![RSS feeds from multiple sources displayed in list and grid layouts](../../screenshots/feed-example-rss.png)
 
 ### Canvas LMS
 
@@ -57,17 +57,17 @@ Displays personalized content from a Canvas LMS instance. Supports both shared (
 **Personalization:**
 When the connection uses OAuth2 (`authMode: oauth2` or `both`), each user connects their own Canvas account. The widget then shows only content from courses the user is enrolled in.
 
-![Canvas OAuth2 connection flow — Connect your account → Authorize → Connected](../screenshots/feed-canvas-connection.png)
+![Canvas OAuth2 connection flow — Connect your account → Authorize → Connected](../../screenshots/feed-canvas-connection.png)
 
 **Setup requirements:**
-- Administrator configures a Canvas connection in IntraVox Admin Settings (see [Admin Settings Guide](ADMIN_SETTINGS.md))
+- Administrator configures a Canvas connection in IntraVox Admin Settings (see [Admin Settings Guide](../admin/settings.md))
 - For OAuth2: a Developer Key must be created in Canvas Admin
 
 ### Moodle
 
 Displays content from a Moodle instance. Supports both shared (admin token) and personalized (per-user OAuth2/manual token) access.
 
-![Moodle connection configuration in IntraVox Admin Settings](../screenshots/feed-connections-moodle.png)
+![Moodle connection configuration in IntraVox Admin Settings](../../screenshots/feed-connections-moodle.png)
 
 **Content types:**
 
@@ -78,7 +78,7 @@ Displays content from a Moodle instance. Supports both shared (admin token) and 
 | **Assignments** | Assignments overview per course with deadlines | `mod_assign_get_assignments` |
 | **Upcoming Deadlines** | Upcoming calendar events across all courses | `core_calendar_get_calendar_upcoming_view` |
 
-![Three Moodle Feed widgets on one page: All courses, Assignments, and Upcoming deadlines](../screenshots/feed-moodle.png)
+![Three Moodle Feed widgets on one page: All courses, Assignments, and Upcoming deadlines](../../screenshots/feed-moodle.png)
 
 **Forum selector:** When "News / Announcements" is selected and a course is chosen, a forum selector appears. This lets admins pick a specific forum (e.g., "Announcements" or "General Discussion") instead of showing all forums in the course.
 
@@ -131,7 +131,7 @@ Displays work packages from an OpenProject instance. Uses the OpenProject API v3
 
 1. In OpenProject, go to **My Account** → **Access tokens** → **+ API token**
 
-![Creating an API token in OpenProject](../screenshots/feed-openproject-accesstoken.png)
+![Creating an API token in OpenProject](../../screenshots/feed-openproject-accesstoken.png)
 
 2. Copy the token (shown only once)
 3. In IntraVox Admin Settings, add a connection with type **OpenProject**
@@ -148,7 +148,7 @@ Displays work packages from an OpenProject instance. Uses the OpenProject API v3
 
 Displays issues from a Jira instance. Supports both Jira Data Center (on-premises) and Jira Cloud (Atlassian Cloud).
 
-![Jira feed widget with project selector and content type filter](../screenshots/feed-jira-selection.png)
+![Jira feed widget with project selector and content type filter](../../screenshots/feed-jira-selection.png)
 
 **Content types:**
 
@@ -184,7 +184,7 @@ The preset auto-detects Cloud vs. Data Center based on the Base URL and adjusts 
 
 **Links:** Issue links open directly in the Jira web interface (e.g., `https://jira.example.com/browse/PROJ-123`), not the API URL.
 
-![Clicking a Jira issue in IntraVox opens it in Jira](../screenshots/feed-jira-online.png)
+![Clicking a Jira issue in IntraVox opens it in Jira](../../screenshots/feed-jira-online.png)
 
 ### Confluence
 
@@ -209,19 +209,19 @@ Displays pages, news posts, documents, or list items from a SharePoint site via 
 
 1. Go to [Microsoft Entra admin center](https://entra.microsoft.com) → **App registrations** → **+ New registration**
 
-![Register an application in Microsoft Entra](../screenshots/feed-appregistration-entra.png)
+![Register an application in Microsoft Entra](../../screenshots/feed-appregistration-entra.png)
 
 2. Add **API permissions**: `Sites.Read.All` (Application) and `User.Read` (Delegated), then grant admin consent
 
-![API permissions for IntraVox SharePoint integration](../screenshots/feed-appregistration-entra-api-permissions.png)
+![API permissions for IntraVox SharePoint integration](../../screenshots/feed-appregistration-entra-api-permissions.png)
 
 3. Create a **Client secret** under Certificates & secrets
 
-![Creating a client secret in Microsoft Entra](../screenshots/feed-appregistration-entra-api-secret.png)
+![Creating a client secret in Microsoft Entra](../../screenshots/feed-appregistration-entra-api-secret.png)
 
 4. Copy the **Application (client) ID** and **Directory (tenant) ID** from the Overview page
 
-![Application and tenant IDs in Microsoft Entra](../screenshots/feed-appregistration-entra-aplication-tenantid.png)
+![Application and tenant IDs in Microsoft Entra](../../screenshots/feed-appregistration-entra-aplication-tenantid.png)
 
 5. In IntraVox Admin Settings, add a connection with type **SharePoint (Graph API)** and enter the Client ID, Client Secret, Tenant ID, and your SharePoint site URL
 
@@ -241,7 +241,7 @@ Many external systems that IntraVox connects to — OpenProject, Jira, Canvas LM
 
 The same principle applies to all supported systems. A university can use the Moodle integration app for students to access their personal courses, while using IntraVox's Feed Widget to show upcoming deadlines on a faculty intranet page for all staff.
 
-See the [Architecture documentation](ARCHITECTURE.md#organizational-communication-not-personal-productivity) for the design principle behind this approach.
+See the [Architecture documentation](../architecture/overview.md#organizational-communication-not-personal-productivity) for the design principle behind this approach.
 
 #### Why there is no "Nextcloud" source type
 
@@ -264,7 +264,7 @@ IntraVox deliberately does not duplicate what the Dashboard already provides:
 
 Connect to any system with a REST/JSON API — Jira, Confluence, OpenProject, ZGW APIs, or any other REST endpoint.
 
-![Custom REST API connection configuration with response mapping and headers](../screenshots/feed-connections-custom.png)
+![Custom REST API connection configuration with response mapping and headers](../../screenshots/feed-connections-custom.png)
 
 **How to use:**
 
@@ -343,7 +343,7 @@ Shows items in a responsive grid. Configure between 2, 3, or 4 columns.
 
 Administrators configure feed connections in **Admin Settings → External Feeds**. Presets are available for popular systems:
 
-![Available connection presets in IntraVox Admin Settings](../screenshots/feed-presets.png)
+![Available connection presets in IntraVox Admin Settings](../../screenshots/feed-presets.png)
 
 ## Configuration
 
@@ -360,9 +360,9 @@ Administrators configure feed connections in **Admin Settings → External Feeds
 | **Course** | Limit results to a specific course | LMS only |
 | **Document library / List** | SharePoint library or list selector | SharePoint |
 
-![Widget editor with Jira connection, project selector, content type, sort, filter, and live preview](../screenshots/feed-widget-config.png)
+![Widget editor with Jira connection, project selector, content type, sort, filter, and live preview](../../screenshots/feed-widget-config.png)
 
-![SharePoint widget editor with content type and document library selector](../screenshots/feed-sharepoint-selection.png)
+![SharePoint widget editor with content type and document library selector](../../screenshots/feed-sharepoint-selection.png)
 
 ### Sort & Filter
 
@@ -374,7 +374,7 @@ Administrators configure feed connections in **Admin Settings → External Feeds
 
 Sorting and filtering are applied server-side after caching. The cache stores all items; sort/filter selects from the cached set. This means changing sort/filter is instant (no re-fetch from external API).
 
-![Keyword filter and sort order in the widget editor with live preview](../screenshots/feed-search.png)
+![Keyword filter and sort order in the widget editor with live preview](../../screenshots/feed-search.png)
 
 ### Language
 

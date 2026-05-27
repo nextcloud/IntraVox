@@ -157,7 +157,7 @@ Each connection has an **active/inactive toggle** in the connection header. Use 
 
 Toggling the active state saves immediately — no need to click **Save connections** separately.
 
-![Disabling a Canvas connection and the resulting message on the page](../screenshots/feed-disable-feed.png)
+![Disabling a Canvas connection and the resulting message on the page](../../screenshots/feed-disable-feed.png)
 
 ### Exporting and Importing Connections
 

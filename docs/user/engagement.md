@@ -14,7 +14,7 @@ Engagement features let you:
 - Reply to other people's comments
 - React to comments
 
-![Engagement on a page](../screenshots/Engagement.png)
+![Engagement on a page](../../screenshots/Engagement.png)
 
 *Example of reactions and comments on an IntraVox page*
 

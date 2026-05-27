@@ -44,7 +44,7 @@ GroupFolder: IntraVox/
 
 Version history is available via the **Versions** tab in the page sidebar:
 
-![Versioning sidebar with version history](../screenshots/Versioning-1.png)
+![Versioning sidebar with version history](../../screenshots/Versioning-1.png)
 
 *The Versions tab shows the current version at the top, followed by the version history. Each version displays the author, relative time ("1 sec. ago", "27 min. ago") and file size.*
 
@@ -52,7 +52,7 @@ Version history is available via the **Versions** tab in the page sidebar:
 
 Click on a version in the list to view its content:
 
-![Selecting and viewing a version](../screenshots/Versioning-2.png)
+![Selecting and viewing a version](../../screenshots/Versioning-2.png)
 
 *When you select an older version, the page content updates to show that version. The title in the header indicates which version you are viewing.*
 
@@ -60,7 +60,7 @@ Click on a version in the list to view its content:
 
 Click the **restore button** (↺) next to a version to restore it:
 
-![Version restored with success message](../screenshots/Versioning-3.png)
+![Version restored with success message](../../screenshots/Versioning-3.png)
 
 *After restoring, a success message appears. The restored version becomes the "Current version" and the previous current version is automatically saved in the version history.*
 

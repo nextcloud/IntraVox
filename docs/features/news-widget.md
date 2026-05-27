@@ -17,19 +17,19 @@ The News Widget displays a dynamic list of pages from a selected location in you
 
 Displays items in a vertical list with thumbnail, title, date, and excerpt.
 
-![News Widget List Layout](../screenshots/Newswidget-list.png)
+![News Widget List Layout](../../screenshots/Newswidget-list.png)
 
 ### Grid Layout
 
 Shows items in a responsive grid with 2, 3, or 4 columns.
 
-![News Widget Grid Layout](../screenshots/Newswidget-grid.png)
+![News Widget Grid Layout](../../screenshots/Newswidget-grid.png)
 
 ### Carousel Layout
 
 A rotating slideshow with navigation arrows and dot indicators. Supports autoplay with configurable interval.
 
-![News Widget Carousel](../screenshots/Newswidget-carrousel.gif)
+![News Widget Carousel](../../screenshots/Newswidget-carrousel.gif)
 
 ## Configuration
 
@@ -39,7 +39,7 @@ To add a News Widget to your page:
 2. Select **News** from the widget picker
 3. Configure the widget settings
 
-![News Widget Editor](../screenshots/Newswidget-edit.png)
+![News Widget Editor](../../screenshots/Newswidget-edit.png)
 
 ### Settings
 
@@ -61,7 +61,7 @@ To add a News Widget to your page:
 
 When the [MetaVox](https://apps.nextcloud.com/apps/metavox) app is installed and configured, you can filter News Widget results based on metadata fields.
 
-![MetaVox Filter Configuration](../screenshots/Newswidget-MetaVoxfilter.png)
+![MetaVox Filter Configuration](../../screenshots/Newswidget-MetaVoxfilter.png)
 
 ### Adding Filters
 
@@ -70,7 +70,7 @@ When the [MetaVox](https://apps.nextcloud.com/apps/metavox) app is installed and
 3. Choose an operator (equals, contains, is not empty)
 4. Enter a value to filter on
 
-![MetaVox Filter Example](../screenshots/Newswidget-MetaVoxfilter2.png)
+![MetaVox Filter Example](../../screenshots/Newswidget-MetaVoxfilter2.png)
 
 ### Filter Operators
 
