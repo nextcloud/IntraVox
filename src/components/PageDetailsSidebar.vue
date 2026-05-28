@@ -1024,4 +1024,8 @@ export default {
   padding: 12px;
   min-height: 200px;
 }
+
+/* Note: the NcAppSidebarTabs double-underline workaround lives in
+ * css/main.css (loaded globally via Util::addStyle) — scoped CSS in a Vue
+ * SFC can't reach the third-party data-v attribute selector. */
 </style>

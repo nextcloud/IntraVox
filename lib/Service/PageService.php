@@ -2658,7 +2658,7 @@ class PageService {
             case 'photo-story':
                 $config = is_array($widget['config'] ?? null) ? $widget['config'] : [];
                 $sanitizedConfig = [];
-                $sanitizedConfig['folderPath'] = $this->sanitizePath($config['folderPath'] ?? '');
+                $sanitizedConfig['folderPath'] = $this->sanitizeFolderPath($config['folderPath'] ?? '');
                 $allowedModes = ['timeline', 'highlights', 'grid', 'on-this-day'];
                 $sanitizedConfig['mode'] = in_array($config['mode'] ?? 'timeline', $allowedModes, true)
                     ? $config['mode']
@@ -2739,7 +2739,7 @@ class PageService {
                 // no visual styles, no day-maps, no cross-folder mode).
                 $config = is_array($widget['config'] ?? null) ? $widget['config'] : [];
                 $sanitizedConfig = [];
-                $sanitizedConfig['folderPath'] = $this->sanitizePath($config['folderPath'] ?? '');
+                $sanitizedConfig['folderPath'] = $this->sanitizeFolderPath($config['folderPath'] ?? '');
                 $allowedModes = ['timeline', 'tiles', 'list', 'grouped'];
                 $sanitizedConfig['mode'] = in_array($config['mode'] ?? 'timeline', $allowedModes, true)
                     ? $config['mode'] : 'timeline';
@@ -2951,6 +2951,21 @@ class PageService {
      * @return string Safe path
      * @throws \InvalidArgumentException if path is malicious
      */
+    /**
+     * Sanitize a folder-path that may be the root ("/"). PhotoStory and
+     * FileStory widgets treat "/" as "the whole user drive" — a meaningful
+     * value that must survive persistence. The generic sanitizePath() strips
+     * leading/trailing slashes and would collapse "/" to "" (= "no folder
+     * selected"), so widgets that allow root selection use this wrapper.
+     */
+    private function sanitizeFolderPath(string $path): string {
+        $trimmed = trim($path);
+        if ($trimmed === '/' || $trimmed === '\\') {
+            return '/';
+        }
+        return $this->sanitizePath($path);
+    }
+
     private function sanitizePath(string $path): string {
         // Allow empty paths (used for news widget sourcePath to indicate "all pages")
         if (empty($path)) {

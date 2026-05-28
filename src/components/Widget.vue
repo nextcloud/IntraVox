@@ -109,12 +109,14 @@
     <PhotoStoryWidget
       v-else-if="widget.type === 'photo-story'"
       :widget="widget"
+      :row-background-color="rowBackgroundColor"
     />
 
     <!-- File Story Widget -->
     <FileStoryWidget
       v-else-if="widget.type === 'file-story'"
       :widget="widget"
+      :row-background-color="rowBackgroundColor"
     />
 
     <!-- Video Widget -->

@@ -4,6 +4,23 @@ All notable changes to IntraVox will be documented in this file.
 
 IntraVox is a Nextcloud intranet page builder.
 
+## [1.5.1] - 2026-05-28 — Themed-row contrast + widget polish
+
+Patch release that fixes legibility on themed page rows and tightens a handful of widget rough-edges that surfaced in production after 1.5.0. No new features, no API changes.
+
+### Fixed
+- **PhotoStory/FileStory contrast on dark row backgrounds** — filenames, day-headers and meta lines used `--color-main-text` (dark) regardless of the row's background colour. On `Primary` (`--color-primary-element`) rows that produced unreadable dark-on-dark text. Both widgets now accept `rowBackgroundColor` from the parent `Widget.vue` (closing a gap with the existing widgets that already consume it) and switch internal text + tile surfaces to a WCAG-paired colour set via two CSS variables (`--fs-text`/`--ps-text` + their muted siblings). Tile bodies become a tinted-glass card on dark rows instead of cutting a hard white rectangle through the coloured backdrop.
+- **FileStory tile filenames invisible on dark rows** — regression from the same root cause: tile bodies kept their `--color-main-background` (white) while inheriting the now-white filename colour. Tile surfaces, hover state, preview-fallback bg and mime-icon placeholder all lift to translucent white on `fs--on-dark`.
+- **Folder-path "/" silently collapses to empty after save** — `PageService::sanitizePath` strips leading/trailing slashes, so a configured PhotoStory/FileStory `folderPath = "/"` (root) was persisted as `""` and rendered as "no folder selected" after reload. New `sanitizeFolderPath()` wrapper preserves `/` (and `\`) as a meaningful "whole drive" marker before delegating to the generic sanitizer.
+- **502/503 during page save** — entering edit mode after a FileStory widget existed triggered four expensive `folder=/` queries within ~250 ms (the legacy debounce). Apache workers saturated on large libraries. FetchKey watcher debounce raised from 250 ms to 700 ms in both widgets.
+- **NcAppSidebarTabs double underline (NC 32 regression)** — `@nextcloud/vue` 8.x renders both a 1 px hairline on the tab-strip wrapper *and* a 4 px coloured indicator on the active tab, producing a stacked double underline in the PageDetailsSidebar. Global override in `css/main.css` removes the redundant hairline; scoped Vue CSS couldn't reach the `data-v-`-tagged third-party selector.
+- **Photo previews missing for common web formats** — `PhotoStoryService::MEDIA_MIMES` was narrower than what users actually drop into their photo folders. Now also includes `webp`, `gif`, `svg+xml`, `bmp` and `video/webm`.
+- **Empty folder picker returning `""` instead of `/`** — NC's `OC.dialogs.filepicker` returns an empty string when the user picks the root; both editors now normalise that to `"/"` so the configured value matches the sanitizer's accepted shape.
+
+### Notes
+- Default-themed rows (transparent / `--color-background-hover` / `--color-primary-element-light`) are visually unchanged; the new contrast logic only activates on saturated row colours.
+- No DB migration. Existing PhotoStory/FileStory widget configs are read back through the new sanitizer transparently.
+
 ## [1.5.0] - 2026-05-27 — Photo Story + File Story widgets
 
 Major release. Introduces two new widgets — **Photo Story** for photo galleries with EXIF, location maps and an Apple-style lightbox; **File Story** for document libraries with multi-mode layouts, MetaVox-aware filtering and federated-share awareness. Adds a fresh wave of perf, security, accessibility and l10n polish across the photo + file widget surface.

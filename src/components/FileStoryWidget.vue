@@ -1,5 +1,5 @@
 <template>
-  <div class="file-story-widget">
+  <div class="file-story-widget" :class="rowBgClass" :style="rowBgStyle">
     <!-- Loading -->
     <div v-if="loading" class="fs-loading" role="status" aria-live="polite" :aria-label="t('Loading documents')">
       <div v-for="i in 5" :key="i" class="fs-skeleton-row" aria-hidden="true"></div>
@@ -19,6 +19,9 @@
       <FileDocumentOutline :size="28" aria-hidden="true" />
       <p>{{ emptyMessage }}</p>
       <small v-if="config.folderPath">{{ config.folderPath }}</small>
+      <small v-if="showScanHint" class="fs-empty-hint">
+        {{ t('If you can see files in the Files app but not here, the file index may be out of sync. Ask an admin to run "occ files:scan" for this folder.') }}
+      </small>
     </div>
 
     <!-- Timeline mode -->
@@ -256,6 +259,7 @@ export default {
   components: { AlertCircle, FileDocumentOutline, CloudOutline, FileTypeIcon, NcButton },
   props: {
     widget: { type: Object, required: true },
+    rowBackgroundColor: { type: String, default: '' },
   },
   data() {
     return {
@@ -277,6 +281,42 @@ export default {
   },
   computed: {
     config() { return this.widget.config || {}; },
+    rowBgClass() {
+      const bg = String(this.rowBackgroundColor || '').trim();
+      if (!bg || bg === 'transparent') {
+        return '';
+      }
+      const dark = new Set([
+        'var(--color-primary-element)',
+        'var(--color-primary)',
+        'var(--color-error)',
+        'var(--color-success)',
+        'var(--color-warning)',
+      ]);
+      if (dark.has(bg)) {
+        return 'fs--on-dark';
+      }
+      return 'fs--on-tinted';
+    },
+    rowBgStyle() {
+      const bg = String(this.rowBackgroundColor || '').trim();
+      if (this.rowBgClass !== 'fs--on-dark') {
+        return {};
+      }
+      // Paired text color for the row background, matches Widget.vue's WCAG map.
+      const textMap = {
+        'var(--color-primary-element)': 'var(--color-primary-element-text)',
+        'var(--color-primary)': 'var(--color-primary-text)',
+        'var(--color-error)': 'var(--color-error-text)',
+        'var(--color-success)': 'var(--color-success-text)',
+        'var(--color-warning)': 'var(--color-warning-text)',
+      };
+      const text = textMap[bg] || '#fff';
+      return {
+        '--fs-text': text,
+        '--fs-text-muted': text,
+      };
+    },
     effectiveMode() {
       const allowed = ['timeline', 'tiles', 'list', 'grouped'];
       return allowed.includes(this.config.mode) ? this.config.mode : 'timeline';
@@ -298,6 +338,15 @@ export default {
         return t('intravox', 'No documents match the current filters');
       }
       return t('intravox', 'No documents to show.');
+    },
+    /**
+     * Only show the file-index hint when the user picked a normal folder and
+     * got zero results — not when filters are active (more likely cause: no match).
+     */
+    showScanHint() {
+      if (!this.config.folderPath) return false;
+      const hasFilters = Array.isArray(this.config.metaVoxFilters) && this.config.metaVoxFilters.length > 0;
+      return !hasFilters;
     },
     fetchKey() {
       const c = this.config || {};
@@ -332,8 +381,12 @@ export default {
   },
   watch: {
     fetchKey() {
+      // 700 ms debounce so quick edit-mode mutations (folder pick + mode flip
+      // + sort change in rapid succession) don't stack four heavy filecache
+      // queries on the Apache worker pool and cause 503s on the subsequent
+      // page save. Each in-flight fetch holds a worker until its SQL returns.
       clearTimeout(this._debounce);
-      this._debounce = setTimeout(() => this.fetch(), 250);
+      this._debounce = setTimeout(() => this.fetch(), 700);
     },
   },
   mounted() {
@@ -645,10 +698,18 @@ export default {
   flex-direction: column;
   gap: 8px;
   padding: 32px 16px;
-  color: var(--color-text-maxcontrast);
+  color: var(--fs-text-muted, var(--color-text-maxcontrast));
   font-size: 13px;
   background: var(--color-background-hover);
   border-radius: var(--border-radius-large);
+}
+
+.fs-empty-hint {
+  display: block;
+  max-width: 480px;
+  margin-top: 8px;
+  line-height: 1.4;
+  text-align: center;
 }
 
 .fs-skeleton-row {
@@ -686,7 +747,7 @@ export default {
   margin: 0;
   font-size: 14px;
   font-weight: 600;
-  color: var(--color-main-text);
+  color: var(--fs-text, var(--color-main-text));
   /* Slightly muted weight in the header so it doesn't compete with filenames
    * but stays readable in both light and dark themes via --color-main-text. */
   letter-spacing: 0.01em;
@@ -694,7 +755,7 @@ export default {
 
 .fs-day-count, .fs-group-count {
   font-size: 11px;
-  color: var(--color-text-maxcontrast);
+  color: var(--fs-text-muted, var(--color-text-maxcontrast));
   /* color-mix tint of the accent color — adapts to theming, no fixed values.
    * Falls back to background-hover if color-mix is not supported (NC32+ targets
    * Chromium 111+ / Firefox 113+ / Safari 16.2+ which all support it). */
@@ -746,7 +807,7 @@ export default {
 
 .fs-row-name {
   font-size: 14px;
-  color: var(--color-main-text);
+  color: var(--fs-text, var(--color-main-text));
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -762,7 +823,7 @@ export default {
   display: inline-flex;
   align-items: center;
   flex-shrink: 0;
-  color: var(--color-text-maxcontrast);
+  color: var(--fs-text-muted, var(--color-text-maxcontrast));
   opacity: 0.7;
 }
 
@@ -775,7 +836,7 @@ export default {
   flex-wrap: wrap;
   gap: 8px;
   font-size: 11px;
-  color: var(--color-text-maxcontrast);
+  color: var(--fs-text-muted, var(--color-text-maxcontrast));
   margin-top: 2px;
 }
 
@@ -834,7 +895,7 @@ export default {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  color: var(--color-text-maxcontrast);
+  color: var(--fs-text-muted, var(--color-text-maxcontrast));
   z-index: 0;
 }
 
@@ -854,7 +915,7 @@ export default {
 .fs-tile-name {
   font-size: 13px;
   font-weight: 500;
-  color: var(--color-main-text);
+  color: var(--fs-text, var(--color-main-text));
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -868,7 +929,7 @@ export default {
   flex-wrap: wrap;
   gap: 6px;
   font-size: 11px;
-  color: var(--color-text-maxcontrast);
+  color: var(--fs-text-muted, var(--color-text-maxcontrast));
 }
 
 .fs-scroll-sentinel {
@@ -881,7 +942,7 @@ export default {
 
 .fs-loading-more {
   font-size: 12px;
-  color: var(--color-text-maxcontrast);
+  color: var(--fs-text-muted, var(--color-text-maxcontrast));
 }
 
 .fs-truncated {
@@ -891,12 +952,69 @@ export default {
   border: 1px solid var(--color-warning);
   border-radius: 6px;
   font-size: 12px;
-  color: var(--color-text-maxcontrast);
+  color: var(--fs-text-muted, var(--color-text-maxcontrast));
 }
 
 @media (prefers-reduced-motion: reduce) {
   .fs-skeleton-row {
     animation: none;
   }
+}
+
+/* When the row background is dark (e.g. --color-primary-element), the widget
+   sits on a saturated surface. Lift muted text, soften hover/border, and keep
+   skeletons/tile-cards readable against the colored backdrop. */
+.file-story-widget.fs--on-dark .fs-day-count,
+.file-story-widget.fs--on-dark .fs-group-count {
+  background: rgba(255, 255, 255, 0.18);
+  color: var(--fs-text, #fff);
+}
+
+.file-story-widget.fs--on-dark .fs-row:hover,
+.file-story-widget.fs--on-dark .fs-row:focus {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.file-story-widget.fs--on-dark .fs-day-header,
+.file-story-widget.fs--on-dark .fs-group-header {
+  border-bottom-color: rgba(255, 255, 255, 0.25);
+}
+
+.file-story-widget.fs--on-dark .fs-row-meta,
+.file-story-widget.fs--on-dark :deep(.fs-federated-badge) {
+  opacity: 0.82;
+}
+
+.file-story-widget.fs--on-dark .fs-skeleton-row {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* Tiles on a dark row: tinted-glass card so the white tile stops "cutting a
+   hole" in the colored background. Filename stays white (--fs-text), reads on
+   the translucent backdrop because there's enough contrast against both the
+   row-bg and the soft white tint. */
+.file-story-widget.fs--on-dark .fs-tile {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.file-story-widget.fs--on-dark .fs-tile:hover,
+.file-story-widget.fs--on-dark .fs-tile:focus {
+  background: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+}
+
+.file-story-widget.fs--on-dark .fs-tile-preview {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* Mime-icon in the placeholder uses currentColor for the SVG paths via NC's
+   icon system — lifting opacity is enough to keep the icon visible on the
+   tinted tile surface without a stark grey square. */
+.file-story-widget.fs--on-dark :deep(.fs-row-icon--placeholder),
+.file-story-widget.fs--on-dark .fs-tile-fallback {
+  background: transparent;
+  color: var(--fs-text, #fff);
+  opacity: 0.88;
 }
 </style>

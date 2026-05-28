@@ -1,5 +1,5 @@
 <template>
-  <div class="photo-story-widget">
+  <div class="photo-story-widget" :class="rowBgClass" :style="rowBgStyle">
     <!-- Optional map at top -->
     <PhotoStoryMap
       v-if="config.showMap && config.folderPath && capabilities && capabilities.hasLocation && mapSettings.enabled"
@@ -27,6 +27,9 @@
       <ImageMultiple :size="32" aria-hidden="true" />
       <p>{{ emptyMessage }}</p>
       <small v-if="config.folderPath">{{ config.folderPath }}</small>
+      <small v-if="showScanHint" class="ps-empty-hint">
+        {{ t('If you can see photos in the Files app but not here, the file index may be out of sync. Ask an admin to run "occ files:scan" for this folder.') }}
+      </small>
     </div>
 
     <!-- Timeline mode — Magazine style -->
@@ -382,6 +385,7 @@ export default {
   },
   props: {
     widget: { type: Object, required: true },
+    rowBackgroundColor: { type: String, default: '' },
   },
   emits: ['open-lightbox'],
   data() {
@@ -425,6 +429,38 @@ export default {
     config() {
       return this.widget.config || {};
     },
+    rowBgClass() {
+      const bg = String(this.rowBackgroundColor || '').trim();
+      if (!bg || bg === 'transparent') {
+        return '';
+      }
+      const dark = new Set([
+        'var(--color-primary-element)',
+        'var(--color-primary)',
+        'var(--color-error)',
+        'var(--color-success)',
+        'var(--color-warning)',
+      ]);
+      return dark.has(bg) ? 'ps--on-dark' : 'ps--on-tinted';
+    },
+    rowBgStyle() {
+      if (this.rowBgClass !== 'ps--on-dark') {
+        return {};
+      }
+      const textMap = {
+        'var(--color-primary-element)': 'var(--color-primary-element-text)',
+        'var(--color-primary)': 'var(--color-primary-text)',
+        'var(--color-error)': 'var(--color-error-text)',
+        'var(--color-success)': 'var(--color-success-text)',
+        'var(--color-warning)': 'var(--color-warning-text)',
+      };
+      const bg = String(this.rowBackgroundColor || '').trim();
+      const text = textMap[bg] || '#fff';
+      return {
+        '--ps-text': text,
+        '--ps-text-muted': text,
+      };
+    },
     effectiveMode() {
       const m = this.config.mode || 'timeline';
       const allowed = ['timeline', 'highlights', 'grid', 'on-this-day'];
@@ -448,6 +484,20 @@ export default {
         return t('intravox', 'No photos taken on this day in previous years');
       }
       return t('intravox', 'No photos found');
+    },
+    /**
+     * Show the "files may not be indexed yet" hint only when it actually fits
+     * the scenario. Hiding it for filtered queries / on-this-day / cross-folder
+     * (those have their own most-likely explanation), showing it only when the
+     * user picked a normal folder and got zero results back.
+     */
+    showScanHint() {
+      const crossFolder = !!this.config.allMetaVoxFolders;
+      const hasFilters = Array.isArray(this.config.metaVoxFilters) && this.config.metaVoxFilters.length > 0;
+      if (crossFolder || hasFilters) return false;
+      if (!this.config.folderPath) return false;
+      if (this.effectiveMode === 'on-this-day') return false;
+      return true;
     },
     gridStyle() {
       const cols = Math.min(Math.max(this.config.columns || 3, 2), 5);
@@ -525,8 +575,11 @@ export default {
     fetchKey: {
       handler(newKey, oldKey) {
         if (newKey === oldKey) return;
+        // 700 ms debounce — see FileStoryWidget for the rationale. Prevents
+        // edit-mode mutation storms from stacking expensive listPhotos calls
+        // on Apache workers and crashing the subsequent save with 503.
         clearTimeout(this._debounce);
-        this._debounce = setTimeout(() => this.fetch(), 250);
+        this._debounce = setTimeout(() => this.fetch(), 700);
       },
     },
   },
@@ -899,7 +952,7 @@ export default {
 
 .ps-loading-more {
   font-size: 13px;
-  color: var(--color-text-maxcontrast);
+  color: var(--ps-text-muted, var(--color-text-maxcontrast));
 }
 
 .ps-truncated {
@@ -909,7 +962,7 @@ export default {
   border: 1px solid var(--color-warning);
   border-radius: 8px;
   font-size: 13px;
-  color: var(--color-text-maxcontrast);
+  color: var(--ps-text-muted, var(--color-text-maxcontrast));
 }
 
 /* Year-jump scrubber: floats top-right inside the widget, sticky to viewport */
@@ -931,7 +984,7 @@ export default {
   z-index: 2;
   font-size: 11px;
   font-weight: 600;
-  color: var(--color-text-maxcontrast);
+  color: var(--ps-text-muted, var(--color-text-maxcontrast));
 }
 
 .ps-year-btn {
@@ -986,7 +1039,7 @@ export default {
   justify-content: center;
   gap: 12px;
   padding: 40px 20px;
-  color: var(--color-text-maxcontrast);
+  color: var(--ps-text-muted, var(--color-text-maxcontrast));
   text-align: center;
 }
 
@@ -1005,6 +1058,15 @@ export default {
   opacity: 0.7;
 }
 
+.ps-empty-hint {
+  /* Secondary hint that appears below the empty-state path. Slightly larger
+   * line-height + max-width so the longer text wraps nicely. */
+  display: block;
+  max-width: 480px;
+  margin-top: 8px;
+  line-height: 1.4;
+}
+
 /* Timeline / on-this-day day section */
 .ps-day,
 .ps-year {
@@ -1019,13 +1081,13 @@ export default {
   margin: 0;
   font-size: 16px;
   font-weight: 600;
-  color: var(--color-main-text);
+  color: var(--ps-text, var(--color-main-text));
 }
 
 .ps-day-location {
   margin: 2px 0 0 0;
   font-size: 12px;
-  color: var(--color-text-maxcontrast);
+  color: var(--ps-text-muted, var(--color-text-maxcontrast));
 }
 
 /* Grids */
@@ -1171,7 +1233,7 @@ export default {
   gap: 8px;
   padding: 12px;
   text-align: center;
-  color: var(--color-main-text);
+  color: var(--ps-text, var(--color-main-text));
 }
 
 :deep(.ps-tile-placeholder-badge) {
@@ -1201,11 +1263,11 @@ export default {
 }
 
 :deep(.ps-tile-placeholder-meta span) {
-  color: var(--color-text-maxcontrast);
+  color: var(--ps-text-muted, var(--color-text-maxcontrast));
 }
 
 :deep(.ps-tile-placeholder-meta small) {
-  color: var(--color-text-maxcontrast);
+  color: var(--ps-text-muted, var(--color-text-maxcontrast));
   font-size: 10px;
 }
 
@@ -1274,11 +1336,11 @@ export default {
   margin-bottom: 80px;
 }
 
+/* Transparent header — inherits the row/widget background instead of forcing
+ * a white block over a themed row. Hairline underline keeps the visual
+ * separator. See file-story-widget.vue::fs-day-header for the same pattern. */
 .ps-day-mag-header {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  background: var(--color-main-background);
+  background: transparent;
   text-align: center;
   padding: 16px 0 12px;
   margin-bottom: 24px;
@@ -1308,14 +1370,14 @@ export default {
   font-size: 32px;
   font-weight: 400;
   letter-spacing: -0.02em;
-  color: var(--color-main-text);
+  color: var(--ps-text, var(--color-main-text));
   font-family: inherit;
 }
 
 .ps-day-mag-loc {
   margin: 4px 0 0 0;
   font-style: italic;
-  color: var(--color-text-maxcontrast);
+  color: var(--ps-text-muted, var(--color-text-maxcontrast));
   font-size: 16px;
 }
 
@@ -1376,28 +1438,27 @@ export default {
 }
 
 .ps-day-apple-header {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  background: var(--color-main-background);
+  background: transparent;
   display: flex;
   justify-content: space-between;
   align-items: baseline;
   gap: 12px;
-  padding: 8px 0;
+  padding: 10px 4px 4px;
+  margin-top: 4px;
   margin-bottom: 12px;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .ps-day-apple-date {
   margin: 0;
   font-size: 22px;
   font-weight: 600;
-  color: var(--color-main-text);
+  color: var(--ps-text, var(--color-main-text));
 }
 
 .ps-day-apple-loc {
   font-size: 13px;
-  color: var(--color-text-maxcontrast);
+  color: var(--ps-text-muted, var(--color-text-maxcontrast));
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -1471,25 +1532,24 @@ export default {
 }
 
 .ps-day-trav-header {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  background: var(--color-main-background);
-  padding: 8px 0;
+  background: transparent;
+  padding: 10px 0 4px;
+  margin-top: 4px;
   margin-bottom: 4px;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .ps-day-trav-date {
   margin: 0 0 4px 0;
   font-size: 18px;
   font-weight: 600;
-  color: var(--color-main-text);
+  color: var(--ps-text, var(--color-main-text));
 }
 
 .ps-day-trav-loc {
   margin: 0 0 12px 0;
   font-size: 13px;
-  color: var(--color-text-maxcontrast);
+  color: var(--ps-text-muted, var(--color-text-maxcontrast));
   display: flex;
   align-items: center;
   gap: 4px;
@@ -1522,5 +1582,25 @@ export default {
   .ps-day-skeleton {
     animation: none;
   }
+}
+
+/* Dark row-bg contrast lifts. Photo tiles already have their own surfaces
+   (image previews, gradient overlays), so the widget only needs to recolor
+   the day/section headers and adjust separators to stay legible. */
+.photo-story-widget.ps--on-dark :deep(.ps-day-header),
+.photo-story-widget.ps--on-dark :deep(.ps-section-header) {
+  border-bottom-color: rgba(255, 255, 255, 0.25);
+}
+
+.photo-story-widget.ps--on-dark :deep(.ps-day-location),
+.photo-story-widget.ps--on-dark :deep(.ps-day-mag-loc),
+.photo-story-widget.ps--on-dark :deep(.ps-day-apple-loc),
+.photo-story-widget.ps--on-dark :deep(.ps-day-trav-loc) {
+  opacity: 0.82;
+}
+
+.photo-story-widget.ps--on-dark :deep(.ps-tile-skeleton),
+.photo-story-widget.ps--on-dark :deep(.ps-day-skeleton) {
+  background: rgba(255, 255, 255, 0.12);
 }
 </style>

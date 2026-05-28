@@ -131,3 +131,11 @@
 .modal-body::-webkit-scrollbar-thumb:hover {
     background: var(--color-text-maxcontrast);
 }
+
+/* Workaround for @nextcloud/vue NcAppSidebarTabs in NC 32+:
+ * the tab-strip wrapper draws a 1px hairline border-bottom, and the active
+ * tab draws its own 4px coloured indicator on top — producing a stacked
+ * double underline. The coloured indicator alone is sufficient. */
+.app-sidebar-tabs__nav {
+    border-bottom: none !important;
+}

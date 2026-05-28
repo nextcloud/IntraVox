@@ -456,10 +456,13 @@ export default {
           window.OC.dialogs.filepicker(
             this.t('Pick a folder'),
             (path) => {
-              if (typeof path === 'string') {
-                this.localConfig.folderPath = path;
-                this.emitUpdate();
-              }
+              if (typeof path !== 'string') return;
+              // OC.dialogs.filepicker returns '' when the user picks the
+              // top-level "Home" / root in the picker. Translate that to '/'
+              // which our backend treats as "entire drive". Otherwise the
+              // widget would silently lose its configured folder.
+              this.localConfig.folderPath = path === '' ? '/' : path;
+              this.emitUpdate();
             },
             false,
             'httpd/unix-directory',

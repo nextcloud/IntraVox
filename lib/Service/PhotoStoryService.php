@@ -30,22 +30,31 @@ class PhotoStoryService {
 	 * `mimesForCategory()` for category-aware lookup.
 	 */
 	private const MEDIA_MIMES = [
+		// Common web image formats
 		'image/jpeg',
+		'image/png',
+		'image/webp',
+		'image/gif',
+		'image/svg+xml',
+		'image/bmp',
+		// Photography-grade formats
 		'image/heic',
 		'image/heif',
 		'image/tiff',
+		// Raw camera formats
 		'image/x-canon-cr2',
 		'image/x-canon-cr3',
 		'image/x-nikon-nef',
 		'image/x-sony-arw',
 		'image/x-adobe-dng',
 		'image/x-dcraw',
-		'image/png',
+		// Video
 		'video/quicktime',
 		'video/mp4',
 		'video/x-msvideo',
 		'video/mpeg',
 		'video/x-ms-wmv',
+		'video/webm',
 	];
 
 	/**

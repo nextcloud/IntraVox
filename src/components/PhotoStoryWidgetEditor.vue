@@ -694,13 +694,21 @@ export default {
           .allowDirectories(true)
           .build();
         const result = await picker.pick();
-        if (typeof result === 'string' && result.length > 0) {
-          this.localConfig.folderPath = result;
-          this.emitUpdate();
-        } else if (Array.isArray(result) && result.length > 0) {
-          // Fallback if API returns array
-          const first = result[0];
-          this.localConfig.folderPath = typeof first === 'string' ? first : (first.path || '');
+        // Normalise an empty / root selection to '/' so the widget knows to
+        // search the user's whole drive instead of silently dropping the
+        // existing folderPath config.
+        const toPath = (r) => {
+          if (typeof r === 'string') return r === '' ? '/' : r;
+          if (Array.isArray(r) && r.length > 0) {
+            const first = r[0];
+            const p = typeof first === 'string' ? first : (first?.path || '');
+            return p === '' ? '/' : p;
+          }
+          return null;
+        };
+        const next = toPath(result);
+        if (next !== null) {
+          this.localConfig.folderPath = next;
           this.emitUpdate();
         }
       } catch (e) {
