@@ -1,7 +1,5 @@
 # File Story Widget
 
-> **Status:** In development. Behavior, configuration options and layouts may still change before the first stable release. This page documents the current shape so admins and editors can start experimenting.
-
 The File Story Widget renders the documents in a Nextcloud folder as a rich, sortable, filterable story on an IntraVox page. It is the documents-centric counterpart to the [Photo Story Widget](photo-story-widget.md): both stream content directly from a folder, but File Story is optimised for office documents, PDFs, spreadsheets, and other non-image files.
 
 ## Features

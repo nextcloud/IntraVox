@@ -1,7 +1,5 @@
 # Photo Story Widget
 
-> **Status:** In development. Behavior, configuration options and visual styles may still change before the first stable release. This page documents the current shape so admins and editors can start experimenting.
-
 The Photo Story Widget turns a folder of photos (and videos) into a rich visual story on an IntraVox page. It reads EXIF metadata and optional MetaVox fields to group photos by day, place them on a map, and surface the most interesting ones automatically.
 
 It is the photo-centric counterpart to the [File Story Widget](file-story-widget.md): both stream content directly from a Nextcloud folder, but Photo Story is optimised for images.
