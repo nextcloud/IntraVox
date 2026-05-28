@@ -14,6 +14,7 @@ It is the photo-centric counterpart to the [File Story Widget](file-story-widget
 - **Optional maps**: an overview map for the whole story and a mini-map per day
 - **MetaVox integration**: filter and sort on any MetaVox field (people, subjects, locations, custom fields)
 - **Cross-folder search**: leave the source folder blank and use filters to pull MetaVox-tagged photos from anywhere
+- **Federation-aware**: federated mounts from partner Nextcloud instances render as a regular photo source — turn a multi-institution project page into a live shared photo wall without moving any files. See [Federation](#federation) below.
 - **Infinite scroll**: folder mode pages photos in batches; a floating year-jump scrubber appears when the story spans multiple years
 - **Video & RAW support**: tiles fall back to a typed placeholder (`VIDEO` / `RAW` / extension) when Nextcloud cannot render a preview; videos get a play-button overlay
 - **Lightbox**: full-screen viewer with keyboard navigation, opened from any tile or day-map photo
@@ -129,6 +130,25 @@ Typical use cases:
 - *"All photos where `Country = Italy` and `Year = 2025`"*
 - *"All photos with subject `Sunset`"*
 
+## Federation
+
+Photo Story renders federated mounts (incoming OCM / Nextcloud-Federation shares) as a regular source: point the widget at the federated folder and partner photos appear in the same timeline / grid / highlight as everything else. Nothing is copied — the widget streams thumbnails and EXIF over the federated link, every time.
+
+What this unlocks for hoger onderwijs / onderzoek:
+
+- **Veldwerkfoto's van een consortiumproject** waarin elke deelnemende universiteit haar eigen Nextcloud beheert. Eén Photo Story-widget toont foto's van het Antarctica-veldwerk van TU Delft, het noordpool-fieldwork van Wageningen, en het laboratoriumwerk van een industriepartner — drie tenants, één tijdlijn, geen master-copy.
+- **Promotie- en openingsceremonies** waarbij de fotograaf van het partnerinstituut zijn shoot in een eigen Nextcloud uploadt en met de gastinstelling federeert. De intranetpagina van de gastinstelling toont de ceremonie binnen minuten, zonder dat de bestanden ergens hoeven te dupliceren.
+- **Studentprojecten over instellingen heen**: docenten van twee hogescholen kunnen één gezamenlijke projectpagina draaien waar de studenten van beide kanten hun output uploaden naar hun eigen Nextcloud-omgeving — de pagina toont alles in één Photo Story.
+
+Federation-bewuste degradatie volgt dezelfde logica als de [File Story Widget](file-story-widget.md#federation):
+
+- MetaVox-velden (mensen, onderwerpen, locaties) komen van de eigenaar-instance; ze reizen niet mee over OCM. Filters en sort-op-MetaVox-veld worden verborgen voor federated sources.
+- EXIF dat in het bestand zelf zit (*date taken*, *GPS*) blijft beschikbaar — Photo Story leest dat aan de viewer-kant.
+- Per-foto verschijnt een klein cloud-badge dat aangeeft dat de tile van een federated source komt.
+- Maps werken: GPS uit EXIF heeft geen owner-side database nodig en wordt gewoon op de overzichtskaart geplot.
+
+De widget her-controleert federation-status op elke `/photos` request — een eerder opgeslagen config waarbij de bron later federated raakt, valt niet stilletjes uit.
+
 ## Performance
 
 - **ETag / 304**: every `/photos` response carries a per-user ETag (UID baked into the hash, so it cannot leak across tenants). Subsequent requests send `If-None-Match` — when nothing changed the server returns `304 Not Modified` without recomputing.
@@ -151,13 +171,71 @@ The widget calls the following endpoints (all under `/apps/intravox/api/photo-st
 | `/video` | GET | HTTP-Range-aware video stream (`Accept-Ranges: bytes`, 206 responses). Params: `file_id`. |
 | `/metavox-fields` | GET | List of available MetaVox fields (used for the filter and sort dropdowns) |
 
+## Only indexed files are shown
+
+Photo Story queries Nextcloud's `oc_filecache` directly via SQL — it does not perform live filesystem walks. This is the same fast path Nextcloud itself uses for search and listing. The consequence is that **files that are not in the file cache are invisible to the widget**, even if they exist on disk.
+
+Files are normally indexed automatically when they're uploaded through:
+
+- The Nextcloud web UI
+- The desktop sync client
+- Mobile apps
+- WebDAV (most clients)
+
+Files can become **out-of-sync with the cache** when they're added directly to disk (e.g. `rsync`, `cp`, server-side scripts) bypassing Nextcloud's storage layer. In that case the Files-app may still show them (it does a one-time live check on directory listing — see `IWatcher::CHECK_ONCE`), but Photo Story will not until the index is updated.
+
+To bring the cache back in sync:
+
+```bash
+# Whole user
+occ files:scan <username>
+
+# A single folder
+occ files:scan --path="/<username>/files/Photos/MyAlbum"
+
+# Everything (slow on big instances)
+occ files:scan --all
+```
+
+For installations where files arrive from external scripts regularly, schedule `occ files:scan` from cron, or — better — make the upload path go through Nextcloud's storage API instead of writing files directly.
+
+The widget does **not** trigger a scan itself: scans on a populated folder can take seconds to minutes, and triggering them on every widget-render would degrade the page-load badly. NC follows the same principle — the Files-app only re-checks file metadata, never adds missing entries.
+
+## Supported file formats
+
+Photo Story includes any file whose mime-type falls in one of these groups:
+
+**Common image formats**: JPEG, PNG, WebP, GIF, SVG, BMP
+**Photography-grade**: HEIC, HEIF, TIFF
+**Raw camera formats**: Canon CR2/CR3, Nikon NEF, Sony ARW, Adobe DNG, dcraw
+**Video**: MP4, MOV/QuickTime, AVI, MPEG, WMV, WebM
+
+Files with other mime-types are silently skipped. If users upload photos with an exotic format (e.g. AVIF) and they don't appear, that's the reason — the format isn't in the widget's mime allowlist.
+
+## Why some tiles show a placeholder instead of a preview
+
+Photo Story renders thumbnails via Nextcloud's `/core/preview` endpoint. For each file Nextcloud asks its preview-provider chain (see `config.php` → `enabledPreviewProviders`) to generate a JPEG. If no provider can handle the mime-type for that file, the widget falls back to a placeholder tile with the file extension as a badge.
+
+Common reasons:
+
+- **Mime-type not in `enabledPreviewProviders`** — admin should add the missing provider. Common gaps:
+  - `image/heic` and `image/heif` require `OC\Preview\HEIC` (NC 28+) **and** server-side `libheif`
+  - `image/webp` is enabled by default in `OC\Preview\Image`, but only if Imagick or GD's WebP support is present
+  - `image/svg+xml` requires the explicit `OC\Preview\SVG` provider (off by default for security)
+  - Raw camera formats (CR2/NEF/ARW/DNG) need `OC\Preview\Imaginary` with the `imaginary` external service, or the `previewgenerator` app with a wrapper script
+- **File too large** — preview generation is capped by `preview_max_filesize_image` (default 50 MB). Larger photos get the placeholder
+- **File hasn't been pre-rendered yet** — for very large libraries, install the [previewgenerator](https://apps.nextcloud.com/apps/previewgenerator) app and run `occ preview:generate-all` once. After that all tiles render instantly
+- **Video previews** require server-side `ffmpeg` in Nextcloud's preview chain; without it videos fall back to a typed placeholder tile with a play-button overlay
+
+Tip: open one of the affected files via NC's Files app and check the preview pane. If even Files shows a generic icon, the preview-provider issue is server-side, not specific to IntraVox.
+
 ## Requirements
 
 - IntraVox 1.5.0 or higher (Photo Story widget is shipping in a 1.5.x preview build)
 - MetaVox app (optional, strongly recommended for filtering, sorting, and people/place metadata)
 - Photos with EXIF metadata (date taken, GPS) for the richest experience
 - Leaflet-compatible map tiles configured by the administrator (optional, for maps)
-- Server-side `ffmpeg` in Nextcloud's preview chain for video tile previews (optional, falls back to typed placeholder)
+- A working Nextcloud preview-provider chain for the formats you want to show (see "Why some tiles show a placeholder" above)
 
 ## Limitations (current preview)
 

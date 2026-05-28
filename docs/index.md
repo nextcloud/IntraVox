@@ -41,10 +41,10 @@ Per-feature documentation for widgets and capabilities.
 
 - [Calendar Widget](features/calendar-widget.md) — Embed calendar events on pages
 - [Feed Widget](features/feed-widget.md) — External feeds (Moodle, Jira, SharePoint, ICS, RSS)
-- [File Story Widget](features/file-story-widget.md) — Folder-as-document-stream rendering *(in development)*
+- [File Story Widget](features/file-story-widget.md) — Folder-as-document-stream rendering, federation-aware *(in development)*
 - [News Widget](features/news-widget.md) — Folder-as-feed news rendering
 - [People Widget](features/people-widget.md) — Show people from groups
-- [Photo Story Widget](features/photo-story-widget.md) — Folder-as-photo-story with EXIF, maps, and timeline *(in development)*
+- [Photo Story Widget](features/photo-story-widget.md) — Folder-as-photo-story with EXIF, maps, timeline, and federation *(in development)*
 - [Engagement Architecture](features/engagement-architecture.md) — How reactions and comments work technically
 - [Confluence Import](features/confluence-import.md) — Import content from Confluence Cloud, Server, or Data Center
 

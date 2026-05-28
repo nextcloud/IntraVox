@@ -11,7 +11,7 @@ The File Story Widget renders the documents in a Nextcloud folder as a rich, sor
 - **Preview thumbnails**: Tile mode renders first-page previews of PDFs, Office documents, etc., with mime-icon fallback layered underneath so a missing preview never flashes a broken image
 - **MetaVox integration**: filter, sort and group by any MetaVox field (author, project, status, custom fields)
 - **Group by**: cluster documents by file category (PDF, Tekstdocumenten, Spreadsheets, Presentaties, Tekst, Overig) or any single-valued MetaVox field
-- **Federated-share aware**: documents from a federated mount are still rendered, with a per-row cloud badge and MetaVox features automatically hidden because metadata cannot cross the federation
+- **Federation-native**: a federated mount from a partner institution renders side-by-side with your own files — one widget can pull documents from multiple Nextcloud instances without copying or syncing them. See [Federation](#federation) below.
 - **Configurable columns**: show date, file size, and/or folder path next to the filename
 - **Infinite scroll**: documents are paged in batches of 100 with ETag-based 304s
 - **Direct open**: clicks open in Nextcloud's native viewer (`OCA.Viewer`) when available, falling back to `/f/<file_id>`
@@ -53,6 +53,10 @@ Best for browsable document libraries where a visual hint helps recognition.
 A flat sortable list — no grouping. Rows use a longer `day month year, HH:MM` date format (unlike Timeline mode, which shows only the time, because the date already lives in the section header).
 
 ![File Story Widget — List mode](../../screenshots/FileStory-List.png)
+
+A common pattern: point the source at `/`, sort on **Date modified — Newest first**, hide the file-size and folder-path columns, and cap at 10 documents — instant "Recent files" widget for the homepage.
+
+![File Story Widget — Recent files configuration](../../screenshots/FileStory-RecentFiles.png)
 
 ### Grouped
 
@@ -108,9 +112,41 @@ To add a File Story Widget to your page:
 
 The File Story editor does **not** have a Title input — wrap the widget in a [Collapsible Section](../user/editor.md) or add a heading widget above it if you need a label like "Manuals" above the document list.
 
-## Federated shares
+## Federation
 
-When the source folder lives on a federated mount (i.e. the storage owner is on a different Nextcloud instance), File Story degrades gracefully:
+File Story is built around Nextcloud's **federated sharing** — the protocol that lets two independent Nextcloud instances share folders with each other without any data leaving its home. Open Cloud Mesh (OCM) under the hood; same mechanism that powers the SURF research-cloud federation, the GÉANT cloud-federation pilot, and every "Sciebo / Hochschulcloud / Drive @ NRW" cross-institution share.
+
+For an intranet built on IntraVox, federation is what makes a page *live across organisations* without becoming a copy-paste portal.
+
+![One IntraVox page rendering three File Story widgets — each sourced from a different Nextcloud server](../../screenshots/FileStory-demo1.png)
+
+*One IntraVox page, three File Story widgets, three different Nextcloud instances: a customer's server on the left, files from this server in the middle, and a testserver on the right. Every column streams live from its owner — nothing is duplicated, nothing is synced, no instance has access to the other tenants' data beyond what was explicitly federated.*
+
+### What this unlocks
+
+- **One page per consortium project.** A research group at TU Delft, a partner faculty at RU Nijmegen, and a non-academic partner at TNO each upload their working documents to *their own* Nextcloud. The project intranet, hosted at one of them, mounts the others' folders via federated share and renders all three streams in a single File Story widget. Every partner keeps ownership, retention, GDPR responsibility — but the project page shows one consolidated view.
+- **One page per onderzoeksinfrastructuur.** A national facility federates partner-institution drop-zones into its public-facing IntraVox project page. New datasets appear on the page the moment a partner uploads — no webmaster, no manual link list.
+- **One page per onderwijsmodule across institutions.** A joint master's programme between Wageningen and Utrecht shows lecture material from both LMSs in one IntraVox curriculum page. Each university keeps its own user accounts and access policy; only the relevant folder is federated.
+- **Cross-organisation chain partners** (ketenpartners — a municipality + a housing corporation + a healthcare org) share project documents *without* one of them having to invite the others into their tenancy. The widget shows the partner's documents live; if the partner revokes the share, the row disappears the next time the widget loads. No orphan copies, no stale links.
+
+This is the FAIR/EOSC argument in practice: data stays where its data-steward is, but composition happens at the presentation layer. IntraVox is the presentation layer.
+
+### How to set it up
+
+1. On the **owning** Nextcloud (the side that holds the documents), share the folder with the partner's federated Cloud ID via the Files-app sharing dialog. The federated share appears under **Extern delen** with the partner's `username@partner.example.org` identifier.
+
+   ![Federated share — creating a federated share from the Files app](../../screenshots/FileStory-CreateFederation.png)
+
+2. The partner accepts the share on their Nextcloud; the folder appears as a regular mount in their Files tree.
+3. In IntraVox, point a File Story widget at that mount. It renders just like a local folder.
+
+   ![File Story rendering the same federated folder side-by-side: owner (left) and partner (right)](../../screenshots/FileStory-FederationExample.png)
+
+   *Same `Afspraken intern.docx` file, same widget config, two different Nextcloud instances. The partner-side widget streams the file metadata over OCM in real time.*
+
+### What changes on a federated source
+
+Federated mounts inherit a constraint of the federated-cloud protocol itself: only the basic file fields cross the federation. MetaVox metadata stays on the owner's instance, because it's stored in the owner's database and not part of the OCM payload. The widget detects this and adjusts:
 
 - The capability badge switches to the federated-share state and explains MetaVox metadata cannot cross the federation.
 - The filter builder is hidden.
@@ -119,6 +155,10 @@ When the source folder lives on a federated mount (i.e. the storage owner is on 
 - Per-row, files mounted from a federated source get a small cloud badge next to the filename, tooltip *"From federated share — MetaVox metadata not available"*.
 
 The server re-checks federation status on every `/files` request, so a config saved before the folder became federated will not silently filter out every result.
+
+### What stays local
+
+Rich metadata (MetaVox fields, EXIF, custom indices) lives in the owner's database and does not travel over OCM. The widget never papers over this: if a federated mount has MetaVox metadata on the owner's side, it stays there. The rule is simple — rich metadata for local sources, basic file metadata for federated sources, no broken links either way.
 
 ## Performance
 
@@ -145,7 +185,7 @@ The `/files` endpoint reuses the shared `PhotoStoryService::listPhotosPaged()` m
 - **Show folder path** when the source folder contains subfolders and the same filename may exist in multiple places.
 - **Combine Grouped + MetaVox** to render a per-author or per-project overview without manually pre-sorting the folder.
 - **Cap the limit** on busy intranet homepages to avoid loading hundreds of documents up-front.
-- **Federated mounts** still work — just remember filters and MetaVox grouping go away.
+- **Federated mounts** are a first-class source — combine a local folder widget with a federated-folder widget on the same page to render one consolidated stream of partner documents alongside your own.
 
 ## Requirements
 
