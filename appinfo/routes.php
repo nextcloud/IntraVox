@@ -211,6 +211,12 @@ return [
         ['name' => 'fileStory#capabilities', 'url' => '/api/file-story/capabilities', 'verb' => 'GET'],
         ['name' => 'fileStory#metaVoxFields', 'url' => '/api/file-story/metavox-fields', 'verb' => 'GET'],
 
+        // Shared preview proxy — fills the gap NC core leaves for federated
+        // files (their preview pipeline can't reach the remote storage). Used
+        // by both PhotoStory and FileStory tiles when file.is_federated.
+        ['name' => 'preview#fetch', 'url' => '/api/preview', 'verb' => 'GET'],
+        ['name' => 'preview#warmup', 'url' => '/api/preview/warmup', 'verb' => 'POST'],
+
         // Page routes
         ['name' => 'page#index', 'url' => '/', 'verb' => 'GET'],
         ['name' => 'page#shareAccess', 'url' => '/s/{shareToken}', 'verb' => 'GET'],

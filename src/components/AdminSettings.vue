@@ -1108,8 +1108,26 @@
 									<span class="page-count">({{ folder.pageCount }} {{ t('intravox', 'pages') }})</span>
 								</span>
 								<span v-else class="content-badge unknown">
-									{{ t('intravox', 'Unknown data') }}
+									{{ t('intravox', 'Non-IntraVox data') }}
 								</span>
+								<ul
+									v-if="folder.sampleContents && folder.sampleContents.entries && folder.sampleContents.entries.length"
+									class="sample-contents">
+									<li v-for="entry in folder.sampleContents.entries" :key="entry.name">
+										<span class="sample-icon">{{ entry.type === 'dir' ? '📁' : '📄' }}</span>
+										<span class="sample-name">{{ entry.name }}</span>
+										<span class="sample-size">{{ entry.sizeFormatted }}</span>
+									</li>
+									<li
+										v-if="folder.sampleContents.totalEntries > folder.sampleContents.entries.length"
+										class="sample-more">
+										{{
+											t('intravox', '… and {n} more', {
+												n: folder.sampleContents.totalEntries - folder.sampleContents.entries.length
+											})
+										}}
+									</li>
+								</ul>
 							</td>
 							<td class="size-cell">{{ folder.sizeFormatted }}</td>
 							<td class="date-cell">{{ folder.lastModifiedFormatted }}</td>
@@ -2734,6 +2752,43 @@ export default {
 .content-badge.basic {
 	background-color: var(--color-background-hover);
 	color: var(--color-text-maxcontrast);
+}
+
+.sample-contents {
+	list-style: none;
+	margin: 6px 0 0 0;
+	padding: 0;
+	font-size: 0.85em;
+	color: var(--color-text-maxcontrast);
+}
+
+.sample-contents li {
+	display: grid;
+	grid-template-columns: 18px 1fr auto;
+	gap: 6px;
+	align-items: baseline;
+	padding: 1px 0;
+}
+
+.sample-contents .sample-icon {
+	font-size: 0.9em;
+	text-align: center;
+}
+
+.sample-contents .sample-name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.sample-contents .sample-size {
+	color: var(--color-text-lighter);
+	font-variant-numeric: tabular-nums;
+}
+
+.sample-contents .sample-more {
+	font-style: italic;
+	grid-template-columns: 1fr;
 }
 
 .status-badge {

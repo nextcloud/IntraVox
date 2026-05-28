@@ -95,7 +95,7 @@
           </div>
           <img
             v-if="!tilePreviewErrors[file.file_id]"
-            :src="previewUrl(file.file_id, 400)"
+            :src="previewUrl(file, 400)"
             alt=""
             loading="lazy"
             decoding="async"
@@ -456,6 +456,7 @@ export default {
         this.timeline = d.timeline || [];
         this.groups = d.groups || [];
         this.capabilities = d.capabilities || null;
+        this.warmFederatedPreviews(this.files);
         if (d.pagination) {
           this.pagination = {
             offset: d.pagination.offset || 0,
@@ -512,6 +513,7 @@ export default {
         const d = res.data || {};
         const newFiles = d.files || [];
         this.files = this.files.concat(newFiles);
+        this.warmFederatedPreviews(newFiles);
 
         // Merge incoming timeline-days + re-sort by date so bucket order is
         // chronologically consistent regardless of pagination boundaries.
@@ -630,12 +632,34 @@ export default {
       return `${v.toFixed(v >= 10 || i === 0 ? 0 : 1)} ${units[i]}`;
     },
     /**
-     * Build the URL for NC's preview-thumbnail endpoint. Same path the photo
-     * widget uses; PDFs and Office docs render as raster previews when the
-     * server has the relevant preview-provider configured.
+     * Fire-and-forget warmup of the federated-preview cache. Called after
+     * each fetch/fetchMore so the IntraVox proxy can pre-fetch thumbnails
+     * from the owning NC instance before the user scrolls to each tile.
+     * Caps + dedup live server-side; we just hand over the fileIds.
      */
-    previewUrl(fileId, size = 400) {
-      return generateUrl(`/core/preview?fileId=${fileId}&x=${size}&y=${size}&a=true`);
+    warmFederatedPreviews(files) {
+      try {
+        if (!Array.isArray(files) || files.length === 0) return;
+        const fids = files
+          .filter(f => f && f.is_federated && f.file_id)
+          .map(f => f.file_id);
+        if (fids.length === 0) return;
+        const url = generateUrl('/apps/intravox/api/preview/warmup');
+        axios.post(url, { file_ids: fids }).catch(() => {});
+      } catch (_) { /* never block render on prewarm */ }
+    },
+    /**
+     * Build the URL for the preview-thumbnail endpoint. Local files go
+     * straight to NC's `/core/preview` (fast, hits NC's own preview cache).
+     * Federated files route through IntraVox's proxy because NC's core
+     * preview pipeline can't reach the remote storage on its own.
+     */
+    previewUrl(file, size = 400) {
+      if (file && file.is_federated) {
+        return generateUrl(`/apps/intravox/api/preview?file_id=${file.file_id}&x=${size}&y=${size}`);
+      }
+      const fid = (file && typeof file === 'object') ? file.file_id : file;
+      return generateUrl(`/core/preview?fileId=${fid}&x=${size}&y=${size}&a=true`);
     },
     markPreviewError(fileId) {
       // Vue 3 reactivity tracks property additions on a plain {} reliably

@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "IntraVox API",
-    "version": "1.5.1",
+    "version": "1.5.2",
     "description": "IntraVox is a modern intranet page builder for Nextcloud. This API provides endpoints for managing pages, media, navigation, comments, reactions, the Photo Story widget (galleries with EXIF, maps and lightbox) and the File Story widget (document libraries with MetaVox-aware filtering and federated-share awareness).",
     "license": {
       "name": "AGPL-3.0",
@@ -2801,6 +2801,67 @@
         "summary": "MetaVox field discovery for File Story filter-builder / sort / group-by",
         "responses": {
           "200": { "description": "List of MetaVox field definitions" }
+        }
+      }
+    },
+    "/api/preview": {
+      "get": {
+        "summary": "Federated-aware preview proxy (shared by PhotoStory and FileStory)",
+        "description": "Generates a thumbnail for a single file by id. Local files 302-redirect to NC core /core/preview so NC's own preview cache stays hot. Federated files (Files_Sharing\\External\\Storage) are fetched from the owner instance's publicpreview endpoint and cached in appdata. In-flight dedup ensures concurrent identical requests share one outbound call; a per-remote concurrency cap protects the owning NC instance from a stampede. Falls back to a 302 redirect to the matching mime-icon SVG when no preview can be produced. Rate-limited to 600 requests per user per minute.",
+        "parameters": [
+          { "name": "file_id", "in": "query", "required": true, "schema": { "type": "integer" }, "description": "NC filecache fileid of the file to preview" },
+          { "name": "x", "in": "query", "schema": { "type": "integer", "minimum": 32, "maximum": 2048, "default": 400 } },
+          { "name": "y", "in": "query", "schema": { "type": "integer", "minimum": 32, "maximum": 2048, "default": 400 } }
+        ],
+        "responses": {
+          "200": { "description": "Preview image bytes (image/png typically)" },
+          "302": { "description": "Redirect to /core/preview (local files) or mime-icon (no preview available)" },
+          "400": { "description": "file_id missing or invalid" },
+          "401": { "description": "Authentication required" },
+          "404": { "description": "File not visible to the current user" },
+          "429": { "description": "Per-user rate limit exceeded (600/min)" }
+        }
+      }
+    },
+    "/api/preview/warmup": {
+      "post": {
+        "summary": "Pre-warm the federated-preview cache for a batch of file ids",
+        "description": "Best-effort: synchronously warms up to 16 federated file thumbnails per call. Designed for the PhotoStory/FileStory widgets to call once per page-load with every is_federated fileId from the just-fetched page. Local fileIds and inaccessible ones are silently skipped (counted under 'skipped'). Rate-limited to 60 calls per user per minute.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file_ids": {
+                    "type": "array",
+                    "items": { "type": "integer" },
+                    "description": "List of NC filecache fileids to warm"
+                  }
+                },
+                "required": ["file_ids"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Counts of fileIds for which a preview was successfully warmed vs skipped",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "warmed": { "type": "integer" },
+                    "skipped": { "type": "integer" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Authentication required" },
+          "429": { "description": "Per-user rate limit exceeded (60/min)" }
         }
       }
     }

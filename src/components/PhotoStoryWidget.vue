@@ -66,7 +66,7 @@
             @keydown.space.prevent="openLightbox(globalIndex(day.photos, idx))"
           >
             <img
-              :src="previewUrl(photo.file_id, 800)"
+              :src="previewUrl(photo, 800)"
               :alt="photo.location_display || photo.location || photo.name"
               loading="lazy"
               decoding="async"
@@ -165,7 +165,7 @@
         @keydown.space.prevent="openLightbox(0)"
       >
         <img
-          :src="previewUrl(highlights[0].file_id, 1600)"
+          :src="previewUrl(highlights[0], 1600)"
           :alt="highlights[0].location_display || highlights[0].location || highlights[0].name"
           loading="lazy"
           decoding="async"
@@ -290,7 +290,11 @@ const PhotoTile = {
   setup(props, { emit }) {
     const hasError = ref(false);
     return () => {
-      const src = generateUrl(`/core/preview?fileId=${props.photo.file_id}&x=512&y=512&a=true`);
+      // Route federated photos through IntraVox's preview proxy; local
+      // photos go straight to NC core preview to reuse NC's preview cache.
+      const src = props.photo.is_federated
+        ? generateUrl(`/apps/intravox/api/preview?file_id=${props.photo.file_id}&x=512&y=512`)
+        : generateUrl(`/core/preview?fileId=${props.photo.file_id}&x=512&y=512&a=true`);
       const caption = props.photo.location_display || props.photo.location || '';
       const dateStr = props.photo.taken_at
         ? new Date(props.photo.taken_at).toLocaleDateString(getCanonicalLocale(), { day: 'numeric', month: 'short', year: 'numeric' })
@@ -556,6 +560,7 @@ export default {
         sb: c.sortBy || 'mtime',
         x: !!c.allMetaVoxFolders,
         flt: Array.isArray(c.metaVoxFilters) ? c.metaVoxFilters : [],
+        dr: c.hideRawDuplicates !== false,
       });
     },
     yearScrubber() {
@@ -694,6 +699,7 @@ export default {
         this.timeline = data.timeline || [];
         this.highlights = data.highlights || [];
         this.capabilities = data.capabilities || null;
+        this.warmFederatedPreviews(this.photos);
         if (data.map && typeof data.map === 'object') {
           this.mapSettings = { ...this.mapSettings, ...data.map };
         }
@@ -758,6 +764,11 @@ export default {
           params.append('total', String(this.pagination.total));
         }
       }
+      // Only send the param when the user explicitly opted out. Backend
+      // defaults to dedup=on, so omitting matches existing widgets.
+      if (this.config.hideRawDuplicates === false) {
+        params.append('hideRawDuplicates', '0');
+      }
       return params;
     },
     async fetchMore() {
@@ -772,6 +783,7 @@ export default {
         const data = res.data || {};
         const newPhotos = data.photos || [];
         this.photos = this.photos.concat(newPhotos);
+        this.warmFederatedPreviews(newPhotos);
 
         // Merge incoming timeline-days into existing timeline. Backend returns
         // grouped days for THIS page; we merge by date key, then explicitly
@@ -839,8 +851,34 @@ export default {
       }, { rootMargin: '800px' });
       this._scrollObserver.observe(sentinel);
     },
-    previewUrl(fileId, size = 512) {
-      return generateUrl(`/core/preview?fileId=${fileId}&x=${size}&y=${size}&a=true`);
+    /**
+     * Best-effort pre-warm of the federated-preview cache. Picks every
+     * `is_federated: true` photo from a newly loaded page and POSTs the
+     * fileIds to the warmup endpoint. Backend handles cap, dedup and
+     * outbound concurrency limit; we don't await the response.
+     */
+    warmFederatedPreviews(photos) {
+      try {
+        if (!Array.isArray(photos) || photos.length === 0) return;
+        const fids = photos
+          .filter(p => p && p.is_federated && p.file_id)
+          .map(p => p.file_id);
+        if (fids.length === 0) return;
+        const url = generateUrl('/apps/intravox/api/preview/warmup');
+        axios.post(url, { file_ids: fids }).catch(() => {});
+      } catch (_) {
+        // Pre-warm is fire-and-forget — never block render on it.
+      }
+    },
+    previewUrl(photo, size = 512) {
+      // Federated files cannot be served by NC core preview (the providers
+      // can't reach the remote storage), so route them through IntraVox's
+      // preview-proxy. Local files keep the direct /core/preview path.
+      if (photo && photo.is_federated) {
+        return generateUrl(`/apps/intravox/api/preview?file_id=${photo.file_id}&x=${size}&y=${size}`);
+      }
+      const fid = (photo && typeof photo === 'object') ? photo.file_id : photo;
+      return generateUrl(`/core/preview?fileId=${fid}&x=${size}&y=${size}&a=true`);
     },
     formatDate(iso) {
       if (!iso) return '';

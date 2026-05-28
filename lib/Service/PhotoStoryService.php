@@ -113,6 +113,28 @@ class PhotoStoryService {
 	/** Hard cap on photos returned in cross-folder mode to avoid runaway queries. */
 	private const CROSS_FOLDER_HARD_CAP = 5000;
 
+	/**
+	 * File extensions that mark a sidecar RAW file. When a camera writes both a
+	 * RAW and a JPG/HEIC for the same shot (Canon RAW+JPG mode, Fujifilm Fine+RAF,
+	 * etc.), the rendered output should prefer the browser-displayable variant
+	 * and hide the RAW. Detection is by extension only; we do not crack the file.
+	 *
+	 * Coverage: every common camera-vendor RAW format. Adobe DNG is included
+	 * because it's frequently produced as a converted sidecar.
+	 */
+	private const RAW_EXTENSIONS = [
+		'cr2', 'cr3',           // Canon
+		'nef', 'nrw',           // Nikon
+		'arw',                  // Sony
+		'dng',                  // Adobe / generic
+		'raf',                  // Fujifilm
+		'orf',                  // Olympus
+		'rw2',                  // Panasonic
+		'pef',                  // Pentax
+		'srw',                  // Samsung
+		'x3f',                  // Sigma
+	];
+
 	/** Allowed filter operators (mirrored in PhotoStoryController::sanitizeFilters). */
 	private const ALLOWED_OPS = ['equals', 'contains', 'in', 'year_equals'];
 
@@ -311,6 +333,7 @@ class PhotoStoryService {
 		?int $knownTotal = null,
 		string $sortBy = 'mtime',
 		string $mimeCategory = 'photos',
+		bool $hideRawDuplicates = true,
 	): array {
 		$user = $this->userSession->getUser();
 		if ($user === null) {
@@ -413,10 +436,20 @@ class PhotoStoryService {
 			);
 		}
 
+		// Over-fetch when dedup is enabled so that the final page reaches the
+		// requested size even after RAW/JPG pairs collapse. Factor 2 covers the
+		// worst case where every shot has a RAW sidecar. Hard-capped at 1000
+		// rows to bound memory; if a user sets pageSize=500 + dedup, the slice
+		// may end up shorter than requested but pagination stays correct.
+		$fetchSize = $hideRawDuplicates ? min(1000, $pageSize * 2) : $pageSize;
+
 		$rawRows = $this->fetchMediaPageAcrossScopes(
-			$scopes, $mimeIds, $offset, $pageSize, $sortOrder, $sqlSortColumn
+			$scopes, $mimeIds, $offset, $fetchSize, $sortOrder, $sqlSortColumn
 		);
-		$hasMore = ($offset + count($rawRows)) < $total;
+		// hasMore is true when SQL filled the full fetch window — there's still
+		// more behind it. We deliberately use fetchSize (not pageSize) here so
+		// dedup-shortened pages don't falsely terminate pagination.
+		$hasMore = (count($rawRows) >= $fetchSize) && (($offset + count($rawRows)) < $total);
 
 		if (empty($rawRows)) {
 			return [
@@ -439,6 +472,19 @@ class PhotoStoryService {
 				'size' => (int)$r['size'],
 			];
 		}, $rawRows);
+
+		if ($hideRawDuplicates) {
+			$slicePrimitives = $this->dedupRawSidecars($slicePrimitives);
+		}
+
+		// Trim back to the user-requested page size. Anything beyond is dropped
+		// silently; the next request's offset advances by SQL-row count
+		// (`fetchSize`), which means we may skip across the dedup-trimmed tail.
+		// In practice RAW/JPG pairs sit adjacent in name/mtime sort order so
+		// the tail is rarely cross-boundary.
+		if (count($slicePrimitives) > $pageSize) {
+			$slicePrimitives = array_slice($slicePrimitives, 0, $pageSize);
+		}
 
 		$sliceIds = array_map(fn(array $r) => $r['file_id'], $slicePrimitives);
 
@@ -502,18 +548,68 @@ class PhotoStoryService {
 	 * Resolve a folder Node to (storageId, internalPath).
 	 * Internal-path is what oc_filecache stores in the `path` column.
 	 *
+	 * For groupfolder mounts (and any other jailed mount) the Node's
+	 * `getInternalPath()` returns the jailed path (e.g. "Albums/Doris").
+	 * The actual filecache row stores the unjailed path — for example
+	 * "__groupfolders/7/Albums/Doris" on installs where the groupfolder
+	 * shares the root local storage, or "files/Albums/Doris" on installs
+	 * where each groupfolder has its own storage. The prefix is mount-
+	 * dependent and lives on the cache layer's CacheJail wrapper, so we
+	 * walk the cache chain looking for `getGetUnjailedRoot()`.
+	 *
+	 * Without this re-prefixing, the SQL `path LIKE` predicate matches
+	 * zero rows on every groupfolder, and the widget shows "no photos".
+	 *
 	 * @return array{0: int|null, 1: string|null}
 	 */
 	private function extractStorageAndPath(Folder $node): array {
 		try {
 			$storage = $node->getStorage();
 			$storageId = $storage->getCache()->getNumericStorageId();
-			$internalPath = $node->getInternalPath();
-			return [(int)$storageId, (string)$internalPath];
+			$internalPath = (string)$node->getInternalPath();
+
+			$prefix = $this->extractCacheJailRoot($storage->getCache());
+			if ($prefix !== '' && !str_starts_with($internalPath, $prefix . '/') && $internalPath !== $prefix) {
+				$internalPath = $prefix . ($internalPath === '' ? '' : '/' . $internalPath);
+			}
+
+			return [(int)$storageId, $internalPath];
 		} catch (\Throwable $e) {
 			$this->logger->warning('PhotoStoryService: extractStorageAndPath failed: ' . $e->getMessage());
 			return [null, null];
 		}
+	}
+
+	/**
+	 * Walk the cache-wrapper chain (PermissionsMask → RootEntryCache →
+	 * CacheJail → Cache) and return the unjailed root prefix from the
+	 * first CacheJail we find. Returns '' when no jail is in play
+	 * (personal storage, plain external mounts).
+	 */
+	private function extractCacheJailRoot($cache): string {
+		$visited = 0;
+		while ($cache !== null && $visited++ < 10) {
+			if (method_exists($cache, 'getGetUnjailedRoot')) {
+				try {
+					$root = (string)$cache->getGetUnjailedRoot();
+					if ($root !== '') {
+						return trim($root, '/');
+					}
+				} catch (\Throwable $e) {
+					// Keep unwrapping
+				}
+			}
+			if (method_exists($cache, 'getCache')) {
+				$inner = $cache->getCache();
+				if ($inner === $cache || $inner === null) {
+					break;
+				}
+				$cache = $inner;
+				continue;
+			}
+			break;
+		}
+		return '';
 	}
 
 	/**
@@ -2825,6 +2921,78 @@ class PhotoStoryService {
 			$this->logger->debug('PhotoStoryService: getLocalFile failed: ' . $e->getMessage());
 		}
 		return null;
+	}
+
+	/**
+	 * Collapse RAW + JPG/HEIC sidecars to a single entry per shot. Operates on
+	 * the pre-hydration primitives array (each row has `path`, `name`, `mime`)
+	 * because RAW detection is by extension and parent-folder grouping — no
+	 * EXIF or MetaVox fields needed.
+	 *
+	 * Algorithm: group by (parent_path, basename-without-extension). Within
+	 * each group, prefer a non-RAW variant if present; otherwise keep the
+	 * first RAW. Preserves the original sort order of the kept entries.
+	 *
+	 * @param array<int, array<string, mixed>> $primitives Rows with `path` and `name` set.
+	 * @return array<int, array<string, mixed>>
+	 */
+	private function dedupRawSidecars(array $primitives): array {
+		if (empty($primitives)) {
+			return $primitives;
+		}
+
+		// First pass: bucket by (parent_dir, basename-without-extension).
+		// We track each bucket's chosen winner's index in the original array so
+		// we can rebuild output in input order.
+		$bucketWinner = [];
+		foreach ($primitives as $idx => $row) {
+			$path = (string)($row['path'] ?? '');
+			$name = (string)($row['name'] ?? '');
+			if ($name === '') {
+				// Nothing to group on — keep as-is, never dedup.
+				$bucketWinner['__keep_' . $idx] = $idx;
+				continue;
+			}
+
+			$dot = strrpos($name, '.');
+			$stem = $dot !== false ? substr($name, 0, $dot) : $name;
+			$ext = $dot !== false ? strtolower(substr($name, $dot + 1)) : '';
+			// Parent dir lives in the row's path (which ends with the filename
+			// in filecache layout). Strip the basename to get the dir.
+			$slash = strrpos($path, '/');
+			$parent = $slash !== false ? substr($path, 0, $slash) : '';
+
+			$key = $parent . '/' . strtolower($stem);
+			$isRaw = $ext !== '' && in_array($ext, self::RAW_EXTENSIONS, true);
+
+			if (!isset($bucketWinner[$key])) {
+				$bucketWinner[$key] = $idx;
+				continue;
+			}
+
+			// Existing winner — replace only if current is non-RAW and existing
+			// is RAW. Otherwise keep the earlier entry (preserves sort order
+			// among ties and avoids flapping if two non-RAW files share a stem).
+			$existingIdx = $bucketWinner[$key];
+			$existingName = (string)($primitives[$existingIdx]['name'] ?? '');
+			$existingDot = strrpos($existingName, '.');
+			$existingExt = $existingDot !== false ? strtolower(substr($existingName, $existingDot + 1)) : '';
+			$existingIsRaw = $existingExt !== '' && in_array($existingExt, self::RAW_EXTENSIONS, true);
+
+			if ($existingIsRaw && !$isRaw) {
+				$bucketWinner[$key] = $idx;
+			}
+		}
+
+		// Second pass: emit only the winning indices, in original order.
+		$winners = array_flip($bucketWinner);  // value->key gives idx => bucketKey
+		$out = [];
+		foreach ($primitives as $idx => $row) {
+			if (isset($winners[$idx])) {
+				$out[] = $row;
+			}
+		}
+		return $out;
 	}
 
 	/**

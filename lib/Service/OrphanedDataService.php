@@ -343,6 +343,7 @@ class OrphanedDataService {
             $hasIntraVoxContent = $this->hasIntraVoxContent($filesPath);
             $languages = $this->detectLanguages($filesPath);
             $pageCount = $this->countPages($filesPath);
+            $sampleContents = $this->sampleTopLevelContents($filesPath);
 
             $info = [
                 'id' => $id,
@@ -354,6 +355,7 @@ class OrphanedDataService {
                 'lastModified' => $lastModified,
                 'lastModifiedFormatted' => $lastModified ? date('Y-m-d H:i', $lastModified) : null,
                 'pageCount' => $pageCount,
+                'sampleContents' => $sampleContents,
             ];
 
             if ($detailed) {
@@ -366,6 +368,48 @@ class OrphanedDataService {
             $this->logger->error("[OrphanedData] Failed to analyze folder {$id}: " . $e->getMessage());
             return null;
         }
+    }
+
+    /**
+     * Return a small sample of the top-level entries inside an orphaned
+     * groupfolder's `files/` directory so an admin can recognise what's
+     * actually in there before clicking Delete.
+     *
+     * Cap at 8 entries plus a `totalEntries` counter for the rest. Each
+     * entry carries `name`, `type` (file|dir), and `size` (bytes; for dirs
+     * the total recursive size). Listings are sorted alphabetically so the
+     * output is stable between scans.
+     *
+     * @return array{entries: array<int, array{name: string, type: string, size: int, sizeFormatted: string}>, totalEntries: int}
+     */
+    private function sampleTopLevelContents(string $filesPath, int $cap = 8): array {
+        $out = ['entries' => [], 'totalEntries' => 0];
+        if (!is_dir($filesPath)) {
+            return $out;
+        }
+
+        $names = @scandir($filesPath);
+        if ($names === false) {
+            return $out;
+        }
+        $names = array_values(array_filter($names, fn(string $n) => $n !== '.' && $n !== '..'));
+        sort($names, SORT_NATURAL | SORT_FLAG_CASE);
+
+        $out['totalEntries'] = count($names);
+
+        foreach (array_slice($names, 0, $cap) as $name) {
+            $full = $filesPath . '/' . $name;
+            $isDir = is_dir($full);
+            $size = $isDir ? $this->calculateFolderSize($full) : (int)@filesize($full);
+            $out['entries'][] = [
+                'name' => $name,
+                'type' => $isDir ? 'dir' : 'file',
+                'size' => $size,
+                'sizeFormatted' => $this->formatSize($size),
+            ];
+        }
+
+        return $out;
     }
 
     /**

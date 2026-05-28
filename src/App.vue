@@ -2,6 +2,10 @@
   <div id="intravox-app">
     <a href="#intravox-main-content" class="skip-link">{{ t('Skip to main content') }}</a>
 
+    <!-- Sticky topbar wraps header + navigation so navigating between pages
+         doesn't require scrolling all the way back up on long pages. -->
+    <div class="intravox-topbar">
+
     <!-- Header with page title and actions -->
     <header class="intravox-header">
       <div class="header-left">
@@ -99,6 +103,8 @@
                   @navigate="navigateToItem"
                   @show-tree="showPageTree = true" />
     </div>
+
+    </div><!-- /.intravox-topbar -->
 
     <!-- Main content area with sidebar -->
     <div class="app-content-wrapper">
@@ -1404,6 +1410,15 @@ export default {
   width: 100%;
 }
 
+/* Sticky topbar wrapping header + nav. Keeps page navigation in reach
+   on long pages (e.g. Photo Story timelines with hundreds of photos). */
+.intravox-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--color-main-background);
+}
+
 /* Header */
 .intravox-header {
   display: flex;
@@ -1415,9 +1430,6 @@ export default {
   gap: 20px;
   width: 100%;
   box-sizing: border-box;
-  position: sticky;
-  top: 0;
-  z-index: 100;
 }
 
 .header-left {

@@ -127,6 +127,16 @@ class PhotoStoryController extends Controller {
 		$totalHintRaw = $this->request->getParam('total', null);
 		$totalHint = ($totalHintRaw !== null && $totalHintRaw !== '' && $offset > 0) ? max(0, (int)$totalHintRaw) : null;
 
+		// Default-true: hide RAW sidecars when a JPG/HEIC variant exists. Existing
+		// widgets without this param get the dedup, which matches the rollout
+		// intent. Explicit "0"/"false"/"no" disables it; everything else keeps
+		// the default.
+		$dedupRaw = true;
+		$dedupRawRaw = $this->request->getParam('hideRawDuplicates', null);
+		if ($dedupRawRaw !== null && $dedupRawRaw !== '') {
+			$dedupRaw = !in_array(strtolower((string)$dedupRawRaw), ['0', 'false', 'no', 'off'], true);
+		}
+
 		$filtersRaw = $this->request->getParam('filters', null);
 		$filters = [];
 		if ($filtersRaw !== null && $filtersRaw !== '') {
@@ -182,7 +192,7 @@ class PhotoStoryController extends Controller {
 				// Highlights: pull a larger pool (max 2000) in a single page so the
 				// score+pick logic has enough candidates without loading every photo.
 				$effectivePageSize = ($mode === 'highlights') ? 2000 : $pageSize;
-				$paged = $this->service->listPhotosPaged($effectiveFolder, $filters, $offset, $effectivePageSize, $sortOrder, $totalHint, $sortBy);
+				$paged = $this->service->listPhotosPaged($effectiveFolder, $filters, $offset, $effectivePageSize, $sortOrder, $totalHint, $sortBy, 'photos', $dedupRaw);
 				$photos = $paged['photos'];
 				$capabilities = $this->service->getCapabilities();
 				$title = $this->service->suggestTitle($photos, $folderName);
@@ -223,6 +233,7 @@ class PhotoStoryController extends Controller {
 					'f' => $folder, 'm' => $mode, 'l' => $limit,
 					'o' => $offset, 'ps' => $pageSize, 's' => $sortOrder, 'sb' => $sortBy,
 					'flt' => $filters, 'n' => count($photos), 't' => $maxMtime,
+					'dr' => $dedupRaw ? 1 : 0,
 				]);
 
 				$ifNoneMatch = $this->request->getHeader('If-None-Match');

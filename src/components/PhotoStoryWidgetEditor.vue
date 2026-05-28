@@ -294,6 +294,16 @@
       >
         {{ t('No GPS data found in this folder. Map features are disabled. Run the MetaVox EXIF backfill to enable maps for photos with embedded GPS.') }}
       </p>
+
+      <NcCheckboxRadioSwitch
+        :model-value="localConfig.hideRawDuplicates !== false"
+        @update:model-value="toggleHideRawDuplicates"
+      >
+        {{ t('Hide RAW when JPG/HEIC exists') }}
+        <small class="ps-disabled-hint">
+          ({{ t('Collapses RAW+JPG pairs from RAW-capable cameras') }})
+        </small>
+      </NcCheckboxRadioSwitch>
     </div>
 
   </div>
@@ -485,6 +495,7 @@ export default {
         sortBy: 'mtime',
         allMetaVoxFolders: false,
         metaVoxFilters: [],
+        hideRawDuplicates: true,
       };
     },
     async fetchCapabilities() {
@@ -545,6 +556,10 @@ export default {
     },
     toggleDayMaps(val) {
       this.localConfig.showDayMaps = !!val;
+      this.emitUpdate();
+    },
+    toggleHideRawDuplicates(val) {
+      this.localConfig.hideRawDuplicates = !!val;
       this.emitUpdate();
     },
     async loadMetaVoxFields() {

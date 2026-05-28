@@ -318,7 +318,12 @@ export default {
       return t('intravox', key, vars);
     },
     fullUrl(photo) {
-      // High-resolution image OR video poster-frame: NC's preview endpoint.
+      // High-resolution image OR video poster-frame. Federated photos
+      // route through IntraVox's preview proxy because NC core can't
+      // generate previews for files on remote storages.
+      if (photo && photo.is_federated) {
+        return generateUrl(`/apps/intravox/api/preview?file_id=${photo.file_id}&x=2048&y=2048`);
+      }
       return generateUrl(`/core/preview?fileId=${photo.file_id}&x=2048&y=2048&a=true`);
     },
     isVideo(photo) {
