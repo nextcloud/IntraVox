@@ -4,6 +4,18 @@ All notable changes to IntraVox will be documented in this file.
 
 IntraVox is a Nextcloud intranet page builder.
 
+## [1.5.3] - 2026-05-30 — FileStory open in new tab + legacy GroupFolders fix
+
+Patch release that fixes a "file no longer exists" toast when clicking documents in FileStory, and makes click-to-open behaviour consistent across all mount types. No DB migration, no API breaking changes.
+
+### Fixed
+- **FileStory: "file no longer exists" toast on click for legacy shared-storage GroupFolders** — `FileStoryWidget.openFile()` preferred `OCA.Viewer.open({path})` for inline preview, deriving the path from `file.path` by stripping a leading `files/`. That works for personal storage and per-folder jail GroupFolders, but in legacy shared-storage GroupFolders the cache row stores `__groupfolders/<id>/...` and the user-visible mount-point name (e.g. `Shalution`) isn't carried on the row. The Viewer received `/__groupfolders/4/Administratie/2026/Boekhouding.xlsx`, couldn't resolve it against the user's tree, and NC raised the "file no longer exists" toast. Federated shares hit a similar dead-end via a different code path.
+- **FileStory click behaviour now consistent across mount types** — documents always open in a new tab via NC's `/f/<id>` handler, which resolves the right mount server-side for personal storage, both GroupFolders mount strategies, internal shares and federated shares. Removed the path-derivation entirely (`resolveDisplayPath()` deleted).
+
+### Notes
+- Behaviour change: clicking a document in FileStory no longer opens the inline NC Viewer overlay — every click now opens a new tab at the file's NC Files location. This trades inline-preview ergonomics for "actually works on every mount type" reliability.
+- PhotoStory is unaffected; its widget uses an internal Lightbox component and never touched `OCA.Viewer.open()`.
+
 ## [1.5.2] - 2026-05-28 — PhotoStory groupfolder fix + federated previews + sticky navigation
 
 Patch release with two production-blocking PhotoStory fixes (groupfolder albums and federated-file thumbnails), three UX improvements requested from real use, and one admin-tool clarification. No DB migration, no API breaking changes.
