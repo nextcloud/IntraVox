@@ -22,7 +22,14 @@
       </NcButton>
     </div>
 
-    <!-- Empty -->
+    <!-- No-access: minimal locked placeholder; deliberately hides the folder
+         name to avoid leaking the existence of a path the viewer can't see. -->
+    <div v-else-if="!photos.length && accessReason === 'folder_not_accessible'" class="ps-empty ps-empty--locked" role="status">
+      <LockOutline :size="32" aria-hidden="true" />
+      <p>{{ t('You do not have access to this widget') }}</p>
+    </div>
+
+    <!-- Empty (accessible folder but no photos to show) -->
     <div v-else-if="!photos.length" class="ps-empty" role="status">
       <ImageMultiple :size="32" aria-hidden="true" />
       <p>{{ emptyMessage }}</p>
@@ -278,6 +285,7 @@ import { NcButton } from '@nextcloud/vue';
 import AlertCircle from 'vue-material-design-icons/AlertCircle.vue';
 import ImageMultiple from 'vue-material-design-icons/ImageMultiple.vue';
 import MapMarker from 'vue-material-design-icons/MapMarker.vue';
+import LockOutline from 'vue-material-design-icons/LockOutline.vue';
 
 import { h, ref } from 'vue';
 const PhotoTile = {
@@ -380,6 +388,7 @@ export default {
   components: {
     AlertCircle,
     ImageMultiple,
+    LockOutline,
     NcButton,
     MapMarker,
     PhotoTile,
@@ -408,6 +417,10 @@ export default {
       },
       loading: true,
       error: null,
+      // Set to 'folder_not_accessible' when the backend returns a 404 with
+      // that reason — used by emptyMessage()/showScanHint() to surface a
+      // permission-aware empty-state instead of the generic "no photos".
+      accessReason: null,
       lightboxVisible: false,
       lightboxIndex: 0,
       // Client-side memo keyed by fetchKey — instant restore when switching
@@ -484,6 +497,9 @@ export default {
       if (!this.config.folderPath && !crossFolder) {
         return t('intravox', 'No folder selected');
       }
+      if (this.accessReason === 'folder_not_accessible') {
+        return t('intravox', 'You do not have access to this folder');
+      }
       if (this.effectiveMode === 'on-this-day') {
         return t('intravox', 'No photos taken on this day in previous years');
       }
@@ -492,14 +508,15 @@ export default {
     /**
      * Show the "files may not be indexed yet" hint only when it actually fits
      * the scenario. Hiding it for filtered queries / on-this-day / cross-folder
-     * (those have their own most-likely explanation), showing it only when the
-     * user picked a normal folder and got zero results back.
+     * / no-access (each has its own most-likely explanation), showing it only
+     * when the user picked a normal folder and got zero results back.
      */
     showScanHint() {
       const crossFolder = !!this.config.allMetaVoxFolders;
       const hasFilters = Array.isArray(this.config.metaVoxFilters) && this.config.metaVoxFilters.length > 0;
       if (crossFolder || hasFilters) return false;
       if (!this.config.folderPath) return false;
+      if (this.accessReason === 'folder_not_accessible') return false;
       if (this.effectiveMode === 'on-this-day') return false;
       return true;
     },
@@ -673,6 +690,7 @@ export default {
 
       this.loading = true;
       this.error = null;
+      this.accessReason = null;
       try {
         const params = this.buildPhotosParams(0);
         const url = generateUrl(`/apps/intravox/api/photo-story/photos?${params.toString()}`);
@@ -691,6 +709,7 @@ export default {
           this.timeline = [];
           this.highlights = [];
           this.capabilities = null;
+          this.accessReason = res.data?.reason || null;
           this.loading = false;
           return;
         }

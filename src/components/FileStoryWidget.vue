@@ -14,7 +14,14 @@
       </NcButton>
     </div>
 
-    <!-- Empty -->
+    <!-- No-access: minimal locked placeholder; deliberately hides the folder
+         name to avoid leaking the existence of a path the viewer can't see. -->
+    <div v-else-if="!files.length && accessReason === 'folder_not_accessible'" class="fs-empty fs-empty--locked" role="status">
+      <LockOutline :size="28" aria-hidden="true" />
+      <p>{{ t('You do not have access to this widget') }}</p>
+    </div>
+
+    <!-- Empty (accessible folder but no documents to show) -->
     <div v-else-if="!files.length" class="fs-empty" role="status">
       <FileDocumentOutline :size="28" aria-hidden="true" />
       <p>{{ emptyMessage }}</p>
@@ -230,6 +237,7 @@ import { NcButton } from '@nextcloud/vue';
 import AlertCircle from 'vue-material-design-icons/AlertCircle.vue';
 import FileDocumentOutline from 'vue-material-design-icons/FileDocumentOutline.vue';
 import CloudOutline from 'vue-material-design-icons/CloudOutline.vue';
+import LockOutline from 'vue-material-design-icons/LockOutline.vue';
 
 // FileTypeIcon renders a small mime-icon. Uses NC's `OC.MimeType.getIconUrl()`
 // when available (returns a path to NC's built-in icon SVG), falls back to a
@@ -256,7 +264,7 @@ const FileTypeIcon = {
 
 export default {
   name: 'FileStoryWidget',
-  components: { AlertCircle, FileDocumentOutline, CloudOutline, FileTypeIcon, NcButton },
+  components: { AlertCircle, FileDocumentOutline, CloudOutline, LockOutline, FileTypeIcon, NcButton },
   props: {
     widget: { type: Object, required: true },
     rowBackgroundColor: { type: String, default: '' },
@@ -269,6 +277,10 @@ export default {
       capabilities: null,
       loading: true,
       error: null,
+      // Set to 'folder_not_accessible' when the backend returns a 404 with
+      // that reason — used by emptyMessage()/showScanHint() to surface a
+      // permission-aware empty-state instead of the generic "no documents".
+      accessReason: null,
       pagination: { offset: 0, pageSize: 100, total: 0, hasMore: false, truncated: false },
       loadingMore: false,
       _scrollObserver: null,
@@ -333,6 +345,9 @@ export default {
       if (!this.config.folderPath) {
         return t('intravox', 'No folder selected');
       }
+      if (this.accessReason === 'folder_not_accessible') {
+        return t('intravox', 'You do not have access to this folder');
+      }
       const hasFilters = Array.isArray(this.config.metaVoxFilters) && this.config.metaVoxFilters.length > 0;
       if (hasFilters) {
         return t('intravox', 'No documents match the current filters');
@@ -341,10 +356,12 @@ export default {
     },
     /**
      * Only show the file-index hint when the user picked a normal folder and
-     * got zero results — not when filters are active (more likely cause: no match).
+     * got zero results — not when filters are active (more likely cause: no
+     * match) and not when the user lacks access (occ files:scan won't help).
      */
     showScanHint() {
       if (!this.config.folderPath) return false;
+      if (this.accessReason === 'folder_not_accessible') return false;
       const hasFilters = Array.isArray(this.config.metaVoxFilters) && this.config.metaVoxFilters.length > 0;
       return !hasFilters;
     },
@@ -433,6 +450,7 @@ export default {
       this.pagination = { offset: 0, pageSize: 100, total: 0, hasMore: false, truncated: false };
       this.loading = true;
       this.error = null;
+      this.accessReason = null;
       try {
         const params = this.buildParams(0);
         const url = generateUrl(`/apps/intravox/api/file-story/files?${params.toString()}`);
@@ -448,6 +466,7 @@ export default {
           this.timeline = [];
           this.groups = [];
           this.capabilities = null;
+          this.accessReason = res.data?.reason || null;
           this.loading = false;
           return;
         }

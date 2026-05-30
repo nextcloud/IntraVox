@@ -1143,6 +1143,8 @@
         "X-API-Key": "X-API-Key",
         "Year": "Jaar",
         "You and {count} others reacted with {emoji}": "Jij en {count} anderen reageerden met {emoji}",
+        "You do not have access to this folder": "Je hebt geen toegang tot deze map",
+        "You do not have access to this widget": "Je hebt geen toegang tot deze widget",
         "You will get a fresh empty homepage and empty navigation.": "Je krijgt een verse lege homepage en lege navigatie.",
         "Your IntraVox subscription key needs attention.": "Your IntraVox subscription key needs attention.",
         "Your browser does not support HTML5 video.": "Je browser ondersteunt geen HTML5 video.",

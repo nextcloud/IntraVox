@@ -356,6 +356,7 @@ class PhotoStoryService {
 		if (!($node instanceof Folder)) {
 			throw new \RuntimeException('Folder not found: ' . $folderPath);
 		}
+		$this->assertNotResolvedToUserRoot($node, $folderPath, $user->getUID());
 
 		// SQL-based enumeration on oc_filecache. Avoids the catastrophic O(N) node
 		// instantiation cost of $folder->getDirectoryListing() recursion — that was
@@ -577,6 +578,33 @@ class PhotoStoryService {
 		} catch (\Throwable $e) {
 			$this->logger->warning('PhotoStoryService: extractStorageAndPath failed: ' . $e->getMessage());
 			return [null, null];
+		}
+	}
+
+	/**
+	 * Defensive guard: when the requested folder path is a subfolder but NC's
+	 * userFolder->get() returns a Node whose path equals the user's root
+	 * (e.g. an unauthorised groupfolder subpath silently resolved to the
+	 * user-folder itself), treat it as not-accessible. Without this guard
+	 * resolveSearchScopes() would then enumerate every mount the user has,
+	 * producing a confusing root-content listing for a widget that's
+	 * configured on a folder the user shouldn't see.
+	 *
+	 * Throws NotFoundException so the controllers' existing 404 path picks
+	 * it up and the frontend renders the "no access" empty-state.
+	 */
+	private function assertNotResolvedToUserRoot(Folder $node, string $folderPath, string $userId): void {
+		$isRootRequest = ($folderPath === '/' || $folderPath === '');
+		if ($isRootRequest) {
+			return; // explicit root-mode is intentional (admin chose "/")
+		}
+		$resolvedPath = $node->getPath();
+		$userRootPath = '/' . $userId . '/files';
+		if ($resolvedPath === $userRootPath || $resolvedPath === $userRootPath . '/') {
+			$this->logger->info('PhotoStoryService: requested folder {req} resolved to user root for {uid}; treating as not-accessible', [
+				'req' => $folderPath, 'uid' => $userId,
+			]);
+			throw new \OCP\Files\NotFoundException('Folder not accessible: ' . $folderPath);
 		}
 	}
 
@@ -1258,6 +1286,10 @@ class PhotoStoryService {
 		$node = $userFolder->get($folderPath);
 		if (!($node instanceof Folder)) {
 			throw new \RuntimeException('Folder not found: ' . $folderPath);
+		}
+		$user = $this->userSession->getUser();
+		if ($user !== null) {
+			$this->assertNotResolvedToUserRoot($node, $folderPath, $user->getUID());
 		}
 
 		// Collect candidate files recursively (subfolders included)

@@ -1143,6 +1143,8 @@
         "X-API-Key": "X-API-Key",
         "Year": "Jahr",
         "You and {count} others reacted with {emoji}": "Du und {count} andere haben mit {emoji} reagiert",
+        "You do not have access to this folder": "Du hast keinen Zugriff auf diesen Ordner",
+        "You do not have access to this widget": "Du hast keinen Zugriff auf dieses Widget",
         "You will get a fresh empty homepage and empty navigation.": "Sie erhalten eine frische leere Startseite und leere Navigation.",
         "Your IntraVox subscription key needs attention.": "Your IntraVox subscription key needs attention.",
         "Your browser does not support HTML5 video.": "Ihr Browser unterstützt kein HTML5 Video.",

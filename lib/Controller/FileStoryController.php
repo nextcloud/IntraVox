@@ -208,7 +208,12 @@ class FileStoryController extends Controller {
 			return $resp;
 		} catch (\OCP\Files\NotFoundException $e) {
 			return new DataResponse(
-				['error' => 'Folder not found', 'files' => [], 'capabilities' => null],
+				[
+					'error' => 'Folder not found',
+					'reason' => 'folder_not_accessible',
+					'files' => [],
+					'capabilities' => null,
+				],
 				Http::STATUS_NOT_FOUND
 			);
 		} catch (\Throwable $e) {

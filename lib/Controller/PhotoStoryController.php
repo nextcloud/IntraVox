@@ -302,11 +302,17 @@ class PhotoStoryController extends Controller {
 			$resp->addHeader('Cache-Control', 'private, must-revalidate');
 			return $resp;
 		} catch (\OCP\Files\NotFoundException $e) {
-			// Folder doesn't exist for this user (renamed, deleted, or never
-			// existed). Return 404 + empty payload so the widget renders an
-			// empty-state instead of a generic error.
+			// Folder doesn't exist for this user (renamed, deleted, never
+			// existed, OR the defensive guard in PhotoStoryService caught a
+			// silent resolve-to-root for an unauthorised subpath). Return 404
+			// + empty payload so the widget renders the "no access" empty-state.
 			return new DataResponse(
-				['error' => 'Folder not found', 'photos' => [], 'capabilities' => null],
+				[
+					'error' => 'Folder not found',
+					'reason' => 'folder_not_accessible',
+					'photos' => [],
+					'capabilities' => null,
+				],
 				Http::STATUS_NOT_FOUND
 			);
 		} catch (\Throwable $e) {

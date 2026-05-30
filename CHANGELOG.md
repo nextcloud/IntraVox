@@ -4,6 +4,18 @@ All notable changes to IntraVox will be documented in this file.
 
 IntraVox is a Nextcloud intranet page builder.
 
+## [1.5.4] - 2026-05-30 — Hide source folder for users without access (information disclosure fix)
+
+Patch release that closes an information disclosure issue introduced by 1.5.3.1 and hardens the FileStory / PhotoStory empty-state for users without folder access. No DB migration, no API breaking changes.
+
+### Security
+- **FileStory / PhotoStory: source folder path leaked to users without access** — 1.5.3.1 added a "You do not have access to this folder" empty-state that showed the configured folder path (e.g. `Shalution/Administratie/2026`) as context. For a user who is *deliberately excluded* from that folder, this disclosed the existence and naming of paths they shouldn't be aware of — path names can carry sensitive context (client names, project codes, person names, dated boundaries). The empty-state now renders a minimal lock icon + `"You do not have access to this widget"` with no folder name and no scan hint. The folder path remains visible only for users who *do* have access but happen to see an empty result (legitimate context).
+
+### Notes
+- The defensive backend guard `PhotoStoryService::assertNotResolvedToUserRoot()` added in 1.5.3.1 stays in place. It already returns `reason: 'folder_not_accessible'` on the 404 response which the new empty-state branches on.
+- Known follow-up: News widget's empty-state still shows `Source: {path}` for unauthorised users. Same pattern, lower severity (source is usually a page-id, not a filesystem path); tracked separately.
+- Future direction: SharePoint-style **audience targeting** per widget will eventually let admins hide widgets entirely from users who shouldn't see them. The lock-state introduced here is the fallback for the edge-case where audience-target users lose folder permissions after configuration.
+
 ## [1.5.3] - 2026-05-30 — FileStory open in new tab + legacy GroupFolders fix
 
 Patch release that fixes a "file no longer exists" toast when clicking documents in FileStory, and makes click-to-open behaviour consistent across all mount types. No DB migration, no API breaking changes.
