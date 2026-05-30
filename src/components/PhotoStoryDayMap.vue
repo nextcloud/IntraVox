@@ -235,7 +235,12 @@ export default {
   overflow: hidden;
   background: var(--color-background-dark);
   margin-bottom: 12px;
+  /* isolation creates an own stacking context so Leaflet's internal
+     panes (default z-index 200-700) can't render over the sticky
+     topbar (.intravox-topbar, z-index: 100) when scrolling. */
   position: relative;
+  z-index: 0;
+  isolation: isolate;
 }
 
 .ps-day-map-canvas {

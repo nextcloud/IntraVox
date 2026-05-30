@@ -201,7 +201,12 @@ export default {
   border-radius: var(--border-radius-large);
   overflow: hidden;
   background: var(--color-background-dark);
+  /* isolation creates an own stacking context so Leaflet's internal
+     panes (default z-index 200-700) can't render over the sticky
+     topbar (.intravox-topbar, z-index: 100) when scrolling. */
   position: relative;
+  z-index: 0;
+  isolation: isolate;
 }
 
 .ps-map--fullscreen {

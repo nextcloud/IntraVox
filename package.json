@@ -32,7 +32,7 @@
     "@nextcloud/l10n": "^3.4.0",
     "@nextcloud/paths": "^2.2.1",
     "@nextcloud/router": "^3.0.0",
-    "@nextcloud/vue": "^9.1.0",
+    "@nextcloud/vue": "^9.6.0",
     "@tiptap/extension-blockquote": "^3.14.0",
     "@tiptap/extension-code": "^3.14.0",
     "@tiptap/extension-code-block": "^3.14.0",

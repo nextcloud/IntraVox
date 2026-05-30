@@ -4,12 +4,25 @@ All notable changes to IntraVox will be documented in this file.
 
 IntraVox is a Nextcloud intranet page builder.
 
-## [1.5.4] - 2026-05-30 — Hide source folder for users without access (information disclosure fix)
+## [1.5.4] - 2026-05-30 — Hide source folder for users without access, PhotoStory map z-index, NC look-and-feel parity
 
-Patch release that closes an information disclosure issue introduced by 1.5.3.1 and hardens the FileStory / PhotoStory empty-state for users without folder access. No DB migration, no API breaking changes.
+Patch release that closes an information disclosure issue introduced by 1.5.3.1, fixes a Leaflet/sticky-topbar layering bug, and brings the bundled `@nextcloud/vue` in line with what Nextcloud 33 itself ships so IntraVox widgets visually match NC's own apps again. No DB migration, no API breaking changes.
 
 ### Security
 - **FileStory / PhotoStory: source folder path leaked to users without access** — 1.5.3.1 added a "You do not have access to this folder" empty-state that showed the configured folder path (e.g. `Shalution/Administratie/2026`) as context. For a user who is *deliberately excluded* from that folder, this disclosed the existence and naming of paths they shouldn't be aware of — path names can carry sensitive context (client names, project codes, person names, dated boundaries). The empty-state now renders a minimal lock icon + `"You do not have access to this widget"` with no folder name and no scan hint. The folder path remains visible only for users who *do* have access but happen to see an empty result (legitimate context).
+
+### Fixed
+- **PhotoStory: Leaflet map overlapped the sticky IntraVox topbar on scroll** — `PhotoStoryMap.vue` and `PhotoStoryDayMap.vue` had `position: relative` with no z-index, so Leaflet's internal panes (default z-index 200–700) rendered over `.intravox-topbar` (z-index 100) when the page scrolled past the map. Both map containers now establish their own stacking context with `position: relative; z-index: 0; isolation: isolate;`, capping the Leaflet panes below the topbar without touching Leaflet's own z-index conventions.
+- **PageDetailsSidebar tabs visually diverged from NC Files** — IntraVox bundled `@nextcloud/vue` 9.5, while NC 33 ships 9.6+ with a refreshed sidebar-tab look. The result was a different (often "double-underline" feeling) active-tab rendering versus what users see in NC's own Files sidebar. Bumped the bundled `@nextcloud/vue` to `^9.6.0` (resolved to 9.8.1) so PageDetailsSidebar now renders identically to NC's own sidebar tabs.
+
+### Changed
+- **Bundled `@nextcloud/vue` upgraded** from 9.5.0 → 9.8.1 (within `^9.6.0` range, matching the version NC 33 itself bundles). No public IntraVox API changes; some `Nc*` components may have minor visual refinements that come along with the upgrade.
+
+### Removed
+- **Obsolete `.app-sidebar-tabs__nav` border-bottom override** — the 1.5.1-era CSS workaround in `css/main.css` was meant to fix a double-underline on `NcAppSidebarTabs` in NC 32+. With the `@nextcloud/vue` 9.6+ refresh that override became counter-productive (it removed the hairline that NC's new active-tab rendering visually anchors against, producing the misaligned look reported on 1.5.4-rc). The override has been removed; the look is now exactly what NC Files renders.
+
+### Internal
+- **RELEASE_CHECKLIST: new section 1b "Dependency parity with Nextcloud core"** — codifies the lesson from this release. Before tagging, check `node_modules/@nextcloud/vue/package.json` against the version NC ships for the target NC min-version (table maintained in the checklist). Visual canary: PageDetailsSidebar tabs vs. NC Files sidebar.
 
 ### Notes
 - The defensive backend guard `PhotoStoryService::assertNotResolvedToUserRoot()` added in 1.5.3.1 stays in place. It already returns `reason: 'folder_not_accessible'` on the 404 response which the new empty-state branches on.

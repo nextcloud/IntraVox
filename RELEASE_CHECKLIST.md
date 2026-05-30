@@ -44,6 +44,24 @@ Follow this checklist for every release to the Nextcloud App Store.
 
 ---
 
+## 1b. Dependency parity with Nextcloud core
+
+IntraVox bundles `@nextcloud/vue` instead of using the runtime version from the NC server. If the bundled version lags behind what NC core ships, app UI starts to look subtly different from NC's own apps (notably sidebar tabs, NcDialog, NcButton — visual language shifted in 9.6+). The version that ships in this release should be ≥ the version NC bundles for our `min-version` target.
+
+- [ ] Check the bundled major.minor against NC core for the target NC version:
+  ```bash
+  cat node_modules/@nextcloud/vue/package.json | grep '"version"'
+  ```
+  Reference (update this table when NC bumps): NC 32 → nc-vue 8.x ; NC 33 → nc-vue 9.6+ ; NC 34 → check `apps/files/package.json` on a fresh server.
+- [ ] If bundled is older than NC core's minor, bump:
+  ```bash
+  npm install @nextcloud/vue@^<X.Y.0>
+  ```
+  Then `npm run build` and visually verify the PageDetailsSidebar tabs match the NC Files sidebar — that's the canary for shifts in nc-vue look-and-feel.
+- [ ] Commit `package.json` + `package-lock.json` together so the bump is reproducible.
+
+---
+
 ## 2. Translations (l10n/)
 
 Supported languages: **EN, NL, DE, FR**
