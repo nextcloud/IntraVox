@@ -30,8 +30,38 @@ class UrlSanitizerTest extends TestCase {
         $this->assertSame('#section', $this->sanitizer->sanitize('#section'));
     }
 
+    public function testAcceptsMailtoScheme(): void {
+        $this->assertSame('mailto:office@example.com', $this->sanitizer->sanitize('mailto:office@example.com'));
+    }
+
+    public function testAcceptsMailtoWithSubject(): void {
+        // FILTER_SANITIZE_URL preserves "+", "?", "&", "=" in the local part / querystring.
+        $this->assertSame(
+            'mailto:rik+tag@example.nl?subject=Hi',
+            $this->sanitizer->sanitize('mailto:rik+tag@example.nl?subject=Hi')
+        );
+    }
+
+    public function testAcceptsTelScheme(): void {
+        $this->assertSame('tel:+31612345678', $this->sanitizer->sanitize('tel:+31612345678'));
+    }
+
+    public function testAcceptsSmsScheme(): void {
+        $this->assertSame('sms:+31612345678', $this->sanitizer->sanitize('sms:+31612345678'));
+    }
+
+    public function testAcceptsSchemeCaseInsensitively(): void {
+        $this->assertSame('MailTo:foo@example.com', $this->sanitizer->sanitize('MailTo:foo@example.com'));
+    }
+
     public function testRejectsJavascriptScheme(): void {
         $this->assertSame('', $this->sanitizer->sanitize('javascript:alert(1)'));
+    }
+
+    public function testRejectsXmppScheme(): void {
+        // xmpp is safe in principle but deliberately excluded from the
+        // default allowlist — add per-need with explicit review.
+        $this->assertSame('', $this->sanitizer->sanitize('xmpp:room@conference.example.com'));
     }
 
     public function testRejectsFileScheme(): void {
