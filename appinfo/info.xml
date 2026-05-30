@@ -48,7 +48,7 @@
 * Internal communication and documentation
 * SharePoint-to-Nextcloud migrations
     ]]></description>
-    <version>1.5.2</version>
+    <version>1.5.2.2</version>
     <licence>agpl</licence>
     <author mail="info@voxcloud.nl" homepage="https://voxcloud.nl">VoxCloud</author>
     <namespace>IntraVox</namespace>

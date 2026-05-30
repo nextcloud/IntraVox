@@ -576,27 +576,11 @@ export default {
       this._scrollObserver.observe(sentinel);
     },
     openFile(file) {
-      // Prefer NC Viewer for inline document preview, fallback to /f/<id> redirect.
-      try {
-        if (typeof window !== 'undefined' && window.OCA && window.OCA.Viewer && typeof window.OCA.Viewer.open === 'function') {
-          window.OCA.Viewer.open({ path: this.resolveDisplayPath(file) });
-          return;
-        }
-      } catch (e) {
-        // Fall through to redirect
-      }
+      // Always open in a new tab via NC's /f/<id> handler — it resolves the
+      // right mount per-user (personal storage, GroupFolders in either legacy
+      // shared-storage or per-folder jail mode, federated shares).
       const url = generateUrl(`/f/${file.file_id}`);
       window.open(url, '_blank', 'noopener');
-    },
-    resolveDisplayPath(file) {
-      // File-row .path is the internal path ("files/Foo/bar.pdf"); user-facing
-      // path strips the leading "files/". For groupfolders this works because
-      // NC mounts them under the user's namespace.
-      const p = String(file.path || '');
-      if (p.startsWith('files/')) {
-        return '/' + p.slice('files/'.length);
-      }
-      return '/' + p;
     },
     formatLongDate(dateStr) {
       if (!dateStr) return '';
