@@ -4,6 +4,17 @@ All notable changes to IntraVox will be documented in this file.
 
 IntraVox is a Nextcloud intranet page builder.
 
+## [1.5.5] - 2026-05-30 — Allow mailto / tel / sms links in Link widget
+
+Patch release that fixes [#57](https://github.com/nextcloud/IntraVox/issues/57): clicking-save on a Link widget item whose URL is `mailto:`, `tel:`, or `sms:` would silently empty the URL on save. After page refresh the link rendered as `#`. No DB migration, no API breaking changes.
+
+### Fixed
+- **Link widget: `mailto:`, `tel:`, and `sms:` URLs were stripped on save** ([#57](https://github.com/nextcloud/IntraVox/issues/57)) — `Service\Sanitize\UrlSanitizer::sanitize()` only allowed `http(s)://`, root-relative paths, and `#` anchors. Any other scheme — including the universally-accepted communication shortcuts mailto/tel/sms — was rewritten to an empty string at save time. The widget then rendered `href="#"` after a page refresh, even though the in-memory edit showed the correct URL until then. The Navigation editor used a different sanitization path (`FILTER_SANITIZE_URL` without the scheme allowlist) which is why mailto links worked there but not in Link widgets. Allowlist extended to include `mailto:`, `tel:`, `sms:` — three schemes with no JavaScript execution path, part of the default allowlist of [DOMPurify](https://github.com/cure53/DOMPurify) and [HTMLPurifier](http://htmlpurifier.org/). `javascript:`, `data:`, `file:`, `xmpp:`, `matrix:`, and bare domains remain blocked. New unit tests cover both the accept and the continued-reject cases.
+
+### Notes
+- Existing Link widgets that lost their mailto/tel/sms URL still need to be re-edited and saved once — the empty value is persisted on disk. There is no automatic migration; once saved with 1.5.5 the URLs stick.
+- `xmpp:` and `matrix:` remain blocked. They are safe in principle (no JS execution) but unlikely to be intentional in most intranets; add per-need with an explicit code review if you want them. Open an issue if your installation needs them.
+
 ## [1.5.4] - 2026-05-30 — Hide source folder for users without access, PhotoStory map z-index, NC look-and-feel parity
 
 Patch release that closes an information disclosure issue introduced by 1.5.3.1, fixes a Leaflet/sticky-topbar layering bug, and brings the bundled `@nextcloud/vue` in line with what Nextcloud 33 itself ships so IntraVox widgets visually match NC's own apps again. No DB migration, no API breaking changes.
