@@ -38,7 +38,7 @@
 * Seamless theming, users, groups, and files integration
 
 **Requirements:**
-* Nextcloud 32 or 33
+* Nextcloud 32, 33, or 34
 * PHP 8.2 or higher
 * GroupFolders app (installed and enabled)
 
@@ -72,7 +72,7 @@
     <screenshot>https://raw.githubusercontent.com/nextcloud/IntraVox/main/screenshots/Engagement.png</screenshot>
     <dependencies>
         <php min-version="8.2"/>
-        <nextcloud min-version="32" max-version="33"/>
+        <nextcloud min-version="32" max-version="34"/>
     </dependencies>
     <navigations>
         <navigation>
