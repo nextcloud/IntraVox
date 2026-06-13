@@ -106,7 +106,7 @@ After `-X ours` you may still get `modify/delete` conflicts (see Gotcha 2) — r
 
 ### ⚠️ Gotcha 2 — `tx pull` and the bot disagree on near-empty languages
 
-If you ever manually run `tx pull -a --minimum-perc=1` (e.g. via a future `scripts/sync-translations.sh`), it pulls back **any** language with ≥1% translated (e.g. `ta` at 12/1265 strings). The bot, however, **deletes** files that drop below its completeness threshold. During a merge this shows up as `modify/delete` conflicts (the bot deleted `l10n/ta.json`, our pull re-created it).
+If you ever manually run `tx pull -a --minimum-perc=1` (e.g. via a future `scripts/sync-translations.sh`), it pulls back **any** language with ≥1% translated (with IntraVox 1.6's ~442 source strings, that's any language with ≥5 strings). The bot, however, **deletes** files that drop below its completeness threshold. During a merge this shows up as `modify/delete` conflicts (the bot deleted `l10n/ta.json`, our pull re-created it).
 
 **Convention: follow the bot — delete the near-empty files.** A handful-of-strings file adds clutter, ships almost nothing, and would re-conflict on every future sync. Resolve with:
 ```bash
@@ -126,12 +126,17 @@ git rm --force l10n/<lang>.js l10n/<lang>.json
       ```bash
       node -e "require('fs').readdirSync('l10n').filter(f=>f.endsWith('.json')).forEach(f=>JSON.parse(require('fs').readFileSync('l10n/'+f,'utf8')))"
       ```
-- [ ] Validate POT syntax: `msgfmt --check --output=/dev/null translationfiles/templates/intravox.pot` (header warnings are normal for a `.pot`)
-- [ ] Verify POT msgid count is plausible (400+ for IntraVox 1.6 — note: NC tool extracts only strings xgettext can find in PHP + a synthetic Vue dummy; some Vue-template-syntax strings may be missed and need explicit `t()` calls in JS to register): `grep -c "^msgid " translationfiles/templates/intravox.pot`
-- [ ] **Reconcile with the GitHub bot (Gotcha 1)**: `git fetch github main` then merge `-X ours`, resolving near-empty `modify/delete` conflicts per Gotcha 2
-- [ ] Confirm the core languages survived the merge:
+- [ ] Sanity-check the `.js` siblings load as `OC.L10N.register(...)` calls (one line per file):
       ```bash
-      for l in de nl fr; do node -e "console.log('$l',Object.keys(JSON.parse(require('fs').readFileSync('l10n/$l.json','utf8')).translations||{}).length)"; done
+      for f in l10n/*.js; do head -c 50 "$f" | grep -q '^OC.L10N.register' || echo "BAD: $f"; done
+      ```
+- [ ] Validate POT syntax: `msgfmt --check --output=/dev/null translationfiles/templates/intravox.pot` (header warnings are normal for a `.pot`)
+- [ ] Verify POT msgid count is plausible (~442 for IntraVox 1.6 — note: NC tool extracts only strings xgettext can find in PHP + a synthetic Vue dummy; some Vue-template-syntax strings may be missed and need explicit `t()` calls in JS to register): `grep -c "^msgid " translationfiles/templates/intravox.pot`
+- [ ] **Reconcile with the GitHub bot (Gotcha 1)**: `git fetch github main` then merge `-X ours`, resolving near-empty `modify/delete` conflicts per Gotcha 2
+- [ ] Confirm the core bundled languages survived the merge (target counts as of 1.6.0):
+      ```bash
+      for l in en nl de fr; do node -e "console.log('$l',Object.keys(JSON.parse(require('fs').readFileSync('l10n/$l.json','utf8')).translations||{}).length)"; done
+      # Expected: en 1258, nl 1235, de 1234, fr 1234 (or higher after bot adds new strings)
       ```
 - [ ] Review the diff (`git diff --stat l10n/`) and commit the refreshed translations
 - [ ] **Build the tarball AFTER the merge** — if you cut it before reconciling with the bot it will contain the wrong set of languages (IntroVox v1.7.1 had to regenerate its tarball for exactly this reason — 90 langs cut vs 82 langs released).
@@ -145,11 +150,15 @@ git rm --force l10n/<lang>.js l10n/<lang>.json
 ## 3. Version Management
 
 - [ ] Determine new version number (semantic versioning: MAJOR.MINOR.PATCH)
-- [ ] Update version — all three files must match:
-  - `package.json` → `"version": "X.Y.Z"`
-  - `appinfo/info.xml` → `<version>X.Y.Z</version>`
-  - `openapi.json` → `"version": "X.Y.Z"`
-- [ ] Verify with: `npm run build` (prebuild script checks automatically)
+- [ ] Run `node scripts/sync-version.js X.Y.Z` to update both `package.json` and `appinfo/info.xml` in one go
+- [ ] Manually update `openapi.json` `"version": "X.Y.Z"` — `sync-version.js` does NOT touch it yet (current `openapi.json` is at 1.5.5 while app is at 1.6.0; fix on next release)
+- [ ] Verify all four locations match:
+  ```bash
+  grep '"version"' package.json | head -1
+  grep '<version>' appinfo/info.xml | head -1
+  grep '"version"' openapi.json | head -1
+  ```
+- [ ] Verify with: `npm run build` (prebuild script checks package.json↔info.xml automatically)
 - [ ] Update `CHANGELOG.md`:
   - [ ] Move items from `[Unreleased]` to `[X.Y.Z] - date - Label`
   - [ ] Sections: Added, Changed, Fixed, Removed, Security
@@ -167,7 +176,8 @@ git rm --force l10n/<lang>.js l10n/<lang>.json
 
 ## 5. Build & Testing
 
-- [ ] Run `npm run l10n` to regenerate JS translation files
+- [ ] Run `npm run l10n` to regenerate JS translation files (auto-applies plural-form overrides for JA/KO/ZH/AR/RU/PL/CS/SK/SL — see `scripts/generate-l10n.js`)
+- [ ] Run `node scripts/generate-pot.js` to refresh the POT via NC's official `translationtool.phar` (only if strings changed)
 - [ ] Run `npm run build` without errors
   - Bundle size warnings for main/admin are normal (TipTap editor)
 - [ ] Test core functionalities on 3dev:
@@ -180,6 +190,8 @@ git rm --force l10n/<lang>.js l10n/<lang>.json
   - [ ] Calendar widget with Light and Primary background colors
   - [ ] Comments and reactions
   - [ ] Demo data import
+  - [ ] **Available languages admin section** (Demo Data tab) — enable/disable a language, verify it appears/disappears from menus
+  - [ ] **Language activation creates empty homepage** (try enabling a new language for an existing install)
 - [ ] Check browser console for errors
 - [ ] Test with GroupFolders extension
 
@@ -187,9 +199,12 @@ git rm --force l10n/<lang>.js l10n/<lang>.json
 
 ## 6. Nextcloud Compatibility
 
-- [ ] Check `appinfo/info.xml`: `<nextcloud min-version="32" max-version="34"/>` (update max as new NC versions release)
-- [ ] PHP requirement: `<php min-version="8.2"/>` (matches composer.json)
-- [ ] Test on target Nextcloud version
+- [ ] Check `appinfo/info.xml`: `<nextcloud min-version="32" max-version="34"/>` (update max as new NC versions release; current confirmed range as of June 2026)
+- [ ] PHP requirement: `<php min-version="8.2"/>` (matches composer.json; NC34 requires PHP `>=8.2 <8.6`)
+- [ ] Test on target Nextcloud version (3dev: NC33; hetzner nc-dev: NC33)
+- [ ] **Bundled lib parity** with NC34: `@nextcloud/vue` ≥ 9.8 (NC34 ships 9.8.x); Vue ≥ 3.5 (NC34 ships 3.5.x). See §1b.
+- [ ] **Enterprise detection** (when relevant): IntraVox uses `OCP\Util::hasExtendedSupport` for Enterprise gating, not config-fallback (anti-spoofing). Verify behaviour on a non-Enterprise instance after each NC major bump — the API surface can shift.
+- [ ] **OC.* globals** (legacy front-end): IntraVox still references `OC.dialogs.filepicker`, `OC.MimeType.getIconUrl`, `OC.L10N.translate`, `OC.requestToken`, `OC.webroot`. All five remain functional in NC34 stable (deprecated, not removed). Migration to `@nextcloud/*` equivalents is a 1.7+ task — not blocking for NC34 support.
 
 ---
 
@@ -209,9 +224,11 @@ Required files in tarball:
 | `demo-data/` | Demo content for setup wizard     |
 | Root files   | CHANGELOG.md, LICENSE, README.md  |
 
-**Exclude from tarball:** `src/`, `node_modules/`, `screenshots/`, `docs/`, `.git/`, `*.key`, `deploy.sh`, `openapi.json`, `scripts/`, `.tx/`, `.l10nignore`, `translationfiles/`
+**Exclude from tarball:** `src/`, `node_modules/`, `screenshots/`, `docs/`, `.git/`, `*.key`, `deploy.sh`, `openapi.json`, `scripts/`, `.tx/`, `.l10nignore`, `translationfiles/`, `examples/`, `showcases/`, `testdata/`
 
 The `.tx/`, `.l10nignore`, and `translationfiles/` are dev-only artefacts for Transifex sync. Runtime IntraVox loads translations only from `l10n/*.{js,json}`.
+
+> **POT detail**: the generated `translationfiles/templates/intravox.pot` contains absolute-path source-file references (`#: /Users/rikdekker/Documents/Development/IntraVox/lib/...`). This is harmless — Transifex only uses msgids, not the comments — and the POT is excluded from the tarball anyway. Don't try to make those paths repo-relative; the NC sync-bot regenerates the POT server-side with its own paths.
 
 ---
 
@@ -379,4 +396,4 @@ git push github main --tags
 
 ---
 
-*Last updated: 2026-06-13 — Switched POT generation to NC's official `translationtool.phar` (was a custom en.json-based extractor). 1.6.0 release + IntroVox v1.7.1 gotchas + zero-drift POT.*
+*Last updated: 2026-06-13 — Audit pass: corrected stale 1265-msgid references to actual 442 (post-NC-tool POT). Added concrete expected per-lang string counts. NC34 compat documented in §6. openapi.json version-sync gap flagged in §3. POT absolute-path note in §7.*
