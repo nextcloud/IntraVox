@@ -4,9 +4,9 @@ All notable changes to IntraVox will be documented in this file.
 
 IntraVox is a Nextcloud intranet page builder.
 
-## [1.6.0] - 2026-06-09 — Transifex-ready translations + admin-curated language list
+## [1.6.0] - 2026-06-13 — Nextcloud 34 + Transifex-ready translations + admin-curated language list
 
-Major release that wires IntraVox into Nextcloud's central Transifex translation pool and gives admins full control over which translated languages actually appear in their intranet. **No data loss on upgrade — existing installs keep their four configured languages enabled by default.**
+Major release with three themes: **Nextcloud 34 compatibility**, **community translations via Transifex**, and **admin-curated language activation**. Plus PhotoStory lightbox fullscreen + "Open in Files" originally drafted for 1.5.6 are folded into this release. **No data loss on upgrade — existing installs keep their four configured languages enabled by default.**
 
 ### Upgrade safety contract
 
@@ -22,10 +22,13 @@ This release respects seven rules so existing installs cannot break:
 
 ### Added
 
-- **Transifex-ready translation pipeline** ([#NN](https://github.com/nextcloud/IntraVox/issues/NN)) — IntraVox is now packaged for community translations via Nextcloud's [Transifex pool](https://app.transifex.com/nextcloud/nextcloud/intravox/) (`o:nextcloud:p:nextcloud:r:intravox`). New `.tx/config` + `.l10nignore` enable the Nextcloud l10n sync-bot to open pull requests with new translations as they land. The four existing languages (NL/EN/DE/FR) continue to ship in `l10n/*.json` until the resource is provisioned on the Transifex server (open GitHub issue: `nextcloud/docker-ci`).
+- **Nextcloud 34 compatibility declared** — `info.xml` now ships `<nextcloud min-version="32" max-version="34"/>`. Audit results: zero removed-in-NC34 OCP PHP APIs referenced in `lib/`; all five `OC.*` JS globals IntraVox uses (`OC.dialogs.filepicker`, `OC.MimeType.getIconUrl`, `OC.L10N.translate`, `OC.requestToken`, `OC.webroot`) remain functional in NC34 stable (deprecated, scheduled for migration in 1.7); bundled `@nextcloud/vue` (9.8.1) and Vue (3.5.22) match NC34's ship versions; PHP `>=8.2` matches NC34's `>=8.2 <8.6` requirement.
+- **Transifex-ready translation pipeline** — IntraVox is now packaged for community translations via Nextcloud's [Transifex pool](https://app.transifex.com/nextcloud/nextcloud/intravox/) (`o:nextcloud:p:nextcloud:r:intravox`). New `.tx/config` + `.l10nignore` + `l10n/.gitkeep` + committed POT template enable the Nextcloud l10n sync-bot to open pull requests with new translations as they land. Resource provisioning requested via [docker-ci#951](https://github.com/nextcloud/docker-ci/issues/951). The four existing languages (NL/EN/DE/FR) continue to ship in `l10n/*.json` until the resource is online.
 - **Admin-curated language list** — new "Available languages" section at the top of the Demo Data tab in admin settings. Each language IntraVox ships a translation for appears as a checkbox; the admin ticks which ones should be active in the intranet. Disabled languages disappear from IntraVox menus, navigation, and the demo-data table, but **all their content stays on disk** and reappears the moment the language is re-enabled. English is always enabled and cannot be unticked.
 - **Empty homepage on language activation** — when an admin enables a new language (one without bundled full-intranet demo data), IntraVox creates an empty homepage in the content folder so the language is immediately usable. Idempotent: never overwrites existing content.
 - **New `LanguageService`, `LanguageController`, `LanguageHomepageService`** under `OCA\IntraVox\Service\*` and `OCA\IntraVox\Controller\*` — the single source of truth for "what languages are shipped" (auto-discovered from `l10n/*.json`) versus "what languages are active" (admin-controlled, persisted in `oc_appconfig.intravox.enabled_languages`).
+- **PhotoStory lightbox: "Open in Files" button** in the lightbox topbar, plus a clickable filename in the details panel. Both open the photo's parent folder in the Files app in a new tab. A new server-side endpoint `/api/photo-story/open-in-files?file_id=N` resolves the user-relative parent path (including federated/GroupFolder mountpoints) and 302-redirects to the Files view — the API's `path` field is storage-internal, so building the URL client-side would 404 on those mounts.
+- **PhotoStory lightbox: swipe-down-to-close on mobile** — vertical swipe over 100px closes the lightbox, alongside the existing horizontal swipe for prev/next.
 
 ### Changed
 
@@ -33,6 +36,15 @@ This release respects seven rules so existing installs cannot break:
 - **Navigation fallback unified on English** — `NavigationService::getCurrentLanguage()` used to fall back to `'nl'` for unknown user-locales. It now falls back to the universal English default, matching the rest of the codebase and the Transifex source-of-truth.
 - **`SetupService` upgrade migrations now language-aware** — `migrateResourcesFolders()`, `migrateTemplatesFolders()`, and `migrateVersioningFolders()` now iterate over admin-enabled languages and skip language folders that don't already exist on disk. The result: `occ upgrade` from 1.5.x → 1.6.0 touches exactly the four folders the install already had, never creates phantom folders for new Transifex-discovered languages.
 - **Demo Data tab filters by enabled languages** — only ticked languages appear in the install-status table. The "Full intranet" content option remains bundled for NL+EN only; other enabled languages show "Homepage only" and use the empty-homepage flow.
+- **POT generation uses Nextcloud's official `translationtool.phar`** — `scripts/generate-pot.js` is now a thin Node wrapper around the same binary the sync-bot runs (`create-pot-files` task). Zero drift between local extraction and what Transifex sees. Replaces a custom en.json-based extractor that produced inflated POTs containing ~820 stale msgids the bot would have stripped anyway.
+- **Plural-form overrides** for JA/KO/ZH/TH/VI/ID (1 form), FR/PT (`n > 1`), PL/RU/UK/CS/SK (3 Slavic forms), SL (4 forms), AR (6 forms) — ported from IntroVox's `regenerate_js_translations.py` so non-Germanic languages render correctly when their `pluralForm` field is absent. Without these overrides Asian and Slavic translations rendered with the wrong plural rule.
+
+### Fixed
+
+- **PhotoStory lightbox: Nextcloud header overlapped the topbar** — the lightbox sat at `z-index: 100000` but the NC header (z-index 2000) stayed visible because parent containers create stacking contexts (transforms/filters) that trap `position: fixed` children. Wrapping the template in `<Teleport to="body">` escapes the trapped context; the lightbox now genuinely covers the full viewport.
+- **PhotoStory lightbox: date/location pill unreadable against light photos** — the translucent pill background disappeared against bright photos (white walls, snow, paper). Darker background, stronger backdrop-blur with saturation, subtle border, heavier drop-shadow, plus a text-shadow fallback for browsers without `backdrop-filter`.
+- **PhotoStory lightbox: body scroll-lock on open** — the page underneath could be scrolled with the trackpad while the lightbox was open. `body.style.overflow = 'hidden'` is now applied on open and restored on close.
+- **PhotoStory lightbox: iOS notch / Android status bar in fullscreen** — topbar now uses `env(safe-area-inset-*)` padding so the close button doesn't hide behind the notch.
 
 ### Removed
 
@@ -44,26 +56,15 @@ This release respects seven rules so existing installs cannot break:
 - **New migration `Version001600Date20260609000000`** — pure config-init, seeds `intravox.enabled_languages` with the legacy default on first upgrade. Idempotent.
 - **`PagePathHelper` stays a pure helper** — its language-code set is static-class state synchronised once per request from `Application::boot()`. Avoids piping `LanguageService` through every caller of a previously side-effect-free helper.
 - **`AdminSettings` initial state expanded** — admin UI receives `availableLanguages`, `enabledLanguageCodes`, and `defaultLanguage` server-side, no separate fetch needed on tab open.
+- **RELEASE_CHECKLIST.md** rewritten with the full Transifex pipeline diagram and two adopted IntroVox v1.7.1 gotchas (GitHub-bot divergence, near-empty-language conflict resolution) so the next release doesn't repeat IntroVox's mistakes.
+- **`scripts/generate-pot.js`** rewritten as wrapper around `translationtool.phar` (downloaded + cached under `scripts/.cache/` for 7 days).
 
 ### Notes
 
 - The first Transifex sync PR will land **only after** a Nextcloud team member provisions `o:nextcloud:p:nextcloud:r:intravox` on the Transifex server. A GitHub issue on `nextcloud/docker-ci` requests this. Until then, translation files remain manually maintained for NL/EN/DE/FR.
 - Disabled-language pages don't count toward the free-tier 50-pages-per-language limit. This is the intended behaviour: organisations get back unused-language capacity once they curate the list. Re-enabling a language re-counts.
 - The bundled `LANGUAGE_META` map in `DemoDataService` still hardcodes display names and the "has full intranet demo" flag for NL/EN/DE/FR. New Transifex-shipped languages will appear in the admin UI with their base code as the name (e.g. "es") until they're added to the meta map. Cosmetic-only; activation and content management work either way.
-
-## [1.5.6] - 2026-06-01 — PhotoStory lightbox: fullscreen overlay + Open in Files
-
-Usability fixes in the PhotoStory lightbox. No DB migration, no API breaking changes.
-
-### Added
-- **"Open in Files" button** in the lightbox topbar, plus a clickable filename in the details panel. Both open the photo's parent folder in the Files app in a new tab. A new server-side endpoint `/api/photo-story/open-in-files?file_id=N` resolves the user-relative parent path (including federated/GroupFolder mountpoints) and 302-redirects to the Files view — the API's `path` field is storage-internal, so building the URL client-side would 404 on those mounts.
-- **Swipe-down-to-close on mobile** — vertical swipe over 100px closes the lightbox, alongside the existing horizontal swipe for prev/next.
-
-### Fixed
-- **Nextcloud header overlapped the lightbox topbar** — the lightbox sat at `z-index: 100000` but the NC header (z-index 2000) stayed visible because parent containers create stacking contexts (transforms/filters) that trap `position: fixed` children. Wrapping the template in `<Teleport to="body">` escapes the trapped context; the lightbox now genuinely covers the full viewport.
-- **Date/location pill was unreadable against light photos** — the translucent pill background disappeared against bright photos (white walls, snow, paper). Darker background, stronger backdrop-blur with saturation, subtle border, heavier drop-shadow, plus a text-shadow fallback for browsers without `backdrop-filter`.
-- **Body scroll-lock on open** — the page underneath could be scrolled with the trackpad while the lightbox was open. `body.style.overflow = 'hidden'` is now applied on open and restored on close.
-- **iOS notch / Android status bar in fullscreen** — topbar now uses `env(safe-area-inset-*)` padding so the close button doesn't hide behind the notch.
+- **Cosmetic legacy still in code**: five `OC.*` JavaScript globals (deprecated since NC 26-30) — migration to `@nextcloud/*` equivalents is planned for 1.7. Works on NC32-34 today, may break on NC35 if Nextcloud removes them.
 
 ## [1.5.5] - 2026-05-30 — Allow mailto / tel / sms links in Link widget
 
