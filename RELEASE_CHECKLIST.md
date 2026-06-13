@@ -87,9 +87,9 @@ Since v1.6.0, IntraVox uses Transifex (`nextcloud:intravox` resource, part of th
 ```
 
 - The **source push (1) is fully automatic** by the Nextcloud Transifex bot once `o:nextcloud:p:nextcloud:r:intravox` is provisioned. The bot reads `translationfiles/templates/intravox.pot` from `main` and uploads it.
-- Unlike IntroVox, IntraVox has an explicit `l10n/en.json` that is the **webpack-extracted source** for frontend strings. It is *also* the input to `scripts/generate-pot.js`, which merges it with `xgettext` output from `lib/**.php` to build the POT.
-- The **translation pull-back (2) happens via two paths that drift apart**, which is the root of both gotchas below.
+- **POT generation uses Nextcloud's official `translationtool.phar`** (the same binary the sync-bot runs). `scripts/generate-pot.js` is a thin Node wrapper around it: download the phar, run `create-pot-files`, report msgid count. This guarantees zero drift between what we extract locally and what the bot extracts on its run.
 - Only `l10n/*.js` (frontend, `OC.L10N.register`) and `l10n/*.json` (PHP `IL10N`) are loaded at runtime. The `.po` files (`translationfiles/`) are an intermediate sync artefact — only the POT template is committed; per-language `.po` files are gitignored.
+- **Existing `l10n/<lang>.json` translations are preserved across releases.** The Transifex bot uses them as initial "translation memory" when it provisions the resource — translators see strings already-translated and can refine, not start from zero.
 
 ### ⚠️ Gotcha 1 — the GitHub bot pushes translation commits DIRECTLY to `nextcloud/IntraVox`
 
@@ -120,13 +120,14 @@ git rm --force l10n/<lang>.js l10n/<lang>.json
 - [ ] **Refresh the POT** from current code (only if you added/removed translatable strings since last release):
       ```bash
       npm run l10n                            # re-emit .js from .json (in case .json was edited)
-      node scripts/generate-pot.js            # merges l10n/en.json + xgettext on lib/
+      node scripts/generate-pot.js            # runs NC's official translationtool.phar
       ```
 - [ ] Validate JSON syntax in all l10n files:
       ```bash
       node -e "require('fs').readdirSync('l10n').filter(f=>f.endsWith('.json')).forEach(f=>JSON.parse(require('fs').readFileSync('l10n/'+f,'utf8')))"
       ```
-- [ ] Verify POT msgid count is plausible (1200+ for IntraVox 1.6+): `grep -c "^msgid " translationfiles/templates/intravox.pot`
+- [ ] Validate POT syntax: `msgfmt --check --output=/dev/null translationfiles/templates/intravox.pot` (header warnings are normal for a `.pot`)
+- [ ] Verify POT msgid count is plausible (400+ for IntraVox 1.6 — note: NC tool extracts only strings xgettext can find in PHP + a synthetic Vue dummy; some Vue-template-syntax strings may be missed and need explicit `t()` calls in JS to register): `grep -c "^msgid " translationfiles/templates/intravox.pot`
 - [ ] **Reconcile with the GitHub bot (Gotcha 1)**: `git fetch github main` then merge `-X ours`, resolving near-empty `modify/delete` conflicts per Gotcha 2
 - [ ] Confirm the core languages survived the merge:
       ```bash
@@ -367,7 +368,8 @@ git push github main --tags
 - **PHP version:** >= 8.2
 - **Translation pool:** Transifex resource `o:nextcloud:p:nextcloud:r:intravox`
 - **Bundled translations:** Whatever is in `l10n/` at release time (grows automatically as Transifex translators contribute)
-- **Source of truth:** `l10n/en.json` (extracted by webpack build) + `translationfiles/templates/intravox.pot` (regenerated via `scripts/generate-pot.js`)
+- **Source of truth for POT:** Nextcloud's official `translationtool.phar` (downloaded + cached by `scripts/generate-pot.js`). Zero drift from what the sync-bot extracts.
+- **Existing translations:** `l10n/<lang>.{js,json}` ship as bundled translations and are uploaded to Transifex as "translation memory" on first sync — users keep their localised UI across the 1.6.0 upgrade.
 - **Transifex token (optional, for manual `tx pull`):** when needed, set `TX_TOKEN=1/xxxxxxxx` (read-access to `nextcloud:intravox`) — but in normal release flow you don't need it, the GH bot does the sync. See IntroVox's `scripts/sync-translations.sh` if you ever want to add manual-pull capability to IntraVox.
 - **Sibling app reference:** IntroVox uses the same Transifex pool and went through onboarding two days before us — when in doubt about l10n/Transifex behaviour, check [`IntroVox/RELEASE_CHECKLIST.md`](../IntroVox/RELEASE_CHECKLIST.md) first.
 - **App Store:** https://apps.nextcloud.com
@@ -377,4 +379,4 @@ git push github main --tags
 
 ---
 
-*Last updated: 2026-06-10 — Transifex integration (1.6.0) + adopted IntroVox v1.7.1 gotchas (bot-divergence + near-empty languages + tarball-after-merge)*
+*Last updated: 2026-06-13 — Switched POT generation to NC's official `translationtool.phar` (was a custom en.json-based extractor). 1.6.0 release + IntroVox v1.7.1 gotchas + zero-drift POT.*
