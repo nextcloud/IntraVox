@@ -1,0 +1,14 @@
+node_modules/
+js/
+tests/
+docs/
+vendor/
+vendor-bin/
+releases/
+demo-data/
+screenshots/
+showcases/
+examples/
+testdata/
+certificates/
+*.tar.gz

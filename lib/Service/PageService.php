@@ -47,7 +47,6 @@ class PageService {
     private const MAX_MEDIA_SIZE = 52428800; // 50MB (largest of image/video limits)
     private const MAX_SVG_SIZE = 1048576; // 1MB for SVG files (prevent XML bomb attacks)
     private const MAX_COLUMNS = 5;
-    private const SUPPORTED_LANGUAGES = ['nl', 'en', 'de', 'fr'];
     private const DEFAULT_LANGUAGE = 'en';
 
     private IRootFolder $rootFolder;
@@ -335,6 +334,7 @@ class PageService {
     private PagePathHelper $pathHelper;
     private PageIdUtils $idUtils;
     private GroupContextService $groupContext;
+    private LanguageService $languageService;
 
     public function __construct(
         IRootFolder $rootFolder,
@@ -358,6 +358,7 @@ class PageService {
         PagePathHelper $pathHelper,
         PageIdUtils $idUtils,
         GroupContextService $groupContext,
+        LanguageService $languageService,
         ?string $userId
     ) {
         $this->rootFolder = $rootFolder;
@@ -380,6 +381,7 @@ class PageService {
         $this->pathHelper = $pathHelper;
         $this->idUtils = $idUtils;
         $this->groupContext = $groupContext;
+        $this->languageService = $languageService;
         $this->userId = $userId ?? '';
 
         if ($cacheFactory->isAvailable()) {
@@ -411,8 +413,8 @@ class PageService {
         // Extract language code (e.g., 'nl_NL' -> 'nl')
         $langCode = explode('_', $lang)[0];
 
-        // Check if supported, otherwise return default
-        return in_array($langCode, self::SUPPORTED_LANGUAGES) ? $langCode : self::DEFAULT_LANGUAGE;
+        // Check if enabled by admin, otherwise return default
+        return $this->languageService->isLanguageEnabled($langCode) ? $langCode : self::DEFAULT_LANGUAGE;
     }
 
     /**
@@ -924,7 +926,7 @@ class PageService {
             $baseFolder = $this->getIntraVoxFolder();
             $currentLang = $this->getUserLanguage();
 
-            foreach (self::SUPPORTED_LANGUAGES as $lang) {
+            foreach ($this->languageService->getEnabledLanguages() as $lang) {
                 if ($lang === $currentLang) {
                     continue; // Already searched
                 }
@@ -1094,8 +1096,10 @@ class PageService {
     private function getMaxDepthForPath(string $path): int {
         $pathParts = explode('/', trim($path, '/'));
 
-        // Remove language if present
-        if (count($pathParts) > 0 && in_array($pathParts[0], self::SUPPORTED_LANGUAGES)) {
+        // Remove language if present. Uses discovered (= every shipped
+        // translation) rather than enabled because disabled-language paths
+        // still need correct depth math — we never delete them.
+        if (count($pathParts) > 0 && in_array($pathParts[0], $this->languageService->getDiscoveredLanguages(), true)) {
             array_shift($pathParts);
         }
 
@@ -1249,7 +1253,7 @@ class PageService {
             $accumulatedPath .= $part;
 
             // Skip language folder in breadcrumb display (but include in accumulated path)
-            if ($index === 0 && in_array($part, self::SUPPORTED_LANGUAGES)) {
+            if ($index === 0 && in_array($part, $this->languageService->getDiscoveredLanguages(), true)) {
                 continue;
             }
 
@@ -1369,7 +1373,7 @@ class PageService {
         $currentFolder = $this->getLanguageFolder();
 
         // Remove language part since we already start from language folder
-        if (count($pathParts) > 0 && in_array($pathParts[0], self::SUPPORTED_LANGUAGES)) {
+        if (count($pathParts) > 0 && in_array($pathParts[0], $this->languageService->getDiscoveredLanguages(), true)) {
             array_shift($pathParts);
         }
 

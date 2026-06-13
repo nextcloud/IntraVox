@@ -19,7 +19,6 @@ use Psr\Log\LoggerInterface;
  */
 class FeedService {
     private const GROUPFOLDER_NAME = 'IntraVox';
-    private const SUPPORTED_LANGUAGES = ['nl', 'en', 'de', 'fr'];
     private const DEFAULT_LANGUAGE = 'en';
     private const DEFAULT_LIMIT = 20;
     private const MAX_LIMIT = 50;
@@ -31,7 +30,8 @@ class FeedService {
         private IUserManager $userManager,
         private IURLGenerator $urlGenerator,
         private IConfig $config,
-        private LoggerInterface $logger
+        private LoggerInterface $logger,
+        private LanguageService $languageService
     ) {}
 
     /**
@@ -89,8 +89,8 @@ class FeedService {
             $userLang = $this->getUserLanguage($userId);
             $this->collectPagesFromLanguage($intraVoxFolder, $userLang, $pages);
         } else {
-            // All languages
-            foreach (self::SUPPORTED_LANGUAGES as $lang) {
+            // All admin-enabled languages
+            foreach ($this->languageService->getEnabledLanguages() as $lang) {
                 $this->collectPagesFromLanguage($intraVoxFolder, $lang, $pages);
             }
         }
@@ -120,7 +120,7 @@ class FeedService {
      * Collect pages from a specific language folder.
      */
     private function collectPagesFromLanguage(Folder $intraVoxFolder, string $language, array &$pages): void {
-        if (!in_array($language, self::SUPPORTED_LANGUAGES, true)) {
+        if (!$this->languageService->isLanguageEnabled($language)) {
             return;
         }
 
@@ -145,7 +145,7 @@ class FeedService {
      * Collect pages from a specific folder (identified by its page uniqueId).
      */
     private function collectPagesFromFolder(Folder $intraVoxFolder, string $language, string $folderId, array &$pages): void {
-        if (!in_array($language, self::SUPPORTED_LANGUAGES, true)) {
+        if (!$this->languageService->isLanguageEnabled($language)) {
             return;
         }
 
@@ -492,8 +492,8 @@ class FeedService {
             return null;
         }
 
-        // Search all language folders for the page
-        foreach (self::SUPPORTED_LANGUAGES as $lang) {
+        // Search all enabled language folders for the page
+        foreach ($this->languageService->getEnabledLanguages() as $lang) {
             try {
                 if (!$intraVoxFolder->nodeExists($lang)) {
                     continue;
@@ -594,7 +594,7 @@ class FeedService {
     private function getUserLanguage(string $userId): string {
         $lang = $this->config->getUserValue($userId, 'core', 'lang', self::DEFAULT_LANGUAGE);
         $langCode = strtolower(substr($lang, 0, 2));
-        return in_array($langCode, self::SUPPORTED_LANGUAGES, true)
+        return $this->languageService->isLanguageEnabled($langCode)
             ? $langCode
             : self::DEFAULT_LANGUAGE;
     }

@@ -4,6 +4,67 @@ All notable changes to IntraVox will be documented in this file.
 
 IntraVox is a Nextcloud intranet page builder.
 
+## [1.6.0] - 2026-06-09 — Transifex-ready translations + admin-curated language list
+
+Major release that wires IntraVox into Nextcloud's central Transifex translation pool and gives admins full control over which translated languages actually appear in their intranet. **No data loss on upgrade — existing installs keep their four configured languages enabled by default.**
+
+### Upgrade safety contract
+
+This release respects seven rules so existing installs cannot break:
+
+1. No language folder is ever deleted automatically — not on toggle-off, not on upgrade, not by cleanup.
+2. Default for installs upgrading from 1.5.x is `["nl","en","de","fr"]` — exactly the previous hardcoded set.
+3. The Version10600 migration only seeds the config key; it never creates or removes content folders.
+4. English cannot be disabled — it is the guaranteed fallback for every code path.
+5. License page-counts stay per-language and are not reset when a language is toggled.
+6. Cache invalidation runs automatically when the admin changes the enabled set.
+7. `occ upgrade` from 1.5.x → 1.6.0 produces zero user-visible changes (until the admin acts).
+
+### Added
+
+- **Transifex-ready translation pipeline** ([#NN](https://github.com/nextcloud/IntraVox/issues/NN)) — IntraVox is now packaged for community translations via Nextcloud's [Transifex pool](https://app.transifex.com/nextcloud/nextcloud/intravox/) (`o:nextcloud:p:nextcloud:r:intravox`). New `.tx/config` + `.l10nignore` enable the Nextcloud l10n sync-bot to open pull requests with new translations as they land. The four existing languages (NL/EN/DE/FR) continue to ship in `l10n/*.json` until the resource is provisioned on the Transifex server (open GitHub issue: `nextcloud/docker-ci`).
+- **Admin-curated language list** — new "Available languages" section at the top of the Demo Data tab in admin settings. Each language IntraVox ships a translation for appears as a checkbox; the admin ticks which ones should be active in the intranet. Disabled languages disappear from IntraVox menus, navigation, and the demo-data table, but **all their content stays on disk** and reappears the moment the language is re-enabled. English is always enabled and cannot be unticked.
+- **Empty homepage on language activation** — when an admin enables a new language (one without bundled full-intranet demo data), IntraVox creates an empty homepage in the content folder so the language is immediately usable. Idempotent: never overwrites existing content.
+- **New `LanguageService`, `LanguageController`, `LanguageHomepageService`** under `OCA\IntraVox\Service\*` and `OCA\IntraVox\Controller\*` — the single source of truth for "what languages are shipped" (auto-discovered from `l10n/*.json`) versus "what languages are active" (admin-controlled, persisted in `oc_appconfig.intravox.enabled_languages`).
+
+### Changed
+
+- **All hardcoded `SUPPORTED_LANGUAGES` constants replaced** — 12 services that each defined their own copy of `['nl','en','de','fr']` (PageService, DemoDataService, LicenseService, NavigationService, SetupService, FooterService, SystemFileService, FeedService, OrphanedDataService, ExportService, PagePathHelper, plus 2 OCC commands) now read from the central `LanguageService`. License page-counts only enumerate enabled languages; RSS feeds only include enabled languages; the orphaned-data scan recognises any language that's ever been shipped or enabled so it can never accidentally flag legitimate content as orphaned.
+- **Navigation fallback unified on English** — `NavigationService::getCurrentLanguage()` used to fall back to `'nl'` for unknown user-locales. It now falls back to the universal English default, matching the rest of the codebase and the Transifex source-of-truth.
+- **`SetupService` upgrade migrations now language-aware** — `migrateResourcesFolders()`, `migrateTemplatesFolders()`, and `migrateVersioningFolders()` now iterate over admin-enabled languages and skip language folders that don't already exist on disk. The result: `occ upgrade` from 1.5.x → 1.6.0 touches exactly the four folders the install already had, never creates phantom folders for new Transifex-discovered languages.
+- **Demo Data tab filters by enabled languages** — only ticked languages appear in the install-status table. The "Full intranet" content option remains bundled for NL+EN only; other enabled languages show "Homepage only" and use the empty-homepage flow.
+
+### Removed
+
+- **Stray `l10n/*.po` files** — replaced by the canonical Transifex output path `translationfiles/<lang>/intravox.po`. The PO files in `l10n/` were never used by the Nextcloud runtime (which reads `.js` + `.json`) and only created dual-source confusion. Bundled translations remain in `l10n/{nl,en,de,fr}.json` until Transifex onboarding completes.
+- **`PageService::SUPPORTED_LANGUAGES` constant** — and 11 sibling constants across the service layer. All logic now routes through `LanguageService`.
+
+### Internal
+
+- **New migration `Version001600Date20260609000000`** — pure config-init, seeds `intravox.enabled_languages` with the legacy default on first upgrade. Idempotent.
+- **`PagePathHelper` stays a pure helper** — its language-code set is static-class state synchronised once per request from `Application::boot()`. Avoids piping `LanguageService` through every caller of a previously side-effect-free helper.
+- **`AdminSettings` initial state expanded** — admin UI receives `availableLanguages`, `enabledLanguageCodes`, and `defaultLanguage` server-side, no separate fetch needed on tab open.
+
+### Notes
+
+- The first Transifex sync PR will land **only after** a Nextcloud team member provisions `o:nextcloud:p:nextcloud:r:intravox` on the Transifex server. A GitHub issue on `nextcloud/docker-ci` requests this. Until then, translation files remain manually maintained for NL/EN/DE/FR.
+- Disabled-language pages don't count toward the free-tier 50-pages-per-language limit. This is the intended behaviour: organisations get back unused-language capacity once they curate the list. Re-enabling a language re-counts.
+- The bundled `LANGUAGE_META` map in `DemoDataService` still hardcodes display names and the "has full intranet demo" flag for NL/EN/DE/FR. New Transifex-shipped languages will appear in the admin UI with their base code as the name (e.g. "es") until they're added to the meta map. Cosmetic-only; activation and content management work either way.
+
+## [1.5.6] - 2026-06-01 — PhotoStory lightbox: fullscreen overlay + Open in Files
+
+Usability fixes in the PhotoStory lightbox. No DB migration, no API breaking changes.
+
+### Added
+- **"Open in Files" button** in the lightbox topbar, plus a clickable filename in the details panel. Both open the photo's parent folder in the Files app in a new tab. A new server-side endpoint `/api/photo-story/open-in-files?file_id=N` resolves the user-relative parent path (including federated/GroupFolder mountpoints) and 302-redirects to the Files view — the API's `path` field is storage-internal, so building the URL client-side would 404 on those mounts.
+- **Swipe-down-to-close on mobile** — vertical swipe over 100px closes the lightbox, alongside the existing horizontal swipe for prev/next.
+
+### Fixed
+- **Nextcloud header overlapped the lightbox topbar** — the lightbox sat at `z-index: 100000` but the NC header (z-index 2000) stayed visible because parent containers create stacking contexts (transforms/filters) that trap `position: fixed` children. Wrapping the template in `<Teleport to="body">` escapes the trapped context; the lightbox now genuinely covers the full viewport.
+- **Date/location pill was unreadable against light photos** — the translucent pill background disappeared against bright photos (white walls, snow, paper). Darker background, stronger backdrop-blur with saturation, subtle border, heavier drop-shadow, plus a text-shadow fallback for browsers without `backdrop-filter`.
+- **Body scroll-lock on open** — the page underneath could be scrolled with the trackpad while the lightbox was open. `body.style.overflow = 'hidden'` is now applied on open and restored on close.
+- **iOS notch / Android status bar in fullscreen** — topbar now uses `env(safe-area-inset-*)` padding so the close button doesn't hide behind the notch.
+
 ## [1.5.5] - 2026-05-30 — Allow mailto / tel / sms links in Link widget
 
 Patch release that fixes [#57](https://github.com/nextcloud/IntraVox/issues/57): clicking-save on a Link widget item whose URL is `mailto:`, `tel:`, or `sms:` would silently empty the URL on save. After page refresh the link rendered as `#`. No DB migration, no API breaking changes.

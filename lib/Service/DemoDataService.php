@@ -18,10 +18,12 @@ class DemoDataService {
     // Demo data source URL - will be changed to GitHub when released
     private const DEMO_DATA_BASE_URL = 'https://raw.githubusercontent.com/nextcloud/intravox/main/demo-data';
 
-    private const SUPPORTED_LANGUAGES = ['nl', 'en', 'de', 'fr'];
     private const DEFAULT_LANGUAGE = 'nl';
 
-    // Language metadata for UI
+    // Per-language demo-content metadata. `full=true` means a complete demo
+    // intranet is bundled under `demo-data/{code}/`; `full=false` means only a
+    // basic empty homepage is available. Languages not listed (e.g. new ones
+    // shipped via Transifex) fall back to `{name: <code>, full: false}`.
     private const LANGUAGE_META = [
         'nl' => ['name' => 'Nederlands', 'flag' => '🇳🇱', 'full' => true],
         'en' => ['name' => 'English', 'flag' => '🇬🇧', 'full' => true],
@@ -34,19 +36,22 @@ class DemoDataService {
     private IConfig $config;
     private LoggerInterface $logger;
     private ICommentsManager $commentsManager;
+    private LanguageService $languageService;
 
     public function __construct(
         SetupService $setupService,
         IClientService $clientService,
         IConfig $config,
         LoggerInterface $logger,
-        ICommentsManager $commentsManager
+        ICommentsManager $commentsManager,
+        LanguageService $languageService
     ) {
         $this->setupService = $setupService;
         $this->clientService = $clientService;
         $this->config = $config;
         $this->logger = $logger;
         $this->commentsManager = $commentsManager;
+        $this->languageService = $languageService;
     }
 
     /**
@@ -78,10 +83,10 @@ class DemoDataService {
     }
 
     /**
-     * Get available languages for demo data
+     * Get available languages for demo data (admin-enabled languages only).
      */
     public function getAvailableLanguages(): array {
-        return self::SUPPORTED_LANGUAGES;
+        return $this->languageService->getEnabledLanguages();
     }
 
     /**
@@ -92,7 +97,7 @@ class DemoDataService {
 
         return [
             'imported' => $this->isDemoDataImported(),
-            'available_languages' => self::SUPPORTED_LANGUAGES,
+            'available_languages' => $this->languageService->getEnabledLanguages(),
             'default_language' => self::DEFAULT_LANGUAGE,
             'languages' => $this->getLanguagesWithStatus(),
             'setupComplete' => $setupComplete,
@@ -114,7 +119,7 @@ class DemoDataService {
             $this->logger->info('[DemoData] GroupFolder not yet available: ' . $e->getMessage());
         }
 
-        foreach (self::SUPPORTED_LANGUAGES as $lang) {
+        foreach ($this->languageService->getEnabledLanguages() as $lang) {
             $meta = self::LANGUAGE_META[$lang] ?? ['name' => $lang, 'flag' => '', 'full' => false];
             $exists = false;
             $hasContent = false;
@@ -176,10 +181,10 @@ class DemoDataService {
      * @return array Result with success status and message
      */
     public function importDemoData(string $language = 'nl'): array {
-        if (!in_array($language, self::SUPPORTED_LANGUAGES)) {
+        if (!$this->languageService->isLanguageEnabled($language)) {
             return [
                 'success' => false,
-                'message' => "Unsupported language: {$language}. Supported: " . implode(', ', self::SUPPORTED_LANGUAGES),
+                'message' => "Language not enabled: {$language}. Enable it in admin settings first.",
             ];
         }
 
@@ -543,10 +548,10 @@ class DemoDataService {
      * @return array Result with success status and message
      */
     public function importBundledDemoData(string $language = 'nl', string $mode = 'overwrite'): array {
-        if (!in_array($language, self::SUPPORTED_LANGUAGES)) {
+        if (!$this->languageService->isLanguageEnabled($language)) {
             return [
                 'success' => false,
-                'message' => "Unsupported language: {$language}. Supported: " . implode(', ', self::SUPPORTED_LANGUAGES),
+                'message' => "Language not enabled: {$language}. Enable it in admin settings first.",
             ];
         }
 
@@ -857,10 +862,10 @@ class DemoDataService {
      * @return array Result with success status and message
      */
     public function performCleanStart(string $language): array {
-        if (!in_array($language, self::SUPPORTED_LANGUAGES)) {
+        if (!$this->languageService->isLanguageEnabled($language)) {
             return [
                 'success' => false,
-                'message' => "Unsupported language: {$language}. Supported: " . implode(', ', self::SUPPORTED_LANGUAGES),
+                'message' => "Language not enabled: {$language}. Enable it in admin settings first.",
             ];
         }
 

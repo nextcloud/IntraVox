@@ -21,23 +21,26 @@ use Psr\Log\LoggerInterface;
  * Never use it for arbitrary file access.
  */
 class SystemFileService {
-    private const SUPPORTED_LANGUAGES = ['nl', 'en', 'de', 'fr'];
     private const ALLOWED_SHARED_FILES = ['navigation.json', 'footer.json'];
     private const MAX_JSON_SIZE = 5 * 1024 * 1024; // 5 MB
     private const MAX_JSON_DEPTH = 64;
+    private const FALLBACK_LANGUAGE = 'en';
 
     private IRootFolder $rootFolder;
     private SetupService $setupService;
     private LoggerInterface $logger;
+    private LanguageService $languageService;
 
     public function __construct(
         IRootFolder $rootFolder,
         SetupService $setupService,
-        LoggerInterface $logger
+        LoggerInterface $logger,
+        LanguageService $languageService
     ) {
         $this->rootFolder = $rootFolder;
         $this->setupService = $setupService;
         $this->logger = $logger;
+        $this->languageService = $languageService;
     }
 
     /**
@@ -62,9 +65,9 @@ class SystemFileService {
             throw new \Exception('Access denied: file not in allowed list');
         }
 
-        // Validate language
-        if (!in_array($language, self::SUPPORTED_LANGUAGES, true)) {
-            $language = 'nl'; // Default to Dutch
+        // Validate language: must be enabled by admin, otherwise fall back to English.
+        if (!$this->languageService->isLanguageEnabled($language)) {
+            $language = self::FALLBACK_LANGUAGE;
         }
 
         try {
@@ -182,8 +185,8 @@ class SystemFileService {
      * @return array Hierarchical tree of pages
      */
     public function getPageTree(string $language): array {
-        if (!in_array($language, self::SUPPORTED_LANGUAGES, true)) {
-            $language = 'nl';
+        if (!$this->languageService->isLanguageEnabled($language)) {
+            $language = self::FALLBACK_LANGUAGE;
         }
 
         try {
@@ -312,7 +315,7 @@ class SystemFileService {
      * @return bool True if folder exists
      */
     public function languageFolderExists(string $language): bool {
-        if (!in_array($language, self::SUPPORTED_LANGUAGES, true)) {
+        if (!$this->languageService->isLanguageEnabled($language)) {
             return false;
         }
 
@@ -350,8 +353,8 @@ class SystemFileService {
         string $sortBy = 'modified',
         string $sortOrder = 'desc'
     ): array {
-        if (!in_array($language, self::SUPPORTED_LANGUAGES, true)) {
-            $language = 'nl';
+        if (!$this->languageService->isLanguageEnabled($language)) {
+            $language = self::FALLBACK_LANGUAGE;
         }
 
         try {

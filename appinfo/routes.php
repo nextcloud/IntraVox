@@ -68,6 +68,11 @@ return [
         ['name' => 'demoData#importDemoData', 'url' => '/api/demo-data/import', 'verb' => 'POST'],
         ['name' => 'demoData#cleanStart', 'url' => '/api/demo-data/clean-start', 'verb' => 'POST'],
 
+        // Language management routes (Transifex-discovered languages + admin enable/disable)
+        ['name' => 'language#list', 'url' => '/api/languages', 'verb' => 'GET'],
+        ['name' => 'language#setEnabled', 'url' => '/api/languages/enabled', 'verb' => 'POST'],
+        ['name' => 'language#createEmptyHomepage', 'url' => '/api/languages/{code}/empty-homepage', 'verb' => 'POST'],
+
         // Settings routes
         ['name' => 'api#getVideoDomains', 'url' => '/api/settings/video-domains', 'verb' => 'GET'],
         ['name' => 'api#setVideoDomains', 'url' => '/api/settings/video-domains', 'verb' => 'POST'],
@@ -203,6 +208,7 @@ return [
         ['name' => 'photoStory#clusters', 'url' => '/api/photo-story/clusters', 'verb' => 'GET'],
         ['name' => 'photoStory#capabilities', 'url' => '/api/photo-story/capabilities', 'verb' => 'GET'],
         ['name' => 'photoStory#photoExif', 'url' => '/api/photo-story/photo-exif', 'verb' => 'GET'],
+        ['name' => 'photoStory#openInFiles', 'url' => '/api/photo-story/open-in-files', 'verb' => 'GET'],
         ['name' => 'photoStory#video', 'url' => '/api/photo-story/video', 'verb' => 'GET'],
         ['name' => 'photoStory#metaVoxFields', 'url' => '/api/photo-story/metavox-fields', 'verb' => 'GET'],
 

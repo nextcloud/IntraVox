@@ -1,4 +1,5 @@
 <template>
+  <Teleport to="body">
   <div
     v-if="visible"
     class="ps-lightbox"
@@ -40,6 +41,15 @@
           <option :value="4000">{{ t('Normal') }}</option>
           <option :value="2500">{{ t('Fast') }}</option>
         </select>
+        <button
+          v-if="canOpenInFiles()"
+          class="ps-lb-icon-btn"
+          :aria-label="t('Show in Files')"
+          :title="t('Show in Files')"
+          @click="openInFiles"
+        >
+          <FolderOpen :size="20" />
+        </button>
         <button
           class="ps-lb-icon-btn"
           :aria-label="t('Toggle info panel')"
@@ -190,11 +200,24 @@
         </template>
         <template v-if="currentPhoto.name">
           <dt>{{ t('File') }}</dt>
-          <dd class="ps-lb-info-filename">{{ currentPhoto.name }}</dd>
+          <dd class="ps-lb-info-filename">
+            <button
+              v-if="canOpenInFiles()"
+              type="button"
+              class="ps-lb-filename-link"
+              :title="t('Show in Files')"
+              @click="openInFiles"
+            >
+              <span>{{ currentPhoto.name }}</span>
+              <OpenInNew :size="14" />
+            </button>
+            <span v-else>{{ currentPhoto.name }}</span>
+          </dd>
         </template>
       </dl>
     </aside>
   </div>
+  </Teleport>
 </template>
 
 <script>
@@ -207,6 +230,8 @@ import Play from 'vue-material-design-icons/Play.vue';
 import Pause from 'vue-material-design-icons/Pause.vue';
 import InformationOutline from 'vue-material-design-icons/InformationOutline.vue';
 import MapMarker from 'vue-material-design-icons/MapMarker.vue';
+import FolderOpen from 'vue-material-design-icons/FolderOpen.vue';
+import OpenInNew from 'vue-material-design-icons/OpenInNew.vue';
 
 export default {
   name: 'PhotoLightbox',
@@ -218,6 +243,8 @@ export default {
     Pause,
     InformationOutline,
     MapMarker,
+    FolderOpen,
+    OpenInNew,
   },
   props: {
     photos: { type: Array, required: true },
@@ -276,11 +303,13 @@ export default {
     visible(v) {
       if (v) {
         this.index = this.startIndex;
+        this.lockBodyScroll();
         this.$nextTick(() => {
           this.$refs.root?.focus();
         });
       } else {
         this.stopSlideshow();
+        this.unlockBodyScroll();
       }
     },
     speed() {
@@ -301,12 +330,14 @@ export default {
       ? document.activeElement
       : null;
     this.index = this.startIndex;
+    if (this.visible) this.lockBodyScroll();
     this.$nextTick(() => {
       this.$refs.root?.focus();
     });
   },
   beforeUnmount() {
     this.stopSlideshow();
+    this.unlockBodyScroll();
     // Restore focus to the element that triggered the lightbox.
     if (this._previouslyFocused && typeof this._previouslyFocused.focus === 'function') {
       try { this._previouslyFocused.focus(); } catch (e) { /* ignore */ }
@@ -380,6 +411,32 @@ export default {
       if (this.currentPhoto?.gps) {
         this.miniMapOpen = !this.miniMapOpen;
       }
+    },
+    openInFiles() {
+      const p = this.currentPhoto;
+      if (!p || !p.file_id) return;
+      // Server-side endpoint resolves the user-relative parent path and 302s
+      // to the Files app. Necessary because `path` in the API response is
+      // storage-internal (no mountpoint prefix for federated/groupfolder
+      // shares), so building the URL client-side breaks for those mounts.
+      const url = generateUrl('/apps/intravox/api/photo-story/open-in-files?file_id={id}', {
+        id: String(p.file_id),
+      });
+      window.open(url, '_blank', 'noopener');
+    },
+    canOpenInFiles() {
+      return !!this.currentPhoto?.file_id;
+    },
+    lockBodyScroll() {
+      if (this._bodyLocked) return;
+      this._prevBodyOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      this._bodyLocked = true;
+    },
+    unlockBodyScroll() {
+      if (!this._bodyLocked) return;
+      document.body.style.overflow = this._prevBodyOverflow || '';
+      this._bodyLocked = false;
     },
     next() {
       if (!this.photos.length) return;
@@ -455,10 +512,15 @@ export default {
       if (!t1) return;
       const dx = t1.clientX - this.touchStartX;
       const dy = t1.clientY - this.touchStartY;
-      // Horizontal swipe over 60px and dominant axis
+      // Horizontal swipe over 60px and dominant axis → prev/next
       if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy)) {
         if (dx < 0) this.next();
         else this.prev();
+        return;
+      }
+      // Vertical swipe-down over 100px → close (matches iOS/Android Photos UX)
+      if (dy > 100 && Math.abs(dy) > Math.abs(dx)) {
+        this.close();
       }
     },
     toggleSlideshow() {
@@ -501,8 +563,9 @@ export default {
 .ps-lightbox {
   position: fixed;
   inset: 0;
-  z-index: 10000;
-  background: rgba(0, 0, 0, 0.95);
+  /* Above Nextcloud header (z-index 2000) and most NC overlays. */
+  z-index: 100000;
+  background: rgba(0, 0, 0, 0.97);
   display: flex;
   flex-direction: column;
   color: #fff;
@@ -514,7 +577,11 @@ export default {
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.7), transparent);
+  /* Respect iOS notch / Android status bar in fullscreen. */
+  padding-top: max(12px, env(safe-area-inset-top));
+  padding-left: max(16px, env(safe-area-inset-left));
+  padding-right: max(16px, env(safe-area-inset-right));
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.75), transparent);
   position: absolute;
   top: 0;
   left: 0;
@@ -639,20 +706,21 @@ export default {
   right: 12px;
 }
 
-/* Date + location pill (always-visible left-bottom) */
+/* Date + location pill (always-visible left-bottom).
+   Background is opaque enough to stay readable over any photo. */
 .ps-lb-pill {
   position: absolute;
   left: 24px;
   bottom: 24px;
-  background: rgba(20, 20, 20, 0.78);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: none;
+  background: rgba(0, 0, 0, 0.62);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 14px;
   padding: 14px 20px;
   color: #fff;
   z-index: 3;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.55);
   cursor: pointer;
   transition: background 0.2s ease, transform 0.2s ease;
   max-width: 70vw;
@@ -662,11 +730,11 @@ export default {
 
 .ps-lb-pill:disabled {
   cursor: default;
-  opacity: 0.85;
+  opacity: 0.9;
 }
 
-.ps-lb-pill:hover {
-  background: rgba(20, 20, 20, 0.92);
+.ps-lb-pill:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.78);
   transform: translateY(-2px);
 }
 
@@ -675,12 +743,13 @@ export default {
   font-weight: 600;
   letter-spacing: -0.01em;
   line-height: 1.2;
+  /* Last-resort fallback if backdrop-filter is unsupported. */
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
 }
 
 .ps-lb-pill-date--fallback {
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.85);
   font-weight: 500;
-  font-style: italic;
 }
 
 .ps-lb-pill-time {
@@ -805,7 +874,34 @@ export default {
 .ps-lb-info-filename {
   font-family: var(--font-face, monospace);
   font-size: 12px;
-  opacity: 0.8;
+  opacity: 0.85;
+}
+
+.ps-lb-filename-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  margin: -4px -8px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: #fff;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  word-break: break-all;
+  transition: background 0.15s;
+}
+
+.ps-lb-filename-link:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--color-primary-element-light, #6bb4ff);
+}
+
+.ps-lb-filename-link:focus-visible {
+  outline: 2px solid var(--color-primary-element, #0082c9);
+  outline-offset: 1px;
 }
 
 .ps-lb-chip {

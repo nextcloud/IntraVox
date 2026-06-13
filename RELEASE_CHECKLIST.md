@@ -64,22 +64,34 @@ IntraVox bundles `@nextcloud/vue` instead of using the runtime version from the 
 
 ## 2. Translations (l10n/)
 
-Supported languages: **EN, NL, DE, FR**
+**Translation model:** UI strings are translated via the central Nextcloud Transifex pool (`o:nextcloud:p:nextcloud:r:intravox`). The repo ships translation files for whatever languages have been delivered by the sync-bot at release time. Admins curate which of those are enabled in their intranet via the "Available languages" section in IntraVox admin settings (see [docs/admin/language-management.md](docs/admin/language-management.md)).
 
-- [ ] Check that all languages have identical keys:
+**Bundled at release time (1.6.0):** NL, EN, DE, FR. More will appear automatically as Transifex translators contribute and the NC l10n bot merges PRs.
+
+- [ ] Validate JSON syntax in all l10n files:
   ```bash
-  python3 -c "
-  import json
-  langs = ['en','nl','de','fr']
-  ref = set(json.load(open('l10n/en.json'))['translations'].keys())
-  for l in langs:
-      keys = set(json.load(open(f'l10n/{l}.json'))['translations'].keys())
-      print(f'{l}: {len(keys)} keys', '✓' if keys == ref else f'✗ diff: {len(ref - keys)} missing')
-  "
+  node -e "require('fs').readdirSync('l10n').filter(f=>f.endsWith('.json')).forEach(f=>JSON.parse(require('fs').readFileSync('l10n/'+f,'utf8')))"
   ```
-- [ ] Validate JSON syntax in all translation files
-- [ ] Regenerate `.js` translation files: `npm run l10n`
-- [ ] Verify JS files are newer than JSON files
+- [ ] Regenerate `.js` translation files from `.json`: `npm run l10n`
+- [ ] Regenerate POT template from `en.json` + PHP: `node scripts/generate-pot.js`
+- [ ] Verify POT msgid count is plausible (1000+ for IntraVox 1.6+): `grep -c "^msgid " translationfiles/templates/intravox.pot`
+- [ ] **Do NOT** require identical keys across languages — incomplete translations are expected and fall back to English at runtime.
+
+---
+
+## 2b. Transifex sync
+
+This section is informational — the Nextcloud l10n bot does the work, you just review its PRs.
+
+- [ ] Check if any open `nextcloud-l10n[bot]` or `transifex-integration[bot]` PRs are pending for this repo
+- [ ] If yes: review the diff (it should only touch `l10n/<lang>.{js,json}` and `translationfiles/<lang>/intravox.po`), then merge before tagging the release
+- [ ] If you added new translatable strings since the last release: regenerate the POT so the bot picks them up:
+  ```bash
+  node scripts/generate-pot.js
+  git add translationfiles/templates/intravox.pot l10n/en.json
+  git commit -m "Refresh translation template"
+  ```
+- [ ] No action needed if no string changes were made — Transifex resource stays in sync automatically.
 
 ---
 
@@ -128,8 +140,8 @@ Supported languages: **EN, NL, DE, FR**
 
 ## 6. Nextcloud Compatibility
 
-- [ ] Check `appinfo/info.xml`: `<nextcloud min-version="32" max-version="32"/>`
-- [ ] PHP requirement: `<php min-version="8.1"/>`
+- [ ] Check `appinfo/info.xml`: `<nextcloud min-version="32" max-version="34"/>` (update max as new NC versions release)
+- [ ] PHP requirement: `<php min-version="8.2"/>` (matches composer.json)
 - [ ] Test on target Nextcloud version
 
 ---
@@ -150,7 +162,9 @@ Required files in tarball:
 | `demo-data/` | Demo content for setup wizard     |
 | Root files   | CHANGELOG.md, LICENSE, README.md  |
 
-**Exclude from tarball:** `src/`, `node_modules/`, `screenshots/`, `docs/`, `.git/`, `*.key`, `deploy.sh`, `openapi.json`, `scripts/`
+**Exclude from tarball:** `src/`, `node_modules/`, `screenshots/`, `docs/`, `.git/`, `*.key`, `deploy.sh`, `openapi.json`, `scripts/`, `.tx/`, `.l10nignore`, `translationfiles/`
+
+The `.tx/`, `.l10nignore`, and `translationfiles/` are dev-only artefacts for Transifex sync. Runtime IntraVox loads translations only from `l10n/*.{js,json}`.
 
 ---
 
@@ -183,7 +197,7 @@ rm -rf "$TEMP_DIR"
 
 ```bash
 # Verify no sensitive files
-tar -tzf intravox-X.Y.Z.tar.gz | grep -iE '(credential|\.key|\.env|deploy|\.git/|node_modules|src/|\.pem|\.crt)'
+tar -tzf intravox-X.Y.Z.tar.gz | grep -iE '(credential|\.key|\.env|deploy|\.git/|node_modules|src/|\.pem|\.crt|\.tx/|translationfiles/)'
 
 # Verify root folder is "intravox/"
 tar -tzf intravox-X.Y.Z.tar.gz | head -1
@@ -271,6 +285,7 @@ https://github.com/nextcloud/IntraVox/releases/download/vX.Y.Z/intravox-X.Y.Z.ta
 ```bash
 # 1. Prep
 npm run l10n
+node scripts/generate-pot.js
 npm run build
 
 # 2. Commit & tag
@@ -295,9 +310,11 @@ git push github main --tags
 ## Notes
 
 - **App ID:** `intravox`
-- **Minimum Nextcloud version:** 32
-- **PHP version:** >= 8.1
-- **Supported languages:** EN, NL, DE, FR
+- **Nextcloud version:** 32-34 (check info.xml for actual range)
+- **PHP version:** >= 8.2
+- **Translation pool:** Transifex resource `o:nextcloud:p:nextcloud:r:intravox`
+- **Bundled translations:** Whatever is in `l10n/` at release time (grows automatically as Transifex translators contribute)
+- **Source of truth:** `l10n/en.json` (extracted by webpack build) + `translationfiles/templates/intravox.pot` (regenerated via `scripts/generate-pot.js`)
 - **App Store:** https://apps.nextcloud.com
 - **Gitea:** (private repository)
 - **GitHub:** https://github.com/nextcloud/IntraVox
@@ -305,4 +322,4 @@ git push github main --tags
 
 ---
 
-*Last updated: February 2026*
+*Last updated: June 2026 — Transifex integration (1.6.0)*

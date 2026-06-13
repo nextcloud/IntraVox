@@ -430,6 +430,50 @@ class PhotoStoryController extends Controller {
 	}
 
 	/**
+	 * GET /api/photo-story/open-in-files?file_id=N
+	 *
+	 * 302-redirect to NC's Files app, scrolled to the requested file. Resolving
+	 * the user-relative parent path server-side handles federated/groupfolder
+	 * mounts correctly — the client only knows the file_id, not where the file
+	 * is mounted in the user's tree.
+	 */
+	#[NoAdminRequired]
+	#[NoCSRFRequired]
+	public function openInFiles(): \OCP\AppFramework\Http\Response {
+		$fileId = (int)$this->request->getParam('file_id', 0);
+		if ($fileId <= 0) {
+			return new DataResponse(['error' => 'Missing or invalid file_id'], Http::STATUS_BAD_REQUEST);
+		}
+		$user = $this->userSession->getUser();
+		if ($user === null) {
+			return new DataResponse(['error' => 'Authentication required'], Http::STATUS_UNAUTHORIZED);
+		}
+		try {
+			$userFolder = $this->rootFolder->getUserFolder($user->getUID());
+			$nodes = $userFolder->getById($fileId);
+			if (empty($nodes)) {
+				return new DataResponse(['error' => 'Not found or no access'], Http::STATUS_NOT_FOUND);
+			}
+			$node = $nodes[0];
+			$parentPath = $userFolder->getRelativePath($node->getParent()->getPath()) ?: '/';
+			$urlGen = \OC::$server->getURLGenerator();
+			$url = $urlGen->linkToRoute('files.view.index', [
+				'dir' => $parentPath,
+				'scrollto' => $node->getName(),
+				'openfile' => 'true',
+				'fileid' => $fileId,
+			]);
+			return new \OCP\AppFramework\Http\RedirectResponse($url);
+		} catch (\Throwable $e) {
+			$this->logger->warning('PhotoStoryController: openInFiles failed', [
+				'file_id' => $fileId,
+				'error' => $e->getMessage(),
+			]);
+			return new DataResponse(['error' => 'Cannot open file'], Http::STATUS_INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	/**
 	 * GET /api/photo-story/video?file_id=N
 	 *
 	 * Streams a video file's bytes to the browser. The video tag in the lightbox

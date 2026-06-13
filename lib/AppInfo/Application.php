@@ -123,7 +123,8 @@ class Application extends App implements IBootstrap {
             return new \OCA\IntraVox\Service\SystemFileService(
                 $c->get(\OCP\Files\IRootFolder::class),
                 $c->get(\OCA\IntraVox\Service\SetupService::class),
-                $c->get(\Psr\Log\LoggerInterface::class)
+                $c->get(\Psr\Log\LoggerInterface::class),
+                $c->get(\OCA\IntraVox\Service\LanguageService::class)
             );
         });
 
@@ -135,14 +136,41 @@ class Application extends App implements IBootstrap {
                 $c->get(\OCA\IntraVox\Service\SetupService::class),
                 $c->get(\OCA\IntraVox\Service\SystemFileService::class),
                 $c->get(\OCP\IConfig::class),
+                $c->get(\OCA\IntraVox\Service\LanguageService::class),
                 $c->get(\OCP\IUserSession::class)->getUser()?->getUID()
             );
         });
     }
 
     public function boot(IBootContext $context): void {
-        $appManager = $context->getServerContainer()->get(\OCP\App\IAppManager::class);
-        $request = $context->getServerContainer()->get(\OCP\IRequest::class);
+        $container = $context->getServerContainer();
+
+        // Late-bind PageService into LanguageService. Both services need each
+        // other (LanguageService → PageService for cache flush on toggle;
+        // PageService → LanguageService for the enabled-language check on
+        // every URL lookup). Constructor-injecting either way creates a DI
+        // cycle, so we resolve LanguageService first and wire PageService in
+        // after boot.
+        try {
+            $languageService = $container->get(\OCA\IntraVox\Service\LanguageService::class);
+            $pageService = $container->get(\OCA\IntraVox\Service\PageService::class);
+            $languageService->setPageService($pageService);
+
+            // PagePathHelper is a pure helper (no DI), so we sync its
+            // language-code set from LanguageService once per request.
+            \OCA\IntraVox\Service\Path\PagePathHelper::setKnownLanguages(
+                $languageService->getDiscoveredLanguages()
+            );
+        } catch (\Throwable $e) {
+            // Boot-time errors must not break the whole app. The cache flush
+            // path will just no-op until next request.
+            $container->get(\Psr\Log\LoggerInterface::class)->warning(
+                '[IntraVox] LanguageService late-binding failed: ' . $e->getMessage()
+            );
+        }
+
+        $appManager = $container->get(\OCP\App\IAppManager::class);
+        $request = $container->get(\OCP\IRequest::class);
         $requestUri = $request->getRequestUri();
 
         // Don't load external scripts on admin/settings pages - OC object is not available there

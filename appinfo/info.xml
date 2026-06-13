@@ -27,7 +27,7 @@
 * Public sharing with optional password protection
 
 **Content management:**
-* Multi-language support with per-language content folders
+* Multi-language support — admins choose which Transifex-translated languages to enable
 * Navigation editor with megamenu and sidebar options
 * Full export/import to ZIP — including Confluence HTML import
 * Demo content to get started in minutes
@@ -48,7 +48,7 @@
 * Internal communication and documentation
 * SharePoint-to-Nextcloud migrations
     ]]></description>
-    <version>1.5.5</version>
+    <version>1.6.0</version>
     <licence>agpl</licence>
     <author mail="info@voxcloud.nl" homepage="https://voxcloud.nl">VoxCloud</author>
     <namespace>IntraVox</namespace>

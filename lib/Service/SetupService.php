@@ -20,7 +20,6 @@ class SetupService {
     private const ADMIN_GROUP = 'IntraVox Admins';
     private const EDITOR_GROUP = 'IntraVox Editors';
     private const USER_GROUP = 'IntraVox Users';
-    private const SUPPORTED_LANGUAGES = ['nl', 'en', 'de', 'fr'];
     private const DEFAULT_LANGUAGE = 'en';
 
     private IRootFolder $rootFolder;
@@ -29,6 +28,7 @@ class SetupService {
     private IUserSession $userSession;
     private IShareManager $shareManager;
     private IGroupManager $groupManager;
+    private LanguageService $languageService;
     private string $nextcloudPath;
 
     public function __construct(
@@ -37,7 +37,8 @@ class SetupService {
         LoggerInterface $logger,
         IUserSession $userSession,
         IShareManager $shareManager,
-        IGroupManager $groupManager
+        IGroupManager $groupManager,
+        LanguageService $languageService
     ) {
         $this->rootFolder = $rootFolder;
         $this->config = $config;
@@ -45,6 +46,7 @@ class SetupService {
         $this->userSession = $userSession;
         $this->shareManager = $shareManager;
         $this->groupManager = $groupManager;
+        $this->languageService = $languageService;
 
         // Get Nextcloud path from environment or use default
         $this->nextcloudPath = '/var/www/nextcloud';
@@ -630,7 +632,11 @@ class SetupService {
             $folder = $this->getSharedFolder();
 
             // Create _resources folder for each language
-            foreach (self::SUPPORTED_LANGUAGES as $lang) {
+            // Iterate only over admin-enabled languages. The existing
+            // `catch (NotFoundException) { continue; }` skips languages whose
+            // folder never existed, so a 1.5.x install upgrades without any
+            // new folders being silently created.
+            foreach ($this->languageService->getEnabledLanguages() as $lang) {
                 try {
                     $langFolder = $folder->get($lang);
                     $this->logger->info("Checking language folder: {$lang}");
@@ -672,7 +678,11 @@ class SetupService {
             $folder = $this->getSharedFolder();
 
             // Create _templates folder for each language
-            foreach (self::SUPPORTED_LANGUAGES as $lang) {
+            // Iterate only over admin-enabled languages. The existing
+            // `catch (NotFoundException) { continue; }` skips languages whose
+            // folder never existed, so a 1.5.x install upgrades without any
+            // new folders being silently created.
+            foreach ($this->languageService->getEnabledLanguages() as $lang) {
                 try {
                     $langFolder = $folder->get($lang);
                     $this->logger->info("Checking language folder: {$lang}");
@@ -741,7 +751,11 @@ class SetupService {
             $skipped = 0;
 
             // Install templates only for languages that have a folder
-            foreach (self::SUPPORTED_LANGUAGES as $lang) {
+            // Iterate only over admin-enabled languages. The existing
+            // `catch (NotFoundException) { continue; }` skips languages whose
+            // folder never existed, so a 1.5.x install upgrades without any
+            // new folders being silently created.
+            foreach ($this->languageService->getEnabledLanguages() as $lang) {
                 try {
                     $langFolder = $folder->get($lang);
 

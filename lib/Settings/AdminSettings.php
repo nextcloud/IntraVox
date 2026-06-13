@@ -7,6 +7,7 @@ use OCA\IntraVox\AppInfo\Application;
 use OCA\IntraVox\Constants;
 use OCA\IntraVox\Service\DemoDataService;
 use OCA\IntraVox\Service\EngagementSettingsService;
+use OCA\IntraVox\Service\LanguageService;
 use OCA\IntraVox\Service\LicenseService;
 use OCA\IntraVox\Service\PublicationSettingsService;
 use OCA\IntraVox\Service\TelemetryService;
@@ -23,6 +24,7 @@ use OCP\Util;
 class AdminSettings implements IDelegatedSettings {
     private DemoDataService $demoDataService;
     private EngagementSettingsService $engagementSettings;
+    private LanguageService $languageService;
     private LicenseService $licenseService;
     private PublicationSettingsService $publicationSettings;
     private TelemetryService $telemetryService;
@@ -33,6 +35,7 @@ class AdminSettings implements IDelegatedSettings {
     public function __construct(
         DemoDataService $demoDataService,
         EngagementSettingsService $engagementSettings,
+        LanguageService $languageService,
         LicenseService $licenseService,
         PublicationSettingsService $publicationSettings,
         TelemetryService $telemetryService,
@@ -42,6 +45,7 @@ class AdminSettings implements IDelegatedSettings {
     ) {
         $this->demoDataService = $demoDataService;
         $this->engagementSettings = $engagementSettings;
+        $this->languageService = $languageService;
         $this->licenseService = $licenseService;
         $this->publicationSettings = $publicationSettings;
         $this->telemetryService = $telemetryService;
@@ -90,6 +94,11 @@ class AdminSettings implements IDelegatedSettings {
             'licenseKey' => $this->licenseService->getLicenseKey() ?? '',
             'telemetryEnabled' => $this->telemetryService->isEnabled(),
             'telemetryLastReport' => $this->telemetryService->getStatus()['lastReport'] ?? null,
+            // Transifex-discovered languages with NC display names and the
+            // admin's enable/disable state, plus the canonical fallback code.
+            'availableLanguages' => $this->languageService->getLanguagesWithMetadata(),
+            'enabledLanguageCodes' => $this->languageService->getEnabledLanguages(),
+            'defaultLanguage' => $this->languageService->getDefaultLanguage(),
         ]);
 
         // Load translations for JavaScript

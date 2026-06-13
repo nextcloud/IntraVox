@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace OCA\IntraVox\Command;
 
+use OCA\IntraVox\Service\LanguageService;
 use OCA\IntraVox\Service\NavigationService;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -12,18 +13,19 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Psr\Log\LoggerInterface;
 
 class CopyNavigationCommand extends Command {
-    private const SUPPORTED_LANGUAGES = ['nl', 'en', 'de', 'fr'];
-
     private NavigationService $navigationService;
     private LoggerInterface $logger;
+    private LanguageService $languageService;
 
     public function __construct(
         NavigationService $navigationService,
-        LoggerInterface $logger
+        LoggerInterface $logger,
+        LanguageService $languageService
     ) {
         parent::__construct();
         $this->navigationService = $navigationService;
         $this->logger = $logger;
+        $this->languageService = $languageService;
     }
 
     protected function configure(): void {
@@ -52,10 +54,12 @@ class CopyNavigationCommand extends Command {
         $target = $input->getArgument('target');
         $overwrite = $input->getOption('overwrite');
 
+        $enabled = $this->languageService->getEnabledLanguages();
+
         // Validate source language
-        if (!in_array($source, self::SUPPORTED_LANGUAGES)) {
+        if (!in_array($source, $enabled, true)) {
             $output->writeln("<error>Invalid source language: {$source}</error>");
-            $output->writeln('<error>Supported languages: ' . implode(', ', self::SUPPORTED_LANGUAGES) . '</error>');
+            $output->writeln('<error>Enabled languages: ' . implode(', ', $enabled) . '</error>');
             return 1;
         }
 
@@ -63,13 +67,13 @@ class CopyNavigationCommand extends Command {
         $targetLanguages = [];
         if ($target === 'all') {
             $targetLanguages = array_filter(
-                self::SUPPORTED_LANGUAGES,
+                $enabled,
                 fn($lang) => $lang !== $source
             );
         } else {
-            if (!in_array($target, self::SUPPORTED_LANGUAGES)) {
+            if (!in_array($target, $enabled, true)) {
                 $output->writeln("<error>Invalid target language: {$target}</error>");
-                $output->writeln('<error>Supported languages: ' . implode(', ', self::SUPPORTED_LANGUAGES) . ' or "all"</error>');
+                $output->writeln('<error>Enabled languages: ' . implode(', ', $enabled) . ' or "all"</error>');
                 return 1;
             }
             if ($target === $source) {

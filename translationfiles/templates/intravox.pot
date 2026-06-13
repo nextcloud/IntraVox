@@ -1,14 +1,12 @@
-# SOME DESCRIPTIVE TITLE.
-# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the PACKAGE package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# IntraVox translation template.
+# Copyright (C) 2026 VoxCloud
+# This file is distributed under the AGPL-3.0 license.
 #
-#, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: IntraVox\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-01-05 12:00+0000\n"
+"Project-Id-Version: IntraVox 1.6.0\n"
+"Report-Msgid-Bugs-To: translations@nextcloud.com\n"
+"POT-Creation-Date: 2026-06-09 20:25+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,17 +15,475 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-# App.vue
-msgid "Edit"
+msgid " with side columns"
 msgstr ""
 
-msgid "Edit page"
+msgid "— Not configured —"
 msgstr ""
 
-msgid "Save"
+msgid "… and {n} more"
 msgstr ""
 
-msgid "Save changes"
+msgid "(Department: {dept}, Max: {max})"
+msgstr ""
+
+msgid "(has child pages)"
+msgstr ""
+
+msgid "(no value)"
+msgstr ""
+
+msgid "(optional)"
+msgstr ""
+
+msgid "(Public page, Max: 3)"
+msgstr ""
+
+msgid "(unchanged)"
+msgstr ""
+
+msgid "{count} new connection(s) will be added."
+msgstr ""
+
+msgid "{count} people reacted with {emoji}"
+msgstr ""
+
+msgid "{count} result(s) found"
+msgstr ""
+
+msgid "{days} days ago"
+msgstr ""
+
+msgid "{displayName} is editing this page"
+msgstr ""
+
+msgid "{hours} hours ago"
+msgstr ""
+
+msgid "{minutes} min ago"
+msgstr ""
+
+msgid "{n} columns may be too narrow{side}. Consider {rec} or fewer."
+msgstr ""
+
+msgid "{service} has tracking concerns. Consider privacy-friendly alternatives."
+msgstr ""
+
+msgid "{service} is already available in the predefined services above"
+msgstr ""
+
+msgid "/api/v1/announcements"
+msgstr ""
+
+msgid "/Documents/..."
+msgstr ""
+
+msgid "/Photos/Albums/..."
+msgstr ""
+
+msgid "+ Add connection"
+msgstr ""
+
+msgid "+ Add header"
+msgstr ""
+
+msgid "A → Z"
+msgstr ""
+
+msgid "A backup of the current version will be created before restoring. Do you want to continue?"
+msgstr ""
+
+msgid "A free tier for small and medium installations"
+msgstr ""
+
+msgid "A network error occurred while loading the video."
+msgstr ""
+
+msgid "Access denied. Check the connection permissions."
+msgstr ""
+
+msgid "Account"
+msgstr ""
+
+msgid "Action"
+msgstr ""
+
+msgid "Actions"
+msgstr ""
+
+msgid "Activating..."
+msgstr ""
+
+msgid "Active"
+msgstr ""
+
+msgid "Add"
+msgstr ""
+
+msgid "Add a file"
+msgstr ""
+
+msgid "Add a grid of links with icons"
+msgstr ""
+
+msgid "Add a heading"
+msgstr ""
+
+msgid "Add a horizontal line"
+msgstr ""
+
+msgid "Add a label to this version"
+msgstr ""
+
+msgid "Add a link"
+msgstr ""
+
+msgid "Add a PeerTube or local video"
+msgstr ""
+
+msgid "Add an image"
+msgstr ""
+
+msgid "Add column"
+msgstr ""
+
+msgid "Add column left"
+msgstr ""
+
+msgid "Add column right"
+msgstr ""
+
+msgid "Add empty space"
+msgstr ""
+
+msgid "Add filter"
+msgstr ""
+
+msgid "Add Item"
+msgstr ""
+
+msgid "Add label"
+msgstr ""
+
+msgid "Add left column"
+msgstr ""
+
+msgid "Add link"
+msgstr ""
+
+msgid "Add new domain (e.g., https://peertube.example.org)"
+msgstr ""
+
+msgid "Add reaction"
+msgstr ""
+
+msgid "Add right column"
+msgstr ""
+
+msgid "Add row"
+msgstr ""
+
+msgid "Add Row"
+msgstr ""
+
+msgid "Add row above"
+msgstr ""
+
+msgid "Add row below"
+msgstr ""
+
+msgid "Add sub-item"
+msgstr ""
+
+msgid "Add text to your page"
+msgstr ""
+
+msgid "Add widget"
+msgstr ""
+
+msgid "Add Widget"
+msgstr ""
+
+msgid "Added to navigation"
+msgstr ""
+
+msgid "Admin token only (shared)"
+msgstr ""
+
+msgid "Advanced"
+msgstr ""
+
+msgid "Advanced options"
+msgstr ""
+
+msgid "After installing demo data, refresh this page to see your new intranet."
+msgstr ""
+
+msgid "all"
+msgstr ""
+
+msgid "All"
+msgstr ""
+
+msgid "All comments and reactions"
+msgstr ""
+
+msgid "All connections already exist (matched by name). Nothing imported."
+msgstr ""
+
+msgid "All connections already exist. Nothing to import."
+msgstr ""
+
+msgid "All courses"
+msgstr ""
+
+msgid "All current features remain available"
+msgstr ""
+
+msgid "All day"
+msgstr ""
+
+msgid "All forums"
+msgstr ""
+
+msgid "All issues"
+msgstr ""
+
+msgid "All languages"
+msgstr ""
+
+msgid "All pages"
+msgstr ""
+
+msgid "All pages and subpages"
+msgstr ""
+
+msgid "All projects"
+msgstr ""
+
+msgid "All uploaded media files"
+msgstr ""
+
+msgid "All work packages"
+msgstr ""
+
+msgid "Allow comments on pages"
+msgstr ""
+
+msgid "Allow comments on this page"
+msgstr ""
+
+msgid "Allow multiple reactions per user"
+msgstr ""
+
+msgid "Allow reactions on comments"
+msgstr ""
+
+msgid "Allow reactions on pages"
+msgstr ""
+
+msgid "Allow reactions on this page"
+msgstr ""
+
+msgid "already exists"
+msgstr ""
+
+msgid "Alt text:"
+msgstr ""
+
+msgid "always on"
+msgstr ""
+
+msgid "An unknown error occurred while playing the video."
+msgstr ""
+
+msgid "Analytics"
+msgstr ""
+
+msgid "and replace it with fresh demo data."
+msgstr ""
+
+msgid "Anonymous Usage Statistics"
+msgstr ""
+
+msgid "Anonymous usage statistics disabled."
+msgstr ""
+
+msgid "any"
+msgstr ""
+
+msgid "Any changes you made to the demo pages will be lost. This action cannot be undone."
+msgstr ""
+
+msgid "API key (custom header)"
+msgstr ""
+
+msgid "API key header name"
+msgstr ""
+
+msgid "API Token"
+msgstr ""
+
+msgid "Apple"
+msgstr ""
+
+msgid "Application (client) ID"
+msgstr ""
+
+msgid "Application Display Settings"
+msgstr ""
+
+msgid "Application Icon"
+msgstr ""
+
+msgid "Application Name"
+msgstr ""
+
+msgid "Apply"
+msgstr ""
+
+msgid "Approximately {count} pages"
+msgstr ""
+
+msgid "April"
+msgstr ""
+
+msgid "Archive"
+msgstr ""
+
+msgid "Are you sure you want to delete this comment?"
+msgstr ""
+
+msgid "Are you sure you want to delete this page?"
+msgstr ""
+
+msgid "Are you sure you want to delete this row?"
+msgstr ""
+
+msgid "Are you sure you want to delete this widget?"
+msgstr ""
+
+msgid "Are you sure you want to remove the header row?"
+msgstr ""
+
+msgid "Are you sure you want to remove this column?"
+msgstr ""
+
+msgid "Are you sure you want to unlock this page? {displayName} may lose unsaved changes."
+msgstr ""
+
+msgid "Ascending"
+msgstr ""
+
+msgid "Assignments"
+msgstr ""
+
+msgid "Atlassian account email"
+msgstr ""
+
+msgid "August"
+msgstr ""
+
+msgid "Auth method"
+msgstr ""
+
+msgid "Authentication"
+msgstr ""
+
+msgid "Authentication required. Please connect your account."
+msgstr ""
+
+msgid "author (optional)"
+msgstr ""
+
+msgid "Author field"
+msgstr ""
+
+msgid "Automatically curated — best photos are picked using EXIF metadata (people, subjects, location, file size) and duplicates from photo bursts are collapsed."
+msgstr ""
+
+msgid "Autoplay interval (seconds)"
+msgstr ""
+
+msgid "Autoplay when page loads"
+msgstr ""
+
+msgid "Available Courses"
+msgstr ""
+
+msgid "Available languages"
+msgstr ""
+
+msgid "Azure AD / Entra ID Tenant ID. Found in Azure Portal → App registrations."
+msgstr ""
+
+msgid "Background color"
+msgstr ""
+
+msgid "Background color:"
+msgstr ""
+
+msgid "Base URL"
+msgstr ""
+
+msgid "Basic auth"
+msgstr ""
+
+msgid "Basic information"
+msgstr ""
+
+msgid "Basic server configuration (database, OS, web server, language, timezone, country)"
+msgstr ""
+
+msgid "Bearer token"
+msgstr ""
+
+msgid "Behavior"
+msgstr ""
+
+msgid "Blank Page"
+msgstr ""
+
+msgid "Bold"
+msgstr ""
+
+msgid "Bold (Ctrl+B)"
+msgstr ""
+
+msgid "Both (OAuth2 with admin fallback)"
+msgstr ""
+
+msgid "Bottom"
+msgstr ""
+
+msgid "Browse media..."
+msgstr ""
+
+msgid "Browse..."
+msgstr ""
+
+msgid "Bugs"
+msgstr ""
+
+msgid "Bullet list"
+msgstr ""
+
+msgid "Business"
+msgstr ""
+
+msgid "Business platforms (Vimeo, Wistia, etc.)"
+msgstr ""
+
+msgid "by {author}"
+msgstr ""
+
+msgid "Calendar"
+msgstr ""
+
+msgid "Calendars"
+msgstr ""
+
+msgid "Camera"
 msgstr ""
 
 msgid "Cancel"
@@ -36,156 +492,1060 @@ msgstr ""
 msgid "Cancel editing"
 msgstr ""
 
-msgid "Pages"
+msgid "Cap the total number of documents. Leave blank to load everything via infinite scroll."
 msgstr ""
 
-msgid "Show page list"
+msgid "Cap the total number of photos shown. Leave blank to load everything via infinite scroll."
 msgstr ""
 
-msgid "New Page"
+msgid "Cards"
 msgstr ""
 
-msgid "Create new page"
+msgid "Carousel"
 msgstr ""
 
-msgid "Loading..."
+msgid "Category (file type)"
 msgstr ""
 
-msgid "No pages found. Please run the setup command first."
-msgstr ""
-
-msgid "Could not load pages: {error}"
-msgstr ""
-
-msgid "Could not load page: {error}"
+msgid "Center"
 msgstr ""
 
 msgid "Changes cancelled"
 msgstr ""
 
-msgid "Page saved"
+msgid "Checked"
 msgstr ""
 
-msgid "Could not save page: {error}"
+msgid "Checking capabilities..."
 msgstr ""
 
-msgid "Title for the new page:"
+msgid "Checking..."
 msgstr ""
 
-msgid "Invalid page title"
+msgid "Choose an icon"
 msgstr ""
 
-msgid "Page created"
+msgid "Choose which part of the image is visible when cropped"
 msgstr ""
 
-msgid "Could not create page: {error}"
+msgid "Chronological — documents grouped by date with sticky headers. Granularity (day/month/year) configurable below."
 msgstr ""
 
-msgid "Are you sure you want to delete this page?"
+msgid "Chronological — photos grouped by day with sticky date headers."
 msgstr ""
 
-msgid "Page deleted"
+msgid "Clean grid (default)"
 msgstr ""
 
-msgid "Could not delete page: {error}"
+msgid "Clean Start"
 msgstr ""
 
-# PageEditor.vue
-msgid "Columns:"
+msgid "Clean start completed successfully"
 msgstr ""
 
-msgid "Add Row"
+msgid "Clean start failed"
 msgstr ""
 
-msgid "Add Widget"
+msgid "Clear selection"
 msgstr ""
 
-msgid "Delete row"
+msgid "Clear URL"
 msgstr ""
 
-msgid "Column {column}"
+msgid "Click here"
 msgstr ""
 
-msgid "Edit widget"
+msgid "Click on the image to navigate to this page"
 msgstr ""
 
-msgid "Delete widget"
+msgid "Click on the image to open this URL"
 msgstr ""
 
-msgid "Are you sure you want to delete this row?"
+msgid "Click on the image to open this URL in a new tab"
 msgstr ""
 
-msgid "New text widget"
+msgid "Click to collapse"
 msgstr ""
 
-msgid "New heading"
+msgid "Click to expand"
 msgstr ""
 
-msgid "Link text"
+msgid "Client ID"
 msgstr ""
 
-msgid "File"
+msgid "Client ID from LMS"
 msgstr ""
 
-msgid "Are you sure you want to delete this widget?"
+msgid "Client Secret"
 msgstr ""
 
-# WidgetEditor.vue
-msgid "Edit widget"
+msgid "Client secret from LMS"
 msgstr ""
 
-msgid "Text:"
+msgid "Client secret value"
 msgstr ""
 
-msgid "Text formatting"
+msgid "close"
 msgstr ""
 
-msgid "Bold (Ctrl+B)"
+msgid "Close details"
 msgstr ""
 
-msgid "Italic (Ctrl+I)"
+msgid "Close lightbox"
 msgstr ""
 
-msgid "Underline (Ctrl+U)"
+msgid "Close map"
 msgstr ""
 
-msgid "Strikethrough"
-msgstr ""
-
-msgid "Unordered list"
-msgstr ""
-
-msgid "Ordered list"
-msgstr ""
-
-msgid "Quote"
+msgid "Cluster documents by category or MetaVox field (author, project, status, …)."
 msgstr ""
 
 msgid "Code block"
 msgstr ""
 
-msgid "Insert link"
+msgid "Collapse"
 msgstr ""
 
-msgid "Insert image"
+msgid "Collapsed"
 msgstr ""
 
-msgid "Insert table"
+msgid "Collapsed by default"
+msgstr ""
+
+msgid "Collapses RAW+JPG pairs from RAW-capable cameras"
+msgstr ""
+
+msgid "Collapsible row"
+msgstr ""
+
+msgid "Collapsible section"
+msgstr ""
+
+msgid "column"
+msgstr ""
+
+msgid "Column {column}"
+msgstr ""
+
+msgid "columns"
+msgstr ""
+
+msgid "Columns"
+msgstr ""
+
+msgid "Columns:"
+msgstr ""
+
+msgid "comments"
+msgstr ""
+
+msgid "Comments"
+msgstr ""
+
+msgid "Comments Settings"
+msgstr ""
+
+msgid "Commercial"
+msgstr ""
+
+msgid "Commercial platform - Consider privacy alternatives"
+msgstr ""
+
+msgid "Commercial platforms are allowed but will show a warning due to tracking and privacy concerns."
+msgstr ""
+
+msgid "Configure connections to external systems (LMS, RSS sources). These connections can be used by the Feed widget on any page."
+msgstr ""
+
+msgid "Configure how users can interact with pages through reactions and comments."
+msgstr ""
+
+msgid "Configure MetaVox fields used for publication date filtering in the News widget."
+msgstr ""
+
+msgid "Configure Settings"
+msgstr ""
+
+msgid "Configure which video platforms can be embedded in pages. Only HTTPS domains are allowed."
+msgstr ""
+
+msgid "Configure which video platforms can be embedded in pages. Toggle services on or off."
+msgstr ""
+
+msgid "Configured"
+msgstr ""
+
+msgid "Confluence"
+msgstr ""
+
+msgid "Connect your account"
+msgstr ""
+
+msgid "Connected"
+msgstr ""
+
+msgid "Connected via SSO"
+msgstr ""
+
+msgid "Connecting..."
+msgstr ""
+
+msgid "Connection"
+msgstr ""
+
+msgid "Connection no longer exists. Please reconfigure this widget."
+msgstr ""
+
+msgid "Connection OK"
+msgstr ""
+
+msgid "Contact us for a license if you need more pages."
+msgstr ""
+
+msgid "Container"
+msgstr ""
+
+msgid "Container settings"
+msgstr ""
+
+msgid "contains"
+msgstr ""
+
+msgid "contains all"
+msgstr ""
+
+msgid "Contains IntraVox data for"
+msgstr ""
+
+msgid "Content"
+msgstr ""
+
+msgid "Content type"
+msgstr ""
+
+msgid "Copy public link"
+msgstr ""
+
+msgid "Copy URL"
+msgstr ""
+
+msgid "Could not copy automatically. Please copy the selected URL."
+msgstr ""
+
+msgid "Could not create page from template: {error}"
+msgstr ""
+
+msgid "Could not create page: {error}"
+msgstr ""
+
+msgid "Could not delete page: {error}"
+msgstr ""
+
+msgid "Could not load feed. Check the connection settings."
+msgstr ""
+
+msgid "Could not load feed. The external system may be unavailable."
+msgstr ""
+
+msgid "Could not load page structure: {error}"
+msgstr ""
+
+msgid "Could not load page: {error}"
+msgstr ""
+
+msgid "Could not load pages: {error}"
+msgstr ""
+
+msgid "Could not load version: {error}"
+msgstr ""
+
+msgid "Could not reach the telemetry server. Please try again later."
+msgstr ""
+
+msgid "Could not save footer: {error}"
+msgstr ""
+
+msgid "Could not save navigation: {error}"
+msgstr ""
+
+msgid "Could not save page settings: {error}"
+msgstr ""
+
+msgid "Could not save page: {error}"
+msgstr ""
+
+msgid "Could not start editing: {error}"
+msgstr ""
+
+msgid "Could not unlock page: {error}"
+msgstr ""
+
+msgid "Could not upload image"
+msgstr ""
+
+msgid "Could not upload video"
+msgstr ""
+
+msgid "Course (optional)"
+msgstr ""
+
+msgid "Course ID (connect your account to see a list)"
+msgstr ""
+
+msgid "Create"
+msgstr ""
+
+msgid "Create a reusable template from this page"
+msgstr ""
+
+msgid "Create Content"
+msgstr ""
+
+msgid "Create new page"
+msgstr ""
+
+msgid "Create templates by saving existing pages as templates"
+msgstr ""
+
+msgid "Created"
+msgstr ""
+
+msgid "Credentials missing"
+msgstr ""
+
+msgid "Cross-folder mode (empty source folder) requires at least one filter"
+msgstr ""
+
+msgid "Ctrl+Enter to send"
+msgstr ""
+
+msgid "Current"
+msgstr ""
+
+msgid "Current version"
+msgstr ""
+
+msgid "Current:"
+msgstr ""
+
+msgid "Custom fields (LDAP/OIDC)"
+msgstr ""
+
+msgid "Custom Icon"
+msgstr ""
+
+msgid "Custom request headers"
+msgstr ""
+
+msgid "Custom servers"
+msgstr ""
+
+msgid "Custom Upload"
+msgstr ""
+
+msgid "Custom URL"
+msgstr ""
+
+msgid "Custom video domain"
+msgstr ""
+
+msgid "Custom width (pixels):"
+msgstr ""
+
+msgid "Customize how IntraVox appears in the navigation bar"
+msgstr ""
+
+msgid "Customize video domains, upload limits, and other settings for your organization."
+msgstr ""
+
+msgid "data or results or leave empty for root array"
+msgstr ""
+
+msgid "Data recovered successfully: {files} files migrated"
+msgstr ""
+
+msgid "Date"
+msgstr ""
+
+msgid "Date field"
+msgstr ""
+
+msgid "Date modified"
+msgstr ""
+
+msgid "Date range"
+msgstr ""
+
+msgid "Date taken"
+msgstr ""
+
+msgid "December"
+msgstr ""
+
+msgid "Default"
+msgstr ""
+
+msgid "Default (transparent)"
+msgstr ""
+
+msgid "Default Icon"
+msgstr ""
+
+msgid "Default state"
+msgstr ""
+
+msgid "Delete"
+msgstr ""
+
+msgid "Delete All & Start Fresh"
+msgstr ""
+
+msgid "Delete column"
+msgstr ""
+
+msgid "Delete item"
+msgstr ""
+
+msgid "Delete Orphaned Data"
+msgstr ""
+
+msgid "Delete Permanently"
+msgstr ""
+
+msgid "Delete row"
+msgstr ""
+
+msgid "Delete table"
+msgstr ""
+
+msgid "Delete widget"
+msgstr ""
+
+msgid "Deleting..."
+msgstr ""
+
+msgid "Deletion failed"
+msgstr ""
+
+msgid "Demo content"
+msgstr ""
+
+msgid "Demo Data"
+msgstr ""
+
+msgid "Demo data installed successfully"
+msgstr ""
+
+msgid "Demote (make child of item above)"
+msgstr ""
+
+msgid "Department"
+msgstr ""
+
+msgid "Descending"
+msgstr ""
+
+msgid "Describe what this template is for"
+msgstr ""
+
+msgid "Description"
+msgstr ""
+
+msgid "Description of the image..."
+msgstr ""
+
+msgid "Details"
+msgstr ""
+
+msgid "Detect and manage orphaned data from previous IntraVox installations."
+msgstr ""
+
+msgid "Detected:"
+msgstr ""
+
+msgid "Disable connection"
+msgstr ""
+
+msgid "Disabled"
+msgstr ""
+
+msgid "Disabled by administrator"
+msgstr ""
+
+msgid "Disabled for this page"
+msgstr ""
+
+msgid "Disabled globally"
+msgstr ""
+
+msgid "Disconnect"
+msgstr ""
+
+msgid "Discouraged"
+msgstr ""
+
+msgid "Discouraged - Significant tracking and privacy concerns"
+msgstr ""
+
+msgid "Dismiss banner"
+msgstr ""
+
+msgid "Display"
+msgstr ""
+
+msgid "Display options"
+msgstr ""
+
+msgid "Divider"
+msgstr ""
+
+msgid "Document"
+msgstr ""
+
+msgid "Document library"
+msgstr ""
+
+msgid "Documentation on GitHub"
+msgstr ""
+
+msgid "Documents"
+msgstr ""
+
+msgid "does not contain"
+msgstr ""
+
+msgid "Domain"
+msgstr ""
+
+msgid "Domain added. Don't forget to save your settings."
+msgstr ""
+
+msgid "Domain added. Don\\"
+msgstr ""
+
+msgid "Domain contains invalid characters. Only letters, numbers, dots and hyphens are allowed."
+msgstr ""
+
+msgid "Download"
+msgstr ""
+
+msgid "Download Export"
+msgstr ""
+
+msgid "Downloading... {percent}%"
+msgstr ""
+
+msgid "Downloading... {size} MB"
+msgstr ""
+
+msgid "Draft"
+msgstr ""
+
+msgid "Draft — click to publish"
+msgstr ""
+
+msgid "Drag to reorder"
+msgstr ""
+
+msgid "Drag to reorder row"
+msgstr ""
+
+msgid "Dropdown (Cascading)"
+msgstr ""
+
+msgid "Dropdown Menu"
+msgstr ""
+
+msgid "Duplicate row"
+msgstr ""
+
+msgid "Duplicate widget"
+msgstr ""
+
+msgid "Dutch"
+msgstr ""
+
+msgid "e.g. announcement, update"
+msgstr ""
+
+msgid "e.g. Canvas University"
+msgstr ""
+
+msgid "e.g., Latest News"
+msgstr ""
+
+msgid "e.g., Our Team"
+msgstr ""
+
+msgid "e.g., Upcoming Events"
+msgstr ""
+
+msgid "Edit"
+msgstr ""
+
+msgid "Edit footer"
+msgstr ""
+
+msgid "Edit label"
+msgstr ""
+
+msgid "Edit links"
+msgstr ""
+
+msgid "Edit navigation"
+msgstr ""
+
+msgid "Edit Navigation"
+msgstr ""
+
+msgid "Edit page"
+msgstr ""
+
+msgid "Edit Page"
+msgstr ""
+
+msgid "Edit this page"
+msgstr ""
+
+msgid "Edit widget"
+msgstr ""
+
+msgid "edited"
+msgstr ""
+
+msgid "Education"
+msgstr ""
+
+msgid "Educational"
+msgstr ""
+
+msgid "Email"
+msgstr ""
+
+msgid "empty"
+msgstr ""
+
+msgid "Empty folder"
+msgstr ""
+
+msgid "Enable connection"
+msgstr ""
+
+msgid "Enable if this system uses the same identity provider as Nextcloud (e.g. SURFconext, Keycloak, Azure AD)."
+msgstr ""
+
+msgid "Enabled"
+msgstr ""
+
+msgid "Enabled for this page"
+msgstr ""
+
+msgid "Endpoint path"
+msgstr ""
+
+msgid "Engagement"
+msgstr ""
+
+msgid "Engagement settings saved"
+msgstr ""
+
+msgid "English"
+msgstr ""
+
+msgid "Enter a title for the new page"
+msgstr ""
+
+msgid "Enter a video URL above to see a preview."
+msgstr ""
+
+msgid "Enter API token"
+msgstr ""
+
+msgid "Enter course ID"
+msgstr ""
+
+msgid "Enter footer content..."
+msgstr ""
+
+msgid "Enter ID manually"
+msgstr ""
+
+msgid "Enter page title"
+msgstr ""
+
+msgid "Enter template name"
+msgstr ""
+
+msgid "Enter text..."
 msgstr ""
 
 msgid "Enter text... (Markdown supported: **bold**, *italic*, etc.)"
 msgstr ""
 
-msgid "Preview:"
-msgstr ""
-
-msgid "Heading:"
+msgid "Enter token manually"
 msgstr ""
 
 msgid "Enter your heading..."
 msgstr ""
 
-msgid "Level:"
+msgid "equals"
+msgstr ""
+
+msgid "Error: {message}"
+msgstr ""
+
+msgid "Excerpt field"
+msgstr ""
+
+msgid "Expand"
+msgstr ""
+
+msgid "Expanded"
+msgstr ""
+
+msgid "Expiration date field"
+msgstr ""
+
+msgid "Expired"
+msgstr ""
+
+msgid "Expires"
+msgstr ""
+
+msgid "Export"
+msgstr ""
+
+msgid "Export completed"
+msgstr ""
+
+msgid "Export completed successfully. Download should start automatically."
+msgstr ""
+
+msgid "Export downloaded successfully"
+msgstr ""
+
+msgid "Export in progress"
+msgstr ""
+
+msgid "Export is incomplete — {count} pages are missing _exportPath. Please re-export with IntraVox v0.8.11 or higher."
+msgstr ""
+
+msgid "Export Pages"
+msgstr ""
+
+msgid "Export started"
+msgstr ""
+
+msgid "Export your IntraVox pages for backup or migration."
+msgstr ""
+
+msgid "Export/Import"
+msgstr ""
+
+msgid "Exported {count} connection(s)"
+msgstr ""
+
+msgid "Exporting..."
+msgstr ""
+
+msgid "External Feed Connections"
+msgstr ""
+
+msgid "External Feeds"
+msgstr ""
+
+msgid "External link"
+msgstr ""
+
+msgid "External URL"
+msgstr ""
+
+msgid "Extra HTTP headers sent with every request. E.g. OCS-APIRequest: true for Nextcloud APIs."
+msgstr ""
+
+msgid "Failed to add page to navigation"
+msgstr ""
+
+msgid "Failed to copy link"
+msgstr ""
+
+msgid "Failed to disconnect"
+msgstr ""
+
+msgid "Failed to export: "
+msgstr ""
+
+msgid "Failed to generate feed URL"
+msgstr ""
+
+msgid "Failed to install demo data"
+msgstr ""
+
+msgid "Failed to load documents"
+msgstr ""
+
+msgid "Failed to load events"
+msgstr ""
+
+msgid "Failed to load feed settings"
+msgstr ""
+
+msgid "Failed to load map"
+msgstr ""
+
+msgid "Failed to load news"
+msgstr ""
+
+msgid "Failed to load people"
+msgstr ""
+
+msgid "Failed to load photos"
+msgstr ""
+
+msgid "Failed to load properties"
+msgstr ""
+
+msgid "Failed to load settings"
+msgstr ""
+
+msgid "Failed to load share links"
+msgstr ""
+
+msgid "Failed to load SharePoint lists"
+msgstr ""
+
+msgid "Failed to load version history"
+msgstr ""
+
+msgid "Failed to load versions"
+msgstr ""
+
+msgid "Failed to parse file: {error}"
+msgstr ""
+
+msgid "Failed to regenerate feed URL"
+msgstr ""
+
+msgid "Failed to restore version: {error}"
+msgstr ""
+
+msgid "Failed to revoke feed URL"
+msgstr ""
+
+msgid "Failed to save engagement settings"
+msgstr ""
+
+msgid "Failed to save feed connections"
+msgstr ""
+
+msgid "Failed to save feed settings"
+msgstr ""
+
+msgid "Failed to save language selection."
+msgstr ""
+
+msgid "Failed to save publication settings"
+msgstr ""
+
+msgid "Failed to save settings"
+msgstr ""
+
+msgid "Failed to save template"
+msgstr ""
+
+msgid "Failed to save token"
+msgstr ""
+
+msgid "Failed to save video domains"
+msgstr ""
+
+msgid "Failed to save: {error}"
+msgstr ""
+
+msgid "Failed to scan for orphaned data"
+msgstr ""
+
+msgid "Failed to send report"
+msgstr ""
+
+msgid "Failed to start connection"
+msgstr ""
+
+msgid "Failed to start export"
+msgstr ""
+
+msgid "Failed to update title: {error}"
+msgstr ""
+
+msgid "Failed to update version label: {error}"
+msgstr ""
+
+msgid "Failed to upload icon"
+msgstr ""
+
+msgid "Fast"
+msgstr ""
+
+msgid "Favorite"
+msgstr ""
+
+msgid "February"
+msgstr ""
+
+msgid "Federated share — MetaVox metadata is not available because the source lives on another Nextcloud instance. Files are shown with name, date and file type only."
+msgstr ""
+
+msgid "Feed connections saved"
+msgstr ""
+
+msgid "Feed scope"
+msgstr ""
+
+msgid "Feed settings saved"
+msgstr ""
+
+msgid "Feed URL"
+msgstr ""
+
+msgid "Feed URL copied to clipboard"
+msgstr ""
+
+msgid "Feed URL generated"
+msgstr ""
+
+msgid "Feed URL regenerated. The old URL no longer works."
+msgstr ""
+
+msgid "Feed URL revoked"
+msgstr ""
+
+msgid "Field"
+msgstr ""
+
+msgid "File"
+msgstr ""
+
+msgid "File name:"
+msgstr ""
+
+msgid "File path (in IntraVox folder):"
+msgstr ""
+
+msgid "File size"
+msgstr ""
+
+msgid "File size must be less than 1MB"
+msgstr ""
+
+msgid "Filename"
+msgstr ""
+
+msgid "Filter by attributes"
+msgstr ""
+
+msgid "Filter by keyword (optional)"
+msgstr ""
+
+msgid "Filter pages based on publication and expiration dates configured in admin settings."
+msgstr ""
+
+msgid "filters"
+msgstr ""
+
+msgid "Filters"
+msgstr ""
+
+msgid "Flat sortable list — no grouping."
+msgstr ""
+
+msgid "Folder ID"
+msgstr ""
+
+msgid "Folder path"
+msgstr ""
+
+msgid "Footer content"
+msgstr ""
+
+msgid "Footer saved"
+msgstr ""
+
+msgid "Format"
+msgstr ""
+
+msgid "Forum (optional)"
+msgstr ""
+
+msgid "Found {count} orphaned data folder(s) from a previous installation."
+msgstr ""
+
+msgid "Found {count} orphaned folder(s)"
+msgstr ""
+
+msgid "Found {total} connection(s) in file:"
+msgstr ""
+
+msgid "French"
+msgstr ""
+
+msgid "From federated share — MetaVox metadata not available"
+msgstr ""
+
+msgid "From Template"
+msgstr ""
+
+msgid "Full intranet"
+msgstr ""
+
+msgid "Full width"
+msgstr ""
+
+msgid "Future"
+msgstr ""
+
+msgid "Generate a personal RSS feed URL to follow IntraVox updates in your favorite RSS reader. The feed only shows pages you have access to."
+msgstr ""
+
+msgid "Generate Feed URL"
+msgstr ""
+
+msgid "German"
+msgstr ""
+
+msgid "Get started quickly with example pages in multiple languages (Dutch, English, German, French)."
+msgstr ""
+
+msgid "Glossy editorial (serif)"
+msgstr ""
+
+msgid "Go to Admin Settings"
+msgstr ""
+
+msgid "Go to Maintenance"
+msgstr ""
+
+msgid "Go to slide {number}"
+msgstr ""
+
+msgid "Government"
+msgstr ""
+
+msgid "Grid"
+msgstr ""
+
+msgid "Grid columns:"
+msgstr ""
+
+msgid "Group by"
+msgstr ""
+
+msgid "Group by date"
+msgstr ""
+
+msgid "Grouped"
+msgstr ""
+
+msgid "H1"
 msgstr ""
 
 msgid "H1 - Largest"
@@ -203,90 +1563,2249 @@ msgstr ""
 msgid "H5"
 msgstr ""
 
+msgid "H6"
+msgstr ""
+
 msgid "H6 - Smallest"
 msgstr ""
 
-msgid "Upload image:"
+msgid "Header name"
 msgstr ""
 
-msgid "Alt text:"
-msgstr ""
-
-msgid "Description of the image..."
-msgstr ""
-
-msgid "Link text:"
-msgstr ""
-
-msgid "Click here"
-msgstr ""
-
-msgid "URL:"
-msgstr ""
-
-msgid "File name:"
-msgstr ""
-
-msgid "File path (in IntraVox folder):"
-msgstr ""
-
-msgid "Height (pixels):"
-msgstr ""
-
-# PageListModal.vue
-msgid "All pages"
-msgstr ""
-
-msgid "No pages created yet."
-msgstr ""
-
-msgid "Delete"
-msgstr ""
-
-# WidgetPicker.vue
-msgid "Add widget"
-msgstr ""
-
-msgid "Text"
-msgstr ""
-
-msgid "Add text to your page"
+msgid "Header row"
 msgstr ""
 
 msgid "Heading"
 msgstr ""
 
-msgid "Add a heading"
+msgid "Heading:"
+msgstr ""
+
+msgid "Headline"
+msgstr ""
+
+msgid "Height (pixels):"
+msgstr ""
+
+msgid "Height will automatically adjust to maintain aspect ratio"
+msgstr ""
+
+msgid "Help"
+msgstr ""
+
+msgid "Hide RAW when JPG/HEIC exists"
+msgstr ""
+
+msgid "Highlights"
+msgstr ""
+
+msgid "Home"
+msgstr ""
+
+msgid "Homepage only"
+msgstr ""
+
+msgid "https://example.com"
+msgstr ""
+
+msgid "https://example.com/feed.xml"
+msgstr ""
+
+msgid "https://lms.example.com"
+msgstr ""
+
+msgid "Icon Library"
+msgstr ""
+
+msgid "Icon uploaded successfully"
+msgstr ""
+
+msgid "Icon:"
+msgstr ""
+
+msgid "Idea"
 msgstr ""
 
 msgid "Image"
 msgstr ""
 
-msgid "Add an image"
+msgid "Image field"
+msgstr ""
+
+msgid "Image too large. Maximum size is {limit}MB."
+msgstr ""
+
+msgid "Image too large. Maximum size is 2MB."
+msgstr ""
+
+msgid "Image:"
+msgstr ""
+
+msgid "Import"
+msgstr ""
+
+msgid "Import {count} connection(s)"
+msgstr ""
+
+msgid "Import comments and reactions"
+msgstr ""
+
+msgid "Import completed"
+msgstr ""
+
+msgid "Import completed successfully"
+msgstr ""
+
+msgid "Import connections"
+msgstr ""
+
+msgid "Import failed: "
+msgstr ""
+
+msgid "Import from ZIP"
+msgstr ""
+
+msgid "Import in progress"
+msgstr ""
+
+msgid "Import pages and media from a ZIP export file."
+msgstr ""
+
+msgid "Import pages and media from an IntraVox ZIP export file."
+msgstr ""
+
+msgid "Import/Export"
+msgstr ""
+
+msgid "Imported {added} connection(s), skipped {skipped} duplicate(s). Enter API tokens and save."
+msgstr ""
+
+msgid "Imported {count} connection(s). Enter API tokens and save."
+msgstr ""
+
+msgid "Importing..."
+msgstr ""
+
+msgid "In the free version, {limit} pages per language are included."
+msgstr ""
+
+msgid "inactive"
+msgstr ""
+
+msgid "Inactive"
+msgstr ""
+
+msgid "Include comments and reactions"
+msgstr ""
+
+msgid "Includes these pages:"
+msgstr ""
+
+msgid "Incorrect password. Please try again."
+msgstr ""
+
+msgid "Information"
+msgstr ""
+
+msgid "Insert image"
+msgstr ""
+
+msgid "Insert link"
+msgstr ""
+
+msgid "Insert Row"
+msgstr ""
+
+msgid "Insert table"
+msgstr ""
+
+msgid "Install"
+msgstr ""
+
+msgid "Install demo content to quickly set up your intranet with example pages, navigation, and images."
+msgstr ""
+
+msgid "Install demo content to quickly set up your intranet with example pages, navigation, and images. Only enabled languages are shown here."
+msgstr ""
+
+msgid "Install Demo Data"
+msgstr ""
+
+msgid "Install MetaVox for advanced filtering options"
+msgstr ""
+
+msgid "Installed"
+msgstr ""
+
+msgid "Installing..."
+msgstr ""
+
+msgid "Internal page"
+msgstr ""
+
+msgid "IntraVox"
+msgstr ""
+
+msgid "IntraVox is and will remain free for most users. To keep IntraVox actively maintained and improved, we're introducing a licensing model for larger organizations."
+msgstr ""
+
+msgid "IntraVox is not yet configured. To get started, you can install demo data or create your own pages."
+msgstr ""
+
+msgid "IntraVox Page"
+msgstr ""
+
+msgid "IntraVox page activity"
+msgstr ""
+
+msgid "IntraVox Pages"
+msgstr ""
+
+msgid "IntraVox recommends PeerTube instances and other privacy-respecting video platforms."
+msgstr ""
+
+msgid "IntraVox Settings"
+msgstr ""
+
+msgid "Invalid domain: TLD must be at least 2 characters (e.g., .com, .org, .nl)"
+msgstr ""
+
+msgid "Invalid file: expected an array of connections"
+msgstr ""
+
+msgid "Invalid page ID"
+msgstr ""
+
+msgid "Invalid page title"
+msgstr ""
+
+msgid "Invalid URL"
+msgstr ""
+
+msgid "Invalid URL format. Please enter a valid URL (e.g., https://video.example.org)"
+msgstr ""
+
+msgid "Invalid video format. Please use MP4, WebM or OGG."
+msgstr ""
+
+msgid "is after"
+msgstr ""
+
+msgid "is any of"
+msgstr ""
+
+msgid "is before"
+msgstr ""
+
+msgid "is empty"
+msgstr ""
+
+msgid "is false"
+msgstr ""
+
+msgid "is greater or equal"
+msgstr ""
+
+msgid "is greater than"
+msgstr ""
+
+msgid "is less or equal"
+msgstr ""
+
+msgid "is less than"
+msgstr ""
+
+msgid "is not empty"
+msgstr ""
+
+msgid "is one of"
+msgstr ""
+
+msgid "is true"
+msgstr ""
+
+msgid "Italic"
+msgstr ""
+
+msgid "Italic (Ctrl+I)"
+msgstr ""
+
+msgid "Item title"
+msgstr ""
+
+msgid "items"
+msgstr ""
+
+msgid "Items path"
+msgstr ""
+
+msgid "January"
+msgstr ""
+
+msgid "July"
+msgstr ""
+
+msgid "Jump to {year}"
+msgstr ""
+
+msgid "Jump to year"
+msgstr ""
+
+msgid "June"
+msgstr ""
+
+msgid "just now"
+msgstr ""
+
+msgid "Language"
+msgstr ""
+
+msgid "Language selection saved."
+msgstr ""
+
+msgid "Language to recover"
+msgstr ""
+
+msgid "Large"
+msgstr ""
+
+msgid "Largest first"
+msgstr ""
+
+msgid "Last accessed: {date}"
+msgstr ""
+
+msgid "Last Modified"
+msgstr ""
+
+msgid "Last report sent"
+msgstr ""
+
+msgid "Launch"
+msgstr ""
+
+msgid "Layout"
+msgstr ""
+
+msgid "Layout mode"
+msgstr ""
+
+msgid "Layout:"
+msgstr ""
+
+msgid "Learn more"
+msgstr ""
+
+msgid "Leave blank to search MetaVox-tagged photos across all folders — requires at least one filter below."
+msgstr ""
+
+msgid "Left column"
+msgstr ""
+
+msgid "Level:"
+msgstr ""
+
+msgid "License"
+msgstr ""
+
+msgid "Light"
+msgstr ""
+
+msgid "Light background"
+msgstr ""
+
+msgid "Like"
 msgstr ""
 
 msgid "Link"
 msgstr ""
 
-msgid "Add a link"
+msgid "Link background:"
 msgstr ""
 
-msgid "Add a file"
+msgid "Link copied to clipboard"
+msgstr ""
+
+msgid "Link text"
+msgstr ""
+
+msgid "Link text:"
+msgstr ""
+
+msgid "Link to page"
+msgstr ""
+
+msgid "Link to:"
+msgstr ""
+
+msgid "Link:"
+msgstr ""
+
+msgid "Links"
+msgstr ""
+
+msgid "List"
+msgstr ""
+
+msgid "List items"
+msgstr ""
+
+msgid "Loading"
+msgstr ""
+
+msgid "Loading calendars..."
+msgstr ""
+
+msgid "Loading courses..."
+msgstr ""
+
+msgid "Loading documents"
+msgstr ""
+
+msgid "Loading events..."
+msgstr ""
+
+msgid "Loading feed..."
+msgstr ""
+
+msgid "Loading map..."
+msgstr ""
+
+msgid "Loading MetaVox fields..."
+msgstr ""
+
+msgid "Loading MetaVox..."
+msgstr ""
+
+msgid "Loading more photos…"
+msgstr ""
+
+msgid "Loading more…"
+msgstr ""
+
+msgid "Loading news..."
+msgstr ""
+
+msgid "Loading page structure..."
+msgstr ""
+
+msgid "Loading photos"
+msgstr ""
+
+msgid "Loading properties..."
+msgstr ""
+
+msgid "Loading shares..."
+msgstr ""
+
+msgid "Loading templates..."
+msgstr ""
+
+msgid "Loading versions..."
+msgstr ""
+
+msgid "Loading..."
+msgstr ""
+
+msgid "Local file"
+msgstr ""
+
+msgid "Location"
+msgstr ""
+
+msgid "Location map"
+msgstr ""
+
+msgid "Loop video"
+msgstr ""
+
+msgid "Magazine"
+msgstr ""
+
+msgid "Maintenance"
+msgstr ""
+
+msgid "Make this row collapsible"
+msgstr ""
+
+msgid "Manage share in Files"
+msgstr ""
+
+msgid "Map JSON fields from the API response to feed items. Use dot notation for nested fields (e.g. data.items, author.name)."
+msgstr ""
+
+msgid "Map view requires the Leaflet library — not installed."
+msgstr ""
+
+msgid "March"
+msgstr ""
+
+msgid "Masonry grid — all photos in a continuous wall, no date grouping."
+msgstr ""
+
+msgid "Match"
+msgstr ""
+
+msgid "Maximum documents"
+msgstr ""
+
+msgid "Maximum items"
+msgstr ""
+
+msgid "Maximum people to show"
+msgstr ""
+
+msgid "Maximum photos"
+msgstr ""
+
+msgid "May"
+msgstr ""
+
+msgid "media files"
+msgstr ""
+
+msgid "Medium"
+msgstr ""
+
+msgid "Mega Menu"
+msgstr ""
+
+msgid "Merge (keep existing, add missing)"
+msgstr ""
+
+msgid "MetaVox"
+msgstr ""
+
+msgid "MetaVox app is not installed"
+msgstr ""
+
+msgid "MetaVox filters"
+msgstr ""
+
+msgid "MetaVox is not available. Install and enable MetaVox to use publication date filtering."
+msgstr ""
+
+msgid "MetaVox is required for publication filtering but is not available."
+msgstr ""
+
+msgid "MetaVox not available — basic file metadata only"
+msgstr ""
+
+msgid "MetaVox: basic EXIF only"
+msgstr ""
+
+msgid "MetaVox: rich metadata available"
+msgstr ""
+
+msgid "Milestones"
+msgstr ""
+
+msgid "Missing template or title"
+msgstr ""
+
+msgid "Modified"
+msgstr ""
+
+msgid "More options"
+msgstr ""
+
+msgid "MP4, WebM or OGG. Maximum {limit}MB."
+msgstr ""
+
+msgid "Muted"
+msgstr ""
+
+msgid "My language"
+msgstr ""
+
+msgid "Name"
+msgstr ""
+
+msgid "Navigation Editor"
+msgstr ""
+
+msgid "Navigation Items"
+msgstr ""
+
+msgid "Navigation saved"
+msgstr ""
+
+msgid "Navigation structure"
+msgstr ""
+
+msgid "Navigation structure is invalid. Please reload the page."
+msgstr ""
+
+msgid "Navigation Type:"
+msgstr ""
+
+msgid "Nesting Level"
+msgstr ""
+
+msgid "Network error - please check your connection and try again"
+msgstr ""
+
+msgid "Never"
+msgstr ""
+
+msgid "New connection"
+msgstr ""
+
+msgid "New heading"
+msgstr ""
+
+msgid "New Item"
+msgstr ""
+
+msgid "New Page"
+msgstr ""
+
+msgid "New reaction replaces previous (like Facebook). When off, users can add multiple different reactions."
+msgstr ""
+
+msgid "New reaction replaces previous one (like Facebook)"
+msgstr ""
+
+msgid "New tab"
+msgstr ""
+
+msgid "New text widget"
+msgstr ""
+
+msgid "Newest first"
+msgstr ""
+
+msgid "News"
+msgstr ""
+
+msgid "News / Announcements"
+msgstr ""
+
+msgid "News posts"
+msgstr ""
+
+msgid "Next 2 weeks"
+msgstr ""
+
+msgid "Next 3 months"
+msgstr ""
+
+msgid "Next 6 months"
+msgstr ""
+
+msgid "Next photo"
+msgstr ""
+
+msgid "Next year"
+msgstr ""
+
+msgid "No active public share links found. Share links can be created in the Files app on IntraVox folders or pages."
+msgstr ""
+
+msgid "No API token configured — showing public data only."
+msgstr ""
+
+msgid "No authentication"
+msgstr ""
+
+msgid "No calendar selected"
+msgstr ""
+
+msgid "No calendars available"
+msgstr ""
+
+msgid "No comments yet. Be the first to comment!"
+msgstr ""
+
+msgid "No connections configured. Ask an administrator to add one in IntraVox settings."
+msgstr ""
+
+msgid "No date fields found in MetaVox. Create date fields in MetaVox first and assign them to the IntraVox groupfolder."
+msgstr ""
+
+msgid "No date in EXIF"
+msgstr ""
+
+msgid "No documents match the current filters"
+msgstr ""
+
+msgid "No documents to show."
+msgstr ""
+
+msgid "No export.json found in the ZIP. Make sure you uploaded an IntraVox export (Settings → Export), not a Nextcloud Files backup or a different app's archive."
+msgstr ""
+
+msgid "No export.json found in the ZIP. Make sure you uploaded an IntraVox export (Settings → Export), not a Nextcloud Files backup or a different app\\"
+msgstr ""
+
+msgid "No filters. Click \"Add filter\" to filter by author, project, status or any other MetaVox field."
+msgstr ""
+
+msgid "No filters. Click \"Add filter\" to filter by date, location, people, or subject."
+msgstr ""
+
+msgid "No GPS data found in this folder. Map features are disabled. Run the MetaVox EXIF backfill to enable maps for photos with embedded GPS."
+msgstr ""
+
+msgid "No HTTPS"
+msgstr ""
+
+msgid "No image selected"
+msgstr ""
+
+msgid "No items found"
+msgstr ""
+
+msgid "No items match your filter."
+msgstr ""
+
+msgid "No link"
+msgstr ""
+
+msgid "No links configured. Click the edit button to add links."
+msgstr ""
+
+msgid "No links yet. Click \"Add link\" to get started."
+msgstr ""
+
+msgid "No location data"
+msgstr ""
+
+msgid "No navigation items yet. Click \"Add Item\" to create one."
+msgstr ""
+
+msgid "No news items found"
+msgstr ""
+
+msgid "No orphaned data found"
+msgstr ""
+
+msgid "No orphaned GroupFolder data found. Your installation is clean."
+msgstr ""
+
+msgid "No page specified."
+msgstr ""
+
+msgid "No pages available"
+msgstr ""
+
+msgid "No pages created yet."
+msgstr ""
+
+msgid "No pages found"
+msgstr ""
+
+msgid "No pages found."
+msgstr ""
+
+msgid "No pages found. Please run the setup command first."
+msgstr ""
+
+msgid "No people found"
+msgstr ""
+
+msgid "No results found"
+msgstr ""
+
+msgid "No templates available"
+msgstr ""
+
+msgid "No upcoming events"
+msgstr ""
+
+msgid "No users match the current filters"
+msgstr ""
+
+msgid "No valid pages found. Pages might be missing uniqueId."
+msgstr ""
+
+msgid "No versions available"
+msgstr ""
+
+msgid "No versions yet"
+msgstr ""
+
+msgid "No video selected"
+msgstr ""
+
+msgid "Non-IntraVox data"
+msgstr ""
+
+msgid "None"
+msgstr ""
+
+msgid "Normal"
+msgstr ""
+
+msgid "Not available"
+msgstr ""
+
+msgid "Not configured"
+msgstr ""
+
+msgid "Not connected"
+msgstr ""
+
+msgid "Not installed"
+msgstr ""
+
+msgid "November"
+msgstr ""
+
+msgid "Now"
+msgstr ""
+
+msgid "Number of events"
+msgstr ""
+
+msgid "Number of items"
+msgstr ""
+
+msgid "Numbered list"
+msgstr ""
+
+msgid "OAuth2 (per-user, personalized)"
+msgstr ""
+
+msgid "OAuth2 Client ID"
+msgstr ""
+
+msgid "OAuth2 Client Secret"
+msgstr ""
+
+msgid "October"
+msgstr ""
+
+msgid "Off"
+msgstr ""
+
+msgid "OIDC auto-connect (zero-click SSO)"
+msgstr ""
+
+msgid "Oldest first"
+msgstr ""
+
+msgid "On this day"
+msgstr ""
+
+msgid "One reaction per user"
+msgstr ""
+
+msgid "Only HTTPS URLs are allowed for security reasons"
+msgstr ""
+
+msgid "Only HTTPS URLs are allowed for security reasons. Please use https://"
+msgstr ""
+
+msgid "Only secure HTTPS servers can be added. The URL will be validated before adding."
+msgstr ""
+
+msgid "Only show items containing this word in title, excerpt, or author."
+msgstr ""
+
+msgid "Only ZIP files produced by IntraVox (Settings → Export) are accepted. Nextcloud Files backups, cloudron backups, or other apps' archives will not work — they don't contain the export.json IntraVox needs."
+msgstr ""
+
+msgid "Only ZIP files produced by IntraVox (Settings → Export) are accepted. Nextcloud Files backups, cloudron backups, or other apps\\"
+msgstr ""
+
+msgid "Open {name}"
+msgstr ""
+
+msgid "Open in Files"
+msgstr ""
+
+msgid "Open in new tab"
+msgstr ""
+
+msgid "Open issues"
+msgstr ""
+
+msgid "Open links in new tab"
+msgstr ""
+
+msgid "Open photo {name}"
+msgstr ""
+
+msgid "Open Sharing settings"
+msgstr ""
+
+msgid "Open source folder in Files"
+msgstr ""
+
+msgid "Open work packages"
+msgstr ""
+
+msgid "Operator"
+msgstr ""
+
+msgid "optional"
+msgstr ""
+
+msgid "or"
+msgstr ""
+
+msgid "Order"
+msgstr ""
+
+msgid "Ordered list"
+msgstr ""
+
+msgid "Orphaned data deleted successfully ({space} freed)"
+msgstr ""
+
+msgid "Orphaned GroupFolder Data"
+msgstr ""
+
+msgid "Other"
+msgstr ""
+
+msgid "Our promise"
+msgstr ""
+
+msgid "Overdue"
+msgstr ""
+
+msgid "Override global engagement settings for this page."
+msgstr ""
+
+msgid "Overview of all active Nextcloud share links on IntraVox content."
+msgstr ""
+
+msgid "Overview of pages per language in your IntraVox installation."
+msgstr ""
+
+msgid "Overwrite existing pages"
+msgstr ""
+
+msgid "Owner"
+msgstr ""
+
+msgid "Page"
+msgstr ""
+
+msgid "Page created"
+msgstr ""
+
+msgid "Page created from template"
+msgstr ""
+
+msgid "Page deleted"
+msgstr ""
+
+msgid "Page details and history"
+msgstr ""
+
+msgid "Page editors can override these settings for individual pages in the page editor."
+msgstr ""
+
+msgid "Page limit reached for one or more languages. Upgrade for unlimited pages."
+msgstr ""
+
+msgid "Page Not Available"
+msgstr ""
+
+msgid "Page Reactions"
+msgstr ""
+
+msgid "Page saved"
+msgstr ""
+
+msgid "Page Settings"
+msgstr ""
+
+msgid "Page settings saved"
+msgstr ""
+
+msgid "Page Statistics"
+msgstr ""
+
+msgid "Page structure"
+msgstr ""
+
+msgid "Page title"
+msgstr ""
+
+msgid "Page unlocked"
+msgstr ""
+
+msgid "pages"
+msgstr ""
+
+msgid "Pages"
+msgstr ""
+
+msgid "pages only"
+msgstr ""
+
+msgid "Pages will be hidden after this date."
+msgstr ""
+
+msgid "Pages will only be shown on or after this date."
+msgstr ""
+
+msgid "Paragraph"
+msgstr ""
+
+msgid "Parent Page"
+msgstr ""
+
+msgid "Password"
+msgstr ""
+
+msgid "Password protected"
+msgstr ""
+
+msgid "Password Required"
+msgstr ""
+
+msgid "Past"
+msgstr ""
+
+msgid "Past 3 months"
+msgstr ""
+
+msgid "Past month"
+msgstr ""
+
+msgid "Past week"
+msgstr ""
+
+msgid "Paste a video URL from YouTube, Vimeo, PeerTube or other supported platforms."
+msgstr ""
+
+msgid "Paste your API token here"
+msgstr ""
+
+msgid "Path"
+msgstr ""
+
+msgid "Path appended to the base URL."
+msgstr ""
+
+msgid "Pause slideshow"
+msgstr ""
+
+msgid "PDF"
+msgstr ""
+
+msgid "People"
+msgstr ""
+
+msgid "Per day"
+msgstr ""
+
+msgid "Per day works for daily reports / notes; per month suits monthly newsletters and quarterly contracts; per year is for archives."
+msgstr ""
+
+msgid "Per month"
+msgstr ""
+
+msgid "Per year"
+msgstr ""
+
+msgid "Phone"
+msgstr ""
+
+msgid "Photo"
+msgstr ""
+
+msgid "Photo {n} of {total}"
+msgstr ""
+
+msgid "Photos taken on this same date in earlier years."
+msgstr ""
+
+msgid "Pick a folder"
+msgstr ""
+
+msgid "Pick a folder, or use \"/\" for your entire drive."
+msgstr ""
+
+msgid "Pick a folder. Documents are streamed directly from this location."
+msgstr ""
+
+msgid "Pick a photo folder"
+msgstr ""
+
+msgid "Pick what to cluster files under. \"Category\" groups by file type (PDF / Spreadsheets / etc); other options come from MetaVox fields."
+msgstr ""
+
+msgid "Pick which fields appear next to the filename. The filename + file-type icon are always shown."
+msgstr ""
+
+msgid "Playback options:"
+msgstr ""
+
+msgid "Please contact your administrator if you need access to this video service."
+msgstr ""
+
+msgid "Please enter a valid domain name (e.g., video.example.org)"
+msgstr ""
+
+msgid "Please keep this page open until the export completes."
+msgstr ""
+
+msgid "Please keep this page open until the import completes."
+msgstr ""
+
+msgid "Please rename the file and try again"
+msgstr ""
+
+msgid "Popup blocked. Please allow popups for this site."
+msgstr ""
+
+msgid "Preparing export..."
+msgstr ""
+
+msgid "Presentations"
+msgstr ""
+
+msgid "Preview"
+msgstr ""
+
+msgid "Preview:"
+msgstr ""
+
+msgid "Previous photo"
+msgstr ""
+
+msgid "Primary"
+msgstr ""
+
+msgid "Primary light"
+msgstr ""
+
+msgid "Privacy warnings:"
+msgstr ""
+
+msgid "Privacy-friendly"
+msgstr ""
+
+msgid "Privacy-friendly platforms like PeerTube"
+msgstr ""
+
+msgid "Privacy-friendly video embedding"
+msgstr ""
+
+msgid "Processing import on server..."
+msgstr ""
+
+msgid "Project"
+msgstr ""
+
+msgid "Promote (move up one level)"
+msgstr ""
+
+msgid "Public link"
+msgstr ""
+
+msgid "Public Link"
+msgstr ""
+
+msgid "Public link sharing is disabled by the administrator."
+msgstr ""
+
+msgid "Public Share Links"
+msgstr ""
+
+msgid "Publication"
+msgstr ""
+
+msgid "Publication Date Fields"
+msgstr ""
+
+msgid "Publication date fields have not been configured in admin settings."
+msgstr ""
+
+msgid "Publication settings saved"
+msgstr ""
+
+msgid "Publish date field"
+msgstr ""
+
+msgid "Published"
+msgstr ""
+
+msgid "Published — click to unpublish"
+msgstr ""
+
+msgid "Quote"
+msgstr ""
+
+msgid "React"
+msgstr ""
+
+msgid "Reaction Behavior"
+msgstr ""
+
+msgid "Reactions & Comments"
+msgstr ""
+
+msgid "read-only"
+msgstr ""
+
+msgid "Recently created (7 days)"
+msgstr ""
+
+msgid "Recently updated"
+msgstr ""
+
+msgid "Recently updated (7 days)"
+msgstr ""
+
+msgid "Recommended"
+msgstr ""
+
+msgid "Recommended - Privacy-friendly platform"
+msgstr ""
+
+msgid "Recover"
+msgstr ""
+
+msgid "Recover data from orphaned folder #{id} to your active IntraVox installation."
+msgstr ""
+
+msgid "Recover Orphaned Data"
+msgstr ""
+
+msgid "Recovering..."
+msgstr ""
+
+msgid "Recovery failed"
+msgstr ""
+
+msgid "Recovery mode"
+msgstr ""
+
+msgid "Redirect URI:"
+msgstr ""
+
+msgid "Regenerate"
+msgstr ""
+
+msgid "Reinstall"
+msgstr ""
+
+msgid "Reinstall demo data"
+msgstr ""
+
+msgid "Reinstalling..."
+msgstr ""
+
+msgid "Relevance: {score}"
+msgstr ""
+
+msgid "Remove"
+msgstr ""
+
+msgid "Remove \"{name}\"? This cannot be undone after saving."
+msgstr ""
+
+msgid "Remove column"
+msgstr ""
+
+msgid "Remove connection"
+msgstr ""
+
+msgid "Remove domain"
+msgstr ""
+
+msgid "Remove filter"
+msgstr ""
+
+msgid "Remove header row"
+msgstr ""
+
+msgid "Remove link"
+msgstr ""
+
+msgid "Replace (overwrite existing content)"
+msgstr ""
+
+msgid "Reply"
+msgstr ""
+
+msgid "Replying to {name}"
+msgstr ""
+
+msgid "Report sent successfully"
+msgstr ""
+
+msgid "Requires metadata not available in this folder"
+msgstr ""
+
+msgid "Resetting..."
+msgstr ""
+
+msgid "Response mapping"
+msgstr ""
+
+msgid "Restore"
+msgstr ""
+
+msgid "Restore this version"
+msgstr ""
+
+msgid "Restore Version"
+msgstr ""
+
+msgid "Retry"
+msgstr ""
+
+msgid "Revoke"
+msgstr ""
+
+msgid "Right column"
+msgstr ""
+
+msgid "Row columns:"
+msgstr ""
+
+msgid "Row is collapsed by default"
+msgstr ""
+
+msgid "Row is expanded by default"
+msgstr ""
+
+msgid "RSS / Atom feed"
+msgstr ""
+
+msgid "RSS Feed"
+msgstr ""
+
+msgid "RSS feeds are disabled. The administrator has turned off public link sharing in the Nextcloud Sharing settings."
+msgstr ""
+
+msgid "Same tab"
+msgstr ""
+
+msgid "Save"
+msgstr ""
+
+msgid "Save as Template"
+msgstr ""
+
+msgid "Save changes"
+msgstr ""
+
+msgid "Save connections"
+msgstr ""
+
+msgid "Save connections first to test"
+msgstr ""
+
+msgid "Save engagement settings"
+msgstr ""
+
+msgid "Save language selection"
+msgstr ""
+
+msgid "Save Navigation"
+msgstr ""
+
+msgid "Save publication settings"
+msgstr ""
+
+msgid "Save settings"
+msgstr ""
+
+msgid "Save Settings"
+msgstr ""
+
+msgid "Save Template"
+msgstr ""
+
+msgid "Save token"
+msgstr ""
+
+msgid "Save video settings"
+msgstr ""
+
+msgid "Saving..."
+msgstr ""
+
+msgid "Scan for Orphaned Data"
+msgstr ""
+
+msgid "Scanning..."
+msgstr ""
+
+msgid "Scope"
+msgstr ""
+
+msgid "Search failed: {error}"
+msgstr ""
+
+msgid "Search pages"
+msgstr ""
+
+msgid "Search pages..."
+msgstr ""
+
+msgid "Search Results"
+msgstr ""
+
+msgid "Search Results for \"{query}\""
+msgstr ""
+
+msgid "Search..."
+msgstr ""
+
+msgid "Searching..."
+msgstr ""
+
+msgid "Section title"
+msgstr ""
+
+msgid "Section title..."
+msgstr ""
+
+msgid "Select a connection..."
+msgstr ""
+
+msgid "Select a page or folder to show content from, including all subpages"
+msgstr ""
+
+msgid "Select a page..."
+msgstr ""
+
+msgid "Select an icon"
+msgstr ""
+
+msgid "Select field"
+msgstr ""
+
+msgid "Select from list"
+msgstr ""
+
+msgid "Select group"
+msgstr ""
+
+msgid "Select Image"
+msgstr ""
+
+msgid "Select language"
+msgstr ""
+
+msgid "Select navigation type"
+msgstr ""
+
+msgid "Select one or more calendars in the widget editor"
+msgstr ""
+
+msgid "Select page"
+msgstr ""
+
+msgid "Select page:"
+msgstr ""
+
+msgid "Select people"
+msgstr ""
+
+msgid "Select people in edit mode"
+msgstr ""
+
+msgid "Select the MetaVox date fields used for publication filtering. The News widget will use these fields to filter pages based on their publication period."
+msgstr ""
+
+msgid "Select value"
+msgstr ""
+
+msgid "Select Video"
+msgstr ""
+
+msgid "Select ZIP file"
+msgstr ""
+
+msgid "Select..."
+msgstr ""
+
+msgid "Selection mode"
+msgstr ""
+
+msgid "Send"
+msgstr ""
+
+msgid "Send report now"
+msgstr ""
+
+msgid "Sending..."
+msgstr ""
+
+msgid "September"
+msgstr ""
+
+msgid "Set to 0 to disable autoplay"
+msgstr ""
+
+msgid "Settings"
+msgstr ""
+
+msgid "Settings saved successfully"
+msgstr ""
+
+msgid "Setup failed: An unexpected error occurred while setting up the IntraVox Team Folder. Please check the Nextcloud logs for details."
+msgstr ""
+
+msgid "Setup failed: Could not access the IntraVox Team Folder. Please check file system permissions."
+msgstr ""
+
+msgid "Setup failed: Could not create IntraVox Team Folder"
+msgstr ""
+
+msgid "Setup failed: Could not create the IntraVox Team Folder. Please check if the Team Folders app is working correctly."
+msgstr ""
+
+msgid "Setup failed: The Team Folders app is not installed or enabled. Please install and enable the Team Folders app in Nextcloud first."
+msgstr ""
+
+msgid "Share this page"
+msgstr ""
+
+msgid "SharePoint site URL"
+msgstr ""
+
+msgid "Sharing"
+msgstr ""
+
+msgid "Short description"
+msgstr ""
+
+msgid "Show {count} photos in {location}"
+msgstr ""
+
+msgid "Show captions"
+msgstr ""
+
+msgid "Show columns"
+msgstr ""
+
+msgid "Show daily mini-map"
+msgstr ""
+
+msgid "Show date"
+msgstr ""
+
+msgid "Show events from shared calendars"
+msgstr ""
+
+msgid "Show excerpt"
+msgstr ""
+
+msgid "Show image"
+msgstr ""
+
+msgid "Show in Files"
+msgstr ""
+
+msgid "Show location"
+msgstr ""
+
+msgid "Show more"
+msgstr ""
+
+msgid "Show news from a folder"
+msgstr ""
+
+msgid "Show only published pages"
+msgstr ""
+
+msgid "Show overview map"
+msgstr ""
+
+msgid "Show page list"
+msgstr ""
+
+msgid "Show source"
+msgstr ""
+
+msgid "Show time"
+msgstr ""
+
+msgid "show users matching these criteria"
+msgstr ""
+
+msgid "Showing {shown} of {total} people"
+msgstr ""
+
+msgid "Showing first {n} documents. Use filters or a more specific folder."
+msgstr ""
+
+msgid "Showing first {n} photos. Use filters or a more specific folder to narrow the selection."
+msgstr ""
+
+msgid "Significant tracking concerns (YouTube, TikTok, etc.)"
+msgstr ""
+
+msgid "Simple"
+msgstr ""
+
+msgid "Size"
+msgstr ""
+
+msgid "Size:"
+msgstr ""
+
+msgid "Slideshow speed"
+msgstr ""
+
+msgid "Slow"
+msgstr ""
+
+msgid "Small"
+msgstr ""
+
+msgid "Smallest first"
+msgstr ""
+
+msgid "Social links (X/Fediverse)"
+msgstr ""
+
+msgid "Sort by"
+msgstr ""
+
+msgid "Sorting on a MetaVox field reorders within each loaded page (best-effort across infinite scroll)."
+msgstr ""
+
+msgid "Source"
+msgstr ""
+
+msgid "Source folder"
+msgstr ""
+
+msgid "Source location"
+msgstr ""
+
+msgid "Source type"
+msgstr ""
+
+msgid "Source: {path}"
 msgstr ""
 
 msgid "Spacer"
 msgstr ""
 
-msgid "Add empty space"
+msgid "Spreadsheets"
 msgstr ""
 
-# NewsWidgetEditor.vue
-msgid "Background color"
+msgid "Start building your intranet with pages, navigation, and multimedia content."
 msgstr ""
 
-# Errors
-msgid "Error: {message}"
+msgid "Start Import"
+msgstr ""
+
+msgid "Start Recovery"
+msgstr ""
+
+msgid "Start slideshow"
+msgstr ""
+
+msgid "Statistics"
+msgstr ""
+
+msgid "Status"
+msgstr ""
+
+msgid "Strikethrough"
+msgstr ""
+
+msgid "Subjects"
+msgstr ""
+
+msgid "Subtitle:"
 msgstr ""
 
 msgid "Success: {message}"
+msgstr ""
+
+msgid "Support"
+msgstr ""
+
+msgid "Supported formats: JPEG, PNG, GIF, WebP. Maximum size: {limit}MB."
+msgstr ""
+
+msgid "Supported formats: SVG, PNG, JPG. Recommended size: 32x32px"
+msgstr ""
+
+msgid "Table"
+msgstr ""
+
+msgid "Team"
+msgstr ""
+
+msgid "Template name"
+msgstr ""
+
+msgid "Template saved: {name}"
+msgstr ""
+
+msgid "template_department_description"
+msgstr ""
+
+msgid "template_department_title"
+msgstr ""
+
+msgid "template_event_description"
+msgstr ""
+
+msgid "template_event_title"
+msgstr ""
+
+msgid "template_knowledge-base_description"
+msgstr ""
+
+msgid "template_knowledge-base_title"
+msgstr ""
+
+msgid "template_landing-page_description"
+msgstr ""
+
+msgid "template_landing-page_title"
+msgstr ""
+
+msgid "template_news-article_description"
+msgstr ""
+
+msgid "template_news-article_title"
+msgstr ""
+
+msgid "template_news-hub_description"
+msgstr ""
+
+msgid "template_news-hub_title"
+msgstr ""
+
+msgid "template_project_description"
+msgstr ""
+
+msgid "template_project_title"
+msgstr ""
+
+msgid "Tenant ID"
+msgstr ""
+
+msgid "Test connection"
+msgstr ""
+
+msgid "Testing..."
+msgstr ""
+
+msgid "Text"
+msgstr ""
+
+msgid "Text documents"
+msgstr ""
+
+msgid "Text formatting"
+msgstr ""
+
+msgid "Text:"
+msgstr ""
+
+msgid "Thank you for helping improve IntraVox!"
+msgstr ""
+
+msgid "Thank you! Anonymous usage statistics enabled."
+msgstr ""
+
+msgid "The export.json file is not valid JSON: {detail}"
+msgstr ""
+
+msgid "The full URL of your SharePoint site. Found in your browser address bar."
+msgstr ""
+
+msgid "The Future of IntraVox"
+msgstr ""
+
+msgid "The IntraVox Team Folder will be created automatically when you install demo data."
+msgstr ""
+
+msgid "The name shown in the navigation bar"
+msgstr ""
+
+msgid "The telemetry server returned an error:"
+msgstr ""
+
+msgid "The title shown in the collapsible header"
+msgstr ""
+
+msgid "The upload could not be opened as a ZIP archive."
+msgstr ""
+
+msgid "The upload limit is configured by your server administrator."
+msgstr ""
+
+msgid "The video file is corrupted or uses an unsupported format."
+msgstr ""
+
+msgid "The video format is not supported by your browser."
+msgstr ""
+
+msgid "The video owner or platform has disabled embedding. This is not an IntraVox issue."
+msgstr ""
+
+msgid "These languages are translated for IntraVox via Transifex. Tick the ones you want to enable in your intranet. Disabled languages do not appear in IntraVox menus, navigation, or the demo-data table below. Existing content for a disabled language stays on disk and reappears if you re-enable the language later."
+msgstr ""
+
+msgid "This action cannot be undone!"
+msgstr ""
+
+msgid "this connection"
+msgstr ""
+
+msgid "This connection is currently disabled by an administrator."
+msgstr ""
+
+msgid "This domain is already in the list"
+msgstr ""
+
+msgid "This link shares all {language} pages"
+msgstr ""
+
+msgid "This link shares only this page"
+msgstr ""
+
+msgid "This link shares the \"{section}\" section"
+msgstr ""
+
+msgid "This month"
+msgstr ""
+
+msgid "This page is not available or the share link has expired."
+msgstr ""
+
+msgid "This page is not shared publicly"
+msgstr ""
+
+msgid "This page is shared via a public link"
+msgstr ""
+
+msgid "This shared page is password protected. Enter the password to continue."
+msgstr ""
+
+msgid "This URL contains a personal token. Anyone with this link can read your feed. Do not share it publicly."
+msgstr ""
+
+msgid "This week"
+msgstr ""
+
+msgid "This will delete all existing demo content for"
+msgstr ""
+
+msgid "This will delete for"
+msgstr ""
+
+msgid "thumbnail (optional)"
+msgstr ""
+
+msgid "Tile size"
+msgstr ""
+
+msgid "Tile title"
+msgstr ""
+
+msgid "Tiles"
+msgstr ""
+
+msgid "Timeline"
+msgstr ""
+
+msgid "Timeline only"
+msgstr ""
+
+msgid "Title"
+msgstr ""
+
+msgid "Title (optional):"
+msgstr ""
+
+msgid "Title cannot be empty"
+msgstr ""
+
+msgid "Title field"
+msgstr ""
+
+msgid "Title for the new page:"
+msgstr ""
+
+msgid "Title updated"
+msgstr ""
+
+msgid "Title:"
+msgstr ""
+
+msgid "To enable anonymous access to IntraVox pages, an administrator must first enable \"Allow users to share via link and emails\" in the Nextcloud Sharing settings."
+msgstr ""
+
+msgid "To make this page accessible without login, create a public share link in the Files app."
+msgstr ""
+
+msgid "Today"
+msgstr ""
+
+msgid "Toggle connection details"
+msgstr ""
+
+msgid "Toggle info panel"
+msgstr ""
+
+msgid "Toggle location map"
+msgstr ""
+
+msgid "Token missing"
+msgstr ""
+
+msgid "Tokens and secrets are not included in the export. You will need to enter them after importing."
+msgstr ""
+
+msgid "Tomorrow"
+msgstr ""
+
+msgid "Too many requests. Please try again later."
+msgstr ""
+
+msgid "Top"
+msgstr ""
+
+msgid "Total"
+msgstr ""
+
+msgid "Tracking concerns"
+msgstr ""
+
+msgid "Transparent pricing based on actual usage"
+msgstr ""
+
+msgid "Travel diary with timeline rail"
+msgstr ""
+
+msgid "Travelogue"
+msgstr ""
+
+msgid "Try different keywords or check your spelling"
+msgstr ""
+
+msgid "Type"
+msgstr ""
+
+msgid "Type DELETE to confirm:"
+msgstr ""
+
+msgid "Unavailable"
+msgstr ""
+
+msgid "Underline"
+msgstr ""
+
+msgid "Underline (Ctrl+U)"
+msgstr ""
+
+msgid "UniqueId"
+msgstr ""
+
+msgid "Unknown data"
+msgstr ""
+
+msgid "Unknown platform"
+msgstr ""
+
+msgid "Unknown widget type: {type}"
+msgstr ""
+
+msgid "Unlock"
+msgstr ""
+
+msgid "Unordered list"
+msgstr ""
+
+msgid "Unsupported export version: {version}. Please re-export from a recent IntraVox install."
+msgstr ""
+
+msgid "Untitled"
+msgstr ""
+
+msgid "Untitled Page"
+msgstr ""
+
+msgid "Upcoming (30 days)"
+msgstr ""
+
+msgid "Upcoming Deadlines"
+msgstr ""
+
+msgid "Upload Custom Icon"
+msgstr ""
+
+msgid "Upload image:"
+msgstr ""
+
+msgid "Upload video:"
+msgstr ""
+
+msgid "Uploading image..."
+msgstr ""
+
+msgid "Uploading video..."
+msgstr ""
+
+msgid "Uploading ZIP file..."
+msgstr ""
+
+msgid "Uploading... {percent}%"
+msgstr ""
+
+msgid "Uploading... {size} MB"
+msgstr ""
+
+msgid "URL field"
+msgstr ""
+
+msgid "URL:"
+msgstr ""
+
+msgid "Use global setting"
+msgstr ""
+
+msgid "User authentication"
+msgstr ""
+
+msgid "Users can add emoji reactions to comments"
+msgstr ""
+
+msgid "Users can add emoji reactions to pages"
+msgstr ""
+
+msgid "Users can add multiple different emoji reactions"
+msgstr ""
+
+msgid "Users can post comments on pages"
+msgstr ""
+
+msgid "Using global setting (disabled)"
+msgstr ""
+
+msgid "Using global setting (enabled)"
+msgstr ""
+
+msgid "Validating..."
+msgstr ""
+
+msgid "Value"
+msgstr ""
+
+msgid "Version"
+msgstr ""
+
+msgid "Version history"
+msgstr ""
+
+msgid "Version label"
+msgstr ""
+
+msgid "Version label updated"
+msgstr ""
+
+msgid "Version restored successfully"
+msgstr ""
+
+msgid "Versions"
+msgstr ""
+
+msgid "Versions are created automatically when you save changes to this page."
+msgstr ""
+
+msgid "Vertical position:"
+msgstr ""
+
+msgid "Video"
+msgstr ""
+
+msgid "Video cannot be embedded"
+msgstr ""
+
+msgid "Video cannot be played"
+msgstr ""
+
+msgid "Video domains saved"
+msgstr ""
+
+msgid "Video domains saved successfully"
+msgstr ""
+
+msgid "Video Embed Domains"
+msgstr ""
+
+msgid "Video file is too large for the server"
+msgstr ""
+
+msgid "Video platform"
+msgstr ""
+
+msgid "Video playback was aborted."
+msgstr ""
+
+msgid "Video plays without sound (required for autoplay in most browsers)"
+msgstr ""
+
+msgid "Video service not allowed"
+msgstr ""
+
+msgid "Video Services"
+msgstr ""
+
+msgid "Video source:"
+msgstr ""
+
+msgid "Video too large. Maximum size is {limit}MB."
+msgstr ""
+
+msgid "Video uploaded successfully"
+msgstr ""
+
+msgid "Video URL"
+msgstr ""
+
+msgid "Video URL:"
+msgstr ""
+
+msgid "Video will restart when finished"
+msgstr ""
+
+msgid "Video will start automatically (muted for browser compatibility)"
+msgstr ""
+
+msgid "Video:"
+msgstr ""
+
+msgid "video.example.org (HTTPS required)"
+msgstr ""
+
+msgid "View larger map"
+msgstr ""
+
+msgid "Visit Support"
+msgstr ""
+
+msgid "Visit website"
+msgstr ""
+
+msgid "Visitors can only VIEW this content. Editing via this link is not possible, even if the Files share allows it."
+msgstr ""
+
+msgid "Visitors must enter a password to access this link. Manage in Files."
+msgstr ""
+
+msgid "Visual grid — each document rendered as a tile with first-page preview thumbnail. Best for browsable document libraries."
+msgstr ""
+
+msgid "Visual style"
+msgstr ""
+
+msgid "Warning: This action will permanently delete all content!"
+msgstr ""
+
+msgid "Warning: This will overwrite all existing content for the selected language!"
+msgstr ""
+
+msgid "Warning: This will permanently delete all data!"
+msgstr ""
+
+msgid "Watch on {platform}"
+msgstr ""
+
+msgid "We're currently collecting anonymous statistics to establish fair limits that work for everyone. Your feedback matters – together we're building a sustainable future for IntraVox."
+msgstr ""
+
+msgid "Website"
+msgstr ""
+
+msgid "Welcome to IntraVox"
+msgstr ""
+
+msgid "What we collect"
+msgstr ""
+
+msgid "When the Team Folders app is reinstalled, previous data may become orphaned. This tool helps you recover or clean up that data."
+msgstr ""
+
+msgid "Widget title (optional)"
+msgstr ""
+
+msgid "Width in pixels"
+msgstr ""
+
+msgid "with media files"
+msgstr ""
+
+msgid "Write a comment..."
+msgstr ""
+
+msgid "Write a reply..."
+msgstr ""
+
+msgid "X-API-Key"
+msgstr ""
+
+msgid "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+msgstr ""
+
+msgid "Year"
+msgstr ""
+
+msgid "year is"
+msgstr ""
+
+msgid "You and {count} others reacted with {emoji}"
+msgstr ""
+
+msgid "You are about to delete orphaned folder #{id}:"
+msgstr ""
+
+msgid "You commented on \\\"%s\\\""
+msgstr ""
+
+msgid "You created page \\\"%s\\\""
+msgstr ""
+
+msgid "You deleted page \\\"%s\\\""
+msgstr ""
+
+msgid "You do not have access to this folder"
+msgstr ""
+
+msgid "You do not have access to this widget"
+msgstr ""
+
+msgid "You reacted to \\\"%s\\\""
+msgstr ""
+
+msgid "You updated page \\\"%s\\\""
+msgstr ""
+
+msgid "You viewed \\\"%s\\\""
+msgstr ""
+
+msgid "You will get a fresh empty homepage and empty navigation."
+msgstr ""
+
+msgid "you@example.com"
+msgstr ""
+
+msgid "You\\"
+msgstr ""
+
+msgid "Your browser does not support HTML5 video."
+msgstr ""
+
+msgid "Your edit lock has expired. Please save your work."
+msgstr ""
+
+msgid "Your feed URL"
+msgstr ""
+
+msgid "Your IntraVox subscription key needs attention."
+msgstr ""
+
+msgid "Z → A"
 msgstr ""

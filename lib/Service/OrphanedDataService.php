@@ -14,20 +14,45 @@ use Psr\Log\LoggerInterface;
  * or clean up such orphaned data.
  */
 class OrphanedDataService {
-    private const SUPPORTED_LANGUAGES = ['nl', 'en', 'de', 'fr'];
+    /**
+     * Languages whose folders we always recognise as IntraVox content — never
+     * report them as "unknown" or "stray" even when admins have disabled them.
+     * Union of (discovered translations) ∪ (admin-enabled) ∪ (legacy hardcoded).
+     */
+    private const LEGACY_LANGUAGES = ['nl', 'en', 'de', 'fr'];
 
     private IConfig $config;
     private SetupService $setupService;
     private LoggerInterface $logger;
+    private LanguageService $languageService;
 
     public function __construct(
         IConfig $config,
         SetupService $setupService,
-        LoggerInterface $logger
+        LoggerInterface $logger,
+        LanguageService $languageService
     ) {
         $this->config = $config;
         $this->setupService = $setupService;
         $this->logger = $logger;
+        $this->languageService = $languageService;
+    }
+
+    /**
+     * Languages we treat as "known IntraVox content" for the purpose of
+     * orphan/scan detection. Union of currently-shipped translations, what the
+     * admin has enabled, and the legacy 1.5.x default — so a content folder
+     * from a disabled-and-no-longer-translated language is still never
+     * reported as orphaned.
+     *
+     * @return string[]
+     */
+    private function getKnownLanguages(): array {
+        return array_values(array_unique(array_merge(
+            $this->languageService->getDiscoveredLanguages(),
+            $this->languageService->getEnabledLanguages(),
+            self::LEGACY_LANGUAGES
+        )));
     }
 
     /**
@@ -170,8 +195,9 @@ class OrphanedDataService {
      */
     public function migrateOrphanedToActive(int $orphanedId, string $language, string $mode = 'merge'): array {
         try {
-            // Validate language
-            if (!in_array($language, self::SUPPORTED_LANGUAGES)) {
+            // Validate language: must be a known IntraVox content language
+            // (discovered, enabled, or part of the legacy default).
+            if (!in_array($language, $this->getKnownLanguages(), true)) {
                 return [
                     'success' => false,
                     'message' => "Unsupported language: {$language}",
@@ -417,7 +443,7 @@ class OrphanedDataService {
      * Looks for language folders with home.json files.
      */
     private function hasIntraVoxContent(string $filesPath): bool {
-        foreach (self::SUPPORTED_LANGUAGES as $lang) {
+        foreach ($this->getKnownLanguages() as $lang) {
             $homeJson = $filesPath . '/' . $lang . '/home.json';
             if (is_file($homeJson)) {
                 return true;
@@ -431,7 +457,7 @@ class OrphanedDataService {
      */
     private function detectLanguages(string $filesPath): array {
         $found = [];
-        foreach (self::SUPPORTED_LANGUAGES as $lang) {
+        foreach ($this->getKnownLanguages() as $lang) {
             if (is_dir($filesPath . '/' . $lang)) {
                 $found[] = $lang;
             }
@@ -445,7 +471,7 @@ class OrphanedDataService {
     private function getLanguageDetails(string $filesPath): array {
         $details = [];
 
-        foreach (self::SUPPORTED_LANGUAGES as $lang) {
+        foreach ($this->getKnownLanguages() as $lang) {
             $langPath = $filesPath . '/' . $lang;
             if (!is_dir($langPath)) {
                 continue;
@@ -476,7 +502,7 @@ class OrphanedDataService {
      */
     private function countPages(string $filesPath): int {
         $total = 0;
-        foreach (self::SUPPORTED_LANGUAGES as $lang) {
+        foreach ($this->getKnownLanguages() as $lang) {
             $langPath = $filesPath . '/' . $lang;
             if (is_dir($langPath)) {
                 $total += $this->countPagesInLanguage($langPath);

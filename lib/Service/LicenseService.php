@@ -14,7 +14,6 @@ use Psr\Log\LoggerInterface;
  * Service for license management and page counting
  */
 class LicenseService {
-    private const SUPPORTED_LANGUAGES = ['nl', 'en', 'de', 'fr'];
     private const FREE_LIMIT = 50; // Pages per language in free version
     private const DEFAULT_LICENSE_SERVER_URL = 'https://licenses.voxcloud.nl';
 
@@ -22,17 +21,20 @@ class LicenseService {
     private IConfig $config;
     private IClientService $clientService;
     private LoggerInterface $logger;
+    private LanguageService $languageService;
 
     public function __construct(
         SetupService $setupService,
         IConfig $config,
         IClientService $clientService,
-        LoggerInterface $logger
+        LoggerInterface $logger,
+        LanguageService $languageService
     ) {
         $this->setupService = $setupService;
         $this->config = $config;
         $this->clientService = $clientService;
         $this->logger = $logger;
+        $this->languageService = $languageService;
     }
 
     /**
@@ -397,7 +399,7 @@ class LicenseService {
                 return [];
             }
 
-            foreach (self::SUPPORTED_LANGUAGES as $lang) {
+            foreach ($this->languageService->getEnabledLanguages() as $lang) {
                 try {
                     if ($sharedFolder->nodeExists($lang)) {
                         $langFolder = $sharedFolder->get($lang);
@@ -421,7 +423,7 @@ class LicenseService {
                 'error' => $e->getMessage()
             ]);
             // Return zeros for all languages if folder not accessible
-            foreach (self::SUPPORTED_LANGUAGES as $lang) {
+            foreach ($this->languageService->getEnabledLanguages() as $lang) {
                 $counts[$lang] = 0;
             }
         }
@@ -616,7 +618,7 @@ class LicenseService {
             'pageCounts' => $pageCounts,
             'totalPages' => $this->getTotalPageCount(),
             'freeLimit' => self::FREE_LIMIT,
-            'supportedLanguages' => self::SUPPORTED_LANGUAGES,
+            'supportedLanguages' => $this->languageService->getEnabledLanguages(),
             'hasLicense' => $hasLicense,
             'licenseValid' => $validation['valid'],
             'licenseInfo' => $validation['license'] ?? null,

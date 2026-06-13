@@ -84,8 +84,45 @@
 		<div v-if="activeTab === 'demo'" class="tab-content">
 			<div class="settings-section">
 				<h2>{{ t('intravox', 'Demo Data') }}</h2>
+
+			<!-- Available languages (Transifex-discovered, admin-curated) -->
+			<div class="available-languages-section">
+				<h3>{{ t('intravox', 'Available languages') }}</h3>
+				<p class="settings-section-desc">
+					{{ t('intravox', 'These languages are translated for IntraVox via Transifex. Tick the ones you want to enable in your intranet. Disabled languages do not appear in IntraVox menus, navigation, or the demo-data table below. Existing content for a disabled language stays on disk and reappears if you re-enable the language later.') }}
+				</p>
+				<div class="available-languages-grid">
+					<label
+						v-for="lang in availableLanguages"
+						:key="lang.code"
+						class="language-checkbox"
+						:class="{ disabled: lang.isDefault }">
+						<input
+							type="checkbox"
+							:checked="pendingLanguageCodes.includes(lang.code)"
+							:disabled="lang.isDefault"
+							@change="toggleLanguage(lang.code, $event.target.checked)" />
+						<span class="language-checkbox-label">{{ lang.name }}</span>
+						<span class="language-checkbox-code">{{ lang.code }}</span>
+						<span v-if="lang.isDefault" class="language-checkbox-default">{{ t('intravox', 'always on') }}</span>
+					</label>
+				</div>
+				<div class="available-languages-actions">
+					<NcButton
+						type="primary"
+						:disabled="savingLanguageSelection || !languageSelectionDirty"
+						@click="saveLanguageSelection">
+						<template #icon>
+							<span v-if="savingLanguageSelection" class="icon-loading-small" role="status" :aria-label="t('intravox', 'Loading')"></span>
+						</template>
+						{{ savingLanguageSelection ? t('intravox', 'Saving...') : t('intravox', 'Save language selection') }}
+					</NcButton>
+				</div>
+			</div>
+
+			<h3>{{ t('intravox', 'Demo content') }}</h3>
 			<p class="settings-section-desc">
-				{{ t('intravox', 'Install demo content to quickly set up your intranet with example pages, navigation, and images.') }}
+				{{ t('intravox', 'Install demo content to quickly set up your intranet with example pages, navigation, and images. Only enabled languages are shown here.') }}
 			</p>
 
 			<div class="demo-data-info">
@@ -104,7 +141,7 @@
 					</tr>
 				</thead>
 				<tbody>
-					<tr v-for="lang in languages" :key="lang.code">
+					<tr v-for="lang in enabledDemoLanguages" :key="lang.code">
 						<td class="language-cell">
 							<span class="flag">{{ lang.flag }}</span>
 							<span class="name">{{ lang.name }}</span>
@@ -1320,6 +1357,12 @@ export default {
 			exportSubTab: 'import', // Default import sub-tab
 			languages: this.initialState.languages || [],
 			setupComplete: this.initialState.setupComplete !== false,
+			// Transifex language management state.
+			availableLanguages: this.initialState.availableLanguages || [],
+			enabledLanguageCodes: this.initialState.enabledLanguageCodes || ['nl', 'en', 'de', 'fr'],
+			defaultLanguage: this.initialState.defaultLanguage || 'en',
+			pendingLanguageCodes: [],
+			savingLanguageSelection: false,
 			installing: null,
 			message: '',
 			messageType: 'success',
@@ -1388,7 +1431,7 @@ export default {
 				pageCounts: {},
 				totalPages: 0,
 				freeLimit: 50,
-				supportedLanguages: ['nl', 'en', 'de', 'fr'],
+				supportedLanguages: this.initialState.enabledLanguageCodes || ['nl', 'en', 'de', 'fr'],
 			},
 			// License configuration
 			licenseKey: this.initialState.licenseKey || '',
@@ -1448,6 +1491,19 @@ export default {
 	computed: {
 		callbackUrl() {
 			return window.location.origin + generateUrl('/apps/intravox/api/lms/callback')
+		},
+		// Demo-data table only shows admin-enabled languages. Disabled languages
+		// stay on disk but are hidden from the UI per the language-management contract.
+		enabledDemoLanguages() {
+			return this.languages.filter(l => this.enabledLanguageCodes.includes(l.code))
+		},
+		// True when the user has changed the checkbox grid since the last save.
+		// Compare sorted copies so reorderings don't trigger a false-positive dirty state.
+		languageSelectionDirty() {
+			const a = [...this.enabledLanguageCodes].sort()
+			const b = [...this.pendingLanguageCodes].sort()
+			if (a.length !== b.length) return true
+			return a.some((code, idx) => code !== b[idx])
 		},
 		reinstallLanguageName() {
 			if (!this.reinstallLanguageCode) return ''
@@ -1533,6 +1589,47 @@ export default {
 		},
 	},
 	methods: {
+		// Language management (Transifex-discovered languages, admin enable/disable).
+		toggleLanguage(code, checked) {
+			if (checked) {
+				if (!this.pendingLanguageCodes.includes(code)) {
+					this.pendingLanguageCodes = [...this.pendingLanguageCodes, code]
+				}
+			} else {
+				this.pendingLanguageCodes = this.pendingLanguageCodes.filter(c => c !== code)
+			}
+		},
+		async saveLanguageSelection() {
+			this.savingLanguageSelection = true
+			try {
+				const response = await axios.post(
+					generateUrl('/apps/intravox/api/languages/enabled'),
+					{ codes: this.pendingLanguageCodes },
+				)
+				// Server enforces the contract (English always present, dedup,
+				// sort). Adopt whatever it returns as the new ground truth.
+				this.enabledLanguageCodes = response.data.enabled || this.pendingLanguageCodes
+				this.pendingLanguageCodes = [...this.enabledLanguageCodes]
+				this.message = this.t('intravox', 'Language selection saved.')
+				this.messageType = 'success'
+				// Refresh the demo-data status so the table reflects newly-enabled
+				// or newly-hidden languages.
+				try {
+					const statusResponse = await axios.get(generateUrl('/apps/intravox/api/demo-data/status'))
+					if (Array.isArray(statusResponse.data.languages)) {
+						this.languages = statusResponse.data.languages
+					}
+				} catch (e) {
+					console.warn('[AdminSettings] Could not refresh demo-data status after language toggle:', e)
+				}
+			} catch (error) {
+				console.error('[AdminSettings] Failed to save language selection:', error)
+				this.message = this.t('intravox', 'Failed to save language selection.')
+				this.messageType = 'error'
+			} finally {
+				this.savingLanguageSelection = false
+			}
+		},
 		// Feed connections management
 		async loadFeedConnections() {
 			try {
@@ -2558,6 +2655,8 @@ export default {
 		this.loadLicenseStats()
 		this.loadFeedConnections()
 		this.checkOrphanedData()
+		// Seed the pending selection so the checkbox grid renders the current state.
+		this.pendingLanguageCodes = [...this.enabledLanguageCodes]
 		// Prevent accidental navigation during export (use bound handler for proper cleanup)
 		this.boundBeforeUnloadHandler = this.handleBeforeUnload.bind(this)
 		window.addEventListener('beforeunload', this.boundBeforeUnloadHandler)
@@ -2708,6 +2807,68 @@ export default {
 	padding: 12px;
 	border-radius: 4px;
 	border-left: 3px solid var(--color-primary);
+}
+
+.available-languages-section {
+	margin-bottom: 28px;
+	padding-bottom: 20px;
+	border-bottom: 1px solid var(--color-border);
+}
+
+.available-languages-section h3 {
+	margin: 0 0 8px 0;
+}
+
+.available-languages-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+	gap: 8px 16px;
+	margin: 12px 0 16px 0;
+}
+
+.language-checkbox {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 8px 10px;
+	border-radius: var(--border-radius);
+	background-color: var(--color-background-hover);
+	cursor: pointer;
+	user-select: none;
+}
+
+.language-checkbox.disabled {
+	cursor: not-allowed;
+	opacity: 0.8;
+}
+
+.language-checkbox input[type="checkbox"] {
+	margin: 0;
+}
+
+.language-checkbox-label {
+	flex: 1;
+	color: var(--color-main-text);
+}
+
+.language-checkbox-code {
+	font-family: var(--font-face-monospace, monospace);
+	font-size: 0.85em;
+	color: var(--color-text-maxcontrast);
+	background-color: var(--color-background-dark);
+	padding: 2px 6px;
+	border-radius: var(--border-radius);
+}
+
+.language-checkbox-default {
+	font-size: 0.8em;
+	color: var(--color-text-maxcontrast);
+	font-style: italic;
+}
+
+.available-languages-actions {
+	display: flex;
+	gap: 8px;
 }
 
 .demo-data-table {

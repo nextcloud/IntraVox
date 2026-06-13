@@ -15,7 +15,7 @@ class FooterService {
     private SetupService $setupService;
     private SystemFileService $systemFileService;
     private IConfig $config;
-    private const SUPPORTED_LANGUAGES = ['nl', 'en', 'de', 'fr'];
+    private LanguageService $languageService;
     private const DEFAULT_LANGUAGE = 'en';
 
     public function __construct(
@@ -24,6 +24,7 @@ class FooterService {
         SetupService $setupService,
         SystemFileService $systemFileService,
         IConfig $config,
+        LanguageService $languageService,
         ?string $userId
     ) {
         $this->rootFolder = $rootFolder;
@@ -31,6 +32,7 @@ class FooterService {
         $this->setupService = $setupService;
         $this->systemFileService = $systemFileService;
         $this->config = $config;
+        $this->languageService = $languageService;
         $this->userId = $userId ?? '';
     }
 
@@ -64,8 +66,8 @@ class FooterService {
         // Normalize language code (e.g., 'en_US' -> 'en')
         $lang = strtolower(substr($lang, 0, 2));
 
-        // Check if language is supported, fallback to default if not
-        if (!in_array($lang, self::SUPPORTED_LANGUAGES)) {
+        // Check if language is enabled by admin, fallback to default if not
+        if (!$this->languageService->isLanguageEnabled($lang)) {
             $lang = self::DEFAULT_LANGUAGE;
         }
 

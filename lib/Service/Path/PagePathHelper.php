@@ -18,8 +18,38 @@ namespace OCA\IntraVox\Service\Path;
  * flag the page the user is currently viewing.
  */
 final class PagePathHelper {
-    /** Languages whose root segment is stripped before counting depth. */
-    public const SUPPORTED_LANGUAGES = ['nl', 'en', 'de', 'fr'];
+    /**
+     * Languages whose root segment is stripped before counting depth.
+     *
+     * Initial value is the legacy 1.5.x set so the helper works during
+     * bootstrap and in static contexts; `LanguageService` syncs this at
+     * boot time with the actually-discovered languages (every language
+     * shipped via Transifex), via {@see setKnownLanguages()}.
+     *
+     * Whether a language is *enabled* by the admin doesn't matter here:
+     * paths that live in disabled language folders still need correct
+     * depth/department/type derivation (we never delete them).
+     */
+    private static array $knownLanguages = ['nl', 'en', 'de', 'fr'];
+
+    /**
+     * Sync the helper's language-code set with what IntraVox ships
+     * translations for. Called from Application::boot() once per request.
+     *
+     * @param string[] $codes Base two-letter codes.
+     */
+    public static function setKnownLanguages(array $codes): void {
+        $valid = [];
+        foreach ($codes as $code) {
+            if (is_string($code) && preg_match('/^[a-z]{2}$/', $code)) {
+                $valid[] = $code;
+            }
+        }
+        if (!in_array('en', $valid, true)) {
+            $valid[] = 'en';
+        }
+        self::$knownLanguages = $valid;
+    }
 
     /**
      * Depth of the page relative to its language root. The leading
@@ -132,7 +162,7 @@ final class PagePathHelper {
      */
     private function stripLanguagePrefix(string $path): array {
         $parts = explode('/', trim($path, '/'));
-        if ($parts !== [] && in_array($parts[0], self::SUPPORTED_LANGUAGES, true)) {
+        if ($parts !== [] && in_array($parts[0], self::$knownLanguages, true)) {
             array_shift($parts);
         }
         // Preserve the [''] result from an empty path → return [].

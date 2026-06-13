@@ -35,7 +35,8 @@ class ExportService {
         private ITempManager $tempManager,
         private LoggerInterface $logger,
         private IAppManager $appManager,
-        private IDBConnection $connection
+        private IDBConnection $connection,
+        private LanguageService $languageService
     ) {}
 
     /**
@@ -269,7 +270,7 @@ class ExportService {
      * @return array|null Page data or null if not found
      */
     private function findPageByUniqueIdInAllLanguages(string $uniqueId): ?array {
-        $languages = ['nl', 'en', 'de', 'fr'];
+        $languages = $this->languageService->getEnabledLanguages();
 
         foreach ($languages as $lang) {
             $pages = $this->getPagesFromLanguageFolder($lang);
@@ -319,20 +320,23 @@ class ExportService {
      * @return array List of languages with content
      */
     public function getExportableLanguages(): array {
-        $languages = [
-            ['code' => 'nl', 'name' => 'Nederlands', 'flag' => '🇳🇱'],
-            ['code' => 'en', 'name' => 'English', 'flag' => '🇬🇧'],
-            ['code' => 'de', 'name' => 'Deutsch', 'flag' => '🇩🇪'],
-            ['code' => 'fr', 'name' => 'Français', 'flag' => '🇫🇷'],
-        ];
+        // Only enabled languages can be exported. Disabled-language folders
+        // exist on disk but are intentionally hidden from the admin UI.
+        $enabled = $this->languageService->getLanguagesWithMetadata();
 
-        // Check which languages have content using our own method
         $result = [];
-        foreach ($languages as $lang) {
-            $pages = $this->getPagesFromLanguageFolder($lang['code']);
-            $lang['hasContent'] = count($pages) > 0;
-            $lang['pageCount'] = count($pages);
-            $result[] = $lang;
+        foreach ($enabled as $entry) {
+            if (!$entry['isEnabled']) {
+                continue;
+            }
+            $pages = $this->getPagesFromLanguageFolder($entry['code']);
+            $result[] = [
+                'code' => $entry['code'],
+                'name' => $entry['name'],
+                'flag' => '',
+                'hasContent' => count($pages) > 0,
+                'pageCount' => count($pages),
+            ];
         }
 
         return $result;

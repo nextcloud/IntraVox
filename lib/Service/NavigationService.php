@@ -18,8 +18,8 @@ class NavigationService {
     private SetupService $setupService;
     private SystemFileService $systemFileService;
     private IL10N $l10n;
+    private LanguageService $languageService;
     private string $userId;
-    private const SUPPORTED_LANGUAGES = ['nl', 'en', 'de', 'fr'];
 
     private ?ICache $pagesCache = null;
     private ?ICache $permissionsCache = null;
@@ -31,6 +31,7 @@ class NavigationService {
         SystemFileService $systemFileService,
         IL10N $l10n,
         ICacheFactory $cacheFactory,
+        LanguageService $languageService,
         ?string $userId
     ) {
         $this->rootFolder = $rootFolder;
@@ -38,6 +39,7 @@ class NavigationService {
         $this->setupService = $setupService;
         $this->systemFileService = $systemFileService;
         $this->l10n = $l10n;
+        $this->languageService = $languageService;
         $this->userId = $userId ?? '';
 
         if ($cacheFactory->isAvailable()) {
@@ -243,9 +245,9 @@ class NavigationService {
     private function getLanguageFolder(string $language) {
         $sharedFolder = $this->getIntraVoxFolder();
 
-        // Validate language
-        if (!in_array($language, self::SUPPORTED_LANGUAGES)) {
-            $language = 'nl'; // Default to Dutch
+        // Validate language: must be admin-enabled, otherwise fall back to default.
+        if (!$this->languageService->isLanguageEnabled($language)) {
+            $language = $this->languageService->getDefaultLanguage();
         }
 
         if (!$sharedFolder->nodeExists($language)) {
@@ -265,8 +267,10 @@ class NavigationService {
         // Extract base language (e.g., 'nl' from 'nl_NL')
         $baseLang = strtolower(substr($languageCode, 0, 2));
 
-        // Return if supported, otherwise default to Dutch
-        return in_array($baseLang, self::SUPPORTED_LANGUAGES) ? $baseLang : 'nl';
+        // Return if admin-enabled, otherwise fall back to the universal default (English).
+        return $this->languageService->isLanguageEnabled($baseLang)
+            ? $baseLang
+            : $this->languageService->getDefaultLanguage();
     }
 
     /**

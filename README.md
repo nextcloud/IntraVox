@@ -1,5 +1,7 @@
 # IntraVox - Intranet Pages for Nextcloud
 
+[![Translation status](https://app.transifex.com/projects/p/nextcloud/resource/intravox/chart/image_png)](https://app.transifex.com/nextcloud/nextcloud/intravox/)
+
 **Build collaborative intranet pages directly in Nextcloud with a powerful drag-and-drop editor.**
 
 IntraVox brings SharePoint-style page creation to Nextcloud, enabling teams to build intranets, knowledge bases, and collaborative workspaces within their secure Nextcloud environment.
