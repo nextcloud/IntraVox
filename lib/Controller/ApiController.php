@@ -38,6 +38,7 @@ use OCP\IRequest;
 use OCP\ITempManager;
 use OCP\ISession;
 use OCP\IUserSession;
+use OCP\App\IAppManager;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -67,6 +68,7 @@ class ApiController extends Controller {
     private PermissionService $permissionService;
     private PageLockService $pageLockService;
     private ISession $session;
+    private IAppManager $appManager;
 
     public function __construct(
         string $appName,
@@ -87,7 +89,8 @@ class ApiController extends Controller {
         NavigationService $navigationService,
         PermissionService $permissionService,
         PageLockService $pageLockService,
-        ISession $session
+        ISession $session,
+        IAppManager $appManager
     ) {
         parent::__construct($appName, $request);
         $this->pageService = $pageService;
@@ -107,6 +110,7 @@ class ApiController extends Controller {
         $this->permissionService = $permissionService;
         $this->pageLockService = $pageLockService;
         $this->session = $session;
+        $this->appManager = $appManager;
     }
 
     /**
@@ -884,7 +888,7 @@ class ApiController extends Controller {
      */
     public function getMetavoxStatus(): DataResponse {
         try {
-            $appManager = \OC::$server->getAppManager();
+            $appManager = $this->appManager;
             $installed = $appManager->isInstalled('metavox') && $appManager->isEnabledForUser('metavox');
 
             return new DataResponse([
@@ -906,7 +910,7 @@ class ApiController extends Controller {
      */
     public function getMetavoxFields(): DataResponse {
         try {
-            $appManager = \OC::$server->getAppManager();
+            $appManager = $this->appManager;
             if (!$appManager->isInstalled('metavox') || !$appManager->isEnabledForUser('metavox')) {
                 return new DataResponse(['fields' => [], 'error' => 'MetaVox not available']);
             }
@@ -1181,7 +1185,7 @@ class ApiController extends Controller {
         return new DataResponse([
             'status' => 'ok',
             'app' => Application::APP_ID,
-            'version' => \OC::$server->getAppManager()->getAppVersion(Application::APP_ID),
+            'version' => $this->appManager->getAppVersion(Application::APP_ID),
         ]);
     }
 

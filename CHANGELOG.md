@@ -4,6 +4,25 @@ All notable changes to IntraVox will be documented in this file.
 
 IntraVox is a Nextcloud intranet page builder.
 
+## [1.6.1] - 2026-06-14 — Fix: app could not be enabled on Nextcloud 34
+
+Bugfix release. IntraVox 1.6.0 declared Nextcloud 34 support but crashed on `occ app:enable intravox`:
+
+```
+Error: Call to undefined method OC\Server::getAppManager()
+```
+
+Nextcloud 34 removed the legacy `\OC::$server->getXxx()` getter shortcuts on `OC\Server`. The 1.6.0 NC34 audit only checked the public `OCP\*` API surface and missed these internal `OC\` getters, which were still called in `lib/`. During install the repair step (`SetupDemoData`) hits `SetupService::isGroupFoldersAppEnabled()`, so the crash aborted `app:enable` entirely.
+
+### Fixed
+
+- **App can be enabled on Nextcloud 34 again** ([#58](https://github.com/nextcloud/IntraVox/issues/58)). Replaced every removed `\OC::$server->getXxx()` getter with dependency injection of the stable `OCP\*` interfaces across 11 files (`SetupService`, `PermissionService`, `ApiController`, `PageService`, `PhotoStoryController`, `PreviewController`, `LicenseService`, `DemoDataService`, `OrphanedDataService`, `ImportDemoDataCommand`, `ImportPagesCommand`). Getters migrated: `getAppManager` → `OCP\App\IAppManager`, `getUserManager` → `OCP\IUserManager`, `getDatabaseConnection` → `OCP\IDBConnection`, `getURLGenerator` → `OCP\IURLGenerator`, `getMimeTypeDetector` → `OCP\Files\IMimeTypeDetector`, `getConfig` → injected `OCP\IConfig`. These interfaces are unchanged across NC 32/33/34, so a single codebase keeps working on all three.
+
+### Removed
+
+- Dead `$nextcloudPath = '/var/www/nextcloud'` field in `SetupService` (unused, and wrong for non-default install layouts).
+- Redundant `\OC::$SERVERROOT`-based demo-data path fallback in `DemoDataService::getBundledDemoDataPath()`; `IAppManager::getAppPath('intravox')` already resolves both `apps/` and `custom_apps/` layouts.
+
 ## [1.6.0] - 2026-06-13 — Nextcloud 34 + Transifex-ready translations + admin-curated language list
 
 Major release with three themes: **Nextcloud 34 compatibility**, **community translations via Transifex**, and **admin-curated language activation**. Plus PhotoStory lightbox fullscreen + "Open in Files" originally drafted for 1.5.6 are folded into this release. **No data loss on upgrade — existing installs keep their four configured languages enabled by default.**

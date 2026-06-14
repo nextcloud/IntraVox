@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace OCA\IntraVox\Command;
 
 use OCA\IntraVox\Service\DemoDataService;
+use OCP\IUserManager;
 use OCP\IUserSession;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -21,14 +22,17 @@ use Symfony\Component\Console\Output\OutputInterface;
 class ImportDemoDataCommand extends Command {
     private DemoDataService $demoDataService;
     private IUserSession $userSession;
+    private IUserManager $userManager;
 
     public function __construct(
         DemoDataService $demoDataService,
-        IUserSession $userSession
+        IUserSession $userSession,
+        IUserManager $userManager
     ) {
         parent::__construct();
         $this->demoDataService = $demoDataService;
         $this->userSession = $userSession;
+        $this->userManager = $userManager;
     }
 
     protected function configure(): void {
@@ -73,8 +77,7 @@ class ImportDemoDataCommand extends Command {
         }
 
         // Set user context
-        $userManager = \OC::$server->getUserManager();
-        $user = $userManager->get($userId);
+        $user = $this->userManager->get($userId);
         if (!$user) {
             $output->writeln("<error>User not found: {$userId}</error>");
             return 1;

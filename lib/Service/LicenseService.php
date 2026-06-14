@@ -8,6 +8,7 @@ use OCP\Files\Folder;
 use OCP\Files\NotFoundException;
 use OCP\Http\Client\IClientService;
 use OCP\IConfig;
+use OCP\IURLGenerator;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -22,19 +23,22 @@ class LicenseService {
     private IClientService $clientService;
     private LoggerInterface $logger;
     private LanguageService $languageService;
+    private IURLGenerator $urlGenerator;
 
     public function __construct(
         SetupService $setupService,
         IConfig $config,
         IClientService $clientService,
         LoggerInterface $logger,
-        LanguageService $languageService
+        LanguageService $languageService,
+        IURLGenerator $urlGenerator
     ) {
         $this->setupService = $setupService;
         $this->config = $config;
         $this->clientService = $clientService;
         $this->logger = $logger;
         $this->languageService = $languageService;
+        $this->urlGenerator = $urlGenerator;
     }
 
     /**
@@ -98,7 +102,7 @@ class LicenseService {
     public function getInstanceUrl(): string {
         $instanceUrl = $this->config->getSystemValue('overwrite.cli.url', '');
         if (empty($instanceUrl)) {
-            $instanceUrl = \OC::$server->getURLGenerator()->getAbsoluteURL('/');
+            $instanceUrl = $this->urlGenerator->getAbsoluteURL('/');
         }
         return $instanceUrl;
     }
@@ -527,7 +531,7 @@ class LicenseService {
      */
     public function getInstanceInfo(): array {
         // Get Nextcloud version
-        $nextcloudVersion = \OC::$server->getConfig()->getSystemValue('version', 'unknown');
+        $nextcloudVersion = $this->config->getSystemValue('version', 'unknown');
 
         return [
             'instance_url_hash' => $this->getInstanceUrlHash(),

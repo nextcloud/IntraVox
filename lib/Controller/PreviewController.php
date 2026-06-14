@@ -17,6 +17,7 @@ use OCP\Files\IRootFolder;
 use OCP\Files\Node;
 use OCP\Http\Client\IClientService;
 use OCP\IDBConnection;
+use OCP\Files\IMimeTypeDetector;
 use OCP\IRequest;
 use OCP\IURLGenerator;
 use OCP\IUserSession;
@@ -54,6 +55,7 @@ class PreviewController extends Controller {
 		private FederatedPreviewService $federatedPreview,
 		private IDBConnection $db,
 		private IURLGenerator $urlGenerator,
+		private IMimeTypeDetector $mimeTypeDetector,
 		private LoggerInterface $logger,
 	) {
 		parent::__construct($appName, $request);
@@ -297,7 +299,7 @@ class PreviewController extends Controller {
 	private function mimeIconRedirect(?Node $node): RedirectResponse {
 		$mime = $node !== null ? (string)$node->getMimeType() : 'application/octet-stream';
 		try {
-			$url = \OC::$server->getMimeTypeDetector()->mimeTypeIcon($mime);
+			$url = $this->mimeTypeDetector->mimeTypeIcon($mime);
 		} catch (\Throwable $e) {
 			$url = $this->urlGenerator->imagePath('core', 'filetypes/file.svg');
 		}

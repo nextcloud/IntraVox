@@ -15,6 +15,7 @@ use OCP\Files\File;
 use OCP\Files\IRootFolder;
 use OCP\IConfig;
 use OCP\IRequest;
+use OCP\IURLGenerator;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
 
@@ -30,6 +31,7 @@ class PhotoStoryController extends Controller {
 		private IRootFolder $rootFolder,
 		private IUserSession $userSession,
 		private LoggerInterface $logger,
+		private IURLGenerator $urlGenerator,
 	) {
 		parent::__construct($appName, $request);
 	}
@@ -456,7 +458,7 @@ class PhotoStoryController extends Controller {
 			}
 			$node = $nodes[0];
 			$parentPath = $userFolder->getRelativePath($node->getParent()->getPath()) ?: '/';
-			$urlGen = \OC::$server->getURLGenerator();
+			$urlGen = $this->urlGenerator;
 			$url = $urlGen->linkToRoute('files.view.index', [
 				'dir' => $parentPath,
 				'scrollto' => $node->getName(),

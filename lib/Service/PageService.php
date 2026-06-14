@@ -23,6 +23,7 @@ use OCP\Files\NotFoundException;
 use OCP\IUserSession;
 use OCP\IConfig;
 use OCP\IDBConnection;
+use OCP\App\IAppManager;
 use OCP\ICacheFactory;
 use OCP\ICache;
 use Psr\Log\LoggerInterface;
@@ -52,6 +53,7 @@ class PageService {
     private IRootFolder $rootFolder;
     private IUserSession $userSession;
     private string $userId;
+    private IAppManager $appManager;
     private SetupService $setupService;
     private IConfig $config;
     private IDBConnection $db;
@@ -359,6 +361,7 @@ class PageService {
         PageIdUtils $idUtils,
         GroupContextService $groupContext,
         LanguageService $languageService,
+        IAppManager $appManager,
         ?string $userId
     ) {
         $this->rootFolder = $rootFolder;
@@ -382,6 +385,7 @@ class PageService {
         $this->idUtils = $idUtils;
         $this->groupContext = $groupContext;
         $this->languageService = $languageService;
+        $this->appManager = $appManager;
         $this->userId = $userId ?? '';
 
         if ($cacheFactory->isAvailable()) {
@@ -5092,8 +5096,7 @@ class PageService {
      */
     private function isMetaVoxAvailable(): bool {
         try {
-            $appManager = \OC::$server->getAppManager();
-            return $appManager->isInstalled('metavox') && $appManager->isEnabledForUser('metavox');
+            return $this->appManager->isInstalled('metavox') && $this->appManager->isEnabledForUser('metavox');
         } catch (\Exception $e) {
             return false;
         }

@@ -7,6 +7,7 @@ use OCP\Comments\ICommentsManager;
 use OCP\Files\Folder;
 use OCP\Http\Client\IClientService;
 use OCP\IConfig;
+use OCP\App\IAppManager;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -37,6 +38,7 @@ class DemoDataService {
     private LoggerInterface $logger;
     private ICommentsManager $commentsManager;
     private LanguageService $languageService;
+    private IAppManager $appManager;
 
     public function __construct(
         SetupService $setupService,
@@ -44,7 +46,8 @@ class DemoDataService {
         IConfig $config,
         LoggerInterface $logger,
         ICommentsManager $commentsManager,
-        LanguageService $languageService
+        LanguageService $languageService,
+        IAppManager $appManager
     ) {
         $this->setupService = $setupService;
         $this->clientService = $clientService;
@@ -52,6 +55,7 @@ class DemoDataService {
         $this->logger = $logger;
         $this->commentsManager = $commentsManager;
         $this->languageService = $languageService;
+        $this->appManager = $appManager;
     }
 
     /**
@@ -789,10 +793,11 @@ class DemoDataService {
      * Uses Nextcloud's app manager to find the actual app installation path
      */
     private function getBundledDemoDataPath(string $language): ?string {
-        // First, try to get the app path from Nextcloud's app manager (most reliable)
+        // Resolve the app installation path via Nextcloud's app manager. This
+        // works regardless of whether intravox lives in apps/ or custom_apps/,
+        // so no manual SERVERROOT path probing is needed.
         try {
-            $appManager = \OC::$server->getAppManager();
-            $appPath = $appManager->getAppPath('intravox');
+            $appPath = $this->appManager->getAppPath('intravox');
             if ($appPath !== null) {
                 $demoDataPath = $appPath . '/demo-data/' . $language;
                 if (is_dir($demoDataPath)) {
@@ -802,19 +807,6 @@ class DemoDataService {
             }
         } catch (\Exception $e) {
             $this->logger->warning("[DemoData] Could not get app path from app manager: " . $e->getMessage());
-        }
-
-        // Fallback: check common paths (for backwards compatibility)
-        $possiblePaths = [
-            \OC::$SERVERROOT . '/apps/intravox/demo-data/' . $language,
-            \OC::$SERVERROOT . '/custom_apps/intravox/demo-data/' . $language,
-        ];
-
-        foreach ($possiblePaths as $path) {
-            if (is_dir($path)) {
-                $this->logger->debug("[DemoData] Found demo data at fallback path: {$path}");
-                return $path;
-            }
         }
 
         $this->logger->warning("[DemoData] Demo data not found for language: {$language}");

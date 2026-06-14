@@ -6,6 +6,7 @@ namespace OCA\IntraVox\Command;
 use OCA\IntraVox\Service\SetupService;
 use OCP\Files\IRootFolder;
 use OCP\Files\NotFoundException;
+use OCP\IUserManager;
 use OCP\IUserSession;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -17,16 +18,19 @@ class ImportPagesCommand extends Command {
     private IRootFolder $rootFolder;
     private IUserSession $userSession;
     private SetupService $setupService;
+    private IUserManager $userManager;
 
     public function __construct(
         IRootFolder $rootFolder,
         IUserSession $userSession,
-        SetupService $setupService
+        SetupService $setupService,
+        IUserManager $userManager
     ) {
         parent::__construct();
         $this->rootFolder = $rootFolder;
         $this->userSession = $userSession;
         $this->setupService = $setupService;
+        $this->userManager = $userManager;
     }
 
     protected function configure(): void {
@@ -70,8 +74,7 @@ class ImportPagesCommand extends Command {
         $output->writeln("");
 
         // Set user context
-        $userManager = \OC::$server->getUserManager();
-        $user = $userManager->get($userId);
+        $user = $this->userManager->get($userId);
         if (!$user) {
             $output->writeln("<error>User not found: {$userId}</error>");
             return 1;

@@ -10,6 +10,9 @@ use OCP\ICacheFactory;
 use OCP\IUserSession;
 use OCP\IGroupManager;
 use OCP\IConfig;
+use OCP\IUserManager;
+use OCP\IDBConnection;
+use OCP\App\IAppManager;
 use OCP\Constants;
 use Psr\Log\LoggerInterface;
 
@@ -34,6 +37,9 @@ class PermissionService {
     private SetupService $setupService;
     private IConfig $config;
     private LoggerInterface $logger;
+    private IUserManager $userManager;
+    private IDBConnection $db;
+    private IAppManager $appManager;
     private ?ICache $distributedCache = null;
     private ?string $userId;
 
@@ -48,6 +54,9 @@ class PermissionService {
         IConfig $config,
         LoggerInterface $logger,
         ICacheFactory $cacheFactory,
+        IUserManager $userManager,
+        IDBConnection $db,
+        IAppManager $appManager,
         ?string $userId
     ) {
         $this->rootFolder = $rootFolder;
@@ -56,6 +65,9 @@ class PermissionService {
         $this->setupService = $setupService;
         $this->config = $config;
         $this->logger = $logger;
+        $this->userManager = $userManager;
+        $this->db = $db;
+        $this->appManager = $appManager;
         $this->userId = $userId;
 
         if ($cacheFactory->isAvailable()) {
@@ -68,7 +80,7 @@ class PermissionService {
      */
     private function getGroupFolderId(string $folderName = 'IntraVox'): ?int {
         try {
-            if (!\OC::$server->getAppManager()->isEnabledForUser('groupfolders')) {
+            if (!$this->appManager->isEnabledForUser('groupfolders')) {
                 return null;
             }
 
@@ -146,7 +158,7 @@ class PermissionService {
             $groupfolderManager = \OC::$server->get(\OCA\GroupFolders\Folder\FolderManager::class);
 
             // Get user's groups
-            $user = \OC::$server->getUserManager()->get($userId);
+            $user = $this->userManager->get($userId);
             if (!$user) {
                 return 0;
             }
@@ -231,7 +243,7 @@ class PermissionService {
             $this->logger->debug("Checking ACL for paths: " . implode(', ', $pathsToCheck));
 
             // Query ACL rules directly from database
-            $db = \OC::$server->getDatabaseConnection();
+            $db = $this->db;
 
             // Get storage ID for the groupfolder
             // Try both storage ID formats: object::groupfolder:: (newer) and local:: (older)
@@ -404,7 +416,7 @@ class PermissionService {
             return false;
         }
 
-        $user = \OC::$server->getUserManager()->get($userId);
+        $user = $this->userManager->get($userId);
         if (!$user) {
             return false;
         }

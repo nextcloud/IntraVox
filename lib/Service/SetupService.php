@@ -12,6 +12,7 @@ use OCP\IUserSession;
 use OCP\Share\IManager as IShareManager;
 use OCP\Share\IShare;
 use OCP\IGroupManager;
+use OCP\App\IAppManager;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Process\Process;
 
@@ -29,7 +30,7 @@ class SetupService {
     private IShareManager $shareManager;
     private IGroupManager $groupManager;
     private LanguageService $languageService;
-    private string $nextcloudPath;
+    private IAppManager $appManager;
 
     public function __construct(
         IRootFolder $rootFolder,
@@ -38,7 +39,8 @@ class SetupService {
         IUserSession $userSession,
         IShareManager $shareManager,
         IGroupManager $groupManager,
-        LanguageService $languageService
+        LanguageService $languageService,
+        IAppManager $appManager
     ) {
         $this->rootFolder = $rootFolder;
         $this->config = $config;
@@ -47,9 +49,7 @@ class SetupService {
         $this->shareManager = $shareManager;
         $this->groupManager = $groupManager;
         $this->languageService = $languageService;
-
-        // Get Nextcloud path from environment or use default
-        $this->nextcloudPath = '/var/www/nextcloud';
+        $this->appManager = $appManager;
     }
 
     /**
@@ -71,7 +71,7 @@ class SetupService {
      * Check if the GroupFolders app is installed and enabled
      */
     public function isGroupFoldersAppEnabled(): bool {
-        return \OC::$server->getAppManager()->isEnabledForUser('groupfolders');
+        return $this->appManager->isEnabledForUser('groupfolders');
     }
 
     /**
@@ -501,7 +501,7 @@ class SetupService {
      */
     public function getGroupFolderId(): int {
         try {
-            if (!\OC::$server->getAppManager()->isEnabledForUser('groupfolders')) {
+            if (!$this->appManager->isEnabledForUser('groupfolders')) {
                 throw new \Exception('Groupfolders app is not enabled');
             }
 
@@ -575,7 +575,7 @@ class SetupService {
      */
     private function createOrGetGroupfolderByName(string $folderName): ?int {
         try {
-            if (!\OC::$server->getAppManager()->isEnabledForUser('groupfolders')) {
+            if (!$this->appManager->isEnabledForUser('groupfolders')) {
                 $this->logger->error('Groupfolders app is not enabled');
                 return null;
             }
@@ -723,7 +723,7 @@ class SetupService {
             $this->logger->info('Starting default templates installation');
 
             $folder = $this->getSharedFolder();
-            $appPath = \OC::$server->getAppManager()->getAppPath('intravox');
+            $appPath = $this->appManager->getAppPath('intravox');
             $templatesSourcePath = $appPath . '/demo-data/templates';
 
             if (!is_dir($templatesSourcePath)) {

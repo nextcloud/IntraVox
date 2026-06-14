@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace OCA\IntraVox\Service;
 
 use OCP\IConfig;
+use OCP\App\IAppManager;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -25,17 +26,20 @@ class OrphanedDataService {
     private SetupService $setupService;
     private LoggerInterface $logger;
     private LanguageService $languageService;
+    private IAppManager $appManager;
 
     public function __construct(
         IConfig $config,
         SetupService $setupService,
         LoggerInterface $logger,
-        LanguageService $languageService
+        LanguageService $languageService,
+        IAppManager $appManager
     ) {
         $this->config = $config;
         $this->setupService = $setupService;
         $this->logger = $logger;
         $this->languageService = $languageService;
+        $this->appManager = $appManager;
     }
 
     /**
@@ -322,7 +326,7 @@ class OrphanedDataService {
      */
     private function getRegisteredGroupFolderIds(): array {
         try {
-            if (!\OC::$server->getAppManager()->isEnabledForUser('groupfolders')) {
+            if (!$this->appManager->isEnabledForUser('groupfolders')) {
                 $this->logger->warning('[OrphanedData] GroupFolders app is not enabled');
                 return [];
             }

@@ -48,14 +48,14 @@
 * Internal communication and documentation
 * SharePoint-to-Nextcloud migrations
     ]]></description>
-    <version>1.6.0</version>
+    <version>1.6.1</version>
     <licence>agpl</licence>
     <author mail="info@voxcloud.nl" homepage="https://voxcloud.nl">VoxCloud</author>
     <namespace>IntraVox</namespace>
     <documentation>
-        <user>https://github.com/nextcloud/IntraVox/blob/main/docs/user/editor.md</user>
-        <admin>https://github.com/nextcloud/IntraVox/blob/main/docs/admin/guide.md</admin>
-        <developer>https://github.com/nextcloud/IntraVox/blob/main/docs/architecture/api-development.md</developer>
+        <user>https://voxcloud.nl/docs/en/intravox/user/editor/</user>
+        <admin>https://voxcloud.nl/docs/en/intravox/admin/guide/</admin>
+        <developer>https://voxcloud.nl/docs/en/intravox/architecture/api-development/</developer>
     </documentation>
     <category>organization</category>
     <category>office</category>
