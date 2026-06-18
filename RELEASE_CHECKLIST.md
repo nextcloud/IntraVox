@@ -87,7 +87,7 @@ Since v1.6.0, IntraVox uses Transifex (`nextcloud:intravox` resource, part of th
 ```
 
 - The **source push (1) is fully automatic** by the Nextcloud Transifex bot once `o:nextcloud:p:nextcloud:r:intravox` is provisioned. The bot reads `translationfiles/templates/intravox.pot` from `main` and uploads it.
-- **POT generation uses Nextcloud's official `translationtool.phar`** (the same binary the sync-bot runs). `scripts/generate-pot.js` is a thin Node wrapper around it: download the phar, run `create-pot-files`, report msgid count. This guarantees zero drift between what we extract locally and what the bot extracts on its run.
+- IntraVox has an explicit `l10n/en.json` that is the **webpack-extracted source** for frontend strings — it captures every `t('intravox', '...')` call, including those inside Vue `<template>` blocks. It is *also* the input to `scripts/generate-pot.js`, which merges it with `xgettext` output from `lib/**.php` to build the POT. **Do NOT switch POT generation to `translationtool.phar`/bare `xgettext`** — xgettext does not parse Vue templates and silently drops ~700 live frontend strings (see commit history around 2026-06-18).
 - Only `l10n/*.js` (frontend, `OC.L10N.register`) and `l10n/*.json` (PHP `IL10N`) are loaded at runtime. The `.po` files (`translationfiles/`) are an intermediate sync artefact — only the POT template is committed; per-language `.po` files are gitignored.
 - **Existing `l10n/<lang>.json` translations are preserved across releases.** The Transifex bot uses them as initial "translation memory" when it provisions the resource — translators see strings already-translated and can refine, not start from zero.
 
@@ -106,7 +106,7 @@ After `-X ours` you may still get `modify/delete` conflicts (see Gotcha 2) — r
 
 ### ⚠️ Gotcha 2 — `tx pull` and the bot disagree on near-empty languages
 
-If you ever manually run `tx pull -a --minimum-perc=1` (e.g. via a future `scripts/sync-translations.sh`), it pulls back **any** language with ≥1% translated (with IntraVox 1.6's ~442 source strings, that's any language with ≥5 strings). The bot, however, **deletes** files that drop below its completeness threshold. During a merge this shows up as `modify/delete` conflicts (the bot deleted `l10n/ta.json`, our pull re-created it).
+If you ever manually run `tx pull -a --minimum-perc=1` (e.g. via a future `scripts/sync-translations.sh`), it pulls back **any** language with ≥1% translated (with IntraVox 1.6's ~1265 source strings, that's any language with ≥13 strings). The bot, however, **deletes** files that drop below its completeness threshold. During a merge this shows up as `modify/delete` conflicts (the bot deleted `l10n/ta.json`, our pull re-created it).
 
 **Convention: follow the bot — delete the near-empty files.** A handful-of-strings file adds clutter, ships almost nothing, and would re-conflict on every future sync. Resolve with:
 ```bash
@@ -120,7 +120,7 @@ git rm --force l10n/<lang>.js l10n/<lang>.json
 - [ ] **Refresh the POT** from current code (only if you added/removed translatable strings since last release):
       ```bash
       npm run l10n                            # re-emit .js from .json (in case .json was edited)
-      node scripts/generate-pot.js            # runs NC's official translationtool.phar
+      node scripts/generate-pot.js            # merges l10n/en.json + xgettext on lib/
       ```
 - [ ] Validate JSON syntax in all l10n files:
       ```bash
@@ -131,7 +131,7 @@ git rm --force l10n/<lang>.js l10n/<lang>.json
       for f in l10n/*.js; do head -c 50 "$f" | grep -q '^OC.L10N.register' || echo "BAD: $f"; done
       ```
 - [ ] Validate POT syntax: `msgfmt --check --output=/dev/null translationfiles/templates/intravox.pot` (header warnings are normal for a `.pot`)
-- [ ] Verify POT msgid count is plausible (~442 for IntraVox 1.6 — note: NC tool extracts only strings xgettext can find in PHP + a synthetic Vue dummy; some Vue-template-syntax strings may be missed and need explicit `t()` calls in JS to register): `grep -c "^msgid " translationfiles/templates/intravox.pot`
+- [ ] Verify POT msgid count is plausible (1200+ for IntraVox 1.6+ — the en.json-based extractor captures all Vue-template strings; a count near ~440 means someone reintroduced bare-xgettext extraction that drops the frontend): `grep -c "^msgid " translationfiles/templates/intravox.pot`
 - [ ] **Reconcile with the GitHub bot (Gotcha 1)**: `git fetch github main` then merge `-X ours`, resolving near-empty `modify/delete` conflicts per Gotcha 2
 - [ ] Confirm the core bundled languages survived the merge (target counts as of 1.6.0):
       ```bash
@@ -177,7 +177,7 @@ git rm --force l10n/<lang>.js l10n/<lang>.json
 ## 5. Build & Testing
 
 - [ ] Run `npm run l10n` to regenerate JS translation files (auto-applies plural-form overrides for JA/KO/ZH/AR/RU/PL/CS/SK/SL — see `scripts/generate-l10n.js`)
-- [ ] Run `node scripts/generate-pot.js` to refresh the POT via NC's official `translationtool.phar` (only if strings changed)
+- [ ] Run `node scripts/generate-pot.js` to refresh the POT from `l10n/en.json` + `xgettext` on `lib/` (only if strings changed)
 - [ ] Run `npm run build` without errors
   - Bundle size warnings for main/admin are normal (TipTap editor)
 - [ ] Test core functionalities on 3dev:
@@ -385,7 +385,7 @@ git push github main --tags
 - **PHP version:** >= 8.2
 - **Translation pool:** Transifex resource `o:nextcloud:p:nextcloud:r:intravox`
 - **Bundled translations:** Whatever is in `l10n/` at release time (grows automatically as Transifex translators contribute)
-- **Source of truth for POT:** Nextcloud's official `translationtool.phar` (downloaded + cached by `scripts/generate-pot.js`). Zero drift from what the sync-bot extracts.
+- **Source of truth for POT:** `l10n/en.json` (webpack-extracted frontend strings, incl. Vue templates) + `xgettext` on `lib/**.php`, merged by `scripts/generate-pot.js`. Bare xgettext alone cannot read Vue templates — do not replace this with `translationtool.phar`.
 - **Existing translations:** `l10n/<lang>.{js,json}` ship as bundled translations and are uploaded to Transifex as "translation memory" on first sync — users keep their localised UI across the 1.6.0 upgrade.
 - **Transifex token (optional, for manual `tx pull`):** when needed, set `TX_TOKEN=1/xxxxxxxx` (read-access to `nextcloud:intravox`) — but in normal release flow you don't need it, the GH bot does the sync. See IntroVox's `scripts/sync-translations.sh` if you ever want to add manual-pull capability to IntraVox.
 - **Sibling app reference:** IntroVox uses the same Transifex pool and went through onboarding two days before us — when in doubt about l10n/Transifex behaviour, check [`IntroVox/RELEASE_CHECKLIST.md`](../IntroVox/RELEASE_CHECKLIST.md) first.
@@ -396,4 +396,4 @@ git push github main --tags
 
 ---
 
-*Last updated: 2026-06-13 — Audit pass: corrected stale 1265-msgid references to actual 442 (post-NC-tool POT). Added concrete expected per-lang string counts. NC34 compat documented in §6. openapi.json version-sync gap flagged in §3. POT absolute-path note in §7.*
+*Last updated: 2026-06-18 — Reverted POT generation to the en.json + lib/xgettext extractor after `translationtool.phar` was found to silently drop ~700 Vue-template strings (1265 → 442); rakekniven flagged the shrunken template on docker-ci#951. Restored 1265-msgid expectations. Kept the msgfmt-check step + translation-memory note. Earlier: NC34 compat in §6, openapi.json version-sync gap in §3, POT absolute-path note in §7.*

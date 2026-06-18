@@ -1,97 +1,100 @@
 #!/usr/bin/env node
 /**
- * Generate translationfiles/templates/intravox.pot using Nextcloud's official
- * translationtool.phar (the same tool the NC Transifex sync-bot runs).
+ * Generate translationfiles/templates/intravox.pot from l10n/en.json + PHP scan.
  *
- * Using the official tool guarantees that what we ship in the POT exactly
- * matches what the sync-bot will extract — no drift between local and remote.
+ * Why this exists: `xgettext` chokes on Vue templates (HTML/directive syntax
+ * looks like broken JS to it), so we can't run it against `src/`. But the
+ * webpack build pipeline already extracts every `t('intravox', '...')` call
+ * into l10n/en.json — that's the canonical set of frontend-translatable
+ * strings. We use that as source-of-truth for the POT.
  *
- * The tool:
- *   - reads .l10nignore for excluded paths,
- *   - concatenates all Vue/JS into a fake dummy file,
- *   - runs xgettext on PHP + JS sources,
- *   - writes translationfiles/templates/<appid>.pot with source-file refs.
+ * PHP `->t('...')` calls live in lib/ and aren't captured by webpack. For
+ * those we run xgettext on lib/**\/*.php and merge the result in.
  *
  * Usage:
  *   node scripts/generate-pot.js
  *
- * Replaces our older en.json-based extraction (which kept stale strings
- * that no longer exist in source). See RELEASE_CHECKLIST.md §2 for details.
+ * Output: translationfiles/templates/intravox.pot (overwrites previous)
  */
 
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
-const https = require('https');
 
 const ROOT = path.resolve(__dirname, '..');
-const PHAR_URL = 'https://raw.githubusercontent.com/nextcloud/docker-ci/master/translations/translationtool/translationtool.phar';
-const PHAR_LOCAL = path.join(ROOT, 'scripts', '.cache', 'translationtool.phar');
-const POT_PATH = path.join(ROOT, 'translationfiles', 'templates', 'intravox.pot');
+const EN_JSON = path.join(ROOT, 'l10n', 'en.json');
+const POT = path.join(ROOT, 'translationfiles', 'templates', 'intravox.pot');
 
-async function downloadPhar() {
-    return new Promise((resolve, reject) => {
-        fs.mkdirSync(path.dirname(PHAR_LOCAL), { recursive: true });
-        console.log(`Downloading ${PHAR_URL} …`);
-        const file = fs.createWriteStream(PHAR_LOCAL);
-        https.get(PHAR_URL, (res) => {
-            // Follow one level of redirect.
-            if (res.statusCode === 301 || res.statusCode === 302) {
-                https.get(res.headers.location, (res2) => {
-                    res2.pipe(file).on('finish', () => file.close(resolve));
-                }).on('error', reject);
-                return;
-            }
-            if (res.statusCode !== 200) {
-                return reject(new Error(`HTTP ${res.statusCode} fetching translationtool.phar`));
-            }
-            res.pipe(file).on('finish', () => file.close(resolve));
-        }).on('error', reject);
-    });
+const VERSION = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8')).version;
+
+// Escape a string for inclusion in a PO `msgid "..."` line.
+function escapePo(s) {
+    return s
+        .replace(/\\/g, '\\\\')
+        .replace(/"/g, '\\"')
+        .replace(/\n/g, '\\n')
+        .replace(/\t/g, '\\t');
 }
 
-async function main() {
-    // Cache the phar locally — refresh if older than 7 days.
-    let needDownload = !fs.existsSync(PHAR_LOCAL);
-    if (!needDownload) {
-        const ageMs = Date.now() - fs.statSync(PHAR_LOCAL).mtimeMs;
-        needDownload = ageMs > 7 * 24 * 3600 * 1000;
-    }
-    if (needDownload) {
-        await downloadPhar();
-        console.log(`Saved to ${PHAR_LOCAL}`);
-    } else {
-        console.log(`Using cached ${PHAR_LOCAL}`);
-    }
-
-    // Run the NC tool. It writes its output to translationfiles/templates/<appid>.pot
-    // relative to the current working directory.
-    console.log('Running NC translationtool.phar create-pot-files …');
-    try {
-        const stdout = execSync(`php ${PHAR_LOCAL} create-pot-files`, {
-            cwd: ROOT,
-            stdio: ['ignore', 'pipe', 'inherit'],
-        }).toString();
-        // The tool also prints warnings (embedded URLs, regex literals in vue
-        // templates xgettext doesn't grok) — useful but not fatal.
-        if (stdout) process.stdout.write(stdout);
-    } catch (e) {
-        console.error('translationtool.phar failed:', e.message);
-        process.exit(1);
-    }
-
-    // Report what we got.
-    if (!fs.existsSync(POT_PATH)) {
-        console.error(`Expected ${POT_PATH} to exist after run`);
-        process.exit(1);
-    }
-    const pot = fs.readFileSync(POT_PATH, 'utf8');
-    const msgidCount = [...pot.matchAll(/^msgid "/gm)].length - 1; // -1 for the empty header msgid
-    console.log(`\nWrote ${POT_PATH}`);
-    console.log(`Total msgids: ${msgidCount}`);
+// Format one msgid/msgstr entry. PO format wraps long strings — for simplicity
+// we emit single-line msgids; Transifex and the NC l10n bot both accept this.
+function poEntry(msgid) {
+    return `msgid "${escapePo(msgid)}"\nmsgstr ""\n`;
 }
 
-main().catch((e) => {
-    console.error(e);
-    process.exit(1);
-});
+console.log('Generating POT from l10n/en.json + lib/**.php …');
+
+// 1. Frontend strings from en.json (the canonical webpack-extracted set).
+const en = JSON.parse(fs.readFileSync(EN_JSON, 'utf8'));
+const frontendStrings = Object.keys(en.translations || {});
+console.log(`  Frontend strings (from en.json): ${frontendStrings.length}`);
+
+// 2. PHP strings via xgettext on lib/.
+let phpStrings = [];
+try {
+    const phpFilesList = '/tmp/intravox-pot-php-files.txt';
+    execSync(`find lib/ -name "*.php" -type f > ${phpFilesList}`, { cwd: ROOT });
+    const phpPotPath = '/tmp/intravox-pot-php.pot';
+    execSync(
+        `xgettext --language=PHP --from-code=UTF-8 --keyword=t:1 --keyword=n:1,2 -o ${phpPotPath} --files-from=${phpFilesList}`,
+        { cwd: ROOT }
+    );
+    const phpPot = fs.readFileSync(phpPotPath, 'utf8');
+    // Match every `msgid "..."` after the header, skipping the empty leading msgid.
+    const matches = [...phpPot.matchAll(/^msgid "(.*)"$/gm)];
+    phpStrings = matches.map(m => m[1]).filter(s => s.length > 0);
+    console.log(`  PHP strings (from xgettext on lib/): ${phpStrings.length}`);
+} catch (e) {
+    console.warn('  xgettext failed — PHP strings will be missing from POT:', e.message);
+}
+
+// 3. Merge, dedupe, sort for deterministic output.
+const all = new Set([...frontendStrings, ...phpStrings]);
+const sorted = [...all].sort((a, b) => a.localeCompare(b));
+console.log(`  Total unique strings: ${sorted.length}`);
+
+// 4. Build the POT.
+const now = new Date().toISOString().replace('T', ' ').replace(/:\d+\.\d+Z$/, '+0000');
+const header = `# IntraVox translation template.
+# Copyright (C) ${new Date().getFullYear()} VoxCloud
+# This file is distributed under the AGPL-3.0 license.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: IntraVox ${VERSION}\\n"
+"Report-Msgid-Bugs-To: translations@nextcloud.com\\n"
+"POT-Creation-Date: ${now}\\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\\n"
+"Language-Team: LANGUAGE <LL@li.org>\\n"
+"Language: \\n"
+"MIME-Version: 1.0\\n"
+"Content-Type: text/plain; charset=UTF-8\\n"
+"Content-Transfer-Encoding: 8bit\\n"
+
+`;
+
+const body = sorted.map(poEntry).join('\n');
+fs.writeFileSync(POT, header + body);
+console.log(`Wrote ${POT}`);
+console.log(`Total msgids: ${sorted.length + 1} (incl. header)`);
