@@ -1,6 +1,5 @@
 {
     "translations": {
-        " with side columns": " with side columns",
         "(Department: {dept}, Max: {max})": "(Department: {dept}, Max: {max})",
         "(Public page, Max: 3)": "(Public page, Max: 3)",
         "(has child pages)": "(has child pages)",
@@ -374,7 +373,6 @@
         "Export started": "Export started",
         "Export your IntraVox pages for backup or migration.": "Export your IntraVox pages for backup or migration.",
         "Export/Import": "Export/Import",
-        "Exported {count} connection(s)": "Exported {count} connection(s)",
         "Exporting…": "Exporting…",
         "External Feed Connections": "External Feed Connections",
         "External Feeds": "External Feeds",
@@ -384,7 +382,6 @@
         "Failed to add page to navigation": "Failed to add page to navigation",
         "Failed to copy link": "Failed to copy link",
         "Failed to disconnect": "Failed to disconnect",
-        "Failed to export: ": "Failed to export: ",
         "Failed to generate feed URL": "Failed to generate feed URL",
         "Failed to install demo data": "Failed to install demo data",
         "Failed to load SharePoint lists": "Failed to load SharePoint lists",
@@ -451,9 +448,6 @@
         "Footer saved": "Footer saved",
         "Format": "Format",
         "Forum (optional)": "Forum (optional)",
-        "Found {count} orphaned data folder(s) from a previous installation.": "Found {count} orphaned data folder(s) from a previous installation.",
-        "Found {count} orphaned folder(s)": "Found {count} orphaned folder(s)",
-        "Found {total} connection(s) in file:": "Found {total} connection(s) in file:",
         "French": "French",
         "From Template": "From Template",
         "From federated share — MetaVox metadata not available": "From federated share — MetaVox metadata not available",
@@ -465,7 +459,6 @@
         "German": "German",
         "Get started quickly with example pages in multiple languages (Dutch, English, German, French).": "Get started quickly with example pages in multiple languages (Dutch, English, German, French).",
         "Glossy editorial (serif)": "Glossy editorial (serif)",
-        "Go to Admin Settings": "Go to Admin Settings",
         "Go to Maintenance": "Go to Maintenance",
         "Go to slide {number}": "Go to slide {number}",
         "Government": "Government",
@@ -507,15 +500,11 @@
         "Import comments and reactions": "Import comments and reactions",
         "Import completed": "Import completed",
         "Import connections": "Import connections",
-        "Import failed: ": "Import failed: ",
         "Import from ZIP": "Import from ZIP",
         "Import in progress": "Import in progress",
         "Import pages and media from a ZIP export file.": "Import pages and media from a ZIP export file.",
         "Import pages and media from an IntraVox ZIP export file.": "Import pages and media from an IntraVox ZIP export file.",
-        "Import {count} connection(s)": "Import {count} connection(s)",
         "Import/Export": "Import/Export",
-        "Imported {added} connection(s), skipped {skipped} duplicate(s). Enter API tokens and save.": "Imported {added} connection(s), skipped {skipped} duplicate(s). Enter API tokens and save.",
-        "Imported {count} connection(s). Enter API tokens and save.": "Imported {count} connection(s). Enter API tokens and save.",
         "Importing…": "Importing…",
         "In the free version, {limit} pages per language are included.": "In the free version, {limit} pages per language are included.",
         "Inactive": "Inactive",
@@ -1106,10 +1095,6 @@
         "Uploading… {size} MB": "Uploading… {size} MB",
         "Use global setting": "Use global setting",
         "User authentication": "User authentication",
-        "Users can add emoji reactions to comments": "Users can add emoji reactions to comments",
-        "Users can add emoji reactions to pages": "Users can add emoji reactions to pages",
-        "Users can add multiple different emoji reactions": "Users can add multiple different emoji reactions",
-        "Users can post comments on pages": "Users can post comments on pages",
         "Using global setting (disabled)": "Using global setting (disabled)",
         "Using global setting (enabled)": "Using global setting (enabled)",
         "Validating…": "Validating…",
@@ -1244,18 +1229,55 @@
         "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
         "year is": "year is",
         "you@example.com": "you@example.com",
-        "{count} new connection(s) will be added.": "{count} new connection(s) will be added.",
         "{count} people reacted with {emoji}": "{count} people reacted with {emoji}",
-        "{count} result(s) found": "{count} result(s) found",
         "{days} days ago": "{days} days ago",
         "{displayName} is editing this page": "{displayName} is editing this page",
         "{hours} hours ago": "{hours} hours ago",
         "{minutes} min ago": "{minutes} min ago",
-        "{n} columns may be too narrow{side}. Consider {rec} or fewer.": "{n} columns may be too narrow{side}. Consider {rec} or fewer.",
         "{service} has tracking concerns. Consider privacy-friendly alternatives.": "{service} has tracking concerns. Consider privacy-friendly alternatives.",
         "{service} is already available in the predefined services above": "{service} is already available in the predefined services above",
         "— Not configured —": "— Not configured —",
-        "… and {n} more": "… and {n} more"
+        "… and {n} more": "… and {n} more",
+        "%n result found": [
+            "%n result found",
+            "%n results found"
+        ],
+        "Found %n orphaned data folder from a previous installation.": [
+            "Found %n orphaned data folder from a previous installation.",
+            "Found %n orphaned data folders from a previous installation."
+        ],
+        "Found %n connection in file:": [
+            "Found %n connection in file:",
+            "Found %n connections in file:"
+        ],
+        "%n new connection will be added.": [
+            "%n new connection will be added.",
+            "%n new connections will be added."
+        ],
+        "Import %n connection": [
+            "Import %n connection",
+            "Import %n connections"
+        ],
+        "Exported %n connection": [
+            "Exported %n connection",
+            "Exported %n connections"
+        ],
+        "Imported %n connection. Enter API tokens and save.": [
+            "Imported %n connection. Enter API tokens and save.",
+            "Imported %n connections. Enter API tokens and save."
+        ],
+        "Found %n orphaned folder": [
+            "Found %n orphaned folder",
+            "Found %n orphaned folders"
+        ],
+        "Failed to export: {error}": "Failed to export: {error}",
+        "Import failed: {error}": "Import failed: {error}",
+        "{n} columns may be too narrow with side columns. Consider {rec} or fewer.": "{n} columns may be too narrow with side columns. Consider {rec} or fewer.",
+        "{n} columns may be too narrow. Consider {rec} or fewer.": "{n} columns may be too narrow. Consider {rec} or fewer.",
+        "People can add emoji reactions to pages": "People can add emoji reactions to pages",
+        "People can post comments on pages": "People can post comments on pages",
+        "People can add emoji reactions to comments": "People can add emoji reactions to comments",
+        "Go to Administration settings": "Go to Administration settings"
     },
     "pluralForm": "nplurals=2; plural=(n != 1);"
 }

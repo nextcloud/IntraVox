@@ -871,11 +871,15 @@ export default {
 
       if (colWidth < 180) {
         const recommended = Math.max(1, Math.floor(availableWidth / 200));
-        return this.t('{n} columns may be too narrow{side}. Consider {rec} or fewer.', {
-          n: cols,
-          side: hasSideColumns ? this.t(' with side columns') : '',
-          rec: recommended,
-        });
+        return hasSideColumns
+          ? this.t('{n} columns may be too narrow with side columns. Consider {rec} or fewer.', {
+            n: cols,
+            rec: recommended,
+          })
+          : this.t('{n} columns may be too narrow. Consider {rec} or fewer.', {
+            n: cols,
+            rec: recommended,
+          });
       }
       return null;
     },

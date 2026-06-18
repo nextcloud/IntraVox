@@ -38,16 +38,36 @@ function escapePo(s) {
 
 // Format one msgid/msgstr entry. PO format wraps long strings — for simplicity
 // we emit single-line msgids; Transifex and the NC l10n bot both accept this.
+// Plural entries (en.json array value [singular, plural]) emit a msgid_plural
+// block with msgstr[0]/msgstr[1] — required so the `%n` placeholder is a real
+// gettext plural and not an "undefined plural" (see NC translation dos-and-don'ts).
 function poEntry(msgid) {
     return `msgid "${escapePo(msgid)}"\nmsgstr ""\n`;
+}
+
+function poPluralEntry(singular, plural) {
+    return `msgid "${escapePo(singular)}"\n` +
+        `msgid_plural "${escapePo(plural)}"\n` +
+        `msgstr[0] ""\nmsgstr[1] ""\n`;
 }
 
 console.log('Generating POT from l10n/en.json + lib/**.php …');
 
 // 1. Frontend strings from en.json (the canonical webpack-extracted set).
+// Array values are plurals: { "%n result found": ["%n result found", "%n results found"] }.
 const en = JSON.parse(fs.readFileSync(EN_JSON, 'utf8'));
-const frontendStrings = Object.keys(en.translations || {});
-console.log(`  Frontend strings (from en.json): ${frontendStrings.length}`);
+const enTranslations = en.translations || {};
+const frontendSingular = [];
+const frontendPlural = []; // [singular, plural]
+for (const [key, val] of Object.entries(enTranslations)) {
+    if (Array.isArray(val)) {
+        frontendPlural.push([val[0] || key, val[1] || val[0] || key]);
+    } else {
+        frontendSingular.push(key);
+    }
+}
+const frontendStrings = frontendSingular;
+console.log(`  Frontend strings (from en.json): ${frontendStrings.length} singular + ${frontendPlural.length} plural`);
 
 // 2. PHP strings via xgettext on lib/.
 let phpStrings = [];
@@ -71,7 +91,10 @@ try {
 // 3. Merge, dedupe, sort for deterministic output.
 const all = new Set([...frontendStrings, ...phpStrings]);
 const sorted = [...all].sort((a, b) => a.localeCompare(b));
-console.log(`  Total unique strings: ${sorted.length}`);
+// Dedupe plurals by singular, sort deterministically.
+const pluralBySingular = new Map(frontendPlural.map(([s, p]) => [s, p]));
+const sortedPlurals = [...pluralBySingular.keys()].sort((a, b) => a.localeCompare(b));
+console.log(`  Total unique strings: ${sorted.length} singular + ${sortedPlurals.length} plural`);
 
 // 4. Build the POT.
 const now = new Date().toISOString().replace('T', ' ').replace(/:\d+\.\d+Z$/, '+0000');
@@ -94,7 +117,11 @@ msgstr ""
 
 `;
 
-const body = sorted.map(poEntry).join('\n');
+const singularBody = sorted.map(poEntry).join('\n');
+const pluralBody = sortedPlurals
+    .map(s => poPluralEntry(s, pluralBySingular.get(s)))
+    .join('\n');
+const body = [singularBody, pluralBody].filter(Boolean).join('\n');
 fs.writeFileSync(POT, header + body);
 console.log(`Wrote ${POT}`);
-console.log(`Total msgids: ${sorted.length + 1} (incl. header)`);
+console.log(`Total msgids: ${sorted.length + sortedPlurals.length + 1} (incl. header)`);

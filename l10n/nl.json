@@ -1,6 +1,5 @@
 {
     "translations": {
-        " with side columns": " met zijkolommen",
         "(Department: {dept}, Max: {max})": "(Afdeling: {dept}, Max: {max})",
         "(Public page, Max: 3)": "(Openbare pagina, Max: 3)",
         "(has child pages)": "(heeft subpagina's)",
@@ -366,7 +365,6 @@
         "Export started": "Export gestart",
         "Export your IntraVox pages for backup or migration.": "Exporteer je IntraVox-pagina's voor backup of migratie.",
         "Export/Import": "Export/Import",
-        "Exported {count} connection(s)": "{count} verbinding(en) geëxporteerd",
         "Exporting…": "Exporteren...",
         "External Feed Connections": "External Feed Connections",
         "External Feeds": "External Feeds",
@@ -376,7 +374,6 @@
         "Failed to add page to navigation": "Toevoegen van pagina aan navigatie mislukt",
         "Failed to copy link": "Link kopiëren mislukt",
         "Failed to disconnect": "Kan verbinding niet verbreken",
-        "Failed to export: ": "Failed to export: ",
         "Failed to generate feed URL": "Kan feed-URL niet genereren",
         "Failed to install demo data": "Installeren van demogegevens mislukt",
         "Failed to load SharePoint lists": "Kan SharePoint-lijsten niet laden",
@@ -442,8 +439,6 @@
         "Footer saved": "Voettekst opgeslagen",
         "Format": "Formaat",
         "Forum (optional)": "Forum (optioneel)",
-        "Found {count} orphaned data folder(s) from a previous installation.": "{count} verweesde datamap(pen) gevonden van een eerdere installatie.",
-        "Found {total} connection(s) in file:": "{total} verbinding(en) gevonden in bestand:",
         "French": "Frans",
         "From Template": "Uit sjabloon",
         "From federated share — MetaVox metadata not available": "Van federated share — MetaVox-metadata niet beschikbaar",
@@ -455,7 +450,6 @@
         "German": "Duits",
         "Get started quickly with example pages in multiple languages (Dutch, English, German, French).": "Ga snel van start met voorbeeldpagina's in meerdere talen (Nederlands, Engels, Duits, Frans).",
         "Glossy editorial (serif)": "Glossy editorial (serif)",
-        "Go to Admin Settings": "Ga naar Admin Instellingen",
         "Go to Maintenance": "Ga naar Onderhoud",
         "Go to slide {number}": "Ga naar slide {number}",
         "Government": "Overheid",
@@ -496,15 +490,11 @@
         "Import comments and reactions": "Importeer reacties en comments",
         "Import completed": "Import succesvol voltooid",
         "Import connections": "Verbindingen importeren",
-        "Import failed: ": "Import mislukt: ",
         "Import from ZIP": "Import from ZIP",
         "Import in progress": "Import in progress",
         "Import pages and media from a ZIP export file.": "Importeer pagina's en media uit een ZIP-exportbestand.",
         "Import pages and media from an IntraVox ZIP export file.": "Import pages and media from an IntraVox ZIP export file.",
-        "Import {count} connection(s)": "{count} verbinding(en) importeren",
         "Import/Export": "Import/Export",
-        "Imported {added} connection(s), skipped {skipped} duplicate(s). Enter API tokens and save.": "{added} verbinding(en) geïmporteerd, {skipped} duplica(a)t(en) overgeslagen. Voer API-tokens in en sla op.",
-        "Imported {count} connection(s). Enter API tokens and save.": "{count} verbinding(en) geïmporteerd. Voer API-tokens in en sla op.",
         "Importing…": "Importeren...",
         "In the free version, {limit} pages per language are included.": "In de gratis versie zijn {limit} pagina's per taal inbegrepen.",
         "Inactive": "Inactive",
@@ -1084,10 +1074,6 @@
         "Uploading video…": "Video uploaden...",
         "Use global setting": "Globale instelling gebruiken",
         "User authentication": "User authentication",
-        "Users can add emoji reactions to comments": "Gebruikers kunnen emoji-reacties op reacties toevoegen",
-        "Users can add emoji reactions to pages": "Gebruikers kunnen emoji-reacties op pagina's toevoegen",
-        "Users can add multiple different emoji reactions": "Gebruikers kunnen meerdere verschillende emoji-reacties toevoegen",
-        "Users can post comments on pages": "Gebruikers kunnen reacties op pagina's plaatsen",
         "Using global setting (disabled)": "Globale instelling (uitgeschakeld)",
         "Using global setting (enabled)": "Globale instelling (ingeschakeld)",
         "Validating…": "Valideren...",
@@ -1218,21 +1204,58 @@
         "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
         "year is": "jaar is",
         "you@example.com": "you@example.com",
-        "{count} new connection(s) will be added.": "{count} nieuwe verbinding(en) worden toegevoegd.",
         "{count} people reacted with {emoji}": "{count} personen reageerden met {emoji}",
-        "{count} result(s) found": "{count} resultaten gevonden",
         "{days} days ago": "{days} dagen geleden",
         "{displayName} is editing this page": "{displayName} is deze pagina aan het bewerken",
         "{hours} hours ago": "{hours} uur geleden",
         "{minutes} min ago": "{minutes} min geleden",
-        "{n} columns may be too narrow{side}. Consider {rec} or fewer.": "{n} kolommen kan te smal zijn{side}. Overweeg {rec} of minder.",
         "{service} has tracking concerns. Consider privacy-friendly alternatives.": "{service} heeft trackingzorgen. Overweeg privacyvriendelijke alternatieven.",
         "{service} is already available in the predefined services above": "{service} is al beschikbaar in de voorgedefinieerde diensten hierboven",
         "— Not configured —": "— Niet geconfigureerd —",
         "Hide RAW when JPG/HEIC exists": "Verberg RAW als JPG/HEIC bestaat",
         "Collapses RAW+JPG pairs from RAW-capable cameras": "Voegt RAW+JPG-paren van RAW-camera's samen",
         "Non-IntraVox data": "Niet-IntraVox data",
-        "… and {n} more": "… en nog {n}"
+        "… and {n} more": "… en nog {n}",
+        "%n result found": [
+            "%n resultaten gevonden",
+            "%n resultaten gevonden"
+        ],
+        "Found %n orphaned data folder from a previous installation.": [
+            "%n verweesde datamap(pen) gevonden van een eerdere installatie.",
+            "%n verweesde datamap(pen) gevonden van een eerdere installatie."
+        ],
+        "Found %n connection in file:": [
+            "%n verbinding(en) gevonden in bestand:",
+            "%n verbinding(en) gevonden in bestand:"
+        ],
+        "%n new connection will be added.": [
+            "%n nieuwe verbinding(en) worden toegevoegd.",
+            "%n nieuwe verbinding(en) worden toegevoegd."
+        ],
+        "Import %n connection": [
+            "%n verbinding(en) importeren",
+            "%n verbinding(en) importeren"
+        ],
+        "Exported %n connection": [
+            "%n verbinding(en) geëxporteerd",
+            "%n verbinding(en) geëxporteerd"
+        ],
+        "Imported %n connection. Enter API tokens and save.": [
+            "%n verbinding(en) geïmporteerd. Voer API-tokens in en sla op.",
+            "%n verbinding(en) geïmporteerd. Voer API-tokens in en sla op."
+        ],
+        "Found %n orphaned folder": [
+            "Found %n orphaned folder",
+            "Found %n orphaned folders"
+        ],
+        "Failed to export: {error}": "Failed to export: {error}",
+        "Import failed: {error}": "Import mislukt: {error}",
+        "{n} columns may be too narrow with side columns. Consider {rec} or fewer.": "{n} kolommen kan te smal zijn met zijkolommen. Overweeg {rec} of minder.",
+        "{n} columns may be too narrow. Consider {rec} or fewer.": "{n} kolommen kan te smal zijn. Overweeg {rec} of minder.",
+        "People can add emoji reactions to pages": "Gebruikers kunnen emoji-reacties op pagina's toevoegen",
+        "People can post comments on pages": "Gebruikers kunnen reacties op pagina's plaatsen",
+        "People can add emoji reactions to comments": "Gebruikers kunnen emoji-reacties op reacties toevoegen",
+        "Go to Administration settings": "Ga naar Admin Instellingen"
     },
     "pluralForm": "nplurals=2; plural=(n != 1);"
 }

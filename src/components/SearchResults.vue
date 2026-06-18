@@ -10,7 +10,7 @@
       <div class="search-header">
         <h2>{{ t('Search Results for "{query}"', { query: searchQuery }) }}</h2>
         <p v-if="!loading && results.length > 0" class="result-count">
-          {{ t('{count} result(s) found', { count: results.length }) }}
+          {{ n('%n result found', '%n results found', results.length) }}
         </p>
       </div>
 
@@ -71,7 +71,7 @@
 import { NcModal, NcEmptyContent, NcLoadingIcon } from '@nextcloud/vue';
 import Magnify from 'vue-material-design-icons/Magnify.vue';
 import FolderOutline from 'vue-material-design-icons/FolderOutline.vue';
-import { translate as t } from '@nextcloud/l10n';
+import { translate as t, translatePlural as n } from '@nextcloud/l10n';
 
 export default {
   name: 'SearchResults',
@@ -104,6 +104,9 @@ export default {
   methods: {
     t(key, vars = {}) {
       return t('intravox', key, vars);
+    },
+    n(singular, plural, count, vars = {}) {
+      return n('intravox', singular, plural, count, vars);
     },
     selectResult(result) {
       this.$emit('select', result);

@@ -1,6 +1,5 @@
 {
     "translations": {
-        " with side columns": " mit Seitenspalten",
         "(Department: {dept}, Max: {max})": "(Abteilung: {dept}, Max: {max})",
         "(Public page, Max: 3)": "(Öffentliche Seite, Max: 3)",
         "(has child pages)": "(hat Unterseiten)",
@@ -366,7 +365,6 @@
         "Export started": "Export gestartet",
         "Export your IntraVox pages for backup or migration.": "Exportieren Sie Ihre IntraVox-Seiten zur Sicherung oder Migration.",
         "Export/Import": "Export/Import",
-        "Exported {count} connection(s)": "{count} Verbindung(en) exportiert",
         "Exporting…": "Exportieren...",
         "External Feed Connections": "External Feed Connections",
         "External Feeds": "External Feeds",
@@ -376,7 +374,6 @@
         "Failed to add page to navigation": "Hinzufügen der Seite zur Navigation fehlgeschlagen",
         "Failed to copy link": "Link konnte nicht kopiert werden",
         "Failed to disconnect": "Verbindung konnte nicht getrennt werden",
-        "Failed to export: ": "Failed to export: ",
         "Failed to generate feed URL": "Feed-URL konnte nicht generiert werden",
         "Failed to install demo data": "Installation der Demodaten fehlgeschlagen",
         "Failed to load SharePoint lists": "SharePoint-Listen konnten nicht geladen werden",
@@ -442,8 +439,6 @@
         "Footer saved": "Fußzeile gespeichert",
         "Format": "Format",
         "Forum (optional)": "Forum (optional)",
-        "Found {count} orphaned data folder(s) from a previous installation.": "{count} verwaiste Datenordner aus einer früheren Installation gefunden.",
-        "Found {total} connection(s) in file:": "{total} Verbindung(en) in Datei gefunden:",
         "French": "Französisch",
         "From Template": "Aus Vorlage",
         "From federated share — MetaVox metadata not available": "Aus föderierter Freigabe — MetaVox-Metadaten nicht verfügbar",
@@ -455,7 +450,6 @@
         "German": "Deutsch",
         "Get started quickly with example pages in multiple languages (Dutch, English, German, French).": "Starten Sie schnell mit Beispielseiten in mehreren Sprachen (Niederländisch, Englisch, Deutsch, Französisch).",
         "Glossy editorial (serif)": "Magazin (Serif)",
-        "Go to Admin Settings": "Zu den Admin-Einstellungen",
         "Go to Maintenance": "Zur Wartung",
         "Go to slide {number}": "Gehe zu Folie {number}",
         "Government": "Regierung",
@@ -496,15 +490,11 @@
         "Import comments and reactions": "Kommentare und Reaktionen importieren",
         "Import completed": "Import erfolgreich abgeschlossen",
         "Import connections": "Verbindungen importieren",
-        "Import failed: ": "Import fehlgeschlagen: ",
         "Import from ZIP": "Import from ZIP",
         "Import in progress": "Import in progress",
         "Import pages and media from a ZIP export file.": "Importieren Sie Seiten und Medien aus einer ZIP-Exportdatei.",
         "Import pages and media from an IntraVox ZIP export file.": "Import pages and media from an IntraVox ZIP export file.",
-        "Import {count} connection(s)": "{count} Verbindung(en) importieren",
         "Import/Export": "Import/Export",
-        "Imported {added} connection(s), skipped {skipped} duplicate(s). Enter API tokens and save.": "{added} Verbindung(en) importiert, {skipped} Duplikat(e) übersprungen. API-Tokens eingeben und speichern.",
-        "Imported {count} connection(s). Enter API tokens and save.": "{count} Verbindung(en) importiert. API-Tokens eingeben und speichern.",
         "Importing…": "Importieren...",
         "In the free version, {limit} pages per language are included.": "In der kostenlosen Version sind {limit} Seiten pro Sprache enthalten.",
         "Inactive": "Inactive",
@@ -1083,10 +1073,6 @@
         "Uploading video…": "Video wird hochgeladen...",
         "Use global setting": "Globale Einstellung verwenden",
         "User authentication": "User authentication",
-        "Users can add emoji reactions to comments": "Benutzer können Emoji-Reaktionen auf Kommentare hinzufügen",
-        "Users can add emoji reactions to pages": "Benutzer können Emoji-Reaktionen auf Seiten hinzufügen",
-        "Users can add multiple different emoji reactions": "Benutzer können mehrere verschiedene Emoji-Reaktionen hinzufügen",
-        "Users can post comments on pages": "Benutzer können Kommentare auf Seiten veröffentlichen",
         "Using global setting (disabled)": "Globale Einstellung verwenden (deaktiviert)",
         "Using global setting (enabled)": "Globale Einstellung verwenden (aktiviert)",
         "Validating…": "Validieren...",
@@ -1217,21 +1203,58 @@
         "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
         "year is": "Jahr ist",
         "you@example.com": "you@example.com",
-        "{count} new connection(s) will be added.": "{count} neue Verbindung(en) werden hinzugefügt.",
         "{count} people reacted with {emoji}": "{count} Personen haben mit {emoji} reagiert",
-        "{count} result(s) found": "{count} Ergebnisse gefunden",
         "{days} days ago": "vor {days} Tagen",
         "{displayName} is editing this page": "{displayName} bearbeitet diese Seite",
         "{hours} hours ago": "vor {hours} Stunden",
         "{minutes} min ago": "vor {minutes} Min.",
-        "{n} columns may be too narrow{side}. Consider {rec} or fewer.": "{n} Spalten könnten zu schmal sein{side}. Erwägen Sie {rec} oder weniger.",
         "{service} has tracking concerns. Consider privacy-friendly alternatives.": "{service} hat Tracking-Bedenken. Erwägen Sie datenschutzfreundliche Alternativen.",
         "{service} is already available in the predefined services above": "{service} ist bereits in den vordefinierten Diensten oben verfügbar",
         "— Not configured —": "— Nicht konfiguriert —",
         "Hide RAW when JPG/HEIC exists": "RAW ausblenden, wenn JPG/HEIC vorhanden ist",
         "Collapses RAW+JPG pairs from RAW-capable cameras": "Fasst RAW+JPG-Paare von RAW-fähigen Kameras zusammen",
         "Non-IntraVox data": "Nicht-IntraVox-Daten",
-        "… and {n} more": "… und {n} weitere"
+        "… and {n} more": "… und {n} weitere",
+        "%n result found": [
+            "%n Ergebnisse gefunden",
+            "%n Ergebnisse gefunden"
+        ],
+        "Found %n orphaned data folder from a previous installation.": [
+            "%n verwaiste Datenordner aus einer früheren Installation gefunden.",
+            "%n verwaiste Datenordner aus einer früheren Installation gefunden."
+        ],
+        "Found %n connection in file:": [
+            "%n Verbindung(en) in Datei gefunden:",
+            "%n Verbindung(en) in Datei gefunden:"
+        ],
+        "%n new connection will be added.": [
+            "%n neue Verbindung(en) werden hinzugefügt.",
+            "%n neue Verbindung(en) werden hinzugefügt."
+        ],
+        "Import %n connection": [
+            "%n Verbindung(en) importieren",
+            "%n Verbindung(en) importieren"
+        ],
+        "Exported %n connection": [
+            "%n Verbindung(en) exportiert",
+            "%n Verbindung(en) exportiert"
+        ],
+        "Imported %n connection. Enter API tokens and save.": [
+            "%n Verbindung(en) importiert. API-Tokens eingeben und speichern.",
+            "%n Verbindung(en) importiert. API-Tokens eingeben und speichern."
+        ],
+        "Found %n orphaned folder": [
+            "Found %n orphaned folder",
+            "Found %n orphaned folders"
+        ],
+        "Failed to export: {error}": "Failed to export: {error}",
+        "Import failed: {error}": "Import fehlgeschlagen: {error}",
+        "{n} columns may be too narrow with side columns. Consider {rec} or fewer.": "{n} Spalten könnten zu schmal sein mit Seitenspalten. Erwägen Sie {rec} oder weniger.",
+        "{n} columns may be too narrow. Consider {rec} or fewer.": "{n} Spalten könnten zu schmal sein. Erwägen Sie {rec} oder weniger.",
+        "People can add emoji reactions to pages": "Benutzer können Emoji-Reaktionen auf Seiten hinzufügen",
+        "People can post comments on pages": "Benutzer können Kommentare auf Seiten veröffentlichen",
+        "People can add emoji reactions to comments": "Benutzer können Emoji-Reaktionen auf Kommentare hinzufügen",
+        "Go to Administration settings": "Zu den Admin-Einstellungen"
     },
     "pluralForm": "nplurals=2; plural=(n != 1);"
 }

@@ -14,7 +14,7 @@
 		<!-- Orphaned Data Banner -->
 		<div v-if="orphanedBannerCount > 0 && !orphanedBannerDismissed" class="license-banner warning">
 			<span class="license-banner-text">
-				{{ t('intravox', 'Found {count} orphaned data folder(s) from a previous installation.', { count: orphanedBannerCount }) }}
+				{{ n('intravox', 'Found %n orphaned data folder from a previous installation.', 'Found %n orphaned data folders from a previous installation.', orphanedBannerCount) }}
 				<a href="#" @click.prevent="activeTab = 'maintenance'; scanOrphanedFolders()">
 					{{ t('intravox', 'Go to Maintenance') }}
 				</a>
@@ -301,7 +301,7 @@
 			:name="t('intravox', 'Import connections')"
 			@closing="importDialogVisible = false; importPreview = null">
 			<template #default>
-				<p>{{ t('intravox', 'Found {total} connection(s) in file:', { total: importPreview.total }) }}</p>
+				<p>{{ n('intravox', 'Found %n connection in file:', 'Found %n connections in file:', importPreview.total) }}</p>
 				<ul class="import-preview-list">
 					<li v-for="conn in importPreview.items" :key="conn.name" :class="{ 'is-duplicate': conn.duplicate }">
 						<strong>{{ conn.name }}</strong> ({{ conn.type }})
@@ -309,7 +309,7 @@
 					</li>
 				</ul>
 				<p v-if="importPreview.newCount > 0">
-					{{ t('intravox', '{count} new connection(s) will be added.', { count: importPreview.newCount }) }}
+					{{ n('intravox', '%n new connection will be added.', '%n new connections will be added.', importPreview.newCount) }}
 				</p>
 				<p v-else>
 					{{ t('intravox', 'All connections already exist. Nothing to import.') }}
@@ -323,7 +323,7 @@
 					{{ t('intravox', 'Cancel') }}
 				</NcButton>
 				<NcButton type="primary" @click="confirmImportConnections" :disabled="importPreview.newCount === 0">
-					{{ t('intravox', 'Import {count} connection(s)', { count: importPreview.newCount }) }}
+					{{ n('intravox', 'Import %n connection', 'Import %n connections', importPreview.newCount) }}
 				</NcButton>
 			</template>
 		</NcDialog>
@@ -656,7 +656,7 @@
 							@update:model-value="engagementSettings.allowPageReactions = $event">
 							<div class="option-info">
 								<span class="option-label">{{ t('intravox', 'Allow reactions on pages') }}</span>
-								<span class="option-desc">{{ t('intravox', 'Users can add emoji reactions to pages') }}</span>
+								<span class="option-desc">{{ t('intravox', 'People can add emoji reactions to pages') }}</span>
 							</div>
 						</NcCheckboxRadioSwitch>
 					</div>
@@ -675,7 +675,7 @@
 							@update:model-value="engagementSettings.allowComments = $event">
 							<div class="option-info">
 								<span class="option-label">{{ t('intravox', 'Allow comments on pages') }}</span>
-								<span class="option-desc">{{ t('intravox', 'Users can post comments on pages') }}</span>
+								<span class="option-desc">{{ t('intravox', 'People can post comments on pages') }}</span>
 							</div>
 						</NcCheckboxRadioSwitch>
 					</div>
@@ -686,7 +686,7 @@
 							@update:model-value="engagementSettings.allowCommentReactions = $event">
 							<div class="option-info">
 								<span class="option-label">{{ t('intravox', 'Allow reactions on comments') }}</span>
-								<span class="option-desc">{{ t('intravox', 'Users can add emoji reactions to comments') }}</span>
+								<span class="option-desc">{{ t('intravox', 'People can add emoji reactions to comments') }}</span>
 							</div>
 						</NcCheckboxRadioSwitch>
 					</div>
@@ -1760,7 +1760,7 @@ export default {
 			a.download = 'intravox-feed-connections.json'
 			a.click()
 			URL.revokeObjectURL(url)
-			showSuccess(this.t('intravox', 'Exported {count} connection(s)', { count: exportData.length }))
+			showSuccess(this.n('intravox', 'Exported %n connection', 'Exported %n connections', exportData.length))
 		},
 		importFeedConnections(event) {
 			const file = event.target.files?.[0]
@@ -1831,7 +1831,7 @@ export default {
 			}
 			this.importDialogVisible = false
 			this.importPreview = null
-			showSuccess(this.t('intravox', 'Imported {count} connection(s). Enter API tokens and save.', { count: added }))
+			showSuccess(this.n('intravox', 'Imported %n connection. Enter API tokens and save.', 'Imported %n connections. Enter API tokens and save.', added))
 		},
 		isConnectionConfigured(conn) {
 			return this.getConfigStatus(conn).configured
@@ -2276,6 +2276,12 @@ export default {
 			}
 			return text
 		},
+		n(app, singular, plural, count, vars) {
+			if (window.n) {
+				return vars ? window.n(app, singular, plural, count, vars) : window.n(app, singular, plural, count)
+			}
+			return count === 1 ? singular.replace('%n', count) : plural.replace('%n', count)
+		},
 		async saveVideoDomains() {
 			this.savingDomains = true
 			this.domainWarnings = []
@@ -2422,7 +2428,7 @@ export default {
 				showSuccess(this.t('intravox', 'Export downloaded'))
 			} catch (error) {
 				console.error('Failed to export:', error)
-				showError(this.t('intravox', 'Failed to export: ') + (error.response?.data?.error || error.message))
+				showError(this.t('intravox', 'Failed to export: {error}', { error: error.response?.data?.error || error.message }))
 			} finally {
 				// Reset after a short delay (with proper cleanup)
 				if (this.exportTimeoutId) {
@@ -2498,7 +2504,7 @@ export default {
 				this.loadExportLanguages()
 			} catch (error) {
 				console.error('Import failed:', error)
-				showError(this.t('intravox', 'Import failed: ') + this.importErrorMessageFor(error))
+				showError(this.t('intravox', 'Import failed: {error}', { error: this.importErrorMessageFor(error) }))
 			} finally {
 				// Reset after a short delay (with proper cleanup)
 				if (this.importTimeoutId) {
@@ -2582,7 +2588,7 @@ export default {
 				if (this.orphanedFolders.length === 0) {
 					showSuccess(this.t('intravox', 'No orphaned data found'))
 				} else {
-					showWarning(this.t('intravox', 'Found {count} orphaned folder(s)', { count: this.orphanedFolders.length }))
+					showWarning(this.n('intravox', 'Found %n orphaned folder', 'Found %n orphaned folders', this.orphanedFolders.length))
 				}
 			} catch (error) {
 				showError(this.t('intravox', 'Failed to scan for orphaned data'))

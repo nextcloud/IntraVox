@@ -42,7 +42,7 @@
 					<template #icon>
 						<Cog :size="20" />
 					</template>
-					{{ t('Go to Admin Settings') }}
+					{{ t('Go to Administration settings') }}
 				</NcButton>
 				<a
 					href="https://github.com/nextcloud/IntraVox/blob/main/README.md"
