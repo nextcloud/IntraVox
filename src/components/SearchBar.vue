@@ -3,7 +3,7 @@
     <NcTextField
       :value.sync="searchQuery"
       :label="t('Search pages')"
-      :placeholder="t('Search...')"
+      :placeholder="t('Search…')"
       @update:value="onSearchInput"
       @keydown.enter="performSearch"
       @keydown.esc="clearSearch"

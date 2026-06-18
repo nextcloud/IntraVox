@@ -17,7 +17,7 @@
       <!-- Loading State -->
       <div v-if="loading" class="loading-state">
         <NcLoadingIcon :size="64" />
-        <p>{{ t('Searching...') }}</p>
+        <p>{{ t('Searching…') }}</p>
       </div>
 
       <!-- Empty State -->

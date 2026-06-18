@@ -57,7 +57,7 @@
           class="btn btn-primary"
         >
           <span v-if="isUploading" class="spinner"></span>
-          {{ isUploading ? 'Importing...' : 'Import HTML Export' }}
+          {{ isUploading ? 'Importing…' : 'Import HTML Export' }}
         </button>
       </div>
 

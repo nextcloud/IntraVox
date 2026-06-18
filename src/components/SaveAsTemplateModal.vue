@@ -41,7 +41,7 @@
           <template #icon>
             <NcLoadingIcon v-if="saving" :size="20" />
           </template>
-          {{ saving ? t('Saving...') : t('Save Template') }}
+          {{ saving ? t('Saving…') : t('Save Template') }}
         </NcButton>
       </div>
     </div>

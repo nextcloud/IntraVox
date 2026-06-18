@@ -5,7 +5,7 @@
 		<!-- Loading state -->
 		<div v-if="loading" class="public-loading" role="status" aria-live="polite">
 			<div class="loading-spinner" />
-			<span>{{ t('intravox', 'Loading...') }}</span>
+			<span>{{ t('intravox', 'Loading…') }}</span>
 		</div>
 
 		<!-- Password required state -->

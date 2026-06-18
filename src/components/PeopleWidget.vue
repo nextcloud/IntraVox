@@ -6,7 +6,7 @@
 
     <div v-if="loading && users.length === 0" class="people-loading">
       <NcLoadingIcon :size="32" />
-      <span>{{ t('Loading...') }}</span>
+      <span>{{ t('Loading…') }}</span>
     </div>
 
     <div v-else-if="error" class="people-error">
@@ -47,7 +47,7 @@
           <template #icon>
             <NcLoadingIcon v-if="loadingMore" :size="20" />
           </template>
-          {{ loadingMore ? t('Loading...') : t('Show more') }}
+          {{ loadingMore ? t('Loading…') : t('Show more') }}
         </NcButton>
       </div>
     </template>

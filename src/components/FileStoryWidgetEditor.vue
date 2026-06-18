@@ -10,7 +10,7 @@
           id="fse-folder"
           type="text"
           v-model="localConfig.folderPath"
-          :placeholder="t('/Documents/...')"
+          :placeholder="t('/Documents/…')"
           class="editor-input"
           @change="emitUpdate"
         />
@@ -18,7 +18,7 @@
           <template #icon>
             <FolderOpen :size="18" />
           </template>
-          {{ t('Browse...') }}
+          {{ t('Browse…') }}
         </NcButton>
       </div>
       <p class="editor-hint">{{ t('Pick a folder. Documents are streamed directly from this location.') }}</p>

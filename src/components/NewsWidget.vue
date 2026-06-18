@@ -12,7 +12,7 @@
 
     <div v-if="loading" class="news-loading">
       <NcLoadingIcon :size="32" />
-      <span>{{ t('Loading news...') }}</span>
+      <span>{{ t('Loading news…') }}</span>
     </div>
 
     <div v-else-if="error" class="news-error">

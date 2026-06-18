@@ -23,7 +23,7 @@
 					ref="commentInput"
 					v-model="newComment"
 					class="comment-section__textarea"
-					:placeholder="t('intravox', 'Write a comment...')"
+					:placeholder="t('intravox', 'Write a comment…')"
 					:aria-label="t('intravox', 'Write a comment')"
 					rows="2"
 					@keydown.enter.ctrl="submitComment"
@@ -50,7 +50,7 @@
 		</div>
 
 		<div v-else-if="comments.length === 0" class="comment-section__empty">
-			<p>{{ t('intravox', 'No comments yet. Be the first to comment!') }}</p>
+			<p>{{ t('intravox', 'No comments yet. Be the first to comment.') }}</p>
 		</div>
 
 		<div v-else class="comment-section__list">
@@ -79,7 +79,7 @@
 							ref="replyInput"
 							v-model="replyText"
 							class="comment-section__reply-textarea"
-							:placeholder="t('intravox', 'Write a reply...')"
+							:placeholder="t('intravox', 'Write a reply…')"
 							:aria-label="t('intravox', 'Write a reply')"
 							rows="2"
 							@keydown.enter.ctrl="submitReply"

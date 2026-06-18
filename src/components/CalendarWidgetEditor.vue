@@ -50,7 +50,7 @@
 
       <div v-if="loadingCalendars" class="calendars-loading">
         <NcLoadingIcon :size="20" />
-        <span>{{ t('Loading calendars...') }}</span>
+        <span>{{ t('Loading calendars…') }}</span>
       </div>
 
       <div v-else-if="calendars.length === 0" class="calendars-empty">

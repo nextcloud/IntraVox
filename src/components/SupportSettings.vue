@@ -82,7 +82,7 @@
 				<NcButton type="primary"
 					:disabled="savingLicense"
 					@click="saveLicenseKey">
-					{{ licenseStep === 'saving' ? t('intravox', 'Saving...') : licenseStep === 'validating' ? t('intravox', 'Validating...') : licenseStep === 'activating' ? t('intravox', 'Activating...') : t('intravox', 'Save & activate') }}
+					{{ licenseStep === 'saving' ? t('intravox', 'Saving…') : licenseStep === 'validating' ? t('intravox', 'Validating…') : licenseStep === 'activating' ? t('intravox', 'Activating…') : t('intravox', 'Save & activate') }}
 				</NcButton>
 				<NcButton v-if="licenseStats && licenseStats.hasLicense"
 					type="tertiary"
@@ -115,14 +115,14 @@
 
 				<div v-if="telemetryEnabled" class="telemetry-info">
 					<NcNoteCard type="success">
-						<p>{{ t('intravox', 'Thank you for helping improve IntraVox!') }}</p>
+						<p>{{ t('intravox', 'Thank you for helping improve IntraVox.') }}</p>
 						<p v-if="telemetryLastReport">
 							{{ t('intravox', 'Last report sent') }}: {{ formatDate(telemetryLastReport) }}
 						</p>
 						<NcButton type="secondary"
 							:disabled="sendingTelemetry"
 							@click="sendTelemetryNow">
-							{{ sendingTelemetry ? t('intravox', 'Sending...') : t('intravox', 'Send report now') }}
+							{{ sendingTelemetry ? t('intravox', 'Sending…') : t('intravox', 'Send report now') }}
 						</NcButton>
 					</NcNoteCard>
 					<NcNoteCard v-if="telemetryMessage" :type="telemetryMessageType" class="telemetry-result">
@@ -290,7 +290,7 @@ export default {
 				const data = response.data
 				if (data.success) {
 					this.telemetryLastReport = Math.floor(Date.now() / 1000)
-					this.telemetryMessage = this.t('intravox', 'Report sent successfully')
+					this.telemetryMessage = this.t('intravox', 'Report sent')
 					this.telemetryMessageType = 'success'
 				} else if (data.reason === 'server_error' || data.reason === 'error') {
 					const serverMsg = data.message || ''

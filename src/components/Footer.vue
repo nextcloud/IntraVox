@@ -8,7 +8,7 @@
             v-if="isEditingFooter"
             v-model="editableContent"
             :editable="true"
-            :placeholder="t('Enter footer content...')"
+            :placeholder="t('Enter footer content…')"
             class="footer-editor"
           />
           <div v-else class="footer-content" v-html="footerHtml"></div>

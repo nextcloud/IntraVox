@@ -46,7 +46,7 @@
         <!-- Loading state -->
         <div v-if="loadingTemplates" class="templates-loading">
           <NcLoadingIcon :size="32" />
-          <span>{{ t('Loading templates...') }}</span>
+          <span>{{ t('Loading templates…') }}</span>
         </div>
 
         <!-- No templates -->

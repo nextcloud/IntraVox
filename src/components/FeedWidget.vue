@@ -2,7 +2,7 @@
   <div class="feed-widget" aria-live="polite">
     <div v-if="loading" class="feed-widget-loading" role="status">
       <NcLoadingIcon :size="32" />
-      <p>{{ t('Loading feed...') }}</p>
+      <p>{{ t('Loading feed…') }}</p>
     </div>
 
     <div v-else-if="error" class="feed-widget-error">

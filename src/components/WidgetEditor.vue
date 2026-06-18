@@ -14,7 +14,7 @@
               v-model="localWidget.content"
               :editable="true"
               :compact="false"
-              :placeholder="t('Enter text...')"
+              :placeholder="t('Enter text…')"
             />
           </div>
         </div>
@@ -27,7 +27,7 @@
               id="widget-heading-text"
               v-model="localWidget.content"
               type="text"
-              :placeholder="t('Enter your heading...')"
+              :placeholder="t('Enter your heading…')"
               class="heading-text-input"
             />
           </div>
@@ -55,7 +55,7 @@
               <template #icon>
                 <ImageIcon :size="20" />
               </template>
-              {{ t('Browse media...') }}
+              {{ t('Browse media…') }}
             </NcButton>
           </div>
           <div v-if="localWidget.src" class="image-preview">
@@ -67,7 +67,7 @@
               id="widget-image-alt"
               v-model="localWidget.alt"
               type="text"
-              :placeholder="t('Description of the image...')"
+              :placeholder="t('Description of the image…')"
               class="widget-input"
             />
           </div>
@@ -186,7 +186,7 @@
             <label>{{ t('Select page:') }}</label>
             <PageTreeSelect
               v-model="localWidget.linkPageId"
-              :placeholder="t('Select a page...')"
+              :placeholder="t('Select a page…')"
               :clearable="true"
             />
             <p class="size-hint">{{ t('Click on the image to navigate to this page') }}</p>
@@ -309,7 +309,7 @@
               <template #icon>
                 <VideoIcon :size="20" />
               </template>
-              {{ t('Browse media...') }}
+              {{ t('Browse media…') }}
             </NcButton>
             <div v-if="localWidget.src" class="current-video">
               {{ t('Current:') }} {{ localWidget.src }}

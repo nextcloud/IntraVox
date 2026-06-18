@@ -109,7 +109,7 @@
     <!-- Main content area with sidebar -->
     <div class="app-content-wrapper">
       <div v-if="loading" class="loading" role="status" aria-live="polite">
-        {{ t('Loading...') }}
+        {{ t('Loading…') }}
       </div>
 
       <!-- Welcome screen when no pages exist (first install) -->
@@ -1233,7 +1233,7 @@ export default {
       this.$forceUpdate();
     },
     async handleVersionRestored(restoredPageData) {
-      showSuccess(this.t('Version restored successfully'));
+      showSuccess(this.t('Version restored'));
 
       // Reload pages list to update timestamps, but stay on current page
       const currentPageId = restoredPageData.uniqueId || this.currentPage?.uniqueId;

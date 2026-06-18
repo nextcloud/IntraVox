@@ -231,7 +231,7 @@
             v-if="row.collapsible"
             v-model="row.sectionTitle"
             class="row-section-title"
-            :placeholder="t('Section title...')"
+            :placeholder="t('Section title…')"
             :aria-label="t('Section title')"
             @input="onSectionTitleChange(row)"
             @click.stop

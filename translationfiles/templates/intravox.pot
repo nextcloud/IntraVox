@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: IntraVox 1.6.1\n"
 "Report-Msgid-Bugs-To: translations@nextcloud.com\n"
-"POT-Creation-Date: 2026-06-18 08:28+0000\n"
+"POT-Creation-Date: 2026-06-18 10:36+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -75,10 +75,10 @@ msgstr ""
 msgid "/api/v1/announcements"
 msgstr ""
 
-msgid "/Documents/..."
+msgid "/Documents/…"
 msgstr ""
 
-msgid "/Photos/Albums/..."
+msgid "/Photos/Albums/…"
 msgstr ""
 
 msgid "+ Add connection"
@@ -111,7 +111,7 @@ msgstr ""
 msgid "Actions"
 msgstr ""
 
-msgid "Activating..."
+msgid "Activating…"
 msgstr ""
 
 msgid "Active"
@@ -456,10 +456,10 @@ msgstr ""
 msgid "Bottom"
 msgstr ""
 
-msgid "Browse media..."
+msgid "Browse media…"
 msgstr ""
 
-msgid "Browse..."
+msgid "Browse…"
 msgstr ""
 
 msgid "Bugs"
@@ -516,10 +516,10 @@ msgstr ""
 msgid "Checked"
 msgstr ""
 
-msgid "Checking capabilities..."
+msgid "Checking capabilities…"
 msgstr ""
 
-msgid "Checking..."
+msgid "Checking…"
 msgstr ""
 
 msgid "Choose an icon"
@@ -540,7 +540,7 @@ msgstr ""
 msgid "Clean Start"
 msgstr ""
 
-msgid "Clean start completed successfully"
+msgid "Clean start completed"
 msgstr ""
 
 msgid "Clean start failed"
@@ -687,7 +687,7 @@ msgstr ""
 msgid "Connected via SSO"
 msgstr ""
 
-msgid "Connecting..."
+msgid "Connecting…"
 msgstr ""
 
 msgid "Connection"
@@ -861,7 +861,7 @@ msgstr ""
 msgid "data or results or leave empty for root array"
 msgstr ""
 
-msgid "Data recovered successfully: {files} files migrated"
+msgid "Data recovered: {files} files migrated"
 msgstr ""
 
 msgid "Date"
@@ -921,7 +921,7 @@ msgstr ""
 msgid "Delete widget"
 msgstr ""
 
-msgid "Deleting..."
+msgid "Deleting…"
 msgstr ""
 
 msgid "Deletion failed"
@@ -933,7 +933,7 @@ msgstr ""
 msgid "Demo Data"
 msgstr ""
 
-msgid "Demo data installed successfully"
+msgid "Demo data installed"
 msgstr ""
 
 msgid "Demote (make child of item above)"
@@ -951,7 +951,7 @@ msgstr ""
 msgid "Description"
 msgstr ""
 
-msgid "Description of the image..."
+msgid "Description of the image…"
 msgstr ""
 
 msgid "Details"
@@ -1017,7 +1017,7 @@ msgstr ""
 msgid "Domain"
 msgstr ""
 
-msgid "Domain added. Don't forget to save your settings."
+msgid "Domain added. Do not forget to save your settings."
 msgstr ""
 
 msgid "Domain added. Don\\"
@@ -1032,10 +1032,10 @@ msgstr ""
 msgid "Download Export"
 msgstr ""
 
-msgid "Downloading... {percent}%"
+msgid "Downloading… {percent}%"
 msgstr ""
 
-msgid "Downloading... {size} MB"
+msgid "Downloading… {size} MB"
 msgstr ""
 
 msgid "Draft"
@@ -1164,7 +1164,7 @@ msgstr ""
 msgid "Enter course ID"
 msgstr ""
 
-msgid "Enter footer content..."
+msgid "Enter footer content…"
 msgstr ""
 
 msgid "Enter ID manually"
@@ -1176,16 +1176,16 @@ msgstr ""
 msgid "Enter template name"
 msgstr ""
 
-msgid "Enter text..."
+msgid "Enter text…"
 msgstr ""
 
-msgid "Enter text... (Markdown supported: **bold**, *italic*, etc.)"
+msgid "Enter text… (Markdown supported: **bold**, *italic*, etc.)"
 msgstr ""
 
 msgid "Enter token manually"
 msgstr ""
 
-msgid "Enter your heading..."
+msgid "Enter your heading…"
 msgstr ""
 
 msgid "equals"
@@ -1218,10 +1218,10 @@ msgstr ""
 msgid "Export completed"
 msgstr ""
 
-msgid "Export completed successfully. Download should start automatically."
+msgid "Export completed. Download should start automatically."
 msgstr ""
 
-msgid "Export downloaded successfully"
+msgid "Export downloaded"
 msgstr ""
 
 msgid "Export in progress"
@@ -1245,7 +1245,7 @@ msgstr ""
 msgid "Exported {count} connection(s)"
 msgstr ""
 
-msgid "Exporting..."
+msgid "Exporting…"
 msgstr ""
 
 msgid "External Feed Connections"
@@ -1617,7 +1617,7 @@ msgstr ""
 msgid "Icon Library"
 msgstr ""
 
-msgid "Icon uploaded successfully"
+msgid "Icon uploaded"
 msgstr ""
 
 msgid "Icon:"
@@ -1653,9 +1653,6 @@ msgstr ""
 msgid "Import completed"
 msgstr ""
 
-msgid "Import completed successfully"
-msgstr ""
-
 msgid "Import connections"
 msgstr ""
 
@@ -1683,7 +1680,7 @@ msgstr ""
 msgid "Imported {count} connection(s). Enter API tokens and save."
 msgstr ""
 
-msgid "Importing..."
+msgid "Importing…"
 msgstr ""
 
 msgid "In the free version, {limit} pages per language are included."
@@ -1737,7 +1734,7 @@ msgstr ""
 msgid "Installed"
 msgstr ""
 
-msgid "Installing..."
+msgid "Installing…"
 msgstr ""
 
 msgid "Internal page"
@@ -1746,7 +1743,7 @@ msgstr ""
 msgid "IntraVox"
 msgstr ""
 
-msgid "IntraVox is and will remain free for most users. To keep IntraVox actively maintained and improved, we're introducing a licensing model for larger organizations."
+msgid "IntraVox is and will remain free for most users. To keep IntraVox actively maintained and improved, we are introducing a licensing model for larger organizations."
 msgstr ""
 
 msgid "IntraVox is not yet configured. To get started, you can install demo data or create your own pages."
@@ -1953,28 +1950,28 @@ msgstr ""
 msgid "Loading"
 msgstr ""
 
-msgid "Loading calendars..."
+msgid "Loading calendars…"
 msgstr ""
 
-msgid "Loading courses..."
+msgid "Loading courses…"
 msgstr ""
 
 msgid "Loading documents"
 msgstr ""
 
-msgid "Loading events..."
+msgid "Loading events…"
 msgstr ""
 
-msgid "Loading feed..."
+msgid "Loading feed…"
 msgstr ""
 
-msgid "Loading map..."
+msgid "Loading map…"
 msgstr ""
 
-msgid "Loading MetaVox fields..."
+msgid "Loading MetaVox fields…"
 msgstr ""
 
-msgid "Loading MetaVox..."
+msgid "Loading MetaVox…"
 msgstr ""
 
 msgid "Loading more photos…"
@@ -1983,28 +1980,28 @@ msgstr ""
 msgid "Loading more…"
 msgstr ""
 
-msgid "Loading news..."
+msgid "Loading news…"
 msgstr ""
 
-msgid "Loading page structure..."
+msgid "Loading page structure…"
 msgstr ""
 
 msgid "Loading photos"
 msgstr ""
 
-msgid "Loading properties..."
+msgid "Loading properties…"
 msgstr ""
 
-msgid "Loading shares..."
+msgid "Loading shares…"
 msgstr ""
 
-msgid "Loading templates..."
+msgid "Loading templates…"
 msgstr ""
 
-msgid "Loading versions..."
+msgid "Loading versions…"
 msgstr ""
 
-msgid "Loading..."
+msgid "Loading…"
 msgstr ""
 
 msgid "Local file"
@@ -2214,7 +2211,7 @@ msgstr ""
 msgid "No calendars available"
 msgstr ""
 
-msgid "No comments yet. Be the first to comment!"
+msgid "No comments yet. Be the first to comment."
 msgstr ""
 
 msgid "No connections configured. Ask an administrator to add one in IntraVox settings."
@@ -2403,7 +2400,7 @@ msgstr ""
 msgid "Only show items containing this word in title, excerpt, or author."
 msgstr ""
 
-msgid "Only ZIP files produced by IntraVox (Settings → Export) are accepted. Nextcloud Files backups, cloudron backups, or other apps' archives will not work — they don't contain the export.json IntraVox needs."
+msgid "Only ZIP files produced by IntraVox (Settings → Export) are accepted. Nextcloud Files backups, cloudron backups, or other apps' archives will not work — they do not contain the export.json IntraVox needs."
 msgstr ""
 
 msgid "Only ZIP files produced by IntraVox (Settings → Export) are accepted. Nextcloud Files backups, cloudron backups, or other apps\\"
@@ -2451,7 +2448,7 @@ msgstr ""
 msgid "Ordered list"
 msgstr ""
 
-msgid "Orphaned data deleted successfully ({space} freed)"
+msgid "Orphaned data deleted ({space} freed)"
 msgstr ""
 
 msgid "Orphaned GroupFolder Data"
@@ -2655,7 +2652,7 @@ msgstr ""
 msgid "Popup blocked. Please allow popups for this site."
 msgstr ""
 
-msgid "Preparing export..."
+msgid "Preparing export…"
 msgstr ""
 
 msgid "Presentations"
@@ -2688,7 +2685,7 @@ msgstr ""
 msgid "Privacy-friendly video embedding"
 msgstr ""
 
-msgid "Processing import on server..."
+msgid "Processing import on server…"
 msgstr ""
 
 msgid "Project"
@@ -2769,7 +2766,7 @@ msgstr ""
 msgid "Recover Orphaned Data"
 msgstr ""
 
-msgid "Recovering..."
+msgid "Recovering…"
 msgstr ""
 
 msgid "Recovery failed"
@@ -2790,7 +2787,7 @@ msgstr ""
 msgid "Reinstall demo data"
 msgstr ""
 
-msgid "Reinstalling..."
+msgid "Reinstalling…"
 msgstr ""
 
 msgid "Relevance: {score}"
@@ -2829,13 +2826,13 @@ msgstr ""
 msgid "Replying to {name}"
 msgstr ""
 
-msgid "Report sent successfully"
+msgid "Report sent"
 msgstr ""
 
 msgid "Requires metadata not available in this folder"
 msgstr ""
 
-msgid "Resetting..."
+msgid "Resetting…"
 msgstr ""
 
 msgid "Response mapping"
@@ -2922,13 +2919,13 @@ msgstr ""
 msgid "Save video settings"
 msgstr ""
 
-msgid "Saving..."
+msgid "Saving…"
 msgstr ""
 
 msgid "Scan for Orphaned Data"
 msgstr ""
 
-msgid "Scanning..."
+msgid "Scanning…"
 msgstr ""
 
 msgid "Scope"
@@ -2940,7 +2937,7 @@ msgstr ""
 msgid "Search pages"
 msgstr ""
 
-msgid "Search pages..."
+msgid "Search pages…"
 msgstr ""
 
 msgid "Search Results"
@@ -2949,25 +2946,25 @@ msgstr ""
 msgid "Search Results for \"{query}\""
 msgstr ""
 
-msgid "Search..."
+msgid "Search…"
 msgstr ""
 
-msgid "Searching..."
+msgid "Searching…"
 msgstr ""
 
 msgid "Section title"
 msgstr ""
 
-msgid "Section title..."
+msgid "Section title…"
 msgstr ""
 
-msgid "Select a connection..."
+msgid "Select a connection…"
 msgstr ""
 
 msgid "Select a page or folder to show content from, including all subpages"
 msgstr ""
 
-msgid "Select a page..."
+msgid "Select a page…"
 msgstr ""
 
 msgid "Select an icon"
@@ -3018,7 +3015,7 @@ msgstr ""
 msgid "Select ZIP file"
 msgstr ""
 
-msgid "Select..."
+msgid "Select…"
 msgstr ""
 
 msgid "Selection mode"
@@ -3030,7 +3027,7 @@ msgstr ""
 msgid "Send report now"
 msgstr ""
 
-msgid "Sending..."
+msgid "Sending…"
 msgstr ""
 
 msgid "September"
@@ -3042,7 +3039,7 @@ msgstr ""
 msgid "Settings"
 msgstr ""
 
-msgid "Settings saved successfully"
+msgid "Settings saved"
 msgstr ""
 
 msgid "Setup failed: An unexpected error occurred while setting up the IntraVox Team Folder. Please check the Nextcloud logs for details."
@@ -3288,7 +3285,7 @@ msgstr ""
 msgid "Test connection"
 msgstr ""
 
-msgid "Testing..."
+msgid "Testing…"
 msgstr ""
 
 msgid "Text"
@@ -3303,10 +3300,10 @@ msgstr ""
 msgid "Text:"
 msgstr ""
 
-msgid "Thank you for helping improve IntraVox!"
+msgid "Thank you for helping improve IntraVox."
 msgstr ""
 
-msgid "Thank you! Anonymous usage statistics enabled."
+msgid "Thank you. Anonymous usage statistics enabled."
 msgstr ""
 
 msgid "The export.json file is not valid JSON: {detail}"
@@ -3348,7 +3345,7 @@ msgstr ""
 msgid "These languages are translated for IntraVox via Transifex. Tick the ones you want to enable in your intranet. Disabled languages do not appear in IntraVox menus, navigation, or the demo-data table below. Existing content for a disabled language stays on disk and reappears if you re-enable the language later."
 msgstr ""
 
-msgid "This action cannot be undone!"
+msgid "This action cannot be undone."
 msgstr ""
 
 msgid "this connection"
@@ -3543,19 +3540,19 @@ msgstr ""
 msgid "Upload video:"
 msgstr ""
 
-msgid "Uploading image..."
+msgid "Uploading image…"
 msgstr ""
 
-msgid "Uploading video..."
+msgid "Uploading video…"
 msgstr ""
 
-msgid "Uploading ZIP file..."
+msgid "Uploading ZIP file…"
 msgstr ""
 
-msgid "Uploading... {percent}%"
+msgid "Uploading… {percent}%"
 msgstr ""
 
-msgid "Uploading... {size} MB"
+msgid "Uploading… {size} MB"
 msgstr ""
 
 msgid "URL field"
@@ -3588,7 +3585,7 @@ msgstr ""
 msgid "Using global setting (enabled)"
 msgstr ""
 
-msgid "Validating..."
+msgid "Validating…"
 msgstr ""
 
 msgid "Value"
@@ -3606,7 +3603,7 @@ msgstr ""
 msgid "Version label updated"
 msgstr ""
 
-msgid "Version restored successfully"
+msgid "Version restored"
 msgstr ""
 
 msgid "Versions"
@@ -3628,9 +3625,6 @@ msgid "Video cannot be played"
 msgstr ""
 
 msgid "Video domains saved"
-msgstr ""
-
-msgid "Video domains saved successfully"
 msgstr ""
 
 msgid "Video Embed Domains"
@@ -3660,7 +3654,7 @@ msgstr ""
 msgid "Video too large. Maximum size is {limit}MB."
 msgstr ""
 
-msgid "Video uploaded successfully"
+msgid "Video uploaded"
 msgstr ""
 
 msgid "Video URL"
@@ -3702,19 +3696,19 @@ msgstr ""
 msgid "Visual style"
 msgstr ""
 
-msgid "Warning: This action will permanently delete all content!"
+msgid "Warning: This action will permanently delete all content."
 msgstr ""
 
-msgid "Warning: This will overwrite all existing content for the selected language!"
+msgid "Warning: This will overwrite all existing content for the selected language."
 msgstr ""
 
-msgid "Warning: This will permanently delete all data!"
+msgid "Warning: This will permanently delete all data."
 msgstr ""
 
 msgid "Watch on {platform}"
 msgstr ""
 
-msgid "We're currently collecting anonymous statistics to establish fair limits that work for everyone. Your feedback matters – together we're building a sustainable future for IntraVox."
+msgid "We are currently collecting anonymous statistics to establish fair limits that work for everyone. Your feedback matters – together we are building a sustainable future for IntraVox."
 msgstr ""
 
 msgid "Website"
@@ -3738,10 +3732,10 @@ msgstr ""
 msgid "with media files"
 msgstr ""
 
-msgid "Write a comment..."
+msgid "Write a comment…"
 msgstr ""
 
-msgid "Write a reply..."
+msgid "Write a reply…"
 msgstr ""
 
 msgid "X-API-Key"

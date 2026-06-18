@@ -115,7 +115,7 @@
 						<template #icon>
 							<span v-if="savingLanguageSelection" class="icon-loading-small" role="status" :aria-label="t('intravox', 'Loading')"></span>
 						</template>
-						{{ savingLanguageSelection ? t('intravox', 'Saving...') : t('intravox', 'Save language selection') }}
+						{{ savingLanguageSelection ? t('intravox', 'Saving…') : t('intravox', 'Save language selection') }}
 					</NcButton>
 				</div>
 			</div>
@@ -169,7 +169,7 @@
 									<template #icon>
 										<span v-if="installing === lang.code" class="icon-loading-small" role="status" :aria-label="t('intravox', 'Loading')"></span>
 									</template>
-									{{ installing === lang.code ? t('intravox', 'Installing...') : t('intravox', 'Install') }}
+									{{ installing === lang.code ? t('intravox', 'Installing…') : t('intravox', 'Install') }}
 								</NcButton>
 							</template>
 							<!-- Already installed: reinstall button -->
@@ -181,7 +181,7 @@
 									<template #icon>
 										<span v-if="installing === lang.code" class="icon-loading-small" role="status" :aria-label="t('intravox', 'Loading')"></span>
 									</template>
-									{{ installing === lang.code ? t('intravox', 'Reinstalling...') : t('intravox', 'Reinstall') }}
+									{{ installing === lang.code ? t('intravox', 'Reinstalling…') : t('intravox', 'Reinstall') }}
 								</NcButton>
 							</template>
 							<span v-else class="unavailable">
@@ -197,7 +197,7 @@
 									<span v-if="cleaningStart === lang.code" class="icon-loading-small" role="status" :aria-label="t('intravox', 'Loading')"></span>
 									<Broom v-else :size="16" />
 								</template>
-								{{ cleaningStart === lang.code ? t('intravox', 'Resetting...') : t('intravox', 'Clean Start') }}
+								{{ cleaningStart === lang.code ? t('intravox', 'Resetting…') : t('intravox', 'Clean Start') }}
 							</NcButton>
 						</td>
 					</tr>
@@ -243,7 +243,7 @@
 			<template #default>
 				<div class="clean-start-dialog-content">
 					<NcNoteCard type="error">
-						<p><strong>{{ t('intravox', 'Warning: This action will permanently delete all content!') }}</strong></p>
+						<p><strong>{{ t('intravox', 'Warning: This action will permanently delete all content.') }}</strong></p>
 					</NcNoteCard>
 					<p class="clean-start-info">
 						{{ t('intravox', 'This will delete for') }} <strong>{{ cleanStartLanguageName }}</strong>:
@@ -259,7 +259,7 @@
 						{{ t('intravox', 'You will get a fresh empty homepage and empty navigation.') }}
 					</p>
 					<NcNoteCard type="warning">
-						{{ t('intravox', 'This action cannot be undone!') }}
+						{{ t('intravox', 'This action cannot be undone.') }}
 					</NcNoteCard>
 					<div class="clean-start-confirm">
 						<label for="clean-start-confirm-input">{{ t('intravox', 'Type DELETE to confirm:') }}</label>
@@ -445,7 +445,7 @@
 						type="primary"
 						:disabled="savingDomains"
 						@click="saveVideoDomains">
-						{{ savingDomains ? t('intravox', 'Saving...') : t('intravox', 'Save video settings') }}
+						{{ savingDomains ? t('intravox', 'Saving…') : t('intravox', 'Save video settings') }}
 					</NcButton>
 				</div>
 			</div>
@@ -533,7 +533,7 @@
 						<template #icon>
 							<Download :size="20" />
 						</template>
-						{{ exporting ? t('intravox', 'Exporting...') : t('intravox', 'Download Export') }}
+						{{ exporting ? t('intravox', 'Exporting…') : t('intravox', 'Download Export') }}
 					</NcButton>
 
 					<!-- Export Progress -->
@@ -549,7 +549,7 @@
 					<!-- Export Success Message -->
 					<div v-if="exportComplete" class="export-result">
 						<NcNoteCard type="success">
-							{{ t('intravox', 'Export completed successfully. Download should start automatically.') }}
+							{{ t('intravox', 'Export completed. Download should start automatically.') }}
 						</NcNoteCard>
 					</div>
 				</div>
@@ -568,7 +568,7 @@
 				</p>
 
 				<NcNoteCard type="info" class="import-format-hint">
-					{{ t('intravox', 'Only ZIP files produced by IntraVox (Settings → Export) are accepted. Nextcloud Files backups, cloudron backups, or other apps\' archives will not work — they don\'t contain the export.json IntraVox needs.') }}
+					{{ t('intravox', 'Only ZIP files produced by IntraVox (Settings → Export) are accepted. Nextcloud Files backups, cloudron backups, or other apps\' archives will not work — they do not contain the export.json IntraVox needs.') }}
 				</NcNoteCard>
 
 				<div class="import-options">
@@ -609,7 +609,7 @@
 						<template #icon>
 							<Upload :size="20" />
 						</template>
-						{{ importing ? t('intravox', 'Importing...') : t('intravox', 'Start Import') }}
+						{{ importing ? t('intravox', 'Importing…') : t('intravox', 'Start Import') }}
 					</NcButton>
 
 					<!-- Import Progress -->
@@ -625,7 +625,7 @@
 					<!-- Import Result -->
 					<div v-if="importResult" class="import-result">
 						<NcNoteCard type="success">
-							{{ t('intravox', 'Import completed successfully') }}:
+							{{ t('intravox', 'Import completed') }}:
 							{{ importResult.stats.pagesImported }} {{ t('intravox', 'pages') }},
 							{{ importResult.stats.mediaFilesImported }} {{ t('intravox', 'media files') }},
 							{{ importResult.stats.commentsImported }} {{ t('intravox', 'comments') }}
@@ -697,7 +697,7 @@
 						type="primary"
 						:disabled="savingEngagement"
 						@click="saveEngagementSettings">
-						{{ savingEngagement ? t('intravox', 'Saving...') : t('intravox', 'Save engagement settings') }}
+						{{ savingEngagement ? t('intravox', 'Saving…') : t('intravox', 'Save engagement settings') }}
 					</NcButton>
 				</div>
 			</div>
@@ -723,7 +723,7 @@
 					<!-- Loading state -->
 					<div v-if="loadingMetavoxFields" class="loading-fields">
 						<span class="icon-loading-small" role="status" :aria-label="t('intravox', 'Loading')"></span>
-						{{ t('intravox', 'Loading MetaVox fields...') }}
+						{{ t('intravox', 'Loading MetaVox fields…') }}
 					</div>
 
 					<!-- No date fields available -->
@@ -785,7 +785,7 @@
 								type="primary"
 								:disabled="savingPublication"
 								@click="savePublicationSettings">
-								{{ savingPublication ? t('intravox', 'Saving...') : t('intravox', 'Save publication settings') }}
+								{{ savingPublication ? t('intravox', 'Saving…') : t('intravox', 'Save publication settings') }}
 							</NcButton>
 						</div>
 					</template>
@@ -805,7 +805,7 @@
 
 				<div v-if="loadingShares" class="shares-loading">
 					<span class="icon-loading-small" role="status" :aria-label="t('intravox', 'Loading')"></span>
-					{{ t('intravox', 'Loading shares...') }}
+					{{ t('intravox', 'Loading shares…') }}
 				</div>
 
 				<NcNoteCard v-else-if="activeShares.length === 0" type="info">
@@ -1058,7 +1058,7 @@
 							<template #icon>
 								<span v-if="testingConnection === index" class="icon-loading-small" role="status" :aria-label="t('intravox', 'Loading')"></span>
 							</template>
-							{{ testingConnection === index ? t('intravox', 'Testing...') : t('intravox', 'Test connection') }}
+							{{ testingConnection === index ? t('intravox', 'Testing…') : t('intravox', 'Test connection') }}
 						</NcButton>
 						<span v-if="!conn.id" class="field-hint">{{ t('intravox', 'Save connections first to test') }}</span>
 					</div>
@@ -1079,7 +1079,7 @@
 						{{ t('intravox', '+ Add connection') }}
 					</NcButton>
 					<NcButton type="primary" @click="saveFeedConnections" :disabled="feedConnectionsSaving">
-						{{ feedConnectionsSaving ? t('intravox', 'Saving...') : t('intravox', 'Save connections') }}
+						{{ feedConnectionsSaving ? t('intravox', 'Saving…') : t('intravox', 'Save connections') }}
 					</NcButton>
 					<span class="feed-connection-actions-spacer"></span>
 					<NcButton type="tertiary" @click="exportFeedConnections" :disabled="feedConnections.length === 0">
@@ -1114,7 +1114,7 @@
 							<span v-if="scanningOrphaned" class="icon-loading-small" role="status" :aria-label="t('intravox', 'Loading')"></span>
 							<DatabaseSearch v-else :size="20" />
 						</template>
-						{{ scanningOrphaned ? t('intravox', 'Scanning...') : t('intravox', 'Scan for Orphaned Data') }}
+						{{ scanningOrphaned ? t('intravox', 'Scanning…') : t('intravox', 'Scan for Orphaned Data') }}
 					</NcButton>
 				</div>
 
@@ -1226,7 +1226,7 @@
 					</div>
 
 					<NcNoteCard v-if="migrateMode === 'replace'" type="warning">
-						{{ t('intravox', 'Warning: This will overwrite all existing content for the selected language!') }}
+						{{ t('intravox', 'Warning: This will overwrite all existing content for the selected language.') }}
 					</NcNoteCard>
 				</div>
 			</template>
@@ -1235,7 +1235,7 @@
 					{{ t('intravox', 'Cancel') }}
 				</NcButton>
 				<NcButton type="primary" :disabled="migratingOrphaned" @click="executeMigrate">
-					{{ migratingOrphaned ? t('intravox', 'Recovering...') : t('intravox', 'Start Recovery') }}
+					{{ migratingOrphaned ? t('intravox', 'Recovering…') : t('intravox', 'Start Recovery') }}
 				</NcButton>
 			</template>
 		</NcDialog>
@@ -1248,7 +1248,7 @@
 			<template #default>
 				<div class="cleanup-dialog-content">
 					<NcNoteCard type="error">
-						<p><strong>{{ t('intravox', 'Warning: This will permanently delete all data!') }}</strong></p>
+						<p><strong>{{ t('intravox', 'Warning: This will permanently delete all data.') }}</strong></p>
 					</NcNoteCard>
 					<p>{{ t('intravox', 'You are about to delete orphaned folder #{id}:', { id: cleanupFolder?.id }) }}</p>
 					<ul>
@@ -1261,7 +1261,7 @@
 						</li>
 					</ul>
 					<NcNoteCard type="warning">
-						{{ t('intravox', 'This action cannot be undone!') }}
+						{{ t('intravox', 'This action cannot be undone.') }}
 					</NcNoteCard>
 				</div>
 			</template>
@@ -1270,7 +1270,7 @@
 					{{ t('intravox', 'Cancel') }}
 				</NcButton>
 				<NcButton type="error" :disabled="cleaningOrphaned" @click="executeOrphanedCleanup">
-					{{ cleaningOrphaned ? t('intravox', 'Deleting...') : t('intravox', 'Delete Permanently') }}
+					{{ cleaningOrphaned ? t('intravox', 'Deleting…') : t('intravox', 'Delete Permanently') }}
 				</NcButton>
 			</template>
 		</NcDialog>
@@ -2103,7 +2103,7 @@ export default {
 
 			this.videoDomains.push(domain)
 			this.newDomain = ''
-			showSuccess(this.t('intravox', 'Domain added. Don\'t forget to save your settings.'))
+			showSuccess(this.t('intravox', 'Domain added. Do not forget to save your settings.'))
 		},
 		removeCustomDomain(domain) {
 			const index = this.videoDomains.indexOf(domain)
@@ -2212,7 +2212,7 @@ export default {
 				)
 
 				if (response.data.success) {
-					this.message = this.t('intravox', 'Clean start completed successfully')
+					this.message = this.t('intravox', 'Clean start completed')
 					this.messageType = 'success'
 					await this.refreshStatus()
 				} else {
@@ -2239,7 +2239,7 @@ export default {
 				)
 
 				if (response.data.success) {
-					this.message = response.data.message || this.t('intravox', 'Demo data installed successfully')
+					this.message = response.data.message || this.t('intravox', 'Demo data installed')
 					this.messageType = 'success'
 					// Refresh status
 					await this.refreshStatus()
@@ -2358,7 +2358,7 @@ export default {
 			this.exporting = true
 			this.exportProgress = 0
 			this.exportComplete = false
-			this.exportStatusText = this.t('intravox', 'Preparing export...')
+			this.exportStatusText = this.t('intravox', 'Preparing export…')
 
 			try {
 				// Choose endpoint based on format
@@ -2380,10 +2380,10 @@ export default {
 						if (progressEvent.lengthComputable) {
 							const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total)
 							this.exportProgress = percentCompleted
-							this.exportStatusText = this.t('intravox', 'Downloading... {percent}%', { percent: percentCompleted })
+							this.exportStatusText = this.t('intravox', 'Downloading… {percent}%', { percent: percentCompleted })
 						} else {
 							// If total size is unknown, show indeterminate progress
-							this.exportStatusText = this.t('intravox', 'Downloading... {size} MB', {
+							this.exportStatusText = this.t('intravox', 'Downloading… {size} MB', {
 								size: (progressEvent.loaded / 1024 / 1024).toFixed(2)
 							})
 						}
@@ -2419,7 +2419,7 @@ export default {
 				this.exportProgress = 100
 				this.exportStatusText = this.t('intravox', 'Export completed')
 				this.exportComplete = true
-				showSuccess(this.t('intravox', 'Export downloaded successfully'))
+				showSuccess(this.t('intravox', 'Export downloaded'))
 			} catch (error) {
 				console.error('Failed to export:', error)
 				showError(this.t('intravox', 'Failed to export: ') + (error.response?.data?.error || error.message))
@@ -2449,7 +2449,7 @@ export default {
 			this.importing = true
 			this.importProgress = 0
 			this.importResult = null
-			this.importStatusText = this.t('intravox', 'Uploading ZIP file...')
+			this.importStatusText = this.t('intravox', 'Uploading ZIP file…')
 
 			try {
 				const formData = new FormData()
@@ -2467,9 +2467,9 @@ export default {
 							if (progressEvent.lengthComputable) {
 								const uploadPercent = Math.round((progressEvent.loaded * 50) / progressEvent.total)
 								this.importProgress = uploadPercent
-								this.importStatusText = this.t('intravox', 'Uploading... {percent}%', { percent: Math.round((progressEvent.loaded * 100) / progressEvent.total) })
+								this.importStatusText = this.t('intravox', 'Uploading… {percent}%', { percent: Math.round((progressEvent.loaded * 100) / progressEvent.total) })
 							} else {
-								this.importStatusText = this.t('intravox', 'Uploading... {size} MB', {
+								this.importStatusText = this.t('intravox', 'Uploading… {size} MB', {
 									size: (progressEvent.loaded / 1024 / 1024).toFixed(2)
 								})
 							}
@@ -2483,7 +2483,7 @@ export default {
 							// Simulate processing progress
 							const processingProgress = 50 + Math.min(45, Math.floor(Math.random() * 30))
 							this.importProgress = processingProgress
-							this.importStatusText = this.t('intravox', 'Processing import on server...')
+							this.importStatusText = this.t('intravox', 'Processing import on server…')
 						}
 					}
 				)
@@ -2492,7 +2492,7 @@ export default {
 				this.importProgress = 100
 				this.importStatusText = this.t('intravox', 'Import completed')
 				this.importResult = response.data
-				showSuccess(this.t('intravox', 'Import completed successfully'))
+				showSuccess(this.t('intravox', 'Import completed'))
 
 				// Refresh export languages to show new content
 				this.loadExportLanguages()
@@ -2606,7 +2606,7 @@ export default {
 					{ language: this.migrateLanguage, mode: this.migrateMode }
 				)
 				if (response.data.success) {
-					showSuccess(this.t('intravox', 'Data recovered successfully: {files} files migrated', {
+					showSuccess(this.t('intravox', 'Data recovered: {files} files migrated', {
 						files: response.data.migratedFiles
 					}))
 					this.migrateDialogVisible = false
@@ -2634,7 +2634,7 @@ export default {
 					generateUrl(`/apps/intravox/api/orphaned/${this.cleanupFolder.id}`)
 				)
 				if (response.data.success) {
-					showSuccess(this.t('intravox', 'Orphaned data deleted successfully ({space} freed)', {
+					showSuccess(this.t('intravox', 'Orphaned data deleted ({space} freed)', {
 						space: response.data.freedSpaceFormatted
 					}))
 					this.orphanedCleanupDialogVisible = false

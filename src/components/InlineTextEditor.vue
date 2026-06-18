@@ -633,7 +633,7 @@ export default {
           }
         }),
         modules.Placeholder.configure({
-          placeholder: this.placeholder || this.t('Enter text...')
+          placeholder: this.placeholder || this.t('Enter text…')
         }),
         // Custom Table node — adds `width` and `align` attributes so editors
         // can make a table narrower than the widget container and align it
