@@ -21,6 +21,7 @@ Thumbs.db
 
 # Deployment artifacts
 *.tar.gz
+*.sig
 intravox-deploy/
 
 # Demo data images (downloaded/generated content)
