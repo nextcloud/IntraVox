@@ -1,0 +1,9 @@
+{ "translations": {
+    "Link" : "Ligam",
+    "Dutch" : "Neerlandés",
+    "French" : "Francés",
+    "Advanced options" : "Opcions avançadas",
+    "Authentication" : "Autentificacion",
+    "Send" : "Enviar"
+},"pluralForm" :"nplurals=2; plural=(n > 1);"
+}

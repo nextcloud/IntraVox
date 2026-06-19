@@ -1,0 +1,24 @@
+OC.L10N.register(
+    "intravox",
+    {
+    "Link" : "Bağlantı",
+    "Installed" : "Kurulmuş",
+    "Dutch" : "Felemenkçe",
+    "French" : "Fransızca",
+    "Sharing" : "Paylaşım",
+    "Content" : "İçerik",
+    "This action cannot be undone." : "Bu işlem geri alınamaz.",
+    "Visit website" : "Siteye bakın",
+    "Import" : "İçe aktar",
+    "Scope" : "Kapsam",
+    "Created" : "Oluşturulma",
+    "Advanced options" : "Gelişmiş ayarlar",
+    "Authentication" : "Kimlik doğrulama",
+    "Subscription key saved but validation failed: {reason}" : "Abonelik kodu kaydedildi ancak doğrulanamadı: {reason}",
+    "Failed to remove subscription key" : "Abonelik kodu kaldırılamadı",
+    "View pricing & plans" : "Fiyatlara ve tarifelere bakın",
+    "Subscription key is invalid or expired." : "Abonelik kodu geçersiz veya süresi dolmuş.",
+    "Add reaction" : "Tepki ver",
+    "Send" : "Gönder"
+},
+"nplurals=2; plural=(n > 1);");

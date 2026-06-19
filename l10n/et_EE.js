@@ -1,0 +1,8 @@
+OC.L10N.register(
+    "intravox",
+    {
+    "French" : "prantsuse keel",
+    "Failed to remove subscription key" : "Tellimuse võtme eemaldamine ei õnnestunud",
+    "View pricing & plans" : "Vaata hinnastamist ja teenusepakette"
+},
+"nplurals=2; plural=(n != 1);");

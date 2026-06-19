@@ -1,0 +1,10 @@
+{ "translations": {
+    "Link" : "Lenke",
+    "Dutch" : "Nederlansk",
+    "French" : "Fransk",
+    "Scope" : "Omfang",
+    "Created" : "Opprettet",
+    "Advanced options" : "Avanserte innstillinger",
+    "Send" : "Send"
+},"pluralForm" :"nplurals=2; plural=(n != 1);"
+}

@@ -1,0 +1,23 @@
+OC.L10N.register(
+    "intravox",
+    {
+    "Link" : "链接",
+    "Dutch" : "荷兰语",
+    "French" : "法语",
+    "Sharing" : "共享",
+    "Content" : "内容",
+    "This action cannot be undone." : "此操作无法撤消。",
+    "Visit website" : "访问网站",
+    "Import" : "导入",
+    "Scope" : "适用范围",
+    "Created" : "已创建",
+    "Advanced options" : "高级选项",
+    "Authentication" : "身份验证",
+    "Subscription key saved but validation failed: {reason}" : "订阅密钥已保存但验证失败: {reason}",
+    "Failed to remove subscription key" : "移除订阅密钥失败",
+    "View pricing & plans" : "查看价格 & 计划",
+    "Subscription key is invalid or expired." : "订阅密钥无效或过期。",
+    "Carousel" : "轮播",
+    "Send" : "发送"
+},
+"nplurals=1; plural=0;");

@@ -1,0 +1,20 @@
+OC.L10N.register(
+    "intravox",
+    {
+    "Link" : "ئۇلىنىش",
+    "Dutch" : "گوللاندىيە",
+    "French" : "فىرانسۇزچە",
+    "Sharing" : "ھەمبەھىرلەش",
+    "Content" : "مەزمۇن",
+    "This action cannot be undone." : "بۇ ھەرىكەتنى بىكار قىلغىلى بولمايدۇ.",
+    "Visit website" : "توربېكەتنى زىيارەت قىلىڭ",
+    "Import" : "ئەكىر",
+    "Scope" : "دائىرىسى",
+    "Created" : "قۇرۇلدى",
+    "Advanced options" : "ئىلغار تاللاشلار",
+    "Authentication" : "دەلىللەش",
+    "Unlock" : "قۇلۇپ ئېچىش",
+    "Add reaction" : "رېئاكسىيە قوشۇش",
+    "Send" : "ئەۋەتىڭ"
+},
+"nplurals=2; plural=(n != 1);");
