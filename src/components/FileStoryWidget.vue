@@ -218,7 +218,7 @@
       ref="scrollSentinel"
       class="fs-scroll-sentinel"
     >
-      <span v-if="loadingMore" class="fs-loading-more">{{ t('Loading more…') }}</span>
+      <span v-if="loadingMore" class="fs-loading-more">{{ t('Loading more …') }}</span>
     </div>
 
     <!-- Truncated notice -->

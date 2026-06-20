@@ -1,6 +1,6 @@
 {
   "name": "nextcloud-intravox",
-  "version": "1.6.1",
+  "version": "1.7.0",
   "description": "SharePoint-like pages for Nextcloud",
   "repository": {
     "type": "git",
@@ -22,6 +22,8 @@
     "analyze": "ANALYZE=true webpack",
     "version:sync": "node scripts/sync-version.js",
     "l10n": "node scripts/generate-l10n.js",
+    "l10n:extract": "node scripts/extract-en-json.js",
+    "pot": "npm run l10n:extract && node scripts/generate-pot.js",
     "release": "./create-release.sh"
   },
   "dependencies": {

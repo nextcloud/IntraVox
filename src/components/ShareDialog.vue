@@ -1,5 +1,5 @@
 <template>
-  <NcDialog :name="t('Public Link')"
+  <NcDialog :name="t('Public link')"
             :can-close="true"
             @close="$emit('close')">
     <div class="share-dialog">

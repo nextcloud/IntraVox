@@ -6,7 +6,7 @@
       <template #icon>
         <Plus :size="20" />
       </template>
-      {{ t('New Page') }}
+      {{ t('New page') }}
     </NcActionButton>
 
     <!-- Edit Navigation (admin action, less frequently used) -->
@@ -15,7 +15,7 @@
       <template #icon>
         <Cog :size="20" />
       </template>
-      {{ t('Edit Navigation') }}
+      {{ t('Edit navigation') }}
     </NcActionButton>
 
     <!-- Page Settings (for editors) -->
@@ -24,7 +24,7 @@
       <template #icon>
         <TuneVertical :size="20" />
       </template>
-      {{ t('Page Settings') }}
+      {{ t('Page settings') }}
     </NcActionButton>
 
     <!-- Save as Template -->

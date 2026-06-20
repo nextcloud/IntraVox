@@ -405,7 +405,18 @@ class PageService {
     }
 
     /**
-     * Get the user's language preference
+     * Get the user's TRUE intranet language (base code) from their Nextcloud
+     * language preference, e.g. 'nl_NL' -> 'nl', 'da' -> 'da'.
+     *
+     * VoxCloud language model: we return the user's actual language and do NOT
+     * silently remap it to English here. Two consumers rely on this:
+     *   - getLanguageFolder() resolves the content folder and falls back to the
+     *     English folder itself when the user's language folder is absent, so a
+     *     language without content still renders *something*.
+     *   - getLanguageContentStatus() needs the real language to detect "the
+     *     user's language has no content" and drive the fallback notice. The old
+     *     enabled_languages remap broke that: a Danish user was reported as
+     *     English, so the notice never showed.
      */
     private function getUserLanguage(): string {
         if (!$this->userId) {
@@ -414,11 +425,11 @@ class PageService {
 
         $lang = $this->config->getUserValue($this->userId, 'core', 'lang', self::DEFAULT_LANGUAGE);
 
-        // Extract language code (e.g., 'nl_NL' -> 'nl')
+        // Extract base language code (e.g., 'nl_NL' -> 'nl').
         $langCode = explode('_', $lang)[0];
 
-        // Check if enabled by admin, otherwise return default
-        return $this->languageService->isLanguageEnabled($langCode) ? $langCode : self::DEFAULT_LANGUAGE;
+        // Guard against malformed values; fall back to the default language.
+        return preg_match('/^[a-z]{2}$/', $langCode) ? $langCode : self::DEFAULT_LANGUAGE;
     }
 
     /**
@@ -756,6 +767,83 @@ class PageService {
     }
 
     /**
+     * Whether a language folder holds a REAL (editor-authored) homepage, as
+     * opposed to an auto-generated placeholder or no homepage at all.
+     *
+     * A homepage counts as real when `home.json` exists, parses, and does NOT
+     * carry the `_generated` marker written by LanguageHomepageService /
+     * demo-data. The marker is dropped on the first editor save, so any edited
+     * homepage reads as real. Homepages from installs predating the marker also
+     * read as real (no marker present) — which is the safe, no-regression
+     * default.
+     */
+    private function languageFolderHasRealContent(\OCP\Files\Folder $langFolder): bool {
+        try {
+            $homeFile = $langFolder->get('home.json');
+        } catch (NotFoundException $e) {
+            return false;
+        }
+        if (!($homeFile instanceof \OCP\Files\File)) {
+            return false;
+        }
+        try {
+            $data = json_decode($homeFile->getContent(), true);
+        } catch (\Throwable $e) {
+            return false;
+        }
+        if (!is_array($data) || !isset($data['title'])) {
+            return false;
+        }
+        return empty($data['_generated']);
+    }
+
+    /**
+     * Language content status for the CURRENT user. Drives the landing-page
+     * fallback notice and is the "active = where content is" signal for the
+     * VoxCloud language model (replaces the enabled_languages opt-in list).
+     *
+     * @return array{
+     *   language: string,
+     *   hasContent: bool,
+     *   languagesWithContent: string[]
+     * }
+     *   - language: the user's resolved IntraVox language (base code)
+     *   - hasContent: does that language have a real homepage?
+     *   - languagesWithContent: every language folder with real content, sorted
+     */
+    public function getLanguageContentStatus(): array {
+        $userLang = $this->getUserLanguage();
+        $withContent = [];
+
+        try {
+            $baseFolder = $this->getIntraVoxFolder();
+            foreach ($this->getCachedDirectoryListing($baseFolder) as $item) {
+                if ($item->getType() !== \OCP\Files\FileInfo::TYPE_FOLDER) {
+                    continue;
+                }
+                $name = $item->getName();
+                // Language folders are two-letter base codes (nl, en, de, ...).
+                if (!preg_match('/^[a-z]{2}$/', $name)) {
+                    continue;
+                }
+                if ($item instanceof \OCP\Files\Folder && $this->languageFolderHasRealContent($item)) {
+                    $withContent[] = $name;
+                }
+            }
+        } catch (\Throwable $e) {
+            $this->logger->warning('[PageService] getLanguageContentStatus failed: ' . $e->getMessage());
+        }
+
+        sort($withContent);
+
+        return [
+            'language' => $userLang,
+            'hasContent' => in_array($userLang, $withContent, true),
+            'languagesWithContent' => $withContent,
+        ];
+    }
+
+    /**
      * Recursively find pages in folders
      */
     private function findPagesInFolder($folder, array &$pages, string $basePath = ''): void {
@@ -924,26 +1012,29 @@ class PageService {
             $result = $this->findPageById($folder, $id);
         }
 
-        // Cross-language fallback: search other language folders
-        // This enables feed links and shared links to work across languages
+        // Cross-language fallback: search other language folders that actually
+        // exist on disk. This enables feed links and shared links to work across
+        // languages. VoxCloud model: scan real language folders rather than an
+        // opt-in list, so content in any language (e.g. 'da') is reachable.
         if ($result === null && strpos($originalId, 'page-') === 0) {
             $baseFolder = $this->getIntraVoxFolder();
             $currentLang = $this->getUserLanguage();
 
-            foreach ($this->languageService->getEnabledLanguages() as $lang) {
-                if ($lang === $currentLang) {
-                    continue; // Already searched
-                }
-                try {
-                    $langFolder = $baseFolder->get($lang);
-                    if ($langFolder instanceof \OCP\Files\Folder) {
-                        $result = $this->findPageByUniqueId($langFolder, $originalId);
-                        if ($result !== null) {
-                            break;
-                        }
-                    }
-                } catch (NotFoundException $e) {
+            foreach ($this->getCachedDirectoryListing($baseFolder) as $item) {
+                if ($item->getType() !== \OCP\Files\FileInfo::TYPE_FOLDER) {
                     continue;
+                }
+                $lang = $item->getName();
+                // Language folders are two-letter base codes; skip the one we
+                // already searched and any non-language folder.
+                if (!preg_match('/^[a-z]{2}$/', $lang) || $lang === $currentLang) {
+                    continue;
+                }
+                if ($item instanceof \OCP\Files\Folder) {
+                    $result = $this->findPageByUniqueId($item, $originalId);
+                    if ($result !== null) {
+                        break;
+                    }
                 }
             }
         }
@@ -1100,10 +1191,10 @@ class PageService {
     private function getMaxDepthForPath(string $path): int {
         $pathParts = explode('/', trim($path, '/'));
 
-        // Remove language if present. Uses discovered (= every shipped
-        // translation) rather than enabled because disabled-language paths
-        // still need correct depth math — we never delete them.
-        if (count($pathParts) > 0 && in_array($pathParts[0], $this->languageService->getDiscoveredLanguages(), true)) {
+        // Remove language if present. Uses the available (= every NC-known)
+        // language set so paths in any language an admin added (e.g. 'da') get
+        // correct depth math, not only the ones IntraVox ships a translation for.
+        if (count($pathParts) > 0 && $this->languageService->isLanguageAvailable($pathParts[0])) {
             array_shift($pathParts);
         }
 
@@ -1257,7 +1348,7 @@ class PageService {
             $accumulatedPath .= $part;
 
             // Skip language folder in breadcrumb display (but include in accumulated path)
-            if ($index === 0 && in_array($part, $this->languageService->getDiscoveredLanguages(), true)) {
+            if ($index === 0 && $this->languageService->isLanguageAvailable($part)) {
                 continue;
             }
 
@@ -1377,7 +1468,7 @@ class PageService {
         $currentFolder = $this->getLanguageFolder();
 
         // Remove language part since we already start from language folder
-        if (count($pathParts) > 0 && in_array($pathParts[0], $this->languageService->getDiscoveredLanguages(), true)) {
+        if (count($pathParts) > 0 && $this->languageService->isLanguageAvailable($pathParts[0])) {
             array_shift($pathParts);
         }
 

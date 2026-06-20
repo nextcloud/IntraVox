@@ -31,7 +31,7 @@
           v-model="searchQuery"
           type="text"
           class="search-input"
-          :placeholder="t('Search pages…')"
+          :placeholder="t('Search pages …')"
           :aria-label="t('Search pages')"
           @keydown.escape="closeDropdown"
           @keydown.down.prevent="focusNext"

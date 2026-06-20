@@ -109,6 +109,7 @@ import Delete from 'vue-material-design-icons/Delete.vue'
 import Reply from 'vue-material-design-icons/Reply.vue'
 import EmoticonHappyOutline from 'vue-material-design-icons/EmoticonHappyOutline.vue'
 import ReactionPicker from './ReactionPicker.vue'
+import { translatePlural as n } from '@nextcloud/l10n'
 import { updateComment, deleteComment, toggleCommentReaction } from '../../services/CommentService.js'
 
 export default {
@@ -180,9 +181,9 @@ export default {
 			const diffDays = Math.floor(diffMs / 86400000)
 
 			if (diffMins < 1) return this.t('intravox', 'just now')
-			if (diffMins < 60) return this.t('intravox', '{minutes} min ago', { minutes: diffMins })
-			if (diffHours < 24) return this.t('intravox', '{hours} hours ago', { hours: diffHours })
-			if (diffDays < 7) return this.t('intravox', '{days} days ago', { days: diffDays })
+			if (diffMins < 60) return n('intravox', '%n minute ago', '%n minutes ago', diffMins)
+			if (diffHours < 24) return n('intravox', '%n hour ago', '%n hours ago', diffHours)
+			if (diffDays < 7) return n('intravox', '%n day ago', '%n days ago', diffDays)
 			return date.toLocaleDateString()
 		},
 	},

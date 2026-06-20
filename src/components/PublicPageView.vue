@@ -5,14 +5,14 @@
 		<!-- Loading state -->
 		<div v-if="loading" class="public-loading" role="status" aria-live="polite">
 			<div class="loading-spinner" />
-			<span>{{ t('intravox', 'Loading…') }}</span>
+			<span>{{ t('intravox', 'Loading …') }}</span>
 		</div>
 
 		<!-- Password required state -->
 		<div v-else-if="passwordRequired" class="public-password-challenge">
 			<div class="password-container">
 				<div class="lock-icon">&#128274;</div>
-				<h2>{{ t('intravox', 'Password Required') }}</h2>
+				<h2>{{ t('intravox', 'Password required') }}</h2>
 				<p>{{ t('intravox', 'This shared page is password protected. Enter the password to continue.') }}</p>
 				<form @submit.prevent="submitPassword">
 					<label for="intravox-public-password" class="visually-hidden">{{ t('intravox', 'Password') }}</label>
@@ -36,7 +36,7 @@
 
 		<!-- Error state -->
 		<div v-else-if="error" class="public-error" role="alert">
-			<h1>{{ t('intravox', 'Page Not Available') }}</h1>
+			<h1>{{ t('intravox', 'Page not available') }}</h1>
 			<p>{{ error }}</p>
 		</div>
 

@@ -7,7 +7,7 @@
 
       <div v-if="loading" class="loading-state">
         <NcLoadingIcon :size="32" />
-        <p>{{ t('Loading page structure…') }}</p>
+        <p>{{ t('Loading page structure …') }}</p>
       </div>
 
       <div v-else-if="error" class="error-state">

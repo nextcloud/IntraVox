@@ -30,6 +30,7 @@ use Psr\Log\LoggerInterface;
 class LanguageService {
     private const APP_ID = 'intravox';
     private const CONFIG_KEY_ENABLED = 'enabled_languages';
+    private const CONFIG_KEY_PRIMARY = 'primary_language';
     private const DEFAULT_ENABLED_LANGUAGES = ['nl', 'en', 'de', 'fr'];
     private const FALLBACK_LANGUAGE = 'en';
 
@@ -101,6 +102,13 @@ class LanguageService {
     }
 
     /**
+     * @deprecated VoxCloud language model: a language is "active" when it has
+     * content, not because it sits in this opt-in list. New code derives the
+     * active set from content (see PageService::getLanguageContentStatus) and
+     * offers ALL NC languages via getAvailableLanguages(). This method is kept
+     * only so existing callers and downgrade paths keep working; the config key
+     * is no longer written by the admin UI.
+     *
      * Languages currently active in IntraVox.
      *
      * Falls back to the legacy 1.5.x hardcoded set if the config key is missing
@@ -177,6 +185,86 @@ class LanguageService {
 
     public function isLanguageEnabled(string $code): bool {
         return in_array($code, $this->getEnabledLanguages(), true);
+    }
+
+    /**
+     * Every language Nextcloud knows about — common + other — deduped on the
+     * base two-letter code and sorted by display name. This is the canonical
+     * "available languages" set for the VoxCloud language model: admins pick
+     * from ALL NC languages, not only the subset IntraVox happens to ship a
+     * translation file for.
+     *
+     * Modelled on IntroVox's getAvailableLanguagesWithMetadata().
+     *
+     * @return array<int, array{code: string, name: string}> Sorted by name.
+     */
+    public function getAvailableLanguages(): array {
+        $ncLanguages = $this->l10nFactory->getLanguages();
+        $seen = [];
+        $result = [];
+        foreach (array_merge($ncLanguages['commonLanguages'] ?? [], $ncLanguages['otherLanguages'] ?? []) as $entry) {
+            if (!isset($entry['code'], $entry['name'])) {
+                continue;
+            }
+            $code = substr($entry['code'], 0, 2);
+            // Only well-formed base codes; first entry per base code wins
+            // (commonLanguages is iterated first and holds the localised default).
+            if (!preg_match('/^[a-z]{2}$/', $code) || isset($seen[$code])) {
+                continue;
+            }
+            $seen[$code] = true;
+            $result[] = ['code' => $code, 'name' => $entry['name']];
+        }
+
+        // English is guaranteed present even if NC's list somehow omits it.
+        if (!isset($seen[self::FALLBACK_LANGUAGE])) {
+            $result[] = ['code' => self::FALLBACK_LANGUAGE, 'name' => 'English'];
+        }
+
+        usort($result, fn($a, $b) => strcmp($a['name'], $b['name']));
+        return $result;
+    }
+
+    /**
+     * Is this a valid, NC-known base language code? Used to validate admin
+     * input (primary language, "add language") against the available set
+     * rather than the deprecated enabled set. Also the correct check for "is
+     * this path segment a language folder?" — covers any language an admin can
+     * add, not just the ones IntraVox ships a translation for.
+     */
+    public function isLanguageAvailable(string $code): bool {
+        foreach ($this->getAvailableLanguages() as $lang) {
+            if ($lang['code'] === $code) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * The admin-chosen "primary" language: the recommended fallback shown first
+     * when a user's own language has no content (see LanguageFallbackNotice).
+     * Defaults to English. Validated against the available set on read so a
+     * stale/invalid value degrades gracefully.
+     */
+    public function getPrimaryLanguage(): string {
+        $code = $this->config->getAppValue(self::APP_ID, self::CONFIG_KEY_PRIMARY, '');
+        if ($code === '' || !$this->isLanguageAvailable($code)) {
+            return self::FALLBACK_LANGUAGE;
+        }
+        return $code;
+    }
+
+    /**
+     * Persist the admin's primary-language choice. Must be a valid NC-known
+     * base code; otherwise an InvalidArgumentException is thrown so the caller
+     * can return a 400.
+     */
+    public function setPrimaryLanguage(string $code): void {
+        if (!$this->isLanguageAvailable($code)) {
+            throw new \InvalidArgumentException("Unknown language code: {$code}");
+        }
+        $this->config->setAppValue(self::APP_ID, self::CONFIG_KEY_PRIMARY, $code);
     }
 
     /**

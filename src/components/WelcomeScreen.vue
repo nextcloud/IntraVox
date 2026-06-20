@@ -15,21 +15,21 @@
 				<div class="step">
 					<span class="step-number">1</span>
 					<div class="step-content">
-						<h3>{{ t('Install Demo Data') }}</h3>
+						<h3>{{ t('Install demo data') }}</h3>
 						<p>{{ t('Get started quickly with example pages in multiple languages (Dutch, English, German, French).') }}</p>
 					</div>
 				</div>
 				<div class="step">
 					<span class="step-number">2</span>
 					<div class="step-content">
-						<h3>{{ t('Configure Settings') }}</h3>
+						<h3>{{ t('Configure settings') }}</h3>
 						<p>{{ t('Customize video domains, upload limits, and other settings for your organization.') }}</p>
 					</div>
 				</div>
 				<div class="step">
 					<span class="step-number">3</span>
 					<div class="step-content">
-						<h3>{{ t('Create Content') }}</h3>
+						<h3>{{ t('Create content') }}</h3>
 						<p>{{ t('Start building your intranet with pages, navigation, and multimedia content.') }}</p>
 					</div>
 				</div>

@@ -4,6 +4,26 @@ All notable changes to IntraVox will be documented in this file.
 
 IntraVox is a Nextcloud intranet page builder.
 
+## [1.7.0] - 2026-06-20 — Clearer landing page for users whose language has no content + VoxCloud language model + translation cleanup
+
+When an editor maintained content only in one language (e.g. Dutch) and a user's Nextcloud language was set to another (e.g. English), the user silently saw a generic placeholder homepage — the editor's real work was invisible and there was no hint that this was a fallback. This release replaces that silent placeholder with a clear notice, aligns IntraVox's language handling with the wider VoxCloud model, and brings all source strings in line with the Nextcloud translation guidelines so the Transifex resource can be unlocked for translators.
+
+### Added
+
+- **Language fallback notice on the landing page.** If the user's own language has no real (editor-authored) homepage but another language does, IntraVox now shows a clear `LanguageFallbackNotice` instead of the generic placeholder: it states the intranet has no pages in the user's language yet, lists the languages that *do* have content, and links to the user's Nextcloud personal settings so they can change their own language. New endpoint `GET /api/languages/content-status`.
+- **VoxCloud language model in admin settings.** Admins can now pick from **every Nextcloud-known language** (not only the subset IntraVox ships a translation file for), choose a **recommended (primary) language** used as the fallback suggestion, and **add a language** (creates an empty homepage for it). New endpoints `POST /api/languages/primary` and `POST /api/languages/{code}/add`.
+- **Deep-linkable admin settings tabs.** Each admin settings tab is now addressable via the URL hash (e.g. `…/settings/admin/intravox#demo`), and the tab updates the hash as you navigate.
+- **`l10n/en.json` extractor** (`scripts/extract-en-json.js`, run via `npm run l10n:extract` / `npm run pot`). It scans `src/` and `lib/` for every `t()/n()/$t()/$n()` call and regenerates the English source for the POT, replacing the previous hand-maintained/restore-from-git workflow.
+
+### Changed
+
+- **"Active" languages are now derived from content, not an opt-in list.** A language is active once it has a homepage; the `enabled_languages` opt-in checkbox grid is replaced by a "languages with content" view plus an add-language picker. Real (editor-authored) content is told apart from auto-generated placeholders via a `_generated` marker on the placeholder homepage, which is dropped automatically the first time an editor saves the page. Demo data is unchanged and always counts as real content.
+- **Source strings aligned with the Nextcloud translation guidelines** ([#63](https://github.com/nextcloud/IntraVox/issues/63)): sentence-case for headings/labels/buttons (e.g. "Demo Data" → "Demo data", "API Token" → "API token"), a non-breaking space before every ellipsis, "GroupFolder" → "Team folder" wording, real gettext plurals for relative-time and file-count strings, URL/placeholder values removed from `t()`, and the redundant translated language-name helper dropped (the recommended-language picker uses Nextcloud's own localized names).
+
+### Deprecated
+
+- `enabled_languages` app-config and the `language#setEnabled` / `language#createEmptyHomepage` endpoints are deprecated. The config key is no longer written by the admin UI but is kept in the database for downgrade safety (it is simply ignored by 1.7.0 code).
+
 ## [1.6.1] - 2026-06-14 — Fix: app could not be enabled on Nextcloud 34
 
 Bugfix release. IntraVox 1.6.0 declared Nextcloud 34 support but crashed on `occ app:enable intravox`:

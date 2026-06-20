@@ -2,7 +2,7 @@
   <div class="ps-map" :class="{ 'ps-map--fullscreen': fullscreen }">
     <div v-if="loading" class="ps-map-state">
       <NcLoadingIcon :size="24" />
-      <span>{{ t('Loading map…') }}</span>
+      <span>{{ t('Loading map …') }}</span>
     </div>
 
     <div v-else-if="fallback" class="ps-map-fallback">

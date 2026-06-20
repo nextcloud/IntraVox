@@ -11,7 +11,7 @@
           id="ps-folder"
           type="text"
           v-model="localConfig.folderPath"
-          :placeholder="t('/Photos/Albums/…')"
+          :placeholder="t('/Photos/Albums/ …')"
           class="editor-input"
           @change="emitUpdate"
         />
@@ -19,7 +19,7 @@
           <template #icon>
             <FolderOpen :size="18" />
           </template>
-          {{ t('Browse…') }}
+          {{ t('Browse …') }}
         </NcButton>
       </div>
       <p class="editor-hint">
@@ -31,7 +31,7 @@
       <div class="ps-capability-badge" :class="{ rich: metaVoxAvailable }">
         <CheckCircle v-if="metaVoxAvailable" :size="14" />
         <AlertCircle v-else :size="14" />
-        <span v-if="capLoading">{{ t('Checking capabilities…') }}</span>
+        <span v-if="capLoading">{{ t('Checking capabilities …') }}</span>
         <span v-else-if="metaVoxAvailable">{{ t('MetaVox: rich metadata available') }}</span>
         <span v-else>{{ t('MetaVox: basic EXIF only') }}</span>
       </div>

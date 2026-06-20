@@ -25,7 +25,7 @@
     <div v-if="localWidget.sourceType === 'connection'" class="form-group">
       <label for="feed-connection">{{ t('Connection') }}</label>
       <select id="feed-connection" v-model="localWidget.connectionId" @change="onConnectionChange">
-        <option value="">{{ t('Select a connection…') }}</option>
+        <option value="">{{ t('Select a connection …') }}</option>
         <option
           v-for="conn in availableConnections"
           :key="conn.id"
@@ -56,13 +56,13 @@
         <button class="disconnect-button" @click="disconnectLms">{{ t('Disconnect') }}</button>
       </div>
       <div v-else-if="userConnectionStatus === 'loading'" class="lms-status">
-        <span class="status-badge loading">{{ t('Checking…') }}</span>
+        <span class="status-badge loading">{{ t('Checking …') }}</span>
       </div>
       <div v-else class="lms-status lms-status-disconnected">
         <span class="status-badge disconnected">{{ t('Not connected') }}</span>
         <div class="connect-actions">
           <button v-if="selectedConnectionAuthMode !== 'token'" class="connect-button" @click="startOAuth" :disabled="oauthLoading">
-            {{ oauthLoading ? t('Connecting…') : t('Connect your account') }}
+            {{ oauthLoading ? t('Connecting …') : t('Connect your account') }}
           </button>
           <button v-if="selectedConnectionType === 'moodle' || selectedConnectionType === 'brightspace'" class="connect-button secondary" @click="showManualToken = !showManualToken">
             {{ t('Enter token manually') }}
@@ -75,7 +75,7 @@
             :placeholder="t('Paste your API token here')"
           />
           <button @click="saveManualToken" :disabled="!manualToken || manualTokenSaving">
-            {{ manualTokenSaving ? t('Saving…') : t('Save token') }}
+            {{ manualTokenSaving ? t('Saving …') : t('Save token') }}
           </button>
         </div>
         <p v-if="connectError" class="field-error">{{ connectError }}</p>
@@ -87,16 +87,16 @@
       <label for="feed-content-type">{{ t('Content type') }}</label>
       <select id="feed-content-type" v-model="localWidget.contentType" @change="onLmsContentTypeChange">
         <option value="news">{{ t('News / Announcements') }}</option>
-        <option value="courses">{{ t('Available Courses') }}</option>
+        <option value="courses">{{ t('Available courses') }}</option>
         <option value="assignments">{{ t('Assignments') }}</option>
-        <option value="deadlines">{{ t('Upcoming Deadlines') }}</option>
+        <option value="deadlines">{{ t('Upcoming deadlines') }}</option>
       </select>
     </div>
 
     <!-- Moodle forum selector (when News + course selected) -->
     <div v-if="isMoodleType && localWidget.connectionId && localWidget.contentType === 'news' && localWidget.courseId" class="form-group">
       <label for="feed-moodle-forum">{{ t('Forum (optional)') }}</label>
-      <div v-if="moodleForumsLoading" class="field-hint">{{ t('Loading…') }}</div>
+      <div v-if="moodleForumsLoading" class="field-hint">{{ t('Loading …') }}</div>
       <template v-else>
         <select id="feed-moodle-forum" v-model="localWidget.moodleForumId" @change="emitUpdate">
           <option value="">{{ t('All forums') }}</option>
@@ -120,7 +120,7 @@
     <!-- Jira project selector -->
     <div v-if="isJiraType && localWidget.connectionId" class="form-group">
       <label for="feed-jira-project">{{ t('Project') }}</label>
-      <div v-if="jiraProjectsLoading" class="field-hint">{{ t('Loading…') }}</div>
+      <div v-if="jiraProjectsLoading" class="field-hint">{{ t('Loading …') }}</div>
       <template v-else>
         <select id="feed-jira-project" v-model="localWidget.jiraProject" @change="emitUpdate">
           <option value="">{{ t('All projects') }}</option>
@@ -153,10 +153,10 @@
     <!-- SharePoint list/library selector -->
     <div v-if="isSharePointType && localWidget.connectionId && (localWidget.contentType === 'documents' || localWidget.contentType === 'list')" class="form-group">
       <label for="feed-sp-list">{{ localWidget.contentType === 'documents' ? t('Document library') : t('List') }}</label>
-      <div v-if="spListsLoading" class="field-hint">{{ t('Loading…') }}</div>
+      <div v-if="spListsLoading" class="field-hint">{{ t('Loading …') }}</div>
       <template v-else>
         <select id="feed-sp-list" v-model="localWidget.listId" @change="emitUpdate">
-          <option value="">{{ t('Select…') }}</option>
+          <option value="">{{ t('Select …') }}</option>
           <option v-for="item in spListsForType" :key="item.id" :value="item.id">{{ item.name }}</option>
         </select>
         <span v-if="spListsError" class="field-hint" style="color: var(--color-error)">{{ spListsError }}</span>
@@ -166,7 +166,7 @@
     <!-- Course selection (for LMS types) -->
     <div v-if="isLmsType && localWidget.connectionId && showCourseIdField" class="form-group">
       <label for="feed-course-id">{{ t('Course (optional)') }}</label>
-      <div v-if="coursesLoading" class="field-hint">{{ t('Loading courses…') }}</div>
+      <div v-if="coursesLoading" class="field-hint">{{ t('Loading courses …') }}</div>
       <template v-else-if="courses.length > 0 && !manualCourseId">
         <select id="feed-course-id" v-model="localWidget.courseId" @change="onCourseChange">
           <option value="">{{ t('All courses') }}</option>

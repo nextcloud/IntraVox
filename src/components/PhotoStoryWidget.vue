@@ -257,7 +257,7 @@
       class="ps-scroll-sentinel"
       aria-hidden="true"
     >
-      <span v-if="loadingMore" class="ps-loading-more">{{ t('Loading more photos…') }}</span>
+      <span v-if="loadingMore" class="ps-loading-more">{{ t('Loading more photos …') }}</span>
     </div>
 
     <!-- Truncation notice when server hit its hard cap -->
