@@ -13,7 +13,7 @@
           @click="mode = 'blank'"
         >
           <FileOutline :size="18" />
-          {{ t('Blank Page') }}
+          {{ t('Blank page') }}
         </button>
         <button
           class="mode-tab"
@@ -23,7 +23,7 @@
           @click="mode = 'template'; loadTemplates()"
         >
           <FileDocumentMultipleOutline :size="18" />
-          {{ t('From Template') }}
+          {{ t('From template') }}
         </button>
       </div>
 
@@ -46,7 +46,7 @@
         <!-- Loading state -->
         <div v-if="loadingTemplates" class="templates-loading">
           <NcLoadingIcon :size="32" />
-          <span>{{ t('Loading templates…') }}</span>
+          <span>{{ t('Loading templates …') }}</span>
         </div>
 
         <!-- No templates -->

@@ -68,8 +68,12 @@ return [
         ['name' => 'demoData#importDemoData', 'url' => '/api/demo-data/import', 'verb' => 'POST'],
         ['name' => 'demoData#cleanStart', 'url' => '/api/demo-data/clean-start', 'verb' => 'POST'],
 
-        // Language management routes (Transifex-discovered languages + admin enable/disable)
+        // Language management routes (VoxCloud model: all NC languages available,
+        // active = has content; legacy enable/disable kept for compatibility)
         ['name' => 'language#list', 'url' => '/api/languages', 'verb' => 'GET'],
+        ['name' => 'language#contentStatus', 'url' => '/api/languages/content-status', 'verb' => 'GET'],
+        ['name' => 'language#setPrimary', 'url' => '/api/languages/primary', 'verb' => 'POST'],
+        ['name' => 'language#addLanguage', 'url' => '/api/languages/{code}/add', 'verb' => 'POST'],
         ['name' => 'language#setEnabled', 'url' => '/api/languages/enabled', 'verb' => 'POST'],
         ['name' => 'language#createEmptyHomepage', 'url' => '/api/languages/{code}/empty-homepage', 'verb' => 'POST'],
 

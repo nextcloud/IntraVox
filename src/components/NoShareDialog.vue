@@ -22,7 +22,7 @@
         <a :href="adminSharingUrl" target="_blank" class="share-manage-link">
           <CogOutline :size="16" />
           <span class="manage-text">
-            {{ t('Open Sharing settings') }}
+            {{ t('Open sharing settings') }}
           </span>
           <OpenInNew :size="14" class="manage-arrow" />
         </a>

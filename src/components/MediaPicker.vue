@@ -22,7 +22,7 @@
         :aria-selected="activeTab === 'page'"
         @click="switchToTab('page')"
       >
-        {{ t('Page Media') }}
+        {{ t('Page media') }}
       </button>
       <button
         :class="['tab-button', { active: activeTab === 'resources' }]"
@@ -30,7 +30,7 @@
         :aria-selected="activeTab === 'resources'"
         @click="switchToTab('resources')"
       >
-        {{ t('Shared Library') }}
+        {{ t('Shared library') }}
       </button>
     </div>
 
@@ -114,7 +114,7 @@
             class="breadcrumb-item"
             @click="navigateToFolder('')"
           >
-            📚 {{ t('Shared Library') }}
+            📚 {{ t('Shared library') }}
           </button>
           <span v-for="(segment, index) in breadcrumbSegments" :key="index">
             <span class="breadcrumb-separator">/</span>
@@ -192,7 +192,7 @@
     <NcDialog
       v-if="showDuplicateDialog"
       :open="showDuplicateDialog"
-      :name="t('File Already Exists')"
+      :name="t('File already exists')"
       size="small"
       @update:open="showDuplicateDialog = false"
     >
@@ -248,7 +248,7 @@ export default {
     },
     title: {
       type: String,
-      default: () => t('intravox', 'Select Media')
+      default: () => t('intravox', 'Select media')
     }
   },
 

@@ -4,7 +4,7 @@
 
     <div v-if="loading" class="calendar-loading" role="status" aria-live="polite">
       <NcLoadingIcon :size="32" />
-      <span>{{ t('Loading events…') }}</span>
+      <span>{{ t('Loading events …') }}</span>
     </div>
 
     <div v-else-if="error" class="calendar-error" role="alert">

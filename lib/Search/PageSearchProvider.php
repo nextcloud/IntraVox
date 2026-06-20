@@ -40,7 +40,7 @@ class PageSearchProvider implements IProvider {
     }
 
     public function getName(): string {
-        return $this->l10n->t('IntraVox Pages');
+        return $this->l10n->t('IntraVox pages');
     }
 
     public function getOrder(string $route, array $routeParameters): int {
@@ -58,7 +58,7 @@ class PageSearchProvider implements IProvider {
         // Don't search for very short queries
         if (mb_strlen($term) < 2) {
             return SearchResult::complete(
-                $this->l10n->t('IntraVox Pages'),
+                $this->l10n->t('IntraVox pages'),
                 []
             );
         }
@@ -81,13 +81,13 @@ class PageSearchProvider implements IProvider {
                     $entries[] = new SearchResultEntry(
                         $thumbnailUrl,
                         $row['title'],
-                        $this->l10n->t('IntraVox Page'),
+                        $this->l10n->t('IntraVox page'),
                         $url,
                         '',
                         true
                     );
                 }
-                return SearchResult::complete($this->l10n->t('IntraVox Pages'), $entries);
+                return SearchResult::complete($this->l10n->t('IntraVox pages'), $entries);
             }
 
             // Fallback to full-text search (slower, reads all JSON files)
@@ -121,7 +121,7 @@ class PageSearchProvider implements IProvider {
                     // Format subline with widget type prefix for clarity
                     switch ($matchType) {
                         case 'title':
-                            $subline = $this->l10n->t('IntraVox Page');
+                            $subline = $this->l10n->t('IntraVox page');
                             break;
                         case 'content':
                             $subline = $this->truncate($matchText, 100);
@@ -159,12 +159,12 @@ class PageSearchProvider implements IProvider {
             }
 
             return SearchResult::complete(
-                $this->l10n->t('IntraVox Pages'),
+                $this->l10n->t('IntraVox pages'),
                 $entries
             );
         } catch (\Exception $e) {
             return SearchResult::complete(
-                $this->l10n->t('IntraVox Pages'),
+                $this->l10n->t('IntraVox pages'),
                 []
             );
         }

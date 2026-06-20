@@ -123,6 +123,12 @@ class LanguageHomepageService {
         return [
             'id' => 'home',
             'title' => $t['title'],
+            // Marker: this homepage was auto-generated, not authored by an
+            // editor. The landing-page fallback notice uses it to tell "real"
+            // content apart from a placeholder. The marker is dropped the moment
+            // an editor saves the page (validateAndSanitizePage whitelists keys
+            // and never copies it through).
+            '_generated' => true,
             'layout' => [
                 'columns' => 2,
                 'rows' => [

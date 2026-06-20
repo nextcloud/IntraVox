@@ -16,7 +16,7 @@
 			<span class="license-banner-text">
 				{{ n('intravox', 'Found %n orphaned data folder from a previous installation.', 'Found %n orphaned data folders from a previous installation.', orphanedBannerCount) }}
 				<a href="#" @click.prevent="activeTab = 'maintenance'; scanOrphanedFolders()">
-					{{ t('intravox', 'Go to Maintenance') }}
+					{{ t('intravox', 'Go to maintenance') }}
 				</a>
 			</span>
 			<button class="license-banner-close" @click="orphanedBannerDismissed = true" :aria-label="t('intravox', 'Dismiss banner')">&times;</button>
@@ -28,7 +28,7 @@
 				:class="['tab-button', { active: activeTab === 'video' }]"
 				@click="activeTab = 'video'">
 				<Video :size="16" />
-				{{ t('intravox', 'Video Services') }}
+				{{ t('intravox', 'Video services') }}
 			</button>
 			<button
 				:class="['tab-button', { active: activeTab === 'engagement' }]"
@@ -46,13 +46,13 @@
 				:class="['tab-button', { active: activeTab === 'demo' }]"
 				@click="activeTab = 'demo'">
 				<PackageVariant :size="16" />
-				{{ t('intravox', 'Demo Data') }}
+				{{ t('intravox', 'Demo data') }}
 			</button>
 			<button
 				:class="['tab-button', { active: activeTab === 'export' }]"
 				@click="activeTab = 'export'">
 				<Download :size="16" />
-				{{ t('intravox', 'Import/Export') }}
+				{{ t('intravox', 'Import/export') }}
 			</button>
 			<button
 				:class="['tab-button', { active: activeTab === 'sharing' }]"
@@ -64,7 +64,7 @@
 				:class="['tab-button', { active: activeTab === 'feeds' }]"
 				@click="activeTab = 'feeds'">
 				<RssBox :size="16" />
-				{{ t('intravox', 'External Feeds') }}
+				{{ t('intravox', 'External feeds') }}
 			</button>
 			<button
 				:class="['tab-button', { active: activeTab === 'support' }]"
@@ -83,39 +83,77 @@
 		<!-- Demo Data Tab -->
 		<div v-if="activeTab === 'demo'" class="tab-content">
 			<div class="settings-section">
-				<h2>{{ t('intravox', 'Demo Data') }}</h2>
+				<h2>{{ t('intravox', 'Demo data') }}</h2>
 
-			<!-- Available languages (Transifex-discovered, admin-curated) -->
+			<!-- Intranet languages (VoxCloud model: all NC languages available,
+			     active = has content, admin picks a recommended primary). -->
 			<div class="available-languages-section">
-				<h3>{{ t('intravox', 'Available languages') }}</h3>
+				<h3>{{ t('intravox', 'Intranet languages') }}</h3>
 				<p class="settings-section-desc">
-					{{ t('intravox', 'These languages are translated for IntraVox via Transifex. Tick the ones you want to enable in your intranet. Disabled languages do not appear in IntraVox menus, navigation, or the demo-data table below. Existing content for a disabled language stays on disk and reappears if you re-enable the language later.') }}
+					{{ t('intravox', 'Your intranet can hold content in any language Nextcloud supports. A language becomes active as soon as it has a homepage. Users see content in their own Nextcloud language; if there is none, they are shown the recommended language below.') }}
 				</p>
-				<div class="available-languages-grid">
-					<label
-						v-for="lang in availableLanguages"
-						:key="lang.code"
-						class="language-checkbox"
-						:class="{ disabled: lang.isDefault }">
-						<input
-							type="checkbox"
-							:checked="pendingLanguageCodes.includes(lang.code)"
-							:disabled="lang.isDefault"
-							@change="toggleLanguage(lang.code, $event.target.checked)" />
-						<span class="language-checkbox-label">{{ lang.name }}</span>
-						<span class="language-checkbox-code">{{ lang.code }}</span>
-						<span v-if="lang.isDefault" class="language-checkbox-default">{{ t('intravox', 'always on') }}</span>
-					</label>
+
+				<!-- Active languages (those with content) -->
+				<div class="active-languages">
+					<span class="active-languages-label">{{ t('intravox', 'Languages with content:') }}</span>
+					<span v-if="languagesWithContent.length === 0" class="active-languages-empty">
+						{{ t('intravox', 'None yet') }}
+					</span>
+					<span
+						v-for="code in languagesWithContent"
+						:key="code"
+						class="active-language-chip">
+						{{ nameForCode(code) }}
+						<span v-if="code === primaryLanguage" class="active-language-primary">{{ t('intravox', 'recommended') }}</span>
+					</span>
 				</div>
-				<div class="available-languages-actions">
+
+				<!-- Recommended (primary) language picker -->
+				<div class="primary-language-row">
+					<label for="primary-language-select" class="primary-language-label">
+						{{ t('intravox', 'Recommended language') }}
+					</label>
+					<select
+						id="primary-language-select"
+						v-model="primaryLanguage"
+						class="primary-language-select"
+						:disabled="savingPrimaryLanguage"
+						@change="savePrimaryLanguage">
+						<option
+							v-for="lang in allAvailableLanguages"
+							:key="lang.code"
+							:value="lang.code">
+							{{ lang.name }}
+						</option>
+					</select>
+				</div>
+
+				<!-- Add a language (creates an empty homepage for it) -->
+				<div class="add-language-row">
+					<label for="add-language-select" class="add-language-label">
+						{{ t('intravox', 'Add a language') }}
+					</label>
+					<select
+						id="add-language-select"
+						v-model="addLanguageCode"
+						class="add-language-select"
+						:disabled="addingLanguage">
+						<option value="" disabled>{{ t('intravox', 'Select a language …') }}</option>
+						<option
+							v-for="lang in addableLanguages"
+							:key="lang.code"
+							:value="lang.code">
+							{{ lang.name }}
+						</option>
+					</select>
 					<NcButton
-						type="primary"
-						:disabled="savingLanguageSelection || !languageSelectionDirty"
-						@click="saveLanguageSelection">
+						type="secondary"
+						:disabled="!addLanguageCode || addingLanguage"
+						@click="addLanguage">
 						<template #icon>
-							<span v-if="savingLanguageSelection" class="icon-loading-small" role="status" :aria-label="t('intravox', 'Loading')"></span>
+							<span v-if="addingLanguage" class="icon-loading-small" role="status" :aria-label="t('intravox', 'Loading')"></span>
 						</template>
-						{{ savingLanguageSelection ? t('intravox', 'Saving…') : t('intravox', 'Save language selection') }}
+						{{ t('intravox', 'Add language') }}
 					</NcButton>
 				</div>
 			</div>
@@ -169,7 +207,7 @@
 									<template #icon>
 										<span v-if="installing === lang.code" class="icon-loading-small" role="status" :aria-label="t('intravox', 'Loading')"></span>
 									</template>
-									{{ installing === lang.code ? t('intravox', 'Installing…') : t('intravox', 'Install') }}
+									{{ installing === lang.code ? t('intravox', 'Installing …') : t('intravox', 'Install') }}
 								</NcButton>
 							</template>
 							<!-- Already installed: reinstall button -->
@@ -181,7 +219,7 @@
 									<template #icon>
 										<span v-if="installing === lang.code" class="icon-loading-small" role="status" :aria-label="t('intravox', 'Loading')"></span>
 									</template>
-									{{ installing === lang.code ? t('intravox', 'Reinstalling…') : t('intravox', 'Reinstall') }}
+									{{ installing === lang.code ? t('intravox', 'Reinstalling …') : t('intravox', 'Reinstall') }}
 								</NcButton>
 							</template>
 							<span v-else class="unavailable">
@@ -197,7 +235,7 @@
 									<span v-if="cleaningStart === lang.code" class="icon-loading-small" role="status" :aria-label="t('intravox', 'Loading')"></span>
 									<Broom v-else :size="16" />
 								</template>
-								{{ cleaningStart === lang.code ? t('intravox', 'Resetting…') : t('intravox', 'Clean Start') }}
+								{{ cleaningStart === lang.code ? t('intravox', 'Resetting …') : t('intravox', 'Clean start') }}
 							</NcButton>
 						</td>
 					</tr>
@@ -238,7 +276,7 @@
 		<!-- Clean Start confirmation dialog -->
 		<NcDialog
 			v-if="cleanStartDialogVisible"
-			:name="t('intravox', 'Clean Start')"
+			:name="t('intravox', 'Clean start')"
 			@closing="cleanStartDialogVisible = false">
 			<template #default>
 				<div class="clean-start-dialog-content">
@@ -272,7 +310,7 @@
 					{{ t('intravox', 'Cancel') }}
 				</NcButton>
 				<NcButton type="error" @click="confirmCleanStart" :disabled="cleanStartConfirmText !== 'DELETE'">
-					{{ t('intravox', 'Delete All & Start Fresh') }}
+					{{ t('intravox', 'Delete all & start fresh') }}
 				</NcButton>
 			</template>
 		</NcDialog>
@@ -331,7 +369,7 @@
 		<!-- Video Services Tab -->
 		<div v-if="activeTab === 'video'" class="tab-content">
 			<div class="settings-section">
-				<h2>{{ t('intravox', 'Video Embed Domains') }}</h2>
+				<h2>{{ t('intravox', 'Video embed domains') }}</h2>
 				<p class="settings-section-desc">
 					{{ t('intravox', 'Configure which video platforms can be embedded in pages. Toggle services on or off.') }}
 				</p>
@@ -445,7 +483,7 @@
 						type="primary"
 						:disabled="savingDomains"
 						@click="saveVideoDomains">
-						{{ savingDomains ? t('intravox', 'Saving…') : t('intravox', 'Save video settings') }}
+						{{ savingDomains ? t('intravox', 'Saving …') : t('intravox', 'Save video settings') }}
 					</NcButton>
 				</div>
 			</div>
@@ -477,7 +515,7 @@
 
 			<!-- Export Section -->
 			<div v-if="exportSubTab === 'export'" class="settings-section">
-				<h2>{{ t('intravox', 'Export Pages') }}</h2>
+				<h2>{{ t('intravox', 'Export pages') }}</h2>
 				<p class="settings-section-desc">
 					{{ t('intravox', 'Export your IntraVox pages for backup or migration.') }}
 				</p>
@@ -533,7 +571,7 @@
 						<template #icon>
 							<Download :size="20" />
 						</template>
-						{{ exporting ? t('intravox', 'Exporting…') : t('intravox', 'Download Export') }}
+						{{ exporting ? t('intravox', 'Exporting …') : t('intravox', 'Download export') }}
 					</NcButton>
 
 					<!-- Export Progress -->
@@ -609,7 +647,7 @@
 						<template #icon>
 							<Upload :size="20" />
 						</template>
-						{{ importing ? t('intravox', 'Importing…') : t('intravox', 'Start Import') }}
+						{{ importing ? t('intravox', 'Importing …') : t('intravox', 'Start import') }}
 					</NcButton>
 
 					<!-- Import Progress -->
@@ -638,7 +676,7 @@
 		<!-- Engagement Tab -->
 		<div v-if="activeTab === 'engagement'" class="tab-content">
 			<div class="settings-section">
-				<h2>{{ t('intravox', 'Reactions & Comments') }}</h2>
+				<h2>{{ t('intravox', 'Reactions & comments') }}</h2>
 				<p class="settings-section-desc">
 					{{ t('intravox', 'Configure how users can interact with pages through reactions and comments.') }}
 				</p>
@@ -647,7 +685,7 @@
 				<div class="engagement-group">
 					<h3 class="engagement-group-header">
 						<span class="engagement-icon">👍</span>
-						{{ t('intravox', 'Page Reactions') }}
+						{{ t('intravox', 'Page reactions') }}
 					</h3>
 					<div class="engagement-option">
 						<NcCheckboxRadioSwitch
@@ -697,7 +735,7 @@
 						type="primary"
 						:disabled="savingEngagement"
 						@click="saveEngagementSettings">
-						{{ savingEngagement ? t('intravox', 'Saving…') : t('intravox', 'Save engagement settings') }}
+						{{ savingEngagement ? t('intravox', 'Saving …') : t('intravox', 'Save engagement settings') }}
 					</NcButton>
 				</div>
 			</div>
@@ -706,7 +744,7 @@
 		<!-- Publication Tab -->
 		<div v-if="activeTab === 'publication'" class="tab-content">
 			<div class="settings-section">
-				<h2>{{ t('intravox', 'Publication Date Fields') }}</h2>
+				<h2>{{ t('intravox', 'Publication date fields') }}</h2>
 				<p class="settings-section-desc">
 					{{ t('intravox', 'Configure MetaVox fields used for publication date filtering in the News widget.') }}
 				</p>
@@ -723,12 +761,12 @@
 					<!-- Loading state -->
 					<div v-if="loadingMetavoxFields" class="loading-fields">
 						<span class="icon-loading-small" role="status" :aria-label="t('intravox', 'Loading')"></span>
-						{{ t('intravox', 'Loading MetaVox fields…') }}
+						{{ t('intravox', 'Loading MetaVox fields …') }}
 					</div>
 
 					<!-- No date fields available -->
 					<NcNoteCard v-else-if="dateFields.length === 0" type="warning">
-						{{ t('intravox', 'No date fields found in MetaVox. Create date fields in MetaVox first and assign them to the IntraVox groupfolder.') }}
+						{{ t('intravox', 'No date fields found in MetaVox. Create date fields in MetaVox first and assign them to the IntraVox Team folder.') }}
 					</NcNoteCard>
 
 					<template v-else>
@@ -785,7 +823,7 @@
 								type="primary"
 								:disabled="savingPublication"
 								@click="savePublicationSettings">
-								{{ savingPublication ? t('intravox', 'Saving…') : t('intravox', 'Save publication settings') }}
+								{{ savingPublication ? t('intravox', 'Saving …') : t('intravox', 'Save publication settings') }}
 							</NcButton>
 						</div>
 					</template>
@@ -798,14 +836,14 @@
 		<!-- Sharing Tab -->
 		<div v-if="activeTab === 'sharing'" class="tab-content">
 			<div class="settings-section">
-				<h2>{{ t('intravox', 'Public Share Links') }}</h2>
+				<h2>{{ t('intravox', 'Public share links') }}</h2>
 				<p class="settings-section-desc">
 					{{ t('intravox', 'Overview of all active Nextcloud share links on IntraVox content.') }}
 				</p>
 
 				<div v-if="loadingShares" class="shares-loading">
 					<span class="icon-loading-small" role="status" :aria-label="t('intravox', 'Loading')"></span>
-					{{ t('intravox', 'Loading shares…') }}
+					{{ t('intravox', 'Loading shares …') }}
 				</div>
 
 				<NcNoteCard v-else-if="activeShares.length === 0" type="info">
@@ -859,7 +897,7 @@
 		<!-- External Feeds Tab -->
 		<div v-if="activeTab === 'feeds'" class="tab-content">
 			<div class="settings-section">
-				<h2>{{ t('intravox', 'External Feed Connections') }}</h2>
+				<h2>{{ t('intravox', 'External feed connections') }}</h2>
 				<p class="settings-section-desc">
 					{{ t('intravox', 'Configure connections to external systems (LMS, RSS sources). These connections can be used by the Feed widget on any page.') }}
 				</p>
@@ -907,7 +945,7 @@
 							</div>
 							<div v-else class="form-group full-width">
 								<label :for="'conn-url-' + index">{{ t('intravox', 'Base URL') }}</label>
-								<input :id="'conn-url-' + index" v-model="conn.baseUrl" type="url" :placeholder="conn.type === 'jira' ? 'https://your-org.atlassian.net' : t('intravox', 'https://lms.example.com')" @input="onBaseUrlInput(conn)" />
+								<input :id="'conn-url-' + index" v-model="conn.baseUrl" type="url" :placeholder="conn.type === 'jira' ? 'https://your-org.atlassian.net' : 'https://lms.example.com'" @input="onBaseUrlInput(conn)" />
 							</div>
 						</div>
 						<!-- Endpoint, Auth & Mapping (non-LMS, non-SharePoint) -->
@@ -920,7 +958,7 @@
 								<div class="fields-grid">
 									<div class="form-group full-width">
 										<label :for="'conn-endpoint-' + index">{{ t('intravox', 'Endpoint path') }}</label>
-										<input :id="'conn-endpoint-' + index" v-model="conn.customEndpoint" type="text" :placeholder="t('intravox', '/api/v1/announcements')" />
+										<input :id="'conn-endpoint-' + index" v-model="conn.customEndpoint" type="text" placeholder="/api/v1/announcements" />
 										<span class="field-hint">{{ t('intravox', 'Path appended to the base URL.') }}</span>
 									</div>
 									<div v-if="conn.authMethod !== 'client_credentials'" class="form-group">
@@ -934,7 +972,7 @@
 									</div>
 									<div v-if="conn.authMethod === 'apikey'" class="form-group">
 										<label :for="'conn-apikeyheader-' + index">{{ t('intravox', 'API key header name') }}</label>
-										<input :id="'conn-apikeyheader-' + index" v-model="conn.apiKeyHeader" type="text" :placeholder="t('intravox', 'X-API-Key')" />
+										<input :id="'conn-apikeyheader-' + index" v-model="conn.apiKeyHeader" type="text" placeholder="X-API-Key" />
 									</div>
 								</div>
 							</div>
@@ -998,7 +1036,7 @@
 									<input :id="'conn-jira-email-' + index" v-model="conn.jiraEmail" type="email" :placeholder="t('intravox', 'you@example.com')" />
 								</div>
 								<div v-if="['moodle', 'canvas', 'brightspace'].includes(conn.type) || ['bearer', 'basic', 'apikey'].includes(conn.authMethod)" class="form-group">
-									<label :for="'conn-token-' + index">{{ t('intravox', 'API Token') }}</label>
+									<label :for="'conn-token-' + index">{{ t('intravox', 'API token') }}</label>
 									<input :id="'conn-token-' + index" v-model="conn.token" type="password" :placeholder="conn.hasToken ? t('intravox', '(unchanged)') : t('intravox', 'Enter API token')" />
 								</div>
 								<div v-if="['moodle', 'canvas', 'brightspace'].includes(conn.type)" class="form-group">
@@ -1015,7 +1053,7 @@
 										<input :id="'conn-clientid-' + index" v-model="conn.clientId" type="text" :placeholder="t('intravox', 'Client ID from LMS')" />
 									</div>
 									<div class="form-group">
-										<label :for="'conn-clientsecret-' + index">{{ t('intravox', 'OAuth2 Client Secret') }}</label>
+										<label :for="'conn-clientsecret-' + index">{{ t('intravox', 'OAuth2 client secret') }}</label>
 										<input :id="'conn-clientsecret-' + index" v-model="conn.clientSecret" type="password" :placeholder="conn.hasClientCredentials ? t('intravox', '(unchanged)') : t('intravox', 'Client secret from LMS')" />
 									</div>
 									<div class="form-group full-width">
@@ -1037,15 +1075,15 @@
 								<template v-if="conn.authMethod === 'client_credentials'">
 									<div class="form-group">
 										<label :for="'conn-tenantid-' + index">{{ t('intravox', 'Tenant ID') }}</label>
-										<input :id="'conn-tenantid-' + index" v-model="conn.tenantId" type="text" :placeholder="t('intravox', 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx')" />
-										<span class="field-hint">{{ t('intravox', 'Azure AD / Entra ID Tenant ID. Found in Azure Portal → App registrations.') }}</span>
+										<input :id="'conn-tenantid-' + index" v-model="conn.tenantId" type="text" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" />
+										<span class="field-hint">{{ t('intravox', 'Azure AD/Entra ID tenant ID. Found in Azure Portal → App registrations.') }}</span>
 									</div>
 									<div class="form-group">
 										<label :for="'conn-cc-clientid-' + index">{{ t('intravox', 'Client ID') }}</label>
 										<input :id="'conn-cc-clientid-' + index" v-model="conn.clientId" type="text" :placeholder="t('intravox', 'Application (client) ID')" />
 									</div>
 									<div class="form-group">
-										<label :for="'conn-cc-clientsecret-' + index">{{ t('intravox', 'Client Secret') }}</label>
+										<label :for="'conn-cc-clientsecret-' + index">{{ t('intravox', 'Client secret') }}</label>
 										<input :id="'conn-cc-clientsecret-' + index" v-model="conn.clientSecret" type="password" :placeholder="conn.hasClientCredentials ? t('intravox', '(unchanged)') : t('intravox', 'Client secret value')" />
 									</div>
 								</template>
@@ -1058,7 +1096,7 @@
 							<template #icon>
 								<span v-if="testingConnection === index" class="icon-loading-small" role="status" :aria-label="t('intravox', 'Loading')"></span>
 							</template>
-							{{ testingConnection === index ? t('intravox', 'Testing…') : t('intravox', 'Test connection') }}
+							{{ testingConnection === index ? t('intravox', 'Testing …') : t('intravox', 'Test connection') }}
 						</NcButton>
 						<span v-if="!conn.id" class="field-hint">{{ t('intravox', 'Save connections first to test') }}</span>
 					</div>
@@ -1079,7 +1117,7 @@
 						{{ t('intravox', '+ Add connection') }}
 					</NcButton>
 					<NcButton type="primary" @click="saveFeedConnections" :disabled="feedConnectionsSaving">
-						{{ feedConnectionsSaving ? t('intravox', 'Saving…') : t('intravox', 'Save connections') }}
+						{{ feedConnectionsSaving ? t('intravox', 'Saving …') : t('intravox', 'Save connections') }}
 					</NcButton>
 					<span class="feed-connection-actions-spacer"></span>
 					<NcButton type="tertiary" @click="exportFeedConnections" :disabled="feedConnections.length === 0">
@@ -1096,7 +1134,7 @@
 		<!-- Maintenance Tab -->
 		<div v-if="activeTab === 'maintenance'" class="tab-content">
 			<div class="settings-section">
-				<h2>{{ t('intravox', 'Orphaned GroupFolder Data') }}</h2>
+				<h2>{{ t('intravox', 'Orphaned Team folder data') }}</h2>
 				<p class="settings-section-desc">
 					{{ t('intravox', 'Detect and manage orphaned data from previous IntraVox installations.') }}
 				</p>
@@ -1114,14 +1152,14 @@
 							<span v-if="scanningOrphaned" class="icon-loading-small" role="status" :aria-label="t('intravox', 'Loading')"></span>
 							<DatabaseSearch v-else :size="20" />
 						</template>
-						{{ scanningOrphaned ? t('intravox', 'Scanning…') : t('intravox', 'Scan for Orphaned Data') }}
+						{{ scanningOrphaned ? t('intravox', 'Scanning …') : t('intravox', 'Scan for orphaned data') }}
 					</NcButton>
 				</div>
 
 				<!-- No orphaned data found -->
 				<div v-if="orphanedFolders.length === 0 && orphanedScanned" class="no-orphaned">
 					<NcNoteCard type="success">
-						{{ t('intravox', 'No orphaned GroupFolder data found. Your installation is clean.') }}
+						{{ t('intravox', 'No orphaned Team folder data found. Your installation is clean.') }}
 					</NcNoteCard>
 				</div>
 
@@ -1132,7 +1170,7 @@
 							<th>{{ t('intravox', 'Folder ID') }}</th>
 							<th>{{ t('intravox', 'Content') }}</th>
 							<th>{{ t('intravox', 'Size') }}</th>
-							<th>{{ t('intravox', 'Last Modified') }}</th>
+							<th>{{ t('intravox', 'Last modified') }}</th>
 							<th>{{ t('intravox', 'Actions') }}</th>
 						</tr>
 					</thead>
@@ -1192,7 +1230,7 @@
 		<!-- Orphaned data migrate dialog -->
 		<NcDialog
 			v-if="migrateDialogVisible"
-			:name="t('intravox', 'Recover Orphaned Data')"
+			:name="t('intravox', 'Recover orphaned data')"
 			@closing="migrateDialogVisible = false">
 			<template #default>
 				<div class="migrate-dialog-content">
@@ -1202,7 +1240,7 @@
 						<label for="migrate-language">{{ t('intravox', 'Language to recover') }}</label>
 						<select id="migrate-language" v-model="migrateLanguage" class="migrate-select">
 							<option v-for="lang in migrateFolder?.languages" :key="lang" :value="lang">
-								{{ getLanguageFlag(lang) }} {{ getLanguageName(lang) }} ({{ lang }})
+								{{ getLanguageFlag(lang) }} {{ nameForCode(lang) }} ({{ lang }})
 							</option>
 						</select>
 					</div>
@@ -1235,7 +1273,7 @@
 					{{ t('intravox', 'Cancel') }}
 				</NcButton>
 				<NcButton type="primary" :disabled="migratingOrphaned" @click="executeMigrate">
-					{{ migratingOrphaned ? t('intravox', 'Recovering…') : t('intravox', 'Start Recovery') }}
+					{{ migratingOrphaned ? t('intravox', 'Recovering …') : t('intravox', 'Start recovery') }}
 				</NcButton>
 			</template>
 		</NcDialog>
@@ -1243,7 +1281,7 @@
 		<!-- Orphaned data cleanup confirmation dialog -->
 		<NcDialog
 			v-if="orphanedCleanupDialogVisible"
-			:name="t('intravox', 'Delete Orphaned Data')"
+			:name="t('intravox', 'Delete orphaned data')"
 			@closing="orphanedCleanupDialogVisible = false">
 			<template #default>
 				<div class="cleanup-dialog-content">
@@ -1270,7 +1308,7 @@
 					{{ t('intravox', 'Cancel') }}
 				</NcButton>
 				<NcButton type="error" :disabled="cleaningOrphaned" @click="executeOrphanedCleanup">
-					{{ cleaningOrphaned ? t('intravox', 'Deleting…') : t('intravox', 'Delete Permanently') }}
+					{{ cleaningOrphaned ? t('intravox', 'Deleting …') : t('intravox', 'Delete permanently') }}
 				</NcButton>
 			</template>
 		</NcDialog>
@@ -1361,8 +1399,14 @@ export default {
 			availableLanguages: this.initialState.availableLanguages || [],
 			enabledLanguageCodes: this.initialState.enabledLanguageCodes || ['nl', 'en', 'de', 'fr'],
 			defaultLanguage: this.initialState.defaultLanguage || 'en',
-			pendingLanguageCodes: [],
-			savingLanguageSelection: false,
+			// VoxCloud language model: all NC languages selectable, active = has
+			// content, plus an admin-chosen recommended primary language.
+			allAvailableLanguages: this.initialState.allAvailableLanguages || [],
+			languagesWithContent: this.initialState.languagesWithContent || [],
+			primaryLanguage: this.initialState.primaryLanguage || 'en',
+			savingPrimaryLanguage: false,
+			addLanguageCode: '',
+			addingLanguage: false,
 			installing: null,
 			message: '',
 			messageType: 'success',
@@ -1497,13 +1541,9 @@ export default {
 		enabledDemoLanguages() {
 			return this.languages.filter(l => this.enabledLanguageCodes.includes(l.code))
 		},
-		// True when the user has changed the checkbox grid since the last save.
-		// Compare sorted copies so reorderings don't trigger a false-positive dirty state.
-		languageSelectionDirty() {
-			const a = [...this.enabledLanguageCodes].sort()
-			const b = [...this.pendingLanguageCodes].sort()
-			if (a.length !== b.length) return true
-			return a.some((code, idx) => code !== b[idx])
+		// NC languages that don't have content yet — the "add language" options.
+		addableLanguages() {
+			return this.allAvailableLanguages.filter(l => !this.languagesWithContent.includes(l.code))
 		},
 		reinstallLanguageName() {
 			if (!this.reinstallLanguageCode) return ''
@@ -1551,7 +1591,7 @@ export default {
 
 			// Invalid/expired subscription key
 			if (hasKey && s.licenseValid === false) {
-				return { type: 'info', message: this.t('intravox', 'Your IntraVox subscription key needs attention.'), linkText: this.t('intravox', 'Visit Support') }
+				return { type: 'info', message: this.t('intravox', 'Your IntraVox subscription key needs attention.'), linkText: this.t('intravox', 'Visit support') }
 			}
 			// No subscription + page limit exceeded (>=50 pages in any language)
 			if (!hasKey && s.pageCounts) {
@@ -1581,6 +1621,10 @@ export default {
 				this._connectionsTested = true
 				this.testAllConnections()
 			}
+			// Keep the URL hash in sync so the current tab is shareable/deep-linkable.
+			if (window.location.hash !== `#${newTab}`) {
+				window.location.hash = newTab
+			}
 		},
 		// Clear success messages when switching export sub-tabs
 		exportSubTab() {
@@ -1589,45 +1633,65 @@ export default {
 		},
 	},
 	methods: {
-		// Language management (Transifex-discovered languages, admin enable/disable).
-		toggleLanguage(code, checked) {
-			if (checked) {
-				if (!this.pendingLanguageCodes.includes(code)) {
-					this.pendingLanguageCodes = [...this.pendingLanguageCodes, code]
-				}
-			} else {
-				this.pendingLanguageCodes = this.pendingLanguageCodes.filter(c => c !== code)
+		// Tab deep-linking: set activeTab from the URL hash if it names a known tab.
+		applyTabFromHash() {
+			const validTabs = ['video', 'engagement', 'publication', 'demo', 'export', 'sharing', 'support', 'feeds', 'maintenance']
+			const hash = (window.location.hash || '').replace(/^#/, '')
+			if (validTabs.includes(hash) && hash !== this.activeTab) {
+				this.activeTab = hash
 			}
 		},
-		async saveLanguageSelection() {
-			this.savingLanguageSelection = true
+		// Language management (VoxCloud model: all NC languages available,
+		// active = has content, admin picks a recommended primary language).
+		nameForCode(code) {
+			const lang = this.allAvailableLanguages.find(l => l.code === code)
+			return lang ? lang.name : code.toUpperCase()
+		},
+		async savePrimaryLanguage() {
+			this.savingPrimaryLanguage = true
 			try {
 				const response = await axios.post(
-					generateUrl('/apps/intravox/api/languages/enabled'),
-					{ codes: this.pendingLanguageCodes },
+					generateUrl('/apps/intravox/api/languages/primary'),
+					{ code: this.primaryLanguage },
 				)
-				// Server enforces the contract (English always present, dedup,
-				// sort). Adopt whatever it returns as the new ground truth.
-				this.enabledLanguageCodes = response.data.enabled || this.pendingLanguageCodes
-				this.pendingLanguageCodes = [...this.enabledLanguageCodes]
-				this.message = this.t('intravox', 'Language selection saved.')
+				this.primaryLanguage = response.data.primaryLanguage || this.primaryLanguage
+				this.message = this.t('intravox', 'Recommended language saved.')
 				this.messageType = 'success'
-				// Refresh the demo-data status so the table reflects newly-enabled
-				// or newly-hidden languages.
+			} catch (error) {
+				console.error('[AdminSettings] Failed to save primary language:', error)
+				this.message = this.t('intravox', 'Failed to save recommended language.')
+				this.messageType = 'error'
+			} finally {
+				this.savingPrimaryLanguage = false
+			}
+		},
+		async addLanguage() {
+			if (!this.addLanguageCode) return
+			const code = this.addLanguageCode
+			this.addingLanguage = true
+			try {
+				await axios.post(generateUrl(`/apps/intravox/api/languages/${code}/add`))
+				if (!this.languagesWithContent.includes(code)) {
+					this.languagesWithContent = [...this.languagesWithContent, code].sort()
+				}
+				this.addLanguageCode = ''
+				this.message = this.t('intravox', 'Language added.')
+				this.messageType = 'success'
+				// Refresh the demo-data status so the table picks up the new folder.
 				try {
 					const statusResponse = await axios.get(generateUrl('/apps/intravox/api/demo-data/status'))
 					if (Array.isArray(statusResponse.data.languages)) {
 						this.languages = statusResponse.data.languages
 					}
 				} catch (e) {
-					console.warn('[AdminSettings] Could not refresh demo-data status after language toggle:', e)
+					console.warn('[AdminSettings] Could not refresh demo-data status after adding language:', e)
 				}
 			} catch (error) {
-				console.error('[AdminSettings] Failed to save language selection:', error)
-				this.message = this.t('intravox', 'Failed to save language selection.')
+				console.error('[AdminSettings] Failed to add language:', error)
+				this.message = this.t('intravox', 'Failed to add language.')
 				this.messageType = 'error'
 			} finally {
-				this.savingLanguageSelection = false
+				this.addingLanguage = false
 			}
 		},
 		// Feed connections management
@@ -2364,7 +2428,7 @@ export default {
 			this.exporting = true
 			this.exportProgress = 0
 			this.exportComplete = false
-			this.exportStatusText = this.t('intravox', 'Preparing export…')
+			this.exportStatusText = this.t('intravox', 'Preparing export …')
 
 			try {
 				// Choose endpoint based on format
@@ -2386,10 +2450,10 @@ export default {
 						if (progressEvent.lengthComputable) {
 							const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total)
 							this.exportProgress = percentCompleted
-							this.exportStatusText = this.t('intravox', 'Downloading… {percent}%', { percent: percentCompleted })
+							this.exportStatusText = this.t('intravox', 'Downloading … {percent}%', { percent: percentCompleted })
 						} else {
 							// If total size is unknown, show indeterminate progress
-							this.exportStatusText = this.t('intravox', 'Downloading… {size} MB', {
+							this.exportStatusText = this.t('intravox', 'Downloading … {size} MB', {
 								size: (progressEvent.loaded / 1024 / 1024).toFixed(2)
 							})
 						}
@@ -2455,7 +2519,7 @@ export default {
 			this.importing = true
 			this.importProgress = 0
 			this.importResult = null
-			this.importStatusText = this.t('intravox', 'Uploading ZIP file…')
+			this.importStatusText = this.t('intravox', 'Uploading ZIP file …')
 
 			try {
 				const formData = new FormData()
@@ -2473,9 +2537,9 @@ export default {
 							if (progressEvent.lengthComputable) {
 								const uploadPercent = Math.round((progressEvent.loaded * 50) / progressEvent.total)
 								this.importProgress = uploadPercent
-								this.importStatusText = this.t('intravox', 'Uploading… {percent}%', { percent: Math.round((progressEvent.loaded * 100) / progressEvent.total) })
+								this.importStatusText = this.t('intravox', 'Uploading … {percent}%', { percent: Math.round((progressEvent.loaded * 100) / progressEvent.total) })
 							} else {
-								this.importStatusText = this.t('intravox', 'Uploading… {size} MB', {
+								this.importStatusText = this.t('intravox', 'Uploading … {size} MB', {
 									size: (progressEvent.loaded / 1024 / 1024).toFixed(2)
 								})
 							}
@@ -2489,7 +2553,7 @@ export default {
 							// Simulate processing progress
 							const processingProgress = 50 + Math.min(45, Math.floor(Math.random() * 30))
 							this.importProgress = processingProgress
-							this.importStatusText = this.t('intravox', 'Processing import on server…')
+							this.importStatusText = this.t('intravox', 'Processing import on server …')
 						}
 					}
 				)
@@ -2560,15 +2624,6 @@ export default {
 			}
 			return flags[lang] || '🌐'
 		},
-		getLanguageName(lang) {
-			const names = {
-				nl: this.t('intravox', 'Dutch'),
-				en: this.t('intravox', 'English'),
-				de: this.t('intravox', 'German'),
-				fr: this.t('intravox', 'French'),
-			}
-			return names[lang] || lang
-		},
 		// Orphaned data management methods
 		async checkOrphanedData() {
 			try {
@@ -2612,9 +2667,7 @@ export default {
 					{ language: this.migrateLanguage, mode: this.migrateMode }
 				)
 				if (response.data.success) {
-					showSuccess(this.t('intravox', 'Data recovered: {files} files migrated', {
-						files: response.data.migratedFiles
-					}))
+					showSuccess(this.n('intravox', 'Data recovered: %n file migrated', 'Data recovered: %n files migrated', response.data.migratedFiles))
 					this.migrateDialogVisible = false
 					await this.scanOrphanedFolders()
 					await this.refreshStatus()
@@ -2657,17 +2710,21 @@ export default {
 		},
 	},
 	mounted() {
+		// Open the tab named in the URL hash (e.g. .../settings/admin/intravox#demo)
+		// so every tab is deep-linkable. Falls back to the default tab otherwise.
+		this.applyTabFromHash()
+		window.addEventListener('hashchange', this.applyTabFromHash)
+
 		this.loadExportLanguages()
 		this.loadLicenseStats()
 		this.loadFeedConnections()
 		this.checkOrphanedData()
-		// Seed the pending selection so the checkbox grid renders the current state.
-		this.pendingLanguageCodes = [...this.enabledLanguageCodes]
 		// Prevent accidental navigation during export (use bound handler for proper cleanup)
 		this.boundBeforeUnloadHandler = this.handleBeforeUnload.bind(this)
 		window.addEventListener('beforeunload', this.boundBeforeUnloadHandler)
 	},
 	beforeUnmount() {
+		window.removeEventListener('hashchange', this.applyTabFromHash)
 		// Clean up event listener with the same bound function reference
 		if (this.boundBeforeUnloadHandler) {
 			window.removeEventListener('beforeunload', this.boundBeforeUnloadHandler)
@@ -2825,56 +2882,62 @@ export default {
 	margin: 0 0 8px 0;
 }
 
-.available-languages-grid {
-	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-	gap: 8px 16px;
+.active-languages {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
 	margin: 12px 0 16px 0;
 }
 
-.language-checkbox {
-	display: flex;
-	align-items: center;
-	gap: 8px;
-	padding: 8px 10px;
-	border-radius: var(--border-radius);
-	background-color: var(--color-background-hover);
-	cursor: pointer;
-	user-select: none;
-}
-
-.language-checkbox.disabled {
-	cursor: not-allowed;
-	opacity: 0.8;
-}
-
-.language-checkbox input[type="checkbox"] {
-	margin: 0;
-}
-
-.language-checkbox-label {
-	flex: 1;
-	color: var(--color-main-text);
-}
-
-.language-checkbox-code {
-	font-family: var(--font-face-monospace, monospace);
-	font-size: 0.85em;
+.active-languages-label {
 	color: var(--color-text-maxcontrast);
-	background-color: var(--color-background-dark);
-	padding: 2px 6px;
-	border-radius: var(--border-radius);
 }
 
-.language-checkbox-default {
-	font-size: 0.8em;
+.active-languages-empty {
 	color: var(--color-text-maxcontrast);
 	font-style: italic;
 }
 
-.available-languages-actions {
+.active-language-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 4px 10px;
+	border-radius: var(--border-radius-pill, 16px);
+	background-color: var(--color-background-hover);
+	color: var(--color-main-text);
+}
+
+.active-language-primary {
+	font-size: 0.8em;
+	color: var(--color-primary-element);
+	font-weight: 600;
+}
+
+.primary-language-row,
+.add-language-row {
 	display: flex;
-	gap: 8px;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 10px;
+	margin: 12px 0;
+}
+
+.primary-language-label,
+.add-language-label {
+	min-width: 180px;
+	color: var(--color-main-text);
+}
+
+.primary-language-select,
+.add-language-select {
+	min-width: 200px;
+	padding: 6px 8px;
+	border-radius: var(--border-radius);
+	border: 1px solid var(--color-border-dark);
+	background-color: var(--color-main-background);
+	color: var(--color-main-text);
 }
 
 .demo-data-table {

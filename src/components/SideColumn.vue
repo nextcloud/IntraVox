@@ -52,7 +52,7 @@
 					<template #icon>
 						<Plus :size="20" />
 					</template>
-					{{ t('Add Widget') }}
+					{{ t('Add widget') }}
 				</NcButton>
 			</div>
 

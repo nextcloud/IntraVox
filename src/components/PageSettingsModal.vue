@@ -1,7 +1,7 @@
 <template>
 	<NcDialog
 		:open="true"
-		:name="t('intravox', 'Page Settings')"
+		:name="t('intravox', 'Page settings')"
 		size="normal"
 		@close="$emit('close')">
 		<!-- Hidden element to capture initial focus and blur it -->

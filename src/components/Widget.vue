@@ -7,7 +7,7 @@
         v-model="localContent"
         :editable="true"
         :compact="isCompactMode"
-        :placeholder="t('Enter text…')"
+        :placeholder="t('Enter text …')"
         @focus="$emit('focus')"
         @blur="onBlur"
       />

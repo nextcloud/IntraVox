@@ -3,16 +3,18 @@
  * Generate translationfiles/templates/intravox.pot from l10n/en.json + PHP scan.
  *
  * Why this exists: `xgettext` chokes on Vue templates (HTML/directive syntax
- * looks like broken JS to it), so we can't run it against `src/`. But the
- * webpack build pipeline already extracts every `t('intravox', '...')` call
- * into l10n/en.json — that's the canonical set of frontend-translatable
- * strings. We use that as source-of-truth for the POT.
+ * looks like broken JS to it), so we can't run it against `src/`. Instead,
+ * scripts/extract-en-json.js scans src/ + lib/ for every t()/n()/$t()/$n() call
+ * and writes l10n/en.json — the canonical set of translatable strings. We use
+ * that as the source-of-truth for the POT.
  *
- * PHP `->t('...')` calls live in lib/ and aren't captured by webpack. For
- * those we run xgettext on lib/**\/*.php and merge the result in.
+ * IMPORTANT: l10n/en.json is a generated build artifact (the NC Transifex bot
+ * deletes it after each sync, and .gitignore keeps it out of git). Run
+ * `npm run l10n:extract` first, or just `npm run pot` which chains both.
  *
  * Usage:
- *   node scripts/generate-pot.js
+ *   npm run pot                    (recommended — regenerates en.json, then POT)
+ *   node scripts/generate-pot.js   (assumes l10n/en.json already exists)
  *
  * Output: translationfiles/templates/intravox.pot (overwrites previous)
  */
@@ -122,6 +124,9 @@ const pluralBody = sortedPlurals
     .map(s => poPluralEntry(s, pluralBySingular.get(s)))
     .join('\n');
 const body = [singularBody, pluralBody].filter(Boolean).join('\n');
+// The translationfiles/ tree is gitignored and the bot removes it after sync,
+// so it may not exist on a fresh checkout — create it before writing.
+fs.mkdirSync(path.dirname(POT), { recursive: true });
 fs.writeFileSync(POT, header + body);
 console.log(`Wrote ${POT}`);
 console.log(`Total msgids: ${sorted.length + sortedPlurals.length + 1} (incl. header)`);

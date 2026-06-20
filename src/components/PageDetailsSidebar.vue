@@ -18,7 +18,7 @@
       </template>
 
       <div v-if="loadingMetadata" class="loading">
-        {{ t('Loading properties…') }}
+        {{ t('Loading properties …') }}
       </div>
 
       <div v-else-if="metadataError" class="error-message">
@@ -113,7 +113,7 @@
       </template>
       <div ref="metavoxContainer" class="metavox-container">
         <div v-if="loadingMetaVox" class="loading">
-          {{ t('Loading MetaVox…') }}
+          {{ t('Loading MetaVox …') }}
         </div>
         <div v-else-if="!metaVoxInstalled" class="empty-state">
           <p>{{ t('MetaVox app is not installed') }}</p>
@@ -133,7 +133,7 @@
 
       <div class="versions-container">
         <div v-if="loadingVersions" class="loading">
-          {{ t('Loading versions…') }}
+          {{ t('Loading versions …') }}
         </div>
 
         <div v-else-if="versionError" class="error-message">
@@ -205,7 +205,7 @@
   <!-- Restore Version Confirmation Dialog -->
   <NcDialog
     v-if="showRestoreDialog"
-    :name="t('Restore Version')"
+    :name="t('Restore version')"
     :message="t('A backup of the current version will be created before restoring. Do you want to continue?')"
     :buttons="[
       {

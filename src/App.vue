@@ -3,8 +3,10 @@
     <a href="#intravox-main-content" class="skip-link">{{ t('Skip to main content') }}</a>
 
     <!-- Sticky topbar wraps header + navigation so navigating between pages
-         doesn't require scrolling all the way back up on long pages. -->
-    <div class="intravox-topbar">
+         doesn't require scrolling all the way back up on long pages.
+         Hidden when the language-fallback notice is showing — it is a
+         full-screen, self-contained state with no page to act on. -->
+    <div v-if="!showLanguageFallback" class="intravox-topbar">
 
     <!-- Header with page title and actions -->
     <header class="intravox-header">
@@ -52,7 +54,7 @@
           <template #icon>
             <Pencil :size="20" />
           </template>
-          {{ t('Edit Page') }}
+          {{ t('Edit page') }}
         </NcButton>
 
         <!-- Page Actions Menu (3-dot menu) -->
@@ -109,11 +111,18 @@
     <!-- Main content area with sidebar -->
     <div class="app-content-wrapper">
       <div v-if="loading" class="loading" role="status" aria-live="polite">
-        {{ t('Loading…') }}
+        {{ t('Loading …') }}
       </div>
 
       <!-- Welcome screen when no pages exist (first install) -->
       <WelcomeScreen v-else-if="showWelcomeScreen" />
+
+      <!-- Language fallback: user's language has no content, another does -->
+      <LanguageFallbackNotice v-else-if="showLanguageFallback"
+                              :own-language="languageContentStatus.language"
+                              :languages-with-content="languageContentStatus.languagesWithContent"
+                              :language-names="languageContentStatus.languageNames"
+                              :is-admin="languageContentStatus.isAdmin === true" />
 
       <div v-else-if="error" class="error" role="alert">
         {{ error }}
@@ -155,7 +164,7 @@
         v-show="currentPage && !loading && !error"
         :is-open="showDetailsSidebar"
         :page-id="currentPage?.uniqueId"
-        :page-name="currentPage?.title || t('Untitled Page')"
+        :page-name="currentPage?.title || t('Untitled page')"
         :initial-tab="sidebarInitialTab"
         @close="handleCloseSidebar"
         @version-restored="handleVersionRestored"
@@ -260,6 +269,7 @@ const NewPageModal = defineAsyncComponent(() => import('./components/NewPageModa
 const NavigationEditor = defineAsyncComponent(() => import('./components/NavigationEditor.vue'));
 const PageDetailsSidebar = defineAsyncComponent(() => import('./components/PageDetailsSidebar.vue'));
 const WelcomeScreen = defineAsyncComponent(() => import('./components/WelcomeScreen.vue'));
+const LanguageFallbackNotice = defineAsyncComponent(() => import('./components/LanguageFallbackNotice.vue'));
 const PageSettingsModal = defineAsyncComponent(() => import('./components/PageSettingsModal.vue'));
 const SaveAsTemplateModal = defineAsyncComponent(() => import('./components/SaveAsTemplateModal.vue'));
 const FeedSettings = defineAsyncComponent(() => import('./components/FeedSettings.vue'));
@@ -292,6 +302,7 @@ export default {
     PageDetailsSidebar,
     Breadcrumb,
     WelcomeScreen,
+    LanguageFallbackNotice,
     PageSettingsModal,
     SaveAsTemplateModal,
     ShareButton,
@@ -319,6 +330,10 @@ export default {
       canEditNavigation: false,
       showNavigationEditor: false,
       currentLanguage: document.documentElement.lang || 'en',
+      // Language content status (drives the landing-page fallback notice).
+      // null until loaded; shape: { language, hasContent, languagesWithContent,
+      // primaryLanguage, languageNames }.
+      languageContentStatus: null,
       footerContent: '',
       canEditFooter: false,
       // Version preview state
@@ -404,9 +419,27 @@ export default {
      */
     showWelcomeScreen() {
       return !this.loading && this.pages.length === 0 && !this.error;
+    },
+    /**
+     * Show the language-fallback notice when the user's own language has no
+     * real (editor-authored) content but at least one other language does.
+     * This replaces the silent "generic placeholder page" the user would
+     * otherwise see when content exists only in another language.
+     */
+    showLanguageFallback() {
+      const s = this.languageContentStatus;
+      if (this.loading || this.error || !s) {
+        return false;
+      }
+      return !s.hasContent && (s.languagesWithContent || []).length > 0;
     }
   },
   async mounted() {
+    // Load content status FIRST so loadPages knows whether the user's language
+    // has content. If it doesn't, we show the fallback notice instead of trying
+    // to select a home page (which would 404 when only other languages exist).
+    await this.loadContentStatus();
+
     // Load pages, navigation, footer, and settings in parallel
     try {
       await Promise.all([
@@ -509,6 +542,15 @@ export default {
           if (!targetPage || !targetPage.uniqueId) {
             console.error('IntraVox: No valid page found to load', { targetPage, pages: this.pages });
             this.error = this.t('No valid pages found. Pages might be missing uniqueId.');
+            return;
+          }
+
+          // If the user's language has no content, the fallback notice takes
+          // over the screen — don't try to select a page (the pages list here
+          // belongs to a fallback language and selecting it would be confusing,
+          // and a stale cache could even 404).
+          if (this.showLanguageFallback) {
+            this.loading = false;
             return;
           }
 
@@ -617,7 +659,11 @@ export default {
         this.updatePageMetadata();
       } catch (err) {
         console.error('IntraVox: Error selecting page:', err);
-        showError(this.t('Could not load page: {error}', { error: err.message }));
+        // Suppress the toast when the language-fallback notice owns the screen:
+        // there is no page to load and the notice already explains why.
+        if (!this.showLanguageFallback) {
+          showError(this.t('Could not load page: {error}', { error: err.message }));
+        }
       } finally {
         this.loading = false;
       }
@@ -1229,6 +1275,8 @@ export default {
     handleLanguageChange() {
       // Only reload navigation - pages structure doesn't change with language
       this.loadNavigation();
+      // The fallback notice depends on the user's language, so refresh it too.
+      this.loadContentStatus();
       // Force Vue to re-render all translated strings
       this.$forceUpdate();
     },
@@ -1351,6 +1399,19 @@ export default {
         CacheService.set('engagement-settings', response.data);
       } catch (err) {
         // Silent fail - use defaults
+      }
+    },
+    /**
+     * Load the language content status that drives the fallback notice:
+     * does the user's language have real content, and which languages do?
+     */
+    async loadContentStatus() {
+      try {
+        const response = await axios.get(generateUrl('/apps/intravox/api/languages/content-status'));
+        this.languageContentStatus = response.data;
+      } catch (err) {
+        // Silent fail - notice simply won't show
+        this.languageContentStatus = null;
       }
     },
     async handlePageSettingsSave(settings) {

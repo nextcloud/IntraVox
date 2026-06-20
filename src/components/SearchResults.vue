@@ -1,7 +1,7 @@
 <template>
   <NcModal
     v-if="show"
-    :name="t('Search Results')"
+    :name="t('Search results')"
     size="large"
     @close="$emit('close')"
   >
@@ -17,7 +17,7 @@
       <!-- Loading State -->
       <div v-if="loading" class="loading-state">
         <NcLoadingIcon :size="64" />
-        <p>{{ t('Searching…') }}</p>
+        <p>{{ t('Searching …') }}</p>
       </div>
 
       <!-- Empty State -->

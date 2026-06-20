@@ -74,7 +74,7 @@
           <template #icon>
             <Plus :size="20" />
           </template>
-          {{ t('Add Widget') }}
+          {{ t('Add widget') }}
         </NcButton>
       </div>
     </div>
@@ -164,7 +164,7 @@
           <template #icon>
             <Plus :size="20" />
           </template>
-          {{ t('Add Widget') }}
+          {{ t('Add widget') }}
         </NcButton>
       </div>
     </div>
@@ -231,7 +231,7 @@
             v-if="row.collapsible"
             v-model="row.sectionTitle"
             class="row-section-title"
-            :placeholder="t('Section title…')"
+            :placeholder="t('Section title …')"
             :aria-label="t('Section title')"
             @input="onSectionTitleChange(row)"
             @click.stop
@@ -362,7 +362,7 @@
                 <template #icon>
                   <Plus :size="20" />
                 </template>
-                {{ t('Add Widget') }}
+                {{ t('Add widget') }}
               </NcButton>
             </div>
           </div>
@@ -376,7 +376,7 @@
         <template #icon>
           <TableRowPlusAfter :size="20" />
         </template>
-        {{ t('Insert Row') }}
+        {{ t('Insert row') }}
       </NcButton>
     </div>
     </div>
@@ -499,7 +499,7 @@
           <template #icon>
             <Plus :size="20" />
           </template>
-          {{ t('Add Widget') }}
+          {{ t('Add widget') }}
         </NcButton>
       </div>
     </div>

@@ -82,7 +82,7 @@
 				<NcButton type="primary"
 					:disabled="savingLicense"
 					@click="saveLicenseKey">
-					{{ licenseStep === 'saving' ? t('intravox', 'Saving…') : licenseStep === 'validating' ? t('intravox', 'Validating…') : licenseStep === 'activating' ? t('intravox', 'Activating…') : t('intravox', 'Save & activate') }}
+					{{ licenseStep === 'saving' ? t('intravox', 'Saving …') : licenseStep === 'validating' ? t('intravox', 'Validating …') : licenseStep === 'activating' ? t('intravox', 'Activating …') : t('intravox', 'Save & activate') }}
 				</NcButton>
 				<NcButton v-if="licenseStats && licenseStats.hasLicense"
 					type="tertiary"
@@ -122,7 +122,7 @@
 						<NcButton type="secondary"
 							:disabled="sendingTelemetry"
 							@click="sendTelemetryNow">
-							{{ sendingTelemetry ? t('intravox', 'Sending…') : t('intravox', 'Send report now') }}
+							{{ sendingTelemetry ? t('intravox', 'Sending …') : t('intravox', 'Send report now') }}
 						</NcButton>
 					</NcNoteCard>
 					<NcNoteCard v-if="telemetryMessage" :type="telemetryMessageType" class="telemetry-result">
@@ -334,11 +334,14 @@ export default {
 		},
 
 		getLanguageName(lang) {
+			// Plain English endonym-ish labels — intentionally NOT translated:
+			// the language code is shown alongside, and translating the names of
+			// a handful of languages adds churn without value (see issue #63).
 			const names = {
-				nl: this.t('intravox', 'Dutch'),
-				en: this.t('intravox', 'English'),
-				de: this.t('intravox', 'German'),
-				fr: this.t('intravox', 'French'),
+				nl: 'Dutch',
+				en: 'English',
+				de: 'German',
+				fr: 'French',
 			}
 			return names[lang] || lang
 		},

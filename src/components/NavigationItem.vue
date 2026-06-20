@@ -226,7 +226,7 @@ export default {
 
         // Auto-fill title with page name if current title is empty or "New Item"
         const currentTitle = this.localItem.title?.trim() || '';
-        const isNewItem = currentTitle === '' || currentTitle === this.t('New Item');
+        const isNewItem = currentTitle === '' || currentTitle === this.t('New item');
         if (isNewItem) {
           this.localItem.title = page.title;
         }

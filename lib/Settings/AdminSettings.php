@@ -9,6 +9,7 @@ use OCA\IntraVox\Service\DemoDataService;
 use OCA\IntraVox\Service\EngagementSettingsService;
 use OCA\IntraVox\Service\LanguageService;
 use OCA\IntraVox\Service\LicenseService;
+use OCA\IntraVox\Service\PageService;
 use OCA\IntraVox\Service\PublicationSettingsService;
 use OCA\IntraVox\Service\TelemetryService;
 use OCP\App\IAppManager;
@@ -26,6 +27,7 @@ class AdminSettings implements IDelegatedSettings {
     private EngagementSettingsService $engagementSettings;
     private LanguageService $languageService;
     private LicenseService $licenseService;
+    private PageService $pageService;
     private PublicationSettingsService $publicationSettings;
     private TelemetryService $telemetryService;
     private IInitialState $initialState;
@@ -37,6 +39,7 @@ class AdminSettings implements IDelegatedSettings {
         EngagementSettingsService $engagementSettings,
         LanguageService $languageService,
         LicenseService $licenseService,
+        PageService $pageService,
         PublicationSettingsService $publicationSettings,
         TelemetryService $telemetryService,
         IInitialState $initialState,
@@ -47,6 +50,7 @@ class AdminSettings implements IDelegatedSettings {
         $this->engagementSettings = $engagementSettings;
         $this->languageService = $languageService;
         $this->licenseService = $licenseService;
+        $this->pageService = $pageService;
         $this->publicationSettings = $publicationSettings;
         $this->telemetryService = $telemetryService;
         $this->initialState = $initialState;
@@ -94,11 +98,17 @@ class AdminSettings implements IDelegatedSettings {
             'licenseKey' => $this->licenseService->getLicenseKey() ?? '',
             'telemetryEnabled' => $this->telemetryService->isEnabled(),
             'telemetryLastReport' => $this->telemetryService->getStatus()['lastReport'] ?? null,
-            // Transifex-discovered languages with NC display names and the
-            // admin's enable/disable state, plus the canonical fallback code.
+            // Legacy (deprecated) Transifex-discovered + enabled state. Kept so
+            // any older frontend bits keep working during the transition.
             'availableLanguages' => $this->languageService->getLanguagesWithMetadata(),
             'enabledLanguageCodes' => $this->languageService->getEnabledLanguages(),
             'defaultLanguage' => $this->languageService->getDefaultLanguage(),
+            // VoxCloud language model: ALL Nextcloud languages are selectable,
+            // a language is "active" once it has content, and the admin picks a
+            // recommended primary (fallback) language.
+            'allAvailableLanguages' => $this->languageService->getAvailableLanguages(),
+            'primaryLanguage' => $this->languageService->getPrimaryLanguage(),
+            'languagesWithContent' => $this->pageService->getLanguageContentStatus()['languagesWithContent'] ?? [],
         ]);
 
         // Load translations for JavaScript

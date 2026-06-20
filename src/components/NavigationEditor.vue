@@ -1,6 +1,6 @@
 <template>
   <NcModal @close="$emit('close')"
-           :name="t('Edit Navigation')"
+           :name="t('Edit navigation')"
            size="large"
            class="navigation-editor-modal">
     <div class="navigation-editor">
@@ -25,7 +25,7 @@
             <template #icon>
               <ContentSave :size="20" />
             </template>
-            {{ t('Save Navigation') }}
+            {{ t('Save navigation') }}
           </NcButton>
         </div>
       </div>
@@ -33,12 +33,12 @@
       <!-- Navigation Items -->
       <div class="editor-section">
         <div class="section-header">
-          <h3>{{ t('Navigation Items') }}</h3>
+          <h3>{{ t('Navigation items') }}</h3>
           <NcButton @click="addTopLevelItem" type="primary">
             <template #icon>
               <Plus :size="20" />
             </template>
-            {{ t('Add Item') }}
+            {{ t('Add item') }}
           </NcButton>
         </div>
 
@@ -125,7 +125,7 @@ export default {
       const newId = `nav_${Date.now()}`;
       this.localNavigation.items.push({
         id: newId,
-        title: t('intravox', 'New Item'),
+        title: t('intravox', 'New item'),
         uniqueId: null,
         url: null,
         children: []
@@ -141,7 +141,7 @@ export default {
         const newId = `nav_${Date.now()}`;
         parent.children.push({
           id: newId,
-          title: t('intravox', 'New Item'),
+          title: t('intravox', 'New item'),
           uniqueId: null,
           url: null,
           children: []

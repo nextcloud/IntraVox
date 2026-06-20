@@ -36,6 +36,10 @@ translationfiles/*
 !translationfiles/templates/
 !translationfiles/templates/*.pot
 
+# l10n/en.json is a generated build artifact (scripts/extract-en-json.js); the
+# NC Transifex bot also deletes it after sync. Never commit it.
+l10n/en.json
+
 # Package lock files (use composer.lock for PHP)
 package-lock.json
 
