@@ -1,0 +1,22 @@
+OC.L10N.register(
+    "intravox",
+    {
+    "Other" : "অন্যান্য",
+    "Sharing" : "ভাগাভাগিরত",
+    "Language" : "ভাষা",
+    "Cancel" : "Cancel",
+    "Add" : "যোগ কর",
+    "Import" : "আমদানি",
+    "Export" : "রপ্তানি",
+    "Name" : "নাম",
+    "Type" : "ধরণ",
+    "Client ID" : "ক্লায়েন্ট পরিচিতি",
+    "Size" : "আকার",
+    "Actions" : "পদক্ষেপসমূহ",
+    "Delete" : "Delete",
+    "Disabled" : "অকার্যকর",
+    "Save" : "Save",
+    "Edit" : "সম্পাদনা",
+    "Send" : "পাঠাও"
+},
+"nplurals=2; plural=(n != 1);");

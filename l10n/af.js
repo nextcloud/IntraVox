@@ -1,0 +1,28 @@
+OC.L10N.register(
+    "intravox",
+    {
+    "PDF" : "PDF",
+    "Text" : "Teks",
+    "Other" : "Ander",
+    "File" : "Lêer",
+    "Language" : "Taal",
+    "Cancel" : "Cancel",
+    "Visit website" : "Besoek webwerf",
+    "Add" : "Voeg toe",
+    "Import" : "Invoer",
+    "Export" : "Voer uit",
+    "Comments" : "Kommentare",
+    "Path" : "Roete",
+    "Active" : "Aktief",
+    "Advanced options" : "Gevorderde opsies",
+    "Client ID" : "Klant-ID",
+    "Actions" : "Aksies",
+    "Delete" : "Delete",
+    "Save" : "Save",
+    "Total" : "Totaal",
+    "Subscription key" : "Intekeningsleutel",
+    "Newest first" : "Nuutste eerste",
+    "Oldest first" : "Oudste eerste",
+    "Send" : "Stuur"
+},
+"nplurals=2; plural=(n != 1);");

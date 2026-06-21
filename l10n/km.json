@@ -1,4 +1,23 @@
 { "translations": {
+    "Other" : "ផ្សេងៗ",
+    "File" : "ឯកសារ",
+    "Sharing" : "ការ​ចែក​រំលែក",
+    "Language" : "ភាសា",
+    "Cancel" : "Cancel",
+    "Add" : "បន្ថែម",
+    "Import" : "នាំយកចូល",
+    "Export" : "នាំចេញ",
+    "Name" : "ឈ្មោះ",
+    "Type" : "ប្រភេទ",
+    "Value" : "តម្លៃ",
+    "Size" : "ទំហំ",
+    "Delete" : "Delete",
+    "Delete permanently" : "លុប​ជា​អចិន្ត្រៃយ៍",
+    "Disabled" : "បាន​បិទ",
+    "Save" : "Save",
+    "_%n minute ago_::_%n minutes ago_" : ["%n នាទី​មុន"],
+    "_%n hour ago_::_%n hours ago_" : ["%n ម៉ោង​មុន"],
+    "Edit" : "កែប្រែ",
     "Send" : "ផ្ញើ"
 },"pluralForm" :"nplurals=1; plural=0;"
 }

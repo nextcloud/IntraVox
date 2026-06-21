@@ -1,0 +1,21 @@
+OC.L10N.register(
+    "intravox",
+    {
+    "Other" : "Ostali",
+    "Link" : "Veza",
+    "Sharing" : "Dijeljenje",
+    "Language" : "Jezik",
+    "Cancel" : "Cancel",
+    "Import" : "Uvezi",
+    "Export" : "Izvezi",
+    "Comments" : "Komentari",
+    "Name" : "Ime",
+    "Size" : "Veličina",
+    "Actions" : "Radnje",
+    "Delete" : "Delete",
+    "Disabled" : "Onemogućeno",
+    "Save" : "Save",
+    "Edit" : "Izmjeni",
+    "Send" : "Pošalji"
+},
+"nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);");

@@ -1,0 +1,26 @@
+OC.L10N.register(
+    "intravox",
+    {
+    "Link" : "Ligamine",
+    "Sharing" : "Compartente",
+    "Language" : "Lingua",
+    "Cancel" : "Cancel",
+    "Visit website" : "Visitar sito web",
+    "Export" : "Exportar",
+    "Comments" : "Commentarios",
+    "Path" : "Sentiero",
+    "Never" : "Nunquam",
+    "Type" : "Typo",
+    "Advanced options" : "Optiones avantiate",
+    "Authentication" : "Authentication",
+    "Size" : "Dimension",
+    "Actions" : "Actiones",
+    "Delete" : "Delete",
+    "Delete permanently" : "Deler permanentemente",
+    "Save" : "Save",
+    "Total" : "Total",
+    "Edit" : "Modificar",
+    "Reply" : "Responde",
+    "Send" : "Inviar"
+},
+"nplurals=2; plural=(n != 1);");

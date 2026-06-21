@@ -1,6 +1,28 @@
 OC.L10N.register(
     "intravox",
     {
+    "Other" : "Aner",
+    "Sharing" : "Gedeelt",
+    "Language" : "Sprooch",
+    "Cancel" : "Cancel",
+    "Add" : "Dobäisetzen",
+    "Import" : "Import",
+    "Export" : "Exportéieren",
+    "Comments" : "Kommentarer",
+    "Path" : "Pad",
+    "Name" : "Numm",
+    "Type" : "Typ",
+    "Advanced options" : "Erweidert Astellungen",
+    "Client ID" : "Client ID",
+    "Size" : "Gréisst",
+    "Actions" : "Aktiounen",
+    "Delete" : "Delete",
+    "Delete permanently" : "Permanent läschen",
+    "Disabled" : "Deaktivéiert",
+    "Save" : "Save",
+    "_%n hour ago_::_%n hours ago_" : ["%n Stonn hier","%n Stonnen hier"],
+    "_%n day ago_::_%n days ago_" : ["%n Dag hier","%n Deeg hier"],
+    "Edit" : "Änneren",
     "Send" : "Schécken"
 },
 "nplurals=2; plural=(n != 1);");

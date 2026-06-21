@@ -1,9 +1,25 @@
 OC.L10N.register(
     "intravox",
     {
+    "Other" : "වෙනත්",
     "Link" : "සබැඳිය",
-    "French" : "ප්‍රංශ",
+    "File" : "ගොනුව",
+    "Loading" : "පූරණය වෙමින්",
+    "Language" : "භාෂාව",
+    "Cancel" : "Cancel",
+    "Remove" : "ඉවත් කරන්න",
+    "Add" : "එකතු කරන්න",
+    "Select language" : "භාෂාව තෝරන්න",
+    "Comments" : "අදහස්",
+    "Name" : "නම",
     "Authentication" : "සත්‍යාපනය",
+    "Size" : "ප්‍රමාණය",
+    "Actions" : "ක්‍රියාමාර්ග",
+    "Delete" : "Delete",
+    "Disabled" : "අබල කර ඇත",
+    "Save" : "Save",
+    "Edit" : "සංස්කරණය",
+    "Reply" : "පිළිතුර",
     "Send" : "යවන්න"
 },
 "nplurals=2; plural=(n != 1);");

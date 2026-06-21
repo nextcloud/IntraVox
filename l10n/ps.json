@@ -1,6 +1,15 @@
 { "translations": {
+    "Other" : "نور",
     "Link" : "لېنک",
+    "Cancel" : "Cancel",
+    "Comments" : "تبصرې",
+    "Path" : "درک",
+    "Name" : "نوم",
     "Advanced options" : "نور اختيارات",
+    "Size" : "کچه",
+    "Actions" : "کړنې",
+    "Delete" : "Delete",
+    "Save" : "Save",
     "Send" : "لېږل"
 },"pluralForm" :"nplurals=2; plural=(n != 1);"
 }
