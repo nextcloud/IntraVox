@@ -109,6 +109,11 @@
 							:title="t('intravox', 'Share of the IntraVox interface translated into this language via Transifex. This rises as translators contribute.')">
 							{{ t('intravox', 'UI {percent}%', { percent: coverageFor(code) }) }}
 						</span>
+						<button v-if="canRemoveLanguage(code)"
+							class="active-language-remove"
+							:aria-label="t('intravox', 'Remove language')"
+							:title="t('intravox', 'Remove language')"
+							@click="askRemoveLanguage(code)">×</button>
 					</span>
 				</div>
 
@@ -315,6 +320,34 @@
 				</NcButton>
 				<NcButton type="error" @click="confirmCleanStart" :disabled="cleanStartConfirmText !== 'DELETE'">
 					{{ t('intravox', 'Delete all & start fresh') }}
+				</NcButton>
+			</template>
+		</NcDialog>
+
+		<!-- Remove language confirmation dialog -->
+		<NcDialog
+			v-if="removeLanguageDialogVisible"
+			:name="t('intravox', 'Remove language')"
+			@closing="removeLanguageDialogVisible = false">
+			<template #default>
+				<div class="remove-language-dialog-content">
+					<p>
+						{{ t('intravox', 'Remove all {language} content from your intranet?', { language: removeLanguageName() }) }}
+					</p>
+					<NcNoteCard type="warning">
+						{{ t('intravox', 'This deletes {count} page(s) and their media in this language. The folder is moved to the trash, so it can be restored from Files.', { count: removeLanguagePageCount() }) }}
+					</NcNoteCard>
+					<p class="remove-language-hint">
+						{{ t('intravox', 'For demo languages, you can reinstall the example content any time from the table below.') }}
+					</p>
+				</div>
+			</template>
+			<template #actions>
+				<NcButton type="tertiary" @click="removeLanguageDialogVisible = false">
+					{{ t('intravox', 'Cancel') }}
+				</NcButton>
+				<NcButton type="error" :disabled="removingLanguage" @click="confirmRemoveLanguage">
+					{{ removingLanguage ? t('intravox', 'Removing …') : t('intravox', 'Remove language') }}
 				</NcButton>
 			</template>
 		</NcDialog>
@@ -1408,7 +1441,11 @@ export default {
 			allAvailableLanguages: this.initialState.allAvailableLanguages || [],
 			languagesWithContent: this.initialState.languagesWithContent || [],
 			translationCoverage: this.initialState.translationCoverage || {},
+			pageCountByLanguage: this.initialState.pageCountByLanguage || {},
 			primaryLanguage: this.initialState.primaryLanguage || 'en',
+			removeLanguageDialogVisible: false,
+			removeLanguageCode: '',
+			removingLanguage: false,
 			savingPrimaryLanguage: false,
 			addLanguageCode: '',
 			addingLanguage: false,
@@ -1658,6 +1695,17 @@ export default {
 		coverageFor(code) {
 			return this.translationCoverage[code] ?? 0
 		},
+		// A content language can be removed unless it's the fallback (en) or the
+		// current recommended language — users must always have a fallback.
+		canRemoveLanguage(code) {
+			return code !== 'en' && code !== this.primaryLanguage
+		},
+		removeLanguageName() {
+			return this.nameForCode(this.removeLanguageCode)
+		},
+		removeLanguagePageCount() {
+			return this.pageCountByLanguage[this.removeLanguageCode] ?? 0
+		},
 		async savePrimaryLanguage() {
 			this.savingPrimaryLanguage = true
 			try {
@@ -1681,28 +1729,70 @@ export default {
 			const code = this.addLanguageCode
 			this.addingLanguage = true
 			try {
-				await axios.post(generateUrl(`/apps/intravox/api/languages/${code}/add`))
-				if (!this.languagesWithContent.includes(code)) {
-					this.languagesWithContent = [...this.languagesWithContent, code].sort()
+				const { data } = await axios.post(generateUrl(`/apps/intravox/api/languages/${code}/add`))
+				// Trust the server, not an optimistic guess: the homepage write can
+				// fail (e.g. GroupFolder access), so only celebrate on success.
+				if (data && data.success === false) {
+					throw new Error(data.message || 'Server reported failure')
 				}
 				this.addLanguageCode = ''
 				this.message = this.t('intravox', 'Language added.')
 				this.messageType = 'success'
-				// Refresh the demo-data status so the table picks up the new folder.
-				try {
-					const statusResponse = await axios.get(generateUrl('/apps/intravox/api/demo-data/status'))
-					if (Array.isArray(statusResponse.data.languages)) {
-						this.languages = statusResponse.data.languages
-					}
-				} catch (e) {
-					console.warn('[AdminSettings] Could not refresh demo-data status after adding language:', e)
-				}
+				// Re-read the real state from the server (no optimistic update).
+				await this.refreshLanguageState()
 			} catch (error) {
 				console.error('[AdminSettings] Failed to add language:', error)
 				this.message = this.t('intravox', 'Failed to add language.')
 				this.messageType = 'error'
 			} finally {
 				this.addingLanguage = false
+			}
+		},
+		// Re-read content languages + page counts + demo status from the server,
+		// so the UI reflects what was actually written (used after add/remove).
+		async refreshLanguageState() {
+			try {
+				const { data } = await axios.get(generateUrl('/apps/intravox/api/languages'))
+				if (Array.isArray(data.languagesWithContent)) {
+					this.languagesWithContent = data.languagesWithContent
+				}
+			} catch (e) {
+				console.warn('[AdminSettings] Could not refresh language content status:', e)
+			}
+			try {
+				const statusResponse = await axios.get(generateUrl('/apps/intravox/api/demo-data/status'))
+				if (Array.isArray(statusResponse.data.languages)) {
+					this.languages = statusResponse.data.languages
+				}
+			} catch (e) {
+				console.warn('[AdminSettings] Could not refresh demo-data status:', e)
+			}
+		},
+		// Open the remove-language confirmation dialog for a content language.
+		askRemoveLanguage(code) {
+			this.removeLanguageCode = code
+			this.removeLanguageDialogVisible = true
+		},
+		async confirmRemoveLanguage() {
+			const code = this.removeLanguageCode
+			if (!code) return
+			this.removingLanguage = true
+			try {
+				const { data } = await axios.delete(generateUrl(`/apps/intravox/api/languages/${code}`))
+				if (data && data.success === false) {
+					throw new Error(data.message || 'Server reported failure')
+				}
+				this.message = this.t('intravox', 'Language removed.')
+				this.messageType = 'success'
+				await this.refreshLanguageState()
+			} catch (error) {
+				console.error('[AdminSettings] Failed to remove language:', error)
+				this.message = this.t('intravox', 'Failed to remove language.')
+				this.messageType = 'error'
+			} finally {
+				this.removingLanguage = false
+				this.removeLanguageDialogVisible = false
+				this.removeLanguageCode = ''
 			}
 		},
 		// Feed connections management
@@ -2930,6 +3020,28 @@ export default {
 	font-size: 0.8em;
 	color: var(--color-text-maxcontrast);
 	cursor: help;
+}
+
+.active-language-remove {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 18px;
+	height: 18px;
+	padding: 0;
+	border: none;
+	border-radius: 50%;
+	background: transparent;
+	color: var(--color-text-maxcontrast);
+	font-size: 1.1em;
+	line-height: 1;
+	cursor: pointer;
+}
+
+.active-language-remove:hover,
+.active-language-remove:focus-visible {
+	background-color: var(--color-error);
+	color: var(--color-primary-element-text, #fff);
 }
 
 .primary-language-row,

@@ -60,7 +60,9 @@ class LanguageController extends Controller {
             $status = $this->pageService->getLanguageContentStatus();
             return new DataResponse([
                 'availableLanguages' => $this->languageService->getAvailableLanguages(),
-                'languagesWithContent' => $status['languagesWithContent'] ?? [],
+                // Admin view: active languages (any homepage incl. placeholder),
+                // so a just-added language appears right away.
+                'languagesWithContent' => $status['activeLanguages'] ?? [],
                 'primaryLanguage' => $this->languageService->getPrimaryLanguage(),
                 'defaultLanguage' => $this->languageService->getDefaultLanguage(),
                 // base code => UI translation coverage % (admin indicator)
@@ -122,6 +124,46 @@ class LanguageController extends Controller {
             $this->logger->error('[LanguageController] addLanguage failed: ' . $e->getMessage());
             return new DataResponse(
                 ['error' => 'Failed to add language: ' . $e->getMessage()],
+                Http::STATUS_INTERNAL_SERVER_ERROR
+            );
+        }
+    }
+
+    /**
+     * Remove a language's content folder (all its pages and images) from the
+     * intranet. Destructive — the frontend confirms first. The fallback language
+     * (English) and the current recommended language cannot be removed, so users
+     * always have a content language to fall back to.
+     */
+    public function removeLanguage(string $code): DataResponse {
+        try {
+            if ($code === $this->languageService->getDefaultLanguage()) {
+                return new DataResponse(
+                    ['error' => 'The fallback language (English) cannot be removed.'],
+                    Http::STATUS_BAD_REQUEST
+                );
+            }
+            if ($code === $this->languageService->getPrimaryLanguage()) {
+                return new DataResponse(
+                    ['error' => 'The recommended language cannot be removed. Choose a different recommended language first.'],
+                    Http::STATUS_BAD_REQUEST
+                );
+            }
+
+            $result = $this->homepageService->removeLanguage($code);
+
+            // Drop cached page trees so the language disappears from the UI at once.
+            try {
+                $this->pageService->invalidateAllCaches();
+            } catch (\Throwable $e) {
+                $this->logger->warning('[LanguageController] cache invalidation after removeLanguage failed: ' . $e->getMessage());
+            }
+
+            return new DataResponse($result);
+        } catch (\Throwable $e) {
+            $this->logger->error('[LanguageController] removeLanguage failed: ' . $e->getMessage());
+            return new DataResponse(
+                ['error' => 'Failed to remove language: ' . $e->getMessage()],
                 Http::STATUS_INTERNAL_SERVER_ERROR
             );
         }

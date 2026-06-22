@@ -74,6 +74,7 @@ return [
         ['name' => 'language#contentStatus', 'url' => '/api/languages/content-status', 'verb' => 'GET'],
         ['name' => 'language#setPrimary', 'url' => '/api/languages/primary', 'verb' => 'POST'],
         ['name' => 'language#addLanguage', 'url' => '/api/languages/{code}/add', 'verb' => 'POST'],
+        ['name' => 'language#removeLanguage', 'url' => '/api/languages/{code}', 'verb' => 'DELETE'],
         ['name' => 'language#setEnabled', 'url' => '/api/languages/enabled', 'verb' => 'POST'],
         ['name' => 'language#createEmptyHomepage', 'url' => '/api/languages/{code}/empty-homepage', 'verb' => 'POST'],
 

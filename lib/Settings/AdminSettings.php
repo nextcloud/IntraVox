@@ -108,10 +108,15 @@ class AdminSettings implements IDelegatedSettings {
             // recommended primary (fallback) language.
             'allAvailableLanguages' => $this->languageService->getAvailableLanguages(),
             'primaryLanguage' => $this->languageService->getPrimaryLanguage(),
-            'languagesWithContent' => $this->pageService->getLanguageContentStatus()['languagesWithContent'] ?? [],
+            // Admin chips show ACTIVE languages (any homepage, incl. a just-added
+            // placeholder) — not only real-content ones, so additions show up.
+            'languagesWithContent' => $this->pageService->getLanguageContentStatus()['activeLanguages'] ?? [],
             // base code => how much of the IntraVox UI is translated in that
             // language (Transifex), as a percentage. Drives the coverage hint.
             'translationCoverage' => $this->languageService->getTranslationCoverage(),
+            // base code => number of pages, so the "remove language" dialog can
+            // warn how many pages would be deleted.
+            'pageCountByLanguage' => $this->pageService->getPageCountByLanguage(),
         ]);
 
         // Load translations for JavaScript

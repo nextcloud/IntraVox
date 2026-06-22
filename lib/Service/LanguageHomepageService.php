@@ -3,36 +3,37 @@ declare(strict_types=1);
 
 namespace OCA\IntraVox\Service;
 
-use OCP\Files\IRootFolder;
 use OCP\Files\NotFoundException;
 use Psr\Log\LoggerInterface;
 
 /**
- * Creates the default empty homepage for a single language inside the IntraVox
+ * Creates (and removes) the per-language content folder inside the IntraVox
  * GroupFolder. Shared between the `intravox:create-language-homepages` OCC
- * command (bulk) and the LanguageController (on-demand, when admin activates a
- * new language in the admin UI).
+ * command (bulk) and the LanguageController (on-demand, when an admin adds or
+ * removes a language in the admin UI).
  *
  * Idempotent: if `home.json` already exists in the target language folder, the
- * method returns without overwriting user content.
+ * create method returns without overwriting user content.
  *
  * Content is rendered in the requested language for the four bundled
  * translations (nl/en/de/fr) and falls back to English for all others — until
  * Transifex catches up with bundled defaults for those languages, this is
  * intentional and acceptable.
+ *
+ * The GroupFolder is reached via SetupService::getSharedFolder() (the same path
+ * demo-data installation uses), NOT via a user folder — there is no dedicated
+ * `intravox` system user, so getUserFolder('intravox') fails with "Backends
+ * provided no user object" and the homepage was never actually written.
  */
 class LanguageHomepageService {
-    private const INTRAVOX_USER = 'intravox';
-    private const INTRAVOX_FOLDER = 'IntraVox';
-
-    private IRootFolder $rootFolder;
+    private SetupService $setupService;
     private LoggerInterface $logger;
 
     public function __construct(
-        IRootFolder $rootFolder,
+        SetupService $setupService,
         LoggerInterface $logger
     ) {
-        $this->rootFolder = $rootFolder;
+        $this->setupService = $setupService;
         $this->logger = $logger;
     }
 
@@ -46,14 +47,15 @@ class LanguageHomepageService {
      */
     public function createEmptyHomepage(string $lang): array {
         try {
-            $userFolder = $this->rootFolder->getUserFolder(self::INTRAVOX_USER);
-            $intraVoxFolder = $userFolder->get(self::INTRAVOX_FOLDER);
+            // getSharedFolder() IS the IntraVox content root (the GroupFolder's
+            // `files` dir), so language folders live directly inside it.
+            $contentRoot = $this->setupService->getSharedFolder();
 
             // Get-or-create the language folder.
             try {
-                $langFolder = $intraVoxFolder->get($lang);
+                $langFolder = $contentRoot->get($lang);
             } catch (NotFoundException $e) {
-                $langFolder = $intraVoxFolder->newFolder($lang);
+                $langFolder = $contentRoot->newFolder($lang);
                 $langFolder->newFolder('images');
             }
 
@@ -81,6 +83,43 @@ class LanguageHomepageService {
             return [
                 'success' => false,
                 'created' => false,
+                'message' => 'Failed: ' . $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * Remove a language's entire content folder from the IntraVox GroupFolder.
+     * Deletes `<lang>/` and everything in it (pages, images). The folder goes to
+     * the GroupFolder trash, so it can be restored from Files if needed.
+     *
+     * @return array{success: bool, removed: bool, message: string}
+     *   - removed: was a folder actually deleted? (false when none existed)
+     */
+    public function removeLanguage(string $lang): array {
+        try {
+            $contentRoot = $this->setupService->getSharedFolder();
+
+            if (!$contentRoot->nodeExists($lang)) {
+                return [
+                    'success' => true,
+                    'removed' => false,
+                    'message' => "No content folder for {$lang}, nothing to remove",
+                ];
+            }
+
+            $contentRoot->get($lang)->delete();
+
+            return [
+                'success' => true,
+                'removed' => true,
+                'message' => "Removed content folder for {$lang}",
+            ];
+        } catch (\Throwable $e) {
+            $this->logger->error('[LanguageHomepageService] Failed to remove language ' . $lang . ': ' . $e->getMessage());
+            return [
+                'success' => false,
+                'removed' => false,
                 'message' => 'Failed: ' . $e->getMessage(),
             ];
         }

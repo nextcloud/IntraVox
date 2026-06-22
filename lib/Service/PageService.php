@@ -798,22 +798,51 @@ class PageService {
     }
 
     /**
+     * Whether a language folder has a homepage AT ALL — real OR an auto/placeholder
+     * one (`_generated`). This is the "active language" signal: a language an admin
+     * added via "Add language" has a placeholder homepage and should show up as an
+     * active intranet language even before an editor fills it.
+     */
+    private function languageFolderHasHomepage(\OCP\Files\Folder $langFolder): bool {
+        try {
+            $homeFile = $langFolder->get('home.json');
+        } catch (NotFoundException $e) {
+            return false;
+        }
+        if (!($homeFile instanceof \OCP\Files\File)) {
+            return false;
+        }
+        try {
+            $data = json_decode($homeFile->getContent(), true);
+        } catch (\Throwable $e) {
+            return false;
+        }
+        return is_array($data) && isset($data['title']);
+    }
+
+    /**
      * Language content status for the CURRENT user. Drives the landing-page
      * fallback notice and is the "active = where content is" signal for the
      * VoxCloud language model (replaces the enabled_languages opt-in list).
      *
+     * Two distinct sets:
+     *   - languagesWithContent: only REAL (editor-authored) homepages. The
+     *     fallback notice uses this so a placeholder doesn't mask "no content".
+     *   - activeLanguages: every language with ANY homepage (incl. an added
+     *     placeholder). The admin "Languages with content" chips use this so a
+     *     just-added language appears immediately.
+     *
      * @return array{
      *   language: string,
      *   hasContent: bool,
-     *   languagesWithContent: string[]
+     *   languagesWithContent: string[],
+     *   activeLanguages: string[]
      * }
-     *   - language: the user's resolved IntraVox language (base code)
-     *   - hasContent: does that language have a real homepage?
-     *   - languagesWithContent: every language folder with real content, sorted
      */
     public function getLanguageContentStatus(): array {
         $userLang = $this->getUserLanguage();
         $withContent = [];
+        $active = [];
 
         try {
             $baseFolder = $this->getIntraVoxFolder();
@@ -823,10 +852,13 @@ class PageService {
                 }
                 $name = $item->getName();
                 // Language folders are two-letter base codes (nl, en, de, ...).
-                if (!preg_match('/^[a-z]{2}$/', $name)) {
+                if (!preg_match('/^[a-z]{2}$/', $name) || !($item instanceof \OCP\Files\Folder)) {
                     continue;
                 }
-                if ($item instanceof \OCP\Files\Folder && $this->languageFolderHasRealContent($item)) {
+                if ($this->languageFolderHasHomepage($item)) {
+                    $active[] = $name;
+                }
+                if ($this->languageFolderHasRealContent($item)) {
                     $withContent[] = $name;
                 }
             }
@@ -835,12 +867,48 @@ class PageService {
         }
 
         sort($withContent);
+        sort($active);
 
         return [
             'language' => $userLang,
             'hasContent' => in_array($userLang, $withContent, true),
             'languagesWithContent' => $withContent,
+            'activeLanguages' => $active,
         ];
+    }
+
+    /**
+     * Number of pages per language folder (base code => count). Used by the
+     * admin "remove language" confirmation so it can warn how many pages would
+     * be deleted. Counts the homepage plus every `{name}/{name}.json` subpage.
+     *
+     * @return array<string,int>
+     */
+    public function getPageCountByLanguage(): array {
+        $counts = [];
+        try {
+            $baseFolder = $this->getIntraVoxFolder();
+            foreach ($this->getCachedDirectoryListing($baseFolder) as $item) {
+                if ($item->getType() !== \OCP\Files\FileInfo::TYPE_FOLDER) {
+                    continue;
+                }
+                $name = $item->getName();
+                if (!preg_match('/^[a-z]{2}$/', $name) || !($item instanceof \OCP\Files\Folder)) {
+                    continue;
+                }
+                $pages = [];
+                $this->findPagesInFolder($item, $pages, '');
+                $count = count($pages);
+                // Homepage counts as a page when present (findPagesInFolder skips it).
+                if ($item->nodeExists('home.json')) {
+                    $count++;
+                }
+                $counts[$name] = $count;
+            }
+        } catch (\Throwable $e) {
+            $this->logger->warning('[PageService] getPageCountByLanguage failed: ' . $e->getMessage());
+        }
+        return $counts;
     }
 
     /**
