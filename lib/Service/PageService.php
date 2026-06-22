@@ -429,7 +429,7 @@ class PageService {
         $langCode = explode('_', $lang)[0];
 
         // Guard against malformed values; fall back to the default language.
-        return preg_match('/^[a-z]{2}$/', $langCode) ? $langCode : self::DEFAULT_LANGUAGE;
+        return preg_match('/^[a-z]{2,3}$/', $langCode) ? $langCode : self::DEFAULT_LANGUAGE;
     }
 
     /**
@@ -852,7 +852,7 @@ class PageService {
                 }
                 $name = $item->getName();
                 // Language folders are two-letter base codes (nl, en, de, ...).
-                if (!preg_match('/^[a-z]{2}$/', $name) || !($item instanceof \OCP\Files\Folder)) {
+                if (!preg_match('/^[a-z]{2,3}$/', $name) || !($item instanceof \OCP\Files\Folder)) {
                     continue;
                 }
                 if ($this->languageFolderHasHomepage($item)) {
@@ -893,7 +893,7 @@ class PageService {
                     continue;
                 }
                 $name = $item->getName();
-                if (!preg_match('/^[a-z]{2}$/', $name) || !($item instanceof \OCP\Files\Folder)) {
+                if (!preg_match('/^[a-z]{2,3}$/', $name) || !($item instanceof \OCP\Files\Folder)) {
                     continue;
                 }
                 $pages = [];
@@ -1095,7 +1095,7 @@ class PageService {
                 $lang = $item->getName();
                 // Language folders are two-letter base codes; skip the one we
                 // already searched and any non-language folder.
-                if (!preg_match('/^[a-z]{2}$/', $lang) || $lang === $currentLang) {
+                if (!preg_match('/^[a-z]{2,3}$/', $lang) || $lang === $currentLang) {
                     continue;
                 }
                 if ($item instanceof \OCP\Files\Folder) {
@@ -1365,8 +1365,8 @@ class PageService {
 
         // Check if current page is the home page
         $isHomePage = ($pageId === 'home' ||
-                       preg_match('/^[a-z]{2}\/home$/', $page['path']) ||
-                       preg_match('/^[a-z]{2}$/', $page['path']));
+                       preg_match('/^[a-z]{2,3}\/home$/', $page['path']) ||
+                       preg_match('/^[a-z]{2,3}$/', $page['path']));
 
         // Read home breadcrumb label from navigation.json (first item title)
         // This allows users to customize the label via the navigation editor

@@ -73,6 +73,13 @@ class LanguageHomepageService {
                 $file->putContent(json_encode($content, JSON_PRETTY_PRINT));
             }
 
+            // The new folder is written via the Files API on the GroupFolder's
+            // own mount, but a user's mounted view of that GroupFolder reads from
+            // the file cache — which isn't updated for the new path until a scan.
+            // Without this, the just-added language is invisible until the next
+            // background scan. Scan synchronously so it shows up immediately.
+            $this->scanFolder($langFolder);
+
             return [
                 'success' => true,
                 'created' => true,
@@ -122,6 +129,21 @@ class LanguageHomepageService {
                 'removed' => false,
                 'message' => 'Failed: ' . $e->getMessage(),
             ];
+        }
+    }
+
+    /**
+     * Synchronously scan a freshly written folder into the file cache, so it is
+     * immediately visible from every user's mounted view of the GroupFolder.
+     * Best-effort: logs and continues if the storage doesn't support scanning.
+     */
+    private function scanFolder(\OCP\Files\Folder $folder): void {
+        try {
+            $storage = $folder->getStorage();
+            $scanner = $storage->getScanner();
+            $scanner->scan($folder->getInternalPath(), \OCP\Files\Cache\IScanner::SCAN_RECURSIVE);
+        } catch (\Throwable $e) {
+            $this->logger->warning('[LanguageHomepageService] scan after create failed: ' . $e->getMessage());
         }
     }
 

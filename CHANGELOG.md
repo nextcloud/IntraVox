@@ -24,7 +24,8 @@ When an editor maintained content only in one language (e.g. Dutch) and a user's
 
 ### Fixed
 
-- **"Add language" actually creates the content folder now.** It silently failed before: `LanguageHomepageService` wrote to `getUserFolder('intravox')`, but there is no `intravox` system user ("Backends provided no user object"), so nothing was written — while the UI optimistically showed "Language added". It now writes via `SetupService::getSharedFolder()` (the same GroupFolder path demo-data uses), and the frontend reads the real server state instead of guessing, surfacing an error if the write fails.
+- **"Add language" actually creates the content folder now.** It silently failed before: `LanguageHomepageService` wrote to `getUserFolder('intravox')`, but there is no `intravox` system user ("Backends provided no user object"), so nothing was written — while the UI optimistically showed "Language added". It now writes via `SetupService::getSharedFolder()` (the same GroupFolder path demo-data uses), and the frontend reads the real server state instead of guessing, surfacing an error if the write fails. The new folder is also scanned into the file cache synchronously so it appears immediately (a Files-API write on the GroupFolder mount wasn't visible from a user's mounted view until the next scan).
+- **3-letter language codes are no longer truncated.** Language codes were clipped to two letters (`substr($code, 0, 2)` / `[a-z]{2}` matching), so Asturianu (`ast`) became an invalid `as` folder that didn't match its real code. Base codes are now treated as 2–3 letters throughout (`ast`, `kab`, …), so adding/removing such a language creates and deletes the correct `ast/` folder.
 - Bumped vulnerable dependencies (dompurify, form-data, markdown-it, ws); `npm audit` reports no vulnerabilities.
 
 ### Deprecated

@@ -83,8 +83,10 @@ class LanguageService {
             $files = scandir($l10nPath);
             if ($files !== false) {
                 foreach ($files as $file) {
-                    if (preg_match('/^([a-z]{2}(_[A-Z]{2})?)\.json$/', $file, $matches)) {
-                        $baseLang = substr($matches[1], 0, 2);
+                    // Base codes are 2–3 letters (en, nl, ast); regional variants
+                    // add a suffix (en_GB, es_419). Capture the base part.
+                    if (preg_match('/^([a-z]{2,3})(_[A-Za-z0-9]+)?\.json$/', $file, $matches)) {
+                        $baseLang = $matches[1];
                         if (!in_array($baseLang, $discovered, true)) {
                             $discovered[] = $baseLang;
                         }
@@ -127,7 +129,7 @@ class LanguageService {
         if (is_dir($l10nPath)) {
             $files = scandir($l10nPath) ?: [];
             foreach ($files as $file) {
-                if (!preg_match('/^([a-z]{2})(_[A-Za-z0-9]+)?\.json$/', $file, $m)) {
+                if (!preg_match('/^([a-z]{2,3})(_[A-Za-z0-9]+)?\.json$/', $file, $m)) {
                     continue;
                 }
                 $base = $m[1];
@@ -281,10 +283,14 @@ class LanguageService {
             if (!isset($entry['code'], $entry['name'])) {
                 continue;
             }
-            $code = substr($entry['code'], 0, 2);
-            // Only well-formed base codes; first entry per base code wins
-            // (commonLanguages is iterated first and holds the localised default).
-            if (!preg_match('/^[a-z]{2}$/', $code) || isset($seen[$code])) {
+            // Base code = the part before any region suffix (nl_NL -> nl,
+            // es_419 -> es). Do NOT truncate to 2 chars: some NC base codes are
+            // 3 letters (e.g. 'ast' Asturianu, 'kab' Kabyle) and would otherwise
+            // become an invalid 'as'/'ka' folder.
+            $code = explode('_', $entry['code'])[0];
+            // First entry per base code wins (commonLanguages is iterated first
+            // and holds the localised default).
+            if (!preg_match('/^[a-z]{2,3}$/', $code) || isset($seen[$code])) {
                 continue;
             }
             $seen[$code] = true;
