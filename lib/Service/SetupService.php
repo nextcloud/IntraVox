@@ -496,6 +496,36 @@ class SetupService {
     }
 
     /**
+     * Synchronously rescan the IntraVox groupfolder so file-cache changes (a
+     * just-added or just-removed language folder) are reflected in every user's
+     * mounted view immediately. Unlike the async scanFolder(), this waits for
+     * the scan to finish. Best-effort: logs and returns on any failure.
+     *
+     * A storage-level scan from a user's jailed mount does NOT reliably update
+     * the groupfolder mount cache, so we run the same `groupfolders:scan` the
+     * demo-data import relies on.
+     */
+    public function rescanGroupfolderSync(): void {
+        try {
+            $folderId = $this->getGroupFolderId();
+            $command = sprintf(
+                'php %s/occ groupfolders:scan %d 2>&1',
+                escapeshellarg(\OC::$SERVERROOT),
+                $folderId
+            );
+            exec($command, $output, $returnCode);
+            if ($returnCode !== 0) {
+                $this->logger->warning('[SetupService] sync groupfolder scan returned non-zero', [
+                    'exit' => $returnCode,
+                    'output' => implode("\n", $output ?? []),
+                ]);
+            }
+        } catch (\Throwable $e) {
+            $this->logger->warning('[SetupService] sync groupfolder scan failed: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * Get the IntraVox groupfolder ID
      * @throws \Exception if groupfolder not found
      */
