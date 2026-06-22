@@ -123,8 +123,12 @@ class DemoDataService {
             $this->logger->info('[DemoData] GroupFolder not yet available: ' . $e->getMessage());
         }
 
-        foreach ($this->languageService->getEnabledLanguages() as $lang) {
-            $meta = self::LANGUAGE_META[$lang] ?? ['name' => $lang, 'flag' => '', 'full' => false];
+        // The demo table lists the languages we ship bundled demo content for
+        // (LANGUAGE_META keys), not the deprecated enabled-languages config.
+        // VoxCloud model: a content language is "active" once it has a homepage;
+        // installing demo data is simply one way to create that content.
+        foreach (array_keys(self::LANGUAGE_META) as $lang) {
+            $meta = self::LANGUAGE_META[$lang];
             $exists = false;
             $hasContent = false;
             $hasBundled = $this->hasBundledDemoData($lang);

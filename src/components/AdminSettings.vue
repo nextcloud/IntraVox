@@ -160,12 +160,12 @@
 
 			<h3>{{ t('intravox', 'Demo content') }}</h3>
 			<p class="settings-section-desc">
-				{{ t('intravox', 'Install demo content to quickly set up your intranet with example pages, navigation, and images. Only enabled languages are shown here.') }}
+				{{ t('intravox', 'Install demo content to quickly set up your intranet with example pages, navigation, and images. Bundled demo content is available in the languages listed below.') }}
 			</p>
 
 			<div class="demo-data-info">
 				<p v-if="!setupComplete" class="info-note info-setup">
-					{{ t('intravox', 'The IntraVox Team Folder will be created automatically when you install demo data.') }}
+					{{ t('intravox', 'The IntraVox Team folder will be created automatically when you install demo data.') }}
 				</p>
 			</div>
 
@@ -179,7 +179,7 @@
 					</tr>
 				</thead>
 				<tbody>
-					<tr v-for="lang in enabledDemoLanguages" :key="lang.code">
+					<tr v-for="lang in demoLanguages" :key="lang.code">
 						<td class="language-cell">
 							<span class="flag">{{ lang.flag }}</span>
 							<span class="name">{{ lang.name }}</span>
@@ -1538,8 +1538,10 @@ export default {
 		},
 		// Demo-data table only shows admin-enabled languages. Disabled languages
 		// stay on disk but are hidden from the UI per the language-management contract.
-		enabledDemoLanguages() {
-			return this.languages.filter(l => this.enabledLanguageCodes.includes(l.code))
+		// Languages we ship bundled demo content for (the backend already returns
+		// exactly these — no enabled-list filter in the VoxCloud model).
+		demoLanguages() {
+			return this.languages
 		},
 		// NC languages that don't have content yet — the "add language" options.
 		addableLanguages() {
