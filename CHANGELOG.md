@@ -4,6 +4,15 @@ All notable changes to IntraVox will be documented in this file.
 
 IntraVox is a Nextcloud intranet page builder.
 
+## [1.7.1] - 2026-06-22 — Demo data tab consistency with the VoxCloud language model
+
+Follow-up to 1.7.0. The "Demo content" table in admin settings still used the deprecated `enabled_languages` config to decide which languages to list, so it could disagree with the "Languages with content" view above it (e.g. German content existed but was missing from the table). The table now lists exactly the languages IntraVox ships bundled demo content for (Dutch, English, German, French), independent of any enabled-list.
+
+### Fixed
+
+- **Demo content table no longer driven by the deprecated enabled-languages list.** `DemoDataService::getLanguagesWithStatus()` iterates the bundled-demo languages directly; the misleading "Only enabled languages are shown here" hint is replaced with "Bundled demo content is available in the languages listed below."
+- Corrected "Team Folder" → "Team folder" in the demo-data hint (Nextcloud terminology).
+
 ## [1.7.0] - 2026-06-20 — Clearer landing page for users whose language has no content + VoxCloud language model + translation cleanup
 
 When an editor maintained content only in one language (e.g. Dutch) and a user's Nextcloud language was set to another (e.g. English), the user silently saw a generic placeholder homepage — the editor's real work was invisible and there was no hint that this was a fallback. This release replaces that silent placeholder with a clear notice, aligns IntraVox's language handling with the wider VoxCloud model, and brings all source strings in line with the Nextcloud translation guidelines so the Transifex resource can be unlocked for translators.
