@@ -104,6 +104,7 @@
 
 <script>
 import { NcAvatar, NcButton, NcSelect, NcLoadingIcon } from '@nextcloud/vue'
+import { translate } from '@nextcloud/l10n'
 import CommentTextOutline from 'vue-material-design-icons/CommentTextOutline.vue'
 import Send from 'vue-material-design-icons/Send.vue'
 import Close from 'vue-material-design-icons/Close.vue'
@@ -291,15 +292,8 @@ export default {
 				}
 			}
 		},
-		t(app, str, params = {}) {
-			if (window.t) {
-				return window.t(app, str, params)
-			}
-			let result = str
-			for (const [key, value] of Object.entries(params)) {
-				result = result.replace(`{${key}}`, value)
-			}
-			return result
+		t(app, text, vars) {
+			return translate(app, text, vars)
 		},
 	},
 }

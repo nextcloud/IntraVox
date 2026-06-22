@@ -14,7 +14,7 @@
         :aria-selected="activeTab === 'upload'"
         @click="activeTab = 'upload'"
       >
-        {{ t('Upload') }}
+        {{ t('intravox', 'Upload') }}
       </button>
       <button
         :class="['tab-button', { active: activeTab === 'page' }]"
@@ -22,7 +22,7 @@
         :aria-selected="activeTab === 'page'"
         @click="switchToTab('page')"
       >
-        {{ t('Page media') }}
+        {{ t('intravox', 'Page media') }}
       </button>
       <button
         :class="['tab-button', { active: activeTab === 'resources' }]"
@@ -30,7 +30,7 @@
         :aria-selected="activeTab === 'resources'"
         @click="switchToTab('resources')"
       >
-        {{ t('Shared library') }}
+        {{ t('intravox', 'Shared library') }}
       </button>
     </div>
 
@@ -44,14 +44,14 @@
             type="file"
             :accept="acceptTypes"
             class="file-input"
-            :aria-label="mediaType === 'image' ? t('Select image file') : t('Select video file')"
+            :aria-label="mediaType === 'image' ? t('intravox', 'Select image file') : t('intravox', 'Select video file')"
             @change="handleFileSelect"
           />
 
           <div v-if="!selectedFile" class="upload-prompt" @click="$refs.fileInput.click()">
             <div class="upload-icon">📁</div>
-            <p>{{ mediaType === 'image' ? t('Click to select an image') : t('Click to select a video') }}</p>
-            <p class="hint">{{ t('or drag and drop') }}</p>
+            <p>{{ mediaType === 'image' ? t('intravox', 'Click to select an image') : t('intravox', 'Click to select a video') }}</p>
+            <p class="hint">{{ t('intravox', 'or drag and drop') }}</p>
           </div>
 
           <div v-else class="file-selected">
@@ -62,7 +62,7 @@
                 <div class="file-size">{{ formatFileSize(selectedFile.size) }}</div>
               </div>
             </div>
-            <button type="button" @click="clearFile" class="btn-remove" :aria-label="t('Remove file')">✕</button>
+            <button type="button" @click="clearFile" class="btn-remove" :aria-label="t('intravox', 'Remove file')">✕</button>
           </div>
 
         </div>
@@ -72,13 +72,13 @@
       <div v-if="activeTab === 'page'" class="tab-panel" role="tabpanel">
         <div v-if="isLoadingMedia" class="loading-state">
           <span class="loading-spinner"></span>
-          <p>{{ t('Loading media...') }}</p>
+          <p>{{ t('intravox', 'Loading media...') }}</p>
         </div>
 
         <div v-else-if="filteredPageMedia.length === 0" class="empty-state">
           <div class="empty-icon">📭</div>
-          <p>{{ t('No media files in this page yet') }}</p>
-          <p class="hint">{{ t('Upload files to see them here') }}</p>
+          <p>{{ t('intravox', 'No media files in this page yet') }}</p>
+          <p class="hint">{{ t('intravox', 'Upload files to see them here') }}</p>
         </div>
 
         <div v-else class="media-grid">
@@ -114,7 +114,7 @@
             class="breadcrumb-item"
             @click="navigateToFolder('')"
           >
-            📚 {{ t('Shared library') }}
+            📚 {{ t('intravox', 'Shared library') }}
           </button>
           <span v-for="(segment, index) in breadcrumbSegments" :key="index">
             <span class="breadcrumb-separator">/</span>
@@ -129,13 +129,13 @@
 
         <div v-if="isLoadingMedia" class="loading-state">
           <span class="loading-spinner"></span>
-          <p>{{ t('Loading shared media...') }}</p>
+          <p>{{ t('intravox', 'Loading shared media...') }}</p>
         </div>
 
         <div v-else-if="filteredResourcesMedia.length === 0" class="empty-state">
           <div class="empty-icon">📚</div>
-          <p>{{ t('No media in shared library yet') }}</p>
-          <p class="hint">{{ t('Upload to shared library to see files here') }}</p>
+          <p>{{ t('intravox', 'No media in shared library yet') }}</p>
+          <p class="hint">{{ t('intravox', 'Upload to shared library to see files here') }}</p>
         </div>
 
         <div v-else class="media-grid">
@@ -164,7 +164,7 @@
             <div class="media-info">
               <div class="media-name" :title="item.name">{{ item.name }}</div>
               <div v-if="item.type === 'file'" class="media-size">{{ formatFileSize(item.size) }}</div>
-              <div v-else class="media-type">{{ t('Folder') }}</div>
+              <div v-else class="media-type">{{ t('intravox', 'Folder') }}</div>
             </div>
           </div>
         </div>
@@ -174,7 +174,7 @@
     <!-- Dialog Actions -->
     <template #actions>
       <NcButton @click="handleClose">
-        {{ t('Cancel') }}
+        {{ t('intravox', 'Cancel') }}
       </NcButton>
       <NcButton
         type="primary"
@@ -192,25 +192,25 @@
     <NcDialog
       v-if="showDuplicateDialog"
       :open="showDuplicateDialog"
-      :name="t('File already exists')"
+      :name="t('intravox', 'File already exists')"
       size="small"
       @update:open="showDuplicateDialog = false"
     >
-      <p>{{ t('A file with the name "{filename}" already exists.', { filename: duplicateFilename }) }}</p>
-      <p>{{ t('What would you like to do?') }}</p>
+      <p>{{ t('intravox', 'A file with the name "{filename}" already exists.', { filename: duplicateFilename }) }}</p>
+      <p>{{ t('intravox', 'What would you like to do?') }}</p>
 
       <template #actions>
         <NcButton @click="handleDuplicateCancel">
-          {{ t('Cancel') }}
+          {{ t('intravox', 'Cancel') }}
         </NcButton>
         <NcButton @click="handleDuplicateRename">
-          {{ t('Use different name') }}
+          {{ t('intravox', 'Use different name') }}
         </NcButton>
         <NcButton
           type="error"
           @click="handleDuplicateOverwrite"
         >
-          {{ t('Overwrite') }}
+          {{ t('intravox', 'Overwrite') }}
         </NcButton>
       </template>
     </NcDialog>
@@ -221,7 +221,7 @@
 import { NcDialog, NcButton } from '@nextcloud/vue'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
-import { translate as t } from '@nextcloud/l10n'
+import { translate, translatePlural } from '@nextcloud/l10n'
 import { showError } from '@nextcloud/dialogs'
 
 export default {
@@ -282,12 +282,12 @@ export default {
 
     confirmButtonLabel() {
       if (this.isUploading) {
-        return this.t('Uploading...')
+        return this.t('intravox', 'Uploading...')
       }
       if (this.activeTab === 'upload' && this.selectedFile) {
-        return this.t('Upload')
+        return this.t('intravox', 'Upload')
       }
-      return this.t('Select')
+      return this.t('intravox', 'Select')
     },
 
     filteredPageMedia() {
@@ -313,8 +313,8 @@ export default {
   },
 
   methods: {
-    t(key, vars = {}) {
-      return t('intravox', key, vars)
+    t(app, text, vars) {
+      return translate(app, text, vars);
     },
 
     handleClose() {
@@ -500,7 +500,7 @@ export default {
 
       } catch (error) {
         console.error('Upload failed:', error)
-        showError(this.t('Upload failed: ') + (error.response?.data?.error || error.message))
+        showError(this.t('intravox', 'Upload failed: ') + (error.response?.data?.error || error.message))
       } finally {
         this.isUploading = false
       }
@@ -514,7 +514,7 @@ export default {
     handleDuplicateRename() {
       this.showDuplicateDialog = false
       this.duplicateFilename = ''
-      alert(this.t('Please rename the file and try again'))
+      alert(this.t('intravox', 'Please rename the file and try again'))
     },
 
     async handleDuplicateOverwrite() {

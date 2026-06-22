@@ -2,12 +2,12 @@
   <div class="calendar-widget-editor">
     <!-- Widget Title -->
     <div class="editor-section">
-      <label class="editor-label" for="calendar-widget-title">{{ t('Widget title (optional)') }}</label>
+      <label class="editor-label" for="calendar-widget-title">{{ t('intravox', 'Widget title (optional)') }}</label>
       <input
         id="calendar-widget-title"
         type="text"
         v-model="localWidget.title"
-        :placeholder="t('e.g., Upcoming Events')"
+        :placeholder="t('intravox', 'e.g., Upcoming Events')"
         class="editor-input"
         @input="emitUpdate"
       />
@@ -15,7 +15,7 @@
 
     <!-- Background Color -->
     <div class="editor-section">
-      <label class="editor-label">{{ t('Background color') }}</label>
+      <label class="editor-label">{{ t('intravox', 'Background color') }}</label>
       <div class="color-presets">
         <button
           type="button"
@@ -23,7 +23,7 @@
           @click="setBackgroundColor(null)"
           class="color-preset-btn"
         >
-          {{ t('None') }}
+          {{ t('intravox', 'None') }}
         </button>
         <button
           type="button"
@@ -31,7 +31,7 @@
           @click="setBackgroundColor('var(--color-background-hover)')"
           class="color-preset-btn"
         >
-          {{ t('Light') }}
+          {{ t('intravox', 'Light') }}
         </button>
         <button
           type="button"
@@ -39,22 +39,22 @@
           @click="setBackgroundColor('var(--color-primary-element)')"
           class="color-preset-btn"
         >
-          {{ t('Primary') }}
+          {{ t('intravox', 'Primary') }}
         </button>
       </div>
     </div>
 
     <!-- Calendar Selection -->
     <div class="editor-section">
-      <label class="editor-label">{{ t('Calendars') }}</label>
+      <label class="editor-label">{{ t('intravox', 'Calendars') }}</label>
 
       <div v-if="loadingCalendars" class="calendars-loading">
         <NcLoadingIcon :size="20" />
-        <span>{{ t('Loading calendars …') }}</span>
+        <span>{{ t('intravox', 'Loading calendars …') }}</span>
       </div>
 
       <div v-else-if="calendars.length === 0" class="calendars-empty">
-        <span>{{ t('No calendars available') }}</span>
+        <span>{{ t('intravox', 'No calendars available') }}</span>
       </div>
 
       <div v-else class="calendar-list">
@@ -74,15 +74,15 @@
             :style="{ backgroundColor: calendar.color }"
           ></span>
           <span class="calendar-name">{{ calendar.displayName }}</span>
-          <span v-if="calendar.isReadOnly" class="calendar-readonly">({{ t('read-only') }})</span>
+          <span v-if="calendar.isReadOnly" class="calendar-readonly">({{ t('intravox', 'read-only') }})</span>
         </label>
       </div>
     </div>
 
     <!-- External ICS Feeds -->
     <div class="editor-section">
-      <label class="editor-label">{{ t('External ICS feeds') }}</label>
-      <p class="editor-hint">{{ t('Add ICS calendar URLs (e.g. from Moodle, Canvas, Brightspace). Visible to all page visitors.') }}</p>
+      <label class="editor-label">{{ t('intravox', 'External ICS feeds') }}</label>
+      <p class="editor-hint">{{ t('intravox', 'Add ICS calendar URLs (e.g. from Moodle, Canvas, Brightspace). Visible to all page visitors.') }}</p>
 
       <div v-if="localWidget.externalIcsUrls && localWidget.externalIcsUrls.length > 0" class="ics-url-list">
         <div
@@ -94,7 +94,7 @@
           <button
             type="button"
             class="ics-url-remove"
-            :aria-label="t('Remove')"
+            :aria-label="t('intravox', 'Remove')"
             @click="removeIcsUrl(index)"
           >x</button>
         </div>
@@ -104,7 +104,7 @@
         <input
           type="url"
           v-model="newIcsUrl"
-          :placeholder="t('https://example.com/calendar.ics')"
+          :placeholder="t('intravox', 'https://example.com/calendar.ics')"
           class="editor-input ics-url-input"
           @keydown.enter.prevent="addIcsUrl"
         />
@@ -113,35 +113,35 @@
           class="ics-url-add-btn"
           :disabled="!isValidIcsUrl"
           @click="addIcsUrl"
-        >{{ t('Add') }}</button>
+        >{{ t('intravox', 'Add') }}</button>
       </div>
       <p v-if="icsUrlError" class="ics-url-error">{{ icsUrlError }}</p>
     </div>
 
     <!-- Date Range -->
     <div class="editor-section">
-      <label class="editor-label" for="calendar-widget-date-range">{{ t('Date range') }}</label>
+      <label class="editor-label" for="calendar-widget-date-range">{{ t('intravox', 'Date range') }}</label>
       <select id="calendar-widget-date-range" v-model="localWidget.dateRange" class="editor-select" @change="emitUpdate">
-        <optgroup :label="t('Future')">
-          <option value="upcoming">{{ t('Upcoming (30 days)') }}</option>
-          <option value="this_week">{{ t('This week') }}</option>
-          <option value="next_two_weeks">{{ t('Next 2 weeks') }}</option>
-          <option value="this_month">{{ t('This month') }}</option>
-          <option value="next_three_months">{{ t('Next 3 months') }}</option>
-          <option value="next_six_months">{{ t('Next 6 months') }}</option>
-          <option value="next_year">{{ t('Next year') }}</option>
+        <optgroup :label="t('intravox', 'Future')">
+          <option value="upcoming">{{ t('intravox', 'Upcoming (30 days)') }}</option>
+          <option value="this_week">{{ t('intravox', 'This week') }}</option>
+          <option value="next_two_weeks">{{ t('intravox', 'Next 2 weeks') }}</option>
+          <option value="this_month">{{ t('intravox', 'This month') }}</option>
+          <option value="next_three_months">{{ t('intravox', 'Next 3 months') }}</option>
+          <option value="next_six_months">{{ t('intravox', 'Next 6 months') }}</option>
+          <option value="next_year">{{ t('intravox', 'Next year') }}</option>
         </optgroup>
-        <optgroup :label="t('Past')">
-          <option value="past_week">{{ t('Past week') }}</option>
-          <option value="past_month">{{ t('Past month') }}</option>
-          <option value="past_three_months">{{ t('Past 3 months') }}</option>
+        <optgroup :label="t('intravox', 'Past')">
+          <option value="past_week">{{ t('intravox', 'Past week') }}</option>
+          <option value="past_month">{{ t('intravox', 'Past month') }}</option>
+          <option value="past_three_months">{{ t('intravox', 'Past 3 months') }}</option>
         </optgroup>
       </select>
     </div>
 
     <!-- Number of events -->
     <div class="editor-section">
-      <label class="editor-label" for="calendar-widget-limit">{{ t('Number of events') }}</label>
+      <label class="editor-label" for="calendar-widget-limit">{{ t('intravox', 'Number of events') }}</label>
       <div class="limit-selector">
         <input
           id="calendar-widget-limit"
@@ -158,15 +158,15 @@
 
     <!-- Display Options -->
     <div class="editor-section">
-      <label class="editor-label">{{ t('Display options') }}</label>
+      <label class="editor-label">{{ t('intravox', 'Display options') }}</label>
       <div class="display-options">
         <label class="checkbox-option">
           <input type="checkbox" v-model="localWidget.showTime" @change="emitUpdate" />
-          <span>{{ t('Show time') }}</span>
+          <span>{{ t('intravox', 'Show time') }}</span>
         </label>
         <label class="checkbox-option">
           <input type="checkbox" v-model="localWidget.showLocation" @change="emitUpdate" />
-          <span>{{ t('Show location') }}</span>
+          <span>{{ t('intravox', 'Show location') }}</span>
         </label>
       </div>
     </div>
@@ -176,7 +176,7 @@
 <script>
 import { NcLoadingIcon } from '@nextcloud/vue';
 import { generateUrl } from '@nextcloud/router';
-import { translate as t } from '@nextcloud/l10n';
+import { translate, translatePlural } from '@nextcloud/l10n';
 import axios from '@nextcloud/axios';
 
 export default {
@@ -229,8 +229,8 @@ export default {
     this.fetchCalendars();
   },
   methods: {
-    t(key, vars = {}) {
-      return t('intravox', key, vars);
+    t(app, text, vars) {
+      return translate(app, text, vars);
     },
     createDefaultWidget() {
       return {
@@ -265,14 +265,14 @@ export default {
     addIcsUrl() {
       this.icsUrlError = '';
       if (!this.isValidIcsUrl) {
-        this.icsUrlError = this.t('Please enter a valid HTTPS URL');
+        this.icsUrlError = this.t('intravox', 'Please enter a valid HTTPS URL');
         return;
       }
       if (!this.localWidget.externalIcsUrls) {
         this.localWidget.externalIcsUrls = [];
       }
       if (this.localWidget.externalIcsUrls.includes(this.newIcsUrl)) {
-        this.icsUrlError = this.t('This URL has already been added');
+        this.icsUrlError = this.t('intravox', 'This URL has already been added');
         return;
       }
       this.localWidget.externalIcsUrls.push(this.newIcsUrl);

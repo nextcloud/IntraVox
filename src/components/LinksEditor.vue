@@ -1,33 +1,33 @@
 <template>
   <NcModal @close="$emit('close')"
-           :name="t('Edit links')"
+           :name="t('intravox', 'Edit links')"
            size="large"
            class="links-editor-modal">
     <div class="links-editor-content">
       <!-- Container Settings -->
       <div class="form-section">
-        <h3>{{ t('Container settings') }}</h3>
+        <h3>{{ t('intravox', 'Container settings') }}</h3>
 
         <div class="form-group">
-          <label for="links-grid-columns">{{ t('Grid columns:') }}</label>
+          <label for="links-grid-columns">{{ t('intravox', 'Grid columns:') }}</label>
           <select id="links-grid-columns" v-model.number="localWidget.columns" class="widget-input">
-            <option :value="1">1 {{ t('column') }}</option>
-            <option :value="2">2 {{ t('columns') }}</option>
-            <option :value="3">3 {{ t('columns') }}</option>
-            <option :value="4">4 {{ t('columns') }}</option>
+            <option :value="1">1 {{ t('intravox', 'column') }}</option>
+            <option :value="2">2 {{ t('intravox', 'columns') }}</option>
+            <option :value="3">3 {{ t('intravox', 'columns') }}</option>
+            <option :value="4">4 {{ t('intravox', 'columns') }}</option>
           </select>
         </div>
 
         <div class="form-group">
-          <label for="links-layout">{{ t('Layout:') }}</label>
+          <label for="links-layout">{{ t('intravox', 'Layout:') }}</label>
           <select id="links-layout" v-model="localWidget.layout" class="widget-input">
-            <option value="list">{{ t('List') }}</option>
-            <option value="tiles">{{ t('Tiles') }}</option>
+            <option value="list">{{ t('intravox', 'List') }}</option>
+            <option value="tiles">{{ t('intravox', 'Tiles') }}</option>
           </select>
         </div>
 
         <div class="form-group">
-          <label>{{ t('Background color:') }}</label>
+          <label>{{ t('intravox', 'Background color:') }}</label>
           <div class="color-presets">
             <button
               type="button"
@@ -36,7 +36,7 @@
               class="color-preset-btn"
             >
               <span class="color-swatch color-swatch--none"></span>
-              {{ t('None') }}
+              {{ t('intravox', 'None') }}
             </button>
             <button
               type="button"
@@ -45,7 +45,7 @@
               class="color-preset-btn"
             >
               <span class="color-swatch color-swatch--light"></span>
-              {{ t('Light') }}
+              {{ t('intravox', 'Light') }}
             </button>
             <button
               type="button"
@@ -54,7 +54,7 @@
               class="color-preset-btn"
             >
               <span class="color-swatch color-swatch--accent"></span>
-              {{ t('Accent') }}
+              {{ t('intravox', 'Accent') }}
             </button>
             <button
               type="button"
@@ -63,7 +63,7 @@
               class="color-preset-btn"
             >
               <span class="color-swatch color-swatch--primary"></span>
-              {{ t('Primary') }}
+              {{ t('intravox', 'Primary') }}
             </button>
           </div>
         </div>
@@ -72,12 +72,12 @@
       <!-- Links List -->
       <div class="form-section">
         <div class="section-header">
-          <h3>{{ t('Links') }}</h3>
+          <h3>{{ t('intravox', 'Links') }}</h3>
           <NcButton @click="addLink" type="primary">
             <template #icon>
               <Plus :size="20" />
             </template>
-            {{ t('Add link') }}
+            {{ t('intravox', 'Add link') }}
           </NcButton>
         </div>
 
@@ -91,47 +91,47 @@
         >
           <template #item="{ element: link, index }">
             <div class="link-editor-item">
-              <div class="drag-handle" :title="t('Drag to reorder')">
+              <div class="drag-handle" :title="t('intravox', 'Drag to reorder')">
                 <DragVertical :size="20" />
               </div>
 
               <div class="link-fields">
                 <div v-if="localWidget.layout === 'tiles'" class="form-row">
                   <div class="form-group flex-1">
-                    <label :for="`link-title-${index}`">{{ t('Title:') }}</label>
+                    <label :for="`link-title-${index}`">{{ t('intravox', 'Title:') }}</label>
                     <input
                       :id="`link-title-${index}`"
                       v-model="link.title"
                       type="text"
-                      :placeholder="t('Tile title')"
+                      :placeholder="t('intravox', 'Tile title')"
                       class="widget-input"
                     />
                   </div>
                 </div>
                 <div class="form-row">
                   <div class="form-group flex-1">
-                    <label :for="`link-text-${index}`">{{ localWidget.layout === 'tiles' ? t('Subtitle:') : t('Link text:') }}</label>
+                    <label :for="`link-text-${index}`">{{ localWidget.layout === 'tiles' ? t('intravox', 'Subtitle:') : t('intravox', 'Link text:') }}</label>
                     <input
                       :id="`link-text-${index}`"
                       v-model="link.text"
                       type="text"
-                      :placeholder="localWidget.layout === 'tiles' ? t('Short description') : t('Click here')"
+                      :placeholder="localWidget.layout === 'tiles' ? t('intravox', 'Short description') : t('intravox', 'Click here')"
                       class="widget-input"
                     />
                   </div>
 
                   <div class="form-group flex-1">
-                    <label :for="`link-url-${index}`">{{ t('Link to:') }}</label>
+                    <label :for="`link-url-${index}`">{{ t('intravox', 'Link to:') }}</label>
                     <div class="link-target-options">
                       <PageTreeSelect
                         :model-value="link.uniqueId"
-                        :placeholder="t('Select page')"
+                        :placeholder="t('intravox', 'Select page')"
                         :disabled="!!link.url"
                         :clearable="true"
                         @select="updatePageLink(index, $event)"
                         class="page-selector"
                       />
-                      <span class="or-separator">{{ t('or') }}</span>
+                      <span class="or-separator">{{ t('intravox', 'or') }}</span>
                       <input
                         :id="`link-url-${index}`"
                         v-model="link.url"
@@ -147,11 +147,11 @@
 
                 <div class="form-row">
                   <div class="form-group flex-1">
-                    <label>{{ t('Icon:') }}</label>
+                    <label>{{ t('intravox', 'Icon:') }}</label>
                     <NcSelect
                       v-model="link.iconObject"
                       :options="iconOptions"
-                      :placeholder="t('Select an icon')"
+                      :placeholder="t('intravox', 'Select an icon')"
                       :clearable="true"
                       @update:modelValue="updateLinkIcon(index, $event)"
                     >
@@ -171,7 +171,7 @@
                   </div>
 
                   <div class="form-group flex-1">
-                    <label>{{ t('Link background:') }}</label>
+                    <label>{{ t('intravox', 'Link background:') }}</label>
                     <div class="color-presets">
                       <button
                         type="button"
@@ -180,7 +180,7 @@
                         class="color-preset-btn small"
                       >
                         <span class="color-swatch color-swatch--none"></span>
-                        {{ t('Default') }}
+                        {{ t('intravox', 'Default') }}
                       </button>
                       <button
                         type="button"
@@ -189,7 +189,7 @@
                         class="color-preset-btn small"
                       >
                         <span class="color-swatch color-swatch--light"></span>
-                        {{ t('Light') }}
+                        {{ t('intravox', 'Light') }}
                       </button>
                       <button
                         type="button"
@@ -198,7 +198,7 @@
                         class="color-preset-btn small"
                       >
                         <span class="color-swatch color-swatch--primary"></span>
-                        {{ t('Primary') }}
+                        {{ t('intravox', 'Primary') }}
                       </button>
                     </div>
                   </div>
@@ -209,7 +209,7 @@
                 type="button"
                 @click="removeLink(index)"
                 class="remove-link-btn"
-                :title="t('Remove link')"
+                :title="t('intravox', 'Remove link')"
               >
                 <Delete :size="20" />
               </button>
@@ -219,16 +219,16 @@
 
         <div v-else class="empty-state">
           <ViewGrid :size="48" />
-          <p>{{ t('No links yet. Click "Add link" to get started.') }}</p>
+          <p>{{ t('intravox', 'No links yet. Click "Add link" to get started.') }}</p>
         </div>
       </div>
 
       <div class="modal-footer">
         <NcButton @click="$emit('close')" type="secondary">
-          {{ t('Cancel') }}
+          {{ t('intravox', 'Cancel') }}
         </NcButton>
         <NcButton @click="save" type="primary">
-          {{ t('Save') }}
+          {{ t('intravox', 'Save') }}
         </NcButton>
       </div>
     </div>
@@ -236,7 +236,7 @@
 </template>
 
 <script>
-import { translate as t } from '@nextcloud/l10n';
+import { translate, translatePlural } from '@nextcloud/l10n';
 import { NcButton, NcModal, NcSelect } from '@nextcloud/vue';
 import Plus from 'vue-material-design-icons/Plus.vue';
 import Delete from 'vue-material-design-icons/Delete.vue';
@@ -385,61 +385,61 @@ export default {
   computed: {
     iconOptions() {
       return [
-        { value: 'home', label: this.t('Home') },
-        { value: 'information', label: this.t('Information') },
-        { value: 'email', label: this.t('Email') },
-        { value: 'phone', label: this.t('Phone') },
-        { value: 'web', label: this.t('Website') },
-        { value: 'file-document', label: this.t('Document') },
-        { value: 'download', label: this.t('Download') },
-        { value: 'help', label: this.t('Help') },
-        { value: 'cog', label: this.t('Settings') },
-        { value: 'account', label: this.t('Account') },
-        { value: 'account-group', label: this.t('Team') },
-        { value: 'calendar', label: this.t('Calendar') },
-        { value: 'chart-line', label: this.t('Analytics') },
-        { value: 'briefcase', label: this.t('Business') },
-        { value: 'school', label: this.t('Education') },
-        { value: 'star', label: this.t('Favorite') },
-        { value: 'heart', label: this.t('Like') },
-        { value: 'lightbulb-on', label: this.t('Idea') },
-        { value: 'rocket', label: this.t('Launch') },
-        { value: 'rocket-launch', label: this.t('Rocket launch') },
-        { value: 'archive', label: this.t('Archive') },
-        { value: 'open-in-new', label: this.t('External link') },
-        { value: 'help-circle', label: this.t('Help circle') },
-        { value: 'account-multiple', label: this.t('People') },
-        { value: 'account-tie', label: this.t('Manager') },
-        { value: 'shield-check', label: this.t('Security') },
-        { value: 'shield-account', label: this.t('Admin') },
-        { value: 'office-building', label: this.t('Organization') },
-        { value: 'newspaper', label: this.t('News') },
-        { value: 'bullhorn', label: this.t('Announcement') },
-        { value: 'forum', label: this.t('Forum') },
-        { value: 'palette', label: this.t('Design') },
-        { value: 'code-tags', label: this.t('Code') },
-        { value: 'lifebuoy', label: this.t('Support') },
-        { value: 'folder', label: this.t('Folder') },
-        { value: 'folder-multiple', label: this.t('Folders') },
-        { value: 'chat', label: this.t('Chat') },
-        { value: 'message-text', label: this.t('Message') },
-        { value: 'view-column', label: this.t('Kanban') },
-        { value: 'form-select', label: this.t('Form') },
-        { value: 'clipboard-check', label: this.t('Tasks') },
-        { value: 'view-dashboard', label: this.t('Dashboard') },
-        { value: 'image-multiple', label: this.t('Photos') },
-        { value: 'draw', label: this.t('Draw') },
-        { value: 'puzzle', label: this.t('Plugin') },
-        { value: 'robot', label: this.t('AI / Robot') },
-        { value: 'table-large', label: this.t('Table') },
-        { value: 'book-open-variant', label: this.t('Knowledge base') },
-        { value: 'poll', label: this.t('Poll') },
-        { value: 'calendar-clock', label: this.t('Appointment') },
-        { value: 'earth', label: this.t('Globe') },
-        { value: 'apps', label: this.t('Apps') },
-        { value: 'cloud', label: this.t('Cloud') },
-        { value: 'information-outline', label: this.t('Info') },
-        { value: 'contacts', label: this.t('Contacts') }
+        { value: 'home', label: this.t('intravox', 'Home') },
+        { value: 'information', label: this.t('intravox', 'Information') },
+        { value: 'email', label: this.t('intravox', 'Email') },
+        { value: 'phone', label: this.t('intravox', 'Phone') },
+        { value: 'web', label: this.t('intravox', 'Website') },
+        { value: 'file-document', label: this.t('intravox', 'Document') },
+        { value: 'download', label: this.t('intravox', 'Download') },
+        { value: 'help', label: this.t('intravox', 'Help') },
+        { value: 'cog', label: this.t('intravox', 'Settings') },
+        { value: 'account', label: this.t('intravox', 'Account') },
+        { value: 'account-group', label: this.t('intravox', 'Team') },
+        { value: 'calendar', label: this.t('intravox', 'Calendar') },
+        { value: 'chart-line', label: this.t('intravox', 'Analytics') },
+        { value: 'briefcase', label: this.t('intravox', 'Business') },
+        { value: 'school', label: this.t('intravox', 'Education') },
+        { value: 'star', label: this.t('intravox', 'Favorite') },
+        { value: 'heart', label: this.t('intravox', 'Like') },
+        { value: 'lightbulb-on', label: this.t('intravox', 'Idea') },
+        { value: 'rocket', label: this.t('intravox', 'Launch') },
+        { value: 'rocket-launch', label: this.t('intravox', 'Rocket launch') },
+        { value: 'archive', label: this.t('intravox', 'Archive') },
+        { value: 'open-in-new', label: this.t('intravox', 'External link') },
+        { value: 'help-circle', label: this.t('intravox', 'Help circle') },
+        { value: 'account-multiple', label: this.t('intravox', 'People') },
+        { value: 'account-tie', label: this.t('intravox', 'Manager') },
+        { value: 'shield-check', label: this.t('intravox', 'Security') },
+        { value: 'shield-account', label: this.t('intravox', 'Admin') },
+        { value: 'office-building', label: this.t('intravox', 'Organization') },
+        { value: 'newspaper', label: this.t('intravox', 'News') },
+        { value: 'bullhorn', label: this.t('intravox', 'Announcement') },
+        { value: 'forum', label: this.t('intravox', 'Forum') },
+        { value: 'palette', label: this.t('intravox', 'Design') },
+        { value: 'code-tags', label: this.t('intravox', 'Code') },
+        { value: 'lifebuoy', label: this.t('intravox', 'Support') },
+        { value: 'folder', label: this.t('intravox', 'Folder') },
+        { value: 'folder-multiple', label: this.t('intravox', 'Folders') },
+        { value: 'chat', label: this.t('intravox', 'Chat') },
+        { value: 'message-text', label: this.t('intravox', 'Message') },
+        { value: 'view-column', label: this.t('intravox', 'Kanban') },
+        { value: 'form-select', label: this.t('intravox', 'Form') },
+        { value: 'clipboard-check', label: this.t('intravox', 'Tasks') },
+        { value: 'view-dashboard', label: this.t('intravox', 'Dashboard') },
+        { value: 'image-multiple', label: this.t('intravox', 'Photos') },
+        { value: 'draw', label: this.t('intravox', 'Draw') },
+        { value: 'puzzle', label: this.t('intravox', 'Plugin') },
+        { value: 'robot', label: this.t('intravox', 'AI / Robot') },
+        { value: 'table-large', label: this.t('intravox', 'Table') },
+        { value: 'book-open-variant', label: this.t('intravox', 'Knowledge base') },
+        { value: 'poll', label: this.t('intravox', 'Poll') },
+        { value: 'calendar-clock', label: this.t('intravox', 'Appointment') },
+        { value: 'earth', label: this.t('intravox', 'Globe') },
+        { value: 'apps', label: this.t('intravox', 'Apps') },
+        { value: 'cloud', label: this.t('intravox', 'Cloud') },
+        { value: 'information-outline', label: this.t('intravox', 'Info') },
+        { value: 'contacts', label: this.t('intravox', 'Contacts') }
       ];
     }
   },
@@ -484,8 +484,8 @@ export default {
     }
   },
   methods: {
-    t(key, vars = {}) {
-      return t('intravox', key, vars);
+    t(app, text, vars) {
+      return translate(app, text, vars);
     },
     getIconComponent(iconName) {
       const iconMap = {

@@ -105,7 +105,7 @@
       <div class="meta">
         <span class="stat">
           <ViewGridOutline :size="12" />
-          {{ columnCount }} {{ t('columns') }}
+          {{ columnCount }} {{ t('intravox', 'columns') }}
         </span>
         <span class="stat">
           <WidgetsOutline :size="12" />
@@ -123,7 +123,7 @@
 </template>
 
 <script>
-import { translate } from '@nextcloud/l10n';
+import { translate, translatePlural } from '@nextcloud/l10n';
 import FormatTitle from 'vue-material-design-icons/FormatTitle.vue';
 import TextBoxOutline from 'vue-material-design-icons/TextBoxOutline.vue';
 import ImageOutline from 'vue-material-design-icons/ImageOutline.vue';
@@ -183,9 +183,9 @@ export default {
     complexityLabel() {
       const complexity = this.template.preview?.complexity || 'simple';
       const labels = {
-        simple: this.t('Simple'),
-        moderate: this.t('Medium'),
-        complex: this.t('Advanced')
+        simple: this.t('intravox', 'Simple'),
+        moderate: this.t('intravox', 'Medium'),
+        complex: this.t('intravox', 'Advanced')
       };
       return labels[complexity] || complexity;
     },

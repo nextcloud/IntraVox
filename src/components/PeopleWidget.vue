@@ -6,7 +6,7 @@
 
     <div v-if="loading && users.length === 0" class="people-loading">
       <NcLoadingIcon :size="32" />
-      <span>{{ t('Loading …') }}</span>
+      <span>{{ t('intravox', 'Loading …') }}</span>
     </div>
 
     <div v-else-if="error" class="people-error">
@@ -16,12 +16,12 @@
 
     <div v-else-if="users.length === 0" class="people-empty">
       <AccountGroup :size="32" />
-      <p>{{ t('No people found') }}</p>
+      <p>{{ t('intravox', 'No people found') }}</p>
       <small v-if="widget.selectionMode === 'manual'">
-        {{ t('Select people in edit mode') }}
+        {{ t('intravox', 'Select people in edit mode') }}
       </small>
       <small v-else>
-        {{ t('No users match the current filters') }}
+        {{ t('intravox', 'No users match the current filters') }}
       </small>
     </div>
 
@@ -36,7 +36,7 @@
       <!-- Pagination footer -->
       <div v-if="showPaginationFooter" class="people-footer" :class="{ 'dark-background': isDarkBackground }" :style="footerStyle">
         <span class="people-count">
-          {{ t('Showing {shown} of {total} people', { shown: users.length, total: total }) }}
+          {{ t('intravox', 'Showing {shown} of {total} people', { shown: users.length, total: total }) }}
         </span>
         <NcButton
           v-if="hasMore"
@@ -47,7 +47,7 @@
           <template #icon>
             <NcLoadingIcon v-if="loadingMore" :size="20" />
           </template>
-          {{ loadingMore ? t('Loading …') : t('Show more') }}
+          {{ loadingMore ? t('intravox', 'Loading …') : t('intravox', 'Show more') }}
         </NcButton>
       </div>
     </template>
@@ -57,7 +57,7 @@
 <script>
 import { NcLoadingIcon, NcButton } from '@nextcloud/vue';
 import { generateUrl } from '@nextcloud/router';
-import { translate as t } from '@nextcloud/l10n';
+import { translate, translatePlural } from '@nextcloud/l10n';
 import axios from '@nextcloud/axios';
 import AlertCircle from 'vue-material-design-icons/AlertCircle.vue';
 import AccountGroup from 'vue-material-design-icons/AccountGroup.vue';
@@ -187,8 +187,8 @@ export default {
     clearTimeout(this._debounceTimer);
   },
   methods: {
-    t(key, vars = {}) {
-      return t('intravox', key, vars);
+    t(app, text, vars) {
+      return translate(app, text, vars);
     },
     async fetchPeople(offset = 0) {
       if (offset === 0) {
@@ -240,7 +240,7 @@ export default {
         this.hasMore = response.data.hasMore || false;
       } catch (err) {
         console.error('[PeopleWidget] Failed to fetch people:', err);
-        this.error = this.t('Failed to load people');
+        this.error = this.t('intravox', 'Failed to load people');
       } finally {
         this.loading = false;
         this.loadingMore = false;

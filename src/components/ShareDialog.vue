@@ -1,5 +1,5 @@
 <template>
-  <NcDialog :name="t('Public link')"
+  <NcDialog :name="t('intravox', 'Public link')"
             :can-close="true"
             @close="$emit('close')">
     <div class="share-dialog">
@@ -9,13 +9,13 @@
         <FileDocumentOutline v-else :size="20" />
         <span class="scope-label">
           <template v-if="shareInfo.scope === 'page'">
-            {{ t('This link shares only this page') }}
+            {{ t('intravox', 'This link shares only this page') }}
           </template>
           <template v-else-if="shareInfo.isLanguageRoot">
-            {{ t('This link shares all {language} pages', { language: shareInfo.scopeLabel }) }}
+            {{ t('intravox', 'This link shares all {language} pages', { language: shareInfo.scopeLabel }) }}
           </template>
           <template v-else>
-            {{ t('This link shares the "{section}" section', { section: shareInfo.scopeLabel || shareInfo.scopeName }) }}
+            {{ t('intravox', 'This link shares the "{section}" section', { section: shareInfo.scopeLabel || shareInfo.scopeName }) }}
           </template>
         </span>
       </div>
@@ -23,8 +23,8 @@
       <!-- Password protected indicator -->
       <div v-if="shareInfo.hasPassword" class="share-password-badge">
         <LockOutline :size="16" />
-        <span class="password-label">{{ t('Password protected') }}</span>
-        <span class="password-hint">{{ t('Visitors must enter a password to access this link. Manage in Files.') }}</span>
+        <span class="password-label">{{ t('intravox', 'Password protected') }}</span>
+        <span class="password-hint">{{ t('intravox', 'Visitors must enter a password to access this link. Manage in Files.') }}</span>
       </div>
 
       <!-- Copy link button -->
@@ -35,13 +35,13 @@
           <template #icon>
             <ContentCopy :size="20" />
           </template>
-          {{ t('Copy public link') }}
+          {{ t('intravox', 'Copy public link') }}
         </NcButton>
       </div>
 
       <!-- Navigation tree (for folder shares) -->
       <div v-if="shareInfo.scope === 'folder' && shareInfo.navigation?.length > 0" class="share-navigation">
-        <h4>{{ t('Includes these pages:') }}</h4>
+        <h4>{{ t('intravox', 'Includes these pages:') }}</h4>
         <ul class="nav-tree">
           <li v-for="item in shareInfo.navigation" :key="item.title" class="nav-tree-item">
             {{ item.title }}
@@ -56,14 +56,14 @@
 
       <!-- Read-only warning -->
       <NcNoteCard type="info" class="share-info-note">
-        <p>{{ t('Visitors can only VIEW this content. Editing via this link is not possible, even if the Files share allows it.') }}</p>
+        <p>{{ t('intravox', 'Visitors can only VIEW this content. Editing via this link is not possible, even if the Files share allows it.') }}</p>
       </NcNoteCard>
 
       <!-- Manage link - clickable -->
       <a :href="filesUrl" target="_blank" class="share-manage-link">
         <FolderOutline :size="16" />
         <span class="manage-text">
-          {{ t('Manage share in Files') }}
+          {{ t('intravox', 'Manage share in Files') }}
         </span>
         <OpenInNew :size="14" class="manage-arrow" />
       </a>
@@ -72,7 +72,7 @@
 </template>
 
 <script>
-import { translate as t } from '@nextcloud/l10n';
+import { translate, translatePlural } from '@nextcloud/l10n';
 import { generateUrl } from '@nextcloud/router';
 import { showSuccess, showError } from '@nextcloud/dialogs';
 import { NcDialog, NcButton, NcNoteCard } from '@nextcloud/vue';
@@ -119,13 +119,13 @@ export default {
     }
   },
   methods: {
-    t(key, vars = {}) {
-      return t('intravox', key, vars);
+    t(app, text, vars) {
+      return translate(app, text, vars);
     },
     async copyUrl() {
       try {
         await navigator.clipboard.writeText(this.publicUrl);
-        showSuccess(this.t('Link copied to clipboard'));
+        showSuccess(this.t('intravox', 'Link copied to clipboard'));
       } catch (err) {
         const textArea = document.createElement('textarea');
         textArea.value = this.publicUrl;
@@ -133,9 +133,9 @@ export default {
         textArea.select();
         try {
           document.execCommand('copy');
-          showSuccess(this.t('Link copied to clipboard'));
+          showSuccess(this.t('intravox', 'Link copied to clipboard'));
         } catch (e) {
-          showError(this.t('Failed to copy link'));
+          showError(this.t('intravox', 'Failed to copy link'));
         }
         document.body.removeChild(textArea);
       }

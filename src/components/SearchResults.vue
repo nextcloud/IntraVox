@@ -1,35 +1,35 @@
 <template>
   <NcModal
     v-if="show"
-    :name="t('Search results')"
+    :name="t('intravox', 'Search results')"
     size="large"
     @close="$emit('close')"
   >
     <div class="search-results-container">
       <!-- Header with query info -->
       <div class="search-header">
-        <h2>{{ t('Search Results for "{query}"', { query: searchQuery }) }}</h2>
+        <h2>{{ t('intravox', 'Search Results for "{query}"', { query: searchQuery }) }}</h2>
         <p v-if="!loading && results.length > 0" class="result-count">
-          {{ n('%n result found', '%n results found', results.length) }}
+          {{ n('intravox', '%n result found', '%n results found', results.length) }}
         </p>
       </div>
 
       <!-- Loading State -->
       <div v-if="loading" class="loading-state">
         <NcLoadingIcon :size="64" />
-        <p>{{ t('Searching …') }}</p>
+        <p>{{ t('intravox', 'Searching …') }}</p>
       </div>
 
       <!-- Empty State -->
       <NcEmptyContent
         v-else-if="results.length === 0"
-        :name="t('No results found')"
+        :name="t('intravox', 'No results found')"
       >
         <template #icon>
           <Magnify :size="64" />
         </template>
         <template #description>
-          {{ t('Try different keywords or check your spelling') }}
+          {{ t('intravox', 'Try different keywords or check your spelling') }}
         </template>
       </NcEmptyContent>
 
@@ -43,7 +43,7 @@
         >
           <div class="result-header">
             <h3 class="result-title">{{ result.title }}</h3>
-            <span class="result-score">{{ t('Relevance: {score}', { score: result.score }) }}</span>
+            <span class="result-score">{{ t('intravox', 'Relevance: {score}', { score: result.score }) }}</span>
           </div>
 
           <div v-if="result.path" class="result-path">
@@ -71,7 +71,7 @@
 import { NcModal, NcEmptyContent, NcLoadingIcon } from '@nextcloud/vue';
 import Magnify from 'vue-material-design-icons/Magnify.vue';
 import FolderOutline from 'vue-material-design-icons/FolderOutline.vue';
-import { translate as t, translatePlural as n } from '@nextcloud/l10n';
+import { translate, translatePlural } from '@nextcloud/l10n';
 
 export default {
   name: 'SearchResults',
@@ -102,11 +102,11 @@ export default {
   },
   emits: ['close', 'select'],
   methods: {
-    t(key, vars = {}) {
-      return t('intravox', key, vars);
+    t(app, text, vars) {
+      return translate(app, text, vars);
     },
-    n(singular, plural, count, vars = {}) {
-      return n('intravox', singular, plural, count, vars);
+    n(app, singular, plural, count, vars) {
+      return translatePlural(app, singular, plural, count, vars);
     },
     selectResult(result) {
       this.$emit('select', result);
@@ -114,9 +114,9 @@ export default {
     },
     getMatchLabel(type) {
       const labels = {
-        title: this.t('Title'),
-        heading: this.t('Heading'),
-        content: this.t('Content')
+        title: this.t('intravox', 'Title'),
+        heading: this.t('intravox', 'Heading'),
+        content: this.t('intravox', 'Content')
       };
       return labels[type] || type;
     }

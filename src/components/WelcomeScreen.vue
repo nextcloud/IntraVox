@@ -5,32 +5,32 @@
 				<img :src="logoUrl" alt="IntraVox" class="welcome-logo">
 			</div>
 
-			<h2 class="welcome-title">{{ t('Welcome to IntraVox') }}</h2>
+			<h2 class="welcome-title">{{ t('intravox', 'Welcome to IntraVox') }}</h2>
 
 			<p class="welcome-description">
-				{{ t('IntraVox is not yet configured. To get started, you can install demo data or create your own pages.') }}
+				{{ t('intravox', 'IntraVox is not yet configured. To get started, you can install demo data or create your own pages.') }}
 			</p>
 
 			<div class="welcome-steps">
 				<div class="step">
 					<span class="step-number">1</span>
 					<div class="step-content">
-						<h3>{{ t('Install demo data') }}</h3>
-						<p>{{ t('Get started quickly with example pages in multiple languages (Dutch, English, German, French).') }}</p>
+						<h3>{{ t('intravox', 'Install demo data') }}</h3>
+						<p>{{ t('intravox', 'Get started quickly with example pages in multiple languages (Dutch, English, German, French).') }}</p>
 					</div>
 				</div>
 				<div class="step">
 					<span class="step-number">2</span>
 					<div class="step-content">
-						<h3>{{ t('Configure settings') }}</h3>
-						<p>{{ t('Customize video domains, upload limits, and other settings for your organization.') }}</p>
+						<h3>{{ t('intravox', 'Configure settings') }}</h3>
+						<p>{{ t('intravox', 'Customize video domains, upload limits, and other settings for your organization.') }}</p>
 					</div>
 				</div>
 				<div class="step">
 					<span class="step-number">3</span>
 					<div class="step-content">
-						<h3>{{ t('Create content') }}</h3>
-						<p>{{ t('Start building your intranet with pages, navigation, and multimedia content.') }}</p>
+						<h3>{{ t('intravox', 'Create content') }}</h3>
+						<p>{{ t('intravox', 'Start building your intranet with pages, navigation, and multimedia content.') }}</p>
 					</div>
 				</div>
 			</div>
@@ -42,7 +42,7 @@
 					<template #icon>
 						<Cog :size="20" />
 					</template>
-					{{ t('Go to Administration settings') }}
+					{{ t('intravox', 'Go to Administration settings') }}
 				</NcButton>
 				<a
 					href="https://github.com/nextcloud/IntraVox/blob/main/README.md"
@@ -50,19 +50,19 @@
 					rel="noopener noreferrer"
 					class="github-link">
 					<Github :size="18" />
-					{{ t('Documentation on GitHub') }}
+					{{ t('intravox', 'Documentation on GitHub') }}
 				</a>
 			</div>
 
 			<p class="welcome-hint">
-				{{ t('After installing demo data, refresh this page to see your new intranet.') }}
+				{{ t('intravox', 'After installing demo data, refresh this page to see your new intranet.') }}
 			</p>
 		</div>
 	</div>
 </template>
 
 <script>
-import { translate as t } from '@nextcloud/l10n';
+import { translate, translatePlural } from '@nextcloud/l10n';
 import { generateUrl, imagePath } from '@nextcloud/router';
 import { NcButton } from '@nextcloud/vue';
 import Cog from 'vue-material-design-icons/Cog.vue';
@@ -84,9 +84,9 @@ export default {
 		},
 	},
 	methods: {
-		t(key, vars = {}) {
-			return t('intravox', key, vars);
-		},
+		t(app, text, vars) {
+      return translate(app, text, vars);
+    },
 	},
 };
 </script>

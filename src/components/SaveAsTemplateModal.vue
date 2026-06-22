@@ -1,30 +1,30 @@
 <template>
   <NcModal @close="$emit('close')"
-           :name="t('Save as Template')"
+           :name="t('intravox', 'Save as Template')"
            size="small">
     <div class="save-template-modal-content">
-      <p class="modal-description">{{ t('Create a reusable template from this page') }}</p>
+      <p class="modal-description">{{ t('intravox', 'Create a reusable template from this page') }}</p>
 
       <div class="form-group">
-        <label for="template-title">{{ t('Template name') }}</label>
+        <label for="template-title">{{ t('intravox', 'Template name') }}</label>
         <input
           id="template-title"
           ref="titleInput"
           v-model="templateTitle"
           type="text"
           class="template-input"
-          :placeholder="t('Enter template name')"
+          :placeholder="t('intravox', 'Enter template name')"
           @keyup.enter="saveTemplate"
         />
       </div>
 
       <div class="form-group">
-        <label for="template-description">{{ t('Description') }} <span class="optional">{{ t('(optional)') }}</span></label>
+        <label for="template-description">{{ t('intravox', 'Description') }} <span class="optional">{{ t('intravox', '(optional)') }}</span></label>
         <textarea
           id="template-description"
           v-model="templateDescription"
           class="template-input template-textarea"
-          :placeholder="t('Describe what this template is for')"
+          :placeholder="t('intravox', 'Describe what this template is for')"
           rows="3"
         ></textarea>
       </div>
@@ -35,13 +35,13 @@
 
       <div class="modal-buttons">
         <NcButton @click="$emit('close')" type="secondary" :disabled="saving">
-          {{ t('Cancel') }}
+          {{ t('intravox', 'Cancel') }}
         </NcButton>
         <NcButton @click="saveTemplate" type="primary" :disabled="!canSave || saving">
           <template #icon>
             <NcLoadingIcon v-if="saving" :size="20" />
           </template>
-          {{ saving ? t('Saving …') : t('Save template') }}
+          {{ saving ? t('intravox', 'Saving …') : t('intravox', 'Save template') }}
         </NcButton>
       </div>
     </div>
@@ -49,7 +49,7 @@
 </template>
 
 <script>
-import { translate } from '@nextcloud/l10n';
+import { translate, translatePlural } from '@nextcloud/l10n';
 import { generateUrl } from '@nextcloud/router';
 import axios from '@nextcloud/axios';
 import { NcModal, NcButton, NcLoadingIcon } from '@nextcloud/vue';
@@ -117,11 +117,11 @@ export default {
           this.$emit('saved', response.data.template);
           this.$emit('close');
         } else {
-          this.error = response.data.error || this.t('Failed to save template');
+          this.error = response.data.error || this.t('intravox', 'Failed to save template');
         }
       } catch (err) {
         console.error('Failed to save template:', err);
-        this.error = err.response?.data?.error || this.t('Failed to save template');
+        this.error = err.response?.data?.error || this.t('intravox', 'Failed to save template');
       } finally {
         this.saving = false;
       }

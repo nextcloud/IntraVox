@@ -2,30 +2,30 @@
   <div class="feed-widget-editor">
     <!-- Source type selection -->
     <div class="form-group">
-      <label for="feed-source-type">{{ t('Source type') }}</label>
+      <label for="feed-source-type">{{ t('intravox', 'Source type') }}</label>
       <select id="feed-source-type" v-model="localWidget.sourceType" @change="onSourceTypeChange">
-        <option value="rss">{{ t('RSS / Atom feed') }}</option>
-        <option v-if="availableConnections.length > 0 || localWidget.sourceType === 'connection'" value="connection">{{ t('Connection') }}</option>
+        <option value="rss">{{ t('intravox', 'RSS / Atom feed') }}</option>
+        <option v-if="availableConnections.length > 0 || localWidget.sourceType === 'connection'" value="connection">{{ t('intravox', 'Connection') }}</option>
       </select>
     </div>
 
     <!-- RSS URL input -->
     <div v-if="localWidget.sourceType === 'rss'" class="form-group">
-      <label for="feed-url">{{ t('Feed URL') }}</label>
+      <label for="feed-url">{{ t('intravox', 'Feed URL') }}</label>
       <input
         id="feed-url"
         v-model="localWidget.feedUrl"
         type="url"
-        :placeholder="t('https://example.com/feed.xml')"
+        :placeholder="t('intravox', 'https://example.com/feed.xml')"
         @input="debouncedEmitUpdate"
       />
     </div>
 
     <!-- Connection selection -->
     <div v-if="localWidget.sourceType === 'connection'" class="form-group">
-      <label for="feed-connection">{{ t('Connection') }}</label>
+      <label for="feed-connection">{{ t('intravox', 'Connection') }}</label>
       <select id="feed-connection" v-model="localWidget.connectionId" @change="onConnectionChange">
-        <option value="">{{ t('Select a connection …') }}</option>
+        <option value="">{{ t('intravox', 'Select a connection …') }}</option>
         <option
           v-for="conn in availableConnections"
           :key="conn.id"
@@ -38,44 +38,44 @@
           :value="inactiveSelectedConnection.id"
           disabled
         >
-          {{ inactiveSelectedConnection.name }} ({{ t('inactive') }})
+          {{ inactiveSelectedConnection.name }} ({{ t('intravox', 'inactive') }})
         </option>
       </select>
       <p v-if="inactiveSelectedConnection" class="field-hint field-hint--warning">
-        {{ t('This connection is currently disabled by an administrator.') }}
+        {{ t('intravox', 'This connection is currently disabled by an administrator.') }}
       </p>
       <p v-else-if="availableConnections.length === 0" class="field-hint">
-        {{ t('No connections configured. Ask an administrator to add one in IntraVox settings.') }}
+        {{ t('intravox', 'No connections configured. Ask an administrator to add one in IntraVox settings.') }}
       </p>
     </div>
 
     <!-- User LMS connection status -->
     <div v-if="isLmsType && localWidget.connectionId && selectedConnectionAuthMode !== 'token'" class="form-group">
       <div v-if="userConnectionStatus === 'connected'" class="lms-status lms-status-connected">
-        <span class="status-badge connected">{{ userConnectionTokenType === 'oidc' ? t('Connected via SSO') : t('Connected') }}</span>
-        <button class="disconnect-button" @click="disconnectLms">{{ t('Disconnect') }}</button>
+        <span class="status-badge connected">{{ userConnectionTokenType === 'oidc' ? t('intravox', 'Connected via SSO') : t('intravox', 'Connected') }}</span>
+        <button class="disconnect-button" @click="disconnectLms">{{ t('intravox', 'Disconnect') }}</button>
       </div>
       <div v-else-if="userConnectionStatus === 'loading'" class="lms-status">
-        <span class="status-badge loading">{{ t('Checking …') }}</span>
+        <span class="status-badge loading">{{ t('intravox', 'Checking …') }}</span>
       </div>
       <div v-else class="lms-status lms-status-disconnected">
-        <span class="status-badge disconnected">{{ t('Not connected') }}</span>
+        <span class="status-badge disconnected">{{ t('intravox', 'Not connected') }}</span>
         <div class="connect-actions">
           <button v-if="selectedConnectionAuthMode !== 'token'" class="connect-button" @click="startOAuth" :disabled="oauthLoading">
-            {{ oauthLoading ? t('Connecting …') : t('Connect your account') }}
+            {{ oauthLoading ? t('intravox', 'Connecting …') : t('intravox', 'Connect your account') }}
           </button>
           <button v-if="selectedConnectionType === 'moodle' || selectedConnectionType === 'brightspace'" class="connect-button secondary" @click="showManualToken = !showManualToken">
-            {{ t('Enter token manually') }}
+            {{ t('intravox', 'Enter token manually') }}
           </button>
         </div>
         <div v-if="showManualToken" class="manual-token-input">
           <input
             v-model="manualToken"
             type="password"
-            :placeholder="t('Paste your API token here')"
+            :placeholder="t('intravox', 'Paste your API token here')"
           />
           <button @click="saveManualToken" :disabled="!manualToken || manualTokenSaving">
-            {{ manualTokenSaving ? t('Saving …') : t('Save token') }}
+            {{ manualTokenSaving ? t('intravox', 'Saving …') : t('intravox', 'Save token') }}
           </button>
         </div>
         <p v-if="connectError" class="field-error">{{ connectError }}</p>
@@ -84,22 +84,22 @@
 
     <!-- Brightspace content type -->
     <div v-if="isLmsType && localWidget.connectionId" class="form-group">
-      <label for="feed-content-type">{{ t('Content type') }}</label>
+      <label for="feed-content-type">{{ t('intravox', 'Content type') }}</label>
       <select id="feed-content-type" v-model="localWidget.contentType" @change="onLmsContentTypeChange">
-        <option value="news">{{ t('News / Announcements') }}</option>
-        <option value="courses">{{ t('Available courses') }}</option>
-        <option value="assignments">{{ t('Assignments') }}</option>
-        <option value="deadlines">{{ t('Upcoming deadlines') }}</option>
+        <option value="news">{{ t('intravox', 'News / Announcements') }}</option>
+        <option value="courses">{{ t('intravox', 'Available courses') }}</option>
+        <option value="assignments">{{ t('intravox', 'Assignments') }}</option>
+        <option value="deadlines">{{ t('intravox', 'Upcoming deadlines') }}</option>
       </select>
     </div>
 
     <!-- Moodle forum selector (when News + course selected) -->
     <div v-if="isMoodleType && localWidget.connectionId && localWidget.contentType === 'news' && localWidget.courseId" class="form-group">
-      <label for="feed-moodle-forum">{{ t('Forum (optional)') }}</label>
-      <div v-if="moodleForumsLoading" class="field-hint">{{ t('Loading …') }}</div>
+      <label for="feed-moodle-forum">{{ t('intravox', 'Forum (optional)') }}</label>
+      <div v-if="moodleForumsLoading" class="field-hint">{{ t('intravox', 'Loading …') }}</div>
       <template v-else>
         <select id="feed-moodle-forum" v-model="localWidget.moodleForumId" @change="emitUpdate">
-          <option value="">{{ t('All forums') }}</option>
+          <option value="">{{ t('intravox', 'All forums') }}</option>
           <option v-for="forum in moodleForums" :key="forum.id" :value="forum.id">{{ forum.name }}</option>
         </select>
       </template>
@@ -107,56 +107,56 @@
 
     <!-- OpenProject content type -->
     <div v-if="isOpenProjectType && localWidget.connectionId" class="form-group">
-      <label for="feed-content-type-op">{{ t('Content type') }}</label>
+      <label for="feed-content-type-op">{{ t('intravox', 'Content type') }}</label>
       <select id="feed-content-type-op" v-model="localWidget.contentType" @change="emitUpdate">
-        <option value="">{{ t('All work packages') }}</option>
-        <option value="open">{{ t('Open work packages') }}</option>
-        <option value="overdue">{{ t('Overdue') }}</option>
-        <option value="milestones">{{ t('Milestones') }}</option>
-        <option value="recently-updated">{{ t('Recently updated') }}</option>
+        <option value="">{{ t('intravox', 'All work packages') }}</option>
+        <option value="open">{{ t('intravox', 'Open work packages') }}</option>
+        <option value="overdue">{{ t('intravox', 'Overdue') }}</option>
+        <option value="milestones">{{ t('intravox', 'Milestones') }}</option>
+        <option value="recently-updated">{{ t('intravox', 'Recently updated') }}</option>
       </select>
     </div>
 
     <!-- Jira project selector -->
     <div v-if="isJiraType && localWidget.connectionId" class="form-group">
-      <label for="feed-jira-project">{{ t('Project') }}</label>
-      <div v-if="jiraProjectsLoading" class="field-hint">{{ t('Loading …') }}</div>
+      <label for="feed-jira-project">{{ t('intravox', 'Project') }}</label>
+      <div v-if="jiraProjectsLoading" class="field-hint">{{ t('intravox', 'Loading …') }}</div>
       <template v-else>
         <select id="feed-jira-project" v-model="localWidget.jiraProject" @change="emitUpdate">
-          <option value="">{{ t('All projects') }}</option>
+          <option value="">{{ t('intravox', 'All projects') }}</option>
           <option v-for="proj in jiraProjects" :key="proj.key" :value="proj.key">{{ proj.name }} ({{ proj.key }})</option>
         </select>
       </template>
     </div>
     <div v-if="isJiraType && localWidget.connectionId" class="form-group">
-      <label for="feed-content-type-jira">{{ t('Content type') }}</label>
+      <label for="feed-content-type-jira">{{ t('intravox', 'Content type') }}</label>
       <select id="feed-content-type-jira" v-model="localWidget.contentType" @change="emitUpdate">
-        <option value="">{{ t('All issues') }}</option>
-        <option value="open">{{ t('Open issues') }}</option>
-        <option value="recent">{{ t('Recently updated (7 days)') }}</option>
-        <option value="created-recent">{{ t('Recently created (7 days)') }}</option>
-        <option value="bugs">{{ t('Bugs') }}</option>
+        <option value="">{{ t('intravox', 'All issues') }}</option>
+        <option value="open">{{ t('intravox', 'Open issues') }}</option>
+        <option value="recent">{{ t('intravox', 'Recently updated (7 days)') }}</option>
+        <option value="created-recent">{{ t('intravox', 'Recently created (7 days)') }}</option>
+        <option value="bugs">{{ t('intravox', 'Bugs') }}</option>
       </select>
     </div>
 
     <!-- SharePoint content type -->
     <div v-if="isSharePointType && localWidget.connectionId" class="form-group">
-      <label for="feed-content-type-sp">{{ t('Content type') }}</label>
+      <label for="feed-content-type-sp">{{ t('intravox', 'Content type') }}</label>
       <select id="feed-content-type-sp" v-model="localWidget.contentType" @change="onSharePointContentTypeChange">
-        <option value="pages">{{ t('All pages') }}</option>
-        <option value="news">{{ t('News posts') }}</option>
-        <option value="documents">{{ t('Documents') }}</option>
-        <option value="list">{{ t('List items') }}</option>
+        <option value="pages">{{ t('intravox', 'All pages') }}</option>
+        <option value="news">{{ t('intravox', 'News posts') }}</option>
+        <option value="documents">{{ t('intravox', 'Documents') }}</option>
+        <option value="list">{{ t('intravox', 'List items') }}</option>
       </select>
     </div>
 
     <!-- SharePoint list/library selector -->
     <div v-if="isSharePointType && localWidget.connectionId && (localWidget.contentType === 'documents' || localWidget.contentType === 'list')" class="form-group">
-      <label for="feed-sp-list">{{ localWidget.contentType === 'documents' ? t('Document library') : t('List') }}</label>
-      <div v-if="spListsLoading" class="field-hint">{{ t('Loading …') }}</div>
+      <label for="feed-sp-list">{{ localWidget.contentType === 'documents' ? t('intravox', 'Document library') : t('intravox', 'List') }}</label>
+      <div v-if="spListsLoading" class="field-hint">{{ t('intravox', 'Loading …') }}</div>
       <template v-else>
         <select id="feed-sp-list" v-model="localWidget.listId" @change="emitUpdate">
-          <option value="">{{ t('Select …') }}</option>
+          <option value="">{{ t('intravox', 'Select …') }}</option>
           <option v-for="item in spListsForType" :key="item.id" :value="item.id">{{ item.name }}</option>
         </select>
         <span v-if="spListsError" class="field-hint" style="color: var(--color-error)">{{ spListsError }}</span>
@@ -165,26 +165,26 @@
 
     <!-- Course selection (for LMS types) -->
     <div v-if="isLmsType && localWidget.connectionId && showCourseIdField" class="form-group">
-      <label for="feed-course-id">{{ t('Course (optional)') }}</label>
-      <div v-if="coursesLoading" class="field-hint">{{ t('Loading courses …') }}</div>
+      <label for="feed-course-id">{{ t('intravox', 'Course (optional)') }}</label>
+      <div v-if="coursesLoading" class="field-hint">{{ t('intravox', 'Loading courses …') }}</div>
       <template v-else-if="courses.length > 0 && !manualCourseId">
         <select id="feed-course-id" v-model="localWidget.courseId" @change="onCourseChange">
-          <option value="">{{ t('All courses') }}</option>
+          <option value="">{{ t('intravox', 'All courses') }}</option>
           <option v-for="course in courses" :key="course.id" :value="course.id">
             {{ course.name }}
           </option>
         </select>
-        <button class="link-button" @click="manualCourseId = true">{{ t('Enter ID manually') }}</button>
+        <button class="link-button" @click="manualCourseId = true">{{ t('intravox', 'Enter ID manually') }}</button>
       </template>
       <template v-else>
         <input
           id="feed-course-id"
           v-model="localWidget.courseId"
           type="text"
-          :placeholder="courses.length > 0 ? t('Enter course ID') : t('Course ID (connect your account to see a list)')"
+          :placeholder="courses.length > 0 ? t('intravox', 'Enter course ID') : t('intravox', 'Course ID (connect your account to see a list)')"
           @blur="emitUpdate"
         />
-        <button v-if="courses.length > 0" class="link-button" @click="manualCourseId = false">{{ t('Select from list') }}</button>
+        <button v-if="courses.length > 0" class="link-button" @click="manualCourseId = false">{{ t('intravox', 'Select from list') }}</button>
       </template>
     </div>
 
@@ -192,16 +192,16 @@
 
     <!-- Layout options -->
     <div class="form-group">
-      <label for="feed-layout">{{ t('Layout') }}</label>
+      <label for="feed-layout">{{ t('intravox', 'Layout') }}</label>
       <select id="feed-layout" v-model="localWidget.layout" @change="emitUpdate">
-        <option value="list">{{ t('List') }}</option>
-        <option value="grid">{{ t('Grid') }}</option>
+        <option value="list">{{ t('intravox', 'List') }}</option>
+        <option value="grid">{{ t('intravox', 'Grid') }}</option>
       </select>
     </div>
 
     <!-- Grid columns -->
     <div v-if="localWidget.layout === 'grid'" class="form-group">
-      <label for="feed-columns">{{ t('Columns') }}</label>
+      <label for="feed-columns">{{ t('intravox', 'Columns') }}</label>
       <select id="feed-columns" v-model.number="localWidget.columns" @change="emitUpdate">
         <option :value="2">2</option>
         <option :value="3">3</option>
@@ -211,11 +211,11 @@
 
     <!-- Sort -->
     <div class="form-group">
-      <label for="feed-sort-by">{{ t('Sort by') }}</label>
+      <label for="feed-sort-by">{{ t('intravox', 'Sort by') }}</label>
       <div class="sort-row">
         <select id="feed-sort-by" v-model="localWidget.sortBy" @change="emitUpdate">
-          <option value="date">{{ t('Date') }}</option>
-          <option value="title">{{ t('Title') }}</option>
+          <option value="date">{{ t('intravox', 'Date') }}</option>
+          <option value="title">{{ t('intravox', 'Title') }}</option>
         </select>
         <button type="button" class="sort-order-toggle" :title="sortOrderLabel" @click="toggleSortOrder">
           {{ sortOrderLabel }}
@@ -225,20 +225,20 @@
 
     <!-- Filter -->
     <div class="form-group">
-      <label for="feed-filter">{{ t('Filter by keyword (optional)') }}</label>
+      <label for="feed-filter">{{ t('intravox', 'Filter by keyword (optional)') }}</label>
       <input
         id="feed-filter"
         v-model="localWidget.filterKeyword"
         type="text"
-        :placeholder="t('e.g. announcement, update')"
+        :placeholder="t('intravox', 'e.g. announcement, update')"
         @input="debouncedEmitUpdate"
       />
-      <span class="field-hint">{{ t('Only show items containing this word in title, excerpt, or author.') }}</span>
+      <span class="field-hint">{{ t('intravox', 'Only show items containing this word in title, excerpt, or author.') }}</span>
     </div>
 
     <!-- Limit -->
     <div class="form-group">
-      <label for="feed-limit">{{ t('Number of items') }}: {{ localWidget.limit }}</label>
+      <label for="feed-limit">{{ t('intravox', 'Number of items') }}: {{ localWidget.limit }}</label>
       <input
         id="feed-limit"
         v-model.number="localWidget.limit"
@@ -251,34 +251,34 @@
 
     <!-- Display options -->
     <div class="form-group">
-      <label>{{ t('Display options') }}</label>
+      <label>{{ t('intravox', 'Display options') }}</label>
       <div class="checkbox-group">
         <label class="checkbox-label">
           <input type="checkbox" v-model="localWidget.showImage" @change="emitUpdate" />
-          {{ t('Show image') }}
+          {{ t('intravox', 'Show image') }}
         </label>
         <label class="checkbox-label">
           <input type="checkbox" v-model="localWidget.showDate" @change="emitUpdate" />
-          {{ t('Show date') }}
+          {{ t('intravox', 'Show date') }}
         </label>
         <label class="checkbox-label">
           <input type="checkbox" v-model="localWidget.showExcerpt" @change="emitUpdate" />
-          {{ t('Show excerpt') }}
+          {{ t('intravox', 'Show excerpt') }}
         </label>
         <label class="checkbox-label">
           <input type="checkbox" v-model="localWidget.showSource" @change="emitUpdate" />
-          {{ t('Show source') }}
+          {{ t('intravox', 'Show source') }}
         </label>
         <label class="checkbox-label">
           <input type="checkbox" v-model="localWidget.openInNewTab" @change="emitUpdate" />
-          {{ t('Open links in new tab') }}
+          {{ t('intravox', 'Open links in new tab') }}
         </label>
       </div>
     </div>
 
     <!-- Live preview -->
     <div v-if="hasValidSource" class="feed-preview-container">
-      <div class="feed-preview-header">{{ t('Preview') }}</div>
+      <div class="feed-preview-header">{{ t('intravox', 'Preview') }}</div>
       <div class="feed-preview-content">
         <FeedWidget :widget="localWidget" :key="previewKey" />
       </div>
@@ -349,7 +349,7 @@ export default {
       if (this.localWidget.sortBy === 'title') {
         return this.localWidget.sortOrder === 'asc' ? 'A → Z' : 'Z → A';
       }
-      return this.localWidget.sortOrder === 'desc' ? this.t('Newest first') : this.t('Oldest first');
+      return this.localWidget.sortOrder === 'desc' ? this.t('intravox', 'Newest first') : this.t('intravox', 'Oldest first');
     },
     isLmsType() {
       if (!this.selectedConnection) return false;
@@ -446,8 +446,8 @@ export default {
     clearTimeout(this._debounceTimer);
   },
   methods: {
-    t(text) {
-      return window.t ? window.t('intravox', text) : text;
+    t(app, text, vars) {
+      return translate(app, text, vars);
     },
     loadTypeSpecificData() {
       if (this.isSharePointType) {
@@ -673,11 +673,11 @@ export default {
             'width=600,height=700,popup=yes'
           );
           if (!popup) {
-            this.connectError = this.t('Popup blocked. Please allow popups for this site.');
+            this.connectError = this.t('intravox', 'Popup blocked. Please allow popups for this site.');
           }
         }
       } catch (err) {
-        this.connectError = err.response?.data?.error || this.t('Failed to start connection');
+        this.connectError = err.response?.data?.error || this.t('intravox', 'Failed to start connection');
       } finally {
         this.oauthLoading = false;
       }
@@ -715,7 +715,7 @@ export default {
         await this.loadUserConnections();
         this.loadCourses();
       } catch (err) {
-        this.connectError = err.response?.data?.error || this.t('Failed to save token');
+        this.connectError = err.response?.data?.error || this.t('intravox', 'Failed to save token');
       } finally {
         this.manualTokenSaving = false;
       }
@@ -728,7 +728,7 @@ export default {
         await axios.delete(url);
         await this.loadUserConnections();
       } catch (err) {
-        this.connectError = err.response?.data?.error || this.t('Failed to disconnect');
+        this.connectError = err.response?.data?.error || this.t('intravox', 'Failed to disconnect');
       }
     },
   },

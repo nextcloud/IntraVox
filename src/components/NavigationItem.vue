@@ -11,7 +11,7 @@
         <input v-model="localItem.title"
                type="text"
                class="item-title-input"
-               :placeholder="t('Item title')"
+               :placeholder="t('intravox', 'Item title')"
                :data-item-id="item.id"
                @input="emitUpdate" />
 
@@ -19,21 +19,21 @@
           <!-- Link to Page (disabled when URL is set) -->
           <PageTreeSelect
             :model-value="localItem.uniqueId"
-            :placeholder="t('Link to page')"
+            :placeholder="t('intravox', 'Link to page')"
             :disabled="!!localItem.url"
             @select="updatePageLink"
             class="link-selector"
             :class="{ 'is-disabled': !!localItem.url }" />
 
           <!-- OR Custom URL -->
-          <span class="or-separator">{{ t('or') }}</span>
+          <span class="or-separator">{{ t('intravox', 'or') }}</span>
 
           <div class="url-section">
             <input v-model="localItem.url"
                    type="url"
                    class="url-input"
                    :class="{ 'has-value': !!localItem.url }"
-                   :placeholder="t('Custom URL')"
+                   :placeholder="t('intravox', 'Custom URL')"
                    @input="onUrlInput" />
 
             <!-- Clear URL button -->
@@ -41,7 +41,7 @@
                     type="button"
                     class="clear-url-btn"
                     @click="clearUrl"
-                    :aria-label="t('Clear URL')">
+                    :aria-label="t('intravox', 'Clear URL')">
               <Close :size="16" />
             </button>
 
@@ -61,7 +61,7 @@
         <NcButton v-if="canPromote"
                   @click="$emit('promote', itemPath)"
                   type="tertiary"
-                  :aria-label="t('Promote (move up one level)')">
+                  :aria-label="t('intravox', 'Promote (move up one level)')">
           <template #icon>
             <ChevronLeft :size="20" />
           </template>
@@ -71,7 +71,7 @@
         <NcButton v-if="canDemote"
                   @click="$emit('demote', itemPath)"
                   type="tertiary"
-                  :aria-label="t('Demote (make child of item above)')">
+                  :aria-label="t('intravox', 'Demote (make child of item above)')">
           <template #icon>
             <ChevronRight :size="20" />
           </template>
@@ -80,7 +80,7 @@
         <NcButton v-if="level < 3"
                   @click="$emit('add-child', itemPath)"
                   type="tertiary"
-                  :aria-label="t('Add sub-item')">
+                  :aria-label="t('intravox', 'Add sub-item')">
           <template #icon>
             <Plus :size="20" />
           </template>
@@ -88,7 +88,7 @@
 
         <NcButton @click="$emit('delete', itemPath)"
                   type="error"
-                  :aria-label="t('Delete item')">
+                  :aria-label="t('intravox', 'Delete item')">
           <template #icon>
             <Delete :size="20" />
           </template>
@@ -122,7 +122,7 @@
 </template>
 
 <script>
-import { translate as t } from '@nextcloud/l10n';
+import { translate, translatePlural } from '@nextcloud/l10n';
 import { NcButton, NcSelect } from '@nextcloud/vue';
 import draggable from 'vuedraggable';
 import DragVertical from 'vue-material-design-icons/DragVertical.vue';
@@ -213,8 +213,8 @@ export default {
     }
   },
   methods: {
-    t(key, vars = {}) {
-      return t('intravox', key, vars);
+    t(app, text, vars) {
+      return translate(app, text, vars);
     },
     emitUpdate() {
       this.$emit('update', this.itemPath, this.localItem);
@@ -226,7 +226,7 @@ export default {
 
         // Auto-fill title with page name if current title is empty or "New Item"
         const currentTitle = this.localItem.title?.trim() || '';
-        const isNewItem = currentTitle === '' || currentTitle === this.t('New item');
+        const isNewItem = currentTitle === '' || currentTitle === this.t('intravox', 'New item');
         if (isNewItem) {
           this.localItem.title = page.title;
         }

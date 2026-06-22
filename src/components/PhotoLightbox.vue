@@ -15,54 +15,54 @@
     <!-- Top bar -->
     <header class="ps-lb-topbar">
       <div class="ps-lb-counter" aria-live="polite" aria-atomic="true">
-        <span class="ps-lb-sr-only">{{ t('Photo') }}</span>
+        <span class="ps-lb-sr-only">{{ t('intravox', 'Photo') }}</span>
         {{ index + 1 }} / {{ photos.length }}
       </div>
       <div class="ps-lb-actions">
         <button
           class="ps-lb-icon-btn"
-          :aria-label="slideshowOn ? t('Pause slideshow') : t('Start slideshow')"
+          :aria-label="slideshowOn ? t('intravox', 'Pause slideshow') : t('intravox', 'Start slideshow')"
           :aria-pressed="slideshowOn ? 'true' : 'false'"
-          :title="slideshowOn ? t('Pause slideshow') : t('Start slideshow')"
+          :title="slideshowOn ? t('intravox', 'Pause slideshow') : t('intravox', 'Start slideshow')"
           @click="toggleSlideshow"
         >
           <Pause v-if="slideshowOn" :size="20" />
           <Play v-else :size="20" />
         </button>
-        <label v-if="slideshowOn" class="ps-lb-sr-only" for="ps-lb-speed-select">{{ t('Slideshow speed') }}</label>
+        <label v-if="slideshowOn" class="ps-lb-sr-only" for="ps-lb-speed-select">{{ t('intravox', 'Slideshow speed') }}</label>
         <select
           v-if="slideshowOn"
           id="ps-lb-speed-select"
           v-model.number="speed"
           class="ps-lb-speed"
-          :aria-label="t('Slideshow speed')"
+          :aria-label="t('intravox', 'Slideshow speed')"
         >
-          <option :value="6000">{{ t('Slow') }}</option>
-          <option :value="4000">{{ t('Normal') }}</option>
-          <option :value="2500">{{ t('Fast') }}</option>
+          <option :value="6000">{{ t('intravox', 'Slow') }}</option>
+          <option :value="4000">{{ t('intravox', 'Normal') }}</option>
+          <option :value="2500">{{ t('intravox', 'Fast') }}</option>
         </select>
         <button
           v-if="canOpenInFiles()"
           class="ps-lb-icon-btn"
-          :aria-label="t('Show in Files')"
-          :title="t('Show in Files')"
+          :aria-label="t('intravox', 'Show in Files')"
+          :title="t('intravox', 'Show in Files')"
           @click="openInFiles"
         >
           <FolderOpen :size="20" />
         </button>
         <button
           class="ps-lb-icon-btn"
-          :aria-label="t('Toggle info panel')"
+          :aria-label="t('intravox', 'Toggle info panel')"
           :aria-pressed="infoOpen ? 'true' : 'false'"
-          :title="t('Toggle info panel')"
+          :title="t('intravox', 'Toggle info panel')"
           @click="infoOpen = !infoOpen"
         >
           <InformationOutline :size="20" />
         </button>
         <button
           class="ps-lb-icon-btn"
-          :aria-label="t('Close lightbox')"
-          :title="t('Close lightbox')"
+          :aria-label="t('intravox', 'Close lightbox')"
+          :title="t('intravox', 'Close lightbox')"
           @click="close"
         >
           <Close :size="22" />
@@ -75,8 +75,8 @@
       <button
         class="ps-lb-nav ps-lb-nav--prev"
         :disabled="photos.length < 2"
-        :aria-label="t('Previous photo')"
-        :title="t('Previous photo')"
+        :aria-label="t('intravox', 'Previous photo')"
+        :title="t('intravox', 'Previous photo')"
         @click.stop="prev"
       >
         <ChevronLeft :size="36" />
@@ -98,7 +98,7 @@
           v-else-if="currentPhoto"
           :key="currentPhoto.file_id"
           :src="fullUrl(currentPhoto)"
-          :alt="currentPhoto.location_display || currentPhoto.location || t('Photo {n} of {total}', { n: index + 1, total: photos.length })"
+          :alt="currentPhoto.location_display || currentPhoto.location || t('intravox', 'Photo {n} of {total}', { n: index + 1, total: photos.length })"
           class="ps-lb-image"
         />
       </div>
@@ -106,8 +106,8 @@
       <button
         class="ps-lb-nav ps-lb-nav--next"
         :disabled="photos.length < 2"
-        :aria-label="t('Next photo')"
-        :title="t('Next photo')"
+        :aria-label="t('intravox', 'Next photo')"
+        :title="t('intravox', 'Next photo')"
         @click.stop="next"
       >
         <ChevronRight :size="36" />
@@ -119,7 +119,7 @@
       v-if="currentPhoto"
       type="button"
       class="ps-lb-pill"
-      :aria-label="t('Toggle location map')"
+      :aria-label="t('intravox', 'Toggle location map')"
       :aria-pressed="miniMapOpen ? 'true' : 'false'"
       :disabled="!currentPhoto.gps"
       @click.stop="onPillClick"
@@ -129,7 +129,7 @@
         <span class="ps-lb-pill-time">· {{ formatTime(currentPhoto.taken_at) }}</span>
       </div>
       <div v-else class="ps-lb-pill-date ps-lb-pill-date--fallback">
-        {{ t('No date in EXIF') }}
+        {{ t('intravox', 'No date in EXIF') }}
       </div>
       <div v-if="locationLabel" class="ps-lb-pill-loc">
         <MapMarker :size="14" />
@@ -140,11 +140,11 @@
     <!-- Mini-map flyout (toggled by clicking pill) -->
     <aside v-if="miniMapOpen && currentPhoto && currentPhoto.gps" class="ps-lb-minimap" @click.stop>
       <div class="ps-lb-minimap-header">
-        <span>{{ locationLabel || t('Location') }}</span>
+        <span>{{ locationLabel || t('intravox', 'Location') }}</span>
         <button
           class="ps-lb-icon-btn"
-          :aria-label="t('Close map')"
-          :title="t('Close map')"
+          :aria-label="t('intravox', 'Close map')"
+          :title="t('intravox', 'Close map')"
           @click="miniMapOpen = false"
         >
           <Close :size="18" />
@@ -155,7 +155,7 @@
         class="ps-lb-minimap-frame"
         loading="lazy"
         referrerpolicy="no-referrer-when-downgrade"
-        :title="t('Location map')"
+        :title="t('intravox', 'Location map')"
       ></iframe>
       <a
         v-if="osmExternalUrl"
@@ -164,18 +164,18 @@
         rel="noopener noreferrer"
         class="ps-lb-minimap-link"
       >
-        {{ t('View larger map') }}
+        {{ t('intravox', 'View larger map') }}
       </a>
     </aside>
 
     <!-- Details flyout (people/subjects/camera/filename) -->
     <aside v-if="infoOpen && currentPhoto" class="ps-lb-details" @click.stop>
       <header class="ps-lb-details-header">
-        <h3>{{ t('Details') }}</h3>
+        <h3>{{ t('intravox', 'Details') }}</h3>
         <button
           class="ps-lb-icon-btn"
-          :aria-label="t('Close details')"
-          :title="t('Close details')"
+          :aria-label="t('intravox', 'Close details')"
+          :title="t('intravox', 'Close details')"
           @click="infoOpen = false"
         >
           <Close :size="18" />
@@ -183,29 +183,29 @@
       </header>
       <dl class="ps-lb-info-list">
         <template v-if="hasPeople">
-          <dt>{{ t('People') }}</dt>
+          <dt>{{ t('intravox', 'People') }}</dt>
           <dd>
             <span v-for="p in currentPhoto.people" :key="p" class="ps-lb-chip">{{ p }}</span>
           </dd>
         </template>
         <template v-if="hasSubjects">
-          <dt>{{ t('Subjects') }}</dt>
+          <dt>{{ t('intravox', 'Subjects') }}</dt>
           <dd>
             <span v-for="s in currentPhoto.subjects" :key="s" class="ps-lb-chip">{{ s }}</span>
           </dd>
         </template>
         <template v-if="currentPhoto.camera">
-          <dt>{{ t('Camera') }}</dt>
+          <dt>{{ t('intravox', 'Camera') }}</dt>
           <dd>{{ currentPhoto.camera }}</dd>
         </template>
         <template v-if="currentPhoto.name">
-          <dt>{{ t('File') }}</dt>
+          <dt>{{ t('intravox', 'File') }}</dt>
           <dd class="ps-lb-info-filename">
             <button
               v-if="canOpenInFiles()"
               type="button"
               class="ps-lb-filename-link"
-              :title="t('Show in Files')"
+              :title="t('intravox', 'Show in Files')"
               @click="openInFiles"
             >
               <span>{{ currentPhoto.name }}</span>
@@ -222,7 +222,7 @@
 
 <script>
 import { generateUrl } from '@nextcloud/router';
-import { translate as t, getCanonicalLocale } from '@nextcloud/l10n';
+import { translate, getCanonicalLocale, translatePlural } from '@nextcloud/l10n';
 import ChevronLeft from 'vue-material-design-icons/ChevronLeft.vue';
 import ChevronRight from 'vue-material-design-icons/ChevronRight.vue';
 import Close from 'vue-material-design-icons/Close.vue';
@@ -345,8 +345,8 @@ export default {
     }
   },
   methods: {
-    t(key, vars = {}) {
-      return t('intravox', key, vars);
+    t(app, text, vars) {
+      return translate(app, text, vars);
     },
     fullUrl(photo) {
       // High-resolution image OR video poster-frame. Federated photos

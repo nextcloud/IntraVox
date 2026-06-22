@@ -8,7 +8,7 @@
             v-if="isEditingFooter"
             v-model="editableContent"
             :editable="true"
-            :placeholder="t('Enter footer content …')"
+            :placeholder="t('intravox', 'Enter footer content …')"
             class="footer-editor"
           />
           <div v-else class="footer-content" v-html="footerHtml"></div>
@@ -21,7 +21,7 @@
               <template #icon>
                 <Pencil :size="20" />
               </template>
-              {{ t('Edit footer') }}
+              {{ t('intravox', 'Edit footer') }}
             </NcActionButton>
           </NcActions>
         </div>
@@ -30,22 +30,22 @@
         <div v-if="isEditingFooter" class="footer-edit-actions">
           <NcButton
             @click="cancelEditFooter"
-            :aria-label="t('Cancel')"
+            :aria-label="t('intravox', 'Cancel')"
           >
             <template #icon>
               <Close :size="20" />
             </template>
-            {{ t('Cancel') }}
+            {{ t('intravox', 'Cancel') }}
           </NcButton>
           <NcButton
             type="primary"
             @click="saveFooter"
-            :aria-label="t('Save')"
+            :aria-label="t('intravox', 'Save')"
           >
             <template #icon>
               <ContentSave :size="20" />
             </template>
-            {{ t('Save') }}
+            {{ t('intravox', 'Save') }}
           </NcButton>
         </div>
       </div>
@@ -54,7 +54,7 @@
 </template>
 
 <script>
-import { translate as t } from '@nextcloud/l10n';
+import { translate, translatePlural } from '@nextcloud/l10n';
 import { showSuccess } from '@nextcloud/dialogs';
 import { defineAsyncComponent } from 'vue';
 import { NcButton, NcActions, NcActionButton } from '@nextcloud/vue';
@@ -117,8 +117,8 @@ export default {
     }
   },
   methods: {
-    t(key, vars = {}) {
-      return t('intravox', key, vars);
+    t(app, text, vars) {
+      return translate(app, text, vars);
     },
     startEditFooter() {
       this.originalContent = this.footerContent;
@@ -129,7 +129,7 @@ export default {
       this.isEditingFooter = false;
       this.editableContent = '';
       this.originalContent = '';
-      showSuccess(this.t('Changes cancelled'));
+      showSuccess(this.t('intravox', 'Changes cancelled'));
     },
     saveFooter() {
       // Emit save event to parent - parent will handle API call and notifications

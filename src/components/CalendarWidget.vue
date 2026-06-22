@@ -4,7 +4,7 @@
 
     <div v-if="loading" class="calendar-loading" role="status" aria-live="polite">
       <NcLoadingIcon :size="32" />
-      <span>{{ t('Loading events …') }}</span>
+      <span>{{ t('intravox', 'Loading events …') }}</span>
     </div>
 
     <div v-else-if="error" class="calendar-error" role="alert">
@@ -14,13 +14,13 @@
 
     <div v-else-if="!hasCalendars" class="calendar-empty">
       <CalendarIcon :size="32" />
-      <p>{{ t('No calendar selected') }}</p>
-      <small>{{ t('Select one or more calendars in the widget editor') }}</small>
+      <p>{{ t('intravox', 'No calendar selected') }}</p>
+      <small>{{ t('intravox', 'Select one or more calendars in the widget editor') }}</small>
     </div>
 
     <div v-else-if="events.length === 0" class="calendar-empty">
       <CalendarIcon :size="32" />
-      <p>{{ t('No upcoming events') }}</p>
+      <p>{{ t('intravox', 'No upcoming events') }}</p>
     </div>
 
     <div v-else class="calendar-event-list">
@@ -44,7 +44,7 @@
           </span>
           <span class="event-title">{{ event.summary }}</span>
           <span v-if="widget.showTime !== false" class="event-time">
-            <template v-if="event.isAllDay">{{ t('All day') }}</template>
+            <template v-if="event.isAllDay">{{ t('intravox', 'All day') }}</template>
             <template v-else>
               {{ formatTime(event.start) }}<template v-if="event.end"> - {{ formatTime(event.end) }}</template>
             </template>
@@ -61,7 +61,7 @@
 <script>
 import { NcLoadingIcon } from '@nextcloud/vue';
 import { generateUrl } from '@nextcloud/router';
-import { translate as t } from '@nextcloud/l10n';
+import { translate, translatePlural } from '@nextcloud/l10n';
 import axios from '@nextcloud/axios';
 import AlertCircle from 'vue-material-design-icons/AlertCircle.vue';
 import CalendarIcon from 'vue-material-design-icons/Calendar.vue';
@@ -140,8 +140,8 @@ export default {
     this.fetchEvents();
   },
   methods: {
-    t(key, vars = {}) {
-      return t('intravox', key, vars);
+    t(app, text, vars) {
+      return translate(app, text, vars);
     },
     async fetchEvents() {
       if (!this.hasCalendars) {
@@ -172,7 +172,7 @@ export default {
         this.events = response.data.events || [];
       } catch (err) {
         console.error('[CalendarWidget] Failed to fetch events:', err);
-        this.error = this.t('Failed to load events');
+        this.error = this.t('intravox', 'Failed to load events');
       } finally {
         this.loading = false;
       }
@@ -275,8 +275,8 @@ export default {
       const eventDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
       const diffDays = Math.round((eventDay - today) / (1000 * 60 * 60 * 24));
 
-      if (diffDays === 0) return this.t('Today');
-      if (diffDays === 1) return this.t('Tomorrow');
+      if (diffDays === 0) return this.t('intravox', 'Today');
+      if (diffDays === 1) return this.t('intravox', 'Tomorrow');
       return null;
     },
     formatTime(dateStr) {

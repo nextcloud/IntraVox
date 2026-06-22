@@ -27,13 +27,13 @@
     </div>
     <div v-else class="empty-links-placeholder">
       <ViewGrid :size="32" />
-      <p>{{ t('No links configured. Click the edit button to add links.') }}</p>
+      <p>{{ t('intravox', 'No links configured. Click the edit button to add links.') }}</p>
     </div>
   </div>
 </template>
 
 <script>
-import { translate as t } from '@nextcloud/l10n';
+import { translate, translatePlural } from '@nextcloud/l10n';
 import { markdownToHtml } from '../utils/markdownSerializer.js';
 import { isDarkBackground, getEffectiveBackgroundColor } from '../utils/colorUtils.js';
 
@@ -197,8 +197,8 @@ export default {
     },
   },
   methods: {
-    t(key, vars = {}) {
-      return t('intravox', key, vars);
+    t(app, text, vars) {
+      return translate(app, text, vars);
     },
     sanitizeHtml(content) {
       if (!content) return '';

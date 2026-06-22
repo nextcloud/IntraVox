@@ -2,12 +2,12 @@
   <div class="ps-map" :class="{ 'ps-map--fullscreen': fullscreen }">
     <div v-if="loading" class="ps-map-state">
       <NcLoadingIcon :size="24" />
-      <span>{{ t('Loading map …') }}</span>
+      <span>{{ t('intravox', 'Loading map …') }}</span>
     </div>
 
     <div v-else-if="fallback" class="ps-map-fallback">
       <Map :size="32" />
-      <p>{{ t('Map view requires the Leaflet library — not installed.') }}</p>
+      <p>{{ t('intravox', 'Map view requires the Leaflet library — not installed.') }}</p>
       <ul v-if="clusters.length" class="ps-map-list">
         <li
           v-for="c in clusters"
@@ -15,7 +15,7 @@
           class="ps-map-list-item"
           tabindex="0"
           role="button"
-          :aria-label="t('Show {count} photos in {location}', { count: c.count, location: c.location })"
+          :aria-label="t('intravox', 'Show {count} photos in {location}', { count: c.count, location: c.location })"
           @click="$emit('cluster-click', { location: c.location, photo_ids: c.photo_ids })"
           @keydown.enter="$emit('cluster-click', { location: c.location, photo_ids: c.photo_ids })"
           @keydown.space.prevent="$emit('cluster-click', { location: c.location, photo_ids: c.photo_ids })"
@@ -39,7 +39,7 @@
 <script>
 import axios from '@nextcloud/axios';
 import { generateUrl } from '@nextcloud/router';
-import { translate as t } from '@nextcloud/l10n';
+import { translate, translatePlural } from '@nextcloud/l10n';
 import { NcLoadingIcon } from '@nextcloud/vue';
 import Map from 'vue-material-design-icons/Map.vue';
 import MapMarker from 'vue-material-design-icons/MapMarker.vue';
@@ -86,8 +86,8 @@ export default {
     }
   },
   methods: {
-    t(key, vars = {}) {
-      return t('intravox', key, vars);
+    t(app, text, vars) {
+      return translate(app, text, vars);
     },
     async loadLeaflet() {
       try {
@@ -130,7 +130,7 @@ export default {
         await this.$nextTick();
         this.initMap();
       } catch (e) {
-        this.error = e.response?.data?.error || e.message || this.t('Failed to load map');
+        this.error = e.response?.data?.error || e.message || this.t('intravox', 'Failed to load map');
         this.loading = false;
       }
     },

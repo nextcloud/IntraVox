@@ -2,12 +2,12 @@
   <div class="news-widget-editor">
     <!-- Widget Title -->
     <div class="editor-section">
-      <label class="editor-label" for="news-widget-title">{{ t('Widget title (optional)') }}</label>
+      <label class="editor-label" for="news-widget-title">{{ t('intravox', 'Widget title (optional)') }}</label>
       <input
         id="news-widget-title"
         type="text"
         v-model="localWidget.title"
-        :placeholder="t('e.g., Latest News')"
+        :placeholder="t('intravox', 'e.g., Latest News')"
         class="editor-input"
         @input="emitUpdate"
       />
@@ -15,7 +15,7 @@
 
     <!-- Background Color -->
     <div class="editor-section">
-      <label class="editor-label">{{ t('Background color') }}</label>
+      <label class="editor-label">{{ t('intravox', 'Background color') }}</label>
       <div class="color-presets">
         <button
           type="button"
@@ -23,7 +23,7 @@
           @click="setBackgroundColor(null)"
           class="color-preset-btn"
         >
-          {{ t('None') }}
+          {{ t('intravox', 'None') }}
         </button>
         <button
           type="button"
@@ -31,7 +31,7 @@
           @click="setBackgroundColor('var(--color-background-hover)')"
           class="color-preset-btn"
         >
-          {{ t('Light') }}
+          {{ t('intravox', 'Light') }}
         </button>
         <button
           type="button"
@@ -39,26 +39,26 @@
           @click="setBackgroundColor('var(--color-primary-element)')"
           class="color-preset-btn"
         >
-          {{ t('Primary') }}
+          {{ t('intravox', 'Primary') }}
         </button>
       </div>
     </div>
 
     <!-- Source Location -->
     <div class="editor-section">
-      <label class="editor-label">{{ t('Source location') }}</label>
+      <label class="editor-label">{{ t('intravox', 'Source location') }}</label>
       <PageTreeSelect
         v-model="localWidget.sourcePageId"
-        :placeholder="t('All pages')"
+        :placeholder="t('intravox', 'All pages')"
         :clearable="true"
         @select="handleSourceSelect"
       />
-      <p class="editor-hint">{{ t('Select a page or folder to show content from, including all subpages') }}</p>
+      <p class="editor-hint">{{ t('intravox', 'Select a page or folder to show content from, including all subpages') }}</p>
     </div>
 
     <!-- Layout Selection -->
     <div class="editor-section">
-      <label class="editor-label">{{ t('Layout') }}</label>
+      <label class="editor-label">{{ t('intravox', 'Layout') }}</label>
       <div class="layout-options">
         <button
           v-for="layout in layoutOptions"
@@ -75,7 +75,7 @@
 
     <!-- Grid Columns (only for grid layout) -->
     <div v-if="localWidget.layout === 'grid'" class="editor-section">
-      <label class="editor-label">{{ t('Columns') }}</label>
+      <label class="editor-label">{{ t('intravox', 'Columns') }}</label>
       <div class="columns-selector">
         <button
           v-for="cols in [2, 3, 4]"
@@ -91,7 +91,7 @@
 
     <!-- Autoplay Interval (only for carousel layout) -->
     <div v-if="localWidget.layout === 'carousel'" class="editor-section">
-      <label class="editor-label" for="news-widget-autoplay">{{ t('Autoplay interval (seconds)') }}</label>
+      <label class="editor-label" for="news-widget-autoplay">{{ t('intravox', 'Autoplay interval (seconds)') }}</label>
       <div class="limit-selector">
         <input
           id="news-widget-autoplay"
@@ -102,14 +102,14 @@
           class="limit-slider"
           @input="emitUpdate"
         />
-        <span class="limit-value">{{ localWidget.autoplayInterval === 0 ? t('Off') : localWidget.autoplayInterval + 's' }}</span>
+        <span class="limit-value">{{ localWidget.autoplayInterval === 0 ? t('intravox', 'Off') : localWidget.autoplayInterval + 's' }}</span>
       </div>
-      <p class="editor-hint">{{ t('Set to 0 to disable autoplay') }}</p>
+      <p class="editor-hint">{{ t('intravox', 'Set to 0 to disable autoplay') }}</p>
     </div>
 
     <!-- Number of items -->
     <div class="editor-section">
-      <label class="editor-label" for="news-widget-limit">{{ t('Number of items') }}</label>
+      <label class="editor-label" for="news-widget-limit">{{ t('intravox', 'Number of items') }}</label>
       <div class="limit-selector">
         <input
           id="news-widget-limit"
@@ -126,16 +126,16 @@
 
     <!-- Sort Options -->
     <div class="editor-section">
-      <label class="editor-label" for="news-widget-sort-by">{{ t('Sort by') }}</label>
+      <label class="editor-label" for="news-widget-sort-by">{{ t('intravox', 'Sort by') }}</label>
       <div class="sort-options">
         <select id="news-widget-sort-by" v-model="localWidget.sortBy" class="editor-select" @change="emitUpdate">
-          <option value="modified">{{ t('Date modified') }}</option>
-          <option value="title">{{ t('Title') }}</option>
+          <option value="modified">{{ t('intravox', 'Date modified') }}</option>
+          <option value="title">{{ t('intravox', 'Title') }}</option>
         </select>
         <button
           class="sort-order-button"
           @click="toggleSortOrder"
-          :title="localWidget.sortOrder === 'desc' ? t('Newest first') : t('Oldest first')"
+          :title="localWidget.sortOrder === 'desc' ? t('intravox', 'Newest first') : t('intravox', 'Oldest first')"
         >
           <SortDescending v-if="localWidget.sortOrder === 'desc'" :size="20" />
           <SortAscending v-else :size="20" />
@@ -145,19 +145,19 @@
 
     <!-- Display Options -->
     <div class="editor-section">
-      <label class="editor-label">{{ t('Display options') }}</label>
+      <label class="editor-label">{{ t('intravox', 'Display options') }}</label>
       <div class="display-options">
         <label class="checkbox-option">
           <input type="checkbox" v-model="localWidget.showImage" @change="emitUpdate" />
-          <span>{{ t('Show image') }}</span>
+          <span>{{ t('intravox', 'Show image') }}</span>
         </label>
         <label class="checkbox-option">
           <input type="checkbox" v-model="localWidget.showDate" @change="emitUpdate" />
-          <span>{{ t('Show date') }}</span>
+          <span>{{ t('intravox', 'Show date') }}</span>
         </label>
         <label class="checkbox-option">
           <input type="checkbox" v-model="localWidget.showExcerpt" @change="emitUpdate" />
-          <span>{{ t('Show excerpt') }}</span>
+          <span>{{ t('intravox', 'Show excerpt') }}</span>
         </label>
       </div>
     </div>
@@ -166,37 +166,37 @@
     <div class="editor-section">
       <label class="checkbox-option publication-filter-option">
         <input type="checkbox" v-model="localWidget.filterPublished" @change="emitUpdate" />
-        <span>{{ t('Show only published pages') }}</span>
+        <span>{{ t('intravox', 'Show only published pages') }}</span>
       </label>
-      <p class="editor-hint">{{ t('Filter pages based on publication and expiration dates configured in admin settings.') }}</p>
+      <p class="editor-hint">{{ t('intravox', 'Filter pages based on publication and expiration dates configured in admin settings.') }}</p>
 
       <div v-if="localWidget.filterPublished && !metavoxAvailable" class="publication-warning">
         <AlertCircle :size="16" />
-        <span>{{ t('MetaVox is required for publication filtering but is not available.') }}</span>
+        <span>{{ t('intravox', 'MetaVox is required for publication filtering but is not available.') }}</span>
       </div>
 
       <div v-else-if="localWidget.filterPublished && !publicationFieldsConfigured" class="publication-warning">
         <AlertCircle :size="16" />
-        <span>{{ t('Publication date fields have not been configured in admin settings.') }}</span>
+        <span>{{ t('intravox', 'Publication date fields have not been configured in admin settings.') }}</span>
       </div>
     </div>
 
     <!-- MetaVox Filters -->
     <div class="editor-section" v-if="metavoxAvailable">
       <label class="editor-label">
-        {{ t('MetaVox filters') }}
-        <span class="label-hint">({{ t('optional') }})</span>
+        {{ t('intravox', 'MetaVox filters') }}
+        <span class="label-hint">({{ t('intravox', 'optional') }})</span>
       </label>
 
       <div v-if="filters.length > 0" class="filters-list">
         <div v-for="(filter, index) in filters" :key="index" class="filter-row">
-          <select v-model="filter.fieldName" class="filter-field" :aria-label="t('Filter field')" @change="handleFieldChange(filter)">
-            <option value="">{{ t('Select field') }}</option>
+          <select v-model="filter.fieldName" class="filter-field" :aria-label="t('intravox', 'Filter field')" @change="handleFieldChange(filter)">
+            <option value="">{{ t('intravox', 'Select field') }}</option>
             <option v-for="field in metavoxFields" :key="field.field_name" :value="field.field_name">
               {{ field.field_label || field.field_name }}
             </option>
           </select>
-          <select v-model="filter.operator" class="filter-operator" :aria-label="t('Filter operator')" @change="handleOperatorChange(filter)">
+          <select v-model="filter.operator" class="filter-operator" :aria-label="t('intravox', 'Filter operator')" @change="handleOperatorChange(filter)">
             <option v-for="op in getOperatorsForField(filter.fieldName)" :key="op.value" :value="op.value">
               {{ t(op.label) }}
             </option>
@@ -210,7 +210,7 @@
               type="date"
               v-model="filter.value"
               class="filter-value"
-              :aria-label="t('Filter value')"
+              :aria-label="t('intravox', 'Filter value')"
               @input="emitUpdate"
             />
 
@@ -220,8 +220,8 @@
               type="number"
               v-model="filter.value"
               class="filter-value"
-              :placeholder="t('Value')"
-              :aria-label="t('Filter value')"
+              :placeholder="t('intravox', 'Value')"
+              :aria-label="t('intravox', 'Filter value')"
               @input="emitUpdate"
             />
 
@@ -230,10 +230,10 @@
               v-else-if="getFieldType(filter.fieldName) === 'select' && filter.operator === 'equals'"
               v-model="filter.value"
               class="filter-value"
-              :aria-label="t('Filter value')"
+              :aria-label="t('intravox', 'Filter value')"
               @change="emitUpdate"
             >
-              <option value="">{{ t('Select value') }}</option>
+              <option value="">{{ t('intravox', 'Select value') }}</option>
               <option v-for="option in getFieldOptions(filter.fieldName)" :key="option" :value="option">
                 {{ option }}
               </option>
@@ -245,7 +245,7 @@
               v-model="filter.values"
               class="filter-value filter-value--multi"
               multiple
-              :aria-label="t('Filter values')"
+              :aria-label="t('intravox', 'Filter values')"
               @change="emitUpdate"
             >
               <option v-for="option in getFieldOptions(filter.fieldName)" :key="option" :value="option">
@@ -259,7 +259,7 @@
               v-model="filter.values"
               class="filter-value filter-value--multi"
               multiple
-              :aria-label="t('Filter values')"
+              :aria-label="t('intravox', 'Filter values')"
               @change="emitUpdate"
             >
               <option v-for="option in getFieldOptions(filter.fieldName)" :key="option" :value="option">
@@ -273,8 +273,8 @@
               type="text"
               v-model="filter.value"
               class="filter-value"
-              :placeholder="t('Value')"
-              :aria-label="t('Filter value')"
+              :placeholder="t('intravox', 'Value')"
+              :aria-label="t('intravox', 'Filter value')"
               @input="emitUpdate"
             />
           </template>
@@ -285,40 +285,40 @@
         </div>
 
         <div v-if="filters.length > 1" class="filter-operator-toggle">
-          <span>{{ t('Match') }}</span>
+          <span>{{ t('intravox', 'Match') }}</span>
           <button
             class="operator-button"
             :class="{ 'operator-button--active': localWidget.filterOperator === 'AND' }"
             @click="setFilterOperator('AND')"
           >
-            {{ t('all') }}
+            {{ t('intravox', 'all') }}
           </button>
           <button
             class="operator-button"
             :class="{ 'operator-button--active': localWidget.filterOperator === 'OR' }"
             @click="setFilterOperator('OR')"
           >
-            {{ t('any') }}
+            {{ t('intravox', 'any') }}
           </button>
-          <span>{{ t('filters') }}</span>
+          <span>{{ t('intravox', 'filters') }}</span>
         </div>
       </div>
 
       <button class="add-filter-button" @click="addFilter">
         <Plus :size="16" />
-        {{ t('Add filter') }}
+        {{ t('intravox', 'Add filter') }}
       </button>
     </div>
 
     <div v-else class="editor-section metavox-notice">
       <Information :size="20" />
-      <span>{{ t('Install MetaVox for advanced filtering options') }}</span>
+      <span>{{ t('intravox', 'Install MetaVox for advanced filtering options') }}</span>
     </div>
   </div>
 </template>
 
 <script>
-import { translate as t } from '@nextcloud/l10n';
+import { translate, translatePlural } from '@nextcloud/l10n';
 import { generateUrl } from '@nextcloud/router';
 import axios from '@nextcloud/axios';
 import ViewList from 'vue-material-design-icons/ViewList.vue';
@@ -415,9 +415,9 @@ export default {
   computed: {
     layoutOptions() {
       return [
-        { value: 'list', label: this.t('List'), icon: 'ViewList' },
-        { value: 'grid', label: this.t('Grid'), icon: 'ViewGrid' },
-        { value: 'carousel', label: this.t('Carousel'), icon: 'ViewCarousel' },
+        { value: 'list', label: this.t('intravox', 'List'), icon: 'ViewList' },
+        { value: 'grid', label: this.t('intravox', 'Grid'), icon: 'ViewGrid' },
+        { value: 'carousel', label: this.t('intravox', 'Carousel'), icon: 'ViewCarousel' },
       ];
     },
   },
@@ -438,8 +438,8 @@ export default {
     this.checkMetaVox();
   },
   methods: {
-    t(key, vars = {}) {
-      return t('intravox', key, vars);
+    t(app, text, vars) {
+      return translate(app, text, vars);
     },
     createDefaultWidget() {
       return {

@@ -10,14 +10,14 @@
     </div>
     <div v-else-if="fallback" class="ps-day-map-fallback">
       <MapMarker :size="16" />
-      <span>{{ t('Map unavailable') }}</span>
+      <span>{{ t('intravox', 'Map unavailable') }}</span>
     </div>
     <div v-else ref="mapEl" class="ps-day-map-canvas"></div>
   </div>
 </template>
 
 <script>
-import { translate as t } from '@nextcloud/l10n';
+import { translate, translatePlural } from '@nextcloud/l10n';
 import { NcLoadingIcon } from '@nextcloud/vue';
 import MapMarker from 'vue-material-design-icons/MapMarker.vue';
 
@@ -141,8 +141,8 @@ export default {
     }
   },
   methods: {
-    t(key, vars = {}) {
-      return t('intravox', key, vars);
+    t(app, text, vars) {
+      return translate(app, text, vars);
     },
     async activateMap() {
       if (this.hasIntersected) return;

@@ -7,7 +7,7 @@
 
       <div v-if="loading" class="loading-state">
         <NcLoadingIcon :size="32" />
-        <p>{{ t('Loading page structure …') }}</p>
+        <p>{{ t('intravox', 'Loading page structure …') }}</p>
       </div>
 
       <div v-else-if="error" class="error-state">
@@ -15,7 +15,7 @@
       </div>
 
       <div v-else-if="tree.length === 0" class="empty-state">
-        <p>{{ t('No pages found.') }}</p>
+        <p>{{ t('intravox', 'No pages found.') }}</p>
       </div>
 
       <div v-else class="page-tree">
@@ -35,7 +35,7 @@
 </template>
 
 <script>
-import { translate } from '@nextcloud/l10n';
+import { translate, translatePlural } from '@nextcloud/l10n';
 import { NcModal, NcLoadingIcon } from '@nextcloud/vue';
 import axios from '@nextcloud/axios';
 import { generateUrl } from '@nextcloud/router';
@@ -69,7 +69,7 @@ export default {
   },
   computed: {
     modalTitle() {
-      return this.t('Page structure');
+      return this.t('intravox', 'Page structure');
     }
   },
   async mounted() {
@@ -98,7 +98,7 @@ export default {
         this.expandPathToCurrent(this.tree);
       } catch (err) {
         console.error('PageTreeModal: Error loading tree:', err);
-        this.error = this.t('Could not load page structure: {error}', { error: err.message });
+        this.error = this.t('intravox', 'Could not load page structure: {error}', { error: err.message });
       } finally {
         this.loading = false;
       }

@@ -62,9 +62,9 @@ export default {
 			this.$emit('select', emoji)
 			this.$emit('update:visible', false)
 		},
-		t(app, str) {
-			return window.t ? window.t(app, str) : str
-		},
+		t(app, text, vars) {
+      return translate(app, text, vars);
+    },
 	},
 }
 </script>

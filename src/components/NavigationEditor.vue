@@ -1,6 +1,6 @@
 <template>
   <NcModal @close="$emit('close')"
-           :name="t('Edit navigation')"
+           :name="t('intravox', 'Edit navigation')"
            size="large"
            class="navigation-editor-modal">
     <div class="navigation-editor">
@@ -10,22 +10,22 @@
       <!-- Actions at top with type selector on left -->
       <div class="modal-actions-top">
         <div class="type-selector-left">
-          <label>{{ t('Navigation Type:') }}</label>
+          <label>{{ t('intravox', 'Navigation Type:') }}</label>
           <NcSelect v-model="selectedType"
                     :options="typeOptions"
-                    :placeholder="t('Select navigation type')"
+                    :placeholder="t('intravox', 'Select navigation type')"
                     :clearable="false"
                     @update:modelValue="updateType" />
         </div>
         <div class="action-buttons">
           <NcButton @click="$emit('close')" type="secondary">
-            {{ t('Cancel') }}
+            {{ t('intravox', 'Cancel') }}
           </NcButton>
           <NcButton @click="save" type="primary">
             <template #icon>
               <ContentSave :size="20" />
             </template>
-            {{ t('Save navigation') }}
+            {{ t('intravox', 'Save navigation') }}
           </NcButton>
         </div>
       </div>
@@ -33,17 +33,17 @@
       <!-- Navigation Items -->
       <div class="editor-section">
         <div class="section-header">
-          <h3>{{ t('Navigation items') }}</h3>
+          <h3>{{ t('intravox', 'Navigation items') }}</h3>
           <NcButton @click="addTopLevelItem" type="primary">
             <template #icon>
               <Plus :size="20" />
             </template>
-            {{ t('Add item') }}
+            {{ t('intravox', 'Add item') }}
           </NcButton>
         </div>
 
         <div v-if="localNavigation.items.length === 0" class="empty-state">
-          {{ t('No navigation items yet. Click "Add Item" to create one.') }}
+          {{ t('intravox', 'No navigation items yet. Click "Add Item" to create one.') }}
         </div>
 
         <!-- Drag and drop list -->
@@ -71,7 +71,7 @@
 </template>
 
 <script>
-import { translate as t } from '@nextcloud/l10n';
+import { translate, translatePlural } from '@nextcloud/l10n';
 import { NcModal, NcButton, NcSelect } from '@nextcloud/vue';
 import draggable from 'vuedraggable';
 import Plus from 'vue-material-design-icons/Plus.vue';
@@ -113,8 +113,8 @@ export default {
     }
   },
   methods: {
-    t(key, vars = {}) {
-      return t('intravox', key, vars);
+    t(app, text, vars) {
+      return translate(app, text, vars);
     },
     updateType(option) {
       if (option) {

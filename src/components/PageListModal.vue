@@ -1,10 +1,10 @@
 <template>
   <NcModal @close="$emit('close')"
-           :name="t('All pages')"
+           :name="t('intravox', 'All pages')"
            size="normal">
     <div class="page-list-content">
       <div v-if="pages.length === 0" class="empty-state">
-        <p>{{ t('No pages created yet.') }}</p>
+        <p>{{ t('intravox', 'No pages created yet.') }}</p>
       </div>
 
       <div v-else class="page-list">
@@ -20,7 +20,7 @@
               v-if="page.uniqueId !== 'home'"
               type="error"
               @click.stop="$emit('delete', page.uniqueId)"
-              :aria-label="t('Delete')"
+              :aria-label="t('intravox', 'Delete')"
             >
               <template #icon>
                 <Delete :size="20" />
@@ -34,7 +34,7 @@
 </template>
 
 <script>
-import { translate } from '@nextcloud/l10n';
+import { translate, translatePlural } from '@nextcloud/l10n';
 import { NcModal, NcListItem, NcButton } from '@nextcloud/vue';
 import Delete from 'vue-material-design-icons/Delete.vue';
 

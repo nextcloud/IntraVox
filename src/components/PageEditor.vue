@@ -3,7 +3,7 @@
     <!-- Header Row (spans full width above everything) -->
     <div v-if="hasHeaderRow" class="header-row-editor" :class="{ 'dark-bg': isDarkBackground(getHeaderRowBgColor()) }" :style="getHeaderRowStyle()">
       <div class="header-row-header">
-        <span class="header-row-title">{{ t('Header row') }}</span>
+        <span class="header-row-title">{{ t('intravox', 'Header row') }}</span>
         <div class="header-row-actions">
           <NcActions>
             <template #icon>
@@ -20,7 +20,7 @@
           </NcActions>
           <NcButton type="error"
                     @click="removeHeaderRow()"
-                    :aria-label="t('Remove header row')">
+                    :aria-label="t('intravox', 'Remove header row')">
             <template #icon>
               <Delete :size="20" />
             </template>
@@ -40,27 +40,27 @@
           <template #item="{ element: widget }">
             <div class="widget-wrapper" :class="{ 'editing': focusedWidgetId === widget.id }">
               <div class="floating-toolbar">
-                <div class="drag-handle" :aria-label="t('Drag to reorder')">
+                <div class="drag-handle" :aria-label="t('intravox', 'Drag to reorder')">
                   <DragVertical :size="16" />
                 </div>
                 <NcButton v-if="needsEditButton(widget.type)"
                           @click="editHeaderRowWidget(widget)"
                           type="secondary"
-                          :aria-label="t('Edit widget')">
+                          :aria-label="t('intravox', 'Edit widget')">
                   <template #icon>
                     <Pencil :size="16" />
                   </template>
                 </NcButton>
                 <NcButton @click="duplicateHeaderRowWidget(widget)"
                           type="secondary"
-                          :aria-label="t('Duplicate widget')">
+                          :aria-label="t('intravox', 'Duplicate widget')">
                   <template #icon>
                     <ContentDuplicate :size="16" />
                   </template>
                 </NcButton>
                 <NcButton @click="deleteHeaderRowWidget(widget.id)"
                           type="error"
-                          :aria-label="t('Delete widget')">
+                          :aria-label="t('intravox', 'Delete widget')">
                   <template #icon>
                     <Delete :size="16" />
                   </template>
@@ -74,7 +74,7 @@
           <template #icon>
             <Plus :size="20" />
           </template>
-          {{ t('Add widget') }}
+          {{ t('intravox', 'Add widget') }}
         </NcButton>
       </div>
     </div>
@@ -85,7 +85,7 @@
         <template #icon>
           <TableRowPlusBefore :size="20" />
         </template>
-        {{ t('Header row') }}
+        {{ t('intravox', 'Header row') }}
       </NcButton>
     </div>
 
@@ -93,7 +93,7 @@
     <!-- Left Side Column -->
     <div v-if="hasSideColumn('left')" class="side-column-editor side-column-left" :class="{ 'dark-bg': isDarkBackground(getSideColumnBgColor('left')) }" :style="getSideColumnStyle('left')">
       <div class="side-column-header">
-        <span class="side-column-title">{{ t('Left column') }}</span>
+        <span class="side-column-title">{{ t('intravox', 'Left column') }}</span>
         <div class="side-column-actions">
           <NcActions>
             <template #icon>
@@ -110,7 +110,7 @@
           </NcActions>
           <NcButton type="error"
                     @click="removeSideColumn('left')"
-                    :aria-label="t('Remove column')">
+                    :aria-label="t('intravox', 'Remove column')">
             <template #icon>
               <Delete :size="20" />
             </template>
@@ -130,27 +130,27 @@
           <template #item="{ element: widget }">
             <div class="widget-wrapper" :class="{ 'editing': focusedWidgetId === widget.id }">
               <div class="floating-toolbar">
-                <div class="drag-handle" :aria-label="t('Drag to reorder')">
+                <div class="drag-handle" :aria-label="t('intravox', 'Drag to reorder')">
                   <DragVertical :size="16" />
                 </div>
                 <NcButton v-if="needsEditButton(widget.type)"
                           @click="editSideColumnWidget(widget, 'left')"
                           type="secondary"
-                          :aria-label="t('Edit widget')">
+                          :aria-label="t('intravox', 'Edit widget')">
                   <template #icon>
                     <Pencil :size="16" />
                   </template>
                 </NcButton>
                 <NcButton @click="duplicateSideColumnWidget(widget, 'left')"
                           type="secondary"
-                          :aria-label="t('Duplicate widget')">
+                          :aria-label="t('intravox', 'Duplicate widget')">
                   <template #icon>
                     <ContentDuplicate :size="16" />
                   </template>
                 </NcButton>
                 <NcButton @click="deleteSideColumnWidget('left', widget.id)"
                           type="error"
-                          :aria-label="t('Delete widget')">
+                          :aria-label="t('intravox', 'Delete widget')">
                   <template #icon>
                     <Delete :size="16" />
                   </template>
@@ -164,7 +164,7 @@
           <template #icon>
             <Plus :size="20" />
           </template>
-          {{ t('Add widget') }}
+          {{ t('intravox', 'Add widget') }}
         </NcButton>
       </div>
     </div>
@@ -176,20 +176,20 @@
         <NcButton v-if="!hasSideColumn('left')"
                   @click="addSideColumn('left')"
                   type="secondary"
-                  :aria-label="t('Add left column')">
+                  :aria-label="t('intravox', 'Add left column')">
           <template #icon>
             <TableColumnPlusBefore :size="20" />
           </template>
-          {{ t('Left column') }}
+          {{ t('intravox', 'Left column') }}
         </NcButton>
         <NcButton v-if="!hasSideColumn('right')"
                   @click="addSideColumn('right')"
                   type="secondary"
-                  :aria-label="t('Add right column')">
+                  :aria-label="t('intravox', 'Add right column')">
           <template #icon>
             <TableColumnPlusAfter :size="20" />
           </template>
-          {{ t('Right column') }}
+          {{ t('intravox', 'Right column') }}
         </NcButton>
       </div>
 
@@ -211,7 +211,7 @@
       :style="getRowStyle(row)"
     >
       <div class="row-controls">
-        <div class="row-drag-handle" :aria-label="t('Drag to reorder row')">
+        <div class="row-drag-handle" :aria-label="t('intravox', 'Drag to reorder row')">
           <DragVertical :size="20" />
         </div>
 
@@ -223,7 +223,7 @@
               :checked="row.collapsible"
               @change="toggleRowCollapsible(row)"
             />
-            {{ t('Collapsible section') }}
+            {{ t('intravox', 'Collapsible section') }}
           </label>
 
           <!-- Section Title (only shown when collapsible) -->
@@ -231,8 +231,8 @@
             v-if="row.collapsible"
             v-model="row.sectionTitle"
             class="row-section-title"
-            :placeholder="t('Section title …')"
-            :aria-label="t('Section title')"
+            :placeholder="t('intravox', 'Section title …')"
+            :aria-label="t('intravox', 'Section title')"
             @input="onSectionTitleChange(row)"
             @click.stop
           />
@@ -244,11 +244,11 @@
               v-model="row.defaultCollapsed"
               @change="onDefaultCollapsedChange(row)"
             />
-            {{ t('Collapsed by default') }}
+            {{ t('intravox', 'Collapsed by default') }}
           </label>
         </div>
 
-        <label class="row-columns-label">{{ t('Row columns:') }}</label>
+        <label class="row-columns-label">{{ t('intravox', 'Row columns:') }}</label>
         <div class="column-buttons">
           <button
             v-for="n in 5"
@@ -282,7 +282,7 @@
         <NcButton @click="duplicateRow(rowIndex)"
                   type="secondary"
                   class="row-action-button"
-                  :aria-label="t('Duplicate row')">
+                  :aria-label="t('intravox', 'Duplicate row')">
           <template #icon>
             <ContentDuplicate :size="20" />
           </template>
@@ -291,7 +291,7 @@
         <NcButton @click="deleteRow(rowIndex)"
                   type="error"
                   class="row-action-button"
-                  :aria-label="t('Delete row')">
+                  :aria-label="t('intravox', 'Delete row')">
           <template #icon>
             <Delete :size="20" />
           </template>
@@ -313,7 +313,7 @@
             :key="`${rowIndex}-${column}`"
             class="page-column droppable"
           >
-            <div class="column-label">{{ t('Column {column}', { column }) }}</div>
+            <div class="column-label">{{ t('intravox', 'Column {column}', { column }) }}</div>
             <draggable
               :list="getColumnWidgets(rowIndex, column)"
               :group="{ name: 'allWidgets', pull: true, put: true }"
@@ -327,27 +327,27 @@
                 <div class="widget-wrapper" :class="{ 'editing': focusedWidgetId === widget.id }">
                   <!-- Floating toolbar - appears on hover -->
                   <div class="floating-toolbar">
-                    <div class="drag-handle" :aria-label="t('Drag to reorder')">
+                    <div class="drag-handle" :aria-label="t('intravox', 'Drag to reorder')">
                       <DragVertical :size="16" />
                     </div>
                     <NcButton v-if="needsEditButton(widget.type)"
                               @click="editWidget(widget, rowIndex)"
                               type="secondary"
-                              :aria-label="t('Edit widget')">
+                              :aria-label="t('intravox', 'Edit widget')">
                       <template #icon>
                         <Pencil :size="16" />
                       </template>
                     </NcButton>
                     <NcButton @click="duplicateWidget(rowIndex, widget)"
                               type="secondary"
-                              :aria-label="t('Duplicate widget')">
+                              :aria-label="t('intravox', 'Duplicate widget')">
                       <template #icon>
                         <ContentDuplicate :size="16" />
                       </template>
                     </NcButton>
                     <NcButton @click="deleteWidget(rowIndex, widget.id)"
                               type="error"
-                              :aria-label="t('Delete widget')">
+                              :aria-label="t('intravox', 'Delete widget')">
                       <template #icon>
                         <Delete :size="16" />
                       </template>
@@ -362,7 +362,7 @@
                 <template #icon>
                   <Plus :size="20" />
                 </template>
-                {{ t('Add widget') }}
+                {{ t('intravox', 'Add widget') }}
               </NcButton>
             </div>
           </div>
@@ -376,7 +376,7 @@
         <template #icon>
           <TableRowPlusAfter :size="20" />
         </template>
-        {{ t('Insert row') }}
+        {{ t('intravox', 'Insert row') }}
       </NcButton>
     </div>
     </div>
@@ -416,10 +416,10 @@
       <p>{{ deleteDialogMessage }}</p>
       <template #actions>
         <NcButton @click="cancelDelete" type="secondary">
-          {{ t('Cancel') }}
+          {{ t('intravox', 'Cancel') }}
         </NcButton>
         <NcButton @click="confirmDelete" type="error">
-          {{ t('Delete') }}
+          {{ t('intravox', 'Delete') }}
         </NcButton>
       </template>
     </NcDialog>
@@ -428,7 +428,7 @@
     <!-- Right Side Column -->
     <div v-if="hasSideColumn('right')" class="side-column-editor side-column-right" :class="{ 'dark-bg': isDarkBackground(getSideColumnBgColor('right')) }" :style="getSideColumnStyle('right')">
       <div class="side-column-header">
-        <span class="side-column-title">{{ t('Right column') }}</span>
+        <span class="side-column-title">{{ t('intravox', 'Right column') }}</span>
         <div class="side-column-actions">
           <NcActions>
             <template #icon>
@@ -445,7 +445,7 @@
           </NcActions>
           <NcButton type="error"
                     @click="removeSideColumn('right')"
-                    :aria-label="t('Remove column')">
+                    :aria-label="t('intravox', 'Remove column')">
             <template #icon>
               <Delete :size="20" />
             </template>
@@ -465,27 +465,27 @@
           <template #item="{ element: widget }">
             <div class="widget-wrapper" :class="{ 'editing': focusedWidgetId === widget.id }">
               <div class="floating-toolbar">
-                <div class="drag-handle" :aria-label="t('Drag to reorder')">
+                <div class="drag-handle" :aria-label="t('intravox', 'Drag to reorder')">
                   <DragVertical :size="16" />
                 </div>
                 <NcButton v-if="needsEditButton(widget.type)"
                           @click="editSideColumnWidget(widget, 'right')"
                           type="secondary"
-                          :aria-label="t('Edit widget')">
+                          :aria-label="t('intravox', 'Edit widget')">
                   <template #icon>
                     <Pencil :size="16" />
                   </template>
                 </NcButton>
                 <NcButton @click="duplicateSideColumnWidget(widget, 'right')"
                           type="secondary"
-                          :aria-label="t('Duplicate widget')">
+                          :aria-label="t('intravox', 'Duplicate widget')">
                   <template #icon>
                     <ContentDuplicate :size="16" />
                   </template>
                 </NcButton>
                 <NcButton @click="deleteSideColumnWidget('right', widget.id)"
                           type="error"
-                          :aria-label="t('Delete widget')">
+                          :aria-label="t('intravox', 'Delete widget')">
                   <template #icon>
                     <Delete :size="16" />
                   </template>
@@ -499,7 +499,7 @@
           <template #icon>
             <Plus :size="20" />
           </template>
-          {{ t('Add widget') }}
+          {{ t('intravox', 'Add widget') }}
         </NcButton>
       </div>
     </div>
@@ -509,7 +509,7 @@
 
 <script>
 import draggable from 'vuedraggable';
-import { translate as t } from '@nextcloud/l10n';
+import { translate, translatePlural } from '@nextcloud/l10n';
 import { NcButton, NcDialog, NcActions, NcActionButton } from '@nextcloud/vue';
 import Plus from 'vue-material-design-icons/Plus.vue';
 import TableRowPlusAfter from 'vue-material-design-icons/TableRowPlusAfter.vue';
@@ -587,22 +587,22 @@ export default {
     backgroundColors() {
       return [
         {
-          label: this.t('Default (transparent)'),
+          label: this.t('intravox', 'Default (transparent)'),
           value: '',
           cssVar: 'transparent'
         },
         {
-          label: this.t('Primary'),
+          label: this.t('intravox', 'Primary'),
           value: 'var(--color-primary-element)',
           cssVar: 'var(--color-primary-element)'
         },
         {
-          label: this.t('Primary light'),
+          label: this.t('intravox', 'Primary light'),
           value: 'var(--color-primary-element-light)',
           cssVar: 'var(--color-primary-element-light)'
         },
         {
-          label: this.t('Light background'),
+          label: this.t('intravox', 'Light background'),
           value: 'var(--color-background-hover)',
           cssVar: 'var(--color-background-hover)'
         }
@@ -620,8 +620,8 @@ export default {
   },
   // Note: Deep watcher removed for performance - updates are emitted explicitly in syncAllZones()
   methods: {
-    t(key, vars = {}) {
-      return t('intravox', key, vars);
+    t(app, text, vars) {
+      return translate(app, text, vars);
     },
     initializeRowIds() {
       // Ensure all rows have unique IDs for drag-and-drop
@@ -872,11 +872,11 @@ export default {
       if (colWidth < 180) {
         const recommended = Math.max(1, Math.floor(availableWidth / 200));
         return hasSideColumns
-          ? this.t('{n} columns may be too narrow with side columns. Consider {rec} or fewer.', {
+          ? this.t('intravox', '{n} columns may be too narrow with side columns. Consider {rec} or fewer.', {
             n: cols,
             rec: recommended,
           })
-          : this.t('{n} columns may be too narrow. Consider {rec} or fewer.', {
+          : this.t('intravox', '{n} columns may be too narrow. Consider {rec} or fewer.', {
             n: cols,
             rec: recommended,
           });
@@ -990,8 +990,8 @@ export default {
     },
     deleteRow(rowIndex) {
       this.showDeleteDialog = true;
-      this.deleteDialogTitle = this.t('Delete row');
-      this.deleteDialogMessage = this.t('Are you sure you want to delete this row?');
+      this.deleteDialogTitle = this.t('intravox', 'Delete row');
+      this.deleteDialogMessage = this.t('intravox', 'Are you sure you want to delete this row?');
       this.deleteCallback = () => {
         this.localPage.layout.rows.splice(rowIndex, 1);
         // Reinitialize column arrays to reflect the deleted row
@@ -1094,7 +1094,7 @@ export default {
           widget.content = '';
           break;
         case 'heading':
-          widget.content = this.t('New heading');
+          widget.content = this.t('intravox', 'New heading');
           widget.level = 2;
           break;
         case 'image':
@@ -1103,7 +1103,7 @@ export default {
           break;
         case 'link':
           widget.url = '';
-          widget.text = this.t('Link text');
+          widget.text = this.t('intravox', 'Link text');
           break;
         case 'links':
           widget.items = [];
@@ -1310,8 +1310,8 @@ export default {
     },
     deleteWidget(rowIndex, widgetId) {
       this.showDeleteDialog = true;
-      this.deleteDialogTitle = this.t('Delete widget');
-      this.deleteDialogMessage = this.t('Are you sure you want to delete this widget?');
+      this.deleteDialogTitle = this.t('intravox', 'Delete widget');
+      this.deleteDialogMessage = this.t('intravox', 'Are you sure you want to delete this widget?');
       this.deleteCallback = () => {
         const row = this.localPage.layout.rows[rowIndex];
         const index = row.widgets.findIndex(w => w.id === widgetId);
@@ -1380,8 +1380,8 @@ export default {
     },
     removeSideColumn(side) {
       this.showDeleteDialog = true;
-      this.deleteDialogTitle = this.t('Remove column');
-      this.deleteDialogMessage = this.t('Are you sure you want to remove this column?');
+      this.deleteDialogTitle = this.t('intravox', 'Remove column');
+      this.deleteDialogMessage = this.t('intravox', 'Are you sure you want to remove this column?');
       this.deleteCallback = () => {
         if (this.localPage.layout.sideColumns?.[side]) {
           this.localPage.layout.sideColumns[side].enabled = false;
@@ -1453,8 +1453,8 @@ export default {
     },
     deleteSideColumnWidget(side, widgetId) {
       this.showDeleteDialog = true;
-      this.deleteDialogTitle = this.t('Delete widget');
-      this.deleteDialogMessage = this.t('Are you sure you want to delete this widget?');
+      this.deleteDialogTitle = this.t('intravox', 'Delete widget');
+      this.deleteDialogMessage = this.t('intravox', 'Are you sure you want to delete this widget?');
       this.deleteCallback = () => {
         const index = this.sideColumnWidgets[side].findIndex(w => w.id === widgetId);
         if (index !== -1) {
@@ -1502,8 +1502,8 @@ export default {
     },
     removeHeaderRow() {
       this.showDeleteDialog = true;
-      this.deleteDialogTitle = this.t('Remove header row');
-      this.deleteDialogMessage = this.t('Are you sure you want to remove the header row?');
+      this.deleteDialogTitle = this.t('intravox', 'Remove header row');
+      this.deleteDialogMessage = this.t('intravox', 'Are you sure you want to remove the header row?');
       this.deleteCallback = () => {
         if (this.localPage.layout.headerRow) {
           this.localPage.layout.headerRow.enabled = false;
@@ -1573,8 +1573,8 @@ export default {
     },
     deleteHeaderRowWidget(widgetId) {
       this.showDeleteDialog = true;
-      this.deleteDialogTitle = this.t('Delete widget');
-      this.deleteDialogMessage = this.t('Are you sure you want to delete this widget?');
+      this.deleteDialogTitle = this.t('intravox', 'Delete widget');
+      this.deleteDialogMessage = this.t('intravox', 'Are you sure you want to delete this widget?');
       this.deleteCallback = () => {
         const index = this.headerRowWidgets.findIndex(w => w.id === widgetId);
         if (index !== -1) {

@@ -1,17 +1,17 @@
 <template>
   <div class="photo-story-editor">
     <!-- ============ SECTION: SOURCE ============ -->
-    <h4 class="ps-section-heading">{{ t('Source') }}</h4>
+    <h4 class="ps-section-heading">{{ t('intravox', 'Source') }}</h4>
 
     <!-- Folder picker — empty + filters = cross-folder MetaVox search; "/" = whole drive -->
     <div class="editor-section">
-      <label class="editor-label" for="ps-folder">{{ t('Source folder') }}</label>
+      <label class="editor-label" for="ps-folder">{{ t('intravox', 'Source folder') }}</label>
       <div class="ps-folder-row">
         <input
           id="ps-folder"
           type="text"
           v-model="localConfig.folderPath"
-          :placeholder="t('/Photos/Albums/ …')"
+          :placeholder="t('intravox', '/Photos/Albums/ …')"
           class="editor-input"
           @change="emitUpdate"
         />
@@ -19,42 +19,42 @@
           <template #icon>
             <FolderOpen :size="18" />
           </template>
-          {{ t('Browse …') }}
+          {{ t('intravox', 'Browse …') }}
         </NcButton>
       </div>
       <p class="editor-hint">
-        {{ t('Pick a folder, or use "/" for your entire drive.') }}
+        {{ t('intravox', 'Pick a folder, or use "/" for your entire drive.') }}
         <template v-if="metaVoxAvailable">
-          {{ t('Leave blank to search MetaVox-tagged photos across all folders — requires at least one filter below.') }}
+          {{ t('intravox', 'Leave blank to search MetaVox-tagged photos across all folders — requires at least one filter below.') }}
         </template>
       </p>
       <div class="ps-capability-badge" :class="{ rich: metaVoxAvailable }">
         <CheckCircle v-if="metaVoxAvailable" :size="14" />
         <AlertCircle v-else :size="14" />
-        <span v-if="capLoading">{{ t('Checking capabilities …') }}</span>
-        <span v-else-if="metaVoxAvailable">{{ t('MetaVox: rich metadata available') }}</span>
-        <span v-else>{{ t('MetaVox: basic EXIF only') }}</span>
+        <span v-if="capLoading">{{ t('intravox', 'Checking capabilities …') }}</span>
+        <span v-else-if="metaVoxAvailable">{{ t('intravox', 'MetaVox: rich metadata available') }}</span>
+        <span v-else>{{ t('intravox', 'MetaVox: basic EXIF only') }}</span>
       </div>
     </div>
 
     <!-- MetaVox filter builder -->
     <div class="editor-section" v-if="metaVoxAvailable">
-      <div class="editor-label">{{ t('Filters') }}</div>
+      <div class="editor-label">{{ t('intravox', 'Filters') }}</div>
       <p v-if="!localConfig.metaVoxFilters || localConfig.metaVoxFilters.length === 0" class="editor-hint">
-        {{ t('No filters. Click "Add filter" to filter by date, location, people, or subject.') }}
+        {{ t('intravox', 'No filters. Click "Add filter" to filter by date, location, people, or subject.') }}
       </p>
       <div v-for="(filter, idx) in localConfig.metaVoxFilters || []" :key="idx" class="ps-filter-row">
         <NcSelect
           :model-value="fieldOptionFor(filter.field)"
           :options="filterFieldOptions"
-          :placeholder="t('Field')"
+          :placeholder="t('intravox', 'Field')"
           class="ps-filter-field"
           @update:model-value="setFilterField(idx, $event)"
         />
         <NcSelect
           :model-value="opOptionFor(filter.op, filter.field)"
           :options="operatorOptionsFor(filter.field)"
-          :placeholder="t('Operator')"
+          :placeholder="t('intravox', 'Operator')"
           class="ps-filter-op"
           @update:model-value="setFilterOp(idx, $event)"
         />
@@ -65,7 +65,7 @@
           :options="valueOptionsFor(filter.field)"
           :taggable="filter.op === 'in' || valueOptionsFor(filter.field).length === 0"
           :multiple="filter.op === 'in'"
-          :placeholder="t('Value')"
+          :placeholder="t('intravox', 'Value')"
           class="ps-filter-value"
           @update:model-value="setFilterValue(idx, $event)"
         />
@@ -83,7 +83,7 @@
           max="2100"
           step="1"
           :value="filter.value"
-          :placeholder="t('Year')"
+          :placeholder="t('intravox', 'Year')"
           class="editor-input ps-filter-value-text ps-narrow"
           @input="setFilterValue(idx, $event.target.value)"
         />
@@ -91,7 +91,7 @@
           v-else-if="valueRenderFor(filter) === 'number'"
           type="number"
           :value="filter.value"
-          :placeholder="t('Value')"
+          :placeholder="t('intravox', 'Value')"
           class="editor-input ps-filter-value-text ps-narrow"
           @input="setFilterValue(idx, $event.target.value)"
         />
@@ -100,17 +100,17 @@
           :model-value="filter.value === '1' || filter.value === true || filter.value === 'true'"
           @update:model-value="setFilterValue(idx, $event ? '1' : '0')"
         >
-          {{ t('Checked') }}
+          {{ t('intravox', 'Checked') }}
         </NcCheckboxRadioSwitch>
         <input
           v-else
           type="text"
           :value="filter.value"
-          :placeholder="t('Value')"
+          :placeholder="t('intravox', 'Value')"
           class="editor-input ps-filter-value-text"
           @input="setFilterValue(idx, $event.target.value)"
         />
-        <NcButton type="tertiary-no-background" :title="t('Remove filter')" @click="removeFilter(idx)">
+        <NcButton type="tertiary-no-background" :title="t('intravox', 'Remove filter')" @click="removeFilter(idx)">
           <template #icon>
             <Close :size="16" />
           </template>
@@ -120,22 +120,22 @@
         <template #icon>
           <Plus :size="16" />
         </template>
-        {{ t('Add filter') }}
+        {{ t('intravox', 'Add filter') }}
       </NcButton>
       <p
         v-if="isCrossFolderEffective && (!localConfig.metaVoxFilters || localConfig.metaVoxFilters.length === 0)"
         class="ps-filter-warning"
       >
-        {{ t('Cross-folder mode (empty source folder) requires at least one filter') }}
+        {{ t('intravox', 'Cross-folder mode (empty source folder) requires at least one filter') }}
       </p>
     </div>
 
     <!-- ============ SECTION: LAYOUT ============ -->
-    <h4 class="ps-section-heading">{{ t('Layout') }}</h4>
+    <h4 class="ps-section-heading">{{ t('intravox', 'Layout') }}</h4>
 
     <!-- Mode -->
     <div class="editor-section">
-      <div class="editor-label">{{ t('Layout mode') }}</div>
+      <div class="editor-label">{{ t('intravox', 'Layout mode') }}</div>
       <div class="ps-mode-grid">
         <button
           v-for="opt in modeOptions"
@@ -144,7 +144,7 @@
           class="ps-mode-btn"
           :class="{ active: localConfig.mode === opt.value }"
           :disabled="!isModeAvailable(opt.value)"
-          :title="isModeAvailable(opt.value) ? opt.label : t('Requires metadata not available in this folder')"
+          :title="isModeAvailable(opt.value) ? opt.label : t('intravox', 'Requires metadata not available in this folder')"
           @click="setMode(opt.value)"
         >
           <component :is="opt.icon" :size="24" />
@@ -158,12 +158,12 @@
          (Timeline / Grid / On-this-day). Highlights has its own scorer so
          the dropdown is hidden there. -->
     <div v-if="sortApplicable" class="editor-section">
-      <div class="editor-label">{{ t('Order') }}</div>
+      <div class="editor-label">{{ t('intravox', 'Order') }}</div>
       <div class="ps-sort-row">
         <NcSelect
           :model-value="sortByOption"
           :options="sortByOptions"
-          :placeholder="t('Sort by')"
+          :placeholder="t('intravox', 'Sort by')"
           class="ps-sort-by"
           @update:model-value="setSortBy"
         />
@@ -189,13 +189,13 @@
         </div>
       </div>
       <p v-if="metaVoxAvailable && isMetaVoxSortKey" class="editor-hint">
-        {{ t('Sorting on a MetaVox field reorders within each loaded page (best-effort across infinite scroll).') }}
+        {{ t('intravox', 'Sorting on a MetaVox field reorders within each loaded page (best-effort across infinite scroll).') }}
       </p>
     </div>
 
     <!-- Visual style — only for Timeline -->
     <div v-if="localConfig.mode === 'timeline'" class="editor-section">
-      <div class="editor-label">{{ t('Visual style') }}</div>
+      <div class="editor-label">{{ t('intravox', 'Visual style') }}</div>
       <div class="ps-style-group">
         <NcCheckboxRadioSwitch
           v-for="opt in styleOptions"
@@ -213,27 +213,27 @@
     </div>
 
     <!-- ============ SECTION: DISPLAY ============ -->
-    <h4 class="ps-section-heading">{{ t('Display') }}</h4>
+    <h4 class="ps-section-heading">{{ t('intravox', 'Display') }}</h4>
 
     <!-- Limit -->
     <div class="editor-section">
-      <label class="editor-label" for="ps-limit">{{ t('Maximum photos') }}</label>
+      <label class="editor-label" for="ps-limit">{{ t('intravox', 'Maximum photos') }}</label>
       <input
         id="ps-limit"
         type="number"
         min="1"
         max="500"
         v-model.number="localConfig.limit"
-        :placeholder="t('All')"
+        :placeholder="t('intravox', 'All')"
         class="editor-input ps-narrow"
         @input="emitUpdate"
       />
-      <p class="editor-hint">{{ t('Cap the total number of photos shown. Leave blank to load everything via infinite scroll.') }}</p>
+      <p class="editor-hint">{{ t('intravox', 'Cap the total number of photos shown. Leave blank to load everything via infinite scroll.') }}</p>
     </div>
 
     <!-- Columns (grid mode) -->
     <div v-if="localConfig.mode === 'grid'" class="editor-section">
-      <div class="editor-label">{{ t('Columns') }}</div>
+      <div class="editor-label">{{ t('intravox', 'Columns') }}</div>
       <div class="ps-columns">
         <button
           v-for="c in [2, 3, 4, 5]"
@@ -254,7 +254,7 @@
         :model-value="localConfig.showCaptions !== false"
         @update:model-value="toggleCaptions"
       >
-        {{ t('Show captions') }}
+        {{ t('intravox', 'Show captions') }}
       </NcCheckboxRadioSwitch>
 
       <NcCheckboxRadioSwitch
@@ -262,12 +262,12 @@
         :disabled="!capabilities || !capabilities.hasLocation || !mapGloballyEnabled"
         @update:model-value="toggleMap"
       >
-        {{ t('Show overview map') }}
+        {{ t('intravox', 'Show overview map') }}
         <small v-if="!mapGloballyEnabled" class="ps-disabled-hint">
-          ({{ t('Disabled by administrator') }})
+          ({{ t('intravox', 'Disabled by administrator') }})
         </small>
         <small v-else-if="capabilities && !capabilities.hasLocation" class="ps-disabled-hint">
-          ({{ t('No location data') }})
+          ({{ t('intravox', 'No location data') }})
         </small>
       </NcCheckboxRadioSwitch>
 
@@ -276,15 +276,15 @@
         :disabled="!capabilities || !capabilities.hasLocation || localConfig.mode !== 'timeline' || !mapGloballyEnabled"
         @update:model-value="toggleDayMaps"
       >
-        {{ t('Show daily mini-map') }}
+        {{ t('intravox', 'Show daily mini-map') }}
         <small v-if="!mapGloballyEnabled" class="ps-disabled-hint">
-          ({{ t('Disabled by administrator') }})
+          ({{ t('intravox', 'Disabled by administrator') }})
         </small>
         <small v-else-if="localConfig.mode !== 'timeline'" class="ps-disabled-hint">
-          ({{ t('Timeline only') }})
+          ({{ t('intravox', 'Timeline only') }})
         </small>
         <small v-else-if="capabilities && !capabilities.hasLocation" class="ps-disabled-hint">
-          ({{ t('No location data') }})
+          ({{ t('intravox', 'No location data') }})
         </small>
       </NcCheckboxRadioSwitch>
 
@@ -292,16 +292,16 @@
         v-if="capabilities && !capabilities.hasLocation && mapGloballyEnabled"
         class="editor-hint ps-no-gps-hint"
       >
-        {{ t('No GPS data found in this folder. Map features are disabled. Run the MetaVox EXIF backfill to enable maps for photos with embedded GPS.') }}
+        {{ t('intravox', 'No GPS data found in this folder. Map features are disabled. Run the MetaVox EXIF backfill to enable maps for photos with embedded GPS.') }}
       </p>
 
       <NcCheckboxRadioSwitch
         :model-value="localConfig.hideRawDuplicates !== false"
         @update:model-value="toggleHideRawDuplicates"
       >
-        {{ t('Hide RAW when JPG/HEIC exists') }}
+        {{ t('intravox', 'Hide RAW when JPG/HEIC exists') }}
         <small class="ps-disabled-hint">
-          ({{ t('Collapses RAW+JPG pairs from RAW-capable cameras') }})
+          ({{ t('intravox', 'Collapses RAW+JPG pairs from RAW-capable cameras') }})
         </small>
       </NcCheckboxRadioSwitch>
     </div>
@@ -312,7 +312,7 @@
 <script>
 import axios from '@nextcloud/axios';
 import { generateUrl } from '@nextcloud/router';
-import { translate as t } from '@nextcloud/l10n';
+import { translate, translatePlural } from '@nextcloud/l10n';
 import { getFilePickerBuilder } from '@nextcloud/dialogs';
 import { NcButton, NcCheckboxRadioSwitch, NcSelect } from '@nextcloud/vue';
 import FolderOpen from 'vue-material-design-icons/FolderOpen.vue';
@@ -358,17 +358,17 @@ export default {
   computed: {
     modeOptions() {
       return [
-        { value: 'timeline', label: this.t('Timeline'), icon: 'ViewList' },
-        { value: 'highlights', label: this.t('Highlights'), icon: 'ViewGallery' },
-        { value: 'grid', label: this.t('Grid'), icon: 'ViewModule' },
-        { value: 'on-this-day', label: this.t('On this day'), icon: 'Calendar' },
+        { value: 'timeline', label: this.t('intravox', 'Timeline'), icon: 'ViewList' },
+        { value: 'highlights', label: this.t('intravox', 'Highlights'), icon: 'ViewGallery' },
+        { value: 'grid', label: this.t('intravox', 'Grid'), icon: 'ViewModule' },
+        { value: 'on-this-day', label: this.t('intravox', 'On this day'), icon: 'Calendar' },
       ];
     },
     styleOptions() {
       return [
-        { value: 'magazine', label: this.t('Magazine'), hint: this.t('Glossy editorial (serif)') },
-        { value: 'apple', label: this.t('Apple'), hint: this.t('Clean grid (default)') },
-        { value: 'travelogue', label: this.t('Travelogue'), hint: this.t('Travel diary with timeline rail') },
+        { value: 'magazine', label: this.t('intravox', 'Magazine'), hint: this.t('intravox', 'Glossy editorial (serif)') },
+        { value: 'apple', label: this.t('intravox', 'Apple'), hint: this.t('intravox', 'Clean grid (default)') },
+        { value: 'travelogue', label: this.t('intravox', 'Travelogue'), hint: this.t('intravox', 'Travel diary with timeline rail') },
       ];
     },
     sortApplicable() {
@@ -379,10 +379,10 @@ export default {
     sortByOptions() {
       // Base file-level options always available
       const base = [
-        { label: this.t('Date taken'), value: 'taken_at', isMeta: true },
-        { label: this.t('Date modified'), value: 'mtime', isMeta: false },
-        { label: this.t('Filename'), value: 'name', isMeta: false },
-        { label: this.t('File size'), value: 'size', isMeta: false },
+        { label: this.t('intravox', 'Date taken'), value: 'taken_at', isMeta: true },
+        { label: this.t('intravox', 'Date modified'), value: 'mtime', isMeta: false },
+        { label: this.t('intravox', 'Filename'), value: 'name', isMeta: false },
+        { label: this.t('intravox', 'File size'), value: 'size', isMeta: false },
       ];
       // MetaVox fields contribute additional sort keys. Skip multiselect/tags
       // (no sane sort order) and checkbox (binary).
@@ -406,28 +406,28 @@ export default {
       const v = this.localConfig.sortBy || 'mtime';
       // For temporal sorts the natural reading is "Newest first"; for name/text
       // sorts "Z–A" is clearer than "Descending"; for size "Largest first".
-      if (v === 'taken_at' || v === 'mtime') return this.t('Newest first');
-      if (v === 'name') return this.t('Z → A');
-      if (v === 'size') return this.t('Largest first');
-      return this.t('Descending');
+      if (v === 'taken_at' || v === 'mtime') return this.t('intravox', 'Newest first');
+      if (v === 'name') return this.t('intravox', 'Z → A');
+      if (v === 'size') return this.t('intravox', 'Largest first');
+      return this.t('intravox', 'Descending');
     },
     sortDirLabelAsc() {
       const v = this.localConfig.sortBy || 'mtime';
-      if (v === 'taken_at' || v === 'mtime') return this.t('Oldest first');
-      if (v === 'name') return this.t('A → Z');
-      if (v === 'size') return this.t('Smallest first');
-      return this.t('Ascending');
+      if (v === 'taken_at' || v === 'mtime') return this.t('intravox', 'Oldest first');
+      if (v === 'name') return this.t('intravox', 'A → Z');
+      if (v === 'size') return this.t('intravox', 'Smallest first');
+      return this.t('intravox', 'Ascending');
     },
     modeHint() {
       switch (this.localConfig.mode) {
         case 'timeline':
-          return this.t('Chronological — photos grouped by day with sticky date headers.');
+          return this.t('intravox', 'Chronological — photos grouped by day with sticky date headers.');
         case 'highlights':
-          return this.t('Automatically curated — best photos are picked using EXIF metadata (people, subjects, location, file size) and duplicates from photo bursts are collapsed.');
+          return this.t('intravox', 'Automatically curated — best photos are picked using EXIF metadata (people, subjects, location, file size) and duplicates from photo bursts are collapsed.');
         case 'grid':
-          return this.t('Masonry grid — all photos in a continuous wall, no date grouping.');
+          return this.t('intravox', 'Masonry grid — all photos in a continuous wall, no date grouping.');
         case 'on-this-day':
-          return this.t('Photos taken on this same date in earlier years.');
+          return this.t('intravox', 'Photos taken on this same date in earlier years.');
         default:
           return '';
       }
@@ -478,8 +478,8 @@ export default {
     this.loadMetaVoxFields();
   },
   methods: {
-    t(key, vars = {}) {
-      return t('intravox', key, vars);
+    t(app, text, vars) {
+      return translate(app, text, vars);
     },
     createDefaultConfig() {
       return {
@@ -591,34 +591,34 @@ export default {
         case 'multiselect':
         case 'tags':
           return [
-            { label: this.t('contains'), value: 'contains' },
-            { label: this.t('is any of'), value: 'in' },
+            { label: this.t('intravox', 'contains'), value: 'contains' },
+            { label: this.t('intravox', 'is any of'), value: 'in' },
           ];
         case 'date':
         case 'datetime':
           return [
-            { label: this.t('equals'), value: 'equals' },
-            { label: this.t('year is'), value: 'year_equals' },
+            { label: this.t('intravox', 'equals'), value: 'equals' },
+            { label: this.t('intravox', 'year is'), value: 'year_equals' },
           ];
         case 'select':
         case 'dropdown':
           return [
-            { label: this.t('equals'), value: 'equals' },
-            { label: this.t('is any of'), value: 'in' },
+            { label: this.t('intravox', 'equals'), value: 'equals' },
+            { label: this.t('intravox', 'is any of'), value: 'in' },
           ];
         case 'checkbox':
           return [
-            { label: this.t('equals'), value: 'equals' },
+            { label: this.t('intravox', 'equals'), value: 'equals' },
           ];
         case 'number':
           return [
-            { label: this.t('equals'), value: 'equals' },
+            { label: this.t('intravox', 'equals'), value: 'equals' },
           ];
         // text, url, user, filelink, anything unknown
         default:
           return [
-            { label: this.t('equals'), value: 'equals' },
-            { label: this.t('contains'), value: 'contains' },
+            { label: this.t('intravox', 'equals'), value: 'equals' },
+            { label: this.t('intravox', 'contains'), value: 'contains' },
           ];
       }
     },
@@ -702,7 +702,7 @@ export default {
     },
     async browseFolder() {
       try {
-        const picker = getFilePickerBuilder(this.t('Pick a photo folder'))
+        const picker = getFilePickerBuilder(this.t('intravox', 'Pick a photo folder'))
           .setMultiSelect(false)
           .setMimeTypeFilter(['httpd/unix-directory'])
           .setType(1) // FilePickerType.Choose

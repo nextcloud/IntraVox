@@ -1,6 +1,6 @@
 <template>
   <div id="intravox-app">
-    <a href="#intravox-main-content" class="skip-link">{{ t('Skip to main content') }}</a>
+    <a href="#intravox-main-content" class="skip-link">{{ t('intravox', 'Skip to main content') }}</a>
 
     <!-- Sticky topbar wraps header + navigation so navigating between pages
          doesn't require scrolling all the way back up on long pages.
@@ -17,15 +17,15 @@
           v-model="editableTitle"
           type="text"
           class="page-title-input"
-          :placeholder="t('Page title')"
-          :aria-label="t('Page title')"
+          :placeholder="t('intravox', 'Page title')"
+          :aria-label="t('intravox', 'Page title')"
         />
       </div>
 
       <div class="header-right">
         <!-- Draft indicator (visible to editors in view mode) -->
         <span v-if="!isEditMode && currentPage?.status === 'draft'" class="draft-badge draft">
-          {{ t('Draft') }}
+          {{ t('intravox', 'Draft') }}
         </span>
 
         <!-- Share Button (only visible when NC share exists) -->
@@ -36,12 +36,12 @@
 
         <!-- Lock indicator (when another user is editing this page) -->
         <span v-if="!isEditMode && pageLock" class="page-lock-indicator">
-          {{ t('{displayName} is editing this page', { displayName: pageLock.displayName }) }}
+          {{ t('intravox', '{displayName} is editing this page', { displayName: pageLock.displayName }) }}
           <NcButton v-if="canEditNavigation"
                     @click="forceUnlock"
                     type="tertiary"
-                    :aria-label="t('Unlock')">
-            {{ t('Unlock') }}
+                    :aria-label="t('intravox', 'Unlock')">
+            {{ t('intravox', 'Unlock') }}
           </NcButton>
         </span>
 
@@ -50,11 +50,11 @@
                   @click="startEditMode"
                   type="secondary"
                   :disabled="!!pageLock"
-                  :aria-label="t('Edit this page')">
+                  :aria-label="t('intravox', 'Edit this page')">
           <template #icon>
             <Pencil :size="20" />
           </template>
-          {{ t('Edit page') }}
+          {{ t('intravox', 'Edit page') }}
         </NcButton>
 
         <!-- Page Actions Menu (3-dot menu) -->
@@ -71,28 +71,28 @@
         <template v-else>
           <NcButton @click="toggleDraftStatus"
                     :type="currentPage?.status === 'draft' ? 'warning' : 'secondary'"
-                    :aria-label="currentPage?.status === 'draft' ? t('Draft — click to publish') : t('Published — click to unpublish')">
+                    :aria-label="currentPage?.status === 'draft' ? t('intravox', 'Draft — click to publish') : t('intravox', 'Published — click to unpublish')">
             <template #icon>
               <EyeOff :size="20" v-if="currentPage?.status === 'draft'" />
               <Eye :size="20" v-else />
             </template>
-            {{ currentPage?.status === 'draft' ? t('Draft') : t('Published') }}
+            {{ currentPage?.status === 'draft' ? t('intravox', 'Draft') : t('intravox', 'Published') }}
           </NcButton>
           <NcButton @click="cancelEditMode"
                     type="secondary"
-                    :aria-label="t('Cancel editing')">
+                    :aria-label="t('intravox', 'Cancel editing')">
             <template #icon>
               <Close :size="20" />
             </template>
-            {{ t('Cancel') }}
+            {{ t('intravox', 'Cancel') }}
           </NcButton>
           <NcButton @click="saveAndExitEditMode"
                     type="primary"
-                    :aria-label="t('Save changes')">
+                    :aria-label="t('intravox', 'Save changes')">
             <template #icon>
               <ContentSave :size="20" />
             </template>
-            {{ t('Save') }}
+            {{ t('intravox', 'Save') }}
           </NcButton>
         </template>
       </div>
@@ -111,7 +111,7 @@
     <!-- Main content area with sidebar -->
     <div class="app-content-wrapper">
       <div v-if="loading" class="loading" role="status" aria-live="polite">
-        {{ t('Loading …') }}
+        {{ t('intravox', 'Loading …') }}
       </div>
 
       <!-- Welcome screen when no pages exist (first install) -->
@@ -140,8 +140,8 @@
                   :class="{ 'details-btn-disabled': showDetailsSidebar }"
                   :disabled="showDetailsSidebar"
                   @click="showDetailsSidebar = true"
-                  :aria-label="t('Details')"
-                  :title="t('Details')">
+                  :aria-label="t('intravox', 'Details')"
+                  :title="t('intravox', 'Details')">
             <Information :size="20" />
           </button>
         </div>
@@ -164,7 +164,7 @@
         v-show="currentPage && !loading && !error"
         :is-open="showDetailsSidebar"
         :page-id="currentPage?.uniqueId"
-        :page-name="currentPage?.title || t('Untitled page')"
+        :page-name="currentPage?.title || t('intravox', 'Untitled page')"
         :initial-tab="sidebarInitialTab"
         @close="handleCloseSidebar"
         @version-restored="handleVersionRestored"
@@ -241,7 +241,7 @@
 <script>
 import axios from '@nextcloud/axios';
 import { generateUrl } from '@nextcloud/router';
-import { translate as t } from '@nextcloud/l10n';
+import { translate, translatePlural } from '@nextcloud/l10n';
 import { showSuccess, showError } from '@nextcloud/dialogs';
 import { NcButton } from '@nextcloud/vue';
 import ContentSave from 'vue-material-design-icons/ContentSave.vue';
@@ -482,8 +482,8 @@ export default {
     }
   },
   methods: {
-    t(key, vars = {}) {
-      return t('intravox', key, vars);
+    t(app, text, vars) {
+      return translate(app, text, vars);
     },
     async loadPages() {
       try {
@@ -541,7 +541,7 @@ export default {
           // Validate targetPage has a uniqueId before selecting
           if (!targetPage || !targetPage.uniqueId) {
             console.error('IntraVox: No valid page found to load', { targetPage, pages: this.pages });
-            this.error = this.t('No valid pages found. Pages might be missing uniqueId.');
+            this.error = this.t('intravox', 'No valid pages found. Pages might be missing uniqueId.');
             return;
           }
 
@@ -560,7 +560,7 @@ export default {
         // If no pages found, don't set error - the welcome screen will be shown instead
       } catch (err) {
         console.error('IntraVox: Error loading pages:', err);
-        this.error = this.t('Could not load pages: {error}', { error: err.message });
+        this.error = this.t('intravox', 'Could not load pages: {error}', { error: err.message });
       } finally {
         this.loading = false;
       }
@@ -570,7 +570,7 @@ export default {
         // Validate pageId
         if (!pageId || pageId === 'undefined') {
           console.error('IntraVox: Cannot select page with invalid ID:', pageId);
-          showError(this.t('Invalid page ID'));
+          showError(this.t('intravox', 'Invalid page ID'));
           return;
         }
 
@@ -662,7 +662,7 @@ export default {
         // Suppress the toast when the language-fallback notice owns the screen:
         // there is no page to load and the notice already explains why.
         if (!this.showLanguageFallback) {
-          showError(this.t('Could not load page: {error}', { error: err.message }));
+          showError(this.t('intravox', 'Could not load page: {error}', { error: err.message }));
         }
       } finally {
         this.loading = false;
@@ -749,11 +749,11 @@ export default {
           // Lock denied — another user is editing
           const lock = err.response.data.lock;
           this.pageLock = lock;
-          showError(this.t('{displayName} is editing this page', {
+          showError(this.t('intravox', '{displayName} is editing this page', {
             displayName: lock?.displayName || 'Someone',
           }));
         } else {
-          showError(this.t('Could not start editing: {error}', { error: err.message }));
+          showError(this.t('intravox', 'Could not start editing: {error}', { error: err.message }));
         }
       }
     },
@@ -773,7 +773,7 @@ export default {
         await this.releaseLock();
       } catch (err) {
         console.error('[saveAndExitEditMode] Error:', err);
-        showError(this.t('Failed to save: {error}', { error: err.message }));
+        showError(this.t('intravox', 'Failed to save: {error}', { error: err.message }));
       }
     },
     cancelEditMode() {
@@ -783,7 +783,7 @@ export default {
       }
       this.isEditMode = false;
       this.originalPage = null;
-      showSuccess(this.t('Changes cancelled'));
+      showSuccess(this.t('intravox', 'Changes cancelled'));
 
       // Release lock after cancelling
       this.releaseLock();
@@ -831,12 +831,12 @@ export default {
           const url = generateUrl(`/apps/intravox/api/pages/${pageId}/lock`);
           const response = await axios.put(url);
           if (!response.data.success) {
-            showError(this.t('Your edit lock has expired. Please save your work.'));
+            showError(this.t('intravox', 'Your edit lock has expired. Please save your work.'));
             this.stopLockHeartbeat();
           }
         } catch (err) {
           if (err.response?.status === 409) {
-            showError(this.t('Your edit lock has expired. Please save your work.'));
+            showError(this.t('intravox', 'Your edit lock has expired. Please save your work.'));
             this.stopLockHeartbeat();
           }
           // On network error, keep trying — lock expires after 15 min
@@ -873,7 +873,7 @@ export default {
       const lockedBy = this.pageLock?.displayName || 'Someone';
       if (!pageId) return;
 
-      if (!confirm(this.t('Are you sure you want to unlock this page? {displayName} may lose unsaved changes.', { displayName: lockedBy }))) {
+      if (!confirm(this.t('intravox', 'Are you sure you want to unlock this page? {displayName} may lose unsaved changes.', { displayName: lockedBy }))) {
         return;
       }
 
@@ -881,9 +881,9 @@ export default {
         const url = generateUrl(`/apps/intravox/api/pages/${pageId}/lock/force-release`);
         await axios.post(url);
         this.pageLock = null;
-        showSuccess(this.t('Page unlocked'));
+        showSuccess(this.t('intravox', 'Page unlocked'));
       } catch (err) {
-        showError(this.t('Could not unlock page: {error}', { error: err.message }));
+        showError(this.t('intravox', 'Could not unlock page: {error}', { error: err.message }));
       }
     },
     async savePage() {
@@ -905,7 +905,7 @@ export default {
         CacheService.delete(`page-${this.currentPage.uniqueId}`);
         CacheService.delete('pages-list');
 
-        showSuccess(this.t('Page saved'));
+        showSuccess(this.t('intravox', 'Page saved'));
 
         // Dispatch event to notify sidebar that a new version was created
         window.dispatchEvent(new CustomEvent('intravox:page:saved', {
@@ -914,7 +914,7 @@ export default {
       } catch (err) {
         console.error('[savePage] Error:', err);
         const errorMsg = err.response?.data?.error || err.message || 'Unknown error';
-        showError(this.t('Could not save page: {error}', { error: errorMsg }));
+        showError(this.t('intravox', 'Could not save page: {error}', { error: errorMsg }));
         throw err;
       }
     },
@@ -949,7 +949,7 @@ export default {
       const slug = this.generateSlug(title);
 
       if (!slug) {
-        showError(this.t('Invalid page title'));
+        showError(this.t('intravox', 'Invalid page title'));
         return;
       }
 
@@ -990,7 +990,7 @@ export default {
         }
 
         await axios.post(generateUrl('/apps/intravox/api/pages'), newPage);
-        showSuccess(this.t('Page created'));
+        showSuccess(this.t('intravox', 'Page created'));
 
         // Reload pages first so the new page is in the array
         await this.loadPages();
@@ -1004,14 +1004,14 @@ export default {
         // Open the new page in edit mode (with lock)
         await this.startEditMode();
       } catch (err) {
-        showError(this.t('Could not create page: {error}', { error: err.message }));
+        showError(this.t('intravox', 'Could not create page: {error}', { error: err.message }));
       }
     },
     async handleCreatePageFromTemplate(data) {
       const { templateId, title } = data;
 
       if (!templateId || !title) {
-        showError(this.t('Missing template or title'));
+        showError(this.t('intravox', 'Missing template or title'));
         return;
       }
 
@@ -1024,7 +1024,7 @@ export default {
         });
 
         if (response.data.success) {
-          showSuccess(this.t('Page created from template'));
+          showSuccess(this.t('intravox', 'Page created from template'));
 
           const newPage = response.data.page;
 
@@ -1072,15 +1072,15 @@ export default {
             await this.startEditMode();
           }
         } else {
-          showError(this.t('Could not create page: {error}', { error: response.data.error || 'Unknown error' }));
+          showError(this.t('intravox', 'Could not create page: {error}', { error: response.data.error || 'Unknown error' }));
         }
       } catch (err) {
         console.error('[handleCreatePageFromTemplate] Error:', err);
-        showError(this.t('Could not create page from template: {error}', { error: err.message }));
+        showError(this.t('intravox', 'Could not create page from template: {error}', { error: err.message }));
       }
     },
     handleTemplateSaved(template) {
-      showSuccess(this.t('Template saved: {name}', { name: template.title }));
+      showSuccess(this.t('intravox', 'Template saved: {name}', { name: template.title }));
     },
     async addPageToNavigation(pageId, pageTitle) {
       try {
@@ -1092,7 +1092,7 @@ export default {
 
         // Ensure navigation structure exists
         if (!this.navigation || !this.navigation.items) {
-          showError(this.t('Navigation structure is invalid. Please reload the page.'));
+          showError(this.t('intravox', 'Navigation structure is invalid. Please reload the page.'));
           return;
         }
 
@@ -1180,19 +1180,19 @@ export default {
           navigation: this.navigation
         });
 
-        showSuccess(this.t('Added to navigation'));
+        showSuccess(this.t('intravox', 'Added to navigation'));
       } catch (err) {
-        showError(this.t('Failed to add page to navigation'));
+        showError(this.t('intravox', 'Failed to add page to navigation'));
       }
     },
     async deletePage(pageId) {
-      if (!confirm(this.t('Are you sure you want to delete this page?'))) {
+      if (!confirm(this.t('intravox', 'Are you sure you want to delete this page?'))) {
         return;
       }
 
       try {
         await axios.delete(generateUrl(`/apps/intravox/api/pages/${pageId}`));
-        showSuccess(this.t('Page deleted'));
+        showSuccess(this.t('intravox', 'Page deleted'));
         await this.loadPages();
 
         if (this.currentPage?.uniqueId === pageId) {
@@ -1202,7 +1202,7 @@ export default {
           }
         }
       } catch (err) {
-        showError(this.t('Could not delete page: {error}', { error: err.message }));
+        showError(this.t('intravox', 'Could not delete page: {error}', { error: err.message }));
       }
     },
     showPageList() {
@@ -1230,9 +1230,9 @@ export default {
         const response = await axios.post(generateUrl('/apps/intravox/api/navigation'), navigation);
         this.navigation = response.data.navigation;
         this.showNavigationEditor = false;
-        showSuccess(this.t('Navigation saved'));
+        showSuccess(this.t('intravox', 'Navigation saved'));
       } catch (err) {
-        showError(this.t('Could not save navigation: {error}', { error: err.message }));
+        showError(this.t('intravox', 'Could not save navigation: {error}', { error: err.message }));
       }
     },
     async loadFooter() {
@@ -1253,9 +1253,9 @@ export default {
           content: content
         });
         this.footerContent = response.data.content;
-        showSuccess(this.t('Footer saved'));
+        showSuccess(this.t('intravox', 'Footer saved'));
       } catch (err) {
-        showError(this.t('Could not save footer: {error}', { error: err.message }));
+        showError(this.t('intravox', 'Could not save footer: {error}', { error: err.message }));
       }
     },
     navigateToItem(item) {
@@ -1281,7 +1281,7 @@ export default {
       this.$forceUpdate();
     },
     async handleVersionRestored(restoredPageData) {
-      showSuccess(this.t('Version restored'));
+      showSuccess(this.t('intravox', 'Version restored'));
 
       // Reload pages list to update timestamps, but stay on current page
       const currentPageId = restoredPageData.uniqueId || this.currentPage?.uniqueId;
@@ -1365,7 +1365,7 @@ export default {
           title: `${versionJson.title || this.currentPage.title} (${this.formatVersionDate(version.timestamp)})`
         };
       } catch (err) {
-        showError(this.t('Could not load version: {error}', { error: err.message }));
+        showError(this.t('intravox', 'Could not load version: {error}', { error: err.message }));
         this.selectedVersion = null;
         this.versionPage = null;
       } finally {
@@ -1430,9 +1430,9 @@ export default {
       try {
         await this.savePage();
         this.showPageSettingsModal = false;
-        showSuccess(this.t('Page settings saved'));
+        showSuccess(this.t('intravox', 'Page settings saved'));
       } catch (err) {
-        showError(this.t('Could not save page settings: {error}', { error: err.message }));
+        showError(this.t('intravox', 'Could not save page settings: {error}', { error: err.message }));
       }
     }
   }

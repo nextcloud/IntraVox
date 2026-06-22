@@ -1,7 +1,7 @@
 <template>
   <div class="file-story-widget" :class="rowBgClass" :style="rowBgStyle">
     <!-- Loading -->
-    <div v-if="loading" class="fs-loading" role="status" aria-live="polite" :aria-label="t('Loading documents')">
+    <div v-if="loading" class="fs-loading" role="status" aria-live="polite" :aria-label="t('intravox', 'Loading documents')">
       <div v-for="i in 5" :key="i" class="fs-skeleton-row" aria-hidden="true"></div>
     </div>
 
@@ -10,7 +10,7 @@
       <AlertCircle :size="20" aria-hidden="true" />
       <span>{{ error }}</span>
       <NcButton type="secondary" @click="fetch()">
-        {{ t('Retry') }}
+        {{ t('intravox', 'Retry') }}
       </NcButton>
     </div>
 
@@ -18,7 +18,7 @@
          name to avoid leaking the existence of a path the viewer can't see. -->
     <div v-else-if="!files.length && accessReason === 'folder_not_accessible'" class="fs-empty fs-empty--locked" role="status">
       <LockOutline :size="28" aria-hidden="true" />
-      <p>{{ t('You do not have access to this widget') }}</p>
+      <p>{{ t('intravox', 'You do not have access to this widget') }}</p>
     </div>
 
     <!-- Empty (accessible folder but no documents to show) -->
@@ -27,7 +27,7 @@
       <p>{{ emptyMessage }}</p>
       <small v-if="config.folderPath">{{ config.folderPath }}</small>
       <small v-if="showScanHint" class="fs-empty-hint">
-        {{ t('If you can see files in the Files app but not here, the file index may be out of sync. Ask an admin to run "occ files:scan" for this folder.') }}
+        {{ t('intravox', 'If you can see files in the Files app but not here, the file index may be out of sync. Ask an admin to run "occ files:scan" for this folder.') }}
       </small>
     </div>
 
@@ -49,7 +49,7 @@
             class="fs-row"
             tabindex="0"
             role="button"
-            :aria-label="t('Open {name}', { name: file.name })"
+            :aria-label="t('intravox', 'Open {name}', { name: file.name })"
             @click="openFile(file)"
             @keydown.enter="openFile(file)"
             @keydown.space.prevent="openFile(file)"
@@ -63,8 +63,8 @@
                   :size="13"
                   class="fs-federated-badge"
                   role="img"
-                  :aria-label="t('From federated share — MetaVox metadata not available')"
-                  :title="t('From federated share — MetaVox metadata not available')"
+                  :aria-label="t('intravox', 'From federated share — MetaVox metadata not available')"
+                  :title="t('intravox', 'From federated share — MetaVox metadata not available')"
                 />
               </div>
               <div class="fs-row-meta">
@@ -86,7 +86,7 @@
         class="fs-tile"
         tabindex="0"
         role="button"
-        :aria-label="t('Open {name}', { name: file.name })"
+        :aria-label="t('intravox', 'Open {name}', { name: file.name })"
         @click="openFile(file)"
         @keydown.enter="openFile(file)"
         @keydown.space.prevent="openFile(file)"
@@ -118,8 +118,8 @@
               :size="12"
               class="fs-federated-badge"
               role="img"
-              :aria-label="t('From federated share — MetaVox metadata not available')"
-              :title="t('From federated share — MetaVox metadata not available')"
+              :aria-label="t('intravox', 'From federated share — MetaVox metadata not available')"
+              :title="t('intravox', 'From federated share — MetaVox metadata not available')"
             />
           </div>
           <div class="fs-tile-meta">
@@ -139,7 +139,7 @@
           class="fs-row"
           tabindex="0"
           role="button"
-          :aria-label="t('Open {name}', { name: file.name })"
+          :aria-label="t('intravox', 'Open {name}', { name: file.name })"
           @click="openFile(file)"
           @keydown.enter="openFile(file)"
         >
@@ -152,8 +152,8 @@
                   :size="13"
                   class="fs-federated-badge"
                   role="img"
-                  :aria-label="t('From federated share — MetaVox metadata not available')"
-                  :title="t('From federated share — MetaVox metadata not available')"
+                  :aria-label="t('intravox', 'From federated share — MetaVox metadata not available')"
+                  :title="t('intravox', 'From federated share — MetaVox metadata not available')"
                 />
               </div>
             <div class="fs-row-meta">
@@ -184,7 +184,7 @@
             class="fs-row"
             tabindex="0"
             role="button"
-            :aria-label="t('Open {name}', { name: file.name })"
+            :aria-label="t('intravox', 'Open {name}', { name: file.name })"
             @click="openFile(file)"
             @keydown.enter="openFile(file)"
             @keydown.space.prevent="openFile(file)"
@@ -198,8 +198,8 @@
                   :size="13"
                   class="fs-federated-badge"
                   role="img"
-                  :aria-label="t('From federated share — MetaVox metadata not available')"
-                  :title="t('From federated share — MetaVox metadata not available')"
+                  :aria-label="t('intravox', 'From federated share — MetaVox metadata not available')"
+                  :title="t('intravox', 'From federated share — MetaVox metadata not available')"
                 />
               </div>
               <div class="fs-row-meta">
@@ -218,12 +218,12 @@
       ref="scrollSentinel"
       class="fs-scroll-sentinel"
     >
-      <span v-if="loadingMore" class="fs-loading-more">{{ t('Loading more …') }}</span>
+      <span v-if="loadingMore" class="fs-loading-more">{{ t('intravox', 'Loading more …') }}</span>
     </div>
 
     <!-- Truncated notice -->
     <div v-if="pagination.truncated" class="fs-truncated">
-      {{ t('Showing first {n} documents. Use filters or a more specific folder.', { n: String(pagination.total) }) }}
+      {{ t('intravox', 'Showing first {n} documents. Use filters or a more specific folder.', { n: String(pagination.total) }) }}
     </div>
   </div>
 </template>
@@ -232,7 +232,7 @@
 import { defineAsyncComponent, h } from 'vue';
 import axios from '@nextcloud/axios';
 import { generateUrl } from '@nextcloud/router';
-import { translate as t, getCanonicalLocale } from '@nextcloud/l10n';
+import { translate, getCanonicalLocale, translatePlural } from '@nextcloud/l10n';
 import { NcButton } from '@nextcloud/vue';
 import AlertCircle from 'vue-material-design-icons/AlertCircle.vue';
 import FileDocumentOutline from 'vue-material-design-icons/FileDocumentOutline.vue';
@@ -428,8 +428,8 @@ export default {
     }
   },
   methods: {
-    t(key, vars = {}) {
-      return t('intravox', key, vars);
+    t(app, text, vars) {
+      return translate(app, text, vars);
     },
     async fetch() {
       if (!this.config.folderPath) {
@@ -492,7 +492,7 @@ export default {
           return; // superseded by newer request
         }
         console.error('[FileStoryWidget] fetch failed:', err);
-        this.error = err.response?.data?.error || err.message || this.t('Failed to load documents');
+        this.error = err.response?.data?.error || err.message || this.t('intravox', 'Failed to load documents');
       } finally {
         this.loading = false;
       }

@@ -1,5 +1,5 @@
 <template>
-  <NcDialog :name="t('Share this page')"
+  <NcDialog :name="t('intravox', 'Share this page')"
             :can-close="true"
             @close="$emit('close')">
     <div class="share-dialog">
@@ -7,22 +7,22 @@
       <div class="share-scope">
         <LinkVariantOff :size="20" />
         <span class="scope-label">
-          {{ t('This page is not shared publicly') }}
+          {{ t('intravox', 'This page is not shared publicly') }}
         </span>
       </div>
 
       <!-- NC link sharing disabled by admin -->
       <template v-if="isDisabledByAdmin">
         <NcNoteCard type="warning">
-          {{ t('Public link sharing is disabled by the administrator.') }}
+          {{ t('intravox', 'Public link sharing is disabled by the administrator.') }}
         </NcNoteCard>
         <p class="share-explanation">
-          {{ t('To enable anonymous access to IntraVox pages, an administrator must first enable "Allow users to share via link and emails" in the Nextcloud Sharing settings.') }}
+          {{ t('intravox', 'To enable anonymous access to IntraVox pages, an administrator must first enable "Allow users to share via link and emails" in the Nextcloud Sharing settings.') }}
         </p>
         <a :href="adminSharingUrl" target="_blank" class="share-manage-link">
           <CogOutline :size="16" />
           <span class="manage-text">
-            {{ t('Open sharing settings') }}
+            {{ t('intravox', 'Open sharing settings') }}
           </span>
           <OpenInNew :size="14" class="manage-arrow" />
         </a>
@@ -31,12 +31,12 @@
       <!-- No share exists, but sharing is possible -->
       <template v-else>
         <p class="share-explanation">
-          {{ t('To make this page accessible without login, create a public share link in the Files app.') }}
+          {{ t('intravox', 'To make this page accessible without login, create a public share link in the Files app.') }}
         </p>
         <a v-if="filesUrl" :href="filesUrl" target="_blank" class="share-manage-link">
           <FolderOutline :size="16" />
           <span class="manage-text">
-            {{ t('Open in Files') }}
+            {{ t('intravox', 'Open in Files') }}
           </span>
           <OpenInNew :size="14" class="manage-arrow" />
         </a>
@@ -46,7 +46,7 @@
 </template>
 
 <script>
-import { translate as t } from '@nextcloud/l10n';
+import { translate, translatePlural } from '@nextcloud/l10n';
 import { generateUrl } from '@nextcloud/router';
 import { NcDialog, NcNoteCard } from '@nextcloud/vue';
 import LinkVariantOff from 'vue-material-design-icons/LinkVariantOff.vue';
@@ -91,8 +91,8 @@ export default {
     }
   },
   methods: {
-    t(key, vars = {}) {
-      return t('intravox', key, vars);
+    t(app, text, vars) {
+      return translate(app, text, vars);
     }
   }
 };

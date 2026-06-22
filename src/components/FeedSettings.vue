@@ -1,43 +1,43 @@
 <template>
   <NcDialog
     :open="true"
-    :name="t('RSS Feed')"
+    :name="t('intravox', 'RSS Feed')"
     size="normal"
     @close="$emit('close')">
 
     <div class="feed-settings">
       <!-- Admin disabled link sharing -->
       <NcNoteCard v-if="linkSharingDisabled" type="error">
-        {{ t('RSS feeds are disabled. The administrator has turned off public link sharing in the Nextcloud Sharing settings.') }}
+        {{ t('intravox', 'RSS feeds are disabled. The administrator has turned off public link sharing in the Nextcloud Sharing settings.') }}
       </NcNoteCard>
 
       <template v-if="!linkSharingDisabled">
       <p class="feed-settings__description">
-        {{ t('Generate a personal RSS feed URL to follow IntraVox updates in your favorite RSS reader. The feed only shows pages you have access to.') }}
+        {{ t('intravox', 'Generate a personal RSS feed URL to follow IntraVox updates in your favorite RSS reader. The feed only shows pages you have access to.') }}
       </p>
 
       <!-- Scope selection -->
       <div class="feed-settings__section">
-        <h4 class="feed-settings__label">{{ t('Feed scope') }}</h4>
+        <h4 class="feed-settings__label">{{ t('intravox', 'Feed scope') }}</h4>
         <NcCheckboxRadioSwitch
           v-model="localConfig.scope"
           value="language"
           name="feed-scope"
           type="radio">
-          {{ t('My language') }}
+          {{ t('intravox', 'My language') }}
         </NcCheckboxRadioSwitch>
         <NcCheckboxRadioSwitch
           v-model="localConfig.scope"
           value="all"
           name="feed-scope"
           type="radio">
-          {{ t('All languages') }}
+          {{ t('intravox', 'All languages') }}
         </NcCheckboxRadioSwitch>
       </div>
 
       <!-- Limit -->
       <div class="feed-settings__section">
-        <h4 class="feed-settings__label">{{ t('Maximum items') }}</h4>
+        <h4 class="feed-settings__label">{{ t('intravox', 'Maximum items') }}</h4>
         <NcSelect
           v-model="localConfig.limit"
           :options="limitOptions"
@@ -47,7 +47,7 @@
 
       <!-- Feed URL (shown after token is generated) -->
       <div v-if="feedUrl" class="feed-settings__section">
-        <h4 class="feed-settings__label">{{ t('Your feed URL') }}</h4>
+        <h4 class="feed-settings__label">{{ t('intravox', 'Your feed URL') }}</h4>
         <div class="feed-settings__url-box">
           <input
             ref="urlInput"
@@ -57,7 +57,7 @@
             @focus="$refs.urlInput.select()" />
           <NcButton
             type="secondary"
-            :aria-label="t('Copy URL')"
+            :aria-label="t('intravox', 'Copy URL')"
             @click="copyFeedUrl">
             <template #icon>
               <ContentCopy :size="20" />
@@ -65,13 +65,13 @@
           </NcButton>
         </div>
         <p v-if="lastAccessed" class="feed-settings__meta">
-          {{ t('Last accessed: {date}', { date: lastAccessed }) }}
+          {{ t('intravox', 'Last accessed: {date}', { date: lastAccessed }) }}
         </p>
       </div>
 
       <!-- Warning about token secrecy -->
       <NcNoteCard v-if="feedUrl" type="warning">
-        {{ t('This URL contains a personal token. Anyone with this link can read your feed. Do not share it publicly.') }}
+        {{ t('intravox', 'This URL contains a personal token. Anyone with this link can read your feed. Do not share it publicly.') }}
       </NcNoteCard>
       </template>
     </div>
@@ -80,24 +80,24 @@
       <NcButton v-if="feedUrl"
                 type="error"
                 @click="revokeToken">
-        {{ t('Revoke') }}
+        {{ t('intravox', 'Revoke') }}
       </NcButton>
       <NcButton v-if="feedUrl"
                 type="secondary"
                 @click="regenerateToken">
-        {{ t('Regenerate') }}
+        {{ t('intravox', 'Regenerate') }}
       </NcButton>
       <NcButton v-if="!feedUrl"
                 type="primary"
                 :disabled="generating"
                 @click="generateToken">
-        {{ t('Generate Feed URL') }}
+        {{ t('intravox', 'Generate Feed URL') }}
       </NcButton>
       <NcButton v-else
                 type="primary"
                 :disabled="saving"
                 @click="saveConfig">
-        {{ t('Save settings') }}
+        {{ t('intravox', 'Save settings') }}
       </NcButton>
     </template>
   </NcDialog>
@@ -106,7 +106,7 @@
 <script>
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
-import { translate as t } from '@nextcloud/l10n'
+import { translate, translatePlural } from '@nextcloud/l10n'
 import { showSuccess, showError } from '@nextcloud/dialogs'
 import { NcDialog, NcButton, NcSelect, NcCheckboxRadioSwitch, NcNoteCard } from '@nextcloud/vue'
 import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
@@ -141,8 +141,8 @@ export default {
     await this.loadToken()
   },
   methods: {
-    t(key, vars = {}) {
-      return t('intravox', key, vars)
+    t(app, text, vars) {
+      return translate(app, text, vars);
     },
 
     async loadToken() {
@@ -170,7 +170,7 @@ export default {
           }
         }
       } catch (err) {
-        showError(this.t('Failed to load feed settings'))
+        showError(this.t('intravox', 'Failed to load feed settings'))
       } finally {
         this.loading = false
       }
@@ -188,10 +188,10 @@ export default {
 
         if (data.hasToken) {
           this.feedUrl = data.feedUrl
-          showSuccess(this.t('Feed URL generated'))
+          showSuccess(this.t('intravox', 'Feed URL generated'))
         }
       } catch (err) {
-        showError(this.t('Failed to generate feed URL'))
+        showError(this.t('intravox', 'Failed to generate feed URL'))
       } finally {
         this.generating = false
       }
@@ -209,10 +209,10 @@ export default {
 
         if (data.hasToken) {
           this.feedUrl = data.feedUrl
-          showSuccess(this.t('Feed URL regenerated. The old URL no longer works.'))
+          showSuccess(this.t('intravox', 'Feed URL regenerated. The old URL no longer works.'))
         }
       } catch (err) {
-        showError(this.t('Failed to regenerate feed URL'))
+        showError(this.t('intravox', 'Failed to regenerate feed URL'))
       } finally {
         this.generating = false
       }
@@ -224,9 +224,9 @@ export default {
         await axios.delete(url)
         this.feedUrl = null
         this.lastAccessed = null
-        showSuccess(this.t('Feed URL revoked'))
+        showSuccess(this.t('intravox', 'Feed URL revoked'))
       } catch (err) {
-        showError(this.t('Failed to revoke feed URL'))
+        showError(this.t('intravox', 'Failed to revoke feed URL'))
       }
     },
 
@@ -242,9 +242,9 @@ export default {
         if (response.data.feedUrl) {
           this.feedUrl = response.data.feedUrl
         }
-        showSuccess(this.t('Feed settings saved'))
+        showSuccess(this.t('intravox', 'Feed settings saved'))
       } catch (err) {
-        showError(this.t('Failed to save feed settings'))
+        showError(this.t('intravox', 'Failed to save feed settings'))
       } finally {
         this.saving = false
       }
@@ -253,11 +253,11 @@ export default {
     async copyFeedUrl() {
       try {
         await navigator.clipboard.writeText(this.feedUrl)
-        showSuccess(this.t('Feed URL copied to clipboard'))
+        showSuccess(this.t('intravox', 'Feed URL copied to clipboard'))
       } catch (err) {
         // Fallback: select the input text
         this.$refs.urlInput?.select()
-        showError(this.t('Could not copy automatically. Please copy the selected URL.'))
+        showError(this.t('intravox', 'Could not copy automatically. Please copy the selected URL.'))
       }
     },
   },

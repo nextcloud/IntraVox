@@ -7,8 +7,8 @@
         type="button"
         @mousedown.prevent="editor.chain().focus().toggleBold().run()"
         :class="{ 'is-active': editor.isActive('bold') }"
-        :title="t('Bold (Ctrl+B)')"
-        :aria-label="t('Bold (Ctrl+B)')"
+        :title="t('intravox', 'Bold (Ctrl+B)')"
+        :aria-label="t('intravox', 'Bold (Ctrl+B)')"
         class="menubar-button"
       >
         <FormatBold :size="18" />
@@ -17,8 +17,8 @@
         type="button"
         @mousedown.prevent="editor.chain().focus().toggleItalic().run()"
         :class="{ 'is-active': editor.isActive('italic') }"
-        :title="t('Italic (Ctrl+I)')"
-        :aria-label="t('Italic (Ctrl+I)')"
+        :title="t('intravox', 'Italic (Ctrl+I)')"
+        :aria-label="t('intravox', 'Italic (Ctrl+I)')"
         class="menubar-button"
       >
         <FormatItalic :size="18" />
@@ -27,8 +27,8 @@
         type="button"
         @mousedown.prevent="editor.chain().focus().toggleUnderline().run()"
         :class="{ 'is-active': editor.isActive('underline') }"
-        :title="t('Underline (Ctrl+U)')"
-        :aria-label="t('Underline (Ctrl+U)')"
+        :title="t('intravox', 'Underline (Ctrl+U)')"
+        :aria-label="t('intravox', 'Underline (Ctrl+U)')"
         class="menubar-button"
       >
         <FormatUnderline :size="18" />
@@ -40,8 +40,8 @@
           ref="moreButton"
           type="button"
           @mousedown.prevent="toggleMoreMenu"
-          :title="t('More options')"
-          :aria-label="t('More options')"
+          :title="t('intravox', 'More options')"
+          :aria-label="t('intravox', 'More options')"
           class="menubar-button"
         >
           <DotsHorizontal :size="18" />
@@ -55,7 +55,7 @@
             class="dropdown-menu-item"
           >
             <FormatStrikethrough :size="16" />
-            {{ t('Strikethrough') }}
+            {{ t('intravox', 'Strikethrough') }}
           </button>
           <div class="dropdown-divider"></div>
           <!-- Headings -->
@@ -78,7 +78,7 @@
             class="dropdown-menu-item"
           >
             <FormatListBulleted :size="16" />
-            {{ t('Bullet list') }}
+            {{ t('intravox', 'Bullet list') }}
           </button>
           <button
             type="button"
@@ -87,7 +87,7 @@
             class="dropdown-menu-item"
           >
             <FormatListNumbered :size="16" />
-            {{ t('Numbered list') }}
+            {{ t('intravox', 'Numbered list') }}
           </button>
           <button
             type="button"
@@ -96,7 +96,7 @@
             class="dropdown-menu-item"
           >
             <FormatQuoteClose :size="16" />
-            {{ t('Blockquote') }}
+            {{ t('intravox', 'Blockquote') }}
           </button>
           <div class="dropdown-divider"></div>
           <!-- Text Alignment -->
@@ -107,7 +107,7 @@
             class="dropdown-menu-item"
           >
             <FormatAlignLeft :size="16" />
-            {{ t('Align left') }}
+            {{ t('intravox', 'Align left') }}
           </button>
           <button
             type="button"
@@ -116,7 +116,7 @@
             class="dropdown-menu-item"
           >
             <FormatAlignCenter :size="16" />
-            {{ t('Align center') }}
+            {{ t('intravox', 'Align center') }}
           </button>
           <button
             type="button"
@@ -125,7 +125,7 @@
             class="dropdown-menu-item"
           >
             <FormatAlignRight :size="16" />
-            {{ t('Align right') }}
+            {{ t('intravox', 'Align right') }}
           </button>
           <div class="dropdown-divider"></div>
           <!-- Link -->
@@ -136,7 +136,7 @@
             class="dropdown-menu-item"
           >
             <LinkVariant :size="16" />
-            {{ t('Link') }}
+            {{ t('intravox', 'Link') }}
           </button>
           <!-- Table -->
           <button
@@ -145,7 +145,7 @@
             class="dropdown-menu-item"
           >
             <TableIcon :size="16" />
-            {{ t('Insert table') }}
+            {{ t('intravox', 'Insert table') }}
           </button>
           <!-- Table editing options when in table -->
           <template v-if="editor.isActive('table')">
@@ -156,7 +156,7 @@
               class="dropdown-menu-item"
             >
               <TableRowPlusAfter :size="16" />
-              {{ t('Add row') }}
+              {{ t('intravox', 'Add row') }}
             </button>
             <button
               type="button"
@@ -164,7 +164,7 @@
               class="dropdown-menu-item"
             >
               <TableColumnPlusAfter :size="16" />
-              {{ t('Add column') }}
+              {{ t('intravox', 'Add column') }}
             </button>
             <button
               type="button"
@@ -172,7 +172,7 @@
               class="dropdown-menu-item dropdown-menu-item--danger"
             >
               <TableRemove :size="16" />
-              {{ t('Delete table') }}
+              {{ t('intravox', 'Delete table') }}
             </button>
           </template>
         </div>
@@ -185,8 +185,8 @@
           type="button"
           @mousedown.prevent="editor.chain().focus().toggleStrike().run()"
           :class="{ 'is-active': editor.isActive('strike') }"
-          :title="t('Strikethrough')"
-          :aria-label="t('Strikethrough')"
+          :title="t('intravox', 'Strikethrough')"
+          :aria-label="t('intravox', 'Strikethrough')"
           class="menubar-button"
         >
           <FormatStrikethrough :size="18" />
@@ -201,8 +201,8 @@
             type="button"
             @mousedown.prevent="toggleHeadingMenu"
             class="menubar-button heading-button"
-            :title="t('Heading')"
-            :aria-label="t('Heading')"
+            :title="t('intravox', 'Heading')"
+            :aria-label="t('intravox', 'Heading')"
           >
             {{ getCurrentHeadingLabel() }}
             <ChevronDown :size="14" />
@@ -226,8 +226,8 @@
           type="button"
           @mousedown.prevent="editor.chain().focus().toggleBulletList().run()"
           :class="{ 'is-active': editor.isActive('bulletList') }"
-          :title="t('Bullet list')"
-          :aria-label="t('Bullet list')"
+          :title="t('intravox', 'Bullet list')"
+          :aria-label="t('intravox', 'Bullet list')"
           class="menubar-button"
         >
           <FormatListBulleted :size="18" />
@@ -236,8 +236,8 @@
           type="button"
           @mousedown.prevent="editor.chain().focus().toggleOrderedList().run()"
           :class="{ 'is-active': editor.isActive('orderedList') }"
-          :title="t('Numbered list')"
-          :aria-label="t('Numbered list')"
+          :title="t('intravox', 'Numbered list')"
+          :aria-label="t('intravox', 'Numbered list')"
           class="menubar-button"
         >
           <FormatListNumbered :size="18" />
@@ -248,8 +248,8 @@
           type="button"
           @mousedown.prevent="editor.chain().focus().toggleBlockquote().run()"
           :class="{ 'is-active': editor.isActive('blockquote') }"
-          :title="t('Blockquote')"
-          :aria-label="t('Blockquote')"
+          :title="t('intravox', 'Blockquote')"
+          :aria-label="t('intravox', 'Blockquote')"
           class="menubar-button"
         >
           <FormatQuoteClose :size="18" />
@@ -263,8 +263,8 @@
             type="button"
             @mousedown.prevent="toggleAlignmentMenu"
             class="menubar-button alignment-button"
-            :title="t('Text alignment')"
-            :aria-label="t('Text alignment')"
+            :title="t('intravox', 'Text alignment')"
+            :aria-label="t('intravox', 'Text alignment')"
           >
             <component :is="currentAlignmentIcon" :size="18" />
             <ChevronDown :size="14" />
@@ -292,8 +292,8 @@
           type="button"
           @mousedown.prevent="showLinkModalHandler"
           :class="{ 'is-active': editor.isActive('link') }"
-          :title="t('Insert link')"
-          :aria-label="t('Insert link')"
+          :title="t('intravox', 'Insert link')"
+          :aria-label="t('intravox', 'Insert link')"
           class="menubar-button"
         >
           <LinkVariant :size="18" />
@@ -305,8 +305,8 @@
             type="button"
             @mousedown.prevent="toggleTableMenu"
             :class="{ 'is-active': editor.isActive('table') }"
-            :title="t('Table')"
-            :aria-label="t('Table')"
+            :title="t('intravox', 'Table')"
+            :aria-label="t('intravox', 'Table')"
             class="menubar-button"
           >
             <TableIcon :size="18" />
@@ -319,7 +319,7 @@
               class="dropdown-menu-item"
             >
               <TableIcon :size="16" />
-              {{ t('Insert table') }}
+              {{ t('intravox', 'Insert table') }}
             </button>
             <template v-if="editor.isActive('table')">
               <div class="dropdown-divider"></div>
@@ -329,7 +329,7 @@
                 class="dropdown-menu-item"
               >
                 <TableRowPlusBefore :size="16" />
-                {{ t('Add row above') }}
+                {{ t('intravox', 'Add row above') }}
               </button>
               <button
                 type="button"
@@ -337,7 +337,7 @@
                 class="dropdown-menu-item"
               >
                 <TableRowPlusAfter :size="16" />
-                {{ t('Add row below') }}
+                {{ t('intravox', 'Add row below') }}
               </button>
               <button
                 type="button"
@@ -345,7 +345,7 @@
                 class="dropdown-menu-item"
               >
                 <TableColumnPlusBefore :size="16" />
-                {{ t('Add column left') }}
+                {{ t('intravox', 'Add column left') }}
               </button>
               <button
                 type="button"
@@ -353,10 +353,10 @@
                 class="dropdown-menu-item"
               >
                 <TableColumnPlusAfter :size="16" />
-                {{ t('Add column right') }}
+                {{ t('intravox', 'Add column right') }}
               </button>
               <div class="dropdown-divider"></div>
-              <div class="dropdown-menu-section-label">{{ t('Width') }}</div>
+              <div class="dropdown-menu-section-label">{{ t('intravox', 'Width') }}</div>
               <div class="dropdown-menu-row">
                 <button
                   v-for="w in tableWidthPresets"
@@ -366,16 +366,16 @@
                   :class="{ 'is-active': isTableWidth(w) }"
                   class="dropdown-menu-pill"
                 >
-                  {{ w === null ? t('Auto') : w }}
+                  {{ w === null ? t('intravox', 'Auto') : w }}
                 </button>
               </div>
-              <div class="dropdown-menu-section-label">{{ t('Alignment') }}</div>
+              <div class="dropdown-menu-section-label">{{ t('intravox', 'Alignment') }}</div>
               <div class="dropdown-menu-row">
                 <button
                   type="button"
                   @mousedown.prevent="setTableAlign('left')"
                   :class="{ 'is-active': isTableAlign('left') }"
-                  :title="t('Align left')"
+                  :title="t('intravox', 'Align left')"
                   class="dropdown-menu-pill"
                 >
                   <FormatAlignLeft :size="16" />
@@ -384,7 +384,7 @@
                   type="button"
                   @mousedown.prevent="setTableAlign('center')"
                   :class="{ 'is-active': isTableAlign('center') }"
-                  :title="t('Align center')"
+                  :title="t('intravox', 'Align center')"
                   class="dropdown-menu-pill"
                 >
                   <FormatAlignCenter :size="16" />
@@ -393,7 +393,7 @@
                   type="button"
                   @mousedown.prevent="setTableAlign('right')"
                   :class="{ 'is-active': isTableAlign('right') }"
-                  :title="t('Align right')"
+                  :title="t('intravox', 'Align right')"
                   class="dropdown-menu-pill"
                 >
                   <FormatAlignRight :size="16" />
@@ -406,7 +406,7 @@
                 class="dropdown-menu-item dropdown-menu-item--danger"
               >
                 <TableRowRemove :size="16" />
-                {{ t('Delete row') }}
+                {{ t('intravox', 'Delete row') }}
               </button>
               <button
                 type="button"
@@ -414,7 +414,7 @@
                 class="dropdown-menu-item dropdown-menu-item--danger"
               >
                 <TableColumnRemove :size="16" />
-                {{ t('Delete column') }}
+                {{ t('intravox', 'Delete column') }}
               </button>
               <button
                 type="button"
@@ -422,7 +422,7 @@
                 class="dropdown-menu-item dropdown-menu-item--danger"
               >
                 <TableRemove :size="16" />
-                {{ t('Delete table') }}
+                {{ t('intravox', 'Delete table') }}
               </button>
             </template>
           </div>
@@ -434,39 +434,39 @@
     <component :is="editorContentComponent" v-if="editorContentComponent && editor" :editor="editor" class="editor-content" />
 
     <!-- Link Modal -->
-    <NcModal v-if="showLinkModal" @close="closeLinkModal" :name="t('Insert link')" size="normal">
+    <NcModal v-if="showLinkModal" @close="closeLinkModal" :name="t('intravox', 'Insert link')" size="normal">
       <div class="link-modal-content">
         <div class="form-group">
-          <label for="link-text">{{ t('Text:') }}</label>
+          <label for="link-text">{{ t('intravox', 'Text:') }}</label>
           <input
             id="link-text"
             v-model="linkText"
             type="text"
-            :placeholder="t('Link text')"
+            :placeholder="t('intravox', 'Link text')"
             class="link-input"
             @keyup.enter="applyLink"
           />
         </div>
         <div class="form-group">
-          <label for="link-url">{{ t('URL:') }}</label>
+          <label for="link-url">{{ t('intravox', 'URL:') }}</label>
           <input
             id="link-url"
             v-model="linkUrl"
             type="url"
-            :placeholder="t('https://example.com')"
+            :placeholder="t('intravox', 'https://example.com')"
             class="link-input"
             @keyup.enter="applyLink"
           />
         </div>
         <div class="modal-buttons">
           <NcButton @click="closeLinkModal" type="secondary">
-            {{ t('Cancel') }}
+            {{ t('intravox', 'Cancel') }}
           </NcButton>
           <NcButton @click="removeLink" v-if="editor && editor.isActive('link')" type="error">
-            {{ t('Remove link') }}
+            {{ t('intravox', 'Remove link') }}
           </NcButton>
           <NcButton @click="applyLink" type="primary">
-            {{ t('Apply') }}
+            {{ t('intravox', 'Apply') }}
           </NcButton>
         </div>
       </div>
@@ -475,7 +475,7 @@
 </template>
 
 <script>
-import { translate as t } from '@nextcloud/l10n';
+import { translate, translatePlural } from '@nextcloud/l10n';
 import { NcModal, NcButton } from '@nextcloud/vue';
 import { markdownToHtml, htmlToMarkdown, cleanMarkdown } from '../utils/markdownSerializer.js';
 
@@ -633,7 +633,7 @@ export default {
           }
         }),
         modules.Placeholder.configure({
-          placeholder: this.placeholder || this.t('Enter text …')
+          placeholder: this.placeholder || this.t('intravox', 'Enter text …')
         }),
         // Custom Table node — adds `width` and `align` attributes so editors
         // can make a table narrower than the widget container and align it
@@ -771,8 +771,8 @@ export default {
     },
   },
   methods: {
-    t(key, vars = {}) {
-      return t('intravox', key, vars);
+    t(app, text, vars) {
+      return translate(app, text, vars);
     },
     getCurrentHeadingLevel() {
       if (!this.editor) return 0;
@@ -788,7 +788,7 @@ export default {
       return this.getHeadingLabel(level);
     },
     getHeadingLabel(level) {
-      if (level === 0) return this.t('Paragraph');
+      if (level === 0) return this.t('intravox', 'Paragraph');
       return this.t(`H${level}`);
     },
     isHeadingLevel(level) {
@@ -955,9 +955,9 @@ export default {
     },
     getAlignmentLabel(align) {
       const labels = {
-        left: this.t('Align left'),
-        center: this.t('Align center'),
-        right: this.t('Align right'),
+        left: this.t('intravox', 'Align left'),
+        center: this.t('intravox', 'Align center'),
+        right: this.t('intravox', 'Align right'),
       };
       return labels[align];
     },

@@ -12,7 +12,7 @@
 
     <div v-if="loading" class="news-loading">
       <NcLoadingIcon :size="32" />
-      <span>{{ t('Loading news …') }}</span>
+      <span>{{ t('intravox', 'Loading news …') }}</span>
     </div>
 
     <div v-else-if="error" class="news-error">
@@ -23,8 +23,8 @@
 
     <div v-else-if="items.length === 0" class="news-empty">
       <Newspaper :size="32" />
-      <p>{{ t('No news items found') }}</p>
-      <small v-if="widget.sourcePageId || widget.sourcePath">{{ t('Source: {path}', { path: widget.sourcePageId || widget.sourcePath }) }}</small>
+      <p>{{ t('intravox', 'No news items found') }}</p>
+      <small v-if="widget.sourcePageId || widget.sourcePath">{{ t('intravox', 'Source: {path}', { path: widget.sourcePageId || widget.sourcePath }) }}</small>
     </div>
 
     <component
@@ -41,7 +41,7 @@
 <script>
 import { NcLoadingIcon } from '@nextcloud/vue';
 import { generateUrl } from '@nextcloud/router';
-import { translate as t } from '@nextcloud/l10n';
+import { translate, translatePlural } from '@nextcloud/l10n';
 import axios from '@nextcloud/axios';
 import AlertCircle from 'vue-material-design-icons/AlertCircle.vue';
 import Newspaper from 'vue-material-design-icons/Newspaper.vue';
@@ -174,8 +174,8 @@ export default {
     clearTimeout(this._debounceTimer);
   },
   methods: {
-    t(key, vars = {}) {
-      return t('intravox', key, vars);
+    t(app, text, vars) {
+      return translate(app, text, vars);
     },
     async fetchNews() {
       this.loading = true;
@@ -215,7 +215,7 @@ export default {
         this.items = response.data.items || [];
       } catch (err) {
         console.error('[NewsWidget] Failed to fetch news:', err);
-        this.error = this.t('Failed to load news');
+        this.error = this.t('intravox', 'Failed to load news');
         this.errorDetails = err.response?.data?.error || err.message;
         this.apiResponse = {
           status: err.response?.status,

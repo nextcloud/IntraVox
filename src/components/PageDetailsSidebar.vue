@@ -10,7 +10,7 @@
     <!-- Details Tab (Page Properties/File Info) -->
     <NcAppSidebarTab
       id="details-tab"
-      :name="t('Details')"
+      :name="t('intravox', 'Details')"
       :order="1"
     >
       <template #icon>
@@ -18,7 +18,7 @@
       </template>
 
       <div v-if="loadingMetadata" class="loading">
-        {{ t('Loading properties …') }}
+        {{ t('intravox', 'Loading properties …') }}
       </div>
 
       <div v-else-if="metadataError" class="error-message">
@@ -28,7 +28,7 @@
       <div v-else-if="metadata" class="metadata-container">
         <!-- Editable Title -->
         <div class="metadata-row">
-          <label class="metadata-label">{{ t('Name') }}</label>
+          <label class="metadata-label">{{ t('intravox', 'Name') }}</label>
           <div class="metadata-value metadata-editable">
             <input
               v-if="editingTitle"
@@ -39,7 +39,7 @@
               @keydown.esc="cancelTitleEdit"
             />
             <span v-else class="metadata-text" :class="{ 'metadata-text--editable': canEditTitle }" @click="startTitleEdit">
-              {{ metadata.title || t('Untitled') }}
+              {{ metadata.title || t('intravox', 'Untitled') }}
             </span>
             <NcButton
               v-if="editingTitle"
@@ -48,7 +48,7 @@
               :disabled="savingTitle"
               size="small"
             >
-              {{ t('Save') }}
+              {{ t('intravox', 'Save') }}
             </NcButton>
             <NcButton
               v-if="editingTitle"
@@ -56,14 +56,14 @@
               @click="cancelTitleEdit"
               size="small"
             >
-              {{ t('Cancel') }}
+              {{ t('intravox', 'Cancel') }}
             </NcButton>
           </div>
         </div>
 
         <!-- Modified -->
         <div class="metadata-row">
-          <label class="metadata-label">{{ t('Modified') }}</label>
+          <label class="metadata-label">{{ t('intravox', 'Modified') }}</label>
           <div class="metadata-value">
             {{ metadata.modifiedRelative }}
             <span class="metadata-hint">{{ metadata.modifiedFormatted }}</span>
@@ -72,7 +72,7 @@
 
         <!-- Path -->
         <div class="metadata-row">
-          <label class="metadata-label">{{ t('Location') }}</label>
+          <label class="metadata-label">{{ t('intravox', 'Location') }}</label>
           <div class="metadata-value metadata-path">
             <a :href="getFolderUrl(metadata.path)" target="_blank" rel="noopener noreferrer" class="folder-link">
               {{ getDisplayPath(metadata.path) }}
@@ -82,20 +82,20 @@
 
         <!-- Page Type -->
         <div v-if="metadata.type" class="metadata-row">
-          <label class="metadata-label">{{ t('Type') }}</label>
+          <label class="metadata-label">{{ t('intravox', 'Type') }}</label>
           <div class="metadata-value">
             <span class="page-type-badge" :class="`page-type-${metadata.type}`">
               {{ getPageTypeLabel(metadata.type) }}
             </span>
             <span v-if="metadata.hasChildren" class="metadata-hint">
-              {{ t('(has child pages)') }}
+              {{ t('intravox', '(has child pages)') }}
             </span>
           </div>
         </div>
 
         <!-- Unique ID (for sharing) -->
         <div v-if="metadata.uniqueId" class="metadata-row">
-          <label class="metadata-label">{{ t('UniqueId') }}</label>
+          <label class="metadata-label">{{ t('intravox', 'UniqueId') }}</label>
           <div class="metadata-value metadata-monospace">{{ metadata.uniqueId }}</div>
         </div>
       </div>
@@ -105,7 +105,7 @@
     <NcAppSidebarTab
       v-if="metaVoxInstalled"
       id="metavox-tab"
-      :name="t('MetaVox')"
+      :name="t('intravox', 'MetaVox')"
       :order="2"
     >
       <template #icon>
@@ -113,10 +113,10 @@
       </template>
       <div ref="metavoxContainer" class="metavox-container">
         <div v-if="loadingMetaVox" class="loading">
-          {{ t('Loading MetaVox …') }}
+          {{ t('intravox', 'Loading MetaVox …') }}
         </div>
         <div v-else-if="!metaVoxInstalled" class="empty-state">
-          <p>{{ t('MetaVox app is not installed') }}</p>
+          <p>{{ t('intravox', 'MetaVox app is not installed') }}</p>
         </div>
       </div>
     </NcAppSidebarTab>
@@ -124,7 +124,7 @@
     <!-- Versions Tab - Uses IntraVox versions API (leverages Nextcloud/GroupFolders versioning) -->
     <NcAppSidebarTab
       id="versions-tab"
-      :name="t('Versions')"
+      :name="t('intravox', 'Versions')"
       :order="3"
     >
       <template #icon>
@@ -133,7 +133,7 @@
 
       <div class="versions-container">
         <div v-if="loadingVersions" class="loading">
-          {{ t('Loading versions …') }}
+          {{ t('intravox', 'Loading versions …') }}
         </div>
 
         <div v-else-if="versionError" class="error-message">
@@ -141,8 +141,8 @@
         </div>
 
         <div v-else-if="versions.length === 0" class="empty-state">
-          <p>{{ t('No versions available') }}</p>
-          <p class="hint">{{ t('Versions are created automatically when you save changes') }}</p>
+          <p>{{ t('intravox', 'No versions available') }}</p>
+          <p class="hint">{{ t('intravox', 'Versions are created automatically when you save changes') }}</p>
         </div>
 
         <div v-else class="version-list">
@@ -154,7 +154,7 @@
           >
             <div class="version-info">
               <div class="version-header">
-                <span class="version-name">{{ t('Current version') }}</span>
+                <span class="version-name">{{ t('intravox', 'Current version') }}</span>
                 <span v-if="currentVersionAuthor" class="version-author">{{ currentVersionAuthor }}</span>
               </div>
               <div class="version-details">
@@ -165,7 +165,7 @@
 
           <!-- Version history -->
           <div class="version-history-label">
-            {{ t('Version history') }}
+            {{ t('intravox', 'Version history') }}
           </div>
 
           <div
@@ -177,7 +177,7 @@
           >
             <div class="version-info">
               <div class="version-header">
-                <span class="version-name">{{ version.label || t('Version') }}</span>
+                <span class="version-name">{{ version.label || t('intravox', 'Version') }}</span>
                 <span v-if="version.author" class="version-author">{{ version.author }}</span>
               </div>
               <div class="version-details">
@@ -187,8 +187,8 @@
             <div class="version-actions">
               <NcButton
                 type="tertiary"
-                :aria-label="t('Restore this version')"
-                :title="t('Restore this version')"
+                :aria-label="t('intravox', 'Restore this version')"
+                :title="t('intravox', 'Restore this version')"
                 @click.stop="confirmRestoreVersion(version.timestamp)"
               >
                 <template #icon>
@@ -205,15 +205,15 @@
   <!-- Restore Version Confirmation Dialog -->
   <NcDialog
     v-if="showRestoreDialog"
-    :name="t('Restore version')"
-    :message="t('A backup of the current version will be created before restoring. Do you want to continue?')"
+    :name="t('intravox', 'Restore version')"
+    :message="t('intravox', 'A backup of the current version will be created before restoring. Do you want to continue?')"
     :buttons="[
       {
-        label: t('Cancel'),
+        label: t('intravox', 'Cancel'),
         callback: cancelRestore
       },
       {
-        label: t('Restore'),
+        label: t('intravox', 'Restore'),
         type: 'primary',
         callback: restoreVersion
       }
@@ -224,7 +224,7 @@
 </template>
 
 <script>
-import { translate as t } from '@nextcloud/l10n';
+import { translate, translatePlural } from '@nextcloud/l10n';
 import { generateUrl } from '@nextcloud/router';
 import axios from '@nextcloud/axios';
 import { showError, showSuccess } from '@nextcloud/dialogs';
@@ -292,7 +292,7 @@ export default {
   },
   computed: {
     pageSubtitle() {
-      return this.t('Page details and history');
+      return this.t('intravox', 'Page details and history');
     },
     canEditTitle() {
       // Check write permission using Nextcloud's permissions
@@ -307,7 +307,7 @@ export default {
       if (this.metadata?.modifiedRelative) {
         return this.metadata.modifiedRelative;
       }
-      return this.t('Now');
+      return this.t('intravox', 'Now');
     },
     currentVersionSize() {
       // Size from currentVersion API response
@@ -396,8 +396,8 @@ export default {
     window.removeEventListener('intravox:edit:started', this.handleEditStarted);
   },
   methods: {
-    t(key, vars = {}) {
-      return t('intravox', key, vars);
+    t(app, text, vars) {
+      return translate(app, text, vars);
     },
     handleClose() {
       this.$emit('close');
@@ -529,7 +529,7 @@ export default {
         }
       } catch (error) {
         console.error('Failed to load versions:', error);
-        this.versionError = error.response?.data?.error || this.t('Failed to load version history');
+        this.versionError = error.response?.data?.error || this.t('intravox', 'Failed to load version history');
       } finally {
         this.loadingVersions = false;
       }
@@ -575,7 +575,7 @@ export default {
         this.versionToRestore = null;
       } catch (error) {
         console.error('Failed to restore version:', error);
-        showError(this.t('Failed to restore version: {error}', {
+        showError(this.t('intravox', 'Failed to restore version: {error}', {
           error: error.response?.data?.error || error.message
         }));
         this.isRestoring = false; // Reset flag on error too
@@ -593,7 +593,7 @@ export default {
         this.metadata = response.data;
       } catch (error) {
         console.error('Failed to load metadata:', error);
-        this.metadataError = error.response?.data?.error || this.t('Failed to load properties');
+        this.metadataError = error.response?.data?.error || this.t('intravox', 'Failed to load properties');
       } finally {
         this.loadingMetadata = false;
       }
@@ -621,7 +621,7 @@ export default {
     },
     async saveTitle() {
       if (!this.editableTitle.trim()) {
-        showError(this.t('Title cannot be empty'));
+        showError(this.t('intravox', 'Title cannot be empty'));
         return;
       }
 
@@ -634,10 +634,10 @@ export default {
         });
         this.metadata = response.data;
         this.editingTitle = false;
-        showSuccess(this.t('Title updated'));
+        showSuccess(this.t('intravox', 'Title updated'));
       } catch (error) {
         console.error('Failed to update title:', error);
-        showError(this.t('Failed to update title: {error}', {
+        showError(this.t('intravox', 'Failed to update title: {error}', {
           error: error.response?.data?.error || error.message
         }));
       } finally {
@@ -708,9 +708,9 @@ export default {
         }
 
         this.cancelLabelEdit();
-        showSuccess(this.t('Version label updated'));
+        showSuccess(this.t('intravox', 'Version label updated'));
       } catch (error) {
-        showError(this.t('Failed to update version label: {error}', {
+        showError(this.t('intravox', 'Failed to update version label: {error}', {
           error: error.response?.data?.error || error.message
         }));
       }
@@ -739,9 +739,9 @@ export default {
     },
     getPageTypeLabel(type) {
       const labels = {
-        'department': this.t('Department'),
-        'container': this.t('Container'),
-        'page': this.t('Page')
+        'department': this.t('intravox', 'Department'),
+        'container': this.t('intravox', 'Container'),
+        'page': this.t('intravox', 'Page')
       };
       return labels[type] || type;
     },

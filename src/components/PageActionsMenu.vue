@@ -6,7 +6,7 @@
       <template #icon>
         <Plus :size="20" />
       </template>
-      {{ t('New page') }}
+      {{ t('intravox', 'New page') }}
     </NcActionButton>
 
     <!-- Edit Navigation (admin action, less frequently used) -->
@@ -15,7 +15,7 @@
       <template #icon>
         <Cog :size="20" />
       </template>
-      {{ t('Edit navigation') }}
+      {{ t('intravox', 'Edit navigation') }}
     </NcActionButton>
 
     <!-- Page Settings (for editors) -->
@@ -24,7 +24,7 @@
       <template #icon>
         <TuneVertical :size="20" />
       </template>
-      {{ t('Page settings') }}
+      {{ t('intravox', 'Page settings') }}
     </NcActionButton>
 
     <!-- Save as Template -->
@@ -33,7 +33,7 @@
       <template #icon>
         <FileDocumentMultipleOutline :size="20" />
       </template>
-      {{ t('Save as Template') }}
+      {{ t('intravox', 'Save as Template') }}
     </NcActionButton>
 
     <!-- RSS Feed -->
@@ -41,13 +41,13 @@
       <template #icon>
         <Rss :size="20" />
       </template>
-      {{ t('RSS Feed') }}
+      {{ t('intravox', 'RSS Feed') }}
     </NcActionButton>
   </NcActions>
 </template>
 
 <script>
-import { translate as t } from '@nextcloud/l10n';
+import { translate, translatePlural } from '@nextcloud/l10n';
 import { NcActions, NcActionButton } from '@nextcloud/vue';
 import Cog from 'vue-material-design-icons/Cog.vue';
 import Plus from 'vue-material-design-icons/Plus.vue';
@@ -84,8 +84,8 @@ export default {
   },
   emits: ['edit-navigation', 'create-page', 'page-settings', 'save-as-template', 'feed-settings'],
   methods: {
-    t(key, vars = {}) {
-      return t('intravox', key, vars);
+    t(app, text, vars) {
+      return translate(app, text, vars);
     },
     /**
      * Check if user can perform a specific action

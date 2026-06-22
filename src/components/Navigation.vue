@@ -3,8 +3,8 @@
     <!-- Page Structure Button (left of navigation) -->
     <button class="page-tree-btn"
             @click="handleTreeClick"
-            :aria-label="t('Page structure')"
-            :title="t('Page structure')">
+            :aria-label="t('intravox', 'Page structure')"
+            :title="t('intravox', 'Page structure')">
       <FileTree :size="20" />
     </button>
 
@@ -267,7 +267,7 @@
 </template>
 
 <script>
-import { translate as t } from '@nextcloud/l10n';
+import { translate, translatePlural } from '@nextcloud/l10n';
 import { NcActions, NcActionButton } from '@nextcloud/vue';
 import ChevronDown from 'vue-material-design-icons/ChevronDown.vue';
 import ChevronRight from 'vue-material-design-icons/ChevronRight.vue';
@@ -324,8 +324,8 @@ export default {
     window.removeEventListener('scroll', this.updateDropdownPosition, true);
   },
   methods: {
-    t(key, vars = {}) {
-      return t('intravox', key, vars);
+    t(app, text, vars) {
+      return translate(app, text, vars);
     },
     getItemKey(item) {
       // Generate a unique key for Vue's :key attribute

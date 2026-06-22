@@ -1,12 +1,12 @@
 <template>
   <NcModal @close="$emit('close')"
-           :name="t('Edit widget')"
+           :name="t('intravox', 'Edit widget')"
            size="large"
            class="widget-editor-modal">
     <div class="widget-editor-content">
         <!-- Text Widget -->
         <div v-if="localWidget.type === 'text'" class="form-group full-width-editor">
-          <label>{{ t('Text:') }}</label>
+          <label>{{ t('intravox', 'Text:') }}</label>
 
           <!-- Use InlineTextEditor for consistent editing experience -->
           <div class="text-editor-wrapper">
@@ -14,7 +14,7 @@
               v-model="localWidget.content"
               :editable="true"
               :compact="false"
-              :placeholder="t('Enter text …')"
+              :placeholder="t('intravox', 'Enter text …')"
             />
           </div>
         </div>
@@ -22,24 +22,24 @@
         <!-- Heading Widget -->
         <div v-else-if="localWidget.type === 'heading'">
           <div class="form-group">
-            <label for="widget-heading-text">{{ t('Heading:') }}</label>
+            <label for="widget-heading-text">{{ t('intravox', 'Heading:') }}</label>
             <input
               id="widget-heading-text"
               v-model="localWidget.content"
               type="text"
-              :placeholder="t('Enter your heading …')"
+              :placeholder="t('intravox', 'Enter your heading …')"
               class="heading-text-input"
             />
           </div>
           <div class="form-group">
-            <label for="widget-heading-level">{{ t('Level:') }}</label>
+            <label for="widget-heading-level">{{ t('intravox', 'Level:') }}</label>
             <select id="widget-heading-level" v-model.number="localWidget.level" class="heading-level-select">
-              <option :value="1">{{ t('H1 - Largest') }}</option>
-              <option :value="2">{{ t('H2') }}</option>
-              <option :value="3">{{ t('H3') }}</option>
-              <option :value="4">{{ t('H4') }}</option>
-              <option :value="5">{{ t('H5') }}</option>
-              <option :value="6">{{ t('H6 - Smallest') }}</option>
+              <option :value="1">{{ t('intravox', 'H1 - Largest') }}</option>
+              <option :value="2">{{ t('intravox', 'H2') }}</option>
+              <option :value="3">{{ t('intravox', 'H3') }}</option>
+              <option :value="4">{{ t('intravox', 'H4') }}</option>
+              <option :value="5">{{ t('intravox', 'H5') }}</option>
+              <option :value="6">{{ t('intravox', 'H6 - Smallest') }}</option>
             </select>
           </div>
         </div>
@@ -47,7 +47,7 @@
         <!-- Image Widget -->
         <div v-else-if="localWidget.type === 'image'">
           <div class="form-group">
-            <label>{{ t('Image:') }}</label>
+            <label>{{ t('intravox', 'Image:') }}</label>
             <NcButton
               type="primary"
               @click="openMediaPicker('image')"
@@ -55,24 +55,24 @@
               <template #icon>
                 <ImageIcon :size="20" />
               </template>
-              {{ t('Browse media …') }}
+              {{ t('intravox', 'Browse media …') }}
             </NcButton>
           </div>
           <div v-if="localWidget.src" class="image-preview">
             <img :src="getImageUrl(localWidget.src)" :alt="localWidget.alt" />
           </div>
           <div class="form-group">
-            <label for="widget-image-alt">{{ t('Alt text:') }}</label>
+            <label for="widget-image-alt">{{ t('intravox', 'Alt text:') }}</label>
             <input
               id="widget-image-alt"
               v-model="localWidget.alt"
               type="text"
-              :placeholder="t('Description of the image …')"
+              :placeholder="t('intravox', 'Description of the image …')"
               class="widget-input"
             />
           </div>
           <div class="form-group">
-            <label>{{ t('Size:') }}</label>
+            <label>{{ t('intravox', 'Size:') }}</label>
             <div class="size-presets">
               <button
                 type="button"
@@ -80,7 +80,7 @@
                 @click="setImageSize(300)"
                 class="size-preset-btn"
               >
-                {{ t('Small') }} (300px)
+                {{ t('intravox', 'Small') }} (300px)
               </button>
               <button
                 type="button"
@@ -88,7 +88,7 @@
                 @click="setImageSize(500)"
                 class="size-preset-btn"
               >
-                {{ t('Medium') }} (500px)
+                {{ t('intravox', 'Medium') }} (500px)
               </button>
               <button
                 type="button"
@@ -96,7 +96,7 @@
                 @click="setImageSize(800)"
                 class="size-preset-btn"
               >
-                {{ t('Large') }} (800px)
+                {{ t('intravox', 'Large') }} (800px)
               </button>
               <button
                 type="button"
@@ -104,12 +104,12 @@
                 @click="setImageSize(null)"
                 class="size-preset-btn"
               >
-                {{ t('Full width') }}
+                {{ t('intravox', 'Full width') }}
               </button>
             </div>
           </div>
           <div v-if="localWidget.width" class="form-group">
-            <label for="widget-image-width">{{ t('Custom width (pixels):') }}</label>
+            <label for="widget-image-width">{{ t('intravox', 'Custom width (pixels):') }}</label>
             <input
               id="widget-image-width"
               v-model.number="localWidget.width"
@@ -117,12 +117,12 @@
               min="50"
               max="2000"
               class="widget-input"
-              :placeholder="t('Width in pixels')"
+              :placeholder="t('intravox', 'Width in pixels')"
             />
-            <p class="size-hint">{{ t('Height will automatically adjust to maintain aspect ratio') }}</p>
+            <p class="size-hint">{{ t('intravox', 'Height will automatically adjust to maintain aspect ratio') }}</p>
           </div>
           <div v-if="!localWidget.width || localWidget.width === null" class="form-group">
-            <label>{{ t('Vertical position:') }}</label>
+            <label>{{ t('intravox', 'Vertical position:') }}</label>
             <div class="position-presets">
               <button
                 type="button"
@@ -130,7 +130,7 @@
                 @click="setObjectPosition('center')"
                 class="size-preset-btn"
               >
-                {{ t('Center') }}
+                {{ t('intravox', 'Center') }}
               </button>
               <button
                 type="button"
@@ -138,7 +138,7 @@
                 @click="setObjectPosition('top')"
                 class="size-preset-btn"
               >
-                {{ t('Top') }}
+                {{ t('intravox', 'Top') }}
               </button>
               <button
                 type="button"
@@ -146,14 +146,14 @@
                 @click="setObjectPosition('bottom')"
                 class="size-preset-btn"
               >
-                {{ t('Bottom') }}
+                {{ t('intravox', 'Bottom') }}
               </button>
             </div>
-            <p class="size-hint">{{ t('Choose which part of the image is visible when cropped') }}</p>
+            <p class="size-hint">{{ t('intravox', 'Choose which part of the image is visible when cropped') }}</p>
           </div>
           <!-- Image Link Section -->
           <div class="form-group">
-            <label>{{ t('Link:') }}</label>
+            <label>{{ t('intravox', 'Link:') }}</label>
             <div class="size-presets">
               <button
                 type="button"
@@ -161,7 +161,7 @@
                 @click="setImageLinkType('none')"
                 class="size-preset-btn"
               >
-                {{ t('No link') }}
+                {{ t('intravox', 'No link') }}
               </button>
               <button
                 type="button"
@@ -169,7 +169,7 @@
                 @click="setImageLinkType('internal')"
                 class="size-preset-btn"
               >
-                {{ t('Internal page') }}
+                {{ t('intravox', 'Internal page') }}
               </button>
               <button
                 type="button"
@@ -177,28 +177,28 @@
                 @click="setImageLinkType('external')"
                 class="size-preset-btn"
               >
-                {{ t('External URL') }}
+                {{ t('intravox', 'External URL') }}
               </button>
             </div>
           </div>
           <!-- Internal page selector -->
           <div v-if="localWidget.linkType === 'internal'" class="form-group">
-            <label>{{ t('Select page:') }}</label>
+            <label>{{ t('intravox', 'Select page:') }}</label>
             <PageTreeSelect
               v-model="localWidget.linkPageId"
-              :placeholder="t('Select a page …')"
+              :placeholder="t('intravox', 'Select a page …')"
               :clearable="true"
             />
-            <p class="size-hint">{{ t('Click on the image to navigate to this page') }}</p>
+            <p class="size-hint">{{ t('intravox', 'Click on the image to navigate to this page') }}</p>
           </div>
           <!-- External URL input -->
           <div v-if="localWidget.linkType === 'external'" class="form-group">
-            <label for="widget-image-link-url">{{ t('URL:') }}</label>
+            <label for="widget-image-link-url">{{ t('intravox', 'URL:') }}</label>
             <input
               id="widget-image-link-url"
               v-model="localWidget.linkUrl"
               type="url"
-              :placeholder="t('https://example.com')"
+              :placeholder="t('intravox', 'https://example.com')"
               class="widget-input"
             />
             <div class="link-target-options">
@@ -207,10 +207,10 @@
                   type="checkbox"
                   v-model="localWidget.linkNewTab"
                 />
-                {{ t('Open in new tab') }}
+                {{ t('intravox', 'Open in new tab') }}
               </label>
             </div>
-            <p class="size-hint">{{ localWidget.linkNewTab ? t('Click on the image to open this URL in a new tab') : t('Click on the image to open this URL') }}</p>
+            <p class="size-hint">{{ localWidget.linkNewTab ? t('intravox', 'Click on the image to open this URL in a new tab') : t('intravox', 'Click on the image to open this URL') }}</p>
           </div>
         </div>
 
@@ -260,7 +260,7 @@
         <div v-else-if="localWidget.type === 'video'">
           <!-- Provider keuze -->
           <div class="form-group">
-            <label>{{ t('Video source:') }}</label>
+            <label>{{ t('intravox', 'Video source:') }}</label>
             <div class="size-presets">
               <button
                 type="button"
@@ -268,7 +268,7 @@
                 @click="localWidget.provider = 'embed'; localWidget.src = ''"
                 class="size-preset-btn"
               >
-                {{ t('Video URL') }}
+                {{ t('intravox', 'Video URL') }}
               </button>
               <button
                 type="button"
@@ -276,14 +276,14 @@
                 @click="localWidget.provider = 'local'; localWidget.src = ''"
                 class="size-preset-btn"
               >
-                {{ t('Local file') }}
+                {{ t('intravox', 'Local file') }}
               </button>
             </div>
           </div>
 
           <!-- Video URL (YouTube, Vimeo, PeerTube, etc.) -->
           <div v-if="localWidget.provider !== 'local'" class="form-group">
-            <label for="widget-video-url">{{ t('Video URL:') }}</label>
+            <label for="widget-video-url">{{ t('intravox', 'Video URL:') }}</label>
             <input
               id="widget-video-url"
               v-model="localWidget.src"
@@ -293,15 +293,15 @@
               @blur="convertVideoUrl"
               @input="debouncedConvertVideoUrl"
             />
-            <p class="hint">{{ t('Paste a video URL from YouTube, Vimeo, PeerTube or other supported platforms.') }}</p>
+            <p class="hint">{{ t('intravox', 'Paste a video URL from YouTube, Vimeo, PeerTube or other supported platforms.') }}</p>
             <p v-if="detectedPlatform" class="detected-platform">
-              {{ t('Detected:') }} <strong>{{ detectedPlatform }}</strong>
+              {{ t('intravox', 'Detected:') }} <strong>{{ detectedPlatform }}</strong>
             </p>
           </div>
 
           <!-- Lokaal bestand upload -->
           <div v-else class="form-group">
-            <label>{{ t('Video:') }}</label>
+            <label>{{ t('intravox', 'Video:') }}</label>
             <NcButton
               type="primary"
               @click="openMediaPicker('video')"
@@ -309,31 +309,31 @@
               <template #icon>
                 <VideoIcon :size="20" />
               </template>
-              {{ t('Browse media …') }}
+              {{ t('intravox', 'Browse media …') }}
             </NcButton>
             <div v-if="localWidget.src" class="current-video">
-              {{ t('Current:') }} {{ localWidget.src }}
+              {{ t('intravox', 'Current:') }} {{ localWidget.src }}
             </div>
           </div>
 
           <!-- Titel -->
           <div class="form-group">
-            <label for="widget-video-title">{{ t('Title (optional):') }}</label>
+            <label for="widget-video-title">{{ t('intravox', 'Title (optional):') }}</label>
             <input id="widget-video-title" v-model="localWidget.title" type="text" class="widget-input" />
           </div>
 
           <!-- Playback Options -->
           <div class="form-group">
-            <label>{{ t('Playback options:') }}</label>
+            <label>{{ t('intravox', 'Playback options:') }}</label>
             <div class="checkbox-group">
               <label class="checkbox-label">
                 <input
                   type="checkbox"
                   v-model="localWidget.autoplay"
                 />
-                {{ t('Autoplay when page loads') }}
+                {{ t('intravox', 'Autoplay when page loads') }}
               </label>
-              <p class="hint checkbox-hint">{{ t('Video will start automatically (muted for browser compatibility)') }}</p>
+              <p class="hint checkbox-hint">{{ t('intravox', 'Video will start automatically (muted for browser compatibility)') }}</p>
             </div>
             <div class="checkbox-group">
               <label class="checkbox-label">
@@ -341,9 +341,9 @@
                   type="checkbox"
                   v-model="localWidget.loop"
                 />
-                {{ t('Loop video') }}
+                {{ t('intravox', 'Loop video') }}
               </label>
-              <p class="hint checkbox-hint">{{ t('Video will restart when finished') }}</p>
+              <p class="hint checkbox-hint">{{ t('intravox', 'Video will restart when finished') }}</p>
             </div>
             <div class="checkbox-group">
               <label class="checkbox-label">
@@ -351,25 +351,25 @@
                   type="checkbox"
                   v-model="localWidget.muted"
                 />
-                {{ t('Muted') }}
+                {{ t('intravox', 'Muted') }}
               </label>
-              <p class="hint checkbox-hint">{{ t('Video plays without sound (required for autoplay in most browsers)') }}</p>
+              <p class="hint checkbox-hint">{{ t('intravox', 'Video plays without sound (required for autoplay in most browsers)') }}</p>
             </div>
           </div>
 
           <!-- Preview -->
           <div v-if="embedUrl && localWidget.provider !== 'local'" class="video-preview">
-            <p>{{ t('Preview:') }}</p>
+            <p>{{ t('intravox', 'Preview:') }}</p>
             <!-- Blocked video warning - matches Widget.vue styling -->
             <div v-if="isVideoBlocked" class="video-blocked-preview">
               <div class="blocked-icon">🚫</div>
-              <p class="blocked-title">{{ t('Video service not allowed') }}</p>
+              <p class="blocked-title">{{ t('intravox', 'Video service not allowed') }}</p>
               <p v-if="localWidget.src" class="blocked-url">
                 <span class="url-label">URL:</span>
                 <code class="url-value">{{ localWidget.src }}</code>
               </p>
               <p class="blocked-hint">
-                {{ t('Please contact your administrator if you need access to this video service.') }}
+                {{ t('intravox', 'Please contact your administrator if you need access to this video service.') }}
               </p>
             </div>
             <!-- Normal preview -->
@@ -385,7 +385,7 @@
             </div>
           </div>
           <div v-else-if="localWidget.provider === 'local' && localWidget.src" class="video-preview">
-            <p>{{ t('Preview:') }}</p>
+            <p>{{ t('intravox', 'Preview:') }}</p>
             <div class="preview-container" style="height:200px;">
               <video
                 :src="getVideoUrl(localWidget.src)"
@@ -397,19 +397,19 @@
           </div>
           <!-- No URL entered yet hint -->
           <div v-else-if="localWidget.provider !== 'local' && !embedUrl" class="video-preview-hint">
-            <p class="hint">{{ t('Enter a video URL above to see a preview.') }}</p>
+            <p class="hint">{{ t('intravox', 'Enter a video URL above to see a preview.') }}</p>
           </div>
         </div>
 
       <div class="modal-footer">
         <NcButton @click="$emit('close')" type="secondary">
-          {{ t('Cancel') }}
+          {{ t('intravox', 'Cancel') }}
         </NcButton>
         <NcButton
           @click="save"
           type="primary"
           :disabled="isUploading || (localWidget.type === 'video' && !canSaveVideo)">
-          {{ t('Save') }}
+          {{ t('intravox', 'Save') }}
         </NcButton>
       </div>
     </div>
@@ -420,7 +420,7 @@
       :open="showMediaPicker"
       :page-id="pageId"
       :media-type="mediaPickerType"
-      :title="mediaPickerType === 'image' ? t('Select image') : t('Select video')"
+      :title="mediaPickerType === 'image' ? t('intravox', 'Select image') : t('intravox', 'Select video')"
       @close="showMediaPicker = false"
       @select="handleMediaSelect"
     />
@@ -430,7 +430,7 @@
 <script>
 import axios from '@nextcloud/axios';
 import { generateUrl } from '@nextcloud/router';
-import { translate as t } from '@nextcloud/l10n';
+import { translate, translatePlural } from '@nextcloud/l10n';
 import { NcButton, NcModal } from '@nextcloud/vue';
 import PageTreeSelect from './PageTreeSelect.vue';
 import MediaPicker from './MediaPicker.vue';
@@ -607,8 +607,8 @@ export default {
     }
   },
   methods: {
-    t(key, vars = {}) {
-      return this.$t(key, vars);
+    t(app, text, vars) {
+      return translate(app, text, vars);
     },
     handleNewsWidgetUpdate(updatedWidget) {
       // Merge the updated news widget properties into localWidget

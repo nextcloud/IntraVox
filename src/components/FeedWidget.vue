@@ -2,7 +2,7 @@
   <div class="feed-widget" aria-live="polite">
     <div v-if="loading" class="feed-widget-loading" role="status">
       <NcLoadingIcon :size="32" />
-      <p>{{ t('Loading feed …') }}</p>
+      <p>{{ t('intravox', 'Loading feed …') }}</p>
     </div>
 
     <div v-else-if="error" class="feed-widget-error">
@@ -12,8 +12,8 @@
 
     <div v-else-if="items.length === 0" class="feed-widget-empty">
       <RssBox :size="32" />
-      <p v-if="widget.filterKeyword">{{ t('No items match your filter.') }}</p>
-      <p v-else>{{ t('No items found') }}</p>
+      <p v-if="widget.filterKeyword">{{ t('intravox', 'No items match your filter.') }}</p>
+      <p v-else>{{ t('intravox', 'No items found') }}</p>
     </div>
 
     <component
@@ -103,8 +103,8 @@ export default {
     clearInterval(this._refreshInterval);
   },
   methods: {
-    t(text) {
-      return window.t ? window.t('intravox', text) : text;
+    t(app, text, vars) {
+      return translate(app, text, vars);
     },
     async fetchFeed() {
       this.loading = true;
@@ -172,17 +172,17 @@ export default {
         if (response.data.error) {
           const err = response.data.error;
           if (err.includes('inactive') || err.includes('disabled')) {
-            this.error = this.t('This connection is currently disabled by an administrator.');
+            this.error = this.t('intravox', 'This connection is currently disabled by an administrator.');
           } else if (err.includes('not found') || err.includes('404')) {
-            this.error = this.t('Connection no longer exists. Please reconfigure this widget.');
+            this.error = this.t('intravox', 'Connection no longer exists. Please reconfigure this widget.');
           } else if (err.includes('token') || err.includes('401') || err.includes('Authentication')) {
-            this.error = this.t('Authentication required. Please connect your account.');
+            this.error = this.t('intravox', 'Authentication required. Please connect your account.');
           } else if (err.includes('403') || err.includes('Access denied')) {
-            this.error = this.t('Access denied. Check the connection permissions.');
+            this.error = this.t('intravox', 'Access denied. Check the connection permissions.');
           } else if (err.includes('429') || err.includes('Rate limited')) {
-            this.error = this.t('Too many requests. Please try again later.');
+            this.error = this.t('intravox', 'Too many requests. Please try again later.');
           } else {
-            this.error = this.t('Could not load feed. Check the connection settings.');
+            this.error = this.t('intravox', 'Could not load feed. Check the connection settings.');
           }
           this.items = [];
           this.feedImage = null;
@@ -191,7 +191,7 @@ export default {
           this.feedImage = response.data.feedImage || null;
         }
       } catch (err) {
-        this.error = this.t('Could not load feed. The external system may be unavailable.');
+        this.error = this.t('intravox', 'Could not load feed. The external system may be unavailable.');
         this.items = [];
         this.feedImage = null;
       } finally {

@@ -109,7 +109,7 @@ import Delete from 'vue-material-design-icons/Delete.vue'
 import Reply from 'vue-material-design-icons/Reply.vue'
 import EmoticonHappyOutline from 'vue-material-design-icons/EmoticonHappyOutline.vue'
 import ReactionPicker from './ReactionPicker.vue'
-import { translatePlural as n } from '@nextcloud/l10n'
+import { translate, translatePlural as n } from '@nextcloud/l10n'
 import { updateComment, deleteComment, toggleCommentReaction } from '../../services/CommentService.js'
 
 export default {
@@ -240,15 +240,8 @@ export default {
 		async addReaction(emoji) {
 			await this.toggleReaction(emoji)
 		},
-		t(app, str, params = {}) {
-			if (window.t) {
-				return window.t(app, str, params)
-			}
-			let result = str
-			for (const [key, value] of Object.entries(params)) {
-				result = result.replace(`{${key}}`, value)
-			}
-			return result
+		t(app, text, vars) {
+			return translate(app, text, vars)
 		},
 	},
 }

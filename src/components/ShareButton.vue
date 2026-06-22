@@ -3,8 +3,8 @@
     <!-- Active share: primary colored icon -->
     <NcButton v-if="hasShare"
               type="tertiary"
-              :aria-label="t('Public link')"
-              :title="t('This page is shared via a public link')"
+              :aria-label="t('intravox', 'Public link')"
+              :title="t('intravox', 'This page is shared via a public link')"
               class="share-button-active"
               @click="showDialog = true">
       <template #icon>
@@ -15,8 +15,8 @@
     <!-- No share: muted icon -->
     <NcButton v-else
               type="tertiary"
-              :aria-label="t('Share this page')"
-              :title="t('Share this page')"
+              :aria-label="t('intravox', 'Share this page')"
+              :title="t('intravox', 'Share this page')"
               class="share-button-inactive"
               @click="showNoShareDialog = true">
       <template #icon>
@@ -43,7 +43,7 @@
 <script>
 import axios from '@nextcloud/axios';
 import { generateUrl } from '@nextcloud/router';
-import { translate as t } from '@nextcloud/l10n';
+import { translate, translatePlural } from '@nextcloud/l10n';
 import { NcButton } from '@nextcloud/vue';
 import LinkVariant from 'vue-material-design-icons/LinkVariant.vue';
 import LinkVariantOff from 'vue-material-design-icons/LinkVariantOff.vue';
@@ -98,8 +98,8 @@ export default {
     }
   },
   methods: {
-    t(key, vars = {}) {
-      return t('intravox', key, vars);
+    t(app, text, vars) {
+      return translate(app, text, vars);
     },
     async loadShareInfo() {
       if (!this.pageUniqueId) {

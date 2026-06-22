@@ -5,19 +5,19 @@
 				<Translate :size="48" />
 			</div>
 
-			<h2 class="language-fallback-title">{{ t('No content in your language yet') }}</h2>
+			<h2 class="language-fallback-title">{{ t('intravox', 'No content in your language yet') }}</h2>
 
 			<p class="language-fallback-description">
-				{{ t('This intranet has no pages in {language} yet.', { language: ownLanguageName }) }}
+				{{ t('intravox', 'This intranet has no pages in {language} yet.', { language: ownLanguageName }) }}
 			</p>
 
 			<!-- Which languages DO have content -->
 			<p v-if="contentLanguageNames.length" class="language-fallback-available">
-				{{ t('Content is available in:') }}
+				{{ t('intravox', 'Content is available in:') }}
 				<strong>{{ contentLanguageNames.join(', ') }}</strong>
 			</p>
 			<p v-else class="language-fallback-available">
-				{{ t('No published content is available in any language yet.') }}
+				{{ t('intravox', 'No published content is available in any language yet.') }}
 			</p>
 
 			<!-- Primary action: let the user change their own language in NC settings -->
@@ -26,17 +26,17 @@
 					<template #icon>
 						<Cog :size="20" />
 					</template>
-					{{ t('Change your language') }}
+					{{ t('intravox', 'Change your language') }}
 				</NcButton>
 			</div>
 
 			<p class="language-fallback-hint">
-				{{ t('Set your language under Personal settings to see the intranet in a language that has content.') }}
+				{{ t('intravox', 'Set your language under Personal settings to see the intranet in a language that has content.') }}
 			</p>
 
 			<div v-if="isAdmin" class="language-fallback-admin">
 				<NcButton type="tertiary" :href="adminSettingsUrl">
-					{{ t('Manage intranet languages') }}
+					{{ t('intravox', 'Manage intranet languages') }}
 				</NcButton>
 			</div>
 		</div>
@@ -44,7 +44,7 @@
 </template>
 
 <script>
-import { translate as t } from '@nextcloud/l10n';
+import { translate, translatePlural } from '@nextcloud/l10n';
 import { generateUrl } from '@nextcloud/router';
 import { NcButton } from '@nextcloud/vue';
 import Cog from 'vue-material-design-icons/Cog.vue';
@@ -101,9 +101,9 @@ export default {
 		},
 	},
 	methods: {
-		t(key, vars = {}) {
-			return t('intravox', key, vars);
-		},
+		t(app, text, vars) {
+      return translate(app, text, vars);
+    },
 		nameOf(code) {
 			return this.languageNames[code] || code.toUpperCase();
 		},

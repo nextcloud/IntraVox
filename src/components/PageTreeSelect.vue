@@ -31,14 +31,14 @@
           v-model="searchQuery"
           type="text"
           class="search-input"
-          :placeholder="t('Search pages …')"
-          :aria-label="t('Search pages')"
+          :placeholder="t('intravox', 'Search pages …')"
+          :aria-label="t('intravox', 'Search pages')"
           @keydown.escape="closeDropdown"
           @keydown.down.prevent="focusNext"
           @keydown.up.prevent="focusPrev"
           @keydown.enter.prevent="selectFocused"
         />
-        <button v-if="searchQuery" class="clear-search" @click="searchQuery = ''" :aria-label="t('Clear search')">
+        <button v-if="searchQuery" class="clear-search" @click="searchQuery = ''" :aria-label="t('intravox', 'Clear search')">
           <Close :size="14" />
         </button>
       </div>
@@ -50,7 +50,7 @@
         </div>
 
         <div v-else-if="filteredTree.length === 0" class="empty-state">
-          {{ searchQuery ? t('No pages found') : t('No pages available') }}
+          {{ searchQuery ? t('intravox', 'No pages found') : t('intravox', 'No pages available') }}
         </div>
 
         <ul v-else class="tree-list" role="listbox">
@@ -72,14 +72,14 @@
       <!-- Clear selection -->
       <button v-if="selectedPage && clearable" class="clear-selection" @click="clearSelection">
         <Close :size="16" />
-        {{ t('Clear selection') }}
+        {{ t('intravox', 'Clear selection') }}
       </button>
     </div>
   </div>
 </template>
 
 <script>
-import { translate } from '@nextcloud/l10n';
+import { translate, translatePlural } from '@nextcloud/l10n';
 import { NcLoadingIcon } from '@nextcloud/vue';
 import axios from '@nextcloud/axios';
 import { generateUrl } from '@nextcloud/router';

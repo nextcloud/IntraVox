@@ -7,7 +7,7 @@
         v-model="localContent"
         :editable="true"
         :compact="isCompactMode"
-        :placeholder="t('Enter text …')"
+        :placeholder="t('intravox', 'Enter text …')"
         @focus="$emit('focus')"
         @blur="onBlur"
       />
@@ -49,7 +49,7 @@
         loading="lazy"
       />
       <div v-else class="placeholder">
-        <span>{{ t('No image selected') }}</span>
+        <span>{{ t('intravox', 'No image selected') }}</span>
       </div>
     </div>
 
@@ -124,17 +124,17 @@
       <!-- Blocked Video - domain not in whitelist -->
       <div v-if="widget.blocked" class="video-blocked">
         <div class="video-blocked-icon">🚫</div>
-        <p class="video-blocked-title">{{ t('Video service not allowed') }}</p>
+        <p class="video-blocked-title">{{ t('intravox', 'Video service not allowed') }}</p>
         <p v-if="widget.originalSrc" class="video-blocked-url">
           <span class="url-label">URL:</span>
           <code class="url-value">{{ widget.originalSrc }}</code>
         </p>
         <p v-else-if="widget.blockedDomain" class="video-blocked-url">
-          <span class="url-label">{{ t('Domain') }}:</span>
+          <span class="url-label">{{ t('intravox', 'Domain') }}:</span>
           <code class="url-value">{{ widget.blockedDomain }}</code>
         </p>
         <p class="video-blocked-hint">
-          {{ t('Please contact your administrator if you need access to this video service.') }}
+          {{ t('intravox', 'Please contact your administrator if you need access to this video service.') }}
         </p>
       </div>
 
@@ -143,7 +143,7 @@
         <div class="video-container">
           <iframe
             :src="getEmbedUrl(widget)"
-            :title="widget.title || t('Video')"
+            :title="widget.title || t('intravox', 'Video')"
             frameborder="0"
             allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
             sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
@@ -169,18 +169,18 @@
           :preload="widget.autoplay ? 'auto' : 'metadata'"
           @error="onLocalVideoError"
         >
-          {{ t('Your browser does not support HTML5 video.') }}
+          {{ t('intravox', 'Your browser does not support HTML5 video.') }}
         </video>
         <!-- Error message for local videos -->
         <div v-if="localVideoError" class="video-error-overlay">
-          <p class="error-message">{{ t('Video cannot be played') }}</p>
+          <p class="error-message">{{ t('intravox', 'Video cannot be played') }}</p>
           <p class="error-reason">{{ localVideoError }}</p>
         </div>
       </div>
 
       <!-- Placeholder -->
       <div v-else class="placeholder">
-        <span>{{ t('No video selected') }}</span>
+        <span>{{ t('intravox', 'No video selected') }}</span>
       </div>
 
       <p v-if="widget.title && !widget.blocked" class="video-title">{{ widget.title }}</p>
@@ -188,14 +188,14 @@
 
     <!-- Unknown Widget Type -->
     <div v-else class="widget-unknown">
-      {{ t('Unknown widget type: {type}', { type: widget.type }) }}
+      {{ t('intravox', 'Unknown widget type: {type}', { type: widget.type }) }}
     </div>
   </div>
 </template>
 
 <script>
 import { defineAsyncComponent } from 'vue';
-import { translate as t } from '@nextcloud/l10n';
+import { translate, translatePlural } from '@nextcloud/l10n';
 import { generateUrl } from '@nextcloud/router';
 import { markdownToHtml } from '../utils/markdownSerializer.js';
 
@@ -371,8 +371,8 @@ export default {
     }
   },
   methods: {
-    t(key, vars = {}) {
-      return t('intravox', key, vars);
+    t(app, text, vars) {
+      return translate(app, text, vars);
     },
     sanitizeHtml(content) {
       if (!content) return '';
@@ -610,19 +610,19 @@ export default {
       if (error) {
         switch (error.code) {
           case MediaError.MEDIA_ERR_ABORTED:
-            this.localVideoError = this.t('Video playback was aborted.');
+            this.localVideoError = this.t('intravox', 'Video playback was aborted.');
             break;
           case MediaError.MEDIA_ERR_NETWORK:
-            this.localVideoError = this.t('A network error occurred while loading the video.');
+            this.localVideoError = this.t('intravox', 'A network error occurred while loading the video.');
             break;
           case MediaError.MEDIA_ERR_DECODE:
-            this.localVideoError = this.t('The video file is corrupted or uses an unsupported format.');
+            this.localVideoError = this.t('intravox', 'The video file is corrupted or uses an unsupported format.');
             break;
           case MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED:
-            this.localVideoError = this.t('The video format is not supported by your browser.');
+            this.localVideoError = this.t('intravox', 'The video format is not supported by your browser.');
             break;
           default:
-            this.localVideoError = this.t('An unknown error occurred while playing the video.');
+            this.localVideoError = this.t('intravox', 'An unknown error occurred while playing the video.');
         }
       }
     },

@@ -4,14 +4,14 @@
 	     :style="getColumnStyle()">
 		<!-- Edit mode controls -->
 		<div v-if="editable" class="side-column-header">
-			<span class="side-column-title">{{ side === 'left' ? t('Left column') : t('Right column') }}</span>
+			<span class="side-column-title">{{ side === 'left' ? t('intravox', 'Left column') : t('intravox', 'Right column') }}</span>
 			<div class="side-column-actions">
 				<!-- Background color picker -->
 				<NcColorPicker v-model="localBackgroundColor"
 				               @update:modelValue="updateBackgroundColor">
 					<NcButton type="tertiary"
-					          :aria-label="t('Background color')"
-					          :title="t('Background color')">
+					          :aria-label="t('intravox', 'Background color')"
+					          :title="t('intravox', 'Background color')">
 						<template #icon>
 							<FormatColorFill :size="20" />
 						</template>
@@ -21,8 +21,8 @@
 				<!-- Delete button -->
 				<NcButton type="tertiary"
 				          @click="$emit('remove')"
-				          :aria-label="t('Remove column')"
-				          :title="t('Remove column')">
+				          :aria-label="t('intravox', 'Remove column')"
+				          :title="t('intravox', 'Remove column')">
 					<template #icon>
 						<Delete :size="20" />
 					</template>
@@ -48,11 +48,11 @@
 			<div v-if="editable" class="side-column-add-widget">
 				<NcButton type="secondary"
 				          @click="$emit('add-widget')"
-				          :aria-label="t('Add widget')">
+				          :aria-label="t('intravox', 'Add widget')">
 					<template #icon>
 						<Plus :size="20" />
 					</template>
-					{{ t('Add widget') }}
+					{{ t('intravox', 'Add widget') }}
 				</NcButton>
 			</div>
 
@@ -65,7 +65,7 @@
 </template>
 
 <script>
-import { translate as t } from '@nextcloud/l10n'
+import { translate, translatePlural } from '@nextcloud/l10n'
 import { NcButton, NcColorPicker } from '@nextcloud/vue'
 import Widget from './Widget.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
@@ -123,9 +123,9 @@ export default {
 		}
 	},
 	methods: {
-		t(key, vars = {}) {
-			return t('intravox', key, vars)
-		},
+		t(app, text, vars) {
+      return translate(app, text, vars);
+    },
 		getColumnStyle() {
 			const style = {}
 

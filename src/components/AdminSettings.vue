@@ -1356,6 +1356,7 @@
 import { NcButton, NcDialog, NcNoteCard, NcCheckboxRadioSwitch, NcProgressBar, NcActions, NcActionButton } from '@nextcloud/vue'
 import { showSuccess, showError, showWarning } from '@nextcloud/dialogs'
 import axios from '@nextcloud/axios'
+import { translate, translatePlural } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import PackageVariant from 'vue-material-design-icons/PackageVariant.vue'
 import Video from 'vue-material-design-icons/Video.vue'
@@ -2436,16 +2437,10 @@ export default {
 			}
 		},
 		t(app, text, vars) {
-			if (window.t) {
-				return vars ? window.t(app, text, vars) : window.t(app, text)
-			}
-			return text
+			return translate(app, text, vars)
 		},
 		n(app, singular, plural, count, vars) {
-			if (window.n) {
-				return vars ? window.n(app, singular, plural, count, vars) : window.n(app, singular, plural, count)
-			}
-			return count === 1 ? singular.replace('%n', count) : plural.replace('%n', count)
+			return translatePlural(app, singular, plural, count, vars)
 		},
 		async saveVideoDomains() {
 			this.savingDomains = true

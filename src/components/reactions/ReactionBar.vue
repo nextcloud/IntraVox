@@ -38,6 +38,7 @@
 
 <script>
 import { NcButton } from '@nextcloud/vue'
+import { translate } from '@nextcloud/l10n'
 import EmoticonHappyOutline from 'vue-material-design-icons/EmoticonHappyOutline.vue'
 import ReactionPicker from './ReactionPicker.vue'
 import { togglePageReaction } from '../../services/CommentService.js'
@@ -94,16 +95,8 @@ export default {
 			}
 			return this.t('intravox', '{count} people reacted with {emoji}', { count, emoji })
 		},
-		t(app, str, params = {}) {
-			if (window.t) {
-				return window.t(app, str, params)
-			}
-			// Fallback: simple parameter replacement
-			let result = str
-			for (const [key, value] of Object.entries(params)) {
-				result = result.replace(`{${key}}`, value)
-			}
-			return result
+		t(app, text, vars) {
+			return translate(app, text, vars)
 		},
 	},
 }

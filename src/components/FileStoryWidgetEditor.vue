@@ -1,16 +1,16 @@
 <template>
   <div class="file-story-editor">
     <!-- ============ SOURCE ============ -->
-    <h4 class="fse-section-heading">{{ t('Source') }}</h4>
+    <h4 class="fse-section-heading">{{ t('intravox', 'Source') }}</h4>
 
     <div class="editor-section">
-      <label class="editor-label" for="fse-folder">{{ t('Source folder') }}</label>
+      <label class="editor-label" for="fse-folder">{{ t('intravox', 'Source folder') }}</label>
       <div class="fse-folder-row">
         <input
           id="fse-folder"
           type="text"
           v-model="localConfig.folderPath"
-          :placeholder="t('/Documents/ …')"
+          :placeholder="t('intravox', '/Documents/ …')"
           class="editor-input"
           @change="emitUpdate"
         />
@@ -18,37 +18,37 @@
           <template #icon>
             <FolderOpen :size="18" />
           </template>
-          {{ t('Browse …') }}
+          {{ t('intravox', 'Browse …') }}
         </NcButton>
       </div>
-      <p class="editor-hint">{{ t('Pick a folder. Documents are streamed directly from this location.') }}</p>
+      <p class="editor-hint">{{ t('intravox', 'Pick a folder. Documents are streamed directly from this location.') }}</p>
       <div class="fse-capability-badge" :class="{ rich: metaVoxAvailable && !sourceIsFederated }">
         <CheckCircle v-if="metaVoxAvailable && !sourceIsFederated" :size="14" />
         <AlertCircle v-else :size="14" />
-        <span v-if="metaVoxAvailable && !sourceIsFederated">{{ t('MetaVox: rich metadata available') }}</span>
-        <span v-else-if="sourceIsFederated">{{ t('Federated share — MetaVox metadata is not available because the source lives on another Nextcloud instance. Files are shown with name, date and file type only.') }}</span>
-        <span v-else>{{ t('MetaVox not available — basic file metadata only') }}</span>
+        <span v-if="metaVoxAvailable && !sourceIsFederated">{{ t('intravox', 'MetaVox: rich metadata available') }}</span>
+        <span v-else-if="sourceIsFederated">{{ t('intravox', 'Federated share — MetaVox metadata is not available because the source lives on another Nextcloud instance. Files are shown with name, date and file type only.') }}</span>
+        <span v-else>{{ t('intravox', 'MetaVox not available — basic file metadata only') }}</span>
       </div>
     </div>
 
     <!-- MetaVox filter builder (only when MetaVox is available and source is not pure-federated) -->
     <div class="editor-section" v-if="metaVoxAvailable && !sourceIsFederated">
-      <div class="editor-label">{{ t('Filters') }}</div>
+      <div class="editor-label">{{ t('intravox', 'Filters') }}</div>
       <p v-if="!localConfig.metaVoxFilters || localConfig.metaVoxFilters.length === 0" class="editor-hint">
-        {{ t('No filters. Click "Add filter" to filter by author, project, status or any other MetaVox field.') }}
+        {{ t('intravox', 'No filters. Click "Add filter" to filter by author, project, status or any other MetaVox field.') }}
       </p>
       <div v-for="(filter, idx) in localConfig.metaVoxFilters || []" :key="idx" class="fse-filter-row">
         <NcSelect
           :model-value="fieldOptionFor(filter.field)"
           :options="filterFieldOptions"
-          :placeholder="t('Field')"
+          :placeholder="t('intravox', 'Field')"
           class="fse-filter-field"
           @update:model-value="setFilterField(idx, $event)"
         />
         <NcSelect
           :model-value="opOptionFor(filter.op, filter.field)"
           :options="operatorOptionsFor(filter.field)"
-          :placeholder="t('Operator')"
+          :placeholder="t('intravox', 'Operator')"
           class="fse-filter-op"
           @update:model-value="setFilterOp(idx, $event)"
         />
@@ -58,7 +58,7 @@
           :options="valueOptionsFor(filter.field)"
           :taggable="filter.op === 'in' || valueOptionsFor(filter.field).length === 0"
           :multiple="filter.op === 'in'"
-          :placeholder="t('Value')"
+          :placeholder="t('intravox', 'Value')"
           class="fse-filter-value"
           @update:model-value="setFilterValue(idx, $event)"
         />
@@ -76,7 +76,7 @@
           max="2100"
           step="1"
           :value="filter.value"
-          :placeholder="t('Year')"
+          :placeholder="t('intravox', 'Year')"
           class="editor-input fse-filter-value-text fse-narrow"
           @input="setFilterValue(idx, $event.target.value)"
         />
@@ -84,7 +84,7 @@
           v-else-if="valueRenderFor(filter) === 'number'"
           type="number"
           :value="filter.value"
-          :placeholder="t('Value')"
+          :placeholder="t('intravox', 'Value')"
           class="editor-input fse-filter-value-text fse-narrow"
           @input="setFilterValue(idx, $event.target.value)"
         />
@@ -93,17 +93,17 @@
           :model-value="filter.value === '1' || filter.value === true || filter.value === 'true'"
           @update:model-value="setFilterValue(idx, $event ? '1' : '0')"
         >
-          {{ t('Checked') }}
+          {{ t('intravox', 'Checked') }}
         </NcCheckboxRadioSwitch>
         <input
           v-else
           type="text"
           :value="filter.value"
-          :placeholder="t('Value')"
+          :placeholder="t('intravox', 'Value')"
           class="editor-input fse-filter-value-text"
           @input="setFilterValue(idx, $event.target.value)"
         />
-        <NcButton type="tertiary-no-background" :title="t('Remove filter')" @click="removeFilter(idx)">
+        <NcButton type="tertiary-no-background" :title="t('intravox', 'Remove filter')" @click="removeFilter(idx)">
           <template #icon>
             <Close :size="16" />
           </template>
@@ -113,15 +113,15 @@
         <template #icon>
           <Plus :size="16" />
         </template>
-        {{ t('Add filter') }}
+        {{ t('intravox', 'Add filter') }}
       </NcButton>
     </div>
 
     <!-- ============ LAYOUT ============ -->
-    <h4 class="fse-section-heading">{{ t('Layout') }}</h4>
+    <h4 class="fse-section-heading">{{ t('intravox', 'Layout') }}</h4>
 
     <div class="editor-section">
-      <div class="editor-label">{{ t('Layout mode') }}</div>
+      <div class="editor-label">{{ t('intravox', 'Layout mode') }}</div>
       <div class="fse-mode-grid">
         <button
           v-for="opt in modeOptions"
@@ -140,7 +140,7 @@
 
     <!-- Tile size (only for tiles mode) -->
     <div v-if="localConfig.mode === 'tiles'" class="editor-section">
-      <div class="editor-label">{{ t('Tile size') }}</div>
+      <div class="editor-label">{{ t('intravox', 'Tile size') }}</div>
       <div class="fse-tile-size-row">
         <button
           v-for="opt in tileSizeOptions"
@@ -157,19 +157,19 @@
 
     <!-- Group-by (only for grouped mode) -->
     <div v-if="localConfig.mode === 'grouped'" class="editor-section">
-      <div class="editor-label">{{ t('Group by') }}</div>
+      <div class="editor-label">{{ t('intravox', 'Group by') }}</div>
       <NcSelect
         :model-value="groupByOption"
         :options="groupByOptions"
-        :placeholder="t('Group by')"
+        :placeholder="t('intravox', 'Group by')"
         @update:model-value="setGroupBy"
       />
-      <p class="editor-hint">{{ t('Pick what to cluster files under. "Category" groups by file type (PDF / Spreadsheets / etc); other options come from MetaVox fields.') }}</p>
+      <p class="editor-hint">{{ t('intravox', 'Pick what to cluster files under. "Category" groups by file type (PDF / Spreadsheets / etc); other options come from MetaVox fields.') }}</p>
     </div>
 
     <!-- Timeline granularity (only for timeline mode) -->
     <div v-if="localConfig.mode === 'timeline'" class="editor-section">
-      <div class="editor-label">{{ t('Group by date') }}</div>
+      <div class="editor-label">{{ t('intravox', 'Group by date') }}</div>
       <div class="fse-granularity-row">
         <NcCheckboxRadioSwitch
           v-for="opt in granularityOptions"
@@ -183,17 +183,17 @@
           {{ opt.label }}
         </NcCheckboxRadioSwitch>
       </div>
-      <p class="editor-hint">{{ t('Per day works for daily reports / notes; per month suits monthly newsletters and quarterly contracts; per year is for archives.') }}</p>
+      <p class="editor-hint">{{ t('intravox', 'Per day works for daily reports / notes; per month suits monthly newsletters and quarterly contracts; per year is for archives.') }}</p>
     </div>
 
     <!-- Sort -->
     <div class="editor-section">
-      <div class="editor-label">{{ t('Order') }}</div>
+      <div class="editor-label">{{ t('intravox', 'Order') }}</div>
       <div class="fse-sort-row">
         <NcSelect
           :model-value="sortByOption"
           :options="sortByOptions"
-          :placeholder="t('Sort by')"
+          :placeholder="t('intravox', 'Sort by')"
           class="fse-sort-by"
           @update:model-value="setSortBy"
         />
@@ -221,11 +221,11 @@
     </div>
 
     <!-- ============ DISPLAY ============ -->
-    <h4 class="fse-section-heading">{{ t('Display') }}</h4>
+    <h4 class="fse-section-heading">{{ t('intravox', 'Display') }}</h4>
 
     <!-- Visible columns: gebruiker kiest wat naast bestandsnaam getoond wordt -->
     <div class="editor-section">
-      <div class="editor-label">{{ t('Show columns') }}</div>
+      <div class="editor-label">{{ t('intravox', 'Show columns') }}</div>
       <div class="fse-columns">
         <NcCheckboxRadioSwitch
           v-for="opt in columnOptions"
@@ -236,22 +236,22 @@
           {{ opt.label }}
         </NcCheckboxRadioSwitch>
       </div>
-      <p class="editor-hint">{{ t('Pick which fields appear next to the filename. The filename + file-type icon are always shown.') }}</p>
+      <p class="editor-hint">{{ t('intravox', 'Pick which fields appear next to the filename. The filename + file-type icon are always shown.') }}</p>
     </div>
 
     <div class="editor-section">
-      <label class="editor-label" for="fse-limit">{{ t('Maximum documents') }}</label>
+      <label class="editor-label" for="fse-limit">{{ t('intravox', 'Maximum documents') }}</label>
       <input
         id="fse-limit"
         type="number"
         min="1"
         max="500"
         v-model.number="localConfig.limit"
-        :placeholder="t('All')"
+        :placeholder="t('intravox', 'All')"
         class="editor-input fse-narrow"
         @input="emitUpdate"
       />
-      <p class="editor-hint">{{ t('Cap the total number of documents. Leave blank to load everything via infinite scroll.') }}</p>
+      <p class="editor-hint">{{ t('intravox', 'Cap the total number of documents. Leave blank to load everything via infinite scroll.') }}</p>
     </div>
   </div>
 </template>
@@ -259,7 +259,7 @@
 <script>
 import axios from '@nextcloud/axios';
 import { generateUrl } from '@nextcloud/router';
-import { translate as t } from '@nextcloud/l10n';
+import { translate, translatePlural } from '@nextcloud/l10n';
 import { NcButton, NcCheckboxRadioSwitch, NcSelect } from '@nextcloud/vue';
 import FolderOpen from 'vue-material-design-icons/FolderOpen.vue';
 import CheckCircle from 'vue-material-design-icons/CheckCircle.vue';
@@ -295,52 +295,52 @@ export default {
   computed: {
     modeOptions() {
       return [
-        { value: 'timeline', label: this.t('Timeline'), icon: 'ViewList' },
-        { value: 'tiles', label: this.t('Tiles'), icon: 'ViewGrid' },
-        { value: 'list', label: this.t('List'), icon: 'FormatListBulleted' },
-        { value: 'grouped', label: this.t('Grouped'), icon: 'FolderMultiple' },
+        { value: 'timeline', label: this.t('intravox', 'Timeline'), icon: 'ViewList' },
+        { value: 'tiles', label: this.t('intravox', 'Tiles'), icon: 'ViewGrid' },
+        { value: 'list', label: this.t('intravox', 'List'), icon: 'FormatListBulleted' },
+        { value: 'grouped', label: this.t('intravox', 'Grouped'), icon: 'FolderMultiple' },
       ];
     },
     tileSizeOptions() {
       return [
-        { value: 'small', label: this.t('Small') },
-        { value: 'medium', label: this.t('Medium') },
-        { value: 'large', label: this.t('Large') },
+        { value: 'small', label: this.t('intravox', 'Small') },
+        { value: 'medium', label: this.t('intravox', 'Medium') },
+        { value: 'large', label: this.t('intravox', 'Large') },
       ];
     },
     modeHint() {
       switch (this.localConfig.mode) {
         case 'timeline':
-          return this.t('Chronological — documents grouped by date with sticky headers. Granularity (day/month/year) configurable below.');
+          return this.t('intravox', 'Chronological — documents grouped by date with sticky headers. Granularity (day/month/year) configurable below.');
         case 'tiles':
-          return this.t('Visual grid — each document rendered as a tile with first-page preview thumbnail. Best for browsable document libraries.');
+          return this.t('intravox', 'Visual grid — each document rendered as a tile with first-page preview thumbnail. Best for browsable document libraries.');
         case 'list':
-          return this.t('Flat sortable list — no grouping.');
+          return this.t('intravox', 'Flat sortable list — no grouping.');
         case 'grouped':
-          return this.t('Cluster documents by category or MetaVox field (author, project, status, …).');
+          return this.t('intravox', 'Cluster documents by category or MetaVox field (author, project, status, …).');
         default:
           return '';
       }
     },
     granularityOptions() {
       return [
-        { value: 'day', label: this.t('Per day') },
-        { value: 'month', label: this.t('Per month') },
-        { value: 'year', label: this.t('Per year') },
+        { value: 'day', label: this.t('intravox', 'Per day') },
+        { value: 'month', label: this.t('intravox', 'Per month') },
+        { value: 'year', label: this.t('intravox', 'Per year') },
       ];
     },
     columnOptions() {
       return [
-        { value: 'date', label: this.t('Date') },
-        { value: 'size', label: this.t('File size') },
-        { value: 'path', label: this.t('Folder path') },
+        { value: 'date', label: this.t('intravox', 'Date') },
+        { value: 'size', label: this.t('intravox', 'File size') },
+        { value: 'path', label: this.t('intravox', 'Folder path') },
       ];
     },
     sortByOptions() {
       const base = [
-        { label: this.t('Date modified'), value: 'mtime' },
-        { label: this.t('Filename'), value: 'name' },
-        { label: this.t('File size'), value: 'size' },
+        { label: this.t('intravox', 'Date modified'), value: 'mtime' },
+        { label: this.t('intravox', 'Filename'), value: 'name' },
+        { label: this.t('intravox', 'File size'), value: 'size' },
       ];
       if (this.sourceIsFederated) return base;
       const skip = new Set(['multiselect', 'tags', 'checkbox']);
@@ -355,21 +355,21 @@ export default {
     },
     sortDirLabelDesc() {
       const v = this.localConfig.sortBy || 'mtime';
-      if (v === 'mtime') return this.t('Newest first');
-      if (v === 'name') return this.t('Z → A');
-      if (v === 'size') return this.t('Largest first');
-      return this.t('Descending');
+      if (v === 'mtime') return this.t('intravox', 'Newest first');
+      if (v === 'name') return this.t('intravox', 'Z → A');
+      if (v === 'size') return this.t('intravox', 'Largest first');
+      return this.t('intravox', 'Descending');
     },
     sortDirLabelAsc() {
       const v = this.localConfig.sortBy || 'mtime';
-      if (v === 'mtime') return this.t('Oldest first');
-      if (v === 'name') return this.t('A → Z');
-      if (v === 'size') return this.t('Smallest first');
-      return this.t('Ascending');
+      if (v === 'mtime') return this.t('intravox', 'Oldest first');
+      if (v === 'name') return this.t('intravox', 'A → Z');
+      if (v === 'size') return this.t('intravox', 'Smallest first');
+      return this.t('intravox', 'Ascending');
     },
     groupByOptions() {
       const base = [
-        { label: this.t('Category (file type)'), value: 'category' },
+        { label: this.t('intravox', 'Category (file type)'), value: 'category' },
       ];
       if (this.sourceIsFederated) return base;
       // Single-valued MetaVox fields make sense for grouping (multiselect doesn't).
@@ -408,8 +408,8 @@ export default {
     this.loadMetaVoxFields();
   },
   methods: {
-    t(key, vars = {}) {
-      return t('intravox', key, vars);
+    t(app, text, vars) {
+      return translate(app, text, vars);
     },
     createDefaultConfig() {
       return {
@@ -454,7 +454,7 @@ export default {
       try {
         if (typeof window !== 'undefined' && window.OC && window.OC.dialogs && typeof window.OC.dialogs.filepicker === 'function') {
           window.OC.dialogs.filepicker(
-            this.t('Pick a folder'),
+            this.t('intravox', 'Pick a folder'),
             (path) => {
               if (typeof path !== 'string') return;
               // OC.dialogs.filepicker returns '' when the user picks the
@@ -516,28 +516,28 @@ export default {
         case 'multiselect':
         case 'tags':
           return [
-            { label: this.t('contains'), value: 'contains' },
-            { label: this.t('is any of'), value: 'in' },
+            { label: this.t('intravox', 'contains'), value: 'contains' },
+            { label: this.t('intravox', 'is any of'), value: 'in' },
           ];
         case 'date':
         case 'datetime':
           return [
-            { label: this.t('equals'), value: 'equals' },
-            { label: this.t('year is'), value: 'year_equals' },
+            { label: this.t('intravox', 'equals'), value: 'equals' },
+            { label: this.t('intravox', 'year is'), value: 'year_equals' },
           ];
         case 'select':
         case 'dropdown':
           return [
-            { label: this.t('equals'), value: 'equals' },
-            { label: this.t('is any of'), value: 'in' },
+            { label: this.t('intravox', 'equals'), value: 'equals' },
+            { label: this.t('intravox', 'is any of'), value: 'in' },
           ];
         case 'checkbox':
         case 'number':
-          return [{ label: this.t('equals'), value: 'equals' }];
+          return [{ label: this.t('intravox', 'equals'), value: 'equals' }];
         default:
           return [
-            { label: this.t('equals'), value: 'equals' },
-            { label: this.t('contains'), value: 'contains' },
+            { label: this.t('intravox', 'equals'), value: 'equals' },
+            { label: this.t('intravox', 'contains'), value: 'contains' },
           ];
       }
     },

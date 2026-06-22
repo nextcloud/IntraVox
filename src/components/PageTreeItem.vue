@@ -6,7 +6,7 @@
         v-if="hasChildren"
         class="tree-toggle"
         @click="$emit('toggle', item.uniqueId)"
-        :aria-label="isExpanded ? t('Collapse') : t('Expand')"
+        :aria-label="isExpanded ? t('intravox', 'Collapse') : t('intravox', 'Expand')"
       >
         <ChevronRight v-if="!isExpanded" :size="18" />
         <ChevronDown v-else :size="18" />
@@ -17,7 +17,7 @@
       <button class="tree-item-content" @click="$emit('navigate', item.uniqueId)">
         <FileDocument :size="18" class="tree-icon" />
         <span class="tree-item-title">{{ item.title }}</span>
-        <span v-if="item.isCurrent" class="current-badge">{{ t('Current') }}</span>
+        <span v-if="item.isCurrent" class="current-badge">{{ t('intravox', 'Current') }}</span>
       </button>
     </div>
 
@@ -33,7 +33,7 @@
       />
       <li v-if="hasMoreChildren" class="tree-show-more">
         <button class="show-more-button" @click="showMoreChildren">
-          {{ t('Show {count} more...', { count: item.children.length - visibleChildCount }) }}
+          {{ t('intravox', 'Show {count} more...', { count: item.children.length - visibleChildCount }) }}
         </button>
       </li>
     </ul>
@@ -41,7 +41,7 @@
 </template>
 
 <script>
-import { translate } from '@nextcloud/l10n';
+import { translate, translatePlural } from '@nextcloud/l10n';
 import ChevronRight from 'vue-material-design-icons/ChevronRight.vue';
 import ChevronDown from 'vue-material-design-icons/ChevronDown.vue';
 import FileDocument from 'vue-material-design-icons/FileDocument.vue';

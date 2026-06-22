@@ -9,7 +9,7 @@
     />
 
     <!-- Loading skeleton -->
-    <div v-if="loading" class="ps-loading" role="status" aria-live="polite" :aria-label="t('Loading photos')">
+    <div v-if="loading" class="ps-loading" role="status" aria-live="polite" :aria-label="t('intravox', 'Loading photos')">
       <div v-for="i in 6" :key="i" class="ps-skeleton-tile" aria-hidden="true"></div>
     </div>
 
@@ -18,7 +18,7 @@
       <AlertCircle :size="24" aria-hidden="true" />
       <span>{{ error }}</span>
       <NcButton type="secondary" @click="fetch()">
-        {{ t('Retry') }}
+        {{ t('intravox', 'Retry') }}
       </NcButton>
     </div>
 
@@ -26,7 +26,7 @@
          name to avoid leaking the existence of a path the viewer can't see. -->
     <div v-else-if="!photos.length && accessReason === 'folder_not_accessible'" class="ps-empty ps-empty--locked" role="status">
       <LockOutline :size="32" aria-hidden="true" />
-      <p>{{ t('You do not have access to this widget') }}</p>
+      <p>{{ t('intravox', 'You do not have access to this widget') }}</p>
     </div>
 
     <!-- Empty (accessible folder but no photos to show) -->
@@ -35,7 +35,7 @@
       <p>{{ emptyMessage }}</p>
       <small v-if="config.folderPath">{{ config.folderPath }}</small>
       <small v-if="showScanHint" class="ps-empty-hint">
-        {{ t('If you can see photos in the Files app but not here, the file index may be out of sync. Ask an admin to run "occ files:scan" for this folder.') }}
+        {{ t('intravox', 'If you can see photos in the Files app but not here, the file index may be out of sync. Ask an admin to run "occ files:scan" for this folder.') }}
       </small>
     </div>
 
@@ -67,7 +67,7 @@
             :style="magazineTileStyle(photo)"
             tabindex="0"
             role="button"
-            :aria-label="t('Open photo {name}', { name: photo.name })"
+            :aria-label="t('intravox', 'Open photo {name}', { name: photo.name })"
             @click="openLightbox(globalIndex(day.photos, idx))"
             @keydown.enter="openLightbox(globalIndex(day.photos, idx))"
             @keydown.space.prevent="openLightbox(globalIndex(day.photos, idx))"
@@ -166,7 +166,7 @@
         class="ps-highlight-hero"
         tabindex="0"
         role="button"
-        :aria-label="t('Open photo {name}', { name: highlights[0].location || highlights[0].name })"
+        :aria-label="t('intravox', 'Open photo {name}', { name: highlights[0].location || highlights[0].name })"
         @click="openLightbox(0)"
         @keydown.enter="openLightbox(0)"
         @keydown.space.prevent="openLightbox(0)"
@@ -236,14 +236,14 @@
     <aside
       v-if="effectiveMode === 'timeline' && yearScrubber.length > 1"
       class="ps-year-scrubber"
-      :aria-label="t('Jump to year')"
+      :aria-label="t('intravox', 'Jump to year')"
     >
       <button
         v-for="y in yearScrubber"
         :key="y"
         type="button"
         class="ps-year-btn"
-        :title="t('Jump to {year}', { year: String(y) })"
+        :title="t('intravox', 'Jump to {year}', { year: String(y) })"
         @click="scrollToYear(y)"
       >
         {{ y }}
@@ -257,12 +257,12 @@
       class="ps-scroll-sentinel"
       aria-hidden="true"
     >
-      <span v-if="loadingMore" class="ps-loading-more">{{ t('Loading more photos …') }}</span>
+      <span v-if="loadingMore" class="ps-loading-more">{{ t('intravox', 'Loading more photos …') }}</span>
     </div>
 
     <!-- Truncation notice when server hit its hard cap -->
     <div v-if="pagination.truncated" class="ps-truncated">
-      {{ t('Showing first {n} photos. Use filters or a more specific folder to narrow the selection.', { n: String(pagination.total) }) }}
+      {{ t('intravox', 'Showing first {n} photos. Use filters or a more specific folder to narrow the selection.', { n: String(pagination.total) }) }}
     </div>
 
     <!-- Lightbox -->
@@ -280,7 +280,7 @@
 import { defineAsyncComponent } from 'vue';
 import axios from '@nextcloud/axios';
 import { generateUrl } from '@nextcloud/router';
-import { translate as t, getCanonicalLocale } from '@nextcloud/l10n';
+import { translate, getCanonicalLocale, translatePlural } from '@nextcloud/l10n';
 import { NcButton } from '@nextcloud/vue';
 import AlertCircle from 'vue-material-design-icons/AlertCircle.vue';
 import ImageMultiple from 'vue-material-design-icons/ImageMultiple.vue';
@@ -628,8 +628,8 @@ export default {
     }
   },
   methods: {
-    t(key, vars = {}) {
-      return t('intravox', key, vars);
+    t(app, text, vars) {
+      return translate(app, text, vars);
     },
     // Whether the backend will paginate this request. Mirrors controller logic:
     // only folder-mode timeline + grid go through the paged path.
@@ -754,7 +754,7 @@ export default {
           return;
         }
         console.error('[PhotoStoryWidget] fetch failed:', err);
-        this.error = err.response?.data?.error || err.message || this.t('Failed to load photos');
+        this.error = err.response?.data?.error || err.message || this.t('intravox', 'Failed to load photos');
       } finally {
         this.loading = false;
       }

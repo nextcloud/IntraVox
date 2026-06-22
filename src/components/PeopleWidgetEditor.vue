@@ -2,12 +2,12 @@
   <div class="people-widget-editor">
     <!-- Widget Title -->
     <div class="editor-section">
-      <label class="editor-label" for="people-widget-title">{{ t('Widget title (optional)') }}</label>
+      <label class="editor-label" for="people-widget-title">{{ t('intravox', 'Widget title (optional)') }}</label>
       <input
         id="people-widget-title"
         type="text"
         v-model="localWidget.title"
-        :placeholder="t('e.g., Our Team')"
+        :placeholder="t('intravox', 'e.g., Our Team')"
         class="editor-input"
         @input="emitUpdate"
       />
@@ -15,7 +15,7 @@
 
     <!-- Background Color -->
     <div class="editor-section">
-      <label class="editor-label">{{ t('Background color') }}</label>
+      <label class="editor-label">{{ t('intravox', 'Background color') }}</label>
       <div class="color-presets">
         <button
           type="button"
@@ -23,7 +23,7 @@
           @click="setBackgroundColor(null)"
           class="color-preset-btn"
         >
-          {{ t('None') }}
+          {{ t('intravox', 'None') }}
         </button>
         <button
           type="button"
@@ -31,7 +31,7 @@
           @click="setBackgroundColor('var(--color-background-hover)')"
           class="color-preset-btn"
         >
-          {{ t('Light') }}
+          {{ t('intravox', 'Light') }}
         </button>
         <button
           type="button"
@@ -39,14 +39,14 @@
           @click="setBackgroundColor('var(--color-primary-element)')"
           class="color-preset-btn"
         >
-          {{ t('Primary') }}
+          {{ t('intravox', 'Primary') }}
         </button>
       </div>
     </div>
 
     <!-- Selection Mode -->
     <div class="editor-section">
-      <label class="editor-label">{{ t('Selection mode') }}</label>
+      <label class="editor-label">{{ t('intravox', 'Selection mode') }}</label>
       <div class="mode-selector">
         <button
           type="button"
@@ -55,7 +55,7 @@
           @click="setSelectionMode('manual')"
         >
           <AccountMultiplePlus :size="20" />
-          <span>{{ t('Manual selection') }}</span>
+          <span>{{ t('intravox', 'Manual selection') }}</span>
         </button>
         <button
           type="button"
@@ -64,14 +64,14 @@
           @click="setSelectionMode('filter')"
         >
           <Filter :size="20" />
-          <span>{{ t('Filter by attributes') }}</span>
+          <span>{{ t('intravox', 'Filter by attributes') }}</span>
         </button>
       </div>
     </div>
 
     <!-- Manual Selection Mode -->
     <div v-if="localWidget.selectionMode === 'manual'" class="editor-section">
-      <label class="editor-label">{{ t('Select people') }}</label>
+      <label class="editor-label">{{ t('intravox', 'Select people') }}</label>
       <UserSelect
         v-model="localWidget.selectedUsers"
         @update:model-value="handleUsersChange"
@@ -81,20 +81,20 @@
     <!-- Filter Mode -->
     <div v-if="localWidget.selectionMode === 'filter'" class="editor-section">
       <label class="editor-label">
-        {{ t('Filters') }}
-        <span class="label-hint">({{ t('show users matching these criteria') }})</span>
+        {{ t('intravox', 'Filters') }}
+        <span class="label-hint">({{ t('intravox', 'show users matching these criteria') }})</span>
       </label>
 
       <div v-if="filters.length > 0" class="filters-list">
         <div v-for="(filter, index) in filters" :key="index" class="filter-row">
-          <select v-model="filter.fieldName" class="filter-field" :aria-label="t('Filter field')" @change="handleFieldChange(filter)">
-            <option value="">{{ t('Select field') }}</option>
+          <select v-model="filter.fieldName" class="filter-field" :aria-label="t('intravox', 'Filter field')" @change="handleFieldChange(filter)">
+            <option value="">{{ t('intravox', 'Select field') }}</option>
             <option v-for="field in availableFields" :key="field.fieldName" :value="field.fieldName">
               {{ field.label }}
             </option>
           </select>
 
-          <select v-model="filter.operator" class="filter-operator" :aria-label="t('Filter operator')" @change="emitUpdate">
+          <select v-model="filter.operator" class="filter-operator" :aria-label="t('intravox', 'Filter operator')" @change="emitUpdate">
             <option v-for="op in getOperatorsForField(filter.fieldName)" :key="op.value" :value="op.value">
               {{ t(op.label) }}
             </option>
@@ -107,10 +107,10 @@
               v-if="filter.fieldName === 'group' && filter.operator !== 'in'"
               v-model="filter.value"
               class="filter-value"
-              :aria-label="t('Filter value')"
+              :aria-label="t('intravox', 'Filter value')"
               @change="emitUpdate"
             >
-              <option value="">{{ t('Select group') }}</option>
+              <option value="">{{ t('intravox', 'Select group') }}</option>
               <option v-for="group in groups" :key="group.id" :value="group.id">
                 {{ group.displayName }}
               </option>
@@ -122,7 +122,7 @@
               v-model="filter.values"
               class="filter-value filter-value--multi"
               multiple
-              :aria-label="t('Filter values')"
+              :aria-label="t('intravox', 'Filter values')"
               @change="emitUpdate"
             >
               <option v-for="group in groups" :key="group.id" :value="group.id">
@@ -136,8 +136,8 @@
               type="number"
               v-model="filter.value"
               class="filter-value filter-value--days"
-              :placeholder="t('Days')"
-              :aria-label="t('Filter value')"
+              :placeholder="t('intravox', 'Days')"
+              :aria-label="t('intravox', 'Filter value')"
               min="1"
               max="365"
               @input="emitUpdate"
@@ -149,8 +149,8 @@
               type="text"
               v-model="filter.value"
               class="filter-value"
-              :placeholder="t('Value')"
-              :aria-label="t('Filter value')"
+              :placeholder="t('intravox', 'Value')"
+              :aria-label="t('intravox', 'Filter value')"
               @input="emitUpdate"
             />
           </template>
@@ -161,14 +161,14 @@
         </div>
 
         <div v-if="filters.length > 1" class="filter-operator-toggle">
-          <span>{{ t('Match') }}</span>
+          <span>{{ t('intravox', 'Match') }}</span>
           <button
             type="button"
             class="operator-button"
             :class="{ 'operator-button--active': localWidget.filterOperator === 'AND' }"
             @click="setFilterOperator('AND')"
           >
-            {{ t('all') }}
+            {{ t('intravox', 'all') }}
           </button>
           <button
             type="button"
@@ -176,21 +176,21 @@
             :class="{ 'operator-button--active': localWidget.filterOperator === 'OR' }"
             @click="setFilterOperator('OR')"
           >
-            {{ t('any') }}
+            {{ t('intravox', 'any') }}
           </button>
-          <span>{{ t('filters') }}</span>
+          <span>{{ t('intravox', 'filters') }}</span>
         </div>
       </div>
 
       <button type="button" class="add-filter-button" @click="addFilter">
         <Plus :size="16" />
-        {{ t('Add filter') }}
+        {{ t('intravox', 'Add filter') }}
       </button>
     </div>
 
     <!-- Layout Selection -->
     <div class="editor-section">
-      <label class="editor-label">{{ t('Layout') }}</label>
+      <label class="editor-label">{{ t('intravox', 'Layout') }}</label>
       <div class="layout-options">
         <button
           v-for="layout in layoutOptions"
@@ -208,7 +208,7 @@
 
     <!-- Grid/Card Columns -->
     <div v-if="localWidget.layout === 'grid' || localWidget.layout === 'card'" class="editor-section">
-      <label class="editor-label">{{ t('Columns') }}</label>
+      <label class="editor-label">{{ t('intravox', 'Columns') }}</label>
       <div class="columns-selector">
         <button
           v-for="cols in columnOptions"
@@ -225,7 +225,7 @@
 
     <!-- Number of people -->
     <div class="editor-section">
-      <label class="editor-label" for="people-widget-limit">{{ t('Maximum people to show') }}</label>
+      <label class="editor-label" for="people-widget-limit">{{ t('intravox', 'Maximum people to show') }}</label>
       <div class="limit-selector">
         <input
           id="people-widget-limit"
@@ -242,17 +242,17 @@
 
     <!-- Sort Options -->
     <div class="editor-section">
-      <label class="editor-label" for="people-widget-sort-by">{{ t('Sort by') }}</label>
+      <label class="editor-label" for="people-widget-sort-by">{{ t('intravox', 'Sort by') }}</label>
       <div class="sort-options">
         <select id="people-widget-sort-by" v-model="localWidget.sortBy" class="editor-select" @change="emitUpdate">
-          <option value="displayName">{{ t('Name') }}</option>
-          <option value="email">{{ t('Email') }}</option>
+          <option value="displayName">{{ t('intravox', 'Name') }}</option>
+          <option value="email">{{ t('intravox', 'Email') }}</option>
         </select>
         <button
           type="button"
           class="sort-order-button"
           @click="toggleSortOrder"
-          :title="localWidget.sortOrder === 'asc' ? t('Ascending') : t('Descending')"
+          :title="localWidget.sortOrder === 'asc' ? t('intravox', 'Ascending') : t('intravox', 'Descending')"
         >
           <SortAscending v-if="localWidget.sortOrder === 'asc'" :size="20" />
           <SortDescending v-else :size="20" />
@@ -262,76 +262,76 @@
 
     <!-- Display Options -->
     <div class="editor-section">
-      <label class="editor-label">{{ t('Display options') }}</label>
+      <label class="editor-label">{{ t('intravox', 'Display options') }}</label>
       <div class="display-options">
         <!-- Basic Information -->
         <div class="display-group">
-          <span class="display-group-header">{{ t('Basic information') }}</span>
+          <span class="display-group-header">{{ t('intravox', 'Basic information') }}</span>
           <label class="checkbox-option">
             <input type="checkbox" v-model="localWidget.showFields.avatar" @change="emitUpdate" />
-            <span>{{ t('Avatar') }}</span>
+            <span>{{ t('intravox', 'Avatar') }}</span>
           </label>
           <label class="checkbox-option">
             <input type="checkbox" v-model="localWidget.showFields.displayName" @change="emitUpdate" />
-            <span>{{ t('Name') }}</span>
+            <span>{{ t('intravox', 'Name') }}</span>
           </label>
           <label class="checkbox-option">
             <input type="checkbox" v-model="localWidget.showFields.pronouns" @change="emitUpdate" />
-            <span>{{ t('Pronouns') }}</span>
+            <span>{{ t('intravox', 'Pronouns') }}</span>
           </label>
           <label class="checkbox-option">
             <input type="checkbox" v-model="localWidget.showFields.role" @change="syncTitleWithRole" />
-            <span>{{ t('Role') }}</span>
+            <span>{{ t('intravox', 'Role') }}</span>
           </label>
           <label class="checkbox-option">
             <input type="checkbox" v-model="localWidget.showFields.headline" @change="emitUpdate" />
-            <span>{{ t('Headline') }}</span>
+            <span>{{ t('intravox', 'Headline') }}</span>
           </label>
           <label class="checkbox-option">
             <input type="checkbox" v-model="localWidget.showFields.department" @change="emitUpdate" />
-            <span>{{ t('Department') }}</span>
+            <span>{{ t('intravox', 'Department') }}</span>
           </label>
         </div>
 
         <!-- Contact -->
         <div class="display-group">
-          <span class="display-group-header">{{ t('Contact') }}</span>
+          <span class="display-group-header">{{ t('intravox', 'Contact') }}</span>
           <label class="checkbox-option">
             <input type="checkbox" v-model="localWidget.showFields.email" @change="emitUpdate" />
-            <span>{{ t('Email') }}</span>
+            <span>{{ t('intravox', 'Email') }}</span>
           </label>
           <label class="checkbox-option">
             <input type="checkbox" v-model="localWidget.showFields.phone" @change="emitUpdate" />
-            <span>{{ t('Phone') }}</span>
+            <span>{{ t('intravox', 'Phone') }}</span>
           </label>
           <label class="checkbox-option">
             <input type="checkbox" v-model="localWidget.showFields.address" @change="emitUpdate" />
-            <span>{{ t('Address') }}</span>
+            <span>{{ t('intravox', 'Address') }}</span>
           </label>
           <label class="checkbox-option">
             <input type="checkbox" v-model="localWidget.showFields.website" @change="emitUpdate" />
-            <span>{{ t('Website') }}</span>
+            <span>{{ t('intravox', 'Website') }}</span>
           </label>
           <label class="checkbox-option">
             <input type="checkbox" v-model="localWidget.showFields.birthdate" @change="emitUpdate" />
-            <span>{{ t('Date of birth') }}</span>
+            <span>{{ t('intravox', 'Date of birth') }}</span>
           </label>
         </div>
 
         <!-- Extended -->
         <div class="display-group">
-          <span class="display-group-header">{{ t('Extended') }}</span>
+          <span class="display-group-header">{{ t('intravox', 'Extended') }}</span>
           <label class="checkbox-option">
             <input type="checkbox" v-model="localWidget.showFields.biography" @change="emitUpdate" />
-            <span>{{ t('Biography') }}</span>
+            <span>{{ t('intravox', 'Biography') }}</span>
           </label>
           <label class="checkbox-option">
             <input type="checkbox" v-model="localWidget.showFields.socialLinks" @change="emitUpdate" />
-            <span>{{ t('Social links (X/Bluesky/Fediverse)') }}</span>
+            <span>{{ t('intravox', 'Social links (X/Bluesky/Fediverse)') }}</span>
           </label>
           <label class="checkbox-option">
             <input type="checkbox" v-model="localWidget.showFields.customFields" @change="emitUpdate" />
-            <span>{{ t('Custom fields (LDAP/OIDC)') }}</span>
+            <span>{{ t('intravox', 'Custom fields (LDAP/OIDC)') }}</span>
           </label>
         </div>
       </div>
@@ -340,7 +340,7 @@
 </template>
 
 <script>
-import { translate as t } from '@nextcloud/l10n';
+import { translate, translatePlural } from '@nextcloud/l10n';
 import { generateUrl } from '@nextcloud/router';
 import axios from '@nextcloud/axios';
 import AccountMultiplePlus from 'vue-material-design-icons/AccountMultiplePlus.vue';
@@ -406,9 +406,9 @@ export default {
   computed: {
     layoutOptions() {
       return [
-        { value: 'card', label: this.t('Cards'), icon: 'ViewModule' },
-        { value: 'list', label: this.t('List'), icon: 'ViewList' },
-        { value: 'grid', label: this.t('Grid'), icon: 'ViewGrid' },
+        { value: 'card', label: this.t('intravox', 'Cards'), icon: 'ViewModule' },
+        { value: 'list', label: this.t('intravox', 'List'), icon: 'ViewList' },
+        { value: 'grid', label: this.t('intravox', 'Grid'), icon: 'ViewGrid' },
       ];
     },
     columnOptions() {
@@ -437,8 +437,8 @@ export default {
     this.loadFields();
   },
   methods: {
-    t(key, vars = {}) {
-      return t('intravox', key, vars);
+    t(app, text, vars) {
+      return translate(app, text, vars);
     },
     createDefaultWidget() {
       return {

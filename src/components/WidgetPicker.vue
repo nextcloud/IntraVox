@@ -55,81 +55,81 @@ export default {
   emits: ['close', 'select'],
   computed: {
     modalTitle() {
-      return this.$t('Add widget');
+      return this.t('intravox', 'Add widget');
     },
     widgetTypes() {
       return [
         {
           type: 'text',
-          name: this.$t('Text'),
+          name: this.t('intravox', 'Text'),
           icon: 'text',
-          description: this.$t('Add text to your page')
+          description: this.t('intravox', 'Add text to your page')
         },
         {
           type: 'heading',
-          name: this.$t('Heading'),
+          name: this.t('intravox', 'Heading'),
           icon: 'format-title',
-          description: this.$t('Add a heading')
+          description: this.t('intravox', 'Add a heading')
         },
         {
           type: 'image',
-          name: this.$t('Image'),
+          name: this.t('intravox', 'Image'),
           icon: 'image',
-          description: this.$t('Add an image')
+          description: this.t('intravox', 'Add an image')
         },
         {
           type: 'divider',
-          name: this.$t('Divider'),
+          name: this.t('intravox', 'Divider'),
           icon: 'minus',
-          description: this.$t('Add a horizontal line')
+          description: this.t('intravox', 'Add a horizontal line')
         },
         {
           type: 'links',
-          name: this.$t('Links'),
+          name: this.t('intravox', 'Links'),
           icon: 'view-grid',
-          description: this.$t('Add a grid of links with icons')
+          description: this.t('intravox', 'Add a grid of links with icons')
         },
         {
           type: 'video',
-          name: this.$t('Video'),
+          name: this.t('intravox', 'Video'),
           icon: 'video',
-          description: this.$t('Add a PeerTube or local video')
+          description: this.t('intravox', 'Add a PeerTube or local video')
         },
         {
           type: 'news',
-          name: this.$t('News'),
+          name: this.t('intravox', 'News'),
           icon: 'newspaper',
-          description: this.$t('Show news from a folder')
+          description: this.t('intravox', 'Show news from a folder')
         },
         {
           type: 'people',
-          name: this.$t('People'),
+          name: this.t('intravox', 'People'),
           icon: 'account-group',
-          description: this.$t('Show team members or people')
+          description: this.t('intravox', 'Show team members or people')
         },
         {
           type: 'calendar',
-          name: this.$t('Calendar'),
+          name: this.t('intravox', 'Calendar'),
           icon: 'calendar',
-          description: this.$t('Show events from shared calendars')
+          description: this.t('intravox', 'Show events from shared calendars')
         },
         {
           type: 'feed',
-          name: this.$t('Feed'),
+          name: this.t('intravox', 'Feed'),
           icon: 'rss-box',
-          description: this.$t('Show items from an external feed or LMS')
+          description: this.t('intravox', 'Show items from an external feed or LMS')
         },
         {
           type: 'photo-story',
-          name: this.$t('Photo Story'),
+          name: this.t('intravox', 'Photo Story'),
           icon: 'image-multiple',
-          description: this.$t('Show photos from a folder with rich layouts')
+          description: this.t('intravox', 'Show photos from a folder with rich layouts')
         },
         {
           type: 'file-story',
-          name: this.$t('File Story'),
+          name: this.t('intravox', 'File Story'),
           icon: 'file-document-multiple',
-          description: this.$t('Show documents from a folder with timeline, list, or grouped layouts')
+          description: this.t('intravox', 'Show documents from a folder with timeline, list, or grouped layouts')
         }
       ];
     }

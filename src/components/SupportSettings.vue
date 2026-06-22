@@ -379,15 +379,7 @@ export default {
 		},
 
 		t(app, text, vars) {
-			if (typeof OC !== 'undefined' && OC.L10N) {
-				return OC.L10N.translate(app, text, vars)
-			}
-			if (vars) {
-				return Object.keys(vars).reduce((result, key) => {
-					return result.replace(`{${key}}`, vars[key])
-				}, text)
-			}
-			return text
+			return translate(app, text, vars)
 		},
 	},
 }

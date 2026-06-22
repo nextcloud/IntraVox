@@ -1,6 +1,6 @@
 <template>
   <NcModal @close="$emit('close')"
-           :name="t('Create new page')"
+           :name="t('intravox', 'Create new page')"
            size="large">
     <div class="new-page-modal-content">
       <!-- Mode Tabs -->
@@ -13,7 +13,7 @@
           @click="mode = 'blank'"
         >
           <FileOutline :size="18" />
-          {{ t('Blank page') }}
+          {{ t('intravox', 'Blank page') }}
         </button>
         <button
           class="mode-tab"
@@ -23,20 +23,20 @@
           @click="mode = 'template'; loadTemplates()"
         >
           <FileDocumentMultipleOutline :size="18" />
-          {{ t('From template') }}
+          {{ t('intravox', 'From template') }}
         </button>
       </div>
 
       <!-- Blank Page Mode -->
       <div v-if="mode === 'blank'" class="mode-content" role="tabpanel">
-        <label for="new-page-title" class="modal-description">{{ t('Enter a title for the new page') }}</label>
+        <label for="new-page-title" class="modal-description">{{ t('intravox', 'Enter a title for the new page') }}</label>
         <input
           id="new-page-title"
           ref="titleInput"
           v-model="newPageTitle"
           type="text"
           class="page-title-input"
-          :placeholder="t('Page title')"
+          :placeholder="t('intravox', 'Page title')"
           @keyup.enter="createPage"
         />
       </div>
@@ -46,14 +46,14 @@
         <!-- Loading state -->
         <div v-if="loadingTemplates" class="templates-loading">
           <NcLoadingIcon :size="32" />
-          <span>{{ t('Loading templates …') }}</span>
+          <span>{{ t('intravox', 'Loading templates …') }}</span>
         </div>
 
         <!-- No templates -->
         <div v-else-if="templates.length === 0" class="templates-empty">
           <FileDocumentMultipleOutline :size="48" />
-          <p>{{ t('No templates available') }}</p>
-          <small>{{ t('Create templates by saving existing pages as templates') }}</small>
+          <p>{{ t('intravox', 'No templates available') }}</p>
+          <small>{{ t('intravox', 'Create templates by saving existing pages as templates') }}</small>
         </div>
 
         <!-- Template Gallery -->
@@ -69,14 +69,14 @@
 
         <!-- Page title input (when template selected) -->
         <div v-if="selectedTemplate && templates.length > 0" class="template-title-section">
-          <label for="template-page-title">{{ t('Page title') }}</label>
+          <label for="template-page-title">{{ t('intravox', 'Page title') }}</label>
           <input
             id="template-page-title"
             ref="templateTitleInput"
             v-model="newPageTitle"
             type="text"
             class="page-title-input"
-            :placeholder="t('Enter page title')"
+            :placeholder="t('intravox', 'Enter page title')"
             @keyup.enter="createPage"
           />
         </div>
@@ -84,14 +84,14 @@
 
       <div class="modal-buttons">
         <NcButton @click="$emit('close')" type="secondary">
-          {{ t('Cancel') }}
+          {{ t('intravox', 'Cancel') }}
         </NcButton>
         <NcButton
           @click="createPage"
           type="primary"
           :disabled="!canCreate"
         >
-          {{ t('Create') }}
+          {{ t('intravox', 'Create') }}
         </NcButton>
       </div>
     </div>
@@ -99,7 +99,7 @@
 </template>
 
 <script>
-import { translate } from '@nextcloud/l10n';
+import { translate, translatePlural } from '@nextcloud/l10n';
 import { generateUrl } from '@nextcloud/router';
 import axios from '@nextcloud/axios';
 import { NcModal, NcButton, NcLoadingIcon } from '@nextcloud/vue';

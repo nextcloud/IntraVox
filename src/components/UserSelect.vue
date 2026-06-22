@@ -6,7 +6,7 @@
       <input
         v-model="searchQuery"
         type="text"
-        :placeholder="t('Search users...')"
+        :placeholder="t('intravox', 'Search users...')"
         class="search-input"
         @input="debouncedSearch"
         @focus="showResults = true"
@@ -35,7 +35,7 @@
 
     <!-- No results message -->
     <div v-if="showResults && searchQuery.length >= 2 && !searching && searchResults.length === 0" class="search-no-results">
-      {{ t('No users found') }}
+      {{ t('intravox', 'No users found') }}
     </div>
 
     <!-- Selected users list -->
@@ -51,7 +51,7 @@
           type="button"
           class="remove-user"
           @click="removeUser(user.uid)"
-          :title="t('Remove')"
+          :title="t('intravox', 'Remove')"
         >
           <Close :size="14" />
         </button>
@@ -61,7 +61,7 @@
     <!-- Empty state -->
     <div v-else class="selected-users-empty">
       <AccountMultiple :size="20" />
-      <span>{{ t('No users selected') }}</span>
+      <span>{{ t('intravox', 'No users selected') }}</span>
     </div>
   </div>
 </template>
@@ -69,7 +69,7 @@
 <script>
 import { NcAvatar, NcLoadingIcon } from '@nextcloud/vue';
 import { generateUrl } from '@nextcloud/router';
-import { translate as t } from '@nextcloud/l10n';
+import { translate, translatePlural } from '@nextcloud/l10n';
 import axios from '@nextcloud/axios';
 import Magnify from 'vue-material-design-icons/Magnify.vue';
 import Close from 'vue-material-design-icons/Close.vue';
@@ -120,8 +120,8 @@ export default {
     document.removeEventListener('click', this.handleClickOutside);
   },
   methods: {
-    t(key, vars = {}) {
-      return t('intravox', key, vars);
+    t(app, text, vars) {
+      return translate(app, text, vars);
     },
     handleClickOutside(event) {
       if (!this.$el.contains(event.target)) {

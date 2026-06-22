@@ -2,8 +2,8 @@
   <div class="search-bar">
     <NcTextField
       :value.sync="searchQuery"
-      :label="t('Search pages')"
-      :placeholder="t('Search …')"
+      :label="t('intravox', 'Search pages')"
+      :placeholder="t('intravox', 'Search …')"
       @update:value="onSearchInput"
       @keydown.enter="performSearch"
       @keydown.esc="clearSearch"
@@ -20,7 +20,7 @@
 import { NcTextField } from '@nextcloud/vue';
 import Magnify from 'vue-material-design-icons/Magnify.vue';
 import Close from 'vue-material-design-icons/Close.vue';
-import { translate as t } from '@nextcloud/l10n';
+import { translate, translatePlural } from '@nextcloud/l10n';
 
 export default {
   name: 'SearchBar',
@@ -48,8 +48,8 @@ export default {
     }
   },
   methods: {
-    t(key) {
-      return t('intravox', key);
+    t(app, text, vars) {
+      return translate(app, text, vars);
     },
     onSearchInput(value) {
       this.searchQuery = value;
