@@ -4,6 +4,15 @@ All notable changes to IntraVox will be documented in this file.
 
 IntraVox is a Nextcloud intranet page builder.
 
+## [1.7.2] - 2026-06-22 — Show UI translation coverage per content language
+
+Content languages (the pages editors create) and UI translations (the IntraVox interface, via Transifex) are separate: an admin can add content in a language whose interface is only partly translated, leaving users with English buttons around localized content. The admin had no signal about this.
+
+### Added
+
+- **Translation coverage indicator** next to each "Languages with content" chip in admin settings, showing what share of the IntraVox interface is translated into that language (e.g. "UI 8%"). The percentage rises as Transifex translators contribute; a tooltip explains what it measures.
+- `LanguageService::getTranslationCoverage()` computes the percentage per base language code (largest regional variant wins, e.g. `de` ← `de_DE.json`), measured against the source-string total. `scripts/extract-en-json.js` now also writes a small committed `l10n/.source-count.json` so the denominator is available at runtime (since `l10n/en.json` is a gitignored build artifact). Falls back gracefully to the largest l10n file if the count is missing.
+
 ## [1.7.1] - 2026-06-22 — Demo data tab consistency with the VoxCloud language model
 
 Follow-up to 1.7.0. The "Demo content" table in admin settings still used the deprecated `enabled_languages` config to decide which languages to list, so it could disagree with the "Languages with content" view above it (e.g. German content existed but was missing from the table). The table now lists exactly the languages IntraVox ships bundled demo content for (Dutch, English, German, French), independent of any enabled-list.

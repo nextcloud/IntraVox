@@ -109,6 +109,9 @@ class AdminSettings implements IDelegatedSettings {
             'allAvailableLanguages' => $this->languageService->getAvailableLanguages(),
             'primaryLanguage' => $this->languageService->getPrimaryLanguage(),
             'languagesWithContent' => $this->pageService->getLanguageContentStatus()['languagesWithContent'] ?? [],
+            // base code => how much of the IntraVox UI is translated in that
+            // language (Transifex), as a percentage. Drives the coverage hint.
+            'translationCoverage' => $this->languageService->getTranslationCoverage(),
         ]);
 
         // Load translations for JavaScript

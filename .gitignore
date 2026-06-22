@@ -38,6 +38,9 @@ translationfiles/*
 
 # l10n/en.json is a generated build artifact (scripts/extract-en-json.js); the
 # NC Transifex bot also deletes it after sync. Never commit it.
+# NOTE: l10n/.source-count.json IS committed on purpose — it holds the source-
+# string total used as the denominator for the admin translation-coverage % at
+# runtime (en.json is absent on the server). Do not add it here.
 l10n/en.json
 
 # Package lock files (use composer.lock for PHP)
