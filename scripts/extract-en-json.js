@@ -136,6 +136,16 @@ const out = { translations, pluralForm: 'nplurals=2; plural=(n != 1);' };
 fs.mkdirSync(path.dirname(OUT), { recursive: true });
 fs.writeFileSync(OUT, JSON.stringify(out, null, 4) + '\n');
 
+// Also write a tiny COMMITTED count file. The admin "translation coverage"
+// percentage needs the total number of source strings as its denominator, but
+// l10n/en.json itself is a gitignored build artifact (the NC Transifex bot
+// deletes it after sync), so it isn't on the server at runtime. This file is —
+// it's the source-string total each translation is measured against.
+const sourceStrings = sortedSingulars.length + sortedPlurals.length;
+const COUNT = path.join(ROOT, 'l10n', '.source-count.json');
+fs.writeFileSync(COUNT, JSON.stringify({ sourceStrings }, null, 4) + '\n');
+
 console.log(`Extracted ${sortedSingulars.length} singular + ${sortedPlurals.length} plural strings`);
 console.log(`Scanned ${files.length} files`);
 console.log(`Wrote ${path.relative(ROOT, OUT)}`);
+console.log(`Wrote ${path.relative(ROOT, COUNT)} (sourceStrings=${sourceStrings})`);

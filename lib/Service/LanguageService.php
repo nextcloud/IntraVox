@@ -44,6 +44,7 @@ class LanguageService {
     /** Request-scoped cache. Recomputing the l10n scan on every call inside one request is wasteful. */
     private ?array $discoveredCache = null;
     private ?array $enabledCache = null;
+    private ?array $coverageCache = null;
 
     public function __construct(
         IConfig $config,
@@ -99,6 +100,80 @@ class LanguageService {
         sort($discovered);
         $this->discoveredCache = $discovered;
         return $discovered;
+    }
+
+    /**
+     * How completely the IntraVox UI is translated per base language code, as a
+     * percentage 0–100. Powers the admin "translation coverage" indicator so an
+     * admin can see how much of the interface a content language's users will
+     * actually see in their own language (vs. English fallback).
+     *
+     * Numerator: the number of translated strings in `l10n/<code>*.json` (the
+     * largest regional variant wins, e.g. `de` ← `de_DE.json`).
+     * Denominator: the source-string total from `l10n/.source-count.json` (a
+     * committed artifact written by scripts/extract-en-json.js). If that file is
+     * missing, fall back to the largest l10n file as a best-effort denominator.
+     *
+     * @return array<string,int> base code => percentage (0–100)
+     */
+    public function getTranslationCoverage(): array {
+        if ($this->coverageCache !== null) {
+            return $this->coverageCache;
+        }
+
+        $l10nPath = __DIR__ . '/../../l10n';
+        $perBase = []; // base code => max translated-string count across its variants
+
+        if (is_dir($l10nPath)) {
+            $files = scandir($l10nPath) ?: [];
+            foreach ($files as $file) {
+                if (!preg_match('/^([a-z]{2})(_[A-Za-z0-9]+)?\.json$/', $file, $m)) {
+                    continue;
+                }
+                $base = $m[1];
+                $count = $this->countTranslations($l10nPath . '/' . $file);
+                if (!isset($perBase[$base]) || $count > $perBase[$base]) {
+                    $perBase[$base] = $count;
+                }
+            }
+        }
+
+        // Denominator: committed source-string total, else largest l10n file.
+        $denominator = 0;
+        $countFile = $l10nPath . '/.source-count.json';
+        if (is_file($countFile)) {
+            $data = json_decode((string)@file_get_contents($countFile), true);
+            if (is_array($data) && isset($data['sourceStrings']) && is_int($data['sourceStrings'])) {
+                $denominator = $data['sourceStrings'];
+            }
+        }
+        if ($denominator <= 0) {
+            $denominator = $perBase ? max($perBase) : 0;
+        }
+
+        $coverage = [];
+        if ($denominator > 0) {
+            foreach ($perBase as $base => $count) {
+                $coverage[$base] = (int)min(100, round(100 * $count / $denominator));
+            }
+        }
+        // English is the source language: always 100%.
+        $coverage[self::FALLBACK_LANGUAGE] = 100;
+
+        $this->coverageCache = $coverage;
+        return $coverage;
+    }
+
+    /**
+     * Count the translated strings in an l10n JSON file (the `translations`
+     * object), tolerating a missing/corrupt file.
+     */
+    private function countTranslations(string $path): int {
+        $data = json_decode((string)@file_get_contents($path), true);
+        if (is_array($data) && isset($data['translations']) && is_array($data['translations'])) {
+            return count($data['translations']);
+        }
+        return 0;
     }
 
     /**

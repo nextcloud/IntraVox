@@ -105,6 +105,10 @@
 						class="active-language-chip">
 						{{ nameForCode(code) }}
 						<span v-if="code === primaryLanguage" class="active-language-primary">{{ t('intravox', 'recommended') }}</span>
+						<span class="active-language-coverage"
+							:title="t('intravox', 'Share of the IntraVox interface translated into this language via Transifex. This rises as translators contribute.')">
+							{{ t('intravox', 'UI {percent}%', { percent: coverageFor(code) }) }}
+						</span>
 					</span>
 				</div>
 
@@ -1403,6 +1407,7 @@ export default {
 			// content, plus an admin-chosen recommended primary language.
 			allAvailableLanguages: this.initialState.allAvailableLanguages || [],
 			languagesWithContent: this.initialState.languagesWithContent || [],
+			translationCoverage: this.initialState.translationCoverage || {},
 			primaryLanguage: this.initialState.primaryLanguage || 'en',
 			savingPrimaryLanguage: false,
 			addLanguageCode: '',
@@ -1648,6 +1653,10 @@ export default {
 		nameForCode(code) {
 			const lang = this.allAvailableLanguages.find(l => l.code === code)
 			return lang ? lang.name : code.toUpperCase()
+		},
+		// UI translation coverage (%) for a base language code; 0 if unknown.
+		coverageFor(code) {
+			return this.translationCoverage[code] ?? 0
 		},
 		async savePrimaryLanguage() {
 			this.savingPrimaryLanguage = true
@@ -2915,6 +2924,12 @@ export default {
 	font-size: 0.8em;
 	color: var(--color-primary-element);
 	font-weight: 600;
+}
+
+.active-language-coverage {
+	font-size: 0.8em;
+	color: var(--color-text-maxcontrast);
+	cursor: help;
 }
 
 .primary-language-row,

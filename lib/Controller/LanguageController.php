@@ -63,6 +63,8 @@ class LanguageController extends Controller {
                 'languagesWithContent' => $status['languagesWithContent'] ?? [],
                 'primaryLanguage' => $this->languageService->getPrimaryLanguage(),
                 'defaultLanguage' => $this->languageService->getDefaultLanguage(),
+                // base code => UI translation coverage % (admin indicator)
+                'translationCoverage' => $this->languageService->getTranslationCoverage(),
                 // Legacy fields (deprecated):
                 'languages' => $this->languageService->getLanguagesWithMetadata(),
             ]);
