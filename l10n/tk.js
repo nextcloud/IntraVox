@@ -3,19 +3,19 @@ OC.L10N.register(
     {
     "Link" : "Baglanyşyk",
     "File" : "Faýl",
+    "Cancel" : "Cancel",
+    "Save" : "Save",
     "Deletion failed" : "Öçürmek şowsuz",
     "Sharing" : "Paýlaşmak",
     "Not available" : "Elýeterli däl",
-    "Cancel" : "Cancel",
     "Remove" : "Aýyrmak",
     "Name" : "Ady",
     "Type" : "Görnüşi",
     "Delete" : "Delete",
-    "Save" : "Save",
-    "Password" : "Açarsöz",
-    "Edit" : "Redaktirläň",
     "Newest first" : "Täze ilkinji",
     "Oldest first" : "Ilki bilen iň köne",
+    "Password" : "Açarsöz",
+    "Edit" : "Redaktirläň",
     "Send" : "Iber"
 },
 "nplurals=2; plural=(n != 1);");

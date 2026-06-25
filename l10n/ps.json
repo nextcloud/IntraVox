@@ -2,6 +2,7 @@
     "Other" : "نور",
     "Link" : "لېنک",
     "Cancel" : "Cancel",
+    "Save" : "Save",
     "Comments" : "تبصرې",
     "Path" : "درک",
     "Name" : "نوم",
@@ -9,7 +10,6 @@
     "Size" : "کچه",
     "Actions" : "کړنې",
     "Delete" : "Delete",
-    "Save" : "Save",
     "Send" : "لېږل"
 },"pluralForm" :"nplurals=2; plural=(n != 1);"
 }

@@ -1,7 +1,7 @@
 { "translations": {
     "Cancel" : "Cancel",
+    "Save" : "Save",
     "Value" : "मूल्य",
-    "Delete" : "Delete",
-    "Save" : "Save"
+    "Delete" : "Delete"
 },"pluralForm" :"nplurals=2; plural=(n != 1);"
 }

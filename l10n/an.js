@@ -1,8 +1,9 @@
 OC.L10N.register(
     "intravox",
     {
-    "Language" : "Luenga",
     "Cancel" : "Cancel",
+    "Save" : "Save",
+    "Language" : "Luenga",
     "Path" : "Camín",
     "Never" : "Nunca",
     "Name" : "Nombre",
@@ -10,7 +11,6 @@ OC.L10N.register(
     "Actions" : "Acions",
     "Delete" : "Delete",
     "Disabled" : "Desactivau",
-    "Save" : "Save",
     "Password" : "Clau"
 },
 "nplurals=2; plural=(n != 1);");

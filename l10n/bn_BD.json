@@ -1,8 +1,9 @@
 { "translations": {
     "Other" : "অন্যান্য",
+    "Cancel" : "Cancel",
+    "Save" : "Save",
     "Sharing" : "ভাগাভাগিরত",
     "Language" : "ভাষা",
-    "Cancel" : "Cancel",
     "Add" : "যোগ কর",
     "Import" : "আমদানি",
     "Export" : "রপ্তানি",
@@ -13,7 +14,6 @@
     "Actions" : "পদক্ষেপসমূহ",
     "Delete" : "Delete",
     "Disabled" : "অকার্যকর",
-    "Save" : "Save",
     "Edit" : "সম্পাদনা",
     "Send" : "পাঠাও"
 },"pluralForm" :"nplurals=2; plural=(n != 1);"

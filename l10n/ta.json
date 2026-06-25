@@ -3,9 +3,10 @@
     "Link" : "Link",
     "File" : "File",
     "Video" : "Video",
+    "Cancel" : "Cancel",
+    "Save" : "Save",
     "Loading" : "Loading",
     "Language" : "மொழி",
-    "Cancel" : "Cancel",
     "Remove" : "அகற்றுக",
     "Add" : "சேர்க்க",
     "Import" : "இறக்குமதி",
@@ -16,7 +17,6 @@
     "Actions" : "செயல்கள்",
     "Delete" : "Delete",
     "Delete permanently" : "நிரந்தரமாக நீக்கவும்",
-    "Save" : "Save",
     "Password" : "கடவுச்சொல்",
     "Edit" : "தொகுக்க"
 },"pluralForm" :"nplurals=2; plural=(n != 1);"

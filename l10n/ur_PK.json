@@ -1,9 +1,9 @@
 { "translations": {
     "Other" : "دیگر",
     "Cancel" : "Cancel",
+    "Save" : "Save",
     "Name" : "اسم",
     "Delete" : "Delete",
-    "Save" : "Save",
     "Edit" : "تدوین کریں",
     "Send" : "بھجیں"
 },"pluralForm" :"nplurals=2; plural=(n != 1);"

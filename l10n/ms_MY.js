@@ -2,8 +2,9 @@ OC.L10N.register(
     "intravox",
     {
     "Other" : "Lain",
-    "Language" : "Bahasa",
     "Cancel" : "Cancel",
+    "Save" : "Save",
+    "Language" : "Bahasa",
     "Import" : "Import",
     "Export" : "Eksport",
     "Name" : "Nama",
@@ -11,7 +12,6 @@ OC.L10N.register(
     "Value" : "Nilai",
     "Size" : "Saiz",
     "Delete" : "Delete",
-    "Save" : "Save",
     "Edit" : "Sunting",
     "Send" : "Hantar"
 },

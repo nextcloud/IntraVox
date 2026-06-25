@@ -2,9 +2,10 @@ OC.L10N.register(
     "intravox",
     {
     "Other" : "অন্যান্য",
+    "Cancel" : "Cancel",
+    "Save" : "Save",
     "Sharing" : "ভাগাভাগিরত",
     "Language" : "ভাষা",
-    "Cancel" : "Cancel",
     "Add" : "যোগ কর",
     "Import" : "আমদানি",
     "Export" : "রপ্তানি",
@@ -15,7 +16,6 @@ OC.L10N.register(
     "Actions" : "পদক্ষেপসমূহ",
     "Delete" : "Delete",
     "Disabled" : "অকার্যকর",
-    "Save" : "Save",
     "Edit" : "সম্পাদনা",
     "Send" : "পাঠাও"
 },

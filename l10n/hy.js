@@ -3,8 +3,9 @@ OC.L10N.register(
     {
     "Other" : "Այլ",
     "Link" : "Հղում",
-    "Language" : "Լեզու",
     "Cancel" : "Cancel",
+    "Save" : "Save",
+    "Language" : "Լեզու",
     "Import" : "Ներմուծում",
     "Export" : "Արտահանում",
     "Comments" : "Կարծիքներ",
@@ -14,7 +15,6 @@ OC.L10N.register(
     "Size" : "Չափս",
     "Delete" : "Delete",
     "Delete permanently" : "Ջնջել ընդմիշտ",
-    "Save" : "Save",
     "Password" : "գախտնաբառ",
     "Edit" : "մշակել",
     "Send" : "Ուղարկել"

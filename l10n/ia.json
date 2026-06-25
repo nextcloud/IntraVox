@@ -1,8 +1,9 @@
 { "translations": {
     "Link" : "Ligamine",
+    "Cancel" : "Cancel",
+    "Save" : "Save",
     "Sharing" : "Compartente",
     "Language" : "Lingua",
-    "Cancel" : "Cancel",
     "Visit website" : "Visitar sito web",
     "Export" : "Exportar",
     "Comments" : "Commentarios",
@@ -15,7 +16,6 @@
     "Actions" : "Actiones",
     "Delete" : "Delete",
     "Delete permanently" : "Deler permanentemente",
-    "Save" : "Save",
     "Total" : "Total",
     "Edit" : "Modificar",
     "Reply" : "Responde",

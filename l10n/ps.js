@@ -4,6 +4,7 @@ OC.L10N.register(
     "Other" : "نور",
     "Link" : "لېنک",
     "Cancel" : "Cancel",
+    "Save" : "Save",
     "Comments" : "تبصرې",
     "Path" : "درک",
     "Name" : "نوم",
@@ -11,7 +12,6 @@ OC.L10N.register(
     "Size" : "کچه",
     "Actions" : "کړنې",
     "Delete" : "Delete",
-    "Save" : "Save",
     "Send" : "لېږل"
 },
 "nplurals=2; plural=(n != 1);");

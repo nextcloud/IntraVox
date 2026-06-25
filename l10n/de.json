@@ -1,0 +1,8 @@
+{ "translations": {
+    "Text" : "Text",
+    "Save" : "Speichern",
+    "Delete" : "Löschen",
+    "Disabled" : "Deaktiviert",
+    "Edit" : "Bearbeiten"
+},"pluralForm" :"nplurals=2; plural=(n != 1);"
+}

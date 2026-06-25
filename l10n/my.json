@@ -1,8 +1,8 @@
 { "translations": {
-    "Status" : "အခြေအနေ",
     "Cancel" : "Cancel",
-    "Delete" : "Delete",
     "Save" : "Save",
+    "Status" : "အခြေအနေ",
+    "Delete" : "Delete",
     "Edit" : "တည်းဖြတ်ပါ"
 },"pluralForm" :"nplurals=1; plural=0;"
 }

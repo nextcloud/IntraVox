@@ -3,9 +3,9 @@ OC.L10N.register(
     {
     "Other" : "دیگر",
     "Cancel" : "Cancel",
+    "Save" : "Save",
     "Name" : "اسم",
     "Delete" : "Delete",
-    "Save" : "Save",
     "Edit" : "تدوین کریں",
     "Send" : "بھجیں"
 },

@@ -1,8 +1,8 @@
 { "translations": {
     "Cancel" : "Cancel",
+    "Save" : "Save",
     "Visit website" : "Vitja heimasíðu",
     "Never" : "ongantíð",
-    "Delete" : "Delete",
-    "Save" : "Save"
+    "Delete" : "Delete"
 },"pluralForm" :"nplurals=2; plural=(n != 1);"
 }

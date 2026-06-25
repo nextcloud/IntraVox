@@ -1,7 +1,8 @@
 { "translations": {
     "Other" : "Lain",
-    "Language" : "Bahasa",
     "Cancel" : "Cancel",
+    "Save" : "Save",
+    "Language" : "Bahasa",
     "Import" : "Import",
     "Export" : "Eksport",
     "Name" : "Nama",
@@ -9,7 +10,6 @@
     "Value" : "Nilai",
     "Size" : "Saiz",
     "Delete" : "Delete",
-    "Save" : "Save",
     "Edit" : "Sunting",
     "Send" : "Hantar"
 },"pluralForm" :"nplurals=1; plural=0;"

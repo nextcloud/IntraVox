@@ -1,9 +1,11 @@
 { "translations": {
     "Other" : "Digər",
+    "Skip to main content" : "Əsas məzmuna keçin",
+    "Cancel" : "Cancel",
+    "Save" : "Save",
     "Sharing" : "Paylaşılır",
     "Language" : "Dil",
     "Status" : "Status",
-    "Cancel" : "Cancel",
     "Visit website" : "Sayta keç",
     "Saving …" : "Saxlanılır …",
     "Import" : "Əlavə et",
@@ -15,12 +17,12 @@
     "Name" : "Ad",
     "Authentication" : "Autentifikasiya",
     "Client ID" : "Müştəri İD-s",
+    "Client secret" : "Müxtəri sirri",
     "Size" : "Həcm",
     "Actions" : "İşlər",
     "Delete" : "Delete",
+    "Delete permanently" : "Həmişəlik sil",
     "Disabled" : "Dayandırılıb",
-    "Save" : "Save",
-    "Skip to main content" : "Əsas məzmuna keçin",
     "Edit" : "Dəyişiklik et",
     "Send" : "Göndər"
 },"pluralForm" :"nplurals=2; plural=(n != 1);"

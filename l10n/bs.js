@@ -3,9 +3,10 @@ OC.L10N.register(
     {
     "Other" : "Ostali",
     "Link" : "Veza",
+    "Cancel" : "Cancel",
+    "Save" : "Save",
     "Sharing" : "Dijeljenje",
     "Language" : "Jezik",
-    "Cancel" : "Cancel",
     "Import" : "Uvezi",
     "Export" : "Izvezi",
     "Comments" : "Komentari",
@@ -14,7 +15,6 @@ OC.L10N.register(
     "Actions" : "Radnje",
     "Delete" : "Delete",
     "Disabled" : "Onemogućeno",
-    "Save" : "Save",
     "Edit" : "Izmjeni",
     "Send" : "Pošalji"
 },

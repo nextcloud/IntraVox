@@ -1,6 +1,7 @@
 { "translations": {
-    "Language" : "Luenga",
     "Cancel" : "Cancel",
+    "Save" : "Save",
+    "Language" : "Luenga",
     "Path" : "Camín",
     "Never" : "Nunca",
     "Name" : "Nombre",
@@ -8,7 +9,6 @@
     "Actions" : "Acions",
     "Delete" : "Delete",
     "Disabled" : "Desactivau",
-    "Save" : "Save",
     "Password" : "Clau"
 },"pluralForm" :"nplurals=2; plural=(n != 1);"
 }
