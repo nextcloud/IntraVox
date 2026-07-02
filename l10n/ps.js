@@ -12,6 +12,8 @@ OC.L10N.register(
     "Size" : "کچه",
     "Actions" : "کړنې",
     "Delete" : "Delete",
+    "_%n comment_::_%n comments_" : ["%nتبصره","%nتبصرې"],
+    "RSS feed" : "RRS لړ ",
     "Send" : "لېږل"
 },
 "nplurals=2; plural=(n != 1);");

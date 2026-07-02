@@ -15,6 +15,7 @@ OC.L10N.register(
     "Size" : "আকার",
     "Actions" : "পদক্ষেপসমূহ",
     "Delete" : "Delete",
+    "RSS feed" : "আরএসএস ফিড ",
     "Disabled" : "অকার্যকর",
     "Edit" : "সম্পাদনা",
     "Send" : "পাঠাও"

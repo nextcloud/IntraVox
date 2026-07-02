@@ -6,6 +6,7 @@ OC.L10N.register(
     "Cancel" : "Cancel",
     "Save" : "Save",
     "Sharing" : "Paylaşılır",
+    "Recommended" : "Məsləhətlidir",
     "Language" : "Dil",
     "Status" : "Status",
     "Visit website" : "Sayta keç",

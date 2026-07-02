@@ -12,6 +12,7 @@ OC.L10N.register(
     "Value" : "Nilai",
     "Size" : "Saiz",
     "Delete" : "Delete",
+    "RSS feed" : "Suapan RSS",
     "Edit" : "Sunting",
     "Send" : "Hantar"
 },

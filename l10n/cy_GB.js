@@ -17,6 +17,7 @@ OC.L10N.register(
     "Actions" : "Gweithredoedd",
     "Delete" : "Delete",
     "Delete permanently" : "Dileu'n barhaol",
+    "RSS feed" : "Llif RSS",
     "Newest first" : "Diweddaraf gyntaf",
     "Oldest first" : "Hynaf gyntaf",
     "Edit" : "Golygu",

@@ -38,6 +38,7 @@ OC.L10N.register(
     "Delete" : "Oʻchirish",
     "Deleting …" : "O'chirilmoqada...",
     "Delete permanently" : "Butunlay o'chirish",
+    "RSS feed" : "RSS tasmasi",
     "Password" : "Parol",
     "Total" : "Jami",
     "Edit" : "Tahrirlash",

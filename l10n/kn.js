@@ -6,6 +6,7 @@ OC.L10N.register(
     "Cancel" : "Cancel",
     "Save" : "Save",
     "Sharing" : "﻿ಹಂಚಿಕೆ",
+    "Recommended" : "ಶಿಫಾರಸು ಮಾಡಲಾಗಿದೆ",
     "Language" : "﻿ಭಾಷೆ",
     "Import" : "ಆಮದು",
     "Export" : "ರಫ್ತು",

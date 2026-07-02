@@ -1,6 +1,7 @@
 { "translations": {
     "Cancel" : "Cancel",
     "Save" : "Save",
-    "Delete" : "Delete"
+    "Delete" : "Delete",
+    "RSS feed" : "RSS फिड"
 },"pluralForm" :"nplurals=2; plural=(n != 1);"
 }

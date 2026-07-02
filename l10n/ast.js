@@ -49,6 +49,7 @@ OC.L10N.register(
     "Actions" : "Aiciones",
     "Delete" : "Delete",
     "Delete permanently" : "Desaniciar permanentemente",
+    "RSS feed" : "Feed RSS",
     "Newest first" : "Primero lo nuevo",
     "Oldest first" : "Primero lo antiguo",
     "Carousel" : "Carrusel",

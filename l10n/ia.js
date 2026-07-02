@@ -18,6 +18,7 @@ OC.L10N.register(
     "Actions" : "Actiones",
     "Delete" : "Delete",
     "Delete permanently" : "Deler permanentemente",
+    "_%n comment_::_%n comments_" : ["%n commentario","%n commentarios"],
     "Total" : "Total",
     "Edit" : "Modificar",
     "Reply" : "Responde",

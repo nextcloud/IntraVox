@@ -10,6 +10,7 @@ OC.L10N.register(
     "Size" : "Grandaria",
     "Actions" : "Acions",
     "Delete" : "Delete",
+    "RSS feed" : "Fuent RSS",
     "Disabled" : "Desactivau",
     "Password" : "Clau"
 },

@@ -27,6 +27,7 @@ OC.L10N.register(
     "Actions" : "Handlingar",
     "Delete" : "Delete",
     "Delete permanently" : "Slett for godt",
+    "RSS feed" : "RSS-straum",
     "Newest first" : "Nyaste fyrst",
     "Oldest first" : "Eldste fyrst",
     "Disabled" : "Deaktivert",

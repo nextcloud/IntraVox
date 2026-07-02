@@ -6,6 +6,7 @@ OC.L10N.register(
     "Cancel" : "Cancel",
     "Save" : "Save",
     "Sharing" : "Dijeljenje",
+    "Recommended" : "Preporučljivo",
     "Language" : "Jezik",
     "Import" : "Uvezi",
     "Export" : "Izvezi",

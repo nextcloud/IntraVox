@@ -15,6 +15,7 @@ OC.L10N.register(
     "Size" : "Չափս",
     "Delete" : "Delete",
     "Delete permanently" : "Ջնջել ընդմիշտ",
+    "RSS feed" : "RSS սնուցում",
     "Password" : "գախտնաբառ",
     "Edit" : "մշակել",
     "Send" : "Ուղարկել"

@@ -14,6 +14,7 @@ OC.L10N.register(
     "Type" : "Tip",
     "Delete" : "Obriši",
     "Delete permanently" : "Obriši zauvek",
+    "RSS feed" : "РСС довод",
     "Newest first" : "Prvo novije",
     "Oldest first" : "prvo starije",
     "Password required" : "Potrebna je lozinka",

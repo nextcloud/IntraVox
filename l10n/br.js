@@ -29,6 +29,7 @@ OC.L10N.register(
     "Actions" : "Oberoù",
     "Delete" : "Delete",
     "Delete permanently" : "Dilemel da viken",
+    "RSS feed" : "Lanv RSS",
     "Newest first" : "An hini nevesañ da gentañ",
     "Oldest first" : "An hini kozhoñ da gentañ",
     "Disabled" : "Disaotreañ",

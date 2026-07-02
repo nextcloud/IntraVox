@@ -20,6 +20,7 @@ OC.L10N.register(
     "Actions" : "Aksies",
     "Delete" : "Delete",
     "Delete permanently" : "Skrap permanent",
+    "RSS feed" : "RSS-voer",
     "Newest first" : "Nuutste eerste",
     "Oldest first" : "Oudste eerste",
     "Total" : "Totaal",

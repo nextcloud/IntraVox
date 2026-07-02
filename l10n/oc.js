@@ -37,6 +37,8 @@ OC.L10N.register(
     "Actions" : "Accions",
     "Delete" : "Delete",
     "Delete permanently" : "Suprimir definitivament",
+    "_%n comment_::_%n comments_" : ["%n comentari","%n comentaris"],
+    "RSS feed" : "Flux RSS",
     "Disabled" : "Desactivat",
     "Password required" : "Senhal requerit",
     "Password" : "Senhal",
