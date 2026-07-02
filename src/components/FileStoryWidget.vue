@@ -27,7 +27,7 @@
       <p>{{ emptyMessage }}</p>
       <small v-if="config.folderPath">{{ config.folderPath }}</small>
       <small v-if="showScanHint" class="fs-empty-hint">
-        {{ t('intravox', 'If you can see files in the Files app but not here, the file index may be out of sync. Ask an admin to run "occ files:scan" for this folder.') }}
+        {{ t('intravox', 'If you can see files in the Files app but not here, the file index may be out of sync. Ask an administrator to run "occ files:scan" for this folder.') }}
       </small>
     </div>
 
@@ -63,8 +63,8 @@
                   :size="13"
                   class="fs-federated-badge"
                   role="img"
-                  :aria-label="t('intravox', 'From federated share — MetaVox metadata not available')"
-                  :title="t('intravox', 'From federated share — MetaVox metadata not available')"
+                  :aria-label="t('intravox', 'MetaVox metadata is not available from a federated share')"
+                  :title="t('intravox', 'MetaVox metadata is not available from a federated share')"
                 />
               </div>
               <div class="fs-row-meta">
@@ -118,8 +118,8 @@
               :size="12"
               class="fs-federated-badge"
               role="img"
-              :aria-label="t('intravox', 'From federated share — MetaVox metadata not available')"
-              :title="t('intravox', 'From federated share — MetaVox metadata not available')"
+              :aria-label="t('intravox', 'MetaVox metadata is not available from a federated share')"
+              :title="t('intravox', 'MetaVox metadata is not available from a federated share')"
             />
           </div>
           <div class="fs-tile-meta">
@@ -152,8 +152,8 @@
                   :size="13"
                   class="fs-federated-badge"
                   role="img"
-                  :aria-label="t('intravox', 'From federated share — MetaVox metadata not available')"
-                  :title="t('intravox', 'From federated share — MetaVox metadata not available')"
+                  :aria-label="t('intravox', 'MetaVox metadata is not available from a federated share')"
+                  :title="t('intravox', 'MetaVox metadata is not available from a federated share')"
                 />
               </div>
             <div class="fs-row-meta">
@@ -198,8 +198,8 @@
                   :size="13"
                   class="fs-federated-badge"
                   role="img"
-                  :aria-label="t('intravox', 'From federated share — MetaVox metadata not available')"
-                  :title="t('intravox', 'From federated share — MetaVox metadata not available')"
+                  :aria-label="t('intravox', 'MetaVox metadata is not available from a federated share')"
+                  :title="t('intravox', 'MetaVox metadata is not available from a federated share')"
                 />
               </div>
               <div class="fs-row-meta">

@@ -11,7 +11,7 @@
           id="ps-folder"
           type="text"
           v-model="localConfig.folderPath"
-          :placeholder="t('intravox', '/Photos/Albums/ …')"
+          :placeholder="t('intravox', '/Photos/Albums/…')"
           class="editor-input"
           @change="emitUpdate"
         />

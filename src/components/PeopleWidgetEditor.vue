@@ -7,7 +7,7 @@
         id="people-widget-title"
         type="text"
         v-model="localWidget.title"
-        :placeholder="t('intravox', 'e.g., Our Team')"
+        :placeholder="t('intravox', 'e.g., our team')"
         class="editor-input"
         @input="emitUpdate"
       />
@@ -82,7 +82,7 @@
     <div v-if="localWidget.selectionMode === 'filter'" class="editor-section">
       <label class="editor-label">
         {{ t('intravox', 'Filters') }}
-        <span class="label-hint">({{ t('intravox', 'show users matching these criteria') }})</span>
+        <span class="label-hint">({{ t('intravox', 'Show users matching these criteria') }})</span>
       </label>
 
       <div v-if="filters.length > 0" class="filters-list">

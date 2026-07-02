@@ -121,13 +121,13 @@ export default {
         },
         {
           type: 'photo-story',
-          name: this.t('intravox', 'Photo Story'),
+          name: this.t('intravox', 'Photo story'),
           icon: 'image-multiple',
           description: this.t('intravox', 'Show photos from a folder with rich layouts')
         },
         {
           type: 'file-story',
-          name: this.t('intravox', 'File Story'),
+          name: this.t('intravox', 'File story'),
           icon: 'file-document-multiple',
           description: this.t('intravox', 'Show documents from a folder with timeline, list, or grouped layouts')
         }

@@ -1,7 +1,7 @@
 <template>
   <NcDialog
     :open="true"
-    :name="t('intravox', 'RSS Feed')"
+    :name="t('intravox', 'RSS feed')"
     size="normal"
     @close="$emit('close')">
 
@@ -91,7 +91,7 @@
                 type="primary"
                 :disabled="generating"
                 @click="generateToken">
-        {{ t('intravox', 'Generate Feed URL') }}
+        {{ t('intravox', 'Generate feed URL') }}
       </NcButton>
       <NcButton v-else
                 type="primary"

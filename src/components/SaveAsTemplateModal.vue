@@ -1,6 +1,6 @@
 <template>
   <NcModal @close="$emit('close')"
-           :name="t('intravox', 'Save as Template')"
+           :name="t('intravox', 'Save as template')"
            size="small">
     <div class="save-template-modal-content">
       <p class="modal-description">{{ t('intravox', 'Create a reusable template from this page') }}</p>

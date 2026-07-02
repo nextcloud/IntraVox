@@ -541,7 +541,7 @@ export default {
           // Validate targetPage has a uniqueId before selecting
           if (!targetPage || !targetPage.uniqueId) {
             console.error('IntraVox: No valid page found to load', { targetPage, pages: this.pages });
-            this.error = this.t('intravox', 'No valid pages found. Pages might be missing uniqueId.');
+            this.error = this.t('intravox', 'No valid pages found. Pages might be missing UID.');
             return;
           }
 

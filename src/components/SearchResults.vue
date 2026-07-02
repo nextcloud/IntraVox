@@ -8,7 +8,7 @@
     <div class="search-results-container">
       <!-- Header with query info -->
       <div class="search-header">
-        <h2>{{ t('intravox', 'Search Results for "{query}"', { query: searchQuery }) }}</h2>
+        <h2>{{ t('intravox', 'Search results for "{query}"', { query: searchQuery }) }}</h2>
         <p v-if="!loading && results.length > 0" class="result-count">
           {{ n('intravox', '%n result found', '%n results found', results.length) }}
         </p>

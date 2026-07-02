@@ -10,7 +10,7 @@
       <!-- Actions at top with type selector on left -->
       <div class="modal-actions-top">
         <div class="type-selector-left">
-          <label>{{ t('intravox', 'Navigation Type:') }}</label>
+          <label>{{ t('intravox', 'Navigation type:') }}</label>
           <NcSelect v-model="selectedType"
                     :options="typeOptions"
                     :placeholder="t('intravox', 'Select navigation type')"
@@ -101,7 +101,7 @@ export default {
       localNavigation: JSON.parse(JSON.stringify(this.navigation)),
       typeOptions: [
         { value: 'dropdown', label: t('intravox', 'Dropdown (Cascading)') },
-        { value: 'megamenu', label: t('intravox', 'Mega Menu') }
+        { value: 'megamenu', label: t('intravox', 'Mega menu') }
       ],
       lastAddedItemId: null
     };

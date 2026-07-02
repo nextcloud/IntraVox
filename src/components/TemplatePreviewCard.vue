@@ -105,7 +105,7 @@
       <div class="meta">
         <span class="stat">
           <ViewGridOutline :size="12" />
-          {{ columnCount }} {{ t('intravox', 'columns') }}
+          {{ n('intravox', '%n column', '%n columns', columnCount) }}
         </span>
         <span class="stat">
           <WidgetsOutline :size="12" />
@@ -205,8 +205,11 @@ export default {
     }
   },
   methods: {
-    t(key, vars = {}) {
-      return translate('intravox', key, vars);
+    t(app, text, vars = {}) {
+      return translate(app, text, vars);
+    },
+    n(app, singular, plural, count, vars = {}) {
+      return translatePlural(app, singular, plural, count, vars);
     },
     getWidgetIcon(type) {
       const icons = {

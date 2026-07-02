@@ -95,7 +95,7 @@
 
         <!-- Unique ID (for sharing) -->
         <div v-if="metadata.uniqueId" class="metadata-row">
-          <label class="metadata-label">{{ t('intravox', 'UniqueId') }}</label>
+          <label class="metadata-label">{{ t('intravox', 'UID') }}</label>
           <div class="metadata-value metadata-monospace">{{ metadata.uniqueId }}</div>
         </div>
       </div>

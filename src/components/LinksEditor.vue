@@ -11,10 +11,10 @@
         <div class="form-group">
           <label for="links-grid-columns">{{ t('intravox', 'Grid columns:') }}</label>
           <select id="links-grid-columns" v-model.number="localWidget.columns" class="widget-input">
-            <option :value="1">1 {{ t('intravox', 'column') }}</option>
-            <option :value="2">2 {{ t('intravox', 'columns') }}</option>
-            <option :value="3">3 {{ t('intravox', 'columns') }}</option>
-            <option :value="4">4 {{ t('intravox', 'columns') }}</option>
+            <option :value="1">{{ n('intravox', '%n column', '%n columns', 1) }}</option>
+            <option :value="2">{{ n('intravox', '%n column', '%n columns', 2) }}</option>
+            <option :value="3">{{ n('intravox', '%n column', '%n columns', 3) }}</option>
+            <option :value="4">{{ n('intravox', '%n column', '%n columns', 4) }}</option>
           </select>
         </div>
 
@@ -430,7 +430,7 @@ export default {
         { value: 'image-multiple', label: this.t('intravox', 'Photos') },
         { value: 'draw', label: this.t('intravox', 'Draw') },
         { value: 'puzzle', label: this.t('intravox', 'Plugin') },
-        { value: 'robot', label: this.t('intravox', 'AI / Robot') },
+        { value: 'robot', label: this.t('intravox', 'AI/Robot') },
         { value: 'table-large', label: this.t('intravox', 'Table') },
         { value: 'book-open-variant', label: this.t('intravox', 'Knowledge base') },
         { value: 'poll', label: this.t('intravox', 'Poll') },
@@ -486,6 +486,9 @@ export default {
   methods: {
     t(app, text, vars) {
       return translate(app, text, vars);
+    },
+    n(app, singular, plural, count, vars) {
+      return translatePlural(app, singular, plural, count, vars);
     },
     getIconComponent(iconName) {
       const iconMap = {

@@ -7,7 +7,7 @@
         id="news-widget-title"
         type="text"
         v-model="localWidget.title"
-        :placeholder="t('intravox', 'e.g., Latest News')"
+        :placeholder="t('intravox', 'e.g., latest news')"
         class="editor-input"
         @input="emitUpdate"
       />

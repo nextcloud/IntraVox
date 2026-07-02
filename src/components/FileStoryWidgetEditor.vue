@@ -10,7 +10,7 @@
           id="fse-folder"
           type="text"
           v-model="localConfig.folderPath"
-          :placeholder="t('intravox', '/Documents/ …')"
+          :placeholder="t('intravox', '/Documents/…')"
           class="editor-input"
           @change="emitUpdate"
         />
@@ -164,7 +164,7 @@
         :placeholder="t('intravox', 'Group by')"
         @update:model-value="setGroupBy"
       />
-      <p class="editor-hint">{{ t('intravox', 'Pick what to cluster files under. "Category" groups by file type (PDF / Spreadsheets / etc); other options come from MetaVox fields.') }}</p>
+      <p class="editor-hint">{{ t('intravox', 'Pick what to cluster files under. "Category" groups by file type (PDF/Spreadsheets/etc); other options come from MetaVox fields.') }}</p>
     </div>
 
     <!-- Timeline granularity (only for timeline mode) -->
@@ -183,7 +183,7 @@
           {{ opt.label }}
         </NcCheckboxRadioSwitch>
       </div>
-      <p class="editor-hint">{{ t('intravox', 'Per day works for daily reports / notes; per month suits monthly newsletters and quarterly contracts; per year is for archives.') }}</p>
+      <p class="editor-hint">{{ t('intravox', 'Per day works for daily reports/notes; per month suits monthly newsletters and quarterly contracts; per year is for archives.') }}</p>
     </div>
 
     <!-- Sort -->

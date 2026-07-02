@@ -7,7 +7,7 @@
         id="calendar-widget-title"
         type="text"
         v-model="localWidget.title"
-        :placeholder="t('intravox', 'e.g., Upcoming Events')"
+        :placeholder="t('intravox', 'e.g., upcoming events')"
         class="editor-input"
         @input="emitUpdate"
       />

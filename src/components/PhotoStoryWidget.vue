@@ -35,7 +35,7 @@
       <p>{{ emptyMessage }}</p>
       <small v-if="config.folderPath">{{ config.folderPath }}</small>
       <small v-if="showScanHint" class="ps-empty-hint">
-        {{ t('intravox', 'If you can see photos in the Files app but not here, the file index may be out of sync. Ask an admin to run "occ files:scan" for this folder.') }}
+        {{ t('intravox', 'If you can see photos in the Files app but not here, the file index may be out of sync. Ask an administrator to run "occ files:scan" for this folder.') }}
       </small>
     </div>
 

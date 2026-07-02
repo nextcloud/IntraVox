@@ -6,7 +6,7 @@
       <input
         v-model="searchQuery"
         type="text"
-        :placeholder="t('intravox', 'Search users...')"
+        :placeholder="t('intravox', 'Search users …')"
         class="search-input"
         @input="debouncedSearch"
         @focus="showResults = true"

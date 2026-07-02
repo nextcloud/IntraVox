@@ -50,8 +50,7 @@
 
           <div v-if="!selectedFile" class="upload-prompt" @click="$refs.fileInput.click()">
             <div class="upload-icon">📁</div>
-            <p>{{ mediaType === 'image' ? t('intravox', 'Click to select an image') : t('intravox', 'Click to select a video') }}</p>
-            <p class="hint">{{ t('intravox', 'or drag and drop') }}</p>
+            <p>{{ mediaType === 'image' ? t('intravox', 'Click to select an image, or drag and drop') : t('intravox', 'Click to select a video, or drag and drop') }}</p>
           </div>
 
           <div v-else class="file-selected">
@@ -72,7 +71,7 @@
       <div v-if="activeTab === 'page'" class="tab-panel" role="tabpanel">
         <div v-if="isLoadingMedia" class="loading-state">
           <span class="loading-spinner"></span>
-          <p>{{ t('intravox', 'Loading media...') }}</p>
+          <p>{{ t('intravox', 'Loading media …') }}</p>
         </div>
 
         <div v-else-if="filteredPageMedia.length === 0" class="empty-state">
@@ -129,7 +128,7 @@
 
         <div v-if="isLoadingMedia" class="loading-state">
           <span class="loading-spinner"></span>
-          <p>{{ t('intravox', 'Loading shared media...') }}</p>
+          <p>{{ t('intravox', 'Loading shared media …') }}</p>
         </div>
 
         <div v-else-if="filteredResourcesMedia.length === 0" class="empty-state">
@@ -282,7 +281,7 @@ export default {
 
     confirmButtonLabel() {
       if (this.isUploading) {
-        return this.t('intravox', 'Uploading...')
+        return this.t('intravox', 'Uploading …')
       }
       if (this.activeTab === 'upload' && this.selectedFile) {
         return this.t('intravox', 'Upload')

@@ -4,7 +4,7 @@
     <div class="form-group">
       <label for="feed-source-type">{{ t('intravox', 'Source type') }}</label>
       <select id="feed-source-type" v-model="localWidget.sourceType" @change="onSourceTypeChange">
-        <option value="rss">{{ t('intravox', 'RSS / Atom feed') }}</option>
+        <option value="rss">{{ t('intravox', 'RSS/Atom feed') }}</option>
         <option v-if="availableConnections.length > 0 || localWidget.sourceType === 'connection'" value="connection">{{ t('intravox', 'Connection') }}</option>
       </select>
     </div>
@@ -86,7 +86,7 @@
     <div v-if="isLmsType && localWidget.connectionId" class="form-group">
       <label for="feed-content-type">{{ t('intravox', 'Content type') }}</label>
       <select id="feed-content-type" v-model="localWidget.contentType" @change="onLmsContentTypeChange">
-        <option value="news">{{ t('intravox', 'News / Announcements') }}</option>
+        <option value="news">{{ t('intravox', 'News/Announcements') }}</option>
         <option value="courses">{{ t('intravox', 'Available courses') }}</option>
         <option value="assignments">{{ t('intravox', 'Assignments') }}</option>
         <option value="deadlines">{{ t('intravox', 'Upcoming deadlines') }}</option>

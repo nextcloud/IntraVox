@@ -104,7 +104,7 @@
 						:key="code"
 						class="active-language-chip">
 						{{ nameForCode(code) }}
-						<span v-if="code === primaryLanguage" class="active-language-primary">{{ t('intravox', 'recommended') }}</span>
+						<span v-if="code === primaryLanguage" class="active-language-primary">{{ t('intravox', 'Recommended') }}</span>
 						<span class="active-language-coverage"
 							:title="t('intravox', 'Share of the IntraVox interface translated into this language via Transifex. This rises as translators contribute.')">
 							{{ t('intravox', 'UI {percent}%', { percent: coverageFor(code) }) }}
@@ -265,7 +265,7 @@
 			<template #default>
 				<div class="reinstall-dialog-content">
 					<NcNoteCard type="warning">
-						{{ t('intravox', 'This will delete all existing demo content for') }} <strong>{{ reinstallLanguageName }}</strong> {{ t('intravox', 'and replace it with fresh demo data.') }}
+						{{ t('intravox', 'This will delete all existing demo content for {language} and replace it with fresh demo data.', { language: reinstallLanguageName }) }}
 					</NcNoteCard>
 					<p class="reinstall-warning">
 						{{ t('intravox', 'Any changes you made to the demo pages will be lost. This action cannot be undone.') }}
@@ -293,7 +293,7 @@
 						<p><strong>{{ t('intravox', 'Warning: This action will permanently delete all content.') }}</strong></p>
 					</NcNoteCard>
 					<p class="clean-start-info">
-						{{ t('intravox', 'This will delete for') }} <strong>{{ cleanStartLanguageName }}</strong>:
+						{{ t('intravox', 'This will delete data for {language}:', { language: cleanStartLanguageName }) }}
 					</p>
 					<ul class="deletion-list">
 						<li>{{ t('intravox', 'All pages and subpages') }}</li>
@@ -380,7 +380,7 @@
 				<ul class="import-preview-list">
 					<li v-for="conn in importPreview.items" :key="conn.name" :class="{ 'is-duplicate': conn.duplicate }">
 						<strong>{{ conn.name }}</strong> ({{ conn.type }})
-						<span v-if="conn.duplicate" class="import-duplicate-badge">{{ t('intravox', 'already exists') }}</span>
+						<span v-if="conn.duplicate" class="import-duplicate-badge">{{ t('intravox', 'Already exists') }}</span>
 					</li>
 				</ul>
 				<p v-if="importPreview.newCount > 0">
@@ -567,8 +567,8 @@
 								:key="lang.code"
 								:value="lang.code">
 								{{ lang.flag }} {{ lang.name }}
-								<template v-if="lang.hasContent">({{ lang.pageCount }} {{ t('intravox', 'pages') }})</template>
-								<template v-else>({{ t('intravox', 'empty') }})</template>
+								<template v-if="lang.hasContent">({{ n('intravox', '%n page', '%n pages', lang.pageCount) }})</template>
+								<template v-else>({{ t('intravox', 'Empty') }})</template>
 							</option>
 						</select>
 					</div>
@@ -581,14 +581,14 @@
 								value="zip"
 								type="radio"
 								name="exportFormat">
-								ZIP ({{ t('intravox', 'with media files') }})
+								{{ t('intravox', 'ZIP (with media files)') }}
 							</NcCheckboxRadioSwitch>
 							<NcCheckboxRadioSwitch
 								v-model="exportFormat"
 								value="json"
 								type="radio"
 								name="exportFormat">
-								JSON ({{ t('intravox', 'pages only') }})
+								{{ t('intravox', 'JSON (pages only)') }}
 							</NcCheckboxRadioSwitch>
 						</div>
 					</div>
@@ -701,9 +701,9 @@
 					<div v-if="importResult" class="import-result">
 						<NcNoteCard type="success">
 							{{ t('intravox', 'Import completed') }}:
-							{{ importResult.stats.pagesImported }} {{ t('intravox', 'pages') }},
-							{{ importResult.stats.mediaFilesImported }} {{ t('intravox', 'media files') }},
-							{{ importResult.stats.commentsImported }} {{ t('intravox', 'comments') }}
+							{{ n('intravox', '%n page', '%n pages', importResult.stats.pagesImported) }},
+							{{ n('intravox', '%n media file', '%n media files', importResult.stats.mediaFilesImported) }},
+							{{ n('intravox', '%n comment', '%n comments', importResult.stats.commentsImported) }}
 						</NcNoteCard>
 					</div>
 				</div>
@@ -1021,7 +1021,7 @@
 								<div class="fields-grid">
 									<div class="form-group full-width">
 										<label :for="'conn-map-items-' + index">{{ t('intravox', 'Items path') }}</label>
-										<input :id="'conn-map-items-' + index" v-model="conn.responseMapping.items" type="text" :placeholder="t('intravox', 'data or results or leave empty for root array')" />
+										<input :id="'conn-map-items-' + index" v-model="conn.responseMapping.items" type="text" :placeholder="t('intravox', 'Data or results or leave empty for root array')" />
 									</div>
 									<div class="form-group">
 										<label :for="'conn-map-title-' + index">{{ t('intravox', 'Title field') }}</label>
@@ -1041,11 +1041,11 @@
 									</div>
 									<div class="form-group">
 										<label :for="'conn-map-image-' + index">{{ t('intravox', 'Image field') }}</label>
-										<input :id="'conn-map-image-' + index" v-model="conn.responseMapping.image" type="text" :placeholder="t('intravox', 'thumbnail (optional)')" />
+										<input :id="'conn-map-image-' + index" v-model="conn.responseMapping.image" type="text" :placeholder="t('intravox', 'Thumbnail (optional)')" />
 									</div>
 									<div class="form-group">
 										<label :for="'conn-map-author-' + index">{{ t('intravox', 'Author field') }}</label>
-										<input :id="'conn-map-author-' + index" v-model="conn.responseMapping.author" type="text" :placeholder="t('intravox', 'author (optional)')" />
+										<input :id="'conn-map-author-' + index" v-model="conn.responseMapping.author" type="text" :placeholder="t('intravox', 'Author (optional)')" />
 									</div>
 								</div>
 							</div>
@@ -1138,7 +1138,7 @@
 						<span v-if="!conn.id" class="field-hint">{{ t('intravox', 'Save connections first to test') }}</span>
 					</div>
 					<NcNoteCard v-if="testResults[conn.id] && testResults[conn.id].success" type="success" class="connection-test-result">
-						{{ t('intravox', 'Connection OK') }} — {{ testResults[conn.id].count }} {{ t('intravox', 'items') }}
+						{{ t('intravox', 'Connection OK') }} — {{ n('intravox', '%n item', '%n items', testResults[conn.id].count) }}
 					</NcNoteCard>
 					<NcNoteCard v-if="testResults[conn.id] && testResults[conn.id].warning" type="warning" class="connection-test-result">
 						{{ testResults[conn.id].warning }}
@@ -1217,7 +1217,7 @@
 							<td class="content-cell">
 								<span v-if="folder.hasIntraVoxContent" class="content-badge intravox">
 									{{ t('intravox', 'IntraVox') }}: {{ folder.languages.join(', ') }}
-									<span class="page-count">({{ folder.pageCount }} {{ t('intravox', 'pages') }})</span>
+									<span class="page-count">({{ n('intravox', '%n page', '%n pages', folder.pageCount) }})</span>
 								</span>
 								<span v-else class="content-badge unknown">
 									{{ t('intravox', 'Non-IntraVox data') }}
@@ -1329,7 +1329,7 @@
 					<ul>
 						<li>{{ t('intravox', 'Size') }}: {{ cleanupFolder?.sizeFormatted }}</li>
 						<li v-if="cleanupFolder?.hasIntraVoxContent">
-							{{ t('intravox', 'Contains IntraVox data for') }}: {{ cleanupFolder?.languages.join(', ') }}
+							{{ t('intravox', 'Contains IntraVox data for {languages}', { languages: cleanupFolder?.languages.join(', ') }) }}
 						</li>
 						<li v-if="cleanupFolder?.pageCount">
 							{{ t('intravox', 'Approximately {count} pages', { count: cleanupFolder?.pageCount }) }}
@@ -1603,7 +1603,7 @@ export default {
 		removeConnectionName() {
 			if (this.removeConnectionIndex === null) return ''
 			const conn = this.feedConnections[this.removeConnectionIndex]
-			return conn?.name || this.t('intravox', 'this connection')
+			return conn?.name || this.t('intravox', 'This connection')
 		},
 		// Get custom domains (domains not in knownServices)
 		customDomains() {

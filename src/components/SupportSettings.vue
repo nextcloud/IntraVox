@@ -46,14 +46,14 @@
 							</div>
 						</div>
 						<span class="page-count">
-							{{ licenseStats.pageCounts[lang] || 0 }} {{ t('intravox', 'pages') }}
+							{{ n('intravox', '%n page', '%n pages', licenseStats.pageCounts[lang] || 0) }}
 						</span>
 					</div>
 				</div>
 
 				<div class="total-pages">
 					<strong>{{ t('intravox', 'Total') }}:</strong>
-					{{ licenseStats.totalPages }} {{ t('intravox', 'pages') }}
+					{{ n('intravox', '%n page', '%n pages', licenseStats.totalPages) }}
 				</div>
 			</div>
 
@@ -95,7 +95,7 @@
 
 		<!-- Section 8: Anonymous Usage Statistics -->
 		<div class="settings-section">
-			<h2>{{ t('intravox', 'Anonymous Usage Statistics') }}</h2>
+			<h2>{{ t('intravox', 'Anonymous usage statistics') }}</h2>
 			<p class="settings-section-desc">
 				{{ t('intravox', 'Help improve IntraVox by sharing anonymous usage statistics.') }}
 			</p>
@@ -162,6 +162,7 @@ import { NcButton, NcCheckboxRadioSwitch, NcNoteCard } from '@nextcloud/vue'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { showError } from '@nextcloud/dialogs'
+import { translate, translatePlural } from '@nextcloud/l10n'
 
 export default {
 	name: 'SupportSettings',
@@ -380,6 +381,9 @@ export default {
 
 		t(app, text, vars) {
 			return translate(app, text, vars)
+		},
+		n(app, singular, plural, count, vars) {
+			return translatePlural(app, singular, plural, count, vars)
 		},
 	},
 }

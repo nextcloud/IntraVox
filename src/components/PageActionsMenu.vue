@@ -33,7 +33,7 @@
       <template #icon>
         <FileDocumentMultipleOutline :size="20" />
       </template>
-      {{ t('intravox', 'Save as Template') }}
+      {{ t('intravox', 'Save as template') }}
     </NcActionButton>
 
     <!-- RSS Feed -->
@@ -41,7 +41,7 @@
       <template #icon>
         <Rss :size="20" />
       </template>
-      {{ t('intravox', 'RSS Feed') }}
+      {{ t('intravox', 'RSS feed') }}
     </NcActionButton>
   </NcActions>
 </template>
