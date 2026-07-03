@@ -1926,6 +1926,103 @@ class PageService {
     }
 
     /**
+     * Move a page (with its whole subtree) under a different parent (issue #69).
+     *
+     * The page keeps its uniqueId — so internal links and URLs by uniqueId stay
+     * valid — while its folder is relocated into the target parent's folder.
+     * Children ride along inside the moved folder. On a folder-name collision at
+     * the destination the folder is given a `-2`/`-3` suffix (mirrors createPage);
+     * the uniqueId is untouched.
+     *
+     * @param string $pageId       uniqueId (or legacy id) of the page to move.
+     * @param string $targetParentId uniqueId of the destination parent; '' = root.
+     * @throws \InvalidArgumentException On home, self/descendant cycles, depth.
+     * @throws \Exception When source or target cannot be located.
+     */
+    public function movePage(string $pageId, string $targetParentId): void {
+        if ($pageId === 'home') {
+            throw new \InvalidArgumentException('The home page cannot be moved');
+        }
+
+        $languageFolder = $this->getLanguageFolder();
+
+        // Locate the source page folder.
+        $source = strpos($pageId, 'page-') === 0
+            ? $this->findPageByUniqueId($languageFolder, $pageId)
+            : $this->findPageById($languageFolder, $this->sanitizeId($pageId));
+        if (!$source || !isset($source['folder'])) {
+            throw new \Exception('Page not found: ' . $pageId);
+        }
+        $sourceFolder = $source['folder'];
+        $sourcePath = $sourceFolder->getPath();
+
+        // Resolve the destination parent folder (root or a page's own folder).
+        if ($targetParentId === '' ) {
+            $targetParentFolder = $languageFolder;
+        } else {
+            $targetResult = strpos($targetParentId, 'page-') === 0
+                ? $this->findPageByUniqueId($languageFolder, $targetParentId)
+                : $this->findPageById($languageFolder, $this->sanitizeId($targetParentId));
+            if (!$targetResult || !isset($targetResult['folder'])) {
+                throw new \Exception('Target parent page not found: ' . $targetParentId);
+            }
+            $targetParentFolder = $targetResult['folder'];
+        }
+        $targetParentPath = $targetParentFolder->getPath();
+
+        // Cycle guard: refuse moving into itself or one of its own descendants,
+        // which would detach (and lose) the subtree.
+        if ($targetParentPath === $sourcePath
+            || strpos($targetParentPath . '/', $sourcePath . '/') === 0) {
+            throw new \InvalidArgumentException('Cannot move a page into itself or its descendant');
+        }
+
+        // No-op if already directly under the target parent.
+        if (dirname($sourcePath) === $targetParentPath) {
+            return;
+        }
+
+        // Respect the configured max nesting depth at the destination.
+        $targetRelPath = $this->getRelativePathFromRoot($targetParentFolder);
+        $this->validateDepth($targetRelPath);
+
+        // Resolve a non-colliding folder name at the destination (mirror createPage).
+        $baseName = $sourceFolder->getName();
+        $newName = $baseName;
+        $counter = 2;
+        while ($targetParentFolder->nodeExists($newName)) {
+            $newName = $baseName . '-' . $counter;
+            $counter++;
+        }
+
+        // Relocate the whole folder; children travel inside it.
+        $sourceFolder->move($targetParentPath . '/' . $newName);
+
+        // Send the moved page to the end of its new siblings by clearing its
+        // explicit order — the stable comparator then places it after ordered
+        // siblings, i.e. last. (A fresh reorder can pin it precisely later.)
+        try {
+            $movedResult = strpos($pageId, 'page-') === 0
+                ? $this->findPageByUniqueId($targetParentFolder, $pageId)
+                : $this->findPageById($targetParentFolder, $this->sanitizeId($pageId));
+            if ($movedResult && isset($movedResult['file'])) {
+                $file = $movedResult['file'];
+                $data = json_decode($file->getContent(), true);
+                if (is_array($data) && array_key_exists('order', $data)) {
+                    unset($data['order']);
+                    $file->putContent(json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+                }
+            }
+        } catch (\Throwable $e) {
+            // Non-fatal: the move succeeded; ordering just falls back to legacy.
+            $this->logger->warning('movePage: could not reset order after move', ['error' => $e->getMessage()]);
+        }
+
+        // Critical: refresh tree + permission caches so the move is visible.
+        $this->clearCache();
+    }
+
+    /**
      * Upload media (image or video) for a specific page
      * Unified endpoint that stores all media in a single '_media' folder
      */
@@ -2268,6 +2365,12 @@ class PageService {
         // Preserve page status (draft/published). Default to "published" for backward compatibility.
         if (isset($data['status']) && in_array($data['status'], ['draft', 'published'], true)) {
             $sanitized['status'] = $data['status'];
+        }
+
+        // Sibling sort order within the parent (issue #69). Integer; absence
+        // means "legacy" — the comparator keeps such pages in filesystem order.
+        if (isset($data['order']) && is_numeric($data['order'])) {
+            $sanitized['order'] = (int)$data['order'];
         }
 
         if (isset($data['layout']['rows']) && is_array($data['layout']['rows'])) {
@@ -3908,6 +4011,58 @@ class PageService {
     }
 
     /**
+     * Persist a new sibling order (issue #69). Writes `order = 0..n` onto each
+     * child's page-JSON in the given sequence. A targeted metadata write — no
+     * file version is created (order is metadata, not content).
+     *
+     * @param string|null $parentUniqueId Parent page uniqueId; null/'' = root.
+     * @param string[] $orderedChildIds Child uniqueIds in the desired order.
+     * @throws \Exception When the parent cannot be located.
+     */
+    public function reorderSiblings(?string $parentUniqueId, array $orderedChildIds): void {
+        $languageFolder = $this->getLanguageFolder();
+
+        // Resolve the parent folder whose direct children we are reordering.
+        if ($parentUniqueId === null || $parentUniqueId === '') {
+            $parentFolder = $languageFolder;
+        } else {
+            $parentResult = $this->findPageByUniqueId($languageFolder, $parentUniqueId);
+            if (!$parentResult || !isset($parentResult['folder'])) {
+                throw new \Exception('Parent page not found: ' . $parentUniqueId);
+            }
+            $parentFolder = $parentResult['folder'];
+        }
+
+        foreach ($orderedChildIds as $index => $childId) {
+            // home is pinned first and never carries an order.
+            if ($childId === 'home') {
+                continue;
+            }
+
+            // Search from the parent folder so a foreign id (outside this parent)
+            // simply isn't found and is skipped, rather than reordered.
+            $childResult = $this->findPageByUniqueId($parentFolder, $childId);
+            if (!$childResult || !isset($childResult['file'])) {
+                continue;
+            }
+
+            $file = $childResult['file'];
+            $data = json_decode($file->getContent(), true);
+            if (!is_array($data)) {
+                continue;
+            }
+
+            if (($data['order'] ?? null) !== $index) {
+                $data['order'] = $index;
+                $file->putContent(json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+            }
+        }
+
+        // Critical: without this the new order stays invisible for up to 5 min.
+        $this->clearCache();
+    }
+
+    /**
      * Extract groupfolder ID from path
      */
     private function extractGroupfolderId(string $path): ?int {
@@ -4348,7 +4503,40 @@ class PageService {
     /**
      * Recursively build the page tree from folder structure
      */
+    /**
+     * Stable sibling sort (issue #69). Pages WITH an integer `order` come first,
+     * ascending. Pages WITHOUT `order` (all legacy pages) keep their original
+     * input order AFTER the ordered ones — so an installation that has never
+     * reordered anything does not reshuffle.
+     *
+     * @param array<int, array> $siblings
+     * @return array<int, array>
+     */
+    private function sortSiblingsByOrder(array $siblings): array {
+        $decorated = [];
+        foreach ($siblings as $i => $node) {
+            $decorated[] = ['i' => $i, 'node' => $node];
+        }
+        usort($decorated, function ($a, $b) {
+            $ao = $a['node']['order'] ?? null;
+            $bo = $b['node']['order'] ?? null;
+            $aHas = is_int($ao);
+            $bHas = is_int($bo);
+            if ($aHas && $bHas) {
+                return ($ao <=> $bo) ?: ($a['i'] <=> $b['i']);
+            }
+            if ($aHas !== $bHas) {
+                return $aHas ? -1 : 1;
+            }
+            return $a['i'] <=> $b['i'];
+        });
+        return array_map(fn ($d) => $d['node'], $decorated);
+    }
+
     private function buildPageTree($folder, array &$tree, ?string $currentPageId, ?string $language = null): void {
+        // Collect siblings locally so we can apply the stable order comparator
+        // (issue #69) before appending them to the tree in the right sequence.
+        $nodes = [];
         foreach ($this->getCachedDirectoryListing($folder) as $item) {
             if ($item->getType() !== \OCP\Files\FileInfo::TYPE_FOLDER) {
                 continue;
@@ -4413,10 +4601,16 @@ class PageService {
                         ]
                     ];
 
+                    // Carry the sibling order (issue #69) for the comparator. Kept
+                    // out of the public node shape below — it's stripped after sort.
+                    if (isset($data['order']) && is_int($data['order'])) {
+                        $pageNode['order'] = $data['order'];
+                    }
+
                     // Recursively get children
                     $this->buildPageTree($item, $pageNode['children'], $currentPageId, $language);
 
-                    $tree[] = $pageNode;
+                    $nodes[] = $pageNode;
                 }
             } catch (\Exception $e) {
                 // This folder doesn't contain a valid page or can't be read, continue
@@ -4424,6 +4618,13 @@ class PageService {
                 // Catch any other errors
                 continue;
             }
+        }
+
+        // Apply the stable sibling order (issue #69) and drop the internal
+        // 'order' key so the tree shape the frontend sees is unchanged.
+        foreach ($this->sortSiblingsByOrder($nodes) as $node) {
+            unset($node['order']);
+            $tree[] = $node;
         }
     }
 

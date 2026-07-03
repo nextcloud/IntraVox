@@ -1220,6 +1220,19 @@
     "_Imported %n connection. Enter API tokens and save._::_Imported %n connections. Enter API tokens and save._" : ["%n Verbindung importiert. API-Tokens eingeben und speichern.","%n Verbindungen importiert. API-Tokens eingeben und speichern."],
     "Whiteboards" : "Whiteboards",
     "Forms" : "Formulare",
-    "Drawings" : "Zeichnungen"
+    "Drawings" : "Zeichnungen",
+    "Manage structure" : "Struktur verwalten",
+    "Done" : "Fertig",
+    "Move up" : "Nach oben",
+    "Move down" : "Nach unten",
+    "Move to another page" : "Auf andere Seite verschieben",
+    "Move page" : "Seite verschieben",
+    "Move this page to:" : "Diese Seite verschieben nach:",
+    "Select a destination" : "Ziel auswählen",
+    "Page order saved" : "Seitenreihenfolge gespeichert",
+    "Could not save page order: {error}" : "Seitenreihenfolge konnte nicht gespeichert werden: {error}",
+    "Page moved" : "Seite verschoben",
+    "Could not move page: {error}" : "Seite konnte nicht verschoben werden: {error}",
+    "Cannot move a page into itself or its descendant" : "Eine Seite kann nicht in sich selbst oder eine untergeordnete Seite verschoben werden"
 },"pluralForm" :"nplurals=2; plural=(n != 1);"
 }

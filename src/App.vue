@@ -182,10 +182,41 @@
 
     <PageTreeModal
       v-if="showPageTree"
+      ref="pageTreeModal"
       :current-page-id="currentPage?.uniqueId"
+      :can-manage="canEditNavigation"
       @close="showPageTree = false"
       @navigate="selectPage"
+      @reorder="reorderPages"
+      @move="openMovePageDialog"
+      @delete="deletePageFromTree"
     />
+
+    <NcDialog
+      v-if="showMoveDialog"
+      :open="true"
+      :name="t('intravox', 'Move page')"
+      size="normal"
+      @close="closeMovePageDialog">
+      <div class="move-page-dialog">
+        <p class="move-page-dialog__label">
+          {{ t('intravox', 'Move this page to:') }}
+        </p>
+        <p class="move-page-dialog__title">{{ movePageNode?.title || '' }}</p>
+        <PageTreeSelect
+          v-model="moveTargetId"
+          :placeholder="t('intravox', 'Select a destination')"
+          @select="onMoveTargetSelect" />
+      </div>
+      <template #actions>
+        <NcButton type="tertiary" @click="closeMovePageDialog">
+          {{ t('intravox', 'Cancel') }}
+        </NcButton>
+        <NcButton type="primary" :disabled="moveInProgress" @click="confirmMovePage">
+          {{ t('intravox', 'Move page') }}
+        </NcButton>
+      </template>
+    </NcDialog>
 
     <NewPageModal
       v-if="showNewPageModal"
@@ -243,7 +274,8 @@ import axios from '@nextcloud/axios';
 import { generateUrl } from '@nextcloud/router';
 import { translate, translatePlural } from '@nextcloud/l10n';
 import { showSuccess, showError } from '@nextcloud/dialogs';
-import { NcButton } from '@nextcloud/vue';
+import PageTreeSelect from './components/PageTreeSelect.vue';
+import { NcButton, NcDialog } from '@nextcloud/vue';
 import ContentSave from 'vue-material-design-icons/ContentSave.vue';
 import Close from 'vue-material-design-icons/Close.vue';
 import Eye from 'vue-material-design-icons/Eye.vue';
@@ -319,6 +351,10 @@ export default {
       error: null,
       showPages: false,
       showPageTree: false,
+      showMoveDialog: false,
+      movePageNode: null,
+      moveTargetId: null,
+      moveInProgress: false,
       showNewPageModal: false,
       showSaveAsTemplateModal: false,
       showDetailsSidebar: false,
@@ -1205,6 +1241,74 @@ export default {
         showError(this.t('intravox', 'Could not delete page: {error}', { error: err.message }));
       }
     },
+    // ---- Page management from the structure modal (issue #69) ----
+    async reorderPages({ parentId, orderedIds }) {
+      try {
+        await axios.post(generateUrl('/apps/intravox/api/pages/reorder'), {
+          parentId: parentId || null,
+          orderedIds,
+        });
+        showSuccess(this.t('intravox', 'Page order saved'));
+        await this.loadPages();
+        if (this.$refs.pageTreeModal) {
+          await this.$refs.pageTreeModal.loadTree();
+        }
+      } catch (err) {
+        showError(this.t('intravox', 'Could not save page order: {error}', { error: err.message }));
+      }
+    },
+    async deletePageFromTree(node) {
+      const pageId = node && node.uniqueId ? node.uniqueId : node;
+      await this.deletePage(pageId);
+      if (this.$refs.pageTreeModal) {
+        await this.$refs.pageTreeModal.loadTree();
+      }
+    },
+    openMovePageDialog(node) {
+      this.movePageNode = node;
+      this.moveTargetId = null;
+      this.showMoveDialog = true;
+    },
+    closeMovePageDialog() {
+      this.showMoveDialog = false;
+      this.movePageNode = null;
+      this.moveTargetId = null;
+    },
+    onMoveTargetSelect(id) {
+      this.moveTargetId = id;
+    },
+    async confirmMovePage() {
+      if (!this.movePageNode) return;
+      const pageId = this.movePageNode.uniqueId;
+      const targetParentId = this.moveTargetId || '';
+      if (targetParentId === pageId) {
+        showError(this.t('intravox', 'Cannot move a page into itself or its descendant'));
+        return;
+      }
+      this.moveInProgress = true;
+      try {
+        const response = await axios.post(generateUrl('/apps/intravox/api/bulk/move'), {
+          pageIds: [pageId],
+          targetParentId,
+        });
+        const failed = response.data?.failed || [];
+        if (failed.length > 0) {
+          const reason = failed[0]?.reason || failed[0]?.error || '';
+          showError(this.t('intravox', 'Could not move page: {error}', { error: reason }));
+        } else {
+          showSuccess(this.t('intravox', 'Page moved'));
+          this.closeMovePageDialog();
+          await this.loadPages();
+          if (this.$refs.pageTreeModal) {
+            await this.$refs.pageTreeModal.loadTree();
+          }
+        }
+      } catch (err) {
+        showError(this.t('intravox', 'Could not move page: {error}', { error: err.message }));
+      } finally {
+        this.moveInProgress = false;
+      }
+    },
     showPageList() {
       this.showPages = true;
     },
@@ -1660,4 +1764,18 @@ export default {
     gap: 4px;
   }
 }
+.move-page-dialog {
+  padding: 8px 4px 4px;
+}
+
+.move-page-dialog__label {
+  margin: 0 0 4px;
+  color: var(--color-text-maxcontrast);
+}
+
+.move-page-dialog__title {
+  margin: 0 0 12px;
+  font-weight: 600;
+}
+
 </style>

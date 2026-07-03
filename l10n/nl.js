@@ -1228,6 +1228,19 @@ OC.L10N.register(
     "_Imported %n connection. Enter API tokens and save._::_Imported %n connections. Enter API tokens and save._" : ["%n verbinding geïmporteerd. Voer API-tokens in en sla op.","%n verbindingen geïmporteerd. Voer API-tokens in en sla op."],
     "Whiteboards" : "Whiteboards",
     "Forms" : "Formulieren",
-    "Drawings" : "Tekeningen"
+    "Drawings" : "Tekeningen",
+    "Manage structure" : "Structuur beheren",
+    "Done" : "Klaar",
+    "Move up" : "Omhoog",
+    "Move down" : "Omlaag",
+    "Move to another page" : "Naar andere pagina verplaatsen",
+    "Move page" : "Pagina verplaatsen",
+    "Move this page to:" : "Verplaats deze pagina naar:",
+    "Select a destination" : "Kies een bestemming",
+    "Page order saved" : "Paginavolgorde opgeslagen",
+    "Could not save page order: {error}" : "Kon paginavolgorde niet opslaan: {error}",
+    "Page moved" : "Pagina verplaatst",
+    "Could not move page: {error}" : "Kon pagina niet verplaatsen: {error}",
+    "Cannot move a page into itself or its descendant" : "Een pagina kan niet naar zichzelf of een onderliggende pagina worden verplaatst"
 },
 "nplurals=2; plural=(n != 1);");

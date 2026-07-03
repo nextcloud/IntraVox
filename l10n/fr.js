@@ -1228,6 +1228,19 @@ OC.L10N.register(
     "_Imported %n connection. Enter API tokens and save._::_Imported %n connections. Enter API tokens and save._" : ["%n connexion importée. Saisissez les jetons API et enregistrez.","%n connexions importées. Saisissez les jetons API et enregistrez.","%n connexions importées. Saisissez les jetons API et enregistrez."],
     "Whiteboards" : "Tableaux blancs",
     "Forms" : "Formulaires",
-    "Drawings" : "Dessins"
+    "Drawings" : "Dessins",
+    "Manage structure" : "Gérer la structure",
+    "Done" : "Terminé",
+    "Move up" : "Monter",
+    "Move down" : "Descendre",
+    "Move to another page" : "Déplacer vers une autre page",
+    "Move page" : "Déplacer la page",
+    "Move this page to:" : "Déplacer cette page vers :",
+    "Select a destination" : "Sélectionner une destination",
+    "Page order saved" : "Ordre des pages enregistré",
+    "Could not save page order: {error}" : "Impossible d'enregistrer l'ordre des pages : {error}",
+    "Page moved" : "Page déplacée",
+    "Could not move page: {error}" : "Impossible de déplacer la page : {error}",
+    "Cannot move a page into itself or its descendant" : "Impossible de déplacer une page dans elle-même ou dans l'une de ses sous-pages"
 },
 "nplurals=3; plural=(n == 0 || n == 1) ? 0 : n != 0 && n % 1000000 == 0 ? 1 : 2;");

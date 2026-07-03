@@ -3,7 +3,17 @@
            :name="modalTitle"
            size="normal">
     <div class="page-tree-content">
-      <h2 class="page-tree-title">{{ modalTitle }}</h2>
+      <div class="page-tree-header">
+        <h2 class="page-tree-title">{{ modalTitle }}</h2>
+        <NcButton v-if="canManage && !loading && !error && tree.length > 0"
+                  type="tertiary"
+                  @click="manageMode = !manageMode">
+          <template #icon>
+            <Cog :size="20" />
+          </template>
+          {{ manageMode ? t('intravox', 'Done') : t('intravox', 'Manage structure') }}
+        </NcButton>
+      </div>
 
       <div v-if="loading" class="loading-state">
         <NcLoadingIcon :size="32" />
@@ -21,12 +31,20 @@
       <div v-else class="page-tree">
         <ul class="tree-list">
           <PageTreeItem
-            v-for="item in tree"
+            v-for="(item, idx) in tree"
             :key="item.uniqueId"
             :item="item"
             :expanded-nodes="expandedNodes"
+            :manage-mode="manageMode"
+            :parent-id="null"
+            :is-first="idx === 0"
+            :is-last="idx === tree.length - 1"
             @toggle="toggleNode"
             @navigate="handleNavigate"
+            @move-up="handleMoveUp"
+            @move-down="handleMoveDown"
+            @move-to="handleMoveTo"
+            @delete="handleDelete"
           />
         </ul>
       </div>
@@ -36,7 +54,8 @@
 
 <script>
 import { translate, translatePlural } from '@nextcloud/l10n';
-import { NcModal, NcLoadingIcon } from '@nextcloud/vue';
+import { NcModal, NcLoadingIcon, NcButton } from '@nextcloud/vue';
+import Cog from 'vue-material-design-icons/Cog.vue';
 import axios from '@nextcloud/axios';
 import { generateUrl } from '@nextcloud/router';
 import PageTreeItem from './PageTreeItem.vue';
@@ -46,7 +65,9 @@ export default {
   components: {
     NcModal,
     NcLoadingIcon,
-    PageTreeItem
+    NcButton,
+    PageTreeItem,
+    Cog
   },
   props: {
     currentPageId: {
@@ -56,15 +77,20 @@ export default {
     shareToken: {
       type: String,
       default: null
+    },
+    canManage: {
+      type: Boolean,
+      default: false
     }
   },
-  emits: ['close', 'navigate'],
+  emits: ['close', 'navigate', 'reorder', 'move', 'delete'],
   data() {
     return {
       tree: [],
       loading: true,
       error: null,
-      expandedNodes: new Set()
+      expandedNodes: new Set(),
+      manageMode: false
     };
   },
   computed: {
@@ -76,8 +102,8 @@ export default {
     await this.loadTree();
   },
   methods: {
-    t(key, vars = {}) {
-      return translate('intravox', key, vars);
+    t(app, text, vars) {
+      return translate(app, text, vars);
     },
     async loadTree() {
       this.loading = true;
@@ -143,6 +169,57 @@ export default {
     handleNavigate(uniqueId) {
       this.$emit('navigate', uniqueId);
       this.$emit('close');
+    },
+    // ---- Manage: reorder / move / delete (issue #69) ----
+    findSiblingList(nodes, parentId) {
+      if (parentId === null || parentId === undefined || parentId === '') {
+        return nodes;
+      }
+      for (const node of nodes) {
+        if (node.uniqueId === parentId) {
+          return node.children || [];
+        }
+        if (node.children && node.children.length) {
+          const found = this.findSiblingList(node.children, parentId);
+          if (found) return found;
+        }
+      }
+      return null;
+    },
+    parentIdOf(targetId, nodes = this.tree, parent = null) {
+      for (const node of nodes) {
+        if (node.uniqueId === targetId) return parent;
+        if (node.children && node.children.length) {
+          const found = this.parentIdOf(targetId, node.children, node.uniqueId);
+          if (found !== undefined) return found;
+        }
+      }
+      return undefined;
+    },
+    emitReorderAfterSwap(uniqueId, delta) {
+      const parentId = this.parentIdOf(uniqueId);
+      if (parentId === undefined) return;
+      const siblings = this.findSiblingList(this.tree, parentId);
+      if (!siblings) return;
+      const i = siblings.findIndex(n => n.uniqueId === uniqueId);
+      const j = i + delta;
+      if (i < 0 || j < 0 || j >= siblings.length) return;
+      const reordered = siblings.slice();
+      [reordered[i], reordered[j]] = [reordered[j], reordered[i]];
+      const orderedIds = reordered.map(n => n.uniqueId);
+      this.$emit('reorder', { parentId: parentId || null, orderedIds });
+    },
+    handleMoveUp(uniqueId) {
+      this.emitReorderAfterSwap(uniqueId, -1);
+    },
+    handleMoveDown(uniqueId) {
+      this.emitReorderAfterSwap(uniqueId, 1);
+    },
+    handleMoveTo(node) {
+      this.$emit('move', node);
+    },
+    handleDelete(node) {
+      this.$emit('delete', node);
     }
   }
 };
@@ -151,6 +228,18 @@ export default {
 <style scoped>
 .page-tree-content {
   padding: 20px;
+}
+
+.page-tree-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.page-tree-header .page-tree-title {
+  margin: 0;
 }
 
 .page-tree-title {

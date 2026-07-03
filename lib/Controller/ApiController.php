@@ -412,6 +412,53 @@ class ApiController extends Controller {
     }
 
     /**
+     * Reorder sibling pages within a parent (issue #69).
+     *
+     * @NoAdminRequired
+     */
+    #[UserRateThrottle(limit: 20, period: 60)]
+    public function reorderPages(?string $parentId = null, array $orderedIds = []): DataResponse {
+        try {
+            if (!is_array($orderedIds) || count($orderedIds) === 0) {
+                throw new \InvalidArgumentException('orderedIds must be a non-empty array');
+            }
+            foreach ($orderedIds as $childId) {
+                if (!is_string($childId) || $childId === '') {
+                    throw new \InvalidArgumentException('orderedIds must contain non-empty strings');
+                }
+            }
+
+            // Write permission is checked on the PARENT (root or the parent page),
+            // respecting GroupFolder ACLs so e.g. a department editor can reorder
+            // within their own department but not elsewhere.
+            $relPath = '';
+            if ($parentId !== null && $parentId !== '') {
+                $parentPage = $this->pageService->getPage($parentId);
+                $relPath = $parentPage['path'] ?? '';
+            }
+            if (!($this->pageService->getFolderPermissions($relPath)['canWrite'] ?? false)) {
+                return new DataResponse(
+                    ['error' => 'Permission denied: cannot reorder pages here'],
+                    Http::STATUS_FORBIDDEN
+                );
+            }
+
+            $this->pageService->reorderSiblings(($parentId !== '' ? $parentId : null), $orderedIds);
+            return new DataResponse(['success' => true]);
+        } catch (\InvalidArgumentException $e) {
+            return new DataResponse(
+                ['error' => $e->getMessage()],
+                Http::STATUS_BAD_REQUEST
+            );
+        } catch (\Exception $e) {
+            return new DataResponse(
+                ['error' => $e->getMessage()],
+                Http::STATUS_INTERNAL_SERVER_ERROR
+            );
+        }
+    }
+
+    /**
      * Upload media (image or video) for a page
      * Unified endpoint that stores all media in a single 'media' folder
      * @NoAdminRequired

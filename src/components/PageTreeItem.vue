@@ -19,17 +19,65 @@
         <span class="tree-item-title">{{ item.title }}</span>
         <span v-if="item.isCurrent" class="current-badge">{{ t('intravox', 'Current') }}</span>
       </button>
+
+      <!-- Manage actions (issue #69) -->
+      <div v-if="manageMode" class="tree-item-actions">
+        <button
+          class="tree-action"
+          :disabled="isFirst"
+          :aria-label="t('intravox', 'Move up')"
+          :title="t('intravox', 'Move up')"
+          @click="$emit('move-up', item.uniqueId)"
+        >
+          <ArrowUp :size="18" />
+        </button>
+        <button
+          class="tree-action"
+          :disabled="isLast"
+          :aria-label="t('intravox', 'Move down')"
+          :title="t('intravox', 'Move down')"
+          @click="$emit('move-down', item.uniqueId)"
+        >
+          <ArrowDown :size="18" />
+        </button>
+        <button
+          v-if="item.uniqueId !== 'home'"
+          class="tree-action"
+          :aria-label="t('intravox', 'Move to another page')"
+          :title="t('intravox', 'Move to another page')"
+          @click="$emit('move-to', item)"
+        >
+          <FolderMove :size="18" />
+        </button>
+        <button
+          v-if="item.uniqueId !== 'home' && (item.permissions && item.permissions.canDelete)"
+          class="tree-action tree-action--danger"
+          :aria-label="t('intravox', 'Delete')"
+          :title="t('intravox', 'Delete')"
+          @click="$emit('delete', item)"
+        >
+          <Delete :size="18" />
+        </button>
+      </div>
     </div>
 
     <!-- Children (progressive rendering: show up to visibleChildCount, expand on demand) -->
     <ul v-if="hasChildren && isExpanded" class="tree-children">
       <PageTreeItem
-        v-for="child in visibleChildren"
+        v-for="(child, idx) in visibleChildren"
         :key="child.uniqueId"
         :item="child"
         :expanded-nodes="expandedNodes"
+        :manage-mode="manageMode"
+        :parent-id="item.uniqueId"
+        :is-first="idx === 0"
+        :is-last="idx === visibleChildren.length - 1"
         @toggle="(id) => $emit('toggle', id)"
         @navigate="(id) => $emit('navigate', id)"
+        @move-up="(id) => $emit('move-up', id)"
+        @move-down="(id) => $emit('move-down', id)"
+        @move-to="(node) => $emit('move-to', node)"
+        @delete="(node) => $emit('delete', node)"
       />
       <li v-if="hasMoreChildren" class="tree-show-more">
         <button class="show-more-button" @click="showMoreChildren">
@@ -45,13 +93,21 @@ import { translate, translatePlural } from '@nextcloud/l10n';
 import ChevronRight from 'vue-material-design-icons/ChevronRight.vue';
 import ChevronDown from 'vue-material-design-icons/ChevronDown.vue';
 import FileDocument from 'vue-material-design-icons/FileDocument.vue';
+import ArrowUp from 'vue-material-design-icons/ArrowUp.vue';
+import ArrowDown from 'vue-material-design-icons/ArrowDown.vue';
+import FolderMove from 'vue-material-design-icons/FolderMove.vue';
+import Delete from 'vue-material-design-icons/Delete.vue';
 
 export default {
   name: 'PageTreeItem',
   components: {
     ChevronRight,
     ChevronDown,
-    FileDocument
+    FileDocument,
+    ArrowUp,
+    ArrowDown,
+    FolderMove,
+    Delete
   },
   props: {
     item: {
@@ -61,9 +117,25 @@ export default {
     expandedNodes: {
       type: Set,
       required: true
+    },
+    manageMode: {
+      type: Boolean,
+      default: false
+    },
+    isFirst: {
+      type: Boolean,
+      default: false
+    },
+    isLast: {
+      type: Boolean,
+      default: false
+    },
+    parentId: {
+      type: String,
+      default: null
     }
   },
-  emits: ['toggle', 'navigate'],
+  emits: ['toggle', 'navigate', 'move-up', 'move-down', 'move-to', 'delete'],
   data() {
     return {
       visibleChildCount: 50,
@@ -85,8 +157,8 @@ export default {
     },
   },
   methods: {
-    t(key, vars = {}) {
-      return translate('intravox', key, vars);
+    t(app, text, vars) {
+      return translate(app, text, vars);
     },
     showMoreChildren() {
       this.visibleChildCount += 50;
@@ -180,6 +252,42 @@ export default {
   color: var(--color-primary-element-text);
   border-radius: 10px;
   font-weight: 500;
+}
+
+.tree-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  margin-left: 4px;
+}
+
+.tree-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-maxcontrast);
+  border-radius: var(--border-radius);
+}
+
+.tree-action:hover:not(:disabled) {
+  background: var(--color-background-dark);
+  color: var(--color-main-text);
+}
+
+.tree-action:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.tree-action--danger:hover:not(:disabled) {
+  color: var(--color-error);
 }
 
 .tree-children {
