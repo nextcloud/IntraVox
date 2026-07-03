@@ -27,6 +27,7 @@
 
 <script>
 import { NcButton, NcPopover } from '@nextcloud/vue'
+import { translate } from '@nextcloud/l10n'
 import Plus from 'vue-material-design-icons/Plus.vue'
 
 export default {

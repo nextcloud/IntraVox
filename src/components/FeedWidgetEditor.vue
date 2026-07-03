@@ -289,6 +289,7 @@
 <script>
 import { defineAsyncComponent } from 'vue';
 import axios from '@nextcloud/axios';
+import { translate } from '@nextcloud/l10n';
 import { generateUrl } from '@nextcloud/router';
 
 export default {

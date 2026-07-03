@@ -155,6 +155,11 @@ class PageController extends Controller {
             // The app will call the API with the share token for actual validation
         }
 
+        // Webpack splits into: vendors (node_modules) → shared (code used by
+        // both main+admin, e.g. PageTreeSelect) → main. All three must load or
+        // the main entry's runtime never fires its mount (blank page, no error).
+        Util::addScript('intravox', 'intravox-vendors');
+        Util::addScript('intravox', 'intravox-shared');
         Util::addScript('intravox', 'intravox-main');
         Util::addStyle('intravox', 'main');
 
@@ -233,6 +238,11 @@ class PageController extends Controller {
             }
         }
 
+        // Webpack splits into: vendors (node_modules) → shared (code used by
+        // both main+admin, e.g. PageTreeSelect) → main. All three must load or
+        // the main entry's runtime never fires its mount (blank page, no error).
+        Util::addScript('intravox', 'intravox-vendors');
+        Util::addScript('intravox', 'intravox-shared');
         Util::addScript('intravox', 'intravox-main');
         Util::addStyle('intravox', 'main');
 
@@ -329,6 +339,11 @@ class PageController extends Controller {
         // Add random delay to mask timing differences
         usleep(random_int(10000, 50000)); // 10-50ms
 
+        // Webpack splits into: vendors (node_modules) → shared (code used by
+        // both main+admin, e.g. PageTreeSelect) → main. All three must load or
+        // the main entry's runtime never fires its mount (blank page, no error).
+        Util::addScript('intravox', 'intravox-vendors');
+        Util::addScript('intravox', 'intravox-shared');
         Util::addScript('intravox', 'intravox-main');
         Util::addStyle('intravox', 'main');
 
@@ -373,6 +388,11 @@ class PageController extends Controller {
     #[NoAdminRequired]
     #[NoCSRFRequired]
     public function show(string $id): TemplateResponse {
+        // Webpack splits into: vendors (node_modules) → shared (code used by
+        // both main+admin, e.g. PageTreeSelect) → main. All three must load or
+        // the main entry's runtime never fires its mount (blank page, no error).
+        Util::addScript('intravox', 'intravox-vendors');
+        Util::addScript('intravox', 'intravox-shared');
         Util::addScript('intravox', 'intravox-main');
         Util::addStyle('intravox', 'main');
 
@@ -387,6 +407,11 @@ class PageController extends Controller {
     public function languagePage(string $language, string $pageId): TemplateResponse {
         // This route handles URLs like /en/home
         // Return the same template as index - Vue.js will handle routing client-side
+        // Webpack splits into: vendors (node_modules) → shared (code used by
+        // both main+admin, e.g. PageTreeSelect) → main. All three must load or
+        // the main entry's runtime never fires its mount (blank page, no error).
+        Util::addScript('intravox', 'intravox-vendors');
+        Util::addScript('intravox', 'intravox-shared');
         Util::addScript('intravox', 'intravox-main');
         Util::addStyle('intravox', 'main');
 
@@ -405,6 +430,11 @@ class PageController extends Controller {
     #[NoAdminRequired]
     #[NoCSRFRequired]
     public function showByUniqueId(string $uniqueId): TemplateResponse {
+        // Webpack splits into: vendors (node_modules) → shared (code used by
+        // both main+admin, e.g. PageTreeSelect) → main. All three must load or
+        // the main entry's runtime never fires its mount (blank page, no error).
+        Util::addScript('intravox', 'intravox-vendors');
+        Util::addScript('intravox', 'intravox-shared');
         Util::addScript('intravox', 'intravox-main');
         Util::addStyle('intravox', 'main');
 

@@ -29,6 +29,7 @@
 
 <script>
 import axios from '@nextcloud/axios';
+import { translate } from '@nextcloud/l10n';
 import { generateUrl } from '@nextcloud/router';
 import { NcLoadingIcon } from '@nextcloud/vue';
 import AlertCircle from 'vue-material-design-icons/AlertCircle.vue';
