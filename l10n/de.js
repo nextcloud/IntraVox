@@ -1219,6 +1219,9 @@ OC.L10N.register(
     "_Found %n orphaned data folder from a previous installation._::_Found %n orphaned data folders from a previous installation._" : ["%n verwaisten Datenordner aus einer früheren Installation gefunden.","%n verwaiste Datenordner aus einer früheren Installation gefunden."],
     "_Found %n orphaned folder_::_Found %n orphaned folders_" : ["%n verwaisten Ordner gefunden","%n verwaiste Ordner gefunden"],
     "_Import %n connection_::_Import %n connections_" : ["%n Verbindung importieren","%n Verbindungen importieren"],
-    "_Imported %n connection. Enter API tokens and save._::_Imported %n connections. Enter API tokens and save._" : ["%n Verbindung importiert. API-Tokens eingeben und speichern.","%n Verbindungen importiert. API-Tokens eingeben und speichern."]
+    "_Imported %n connection. Enter API tokens and save._::_Imported %n connections. Enter API tokens and save._" : ["%n Verbindung importiert. API-Tokens eingeben und speichern.","%n Verbindungen importiert. API-Tokens eingeben und speichern."],
+    "Whiteboards" : "Whiteboards",
+    "Forms" : "Formulare",
+    "Drawings" : "Zeichnungen"
 },
 "nplurals=2; plural=(n != 1);");

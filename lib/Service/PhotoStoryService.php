@@ -77,14 +77,23 @@ class PhotoStoryService {
 		'application/vnd.oasis.opendocument.text',
 		'application/vnd.oasis.opendocument.spreadsheet',
 		'application/vnd.oasis.opendocument.presentation',
-		// Text + markdown
+		'application/vnd.oasis.opendocument.graphics',
+		// Text + markdown ('text/x-markdown' is how some NC installs register .md)
 		'text/markdown',
+		'text/x-markdown',
 		'text/plain',
 		'text/csv',
 		'text/html',
 		// Misc structured docs
 		'application/rtf',
 		'application/epub+zip',
+		// Nextcloud Whiteboard (Excalidraw-based). Surfaced like any other
+		// document; it has no server-side preview, so the widget falls back to
+		// the mime-icon + ".whiteboard" extension placeholder. See #68.
+		'application/vnd.excalidraw+json',
+		// FormVox forms (.fvform). FormVox registers a preview provider for this
+		// mimetype, so these render with a real thumbnail. See #68.
+		'application/x-fvform',
 	];
 
 	private const HIGH_VALUE_SUBJECTS = [

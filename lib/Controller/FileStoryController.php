@@ -302,6 +302,9 @@ class FileStoryController extends Controller {
 			if (str_contains($mime, 'sheet') || str_contains($mime, 'excel')) return $this->l10n->t('Spreadsheets');
 			if (str_contains($mime, 'presentation') || str_contains($mime, 'powerpoint')) return $this->l10n->t('Presentations');
 			if (str_contains($mime, 'markdown') || $mime === 'text/plain') return $this->l10n->t('Text');
+			if (str_contains($mime, 'excalidraw')) return $this->l10n->t('Whiteboards');
+			if (str_contains($mime, 'fvform')) return $this->l10n->t('Forms');
+			if (str_contains($mime, 'opendocument.graphics')) return $this->l10n->t('Drawings');
 			return $this->l10n->t('Other');
 		}
 		// Well-known photo fields stored at the row level

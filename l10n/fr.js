@@ -1225,6 +1225,9 @@ OC.L10N.register(
     "_Found %n orphaned data folder from a previous installation._::_Found %n orphaned data folders from a previous installation._" : ["%n dossier de données orphelin trouvé d'une installation précédente.","%n dossiers de données orphelins trouvés d'une installation précédente.","%n dossiers de données orphelins trouvés d'une installation précédente."],
     "_Found %n orphaned folder_::_Found %n orphaned folders_" : ["%n dossier orphelin trouvé","%n dossiers orphelins trouvés","%n dossiers orphelins trouvés"],
     "_Import %n connection_::_Import %n connections_" : ["Importer %n connexion","Importer %n connexions","Importer %n connexions"],
-    "_Imported %n connection. Enter API tokens and save._::_Imported %n connections. Enter API tokens and save._" : ["%n connexion importée. Saisissez les jetons API et enregistrez.","%n connexions importées. Saisissez les jetons API et enregistrez.","%n connexions importées. Saisissez les jetons API et enregistrez."]
+    "_Imported %n connection. Enter API tokens and save._::_Imported %n connections. Enter API tokens and save._" : ["%n connexion importée. Saisissez les jetons API et enregistrez.","%n connexions importées. Saisissez les jetons API et enregistrez.","%n connexions importées. Saisissez les jetons API et enregistrez."],
+    "Whiteboards" : "Tableaux blancs",
+    "Forms" : "Formulaires",
+    "Drawings" : "Dessins"
 },
 "nplurals=3; plural=(n == 0 || n == 1) ? 0 : n != 0 && n % 1000000 == 0 ? 1 : 2;");

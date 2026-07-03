@@ -4,6 +4,12 @@ All notable changes to IntraVox will be documented in this file.
 
 IntraVox is a Nextcloud intranet page builder.
 
+## [Unreleased]
+
+### Fixed
+
+- **File Story widget now shows Whiteboard and FormVox files** ([#68](https://github.com/nextcloud/IntraVox/issues/68)). The widget filtered files through a hardcoded document-mimetype allowlist that omitted Nextcloud Whiteboard (`application/vnd.excalidraw+json`) and FormVox forms (`application/x-fvform`), so those files were silently dropped from a picked folder. Both are now included — FormVox forms render with their real preview, whiteboards fall back to the mime-icon placeholder — and each groups under its own "Whiteboards" / "Forms" category. Also added `.odg` drawings (`application/vnd.oasis.opendocument.graphics`, grouped as "Drawings") and the `text/x-markdown` alias so `.md` files aren't dropped on installs that register markdown that way.
+
 ## [1.7.0] - 2026-07-03 — Clearer landing page + VoxCloud language model + full language management + translation cleanup
 
 When an editor maintained content only in one language (e.g. Dutch) and a user's Nextcloud language was set to another (e.g. English), the user silently saw a generic placeholder homepage — the editor's real work was invisible and there was no hint that this was a fallback. This release replaces that silent placeholder with a clear notice, gives admins full control over which languages the intranet holds content in, aligns the language handling with the wider VoxCloud model, and brings all source strings in line with the Nextcloud translation guidelines so the Transifex resource could be unlocked for translators.

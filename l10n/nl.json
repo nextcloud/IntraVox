@@ -1223,6 +1223,9 @@
     "_Found %n orphaned data folder from a previous installation._::_Found %n orphaned data folders from a previous installation._" : ["%n verweesde gegevensmap gevonden van een vorige installatie.","%n verweesde gegevensmappen gevonden van een vorige installatie."],
     "_Found %n orphaned folder_::_Found %n orphaned folders_" : ["%n verweesde map gevonden","%n verweesde mappen gevonden"],
     "_Import %n connection_::_Import %n connections_" : ["%n verbinding importeren","%n verbindingen importeren"],
-    "_Imported %n connection. Enter API tokens and save._::_Imported %n connections. Enter API tokens and save._" : ["%n verbinding geïmporteerd. Voer API-tokens in en sla op.","%n verbindingen geïmporteerd. Voer API-tokens in en sla op."]
+    "_Imported %n connection. Enter API tokens and save._::_Imported %n connections. Enter API tokens and save._" : ["%n verbinding geïmporteerd. Voer API-tokens in en sla op.","%n verbindingen geïmporteerd. Voer API-tokens in en sla op."],
+    "Whiteboards" : "Whiteboards",
+    "Forms" : "Formulieren",
+    "Drawings" : "Tekeningen"
 },"pluralForm" :"nplurals=2; plural=(n != 1);"
 }
