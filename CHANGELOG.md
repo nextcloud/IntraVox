@@ -4,7 +4,7 @@ All notable changes to IntraVox will be documented in this file.
 
 IntraVox is a Nextcloud intranet page builder.
 
-## [1.7.0] - 2026-06-22 — Clearer landing page + VoxCloud language model + full language management + translation cleanup
+## [1.7.0] - 2026-07-03 — Clearer landing page + VoxCloud language model + full language management + translation cleanup
 
 When an editor maintained content only in one language (e.g. Dutch) and a user's Nextcloud language was set to another (e.g. English), the user silently saw a generic placeholder homepage — the editor's real work was invisible and there was no hint that this was a fallback. This release replaces that silent placeholder with a clear notice, gives admins full control over which languages the intranet holds content in, aligns the language handling with the wider VoxCloud model, and brings all source strings in line with the Nextcloud translation guidelines so the Transifex resource could be unlocked for translators.
 
@@ -21,6 +21,7 @@ When an editor maintained content only in one language (e.g. Dutch) and a user's
 - **"Active" languages are now derived from content, not an opt-in list.** A language is active once it has a homepage; the `enabled_languages` opt-in checkbox grid is replaced by a "languages with content" view plus add/remove controls. Real (editor-authored) content is told apart from auto-generated placeholders via a `_generated` marker, dropped automatically the first time an editor saves the page. The admin chip list shows active languages (any homepage, including a freshly added placeholder), while the fallback notice keeps the stricter "real content" rule so a placeholder never masks "no content in your language".
 - **Demo content table** now lists exactly the languages IntraVox ships bundled demo content for (Dutch, English, German, French), independent of the deprecated enabled-list (German was previously missing). Hint reworded accordingly.
 - **Source strings aligned with the Nextcloud translation guidelines** ([#63](https://github.com/nextcloud/IntraVox/issues/63)): sentence-case for headings/labels/buttons (e.g. "Demo Data" → "Demo data", "API Token" → "API token"), a non-breaking space before every ellipsis, "GroupFolder"/"Team Folder" → "Team folder" wording, real gettext plurals for relative-time and file-count strings, URL/placeholder values removed from `t()`, and the redundant translated language-name helper dropped (the picker uses Nextcloud's own localized names).
+- **Complete Dutch, German and French UI translations bundled** (all ~1220 interface strings, including plurals). After the source-string cleanup the Transifex resource was re-provisioned without the earlier translation memory, so these are shipped in `l10n/` and also serve as translation memory for the next Transifex sync — the community can refine them online from a fully-translated baseline instead of from scratch.
 
 ### Fixed
 
