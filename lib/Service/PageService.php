@@ -857,21 +857,68 @@ class PageService {
      * read as real (no marker present) — which is the safe, no-regression
      * default.
      */
-    private function languageFolderHasRealContent(\OCP\Files\Folder $langFolder): bool {
+    /**
+     * Resolve the homepage JSON for a language folder regardless of storage form
+     * (configurable homepage). Checks, in order:
+     *   1. a `homepage.json` pointer → the designated root page's JSON;
+     *   2. the legacy loose `home.json`;
+     *   3. a normalized `home/home.json` folder page (post-normalization default).
+     *
+     * Returns the decoded page data array, or null when no homepage exists.
+     */
+    private function resolveLanguageHomepageData(\OCP\Files\Folder $langFolder): ?array {
+        // 1. Pointer.
         try {
-            $homeFile = $langFolder->get('home.json');
-        } catch (NotFoundException $e) {
-            return false;
-        }
-        if (!($homeFile instanceof \OCP\Files\File)) {
-            return false;
-        }
-        try {
-            $data = json_decode($homeFile->getContent(), true);
+            if ($langFolder->nodeExists('homepage.json')) {
+                $ptr = json_decode($langFolder->get('homepage.json')->getContent(), true);
+                $uid = is_array($ptr) ? ($ptr['homepageUniqueId'] ?? null) : null;
+                if (is_string($uid) && $uid !== '') {
+                    $target = $this->findPageByUniqueId($langFolder, $uid);
+                    if ($target !== null && isset($target['file'])) {
+                        $data = json_decode($target['file']->getContent(), true);
+                        if (is_array($data) && isset($data['title'])) {
+                            return $data;
+                        }
+                    }
+                }
+            }
         } catch (\Throwable $e) {
-            return false;
+            // Fall through to loose/normalized forms.
         }
-        if (!is_array($data) || !isset($data['title'])) {
+
+        // 2. Legacy loose home.json.
+        try {
+            if ($langFolder->nodeExists('home.json')) {
+                $data = json_decode($langFolder->get('home.json')->getContent(), true);
+                if (is_array($data) && isset($data['title'])) {
+                    return $data;
+                }
+            }
+        } catch (\Throwable $e) {
+            // Fall through.
+        }
+
+        // 3. Normalized home/home.json.
+        try {
+            if ($langFolder->nodeExists('home')) {
+                $homeFolder = $langFolder->get('home');
+                if ($homeFolder instanceof \OCP\Files\Folder && $homeFolder->nodeExists('home.json')) {
+                    $data = json_decode($homeFolder->get('home.json')->getContent(), true);
+                    if (is_array($data) && isset($data['title'])) {
+                        return $data;
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            // Fall through.
+        }
+
+        return null;
+    }
+
+    private function languageFolderHasRealContent(\OCP\Files\Folder $langFolder): bool {
+        $data = $this->resolveLanguageHomepageData($langFolder);
+        if ($data === null) {
             return false;
         }
         return empty($data['_generated']);
@@ -884,20 +931,7 @@ class PageService {
      * active intranet language even before an editor fills it.
      */
     private function languageFolderHasHomepage(\OCP\Files\Folder $langFolder): bool {
-        try {
-            $homeFile = $langFolder->get('home.json');
-        } catch (NotFoundException $e) {
-            return false;
-        }
-        if (!($homeFile instanceof \OCP\Files\File)) {
-            return false;
-        }
-        try {
-            $data = json_decode($homeFile->getContent(), true);
-        } catch (\Throwable $e) {
-            return false;
-        }
-        return is_array($data) && isset($data['title']);
+        return $this->resolveLanguageHomepageData($langFolder) !== null;
     }
 
     /**
@@ -2075,73 +2109,11 @@ class PageService {
             return;
         }
 
-        // Lazily normalize a still-loose home.json into a folder page so the old
-        // homepage is no longer special-cased in storage.
-        if ($languageFolder->nodeExists('home.json')) {
-            // Only normalize when the new target is NOT the loose home itself.
-            if (!$isLooseHome) {
-                $this->normalizeLooseHomepage($lang);
-            }
-        }
-
+        // Pages never move when the homepage changes — only the pointer shifts.
+        // The old loose home.json simply stays where it is and shows up as a
+        // normal root page once the pointer designates a different page.
         $this->homepageService->setHomepageUniqueId($uniqueId, $lang);
         $this->clearCache();
-    }
-
-    /**
-     * Normalize the legacy loose `home.json` in the language root into a regular
-     * page folder `home/home.json` (issue: configurable homepage). Called once,
-     * lazily, when an admin points the homepage at a DIFFERENT page — so the old
-     * homepage becomes "just another root page" and can be reordered/moved.
-     *
-     * The page's uniqueId is preserved (links/nav/comments key on it). The `home`
-     * folder name is made collision-safe (-2/-3) like createPage. Caches cleared.
-     *
-     * @return string|null The new folder slug, or null when there was nothing to
-     *                     normalize (no loose home.json).
-     */
-    public function normalizeLooseHomepage(?string $language = null): ?string {
-        $languageFolder = $language !== null
-            ? $this->getLanguageFolderByCode($language)
-            : $this->getLanguageFolder();
-
-        if (!$languageFolder->nodeExists('home.json')) {
-            return null; // Already normalized / no loose home.
-        }
-
-        $homeContent = $languageFolder->get('home.json')->getContent();
-
-        // Collision-safe folder name (mirror createPage's -2/-3 logic).
-        $baseName = 'home';
-        $newName = $baseName;
-        $counter = 2;
-        while ($languageFolder->nodeExists($newName)) {
-            $newName = $baseName . '-' . $counter;
-            $counter++;
-        }
-
-        // Create the folder and write the page JSON as {folder}/{folder}.json.
-        $pageFolder = $languageFolder->newFolder($newName);
-        $pageFolder->newFile($newName . '.json')->putContent($homeContent);
-
-        // Move the loose _media folder (if any) inside the new page folder.
-        if ($languageFolder->nodeExists('_media')) {
-            try {
-                $languageFolder->get('_media')->move($pageFolder->getPath() . '/_media');
-            } catch (\Exception $e) {
-                $this->logger->warning('normalizeLooseHomepage: could not move _media', ['error' => $e->getMessage()]);
-            }
-        }
-
-        // Remove the old loose home.json now its content lives in the folder.
-        try {
-            $languageFolder->get('home.json')->delete();
-        } catch (\Exception $e) {
-            $this->logger->warning('normalizeLooseHomepage: could not delete loose home.json', ['error' => $e->getMessage()]);
-        }
-
-        $this->clearCache();
-        return $newName;
     }
 
     public function movePage(string $pageId, string $targetParentId): void {
