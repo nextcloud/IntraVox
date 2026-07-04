@@ -983,11 +983,21 @@ class PageService {
         sort($withContent);
         sort($active);
 
+        // The resolved homepage uniqueId for the user's language, so the app can
+        // land on the configured homepage on first load (configurable homepage).
+        $homepageUniqueId = null;
+        try {
+            $homepageUniqueId = $this->resolveHomepageNodeUniqueId($userLang);
+        } catch (\Throwable $e) {
+            // Non-fatal: the frontend falls back to its own heuristic.
+        }
+
         return [
             'language' => $userLang,
             'hasContent' => in_array($userLang, $withContent, true),
             'languagesWithContent' => $withContent,
             'activeLanguages' => $active,
+            'homepageUniqueId' => $homepageUniqueId,
         ];
     }
 

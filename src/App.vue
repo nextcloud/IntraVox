@@ -583,9 +583,15 @@ export default {
             }
           }
 
-          // Fall back to home page if no hash or page not found
+          // Fall back to home page if no hash or page not found. Prefer the
+          // configured homepage pointer, then the slug/path heuristic.
           if (!targetPage) {
-            targetPage = findHomePage(this.pages);
+            if (this.homepageUniqueId) {
+              targetPage = this.pages.find(p => p.uniqueId === this.homepageUniqueId);
+            }
+            if (!targetPage) {
+              targetPage = findHomePage(this.pages);
+            }
           }
 
           // Validate targetPage has a uniqueId before selecting
@@ -1486,7 +1492,7 @@ export default {
       const hash = window.location.hash;
       if (!hash || hash === '#') {
         // No hash, load home page
-        const homePage = findHomePage(this.pages);
+        const homePage = this.resolveHomePage();
         if (homePage) {
           this.selectPage(homePage.uniqueId, false);
         }
@@ -1503,7 +1509,7 @@ export default {
         this.selectPage(targetPage.uniqueId, false);
       } else {
         // Fall back to home
-        const homePage = findHomePage(this.pages);
+        const homePage = this.resolveHomePage();
         if (homePage) {
           this.selectPage(homePage.uniqueId, true);
         }
@@ -1581,10 +1587,24 @@ export default {
       try {
         const response = await axios.get(generateUrl('/apps/intravox/api/languages/content-status'));
         this.languageContentStatus = response.data;
+        // Configurable homepage: prefer the server-resolved pointer for the
+        // initial page choice (falls back to the slug/path heuristic below).
+        if (response.data && response.data.homepageUniqueId) {
+          this.homepageUniqueId = response.data.homepageUniqueId;
+        }
       } catch (err) {
         // Silent fail - notice simply won't show
         this.languageContentStatus = null;
       }
+    },
+    // Resolve the homepage to land on: prefer the configured pointer, then the
+    // legacy slug/path heuristic (configurable homepage).
+    resolveHomePage() {
+      if (this.homepageUniqueId) {
+        const byPointer = this.pages.find(p => p.uniqueId === this.homepageUniqueId);
+        if (byPointer) return byPointer;
+      }
+      return findHomePage(this.pages);
     },
     async handlePageSettingsSave(settings) {
       if (!this.currentPage) return;
