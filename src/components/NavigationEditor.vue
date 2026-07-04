@@ -7,6 +7,10 @@
       <!-- Hidden element to capture autofocus -->
       <input type="text" style="position: absolute; opacity: 0; pointer-events: none;" autofocus aria-label="Focus trap" />
 
+      <NcNoteCard type="info">
+        {{ t('intravox', 'This changes the menu links and their order only. It does not move or rename the actual pages. To organize pages, use "Page structure" in the navigation bar.') }}
+      </NcNoteCard>
+
       <!-- Actions at top with type selector on left -->
       <div class="modal-actions-top">
         <div class="type-selector-left">
@@ -72,7 +76,7 @@
 
 <script>
 import { translate, translatePlural } from '@nextcloud/l10n';
-import { NcModal, NcButton, NcSelect } from '@nextcloud/vue';
+import { NcModal, NcButton, NcSelect, NcNoteCard } from '@nextcloud/vue';
 import draggable from 'vuedraggable';
 import Plus from 'vue-material-design-icons/Plus.vue';
 import ContentSave from 'vue-material-design-icons/ContentSave.vue';
@@ -81,6 +85,7 @@ import NavigationItem from './NavigationItem.vue';
 export default {
   name: 'NavigationEditor',
   components: {
+    NcNoteCard,
     NcModal,
     NcButton,
     NcSelect,

@@ -1239,6 +1239,17 @@
     "Could not save page order: {error}" : "Impossible d'enregistrer l'ordre des pages : {error}",
     "Page moved" : "Page déplacée",
     "Could not move page: {error}" : "Impossible de déplacer la page : {error}",
-    "Cannot move a page into itself or its descendant" : "Impossible de déplacer une page dans elle-même ou dans l'une de ses sous-pages"
+    "Cannot move a page into itself or its descendant" : "Impossible de déplacer une page dans elle-même ou dans l'une de ses sous-pages",
+    "Copy page" : "Copier la page",
+    "Delete page" : "Supprimer la page",
+    "Set as homepage" : "Définir comme page d’accueil",
+    "Homepage updated" : "Page d’accueil mise à jour",
+    "Page copied" : "Page copiée",
+    "Could not copy page: {error}" : "Impossible de copier la page : {error}",
+    "Could not set homepage: {error}" : "Impossible de définir la page d’accueil : {error}",
+    "This page is the homepage. Set another page as the homepage first." : "Cette page est la page d’accueil. Définissez d’abord une autre page comme page d’accueil.",
+    "Changes here move the actual pages and their folders, not just the menu." : "Les modifications ici déplacent les pages réelles et leurs dossiers, pas seulement le menu.",
+    "This changes the menu links and their order only. It does not move or rename the actual pages. To organize pages, use \"Page structure\" in the navigation bar." : "Ceci modifie uniquement les liens du menu et leur ordre. Cela ne déplace ni ne renomme les pages réelles. Pour organiser les pages, utilisez « Structure des pages » dans la barre de navigation.",
+    "Browse all pages. Use \"Manage structure\" to move, reorder, copy or delete the actual pages." : "Parcourez toutes les pages. Utilisez « Gérer la structure » pour déplacer, réorganiser, copier ou supprimer les pages réelles."
 },"pluralForm" :"nplurals=3; plural=(n == 0 || n == 1) ? 0 : n != 0 && n % 1000000 == 0 ? 1 : 2;"
 }

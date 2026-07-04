@@ -61,11 +61,14 @@
         <PageActionsMenu v-if="!isEditMode"
                          :is-edit-mode="isEditMode"
                          :permissions="pagePermissions"
+                         :is-home="isCurrentPageHome"
                          @edit-navigation="showNavigationEditor = true"
                          @create-page="createNewPage"
                          @page-settings="showPageSettingsModal = true"
                          @save-as-template="showSaveAsTemplateModal = true"
-                         @feed-settings="showFeedSettings = true" />
+                         @feed-settings="showFeedSettings = true"
+                         @copy-page="copyCurrentPage"
+                         @delete-page="deleteCurrentPage" />
 
         <!-- Edit Mode Actions (Save/Cancel) -->
         <template v-else>
@@ -190,6 +193,9 @@
       @reorder="reorderPages"
       @move="openMovePageDialog"
       @delete="deletePageFromTree"
+      @set-homepage="handleSetHomepage"
+      @copy="copyPageFromTree"
+      @homepage="homepageUniqueId = $event"
     />
 
     <NcDialog
@@ -352,6 +358,7 @@ export default {
       showPages: false,
       showPageTree: false,
       showMoveDialog: false,
+      homepageUniqueId: null,
       movePageNode: null,
       moveTargetId: null,
       moveInProgress: false,
@@ -438,12 +445,19 @@ export default {
      * This includes both "nl/home" and "nl" paths
      */
     isCurrentPageHome() {
-      if (!this.currentPage || !this.currentPage.path) {
+      if (!this.currentPage) {
+        return false;
+      }
+      // Prefer the server-resolved homepage pointer (configurable homepage).
+      if (this.homepageUniqueId && this.currentPage.uniqueId) {
+        return this.currentPage.uniqueId === this.homepageUniqueId;
+      }
+      if (!this.currentPage.path) {
         return false;
       }
       const pathParts = this.currentPage.path.split('/').filter(p => p);
 
-      // Home page can be either:
+      // Legacy fallback. Home page can be either:
       // 1. Just language code: "nl" (length === 1)
       // 2. Language + home folder: "nl/home" (length === 2 && last part is "home")
       const isHome = pathParts.length === 1 ||
@@ -1238,7 +1252,61 @@ export default {
           }
         }
       } catch (err) {
-        showError(this.t('intravox', 'Could not delete page: {error}', { error: err.message }));
+        const code = err.response?.data?.error;
+        if (code === 'HOMEPAGE_PROTECTED') {
+          showError(this.t('intravox', 'This page is the homepage. Set another page as the homepage first.'));
+        } else {
+          showError(this.t('intravox', 'Could not delete page: {error}', { error: err.message }));
+        }
+      }
+    },
+    // ---- Three-dot menu page actions (current page) ----
+    deleteCurrentPage() {
+      if (this.currentPage?.uniqueId) {
+        this.deletePage(this.currentPage.uniqueId);
+      }
+    },
+    async copyCurrentPage() {
+      if (!this.currentPage?.uniqueId) return;
+      await this.copyPage(this.currentPage.uniqueId, null);
+    },
+    async copyPageFromTree(node) {
+      const sourceId = node && node.uniqueId ? node.uniqueId : node;
+      if (!sourceId) return;
+      await this.copyPage(sourceId, null);
+      if (this.$refs.pageTreeModal) {
+        await this.$refs.pageTreeModal.loadTree();
+      }
+    },
+    async copyPage(sourceId, targetParentId) {
+      try {
+        const response = await axios.post(generateUrl('/apps/intravox/api/pages/copy'), {
+          sourceId,
+          targetParentId: targetParentId || null,
+        });
+        showSuccess(this.t('intravox', 'Page copied'));
+        await this.loadPages();
+        const copy = response.data?.page;
+        if (copy?.uniqueId) {
+          await this.selectPage(copy.uniqueId);
+        }
+      } catch (err) {
+        showError(this.t('intravox', 'Could not copy page: {error}', { error: err.message }));
+      }
+    },
+    async handleSetHomepage(node) {
+      const uniqueId = node && node.uniqueId ? node.uniqueId : node;
+      if (!uniqueId) return;
+      try {
+        await axios.post(generateUrl('/apps/intravox/api/homepage'), { pageUniqueId: uniqueId });
+        this.homepageUniqueId = uniqueId;
+        showSuccess(this.t('intravox', 'Homepage updated'));
+        await this.loadPages();
+        if (this.$refs.pageTreeModal) {
+          await this.$refs.pageTreeModal.loadTree();
+        }
+      } catch (err) {
+        showError(this.t('intravox', 'Could not set homepage: {error}', { error: err.message }));
       }
     },
     // ---- Page management from the structure modal (issue #69) ----

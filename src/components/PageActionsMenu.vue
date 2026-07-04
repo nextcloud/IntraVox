@@ -1,8 +1,8 @@
 <template>
-  <NcActions>
+  <NcActions ref="actions">
     <!-- New Page -->
     <NcActionButton v-if="canPerformAction('createPage')"
-                    @click="$emit('create-page')">
+                    @click="emitAndClose('create-page')">
       <template #icon>
         <Plus :size="20" />
       </template>
@@ -11,7 +11,7 @@
 
     <!-- Edit Navigation (admin action, less frequently used) -->
     <NcActionButton v-if="canPerformAction('editNavigation')"
-                    @click="$emit('edit-navigation')">
+                    @click="emitAndClose('edit-navigation')">
       <template #icon>
         <Cog :size="20" />
       </template>
@@ -20,7 +20,7 @@
 
     <!-- Page Settings (for editors) -->
     <NcActionButton v-if="canPerformAction('editPage')"
-                    @click="$emit('page-settings')">
+                    @click="emitAndClose('page-settings')">
       <template #icon>
         <TuneVertical :size="20" />
       </template>
@@ -29,7 +29,7 @@
 
     <!-- Save as Template -->
     <NcActionButton v-if="canPerformAction('saveAsTemplate')"
-                    @click="$emit('save-as-template')">
+                    @click="emitAndClose('save-as-template')">
       <template #icon>
         <FileDocumentMultipleOutline :size="20" />
       </template>
@@ -37,11 +37,30 @@
     </NcActionButton>
 
     <!-- RSS Feed -->
-    <NcActionButton @click="$emit('feed-settings')">
+    <NcActionButton @click="emitAndClose('feed-settings')">
       <template #icon>
         <Rss :size="20" />
       </template>
       {{ t('intravox', 'RSS feed') }}
+    </NcActionButton>
+
+    <!-- Copy page -->
+    <NcActionButton v-if="canPerformAction('createPage')"
+                    @click="emitAndClose('copy-page')">
+      <template #icon>
+        <ContentCopy :size="20" />
+      </template>
+      {{ t('intravox', 'Copy page') }}
+    </NcActionButton>
+
+    <!-- Delete page (destructive; hidden for the homepage) -->
+    <NcActionButton v-if="canPerformAction('deletePage') && !isHome"
+                    class="action-delete-page"
+                    @click="emitAndClose('delete-page')">
+      <template #icon>
+        <Delete :size="20" />
+      </template>
+      {{ t('intravox', 'Delete page') }}
     </NcActionButton>
   </NcActions>
 </template>
@@ -54,6 +73,8 @@ import Plus from 'vue-material-design-icons/Plus.vue';
 import TuneVertical from 'vue-material-design-icons/TuneVertical.vue';
 import FileDocumentMultipleOutline from 'vue-material-design-icons/FileDocumentMultipleOutline.vue';
 import Rss from 'vue-material-design-icons/Rss.vue';
+import ContentCopy from 'vue-material-design-icons/ContentCopy.vue';
+import Delete from 'vue-material-design-icons/Delete.vue';
 
 export default {
   name: 'PageActionsMenu',
@@ -64,7 +85,9 @@ export default {
     Plus,
     TuneVertical,
     FileDocumentMultipleOutline,
-    Rss
+    Rss,
+    ContentCopy,
+    Delete
   },
   props: {
     isEditMode: {
@@ -78,14 +101,23 @@ export default {
         viewPages: true,      // Everyone can view pages
         createPage: false,
         editPage: false,
-        deletePage: false     // For future use
+        deletePage: false
       })
+    },
+    isHome: {
+      type: Boolean,
+      default: false
     }
   },
-  emits: ['edit-navigation', 'create-page', 'page-settings', 'save-as-template', 'feed-settings'],
+  emits: ['edit-navigation', 'create-page', 'page-settings', 'save-as-template', 'feed-settings', 'copy-page', 'delete-page'],
   methods: {
     t(app, text, vars) {
       return translate(app, text, vars);
+    },
+    // Close the actions dropdown, then emit (the item opens a modal next).
+    emitAndClose(eventName) {
+      this.$refs.actions?.closeMenu?.();
+      this.$emit(eventName);
     },
     /**
      * Check if user can perform a specific action
@@ -101,4 +133,11 @@ export default {
 
 <style scoped>
 /* NcActions component handles its own styling */
+
+/* Destructive action: tint the Delete page item red (NcActionButton has no
+   danger variant). Matches the .tree-action--danger precedent. */
+:deep(.action-delete-page .action-button__icon),
+:deep(.action-delete-page .action-button__text) {
+  color: var(--color-error);
+}
 </style>

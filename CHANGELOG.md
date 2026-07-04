@@ -4,7 +4,7 @@ All notable changes to IntraVox will be documented in this file.
 
 IntraVox is a Nextcloud intranet page builder.
 
-## [1.8.0] - 2026-07-03 — Page management from the UI: delete, reorder, move
+## [1.8.0] - 2026-07-04 — Page management from the UI: delete, reorder, move, copy + configurable homepage
 
 Editors can now manage the page structure directly from the IntraVox UI, without touching the underlying folders.
 
@@ -13,11 +13,19 @@ Editors can now manage the page structure directly from the IntraVox UI, without
 - **Reorder and move pages from the structure view** ([#69](https://github.com/nextcloud/IntraVox/issues/69)). The page-structure modal gains a **Manage structure** mode with per-row controls: **move up / move down** to reorder a page among its siblings, **move to another page** to relocate a page (with its whole subtree) under a different parent, and **delete** (with the existing confirmation). The home page stays pinned — it cannot be moved, reordered or deleted. All controls respect Nextcloud permissions: you only see them where you have write access, and cross-department moves obey GroupFolder ACLs.
   - Sibling order is persisted in a new per-page `order` field. Installations that have never reordered keep their existing order untouched (a stable comparator leaves pages without an explicit order in filesystem sequence), so this is a no-op until an editor first reorders.
   - New endpoint `POST /api/pages/reorder`; cross-parent moves use the existing `POST /api/bulk/move` (admin-only for now). Moving keeps the page's `uniqueId`, so internal links and URLs by id stay valid; a folder-name collision at the destination gets a `-2`/`-3` suffix.
+- **Configurable homepage.** Any root-level page can be made the homepage from the page-structure manage mode ("Set as homepage"), and the current homepage is marked with a **Home** badge. The homepage is now a per-language pointer (`homepage.json`) rather than a hardcoded `home.json`, so no page needs to be renamed. The homepage cannot be deleted or moved until another page is assigned (returns `HOMEPAGE_PROTECTED`, surfaced as a clear notice). Fully back-compatible: installs without a pointer keep using the legacy `home.json`; the old homepage is lazily normalized into a regular folder page (keeping its `uniqueId`, so links survive) the first time a different page is set as home. New endpoint `POST /api/homepage`.
+- **Copy page.** Duplicate a page as a new draft from the top-right "⋯" menu (copies the current page) or per-row in the page structure. The copy gets a fresh `uniqueId`, keeps the layout and media, is titled "… (copy)", and never inherits the homepage role. New endpoint `POST /api/pages/copy`.
+- **Delete page in the "⋯" menu.** The top-right page menu now has a "Delete page" action (with confirmation), hidden on the homepage and shown only where you have delete permission — matching SharePoint's page menu.
+
+### Changed
+
+- **Clearer separation of "Edit navigation" vs "Page structure".** The navigation editor now states up front that it only changes the menu links/order (not the actual pages), and the page-structure modal explains that its manage actions move the real pages and folders. The "⋯" menu also closes when an item opens a modal.
 
 ### Fixed
 
 - **File Story widget now shows Whiteboard and FormVox files** ([#68](https://github.com/nextcloud/IntraVox/issues/68)). The widget filtered files through a hardcoded document-mimetype allowlist that omitted Nextcloud Whiteboard (`application/vnd.excalidraw+json`) and FormVox forms (`application/x-fvform`), so those files were silently dropped from a picked folder. Both are now included — FormVox forms render with their real preview, whiteboards fall back to the mime-icon placeholder — and each groups under its own "Whiteboards" / "Forms" category. Also added `.odg` drawings (`application/vnd.oasis.opendocument.graphics`, grouped as "Drawings") and the `text/x-markdown` alias so `.md` files aren't dropped on installs that register markdown that way.
 - **Page-structure modal labels now translate.** The tree modal and its rows used a wrapper that passed the app id as the translation key, so strings like "Collapse", "Expand" and "Current" rendered as literal "intravox". The wrapper now matches the rest of the app (`translate(app, text, vars)`), so those labels localize correctly.
+- **Deleting a page by `uniqueId` now works.** `PageService::deletePage` resolved only legacy folder-name ids, so a delete request keyed on a `page-…` uniqueId (how the UI deletes) failed with "Page not found". It now resolves `uniqueId` first, then falls back to the folder id.
 
 ## [1.7.0] - 2026-07-03 — Clearer landing page + VoxCloud language model + full language management + translation cleanup
 

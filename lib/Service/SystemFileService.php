@@ -21,7 +21,7 @@ use Psr\Log\LoggerInterface;
  * Never use it for arbitrary file access.
  */
 class SystemFileService {
-    private const ALLOWED_SHARED_FILES = ['navigation.json', 'footer.json'];
+    private const ALLOWED_SHARED_FILES = ['navigation.json', 'footer.json', 'homepage.json'];
     private const MAX_JSON_SIZE = 5 * 1024 * 1024; // 5 MB
     private const MAX_JSON_DEPTH = 64;
     private const FALLBACK_LANGUAGE = 'en';
@@ -241,6 +241,26 @@ class SystemFileService {
 
             // Recursively build tree from subfolders
             $this->buildPageTreeRecursive($languageFolder, $tree, $language, $basePath);
+
+            // Configurable homepage: float the pointer target to the front so a
+            // public share shows the configured homepage first (issue: homepage).
+            try {
+                if ($languageFolder->nodeExists('homepage.json')) {
+                    $ptr = $this->safeJsonDecode($languageFolder->get('homepage.json')->getContent());
+                    $pointer = is_array($ptr) ? ($ptr['homepageUniqueId'] ?? null) : null;
+                    if (is_string($pointer) && $pointer !== '' && $pointer !== 'home') {
+                        foreach ($tree as $i => $node) {
+                            if (($node['uniqueId'] ?? null) === $pointer && $i !== 0) {
+                                $picked = array_splice($tree, $i, 1);
+                                array_unshift($tree, $picked[0]);
+                                break;
+                            }
+                        }
+                    }
+                }
+            } catch (\Exception $e) {
+                // Non-fatal: fall back to home.json-first ordering.
+            }
 
             return $tree;
         } catch (\Exception $e) {

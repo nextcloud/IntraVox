@@ -15,6 +15,14 @@
         </NcButton>
       </div>
 
+      <p v-if="!loading && !error && tree.length > 0" class="page-tree-intro">
+        {{ t('intravox', 'Browse all pages. Use "Manage structure" to move, reorder, copy or delete the actual pages.') }}
+      </p>
+
+      <NcNoteCard v-if="manageMode" type="warning">
+        {{ t('intravox', 'Changes here move the actual pages and their folders, not just the menu.') }}
+      </NcNoteCard>
+
       <div v-if="loading" class="loading-state">
         <NcLoadingIcon :size="32" />
         <p>{{ t('intravox', 'Loading page structure …') }}</p>
@@ -37,6 +45,7 @@
             :expanded-nodes="expandedNodes"
             :manage-mode="manageMode"
             :parent-id="null"
+            :homepage-unique-id="homepageUniqueId"
             :is-first="idx === 0"
             :is-last="idx === tree.length - 1"
             @toggle="toggleNode"
@@ -45,6 +54,8 @@
             @move-down="handleMoveDown"
             @move-to="handleMoveTo"
             @delete="handleDelete"
+            @copy="handleCopy"
+            @set-homepage="handleSetHomepage"
           />
         </ul>
       </div>
@@ -54,7 +65,7 @@
 
 <script>
 import { translate, translatePlural } from '@nextcloud/l10n';
-import { NcModal, NcLoadingIcon, NcButton } from '@nextcloud/vue';
+import { NcModal, NcLoadingIcon, NcButton, NcNoteCard } from '@nextcloud/vue';
 import Cog from 'vue-material-design-icons/Cog.vue';
 import axios from '@nextcloud/axios';
 import { generateUrl } from '@nextcloud/router';
@@ -66,6 +77,7 @@ export default {
     NcModal,
     NcLoadingIcon,
     NcButton,
+    NcNoteCard,
     PageTreeItem,
     Cog
   },
@@ -83,13 +95,14 @@ export default {
       default: false
     }
   },
-  emits: ['close', 'navigate', 'reorder', 'move', 'delete'],
+  emits: ['close', 'navigate', 'reorder', 'move', 'delete', 'copy', 'set-homepage', 'homepage'],
   data() {
     return {
       tree: [],
       loading: true,
       error: null,
       expandedNodes: new Set(),
+      homepageUniqueId: null,
       manageMode: false
     };
   },
@@ -119,6 +132,8 @@ export default {
         }
         const response = await axios.get(url, { params });
         this.tree = response.data.tree || [];
+        this.homepageUniqueId = response.data.homepageUniqueId || null;
+        this.$emit('homepage', this.homepageUniqueId);
 
         // Auto-expand nodes: path to current page + all children below current
         this.expandPathToCurrent(this.tree);
@@ -220,6 +235,12 @@ export default {
     },
     handleDelete(node) {
       this.$emit('delete', node);
+    },
+    handleCopy(node) {
+      this.$emit('copy', node);
+    },
+    handleSetHomepage(node) {
+      this.$emit('set-homepage', node);
     }
   }
 };
@@ -270,5 +291,10 @@ export default {
   list-style: none;
   margin: 0;
   padding: 0;
+}
+.page-tree-intro {
+  margin: 0 0 12px;
+  color: var(--color-text-maxcontrast);
+  font-size: 13px;
 }
 </style>

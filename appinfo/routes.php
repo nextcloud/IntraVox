@@ -23,6 +23,7 @@ return [
         ['name' => 'api#getPageTree', 'url' => '/api/pages/tree', 'verb' => 'GET'],
         // Literal must precede the /api/pages/{id} wildcard below (issue #69).
         ['name' => 'api#reorderPages', 'url' => '/api/pages/reorder', 'verb' => 'POST'],
+        ['name' => 'api#copyPage', 'url' => '/api/pages/copy', 'verb' => 'POST'],
         ['name' => 'api#getPage', 'url' => '/api/pages/{id}', 'verb' => 'GET'],
         ['name' => 'api#updatePage', 'url' => '/api/pages/{id}', 'verb' => 'PUT'],
         ['name' => 'api#deletePage', 'url' => '/api/pages/{id}', 'verb' => 'DELETE'],
@@ -60,6 +61,7 @@ return [
         ['name' => 'navigation#save', 'url' => '/api/navigation', 'verb' => 'POST'],
         ['name' => 'footer#get', 'url' => '/api/footer', 'verb' => 'GET'],
         ['name' => 'footer#save', 'url' => '/api/footer', 'verb' => 'POST'],
+        ['name' => 'api#setHomepage', 'url' => '/api/homepage', 'verb' => 'POST'],
 
         // Setup route
         ['name' => 'api#runSetup', 'url' => '/api/setup', 'verb' => 'POST'],

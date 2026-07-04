@@ -17,6 +17,7 @@
       <button class="tree-item-content" @click="$emit('navigate', item.uniqueId)">
         <FileDocument :size="18" class="tree-icon" />
         <span class="tree-item-title">{{ item.title }}</span>
+        <span v-if="isThisHomepage" class="home-badge">{{ t('intravox', 'Home') }}</span>
         <span v-if="item.isCurrent" class="current-badge">{{ t('intravox', 'Current') }}</span>
       </button>
 
@@ -41,7 +42,7 @@
           <ArrowDown :size="18" />
         </button>
         <button
-          v-if="item.uniqueId !== 'home'"
+          v-if="!isThisHomepage"
           class="tree-action"
           :aria-label="t('intravox', 'Move to another page')"
           :title="t('intravox', 'Move to another page')"
@@ -50,7 +51,24 @@
           <FolderMove :size="18" />
         </button>
         <button
-          v-if="item.uniqueId !== 'home' && (item.permissions && item.permissions.canDelete)"
+          v-if="canSetHomepage"
+          class="tree-action"
+          :aria-label="t('intravox', 'Set as homepage')"
+          :title="t('intravox', 'Set as homepage')"
+          @click="$emit('set-homepage', item)"
+        >
+          <HomeOutline :size="18" />
+        </button>
+        <button
+          class="tree-action"
+          :aria-label="t('intravox', 'Copy page')"
+          :title="t('intravox', 'Copy page')"
+          @click="$emit('copy', item)"
+        >
+          <ContentCopy :size="18" />
+        </button>
+        <button
+          v-if="!isThisHomepage && (item.permissions && item.permissions.canDelete)"
           class="tree-action tree-action--danger"
           :aria-label="t('intravox', 'Delete')"
           :title="t('intravox', 'Delete')"
@@ -70,6 +88,7 @@
         :expanded-nodes="expandedNodes"
         :manage-mode="manageMode"
         :parent-id="item.uniqueId"
+        :homepage-unique-id="homepageUniqueId"
         :is-first="idx === 0"
         :is-last="idx === visibleChildren.length - 1"
         @toggle="(id) => $emit('toggle', id)"
@@ -78,6 +97,8 @@
         @move-down="(id) => $emit('move-down', id)"
         @move-to="(node) => $emit('move-to', node)"
         @delete="(node) => $emit('delete', node)"
+        @copy="(node) => $emit('copy', node)"
+        @set-homepage="(node) => $emit('set-homepage', node)"
       />
       <li v-if="hasMoreChildren" class="tree-show-more">
         <button class="show-more-button" @click="showMoreChildren">
@@ -97,6 +118,8 @@ import ArrowUp from 'vue-material-design-icons/ArrowUp.vue';
 import ArrowDown from 'vue-material-design-icons/ArrowDown.vue';
 import FolderMove from 'vue-material-design-icons/FolderMove.vue';
 import Delete from 'vue-material-design-icons/Delete.vue';
+import ContentCopy from 'vue-material-design-icons/ContentCopy.vue';
+import HomeOutline from 'vue-material-design-icons/HomeOutline.vue';
 
 export default {
   name: 'PageTreeItem',
@@ -107,7 +130,9 @@ export default {
     ArrowUp,
     ArrowDown,
     FolderMove,
-    Delete
+    Delete,
+    ContentCopy,
+    HomeOutline
   },
   props: {
     item: {
@@ -133,9 +158,13 @@ export default {
     parentId: {
       type: String,
       default: null
+    },
+    homepageUniqueId: {
+      type: String,
+      default: null
     }
   },
-  emits: ['toggle', 'navigate', 'move-up', 'move-down', 'move-to', 'delete'],
+  emits: ['toggle', 'navigate', 'move-up', 'move-down', 'move-to', 'delete', 'copy', 'set-homepage'],
   data() {
     return {
       visibleChildCount: 50,
@@ -154,6 +183,20 @@ export default {
     },
     hasMoreChildren() {
       return this.hasChildren && this.item.children.length > this.visibleChildCount;
+    },
+    isThisHomepage() {
+      if (this.homepageUniqueId) {
+        return this.item.uniqueId === this.homepageUniqueId;
+      }
+      return this.item.uniqueId === 'home';
+    },
+    isRootLevel() {
+      // Root rows are rendered by the modal with parentId === null.
+      return this.parentId === null || this.parentId === undefined || this.parentId === '';
+    },
+    canSetHomepage() {
+      // Only root-level pages can become the homepage, and not the current one.
+      return this.isRootLevel && !this.isThisHomepage;
     },
   },
   methods: {
@@ -242,6 +285,17 @@ export default {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.home-badge {
+  flex-shrink: 0;
+  font-size: 11px;
+  padding: 2px 6px;
+  background: var(--color-primary-element-light);
+  color: var(--color-primary-element-light-text, var(--color-main-text));
+  border-radius: 10px;
+  font-weight: 500;
+  margin-right: 4px;
 }
 
 .current-badge {

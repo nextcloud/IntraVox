@@ -403,6 +403,12 @@ class ApiController extends Controller {
 
             $this->pageService->deletePage($id);
             return new DataResponse(['success' => true]);
+        } catch (\InvalidArgumentException $e) {
+            // Client-preventable conditions (home page / configured homepage).
+            return new DataResponse(
+                ['error' => $e->getMessage()],
+                Http::STATUS_BAD_REQUEST
+            );
         } catch (\Exception $e) {
             return new DataResponse(
                 ['error' => $e->getMessage()],
@@ -1151,6 +1157,77 @@ class ApiController extends Controller {
      * teamhub) that want only the pages below a specific anchor. See
      * GitHub issue #45.
      *
+     * Set a root-level page as the homepage for the current language
+     * (issue: configurable homepage).
+     *
+     * @NoAdminRequired
+     */
+    public function setHomepage(?string $pageUniqueId = null): DataResponse {
+        try {
+            if (!is_string($pageUniqueId) || $pageUniqueId === '') {
+                return new DataResponse(['error' => 'pageUniqueId is required'], Http::STATUS_BAD_REQUEST);
+            }
+
+            // Write permission on the language root (mirror NavigationController::save).
+            $permissions = $this->pageService->getFolderPermissions('');
+            if (!($permissions['canWrite'] ?? false)) {
+                return new DataResponse(
+                    ['error' => 'Permission denied: cannot set the homepage'],
+                    Http::STATUS_FORBIDDEN
+                );
+            }
+
+            $this->pageService->setHomepage($pageUniqueId);
+            return new DataResponse(['success' => true]);
+        } catch (\InvalidArgumentException $e) {
+            return new DataResponse(['error' => $e->getMessage()], Http::STATUS_BAD_REQUEST);
+        } catch (\Exception $e) {
+            return new DataResponse(['error' => $e->getMessage()], Http::STATUS_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Copy a page into a new draft (issue: copy page).
+     *
+     * @NoAdminRequired
+     */
+    public function copyPage(?string $sourceId = null, ?string $targetParentId = null, ?string $title = null): DataResponse {
+        try {
+            if (!is_string($sourceId) || $sourceId === '') {
+                return new DataResponse(['error' => 'sourceId is required'], Http::STATUS_BAD_REQUEST);
+            }
+
+            // Need read on the source page…
+            $source = $this->pageService->getPage($sourceId);
+            if (!($source['permissions']['canRead'] ?? false)) {
+                return new DataResponse(
+                    ['error' => 'Permission denied: cannot read the source page'],
+                    Http::STATUS_FORBIDDEN
+                );
+            }
+
+            // …and create permission on the destination parent (root = '').
+            $parentRelPath = '';
+            if (is_string($targetParentId) && $targetParentId !== '') {
+                $parentRelPath = $this->pageService->getPage($targetParentId)['path'] ?? '';
+            }
+            if (!($this->pageService->getFolderPermissions($parentRelPath)['canCreate'] ?? false)) {
+                return new DataResponse(
+                    ['error' => 'Permission denied: cannot create a page here'],
+                    Http::STATUS_FORBIDDEN
+                );
+            }
+
+            $page = $this->pageService->copyPage($sourceId, $targetParentId, $title);
+            return new DataResponse(['success' => true, 'page' => $page], Http::STATUS_CREATED);
+        } catch (\InvalidArgumentException $e) {
+            return new DataResponse(['error' => $e->getMessage()], Http::STATUS_BAD_REQUEST);
+        } catch (\Exception $e) {
+            return new DataResponse(['error' => $e->getMessage()], Http::STATUS_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
      * @NoAdminRequired
      * @NoCSRFRequired
      */
@@ -1162,8 +1239,13 @@ class ApiController extends Controller {
             // PageService already includes Nextcloud permissions in each page
             $filteredTree = $this->filterTreeByPermissions($tree);
 
+            // Resolve which page is the homepage so the UI can badge it and
+            // offer "set as homepage" only on root pages (configurable homepage).
+            $homepageUniqueId = $this->pageService->resolveHomepageNodeUniqueId($language, $filteredTree);
+
             return new DataResponse([
-                'tree' => $filteredTree
+                'tree' => $filteredTree,
+                'homepageUniqueId' => $homepageUniqueId,
             ]);
         } catch (\Exception $e) {
             return new DataResponse(

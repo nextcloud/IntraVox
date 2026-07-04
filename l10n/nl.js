@@ -1241,6 +1241,17 @@ OC.L10N.register(
     "Could not save page order: {error}" : "Kon paginavolgorde niet opslaan: {error}",
     "Page moved" : "Pagina verplaatst",
     "Could not move page: {error}" : "Kon pagina niet verplaatsen: {error}",
-    "Cannot move a page into itself or its descendant" : "Een pagina kan niet naar zichzelf of een onderliggende pagina worden verplaatst"
+    "Cannot move a page into itself or its descendant" : "Een pagina kan niet naar zichzelf of een onderliggende pagina worden verplaatst",
+    "Copy page" : "Pagina kopiëren",
+    "Delete page" : "Pagina verwijderen",
+    "Set as homepage" : "Als homepage instellen",
+    "Homepage updated" : "Homepage bijgewerkt",
+    "Page copied" : "Pagina gekopieerd",
+    "Could not copy page: {error}" : "Kon pagina niet kopiëren: {error}",
+    "Could not set homepage: {error}" : "Kon homepage niet instellen: {error}",
+    "This page is the homepage. Set another page as the homepage first." : "Deze pagina is de homepage. Stel eerst een andere pagina als homepage in.",
+    "Changes here move the actual pages and their folders, not just the menu." : "Wijzigingen hier verplaatsen de echte pagina’s en hun mappen, niet alleen het menu.",
+    "This changes the menu links and their order only. It does not move or rename the actual pages. To organize pages, use \"Page structure\" in the navigation bar." : "Dit wijzigt alleen de menulinks en hun volgorde. Het verplaatst of hernoemt de echte pagina’s niet. Gebruik \"Paginastructuur\" in de navigatiebalk om pagina’s te ordenen.",
+    "Browse all pages. Use \"Manage structure\" to move, reorder, copy or delete the actual pages." : "Blader door alle pagina’s. Gebruik \"Structuur beheren\" om de echte pagina’s te verplaatsen, herordenen, kopiëren of verwijderen."
 },
 "nplurals=2; plural=(n != 1);");

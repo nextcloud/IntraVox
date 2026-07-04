@@ -337,6 +337,7 @@ class PageService {
     private PageIdUtils $idUtils;
     private GroupContextService $groupContext;
     private LanguageService $languageService;
+    private HomepageService $homepageService;
 
     public function __construct(
         IRootFolder $rootFolder,
@@ -361,6 +362,7 @@ class PageService {
         PageIdUtils $idUtils,
         GroupContextService $groupContext,
         LanguageService $languageService,
+        HomepageService $homepageService,
         IAppManager $appManager,
         ?string $userId
     ) {
@@ -385,6 +387,7 @@ class PageService {
         $this->idUtils = $idUtils;
         $this->groupContext = $groupContext;
         $this->languageService = $languageService;
+        $this->homepageService = $homepageService;
         $this->appManager = $appManager;
         $this->userId = $userId ?? '';
 
@@ -430,6 +433,83 @@ class PageService {
 
         // Guard against malformed values; fall back to the default language.
         return preg_match('/^[a-z]{2,3}$/', $langCode) ? $langCode : self::DEFAULT_LANGUAGE;
+    }
+
+    /**
+     * Resolve which page is the homepage for a language (configurable homepage).
+     *
+     * Returns the configured pointer target if set AND it resolves to a real
+     * page; otherwise falls back to the legacy loose `home.json` (uniqueId
+     * 'home' / the page at the language root). This fallback is the entire
+     * back-compat story: installs without a homepage.json behave exactly as
+     * before.
+     *
+     * @return string uniqueId of the homepage ('home' for the legacy default).
+     */
+    public function getHomepageUniqueId(?string $language = null): string {
+        $lang = $language ?? $this->getUserLanguage();
+
+        $pointer = $this->homepageService->getHomepageUniqueId($lang);
+        if ($pointer !== null && $pointer !== '' && $pointer !== 'home') {
+            // Only honour the pointer when it resolves to an existing page.
+            try {
+                $folder = $this->getLanguageFolder();
+                if ($this->findPageByUniqueId($folder, $pointer) !== null) {
+                    return $pointer;
+                }
+            } catch (\Exception $e) {
+                // Fall through to the legacy default.
+            }
+        }
+
+        // Legacy default: the loose home.json in the language root.
+        return 'home';
+    }
+
+    /**
+     * Whether the given uniqueId is the resolved homepage for the language.
+     * Handles the legacy 'home' id as well as a configured pointer target.
+     */
+    public function isHomepage(string $uniqueId, ?string $language = null): bool {
+        if ($uniqueId === '') {
+            return false;
+        }
+        return $uniqueId === $this->resolveHomepageNodeUniqueId($language);
+    }
+
+    /**
+     * The concrete uniqueId (page-…) of the homepage for a language, suitable
+     * for badging/comparison in the UI. When a pointer is set it is that
+     * uniqueId; otherwise it resolves the legacy loose home.json to its real
+     * uniqueId (not the literal 'home'). Optionally pass an already-built tree
+     * to resolve the legacy home from it without an extra read.
+     *
+     * @param array<int,array>|null $tree Optional pre-built page tree.
+     */
+    public function resolveHomepageNodeUniqueId(?string $language = null, ?array $tree = null): string {
+        $resolved = $this->getHomepageUniqueId($language);
+        if ($resolved !== 'home') {
+            return $resolved;
+        }
+
+        // Legacy default: map 'home' to the real uniqueId of the loose home.json.
+        try {
+            $folder = $this->getLanguageFolderByCode($language ?? $this->getUserLanguage());
+            if ($folder->nodeExists('home.json')) {
+                $data = json_decode($folder->get('home.json')->getContent(), true);
+                if (is_array($data) && !empty($data['uniqueId'])) {
+                    return (string)$data['uniqueId'];
+                }
+            }
+        } catch (\Exception $e) {
+            // Fall through.
+        }
+
+        // Last resort: first root node of a supplied tree.
+        if (is_array($tree) && isset($tree[0]['uniqueId'])) {
+            return (string)$tree[0]['uniqueId'];
+        }
+        return 'home';
     }
 
     /**
@@ -640,7 +720,7 @@ class PageService {
             // Skip navigation.json and footer.json only in the language root folder
             // (these are config files there, not pages). In subfolders they can be page files.
             $skipFile = ($itemName === 'home.json'); // Always skip home.json, checked above
-            if ($isLanguageRoot && ($itemName === 'navigation.json' || $itemName === 'footer.json')) {
+            if ($isLanguageRoot && ($itemName === 'navigation.json' || $itemName === 'footer.json' || $itemName === 'homepage.json')) {
                 $skipFile = true;
             }
 
@@ -1363,10 +1443,12 @@ class PageService {
         $breadcrumb = [];
         $language = $this->getUserLanguage();
 
-        // Check if current page is the home page
+        // Check if current page is the home page (legacy id/path detection, plus
+        // a configured homepage pointer via uniqueId).
         $isHomePage = ($pageId === 'home' ||
                        preg_match('/^[a-z]{2,3}\/home$/', $page['path']) ||
-                       preg_match('/^[a-z]{2,3}$/', $page['path']));
+                       preg_match('/^[a-z]{2,3}$/', $page['path']) ||
+                       (!empty($page['uniqueId']) && $this->isHomepage((string)$page['uniqueId'], $language)));
 
         // Read home breadcrumb label from navigation.json (first item title)
         // This allows users to customize the label via the navigation editor
@@ -1883,21 +1965,42 @@ class PageService {
      * Delete a page and all its assets
      */
     public function deletePage(string $id): void {
-        $id = $this->sanitizeId($id);
-
         if ($id === 'home') {
             throw new \InvalidArgumentException('Cannot delete home page');
         }
 
-        $result = $this->findPageById($this->getLanguageFolder(), $id);
+        // Resolve by uniqueId (page-…) first, then fall back to legacy folder id.
+        $languageFolder = $this->getLanguageFolder();
+        $result = strpos($id, 'page-') === 0
+            ? $this->findPageByUniqueId($languageFolder, $id)
+            : $this->findPageById($languageFolder, $this->sanitizeId($id));
 
         if ($result === null) {
             throw new \Exception('Page not found');
         }
 
+        // Normalize $id to the folder name for downstream index/event use.
+        $id = isset($result['folder']) ? $result['folder']->getName() : $this->sanitizeId($id);
+
+        // Read the page JSON once for uniqueId (homepage guard + comment cleanup).
+        $pageData = [];
+        if (isset($result['file'])) {
+            $decoded = json_decode($result['file']->getContent(), true);
+            if (is_array($decoded)) {
+                $pageData = $decoded;
+            }
+        }
+
+        // The configured homepage cannot be deleted — reassign it first
+        // (issue: configurable homepage). Distinguishable error so the UI can
+        // prompt the user to pick another homepage.
+        $resolvedUniqueId = $pageData['uniqueId'] ?? '';
+        if ($resolvedUniqueId !== '' && $this->isHomepage($resolvedUniqueId)) {
+            throw new \InvalidArgumentException('HOMEPAGE_PROTECTED');
+        }
+
         // Get page data before deletion to retrieve uniqueId for comment cleanup
         try {
-            $pageData = $result['data'] ?? [];
             $uniqueId = $pageData['uniqueId'] ?? '';
 
             // Dispatch event to cleanup comments/reactions before deleting the page
@@ -1939,6 +2042,108 @@ class PageService {
      * @throws \InvalidArgumentException On home, self/descendant cycles, depth.
      * @throws \Exception When source or target cannot be located.
      */
+    /**
+     * Set a root-level page as the homepage for the current language
+     * (issue: configurable homepage). Validates the page exists AND sits at the
+     * language root; lazily normalizes a still-loose home.json into a folder page
+     * first so the old homepage becomes reorderable; then writes the pointer.
+     *
+     * @throws \InvalidArgumentException When the page is unknown or not at root.
+     */
+    public function setHomepage(string $uniqueId): void {
+        $lang = $this->getUserLanguage();
+        $languageFolder = $this->getLanguageFolder();
+
+        // Resolve the target and require it to be a real page.
+        $target = $this->findPageByUniqueId($languageFolder, $uniqueId);
+        if ($target === null || !isset($target['folder'])) {
+            throw new \InvalidArgumentException('Page not found');
+        }
+
+        // Must be a ROOT-level page: its folder's parent is the language root
+        // (or it is the loose home itself). Compare parent paths.
+        $isLooseHome = !empty($target['isHome']);
+        if (!$isLooseHome) {
+            $parentPath = dirname($target['folder']->getPath());
+            if ($parentPath !== $languageFolder->getPath()) {
+                throw new \InvalidArgumentException('Only root-level pages can be the homepage');
+            }
+        }
+
+        // If the target is already the resolved homepage, nothing to do.
+        if ($this->isHomepage($uniqueId, $lang)) {
+            return;
+        }
+
+        // Lazily normalize a still-loose home.json into a folder page so the old
+        // homepage is no longer special-cased in storage.
+        if ($languageFolder->nodeExists('home.json')) {
+            // Only normalize when the new target is NOT the loose home itself.
+            if (!$isLooseHome) {
+                $this->normalizeLooseHomepage($lang);
+            }
+        }
+
+        $this->homepageService->setHomepageUniqueId($uniqueId, $lang);
+        $this->clearCache();
+    }
+
+    /**
+     * Normalize the legacy loose `home.json` in the language root into a regular
+     * page folder `home/home.json` (issue: configurable homepage). Called once,
+     * lazily, when an admin points the homepage at a DIFFERENT page — so the old
+     * homepage becomes "just another root page" and can be reordered/moved.
+     *
+     * The page's uniqueId is preserved (links/nav/comments key on it). The `home`
+     * folder name is made collision-safe (-2/-3) like createPage. Caches cleared.
+     *
+     * @return string|null The new folder slug, or null when there was nothing to
+     *                     normalize (no loose home.json).
+     */
+    public function normalizeLooseHomepage(?string $language = null): ?string {
+        $languageFolder = $language !== null
+            ? $this->getLanguageFolderByCode($language)
+            : $this->getLanguageFolder();
+
+        if (!$languageFolder->nodeExists('home.json')) {
+            return null; // Already normalized / no loose home.
+        }
+
+        $homeContent = $languageFolder->get('home.json')->getContent();
+
+        // Collision-safe folder name (mirror createPage's -2/-3 logic).
+        $baseName = 'home';
+        $newName = $baseName;
+        $counter = 2;
+        while ($languageFolder->nodeExists($newName)) {
+            $newName = $baseName . '-' . $counter;
+            $counter++;
+        }
+
+        // Create the folder and write the page JSON as {folder}/{folder}.json.
+        $pageFolder = $languageFolder->newFolder($newName);
+        $pageFolder->newFile($newName . '.json')->putContent($homeContent);
+
+        // Move the loose _media folder (if any) inside the new page folder.
+        if ($languageFolder->nodeExists('_media')) {
+            try {
+                $languageFolder->get('_media')->move($pageFolder->getPath() . '/_media');
+            } catch (\Exception $e) {
+                $this->logger->warning('normalizeLooseHomepage: could not move _media', ['error' => $e->getMessage()]);
+            }
+        }
+
+        // Remove the old loose home.json now its content lives in the folder.
+        try {
+            $languageFolder->get('home.json')->delete();
+        } catch (\Exception $e) {
+            $this->logger->warning('normalizeLooseHomepage: could not delete loose home.json', ['error' => $e->getMessage()]);
+        }
+
+        $this->clearCache();
+        return $newName;
+    }
+
     public function movePage(string $pageId, string $targetParentId): void {
         if ($pageId === 'home') {
             throw new \InvalidArgumentException('The home page cannot be moved');
@@ -1953,6 +2158,18 @@ class PageService {
         if (!$source || !isset($source['folder'])) {
             throw new \Exception('Page not found: ' . $pageId);
         }
+
+        // The configured homepage cannot be moved — reassign it first
+        // (issue: configurable homepage).
+        $sourceUniqueId = strpos($pageId, 'page-') === 0 ? $pageId : '';
+        if ($sourceUniqueId === '' && isset($source['file'])) {
+            $decoded = json_decode($source['file']->getContent(), true);
+            $sourceUniqueId = is_array($decoded) ? ($decoded['uniqueId'] ?? '') : '';
+        }
+        if ($sourceUniqueId !== '' && $this->isHomepage($sourceUniqueId)) {
+            throw new \InvalidArgumentException('HOMEPAGE_PROTECTED');
+        }
+
         $sourceFolder = $source['folder'];
         $sourcePath = $sourceFolder->getPath();
 
@@ -2280,7 +2497,8 @@ class PageService {
             if ($item->getType() === \OCP\Files\FileInfo::TYPE_FILE &&
                 substr($item->getName(), -5) === '.json' &&
                 $item->getName() !== 'navigation.json' &&
-                $item->getName() !== 'footer.json') {
+                $item->getName() !== 'footer.json' &&
+                $item->getName() !== 'homepage.json') {
 
                 $content = $item->getContent();
                 $data = json_decode($content, true);
@@ -4034,8 +4252,9 @@ class PageService {
         }
 
         foreach ($orderedChildIds as $index => $childId) {
-            // home is pinned first and never carries an order.
-            if ($childId === 'home') {
+            // The homepage is pinned first and never carries an order — skip the
+            // legacy 'home' id as well as a configured pointer target.
+            if ($childId === 'home' || $this->isHomepage($childId)) {
                 continue;
             }
 
@@ -4461,6 +4680,22 @@ class PageService {
 
         // Recursively build tree from subfolders
         $this->buildPageTree($folder, $tree, null, $lang); // Pass null, marking done separately
+
+        // Configurable homepage: if a pointer designates a root page other than
+        // the loose home.json, float that node to the front so the homepage is
+        // always first (matches the legacy home.json-first behaviour).
+        $pointer = $this->homepageService->getHomepageUniqueId($lang);
+        if ($pointer !== null && $pointer !== '' && $pointer !== 'home') {
+            foreach ($tree as $i => $node) {
+                if (($node['uniqueId'] ?? null) === $pointer) {
+                    if ($i !== 0) {
+                        $picked = array_splice($tree, $i, 1);
+                        array_unshift($tree, $picked[0]);
+                    }
+                    break;
+                }
+            }
+        }
 
         // Store in static cache
         self::$pageTreeCache[$cacheKey] = [
@@ -6204,6 +6439,89 @@ class PageService {
         } catch (\Exception $e) {
             $this->logger->error('Failed to create page from template: ' . $e->getMessage());
             return ['success' => false, 'error' => $e->getMessage()];
+        }
+    }
+
+    /**
+     * Copy a page (its content + media) into a new draft page (issue: copy page).
+     *
+     * Mirrors createPageFromTemplate: reuses createPage() for a fresh uniqueId +
+     * collision-safe slug, keeps the layout/widgets (widget ids are page-scoped
+     * and the copy gets its own media folder), copies media assets, and never
+     * inherits the homepage pointer. Result is a draft under the same parent
+     * (or an explicit target parent).
+     *
+     * @param string      $sourceUniqueId uniqueId of the page to copy.
+     * @param string|null $targetParentId uniqueId of the destination parent; null/'' = same parent as source (root when source is root).
+     * @param string|null $newTitle       Title for the copy; defaults to "{title} (copy)".
+     * @return array The freshly created page (getPage shape).
+     * @throws \Exception When the source cannot be located.
+     */
+    public function copyPage(string $sourceUniqueId, ?string $targetParentId = null, ?string $newTitle = null): array {
+        $languageFolder = $this->getLanguageFolder();
+
+        $source = $this->findPageByUniqueId($languageFolder, $sourceUniqueId);
+        if ($source === null || !isset($source['file'])) {
+            throw new \Exception('Page not found: ' . $sourceUniqueId);
+        }
+
+        $sourceData = json_decode($source['file']->getContent(), true);
+        if (!is_array($sourceData)) {
+            throw new \Exception('Could not read source page');
+        }
+
+        // Determine the destination parent path.
+        $parentPath = null;
+        if ($targetParentId !== null && $targetParentId !== '') {
+            $targetParent = $this->findPageByUniqueId($languageFolder, $targetParentId);
+            if ($targetParent === null || !isset($targetParent['folder'])) {
+                throw new \Exception('Target parent not found: ' . $targetParentId);
+            }
+            $parentPath = $this->getRelativePathFromRoot($targetParent['folder']);
+        } elseif (isset($source['folder'])) {
+            // Same parent as the source (empty string / root when source is at root).
+            $sourceParentPath = dirname($this->getRelativePathFromRoot($source['folder']));
+            $parentPath = ($sourceParentPath === '.' || $sourceParentPath === '') ? null : $sourceParentPath;
+        }
+
+        // Build the copy's page data (fresh identity, draft status).
+        $title = $newTitle !== null && $newTitle !== '' ? $newTitle : ($sourceData['title'] ?? 'Untitled') . ' (copy)';
+        $pageData = $sourceData;
+        unset($pageData['order']); // never inherit sibling order
+        $pageData['id'] = $this->sanitizeId($title);
+        $pageData['title'] = $title;
+        $pageData['uniqueId'] = 'page-' . $this->generateUUID();
+        $pageData['status'] = 'draft';
+        $pageData['created'] = time();
+        $pageData['modified'] = time();
+
+        $createdPage = $this->createPage($pageData, $parentPath);
+
+        // Copy media assets from the source page folder into the copy.
+        try {
+            if (isset($source['folder']) && $source['folder']->nodeExists('_media')) {
+                $sourceMedia = $source['folder']->get('_media');
+                $newPageFolder = $this->findPageFolder($createdPage['uniqueId']);
+                if ($newPageFolder && $sourceMedia instanceof \OCP\Files\Folder) {
+                    if (!$newPageFolder->nodeExists('_media')) {
+                        $newPageFolder->newFolder('_media');
+                    }
+                    $targetMedia = $newPageFolder->get('_media');
+                    if ($targetMedia instanceof \OCP\Files\Folder) {
+                        $this->copyMediaFolderContents($sourceMedia, $targetMedia);
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            $this->logger->warning('copyPage: media copy failed', ['error' => $e->getMessage()]);
+        }
+
+        $this->clearCache();
+
+        try {
+            return $this->getPage($createdPage['uniqueId']);
+        } catch (\Exception $e) {
+            return $createdPage;
         }
     }
 
