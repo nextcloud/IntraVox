@@ -1,24 +1,9 @@
 OC.L10N.register(
     "intravox",
     {
-    "Other" : "Ostali",
-    "Link" : "Veza",
-    "File" : "Fajl",
-    "Cancel" : "Poništi",
     "Save" : "Sačuvaj",
-    "Learn more" : "Saznajte više",
-    "Deletion failed" : "Brisanje nije uspelo",
-    "Language" : "Jezik",
-    "Never" : "Nikad",
-    "Name" : "Ime",
-    "Type" : "Tip",
-    "Delete" : "Obriši",
-    "Delete permanently" : "Obriši zauvek",
-    "RSS feed" : "РСС довод",
-    "Newest first" : "Prvo novije",
-    "Oldest first" : "prvo starije",
-    "Password required" : "Potrebna je lozinka",
-    "Edit" : "Izmeni",
-    "Send" : "Pošalji"
+    "Documents" : "Dokumenti",
+    "Small" : "Mali",
+    "Home" : "Početak"
 },
 "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);");

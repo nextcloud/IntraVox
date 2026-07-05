@@ -1,26 +1,6 @@
 OC.L10N.register(
     "intravox",
     {
-    "Other" : "ផ្សេងៗ",
-    "File" : "ឯកសារ",
-    "Cancel" : "Cancel",
-    "Save" : "Save",
-    "Sharing" : "ការ​ចែក​រំលែក",
-    "Language" : "ភាសា",
-    "Add" : "បន្ថែម",
-    "Import" : "នាំយកចូល",
-    "Export" : "នាំចេញ",
-    "Name" : "ឈ្មោះ",
-    "Type" : "ប្រភេទ",
-    "Value" : "តម្លៃ",
-    "Size" : "ទំហំ",
-    "Delete" : "Delete",
-    "Delete permanently" : "លុប​ជា​អចិន្ត្រៃយ៍",
-    "RSS feed" : "RSS feed",
-    "Disabled" : "បាន​បិទ",
-    "_%n minute ago_::_%n minutes ago_" : ["%n នាទី​មុន"],
-    "_%n hour ago_::_%n hours ago_" : ["%n ម៉ោង​មុន"],
-    "Edit" : "កែប្រែ",
-    "Send" : "ផ្ញើ"
+    "Disabled" : "បាន​បិទ"
 },
 "nplurals=1; plural=0;");

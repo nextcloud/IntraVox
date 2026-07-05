@@ -1,9 +1,6 @@
 OC.L10N.register(
     "intravox",
     {
-    "Cancel" : "Cancel",
-    "Save" : "Save",
-    "Delete" : "Delete",
-    "RSS feed" : "RSS फिड"
+    "Home" : "गृह"
 },
 "nplurals=2; plural=(n != 1);");

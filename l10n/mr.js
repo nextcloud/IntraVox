@@ -1,8 +1,6 @@
 OC.L10N.register(
     "intravox",
     {
-    "Cancel" : "रद्द करा",
-    "Save" : "Save",
-    "Delete" : "Delete"
+    "Home" : "होम"
 },
 "nplurals=2; plural=(n != 1);");
