@@ -1,6 +1,4 @@
 { "translations": {
-    "Cancel" : "रद्द करा",
-    "Save" : "Save",
-    "Delete" : "Delete"
+    "Home" : "होम"
 },"pluralForm" :"nplurals=2; plural=(n != 1);"
 }

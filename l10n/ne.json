@@ -1,7 +1,4 @@
 { "translations": {
-    "Cancel" : "Cancel",
-    "Save" : "Save",
-    "Delete" : "Delete",
-    "RSS feed" : "RSS फिड"
+    "Home" : "गृह"
 },"pluralForm" :"nplurals=2; plural=(n != 1);"
 }

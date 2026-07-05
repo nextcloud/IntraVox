@@ -1,25 +1,7 @@
 OC.L10N.register(
     "intravox",
     {
-    "Other" : "மற்றவை",
-    "Link" : "Link",
-    "File" : "File",
-    "Video" : "Video",
-    "Cancel" : "Cancel",
     "Save" : "Save",
-    "Loading" : "Loading",
-    "Language" : "மொழி",
-    "Remove" : "அகற்றுக",
-    "Add" : "சேர்க்க",
-    "Import" : "இறக்குமதி",
-    "Export" : "ஏற்றுமதி",
-    "Name" : "பெயர்",
-    "Type" : "வகை",
-    "Size" : "அளவு",
-    "Actions" : "செயல்கள்",
-    "Delete" : "Delete",
-    "Delete permanently" : "நிரந்தரமாக நீக்கவும்",
-    "Password" : "கடவுச்சொல்",
-    "Edit" : "தொகுக்க"
+    "Home" : "அகம்"
 },
 "nplurals=2; plural=(n != 1);");

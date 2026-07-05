@@ -1,25 +1,7 @@
 { "translations": {
-    "Other" : "වෙනත්",
-    "Link" : "සබැඳිය",
-    "File" : "ගොනුව",
-    "Cancel" : "Cancel",
     "Save" : "Save",
-    "Loading" : "පූරණය වෙමින්",
-    "Language" : "භාෂාව",
-    "Remove" : "ඉවත් කරන්න",
-    "Add" : "එකතු කරන්න",
-    "Select language" : "භාෂාව තෝරන්න",
-    "Empty" : "හිස්",
-    "Comments" : "අදහස්",
-    "Name" : "නම",
-    "Authentication" : "සත්‍යාපනය",
-    "Size" : "ප්‍රමාණය",
-    "Actions" : "ක්‍රියාමාර්ග",
-    "Delete" : "Delete",
-    "_%n comment_::_%n comments_" : ["අදහස් %n","අදහස් %n"],
-    "Disabled" : "අබල කර ඇත",
-    "Edit" : "සංස්කරණය",
-    "Reply" : "පිළිතුර",
-    "Send" : "යවන්න"
+    "Small" : "කුඩා",
+    "Home" : "මුල් පිටුව",
+    "Disabled" : "අබල කර ඇත"
 },"pluralForm" :"nplurals=2; plural=(n != 1);"
 }
