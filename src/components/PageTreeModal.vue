@@ -36,6 +36,32 @@
         <p>{{ t('intravox', 'No pages found.') }}</p>
       </div>
 
+      <!-- Inline "move to" step (kept inside this modal to avoid stacked modals) -->
+      <div v-else-if="movingNode" class="move-panel">
+        <p class="move-panel__label">
+          {{ t('intravox', 'Move this page to:') }}
+        </p>
+        <p class="move-panel__title">{{ movingNode.title }}</p>
+        <NcCheckboxRadioSwitch
+          type="switch"
+          :model-value="moveToRoot"
+          @update:model-value="setMoveToRoot">
+          {{ t('intravox', 'Move to the top level') }}
+        </NcCheckboxRadioSwitch>
+        <PageTreeSelect
+          v-if="!moveToRoot"
+          v-model="moveTargetId"
+          :placeholder="t('intravox', 'Select a destination page')" />
+        <div class="move-panel__actions">
+          <NcButton type="tertiary" @click="cancelMove">
+            {{ t('intravox', 'Cancel') }}
+          </NcButton>
+          <NcButton type="primary" :disabled="moveInProgress || (!moveToRoot && !moveTargetId)" @click="confirmMove">
+            {{ t('intravox', 'Move page') }}
+          </NcButton>
+        </div>
+      </div>
+
       <div v-else class="page-tree">
         <ul class="tree-list">
           <PageTreeItem
@@ -65,11 +91,12 @@
 
 <script>
 import { translate, translatePlural } from '@nextcloud/l10n';
-import { NcModal, NcLoadingIcon, NcButton, NcNoteCard } from '@nextcloud/vue';
+import { NcModal, NcLoadingIcon, NcButton, NcNoteCard, NcCheckboxRadioSwitch } from '@nextcloud/vue';
 import Cog from 'vue-material-design-icons/Cog.vue';
 import axios from '@nextcloud/axios';
 import { generateUrl } from '@nextcloud/router';
 import PageTreeItem from './PageTreeItem.vue';
+import PageTreeSelect from './PageTreeSelect.vue';
 
 export default {
   name: 'PageTreeModal',
@@ -78,7 +105,9 @@ export default {
     NcLoadingIcon,
     NcButton,
     NcNoteCard,
+    NcCheckboxRadioSwitch,
     PageTreeItem,
+    PageTreeSelect,
     Cog
   },
   props: {
@@ -103,6 +132,10 @@ export default {
       error: null,
       expandedNodes: new Set(),
       homepageUniqueId: null,
+      movingNode: null,
+      moveTargetId: null,
+      moveToRoot: false,
+      moveInProgress: false,
       manageMode: false
     };
   },
@@ -232,7 +265,36 @@ export default {
       this.emitReorderAfterSwap(uniqueId, 1);
     },
     handleMoveTo(node) {
-      this.$emit('move', node);
+      this.movingNode = node;
+      this.moveTargetId = null;
+      this.moveToRoot = false;
+    },
+    setMoveToRoot(val) {
+      this.moveToRoot = val;
+      if (val) this.moveTargetId = null;
+    },
+    cancelMove() {
+      this.movingNode = null;
+      this.moveTargetId = null;
+      this.moveToRoot = false;
+    },
+    async confirmMove() {
+      if (!this.movingNode) return;
+      this.moveInProgress = true;
+      const payload = {
+        pageId: this.movingNode.uniqueId,
+        targetParentId: this.moveToRoot ? '' : (this.moveTargetId || ''),
+      };
+      // Delegate the API call to the parent, then refresh the tree in place.
+      this.$emit('move', payload, async (ok) => {
+        this.moveInProgress = false;
+        if (ok) {
+          this.movingNode = null;
+          this.moveTargetId = null;
+          this.moveToRoot = false;
+          await this.loadTree();
+        }
+      });
     },
     handleDelete(node) {
       this.$emit('delete', node);
@@ -293,6 +355,27 @@ export default {
   margin: 0;
   padding: 0;
 }
+.move-panel {
+  padding: 8px 4px;
+}
+
+.move-panel__label {
+  margin: 0 0 4px;
+  color: var(--color-text-maxcontrast);
+}
+
+.move-panel__title {
+  margin: 0 0 12px;
+  font-weight: 600;
+}
+
+.move-panel__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
 .page-tree-intro {
   margin: 0 0 12px;
   color: var(--color-text-maxcontrast);

@@ -6467,7 +6467,11 @@ class PageService {
         }
 
         // Build the copy's page data (fresh identity, draft status).
-        $title = $newTitle !== null && $newTitle !== '' ? $newTitle : ($sourceData['title'] ?? 'Untitled') . ' (copy)';
+        // Decode the source title first: it is stored HTML-encoded (sanitizeText),
+        // and createPage re-encodes it — without decoding, "Tips &amp; Tricks"
+        // would double-encode to "Tips &amp;amp; Tricks (copy)".
+        $baseTitle = $this->decodeHtmlEntitiesRecursive((string)($sourceData['title'] ?? 'Untitled'));
+        $title = $newTitle !== null && $newTitle !== '' ? $newTitle : $baseTitle . ' (copy)';
         $pageData = $sourceData;
         unset($pageData['order']); // never inherit sibling order
         $pageData['id'] = $this->sanitizeId($title);

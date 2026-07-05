@@ -191,45 +191,13 @@
       @close="showPageTree = false"
       @navigate="selectPage"
       @reorder="reorderPages"
-      @move="openMovePageDialog"
+      @move="movePage"
       @delete="deletePageFromTree"
       @set-homepage="handleSetHomepage"
       @copy="copyPageFromTree"
       @homepage="homepageUniqueId = $event"
     />
 
-    <NcDialog
-      v-if="showMoveDialog"
-      :open="true"
-      :name="t('intravox', 'Move page')"
-      size="normal"
-      @close="closeMovePageDialog">
-      <div class="move-page-dialog">
-        <p class="move-page-dialog__label">
-          {{ t('intravox', 'Move this page to:') }}
-        </p>
-        <p class="move-page-dialog__title">{{ movePageNode?.title || '' }}</p>
-        <NcCheckboxRadioSwitch
-          type="switch"
-          :model-value="moveToRoot"
-          @update:model-value="setMoveToRoot">
-          {{ t('intravox', 'Move to the top level') }}
-        </NcCheckboxRadioSwitch>
-        <PageTreeSelect
-          v-if="!moveToRoot"
-          v-model="moveTargetId"
-          :placeholder="t('intravox', 'Select a destination page')"
-          @select="onMoveTargetSelect" />
-      </div>
-      <template #actions>
-        <NcButton type="tertiary" @click="closeMovePageDialog">
-          {{ t('intravox', 'Cancel') }}
-        </NcButton>
-        <NcButton type="primary" :disabled="moveInProgress" @click="confirmMovePage">
-          {{ t('intravox', 'Move page') }}
-        </NcButton>
-      </template>
-    </NcDialog>
 
     <NewPageModal
       v-if="showNewPageModal"
@@ -1351,48 +1319,24 @@ export default {
         await this.$refs.pageTreeModal.loadTree();
       }
     },
-    openMovePageDialog(node) {
-      this.movePageNode = node;
-      this.moveTargetId = null;
-      this.moveToRoot = false;
-      this.showMoveDialog = true;
-    },
-    closeMovePageDialog() {
-      this.showMoveDialog = false;
-      this.movePageNode = null;
-      this.moveTargetId = null;
-    },
-    onMoveTargetSelect(id) {
-      this.moveTargetId = id;
-    },
-    setMoveToRoot(val) {
-      this.moveToRoot = val;
-      if (val) this.moveTargetId = null;
-    },
-    async confirmMovePage() {
-      if (!this.movePageNode) return;
-      const pageId = this.movePageNode.uniqueId;
-      const targetParentId = this.moveToRoot ? '' : (this.moveTargetId || '');
-      if (!this.moveToRoot && !this.moveTargetId) {
-        showError(this.t('intravox', 'Select a destination page, or choose "Move to the top level".'));
-        return;
-      }
+    // The page-structure modal drives the inline move UI and calls this with the
+    // resolved payload + a done(ok) callback so it can refresh itself.
+    async movePage(payload, done) {
+      const { pageId, targetParentId } = payload || {};
+      if (!pageId) { if (done) done(false); return; }
       if (targetParentId === pageId) {
         showError(this.t('intravox', 'Cannot move a page into itself or its descendant'));
+        if (done) done(false);
         return;
       }
-      this.moveInProgress = true;
       try {
         await axios.post(generateUrl('/apps/intravox/api/pages/move'), {
           pageId,
-          targetParentId,
+          targetParentId: targetParentId || '',
         });
         showSuccess(this.t('intravox', 'Page moved'));
-        this.closeMovePageDialog();
         await this.loadPages();
-        if (this.$refs.pageTreeModal) {
-          await this.$refs.pageTreeModal.loadTree();
-        }
+        if (done) done(true);
       } catch (err) {
         const code = err.response?.data?.error;
         if (code === 'HOMEPAGE_PROTECTED') {
@@ -1400,8 +1344,7 @@ export default {
         } else {
           showError(this.t('intravox', 'Could not move page: {error}', { error: code || err.message }));
         }
-      } finally {
-        this.moveInProgress = false;
+        if (done) done(false);
       }
     },
     showPageList() {
