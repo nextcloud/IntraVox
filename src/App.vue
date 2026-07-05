@@ -209,9 +209,15 @@
           {{ t('intravox', 'Move this page to:') }}
         </p>
         <p class="move-page-dialog__title">{{ movePageNode?.title || '' }}</p>
+        <NcCheckboxRadioSwitch
+          :model-value="moveToRoot"
+          @update:model-value="setMoveToRoot">
+          {{ t('intravox', 'Move to the top level') }}
+        </NcCheckboxRadioSwitch>
         <PageTreeSelect
+          v-if="!moveToRoot"
           v-model="moveTargetId"
-          :placeholder="t('intravox', 'Select a destination')"
+          :placeholder="t('intravox', 'Select a destination page')"
           @select="onMoveTargetSelect" />
       </div>
       <template #actions>
@@ -281,7 +287,7 @@ import { generateUrl } from '@nextcloud/router';
 import { translate, translatePlural } from '@nextcloud/l10n';
 import { showSuccess, showError } from '@nextcloud/dialogs';
 import PageTreeSelect from './components/PageTreeSelect.vue';
-import { NcButton, NcDialog } from '@nextcloud/vue';
+import { NcButton, NcDialog, NcCheckboxRadioSwitch } from '@nextcloud/vue';
 import ContentSave from 'vue-material-design-icons/ContentSave.vue';
 import Close from 'vue-material-design-icons/Close.vue';
 import Eye from 'vue-material-design-icons/Eye.vue';
@@ -322,6 +328,7 @@ export default {
   name: 'App',
   components: {
     NcButton,
+    NcCheckboxRadioSwitch,
     ContentSave,
     Close,
     Eye,
@@ -359,6 +366,7 @@ export default {
       showPageTree: false,
       showMoveDialog: false,
       homepageUniqueId: null,
+      moveToRoot: false,
       movePageNode: null,
       moveTargetId: null,
       moveInProgress: false,
@@ -1317,18 +1325,21 @@ export default {
     },
     // ---- Page management from the structure modal (issue #69) ----
     async reorderPages({ parentId, orderedIds }) {
+      // The tree modal already swapped the rows optimistically, so we persist
+      // in the background without a full reload (no flash). Only refresh the
+      // tree if the server rejects the change, to resync the real order.
       try {
         await axios.post(generateUrl('/apps/intravox/api/pages/reorder'), {
           parentId: parentId || null,
           orderedIds,
         });
-        showSuccess(this.t('intravox', 'Page order saved'));
-        await this.loadPages();
+        // Keep the pages list in sync for other views, but don't reload the tree.
+        this.loadPages();
+      } catch (err) {
+        showError(this.t('intravox', 'Could not save page order: {error}', { error: err.message }));
         if (this.$refs.pageTreeModal) {
           await this.$refs.pageTreeModal.loadTree();
         }
-      } catch (err) {
-        showError(this.t('intravox', 'Could not save page order: {error}', { error: err.message }));
       }
     },
     async deletePageFromTree(node) {
@@ -1341,6 +1352,7 @@ export default {
     openMovePageDialog(node) {
       this.movePageNode = node;
       this.moveTargetId = null;
+      this.moveToRoot = false;
       this.showMoveDialog = true;
     },
     closeMovePageDialog() {
@@ -1351,34 +1363,41 @@ export default {
     onMoveTargetSelect(id) {
       this.moveTargetId = id;
     },
+    setMoveToRoot(val) {
+      this.moveToRoot = val;
+      if (val) this.moveTargetId = null;
+    },
     async confirmMovePage() {
       if (!this.movePageNode) return;
       const pageId = this.movePageNode.uniqueId;
-      const targetParentId = this.moveTargetId || '';
+      const targetParentId = this.moveToRoot ? '' : (this.moveTargetId || '');
+      if (!this.moveToRoot && !this.moveTargetId) {
+        showError(this.t('intravox', 'Select a destination page, or choose "Move to the top level".'));
+        return;
+      }
       if (targetParentId === pageId) {
         showError(this.t('intravox', 'Cannot move a page into itself or its descendant'));
         return;
       }
       this.moveInProgress = true;
       try {
-        const response = await axios.post(generateUrl('/apps/intravox/api/bulk/move'), {
-          pageIds: [pageId],
+        await axios.post(generateUrl('/apps/intravox/api/pages/move'), {
+          pageId,
           targetParentId,
         });
-        const failed = response.data?.failed || [];
-        if (failed.length > 0) {
-          const reason = failed[0]?.reason || failed[0]?.error || '';
-          showError(this.t('intravox', 'Could not move page: {error}', { error: reason }));
-        } else {
-          showSuccess(this.t('intravox', 'Page moved'));
-          this.closeMovePageDialog();
-          await this.loadPages();
-          if (this.$refs.pageTreeModal) {
-            await this.$refs.pageTreeModal.loadTree();
-          }
+        showSuccess(this.t('intravox', 'Page moved'));
+        this.closeMovePageDialog();
+        await this.loadPages();
+        if (this.$refs.pageTreeModal) {
+          await this.$refs.pageTreeModal.loadTree();
         }
       } catch (err) {
-        showError(this.t('intravox', 'Could not move page: {error}', { error: err.message }));
+        const code = err.response?.data?.error;
+        if (code === 'HOMEPAGE_PROTECTED') {
+          showError(this.t('intravox', 'This page is the homepage. Set another page as the homepage first.'));
+        } else {
+          showError(this.t('intravox', 'Could not move page: {error}', { error: code || err.message }));
+        }
       } finally {
         this.moveInProgress = false;
       }

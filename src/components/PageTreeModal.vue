@@ -219,9 +219,10 @@ export default {
       const i = siblings.findIndex(n => n.uniqueId === uniqueId);
       const j = i + delta;
       if (i < 0 || j < 0 || j >= siblings.length) return;
-      const reordered = siblings.slice();
-      [reordered[i], reordered[j]] = [reordered[j], reordered[i]];
-      const orderedIds = reordered.map(n => n.uniqueId);
+      // Swap in place so the modal reflects the new order instantly (no full
+      // reload / flash). The server persists in the background.
+      [siblings[i], siblings[j]] = [siblings[j], siblings[i]];
+      const orderedIds = siblings.map(n => n.uniqueId);
       this.$emit('reorder', { parentId: parentId || null, orderedIds });
     },
     handleMoveUp(uniqueId) {

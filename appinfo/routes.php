@@ -24,6 +24,7 @@ return [
         // Literal must precede the /api/pages/{id} wildcard below (issue #69).
         ['name' => 'api#reorderPages', 'url' => '/api/pages/reorder', 'verb' => 'POST'],
         ['name' => 'api#copyPage', 'url' => '/api/pages/copy', 'verb' => 'POST'],
+        ['name' => 'api#movePage', 'url' => '/api/pages/move', 'verb' => 'POST'],
         ['name' => 'api#getPage', 'url' => '/api/pages/{id}', 'verb' => 'GET'],
         ['name' => 'api#updatePage', 'url' => '/api/pages/{id}', 'verb' => 'PUT'],
         ['name' => 'api#deletePage', 'url' => '/api/pages/{id}', 'verb' => 'DELETE'],

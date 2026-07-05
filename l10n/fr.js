@@ -1252,6 +1252,9 @@ OC.L10N.register(
     "This page is the homepage. Set another page as the homepage first." : "Cette page est la page d’accueil. Définissez d’abord une autre page comme page d’accueil.",
     "Changes here move the actual pages and their folders, not just the menu." : "Les modifications ici déplacent les pages réelles et leurs dossiers, pas seulement le menu.",
     "This changes the menu links and their order only. It does not move or rename the actual pages. To organize pages, use \"Page structure\" in the navigation bar." : "Ceci modifie uniquement les liens du menu et leur ordre. Cela ne déplace ni ne renomme les pages réelles. Pour organiser les pages, utilisez « Structure des pages » dans la barre de navigation.",
-    "Browse all pages. Use \"Manage structure\" to move, reorder, copy or delete the actual pages." : "Parcourez toutes les pages. Utilisez « Gérer la structure » pour déplacer, réorganiser, copier ou supprimer les pages réelles."
+    "Browse all pages. Use \"Manage structure\" to move, reorder, copy or delete the actual pages." : "Parcourez toutes les pages. Utilisez « Gérer la structure » pour déplacer, réorganiser, copier ou supprimer les pages réelles.",
+    "Move to the top level" : "Déplacer au niveau supérieur",
+    "Select a destination page" : "Sélectionner une page de destination",
+    "Select a destination page, or choose \"Move to the top level\"." : "Sélectionnez une page de destination, ou choisissez « Déplacer au niveau supérieur »."
 },
 "nplurals=3; plural=(n == 0 || n == 1) ? 0 : n != 0 && n % 1000000 == 0 ? 1 : 2;");

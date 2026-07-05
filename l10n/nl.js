@@ -1252,6 +1252,9 @@ OC.L10N.register(
     "This page is the homepage. Set another page as the homepage first." : "Deze pagina is de homepage. Stel eerst een andere pagina als homepage in.",
     "Changes here move the actual pages and their folders, not just the menu." : "Wijzigingen hier verplaatsen de echte pagina’s en hun mappen, niet alleen het menu.",
     "This changes the menu links and their order only. It does not move or rename the actual pages. To organize pages, use \"Page structure\" in the navigation bar." : "Dit wijzigt alleen de menulinks en hun volgorde. Het verplaatst of hernoemt de echte pagina’s niet. Gebruik \"Paginastructuur\" in de navigatiebalk om pagina’s te ordenen.",
-    "Browse all pages. Use \"Manage structure\" to move, reorder, copy or delete the actual pages." : "Blader door alle pagina’s. Gebruik \"Structuur beheren\" om de echte pagina’s te verplaatsen, herordenen, kopiëren of verwijderen."
+    "Browse all pages. Use \"Manage structure\" to move, reorder, copy or delete the actual pages." : "Blader door alle pagina’s. Gebruik \"Structuur beheren\" om de echte pagina’s te verplaatsen, herordenen, kopiëren of verwijderen.",
+    "Move to the top level" : "Naar het hoogste niveau verplaatsen",
+    "Select a destination page" : "Kies een doelpagina",
+    "Select a destination page, or choose \"Move to the top level\"." : "Kies een doelpagina, of kies \"Naar het hoogste niveau verplaatsen\"."
 },
 "nplurals=2; plural=(n != 1);");

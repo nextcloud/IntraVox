@@ -1244,6 +1244,9 @@
     "This page is the homepage. Set another page as the homepage first." : "Diese Seite ist die Startseite. Legen Sie zuerst eine andere Seite als Startseite fest.",
     "Changes here move the actual pages and their folders, not just the menu." : "Änderungen hier verschieben die tatsächlichen Seiten und ihre Ordner, nicht nur das Menü.",
     "This changes the menu links and their order only. It does not move or rename the actual pages. To organize pages, use \"Page structure\" in the navigation bar." : "Dies ändert nur die Menülinks und ihre Reihenfolge. Die tatsächlichen Seiten werden weder verschoben noch umbenannt. Verwenden Sie \"Seitenstruktur\" in der Navigationsleiste, um Seiten zu organisieren.",
-    "Browse all pages. Use \"Manage structure\" to move, reorder, copy or delete the actual pages." : "Alle Seiten durchsuchen. Verwenden Sie \"Struktur verwalten\", um die tatsächlichen Seiten zu verschieben, neu zu ordnen, zu kopieren oder zu löschen."
+    "Browse all pages. Use \"Manage structure\" to move, reorder, copy or delete the actual pages." : "Alle Seiten durchsuchen. Verwenden Sie \"Struktur verwalten\", um die tatsächlichen Seiten zu verschieben, neu zu ordnen, zu kopieren oder zu löschen.",
+    "Move to the top level" : "Auf die oberste Ebene verschieben",
+    "Select a destination page" : "Zielseite auswählen",
+    "Select a destination page, or choose \"Move to the top level\"." : "Wählen Sie eine Zielseite oder \"Auf die oberste Ebene verschieben\"."
 },"pluralForm" :"nplurals=2; plural=(n != 1);"
 }

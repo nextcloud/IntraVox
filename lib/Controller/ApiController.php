@@ -1228,6 +1228,51 @@ class ApiController extends Controller {
     }
 
     /**
+     * Move a page (with its subtree) under a different parent (issue #69).
+     * Per-folder permission (canWrite on source + canCreate on target parent),
+     * so a department editor can move within their own rights — unlike the
+     * admin-only bulk endpoint.
+     *
+     * @NoAdminRequired
+     */
+    #[UserRateThrottle(limit: 20, period: 60)]
+    public function movePage(?string $pageId = null, ?string $targetParentId = null): DataResponse {
+        try {
+            if (!is_string($pageId) || $pageId === '') {
+                return new DataResponse(['error' => 'pageId is required'], Http::STATUS_BAD_REQUEST);
+            }
+
+            // Write permission on the page being moved.
+            $source = $this->pageService->getPage($pageId);
+            if (!($source['permissions']['canWrite'] ?? false)) {
+                return new DataResponse(
+                    ['error' => 'Permission denied: cannot move this page'],
+                    Http::STATUS_FORBIDDEN
+                );
+            }
+
+            // Create permission on the destination parent (root = '').
+            $parentRelPath = '';
+            if (is_string($targetParentId) && $targetParentId !== '') {
+                $parentRelPath = $this->pageService->getPage($targetParentId)['path'] ?? '';
+            }
+            if (!($this->pageService->getFolderPermissions($parentRelPath)['canCreate'] ?? false)) {
+                return new DataResponse(
+                    ['error' => 'Permission denied: cannot move a page here'],
+                    Http::STATUS_FORBIDDEN
+                );
+            }
+
+            $this->pageService->movePage($pageId, is_string($targetParentId) ? $targetParentId : '');
+            return new DataResponse(['success' => true]);
+        } catch (\InvalidArgumentException $e) {
+            return new DataResponse(['error' => $e->getMessage()], Http::STATUS_BAD_REQUEST);
+        } catch (\Exception $e) {
+            return new DataResponse(['error' => $e->getMessage()], Http::STATUS_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
      * @NoAdminRequired
      * @NoCSRFRequired
      */
