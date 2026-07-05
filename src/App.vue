@@ -210,6 +210,7 @@
         </p>
         <p class="move-page-dialog__title">{{ movePageNode?.title || '' }}</p>
         <NcCheckboxRadioSwitch
+          type="switch"
           :model-value="moveToRoot"
           @update:model-value="setMoveToRoot">
           {{ t('intravox', 'Move to the top level') }}
@@ -329,6 +330,7 @@ export default {
   components: {
     NcButton,
     NcCheckboxRadioSwitch,
+    PageTreeSelect,
     ContentSave,
     Close,
     Eye,
