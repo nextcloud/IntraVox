@@ -70,7 +70,7 @@ class MockUser implements IUser {
     public function getLastLogin(): int { return time(); }
     public function updateLastLoginTimestamp(): void {}
     public function delete(): bool { return true; }
-    public function setPassword(string $password, string $recoveryPassword = null): bool { return true; }
+    public function setPassword(string $password, ?string $recoveryPassword = null): bool { return true; }
     public function getHome(): string { return '/home/' . $this->uid; }
     public function getBackendClassName(): string { return 'Database'; }
     public function canChangeAvatar(): bool { return true; }

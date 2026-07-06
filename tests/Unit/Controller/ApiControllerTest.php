@@ -776,7 +776,6 @@ class ApiControllerTest extends TestCase {
         // Use reflection to test private method
         $reflection = new \ReflectionClass($this->controller);
         $method = $reflection->getMethod('isAdmin');
-        $method->setAccessible(true);
 
         $this->assertTrue($method->invoke($this->controller));
     }
@@ -785,7 +784,6 @@ class ApiControllerTest extends TestCase {
         // Use reflection to test private method
         $reflection = new \ReflectionClass($this->controller);
         $method = $reflection->getMethod('isAdmin');
-        $method->setAccessible(true);
 
         $this->assertFalse($method->invoke($this->controller));
     }
@@ -818,7 +816,6 @@ class ApiControllerTest extends TestCase {
 
         $reflection = new \ReflectionClass($this->controller);
         $method = $reflection->getMethod('isAdmin');
-        $method->setAccessible(true);
 
         $this->assertFalse($method->invoke($this->controller));
     }

@@ -16,12 +16,14 @@
             <directory>./tests/Integration</directory>
         </testsuite>
     </testsuites>
-    <coverage>
-        <report>
-            <html outputDirectory="coverage"/>
-            <clover outputFile="coverage/clover.xml"/>
-        </report>
-    </coverage>
+    <!--
+      No coverage report block here on purpose: it would make every run try to
+      produce a coverage report, which emits a "No code coverage driver
+      available" warning when Xdebug/PCOV is absent. With failOnWarning="true"
+      that turns a fully passing run into a non-zero exit. Request coverage
+      explicitly instead via `composer test:coverage`, which enables it on the
+      command line.
+    -->
     <source>
         <include>
             <directory suffix=".php">./lib</directory>
