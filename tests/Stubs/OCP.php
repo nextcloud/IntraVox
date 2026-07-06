@@ -107,6 +107,10 @@ interface Node {
     public function getName(): string;
     public function getPath(): string;
     public function getType(): int;
+    public function getPermissions(): int;
+    public function isUpdateable(): bool;
+    public function isCreatable(): bool;
+    public function isDeletable(): bool;
 }
 
 interface File extends Node {

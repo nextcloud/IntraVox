@@ -350,14 +350,46 @@ class PageService {
     }
 
     /**
-     * Get cached permissions for a folder
+     * Get cached permissions for a node (folder or file)
      */
-    private function getCachedPermissions(\OCP\Files\Folder $folder): int {
-        $path = $folder->getPath();
+    private function getCachedPermissions(\OCP\Files\Node $node): int {
+        $path = $node->getPath();
         if (!isset($this->permissionsCache[$path])) {
-            $this->permissionsCache[$path] = $folder->getPermissions();
+            $this->permissionsCache[$path] = $node->getPermissions();
         }
         return $this->permissionsCache[$path];
+    }
+
+    /**
+     * Build the canRead/canWrite/canCreate/canDelete/canShare permission object
+     * for a node from Nextcloud's filesystem view — the single source of truth
+     * used by getPage(), getFolderPermissions(), the page tree and listings.
+     *
+     * canWrite/canCreate/canDelete AND the raw permission bit with the node's
+     * capability method. For a read-only GroupFolder / Team Folder member WITHOUT
+     * Advanced Permissions (ACLs), getPermissions() can still report UPDATE/CREATE
+     * because the group read-only toggle is enforced on the mount mask, not always
+     * reflected per child node (issue #70). isUpdateable()/isCreatable()/
+     * isDeletable() DO account for mount writability and are already trusted
+     * elsewhere (canEdit below, template creation, NavigationService/FooterService
+     * canEdit). Under ACLs the bitmask is already correct and these methods reflect
+     * it, so AND-ing can only ever REMOVE a wrongly-granted capability, never grant
+     * one — it never turns a genuinely writable folder read-only. `raw` is kept
+     * un-AND-ed for API back-compat.
+     *
+     * `protected` (not private) only to give unit tests a seam; no runtime
+     * behaviour depends on the visibility.
+     */
+    protected function permissionsFromNode(\OCP\Files\Node $node): array {
+        $perms = $this->getCachedPermissions($node);
+        return [
+            'canRead' => ($perms & 1) !== 0,
+            'canWrite' => ($perms & 2) !== 0 && $node->isUpdateable(),
+            'canCreate' => ($perms & 4) !== 0 && $node->isCreatable(),
+            'canDelete' => ($perms & 8) !== 0 && $node->isDeletable(),
+            'canShare' => ($perms & 16) !== 0,
+            'raw' => $perms,
+        ];
     }
 
     /**
@@ -682,16 +714,7 @@ class PageService {
             }
 
             $folder = $userFolder->get($intraVoxPath);
-            $ncPerms = $this->getCachedPermissions($folder);
-
-            return [
-                'canRead' => ($ncPerms & 1) !== 0,
-                'canWrite' => ($ncPerms & 2) !== 0,
-                'canCreate' => ($ncPerms & 4) !== 0,
-                'canDelete' => ($ncPerms & 8) !== 0,
-                'canShare' => ($ncPerms & 16) !== 0,
-                'raw' => $ncPerms
-            ];
+            return $this->permissionsFromNode($folder);
         } catch (\Exception $e) {
             // If folder doesn't exist, return no permissions
             $this->logger->debug('getFolderPermissions failed for path: ' . $relativePath . ' - ' . $e->getMessage());
@@ -868,21 +891,13 @@ class PageService {
             if ($data && isset($data['uniqueId'], $data['title'])) {
                 // Calculate relative path from IntraVox root
                 $relativePath = substr($folder->getPath(), strlen($basePath) + 1);
-                $folderPerms = $this->getCachedPermissions($folder);
 
                 $pages[] = [
                     'uniqueId' => $data['uniqueId'],
                     'title' => $data['title'],
                     'modified' => $data['modified'] ?? $homeFile->getMTime(),
                     'status' => $data['status'] ?? 'published',
-                    'permissions' => [
-                        'canRead' => ($folderPerms & 1) !== 0,
-                        'canWrite' => ($folderPerms & 2) !== 0,
-                        'canCreate' => ($folderPerms & 4) !== 0,
-                        'canDelete' => ($folderPerms & 8) !== 0,
-                        'canShare' => ($folderPerms & 16) !== 0,
-                        'raw' => $folderPerms
-                    ]
+                    'permissions' => $this->permissionsFromNode($folder)
                 ];
             }
         } catch (NotFoundException $e) {
@@ -1118,22 +1133,12 @@ class PageService {
                     $data = json_decode($content, true);
 
                     if ($data && isset($data['uniqueId'], $data['title'])) {
-                        // Get permissions from the folder containing the page
-                        $folderPerms = $this->getCachedPermissions($item);
-
                         $pages[] = [
                             'uniqueId' => $data['uniqueId'],
                             'title' => $data['title'],
                             'modified' => $data['modified'] ?? $jsonFile->getMTime(),
                             'status' => $data['status'] ?? 'published',
-                            'permissions' => [
-                                'canRead' => ($folderPerms & 1) !== 0,
-                                'canWrite' => ($folderPerms & 2) !== 0,
-                                'canCreate' => ($folderPerms & 4) !== 0,
-                                'canDelete' => ($folderPerms & 8) !== 0,
-                                'canShare' => ($folderPerms & 16) !== 0,
-                                'raw' => $folderPerms
-                            ]
+                            'permissions' => $this->permissionsFromNode($item)
                         ];
                     }
                 } catch (\Exception $e) {
@@ -1377,23 +1382,12 @@ class PageService {
         $page['language'] = $parsedPath[0] ?? $this->getUserLanguage();
         $page['department'] = $this->parseDepartmentFromPath($page['path']);
 
-        // Get permissions directly from Nextcloud's filesystem
-        // This automatically respects GroupFolder ACL rules
-        $ncPerms = $this->getCachedPermissions($folder);
+        // Get permissions directly from Nextcloud's filesystem, combining the
+        // bitmask with the node capability methods so a read-only GroupFolder
+        // member (without ACLs) is reported correctly — see permissionsFromNode().
+        $page['permissions'] = $this->permissionsFromNode($folder);
 
-        // Nextcloud permission constants (from OCP\Constants):
-        // PERMISSION_READ = 1, PERMISSION_UPDATE = 2, PERMISSION_CREATE = 4,
-        // PERMISSION_DELETE = 8, PERMISSION_SHARE = 16, PERMISSION_ALL = 31
-        $page['permissions'] = [
-            'canRead' => ($ncPerms & 1) !== 0,
-            'canWrite' => ($ncPerms & 2) !== 0,
-            'canCreate' => ($ncPerms & 4) !== 0,
-            'canDelete' => ($ncPerms & 8) !== 0,
-            'canShare' => ($ncPerms & 16) !== 0,
-            'raw' => $ncPerms
-        ];
-
-        // Keep canEdit for backwards compatibility
+        // Keep canEdit for backwards compatibility (consistent with canWrite)
         $page['canEdit'] = $folder->isUpdateable();
 
         return $page;
@@ -4733,8 +4727,6 @@ class PageService {
             $data = json_decode($content, true);
 
             if ($data && isset($data['uniqueId'], $data['title'])) {
-                // Get permissions for the language folder
-                $folderPerms = $this->getCachedPermissions($folder);
                 $tree[] = [
                     'uniqueId' => $data['uniqueId'],
                     'title' => $data['title'],
@@ -4743,14 +4735,7 @@ class PageService {
                     'language' => $lang,
                     'isCurrent' => false, // Will be set by markCurrentPageInTree
                     'children' => [],
-                    'permissions' => [
-                        'canRead' => ($folderPerms & 1) !== 0,
-                        'canWrite' => ($folderPerms & 2) !== 0,
-                        'canCreate' => ($folderPerms & 4) !== 0,
-                        'canDelete' => ($folderPerms & 8) !== 0,
-                        'canShare' => ($folderPerms & 16) !== 0,
-                        'raw' => $folderPerms
-                    ]
+                    'permissions' => $this->permissionsFromNode($folder)
                 ];
             }
         } catch (NotFoundException $e) {
@@ -4889,11 +4874,11 @@ class PageService {
                 $data = json_decode($content, true);
 
                 if ($data && isset($data['uniqueId'], $data['title'])) {
-                    // Get folder permissions (respects ACLs)
-                    $folderPerms = $this->getCachedPermissions($item);
+                    // Folder permissions (respects ACLs + mount writability).
+                    $perm = $this->permissionsFromNode($item);
 
                     // Skip if user can't read this folder
-                    if (($folderPerms & 1) === 0) {
+                    if (!$perm['canRead']) {
                         continue;
                     }
 
@@ -4905,14 +4890,7 @@ class PageService {
                         'language' => $language ?? $this->getUserLanguage(),
                         'isCurrent' => ($currentPageId === $data['uniqueId']),
                         'children' => [],
-                        'permissions' => [
-                            'canRead' => ($folderPerms & 1) !== 0,
-                            'canWrite' => ($folderPerms & 2) !== 0,
-                            'canCreate' => ($folderPerms & 4) !== 0,
-                            'canDelete' => ($folderPerms & 8) !== 0,
-                            'canShare' => ($folderPerms & 16) !== 0,
-                            'raw' => $folderPerms
-                        ]
+                        'permissions' => $perm
                     ];
 
                     // Carry the sibling order (issue #69) for the comparator. Kept
@@ -5716,7 +5694,10 @@ class PageService {
                         'fileId' => $jsonFile->getId(),
                         'permissions' => [
                             'canRead' => ($folderPerms & 1) !== 0,
-                            'canWrite' => ($folderPerms & 2) !== 0,
+                            // AND with the node capability so a read-only GroupFolder
+                            // member is reported correctly (issue #70), consistent
+                            // with permissionsFromNode().
+                            'canWrite' => ($folderPerms & 2) !== 0 && $item->isUpdateable(),
                             'raw' => $folderPerms
                         ]
                     ];
