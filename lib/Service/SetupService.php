@@ -238,24 +238,102 @@ class SetupService {
     }
 
     /**
-     * Get groupfolder object by ID
+     * Get the groupfolder's `files` Folder object.
+     *
+     * Preferred: resolve through a member's MOUNTED view — the same mechanism the
+     * whole runtime uses (PageService::getIntraVoxFolder(), Navigation/Footer/
+     * HomepageService). This is storage-backend agnostic, so it works with primary
+     * object storage, where the internal `/__groupfolders/{id}/files` path is not a
+     * resolvable node on the root view (issue #71). The returned node's getPath()
+     * is still the `/__groupfolders/{id}/files/...` internal path (GroupFolders maps
+     * mounted nodes to their storage path), so all existing path-parsing callers
+     * keep working unchanged.
+     *
+     * Fallback: the legacy raw storage walk. It works on LOCAL primary storage and
+     * is kept so no currently-working install can regress.
+     *
+     * @return \OCP\Files\Folder|null The groupfolder `files` folder, or null.
      */
     private function getGroupfolderObject(int $folderId) {
+        // Preferred: mounted view of a member user (object-storage safe).
+        $uid = $this->resolveGroupfolderMemberUser();
+        if ($uid !== null) {
+            try {
+                $userFolder = $this->rootFolder->getUserFolder($uid);
+                $node = $userFolder->get(self::GROUPFOLDER_NAME);
+                if ($node instanceof Folder) {
+                    $this->logger->info("Resolved IntraVox groupfolder via mounted view of user '{$uid}'");
+                    return $node;
+                }
+                $this->logger->warning("Mounted '" . self::GROUPFOLDER_NAME . "' node for user '{$uid}' is not a folder; falling back to raw path");
+            } catch (\Exception $e) {
+                $this->logger->warning("Could not resolve groupfolder via user '{$uid}': " . $e->getMessage() . ' — falling back to raw path');
+            }
+        } else {
+            $this->logger->warning('No member user available to mount the IntraVox groupfolder; falling back to raw path');
+        }
+
+        // Fallback: legacy raw storage walk (__groupfolders/<id>/files). Works on
+        // local primary storage; preserves existing behaviour there.
         try {
-            $this->logger->info("Getting groupfolder object for ID: {$folderId}");
-            // Get the actual folder object from the root
-            // Groupfolders are stored in __groupfolders/<id>/files
-            // The /files subdirectory is the actual user-facing mount point
             $groupfoldersRoot = $this->rootFolder->get('__groupfolders');
             $groupfolderMeta = $groupfoldersRoot->get((string)$folderId);
             $folder = $groupfolderMeta->get('files');
-
-            $this->logger->info('Successfully accessed groupfolder files directory');
+            $this->logger->info('Resolved IntraVox groupfolder via raw __groupfolders path (fallback)');
             return $folder;
         } catch (\Exception $e) {
-            $this->logger->error('Failed to get groupfolder object: ' . $e->getMessage());
+            $this->logger->error('Failed to get groupfolder object (mount unavailable and raw path not accessible): ' . $e->getMessage());
             return null;
         }
+    }
+
+    /**
+     * Pick a user who is a member of the IntraVox groupfolder, so its mount exists
+     * in that user's filesystem view. Prefers a WRITE member (Admins/Editors) since
+     * setup and demo import need to write.
+     *   1. The current session user, if it is a member (web-UI demo import).
+     *   2. Any enabled member of 'IntraVox Admins', then 'IntraVox Editors' (OCC /
+     *      repair-step context, where there is no session user).
+     * Returns null if none can be found (caller falls back to the raw path).
+     *
+     * `protected` only to give unit tests a seam; no runtime behaviour depends on it.
+     */
+    protected function resolveGroupfolderMemberUser(): ?string {
+        // 1. Session user (web request) — must be a member so the mount is present.
+        $sessionUser = $this->userSession->getUser();
+        if ($sessionUser !== null && $this->isGroupfolderMember($sessionUser->getUID())) {
+            return $sessionUser->getUID();
+        }
+
+        // 2. First available enabled member of the write-capable groups (OCC).
+        foreach ([self::ADMIN_GROUP, self::EDITOR_GROUP] as $groupId) {
+            $group = $this->groupManager->get($groupId);
+            if ($group === null) {
+                continue;
+            }
+            foreach ($group->getUsers() as $member) {
+                if ($member->isEnabled()) {
+                    return $member->getUID();
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Whether a user belongs to any IntraVox groupfolder group (Admins/Editors/Users).
+     * These app groups are exactly the folder's applicable groups (bound in
+     * configureGroupfolderPermissions()), so membership here means the mount exists.
+     *
+     * `protected` only to give unit tests a seam.
+     */
+    protected function isGroupfolderMember(string $uid): bool {
+        foreach ([self::ADMIN_GROUP, self::EDITOR_GROUP, self::USER_GROUP] as $groupId) {
+            if ($this->groupManager->isInGroup($uid, $groupId)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -287,6 +365,13 @@ class SetupService {
                 throw new \Exception("Groupfolder '{$folderName}' not found.");
             }
 
+            // Note: getGroupfolderObject() resolves primarily via the member's
+            // mounted view (get by MOUNT-POINT NAME == the groupfolder name). In the
+            // pathological case of two groupfolders both named 'IntraVox', the mounted
+            // view may resolve a different one than the highest-id chosen above. We
+            // intentionally prefer the mounted view, because every runtime page/nav/
+            // footer operation resolves the same way — keeping setup consistent with
+            // reads. $folderId is still used by the raw-path fallback.
             $result = $this->getGroupfolderObject($folderId);
             if ($result === null) {
                 throw new \Exception("Groupfolder '{$folderName}' not accessible.");

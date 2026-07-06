@@ -29,6 +29,7 @@ interface IConfig {
 interface IUser {
     public function getUID(): string;
     public function getDisplayName(): string;
+    public function isEnabled(): bool;
 }
 
 interface IUserSession {
@@ -40,6 +41,7 @@ interface IGroupManager {
     public function isAdmin(string $uid): bool;
     public function isInGroup(string $uid, string $gid): bool;
     public function getUserGroupIds(IUser $user): array;
+    public function get(string $gid): ?IGroup;
 }
 
 interface ITempManager {
@@ -88,7 +90,10 @@ interface IURLGenerator {
 
 namespace OCP\Files;
 
-interface IRootFolder {}
+interface IRootFolder {
+    public function getUserFolder(string $userId): Folder;
+    public function get(string $path);
+}
 
 /**
  * Minimal FileInfo stub carrying the node-type constants (real NC values).
@@ -139,6 +144,9 @@ namespace OCP;
 interface IGroup {
     public function getGID(): string;
     public function getDisplayName(): string;
+    public function getUsers(): array;
+    public function inGroup(IUser $user): bool;
+    public function addUser(IUser $user): void;
 }
 
 namespace OCP\EventDispatcher;
@@ -342,6 +350,10 @@ abstract class SimpleMigrationStep {
         return null;
     }
 }
+
+namespace OCP\Share;
+
+interface IManager {}
 
 namespace Psr\Log;
 

@@ -48,6 +48,8 @@ class MockUserSession implements IUserSession {
  * Mock implementation of IUser for testing
  */
 class MockUser implements IUser {
+    private bool $enabled = true;
+
     public function __construct(
         private string $uid,
         private string $displayName = ''
@@ -76,8 +78,8 @@ class MockUser implements IUser {
     public function canChangeAvatar(): bool { return true; }
     public function canChangePassword(): bool { return true; }
     public function canChangeDisplayName(): bool { return true; }
-    public function isEnabled(): bool { return true; }
-    public function setEnabled(bool $enabled = true): void {}
+    public function isEnabled(): bool { return $this->enabled; }
+    public function setEnabled(bool $enabled = true): void { $this->enabled = $enabled; }
     public function getEMailAddress(): ?string { return $this->uid . '@test.local'; }
     public function getAvatarImage($size): ?\OCP\IImage { return null; }
     public function getCloudId(): string { return $this->uid . '@localhost'; }

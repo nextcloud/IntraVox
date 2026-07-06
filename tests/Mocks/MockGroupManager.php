@@ -3,7 +3,9 @@ declare(strict_types=1);
 
 namespace OCA\IntraVox\Tests\Mocks;
 
+use OCP\IGroup;
 use OCP\IGroupManager;
+use OCP\IUser;
 
 /**
  * Mock implementation of IGroupManager for testing
@@ -11,6 +13,8 @@ use OCP\IGroupManager;
 class MockGroupManager implements IGroupManager {
     private array $adminUsers = [];
     private array $userGroups = [];
+    /** @var array<string, IUser[]> gid => members */
+    private array $groupMembers = [];
 
     /**
      * Set which users are admins
@@ -55,8 +59,22 @@ class MockGroupManager implements IGroupManager {
         return isset($this->userGroups[$uid][$gid]);
     }
 
+    /**
+     * Register members returned by get($gid)->getUsers() for tests.
+     */
+    public function setGroupMembers(string $gid, array $members): self {
+        $this->groupMembers[$gid] = $members;
+        return $this;
+    }
+
+    public function get(string $gid): ?IGroup {
+        if (!array_key_exists($gid, $this->groupMembers)) {
+            return null;
+        }
+        return new MockGroup($gid, $this->groupMembers[$gid]);
+    }
+
     // Implement other IGroupManager methods as stubs
-    public function get($gid) { return null; }
     public function groupExists($gid): bool { return false; }
     public function createGroup($gid) { return null; }
     public function search(string $search, ?int $limit = null, ?int $offset = null): array { return []; }
@@ -83,4 +101,31 @@ class MockGroupManager implements IGroupManager {
     public static function noAdmins(): self {
         return new self();
     }
+}
+
+/**
+ * Minimal IGroup mock exposing the members used by SetupService resolution.
+ */
+class MockGroup implements IGroup {
+    private string $gid;
+    /** @var IUser[] */
+    private array $members;
+
+    public function __construct(string $gid, array $members) {
+        $this->gid = $gid;
+        $this->members = $members;
+    }
+
+    public function getGID(): string { return $this->gid; }
+    public function getDisplayName(): string { return $this->gid; }
+    public function getUsers(): array { return $this->members; }
+    public function inGroup(IUser $user): bool {
+        foreach ($this->members as $m) {
+            if ($m->getUID() === $user->getUID()) {
+                return true;
+            }
+        }
+        return false;
+    }
+    public function addUser(IUser $user): void { $this->members[] = $user; }
 }
