@@ -5,6 +5,7 @@ namespace OCA\IntraVox\Controller;
 
 use OCA\IntraVox\AppInfo\Application;
 use OCA\IntraVox\Constants;
+use OCA\IntraVox\Exception\ForbiddenException;
 use OCA\IntraVox\Http\EtagBuilder;
 use OCA\IntraVox\Service\EngagementSettingsService;
 use OCA\IntraVox\Service\ImportService;
@@ -319,6 +320,11 @@ class ApiController extends Controller {
 
             $page = $this->pageService->createPage($data, $parentPath);
             return new DataResponse($page, Http::STATUS_CREATED);
+        } catch (ForbiddenException $e) {
+            return new DataResponse(
+                ['error' => $e->getMessage()],
+                Http::STATUS_FORBIDDEN
+            );
         } catch (\InvalidArgumentException $e) {
             return new DataResponse(
                 ['error' => $e->getMessage()],
@@ -363,6 +369,11 @@ class ApiController extends Controller {
             $data = $this->request->getParams();
             $page = $this->pageService->updatePage($id, $data);
             return new DataResponse($page);
+        } catch (ForbiddenException $e) {
+            return new DataResponse(
+                ['error' => $e->getMessage()],
+                Http::STATUS_FORBIDDEN
+            );
         } catch (\InvalidArgumentException $e) {
             $this->logger->error('[updatePage] InvalidArgumentException: ' . $e->getMessage(), [
                 'pageId' => $id,

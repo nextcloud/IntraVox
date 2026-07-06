@@ -6,6 +6,7 @@ namespace OCA\IntraVox\Service;
 use OCA\IntraVox\AppInfo\Application;
 use OCA\IntraVox\Constants;
 use OCA\IntraVox\Event\PageDeletedEvent;
+use OCA\IntraVox\Exception\ForbiddenException;
 use OCA\IntraVox\Service\GroupContextService;
 use OCA\IntraVox\Service\News\NewsContentExtractor;
 use OCA\IntraVox\Service\Path\PagePathHelper;
@@ -1747,6 +1748,13 @@ class PageService {
             $targetFolder = $this->getLanguageFolder();
         }
 
+        // Preflight: creating a page writes a file (and a folder) into $targetFolder.
+        // A read-only GroupFolder member must get a clean 403 here instead of a
+        // filesystem-level 400 (issue #70).
+        if (!$targetFolder->isCreatable()) {
+            throw new ForbiddenException('You do not have permission to create a page here');
+        }
+
         // Special handling for home page (always at root)
         if ($pageId === 'home') {
             $file = $targetFolder->newFile('home.json');
@@ -1986,6 +1994,15 @@ class PageService {
 
         // Get the file
         $file = $result['file'];
+
+        // Preflight the write capability on the actual file/mount. permissionsFromNode
+        // already gates canWrite on this, but a read-only GroupFolder member must get a
+        // clean 403 here rather than a filesystem-level 400 if anything reported wrong
+        // (issue #70). This also avoids Nextcloud core's share-access-list side effect
+        // ("foreach() on null") that a doomed putContent would otherwise trigger.
+        if (!$file->isUpdateable()) {
+            throw new ForbiddenException('You do not have permission to edit this page');
+        }
 
         try {
             $existingContent = $file->getContent();

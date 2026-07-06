@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace OCA\IntraVox\Tests\Unit\Controller;
 
 use OCA\IntraVox\Controller\ApiController;
+use OCA\IntraVox\Exception\ForbiddenException;
 use OCA\IntraVox\Service\EngagementSettingsService;
 use OCA\IntraVox\Service\ImportService;
 use OCA\IntraVox\Service\NavigationService;
@@ -443,6 +444,38 @@ class ApiControllerTest extends TestCase {
         $response = $this->controller->updatePage('page-123');
 
         $this->assertEquals(Http::STATUS_BAD_REQUEST, $response->getStatus());
+    }
+
+    public function testUpdatePageReturnsForbiddenWhenServiceThrowsForbidden(): void {
+        // #70 regression guard: a read-only GroupFolder write must surface as 403,
+        // NOT the old 400 "Failed to write updated page data".
+        $existingPage = [
+            'id' => 'page-123',
+            // The pre-write guard passes (canWrite true) so we reach the service,
+            // which then throws ForbiddenException from its isUpdateable() preflight.
+            'permissions' => ['canRead' => true, 'canWrite' => true]
+        ];
+
+        $this->pageService->method('getPage')->willReturn($existingPage);
+        $this->request->method('getParams')->willReturn(['title' => 'x']);
+        $this->pageService->method('updatePage')
+            ->willThrowException(new ForbiddenException('You do not have permission to edit this page'));
+
+        $response = $this->controller->updatePage('page-123');
+
+        $this->assertEquals(Http::STATUS_FORBIDDEN, $response->getStatus());
+        $this->assertStringContainsString('permission', $response->getData()['error']);
+    }
+
+    public function testCreatePageReturnsForbiddenWhenServiceThrowsForbidden(): void {
+        $this->request->method('getParams')->willReturn(['title' => 'x']);
+        $this->pageService->method('getFolderPermissions')->willReturn(['canCreate' => true]);
+        $this->pageService->method('createPage')
+            ->willThrowException(new ForbiddenException('You do not have permission to create a page here'));
+
+        $response = $this->controller->createPage();
+
+        $this->assertEquals(Http::STATUS_FORBIDDEN, $response->getStatus());
     }
 
     // ==========================================
