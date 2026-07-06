@@ -98,32 +98,40 @@ class BulkOperationService {
         $this->validateOperationLimit($pageIds);
         $result = new BulkOperationResult('delete');
 
-        foreach ($pageIds as $pageId) {
-            try {
-                // Get page to check permissions
-                $page = $this->pageService->getPage($pageId);
+        // Clear the (blanket, distributed) cache once at the end of the batch
+        // instead of once per deleted page. Request-level caches are still
+        // invalidated per item, so each getPage() sees a truthful view.
+        $this->pageService->beginDeferredClear();
+        try {
+            foreach ($pageIds as $pageId) {
+                try {
+                    // Get page to check permissions
+                    $page = $this->pageService->getPage($pageId);
 
-                if (!($page['permissions']['canDelete'] ?? false)) {
-                    $result->addFailed($pageId, 'Permission denied');
-                    continue;
+                    if (!($page['permissions']['canDelete'] ?? false)) {
+                        $result->addFailed($pageId, 'Permission denied');
+                        continue;
+                    }
+
+                    // Delete the page
+                    $this->pageService->deletePage($pageId);
+                    $result->addSucceeded($pageId, $page['title'] ?? 'Untitled');
+
+                    $this->logger->info('IntraVox Bulk: Deleted page', [
+                        'pageId' => $pageId,
+                        'title' => $page['title'] ?? 'Untitled'
+                    ]);
+
+                } catch (\Exception $e) {
+                    $result->addFailed($pageId, $e->getMessage());
+                    $this->logger->warning('IntraVox Bulk: Failed to delete page', [
+                        'pageId' => $pageId,
+                        'error' => $e->getMessage()
+                    ]);
                 }
-
-                // Delete the page
-                $this->pageService->deletePage($pageId);
-                $result->addSucceeded($pageId, $page['title'] ?? 'Untitled');
-
-                $this->logger->info('IntraVox Bulk: Deleted page', [
-                    'pageId' => $pageId,
-                    'title' => $page['title'] ?? 'Untitled'
-                ]);
-
-            } catch (\Exception $e) {
-                $result->addFailed($pageId, $e->getMessage());
-                $this->logger->warning('IntraVox Bulk: Failed to delete page', [
-                    'pageId' => $pageId,
-                    'error' => $e->getMessage()
-                ]);
             }
+        } finally {
+            $this->pageService->endDeferredClear();
         }
 
         return $result;
@@ -158,39 +166,45 @@ class BulkOperationService {
             return $result;
         }
 
-        foreach ($pageIds as $pageId) {
-            try {
-                // Get page to check permissions
-                $page = $this->pageService->getPage($pageId);
+        // One blanket cache clear for the whole batch (see bulkDelete).
+        $this->pageService->beginDeferredClear();
+        try {
+            foreach ($pageIds as $pageId) {
+                try {
+                    // Get page to check permissions
+                    $page = $this->pageService->getPage($pageId);
 
-                if (!($page['permissions']['canWrite'] ?? false)) {
-                    $result->addFailed($pageId, 'Permission denied');
-                    continue;
+                    if (!($page['permissions']['canWrite'] ?? false)) {
+                        $result->addFailed($pageId, 'Permission denied');
+                        continue;
+                    }
+
+                    // Prevent moving a page to itself or its descendant
+                    if ($pageId === $targetParentId) {
+                        $result->addFailed($pageId, 'Cannot move page to itself');
+                        continue;
+                    }
+
+                    // Move the page
+                    $this->pageService->movePage($pageId, $targetParentId);
+                    $result->addSucceeded($pageId, $page['title'] ?? 'Untitled');
+
+                    $this->logger->info('IntraVox Bulk: Moved page', [
+                        'pageId' => $pageId,
+                        'targetParentId' => $targetParentId
+                    ]);
+
+                } catch (\Exception $e) {
+                    $result->addFailed($pageId, $e->getMessage());
+                    $this->logger->warning('IntraVox Bulk: Failed to move page', [
+                        'pageId' => $pageId,
+                        'targetParentId' => $targetParentId,
+                        'error' => $e->getMessage()
+                    ]);
                 }
-
-                // Prevent moving a page to itself or its descendant
-                if ($pageId === $targetParentId) {
-                    $result->addFailed($pageId, 'Cannot move page to itself');
-                    continue;
-                }
-
-                // Move the page
-                $this->pageService->movePage($pageId, $targetParentId);
-                $result->addSucceeded($pageId, $page['title'] ?? 'Untitled');
-
-                $this->logger->info('IntraVox Bulk: Moved page', [
-                    'pageId' => $pageId,
-                    'targetParentId' => $targetParentId
-                ]);
-
-            } catch (\Exception $e) {
-                $result->addFailed($pageId, $e->getMessage());
-                $this->logger->warning('IntraVox Bulk: Failed to move page', [
-                    'pageId' => $pageId,
-                    'targetParentId' => $targetParentId,
-                    'error' => $e->getMessage()
-                ]);
             }
+        } finally {
+            $this->pageService->endDeferredClear();
         }
 
         return $result;
@@ -215,32 +229,38 @@ class BulkOperationService {
             return $result;
         }
 
-        foreach ($pageIds as $pageId) {
-            try {
-                // Get page to check permissions
-                $page = $this->pageService->getPage($pageId);
+        // One blanket cache clear for the whole batch (see bulkDelete).
+        $this->pageService->beginDeferredClear();
+        try {
+            foreach ($pageIds as $pageId) {
+                try {
+                    // Get page to check permissions
+                    $page = $this->pageService->getPage($pageId);
 
-                if (!($page['permissions']['canWrite'] ?? false)) {
-                    $result->addFailed($pageId, 'Permission denied');
-                    continue;
+                    if (!($page['permissions']['canWrite'] ?? false)) {
+                        $result->addFailed($pageId, 'Permission denied');
+                        continue;
+                    }
+
+                    // Apply updates
+                    $this->pageService->updatePage($pageId, $updates);
+                    $result->addSucceeded($pageId, $page['title'] ?? 'Untitled');
+
+                    $this->logger->info('IntraVox Bulk: Updated page', [
+                        'pageId' => $pageId,
+                        'updates' => array_keys($updates)
+                    ]);
+
+                } catch (\Exception $e) {
+                    $result->addFailed($pageId, $e->getMessage());
+                    $this->logger->warning('IntraVox Bulk: Failed to update page', [
+                        'pageId' => $pageId,
+                        'error' => $e->getMessage()
+                    ]);
                 }
-
-                // Apply updates
-                $this->pageService->updatePage($pageId, $updates);
-                $result->addSucceeded($pageId, $page['title'] ?? 'Untitled');
-
-                $this->logger->info('IntraVox Bulk: Updated page', [
-                    'pageId' => $pageId,
-                    'updates' => array_keys($updates)
-                ]);
-
-            } catch (\Exception $e) {
-                $result->addFailed($pageId, $e->getMessage());
-                $this->logger->warning('IntraVox Bulk: Failed to update page', [
-                    'pageId' => $pageId,
-                    'error' => $e->getMessage()
-                ]);
             }
+        } finally {
+            $this->pageService->endDeferredClear();
         }
 
         return $result;

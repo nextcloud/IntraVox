@@ -91,6 +91,17 @@ class PageService {
     private const PAGE_TREE_CACHE_TTL = 300; // 5 minutes
 
     /**
+     * @var int While > 0, only the expensive part of clearCache() (static tree
+     * cache + distributed cache clear()) is deferred to the end of a batch.
+     * Request-level caches are still invalidated per item. A 100-item bulk op
+     * would otherwise clear the distributed cache 100 times.
+     */
+    private int $suppressClearDepth = 0;
+
+    /** @var bool Set when the deferred (distributed) clear was requested in a batch. */
+    private bool $clearRequestedWhileSuppressed = false;
+
+    /**
      * Get the effective upload limit in bytes (minimum of upload_max_filesize and post_max_size)
      */
     public function getUploadLimit(): int {
@@ -124,9 +135,36 @@ class PageService {
     }
 
     /**
+     * Begin a batch: suppress the (expensive, blanket) clearCache() that each
+     * mutation triggers, so a bulk operation clears the caches once at the end
+     * instead of once per item. Must be paired with endDeferredClear() in a
+     * finally block. Reentrant — nested begins are counted.
+     */
+    public function beginDeferredClear(): void {
+        $this->suppressClearDepth++;
+    }
+
+    /**
+     * End a batch. When the outermost begin is released, if any mutation asked
+     * for a clear while suppressed, perform exactly one real clearCache() now.
+     */
+    public function endDeferredClear(): void {
+        if (--$this->suppressClearDepth <= 0) {
+            $this->suppressClearDepth = 0;
+            if ($this->clearRequestedWhileSuppressed) {
+                $this->clearRequestedWhileSuppressed = false;
+                $this->clearCache();
+            }
+        }
+    }
+
+    /**
      * Clear all request-level caches (call after mutations)
      */
     private function clearCache(?string $pageId = null): void {
+        // Request-level caches are always invalidated immediately: these are cheap
+        // array resets, and doing them per item keeps every mutation seeing a
+        // truthful filesystem view mid-batch (identical to the non-batch path).
         if ($pageId !== null) {
             unset($this->pageDataCache[$pageId]);
             unset($this->pageFolderCache[$pageId]);
@@ -139,6 +177,14 @@ class PageService {
             $this->fileContentCache = [];
         }
         $this->listPagesCache = null;
+
+        // The expensive part — the static tree cache and the two distributed
+        // caches (IPC/Redis clear()) — is what makes a 100-item bulk op wipe the
+        // distributed cache 100×. Defer only these to the end of the batch.
+        if ($this->suppressClearDepth > 0) {
+            $this->clearRequestedWhileSuppressed = true;
+            return;
+        }
 
         // Clear *all* group-keyed tree caches: a single page mutation can be
         // visible to any group that has read access via GroupFolder ACL, and
