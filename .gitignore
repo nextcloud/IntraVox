@@ -80,3 +80,7 @@ docs/internal/
 testdata/
 .phpunit.cache/
 scripts/.cache/
+
+# Generated l10n build artefacts (must be absent on server)
+l10n/en.js
+l10n/.source-count.js
