@@ -726,7 +726,7 @@ class PageService {
 
             if (substr($itemName, -5) === '.json' && !$skipFile) {
                 try {
-                    $content = $item->getContent();
+                    $content = $this->getCachedFileContent($item);
                     $data = json_decode($content, true);
                     if ($data && isset($data['uniqueId']) && $data['uniqueId'] === $uniqueId) {
                         // Determine the correct folder:
@@ -4233,6 +4233,31 @@ class PageService {
             $parentFolder = $parentResult['folder'];
         }
 
+        // Build a uniqueId => page-JSON File map of this parent's DIRECT children
+        // in a single cached directory pass. Reorder only touches direct children,
+        // so we deliberately do NOT recurse (the old per-child findPageByUniqueId()
+        // walked the whole subtree per id — O(N²) plus uncached reads on a wide set).
+        $isLanguageRoot = ($parentFolder->getPath() === $languageFolder->getPath());
+        $childMap = [];
+        foreach ($this->getCachedDirectoryListing($parentFolder) as $item) {
+            // Only page-JSON files can carry an order; skip subfolders entirely.
+            if ($item->getType() === \OCP\Files\FileInfo::TYPE_FOLDER) {
+                continue;
+            }
+            $itemName = $item->getName();
+            if (substr($itemName, -5) !== '.json' || $itemName === 'home.json') {
+                continue; // home.json is the homepage, never ordered
+            }
+            // In the language root these are config files, not pages.
+            if ($isLanguageRoot && ($itemName === 'navigation.json' || $itemName === 'footer.json' || $itemName === 'homepage.json')) {
+                continue;
+            }
+            $data = json_decode($this->getCachedFileContent($item), true);
+            if (is_array($data) && isset($data['uniqueId'])) {
+                $childMap[$data['uniqueId']] = $item;
+            }
+        }
+
         foreach ($orderedChildIds as $index => $childId) {
             // The homepage is pinned first and never carries an order — skip the
             // legacy 'home' id as well as a configured pointer target.
@@ -4240,22 +4265,24 @@ class PageService {
                 continue;
             }
 
-            // Search from the parent folder so a foreign id (outside this parent)
-            // simply isn't found and is skipped, rather than reordered.
-            $childResult = $this->findPageByUniqueId($parentFolder, $childId);
-            if (!$childResult || !isset($childResult['file'])) {
+            // A foreign id (not among this parent's direct children) is simply
+            // absent from the map and is skipped, rather than reordered.
+            $file = $childMap[$childId] ?? null;
+            if ($file === null) {
                 continue;
             }
 
-            $file = $childResult['file'];
-            $data = json_decode($file->getContent(), true);
+            $data = json_decode($this->getCachedFileContent($file), true);
             if (!is_array($data)) {
                 continue;
             }
 
             if (($data['order'] ?? null) !== $index) {
                 $data['order'] = $index;
-                $file->putContent(json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+                $encoded = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+                $file->putContent($encoded);
+                // Keep the per-request content cache honest with what we just wrote.
+                $this->fileContentCache[$file->getPath()] = $encoded;
             }
         }
 
