@@ -8,7 +8,7 @@
       <input type="text" style="position: absolute; opacity: 0; pointer-events: none;" autofocus aria-label="Focus trap" />
 
       <NcNoteCard type="info">
-        {{ t('intravox', 'This changes the menu links and their order only. It does not move or rename the actual pages. To organize pages, use "Page structure" in the navigation bar.') }}
+        {{ t('intravox', 'This changes the links in the navigation bar and their order only. It does not move or rename the actual pages. To organize pages, use "Page structure".') }}
       </NcNoteCard>
 
       <!-- Actions at top with type selector on left -->

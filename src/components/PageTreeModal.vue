@@ -3,10 +3,12 @@
            :name="modalTitle"
            size="normal">
     <div class="page-tree-content">
-      <div class="page-tree-header">
-        <h2 class="page-tree-title">{{ modalTitle }}</h2>
-        <NcButton v-if="canManage && !loading && !error && tree.length > 0"
-                  type="tertiary"
+      <NcNoteCard v-if="!loading && !error && tree.length > 0" type="info">
+        {{ t('intravox', 'This shows all your actual pages. Use "Manage structure" to move, reorder, copy or delete them. To change the links in the navigation bar and their order, use "Edit navigation".') }}
+      </NcNoteCard>
+
+      <div v-if="canManage && !loading && !error && tree.length > 0" class="page-tree-toolbar">
+        <NcButton type="tertiary"
                   @click="manageMode = !manageMode">
           <template #icon>
             <Cog :size="20" />
@@ -15,12 +17,8 @@
         </NcButton>
       </div>
 
-      <p v-if="!loading && !error && tree.length > 0" class="page-tree-intro">
-        {{ t('intravox', 'Browse all pages. Use "Manage structure" to move, reorder, copy or delete the actual pages.') }}
-      </p>
-
       <NcNoteCard v-if="manageMode" type="warning">
-        {{ t('intravox', 'Changes here move the actual pages and their folders, not just the menu.') }}
+        {{ t('intravox', 'Changes here move and rename the actual pages and their folders. This is different from "Edit navigation", which only changes the links in the navigation bar.') }}
       </NcNoteCard>
 
       <div v-if="loading" class="loading-state">
@@ -314,23 +312,10 @@ export default {
   padding: 20px;
 }
 
-.page-tree-header {
+.page-tree-toolbar {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.page-tree-header .page-tree-title {
-  margin: 0;
-}
-
-.page-tree-title {
-  margin: 0 0 16px 0;
-  font-size: 20px;
-  font-weight: 600;
-  color: var(--color-main-text);
+  justify-content: flex-end;
+  margin-bottom: 12px;
 }
 
 .loading-state,
@@ -376,9 +361,4 @@ export default {
   margin-top: 16px;
 }
 
-.page-tree-intro {
-  margin: 0 0 12px;
-  color: var(--color-text-maxcontrast);
-  font-size: 13px;
-}
 </style>
