@@ -22,6 +22,7 @@
 
 <script>
 import { NcModal } from '@nextcloud/vue';
+import { translate } from '@nextcloud/l10n';
 import Text from 'vue-material-design-icons/Text.vue';
 import FormatTitle from 'vue-material-design-icons/FormatTitle.vue';
 import Image from 'vue-material-design-icons/Image.vue';
@@ -135,6 +136,9 @@ export default {
     }
   },
   methods: {
+    t(app, text, vars) {
+      return translate(app, text, vars);
+    },
     getIconComponent(iconName) {
       const iconMap = {
         'text': 'Text',
