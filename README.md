@@ -187,16 +187,16 @@ Full table editing in text widgets:
 - **Three Navigation Levels** - Support for deep page hierarchies
 - **Two Display Modes** - Choose between dropdown or megamenu style
 - **External Links** - Link to external URLs alongside internal pages
-- **Page Structure View** - Tree view of all accessible pages
+- **Page Structure** - Tree view of all pages with in-place management: reorder, move (with sub-pages), copy, delete, and set any top-level page as the homepage — all permission-aware
 - **Mobile Menu** - Collapsible hamburger menu on mobile devices
 
 ![Megamenu Navigation](https://raw.githubusercontent.com/nextcloud/intravox/main/screenshots/megamenu.png)
 
 *Megamenu navigation with all sections visible*
 
-![Page Structure](https://raw.githubusercontent.com/nextcloud/intravox/main/screenshots/pagestructure.png)
+![Page Structure](https://raw.githubusercontent.com/nextcloud/intravox/main/screenshots/PageStructure-edit.png)
 
-*Page structure view for easy content management*
+*Manage structure: reorder, move, copy, delete and set-as-homepage — the current homepage is protected*
 
 ### Engagement
 

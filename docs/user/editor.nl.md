@@ -580,13 +580,33 @@ Voor je uploadt:
 
 ## Navigatie
 
-### Pagina-structuur-view
+### Paginastructuur
 
-Het pagina-structuur-paneel toont alle pagina's in een tree-view, waardoor je makkelijk door je content-hiërarchie navigeert en die beheert.
+Het **Paginastructuur**-paneel (te openen via de knop in de navigatiebalk) toont al je echte pagina's in een boom. In de standaardweergave blader je door de hiërarchie en klik je een pagina aan om die te openen.
 
-![Pagina-structuur-view](../screenshots/pagestructure.png)
+Zet je **Structuur beheren** aan (beschikbaar waar je bewerkrechten hebt), dan wordt elke rij een set knoppen om de echte pagina's te ordenen — dit is iets anders dan **Navigatie bewerken**, dat alleen de links in de navigatiebalk en hun volgorde wijzigt.
 
-*Pagina-structuur toont de hiërarchische organisatie van pagina's*
+![Paginastructuur in beheer-modus, met knoppen per rij en de twee toelichtingsbanners](../screenshots/PageStructure-edit.png)
+
+*Beheer-modus: elke pagina heeft knoppen voor verplaatsen, herordenen, als-startpagina-instellen, kopiëren en verwijderen. De huidige startpagina (badge "Home") kan niet verplaatst of verwijderd worden.*
+
+#### Wat je per pagina kunt doen
+
+- **Herordenen** — de pijltjes omhoog (↑) en omlaag (↓) verplaatsen een pagina tussen z'n broers en zussen. De pijltjes zijn uitgeschakeld boven- en onderaan een lijst.
+- **Naar andere pagina verplaatsen** — de map-pijl opent een inline-paneel waar je een nieuwe ouder kiest, of zet **Naar het hoogste niveau** aan om de pagina naar de root te promoveren. De sub-pagina's gaan mee. Een pagina kan niet in zichzelf of een eigen sub-pagina worden geplaatst, en de maximale nesting-diepte (5 niveaus) wordt gerespecteerd.
+- **Als startpagina instellen** — het huis-icoon maakt een pagina de landingspagina voor de huidige taal. Alleen **pagina's op het hoogste niveau** kunnen de startpagina zijn; wil je een sub-pagina als startpagina, verplaats die dan eerst naar het hoogste niveau.
+- **Kopiëren** — dupliceert de pagina als een nieuw **Concept** met de titel "… (copy)", inclusief media, zodat je die kunt aanpassen zonder het origineel te raken.
+- **Verwijderen** — verwijdert de pagina na een bevestiging.
+
+#### De startpagina is beschermd
+
+De huidige startpagina draagt een **Home**-badge en kan niet verplaatst of verwijderd worden — wijs eerst een andere pagina als startpagina aan, daarna wordt het origineel een gewone pagina die je kunt verplaatsen of verwijderen. Zie [De startpagina instellen](#de-startpagina-instellen) hieronder.
+
+> Al deze knoppen respecteren je rechten: je ziet ze alleen voor pagina's die je mag bewerken, en de server dwingt dezelfde regels af — er kan dus niets buiten je rechten worden herordend, verplaatst, gekopieerd of verwijderd.
+
+### De startpagina instellen
+
+Elke pagina op het hoogste niveau kan de startpagina voor een taal zijn. Klik in **Structuur beheren** op het huis-icoon van de gewenste pagina; die wordt meteen de landingspagina op `…/apps/intravox/`. De wijziging is een verwijzing — de pagina wordt nooit hernoemd of verplaatst — dus bestaande links blijven werken.
 
 ### Navigatie bewerken
 

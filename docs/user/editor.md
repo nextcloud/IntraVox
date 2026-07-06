@@ -542,13 +542,33 @@ Before uploading:
 
 ## Navigation
 
-### Page Structure View
+### Page Structure
 
-The Page Structure panel shows all pages in a tree view, making it easy to navigate and manage your content hierarchy.
+The **Page structure** panel (opened from the button in the navigation toolbar) shows all your actual pages in a tree. In its default state you can browse the hierarchy and click any page to open it.
 
-![Page Structure View](https://raw.githubusercontent.com/nextcloud/intravox/main/screenshots/pagestructure.png)
+Switching on **Manage structure** (available where you have edit rights) turns each row into a set of controls for organizing the real pages — this is different from **Edit navigation**, which only changes the links in the navigation bar and their order.
 
-*Page structure showing the hierarchical organization of pages*
+![Page structure in manage mode, with per-row controls and the two guidance banners](../../screenshots/PageStructure-edit.png)
+
+*Manage mode: each page has move, reorder, set-as-homepage, copy and delete controls. The current homepage (badged "Home") cannot be moved or deleted.*
+
+#### What you can do per page
+
+- **Reorder** — the up (↑) and down (↓) arrows move a page among its siblings. The arrows are disabled at the top and bottom of a list.
+- **Move to another page** — the folder arrow opens an inline panel where you choose a new parent, or flip **Move to the top level** to promote the page to the root. The page's sub-pages move with it. A page cannot be moved into itself or one of its own descendants, and the maximum nesting depth (5 levels) is respected.
+- **Set as homepage** — the house icon makes a page the landing page for the current language. Only **top-level** pages can be the homepage; to make a sub-page the homepage, move it to the top level first.
+- **Copy** — duplicates the page as a new **Draft** titled "… (copy)", with its media, so you can adapt it without touching the original.
+- **Delete** — removes the page after a confirmation prompt.
+
+#### The homepage is protected
+
+The current homepage carries a **Home** badge and cannot be moved or deleted — reassign the homepage to another page first, then the original becomes an ordinary page you can move or remove. See [Configuring the homepage](#configuring-the-homepage) below.
+
+> All of these controls respect your permissions: you only see them for pages you may edit, and the server enforces the same rules, so nothing can be reordered, moved, copied or deleted outside your rights.
+
+### Configuring the homepage
+
+Any top-level page can be the homepage for a language. In **Manage structure**, click the house icon on the page you want, and it immediately becomes the landing page at `…/apps/intravox/`. The change is a pointer — the page is never renamed or moved — so existing links keep working.
 
 ### Editing Navigation
 
