@@ -17,6 +17,7 @@ use OCA\IntraVox\Service\SystemFileService;
 use OCA\IntraVox\Service\TelemetryService;
 use OCA\IntraVox\Tests\Mocks\MockGroupManager;
 use OCA\IntraVox\Tests\Mocks\MockUserSession;
+use OCP\App\IAppManager;
 use OCP\AppFramework\Http;
 use OCP\IConfig;
 use OCP\IRequest;
@@ -54,6 +55,7 @@ class ApiControllerTest extends TestCase {
     private PermissionService $permissionService;
     private PageLockService $pageLockService;
     private ISession $session;
+    private IAppManager $appManager;
 
     protected function setUp(): void {
         parent::setUp();
@@ -75,6 +77,7 @@ class ApiControllerTest extends TestCase {
         $this->permissionService = $this->createMock(PermissionService::class);
         $this->pageLockService = $this->createMock(PageLockService::class);
         $this->session = $this->createMock(ISession::class);
+        $this->appManager = $this->createMock(IAppManager::class);
 
         // Use real mock implementations for user/group
         $this->userSession = MockUserSession::loggedInAs('testuser');
@@ -99,7 +102,8 @@ class ApiControllerTest extends TestCase {
             $this->navigationService,
             $this->permissionService,
             $this->pageLockService,
-            $this->session
+            $this->session,
+            $this->appManager
         );
     }
 
@@ -300,7 +304,8 @@ class ApiControllerTest extends TestCase {
             $this->navigationService,
             $this->permissionService,
             $this->pageLockService,
-            $this->session
+            $this->session,
+            $this->appManager
         );
 
         $second = $controller->getPage('page-etag');
@@ -489,6 +494,253 @@ class ApiControllerTest extends TestCase {
         $this->assertEquals(Http::STATUS_INTERNAL_SERVER_ERROR, $response->getStatus());
     }
 
+    public function testDeletePageHomepageProtectedReturnsBadRequest(): void {
+        // deletePage() throwing HOMEPAGE_PROTECTED must surface as 400 (not 500)
+        // so the UI can show "reassign the homepage first".
+        $existingPage = [
+            'id' => 'page-home',
+            'permissions' => ['canRead' => true, 'canDelete' => true]
+        ];
+
+        $this->pageService->method('getPage')->willReturn($existingPage);
+        $this->pageService->method('deletePage')
+            ->willThrowException(new \InvalidArgumentException('HOMEPAGE_PROTECTED'));
+
+        $response = $this->controller->deletePage('page-home');
+
+        $this->assertEquals(Http::STATUS_BAD_REQUEST, $response->getStatus());
+        $this->assertEquals('HOMEPAGE_PROTECTED', $response->getData()['error']);
+    }
+
+    // ==========================================
+    // movePage Tests (issue #69)
+    // ==========================================
+
+    public function testMovePageReturnsBadRequestWhenPageIdMissing(): void {
+        $response = $this->controller->movePage(null, 'page-parent');
+
+        $this->assertEquals(Http::STATUS_BAD_REQUEST, $response->getStatus());
+        $this->assertStringContainsStringIgnoringCase('pageId', $response->getData()['error']);
+    }
+
+    public function testMovePageReturnsForbiddenWithoutWriteOnSource(): void {
+        $this->pageService->method('getPage')
+            ->with('page-1')
+            ->willReturn(['id' => 'page-1', 'permissions' => ['canWrite' => false]]);
+
+        $response = $this->controller->movePage('page-1', 'page-parent');
+
+        $this->assertEquals(Http::STATUS_FORBIDDEN, $response->getStatus());
+    }
+
+    public function testMovePageReturnsForbiddenWithoutCreateOnTarget(): void {
+        $this->pageService->method('getPage')->willReturnCallback(function ($id) {
+            if ($id === 'page-1') {
+                return ['id' => 'page-1', 'permissions' => ['canWrite' => true]];
+            }
+            return ['id' => 'page-parent', 'path' => 'en/parent', 'permissions' => ['canWrite' => true]];
+        });
+        $this->pageService->method('getFolderPermissions')
+            ->with('en/parent')
+            ->willReturn(['canCreate' => false]);
+
+        $response = $this->controller->movePage('page-1', 'page-parent');
+
+        $this->assertEquals(Http::STATUS_FORBIDDEN, $response->getStatus());
+    }
+
+    public function testMovePageHappyPathDelegatesToService(): void {
+        $this->pageService->method('getPage')->willReturnCallback(function ($id) {
+            if ($id === 'page-1') {
+                return ['id' => 'page-1', 'permissions' => ['canWrite' => true]];
+            }
+            return ['id' => 'page-parent', 'path' => 'en/parent', 'permissions' => ['canWrite' => true]];
+        });
+        $this->pageService->method('getFolderPermissions')->willReturn(['canCreate' => true]);
+        $this->pageService->expects($this->once())
+            ->method('movePage')
+            ->with('page-1', 'page-parent');
+
+        $response = $this->controller->movePage('page-1', 'page-parent');
+
+        $this->assertEquals(Http::STATUS_OK, $response->getStatus());
+        $this->assertEquals(['success' => true], $response->getData());
+    }
+
+    public function testMovePageRejectsCycleWithBadRequest(): void {
+        $this->pageService->method('getPage')->willReturnCallback(function ($id) {
+            if ($id === 'page-1') {
+                return ['id' => 'page-1', 'permissions' => ['canWrite' => true]];
+            }
+            return ['id' => 'page-child', 'path' => 'en/1/child', 'permissions' => ['canWrite' => true]];
+        });
+        $this->pageService->method('getFolderPermissions')->willReturn(['canCreate' => true]);
+        $this->pageService->method('movePage')
+            ->willThrowException(new \InvalidArgumentException('Cannot move a page into itself or its descendant'));
+
+        $response = $this->controller->movePage('page-1', 'page-child');
+
+        $this->assertEquals(Http::STATUS_BAD_REQUEST, $response->getStatus());
+        $this->assertStringContainsString('itself or its descendant', $response->getData()['error']);
+    }
+
+    public function testMovePageRejectsDepthLimitWithBadRequest(): void {
+        $this->pageService->method('getPage')->willReturnCallback(function ($id) {
+            if ($id === 'page-1') {
+                return ['id' => 'page-1', 'permissions' => ['canWrite' => true]];
+            }
+            return ['id' => 'page-deep', 'path' => 'en/a/b/c/d', 'permissions' => ['canWrite' => true]];
+        });
+        $this->pageService->method('getFolderPermissions')->willReturn(['canCreate' => true]);
+        $this->pageService->method('movePage')
+            ->willThrowException(new \InvalidArgumentException('Maximum nesting depth exceeded'));
+
+        $response = $this->controller->movePage('page-1', 'page-deep');
+
+        $this->assertEquals(Http::STATUS_BAD_REQUEST, $response->getStatus());
+    }
+
+    public function testMovePageHomepageProtectedReturnsBadRequest(): void {
+        $this->pageService->method('getPage')->willReturnCallback(function ($id) {
+            if ($id === 'page-home') {
+                return ['id' => 'page-home', 'permissions' => ['canWrite' => true]];
+            }
+            return ['id' => 'page-parent', 'path' => 'en/parent', 'permissions' => ['canWrite' => true]];
+        });
+        $this->pageService->method('getFolderPermissions')->willReturn(['canCreate' => true]);
+        $this->pageService->method('movePage')
+            ->willThrowException(new \InvalidArgumentException('HOMEPAGE_PROTECTED'));
+
+        $response = $this->controller->movePage('page-home', 'page-parent');
+
+        $this->assertEquals(Http::STATUS_BAD_REQUEST, $response->getStatus());
+        $this->assertEquals('HOMEPAGE_PROTECTED', $response->getData()['error']);
+    }
+
+    // ==========================================
+    // copyPage Tests (copy page feature)
+    // ==========================================
+
+    public function testCopyPageReturnsBadRequestWhenSourceIdMissing(): void {
+        $response = $this->controller->copyPage(null, null, null);
+
+        $this->assertEquals(Http::STATUS_BAD_REQUEST, $response->getStatus());
+        $this->assertStringContainsStringIgnoringCase('sourceId', $response->getData()['error']);
+    }
+
+    public function testCopyPageForbiddenWhenSourceNotReadable(): void {
+        $this->pageService->method('getPage')
+            ->with('page-src')
+            ->willReturn(['id' => 'page-src', 'permissions' => ['canRead' => false]]);
+
+        $response = $this->controller->copyPage('page-src', null, null);
+
+        $this->assertEquals(Http::STATUS_FORBIDDEN, $response->getStatus());
+    }
+
+    public function testCopyPageForbiddenWithoutCreateOnTarget(): void {
+        $this->pageService->method('getPage')->willReturnCallback(function ($id) {
+            if ($id === 'page-src') {
+                return ['id' => 'page-src', 'permissions' => ['canRead' => true]];
+            }
+            return ['id' => 'page-parent', 'path' => 'en/parent', 'permissions' => ['canRead' => true]];
+        });
+        $this->pageService->method('getFolderPermissions')
+            ->with('en/parent')
+            ->willReturn(['canCreate' => false]);
+
+        $response = $this->controller->copyPage('page-src', 'page-parent', null);
+
+        $this->assertEquals(Http::STATUS_FORBIDDEN, $response->getStatus());
+    }
+
+    public function testCopyPageHappyPathReturnsCreated(): void {
+        $this->pageService->method('getPage')->willReturnCallback(function ($id) {
+            return ['id' => $id, 'path' => 'en/parent', 'permissions' => ['canRead' => true]];
+        });
+        $this->pageService->method('getFolderPermissions')->willReturn(['canCreate' => true]);
+        $copy = ['uniqueId' => 'page-new', 'title' => 'Thing (copy)', 'status' => 'draft'];
+        $this->pageService->expects($this->once())
+            ->method('copyPage')
+            ->with('page-src', 'page-parent', null)
+            ->willReturn($copy);
+
+        $response = $this->controller->copyPage('page-src', 'page-parent', null);
+
+        $this->assertEquals(Http::STATUS_CREATED, $response->getStatus());
+        $data = $response->getData();
+        $this->assertTrue($data['success']);
+        $this->assertEquals($copy, $data['page']);
+    }
+
+    // ==========================================
+    // reorderPages Tests (issue #69)
+    // ==========================================
+
+    public function testReorderReturnsBadRequestForEmptyOrderedIds(): void {
+        $response = $this->controller->reorderPages(null, []);
+
+        $this->assertEquals(Http::STATUS_BAD_REQUEST, $response->getStatus());
+        $this->assertStringContainsString('non-empty', $response->getData()['error']);
+    }
+
+    public function testReorderReturnsBadRequestForNonStringId(): void {
+        $response = $this->controller->reorderPages(null, ['page-a', '']);
+
+        $this->assertEquals(Http::STATUS_BAD_REQUEST, $response->getStatus());
+        $this->assertStringContainsString('non-empty strings', $response->getData()['error']);
+    }
+
+    public function testReorderForbiddenWithoutWriteOnRoot(): void {
+        $this->pageService->method('getFolderPermissions')
+            ->with('')
+            ->willReturn(['canWrite' => false]);
+
+        $response = $this->controller->reorderPages(null, ['page-a', 'page-b']);
+
+        $this->assertEquals(Http::STATUS_FORBIDDEN, $response->getStatus());
+    }
+
+    public function testReorderForbiddenWithoutWriteOnParent(): void {
+        $this->pageService->method('getPage')
+            ->with('page-parent')
+            ->willReturn(['id' => 'page-parent', 'path' => 'en/parent']);
+        $this->pageService->method('getFolderPermissions')
+            ->with('en/parent')
+            ->willReturn(['canWrite' => false]);
+
+        $response = $this->controller->reorderPages('page-parent', ['page-a', 'page-b']);
+
+        $this->assertEquals(Http::STATUS_FORBIDDEN, $response->getStatus());
+    }
+
+    public function testReorderRootNormalizesEmptyParentToNull(): void {
+        $this->pageService->method('getFolderPermissions')->willReturn(['canWrite' => true]);
+        // The controller must pass null (not '') to the service for the root.
+        $this->pageService->expects($this->once())
+            ->method('reorderSiblings')
+            ->with(null, ['page-a', 'page-b']);
+
+        $response = $this->controller->reorderPages('', ['page-a', 'page-b']);
+
+        $this->assertEquals(Http::STATUS_OK, $response->getStatus());
+    }
+
+    public function testReorderHappyPathDelegatesWithParent(): void {
+        $this->pageService->method('getPage')
+            ->with('page-parent')
+            ->willReturn(['id' => 'page-parent', 'path' => 'en/parent']);
+        $this->pageService->method('getFolderPermissions')->willReturn(['canWrite' => true]);
+        $this->pageService->expects($this->once())
+            ->method('reorderSiblings')
+            ->with('page-parent', ['page-b', 'page-a']);
+
+        $response = $this->controller->reorderPages('page-parent', ['page-b', 'page-a']);
+
+        $this->assertEquals(Http::STATUS_OK, $response->getStatus());
+        $this->assertEquals(['success' => true], $response->getData());
+    }
+
     // ==========================================
     // Admin Check Tests
     // ==========================================
@@ -517,7 +769,8 @@ class ApiControllerTest extends TestCase {
             $this->navigationService,
             $this->permissionService,
             $this->pageLockService,
-            $this->session
+            $this->session,
+            $this->appManager
         );
 
         // Use reflection to test private method
@@ -559,7 +812,8 @@ class ApiControllerTest extends TestCase {
             $this->navigationService,
             $this->permissionService,
             $this->pageLockService,
-            $this->session
+            $this->session,
+            $this->appManager
         );
 
         $reflection = new \ReflectionClass($this->controller);

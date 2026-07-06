@@ -580,8 +580,11 @@ class PageService {
 
     /**
      * Get the language folder within IntraVox
+     *
+     * `protected` (not private) purely to give unit tests a seam to inject a
+     * fake language folder; no runtime behaviour depends on the visibility.
      */
-    private function getLanguageFolder() {
+    protected function getLanguageFolder() {
         $baseFolder = $this->getIntraVoxFolder();
         $lang = $this->getUserLanguage();
 

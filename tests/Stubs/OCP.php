@@ -89,11 +89,46 @@ interface IURLGenerator {
 namespace OCP\Files;
 
 interface IRootFolder {}
-interface File {}
-interface Folder {}
-interface Node {}
+
+/**
+ * Minimal FileInfo stub carrying the node-type constants (real NC values).
+ */
+interface FileInfo {
+    public const TYPE_FILE = 1;
+    public const TYPE_FOLDER = 2;
+}
+
+/**
+ * The Node/File/Folder stubs carry the subset of the real NC signatures that
+ * the unit tests drive (e.g. reorderSiblings). Additive: existing tests mock
+ * PageService, not these, so populating the interfaces is backward-compatible.
+ */
+interface Node {
+    public function getName(): string;
+    public function getPath(): string;
+    public function getType(): int;
+}
+
+interface File extends Node {
+    public function getContent(): string;
+    public function putContent($data): void;
+}
+
+interface Folder extends Node {
+    public function getDirectoryListing(): array;
+    public function nodeExists(string $path): bool;
+    public function get(string $path);
+}
 
 class NotFoundException extends \Exception {}
+
+namespace OCP\App;
+
+interface IAppManager {
+    public function isInstalled(string $appId): bool;
+    public function isEnabledForUser(string $appId, $user = null): bool;
+    public function getAppVersion(string $appId, bool $useCache = true): string;
+}
 
 namespace OCP;
 
