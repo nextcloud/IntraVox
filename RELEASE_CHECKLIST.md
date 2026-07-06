@@ -66,6 +66,28 @@ IntraVox bundles `@nextcloud/vue` instead of using the runtime version from the 
 
 Since v1.6.0, IntraVox uses Transifex (`nextcloud:intravox` resource, part of the official `nextcloud:nextcloud` project). **Read this whole section before touching `l10n/` — IntroVox's v1.7.1 release was bitten by two non-obvious gotchas we now know to avoid.**
 
+### ⭐ The one rule: translations ship WITH a release, and need a version bump
+
+Translations live in `l10n/*.js` + `l10n/*.json` **inside the app tarball**. There is no
+live link to Transifex from the running app. So a translation only reaches end users when a
+**new app version** is built and installed — this is standard Nextcloud behaviour, not
+IntraVox-specific.
+
+Two consequences to bake into every release:
+
+1. **A translation that is only on Transifex is invisible to users.** It must first come
+   back into the repo (via the bot, see Gotcha 1), then be included in a tarball. Collect
+   translations in git and let the next release carry them — you do **not** release per string.
+2. **Replacing `l10n/*.js` without changing the version does nothing in the browser.**
+   Nextcloud's JS cache-buster is `md5(appVersion)` — the `?v=…` URL only changes when the
+   version changes. Every release therefore *must* bump the version (§3), and dev deploys
+   auto-bump (`deploy.sh` → `auto-bump-dev.js`) for exactly this reason. If users report
+   "still English after update", first suspect an unchanged version / stale cache, not a
+   missing translation.
+
+**Timing tip:** do the Transifex reconciliation (below) as the *last* step before cutting the
+tarball, so the release carries the most complete translations available at that moment.
+
 ### How the pipeline works
 
 ```
@@ -145,9 +167,30 @@ git rm --force l10n/<lang>.js l10n/<lang>.json
       > translation for new strings — see `/tmp`-free reproducible note in the 1.7.0 commit
       > `11a112b`. If a future sync leaves the core three sparse again, re-bundle rather than
       > shipping empty; the bundled files double as translation memory for the next sync.
-      > `en.json` is a **gitignored build artefact** — never expect it as a tracked l10n file.
+      > `en.json` **and `en.js`** are **gitignored build artefacts** — never expect them as
+      > tracked l10n files (both are now in `.gitignore`; a stray `en.js` slipped in via a
+      > sync merge once — remove with `git rm --cached l10n/en.js` if it reappears).
+      >
+      > **2026-07 reality (keep our de/fr):** only some languages are enabled on the Transifex
+      > resource. `nl` is live (~92%); `de`/`fr` are **not yet enabled** there, so a bot sync
+      > **deletes/shrinks** them (bot had 0 for `de`, 323 for `fr`). Our bundled `de` (~1249)
+      > and `fr` (~1255) are real, substantial, and ship in-app — so on a bot merge, **keep
+      > OURS** for de/fr (`git checkout <pre-merge-HEAD> -- l10n/de.* l10n/fr.*`), and after the
+      > merge **re-add any new feature strings** the sync predated (the merge takes the bot's
+      > file wholesale and drops strings added since the last sync). Verify with:
+      > `for s in "Set as homepage" "Copy page"; do grep -c "\"$s\"" l10n/nl.js; done` (must be ≥1).
 - [ ] Review the diff (`git diff --stat l10n/`) and commit the refreshed translations
 - [ ] **Build the tarball AFTER the merge** — if you cut it before reconciling with the bot it will contain the wrong set of languages (IntroVox v1.7.1 had to regenerate its tarball for exactly this reason — 90 langs cut vs 82 langs released).
+- [ ] **Verify the translations are actually IN the tarball** (this is what reaches users):
+      ```bash
+      # core language files present:
+      tar -tzf intravox-X.Y.Z.tar.gz | grep -E 'l10n/(nl|de|fr)\.(js|json)$'
+      # nl is substantially translated (not the ~420-string stub):
+      tar -xzOf intravox-X.Y.Z.tar.gz intravox/l10n/nl.js | grep -oc '" : "'
+      # no build artefacts leaked in (must be empty):
+      tar -tzf intravox-X.Y.Z.tar.gz | grep -E 'l10n/(en\.js|en\.json|\.source-count\.js)$'
+      ```
+      After deploying, a browser still showing English usually means a **stale cache / unchanged version**, not a missing translation — confirm the served `l10n/nl.js?v=…` buster changed.
 - [ ] **Do NOT** require identical keys across languages — incomplete translations are expected and fall back to English at runtime. Reflex of running an "all langs must match en.json" check will break legitimate Transifex output.
 - [ ] Translation typos (e.g. a wrong German string) live on Transifex — they **cannot** be fixed in the repo durably (next pull overwrites them). Report them to the language team on transifex.com.
 
@@ -419,4 +462,4 @@ git push github main --tags
 
 ---
 
-*Last updated: 2026-07-03 (v1.7.0 release) — §2: dropped the stale "core langs ~1234" target; the Transifex resource was re-provisioned without translation memory after the #63 cleanup, so a bot sync can land nl/de/fr near-empty — re-bundle from git history + MT instead of shipping empty, and note `l10n/en.json` is a gitignored artefact. §7: warned that `cp -r l10n` leaks the gitignored `en.json`/`en.js`/`.source-count.js` build artefacts (added the `rm` step + a precise anchored sensitive-file grep, since the loose one false-matches "en" substrings), and that `npm run release`/`create-release.sh` is Gitea-only, not the App Store flow. Earlier (2026-06-18): reverted POT generation to the en.json + lib/xgettext extractor after `translationtool.phar` dropped ~700 Vue-template strings (docker-ci#951); NC34 compat §6; openapi.json version-sync gap §3; POT absolute-path note §7.*
+*Last updated: 2026-07-06 — §2: added "The one rule" intro — translations ship inside the tarball and only reach users with a new version (Nextcloud's `md5(appVersion)` cache-buster), so every release must bump the version and dev deploys auto-bump; a Transifex-only string is invisible to users until it comes back into the repo and is released. Documented the 2026-07 reality that only `nl` is enabled on the resource while `de`/`fr` are not, so a bot sync deletes/shrinks them — keep OURS for de/fr on a merge and re-add feature strings the sync predated. Added a "verify translations are IN the tarball" checklist step, and noted `en.js` is now gitignored too (a stray one slipped in via a sync merge). Earlier: 2026-07-03 (v1.7.0 release) — §2: dropped the stale "core langs ~1234" target; the Transifex resource was re-provisioned without translation memory after the #63 cleanup, so a bot sync can land nl/de/fr near-empty — re-bundle from git history + MT instead of shipping empty, and note `l10n/en.json` is a gitignored artefact. §7: warned that `cp -r l10n` leaks the gitignored `en.json`/`en.js`/`.source-count.js` build artefacts (added the `rm` step + a precise anchored sensitive-file grep, since the loose one false-matches "en" substrings), and that `npm run release`/`create-release.sh` is Gitea-only, not the App Store flow. Earlier (2026-06-18): reverted POT generation to the en.json + lib/xgettext extractor after `translationtool.phar` dropped ~700 Vue-template strings (docker-ci#951); NC34 compat §6; openapi.json version-sync gap §3; POT absolute-path note §7.*
