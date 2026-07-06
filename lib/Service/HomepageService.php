@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace OCA\IntraVox\Service;
 
 use OCP\Files\IRootFolder;
+use OCP\Files\NotFoundException;
 use OCP\IUserSession;
 use OCP\ICache;
 use OCP\ICacheFactory;
@@ -150,6 +151,11 @@ class HomepageService {
             $language = $this->languageService->getDefaultLanguage();
         }
         if (!$sharedFolder->nodeExists($language)) {
+            // Only create the language folder for users who may write here; a
+            // read-only member must not trigger a failing newFolder() (issue #70).
+            if (!$sharedFolder->isCreatable()) {
+                throw new NotFoundException('Language folder does not exist and cannot be created: ' . $language);
+            }
             $sharedFolder->newFolder($language);
         }
         return $sharedFolder->get($language);

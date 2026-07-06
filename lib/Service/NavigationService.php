@@ -251,7 +251,13 @@ class NavigationService {
         }
 
         if (!$sharedFolder->nodeExists($language)) {
-            // Create language folder if it doesn't exist
+            // Create the language folder only if the user may write here. A
+            // read-only GroupFolder / Team Folder member must NOT trigger a
+            // failing newFolder() (issue #70) — throwing NotFound lets the
+            // callers fall back to SystemFileService's system-level read.
+            if (!$sharedFolder->isCreatable()) {
+                throw new NotFoundException('Language folder does not exist and cannot be created: ' . $language);
+            }
             $sharedFolder->newFolder($language);
         }
 
