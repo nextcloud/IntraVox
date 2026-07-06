@@ -4,7 +4,7 @@
            size="normal">
     <div class="page-tree-content">
       <NcNoteCard v-if="!loading && !error && tree.length > 0" type="info">
-        {{ t('intravox', 'This shows all your actual pages. Use "Manage structure" to move, reorder, copy or delete them. To change the links in the navigation bar and their order, use "Edit navigation".') }}
+        {{ t('intravox', 'This shows all your actual pages. Use "Manage structure" to move, reorder, copy or delete them. Only top-level pages can be set as the homepage; to make a subpage the homepage, move it to the top level first. To change the links in the navigation bar and their order, use "Edit navigation".') }}
       </NcNoteCard>
 
       <div v-if="canManage && !loading && !error && tree.length > 0" class="page-tree-toolbar">
