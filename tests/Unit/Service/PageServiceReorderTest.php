@@ -40,6 +40,26 @@ class PageServiceReorderTest extends TestCase {
     }
 
     /**
+     * Build a child-page *folder* named $slug that holds $slug.json (the
+     * canonical on-disk layout: en/news/events/events.json).
+     */
+    private function makeChildFolder(string $slug, array $json, array &$writes): Folder {
+        $path = '/lang/' . $slug;
+        $file = $this->makeFile($path . '/' . $slug . '.json', $json, $writes);
+        $folder = $this->createMock(Folder::class);
+        $folder->method('getName')->willReturn($slug);
+        $folder->method('getType')->willReturn(FileInfo::TYPE_FOLDER);
+        $folder->method('getPath')->willReturn($path);
+        $folder->method('get')->willReturnCallback(function ($p) use ($slug, $file) {
+            if ($p === $slug . '.json') {
+                return $file;
+            }
+            throw new \OCP\Files\NotFoundException($p);
+        });
+        return $folder;
+    }
+
+    /**
      * @return PageService a subclass whose language folder is $parent and whose
      *   isHomepage() returns true only for $homeUniqueId.
      */
@@ -79,6 +99,27 @@ class PageServiceReorderTest extends TestCase {
         $this->assertEquals(0, json_decode($writes['/lang/c.json'], true)['order']);
         $this->assertEquals(1, json_decode($writes['/lang/a.json'], true)['order']);
         $this->assertEquals(2, json_decode($writes['/lang/b.json'], true)['order']);
+    }
+
+    public function testReorderWritesOrderToFolderLayoutChildren(): void {
+        // The real layout: each child page is a subfolder holding {slug}.json.
+        $writes = [];
+        $events = $this->makeChildFolder('events', ['uniqueId' => 'page-ev', 'order' => 0], $writes);
+        $updates = $this->makeChildFolder('updates', ['uniqueId' => 'page-up', 'order' => 1], $writes);
+
+        // The provided folder acts as the container being reordered (root); we
+        // pass null so reorder operates on it directly, isolating this test from
+        // the parent-resolution walk (covered elsewhere).
+        $parent = $this->createMock(Folder::class);
+        $parent->method('getPath')->willReturn('/lang');
+        $parent->method('getDirectoryListing')->willReturn([$events, $updates]);
+
+        $svc = $this->makeService($parent, null);
+        // Put updates first.
+        $svc->reorderSiblings(null, ['page-up', 'page-ev']);
+
+        $this->assertEquals(0, json_decode($writes['/lang/updates/updates.json'], true)['order']);
+        $this->assertEquals(1, json_decode($writes['/lang/events/events.json'], true)['order']);
     }
 
     public function testReorderNeverWritesHomepageOrConfigFiles(): void {

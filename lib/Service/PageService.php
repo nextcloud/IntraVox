@@ -4284,26 +4284,47 @@ class PageService {
 
         // Build a uniqueId => page-JSON File map of this parent's DIRECT children
         // in a single cached directory pass. Reorder only touches direct children,
-        // so we deliberately do NOT recurse (the old per-child findPageByUniqueId()
-        // walked the whole subtree per id — O(N²) plus uncached reads on a wide set).
+        // so we do NOT recurse into their subtrees (the old per-child
+        // findPageByUniqueId() walked the whole subtree per id — O(N²) plus
+        // uncached reads on a wide set). A child page is a subfolder holding
+        // {folderName}.json (the canonical layout, mirrors buildPageTree); the
+        // legacy loose {slug}.json at the parent level is also honoured.
         $isLanguageRoot = ($parentFolder->getPath() === $languageFolder->getPath());
         $childMap = [];
         foreach ($this->getCachedDirectoryListing($parentFolder) as $item) {
-            // Only page-JSON files can carry an order; skip subfolders entirely.
-            if ($item->getType() === \OCP\Files\FileInfo::TYPE_FOLDER) {
-                continue;
-            }
             $itemName = $item->getName();
-            if (substr($itemName, -5) !== '.json' || $itemName === 'home.json') {
-                continue; // home.json is the homepage, never ordered
+            $file = null;
+
+            if ($item->getType() === \OCP\Files\FileInfo::TYPE_FOLDER) {
+                // Skip media/special folders (mirror findPageByUniqueId).
+                if ($itemName === '_media' || $itemName === 'images' || $itemName === 'files' || $itemName === '.nomedia') {
+                    continue;
+                }
+                try {
+                    $candidate = $item->get($itemName . '.json');
+                    if ($candidate instanceof \OCP\Files\File) {
+                        $file = $candidate;
+                    }
+                } catch (NotFoundException $e) {
+                    continue; // a folder without its page-JSON is not a page
+                }
+            } else {
+                // Loose {slug}.json directly in the parent (legacy flat layout).
+                if (substr($itemName, -5) !== '.json' || $itemName === 'home.json') {
+                    continue; // home.json is the homepage, never ordered
+                }
+                if ($isLanguageRoot && ($itemName === 'navigation.json' || $itemName === 'footer.json' || $itemName === 'homepage.json')) {
+                    continue; // root config files are not pages
+                }
+                $file = $item;
             }
-            // In the language root these are config files, not pages.
-            if ($isLanguageRoot && ($itemName === 'navigation.json' || $itemName === 'footer.json' || $itemName === 'homepage.json')) {
+
+            if ($file === null) {
                 continue;
             }
-            $data = json_decode($this->getCachedFileContent($item), true);
+            $data = json_decode($this->getCachedFileContent($file), true);
             if (is_array($data) && isset($data['uniqueId'])) {
-                $childMap[$data['uniqueId']] = $item;
+                $childMap[$data['uniqueId']] = $file;
             }
         }
 
