@@ -4,9 +4,9 @@ All notable changes to IntraVox will be documented in this file.
 
 IntraVox is a Nextcloud intranet page builder.
 
-## [1.8.0] - 2026-07-04 — Page management from the UI: delete, reorder, move, copy + configurable homepage
+## [1.8.0] - 2026-07-07 — Page management from the UI: delete, reorder, move, copy + configurable homepage
 
-Editors can now manage the page structure directly from the IntraVox UI, without touching the underlying folders.
+Editors can now manage the page structure directly from the IntraVox UI, without touching the underlying folders. This release also hardens IntraVox on **Team Folders**: read-only members are handled correctly, and setup/demo-import now work on installations with **primary object storage**.
 
 ### Added
 
@@ -19,13 +19,17 @@ Editors can now manage the page structure directly from the IntraVox UI, without
 
 ### Changed
 
-- **Clearer separation of "Edit navigation" vs "Page structure".** The navigation editor now states up front that it only changes the menu links/order (not the actual pages), and the page-structure modal explains that its manage actions move the real pages and folders. The "⋯" menu also closes when an item opens a modal.
+- **Clearer separation of "Edit navigation" vs "Page structure".** The navigation editor now states up front that it only changes the links in the navigation bar and their order (not the actual pages), and the page-structure modal explains that its manage actions move the real pages and folders. Both modals lead with the same info banner and cross-reference each other, and the word "menu" (ambiguous) is gone in favour of "navigation bar". The "⋯" menu also closes when an item opens a modal. The page-structure modal also notes that only top-level pages can be set as the homepage (move a sub-page to the top level first).
+- **Faster page-structure operations at scale.** Reordering siblings is now O(N) instead of O(N²) (it reads a parent's direct children in a single cached pass rather than walking the whole subtree per child), and bulk delete/move/update clear the distributed cache once per batch instead of once per item — noticeably quicker on large, deeply nested intranets. No behaviour change.
 
 ### Fixed
 
 - **File Story widget now shows Whiteboard and FormVox files** ([#68](https://github.com/nextcloud/IntraVox/issues/68)). The widget filtered files through a hardcoded document-mimetype allowlist that omitted Nextcloud Whiteboard (`application/vnd.excalidraw+json`) and FormVox forms (`application/x-fvform`), so those files were silently dropped from a picked folder. Both are now included — FormVox forms render with their real preview, whiteboards fall back to the mime-icon placeholder — and each groups under its own "Whiteboards" / "Forms" category. Also added `.odg` drawings (`application/vnd.oasis.opendocument.graphics`, grouped as "Drawings") and the `text/x-markdown` alias so `.md` files aren't dropped on installs that register markdown that way.
 - **Page-structure modal labels now translate.** The tree modal and its rows used a wrapper that passed the app id as the translation key, so strings like "Collapse", "Expand" and "Current" rendered as literal "intravox". The wrapper now matches the rest of the app (`translate(app, text, vars)`), so those labels localize correctly.
 - **Deleting a page by `uniqueId` now works.** `PageService::deletePage` resolved only legacy folder-name ids, so a delete request keyed on a `page-…` uniqueId (how the UI deletes) failed with "Page not found". It now resolves `uniqueId` first, then falls back to the folder id.
+- **Read-only Team Folder members are handled correctly** ([#70](https://github.com/nextcloud/IntraVox/issues/70)). On a Team Folder shared read-only to a group (no Advanced Permissions/ACLs), such users could open the editor and the Save then failed with a confusing HTTP 400. IntraVox now reports write/create/delete permission accurately (it combines Nextcloud's permission bits with the node's own `isUpdateable()`/`isCreatable()`/`isDeletable()`, which reflect the mount's writability), so the Edit button is hidden for read-only users and a write attempt returns a clean 403 instead of a 400. This also removes the follow-on Nextcloud core `ShareHelper` error. Reading navigation/homepage no longer tries to create the language folder for read-only users (which explained the intermittent "navigation not visible until permissions were adjusted").
+- **Setup and demo-data import work with primary object storage** ([#71](https://github.com/nextcloud/IntraVox/issues/71)). `intravox:setup` and the demo import resolved the Team Folder via the internal `/__groupfolders` storage path, which does not exist as a node when object storage is the primary backend, so setup failed with "Failed to access groupfolder". IntraVox now resolves the folder through a member's mounted view — the same storage-agnostic mechanism the rest of the app uses — with the legacy path kept only as a fallback for local storage.
+- **The "Add widget" picker opens again** ([#72](https://github.com/nextcloud/IntraVox/issues/72)). The widget picker crashed on open with `TypeError: this.t is not a function` because the component was missing the translation wrapper the rest of the app uses, so clicking "Add widget" appeared to do nothing. Adding the wrapper restores the picker.
 
 ## [1.7.0] - 2026-07-03 — Clearer landing page + VoxCloud language model + full language management + translation cleanup
 
