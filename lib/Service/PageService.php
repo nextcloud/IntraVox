@@ -394,6 +394,25 @@ class PageService {
     }
 
     /**
+     * Permissions for a single page, where "write" is gated on the page FILE and
+     * the remaining capabilities describe operations on the page FOLDER.
+     *
+     * Why the split: editing a page writes its JSON file (updatePage preflights
+     * $file->isUpdateable() and then putContent()s the file). In a read-only
+     * Team Folder without ACLs the FOLDER can report isUpdateable()=true while
+     * the FILE reports false, so a folder-derived canWrite showed an "Edit page"
+     * button that then 403'd on save (issue #70). canCreate/canDelete stay
+     * folder-derived: creating a child or removing the page are folder-level
+     * operations, consistent with the tree/listing builders.
+     */
+    protected function permissionsForPage(\OCP\Files\Node $folder, \OCP\Files\Node $file): array {
+        $perms = $this->permissionsFromNode($folder);
+        $filePerms = $this->getCachedPermissions($file);
+        $perms['canWrite'] = ($filePerms & 2) !== 0 && $file->isUpdateable();
+        return $perms;
+    }
+
+    /**
      * Get cached file content (prevents repeated reads of same file within request)
      */
     private function getCachedFileContent(\OCP\Files\File $file): string {
@@ -1329,6 +1348,14 @@ class PageService {
             if (is_string($cached)) {
                 $decoded = json_decode($cached, true);
                 if (is_array($decoded)) {
+                    // Permissions are per-user and are NOT stored in the shared
+                    // distributed cache (see the set() below). Recompute them
+                    // fresh on every hit so one user's canWrite can never leak to
+                    // another (issue #70). $result['file']/['folder'] are already
+                    // resolved above. This also overwrites any stale permissions
+                    // baked in by pre-fix cache entries, so no flush is needed.
+                    $decoded['permissions'] = $this->permissionsForPage($result['folder'], $result['file']);
+                    $decoded['canEdit'] = $result['file']->isUpdateable();
                     $this->pageDataCache[$originalId] = $decoded;
                     $this->pageDataCache[$uniqueId] = $decoded;
                     return $decoded;
@@ -1336,8 +1363,9 @@ class PageService {
             }
         }
 
-        // Enrich with real-time path data
-        $data = $this->enrichWithPathData($data, $result['folder']);
+        // Enrich with real-time path data. Pass the page file so canWrite/canEdit
+        // are gated on the file the write path actually targets (issue #70).
+        $data = $this->enrichWithPathData($data, $result['folder'], $result['file']);
 
         $sanitizedData = $this->sanitizePage($data);
 
@@ -1349,9 +1377,14 @@ class PageService {
 
         // Cache for cross-request reuse (1 hour TTL; older entries are
         // naturally orphaned when mtime changes, distributed-cache GC will
-        // clean them up).
+        // clean them up). The distributed cache is shared across users, so the
+        // per-user permissions/canEdit are stripped before storing and are
+        // recomputed on every read (issue #70). The user-independent enriched
+        // fields (path/depth/parent/language/department) stay cached.
         if ($this->distributedCache !== null) {
-            $this->distributedCache->set($contentCacheKey, json_encode($sanitizedData), 3600);
+            $cacheable = $sanitizedData;
+            unset($cacheable['permissions'], $cacheable['canEdit']);
+            $this->distributedCache->set($contentCacheKey, json_encode($cacheable), 3600);
         }
 
         return $sanitizedData;
@@ -1360,7 +1393,7 @@ class PageService {
     /**
      * Enrich page data with real-time path information calculated from filesystem
      */
-    private function enrichWithPathData(array $page, $folder): array {
+    private function enrichWithPathData(array $page, $folder, ?\OCP\Files\Node $file = null): array {
         // Get relative path from IntraVox root
         $page['path'] = $this->getRelativePathFromRoot($folder);
 
@@ -1386,10 +1419,16 @@ class PageService {
         // Get permissions directly from Nextcloud's filesystem, combining the
         // bitmask with the node capability methods so a read-only GroupFolder
         // member (without ACLs) is reported correctly — see permissionsFromNode().
-        $page['permissions'] = $this->permissionsFromNode($folder);
-
-        // Keep canEdit for backwards compatibility (consistent with canWrite)
-        $page['canEdit'] = $folder->isUpdateable();
+        // When the page's file node is available, gate canWrite/canEdit on the
+        // FILE (the real edit target) rather than the folder, so the "Edit page"
+        // affordance matches what the write path actually allows (issue #70).
+        if ($file !== null) {
+            $page['permissions'] = $this->permissionsForPage($folder, $file);
+            $page['canEdit'] = $file->isUpdateable();
+        } else {
+            $page['permissions'] = $this->permissionsFromNode($folder);
+            $page['canEdit'] = $folder->isUpdateable();
+        }
 
         return $page;
     }
@@ -1680,8 +1719,8 @@ class PageService {
                     $data = json_decode($content, true);
 
                     if ($data && isset($data['uniqueId'])) {
-                        // Enrich with path data
-                        $data = $this->enrichWithPathData($data, $folder);
+                        // Enrich with path data (file gates canWrite/canEdit, #70)
+                        $data = $this->enrichWithPathData($data, $folder, $file);
                         $result = $this->sanitizePage($data);
                         $this->folderPathCache[$folderPath] = $result;
                         return $result;
@@ -4166,8 +4205,8 @@ class PageService {
         $content = $file->getContent();
         $data = json_decode($content, true);
 
-        // Enrich with path data
-        $data = $this->enrichWithPathData($data, $folder);
+        // Enrich with path data (file gates canWrite/canEdit, #70)
+        $data = $this->enrichWithPathData($data, $folder, $file);
 
         // Format path to show full Nextcloud path starting with /IntraVox/
         $displayPath = isset($data['path']) ? '/IntraVox/' . $data['path'] : '';
