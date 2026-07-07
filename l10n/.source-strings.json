@@ -1,6 +1,6 @@
 {
     "count": 1237,
-    "sha256": "1a22f8168dad1a4ae846f53bf7a91f1c798efd489ce7e6102932bcb0131703d3",
+    "sha256": "277de437ae97a250ef2c47964707dcb4caddaaace437fa3bf7db5d00590c8e74",
     "strings": [
         "— Not configured —",
         "… and {n} more",
@@ -302,7 +302,6 @@
         "Deleting …",
         "Deletion failed",
         "Demo content",
-        "Demo data",
         "Demo data installed",
         "Demote (make child of item above)",
         "Department",
@@ -587,6 +586,7 @@
         "Language added.",
         "Language removed.",
         "Language to recover",
+        "Languages",
         "Languages with content:",
         "Large",
         "Largest first",

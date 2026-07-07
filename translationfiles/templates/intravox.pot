@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: IntraVox 1.8.0\n"
 "Report-Msgid-Bugs-To: translations@nextcloud.com\n"
-"POT-Creation-Date: 2026-07-07 06:30+0000\n"
+"POT-Creation-Date: 2026-07-07 11:36+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -882,9 +882,6 @@ msgstr ""
 msgid "Demo content"
 msgstr ""
 
-msgid "Demo data"
-msgstr ""
-
 msgid "Demo data installed"
 msgstr ""
 
@@ -1717,6 +1714,9 @@ msgid "Language removed."
 msgstr ""
 
 msgid "Language to recover"
+msgstr ""
+
+msgid "Languages"
 msgstr ""
 
 msgid "Languages with content:"
