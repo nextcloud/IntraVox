@@ -15,8 +15,9 @@
     "ws": "^7.5.11"
   },
   "scripts": {
-    "prebuild": "node scripts/sync-version.js --check && node scripts/check-import-consistency.js",
+    "prebuild": "node scripts/sync-version.js --check && node scripts/check-import-consistency.js && node scripts/check-l10n-sync.js",
     "lint:imports": "node scripts/check-import-consistency.js",
+    "lint:l10n": "node scripts/check-l10n-sync.js",
     "build": "webpack",
     "build:dev": "NODE_ENV=development webpack",
     "watch": "webpack --watch",
@@ -24,9 +25,11 @@
     "deploy:demo": "./deploy-demo-data.sh",
     "analyze": "ANALYZE=true webpack",
     "version:sync": "node scripts/sync-version.js",
-    "l10n": "node scripts/generate-l10n.js",
     "l10n:extract": "node scripts/extract-en-json.js",
+    "l10n:lint": "node scripts/lint-l10n-strings.js",
     "pot": "npm run l10n:extract && node scripts/generate-pot.js",
+    "l10n:push": "npm run l10n:extract && node scripts/lint-l10n-strings.js && node scripts/generate-pot.js",
+    "l10n:generate-js": "node scripts/generate-l10n.js",
     "release": "./create-release.sh"
   },
   "dependencies": {

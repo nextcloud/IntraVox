@@ -64,137 +64,84 @@ IntraVox bundles `@nextcloud/vue` instead of using the runtime version from the 
 
 ## 2. Translations (l10n/)
 
-Since v1.6.0, IntraVox uses Transifex (`nextcloud:intravox` resource, part of the official `nextcloud:nextcloud` project). **Read this whole section before touching `l10n/` — IntroVox's v1.7.1 release was bitten by two non-obvious gotchas we now know to avoid.**
+Since v1.6.0, IntraVox translations come from Transifex (`o:nextcloud:p:nextcloud:r:intravox`) via the Nextcloud hosted l10n bot. **As of v1.8.x the fragile "merge `-X ours` + re-add feature strings" dance is gone** — a prebuild guard (`scripts/check-l10n-sync.js`) now guarantees new source strings reach Transifex *before* release, so the bot no longer drops them. Read the model once; after that, releases are a plain merge.
 
-### ⭐ The one rule: translations ship WITH a release, and need a version bump
+### The model (read once)
 
-Translations live in `l10n/*.js` + `l10n/*.json` **inside the app tarball**. There is no
-live link to Transifex from the running app. So a translation only reaches end users when a
-**new app version** is built and installed — this is standard Nextcloud behaviour, not
-IntraVox-specific.
+- **Source strings live in code** (`t('intravox',…)`, `$t(…)`, `$l->t(…)` in `src/**` and `lib/**`). The committed manifest `l10n/.source-strings.json` (a sha256 + the full sorted msgid list) records the exact set the bot has been given.
+- **The moment you add/change/remove a translatable string, push it to Transifex — the same day, not at release.** The prebuild guard fails the build until you do:
+  ```bash
+  npm run l10n:push        # extract → lint → regenerate the POT + manifest
+  git add translationfiles/templates/intravox.pot l10n/.source-strings.json l10n/.source-count.json
+  git commit -s -m "l10n: push <N> new source strings to Transifex"
+  git push github main     # the Nextcloud bot reads the POT from GitHub only
+  ```
+  The bot then ingests the POT and **deletes it** in its next `fix(l10n)` commit — that delete is **normal**; the POT is a transient handoff file, the durable record is the manifest. Translators now have the strings, with lead time.
+- **Runtime source of truth is the bot's paired `l10n/<lang>.{js,json}` files.** Never hand-edit them. **Never run `npm run l10n:generate-js`** to "reconcile" with the bot — it regenerates `.js` from `.json` and silently drops any string missing from `.json`, desyncing the pair. That script exists only for genuine first-time/local generation. (There is intentionally no bare `npm run l10n` any more — it was the footgun that caused this.)
+- Do **not** switch POT generation to `translationtool.phar`/bare `xgettext` — xgettext does not parse Vue templates and drops ~700 frontend strings. The `l10n/en.json` extractor (`scripts/extract-en-json.js`) scans both `src/**` and `lib/**`, so it is the complete source for frontend + PHP.
 
-Two consequences to bake into every release:
+### Why this used to break every release
 
-1. **A translation that is only on Transifex is invisible to users.** It must first come
-   back into the repo (via the bot, see Gotcha 1), then be included in a tarball. Collect
-   translations in git and let the next release carry them — you do **not** release per string.
-2. **Replacing `l10n/*.js` without changing the version does nothing in the browser.**
-   Nextcloud's JS cache-buster is `md5(appVersion)` — the `?v=…` URL only changes when the
-   version changes. Every release therefore *must* bump the version (§3), and dev deploys
-   auto-bump (`deploy.sh` → `auto-bump-dev.js`) for exactly this reason. If users report
-   "still English after update", first suspect an unchanged version / stale cache, not a
-   missing translation.
+New feature strings were added in code but `npm run pot` + committing the POT was skipped. The bot therefore never saw them → translators couldn't translate them → the next bot sync regenerated `l10n/<lang>.{js,json}` from Transifex (which lacked them) and **deleted** them from every language. The `-X ours` merge + hand re-adding strings was a workaround that also desynced `.js` from `.json`. The manifest guard removes the root cause: you cannot build without the strings being pushed.
 
-**Timing tip:** do the Transifex reconciliation (below) as the *last* step before cutting the
-tarball, so the release carries the most complete translations available at that moment.
+### At release time — just merge the bot
 
-### How the pipeline works
+Because strings were already pushed and translated, the release step is a plain merge of the bot's work. **No `-X ours`, no re-adding strings, no `git rm` of near-empty langs.**
 
-```
-                    code ($l->t / t('intravox',…))
-                              │
-        (1) Nextcloud Transifex BOT extracts source strings  ── automatic ──►  Transifex .pot
-                              │                                                      │
-                              │                                       translators work on transifex.com
-                              ▼                                                      │
-   (2) translators' work comes back into the repo via TWO paths:                    ▼
-                                                                          translated .po per language
-        path A — the BOT opens PRs on GitHub (nextcloud/IntraVox)  ◄──────────────┤
-        path B — YOU regenerate manually via scripts/generate-pot.js              │
-                              │                                                   │
-                              ▼                                                   │
-                  l10n/<lang>.js + <lang>.json   ← what Nextcloud actually loads  │
-                              ▲                                                   │
-                              └─── generated by `npm run l10n` from <lang>.json ◄─┘
-```
+- [ ] Fetch + confirm the bot's commits are l10n-only, then plain-merge:
+  ```bash
+  git fetch github main
+  git log --oneline HEAD..github/main                       # should be only fix(l10n) bot commits
+  git diff --name-only HEAD..github/main | grep -v '^l10n/'  # must print nothing
+  git merge github/main --no-edit                            # plain merge — NO strategy flag
+  ```
+- [ ] Assert code and the pushed manifest agree (this is the whole guarantee):
+  ```bash
+  npm run lint:l10n        # ✓ l10n source strings in sync (N strings)
+  ```
+  **If this FAILS**, you added strings since the last push — run the `npm run l10n:push` block above, commit, push github, and wait for the next bot sync **before** cutting the tarball. Do not proceed with a red guard.
+- [ ] Validate JSON + `.js` shape:
+  ```bash
+  node -e "require('fs').readdirSync('l10n').filter(f=>f.endsWith('.json')&&!f.startsWith('.')).forEach(f=>JSON.parse(require('fs').readFileSync('l10n/'+f,'utf8')))"
+  for f in l10n/*.js; do head -c 50 "$f" | grep -q '^OC.L10N.register' || echo "BAD: $f"; done
+  ```
 
-- The **source push (1) is fully automatic** by the Nextcloud Transifex bot once `o:nextcloud:p:nextcloud:r:intravox` is provisioned. The bot reads `translationfiles/templates/intravox.pot` from `main` and uploads it.
-- IntraVox has an explicit `l10n/en.json` that is the **webpack-extracted source** for frontend strings — it captures every `t('intravox', '...')` call, including those inside Vue `<template>` blocks. It is *also* the input to `scripts/generate-pot.js`, which merges it with `xgettext` output from `lib/**.php` to build the POT. **Do NOT switch POT generation to `translationtool.phar`/bare `xgettext`** — xgettext does not parse Vue templates and silently drops ~700 live frontend strings (see commit history around 2026-06-18).
-- Only `l10n/*.js` (frontend, `OC.L10N.register`) and `l10n/*.json` (PHP `IL10N`) are loaded at runtime. The `.po` files (`translationfiles/`) are an intermediate sync artefact — only the POT template is committed; per-language `.po` files are gitignored.
-- **Existing `l10n/<lang>.json` translations are preserved across releases.** The Transifex bot uses them as initial "translation memory" when it provisions the resource — translators see strings already-translated and can refine, not start from zero.
+### de_DE / fr / nl policy (unchanged, per rakekniven #63)
 
-### ⚠️ Gotcha 1 — the GitHub bot pushes translation commits DIRECTLY to `nextcloud/IntraVox`
-
-The Nextcloud l10n bot commits `fix(l10n): Update translations from Transifex` straight to `github/main`, **not** to Gitea. So before any release the GitHub remote is almost always **ahead** of Gitea on `l10n/`. A plain `git push github main` will be **rejected (non-fast-forward)**.
-
-**Do NOT force-push** — that wipes the bot's translations. Instead:
+Follow the bot for `de_DE` and `fr`: ship whatever the bot has, do **not** hand-bundle reviewed de/fr (that fights the resource and re-conflicts every sync). `nl` is the maintainer's language and the canary — after the merge, verify a few recent feature strings survived:
 ```bash
-git fetch github main
-git log --oneline HEAD..github/main          # confirm the new commits are ONLY l10n/
-git diff --name-only <last-common> github/main | grep -v '^l10n/'   # must print nothing
-git merge github/main --no-edit -X ours       # our regen wins content conflicts
+for s in "Set as homepage" "Copy page" "Manage structure"; do grep -c "\"$s\"" l10n/nl.js; done   # each ≥1
 ```
-After `-X ours` you may still get `modify/delete` conflicts (see Gotcha 2) — resolve those, then commit the merge and push to **both** remotes.
+If nl is missing recent strings here, the push step was skipped earlier — `lint:l10n` will also be red. Fix by pushing (above) and waiting for the next bot sync; **do not patch nl.js by hand.**
 
-### ⚠️ Gotcha 2 — `tx pull` and the bot disagree on near-empty languages
+### Still true — github is ahead of gitea on l10n
 
-If you ever manually run `tx pull -a --minimum-perc=1` (e.g. via a future `scripts/sync-translations.sh`), it pulls back **any** language with ≥1% translated (with IntraVox 1.6's ~1265 source strings, that's any language with ≥13 strings). The bot, however, **deletes** files that drop below its completeness threshold. During a merge this shows up as `modify/delete` conflicts (the bot deleted `l10n/ta.json`, our pull re-created it).
+The bot pushes only to github. Release push order: **merge github → push github → push gitea** (never force-push; it wipes bot translations).
 
-**Convention: follow the bot — delete the near-empty files.** A handful-of-strings file adds clutter, ships almost nothing, and would re-conflict on every future sync. Resolve with:
+### Still true — build-artefact hygiene
+
+`l10n/en.json`, `l10n/en.js`, `l10n/.source-count.js` and `l10n/.source-strings.json` are dev artefacts — scrub them from the tarball staging dir (see §7). Only `l10n/.source-count.json` (runtime coverage denominator) and the bot's `l10n/<lang>.{js,json}` ship. Verify translations are actually in the tarball:
 ```bash
-# for each modify/delete conflict where the file has only a handful of strings:
-git rm --force l10n/<lang>.js l10n/<lang>.json
+tar -tzf intravox-X.Y.Z.tar.gz | grep -E 'l10n/(nl|de_DE|fr)\.(js|json)$'    # present
+tar -xzOf intravox-X.Y.Z.tar.gz intravox/l10n/nl.js | grep -oc '" : "'         # substantial, not a stub
+tar -tzf intravox-X.Y.Z.tar.gz | grep -E 'l10n/(en\.js|en\.json|\.source-count\.js|\.source-strings\.json)$'   # must be empty
 ```
-(If a disputed language is actually substantial, keep ours instead with `git add l10n/<lang>.*` — judge by string count, not reflexively.)
+After deploying, a browser still showing English usually means a **stale cache / unchanged version** (NC's cache-buster is `md5(appVersion)` — every release must bump the version), not a missing translation.
 
-### Checklist
+- [ ] **Do NOT** require identical keys across languages — incomplete translations fall back to English at runtime.
+- [ ] Translation typos live on Transifex and **cannot** be fixed durably in the repo — report them to the language team on transifex.com.
 
-- [ ] **Refresh the POT** from current code (only if you added/removed translatable strings since last release):
-      ```bash
-      npm run l10n                            # re-emit .js from .json (in case .json was edited)
-      node scripts/generate-pot.js            # merges l10n/en.json + xgettext on lib/
-      ```
-- [ ] Validate JSON syntax in all l10n files:
-      ```bash
-      node -e "require('fs').readdirSync('l10n').filter(f=>f.endsWith('.json')).forEach(f=>JSON.parse(require('fs').readFileSync('l10n/'+f,'utf8')))"
-      ```
-- [ ] Sanity-check the `.js` siblings load as `OC.L10N.register(...)` calls (one line per file):
-      ```bash
-      for f in l10n/*.js; do head -c 50 "$f" | grep -q '^OC.L10N.register' || echo "BAD: $f"; done
-      ```
-- [ ] Validate POT syntax: `msgfmt --check --output=/dev/null translationfiles/templates/intravox.pot` (header warnings are normal for a `.pot`)
-- [ ] Verify POT msgid count is plausible (1200+ for IntraVox 1.6+ — the en.json-based extractor captures all Vue-template strings; a count near ~440 means someone reintroduced bare-xgettext extraction that drops the frontend): `grep -c "^msgid " translationfiles/templates/intravox.pot`
-- [ ] **Reconcile with the GitHub bot (Gotcha 1)**: `git fetch github main` then merge `-X ours`, resolving near-empty `modify/delete` conflicts per Gotcha 2
-- [ ] Confirm the core bundled languages survived the merge:
-      ```bash
-      for l in nl de fr; do node -e "console.log('$l',Object.keys(JSON.parse(require('fs').readFileSync('l10n/$l.json','utf8')).translations||{}).length)"; done
-      ```
-      > ⚠️ **Do NOT assume the old ~1234-per-language target still holds.** After the #63
-      > source-string cleanup the Transifex resource was **re-provisioned without translation
-      > memory** (2026-07 window: the resource even 404'd for a while), so a bot sync can land
-      > nl/de/fr almost empty (we saw nl 103 / de 5 / fr 95). In **1.7.0** we restored full
-      > coverage by re-bundling nl/de/fr from human-reviewed git history (`89c442b`) + machine
-      > translation for new strings — see `/tmp`-free reproducible note in the 1.7.0 commit
-      > `11a112b`. If a future sync leaves the core three sparse again, re-bundle rather than
-      > shipping empty; the bundled files double as translation memory for the next sync.
-      > `en.json` **and `en.js`** are **gitignored build artefacts** — never expect them as
-      > tracked l10n files (both are now in `.gitignore`; a stray `en.js` slipped in via a
-      > sync merge once — remove with `git rm --cached l10n/en.js` if it reappears).
-      >
-      > **2026-07 reality (keep our de/fr):** only some languages are enabled on the Transifex
-      > resource. `nl` is live (~92%); `de`/`fr` are **not yet enabled** there, so a bot sync
-      > **deletes/shrinks** them (bot had 0 for `de`, 323 for `fr`). Our bundled `de` (~1249)
-      > and `fr` (~1255) are real, substantial, and ship in-app — so on a bot merge, **keep
-      > OURS** for de/fr (`git checkout <pre-merge-HEAD> -- l10n/de.* l10n/fr.*`), and after the
-      > merge **re-add any new feature strings** the sync predated (the merge takes the bot's
-      > file wholesale and drops strings added since the last sync). Verify with:
-      > `for s in "Set as homepage" "Copy page"; do grep -c "\"$s\"" l10n/nl.js; done` (must be ≥1).
-- [ ] Review the diff (`git diff --stat l10n/`) and commit the refreshed translations
-- [ ] **Build the tarball AFTER the merge** — if you cut it before reconciling with the bot it will contain the wrong set of languages (IntroVox v1.7.1 had to regenerate its tarball for exactly this reason — 90 langs cut vs 82 langs released).
-- [ ] **Verify the translations are actually IN the tarball** (this is what reaches users):
-      ```bash
-      # core language files present:
-      tar -tzf intravox-X.Y.Z.tar.gz | grep -E 'l10n/(nl|de|fr)\.(js|json)$'
-      # nl is substantially translated (not the ~420-string stub):
-      tar -xzOf intravox-X.Y.Z.tar.gz intravox/l10n/nl.js | grep -oc '" : "'
-      # no build artefacts leaked in (must be empty):
-      tar -tzf intravox-X.Y.Z.tar.gz | grep -E 'l10n/(en\.js|en\.json|\.source-count\.js)$'
-      ```
-      After deploying, a browser still showing English usually means a **stale cache / unchanged version**, not a missing translation — confirm the served `l10n/nl.js?v=…` buster changed.
-- [ ] **Do NOT** require identical keys across languages — incomplete translations are expected and fall back to English at runtime. Reflex of running an "all langs must match en.json" check will break legitimate Transifex output.
-- [ ] Translation typos (e.g. a wrong German string) live on Transifex — they **cannot** be fixed in the repo durably (next pull overwrites them). Report them to the language team on transifex.com.
+### The everyday developer loop (not just releases)
 
-> **Cross-reference**: [`IntroVox/RELEASE_CHECKLIST.md §2`](../IntroVox/RELEASE_CHECKLIST.md) is the original source for both gotchas — when in doubt, mirror IntroVox's working flow.
+```
+add/change strings in src/** or lib/**  →  npm run build  →  guard FAILS ("strings changed, not pushed")
+  →  npm run l10n:push  →  commit POT + .source-strings.json + .source-count.json  →  git push github main
+  →  bot ingests POT (uploads + deletes it)  →  translators translate  →  bot syncs l10n/<lang>.{js,json} back
+  →  release:  git fetch github && git merge github/main --no-edit  →  npm run lint:l10n ✓  →  tarball/sign/upload
+```
+A check-only GitHub Action (`.github/workflows/l10n.yml`) runs the same guard on push to main as a backstop; it never writes or auto-commits (that would fight the bot's POT delete).
+
+> **Cross-reference**: [`IntroVox/RELEASE_CHECKLIST.md §2`](../IntroVox/RELEASE_CHECKLIST.md) uses the same Transifex pool — mirror whichever app has the guard first.
 
 ---
 
@@ -227,9 +174,9 @@ git rm --force l10n/<lang>.js l10n/<lang>.json
 
 ## 5. Build & Testing
 
-- [ ] Run `npm run l10n` to regenerate JS translation files (auto-applies plural-form overrides for JA/KO/ZH/AR/RU/PL/CS/SK/SL — see `scripts/generate-l10n.js`)
-- [ ] Run `node scripts/generate-pot.js` to refresh the POT from `l10n/en.json` + `xgettext` on `lib/` (only if strings changed)
-- [ ] Run `npm run build` without errors
+- [ ] **Do NOT** run `npm run l10n:generate-js` at release — the `l10n/<lang>.js` files are the bot's paired output, not regenerated from `.json` here (that would drop strings). The bot ships both `.js` and `.json`.
+- [ ] Source strings should already be pushed to Transifex (do it the day you add them, see §2). If `npm run lint:l10n` is red, run `npm run l10n:push`, commit the POT + manifest, `git push github main`, and wait for the bot before releasing.
+- [ ] Run `npm run build` without errors (its `prebuild` runs `check-l10n-sync.js` — a red guard here means unpushed strings)
   - Bundle size warnings for main/admin are normal (TipTap editor)
 - [ ] Test core functionalities on 3dev:
   - [ ] Page CRUD, navigation, media upload
@@ -277,16 +224,19 @@ Required files in tarball:
 
 **Exclude from tarball:** `src/`, `node_modules/`, `screenshots/`, `docs/`, `.git/`, `*.key`, `deploy.sh`, `openapi.json`, `scripts/`, `.tx/`, `.l10nignore`, `translationfiles/`, `examples/`, `showcases/`, `testdata/`
 
-> ⚠️ **`cp -r l10n …` copies untracked build artefacts too.** `l10n/en.json`, `l10n/en.js`
-> and `l10n/.source-count.js` are generated by the build/extract step and are **gitignored**
-> (only `l10n/.source-count.json` is committed on purpose). After copying `l10n/` into the
-> tarball staging dir, delete them so they don't leak into the release:
+> ⚠️ **`cp -r l10n …` copies dev-only l10n files too.** `l10n/en.json`, `l10n/en.js` and
+> `l10n/.source-count.js` are gitignored build artefacts; `l10n/.source-strings.json` is
+> committed but dev-only (the source-string manifest for the prebuild guard). None of these
+> belong in the release — only `l10n/.source-count.json` (the runtime coverage denominator)
+> and the bot's `l10n/<lang>.{js,json}` ship. After copying `l10n/` into the tarball staging
+> dir, delete the dev-only ones:
 > ```bash
-> rm -f "$TEMP_DIR/intravox/l10n/en.json" "$TEMP_DIR/intravox/l10n/en.js" "$TEMP_DIR/intravox/l10n/.source-count.js"
+> rm -f "$TEMP_DIR/intravox/l10n/en.json" "$TEMP_DIR/intravox/l10n/en.js" \
+>       "$TEMP_DIR/intravox/l10n/.source-count.js" "$TEMP_DIR/intravox/l10n/.source-strings.json"
 > ```
 > Note: the §9.2 loose `grep -iE '…|en\.json|…'` throws **false positives** on demo-data paths
 > containing the substring "en" (e.g. `evenementen.json`). Use the precise anchored check:
-> `grep -iE '\.(key|pem|crt|env)$|/\.git/|/src/|\.tx/|translationfiles/|l10n/en\.(js|json)$|source-count\.js$'`.
+> `grep -iE '\.(key|pem|crt|env)$|/\.git/|/src/|\.tx/|translationfiles/|l10n/en\.(js|json)$|source-count\.js$|source-strings\.json$'`.
 
 > **`npm run release` (`create-release.sh`) is NOT the App Store flow.** It only tags
 > (`vX.Y.Z-Label` form) and uploads artefacts to Gitea. For an App Store release follow the
@@ -310,7 +260,7 @@ The `.tx/`, `.l10nignore`, and `translationfiles/` are dev-only artefacts for Tr
 
 ### 9.1 Create Tarball
 
-> ⚠️ **STOP** — before running this, did you reconcile with the GitHub Transifex bot? See §2 Gotcha 1. A tarball cut from a non-reconciled tree ships the wrong set of languages and has to be regenerated (IntroVox v1.7.1 hit this). Run `git fetch github && git log --oneline HEAD..github/main` — if it's empty, you're good.
+> ⚠️ **STOP** — before running this: (1) is `npm run lint:l10n` green (source strings pushed)? (2) did you merge the bot's latest translations (§2 "At release time — just merge the bot")? A tarball cut before the merge ships the wrong set of languages and must be regenerated. Run `git fetch github && git log --oneline HEAD..github/main` — if it's empty, you're already up to date.
 
 **Root folder must be `intravox` (lowercase, no version number)**
 
@@ -415,24 +365,25 @@ https://github.com/nextcloud/IntraVox/releases/download/vX.Y.Z/intravox-X.Y.Z.ta
 ## Quick Release Flow
 
 ```bash
-# 1. Reconcile with the GitHub Transifex bot (§2 Gotcha 1)
-git fetch github main
-git log --oneline HEAD..github/main          # if empty, skip the merge below
-git merge github/main --no-edit -X ours      # resolve modify/delete near-empty langs per §2 Gotcha 2
+# 0. Source strings must already be pushed (§2). Confirm the guard is green:
+npm run lint:l10n                            # red → npm run l10n:push, commit, push github, wait for bot
 
-# 2. Prep
-npm run l10n
-node scripts/generate-pot.js
-npm run build
+# 1. Merge the bot's latest translations (plain merge — NO -X ours)
+git fetch github main
+git log --oneline HEAD..github/main          # only fix(l10n) bot commits; if empty, skip the merge
+git merge github/main --no-edit
+
+# 2. Prep — do NOT run npm run l10n:generate-js (js is the bot's output)
+npm run build                                # prebuild re-runs check-l10n-sync.js
 
 # 3. Commit & tag
 git add -A
-git commit -m "Release vX.Y.Z - [Label]"
+git commit -s -m "Release vX.Y.Z - [Label]"
 git tag -a vX.Y.Z -m "Release vX.Y.Z - [Label]"
 
-# 4. Push to BOTH remotes
-git push gitea main --tags
+# 4. Push to BOTH remotes (github first — it's usually ahead from the bot)
 git push github main --tags
+git push gitea main --tags
 
 # 5. Tarball — AFTER step 1 merged, never before (see section 9.1)
 
@@ -462,4 +413,4 @@ git push github main --tags
 
 ---
 
-*Last updated: 2026-07-06 — §2: added "The one rule" intro — translations ship inside the tarball and only reach users with a new version (Nextcloud's `md5(appVersion)` cache-buster), so every release must bump the version and dev deploys auto-bump; a Transifex-only string is invisible to users until it comes back into the repo and is released. Documented the 2026-07 reality that only `nl` is enabled on the resource while `de`/`fr` are not, so a bot sync deletes/shrinks them — keep OURS for de/fr on a merge and re-add feature strings the sync predated. Added a "verify translations are IN the tarball" checklist step, and noted `en.js` is now gitignored too (a stray one slipped in via a sync merge). Earlier: 2026-07-03 (v1.7.0 release) — §2: dropped the stale "core langs ~1234" target; the Transifex resource was re-provisioned without translation memory after the #63 cleanup, so a bot sync can land nl/de/fr near-empty — re-bundle from git history + MT instead of shipping empty, and note `l10n/en.json` is a gitignored artefact. §7: warned that `cp -r l10n` leaks the gitignored `en.json`/`en.js`/`.source-count.js` build artefacts (added the `rm` step + a precise anchored sensitive-file grep, since the loose one false-matches "en" substrings), and that `npm run release`/`create-release.sh` is Gitea-only, not the App Store flow. Earlier (2026-06-18): reverted POT generation to the en.json + lib/xgettext extractor after `translationtool.phar` dropped ~700 Vue-template strings (docker-ci#951); NC34 compat §6; openapi.json version-sync gap §3; POT absolute-path note §7.*
+*Last updated: 2026-07-07 — §2 REWRITTEN around a durable source-string guard. Root cause of the recurring release breakage: new feature strings were added in code but `npm run pot` + committing the POT was skipped, so the Nextcloud bot never saw them → translators couldn't translate them → every bot sync deleted them from `l10n/<lang>.{js,json}`. The old `-X ours` merge + hand re-adding strings was a workaround that also desynced `.js` from `.json`. Fix: a committed manifest `l10n/.source-strings.json` (sha256 + sorted msgid list, written by `extract-en-json.js`) and a prebuild guard `scripts/check-l10n-sync.js` (wired into `prebuild`, standalone as `npm run lint:l10n`) that FAILS the build whenever code's string set diverges from the manifest — making "push strings to Transifex" (`npm run l10n:push`, decoupled from release) unmissable. Releases are now a plain `git merge github/main` (no `-X ours`, no re-add) with a green-guard assertion. The bare `npm run l10n` footgun (lossy json→js regen) is renamed to `l10n:generate-js`. A check-only `.github/workflows/l10n.yml` runs the guard on push as a backstop (never auto-commits). de_DE/fr/nl policy unchanged (follow the bot). §5/§7/§9 cross-refs updated; `.source-strings.json` added to the tarball scrub. Earlier history condensed: v1.7.0 dropped the stale per-lang targets after the #63 resource re-provision; 2026-06-18 reverted POT generation to the en.json+lib/xgettext extractor (bare xgettext drops ~700 Vue strings); `l10n/en.json`/`en.js` are gitignored artefacts; `npm run release` is Gitea-only, not the App Store flow.*
