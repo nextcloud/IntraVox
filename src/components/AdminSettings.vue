@@ -129,7 +129,7 @@
 						:disabled="savingPrimaryLanguage"
 						@change="savePrimaryLanguage">
 						<option
-							v-for="lang in allAvailableLanguages"
+							v-for="lang in recommendableLanguages"
 							:key="lang.code"
 							:value="lang.code">
 							{{ lang.name }}
@@ -1589,6 +1589,17 @@ export default {
 		// NC languages that don't have content yet — the "add language" options.
 		addableLanguages() {
 			return this.allAvailableLanguages.filter(l => !this.languagesWithContent.includes(l.code))
+		},
+		// The recommended (fallback) language must be one that actually has content
+		// — otherwise a user whose language has none would be pointed at an empty
+		// language (issue #73). English is always included as the universal
+		// fallback (source language, always resolvable), even before it has pages.
+		recommendableLanguages() {
+			const codes = new Set(this.languagesWithContent)
+			codes.add('en')
+			return [...codes]
+				.map(code => ({ code, name: this.nameForCode(code) }))
+				.sort((a, b) => a.name.localeCompare(b.name))
 		},
 		reinstallLanguageName() {
 			if (!this.reinstallLanguageCode) return ''

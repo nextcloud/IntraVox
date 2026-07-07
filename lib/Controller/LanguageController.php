@@ -91,6 +91,19 @@ class LanguageController extends Controller {
                     Http::STATUS_BAD_REQUEST
                 );
             }
+            // The recommended (fallback) language must be one that actually has
+            // content — otherwise users whose language has none get pointed at an
+            // empty language (issue #73). English is always allowed: it is the
+            // universal fallback and source language, resolvable even without pages.
+            if ($code !== 'en') {
+                $withContent = $this->pageService->getLanguageContentStatus()['languagesWithContent'] ?? [];
+                if (!in_array($code, $withContent, true)) {
+                    return new DataResponse(
+                        ['error' => 'The recommended language must be a language that has content'],
+                        Http::STATUS_BAD_REQUEST
+                    );
+                }
+            }
             $this->languageService->setPrimaryLanguage($code);
             return new DataResponse(['primaryLanguage' => $this->languageService->getPrimaryLanguage()]);
         } catch (\InvalidArgumentException $e) {
