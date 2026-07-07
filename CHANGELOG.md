@@ -4,6 +4,16 @@ All notable changes to IntraVox will be documented in this file.
 
 IntraVox is a Nextcloud intranet page builder.
 
+## [1.8.1] - Unreleased — Admin settings tidy-up: languages get their own tab
+
+### Changed
+
+- **Intranet languages now have their own admin settings tab.** Choosing which languages the intranet holds content in — the "languages with content" list, the recommended (fallback) language, and add/remove language — was buried under the **Demo data** tab, where nobody looked for it. It is now a dedicated **Languages** tab, sitting alongside Video services / Engagement / Publication as a peer "how the intranet behaves" setting. The old tab is renamed **Demo content** and now holds only the demo-install table, so its name is honest. To avoid growing the tab bar, the rarely-visited **Maintenance** tab (orphaned Team folder data) becomes a sub-tab under **Support** — both are infrequent operator tasks. Old `#maintenance` deep-links and the orphaned-data banner still work: they now open Support → Maintenance.
+
+### Fixed
+
+- **The recommended language can only be one that has content** ([#73](https://github.com/nextcloud/IntraVox/issues/73)). The recommended (fallback) language picker previously listed every language, so an admin could point the fallback at a language with no pages — leaving users whose own language has no content staring at an empty intranet. The picker now offers only languages that have content (plus English, the universal source/fallback), and the backend rejects setting the recommended language to one without content (`POST /api/languages/primary` returns 400).
+
 ## [1.8.0] - 2026-07-07 — Page management from the UI: delete, reorder, move, copy + configurable homepage
 
 Editors can now manage the page structure directly from the IntraVox UI, without touching the underlying folders. This release also hardens IntraVox on **Team Folders**: read-only members are handled correctly, and setup/demo-import now work on installations with **primary object storage**.

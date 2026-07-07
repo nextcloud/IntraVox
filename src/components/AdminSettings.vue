@@ -15,7 +15,7 @@
 		<div v-if="orphanedBannerCount > 0 && !orphanedBannerDismissed" class="license-banner warning">
 			<span class="license-banner-text">
 				{{ n('intravox', 'Found %n orphaned data folder from a previous installation.', 'Found %n orphaned data folders from a previous installation.', orphanedBannerCount) }}
-				<a href="#" @click.prevent="activeTab = 'maintenance'; scanOrphanedFolders()">
+				<a href="#" @click.prevent="activeTab = 'support'; supportSubTab = 'maintenance'; scanOrphanedFolders()">
 					{{ t('intravox', 'Go to maintenance') }}
 				</a>
 			</span>
@@ -43,10 +43,16 @@
 				{{ t('intravox', 'Publication') }}
 			</button>
 			<button
+				:class="['tab-button', { active: activeTab === 'languages' }]"
+				@click="activeTab = 'languages'">
+				<Translate :size="16" />
+				{{ t('intravox', 'Languages') }}
+			</button>
+			<button
 				:class="['tab-button', { active: activeTab === 'demo' }]"
 				@click="activeTab = 'demo'">
 				<PackageVariant :size="16" />
-				{{ t('intravox', 'Demo data') }}
+				{{ t('intravox', 'Demo content') }}
 			</button>
 			<button
 				:class="['tab-button', { active: activeTab === 'export' }]"
@@ -72,18 +78,12 @@
 				<HeartOutline :size="16" />
 				{{ t('intravox', 'Support') }}
 			</button>
-			<button
-				:class="['tab-button', { active: activeTab === 'maintenance' }]"
-				@click="activeTab = 'maintenance'; scanOrphanedFolders()">
-				<DatabaseAlert :size="16" />
-				{{ t('intravox', 'Maintenance') }}
-			</button>
 		</div>
 
-		<!-- Demo Data Tab -->
-		<div v-if="activeTab === 'demo'" class="tab-content">
+		<!-- Languages Tab -->
+		<div v-if="activeTab === 'languages'" class="tab-content">
 			<div class="settings-section">
-				<h2>{{ t('intravox', 'Demo data') }}</h2>
+				<h2>{{ t('intravox', 'Languages') }}</h2>
 
 			<!-- Intranet languages (VoxCloud model: all NC languages available,
 			     active = has content, admin picks a recommended primary). -->
@@ -166,8 +166,14 @@
 					</NcButton>
 				</div>
 			</div>
+			</div>
+		</div>
 
-			<h3>{{ t('intravox', 'Demo content') }}</h3>
+		<!-- Demo Content Tab -->
+		<div v-if="activeTab === 'demo'" class="tab-content">
+			<div class="settings-section">
+				<h2>{{ t('intravox', 'Demo content') }}</h2>
+
 			<p class="settings-section-desc">
 				{{ t('intravox', 'Install demo content to quickly set up your intranet with example pages, navigation, and images. Bundled demo content is available in the languages listed below.') }}
 			</p>
@@ -925,10 +931,123 @@
 		</div>
 
 		<div v-if="activeTab === 'support'" class="tab-content">
-			<SupportSettings
-				:initial-telemetry-enabled="telemetryEnabled"
-				:initial-telemetry-last-report="telemetryLastReport"
-				@license-changed="loadLicenseStats" />
+			<!-- Sub-tab Navigation -->
+			<div class="sub-tab-navigation">
+				<button
+					:class="['sub-tab-button', { active: supportSubTab === 'support' }]"
+					@click="supportSubTab = 'support'">
+					<HeartOutline :size="16" />
+					{{ t('intravox', 'Support') }}
+				</button>
+				<button
+					:class="['sub-tab-button', { active: supportSubTab === 'maintenance' }]"
+					@click="supportSubTab = 'maintenance'; scanOrphanedFolders()">
+					<DatabaseAlert :size="16" />
+					{{ t('intravox', 'Maintenance') }}
+				</button>
+			</div>
+
+			<!-- Support Section -->
+			<div v-if="supportSubTab === 'support'">
+				<SupportSettings
+					:initial-telemetry-enabled="telemetryEnabled"
+					:initial-telemetry-last-report="telemetryLastReport"
+					@license-changed="loadLicenseStats" />
+			</div>
+
+			<!-- Maintenance Section -->
+			<div v-if="supportSubTab === 'maintenance'" class="settings-section">
+				<h2>{{ t('intravox', 'Orphaned Team folder data') }}</h2>
+				<p class="settings-section-desc">
+					{{ t('intravox', 'Detect and manage orphaned data from previous IntraVox installations.') }}
+				</p>
+
+				<NcNoteCard type="info">
+					{{ t('intravox', 'When the Team Folders app is reinstalled, previous data may become orphaned. This tool helps you recover or clean up that data.') }}
+				</NcNoteCard>
+
+				<div class="scan-section">
+					<NcButton
+						type="primary"
+						:disabled="scanningOrphaned"
+						@click="scanOrphanedFolders">
+						<template #icon>
+							<span v-if="scanningOrphaned" class="icon-loading-small" role="status" :aria-label="t('intravox', 'Loading')"></span>
+							<DatabaseSearch v-else :size="20" />
+						</template>
+						{{ scanningOrphaned ? t('intravox', 'Scanning …') : t('intravox', 'Scan for orphaned data') }}
+					</NcButton>
+				</div>
+
+				<!-- No orphaned data found -->
+				<div v-if="orphanedFolders.length === 0 && orphanedScanned" class="no-orphaned">
+					<NcNoteCard type="success">
+						{{ t('intravox', 'No orphaned Team folder data found. Your installation is clean.') }}
+					</NcNoteCard>
+				</div>
+
+				<!-- Orphaned folders table -->
+				<table v-else-if="orphanedFolders.length > 0" class="orphaned-table">
+					<thead>
+						<tr>
+							<th>{{ t('intravox', 'Folder ID') }}</th>
+							<th>{{ t('intravox', 'Content') }}</th>
+							<th>{{ t('intravox', 'Size') }}</th>
+							<th>{{ t('intravox', 'Last modified') }}</th>
+							<th>{{ t('intravox', 'Actions') }}</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr v-for="folder in orphanedFolders" :key="folder.id">
+							<td class="id-cell">{{ folder.id }}</td>
+							<td class="content-cell">
+								<span v-if="folder.hasIntraVoxContent" class="content-badge intravox">
+									{{ t('intravox', 'IntraVox') }}: {{ folder.languages.join(', ') }}
+									<span class="page-count">({{ n('intravox', '%n page', '%n pages', folder.pageCount) }})</span>
+								</span>
+								<span v-else class="content-badge unknown">
+									{{ t('intravox', 'Non-IntraVox data') }}
+								</span>
+								<ul
+									v-if="folder.sampleContents && folder.sampleContents.entries && folder.sampleContents.entries.length"
+									class="sample-contents">
+									<li v-for="entry in folder.sampleContents.entries" :key="entry.name">
+										<span class="sample-icon">{{ entry.type === 'dir' ? '📁' : '📄' }}</span>
+										<span class="sample-name">{{ entry.name }}</span>
+										<span class="sample-size">{{ entry.sizeFormatted }}</span>
+									</li>
+									<li
+										v-if="folder.sampleContents.totalEntries > folder.sampleContents.entries.length"
+										class="sample-more">
+										{{
+											t('intravox', '… and {n} more', {
+												n: folder.sampleContents.totalEntries - folder.sampleContents.entries.length
+											})
+										}}
+									</li>
+								</ul>
+							</td>
+							<td class="size-cell">{{ folder.sizeFormatted }}</td>
+							<td class="date-cell">{{ folder.lastModifiedFormatted }}</td>
+							<td class="action-cell">
+								<NcButton
+									v-if="folder.hasIntraVoxContent"
+									type="primary"
+									:disabled="migratingOrphaned || cleaningOrphaned"
+									@click="showMigrateDialog(folder)">
+									{{ t('intravox', 'Recover') }}
+								</NcButton>
+								<NcButton
+									type="error"
+									:disabled="migratingOrphaned || cleaningOrphaned"
+									@click="showOrphanedCleanupDialog(folder)">
+									{{ t('intravox', 'Delete') }}
+								</NcButton>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
 		</div>
 
 		<!-- External Feeds Tab -->
@@ -1168,102 +1287,6 @@
 			</div>
 		</div>
 
-		<!-- Maintenance Tab -->
-		<div v-if="activeTab === 'maintenance'" class="tab-content">
-			<div class="settings-section">
-				<h2>{{ t('intravox', 'Orphaned Team folder data') }}</h2>
-				<p class="settings-section-desc">
-					{{ t('intravox', 'Detect and manage orphaned data from previous IntraVox installations.') }}
-				</p>
-
-				<NcNoteCard type="info">
-					{{ t('intravox', 'When the Team Folders app is reinstalled, previous data may become orphaned. This tool helps you recover or clean up that data.') }}
-				</NcNoteCard>
-
-				<div class="scan-section">
-					<NcButton
-						type="primary"
-						:disabled="scanningOrphaned"
-						@click="scanOrphanedFolders">
-						<template #icon>
-							<span v-if="scanningOrphaned" class="icon-loading-small" role="status" :aria-label="t('intravox', 'Loading')"></span>
-							<DatabaseSearch v-else :size="20" />
-						</template>
-						{{ scanningOrphaned ? t('intravox', 'Scanning …') : t('intravox', 'Scan for orphaned data') }}
-					</NcButton>
-				</div>
-
-				<!-- No orphaned data found -->
-				<div v-if="orphanedFolders.length === 0 && orphanedScanned" class="no-orphaned">
-					<NcNoteCard type="success">
-						{{ t('intravox', 'No orphaned Team folder data found. Your installation is clean.') }}
-					</NcNoteCard>
-				</div>
-
-				<!-- Orphaned folders table -->
-				<table v-else-if="orphanedFolders.length > 0" class="orphaned-table">
-					<thead>
-						<tr>
-							<th>{{ t('intravox', 'Folder ID') }}</th>
-							<th>{{ t('intravox', 'Content') }}</th>
-							<th>{{ t('intravox', 'Size') }}</th>
-							<th>{{ t('intravox', 'Last modified') }}</th>
-							<th>{{ t('intravox', 'Actions') }}</th>
-						</tr>
-					</thead>
-					<tbody>
-						<tr v-for="folder in orphanedFolders" :key="folder.id">
-							<td class="id-cell">{{ folder.id }}</td>
-							<td class="content-cell">
-								<span v-if="folder.hasIntraVoxContent" class="content-badge intravox">
-									{{ t('intravox', 'IntraVox') }}: {{ folder.languages.join(', ') }}
-									<span class="page-count">({{ n('intravox', '%n page', '%n pages', folder.pageCount) }})</span>
-								</span>
-								<span v-else class="content-badge unknown">
-									{{ t('intravox', 'Non-IntraVox data') }}
-								</span>
-								<ul
-									v-if="folder.sampleContents && folder.sampleContents.entries && folder.sampleContents.entries.length"
-									class="sample-contents">
-									<li v-for="entry in folder.sampleContents.entries" :key="entry.name">
-										<span class="sample-icon">{{ entry.type === 'dir' ? '📁' : '📄' }}</span>
-										<span class="sample-name">{{ entry.name }}</span>
-										<span class="sample-size">{{ entry.sizeFormatted }}</span>
-									</li>
-									<li
-										v-if="folder.sampleContents.totalEntries > folder.sampleContents.entries.length"
-										class="sample-more">
-										{{
-											t('intravox', '… and {n} more', {
-												n: folder.sampleContents.totalEntries - folder.sampleContents.entries.length
-											})
-										}}
-									</li>
-								</ul>
-							</td>
-							<td class="size-cell">{{ folder.sizeFormatted }}</td>
-							<td class="date-cell">{{ folder.lastModifiedFormatted }}</td>
-							<td class="action-cell">
-								<NcButton
-									v-if="folder.hasIntraVoxContent"
-									type="primary"
-									:disabled="migratingOrphaned || cleaningOrphaned"
-									@click="showMigrateDialog(folder)">
-									{{ t('intravox', 'Recover') }}
-								</NcButton>
-								<NcButton
-									type="error"
-									:disabled="migratingOrphaned || cleaningOrphaned"
-									@click="showOrphanedCleanupDialog(folder)">
-									{{ t('intravox', 'Delete') }}
-								</NcButton>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-			</div>
-		</div>
-
 		<!-- Orphaned data migrate dialog -->
 		<NcDialog
 			v-if="migrateDialogVisible"
@@ -1375,6 +1398,7 @@ import RssBox from 'vue-material-design-icons/RssBox.vue'
 import DatabaseAlert from 'vue-material-design-icons/DatabaseAlert.vue'
 import DatabaseSearch from 'vue-material-design-icons/DatabaseSearch.vue'
 import HeartOutline from 'vue-material-design-icons/HeartOutline.vue'
+import Translate from 'vue-material-design-icons/Translate.vue'
 import ConfluenceImport from '../admin/components/ConfluenceImport.vue'
 import SupportSettings from './SupportSettings.vue'
 
@@ -1398,6 +1422,7 @@ export default {
 		CloudDownload,
 		Broom,
 		HeartOutline,
+		Translate,
 		ContentCopy,
 		SupportSettings,
 		LinkVariant,
@@ -1431,6 +1456,7 @@ export default {
 				{ value: 'custom', label: 'Custom' },
 			],
 			exportSubTab: 'import', // Default import sub-tab
+			supportSubTab: 'support', // Support tab: 'support' | 'maintenance'
 			languages: this.initialState.languages || [],
 			setupComplete: this.initialState.setupComplete !== false,
 			// Transifex language management state.
@@ -1691,8 +1717,15 @@ export default {
 	methods: {
 		// Tab deep-linking: set activeTab from the URL hash if it names a known tab.
 		applyTabFromHash() {
-			const validTabs = ['video', 'engagement', 'publication', 'demo', 'export', 'sharing', 'support', 'feeds', 'maintenance']
 			const hash = (window.location.hash || '').replace(/^#/, '')
+			// Back-compat: the old standalone Maintenance tab is now a sub-tab of Support.
+			// Keep #maintenance bookmarks working (the orphaned-data banner pointed here for years).
+			if (hash === 'maintenance') {
+				this.activeTab = 'support'
+				this.supportSubTab = 'maintenance'
+				return
+			}
+			const validTabs = ['video', 'engagement', 'publication', 'languages', 'demo', 'export', 'sharing', 'support', 'feeds']
 			if (validTabs.includes(hash) && hash !== this.activeTab) {
 				this.activeTab = hash
 			}
