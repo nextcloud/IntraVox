@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "IntraVox API",
-    "version": "1.8.0",
+    "version": "1.8.1",
     "description": "IntraVox is a modern intranet page builder for Nextcloud. This API provides endpoints for managing pages, media, navigation, comments, reactions, the Photo Story widget (galleries with EXIF, maps and lightbox) and the File Story widget (document libraries with MetaVox-aware filtering and federated-share awareness).",
     "license": {
       "name": "AGPL-3.0",

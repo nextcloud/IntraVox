@@ -4,7 +4,7 @@ All notable changes to IntraVox will be documented in this file.
 
 IntraVox is a Nextcloud intranet page builder.
 
-## [1.8.1] - Unreleased — Admin settings tidy-up: languages get their own tab
+## [1.8.1] - 2026-07-07 — Admin settings tidy-up + read-only permission fixes
 
 ### Changed
 
