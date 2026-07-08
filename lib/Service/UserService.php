@@ -490,7 +490,7 @@ class UserService {
      * @return list<string> Array of group IDs
      */
     private function getGroupsForUser(string $userId): array {
-		return $this->groupManager->getUserGroupIds($this->userManager->get($userId));
+        return $this->groupManager->getUserGroupIds($this->userManager->get($userId));
     }
 
     /**
