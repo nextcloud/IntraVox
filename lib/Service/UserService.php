@@ -487,14 +487,10 @@ class UserService {
      * Get group IDs for a user
      *
      * @param string $userId User ID
-     * @return array Array of group IDs
+     * @return list<string> Array of group IDs
      */
     private function getGroupsForUser(string $userId): array {
-        $groups = [];
-        foreach ($this->groupManager->getUserGroups($this->userManager->get($userId)) as $group) {
-            $groups[] = $group->getGID();
-        }
-        return $groups;
+		return $this->groupManager->getUserGroupIds($this->userManager->get($userId));
     }
 
     /**
