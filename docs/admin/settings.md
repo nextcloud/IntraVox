@@ -6,9 +6,17 @@ This guide covers the Nextcloud Admin Settings panel for IntraVox. Access via **
 
 The IntraVox Admin Settings panel has the following tabs:
 
-1. **Video Services** — Configure allowed video embed domains
-2. **Demo Data** — Install and manage demo content
-3. **External Feeds** — Configure LMS and feed connections for the Feed widget
+1. **Video services** — Configure allowed video embed domains
+2. **Engagement** — Comments and reactions settings
+3. **Publication** — MetaVox publication/expiry date fields
+4. **Languages** — Which languages have content, the **recommended language** users fall back to, and adding/removing languages (see [Language Management](language-management.md))
+5. **Demo content** — Install and manage per-language demo content
+6. **Import/export** — Import, export, and Confluence import
+7. **Sharing** — Active public share links
+8. **External feeds** — Configure LMS and feed connections for the Feed widget
+9. **Support** — Subscription and telemetry, with a **Maintenance** sub-tab for orphaned Team folder data
+
+> The tab layout was reorganized in 1.8.1: languages moved out of the old "Demo data" tab into their own **Languages** tab, "Demo data" was renamed **Demo content**, and Maintenance became a sub-tab under Support.
 
 ---
 

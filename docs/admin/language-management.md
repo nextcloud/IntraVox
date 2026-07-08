@@ -1,12 +1,16 @@
 # Language Management
 
-IntraVox 1.6.0 introduced admin-curated language enablement. This guide explains how to tick languages on and off in the admin UI, what happens when you do, and what stays safe across changes.
+Your intranet can hold content in any language Nextcloud supports. This guide explains how languages become active, how to pick the **recommended language** users fall back to, and what users see when their own language has no content yet.
+
+> Note on versions: 1.6.0 shipped a checkbox-based "enable a language" model; 1.7.0 replaced it with the content-driven model described here (a language is active once it has a homepage), and 1.8.2 made the landing page fall back to the recommended language ([#75](https://github.com/nextcloud/IntraVox/issues/75)). Some sections below still describe the legacy enable/disable checkboxes for installs that upgraded through 1.6.x.
 
 ## Where to find it
 
 1. Open **Administration settings** → **IntraVox**.
-2. Switch to the **Demo Data** tab.
-3. The new **Available languages** section is at the top.
+2. Switch to the **Languages** tab.
+3. The **Intranet languages** section shows which languages have content, the recommended language, and controls to add or remove a language.
+
+> Since 1.7.0, languages are content-driven rather than toggled with checkboxes: a language becomes **active as soon as it has a homepage**. There is no "enable" checkbox — you add a language (which creates an empty homepage) or fill an existing one, and it appears automatically.
 
 ## What you see
 
@@ -43,9 +47,20 @@ What happens:
 
 If you re-enable the language later, everything reappears exactly as you left it.
 
-## English is always enabled
+## What users see when their language has no content
 
-English (`en`) cannot be disabled. It's the universal fallback for users whose locale has no IntraVox content folder, and it's the source language for Transifex translations. The checkbox is displayed with an "always on" marker and disabled in the UI.
+A user's Nextcloud **display language** decides which content they see. When their language has no IntraVox content, IntraVox picks a fallback — it does **not** leave them on an empty page. The resolution order is (since 1.8.2, issue #75):
+
+1. **The user's own language**, if it has real content (an editor-authored homepage, not just an auto-generated placeholder).
+2. **The recommended language** — the language you pick in the **Recommended language** dropdown on the Languages tab — if it has content. This is exactly what the setting is for: "which language does a user without their own language see."
+3. **English (`en`)** — the universal fallback and Transifex source language.
+4. Only when **none** of the above has content does IntraVox show the *"No content in your language yet"* notice, which lists the languages that do have content and links the user to their personal language setting.
+
+So on an English-only intranet, a user whose display language is German simply sees the English pages — no notice. If you set the recommended language to Dutch and have Dutch content, those same users see the Dutch intranet instead.
+
+> **The recommended language is a viewing fallback only.** An editor always authors and saves pages in their **own** language — creating a page never redirects the write into the recommended language.
+
+English cannot be removed: it's the guaranteed final fallback and the Transifex source language. The **Recommended language** dropdown only offers languages that actually have content (plus English), so you can't point the fallback at an empty language.
 
 ## License tally impact
 

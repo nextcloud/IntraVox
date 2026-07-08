@@ -6,9 +6,17 @@ Deze gids behandelt het Nextcloud-beheer-instellingen-paneel voor IntraVox. Bere
 
 Het IntraVox-beheer-instellingen-paneel heeft de volgende tabs:
 
-1. **Video Services** — Configureer toegestane video-embed-domeinen
-2. **Demo-data** — Installeer en beheer demo-content
-3. **Externe feeds** — Configureer LMS- en feed-verbindingen voor de Feed-widget
+1. **Videodiensten** — Configureer toegestane video-embed-domeinen
+2. **Interactie** — Instellingen voor reacties en comments
+3. **Publicatie** — MetaVox publicatie-/vervaldatum-velden
+4. **Talen** — Welke talen inhoud hebben, de **aanbevolen taal** waarop gebruikers terugvallen, en talen toevoegen/verwijderen (zie [Taalbeheer](language-management.md))
+5. **Demo-inhoud** — Installeer en beheer per-taal demo-content
+6. **Import/export** — Import, export en Confluence-import
+7. **Delen** — Actieve publieke share-links
+8. **Externe feeds** — Configureer LMS- en feed-verbindingen voor de Feed-widget
+9. **Ondersteuning** — Abonnement en telemetrie, met een **Onderhoud**-subtab voor verweesde Team-folder-data
+
+> De tab-indeling is in 1.8.1 herzien: talen verhuisden uit de oude "Demo-data"-tab naar een eigen **Talen**-tab, "Demo-data" heet nu **Demo-inhoud**, en Onderhoud werd een subtab onder Ondersteuning. De landingspagina valt sinds 1.8.2 terug op de aanbevolen taal ([#75](https://github.com/nextcloud/IntraVox/issues/75)).
 
 ---
 
