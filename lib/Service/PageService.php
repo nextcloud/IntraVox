@@ -545,13 +545,16 @@ class PageService {
      * @return string uniqueId of the homepage ('home' for the legacy default).
      */
     public function getHomepageUniqueId(?string $language = null): string {
-        $lang = $language ?? $this->getUserLanguage();
+        // Without an explicit language, use the language the user is actually
+        // shown (recommended-language fallback, #75) so the homepage pointer is
+        // resolved in — and checked against — the served language's folder.
+        $lang = $language ?? $this->resolveEffectiveLanguage() ?? $this->getUserLanguage();
 
         $pointer = $this->homepageService->getHomepageUniqueId($lang);
         if ($pointer !== null && $pointer !== '' && $pointer !== 'home') {
             // Only honour the pointer when it resolves to an existing page.
             try {
-                $folder = $this->getLanguageFolder();
+                $folder = $this->getLanguageFolderByCode($lang);
                 if ($this->findPageByUniqueId($folder, $pointer) !== null) {
                     return $pointer;
                 }
@@ -655,6 +658,74 @@ class PageService {
             // Create the requested language folder
             return $baseFolder->newFolder($lang);
         }
+    }
+
+    /**
+     * The language whose content the CURRENT user will actually be SHOWN on the
+     * landing/read paths. Read-only resolution — NEVER used to decide where to
+     * write (authoring must always target the user's own language folder).
+     *
+     * Order (issue #75):
+     *   1. the user's own display language, if it has real content
+     *   2. the admin "recommended" (primary) language, if it has real content
+     *      and differs from the user's language — this is what the admin
+     *      settings promise: "if there is none, they are shown the recommended
+     *      language below"
+     *   3. English ('en'), if it has real content
+     *   4. null — nothing can be served (pure other-language install) → notice
+     *
+     * "Has real content" = languageFolderHasRealContent (a homepage that is not
+     * a _generated placeholder), matching how languagesWithContent is built, so
+     * a non-null result is always one of languagesWithContent. primaryLanguage
+     * already defaults to 'en', so when unset the chain collapses to user → en.
+     */
+    private function resolveEffectiveLanguage(): ?string {
+        $userLang = $this->getUserLanguage();
+        $candidates = [$userLang];
+
+        $primary = $this->languageService->getPrimaryLanguage();
+        if ($primary !== $userLang) {
+            $candidates[] = $primary;
+        }
+        if (!in_array(self::DEFAULT_LANGUAGE, $candidates, true)) {
+            $candidates[] = self::DEFAULT_LANGUAGE;
+        }
+
+        $baseFolder = $this->getIntraVoxFolder();
+        foreach ($candidates as $code) {
+            try {
+                $folder = $baseFolder->get($code);
+            } catch (NotFoundException $e) {
+                continue;
+            }
+            if ($folder instanceof \OCP\Files\Folder
+                && $this->languageFolderHasRealContent($folder)) {
+                return $code;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Content folder for READING/VIEWING for the current user, honouring the
+     * recommended-language fallback (issue #75). When nothing resolves it falls
+     * back to the plain write-target folder (getLanguageFolder), so callers get
+     * a valid — possibly empty — folder rather than an exception; the fallback
+     * notice decides separately whether to blank the page.
+     */
+    private function getReadLanguageFolder(): \OCP\Files\Folder {
+        $lang = $this->resolveEffectiveLanguage();
+        if ($lang !== null) {
+            try {
+                $folder = $this->getIntraVoxFolder()->get($lang);
+                if ($folder instanceof \OCP\Files\Folder) {
+                    return $folder;
+                }
+            } catch (NotFoundException $e) {
+                // fall through to the write-target folder
+            }
+        }
+        return $this->getLanguageFolder();
     }
 
     /**
@@ -763,7 +834,7 @@ class PageService {
      */
     public function pageExistsByUniqueId(string $uniqueId): bool {
         try {
-            $folder = $this->getLanguageFolder();
+            $folder = $this->getReadLanguageFolder();
             return $this->findPageByUniqueId($folder, $uniqueId) !== null;
         } catch (\Exception $e) {
             return false;
@@ -895,7 +966,7 @@ class PageService {
      * List all pages (recursively)
      */
     public function listPages(): array {
-        $folder = $this->getLanguageFolder();
+        $folder = $this->getReadLanguageFolder();
         $intraVoxFolder = $this->getIntraVoxFolder();
         $pages = [];
 
@@ -1033,6 +1104,7 @@ class PageService {
      * @return array{
      *   language: string,
      *   hasContent: bool,
+     *   servedLanguage: ?string,
      *   languagesWithContent: string[],
      *   activeLanguages: string[]
      * }
@@ -1067,18 +1139,27 @@ class PageService {
         sort($withContent);
         sort($active);
 
-        // The resolved homepage uniqueId for the user's language, so the app can
-        // land on the configured homepage on first load (configurable homepage).
+        // The language the user will actually be shown: own language, else the
+        // recommended (primary) language, else English — issue #75. null means
+        // nothing can be served (only then does the fallback notice appear).
+        $served = $this->resolveEffectiveLanguage();
+
+        // Resolve the homepage for the SERVED language (not necessarily the
+        // user's), so the app lands on the correct homepage after fallback.
         $homepageUniqueId = null;
         try {
-            $homepageUniqueId = $this->resolveHomepageNodeUniqueId($userLang);
+            $homepageUniqueId = $this->resolveHomepageNodeUniqueId($served ?? $userLang);
         } catch (\Throwable $e) {
             // Non-fatal: the frontend falls back to its own heuristic.
         }
 
         return [
             'language' => $userLang,
-            'hasContent' => in_array($userLang, $withContent, true),
+            // hasContent = "the user will see real content" (own language, the
+            // recommended language, or English all count). Only false when
+            // nothing resolves — the sole trigger for the fallback notice.
+            'hasContent' => $served !== null,
+            'servedLanguage' => $served,
             'languagesWithContent' => $withContent,
             'activeLanguages' => $active,
             'homepageUniqueId' => $homepageUniqueId,
@@ -1180,7 +1261,7 @@ class PageService {
      * This eliminates the N+1 query pattern where listPages() + getPage() for each
      */
     public function listPagesWithContent(): array {
-        $folder = $this->getLanguageFolder();
+        $folder = $this->getReadLanguageFolder();
         $pages = [];
 
         // Check for home.json in root
@@ -1258,7 +1339,7 @@ class PageService {
             return $this->pageDataCache[$id];
         }
 
-        $folder = $this->getLanguageFolder();
+        $folder = $this->getReadLanguageFolder();
         $result = null;
 
         // Save original ID before sanitization
@@ -1582,7 +1663,7 @@ class PageService {
         $homeTitle = 'Home';
         $homeUniqueId = $isHomePage ? $page['uniqueId'] : null;
         try {
-            $folder = $this->getLanguageFolder();
+            $folder = $this->getReadLanguageFolder();
             if ($folder->nodeExists('navigation.json')) {
                 $navFile = $folder->get('navigation.json');
                 $navData = json_decode($navFile->getContent(), true, 64);
@@ -4733,8 +4814,9 @@ class PageService {
      * @return array Tree structure with pages and their children
      */
     public function getPageTree(?string $currentPageId = null, ?string $language = null, ?string $rootPageId = null): array {
-        // Use provided language or fall back to user's language
-        $lang = $language ?? $this->getUserLanguage();
+        // Use provided language, else the language the user is actually shown
+        // (recommended-language fallback, #75), else their own language.
+        $lang = $language ?? $this->resolveEffectiveLanguage() ?? $this->getUserLanguage();
 
         // Cache key is groupHash + language. Users that share a group set
         // share a bucket — at enterprise scale (1k+ users, ~10 groups) that
@@ -5357,7 +5439,7 @@ class PageService {
      */
     public function getMediaList(string $pageId, string $folderType, string $subPath = ''): array {
         try {
-            $languageFolder = $this->getLanguageFolder();
+            $languageFolder = $this->getReadLanguageFolder();
             $mediaFiles = [];
 
             if ($folderType === 'resources') {
@@ -5510,9 +5592,11 @@ class PageService {
         ?string $sourcePageId = null,
         bool $filterPublished = false
     ): array {
-        $folder = $this->getLanguageFolder();
+        $folder = $this->getReadLanguageFolder();
         $pages = [];
-        $language = $this->getUserLanguage();
+        // Match the served language (recommended-language fallback, #75) so
+        // the news cache key and date localisation agree with the folder.
+        $language = $this->resolveEffectiveLanguage() ?? $this->getUserLanguage();
 
         // Version-counter cache: the news widget result depends on all pages in
         // the source folder plus user-supplied filters/sort/limit, plus the

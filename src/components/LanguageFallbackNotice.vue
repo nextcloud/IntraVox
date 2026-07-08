@@ -95,9 +95,9 @@ export default {
 			return generateUrl('/settings/user');
 		},
 		adminSettingsUrl() {
-			// Deep-link straight to the Demo Data tab, where the language
+			// Deep-link straight to the Languages tab, where the language
 			// management UI lives (tabs are hash-addressable in AdminSettings).
-			return generateUrl('/settings/admin/intravox') + '#demo';
+			return generateUrl('/settings/admin/intravox') + '#languages';
 		},
 	},
 	methods: {

@@ -4,6 +4,16 @@ All notable changes to IntraVox will be documented in this file.
 
 IntraVox is a Nextcloud intranet page builder.
 
+## [1.8.2] - 2026-07-08 — Recommended-language fallback on the landing page
+
+### Changed
+
+- **Faster group lookups.** Permission checks now use Nextcloud's `getUserGroupIds()` instead of loading full group objects, avoiding unnecessary object hydration on the hot permission path ([#74](https://github.com/nextcloud/IntraVox/pull/74), thanks @carlschwan).
+
+### Fixed
+
+- **Users whose language has no content are shown the recommended language instead of a blocking notice** ([#75](https://github.com/nextcloud/IntraVox/issues/75)). The admin settings promise "if there is none, they are shown the recommended language below", but the landing page ignored the recommended (primary) language entirely and only ever fell back to English — and since 1.7.0 it showed a full-screen "No content in your language yet" notice even when English (or any recommended language) had content. The page now resolves the language to show as: the user's own language (if it has content) → the admin-configured recommended language (if it has content) → English → and only when *nothing* can be served does the notice appear. Authoring is unaffected: an editor still creates and saves pages in their own language, never the fallback. Also fixed the notice's "Manage intranet languages" button, which deep-linked to the old Demo data tab instead of the new Languages tab.
+
 ## [1.8.1] - 2026-07-07 — Admin settings tidy-up + read-only permission fixes
 
 ### Changed

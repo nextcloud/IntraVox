@@ -459,7 +459,10 @@ export default {
       if (this.loading || this.error || !s) {
         return false;
       }
-      return !s.hasContent && (s.languagesWithContent || []).length > 0;
+      // hasContent now means "something will be served" (own language, the
+      // recommended language, or English — see PageService::getLanguageContentStatus,
+      // issue #75). Only block with the notice when nothing can be served.
+      return !s.hasContent;
     }
   },
   async mounted() {
