@@ -20,6 +20,7 @@ OC.L10N.register(
     "Details" : "Detalles",
     "Learn more" : "Deprendi más",
     "Deletion failed" : "El desaniciu falló",
+    "Languages" : "Llingües",
     "Sharing" : "Compartición",
     "Support" : "Sofitu",
     "Loading" : "Cargando",

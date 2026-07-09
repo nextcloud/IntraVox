@@ -27,6 +27,7 @@ OC.L10N.register(
     "Learn more" : "تعلم المزيد",
     "Configured" : "تمّ تكوينها",
     "Deletion failed" : "فشلت عملية الحذف",
+    "Languages" : "اللغات",
     "Sharing" : "المشاركة",
     "Support" : "المساعدة",
     "Recommended" : "مُقترَحٌ",
