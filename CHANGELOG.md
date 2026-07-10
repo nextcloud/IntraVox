@@ -4,6 +4,12 @@ All notable changes to IntraVox will be documented in this file.
 
 IntraVox is a Nextcloud intranet page builder.
 
+## [1.8.4] - 2026-07-10 — Fix: modals showed "intravox" on every button/label
+
+### Fixed
+
+- **Every button and label in several dialogs read "intravox"** ([#77](https://github.com/nextcloud/IntraVox/issues/77)). Four modals used a translation wrapper that put the app id in the wrong argument, so the "Create new page" and "Save as template" dialogs, the page-tree selector, and the "All pages" list rendered the literal string "intravox" for every tab, label, and button — making them unusable. The wrapper is now aligned with the rest of the app (`t(app, text, vars)`), so the real labels show again ("Blank page", "From template", "Page title", "Cancel", "Create", …). Pre-existing bug, unrelated to recent translation changes.
+
 ## [1.8.3] - 2026-07-10 — mave.io video support + translation polish
 
 ### Added
