@@ -47,7 +47,7 @@ OC.L10N.register(
     "Add" : "Додати",
     "Saving …" : "Збереження ...",
     "Import" : "Імпорт",
-    "Export" : "Експортувати",
+    "Export" : "Експорт",
     "Select language" : "Виберіть мову",
     "Empty" : "Порожньо",
     "Format" : "Формат",

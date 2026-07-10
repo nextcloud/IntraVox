@@ -21,6 +21,7 @@ OC.L10N.register(
     "Loading …" : "Загрузка …",
     "Details" : "Падрабязнасці",
     "Learn more" : "Больш падрабязна",
+    "Languages" : "Мовы",
     "Sharing" : "Абагульванне",
     "Support" : "Падтрымка",
     "Loading" : "Загрузка",
