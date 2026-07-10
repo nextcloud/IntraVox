@@ -4,6 +4,16 @@ All notable changes to IntraVox will be documented in this file.
 
 IntraVox is a Nextcloud intranet page builder.
 
+## [1.8.3] - 2026-07-10 — mave.io video support + translation polish
+
+### Added
+
+- **mave.io as an allowed video service** (EU-hosted, cookieless, GDPR-compliant). Because mave.io serves each space from its own subdomain (`space-{hash}.video-dns.com`), a fixed allowlist entry can't match every space, so this adds a wildcard-base-domain mechanism: a whitelisted base domain also matches its subdomains. Matching is boundary-safe (the host must equal the base or end with `.`+base, over HTTPS), so look-alike domains like `evilvideo-dns.com` are rejected. Enforced identically on the backend (`PageService`) and the frontend Save-gate (`WidgetEditor`).
+
+### Changed
+
+- **Translation polish from reviewer feedback** (thanks @rakekniven and the Nextcloud translators). Added `TRANSLATORS:` context hints for the Photo Story layout-style names (Magazine / Apple / Travelogue) so they're not translated literally; renamed the admin heading "Video embed domains" → "Domains for embedding videos"; fixed "Popup blocked. Please allow popups…" → "Pop-up blocked. Please allow pop-ups…"; and updated the app description to say "Team folders" (the current Nextcloud user-facing name) instead of "GroupFolders". The feed-URL example placeholder is no longer a translatable string. Ships with refreshed community translations (de, de_DE, et_EE, pt_BR, and others).
+
 ## [1.8.2] - 2026-07-08 — Recommended-language fallback on the landing page
 
 ### Changed
