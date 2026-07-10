@@ -206,8 +206,8 @@ export default {
     document.removeEventListener('click', this.handleClickOutside);
   },
   methods: {
-    t(key, vars = {}) {
-      return translate('intravox', key, vars);
+    t(app, text, vars = {}) {
+      return translate(app, text, vars);
     },
     async loadTree() {
       this.loading = true;

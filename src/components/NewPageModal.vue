@@ -148,8 +148,8 @@ export default {
     });
   },
   methods: {
-    t(key, vars = {}) {
-      return translate('intravox', key, vars);
+    t(app, text, vars = {}) {
+      return translate(app, text, vars);
     },
     async loadTemplates() {
       if (this.templates.length > 0) return; // Already loaded

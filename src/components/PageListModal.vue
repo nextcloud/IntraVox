@@ -65,8 +65,8 @@ export default {
     }
   },
   methods: {
-    t(key, vars = {}) {
-      return translate('intravox', key, vars);
+    t(app, text, vars = {}) {
+      return translate(app, text, vars);
     },
     formatDate(timestamp) {
       if (!timestamp) return '';
