@@ -33,14 +33,14 @@
 * Demo content to get started in minutes
 
 **Enterprise ready:**
-* Department-based access control via GroupFolders ACL
+* Department-based access control via Team folders (GroupFolders) ACL
 * Nextcloud Unified Search integration (Ctrl+K)
 * Seamless theming, users, groups, and files integration
 
 **Requirements:**
 * Nextcloud 32, 33, or 34
 * PHP 8.2 or higher
-* GroupFolders app (installed and enabled)
+* Team folders (GroupFolders) app (installed and enabled)
 
 **Ideal for:**
 * Company intranets and news portals

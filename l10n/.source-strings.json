@@ -1,6 +1,6 @@
 {
-    "count": 1237,
-    "sha256": "277de437ae97a250ef2c47964707dcb4caddaaace437fa3bf7db5d00590c8e74",
+    "count": 1236,
+    "sha256": "9d87314b49a1afea2c6b8818eef648e82ef31cfd1c02d84a738b9ba7a4a1bd20",
     "strings": [
         "— Not configured —",
         "… and {n} more",
@@ -521,7 +521,6 @@
         "Homepage updated",
         "https://example.com",
         "https://example.com/calendar.ics",
-        "https://example.com/feed.xml",
         "Icon:",
         "Idea",
         "If you can see files in the Files app but not here, the file index may be out of sync. Ask an administrator to run \"occ files:scan\" for this folder.",
@@ -861,7 +860,7 @@
         "Please rename the file and try again",
         "Plugin",
         "Poll",
-        "Popup blocked. Please allow popups for this site.",
+        "Pop-up blocked. Please allow pop-ups for this site.",
         "Preparing export …",
         "Presentations",
         "Preview",

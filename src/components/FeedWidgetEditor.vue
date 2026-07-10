@@ -16,7 +16,7 @@
         id="feed-url"
         v-model="localWidget.feedUrl"
         type="url"
-        :placeholder="t('intravox', 'https://example.com/feed.xml')"
+        placeholder="https://example.com/feed.xml"
         @input="debouncedEmitUpdate"
       />
     </div>
@@ -674,7 +674,7 @@ export default {
             'width=600,height=700,popup=yes'
           );
           if (!popup) {
-            this.connectError = this.t('intravox', 'Popup blocked. Please allow popups for this site.');
+            this.connectError = this.t('intravox', 'Pop-up blocked. Please allow pop-ups for this site.');
           }
         }
       } catch (err) {
