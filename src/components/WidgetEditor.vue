@@ -445,6 +445,12 @@ import { defineAsyncComponent } from 'vue';
 import ImageIcon from 'vue-material-design-icons/Image.vue';
 import VideoIcon from 'vue-material-design-icons/Video.vue';
 
+// Base domains whose subdomains are ALL allowed when the base is whitelisted.
+// Needed for providers with a per-customer subdomain (e.g. mave.io serves
+// iframes from space-{hash}.video-dns.com). Keep in sync with
+// WILDCARD_VIDEO_DOMAINS in lib/Service/PageService.php (backend allowlist).
+const WILDCARD_VIDEO_DOMAINS = ['video-dns.com'];
+
 export default {
   name: 'WidgetEditor',
   components: {
@@ -561,12 +567,24 @@ export default {
       try {
         const urlObj = new URL(url);
         const videoHost = urlObj.origin.toLowerCase();
+        const videoHostname = urlObj.hostname.toLowerCase();
 
         // Check if any whitelisted domain matches
         return !this.videoDomainWhitelist.some(domain => {
           try {
             const whitelistUrl = new URL(domain);
-            return videoHost === whitelistUrl.origin.toLowerCase();
+            if (videoHost === whitelistUrl.origin.toLowerCase()) {
+              return true;
+            }
+            // Wildcard base domains also match any of their subdomains
+            // (boundary-safe: only true '.'-prefixed subdomains match).
+            const base = whitelistUrl.hostname.toLowerCase();
+            if (WILDCARD_VIDEO_DOMAINS.includes(base)
+              && urlObj.protocol === 'https:'
+              && videoHostname.endsWith('.' + base)) {
+              return true;
+            }
+            return false;
           } catch {
             return false;
           }
@@ -707,7 +725,19 @@ export default {
       }
     },
     convertVideoUrl() {
-      const url = this.localWidget.src || '';
+      let url = this.localWidget.src || '';
+
+      // If the user pasted a full <iframe ...> embed snippet (as mave.io and
+      // others hand out), extract the src="..." URL and continue with that.
+      // Provider-agnostic — also helps YouTube/Vimeo embed snippets.
+      if (url.trim().startsWith('<')) {
+        const srcMatch = url.match(/\bsrc\s*=\s*["']([^"']+)["']/i);
+        if (srcMatch) {
+          url = srcMatch[1];
+          this.localWidget.src = url;
+        }
+      }
+
       if (!url) {
         this.detectedPlatform = null;
         this.embedUrl = null;

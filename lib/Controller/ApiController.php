@@ -1457,6 +1457,7 @@ class ApiController extends Controller {
             'tube.privacytools.io',
             'peertube.debian.social',
             'video.linux.it',
+            'video-dns.com', // mave.io — EU-hosted, cookieless, GDPR-compliant
         ];
 
         // Category 2: Commercial but relatively safe (business platforms)

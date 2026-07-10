@@ -1590,6 +1590,7 @@ export default {
 				{ id: 'tilvids', name: 'TilVids', domain: 'https://tilvids.com', category: 'privacy', description: 'Educational PeerTube' },
 				{ id: 'diode', name: 'Diode Zone', domain: 'https://diode.zone', category: 'privacy', description: 'PeerTube instance' },
 				{ id: 'blender', name: 'Blender Video', domain: 'https://video.blender.org', category: 'privacy', description: 'Blender Foundation' },
+				{ id: 'mave', name: 'mave.io (EU video)', domain: 'https://video-dns.com', category: 'privacy', description: 'European cookieless video, GDPR-compliant' },
 				// Tracking concerns (known trackers)
 				{ id: 'youtube', name: 'YouTube (standard)', domain: 'https://www.youtube.com', category: 'tracking', description: 'Contains Google tracking' },
 				{ id: 'dailymotion', name: 'Dailymotion', domain: 'https://www.dailymotion.com', category: 'tracking', description: 'Contains tracking' },
@@ -2339,6 +2340,7 @@ export default {
 				'tilvids.com': 'https://tilvids.com',
 				'diode.zone': 'https://diode.zone',
 				'video.blender.org': 'https://video.blender.org',
+				'video-dns.com': 'https://mave.io',
 				'www.youtube.com': 'https://www.youtube.com',
 				'www.dailymotion.com': 'https://www.dailymotion.com',
 			}

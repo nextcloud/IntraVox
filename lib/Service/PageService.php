@@ -3721,6 +3721,21 @@ class PageService {
     ];
 
     /**
+     * Base domains whose subdomains are ALL allowed when the base domain is on
+     * the whitelist. Needed for providers that give each customer/space its own
+     * subdomain — e.g. mave.io serves iframes from space-{hash}.video-dns.com,
+     * so a single fixed allowlist entry can never match every space.
+     *
+     * Matching is boundary-safe (see sanitizeVideoEmbedUrl): the host must equal
+     * the base OR end with '.' . $base, so evilvideo-dns.com and
+     * video-dns.com.attacker.com are NOT matched.
+     *
+     * Keep this in sync with WILDCARD_VIDEO_DOMAINS in
+     * src/components/WidgetEditor.vue (frontend Save-gate).
+     */
+    private const WILDCARD_VIDEO_DOMAINS = ['video-dns.com'];
+
+    /**
      * Sanitize video embed URL
      * Validates against configured whitelist of allowed domains
      * Supports: YouTube, Vimeo, PeerTube, Dailymotion, Twitch, TikTok, etc.
@@ -3753,6 +3768,13 @@ class PageService {
             $allowedHost = parse_url($allowedDomain, PHP_URL_HOST);
             // Match either the original host OR its embed alias
             if ($host === $allowedHost || ($embedHost && $embedHost === $allowedHost)) {
+                $isAllowed = true;
+                break;
+            }
+            // Wildcard base domains (e.g. video-dns.com) also match any of their
+            // subdomains. Boundary-safe: only true subdomains (leading '.') match.
+            if (in_array($allowedHost, self::WILDCARD_VIDEO_DOMAINS, true)
+                && str_ends_with($host, '.' . $allowedHost)) {
                 $isAllowed = true;
                 break;
             }
