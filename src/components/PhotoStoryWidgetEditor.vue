@@ -366,9 +366,26 @@ export default {
     },
     styleOptions() {
       return [
-        { value: 'magazine', label: this.t('intravox', 'Magazine'), hint: this.t('intravox', 'Glossy editorial (serif)') },
-        { value: 'apple', label: this.t('intravox', 'Apple'), hint: this.t('intravox', 'Clean grid (default)') },
-        { value: 'travelogue', label: this.t('intravox', 'Travelogue'), hint: this.t('intravox', 'Travel diary with timeline rail') },
+        {
+          value: 'magazine',
+          // TRANSLATORS: Name of a photo-gallery layout style (not to be translated literally as the magazine publication); an editorial, glossy look.
+          label: this.t('intravox', 'Magazine'),
+          hint: this.t('intravox', 'Glossy editorial (serif)'),
+        },
+        {
+          value: 'apple',
+          // TRANSLATORS: Name of a photo-gallery layout style — a clean, minimal photo grid (Apple-Photos-like). Not the fruit or the brand; keep or transliterate as a style name.
+          label: this.t('intravox', 'Apple'),
+          // TRANSLATORS: Hint for the "Apple" photo layout style. "Clean" is an adjective (tidy/minimal grid), not the verb "to clean". This style is the default.
+          hint: this.t('intravox', 'Clean grid (default)'),
+        },
+        {
+          value: 'travelogue',
+          // TRANSLATORS: Name of a photo-gallery layout style — a travel-diary look.
+          label: this.t('intravox', 'Travelogue'),
+          // TRANSLATORS: Hint for the "Travelogue" style. A "timeline rail" is a vertical timeline strip running alongside the photos, marking chronological order.
+          hint: this.t('intravox', 'Travel diary with timeline rail'),
+        },
       ];
     },
     sortApplicable() {

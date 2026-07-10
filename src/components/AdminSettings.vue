@@ -412,7 +412,7 @@
 		<!-- Video Services Tab -->
 		<div v-if="activeTab === 'video'" class="tab-content">
 			<div class="settings-section">
-				<h2>{{ t('intravox', 'Video embed domains') }}</h2>
+				<h2>{{ t('intravox', 'Domains for embedding videos') }}</h2>
 				<p class="settings-section-desc">
 					{{ t('intravox', 'Configure which video platforms can be embedded in pages. Toggle services on or off.') }}
 				</p>

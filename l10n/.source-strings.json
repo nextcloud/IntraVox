@@ -1,6 +1,6 @@
 {
     "count": 1236,
-    "sha256": "9d87314b49a1afea2c6b8818eef648e82ef31cfd1c02d84a738b9ba7a4a1bd20",
+    "sha256": "76dd3a1e627ddb6186a4683cf3689f768b317058099bf6423d28132e13eab0b8",
     "strings": [
         "— Not configured —",
         "… and {n} more",
@@ -329,6 +329,7 @@
         "Domain",
         "Domain added. Do not forget to save your settings.",
         "Domain contains invalid characters. Only letters, numbers, dots and hyphens are allowed.",
+        "Domains for embedding videos",
         "Done",
         "Download",
         "Download export",
@@ -1175,7 +1176,6 @@
         "Video",
         "Video cannot be played",
         "Video domains saved",
-        "Video embed domains",
         "Video playback was aborted.",
         "Video plays without sound (required for autoplay in most browsers)",
         "Video service not allowed",
