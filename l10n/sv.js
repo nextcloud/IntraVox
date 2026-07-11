@@ -117,7 +117,6 @@ OC.L10N.register(
     "Oldest first" : "Äldst först",
     "Connection" : "Anslutning",
     "Feed URL" : "Flödeswebbadress",
-    "https://example.com/feed.xml" : "https://example.com/feed.xml",
     "Connected" : "Ansluten",
     "Disconnect" : "Koppla från",
     "Checking …" : "Kontrollerar...",

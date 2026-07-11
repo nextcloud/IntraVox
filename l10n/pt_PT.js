@@ -148,7 +148,6 @@ OC.L10N.register(
     "RSS/Atom feed" : "Fonte RSS",
     "Connection" : "Conexão",
     "Feed URL" : "URL da Feed",
-    "https://example.com/feed.xml" : "https://example.com/redirect",
     "Connected via SSO" : "Conectado como",
     "Connected" : "Conectado",
     "Disconnect" : "Desligado",
