@@ -67,6 +67,7 @@ OC.L10N.register(
     "Recover" : "Atkurti",
     "Delete" : "Ištrinti",
     "Active" : "Aktyvi",
+    "Inactive" : "Neaktyvus",
     "Name" : "Vardas",
     "Type" : "Tipas",
     "Base URL" : "Bazinis URL",
