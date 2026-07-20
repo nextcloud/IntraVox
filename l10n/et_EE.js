@@ -121,6 +121,7 @@ OC.L10N.register(
     "Select language" : "Vali keel",
     "Empty" : "Tühi",
     "Format" : "Vorming",
+    "Exporting …" : "Ekspordin...",
     "Start import" : "Alusta importimist",
     "Comments" : "Kommentaarid",
     "Scope" : "Kehtivusala",
