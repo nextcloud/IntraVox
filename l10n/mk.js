@@ -100,6 +100,7 @@ OC.L10N.register(
     "Timeline" : "Времеплов",
     "Small" : "Мал",
     "Large" : "Голем",
+    "Date modified" : "Датум на измена",
     "Filename" : "Име на датотека",
     "Descending" : "Опаѓачки",
     "Smallest first" : "Малите прво",
