@@ -39,6 +39,7 @@ OC.L10N.register(
     "Delete" : "Delete",
     "Name" : "Nombre",
     "Type" : "Escribir",
+    "Base URL" : "URL Base",
     "Advanced options" : "Opciones avanzadas",
     "Value" : "Valor",
     "Authentication" : "Autenticación",
