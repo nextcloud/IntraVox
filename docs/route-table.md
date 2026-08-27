@@ -63,11 +63,11 @@ diff rather than staying buried in 14 controllers.
 | GET | `/api/footer` | `footer#get` | any logged-in user | exempt |
 | POST | `/api/footer` | `footer#save` | any logged-in user | required |
 | POST | `/api/homepage` | `api#setHomepage` | any logged-in user | required |
-| POST | `/api/pages/{pageId}/translations` | `api#linkTranslation` | any logged-in user | required |
-| DELETE | `/api/pages/{pageId}/translations` | `api#unlinkTranslation` | any logged-in user | required |
-| GET | `/api/pages/{pageId}/translation-candidates` | `api#getTranslationCandidates` | any logged-in user | required |
-| POST | `/api/pages/{pageId}/translations/create` | `api#createTranslation` | any logged-in user | required |
-| GET | `/api/pages/{pageId}/translatable-languages` | `api#getTranslatableLanguages` | any logged-in user | required |
+| POST | `/api/pages/{pageId}/translations` | `translationApi#linkTranslation` | any logged-in user | required |
+| DELETE | `/api/pages/{pageId}/translations` | `translationApi#unlinkTranslation` | any logged-in user | required |
+| GET | `/api/pages/{pageId}/translation-candidates` | `translationApi#getTranslationCandidates` | any logged-in user | required |
+| POST | `/api/pages/{pageId}/translations/create` | `translationApi#createTranslation` | any logged-in user | required |
+| GET | `/api/pages/{pageId}/translatable-languages` | `translationApi#getTranslatableLanguages` | any logged-in user | required |
 | POST | `/api/setup` | `api#runSetup` | admin (checked in body) | required |
 | GET | `/api/demo-data/status` | `demoData#getStatus` | any logged-in user | required |
 | GET | `/api/demo-data/languages` | `demoData#getLanguages` | any logged-in user | required |
