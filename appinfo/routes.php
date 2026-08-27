@@ -91,15 +91,15 @@ return [
         ['name' => 'language#createEmptyHomepage', 'url' => '/api/languages/{code}/empty-homepage', 'verb' => 'POST'],
 
         // Settings routes
-        ['name' => 'api#getVideoDomains', 'url' => '/api/settings/video-domains', 'verb' => 'GET'],
-        ['name' => 'api#setVideoDomains', 'url' => '/api/settings/video-domains', 'verb' => 'POST'],
+        ['name' => 'settingsApi#getVideoDomains', 'url' => '/api/settings/video-domains', 'verb' => 'GET'],
+        ['name' => 'settingsApi#setVideoDomains', 'url' => '/api/settings/video-domains', 'verb' => 'POST'],
         ['name' => 'api#getUploadLimit', 'url' => '/api/settings/upload-limit', 'verb' => 'GET'],
-        ['name' => 'api#getEngagementSettings', 'url' => '/api/settings/engagement', 'verb' => 'GET'],
-        ['name' => 'api#setEngagementSettings', 'url' => '/api/settings/engagement', 'verb' => 'POST'],
-        ['name' => 'api#getPublicationSettings', 'url' => '/api/settings/publication', 'verb' => 'GET'],
-        ['name' => 'api#setPublicationSettings', 'url' => '/api/settings/publication', 'verb' => 'POST'],
-        ['name' => 'api#getPublicSharePeopleSetting', 'url' => '/api/settings/public-share-people', 'verb' => 'GET'],
-        ['name' => 'api#setPublicSharePeopleSetting', 'url' => '/api/settings/public-share-people', 'verb' => 'POST'],
+        ['name' => 'settingsApi#getEngagementSettings', 'url' => '/api/settings/engagement', 'verb' => 'GET'],
+        ['name' => 'settingsApi#setEngagementSettings', 'url' => '/api/settings/engagement', 'verb' => 'POST'],
+        ['name' => 'settingsApi#getPublicationSettings', 'url' => '/api/settings/publication', 'verb' => 'GET'],
+        ['name' => 'settingsApi#setPublicationSettings', 'url' => '/api/settings/publication', 'verb' => 'POST'],
+        ['name' => 'settingsApi#getPublicSharePeopleSetting', 'url' => '/api/settings/public-share-people', 'verb' => 'GET'],
+        ['name' => 'settingsApi#setPublicSharePeopleSetting', 'url' => '/api/settings/public-share-people', 'verb' => 'POST'],
 
         // Export routes
         ['name' => 'export#getExportableLanguages', 'url' => '/api/export/languages', 'verb' => 'GET'],
@@ -154,7 +154,7 @@ return [
         ['name' => 'license#saveSettings', 'url' => '/api/settings/license', 'verb' => 'POST'],
         ['name' => 'license#validate', 'url' => '/api/license/validate', 'verb' => 'POST'],
         ['name' => 'license#updateUsage', 'url' => '/api/license/update-usage', 'verb' => 'POST'],
-        ['name' => 'api#setTelemetrySettings', 'url' => '/api/settings/telemetry', 'verb' => 'POST'],
+        ['name' => 'settingsApi#setTelemetrySettings', 'url' => '/api/settings/telemetry', 'verb' => 'POST'],
 
         // Template routes
         ['name' => 'templateApi#listTemplates', 'url' => '/api/templates', 'verb' => 'GET'],

@@ -80,15 +80,15 @@ diff rather than staying buried in 14 controllers.
 | DELETE | `/api/languages/{code}` | `language#removeLanguage` | admin | required |
 | POST | `/api/languages/enabled` | `language#setEnabled` | admin | required |
 | POST | `/api/languages/{code}/empty-homepage` | `language#createEmptyHomepage` | admin | required |
-| GET | `/api/settings/video-domains` | `api#getVideoDomains` | any logged-in user | exempt |
-| POST | `/api/settings/video-domains` | `api#setVideoDomains` | admin (checked in body) | required |
+| GET | `/api/settings/video-domains` | `settingsApi#getVideoDomains` | any logged-in user | exempt |
+| POST | `/api/settings/video-domains` | `settingsApi#setVideoDomains` | admin (checked in body) | required |
 | GET | `/api/settings/upload-limit` | `api#getUploadLimit` | any logged-in user | exempt |
-| GET | `/api/settings/engagement` | `api#getEngagementSettings` | any logged-in user | exempt |
-| POST | `/api/settings/engagement` | `api#setEngagementSettings` | admin (checked in body) | required |
-| GET | `/api/settings/publication` | `api#getPublicationSettings` | any logged-in user | exempt |
-| POST | `/api/settings/publication` | `api#setPublicationSettings` | admin (checked in body) | required |
-| GET | `/api/settings/public-share-people` | `api#getPublicSharePeopleSetting` | any logged-in user | exempt |
-| POST | `/api/settings/public-share-people` | `api#setPublicSharePeopleSetting` | admin (checked in body) | required |
+| GET | `/api/settings/engagement` | `settingsApi#getEngagementSettings` | any logged-in user | exempt |
+| POST | `/api/settings/engagement` | `settingsApi#setEngagementSettings` | admin (checked in body) | required |
+| GET | `/api/settings/publication` | `settingsApi#getPublicationSettings` | any logged-in user | exempt |
+| POST | `/api/settings/publication` | `settingsApi#setPublicationSettings` | admin (checked in body) | required |
+| GET | `/api/settings/public-share-people` | `settingsApi#getPublicSharePeopleSetting` | any logged-in user | exempt |
+| POST | `/api/settings/public-share-people` | `settingsApi#setPublicSharePeopleSetting` | admin (checked in body) | required |
 | GET | `/api/export/languages` | `export#getExportableLanguages` | any logged-in user | exempt |
 | GET | `/api/export/language/{language}` | `export#exportLanguage` | any logged-in user | exempt |
 | GET | `/api/export/language/{language}/zip` | `export#exportLanguageZip` | any logged-in user | exempt |
@@ -125,7 +125,7 @@ diff rather than staying buried in 14 controllers.
 | POST | `/api/settings/license` | `license#saveSettings` | admin (checked in body) | required |
 | POST | `/api/license/validate` | `license#validate` | admin (checked in body) | required |
 | POST | `/api/license/update-usage` | `license#updateUsage` | admin (checked in body) | required |
-| POST | `/api/settings/telemetry` | `api#setTelemetrySettings` | admin (checked in body) | required |
+| POST | `/api/settings/telemetry` | `settingsApi#setTelemetrySettings` | admin (checked in body) | required |
 | GET | `/api/templates` | `templateApi#listTemplates` | any logged-in user | required |
 | GET | `/api/templates/{id}` | `templateApi#getTemplate` | any logged-in user | required |
 | POST | `/api/templates` | `templateApi#saveAsTemplate` | any logged-in user | required |
