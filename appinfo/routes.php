@@ -108,8 +108,8 @@ return [
         ['name' => 'export#exportPage', 'url' => '/api/export/page/{uniqueId}', 'verb' => 'GET'],
 
         // Import routes (file uploads handled by ApiController)
-        ['name' => 'api#import_zip', 'url' => '/api/import/zip', 'verb' => 'POST'],
-        ['name' => 'api#import_confluence_html', 'url' => '/api/import/confluence/html', 'verb' => 'POST'],
+        ['name' => 'importApi#import_zip', 'url' => '/api/import/zip', 'verb' => 'POST'],
+        ['name' => 'importApi#import_confluence_html', 'url' => '/api/import/confluence/html', 'verb' => 'POST'],
 
         // Comments API routes
         ['name' => 'comment#getComments', 'url' => '/api/pages/{pageId}/comments', 'verb' => 'GET'],
@@ -164,8 +164,8 @@ return [
         ['name' => 'templateApi#createPageFromTemplate', 'url' => '/api/pages/from-template', 'verb' => 'POST'],
 
         // NC Share link detection routes (for ShareButton)
-        ['name' => 'api#getShareInfo', 'url' => '/api/pages/{uniqueId}/share-info', 'verb' => 'GET'],
-        ['name' => 'api#getActiveShares', 'url' => '/api/admin/shares', 'verb' => 'GET'],
+        ['name' => 'shareAdminApi#getShareInfo', 'url' => '/api/pages/{uniqueId}/share-info', 'verb' => 'GET'],
+        ['name' => 'shareAdminApi#getActiveShares', 'url' => '/api/admin/shares', 'verb' => 'GET'],
 
         // People widget API routes
         ['name' => 'people#searchUsers', 'url' => '/api/users/search', 'verb' => 'GET'],

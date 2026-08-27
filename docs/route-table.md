@@ -93,8 +93,8 @@ diff rather than staying buried in 14 controllers.
 | GET | `/api/export/language/{language}` | `export#exportLanguage` | any logged-in user | exempt |
 | GET | `/api/export/language/{language}/zip` | `export#exportLanguageZip` | any logged-in user | exempt |
 | GET | `/api/export/page/{uniqueId}` | `export#exportPage` | any logged-in user | exempt |
-| POST | `/api/import/zip` | `api#import_zip` | admin (checked in body) | required |
-| POST | `/api/import/confluence/html` | `api#import_confluence_html` | admin (checked in body) | required |
+| POST | `/api/import/zip` | `importApi#import_zip` | admin (checked in body) | required |
+| POST | `/api/import/confluence/html` | `importApi#import_confluence_html` | admin (checked in body) | required |
 | GET | `/api/pages/{pageId}/comments` | `comment#getComments` | any logged-in user | exempt |
 | POST | `/api/pages/{pageId}/comments` | `comment#createComment` | any logged-in user | required |
 | PUT | `/api/comments/{commentId}` | `comment#updateComment` | any logged-in user | required |
@@ -131,8 +131,8 @@ diff rather than staying buried in 14 controllers.
 | POST | `/api/templates` | `templateApi#saveAsTemplate` | any logged-in user | required |
 | DELETE | `/api/templates/{id}` | `templateApi#deleteTemplate` | any logged-in user | required |
 | POST | `/api/pages/from-template` | `templateApi#createPageFromTemplate` | any logged-in user | required |
-| GET | `/api/pages/{uniqueId}/share-info` | `api#getShareInfo` | any logged-in user | exempt |
-| GET | `/api/admin/shares` | `api#getActiveShares` | admin (checked in body) | required |
+| GET | `/api/pages/{uniqueId}/share-info` | `shareAdminApi#getShareInfo` | any logged-in user | exempt |
+| GET | `/api/admin/shares` | `shareAdminApi#getActiveShares` | admin (checked in body) | required |
 | GET | `/api/users/search` | `people#searchUsers` | any logged-in user | exempt |
 | POST | `/api/users` | `people#getUsers` | any logged-in user | required |
 | GET | `/api/users/groups` | `people#getGroups` | any logged-in user | exempt |

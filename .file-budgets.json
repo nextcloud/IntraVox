@@ -7,7 +7,7 @@
   },
   "files": {
     "lib/Controller/AnalyticsController.php": 258,
-    "lib/Controller/ApiController.php": 1988,
+    "lib/Controller/ApiController.php": 1682,
     "lib/Controller/ApiErrorTrait.php": 112,
     "lib/Controller/BulkController.php": 292,
     "lib/Controller/CalendarController.php": 129,
@@ -32,6 +32,7 @@
     "lib/Controller/PreviewController.php": 308,
     "lib/Controller/PublicShareController.php": 1244,
     "lib/Controller/RequiresPagePermission.php": 62,
+    "lib/Controller/SettingsApiController.php": 354,
     "lib/Controller/Shared/CalendarRequestTrait.php": 41,
     "lib/Controller/Shared/FeedRequestTrait.php": 135,
     "lib/Controller/Shared/SharePathTrait.php": 159,
