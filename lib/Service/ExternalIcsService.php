@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace OCA\IntraVox\Service;
 
+use OCA\IntraVox\Service\Sanitize\OutboundUrlValidator;
 use OCP\Http\Client\IClientService;
 use OCP\ICacheFactory;
 use OCP\ICache;
@@ -26,6 +27,7 @@ class ExternalIcsService {
         private IClientService $httpClient,
         private ICacheFactory $cacheFactory,
         private LoggerInterface $logger,
+        private OutboundUrlValidator $urlValidator,
     ) {
         if ($this->cacheFactory->isAvailable()) {
             $this->cache = $this->cacheFactory->createDistributed('intravox-ics');
@@ -186,27 +188,13 @@ class ExternalIcsService {
         return $sourceBaseUrl;
     }
 
+    /**
+     * HTTPS only: an ICS feed is configured, not typed, so there is no reason to
+     * accept a downgrade. Delegated to OutboundUrlValidator — this used to be a
+     * second, weaker copy of the same check.
+     */
     private function validateUrl(string $url): void {
-        if (!filter_var($url, FILTER_VALIDATE_URL)) {
-            throw new \InvalidArgumentException('Invalid ICS URL');
-        }
-        $scheme = parse_url($url, PHP_URL_SCHEME);
-        if ($scheme !== 'https') {
-            throw new \InvalidArgumentException('Only HTTPS URLs are allowed for ICS feeds');
-        }
-
-        // SSRF protection: block private/internal IP ranges
-        $host = parse_url($url, PHP_URL_HOST);
-        if ($host !== null) {
-            $ips = gethostbynamel($host);
-            if (is_array($ips)) {
-                foreach ($ips as $ip) {
-                    if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) {
-                        throw new \InvalidArgumentException('URLs pointing to private or reserved IP addresses are not allowed');
-                    }
-                }
-            }
-        }
+        $this->urlValidator->validate($url, OutboundUrlValidator::SCHEMES_HTTPS_ONLY, 'ICS URL');
     }
 
     /**

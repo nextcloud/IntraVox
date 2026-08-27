@@ -6,6 +6,7 @@ namespace OCA\IntraVox\Service;
 
 use enshrined\svgSanitize\Sanitizer;
 use OCA\IntraVox\AppInfo\Application;
+use OCA\IntraVox\Service\Sanitize\OutboundUrlValidator;
 use OCP\Http\Client\IClientService;
 use OCP\ICacheFactory;
 use OCP\ICache;
@@ -83,6 +84,7 @@ class FeedReaderService {
         private LoggerInterface $logger,
         private LmsTokenService $lmsTokenService,
         private LmsOAuthService $lmsOAuthService,
+        private OutboundUrlValidator $urlValidator,
         private ?OidcTokenBridge $oidcTokenBridge = null,
     ) {
         if ($this->cacheFactory->isAvailable()) {
@@ -2304,49 +2306,13 @@ class FeedReaderService {
         };
     }
 
+    /**
+     * Feeds accept http and https. Delegated to OutboundUrlValidator, which is
+     * the hardened version of this check — ExternalIcsService carried a second,
+     * weaker copy until they were consolidated.
+     */
     private function validateUrl(string $url): void {
-        if (!filter_var($url, FILTER_VALIDATE_URL)) {
-            throw new \InvalidArgumentException('Invalid URL');
-        }
-        $scheme = parse_url($url, PHP_URL_SCHEME);
-        if ($scheme !== 'https' && $scheme !== 'http') {
-            throw new \InvalidArgumentException('Only HTTP(S) URLs are supported');
-        }
-
-        // SSRF protection: block private/internal IP ranges
-        // Note: Nextcloud's IClientService also enforces allow_local_address config,
-        // providing a second layer of protection against DNS rebinding attacks.
-        $host = parse_url($url, PHP_URL_HOST);
-        if ($host === null || $host === '') {
-            throw new \InvalidArgumentException('Invalid URL');
-        }
-
-        // Fail closed. gethostbynamel() returns only A records, and false both
-        // when a name does not resolve and when it has AAAA records only — so the
-        // old `if (is_array($ips))` skipped the whole check for exactly the hosts
-        // most worth checking. http://[::1]/ reached the fetcher untouched.
-        $literal = trim($host, '[]');
-        if (filter_var($literal, FILTER_VALIDATE_IP) !== false) {
-            $ips = [$literal];
-        } else {
-            $ips = gethostbynamel($host) ?: [];
-            foreach (@dns_get_record($host, DNS_AAAA) ?: [] as $record) {
-                if (isset($record['ipv6'])) {
-                    $ips[] = $record['ipv6'];
-                }
-            }
-            if ($ips === []) {
-                throw new \InvalidArgumentException('Could not resolve the host for this URL');
-            }
-        }
-
-        // Every resolved address, not just the first, so a rebinding answer that
-        // mixes a public and a private address is refused on the private one.
-        foreach ($ips as $ip) {
-            if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) {
-                throw new \InvalidArgumentException('URLs pointing to private or reserved IP addresses are not allowed');
-            }
-        }
+        $this->urlValidator->validate($url, OutboundUrlValidator::SCHEMES_HTTP);
     }
 
     /**

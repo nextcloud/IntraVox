@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace OCA\IntraVox\Service\Import;
 
 use GuzzleHttp\Client;
+use OCA\IntraVox\Service\Sanitize\OutboundUrlValidator;
 use GuzzleHttp\Exception\GuzzleException;
 use Psr\Log\LoggerInterface;
 
@@ -381,24 +382,11 @@ class ConfluenceApiImporter {
      * @return array Headers
      */
     private function validateBaseUrl(string $url): void {
-        if (!filter_var($url, FILTER_VALIDATE_URL)) {
-            throw new \InvalidArgumentException('Invalid Confluence URL');
-        }
-        $scheme = parse_url($url, PHP_URL_SCHEME);
-        if ($scheme !== 'https' && $scheme !== 'http') {
-            throw new \InvalidArgumentException('Only HTTP(S) URLs are supported');
-        }
-        $host = parse_url($url, PHP_URL_HOST);
-        if ($host !== null) {
-            $ips = gethostbynamel($host);
-            if (is_array($ips)) {
-                foreach ($ips as $ip) {
-                    if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) {
-                        throw new \InvalidArgumentException('URLs pointing to private or reserved IP addresses are not allowed');
-                    }
-                }
-            }
-        }
+        // Constructed with scalars, so this class is not autowired; the validator
+        // is stateless and safe to build here. Delegated so the SSRF rules live in
+        // one place — this used to be a third copy, with the same fail-open bug
+        // OutboundUrlValidator documents.
+        (new OutboundUrlValidator())->validate($url, OutboundUrlValidator::SCHEMES_HTTP, 'Confluence URL');
     }
 
     private function buildAuthHeaders(): array {
