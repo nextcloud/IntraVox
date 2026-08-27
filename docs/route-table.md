@@ -126,11 +126,11 @@ diff rather than staying buried in 14 controllers.
 | POST | `/api/license/validate` | `license#validate` | admin (checked in body) | required |
 | POST | `/api/license/update-usage` | `license#updateUsage` | admin (checked in body) | required |
 | POST | `/api/settings/telemetry` | `api#setTelemetrySettings` | admin (checked in body) | required |
-| GET | `/api/templates` | `api#listTemplates` | any logged-in user | required |
-| GET | `/api/templates/{id}` | `api#getTemplate` | any logged-in user | required |
-| POST | `/api/templates` | `api#saveAsTemplate` | any logged-in user | required |
-| DELETE | `/api/templates/{id}` | `api#deleteTemplate` | any logged-in user | required |
-| POST | `/api/pages/from-template` | `api#createPageFromTemplate` | any logged-in user | required |
+| GET | `/api/templates` | `templateApi#listTemplates` | any logged-in user | required |
+| GET | `/api/templates/{id}` | `templateApi#getTemplate` | any logged-in user | required |
+| POST | `/api/templates` | `templateApi#saveAsTemplate` | any logged-in user | required |
+| DELETE | `/api/templates/{id}` | `templateApi#deleteTemplate` | any logged-in user | required |
+| POST | `/api/pages/from-template` | `templateApi#createPageFromTemplate` | any logged-in user | required |
 | GET | `/api/pages/{uniqueId}/share-info` | `api#getShareInfo` | any logged-in user | exempt |
 | GET | `/api/admin/shares` | `api#getActiveShares` | admin (checked in body) | required |
 | GET | `/api/users/search` | `people#searchUsers` | any logged-in user | exempt |
