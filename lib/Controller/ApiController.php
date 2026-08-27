@@ -15,7 +15,9 @@ use OCA\IntraVox\Service\ImportService;
 use OCA\IntraVox\Service\PublicationSettingsService;
 use OCA\IntraVox\Service\PublicShareService;
 use OCA\IntraVox\Service\TelemetryService;
+use OCA\IntraVox\Service\VideoDomainPolicy;
 use OCA\IntraVox\Service\Import\ConfluenceHtmlImportOrchestrator;
+use OCA\IntraVox\Service\Import\ZipUploadValidator;
 use OCA\IntraVox\Service\PageLockService;
 use OCA\IntraVox\Service\PageService;
 use OCA\IntraVox\Share\ShareScope;
@@ -69,6 +71,7 @@ class ApiController extends Controller {
     /** Ceiling on an explicit page size, so paging cannot be used to bypass the cap. */
     private const MAX_PAGE_SIZE = 500;
     use ApiErrorTrait;
+    use RequiresPagePermission;
     use \OCA\IntraVox\Controller\Shared\SharePathTrait;
     use HasConditionalResponse;
 
@@ -79,6 +82,8 @@ class ApiController extends Controller {
     private PublicShareService $publicShareService;
     private TelemetryService $telemetryService;
     private ImportService $importService;
+    private VideoDomainPolicy $videoDomains;
+    private ZipUploadValidator $zipUploads;
     private ConfluenceHtmlImportOrchestrator $confluenceImport;
     private LoggerInterface $logger;
     private IConfig $config;
@@ -97,6 +102,8 @@ class ApiController extends Controller {
         PublicShareService $publicShareService,
         TelemetryService $telemetryService,
         ImportService $importService,
+        VideoDomainPolicy $videoDomains,
+        ZipUploadValidator $zipUploads,
         ConfluenceHtmlImportOrchestrator $confluenceImport,
         LoggerInterface $logger,
         IConfig $config,
@@ -113,6 +120,8 @@ class ApiController extends Controller {
         $this->publicShareService = $publicShareService;
         $this->telemetryService = $telemetryService;
         $this->importService = $importService;
+        $this->videoDomains = $videoDomains;
+        $this->zipUploads = $zipUploads;
         $this->confluenceImport = $confluenceImport;
         $this->logger = $logger;
         $this->config = $config;
@@ -127,6 +136,13 @@ class ApiController extends Controller {
      */
     protected function getLogger(): LoggerInterface {
         return $this->logger;
+    }
+
+    /**
+     * Get the page service for RequiresPagePermission.
+     */
+    protected function getPageService(): PageService {
+        return $this->pageService;
     }
 
     /**
@@ -461,14 +477,9 @@ class ApiController extends Controller {
     public function updatePage(string $id): DataResponse {
         try {
             // First get the page to check permissions (from Nextcloud filesystem)
-            $existingPage = $this->pageService->getPage($id);
-
-            // Check write permission using Nextcloud's permissions
-            if (!($existingPage['permissions']['canWrite'] ?? false)) {
-                return new DataResponse(
-                    ['error' => 'Permission denied: cannot edit this page'],
-                    Http::STATUS_FORBIDDEN
-                );
+            $existingPage = $this->requireWritablePage($id, 'cannot edit this page');
+            if ($existingPage instanceof DataResponse) {
+                return $existingPage;
             }
 
             // Check page lock — prevent saving if locked by another user
@@ -621,14 +632,9 @@ class ApiController extends Controller {
     public function uploadMedia(string $pageId): DataResponse {
         try {
             // First get the page to check permissions (from Nextcloud filesystem)
-            $existingPage = $this->pageService->getPage($pageId);
-
-            // Check write permission (uploading media requires write access)
-            if (!($existingPage['permissions']['canWrite'] ?? false)) {
-                return new DataResponse(
-                    ['error' => 'Permission denied: cannot upload media to this page'],
-                    Http::STATUS_FORBIDDEN
-                );
+            $existingPage = $this->requireWritablePage($pageId, 'cannot upload media to this page');
+            if ($existingPage instanceof DataResponse) {
+                return $existingPage;
             }
 
             // Try 'media' field first, then fall back to 'image' or 'video' for compatibility
@@ -722,12 +728,9 @@ class ApiController extends Controller {
     public function uploadMediaWithName(string $pageId): DataResponse {
         try {
             // Check write permission
-            $existingPage = $this->pageService->getPage($pageId);
-            if (!($existingPage['permissions']['canWrite'] ?? false)) {
-                return new DataResponse(
-                    ['error' => 'Permission denied: cannot upload media to this page'],
-                    Http::STATUS_FORBIDDEN
-                );
+            $existingPage = $this->requireWritablePage($pageId, 'cannot upload media to this page');
+            if ($existingPage instanceof DataResponse) {
+                return $existingPage;
             }
 
             // Get uploaded file
@@ -973,14 +976,9 @@ class ApiController extends Controller {
     public function restorePageVersion(string $pageId, string $timestamp): DataResponse {
         try {
             // First get the page to check permissions (from Nextcloud filesystem)
-            $existingPage = $this->pageService->getPage($pageId);
-
-            // Check write permission (restoring requires write access)
-            if (!($existingPage['permissions']['canWrite'] ?? false)) {
-                return new DataResponse(
-                    ['error' => 'Permission denied: cannot restore this page'],
-                    Http::STATUS_FORBIDDEN
-                );
+            $existingPage = $this->requireWritablePage($pageId, 'cannot restore this page');
+            if ($existingPage instanceof DataResponse) {
+                return $existingPage;
             }
 
             $page = $this->pageService->restorePageVersion($pageId, (int)$timestamp);
@@ -999,14 +997,9 @@ class ApiController extends Controller {
     public function updateVersionLabel(string $pageId, string $timestamp): DataResponse {
         try {
             // First get the page to check permissions (from Nextcloud filesystem)
-            $existingPage = $this->pageService->getPage($pageId);
-
-            // Check write permission using Nextcloud's permissions
-            if (!($existingPage['permissions']['canWrite'] ?? false)) {
-                return new DataResponse(
-                    ['error' => 'Permission denied'],
-                    Http::STATUS_FORBIDDEN
-                );
+            $existingPage = $this->requireWritablePage($pageId, '');
+            if ($existingPage instanceof DataResponse) {
+                return $existingPage;
             }
 
             $label = $this->request->getParam('label');
@@ -1107,14 +1100,9 @@ class ApiController extends Controller {
     public function updatePageMetadata(string $pageId): DataResponse {
         try {
             // First get the page to check permissions (from Nextcloud filesystem)
-            $existingPage = $this->pageService->getPage($pageId);
-
-            // Check write permission using Nextcloud's permissions
-            if (!($existingPage['permissions']['canWrite'] ?? false)) {
-                return new DataResponse(
-                    ['error' => 'Permission denied'],
-                    Http::STATUS_FORBIDDEN
-                );
+            $existingPage = $this->requireWritablePage($pageId, '');
+            if ($existingPage instanceof DataResponse) {
+                return $existingPage;
             }
 
             $metadata = $this->request->getParams();
@@ -1585,12 +1573,9 @@ class ApiController extends Controller {
             }
 
             // Write permission on the page being moved.
-            $source = $this->pageService->getPage($pageId);
-            if (!($source['permissions']['canWrite'] ?? false)) {
-                return new DataResponse(
-                    ['error' => 'Permission denied: cannot move this page'],
-                    Http::STATUS_FORBIDDEN
-                );
+            $source = $this->requireWritablePage($pageId, 'cannot move this page');
+            if ($source instanceof DataResponse) {
+                return $source;
             }
 
             // Create permission on the destination parent (root = '').
@@ -1792,71 +1777,6 @@ class ApiController extends Controller {
         return new DataResponse(['domains' => $decoded]);
     }
 
-    /**
-     * Get domain category for warning system
-     * Returns: recommended, commercial, discouraged, or blocked
-     */
-    private function getDomainCategory(string $host): array {
-        // Category 1: Recommended - privacy-friendly platforms
-        $recommended = [
-            'video.edu.nl',
-            'peertube.tv',
-            'framatube.org',
-            'tilvids.com',
-            'peertube.social',
-            'video.ploud.fr',
-            'diode.zone',
-            'tube.privacytools.io',
-            'peertube.debian.social',
-            'video.linux.it',
-            'video-dns.com', // mave.io — EU-hosted, cookieless, GDPR-compliant
-        ];
-
-        // Category 2: Commercial but relatively safe (business platforms)
-        $commercial = [
-            'vimeo.com',
-            'wistia.com',
-            'loom.com',
-            'streamable.com',
-            'bunny.net',
-            'bunnycdn.com',
-        ];
-
-        // Category 3: Discouraged - major tracking/privacy concerns
-        $discouraged = [
-            'youtube.com',
-            'youtu.be',
-            'dailymotion.com',
-            'tiktok.com',
-            'facebook.com',
-            'fb.watch',
-            'instagram.com',
-            'twitter.com',
-            'x.com',
-            'twitch.tv',
-        ];
-
-        foreach ($recommended as $pattern) {
-            if (str_contains($host, $pattern)) {
-                return ['category' => 'recommended', 'level' => 1];
-            }
-        }
-
-        foreach ($commercial as $pattern) {
-            if (str_contains($host, $pattern)) {
-                return ['category' => 'commercial', 'level' => 2];
-            }
-        }
-
-        foreach ($discouraged as $pattern) {
-            if (str_contains($host, $pattern)) {
-                return ['category' => 'discouraged', 'level' => 3];
-            }
-        }
-
-        // Unknown domains - treat as custom PeerTube instances (allowed)
-        return ['category' => 'custom', 'level' => 1];
-    }
 
     /**
      * Set video domain whitelist
@@ -1915,7 +1835,7 @@ class ApiController extends Controller {
             // Get domain category
             $parsedUrl = parse_url($domain);
             $host = $parsedUrl['host'] ?? '';
-            $category = $this->getDomainCategory($host);
+            $category = $this->videoDomains->categorise($host);
 
             // Remove trailing slash
             $domain = rtrim($domain, '/');
@@ -2168,30 +2088,7 @@ class ApiController extends Controller {
                 return new JSONResponse(['error' => $errorMessage], Http::STATUS_BAD_REQUEST);
             }
 
-            // Validate file type
-            $finfo = new \finfo(FILEINFO_MIME_TYPE);
-            $mimeType = $finfo->file($file['tmp_name']);
-
-            // Accept both application/zip and application/x-zip-compressed
-            if (!in_array($mimeType, ['application/zip', 'application/x-zip-compressed', 'application/octet-stream'])) {
-                return new JSONResponse(
-                    ['error' => 'Invalid file type. Expected ZIP file, got: ' . $mimeType],
-                    Http::STATUS_BAD_REQUEST
-                );
-            }
-
-            // Additional check: verify it's actually a ZIP by checking magic bytes
-            $handle = fopen($file['tmp_name'], 'rb');
-            $header = fread($handle, 4);
-            fclose($handle);
-
-            // ZIP files start with PK (0x50 0x4B)
-            if (substr($header, 0, 2) !== 'PK') {
-                return new JSONResponse(
-                    ['error' => 'Invalid ZIP file format'],
-                    Http::STATUS_BAD_REQUEST
-                );
-            }
+            $this->zipUploads->assertIsZip($file);
 
             $importComments = $this->request->getParam('importComments', '1') === '1';
             $overwrite = $this->request->getParam('overwrite', '0') === '1';
@@ -2272,16 +2169,7 @@ class ApiController extends Controller {
                 );
             }
 
-            // Validate ZIP file
-            $finfo = new \finfo(FILEINFO_MIME_TYPE);
-            $mimeType = $finfo->file($file['tmp_name']);
-
-            if (!in_array($mimeType, ['application/zip', 'application/x-zip-compressed', 'application/octet-stream'])) {
-                return new JSONResponse(
-                    ['error' => 'Invalid file type. Expected ZIP file'],
-                    Http::STATUS_BAD_REQUEST
-                );
-            }
+            $this->zipUploads->assertIsZip($file);
 
             // Security: Validate parentPageId before import (IDOR prevention)
             if ($parentPageId) {

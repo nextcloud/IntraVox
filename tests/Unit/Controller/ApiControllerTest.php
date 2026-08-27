@@ -8,6 +8,8 @@ use OCA\IntraVox\Exception\ForbiddenException;
 use OCA\IntraVox\Service\EngagementSettingsService;
 use OCA\IntraVox\Service\ImportService;
 use OCA\IntraVox\Service\Import\ConfluenceHtmlImportOrchestrator;
+use OCA\IntraVox\Service\Import\ZipUploadValidator;
+use OCA\IntraVox\Service\VideoDomainPolicy;
 use OCA\IntraVox\Service\PageLockService;
 use OCA\IntraVox\Service\PageService;
 use OCA\IntraVox\Service\PublicationSettingsService;
@@ -80,6 +82,8 @@ class ApiControllerTest extends TestCase {
             $this->publicShareService,
             $this->telemetryService,
             $this->importService,
+            new VideoDomainPolicy(),
+            new ZipUploadValidator(),
             $this->createMock(ConfluenceHtmlImportOrchestrator::class),
             $this->logger,
             $this->config,
@@ -278,6 +282,8 @@ class ApiControllerTest extends TestCase {
             $this->publicShareService,
             $this->telemetryService,
             $this->importService,
+            new VideoDomainPolicy(),
+            new ZipUploadValidator(),
             $this->createMock(ConfluenceHtmlImportOrchestrator::class),
             $this->logger,
             $this->config,
@@ -771,6 +777,8 @@ class ApiControllerTest extends TestCase {
             $this->publicShareService,
             $this->telemetryService,
             $this->importService,
+            new VideoDomainPolicy(),
+            new ZipUploadValidator(),
             $this->createMock(ConfluenceHtmlImportOrchestrator::class),
             $this->logger,
             $this->config,
@@ -808,6 +816,8 @@ class ApiControllerTest extends TestCase {
             $this->publicShareService,
             $this->telemetryService,
             $this->importService,
+            new VideoDomainPolicy(),
+            new ZipUploadValidator(),
             $this->createMock(ConfluenceHtmlImportOrchestrator::class),
             $this->logger,
             $this->config,

@@ -7,7 +7,7 @@
   },
   "files": {
     "lib/Controller/AnalyticsController.php": 267,
-    "lib/Controller/ApiController.php": 2558,
+    "lib/Controller/ApiController.php": 2446,
     "lib/Controller/ApiErrorTrait.php": 112,
     "lib/Controller/BulkController.php": 301,
     "lib/Controller/CalendarController.php": 129,
@@ -60,6 +60,7 @@
     "lib/Service/Import/Confluence/Macros/MacroHandlerInterface.php": 152,
     "lib/Service/Import/Confluence/Macros/PanelMacroHandler.php": 69,
     "lib/Service/Import/ConfluenceApiImporter.php": 461,
+    "lib/Service/Import/ConfluenceHtmlImportOrchestrator.php": 164,
     "lib/Service/Import/ConfluenceHtmlImporter.php": 586,
     "lib/Service/Import/ConfluenceImporter.php": 292,
     "lib/Service/Import/HtmlToWidgetConverter.php": 353,
