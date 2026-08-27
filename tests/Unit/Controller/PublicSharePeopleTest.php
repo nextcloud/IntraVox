@@ -10,6 +10,7 @@ use OCA\IntraVox\Service\NavigationService;
 use OCA\IntraVox\Service\PageService;
 use OCA\IntraVox\Service\Path\PagePathHelper;
 use OCA\IntraVox\Service\PublicShare\ShareBreadcrumbBuilder;
+use OCA\IntraVox\Service\PublicShare\ShareMediaServer;
 use OCA\IntraVox\Service\PublicShare\ShareTreeShaper;
 use OCA\IntraVox\Service\People\PeopleQuery;
 use OCA\IntraVox\Service\PermissionService;
@@ -77,6 +78,7 @@ class PublicSharePeopleTest extends TestCase {
 			new ShareBreadcrumbBuilder($this->createMock(SetupService::class)),
 			new ShareTreeShaper(),
 			new PagePathHelper(),
+			new ShareMediaServer(),
 		);
 	}
 
@@ -271,6 +273,7 @@ class PublicSharePeopleTest extends TestCase {
 			new ShareBreadcrumbBuilder($this->createMock(SetupService::class)),
 			new ShareTreeShaper(),
 			new PagePathHelper(),
+			new ShareMediaServer(),
 		);
 
 		$this->publicShareService->expects($this->never())->method('resolveIntraVoxLinkShare');

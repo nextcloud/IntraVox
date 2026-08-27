@@ -14,6 +14,7 @@ use OCA\IntraVox\Service\People\PublicSharePeopleGuard;
 use OCA\IntraVox\Service\PageService;
 use OCA\IntraVox\Service\Path\PagePathHelper;
 use OCA\IntraVox\Service\PublicShare\ShareBreadcrumbBuilder;
+use OCA\IntraVox\Service\PublicShare\ShareMediaServer;
 use OCA\IntraVox\Service\PublicShare\ShareTreeShaper;
 use OCA\IntraVox\Service\PermissionService;
 use OCA\IntraVox\Service\PublicShareService;
@@ -82,6 +83,7 @@ class PublicShareController extends Controller {
         private ShareBreadcrumbBuilder $breadcrumbBuilder,
         private ShareTreeShaper $treeShaper,
         private PagePathHelper $pathHelper,
+        private ShareMediaServer $mediaServer,
     ) {
         parent::__construct($appName, $request);
     }
@@ -486,27 +488,20 @@ class PublicShareController extends Controller {
     #[NoCSRFRequired]
     #[AnonRateLimit(limit: 60, period: 60)]
     public function getMediaByShare(string $token, string $uniqueId, string $filename) {
-        // Validate token format first (cheap check)
-        if (!$this->isValidShareTokenFormat($token)) {
-            return new DataResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
-        }
-
-        // NC sharing must be enabled
-        $ncAllowsLinks = $this->config->getAppValue('core', 'shareapi_allow_links', 'yes') === 'yes';
-        if (!$ncAllowsLinks) {
-            return new DataResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
-        }
-
-        // Check share password
-        $pwDenied = $this->checkSharePasswordOrDeny($token);
-        if ($pwDenied !== null) {
-            return $pwDenied;
-        }
-
         // Sanitize filename to prevent directory traversal
         $filename = basename($filename);
 
         try {
+            // Token shape, link sharing, share password and IntraVox membership,
+            // in that order (F6). This used to be the first three of those four
+            // written out by hand; openShare() is the same gate the other eight
+            // endpoints already went through, and it adds the membership check
+            // this path was leaving to validateShareAccess alone.
+            $share = $this->openShare($token, fn () => new DataResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND));
+            if ($share instanceof Response) {
+                return $share;
+            }
+
             // Validate share access - this checks if the page is within share scope
             // We use 'en' as default language, but validateShareAccess will search all languages
             $sessionPw = $this->getSharePasswordFromSession($token);
@@ -551,47 +546,22 @@ class PublicShareController extends Controller {
             $intraVoxPath = $folder->getPath();
             $relativePath = ltrim(substr($pageFolder, strlen($intraVoxPath)), '/');
 
-            $this->logger->debug('[ApiController] getMediaByShare: looking for media', [
-                'pagePath' => $pagePath,
-                'pageFolder' => $pageFolder,
-                'relativePath' => $relativePath,
-                'filename' => $filename
-            ]);
-
-            // Navigate to the page folder
-            $targetFolder = $folder->get($relativePath);
-
-            // Get the _media folder
-            $mediaFolder = $targetFolder->get('_media');
-
-            // Get the file
-            $file = $mediaFolder->get($filename);
-
-            if ($file->getType() !== \OCP\Files\FileInfo::TYPE_FILE) {
+            $mediaFolder = $this->mediaServer->folderIn($folder, [$relativePath, '_media']);
+            if ($mediaFolder === null) {
                 return new DataResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
             }
 
-            // Get mime type
-            $mimeType = $file->getMimeType();
-
-            // Validate it's an allowed media type
-            $allowedTypes = [
-                'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml', 'image/bmp',
-                'video/mp4', 'video/webm', 'video/ogg', 'video/quicktime'
-            ];
-            if (!in_array($mimeType, $allowedTypes)) {
+            $file = $this->mediaServer->fileIn($mediaFolder, $filename);
+            if ($file === null) {
                 return new DataResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
             }
 
-            // Create stream response with security headers
-            $response = new \OCP\AppFramework\Http\StreamResponse($file->fopen('rb'));
-            $response->addHeader('Content-Type', $mimeType);
-            $response->addHeader('Content-Disposition', 'inline; filename="' . $file->getName() . '"');
-            $response->addHeader('X-Content-Type-Options', 'nosniff');
-            $response->addHeader('X-Frame-Options', 'DENY');
-            $isVideo = strpos($mimeType, 'video/') === 0;
-            $cacheTime = $isVideo ? 86400 : 31536000;
-            $response->addHeader('Cache-Control', 'public, max-age=' . $cacheTime);
+            // Allowlist enforced: page media is what a visitor may fetch, and
+            // ShareMediaServer owns that list.
+            $response = $this->mediaServer->stream($file);
+            if ($response === null) {
+                return new DataResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
+            }
 
             return $response;
 
@@ -647,27 +617,24 @@ class PublicShareController extends Controller {
                 return new DataResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
             }
 
-            // Get the _resources folder in the language folder
-            $languageFolder = $folder->get($language);
-            $resourcesFolder = $languageFolder->get('_resources');
-
-            // Get the file
-            $file = $resourcesFolder->get($safePath);
-
-            if ($file->getType() !== \OCP\Files\FileInfo::TYPE_FILE) {
+            $resourcesFolder = $this->mediaServer->folderIn($folder, [$language, '_resources']);
+            if ($resourcesFolder === null) {
                 return new DataResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
             }
 
-            // Get mime type
-            $mimeType = $file->getMimeType();
+            $file = $this->mediaServer->fileIn($resourcesFolder, $safePath);
+            if ($file === null) {
+                return new DataResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
+            }
 
-            // Create stream response with security headers
-            $response = new \OCP\AppFramework\Http\StreamResponse($file->fopen('rb'));
-            $response->addHeader('Content-Type', $mimeType);
-            $response->addHeader('Content-Disposition', 'inline; filename="' . basename($safePath) . '"');
-            $response->addHeader('X-Content-Type-Options', 'nosniff');
-            $response->addHeader('X-Frame-Options', 'DENY');
-            $response->addHeader('Cache-Control', 'public, max-age=31536000'); // 1 year cache
+            // NO allowlist here, unlike page media: _resources has always served
+            // whatever MIME the file reports (fonts, css, pdf all live here).
+            // Narrowing it would break existing shares, so it stays a deliberate
+            // difference rather than an oversight -- see ShareMediaServer.
+            $response = $this->mediaServer->stream($file, basename($safePath), false);
+            if ($response === null) {
+                return new DataResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
+            }
 
             return $response;
 

@@ -133,6 +133,7 @@ interface Node {
     public function isCreatable(): bool;
     public function isDeletable(): bool;
     public function getMTime(): int;
+    public function getMimeType(): string;
     public function getSize();
     public function move(string $targetPath);
     public function getParent();
