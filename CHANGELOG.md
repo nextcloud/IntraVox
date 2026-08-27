@@ -4,6 +4,24 @@ All notable changes to IntraVox will be documented in this file.
 
 IntraVox is a Nextcloud intranet page builder.
 
+## [Unreleased]
+
+### Security
+
+- **The protection against internal addresses now covers the calendar and import
+  paths too.** 2.5.0 fixed this for the feed reader, but two further copies of
+  the same check were missed. The one used for external calendar (ICS) feeds is
+  the one that matters: that address is accepted as a parameter on a public
+  share page, so no sign-in was needed to reach it. All three now share a single
+  implementation that refuses anything it cannot positively confirm as external.
+  As in 2.5.0, this may reject a source on an unusual internal DNS setup —
+  configure those through a reachable public hostname.
+- **SVG images fetched by the feed reader are sanitised by the same code as
+  uploads.** The feed reader carried its own copy, which was missing a
+  protection the upload path already had: when a packaging problem left the
+  sanitising library absent, the upload path refused the file while this copy
+  could fail in a way that was not handled.
+
 ## [2.5.0] - 2026-08-26 — The API describes itself, and the description is checked
 
 ### Security
