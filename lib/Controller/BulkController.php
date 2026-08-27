@@ -25,6 +25,7 @@ use Psr\Log\LoggerInterface;
  * All bulk operations require admin privileges for security.
  */
 class BulkController extends Controller {
+    use ChecksAdminAccess;
     use ApiErrorTrait;
 
     public function __construct(
@@ -45,16 +46,6 @@ class BulkController extends Controller {
         return $this->logger;
     }
 
-    /**
-     * Check if current user is admin
-     */
-    private function isAdmin(): bool {
-        $user = $this->userSession->getUser();
-        if ($user === null) {
-            return false;
-        }
-        return $this->groupManager->isAdmin($user->getUID());
-    }
 
     /**
      * Validate a bulk operation without executing it

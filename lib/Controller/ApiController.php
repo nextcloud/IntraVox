@@ -51,6 +51,7 @@ use Psr\Log\LoggerInterface;
  * which automatically respect GroupFolder ACL rules.
  */
 class ApiController extends Controller {
+    use ChecksAdminAccess;
     /**
      * Ceiling on GET /api/pages.
      *
@@ -145,16 +146,6 @@ class ApiController extends Controller {
         return $this->pageService;
     }
 
-    /**
-     * Check if current user is admin
-     */
-    private function isAdmin(): bool {
-        $user = $this->userSession->getUser();
-        if ($user === null) {
-            return false;
-        }
-        return $this->groupManager->isAdmin($user->getUID());
-    }
 
     /**
      * Validate parentPageId parameter for import operations

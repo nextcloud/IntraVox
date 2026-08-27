@@ -26,6 +26,7 @@ use Psr\Log\LoggerInterface;
  * - Admin settings management
  */
 class AnalyticsController extends Controller {
+    use ChecksAdminAccess;
     use ApiErrorTrait;
 
     private const APP_ID = 'intravox';
@@ -50,16 +51,6 @@ class AnalyticsController extends Controller {
         return $this->logger;
     }
 
-    /**
-     * Check if current user is admin
-     */
-    private function isAdmin(): bool {
-        $user = $this->userSession->getUser();
-        if ($user === null) {
-            return false;
-        }
-        return $this->groupManager->isAdmin($user->getUID());
-    }
 
     /**
      * Get statistics for a specific page

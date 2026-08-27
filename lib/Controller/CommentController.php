@@ -22,6 +22,7 @@ use Psr\Log\LoggerInterface;
  * REST API wrapper around Nextcloud's Comments API
  */
 class CommentController extends Controller {
+    use ChecksAdminAccess;
     use ApiErrorTrait;
     public function __construct(
         string $appName,
@@ -40,16 +41,6 @@ class CommentController extends Controller {
         return $this->logger;
     }
 
-    /**
-     * Check if current user is admin
-     */
-    private function isAdmin(): bool {
-        $user = $this->userSession->getUser();
-        if ($user === null) {
-            return false;
-        }
-        return $this->groupManager->isAdmin($user->getUID());
-    }
 
     /**
      * Check if page exists and user has read access
