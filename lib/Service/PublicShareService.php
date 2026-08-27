@@ -31,7 +31,6 @@ class PublicShareService {
     private IRootFolder $rootFolder;
     private IDBConnection $db;
     private SetupService $setupService;
-    private PageService $pageService;
     private IConfig $config;
     private LoggerInterface $logger;
     private PermissionService $permissionService;
@@ -42,7 +41,6 @@ class PublicShareService {
         IRootFolder $rootFolder,
         IDBConnection $db,
         SetupService $setupService,
-        PageService $pageService,
         IConfig $config,
         LoggerInterface $logger,
         PermissionService $permissionService,
@@ -52,7 +50,6 @@ class PublicShareService {
         $this->rootFolder = $rootFolder;
         $this->db = $db;
         $this->setupService = $setupService;
-        $this->pageService = $pageService;
         $this->config = $config;
         $this->logger = $logger;
         $this->permissionService = $permissionService;

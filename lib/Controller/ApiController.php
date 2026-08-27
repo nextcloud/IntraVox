@@ -17,13 +17,10 @@ use OCA\IntraVox\Service\PublicShareService;
 use OCA\IntraVox\Service\TelemetryService;
 use OCA\IntraVox\Service\Import\ConfluenceHtmlImporter;
 use OCA\IntraVox\Service\Import\ConfluenceImporter;
-use OCA\IntraVox\Service\NavigationService;
 use OCA\IntraVox\Service\PageLockService;
 use OCA\IntraVox\Service\PageService;
 use OCA\IntraVox\Share\ShareScope;
-use OCA\IntraVox\Service\PermissionService;
 use OCA\IntraVox\Service\SetupService;
-use OCA\IntraVox\Service\SystemFileService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Response;
@@ -43,7 +40,6 @@ use OCP\IConfig;
 use OCP\IGroupManager;
 use OCP\IRequest;
 use OCP\ITempManager;
-use OCP\ISession;
 use OCP\IUserSession;
 use OCP\App\IAppManager;
 use Psr\Log\LoggerInterface;
@@ -90,11 +86,7 @@ class ApiController extends Controller {
     private IGroupManager $groupManager;
     private IUserSession $userSession;
     private ITempManager $tempManager;
-    private SystemFileService $systemFileService;
-    private NavigationService $navigationService;
-    private PermissionService $permissionService;
     private PageLockService $pageLockService;
-    private ISession $session;
     private IAppManager $appManager;
 
     public function __construct(
@@ -112,11 +104,7 @@ class ApiController extends Controller {
         IGroupManager $groupManager,
         IUserSession $userSession,
         ITempManager $tempManager,
-        SystemFileService $systemFileService,
-        NavigationService $navigationService,
-        PermissionService $permissionService,
         PageLockService $pageLockService,
-        ISession $session,
         IAppManager $appManager
     ) {
         parent::__construct($appName, $request);
@@ -132,11 +120,7 @@ class ApiController extends Controller {
         $this->groupManager = $groupManager;
         $this->userSession = $userSession;
         $this->tempManager = $tempManager;
-        $this->systemFileService = $systemFileService;
-        $this->navigationService = $navigationService;
-        $this->permissionService = $permissionService;
         $this->pageLockService = $pageLockService;
-        $this->session = $session;
         $this->appManager = $appManager;
     }
 
@@ -2556,74 +2540,6 @@ class ApiController extends Controller {
         }
     }
 
-    /**
-     * Get page data via NC share token (anonymous access).
-     *
-     * This endpoint allows anonymous users to fetch page data when they have
-     * a valid NC Files share token. The share must cover the requested page.
-     *
-     * IMPORTANT: This returns READ-ONLY data. No write operations are possible
-     * through this endpoint regardless of NC share permissions.
-     *
-     * @param string $token The NC share token
-     * @param string $uniqueId The page's unique ID
-     * @return JSONResponse
-     */
-    /**
-     * Get navigation for a public share, filtered by share scope.
-     *
-     * Only navigation items whose pages fall within the share target path are returned.
-     * External URL items are always included.
-     *
-     * @param string $token The NC share token
-     * @return JSONResponse
-     */
-    /**
-     * Get page tree for a public share, filtered by share scope.
-     *
-     * Returns a hierarchical tree of pages within the share target folder.
-     * The share root becomes the tree root — ancestors above it are not included.
-     *
-     * @param string $token The NC share token
-     * @return JSONResponse
-     */
-    /**
-     * Get news items for a public share.
-     *
-     * @param string $token The NC share token
-     * @return JSONResponse
-     */
-    /**
-     * Sanitize page data for public (anonymous) access.
-     *
-     * Only includes safe fields - removes internal metadata like uniqueId path, author info, etc.
-     */
-    /**
-     * Get media (image) for a page via NC share token.
-     *
-     * Validates the share token and serves media if the page is within the share scope.
-     *
-     * @param string $token The NC share token
-     * @param string $uniqueId The page's unique ID
-     * @param string $filename The media filename
-     * @return Response
-     */
-    /**
-     * Get resources media via NC share token.
-     *
-     * Validates the share token and serves shared resources.
-     * Note: _resources is a language-level shared folder (not per-scope).
-     * Pages within any scope may reference these shared resources (backgrounds, icons, etc.).
-     * Access is granted to all resources within the language, not limited to share scope.
-     *
-     * @param string $token The NC share token
-     * @param string $filename The resource filename
-     * @return Response
-     */
-    /**
-     * Get resources media with folder via NC share token.
-     *
-     */
     // =========================================================================
     // TEMPLATE ENDPOINTS
     // =========================================================================

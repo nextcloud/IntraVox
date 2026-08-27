@@ -19,7 +19,6 @@ class TelemetryService {
     private IClientService $httpClient;
     private IConfig $config;
     private LoggerInterface $logger;
-    private PageService $pageService;
     private LicenseService $licenseService;
     private UserCountService $userCounts;
     private ?IRegistry $subscriptionRegistry;
@@ -28,7 +27,6 @@ class TelemetryService {
         IClientService $httpClient,
         IConfig $config,
         LoggerInterface $logger,
-        PageService $pageService,
         LicenseService $licenseService,
         UserCountService $userCounts,
         ?IRegistry $subscriptionRegistry = null
@@ -36,7 +34,6 @@ class TelemetryService {
         $this->httpClient = $httpClient;
         $this->config = $config;
         $this->logger = $logger;
-        $this->pageService = $pageService;
         $this->licenseService = $licenseService;
         $this->userCounts = $userCounts;
         $this->subscriptionRegistry = $subscriptionRegistry;

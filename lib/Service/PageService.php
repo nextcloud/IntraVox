@@ -14,12 +14,10 @@ use OCA\IntraVox\Service\GroupContextService;
 use OCA\IntraVox\Service\News\NewsContentExtractor;
 use OCA\IntraVox\Service\News\NewsPageService;
 use OCA\IntraVox\Service\Path\PagePathHelper;
-use OCA\IntraVox\Service\Sanitize\ColorSanitizer;
 use OCA\IntraVox\Service\Sanitize\HtmlSanitizer;
 use OCA\IntraVox\Service\Sanitize\MediaSanitizer;
 use OCA\IntraVox\Service\Cache\PageCacheService;
 use OCA\IntraVox\Service\Sanitize\PageShapeSanitizer;
-use OCA\IntraVox\Service\Sanitize\UrlSanitizer;
 use OCA\IntraVox\Service\Search\PageSearchHelper;
 use OCA\IntraVox\Service\Locator\PageLocator;
 use OCA\IntraVox\Service\Media\PageMediaService;
@@ -57,7 +55,6 @@ class PageService {
     private IUserSession $userSession;
     private string $userId;
     private IAppManager $appManager;
-    private SetupService $setupService;
     private IConfig $config;
     private IDBConnection $db;
     /** @var array<string, string>|null Request-lifetime cache of MetaVox field labels */
@@ -321,8 +318,6 @@ class PageService {
     }
 
     private HtmlSanitizer $htmlSanitizer;
-    private UrlSanitizer $urlSanitizer;
-    private ColorSanitizer $colorSanitizer;
     private MediaSanitizer $mediaSanitizer;
     private PageShapeSanitizer $shapeSanitizer;
     private PageVersionService $pageVersionService;
@@ -344,7 +339,6 @@ class PageService {
     public function __construct(
         IRootFolder $rootFolder,
         IUserSession $userSession,
-        SetupService $setupService,
         IConfig $config,
         IDBConnection $db,
         LoggerInterface $logger,
@@ -353,8 +347,6 @@ class PageService {
         PageCacheService $cache,
         PageIndexService $pageIndexService,
         HtmlSanitizer $htmlSanitizer,
-        UrlSanitizer $urlSanitizer,
-        ColorSanitizer $colorSanitizer,
         MediaSanitizer $mediaSanitizer,
         PageShapeSanitizer $shapeSanitizer,
         PageVersionService $pageVersionService,
@@ -377,7 +369,6 @@ class PageService {
     ) {
         $this->rootFolder = $rootFolder;
         $this->userSession = $userSession;
-        $this->setupService = $setupService;
         $this->config = $config;
         $this->db = $db;
         $this->logger = $logger;
@@ -385,8 +376,6 @@ class PageService {
         $this->publicationSettings = $publicationSettings;
         $this->pageIndexService = $pageIndexService;
         $this->htmlSanitizer = $htmlSanitizer;
-        $this->urlSanitizer = $urlSanitizer;
-        $this->colorSanitizer = $colorSanitizer;
         $this->mediaSanitizer = $mediaSanitizer;
         $this->shapeSanitizer = $shapeSanitizer;
         $this->pageVersionService = $pageVersionService;

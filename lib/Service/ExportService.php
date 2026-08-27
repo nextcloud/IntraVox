@@ -27,7 +27,6 @@ class ExportService {
     private array $fileIdMappingCache = [];
 
     public function __construct(
-        private PageService $pageService,
         private CommentService $commentService,
         private NavigationService $navigationService,
         private FooterService $footerService,
