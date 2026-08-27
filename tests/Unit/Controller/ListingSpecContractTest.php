@@ -23,17 +23,22 @@ use PHPUnit\Framework\TestCase;
  */
 class ListingSpecContractTest extends TestCase {
     private array $spec;
+    /** The page listing lives here... */
     private string $source;
+    /** ...and the media listing moved to its own controller in the PR-A split. */
+    private string $mediaSource;
 
     protected function setUp(): void {
         parent::setUp();
         $this->spec = json_decode(file_get_contents(__DIR__ . '/../../../openapi.json'), true);
         $this->source = file_get_contents(__DIR__ . '/../../../lib/Controller/ApiController.php');
+        $this->mediaSource = file_get_contents(__DIR__ . '/../../../lib/Controller/MediaApiController.php');
     }
 
     private function constant(string $name): int {
         return (new \ReflectionClass(ApiController::class))->getConstant($name);
     }
+
 
     public function testTheDocumentedListingCapMatchesTheConstant(): void {
         $described = $this->spec['paths']['/api/pages']['get']['description'];
@@ -75,7 +80,7 @@ class ListingSpecContractTest extends TestCase {
             $schema['properties'],
             "The handler returns ['media' => ...]; documenting 'files' sends clients looking for a key that is not there"
         );
-        $this->assertStringContainsString("'media' => array_slice(", $this->source);
+        $this->assertStringContainsString("'media' => array_slice(", $this->mediaSource);
     }
 
     /** Both listings advertise the truncation headers they actually send. */
@@ -87,7 +92,11 @@ class ListingSpecContractTest extends TestCase {
             $this->assertArrayHasKey('X-IntraVox-Truncated', $headers, "{$path} sends this header");
         }
 
+        // One assertion per source, because the two listings are two classes
+        // since the PR-A split. Checking only $this->source would leave the
+        // media half of "both listings" unproven.
         $this->assertStringContainsString("addHeader('X-IntraVox-Cap'", $this->source);
+        $this->assertStringContainsString("addHeader('X-IntraVox-Cap'", $this->mediaSource);
         $this->assertStringContainsString("addHeader('X-IntraVox-Truncated'", $this->source);
     }
 

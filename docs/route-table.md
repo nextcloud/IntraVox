@@ -20,9 +20,9 @@ diff rather than staying buried in 14 controllers.
 | GET | `/api/v1/pages/{id}` | `api#getPage` | any logged-in user | exempt |
 | PUT | `/api/v1/pages/{id}` | `api#updatePage` | any logged-in user | required |
 | DELETE | `/api/v1/pages/{id}` | `api#deletePage` | any logged-in user | required |
-| POST | `/api/v1/pages/{pageId}/media` | `api#uploadMedia` | any logged-in user | required |
-| GET | `/api/v1/pages/{pageId}/media` | `api#listMedia` | any logged-in user | exempt |
-| GET | `/api/v1/pages/{pageId}/media/{filename}` | `api#getMedia` | any logged-in user | exempt |
+| POST | `/api/v1/pages/{pageId}/media` | `mediaApi#uploadMedia` | any logged-in user | required |
+| GET | `/api/v1/pages/{pageId}/media` | `mediaApi#listMedia` | any logged-in user | exempt |
+| GET | `/api/v1/pages/{pageId}/media/{filename}` | `mediaApi#getMedia` | any logged-in user | exempt |
 | POST | `/api/pages` | `api#createPage` | any logged-in user | required |
 | GET | `/api/pages` | `api#listPages` | any logged-in user | exempt |
 | GET | `/api/pages/tree` | `api#getPageTree` | any logged-in user | exempt |
@@ -32,31 +32,31 @@ diff rather than staying buried in 14 controllers.
 | GET | `/api/pages/{id}` | `api#getPage` | any logged-in user | exempt |
 | PUT | `/api/pages/{id}` | `api#updatePage` | any logged-in user | required |
 | DELETE | `/api/pages/{id}` | `api#deletePage` | any logged-in user | required |
-| POST | `/api/pages/{pageId}/media` | `api#uploadMedia` | any logged-in user | required |
-| POST | `/api/pages/{pageId}/media/check` | `api#checkMediaDuplicate` | any logged-in user | required |
-| POST | `/api/pages/{pageId}/media/upload` | `api#uploadMediaWithName` | any logged-in user | required |
-| GET | `/api/pages/{pageId}/media/list` | `api#listMedia` | any logged-in user | exempt |
-| GET | `/api/pages/{pageId}/media/{filename}` | `api#getMedia` | any logged-in user | exempt |
-| GET | `/api/resources/media/{folder}/{filename}` | `api#getResourcesMediaWithFolder` | any logged-in user | exempt |
-| GET | `/api/resources/media/{filename}` | `api#getResourcesMedia` | any logged-in user | exempt |
-| GET | `/api/pages/{pageId}/versions` | `api#getPageVersions` | any logged-in user | exempt |
-| POST | `/api/pages/{pageId}/versions/{timestamp}` | `api#restorePageVersion` | any logged-in user | required |
-| PUT | `/api/pages/{pageId}/versions/{timestamp}/label` | `api#updateVersionLabel` | any logged-in user | required |
-| GET | `/api/pages/{pageId}/versions/{timestamp}/content` | `api#getVersionContent` | any logged-in user | exempt |
-| GET | `/api/pages/{pageId}/content` | `api#getCurrentPageContent` | any logged-in user | exempt |
-| GET | `/api/pages/{pageId}/metadata` | `api#getPageMetadata` | any logged-in user | exempt |
-| PUT | `/api/pages/{pageId}/metadata` | `api#updatePageMetadata` | any logged-in user | required |
+| POST | `/api/pages/{pageId}/media` | `mediaApi#uploadMedia` | any logged-in user | required |
+| POST | `/api/pages/{pageId}/media/check` | `mediaApi#checkMediaDuplicate` | any logged-in user | required |
+| POST | `/api/pages/{pageId}/media/upload` | `mediaApi#uploadMediaWithName` | any logged-in user | required |
+| GET | `/api/pages/{pageId}/media/list` | `mediaApi#listMedia` | any logged-in user | exempt |
+| GET | `/api/pages/{pageId}/media/{filename}` | `mediaApi#getMedia` | any logged-in user | exempt |
+| GET | `/api/resources/media/{folder}/{filename}` | `mediaApi#getResourcesMediaWithFolder` | any logged-in user | exempt |
+| GET | `/api/resources/media/{filename}` | `mediaApi#getResourcesMedia` | any logged-in user | exempt |
+| GET | `/api/pages/{pageId}/versions` | `pageContentApi#getPageVersions` | any logged-in user | exempt |
+| POST | `/api/pages/{pageId}/versions/{timestamp}` | `pageContentApi#restorePageVersion` | any logged-in user | required |
+| PUT | `/api/pages/{pageId}/versions/{timestamp}/label` | `pageContentApi#updateVersionLabel` | any logged-in user | required |
+| GET | `/api/pages/{pageId}/versions/{timestamp}/content` | `pageContentApi#getVersionContent` | any logged-in user | exempt |
+| GET | `/api/pages/{pageId}/content` | `pageContentApi#getCurrentPageContent` | any logged-in user | exempt |
+| GET | `/api/pages/{pageId}/metadata` | `pageContentApi#getPageMetadata` | any logged-in user | exempt |
+| PUT | `/api/pages/{pageId}/metadata` | `pageContentApi#updatePageMetadata` | any logged-in user | required |
 | GET | `/api/pages/{pageId}/lock` | `pageLock#getLock` | any logged-in user | exempt |
 | POST | `/api/pages/{pageId}/lock` | `pageLock#acquireLock` | any logged-in user | required |
 | PUT | `/api/pages/{pageId}/lock` | `pageLock#refreshLock` | any logged-in user | required |
 | DELETE | `/api/pages/{pageId}/lock` | `pageLock#releaseLock` | any logged-in user | required |
 | POST | `/api/pages/{pageId}/lock/force-release` | `pageLock#forceReleaseLock` | admin (checked in body) | required |
-| GET | `/api/page/{pageId}/cache-status` | `api#checkPageCacheStatus` | any logged-in user | exempt |
+| GET | `/api/page/{pageId}/cache-status` | `pageContentApi#checkPageCacheStatus` | any logged-in user | exempt |
 | GET | `/api/search` | `api#searchPages` | any logged-in user | exempt |
 | GET | `/api/news` | `api#getNews` | any logged-in user | exempt |
 | GET | `/api/pages/{id}/breadcrumb` | `api#getBreadcrumb` | any logged-in user | exempt |
-| GET | `/api/metavox/status` | `api#getMetavoxStatus` | any logged-in user | exempt |
-| GET | `/api/metavox/fields` | `api#getMetavoxFields` | any logged-in user | exempt |
+| GET | `/api/metavox/status` | `pageContentApi#getMetavoxStatus` | any logged-in user | exempt |
+| GET | `/api/metavox/fields` | `pageContentApi#getMetavoxFields` | any logged-in user | exempt |
 | GET | `/api/permissions` | `api#getPermissions` | any logged-in user | exempt |
 | GET | `/api/navigation` | `navigation#get` | any logged-in user | exempt |
 | POST | `/api/navigation` | `navigation#save` | any logged-in user | required |
@@ -82,7 +82,7 @@ diff rather than staying buried in 14 controllers.
 | POST | `/api/languages/{code}/empty-homepage` | `language#createEmptyHomepage` | admin | required |
 | GET | `/api/settings/video-domains` | `settingsApi#getVideoDomains` | any logged-in user | exempt |
 | POST | `/api/settings/video-domains` | `settingsApi#setVideoDomains` | admin (checked in body) | required |
-| GET | `/api/settings/upload-limit` | `api#getUploadLimit` | any logged-in user | exempt |
+| GET | `/api/settings/upload-limit` | `mediaApi#getUploadLimit` | any logged-in user | exempt |
 | GET | `/api/settings/engagement` | `settingsApi#getEngagementSettings` | any logged-in user | exempt |
 | POST | `/api/settings/engagement` | `settingsApi#setEngagementSettings` | admin (checked in body) | required |
 | GET | `/api/settings/publication` | `settingsApi#getPublicationSettings` | any logged-in user | exempt |
