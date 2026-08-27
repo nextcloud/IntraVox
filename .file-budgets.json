@@ -41,6 +41,7 @@
     "lib/Controller/Shared/FeedRequestTrait.php": 135,
     "lib/Controller/Shared/SharePathTrait.php": 159,
     "lib/Controller/TemplateApiController.php": 182,
+    "lib/Controller/TranslationApiController.php": 171,
     "lib/Service/AnalyticsService.php": 357,
     "lib/Service/BulkOperationService.php": 343,
     "lib/Service/Cache/PageCacheService.php": 215,
