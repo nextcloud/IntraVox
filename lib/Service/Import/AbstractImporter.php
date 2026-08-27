@@ -38,8 +38,12 @@ abstract class AbstractImporter {
      *
      * @param IntermediateFormat $data Intermediate representation
      * @return array IntraVox export.json structure
+     *
+     * Public, not protected: ApiController already reached it through
+     * ReflectionMethod::setAccessible(), so the encapsulation was nominal.
+     * The caller now lives in the service layer (PR-B) and calls it plainly.
      */
-    protected function convertToIntraVoxExport(IntermediateFormat $data): array {
+    public function convertToIntraVoxExport(IntermediateFormat $data): array {
         $export = [
             'exportVersion' => '1.0',
             'exportDate' => (new \DateTime())->format('c'),

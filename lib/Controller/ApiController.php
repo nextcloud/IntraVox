@@ -15,8 +15,7 @@ use OCA\IntraVox\Service\ImportService;
 use OCA\IntraVox\Service\PublicationSettingsService;
 use OCA\IntraVox\Service\PublicShareService;
 use OCA\IntraVox\Service\TelemetryService;
-use OCA\IntraVox\Service\Import\ConfluenceHtmlImporter;
-use OCA\IntraVox\Service\Import\ConfluenceImporter;
+use OCA\IntraVox\Service\Import\ConfluenceHtmlImportOrchestrator;
 use OCA\IntraVox\Service\PageLockService;
 use OCA\IntraVox\Service\PageService;
 use OCA\IntraVox\Share\ShareScope;
@@ -39,7 +38,6 @@ use OCP\Files\NotFoundException;
 use OCP\IConfig;
 use OCP\IGroupManager;
 use OCP\IRequest;
-use OCP\ITempManager;
 use OCP\IUserSession;
 use OCP\App\IAppManager;
 use Psr\Log\LoggerInterface;
@@ -81,11 +79,11 @@ class ApiController extends Controller {
     private PublicShareService $publicShareService;
     private TelemetryService $telemetryService;
     private ImportService $importService;
+    private ConfluenceHtmlImportOrchestrator $confluenceImport;
     private LoggerInterface $logger;
     private IConfig $config;
     private IGroupManager $groupManager;
     private IUserSession $userSession;
-    private ITempManager $tempManager;
     private PageLockService $pageLockService;
     private IAppManager $appManager;
 
@@ -99,11 +97,11 @@ class ApiController extends Controller {
         PublicShareService $publicShareService,
         TelemetryService $telemetryService,
         ImportService $importService,
+        ConfluenceHtmlImportOrchestrator $confluenceImport,
         LoggerInterface $logger,
         IConfig $config,
         IGroupManager $groupManager,
         IUserSession $userSession,
-        ITempManager $tempManager,
         PageLockService $pageLockService,
         IAppManager $appManager
     ) {
@@ -115,11 +113,11 @@ class ApiController extends Controller {
         $this->publicShareService = $publicShareService;
         $this->telemetryService = $telemetryService;
         $this->importService = $importService;
+        $this->confluenceImport = $confluenceImport;
         $this->logger = $logger;
         $this->config = $config;
         $this->groupManager = $groupManager;
         $this->userSession = $userSession;
-        $this->tempManager = $tempManager;
         $this->pageLockService = $pageLockService;
         $this->appManager = $appManager;
     }
@@ -2302,82 +2300,16 @@ class ApiController extends Controller {
                 'language' => $language,
             ]);
 
-            // Create HTML importer
-            $htmlImporter = new ConfluenceHtmlImporter($this->logger, new \OCA\IntraVox\Service\Import\SafeZipExtractor($this->logger));
-            $confluenceImporter = new ConfluenceImporter($this->logger);
-
-            // Import from ZIP
-            $intermediateFormat = $htmlImporter->importFromZip($file['tmp_name'], $language);
-
-            $this->logger->info('Parsed Confluence HTML export', [
-                'pages' => count($intermediateFormat->pages),
-                'media' => count($intermediateFormat->mediaDownloads),
-            ]);
-
-            // Convert to IntraVox export format
-            $export = $this->convertIntermediateToExport($confluenceImporter, $intermediateFormat);
-
-            // Log hierarchy before setting parent
-            $this->logger->info('Export hierarchy BEFORE setting parent', [
-                'pages' => array_map(function($p) {
-                    return [
-                        'title' => $p['content']['title'] ?? 'unknown',
-                        'uniqueId' => substr($p['uniqueId'], 0, 20),
-                        'parentUniqueId' => isset($p['parentUniqueId']) ? substr($p['parentUniqueId'], 0, 20) : 'NONE'
-                    ];
-                }, $export['pages'])
-            ]);
-
-            // Set parent page for ROOT imported pages (pages without a parent in the import)
-            if ($parentPageId) {
-                $rootCount = 0;
-                foreach ($export['pages'] as &$page) {
-                    // Only set parent for pages that don't already have a parent
-                    if (empty($page['parentUniqueId'])) {
-                        $page['parentUniqueId'] = $parentPageId;
-                        $rootCount++;
-                    }
-                }
-                unset($page); // Break reference
-                $this->logger->info('Set parent page for root imported pages', [
-                    'parentPageId' => $parentPageId,
-                    'rootPagesCount' => $rootCount,
-                    'totalPages' => count($export['pages'])
-                ]);
-
-                // Log hierarchy AFTER setting parent
-                $this->logger->info('Export hierarchy AFTER setting parent', [
-                    'pages' => array_map(function($p) {
-                        return [
-                            'title' => $p['content']['title'] ?? 'unknown',
-                            'uniqueId' => substr($p['uniqueId'], 0, 20),
-                            'parentUniqueId' => isset($p['parentUniqueId']) ? substr($p['parentUniqueId'], 0, 20) : 'NONE'
-                        ];
-                    }, $export['pages'])
-                ]);
-            }
-
-            // Create temporary directory for export
-            $tempDir = $this->tempManager->getTemporaryFolder();
-
-            // Write export.json
-            file_put_contents($tempDir . '/export.json', json_encode($export, JSON_PRETTY_PRINT));
-
-            // Create ZIP
-            $zipPath = $tempDir . '/confluence-html-import.zip';
-            $this->createZipFromDirectory($tempDir, $zipPath);
-
-            // Import the ZIP with parent page ID
-            $zipContent = file_get_contents($zipPath);
-            $stats = $this->importService->importFromZip($zipContent, true, false, $parentPageId);
-
-            // Cleanup
-            $this->cleanupTempDir($tempDir);
+            $result = $this->confluenceImport->importFromUploadedZip(
+                $file['tmp_name'],
+                $language,
+                $parentPageId
+            );
 
             return new JSONResponse([
                 'success' => true,
-                'stats' => $stats,
-                'pages' => count($intermediateFormat->pages),
+                'stats' => $result['stats'],
+                'pages' => $result['pages'],
                 'message' => 'Confluence HTML export imported successfully',
             ]);
         } catch (\OCA\IntraVox\Exception\InvalidImportException $e) {
@@ -2408,73 +2340,8 @@ class ApiController extends Controller {
         }
     }
 
-    /**
-     * Convert intermediate format to IntraVox export format
-     */
-    private function convertIntermediateToExport(ConfluenceImporter $importer, $intermediateFormat): array {
-        // Use reflection to access the protected method
-        $reflectionClass = new \ReflectionClass($importer);
-        $method = $reflectionClass->getMethod('convertToIntraVoxExport');
-        $method->setAccessible(true);
 
-        $export = $method->invoke($importer, $intermediateFormat);
 
-        return $export;
-    }
-
-    /**
-     * Create ZIP archive from directory
-     */
-    private function createZipFromDirectory(string $sourceDir, string $zipPath): void {
-        $zip = new \ZipArchive();
-        if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
-            throw new \Exception('Failed to create ZIP archive');
-        }
-
-        $sourceDir = rtrim($sourceDir, '/');
-
-        $files = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($sourceDir, \FilesystemIterator::SKIP_DOTS),
-            \RecursiveIteratorIterator::LEAVES_ONLY
-        );
-
-        foreach ($files as $file) {
-            if (!$file->isDir()) {
-                $filePath = $file->getRealPath();
-                $relativePath = substr($filePath, strlen($sourceDir) + 1);
-
-                // Skip the zip itself
-                if ($relativePath !== 'confluence-html-import.zip') {
-                    $zip->addFile($filePath, $relativePath);
-                }
-            }
-        }
-
-        $zip->close();
-    }
-
-    /**
-     * Cleanup temporary directory
-     */
-    private function cleanupTempDir(string $dir): void {
-        if (!is_dir($dir)) {
-            return;
-        }
-
-        $files = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS),
-            \RecursiveIteratorIterator::CHILD_FIRST
-        );
-
-        foreach ($files as $file) {
-            if ($file->isDir()) {
-                @rmdir($file->getPathname());
-            } else {
-                @unlink($file->getPathname());
-            }
-        }
-        @rmdir($dir);
-    }
 
     /**
      * Get share info for a page (NC Files share detection).

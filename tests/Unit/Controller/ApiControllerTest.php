@@ -7,6 +7,7 @@ use OCA\IntraVox\Controller\ApiController;
 use OCA\IntraVox\Exception\ForbiddenException;
 use OCA\IntraVox\Service\EngagementSettingsService;
 use OCA\IntraVox\Service\ImportService;
+use OCA\IntraVox\Service\Import\ConfluenceHtmlImportOrchestrator;
 use OCA\IntraVox\Service\PageLockService;
 use OCA\IntraVox\Service\PageService;
 use OCA\IntraVox\Service\PublicationSettingsService;
@@ -19,7 +20,6 @@ use OCP\App\IAppManager;
 use OCP\AppFramework\Http;
 use OCP\IConfig;
 use OCP\IRequest;
-use OCP\ITempManager;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -46,7 +46,6 @@ class ApiControllerTest extends TestCase {
     private MockGroupManager $groupManager;
     private MockUserSession $userSession;
     private IRequest $request;
-    private ITempManager $tempManager;
     private PageLockService $pageLockService;
     private IAppManager $appManager;
 
@@ -64,7 +63,6 @@ class ApiControllerTest extends TestCase {
         $this->logger = $this->createMock(LoggerInterface::class);
         $this->config = $this->createMock(IConfig::class);
         $this->request = $this->createMock(IRequest::class);
-        $this->tempManager = $this->createMock(ITempManager::class);
         $this->pageLockService = $this->createMock(PageLockService::class);
         $this->appManager = $this->createMock(IAppManager::class);
 
@@ -82,11 +80,11 @@ class ApiControllerTest extends TestCase {
             $this->publicShareService,
             $this->telemetryService,
             $this->importService,
+            $this->createMock(ConfluenceHtmlImportOrchestrator::class),
             $this->logger,
             $this->config,
             $this->groupManager,
             $this->userSession,
-            $this->tempManager,
             $this->pageLockService,
             $this->appManager
         );
@@ -280,11 +278,11 @@ class ApiControllerTest extends TestCase {
             $this->publicShareService,
             $this->telemetryService,
             $this->importService,
+            $this->createMock(ConfluenceHtmlImportOrchestrator::class),
             $this->logger,
             $this->config,
             $this->groupManager,
             $this->userSession,
-            $this->tempManager,
             $this->pageLockService,
             $this->appManager
         );
@@ -773,11 +771,11 @@ class ApiControllerTest extends TestCase {
             $this->publicShareService,
             $this->telemetryService,
             $this->importService,
+            $this->createMock(ConfluenceHtmlImportOrchestrator::class),
             $this->logger,
             $this->config,
             $this->groupManager,
             $this->userSession,
-            $this->tempManager,
             $this->pageLockService,
             $this->appManager
         );
@@ -810,11 +808,11 @@ class ApiControllerTest extends TestCase {
             $this->publicShareService,
             $this->telemetryService,
             $this->importService,
+            $this->createMock(ConfluenceHtmlImportOrchestrator::class),
             $this->logger,
             $this->config,
             $this->groupManager,
             $this->userSession,
-            $this->tempManager,
             $this->pageLockService,
             $this->appManager
         );
