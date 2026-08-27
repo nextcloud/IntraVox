@@ -14,8 +14,11 @@ IntraVox is a Nextcloud intranet page builder.
   the one that matters: that address is accepted as a parameter on a public
   share page, so no sign-in was needed to reach it. All three now share a single
   implementation that refuses anything it cannot positively confirm as external.
-  As in 2.5.0, this may reject a source on an unusual internal DNS setup —
-  configure those through a reachable public hostname.
+  Verified against the old code on a live server: plain IPv4 addresses were
+  already refused, so the gaps were IPv6 literals, hosts that publish only IPv6
+  records, and hosts that do not resolve at all. As in 2.5.0, this may reject a
+  source on an unusual internal DNS setup — configure those through a reachable
+  public hostname.
 - **SVG images fetched by the feed reader are sanitised by the same code as
   uploads.** The feed reader carried its own copy, which was missing a
   protection the upload path already had: when a packaging problem left the

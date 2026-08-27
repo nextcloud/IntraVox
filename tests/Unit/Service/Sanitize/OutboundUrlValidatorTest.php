@@ -105,6 +105,27 @@ class OutboundUrlValidatorTest extends TestCase {
         $this->assertNotNull($this->reject('https://169.254.169.254/latest/meta-data/', OutboundUrlValidator::SCHEMES_HTTPS_ONLY));
     }
 
+    /**
+     * The measured scope of the old bug, so a future "simplification" back to
+     * gethostbynamel() alone fails here rather than in production.
+     *
+     * An IPv4 literal was never the hole: gethostbynamel('127.0.0.1') returns
+     * the address itself. What slipped through was anything gethostbynamel()
+     * reports as false — IPv6 literals, AAAA-only hosts, and names that do not
+     * resolve.
+     */
+    public function testTheThreeGapsTheOldCheckLeftOpen(): void {
+        // 1. IPv6 literal — the one confirmed to reach the fetcher.
+        $this->assertNotNull($this->reject('http://[::1]/x'));
+        $this->assertNotNull($this->reject('http://[fe80::1]/x'));
+
+        // 2. A name that does not resolve must be refused, not waved through.
+        $this->assertNotNull($this->reject('http://intravox-nx-host.invalid/x'));
+
+        // 3. And the case that was never broken must keep working.
+        $this->assertNotNull($this->reject('http://127.0.0.1/x'));
+    }
+
     public function testLabelAppearsInTheMessageSoCallersStayDistinguishable(): void {
         $this->assertStringContainsString(
             'ICS URL',

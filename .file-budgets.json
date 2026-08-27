@@ -99,7 +99,7 @@
     "lib/Service/Sanitize/ColorSanitizer.php": 41,
     "lib/Service/Sanitize/HtmlSanitizer.php": 83,
     "lib/Service/Sanitize/MediaSanitizer.php": 204,
-    "lib/Service/Sanitize/OutboundUrlValidator.php": 86,
+    "lib/Service/Sanitize/OutboundUrlValidator.php": 94,
     "lib/Service/Sanitize/PageShapeSanitizer.php": 1358,
     "lib/Service/Sanitize/UrlSanitizer.php": 33,
     "lib/Service/Search/PageSearchHelper.php": 118,

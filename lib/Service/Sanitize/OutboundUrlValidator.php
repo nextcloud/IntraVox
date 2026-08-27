@@ -17,8 +17,16 @@ namespace OCA\IntraVox\Service\Sanitize;
  * gethostbynamel() returns A records and nothing else. It is false when a name
  * does not resolve, and false again when a host publishes AAAA records only —
  * both landed in the else that was not there, so the guard skipped precisely
- * the hosts most worth guarding. There was no IP-literal branch either, so a
- * bare `[::1]` was never resolved and never checked.
+ * the hosts most worth guarding.
+ *
+ * Measured against the old code on a live server, so the scope is known rather
+ * than assumed. A bare IPv4 literal was NOT a hole: gethostbynamel('127.0.0.1')
+ * hands back the address itself, which then failed the range check. The three
+ * real gaps were:
+ *   - IPv6 literals    — `https://[::1]/` went straight through;
+ *   - AAAA-only hosts  — ipv6.google.com: no A records, four AAAA, check skipped;
+ *   - unresolvable     — a .invalid name, check skipped.
+ * Hence both the IP-literal branch and the AAAA lookup below.
  *
  * That mattered more for ICS than for feeds: the ICS URL arrives as the
  * `externalIcsUrls` request parameter on PublicShareController::getEventsByShare,
