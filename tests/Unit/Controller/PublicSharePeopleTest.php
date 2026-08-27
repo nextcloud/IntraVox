@@ -8,6 +8,9 @@ use OCA\IntraVox\Service\CalendarService;
 use OCA\IntraVox\Service\FeedReaderService;
 use OCA\IntraVox\Service\NavigationService;
 use OCA\IntraVox\Service\PageService;
+use OCA\IntraVox\Service\Path\PagePathHelper;
+use OCA\IntraVox\Service\PublicShare\ShareBreadcrumbBuilder;
+use OCA\IntraVox\Service\PublicShare\ShareTreeShaper;
 use OCA\IntraVox\Service\People\PeopleQuery;
 use OCA\IntraVox\Service\PermissionService;
 use OCA\IntraVox\Service\PublicShareService;
@@ -69,6 +72,11 @@ class PublicSharePeopleTest extends TestCase {
 			$this->createMock(CalendarService::class),
 			$this->createMock(FeedReaderService::class),
 			new PeopleQuery($this->userService, $this->createMock(LoggerInterface::class)),
+			// Real instances, not mocks: pure transforms with nothing worth faking,
+			// and a null-returning auto-mock would silently empty the tree.
+			new ShareBreadcrumbBuilder($this->createMock(SetupService::class)),
+			new ShareTreeShaper(),
+			new PagePathHelper(),
 		);
 	}
 
@@ -258,6 +266,11 @@ class PublicSharePeopleTest extends TestCase {
 			$this->createMock(CalendarService::class),
 			$this->createMock(FeedReaderService::class),
 			new PeopleQuery($this->userService, $this->createMock(LoggerInterface::class)),
+			// Real instances, not mocks: pure transforms with nothing worth faking,
+			// and a null-returning auto-mock would silently empty the tree.
+			new ShareBreadcrumbBuilder($this->createMock(SetupService::class)),
+			new ShareTreeShaper(),
+			new PagePathHelper(),
 		);
 
 		$this->publicShareService->expects($this->never())->method('resolveIntraVoxLinkShare');

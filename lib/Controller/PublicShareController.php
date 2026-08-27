@@ -12,6 +12,9 @@ use OCA\IntraVox\Service\NavigationService;
 use OCA\IntraVox\Service\People\PeopleQuery;
 use OCA\IntraVox\Service\People\PublicSharePeopleGuard;
 use OCA\IntraVox\Service\PageService;
+use OCA\IntraVox\Service\Path\PagePathHelper;
+use OCA\IntraVox\Service\PublicShare\ShareBreadcrumbBuilder;
+use OCA\IntraVox\Service\PublicShare\ShareTreeShaper;
 use OCA\IntraVox\Service\PermissionService;
 use OCA\IntraVox\Service\PublicShareService;
 use OCA\IntraVox\Service\SetupService;
@@ -76,6 +79,9 @@ class PublicShareController extends Controller {
         private CalendarService $calendarService,
         private FeedReaderService $feedReaderService,
         private PeopleQuery $peopleQuery,
+        private ShareBreadcrumbBuilder $breadcrumbBuilder,
+        private ShareTreeShaper $treeShaper,
+        private PagePathHelper $pathHelper,
     ) {
         parent::__construct($appName, $request);
     }
@@ -216,7 +222,7 @@ class PublicShareController extends Controller {
                         // Add path to pageData for breadcrumb builder
                         $pageDataWithPath = $pageData;
                         $pageDataWithPath['path'] = $pageRelPath;
-                        $sanitizedPage['breadcrumb'] = $this->buildShareScopedBreadcrumb($pageDataWithPath, $relPath, $language);
+                        $sanitizedPage['breadcrumb'] = $this->breadcrumbBuilder->build($pageDataWithPath, $relPath, $language);
                     }
                 }
             } catch (\Exception $e) {
@@ -303,7 +309,7 @@ class PublicShareController extends Controller {
             if (isset($navigation['items']) && is_array($navigation['items'])) {
                 $hidden = $this->hiddenUniqueIdsForLanguage($language);
                 if (!empty($hidden)) {
-                    $navigation['items'] = $this->filterNavigationByHiddenIds($navigation['items'], $hidden);
+                    $navigation['items'] = $this->treeShaper->filterNavigationByHiddenIds($navigation['items'], $hidden);
                 }
             }
 
@@ -360,7 +366,7 @@ class PublicShareController extends Controller {
             // Extract subtree matching the share scope
             // scopePath is the full relative path like "nl/afdeling/hr"
             $scopePath = $relPath;
-            $filteredTree = $this->extractSubtreeByScope($tree, $scopePath);
+            $filteredTree = $this->treeShaper->extractSubtreeByScope($tree, $scopePath);
 
             // An empty result for a non-root scope means the shared node was
             // not found in the tree — a moved or deleted page. Worth knowing
@@ -377,12 +383,12 @@ class PublicShareController extends Controller {
             $filteredTree = $this->filterDraftsFromTree($filteredTree);
 
             // Strip permissions from all nodes (public = read-only)
-            $filteredTree = $this->stripPermissionsFromTree($filteredTree);
+            $filteredTree = $this->treeShaper->stripPermissionsFromTree($filteredTree);
 
             // Mark current page if provided (for page structure navigation highlighting)
             $currentPageId = $this->request->getParam('currentPageId');
             if ($currentPageId !== null && is_string($currentPageId) && $currentPageId !== '') {
-                $filteredTree = $this->markCurrentPageInTree($filteredTree, $currentPageId);
+                $filteredTree = $this->pathHelper->markCurrentPageInTree($filteredTree, $currentPageId);
             }
 
             $this->logger->info('[PublicShare] Page tree accessed', [
@@ -1164,269 +1170,6 @@ class PublicShareController extends Controller {
     }
 
     /**
-     * Build a breadcrumb scoped to a share target.
-     *
-     * Starts from the share root instead of "Home". Ancestors above the share
-     * scope are not included.
-     */
-    private function buildShareScopedBreadcrumb(array $pageData, string $shareScopePath, string $language): array {
-        $pagePath = $pageData['path'] ?? '';
-        if (empty($pagePath)) {
-            return [];
-        }
-
-        // Normalize paths for Unicode-safe comparison
-        if (function_exists('normalizer_normalize')) {
-            $pagePath = \Normalizer::normalize($pagePath, \Normalizer::FORM_C) ?: $pagePath;
-            $shareScopePath = \Normalizer::normalize($shareScopePath, \Normalizer::FORM_C) ?: $shareScopePath;
-        }
-
-        // shareScopePath is relative path like "nl" or "nl/afdeling" or "nl/afdeling/hr"
-        $pathParts = explode('/', $pagePath);
-
-        $breadcrumb = [];
-
-        // Get GroupFolder for system-level page lookup
-        $groupFolder = null;
-        try {
-            $groupFolder = $this->setupService->getSharedFolder();
-        } catch (\Exception $e) {
-            // Fall back to folder names only
-        }
-
-        // Determine if this is a language-root share (scope is just the language, e.g. "en")
-        $isLanguageRootShare = !str_contains($shareScopePath, '/');
-
-        if ($isLanguageRootShare) {
-            // Language-root share: add actual Home page as first breadcrumb item
-            $homeUniqueId = null;
-            $homeTitle = 'Home';
-            if ($groupFolder !== null) {
-                // Read home breadcrumb label from navigation.json (first item title)
-                try {
-                    $navPath = $language . '/navigation.json';
-                    if ($groupFolder->nodeExists($navPath)) {
-                        $navFile = $groupFolder->get($navPath);
-                        $navData = json_decode($navFile->getContent(), true, 64);
-                        if ($navData && !empty($navData['items'][0]['title'])) {
-                            $homeTitle = $navData['items'][0]['title'];
-                        }
-                        if ($navData && !empty($navData['items'][0]['uniqueId'])) {
-                            $homeUniqueId = $navData['items'][0]['uniqueId'];
-                        }
-                    }
-                } catch (\Exception $e) {
-                    // Fall through, Home without uniqueId
-                }
-                // Get home uniqueId from home.json if not found in navigation
-                if ($homeUniqueId === null) {
-                    try {
-                        $homeJsonPath = $language . '/home.json';
-                        if ($groupFolder->nodeExists($homeJsonPath)) {
-                            $homeFile = $groupFolder->get($homeJsonPath);
-                            $homeData = json_decode($homeFile->getContent(), true, 64);
-                            if ($homeData && isset($homeData['uniqueId'])) {
-                                $homeUniqueId = $homeData['uniqueId'];
-                            }
-                        }
-                    } catch (\Exception $e) {
-                        // Fall through
-                    }
-                }
-                // Fallback: scan language folder for any page-*.json file at root level
-                if ($homeUniqueId === null) {
-                    try {
-                        $langFolder = $groupFolder->get($language);
-                        if ($langFolder instanceof \OCP\Files\Folder) {
-                            foreach ($langFolder->getDirectoryListing() as $node) {
-                                $name = $node->getName();
-                                if (str_starts_with($name, 'page-') && str_ends_with($name, '.json')) {
-                                    $content = $node->getContent();
-                                    $data = json_decode($content, true, 64);
-                                    if ($data && isset($data['uniqueId'])) {
-                                        $homeUniqueId = $data['uniqueId'];
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                    } catch (\Exception $e) {
-                        // Fall through
-                    }
-                }
-            }
-
-            // Check if the current page IS the home page
-            $isHomePage = ($pagePath === $language || $pagePath === $language . '/home');
-
-            $breadcrumb[] = [
-                'uniqueId' => $homeUniqueId,
-                'title' => $homeTitle,
-                'path' => $language,
-                'url' => $isHomePage ? null : ($homeUniqueId ? '#' . $homeUniqueId : null),
-                'current' => $isHomePage,
-            ];
-
-            if ($isHomePage) {
-                return $breadcrumb;
-            }
-        } else {
-            // Subfolder share: add the share scope root page as "Home" breadcrumb
-            $scopeRootUniqueId = null;
-            $scopeFolderName = basename($shareScopePath);
-            $scopeRootTitle = ucfirst(str_replace('-', ' ', $scopeFolderName));
-            if ($groupFolder !== null) {
-                try {
-                    $scopeJsonPath = $shareScopePath . '/' . $scopeFolderName . '.json';
-                    if ($groupFolder->nodeExists($scopeJsonPath)) {
-                        $scopeFile = $groupFolder->get($scopeJsonPath);
-                        $scopeContent = $scopeFile->getContent();
-                        $scopeData = json_decode($scopeContent, true, 64);
-                        if ($scopeData && isset($scopeData['uniqueId'])) {
-                            $scopeRootUniqueId = $scopeData['uniqueId'];
-                            $scopeRootTitle = $scopeData['title'] ?? $scopeRootTitle;
-                        }
-                    }
-                } catch (\Exception $e) {
-                    // Fall through
-                }
-            }
-
-            // Check if the current page IS the scope root page
-            $isScopeRoot = ($pagePath === $shareScopePath);
-
-            $breadcrumb[] = [
-                'uniqueId' => $scopeRootUniqueId,
-                'title' => $scopeRootTitle,
-                'path' => $shareScopePath,
-                'url' => $isScopeRoot ? null : ($scopeRootUniqueId ? '#' . $scopeRootUniqueId : null),
-                'current' => $isScopeRoot,
-            ];
-
-            if ($isScopeRoot) {
-                return $breadcrumb;
-            }
-        }
-
-        // Walk through page path parts, only include items within the share scope
-        $accumulatedPath = '';
-        $scopeReached = false;
-
-        foreach ($pathParts as $index => $part) {
-            if (!empty($accumulatedPath)) {
-                $accumulatedPath .= '/';
-            }
-            $accumulatedPath .= $part;
-
-            // Skip language folder (already covered by root breadcrumb)
-            if ($index === 0 && strlen($part) >= 2 && strlen($part) <= 3) {
-                continue;
-            }
-
-            // For language-root shares, all items after the language are in scope
-            // For subfolder shares, wait until we PASS the share scope (root is already in breadcrumb)
-            if (!$isLanguageRootShare) {
-                if ($accumulatedPath === $shareScopePath) {
-                    // This is the scope root, already added as first breadcrumb — skip
-                    continue;
-                }
-                if (!str_starts_with($accumulatedPath, $shareScopePath . '/')) {
-                    // Not yet within share scope
-                    continue;
-                }
-            }
-
-            $isLastItem = ($index === count($pathParts) - 1);
-
-            if ($isLastItem) {
-                // Current page
-                $breadcrumb[] = [
-                    'uniqueId' => $pageData['uniqueId'] ?? null,
-                    'title' => $pageData['title'] ?? ucfirst(str_replace('-', ' ', $part)),
-                    'path' => $pagePath,
-                    'url' => null,
-                    'current' => true,
-                ];
-            } else {
-                // Parent — try to find the page JSON in the GroupFolder
-                $parentPage = null;
-                if ($groupFolder !== null) {
-                    try {
-                        $jsonPath = $accumulatedPath . '/' . $part . '.json';
-                        if ($groupFolder->nodeExists($jsonPath)) {
-                            $jsonFile = $groupFolder->get($jsonPath);
-                            $content = $jsonFile->getContent();
-                            $data = json_decode($content, true, 64);
-                            if ($data && isset($data['uniqueId'], $data['title'])) {
-                                $parentPage = $data;
-                            }
-                        }
-                    } catch (\Exception $e) {
-                        // Fall through to folder name fallback
-                    }
-                }
-
-                if ($parentPage) {
-                    $breadcrumb[] = [
-                        'uniqueId' => $parentPage['uniqueId'],
-                        'title' => $parentPage['title'],
-                        'path' => $accumulatedPath,
-                        'url' => '#' . $parentPage['uniqueId'],
-                        'current' => false,
-                    ];
-                } else {
-                    $breadcrumb[] = [
-                        'uniqueId' => null,
-                        'title' => ucfirst(str_replace('-', ' ', $part)),
-                        'path' => $accumulatedPath,
-                        'url' => null,
-                        'current' => false,
-                    ];
-                }
-            }
-        }
-
-        return $breadcrumb;
-    }
-
-    /**
-     * Extract a subtree matching the share scope path.
-     *
-     * Finds the node whose path matches the scope and returns it as the root.
-     * If the scope is the language root (e.g., "nl"), the whole language really
-     * is shared and the full tree is correct.
-     *
-     * Anything else fails CLOSED (SCOPE-FAILOPEN). This used to end in
-     * "return $tree" — so a share scoped to nl/afdeling whose node could not be
-     * located in the tree fell back to publishing every page in the language to
-     * an anonymous visitor. That is the opposite of what a narrower scope means:
-     * not finding the subtree is a reason to show nothing, never everything.
-     */
-    private function extractSubtreeByScope(array $tree, string $scopePath): array {
-        // If scopePath is just a language code (e.g., "en"), the entire language is shared.
-        // Return the full tree — the home page and all subfolders are siblings at root level.
-        if (!str_contains($scopePath, '/')) {
-            return $tree;
-        }
-
-        foreach ($tree as $node) {
-            if ($node['path'] === $scopePath) {
-                return [$node];
-            }
-            if (!empty($node['children'])) {
-                $found = $this->extractSubtreeByScope($node['children'], $scopePath);
-                if (!empty($found) && count($found) === 1 && ($found[0]['path'] ?? '') === $scopePath) {
-                    return $found;
-                }
-            }
-        }
-        // No node matches the scope. Fail closed: an empty tree, not the
-        // whole language. The caller logs this; a share pointing at a page
-        // that no longer exists must go quiet rather than open up.
-        return [];
-    }
-
-    /**
      * Remove draft pages from a tree structure.
      */
     private function filterDraftsFromTree(array $tree, ?array $pubMeta = null): array {
@@ -1448,28 +1191,6 @@ class PublicShareController extends Controller {
             $filtered[] = $node;
         }
         return $filtered;
-    }
-
-    /**
-     * Remove navigation items (recursively) whose target page is in the hidden
-     * set. Items are matched by uniqueId; sub-items are pruned too.
-     *
-     * @param array<int, array>    $items
-     * @param array<string, true>  $hidden
-     */
-    private function filterNavigationByHiddenIds(array $items, array $hidden): array {
-        $out = [];
-        foreach ($items as $item) {
-            $uid = $item['uniqueId'] ?? ($item['pageId'] ?? null);
-            if ($uid !== null && isset($hidden[$uid])) {
-                continue;
-            }
-            if (!empty($item['children']) && is_array($item['children'])) {
-                $item['children'] = $this->filterNavigationByHiddenIds($item['children'], $hidden);
-            }
-            $out[] = $item;
-        }
-        return $out;
     }
 
     /**
@@ -1519,33 +1240,5 @@ class PublicShareController extends Controller {
         return $hidden;
     }
 
-    /**
-     * Recursively mark the current page in a tree structure.
-     * Sets 'isCurrent' to true for the matching uniqueId.
-     */
-    private function markCurrentPageInTree(array $tree, string $currentPageId): array {
-        $result = [];
-        foreach ($tree as $node) {
-            $newNode = $node;
-            $newNode['isCurrent'] = ($node['uniqueId'] ?? '') === $currentPageId;
-            if (!empty($node['children'])) {
-                $newNode['children'] = $this->markCurrentPageInTree($node['children'], $currentPageId);
-            }
-            $result[] = $newNode;
-        }
-        return $result;
-    }
 
-    /**
-     * Recursively strip permissions from tree nodes.
-     */
-    private function stripPermissionsFromTree(array $tree): array {
-        return array_map(function ($node) {
-            unset($node['permissions']);
-            if (!empty($node['children'])) {
-                $node['children'] = $this->stripPermissionsFromTree($node['children']);
-            }
-            return $node;
-        }, $tree);
-    }
 }

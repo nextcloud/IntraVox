@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-namespace OCA\IntraVox\Tests\Unit\Controller;
+namespace OCA\IntraVox\Tests\Unit\Service\PublicShare;
 
-use OCA\IntraVox\Controller\PublicShareController;
+use OCA\IntraVox\Service\PublicShare\ShareTreeShaper;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -17,17 +17,15 @@ use PHPUnit\Framework\TestCase;
  * A missing subtree is a reason to show nothing, never everything. The language
  * root remains the one case where returning the whole tree is correct: sharing
  * "nl" really does share all of nl.
+ *
+ * Moved with the method from PublicShareController to ShareTreeShaper in the
+ * controller split (PR-B). It no longer needs reflection: the transform is pure
+ * and public, so the test calls it directly.
  */
 class ShareScopeFailClosedTest extends TestCase {
 
 	private function extract(array $tree, string $scopePath): array {
-		$method = new \ReflectionMethod(PublicShareController::class, 'extractSubtreeByScope');
-
-		return $method->invoke(
-			(new \ReflectionClass(PublicShareController::class))->newInstanceWithoutConstructor(),
-			$tree,
-			$scopePath
-		);
+		return (new ShareTreeShaper())->extractSubtreeByScope($tree, $scopePath);
 	}
 
 	/** @return list<array<string,mixed>> */

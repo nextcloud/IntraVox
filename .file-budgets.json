@@ -29,7 +29,7 @@
     "lib/Controller/PeopleController.php": 429,
     "lib/Controller/PhotoStoryController.php": 675,
     "lib/Controller/PreviewController.php": 308,
-    "lib/Controller/PublicShareController.php": 1551,
+    "lib/Controller/PublicShareController.php": 1244,
     "lib/Controller/Shared/CalendarRequestTrait.php": 41,
     "lib/Controller/Shared/FeedRequestTrait.php": 135,
     "lib/Controller/Shared/SharePathTrait.php": 159,
