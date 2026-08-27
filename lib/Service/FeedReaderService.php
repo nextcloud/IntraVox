@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace OCA\IntraVox\Service;
 
-use enshrined\svgSanitize\Sanitizer;
 use OCA\IntraVox\AppInfo\Application;
+use OCA\IntraVox\Service\Sanitize\MediaSanitizer;
 use OCA\IntraVox\Service\Sanitize\OutboundUrlValidator;
 use OCP\Http\Client\IClientService;
 use OCP\ICacheFactory;
@@ -85,6 +85,7 @@ class FeedReaderService {
         private LmsTokenService $lmsTokenService,
         private LmsOAuthService $lmsOAuthService,
         private OutboundUrlValidator $urlValidator,
+        private MediaSanitizer $mediaSanitizer,
         private ?OidcTokenBridge $oidcTokenBridge = null,
     ) {
         if ($this->cacheFactory->isAvailable()) {
@@ -2401,40 +2402,19 @@ class FeedReaderService {
     }
 
     /**
-     * Sanitize SVG content to prevent XSS attacks.
-     * Uses enshrined/svg-sanitize + additional pattern checks.
+     * Sanitize SVG content to prevent XSS attacks. Fails closed.
      *
-     * Fails closed. A missing svg-sanitize dependency raises an \Error, not an
-     * \Exception, so it would otherwise escape as a fatal instead of being
-     * refused like any other unsafe SVG (see REL-1).
+     * Delegated to MediaSanitizer, which is the same check plus the REL-1
+     * lesson: it catches \Throwable, so a missing vendor/ (where `new
+     * Sanitizer()` raises an \Error, not an \Exception) is a refused image
+     * rather than a fatal. This copy caught only around the sanitizer call and
+     * its pattern list had already drifted.
      *
-     * @throws \RuntimeException on any SVG we cannot prove safe
+     * Both throw a subclass of \Exception, which is what handleProxyImage()
+     * catches, so a rejected SVG still becomes 502 Bad Gateway.
      */
     private function sanitizeSvgContent(string $content): string {
-        try {
-            $sanitizer = new Sanitizer();
-            $sanitizer->removeRemoteReferences(true);
-            $clean = $sanitizer->sanitize($content);
-        } catch (\Throwable $e) {
-            $this->logger->error('SVG sanitization unavailable: ' . $e->getMessage(), [
-                'exception' => $e,
-            ]);
-            throw new \RuntimeException('SVG sanitization failed');
-        }
-        if ($clean === false || empty($clean)) {
-            throw new \RuntimeException('SVG sanitization failed');
-        }
-
-        // Reject dangerous patterns that could bypass the sanitizer
-        $dangerous = ['<!DOCTYPE', '<!ENTITY', '<iframe', '<embed', '<object',
-            '<script', 'javascript:', 'data:text/html', 'SYSTEM', 'PUBLIC'];
-        foreach ($dangerous as $pattern) {
-            if (stripos($clean, $pattern) !== false) {
-                throw new \RuntimeException('SVG contains prohibited content');
-            }
-        }
-
-        return $clean;
+        return $this->mediaSanitizer->sanitizeSVG($content);
     }
 
     /**
