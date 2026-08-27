@@ -26,7 +26,9 @@
     "test": "phpunit",
     "test:unit": "phpunit --testsuite Unit",
     "test:integration": "echo 'Integration tests run inside the nc-dev container: scripts/run-integration-tests.sh'",
-    "test:coverage": "phpunit --coverage-html coverage"
+    "test:coverage": "phpunit --coverage-html coverage",
+    "lint:phpstan": "phpstan analyse --memory-limit=2G",
+    "lint:phpstan:baseline": "phpstan analyse --memory-limit=2G --generate-baseline=phpstan-baseline.neon"
   },
   "config": {
     "audit": {

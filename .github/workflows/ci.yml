@@ -13,9 +13,13 @@
 #   - the prebuild guards that need no node_modules and no build.
 #   - the packaging guard's own self-test, so the release contract stays honest.
 #
-# Explicitly NOT here: compliance.yml, psalm, or a coverage threshold. Those come
-# later in the plan (QG-2 lands after the seam, with a baseline); adding them now
-# would mean a permanently red main, which trains everyone to ignore the gate.
+# QG-2 (PHPStan, level 5) landed here with a baseline of 299 pre-existing errors,
+# which is what keeps main from going permanently red: new and refactored code
+# must be clean, and phpstan-baseline.neon may only ever shrink. It was brought
+# forward from "after the seam" because the service/controller split is what it
+# is meant to protect.
+#
+# Explicitly still NOT here: compliance.yml or a coverage threshold.
 
 name: CI
 
@@ -58,6 +62,13 @@ jobs:
 
       - name: Unit tests
         run: composer run test:unit
+
+      # QG-2. Level 5 against a baseline of 299 pre-existing errors: new and
+      # refactored code must be clean, and the baseline may only ever shrink.
+      # Runs after the tests because a type error is easier to read once you
+      # know the suite itself is green.
+      - name: Static analysis
+        run: composer run lint:phpstan
 
   packaging:
     name: Packaging guard

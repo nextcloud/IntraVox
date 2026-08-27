@@ -1,0 +1,62 @@
+# Static analysis (QG-2).
+#
+# The gate that was deliberately left out of ci.yml until "after the seam":
+# adding a typechecker to 41k lines of untyped-array code means either a
+# permanently red main, or a baseline. This is the baseline version.
+#
+# What the baseline is FOR: everything it lists is pre-existing and known. New
+# code and refactored code must be clean, and the baseline may only ever SHRINK
+# — the same ratchet idea as .file-budgets.json (QG-4). It is not a mute button;
+# it is a record of what we owe.
+#
+# Level 5 on purpose, not 8. Levels 6-8 demand array shapes and null-safety
+# across a codebase whose whole data model is `array $page` passed by hand
+# (466 array parameters, 463 array returns, 0 DTOs). At level 8 the baseline
+# would be larger than the code it describes and would teach everyone to ignore
+# it. 5 catches what actually breaks: unknown methods and classes, wrong
+# argument counts and types, dead branches.
+#
+# OCP comes from nextcloud/ocp, pinned to the LOWEST version we claim to
+# support (info.xml says 32-34), for the same reason ci.yml pins PHP 8.2: an
+# API added in 33 should fail here, not in a user's logs.
+#
+# Run: composer run lint:phpstan   (or vendor/bin/phpstan analyse)
+includes:
+	- phpstan-baseline.neon
+
+parameters:
+	level: 5
+	paths:
+		- lib
+	bootstrapFiles:
+		# Composer's autoloader first, so the libraries Nextcloud provides at
+		# runtime (Symfony Console, Guzzle, Sabre) resolve. They are require-dev
+		# here for analysis only and never ship: create-release.sh builds the
+		# tarball from a separate --no-dev install.
+		- vendor/autoload.php
+		- tests/Stubs/PhpstanBootstrap.php
+	# nextcloud/ocp ships no autoload map on purpose — it is meant to be scanned,
+	# not autoloaded. Note this is the REAL OCP, not tests/Stubs/OCP.php: the
+	# stubs exist so the unit suite can run without a server and are deliberately
+	# partial (66 of the 96 OCP symbols lib/ uses). Analysing against them would
+	# report the other 30 as missing and, worse, typecheck the rest against our
+	# own approximations instead of the real signatures.
+	scanDirectories:
+		- vendor/nextcloud/ocp/OCP
+	excludePaths:
+		analyse:
+			# Generated migration scaffolding; not hand-maintained.
+			- lib/Migration/*
+	ignoreErrors:
+		# Optional integrations with OTHER Nextcloud apps. IntraVox guards each
+		# of these with class_exists()/isEnabledForUser() at runtime and works
+		# without them, so their absence during analysis is expected — not debt.
+		# Listed by name rather than blanket-ignored, so a typo in one of these
+		# names still fails.
+		-
+			identifier: class.notFound
+			message: '#OCA\\(Files_Versions|MetaVox|UserOIDC|Circles|Activity)\\#'
+		-
+			identifier: class.notFound
+			message: '#Class OC\\?[A-Za-z\\]* not found\.#'
+	reportUnmatchedIgnoredErrors: false

@@ -76,6 +76,13 @@ jobs:
       - name: Unit tests
         run: composer run test:unit
 
+      # QG-2. Level 5 against a baseline of 299 pre-existing errors: new and
+      # refactored code must be clean, and the baseline may only ever shrink.
+      # Runs after the tests because a type error is easier to read once you
+      # know the suite itself is green.
+      - name: Static analysis
+        run: composer run lint:phpstan
+
   packaging:
     name: Packaging guard
     runs-on: ubuntu-latest

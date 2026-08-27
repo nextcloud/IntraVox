@@ -1,0 +1,1453 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Property OCA\\IntraVox\\Activity\\Provider\:\:\$logger is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: lib/Activity/Provider.php
+
+		-
+			message: '#^Property OCA\\IntraVox\\BackgroundJob\\FeedRefreshJob\:\:\$config is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: lib/BackgroundJob/FeedRefreshJob.php
+
+		-
+			message: '#^Offset ''rebuilt'' on array\{considered\: int, rebuilt\: int\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: lib/BackgroundJob/PeopleCohortWarmupJob.php
+
+		-
+			message: '#^Property OCA\\IntraVox\\Command\\CreateLanguageHomepagesCommand\:\:\$logger is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: lib/Command/CreateLanguageHomepagesCommand.php
+
+		-
+			message: '#^Call to an undefined method OCP\\Files\\Node\:\:get\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: lib/Command/ImportPagesCommand.php
+
+		-
+			message: '#^Call to an undefined method OCP\\Files\\Node\:\:newFile\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: lib/Command/ImportPagesCommand.php
+
+		-
+			message: '#^Call to an undefined method OCP\\Files\\Node\:\:newFolder\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: lib/Command/ImportPagesCommand.php
+
+		-
+			message: '#^Call to an undefined method OCP\\Files\\Node\:\:nodeExists\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: lib/Command/ImportPagesCommand.php
+
+		-
+			message: '#^Parameter \#2 \$targetFolder of method OCA\\IntraVox\\Command\\ImportPagesCommand\:\:importPageFolders\(\) expects OCP\\Files\\Folder, OCP\\Files\\Node given\.$#'
+			identifier: argument.type
+			count: 1
+			path: lib/Command/ImportPagesCommand.php
+
+		-
+			message: '#^Property OCA\\IntraVox\\Command\\ImportPagesCommand\:\:\$rootFolder is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: lib/Command/ImportPagesCommand.php
+
+		-
+			message: '#^Call to an undefined method OCP\\Files\\Node\:\:get\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: lib/Command/MigrateToLanguageStructureCommand.php
+
+		-
+			message: '#^Call to an undefined method OCP\\Files\\Node\:\:getDirectoryListing\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: lib/Command/MigrateToLanguageStructureCommand.php
+
+		-
+			message: '#^Call to an undefined method OCP\\Files\\Node\:\:newFolder\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: lib/Command/MigrateToLanguageStructureCommand.php
+
+		-
+			message: '#^Parameter \#2 \$statusCode of class OCP\\AppFramework\\Http\\DataResponse constructor expects S of 100\|101\|102\|200\|201\|202\|203\|204\|205\|206\|207\|208\|226\|300\|301\|302\|303\|304\|305\|306\|307\|400\|401\|402\|403\|404\|405\|406\|407\|408\|409\|410\|411\|412\|413\|414\|415\|416\|417\|418\|422\|423\|424\|426\|428\|429\|431\|500\|501\|502\|503\|504\|505\|506\|507\|508\|509\|510\|511, int given\.$#'
+			identifier: argument.type
+			count: 2
+			path: lib/Controller/AnalyticsController.php
+
+		-
+			message: '#^Access to static property \$server on an unknown class OC\.$#'
+			identifier: class.notFound
+			count: 2
+			path: lib/Controller/ApiController.php
+
+		-
+			message: '#^Call to an undefined method OCA\\IntraVox\\Service\\SetupService\:\:setup\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: lib/Controller/ApiController.php
+
+		-
+			message: '#^Call to function is_array\(\) with array will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: lib/Controller/ApiController.php
+
+		-
+			message: '#^Parameter \#1 \$data of class OCP\\AppFramework\\Http\\DataResponse constructor contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: lib/Controller/ApiController.php
+
+		-
+			message: '#^Parameter \#2 \$statusCode of class OCP\\AppFramework\\Http\\DataResponse constructor expects S of 100\|101\|102\|200\|201\|202\|203\|204\|205\|206\|207\|208\|226\|300\|301\|302\|303\|304\|305\|306\|307\|400\|401\|402\|403\|404\|405\|406\|407\|408\|409\|410\|411\|412\|413\|414\|415\|416\|417\|418\|422\|423\|424\|426\|428\|429\|431\|500\|501\|502\|503\|504\|505\|506\|507\|508\|509\|510\|511, int given\.$#'
+			identifier: argument.type
+			count: 2
+			path: lib/Controller/ApiController.php
+
+		-
+			message: '#^Property OCA\\IntraVox\\Controller\\ApiController\:\:\$navigationService is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: lib/Controller/ApiController.php
+
+		-
+			message: '#^Property OCA\\IntraVox\\Controller\\ApiController\:\:\$permissionService is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: lib/Controller/ApiController.php
+
+		-
+			message: '#^Property OCA\\IntraVox\\Controller\\ApiController\:\:\$session is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: lib/Controller/ApiController.php
+
+		-
+			message: '#^Property OCA\\IntraVox\\Controller\\ApiController\:\:\$systemFileService is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: lib/Controller/ApiController.php
+
+		-
+			message: '#^Array has 2 duplicate keys with value ''targetParentId'' \(''targetParentId'', ''targetParentId''\)\.$#'
+			identifier: array.duplicateKey
+			count: 1
+			path: lib/Controller/BulkController.php
+
+		-
+			message: '#^Parameter \#2 \$statusCode of class OCP\\AppFramework\\Http\\DataResponse constructor expects S of 100\|101\|102\|200\|201\|202\|203\|204\|205\|206\|207\|208\|226\|300\|301\|302\|303\|304\|305\|306\|307\|400\|401\|402\|403\|404\|405\|406\|407\|408\|409\|410\|411\|412\|413\|414\|415\|416\|417\|418\|422\|423\|424\|426\|428\|429\|431\|500\|501\|502\|503\|504\|505\|506\|507\|508\|509\|510\|511, int given\.$#'
+			identifier: argument.type
+			count: 2
+			path: lib/Controller/BulkController.php
+
+		-
+			message: '#^Parameter \#2 \$statusCode of class OCP\\AppFramework\\Http\\DataResponse constructor expects S of 100\|101\|102\|200\|201\|202\|203\|204\|205\|206\|207\|208\|226\|300\|301\|302\|303\|304\|305\|306\|307\|400\|401\|402\|403\|404\|405\|406\|407\|408\|409\|410\|411\|412\|413\|414\|415\|416\|417\|418\|422\|423\|424\|426\|428\|429\|431\|500\|501\|502\|503\|504\|505\|506\|507\|508\|509\|510\|511, int given\.$#'
+			identifier: argument.type
+			count: 2
+			path: lib/Controller/CommentController.php
+
+		-
+			message: '#^Access to static property \$server on an unknown class OC\.$#'
+			identifier: class.notFound
+			count: 1
+			path: lib/Controller/FeedController.php
+
+		-
+			message: '#^Property OCA\\IntraVox\\Controller\\FeedController\:\:\$logger is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: lib/Controller/FeedController.php
+
+		-
+			message: '#^Parameter \#1 \$array \(non\-empty\-list\<non\-empty\-string\>\) of array_values is already a list, call has no effect\.$#'
+			identifier: arrayValues.list
+			count: 1
+			path: lib/Controller/FileStoryController.php
+
+		-
+			message: '#^Property OCA\\IntraVox\\Controller\\FileStoryController\:\:\$config is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: lib/Controller/FileStoryController.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between mixed and null will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: lib/Controller/FileStoryController.php
+
+		-
+			message: '#^Offset ''activeLanguages'' on array\{language\: string, hasContent\: bool, servedLanguage\: string\|null, languagesWithContent\: array\<string\>, activeLanguages\: array\<string\>\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: lib/Controller/LanguageController.php
+
+		-
+			message: '#^Offset ''languagesWithContent'' on array\{language\: string, hasContent\: bool, servedLanguage\: string\|null, languagesWithContent\: array\<string\>, activeLanguages\: array\<string\>\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: lib/Controller/LanguageController.php
+
+		-
+			message: '#^Constant OCA\\IntraVox\\Controller\\LicenseController\:\:APP_ID is unused\.$#'
+			identifier: classConstant.unused
+			count: 1
+			path: lib/Controller/LicenseController.php
+
+		-
+			message: '#^Parameter \#2 \$statusCode of class OCP\\AppFramework\\Http\\DataResponse constructor expects S of 100\|101\|102\|200\|201\|202\|203\|204\|205\|206\|207\|208\|226\|300\|301\|302\|303\|304\|305\|306\|307\|400\|401\|402\|403\|404\|405\|406\|407\|408\|409\|410\|411\|412\|413\|414\|415\|416\|417\|418\|422\|423\|424\|426\|428\|429\|431\|500\|501\|502\|503\|504\|505\|506\|507\|508\|509\|510\|511, int given\.$#'
+			identifier: argument.type
+			count: 2
+			path: lib/Controller/LicenseController.php
+
+		-
+			message: '#^Property OCA\\IntraVox\\Controller\\LicenseController\:\:\$config is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: lib/Controller/LicenseController.php
+
+		-
+			message: '#^Offset ''connected_at'' on array\{connection_id\: string, token_type\: string, expires_at\: string\|null, connected\: bool\}\|null on left side of \?\? does not exist\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: lib/Controller/LmsOAuthController.php
+
+		-
+			message: '#^Offset ''connectionId'' does not exist on array\{access_token\: string, refresh_token\: string\|null, expires_in\: int\|null\}\.$#'
+			identifier: offsetAccess.notFound
+			count: 1
+			path: lib/Controller/LmsOAuthController.php
+
+		-
+			message: '#^Offset ''userId'' does not exist on array\{access_token\: string, refresh_token\: string\|null, expires_in\: int\|null\}\.$#'
+			identifier: offsetAccess.notFound
+			count: 1
+			path: lib/Controller/LmsOAuthController.php
+
+		-
+			message: '#^Property OCA\\IntraVox\\Controller\\LmsOAuthController\:\:\$crypto is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: lib/Controller/LmsOAuthController.php
+
+		-
+			message: '#^Property OCA\\IntraVox\\Controller\\LmsOAuthController\:\:\$urlGenerator is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: lib/Controller/LmsOAuthController.php
+
+		-
+			message: '#^Property OCA\\IntraVox\\Controller\\NavigationController\:\:\$l10n is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: lib/Controller/NavigationController.php
+
+		-
+			message: '#^Property OCA\\IntraVox\\Controller\\PageLockController\:\:\$logger is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: lib/Controller/PageLockController.php
+
+		-
+			message: '#^Property OCA\\IntraVox\\Controller\\PeopleController\:\:\$activityManager is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: lib/Controller/PeopleController.php
+
+		-
+			message: '#^Property OCA\\IntraVox\\Controller\\PeopleController\:\:\$config is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: lib/Controller/PeopleController.php
+
+		-
+			message: '#^Property OCA\\IntraVox\\Controller\\PeopleController\:\:\$urlGenerator is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: lib/Controller/PeopleController.php
+
+		-
+			message: '#^Access to undefined constant OCP\\AppFramework\\Http\:\:STATUS_REQUESTED_RANGE_NOT_SATISFIABLE\.$#'
+			identifier: classConstant.notFound
+			count: 1
+			path: lib/Controller/PhotoStoryController.php
+
+		-
+			message: '#^Call to function in_array\(\) with arguments ''grid''\|''highlights''\|''timeline'', array\{''timeline'', ''grid'', ''highlights''\} and true will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: lib/Controller/PhotoStoryController.php
+
+		-
+			message: '#^Parameter \#1 \$array \(non\-empty\-list\<non\-empty\-string\>\) of array_values is already a list, call has no effect\.$#'
+			identifier: arrayValues.list
+			count: 1
+			path: lib/Controller/PhotoStoryController.php
+
+		-
+			message: '#^Access to static property \$server on an unknown class OC\.$#'
+			identifier: class.notFound
+			count: 1
+			path: lib/Controller/PublicShareController.php
+
+		-
+			message: '#^Call to an undefined method OCP\\Files\\Node\:\:getContent\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: lib/Controller/PublicShareController.php
+
+		-
+			message: '#^Method OCA\\IntraVox\\Controller\\PublicShareController\:\:getNavigationByShare\(\) should return OCP\\AppFramework\\Http\\JSONResponse but returns OCP\\AppFramework\\Http\\Response\.$#'
+			identifier: return.type
+			count: 1
+			path: lib/Controller/PublicShareController.php
+
+		-
+			message: '#^Method OCA\\IntraVox\\Controller\\PublicShareController\:\:getNewsByShare\(\) should return OCP\\AppFramework\\Http\\JSONResponse but returns OCP\\AppFramework\\Http\\Response\.$#'
+			identifier: return.type
+			count: 1
+			path: lib/Controller/PublicShareController.php
+
+		-
+			message: '#^Method OCA\\IntraVox\\Controller\\PublicShareController\:\:getPageTreeByShare\(\) should return OCP\\AppFramework\\Http\\JSONResponse but returns OCP\\AppFramework\\Http\\Response\.$#'
+			identifier: return.type
+			count: 1
+			path: lib/Controller/PublicShareController.php
+
+		-
+			message: '#^Offset ''items'' on non\-empty\-array on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: lib/Controller/PublicShareController.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between string and null will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: lib/Controller/PublicShareController.php
+
+		-
+			message: '#^Variable \$segments in empty\(\) always exists and is not falsy\.$#'
+			identifier: empty.variable
+			count: 1
+			path: lib/Controller/PublicShareController.php
+
+		-
+			message: '#^Property OCA\\IntraVox\\Http\\VideoRangeResponse\:\:\$mime is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: lib/Http/VideoRangeResponse.php
+
+		-
+			message: '#^Instanceof between OCP\\Files\\Cache\\CacheEntryRemovedEvent and OCP\\Files\\Cache\\CacheEntryRemovedEvent will always evaluate to true\.$#'
+			identifier: instanceof.alwaysTrue
+			count: 1
+			path: lib/Listener/CacheCleanupListener.php
+
+		-
+			message: '#^Instanceof between OCP\\Comments\\CommentsEntityEvent and OCP\\Comments\\CommentsEntityEvent will always evaluate to true\.$#'
+			identifier: instanceof.alwaysTrue
+			count: 1
+			path: lib/Listener/CommentsEntityListener.php
+
+		-
+			message: '#^Instanceof between OCP\\Group\\Events\\UserRemovedEvent and OCP\\Group\\Events\\UserRemovedEvent will always evaluate to true\.$#'
+			identifier: instanceof.alwaysTrue
+			count: 1
+			path: lib/Listener/GroupMembershipChangedListener.php
+
+		-
+			message: '#^Result of && is always false\.$#'
+			identifier: booleanAnd.alwaysFalse
+			count: 1
+			path: lib/Listener/GroupMembershipChangedListener.php
+
+		-
+			message: '#^Instanceof between OCP\\User\\Events\\UserDeletedEvent and OCP\\User\\Events\\UserDeletedEvent will always evaluate to true\.$#'
+			identifier: instanceof.alwaysTrue
+			count: 1
+			path: lib/Listener/UserDeletedListener.php
+
+		-
+			message: '#^Call to function is_array\(\) with array will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: lib/Search/PageSearchProvider.php
+
+		-
+			message: '#^Instanceof between array\<mixed, mixed\> and DateTimeInterface will always evaluate to false\.$#'
+			identifier: instanceof.alwaysFalse
+			count: 2
+			path: lib/Service/CalendarService.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between OCP\\Comments\\IComment and null will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 5
+			path: lib/Service/CommentService.php
+
+		-
+			message: '#^Access to static property \$SERVERROOT on an unknown class OC\.$#'
+			identifier: class.notFound
+			count: 1
+			path: lib/Service/DemoDataService.php
+
+		-
+			message: '#^Call to an undefined method OCP\\Files\\Node\:\:get\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: lib/Service/DemoDataService.php
+
+		-
+			message: '#^Call to an undefined method OCP\\Files\\Node\:\:newFile\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: lib/Service/DemoDataService.php
+
+		-
+			message: '#^Call to an undefined method OCP\\Files\\Node\:\:nodeExists\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: lib/Service/DemoDataService.php
+
+		-
+			message: '#^Call to an undefined method OCP\\Files\\Node\:\:putContent\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: lib/Service/DemoDataService.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between string and null will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: lib/Service/DemoDataService.php
+
+		-
+			message: '#^Constant OCA\\IntraVox\\Service\\EngagementSettingsService\:\:DEFAULT_SINGLE_REACTION_PER_USER is unused\.$#'
+			identifier: classConstant.unused
+			count: 1
+			path: lib/Service/EngagementSettingsService.php
+
+		-
+			message: '#^Constant OCA\\IntraVox\\Service\\EngagementSettingsService\:\:KEY_SINGLE_REACTION_PER_USER is unused\.$#'
+			identifier: classConstant.unused
+			count: 1
+			path: lib/Service/EngagementSettingsService.php
+
+		-
+			message: '#^Ternary operator condition is always true\.$#'
+			identifier: ternary.alwaysTrue
+			count: 3
+			path: lib/Service/EngagementSettingsService.php
+
+		-
+			message: '#^Access to constant PARAM_INT_ARRAY on an unknown class Doctrine\\DBAL\\Connection\.$#'
+			identifier: class.notFound
+			count: 1
+			path: lib/Service/ExportService.php
+
+		-
+			message: '#^Access to constant PARAM_STR_ARRAY on an unknown class Doctrine\\DBAL\\Connection\.$#'
+			identifier: class.notFound
+			count: 1
+			path: lib/Service/ExportService.php
+
+		-
+			message: '#^Access to static property \$server on an unknown class OC\.$#'
+			identifier: class.notFound
+			count: 1
+			path: lib/Service/ExportService.php
+
+		-
+			message: '#^Method OCA\\IntraVox\\Service\\FooterService\:\:getFooter\(\) invoked with 1 parameter, 0 required\.$#'
+			identifier: arguments.count
+			count: 2
+			path: lib/Service/ExportService.php
+
+		-
+			message: '#^Property OCA\\IntraVox\\Service\\ExportService\:\:\$pageService is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: lib/Service/ExportService.php
+
+		-
+			message: '#^Variable \$fileId might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: lib/Service/ExportService.php
+
+		-
+			message: '#^Access to an undefined property Sabre\\VObject\\Component\\VEvent\:\:\$DTSTART\.$#'
+			identifier: property.notFound
+			count: 1
+			path: lib/Service/ExternalIcsService.php
+
+		-
+			message: '#^Call to an undefined method OCP\\ICache\:\:add\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: lib/Service/FederatedPreviewService.php
+
+		-
+			message: '#^Access to static property \$WEBROOT on an unknown class OC\.$#'
+			identifier: class.notFound
+			count: 1
+			path: lib/Service/FeedReaderService.php
+
+		-
+			message: '#^Variable \$url on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.variable
+			count: 1
+			path: lib/Service/FeedReaderService.php
+
+		-
+			message: '#^Method OCA\\IntraVox\\Service\\FeedService\:\:collectPagesFromFolder\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: lib/Service/FeedService.php
+
+		-
+			message: '#^Result of \|\| is always false\.$#'
+			identifier: booleanOr.alwaysFalse
+			count: 1
+			path: lib/Service/FeedService.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between string and false will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: lib/Service/FeedService.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between string and null will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: lib/Service/FeedService.php
+
+		-
+			message: '#^Offset ''field'' on array\{field\: string, op\: string, value\: mixed\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 3
+			path: lib/Service/Filter/FacetCalculator.php
+
+		-
+			message: '#^Offset ''op'' on array\{field\: string, op\: string, value\: mixed\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: lib/Service/Filter/FacetCalculator.php
+
+		-
+			message: '#^Offset ''field'' on array\{field\: string, op\: string, value\: mixed\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: lib/Service/Filter/FilterSpec.php
+
+		-
+			message: '#^Offset ''op'' on array\{field\: string, op\: string, value\: mixed\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: lib/Service/Filter/FilterSpec.php
+
+		-
+			message: '#^Property OCA\\IntraVox\\Service\\FooterService\:\:\$setupService is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: lib/Service/FooterService.php
+
+		-
+			message: '#^Access to static property \$server on an unknown class OC\.$#'
+			identifier: class.notFound
+			count: 1
+			path: lib/Service/GroupFolders/GroupFoldersGateway.php
+
+		-
+			message: '#^Property OCA\\IntraVox\\Service\\HomepageService\:\:\$userSession is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: lib/Service/HomepageService.php
+
+		-
+			message: '#^Expression on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.expr
+			count: 1
+			path: lib/Service/Import/Confluence/Macros/AttachmentMacroHandler.php
+
+		-
+			message: '#^Property OCA\\IntraVox\\Service\\Import\\Confluence\\Macros\\ConversionContext\:\:\$pageMapping is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: lib/Service/Import/Confluence/Macros/MacroHandlerInterface.php
+
+		-
+			message: '#^PHPDoc tag @return with type array is incompatible with native type void\.$#'
+			identifier: return.phpDocType
+			count: 1
+			path: lib/Service/Import/ConfluenceApiImporter.php
+
+		-
+			message: '#^Method OCA\\IntraVox\\Service\\Import\\HtmlToWidgetConverter\:\:convertElementToBlock\(\) never returns array so it can be removed from the return type\.$#'
+			identifier: return.unusedType
+			count: 1
+			path: lib/Service/Import/HtmlToWidgetConverter.php
+
+		-
+			message: '#^Method OCA\\IntraVox\\Service\\Import\\HtmlToWidgetConverter\:\:convertElementToBlock\(\) never returns null so it can be removed from the return type\.$#'
+			identifier: return.unusedType
+			count: 1
+			path: lib/Service/Import/HtmlToWidgetConverter.php
+
+		-
+			message: '#^Offset ''name'' on array\{name\: string, index\: int, crc\: int, size\: int, mtime\: int, comp_size\: int, comp_method\: int, encryption_method\: int\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: lib/Service/Import/SafeZipExtractor.php
+
+		-
+			message: '#^Offset ''size'' on array\{name\: string, index\: int, crc\: int, size\: int, mtime\: int, comp_size\: int, comp_method\: int, encryption_method\: int\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: lib/Service/Import/SafeZipExtractor.php
+
+		-
+			message: '#^Access to static property \$SERVERROOT on an unknown class OC\.$#'
+			identifier: class.notFound
+			count: 1
+			path: lib/Service/ImportService.php
+
+		-
+			message: '#^Call to an undefined method OCP\\Files\\Node\:\:get\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: lib/Service/ImportService.php
+
+		-
+			message: '#^Call to an undefined method OCP\\Files\\Node\:\:putContent\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: lib/Service/ImportService.php
+
+		-
+			message: '#^Call to function method_exists\(\) with OCP\\Files\\Storage\\IStorage and ''getLocalFile'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: lib/Service/ImportService.php
+
+		-
+			message: '#^Comparison operation "\>" between int\<1, max\> and 0 is always true\.$#'
+			identifier: greater.alwaysTrue
+			count: 1
+			path: lib/Service/ImportService.php
+
+		-
+			message: '#^If condition is always true\.$#'
+			identifier: if.alwaysTrue
+			count: 1
+			path: lib/Service/ImportService.php
+
+		-
+			message: '#^Method OCA\\IntraVox\\Service\\ImportService\:\:createMediaFolderMarker\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: lib/Service/ImportService.php
+
+		-
+			message: '#^Method OCA\\IntraVox\\Service\\ImportService\:\:extractPageIdFromUniqueId\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: lib/Service/ImportService.php
+
+		-
+			message: '#^Method OCA\\IntraVox\\Service\\ImportService\:\:getPageFileByImportedPath\(\) should return OCP\\Files\\File\|null but returns OCP\\Files\\Node\.$#'
+			identifier: return.type
+			count: 1
+			path: lib/Service/ImportService.php
+
+		-
+			message: '#^Method OCA\\IntraVox\\Service\\ImportService\:\:getPageFileByPath\(\) should return OCP\\Files\\File but returns OCP\\Files\\Node\.$#'
+			identifier: return.type
+			count: 2
+			path: lib/Service/ImportService.php
+
+		-
+			message: '#^Parameter \#1 \$folder of method OCA\\IntraVox\\Service\\ImportService\:\:ensurePhysicalFolder\(\) expects OCP\\Files\\Folder, OCP\\Files\\Node given\.$#'
+			identifier: argument.type
+			count: 2
+			path: lib/Service/ImportService.php
+
+		-
+			message: '#^Parameter \#3 \$reuse of method OCP\\Files\\Cache\\IScanner\:\:scan\(\) expects int, false given\.$#'
+			identifier: argument.type
+			count: 1
+			path: lib/Service/ImportService.php
+
+		-
+			message: '#^Call to function is_string\(\) with string will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: lib/Service/LanguageService.php
+
+		-
+			message: '#^Instanceof between OCP\\Files\\Folder and OCP\\Files\\Folder will always evaluate to true\.$#'
+			identifier: instanceof.alwaysTrue
+			count: 1
+			path: lib/Service/Locator/PageLocator.php
+
+		-
+			message: '#^Call to an undefined method OCP\\Files\\Node\:\:get\(\)\.$#'
+			identifier: method.notFound
+			count: 4
+			path: lib/Service/Media/PageMediaService.php
+
+		-
+			message: '#^Call to an undefined method OCP\\Files\\Node\:\:getDirectoryListing\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: lib/Service/Media/PageMediaService.php
+
+		-
+			message: '#^Call to an undefined method OCP\\Files\\Node\:\:putContent\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: lib/Service/Media/PageMediaService.php
+
+		-
+			message: '#^Method OCA\\IntraVox\\Service\\Media\\PageMediaService\:\:mediaFolderFor\(\) should return OCP\\Files\\Folder but returns OCP\\Files\\Node\.$#'
+			identifier: return.type
+			count: 1
+			path: lib/Service/Media/PageMediaService.php
+
+		-
+			message: '#^Method OCA\\IntraVox\\Service\\Media\\PageMediaService\:\:resourcesFolderFor\(\) should return OCP\\Files\\Folder but returns OCP\\Files\\Node\.$#'
+			identifier: return.type
+			count: 1
+			path: lib/Service/Media/PageMediaService.php
+
+		-
+			message: '#^Parameter \#2 \$resourcesRoot of method OCA\\IntraVox\\Service\\Media\\PageMediaService\:\:getRelativePath\(\) expects OCP\\Files\\Folder, OCP\\Files\\Node given\.$#'
+			identifier: argument.type
+			count: 1
+			path: lib/Service/Media/PageMediaService.php
+
+		-
+			message: '#^Access to static property \$server on an unknown class OC\.$#'
+			identifier: class.notFound
+			count: 1
+			path: lib/Service/MetaVoxImportService.php
+
+		-
+			message: '#^Call to function is_array\(\) with array will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: lib/Service/NavigationService.php
+
+		-
+			message: '#^Property OCA\\IntraVox\\Service\\NavigationService\:\:\$setupService is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: lib/Service/NavigationService.php
+
+		-
+			message: '#^Property OCA\\IntraVox\\Service\\NavigationService\:\:\$userSession is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: lib/Service/NavigationService.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between 1 and 0 will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: lib/Service/News/NewsPageService.php
+
+		-
+			message: '#^Variable \$results in empty\(\) always exists and is not falsy\.$#'
+			identifier: empty.variable
+			count: 1
+			path: lib/Service/News/NewsPageService.php
+
+		-
+			message: '#^Constant OCA\\IntraVox\\Service\\OidcTokenBridge\:\:EXCEPTION_CLASS is unused\.$#'
+			identifier: classConstant.unused
+			count: 1
+			path: lib/Service/OidcTokenBridge.php
+
+		-
+			message: '#^Access to static property \$SERVERROOT on an unknown class OC\.$#'
+			identifier: class.notFound
+			count: 2
+			path: lib/Service/OrphanedDataService.php
+
+		-
+			message: '#^Property OCA\\IntraVox\\Service\\OrphanedDataService\:\:\$appManager is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: lib/Service/OrphanedDataService.php
+
+		-
+			message: '#^Access to an undefined property OCA\\IntraVox\\Service\\PageService\:\:\$fileContentCache\.$#'
+			identifier: property.notFound
+			count: 1
+			path: lib/Service/PageService.php
+
+		-
+			message: '#^Access to constant PARAM_INT_ARRAY on an unknown class Doctrine\\DBAL\\Connection\.$#'
+			identifier: class.notFound
+			count: 1
+			path: lib/Service/PageService.php
+
+		-
+			message: '#^Access to static property \$server on an unknown class OC\.$#'
+			identifier: class.notFound
+			count: 1
+			path: lib/Service/PageService.php
+
+		-
+			message: '#^Call to an undefined method OCP\\Files\\Cache\\ICache\:\:correctFolderSize\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: lib/Service/PageService.php
+
+		-
+			message: '#^Call to an undefined method OCP\\Files\\Node\:\:getContent\(\)\.$#'
+			identifier: method.notFound
+			count: 6
+			path: lib/Service/PageService.php
+
+		-
+			message: '#^Call to function is_array\(\) with array will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: lib/Service/PageService.php
+
+		-
+			message: '#^Comparison operation "\>" between int\<1, max\> and 0 is always true\.$#'
+			identifier: greater.alwaysTrue
+			count: 3
+			path: lib/Service/PageService.php
+
+		-
+			message: '#^Constant OCA\\IntraVox\\Service\\PageService\:\:ALLOWED_EXTENSIONS is unused\.$#'
+			identifier: classConstant.unused
+			count: 1
+			path: lib/Service/PageService.php
+
+		-
+			message: '#^Constant OCA\\IntraVox\\Service\\PageService\:\:ALLOWED_IMAGE_TYPES is unused\.$#'
+			identifier: classConstant.unused
+			count: 1
+			path: lib/Service/PageService.php
+
+		-
+			message: '#^Constant OCA\\IntraVox\\Service\\PageService\:\:ALLOWED_WIDGET_TYPES is unused\.$#'
+			identifier: classConstant.unused
+			count: 1
+			path: lib/Service/PageService.php
+
+		-
+			message: '#^Constant OCA\\IntraVox\\Service\\PageService\:\:MAX_COLUMNS is unused\.$#'
+			identifier: classConstant.unused
+			count: 1
+			path: lib/Service/PageService.php
+
+		-
+			message: '#^Constant OCA\\IntraVox\\Service\\PageService\:\:MAX_IMAGE_SIZE is unused\.$#'
+			identifier: classConstant.unused
+			count: 1
+			path: lib/Service/PageService.php
+
+		-
+			message: '#^Constant OCA\\IntraVox\\Service\\PageService\:\:MAX_VIDEO_SIZE is unused\.$#'
+			identifier: classConstant.unused
+			count: 1
+			path: lib/Service/PageService.php
+
+		-
+			message: '#^Constant OCA\\IntraVox\\Service\\PageService\:\:VIDEO_DOMAIN_ALIASES is unused\.$#'
+			identifier: classConstant.unused
+			count: 1
+			path: lib/Service/PageService.php
+
+		-
+			message: '#^Constant OCA\\IntraVox\\Service\\PageService\:\:WILDCARD_VIDEO_DOMAINS is unused\.$#'
+			identifier: classConstant.unused
+			count: 1
+			path: lib/Service/PageService.php
+
+		-
+			message: '#^Method OCA\\IntraVox\\Service\\PageService\:\:determinePageType\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: lib/Service/PageService.php
+
+		-
+			message: '#^Method OCA\\IntraVox\\Service\\PageService\:\:extractSnippet\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: lib/Service/PageService.php
+
+		-
+			message: '#^Method OCA\\IntraVox\\Service\\PageService\:\:findFileByIdInFolder\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: lib/Service/PageService.php
+
+		-
+			message: '#^Method OCA\\IntraVox\\Service\\PageService\:\:folderContainsPages\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: lib/Service/PageService.php
+
+		-
+			message: '#^Method OCA\\IntraVox\\Service\\PageService\:\:formatBytes\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: lib/Service/PageService.php
+
+		-
+			message: '#^Method OCA\\IntraVox\\Service\\PageService\:\:formatDateLocalized\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: lib/Service/PageService.php
+
+		-
+			message: '#^Method OCA\\IntraVox\\Service\\PageService\:\:getResourcesMediaFile\(\) should return OCP\\Files\\File but returns OCP\\Files\\Node\.$#'
+			identifier: return.type
+			count: 2
+			path: lib/Service/PageService.php
+
+		-
+			message: '#^Method OCA\\IntraVox\\Service\\PageService\:\:indexPathToRelative\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: lib/Service/PageService.php
+
+		-
+			message: '#^Method OCA\\IntraVox\\Service\\PageService\:\:locateViaIndex\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: lib/Service/PageService.php
+
+		-
+			message: '#^Method OCA\\IntraVox\\Service\\PageService\:\:sanitizeFolderPath\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: lib/Service/PageService.php
+
+		-
+			message: '#^Method OCA\\IntraVox\\Service\\PageService\:\:sanitizePath\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: lib/Service/PageService.php
+
+		-
+			message: '#^Method OCA\\IntraVox\\Service\\PageService\:\:sanitizeVideoEmbedUrl\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: lib/Service/PageService.php
+
+		-
+			message: '#^Method OCA\\IntraVox\\Service\\PageService\:\:sanitizeViewerFilters\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: lib/Service/PageService.php
+
+		-
+			message: '#^Method OCA\\IntraVox\\Service\\PageService\:\:sanitizeWidget\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: lib/Service/PageService.php
+
+		-
+			message: '#^Method OCA\\IntraVox\\Service\\PageService\:\:stripMarkdown\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: lib/Service/PageService.php
+
+		-
+			message: '#^Offset ''code'' on array\{code\: string, name\: string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: lib/Service/PageService.php
+
+		-
+			message: '#^Offset ''file'' on non\-empty\-array in isset\(\) always exists and is not nullable\.$#'
+			identifier: isset.offset
+			count: 1
+			path: lib/Service/PageService.php
+
+		-
+			message: '#^Offset ''name'' on array\{code\: string, name\: string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: lib/Service/PageService.php
+
+		-
+			message: '#^Offset 0 on non\-empty\-list\<string\> on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: lib/Service/PageService.php
+
+		-
+			message: '#^Property OCA\\IntraVox\\Service\\PageService\:\:\$cache in isset\(\) is not nullable nor uninitialized\.$#'
+			identifier: isset.initializedProperty
+			count: 1
+			path: lib/Service/PageService.php
+
+		-
+			message: '#^Property OCA\\IntraVox\\Service\\PageService\:\:\$colorSanitizer is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: lib/Service/PageService.php
+
+		-
+			message: '#^Property OCA\\IntraVox\\Service\\PageService\:\:\$newsPageService in isset\(\) is not nullable nor uninitialized\.$#'
+			identifier: isset.initializedProperty
+			count: 1
+			path: lib/Service/PageService.php
+
+		-
+			message: '#^Property OCA\\IntraVox\\Service\\PageService\:\:\$pageLocator in isset\(\) is not nullable nor uninitialized\.$#'
+			identifier: isset.initializedProperty
+			count: 1
+			path: lib/Service/PageService.php
+
+		-
+			message: '#^Property OCA\\IntraVox\\Service\\PageService\:\:\$pageMediaService in isset\(\) is not nullable nor uninitialized\.$#'
+			identifier: isset.initializedProperty
+			count: 1
+			path: lib/Service/PageService.php
+
+		-
+			message: '#^Property OCA\\IntraVox\\Service\\PageService\:\:\$setupService is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: lib/Service/PageService.php
+
+		-
+			message: '#^Property OCA\\IntraVox\\Service\\PageService\:\:\$translationGroupService in isset\(\) is not nullable nor uninitialized\.$#'
+			identifier: isset.initializedProperty
+			count: 1
+			path: lib/Service/PageService.php
+
+		-
+			message: '#^Property OCA\\IntraVox\\Service\\PageService\:\:\$urlSanitizer is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: lib/Service/PageService.php
+
+		-
+			message: '#^Right side of && is always true\.$#'
+			identifier: booleanAnd.rightAlwaysTrue
+			count: 1
+			path: lib/Service/PageService.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between string and null will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: lib/Service/PageService.php
+
+		-
+			message: '#^Variable \$id in isset\(\) always exists and is not nullable\.$#'
+			identifier: isset.variable
+			count: 1
+			path: lib/Service/PageService.php
+
+		-
+			message: '#^Call to function is_string\(\) with string will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: lib/Service/Path/PagePathHelper.php
+
+		-
+			message: '#^Method OCA\\IntraVox\\Service\\Path\\PagePathHelper\:\:findSubtree\(\) should return array\<array\<int, array\<string, mixed\>\>\> but returns array\<int, array\<string, mixed\>\>\.$#'
+			identifier: return.type
+			count: 1
+			path: lib/Service/Path/PagePathHelper.php
+
+		-
+			message: '#^Parameter \#1 \$array \(non\-empty\-list\<string\>\) of array_values is already a list, call has no effect\.$#'
+			identifier: arrayValues.list
+			count: 1
+			path: lib/Service/Path/PagePathHelper.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between non\-empty\-list\<string\> and array\{\} will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: lib/Service/Path/PagePathHelper.php
+
+		-
+			message: '#^Offset ''f'' on array\{u\: string, n\: string, f\: array\<string, mixed\>, g\: array\<int, string\>\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: lib/Service/People/CohortSnapshot.php
+
+		-
+			message: '#^Offset ''g'' on array\{u\: string, n\: string, f\: array\<string, mixed\>, g\: array\<int, string\>\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: lib/Service/People/CohortSnapshot.php
+
+		-
+			message: '#^Offset ''n'' on array\{u\: string, n\: string, f\: array\<string, mixed\>, g\: array\<int, string\>\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: lib/Service/People/CohortSnapshot.php
+
+		-
+			message: '#^Offset ''u'' on array\{u\: string, n\: string, f\: array\<string, mixed\>, g\: array\<int, string\>\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: lib/Service/People/CohortSnapshot.php
+
+		-
+			message: '#^Parameter \#1 \$array \(list\<mixed\>\) of array_values is already a list, call has no effect\.$#'
+			identifier: arrayValues.list
+			count: 1
+			path: lib/Service/People/PublicSharePeopleGuard.php
+
+		-
+			message: '#^Property OCA\\IntraVox\\Service\\PermissionService\:\:\$appManager is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: lib/Service/PermissionService.php
+
+		-
+			message: '#^Property OCA\\IntraVox\\Service\\PermissionService\:\:\$config is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: lib/Service/PermissionService.php
+
+		-
+			message: '#^Property OCA\\IntraVox\\Service\\PermissionService\:\:\$rootFolder is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: lib/Service/PermissionService.php
+
+		-
+			message: '#^Property OCA\\IntraVox\\Service\\PermissionService\:\:\$userSession is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: lib/Service/PermissionService.php
+
+		-
+			message: '#^Result of \|\| is always true\.$#'
+			identifier: booleanOr.alwaysTrue
+			count: 1
+			path: lib/Service/PhotoStory/ExifReader.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between lsolesen\\pel\\PelEntry and null will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 3
+			path: lib/Service/PhotoStory/ExifReader.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between lsolesen\\pel\\PelIfd and null will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 2
+			path: lib/Service/PhotoStory/ExifReader.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between string and null will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 2
+			path: lib/Service/PhotoStory/ExifReader.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between lsolesen\\pel\\PelIfd and null will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: lib/Service/PhotoStory/ExifReader.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between lsolesen\\pel\\PelTiff and null will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: lib/Service/PhotoStory/ExifReader.php
+
+		-
+			message: '#^Variable \$make on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.variable
+			count: 1
+			path: lib/Service/PhotoStory/ExifReader.php
+
+		-
+			message: '#^Variable \$model on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.variable
+			count: 1
+			path: lib/Service/PhotoStory/ExifReader.php
+
+		-
+			message: '#^Right side of && is always true\.$#'
+			identifier: booleanAnd.rightAlwaysTrue
+			count: 1
+			path: lib/Service/PhotoStory/GeocodeCache.php
+
+		-
+			message: '#^Access to static property \$server on an unknown class OC\.$#'
+			identifier: class.notFound
+			count: 1
+			path: lib/Service/PhotoStoryService.php
+
+		-
+			message: '#^Call to function is_array\(\) with array\{field\?\: string, op\?\: string, value\?\: mixed\} will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: lib/Service/PhotoStoryService.php
+
+		-
+			message: '#^Call to function method_exists\(\) with OCP\\Files\\Storage\\IStorage and ''getId'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: lib/Service/PhotoStoryService.php
+
+		-
+			message: '#^Instanceof between DateTimeImmutable and DateTimeInterface will always evaluate to true\.$#'
+			identifier: instanceof.alwaysTrue
+			count: 2
+			path: lib/Service/PhotoStoryService.php
+
+		-
+			message: '#^Offset ''field'' on array\{field\: string, op\: string, value\: mixed\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 2
+			path: lib/Service/PhotoStoryService.php
+
+		-
+			message: '#^Offset ''op'' on array\{field\: string, op\: string, value\: mixed\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 2
+			path: lib/Service/PhotoStoryService.php
+
+		-
+			message: '#^Parameter \#2 \$out of method OCA\\IntraVox\\Service\\PhotoStoryService\:\:collectMediaRecursive\(\) expects array\<OCP\\Files\\File\>, array\<OCP\\Files\\Node\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: lib/Service/PhotoStoryService.php
+
+		-
+			message: '#^Parameter &\$out by\-ref type of method OCA\\IntraVox\\Service\\PhotoStoryService\:\:collectMediaRecursive\(\) expects array\<OCP\\Files\\File\>, array\<OCP\\Files\\Node\> given\.$#'
+			identifier: parameterByRef.type
+			count: 1
+			path: lib/Service/PhotoStoryService.php
+
+		-
+			message: '#^Result of && is always false\.$#'
+			identifier: booleanAnd.alwaysFalse
+			count: 1
+			path: lib/Service/PhotoStoryService.php
+
+		-
+			message: '#^Right side of && is always true\.$#'
+			identifier: booleanAnd.rightAlwaysTrue
+			count: 1
+			path: lib/Service/PhotoStoryService.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between mixed and null will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: lib/Service/PhotoStoryService.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between null and null will always evaluate to false\.$#'
+			identifier: notIdentical.alwaysFalse
+			count: 2
+			path: lib/Service/PhotoStoryService.php
+
+		-
+			message: '#^Variable \$timestamps in empty\(\) always exists and is not falsy\.$#'
+			identifier: empty.variable
+			count: 1
+			path: lib/Service/PhotoStoryService.php
+
+		-
+			message: '#^Variable \$truncated might not be defined\.$#'
+			identifier: variable.undefined
+			count: 3
+			path: lib/Service/PhotoStoryService.php
+
+		-
+			message: '#^Offset 0 on non\-empty\-list\<string\> on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: lib/Service/PublicShareService.php
+
+		-
+			message: '#^Property OCA\\IntraVox\\Service\\PublicShareService\:\:\$pageService is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: lib/Service/PublicShareService.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between mixed and null will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: lib/Service/PublicShareService.php
+
+		-
+			message: '#^Variable \$segments in empty\(\) always exists and is not falsy\.$#'
+			identifier: empty.variable
+			count: 1
+			path: lib/Service/PublicShareService.php
+
+		-
+			message: '#^Offset ''width'' on non\-empty\-array on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: lib/Service/Sanitize/PageShapeSanitizer.php
+
+		-
+			message: '#^Parameter \#1 \$array \(non\-empty\-list\<non\-empty\-string\>\) of array_values is already a list, call has no effect\.$#'
+			identifier: arrayValues.list
+			count: 2
+			path: lib/Service/Sanitize/PageShapeSanitizer.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between mixed and null will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 4
+			path: lib/Service/Sanitize/PageShapeSanitizer.php
+
+		-
+			message: '#^Access to static property \$SERVERROOT on an unknown class OC\.$#'
+			identifier: class.notFound
+			count: 2
+			path: lib/Service/SetupService.php
+
+		-
+			message: '#^Call to an undefined method OCP\\Files\\Node\:\:get\(\)\.$#'
+			identifier: method.notFound
+			count: 4
+			path: lib/Service/SetupService.php
+
+		-
+			message: '#^Call to an undefined method OCP\\Files\\Node\:\:newFolder\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: lib/Service/SetupService.php
+
+		-
+			message: '#^Method OCA\\IntraVox\\Service\\SetupService\:\:getMountPointFromFolderData\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: lib/Service/SetupService.php
+
+		-
+			message: '#^Property OCA\\IntraVox\\Service\\SetupService\:\:\$shareManager is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: lib/Service/SetupService.php
+
+		-
+			message: '#^Variable \$output on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.variable
+			count: 1
+			path: lib/Service/SetupService.php
+
+		-
+			message: '#^Call to an undefined method OCP\\Files\\Node\:\:get\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: lib/Service/SystemFileService.php
+
+		-
+			message: '#^Method OCA\\IntraVox\\Service\\SystemFileService\:\:findPageFolderByUniqueId\(\) should return OCP\\Files\\Folder\|null but returns OCP\\Files\\Node\.$#'
+			identifier: return.type
+			count: 1
+			path: lib/Service/SystemFileService.php
+
+		-
+			message: '#^Parameter \#1 \$folder of method OCA\\IntraVox\\Service\\SystemFileService\:\:findPageFolderByUniqueId\(\) expects OCP\\Files\\Folder, OCP\\Files\\Node given\.$#'
+			identifier: argument.type
+			count: 1
+			path: lib/Service/SystemFileService.php
+
+		-
+			message: '#^Property OCA\\IntraVox\\Service\\SystemFileService\:\:\$rootFolder is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: lib/Service/SystemFileService.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between string and false will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: lib/Service/SystemFileService.php
+
+		-
+			message: '#^Property OCA\\IntraVox\\Service\\TelemetryService\:\:\$pageService is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: lib/Service/TelemetryService.php
+
+		-
+			message: '#^Call to an undefined method OCP\\Files\\Node\:\:newFolder\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: lib/Service/Template/PageTemplateService.php
+
+		-
+			message: '#^Call to an undefined method OCP\\Files\\Node\:\:nodeExists\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: lib/Service/Template/PageTemplateService.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method OCP\\IUserManager\:\:callForSeenUsers\(\) expects Closure\(OCP\\IUser\)\: \(bool\|null\), Closure\(mixed\)\: void given\.$#'
+			identifier: argument.type
+			count: 1
+			path: lib/Service/UserCountService.php
+
+		-
+			message: '#^Call to an undefined method OCP\\ICache\:\:add\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: lib/Service/UserService.php
+
+		-
+			message: '#^Property OCA\\IntraVox\\Service\\UserService\:\:\$activityManager is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: lib/Service/UserService.php
+
+		-
+			message: '#^Parameter \#1 \$array of function usort contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: lib/Service/Version/PageVersionFormatter.php
+
+		-
+			message: '#^Parameter \#2 \$callback of function usort contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: lib/Service/Version/PageVersionFormatter.php
+
+		-
+			message: '#^Access to static property \$server on an unknown class OC\.$#'
+			identifier: class.notFound
+			count: 1
+			path: lib/Service/Version/PageVersionService.php
+
+		-
+			message: '#^Call to an undefined method OCP\\Files\\Node\:\:getContent\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: lib/Service/Version/PageVersionService.php
+
+		-
+			message: '#^Offset ''activeLanguages'' on array\{language\: string, hasContent\: bool, servedLanguage\: string\|null, languagesWithContent\: array\<string\>, activeLanguages\: array\<string\>\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: lib/Settings/AdminSettings.php
