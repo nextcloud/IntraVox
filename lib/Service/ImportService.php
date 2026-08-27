@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace OCA\IntraVox\Service;
 
 use OCA\IntraVox\Exception\InvalidImportException;
+use OCA\IntraVox\Exception\PageNotFoundException;
 use OCP\Files\File;
 use OCP\Files\Folder;
 use OCP\ITempManager;
@@ -990,7 +991,7 @@ class ImportService {
      * @param string|null $exportPath Export path (e.g., "home", "about", "departments/sales")
      * @param string $uniqueId Page uniqueId for filename (e.g., "page-abc123")
      * @return File The page JSON file
-     * @throws NotFoundException If file not found
+     * @throws PageNotFoundException If the path does not resolve to a folder
      */
     private function getPageFileByPath(Folder $langFolder, ?string $exportPath, string $uniqueId): File {
         // exportPath format is "home", "about", "departments/sales" (NO language prefix)
@@ -1010,7 +1011,7 @@ class ImportService {
             if (empty($part)) continue;
             $currentFolder = $currentFolder->get($part);
             if (!($currentFolder instanceof Folder)) {
-                throw new NotFoundException('Invalid path: ' . $exportPath);
+                throw new PageNotFoundException('Invalid path: ' . $exportPath);
             }
         }
 

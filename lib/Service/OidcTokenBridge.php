@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace OCA\IntraVox\Service;
 
-use OCP\IEventDispatcher;
+use OCP\EventDispatcher\IEventDispatcher;
 use Psr\Log\LoggerInterface;
 
 /**
