@@ -11,6 +11,7 @@ use OCP\ITempManager;
 use OCP\IDBConnection;
 use Psr\Log\LoggerInterface;
 use OCA\IntraVox\Service\Path\PagePathHelper;
+use OCA\IntraVox\Service\Import\ImportNavigationBuilder;
 use OCA\IntraVox\Service\Import\SafeZipExtractor;
 use OCA\IntraVox\Service\Sanitize\PageShapeSanitizer;
 
@@ -32,7 +33,8 @@ class ImportService {
         private IDBConnection $connection,
         private PageIndexService $pageIndexService,
         private PageShapeSanitizer $shapeSanitizer,
-        private SafeZipExtractor $zipExtractor
+        private SafeZipExtractor $zipExtractor,
+        private ImportNavigationBuilder $navigationBuilder
     ) {}
 
     /**
@@ -198,7 +200,7 @@ class ImportService {
         }
 
         // 7. Sort pages by parent relationships (parents before children)
-        $sortedPages = $this->sortPagesByHierarchy($exportData['pages'] ?? []);
+        $sortedPages = $this->navigationBuilder->sortPagesByHierarchy($exportData['pages'] ?? []);
 
         // Track imported pages by uniqueId to resolve parent paths
         $importedPages = [];
@@ -1166,87 +1168,6 @@ class ImportService {
         @rmdir($dir);
     }
 
-    /**
-     * Sort pages by hierarchy - parents before children
-     *
-     * @param array $pages Array of page data
-     * @return array Sorted array of pages
-     */
-    private function sortPagesByHierarchy(array $pages): array {
-        // Build a map of uniqueId => page for quick lookup
-        $pageMap = [];
-        foreach ($pages as $page) {
-            $pageMap[$page['uniqueId']] = $page;
-        }
-
-        // Group pages by parent (siblings)
-        $pagesByParent = [];
-        foreach ($pages as $page) {
-            $parentId = $page['parentUniqueId'] ?? 'root';
-            if (!isset($pagesByParent[$parentId])) {
-                $pagesByParent[$parentId] = [];
-            }
-            $pagesByParent[$parentId][] = $page;
-        }
-
-        // Sort siblings by confluenceOrder if available
-        foreach ($pagesByParent as $parentId => &$siblings) {
-            usort($siblings, function($a, $b) {
-                $orderA = $a['content']['metadata']['confluenceOrder'] ?? 9999;
-                $orderB = $b['content']['metadata']['confluenceOrder'] ?? 9999;
-                return $orderA <=> $orderB;
-            });
-        }
-        unset($siblings);
-
-        // Build dependency graph with sorted siblings
-        $sorted = [];
-        $visited = [];
-
-        // Helper function to visit a page and its ancestors first
-        $visit = function($uniqueId) use (&$visit, &$sorted, &$visited, $pageMap, $pagesByParent) {
-            if (isset($visited[$uniqueId])) {
-                return; // Already processed
-            }
-
-            $visited[$uniqueId] = true;
-
-            if (!isset($pageMap[$uniqueId])) {
-                return; // Page not found
-            }
-
-            $page = $pageMap[$uniqueId];
-
-            // Visit parent first if exists
-            if (!empty($page['parentUniqueId']) && isset($pageMap[$page['parentUniqueId']])) {
-                $visit($page['parentUniqueId']);
-            }
-
-            // Add this page
-            $sorted[] = $page;
-
-            // Visit children in sorted order
-            if (isset($pagesByParent[$uniqueId])) {
-                foreach ($pagesByParent[$uniqueId] as $child) {
-                    $visit($child['uniqueId']);
-                }
-            }
-        };
-
-        // Visit root pages first (in sorted order)
-        if (isset($pagesByParent['root'])) {
-            foreach ($pagesByParent['root'] as $page) {
-                $visit($page['uniqueId']);
-            }
-        }
-
-        // Visit any remaining pages that weren't reached (shouldn't happen normally)
-        foreach ($pages as $page) {
-            $visit($page['uniqueId']);
-        }
-
-        return $sorted;
-    }
 
     /**
      * Find the folder path for a page by its uniqueId
@@ -1348,7 +1269,7 @@ class ImportService {
         // Find the parent navigation item path first to determine depth (if parent specified)
         $parentPath = null;
         if ($parentPageId) {
-            $parentPath = $this->findNavigationItemPath($navigation['items'], $parentPageId);
+            $parentPath = $this->navigationBuilder->findNavigationItemPath($navigation['items'], $parentPageId);
         }
 
         // Calculate parent depth to determine max depth for imported tree
@@ -1366,10 +1287,10 @@ class ImportService {
         $maxImportDepth = 4 - $parentDepth;
 
         // Build a tree structure of imported pages with depth limit
-        $pageTree = $this->buildPageTree($sortedPages, $maxImportDepth);
+        $pageTree = $this->navigationBuilder->buildPageTree($sortedPages, $maxImportDepth);
 
         if (!$parentPath) {
-            $this->addPagesToNavigation($navigation['items'], $pageTree);
+            $this->navigationBuilder->addPagesToNavigation($navigation['items'], $pageTree);
         } else {
             // Get reference to parent item
             $parentNavItem = &$this->getNavigationItemByPath($navigation['items'], $parentPath);
@@ -1378,139 +1299,16 @@ class ImportService {
             if (!isset($parentNavItem['children'])) {
                 $parentNavItem['children'] = [];
             }
-            $this->addPagesToNavigation($parentNavItem['children'], $pageTree);
+            $this->navigationBuilder->addPagesToNavigation($parentNavItem['children'], $pageTree);
         }
 
         // Save updated navigation
         $this->navigationService->saveNavigation($navigation, $language);
     }
 
-    /**
-     * Build a tree structure from flat page list
-     * Limits depth to maximum levels allowed in navigation (5 levels total)
-     *
-     * @param array $pages Flat list of pages
-     * @param int $maxDepth Maximum depth to include (default 4 = 5 levels total with root)
-     * @return array Tree structure limited to maxDepth
-     */
-    private function buildPageTree(array $pages, int $maxDepth = 4): array {
-        $tree = [];
-        $lookup = [];
 
-        // First pass: create all nodes with depth tracking
-        foreach ($pages as $page) {
-            $uniqueId = $page['uniqueId'];
-            $node = [
-                'id' => 'nav_' . substr($uniqueId, 5, 8), // nav_abc12345
-                'title' => $page['content']['title'] ?? 'Untitled',
-                'uniqueId' => $uniqueId,
-                'url' => null,
-                'target' => null,
-                'children' => [],
-                '_depth' => 0, // Will be calculated
-                '_parentId' => $page['parentUniqueId'] ?? null
-            ];
-            $lookup[$uniqueId] = $node;
-        }
 
-        // Calculate depth for each node
-        foreach ($lookup as $uniqueId => &$node) {
-            $node['_depth'] = $this->calculateNodeDepth($uniqueId, $lookup);
-        }
-        unset($node);
 
-        // Second pass: build hierarchy, but only include nodes within maxDepth
-        $skippedCount = 0;
-        foreach ($pages as $page) {
-            $uniqueId = $page['uniqueId'];
-            $parentUniqueId = $page['parentUniqueId'] ?? null;
-            $nodeDepth = $lookup[$uniqueId]['_depth'];
-
-            // Skip nodes that are too deep
-            if ($nodeDepth > $maxDepth) {
-                $skippedCount++;
-                continue;
-            }
-
-            if ($parentUniqueId && isset($lookup[$parentUniqueId])) {
-                $parentDepth = $lookup[$parentUniqueId]['_depth'];
-
-                // Only add if parent is also within depth limit
-                if ($parentDepth <= $maxDepth) {
-                    $lookup[$parentUniqueId]['children'][] = &$lookup[$uniqueId];
-                }
-            } else {
-                // No parent or parent not in imported set = root level
-                $tree[] = &$lookup[$uniqueId];
-            }
-        }
-
-        if ($skippedCount > 0) {
-            $this->logger->info("Skipped pages too deep for navigation", [
-                'skippedCount' => $skippedCount,
-                'maxDepth' => $maxDepth,
-                'note' => 'These pages are still created and accessible via page structure'
-            ]);
-        }
-
-        // Remove temporary depth tracking fields
-        $this->cleanupTreeMetadata($tree);
-
-        return $tree;
-    }
-
-    /**
-     * Calculate depth of a node in the tree (0 = root)
-     */
-    private function calculateNodeDepth(string $uniqueId, array &$lookup, array &$visited = []): int {
-        // Prevent infinite loops
-        if (isset($visited[$uniqueId])) {
-            return 999; // Very deep to exclude circular references
-        }
-        $visited[$uniqueId] = true;
-
-        $node = $lookup[$uniqueId];
-        if (!$node['_parentId'] || !isset($lookup[$node['_parentId']])) {
-            return 0; // Root level
-        }
-
-        return 1 + $this->calculateNodeDepth($node['_parentId'], $lookup, $visited);
-    }
-
-    /**
-     * Remove temporary metadata fields from tree
-     */
-    private function cleanupTreeMetadata(array &$tree): void {
-        foreach ($tree as &$node) {
-            unset($node['_depth']);
-            unset($node['_parentId']);
-
-            if (!empty($node['children'])) {
-                $this->cleanupTreeMetadata($node['children']);
-            }
-        }
-    }
-
-    /**
-     * Find index of navigation item by uniqueId (recursive search)
-     * Returns path to item as array of indices
-     */
-    private function findNavigationItemPath(array $items, string $uniqueId, array $path = []): ?array {
-        foreach ($items as $index => $item) {
-            if (isset($item['uniqueId']) && $item['uniqueId'] === $uniqueId) {
-                return array_merge($path, [$index]);
-            }
-
-            if (!empty($item['children'])) {
-                $found = $this->findNavigationItemPath($item['children'], $uniqueId, array_merge($path, [$index, 'children']));
-                if ($found !== null) {
-                    return $found;
-                }
-            }
-        }
-
-        return null;
-    }
 
     /**
      * Get navigation item by path
@@ -1524,25 +1322,6 @@ class ImportService {
         return $current;
     }
 
-    /**
-     * Add pages to navigation array
-     */
-    private function addPagesToNavigation(array &$navItems, array $pageTree): void {
-        foreach ($pageTree as $pageNode) {
-            // Check if already exists
-            $exists = false;
-            foreach ($navItems as $existingItem) {
-                if (isset($existingItem['uniqueId']) && $existingItem['uniqueId'] === $pageNode['uniqueId']) {
-                    $exists = true;
-                    break;
-                }
-            }
-
-            if (!$exists) {
-                $navItems[] = $pageNode;
-            }
-        }
-    }
 
     /**
      * Map a groupfolder file ID to its corresponding Files storage file ID
