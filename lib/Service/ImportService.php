@@ -224,6 +224,110 @@ class ImportService {
         $metavoxImportQueue = [];
 
         // 8. Import pages
+        $metavoxImportQueue = $this->importSortedPages(
+            $sortedPages,
+            $language,
+            $overwrite,
+            $importComments,
+            $hasMetaVoxData,
+            $groupfolderId,
+            $importedPages,
+            $stats
+        );
+
+        // 9. Import media files
+        $stats['mediaFilesImported'] = $this->importMediaFiles($tempDir, $language, $overwrite);
+
+        // 10. Update navigation with imported pages (if navigation wasn't explicitly imported)
+
+        if (empty($exportData['navigation']) && !empty($importedPages)) {
+            try {
+                $this->updateNavigationWithImportedPages($sortedPages, $importedPages, $language, $parentPageId);
+                $stats['navigationUpdated'] = true;
+            } catch (\Exception $e) {
+                $this->logger->warning('Failed to update navigation: ' . $e->getMessage());
+            }
+        }
+
+        // 11. Rescan filecache SYNCHRONOUSLY before MetaVox import
+        if ($hasMetaVoxData && !empty($metavoxImportQueue)) {
+            $this->rescanFilecache($language);
+        }
+
+        // 12. Import MetaVox metadata (after filecache rescan)
+        $this->importQueuedMetaVoxData(
+            $hasMetaVoxData ? $metavoxImportQueue : [],
+            $groupfolderId,
+            $language,
+            $stats
+        );
+
+        // 13. Trigger background groupfolder scan for final cleanup
+        $this->triggerGroupfolderScan();
+
+        // Add MetaVox compatibility info to stats
+        if ($metaVoxCompatibility) {
+            $stats['metavoxCompatibility'] = $metaVoxCompatibility;
+        }
+        if ($metaVoxFieldValidation) {
+            $stats['metavoxFieldValidation'] = $metaVoxFieldValidation;
+        }
+
+        // Cleanup
+        $this->cleanupTempDir($tempDir);
+
+        // Flush distributed caches so the freshly imported pages appear
+        // in tree, navigation and permission lookups immediately. Without
+        // this the import "succeeds" but the new pages are invisible for
+        // up to 5 minutes (PR-3 distributed tree TTL).
+        $this->pageService->invalidateAllCaches();
+
+        $this->logger->info(self::LOG_PREFIX . ' Import complete', $stats);
+
+        return $stats;
+    }
+
+    /**
+     * Phase 12 of importFromZip(): write the queued MetaVox metadata.
+     *
+     * Split out as its own method rather than a new class: it is a step in
+     * one long transaction and shares $stats with the phases around it.
+     * Moving it to a collaborator would mean handing over the whole
+     * accumulator and three lookup helpers for no gain -- what was wrong
+     * with it was that importFromZip() was 382 lines, not where it lived.
+     *
+     * MUST run after the filecache rescan (phase 11): MetaVox keys metadata
+     * on the Files-storage file id, which does not exist until the freshly
+     * written pages have been scanned.
+     *
+     * @param array<int, array<string, mixed>> $queue    empty disables the phase
+     * @param array<string, mixed>             $stats    accumulator, by reference
+     */
+    /**
+     * Phase 8 of importFromZip(): write the pages, in parent-before-child
+     * order, and collect the MetaVox metadata that cannot be written yet.
+     *
+     * The queue exists because MetaVox keys its rows on the Files-storage
+     * file id, which does not exist until the filecache has been rescanned.
+     * So the pages are written here and their metadata in phase 12.
+     *
+     * @param array<int, array<string, mixed>>  $sortedPages   parents first
+     * @param array                             $importedPages uniqueId => path, by reference
+     * @param array<string, mixed>              $stats         accumulator, by reference
+     * @return array<int, array<string, mixed>> the MetaVox import queue
+     */
+    private function importSortedPages(
+        array $sortedPages,
+        string $language,
+        bool $overwrite,
+        bool $importComments,
+        bool $hasMetaVoxData,
+        int $groupfolderId,
+        array &$importedPages,
+        array &$stats
+    ): array {
+        $metavoxImportQueue = [];
+
         foreach ($sortedPages as $pageData) {
             $result = $this->importPage($pageData, $language, $overwrite, $importedPages);
             if ($result['imported']) {
@@ -273,163 +377,132 @@ class ImportService {
             }
         }
 
-        // 9. Import media files
-        $stats['mediaFilesImported'] = $this->importMediaFiles($tempDir, $language, $overwrite);
-
-        // 10. Update navigation with imported pages (if navigation wasn't explicitly imported)
-
-        if (empty($exportData['navigation']) && !empty($importedPages)) {
-            try {
-                $this->updateNavigationWithImportedPages($sortedPages, $importedPages, $language, $parentPageId);
-                $stats['navigationUpdated'] = true;
-            } catch (\Exception $e) {
-                $this->logger->warning('Failed to update navigation: ' . $e->getMessage());
-            }
-        }
-
-        // 11. Rescan filecache SYNCHRONOUSLY before MetaVox import
-        if ($hasMetaVoxData && !empty($metavoxImportQueue)) {
-            $this->rescanFilecache($language);
-        }
-
-        // 12. Import MetaVox metadata (after filecache rescan)
-        if ($hasMetaVoxData && !empty($metavoxImportQueue) && $groupfolderId > 0) {
-
-            $langFolder = $this->setupService->getLanguageFolder($language);
-
-            foreach ($metavoxImportQueue as $queueItem) {
-                try {
-                    // Get fresh file ID after rescan
-                    // Use exportPath for IntraVox exports, or importedPath for Confluence imports
-                    $pageFile = null;
-
-                    if (!empty($queueItem['exportPath'])) {
-                        // IntraVox export format - use exportPath
-                        $pageFile = $this->getPageFileByPath($langFolder, $queueItem['exportPath'], $queueItem['uniqueId']);
-                    } elseif (!empty($queueItem['importedPath'])) {
-                        // Confluence import - use the imported path directly
-                        $pageFile = $this->getPageFileByImportedPath($langFolder, $queueItem['importedPath']);
-                    }
-
-                    if ($pageFile === null) {
-                        $this->logger->warning('Could not find page file for MetaVox import', [
-                            'uniqueId' => $queueItem['uniqueId'],
-                            'exportPath' => $queueItem['exportPath'] ?? 'none',
-                            'importedPath' => $queueItem['importedPath'] ?? 'none'
-                        ]);
-                        continue;
-                    }
-
-                    $groupfolderFileId = $pageFile->getId();
-                    $groupfolderFolderId = $pageFile->getParent()->getId();
-
-                    // Map groupfolder file IDs to Files storage IDs for MetaVox compatibility
-                    // MetaVox stores metadata using Files storage IDs, not groupfolder IDs
-                    $filesStorageFileId = $this->getFilesStorageFileId($groupfolderFileId, $groupfolderId);
-                    $filesStorageFolderId = $this->getFilesStorageFileId($groupfolderFolderId, $groupfolderId);
-
-                    // Use mapped IDs if available, otherwise fall back to original IDs
-                    $freshFileId = $filesStorageFileId ?? $groupfolderFileId;
-                    $folderFileId = $filesStorageFolderId ?? $groupfolderFolderId;
-
-                    $metadata = $queueItem['metadata'];
-
-                    // Check if v1.3 format (nested file/folder) or old format (flat array)
-                    $isNestedFormat = isset($metadata['file']) || isset($metadata['folder']);
-
-                    if ($isNestedFormat) {
-                        // v1.3+ format: metadata nested as file/folder
-                        $fileMetadata = $metadata['file'] ?? [];
-                        $folderMetadata = $metadata['folder'] ?? [];
-
-                        // Import file metadata
-                        if (!empty($fileMetadata)) {
-                            foreach ($fileMetadata as $field) {
-                                $success = $this->metaVoxImportService->importFieldValue(
-                                    $freshFileId,
-                                    $groupfolderId,
-                                    $field['field_name'],
-                                    $field['value']
-                                );
-                                if ($success) {
-                                    $stats['metavoxFieldsImported']++;
-                                } else {
-                                    $stats['metavoxFieldsFailed']++;
-                                }
-                            }
-                        }
-
-                        // Import folder metadata
-                        if (!empty($folderMetadata)) {
-                            foreach ($folderMetadata as $field) {
-                                $success = $this->metaVoxImportService->importFieldValue(
-                                    $folderFileId,
-                                    $groupfolderId,
-                                    $field['field_name'],
-                                    $field['value']
-                                );
-                                if ($success) {
-                                    $stats['metavoxFieldsImported']++;
-                                } else {
-                                    $stats['metavoxFieldsFailed']++;
-                                }
-                            }
-                        }
-                    } else {
-                        // v1.2 or older format: flat metadata array (backward compatibility)
-                        $metaStats = $this->metaVoxImportService->importPageMetadata(
-                            $freshFileId,
-                            $groupfolderId,
-                            $metadata
-                        );
-
-                        $stats['metavoxFieldsImported'] += $metaStats['imported'];
-                        $stats['metavoxFieldsSkipped'] += $metaStats['skipped'];
-                        $stats['metavoxFieldsFailed'] += $metaStats['failed'];
-                    }
-
-                } catch (\Exception $e) {
-                    $this->logger->error('Failed to import MetaVox metadata for page', [
-                        'uniqueId' => $queueItem['uniqueId'],
-                        'error' => $e->getMessage()
-                    ]);
-                    // Count all fields as failed
-                    $metadata = $queueItem['metadata'];
-                    $isNested = isset($metadata['file']) || isset($metadata['folder']);
-                    if ($isNested) {
-                        $total = count($metadata['file'] ?? []) + count($metadata['folder'] ?? []);
-                    } else {
-                        $total = count($metadata);
-                    }
-                    $stats['metavoxFieldsFailed'] += $total;
-                }
-            }
-        }
-
-        // 13. Trigger background groupfolder scan for final cleanup
-        $this->triggerGroupfolderScan();
-
-        // Add MetaVox compatibility info to stats
-        if ($metaVoxCompatibility) {
-            $stats['metavoxCompatibility'] = $metaVoxCompatibility;
-        }
-        if ($metaVoxFieldValidation) {
-            $stats['metavoxFieldValidation'] = $metaVoxFieldValidation;
-        }
-
-        // Cleanup
-        $this->cleanupTempDir($tempDir);
-
-        // Flush distributed caches so the freshly imported pages appear
-        // in tree, navigation and permission lookups immediately. Without
-        // this the import "succeeds" but the new pages are invisible for
-        // up to 5 minutes (PR-3 distributed tree TTL).
-        $this->pageService->invalidateAllCaches();
-
-        $this->logger->info(self::LOG_PREFIX . ' Import complete', $stats);
-
-        return $stats;
+        return $metavoxImportQueue;
     }
+
+    private function importQueuedMetaVoxData(
+        array $queue,
+        int $groupfolderId,
+        string $language,
+        array &$stats
+    ): void {
+        if ($queue === [] || $groupfolderId <= 0) {
+            return;
+        }
+
+
+        $langFolder = $this->setupService->getLanguageFolder($language);
+
+        foreach ($queue as $queueItem) {
+            try {
+                // Get fresh file ID after rescan
+                // Use exportPath for IntraVox exports, or importedPath for Confluence imports
+                $pageFile = null;
+
+                if (!empty($queueItem['exportPath'])) {
+                    // IntraVox export format - use exportPath
+                    $pageFile = $this->getPageFileByPath($langFolder, $queueItem['exportPath'], $queueItem['uniqueId']);
+                } elseif (!empty($queueItem['importedPath'])) {
+                    // Confluence import - use the imported path directly
+                    $pageFile = $this->getPageFileByImportedPath($langFolder, $queueItem['importedPath']);
+                }
+
+                if ($pageFile === null) {
+                    $this->logger->warning('Could not find page file for MetaVox import', [
+                        'uniqueId' => $queueItem['uniqueId'],
+                        'exportPath' => $queueItem['exportPath'] ?? 'none',
+                        'importedPath' => $queueItem['importedPath'] ?? 'none'
+                    ]);
+                    continue;
+                }
+
+                $groupfolderFileId = $pageFile->getId();
+                $groupfolderFolderId = $pageFile->getParent()->getId();
+
+                // Map groupfolder file IDs to Files storage IDs for MetaVox compatibility
+                // MetaVox stores metadata using Files storage IDs, not groupfolder IDs
+                $filesStorageFileId = $this->getFilesStorageFileId($groupfolderFileId, $groupfolderId);
+                $filesStorageFolderId = $this->getFilesStorageFileId($groupfolderFolderId, $groupfolderId);
+
+                // Use mapped IDs if available, otherwise fall back to original IDs
+                $freshFileId = $filesStorageFileId ?? $groupfolderFileId;
+                $folderFileId = $filesStorageFolderId ?? $groupfolderFolderId;
+
+                $metadata = $queueItem['metadata'];
+
+                // Check if v1.3 format (nested file/folder) or old format (flat array)
+                $isNestedFormat = isset($metadata['file']) || isset($metadata['folder']);
+
+                if ($isNestedFormat) {
+                    // v1.3+ format: metadata nested as file/folder
+                    $fileMetadata = $metadata['file'] ?? [];
+                    $folderMetadata = $metadata['folder'] ?? [];
+
+                    // Import file metadata
+                    if (!empty($fileMetadata)) {
+                        foreach ($fileMetadata as $field) {
+                            $success = $this->metaVoxImportService->importFieldValue(
+                                $freshFileId,
+                                $groupfolderId,
+                                $field['field_name'],
+                                $field['value']
+                            );
+                            if ($success) {
+                                $stats['metavoxFieldsImported']++;
+                            } else {
+                                $stats['metavoxFieldsFailed']++;
+                            }
+                        }
+                    }
+
+                    // Import folder metadata
+                    if (!empty($folderMetadata)) {
+                        foreach ($folderMetadata as $field) {
+                            $success = $this->metaVoxImportService->importFieldValue(
+                                $folderFileId,
+                                $groupfolderId,
+                                $field['field_name'],
+                                $field['value']
+                            );
+                            if ($success) {
+                                $stats['metavoxFieldsImported']++;
+                            } else {
+                                $stats['metavoxFieldsFailed']++;
+                            }
+                        }
+                    }
+                } else {
+                    // v1.2 or older format: flat metadata array (backward compatibility)
+                    $metaStats = $this->metaVoxImportService->importPageMetadata(
+                        $freshFileId,
+                        $groupfolderId,
+                        $metadata
+                    );
+
+                    $stats['metavoxFieldsImported'] += $metaStats['imported'];
+                    $stats['metavoxFieldsSkipped'] += $metaStats['skipped'];
+                    $stats['metavoxFieldsFailed'] += $metaStats['failed'];
+                }
+
+            } catch (\Exception $e) {
+                $this->logger->error('Failed to import MetaVox metadata for page', [
+                    'uniqueId' => $queueItem['uniqueId'],
+                    'error' => $e->getMessage()
+                ]);
+                // Count all fields as failed
+                $metadata = $queueItem['metadata'];
+                $isNested = isset($metadata['file']) || isset($metadata['folder']);
+                if ($isNested) {
+                    $total = count($metadata['file'] ?? []) + count($metadata['folder'] ?? []);
+                } else {
+                    $total = count($metadata);
+                }
+                $stats['metavoxFieldsFailed'] += $total;
+            }
+        }
+    
+    }
+
 
     /**
      * Import a single page
