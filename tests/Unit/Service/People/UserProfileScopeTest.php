@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace OCA\IntraVox\Tests\Unit\Service\People;
 
 use OCA\IntraVox\Service\UserService;
+use OCA\IntraVox\Service\People\ProfileFilterMatcher;
 use OCP\Accounts\IAccount;
 use OCP\Accounts\IAccountManager;
 use OCP\Accounts\IAccountProperty;
@@ -81,6 +82,7 @@ class UserProfileScopeTest extends TestCase {
 			$accountManager,
 			$urlGenerator,
 			$this->createMock(LoggerInterface::class),
+			new ProfileFilterMatcher(),
 			null,
 			null,
 			null,
