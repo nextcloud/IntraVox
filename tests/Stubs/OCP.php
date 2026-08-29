@@ -184,6 +184,17 @@ interface IGroup {
     public function addUser(IUser $user): void;
 }
 
+namespace OCP\Security;
+
+/**
+ * Server-side encryption for stored secrets (feed tokens, client secrets).
+ * Only the two methods the app calls.
+ */
+interface ICrypto {
+    public function encrypt(string $input, string $password = ''): string;
+    public function decrypt(string $input, string $password = ''): string;
+}
+
 namespace OCP\EventDispatcher;
 
 abstract class Event {}

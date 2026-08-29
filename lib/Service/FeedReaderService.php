@@ -6,6 +6,7 @@ namespace OCA\IntraVox\Service;
 
 use OCA\IntraVox\AppInfo\Application;
 use OCA\IntraVox\Service\Feed\FeedResponseReader;
+use OCA\IntraVox\Service\Feed\FeedTokenResolver;
 use OCA\IntraVox\Service\Sanitize\MediaSanitizer;
 use OCA\IntraVox\Service\Sanitize\OutboundUrlValidator;
 use OCP\Http\Client\IClientService;
@@ -24,6 +25,8 @@ use Psr\Log\LoggerInterface;
 class FeedReaderService {
     private const CACHE_TTL = 900; // 15 minutes
     private const HTTP_TIMEOUT = 5;
+
+    private ?FeedTokenResolver $tokenResolver = null;
     private const MAX_ITEMS = 50;
     /**
      * Still here for the XML path, which parses with simplexml rather than
@@ -273,74 +276,6 @@ class FeedReaderService {
         return $items;
     }
 
-    /**
-     * Resolve the best available token for a connection + user.
-     *
-     * Priority: OIDC auto-connect > per-user OAuth2/manual > admin fallback
-     *
-     * @return array|null {token: string, source: string} or null if no token available
-     */
-    public function resolveToken(string $connectionId, ?string $userId): ?array {
-        $connection = $this->getConnection($connectionId);
-        if ($connection === null) {
-            return null;
-        }
-
-        // Client credentials flow (app-level, e.g. SharePoint/Graph API)
-        if (($connection['authMethod'] ?? '') === 'client_credentials') {
-            return $this->acquireClientCredentialsToken($connection);
-        }
-
-        $authMode = $connection['authMode'] ?? 'token';
-
-        // Legacy mode: use admin token (only for authenticated users, not public shares)
-        if ($authMode === 'token') {
-            if ($userId === null) {
-                return null; // Don't expose admin token to public/anonymous requests
-            }
-            return $this->decryptAdminToken($connection);
-        }
-
-        // Try user-level tokens if we have a userId
-        if ($userId !== null) {
-            // 1. Try OIDC auto-connect
-            if (($connection['oidcAutoConnect'] ?? false) && $this->oidcTokenBridge !== null) {
-                $oidcToken = $this->oidcTokenBridge->getToken();
-                if ($oidcToken !== null && !empty($oidcToken['access_token'])) {
-                    return [
-                        'token' => $oidcToken['access_token'],
-                        'source' => 'oidc',
-                    ];
-                }
-            }
-
-            // 2. Try per-user stored token (OAuth2 or manual)
-            $userToken = $this->lmsTokenService->getUserToken($userId, $connectionId);
-            if ($userToken !== null) {
-                // Check if OAuth2 token needs refresh
-                if ($userToken['token_type'] === 'oauth2' && $this->lmsTokenService->isTokenExpired($userId, $connectionId)) {
-                    $refreshed = $this->tryRefreshToken($connection, $userToken, $userId, $connectionId);
-                    if ($refreshed !== null) {
-                        return $refreshed;
-                    }
-                    // Refresh failed — token is invalid, delete it
-                    $this->lmsTokenService->deleteUserToken($userId, $connectionId);
-                } else {
-                    return [
-                        'token' => $userToken['access_token'],
-                        'source' => $userToken['token_type'],
-                    ];
-                }
-            }
-        }
-
-        // 3. Fall back to admin token (only for "both" mode, authenticated users only)
-        if ($authMode === 'both' && $userId !== null) {
-            return $this->decryptAdminToken($connection);
-        }
-
-        return null;
-    }
 
     /**
      * Route a connection-based feed request to the appropriate fetch strategy.
@@ -598,140 +533,8 @@ class FeedReaderService {
         return $courseId;
     }
 
-    private function decryptAdminToken(array $connection): ?array {
-        if (empty($connection['token'])) {
-            return null;
-        }
-        try {
-            return [
-                'token' => $this->crypto->decrypt($connection['token']),
-                'source' => 'admin',
-            ];
-        } catch (\Exception $e) {
-            $this->logger->error('IntraVox: Failed to decrypt admin token', [
-                'connectionId' => $connection['id'] ?? 'unknown',
-            ]);
-            return null;
-        }
-    }
 
-    /**
-     * Try to refresh an expired OAuth2 token.
-     */
-    private function tryRefreshToken(array $connection, array $userToken, string $userId, string $connectionId): ?array {
-        if (empty($userToken['refresh_token'])) {
-            return null;
-        }
 
-        try {
-            $refreshed = $this->lmsOAuthService->refreshToken($connection, $userToken['refresh_token']);
-
-            $expiresAt = null;
-            if (isset($refreshed['expires_in']) && $refreshed['expires_in'] > 0) {
-                $expiresAt = new \DateTime('+' . $refreshed['expires_in'] . ' seconds');
-            }
-
-            $this->lmsTokenService->saveUserToken(
-                $userId,
-                $connectionId,
-                $refreshed['access_token'],
-                $refreshed['refresh_token'] ?? $userToken['refresh_token'],
-                'oauth2',
-                $expiresAt,
-            );
-
-            return [
-                'token' => $refreshed['access_token'],
-                'source' => 'oauth2',
-            ];
-        } catch (\Exception $e) {
-            $this->logger->warning('IntraVox: Token refresh failed', [
-                'connectionId' => $connectionId,
-                'userId' => $userId,
-                'error' => $e->getMessage(),
-            ]);
-            return null;
-        }
-    }
-
-    /**
-     * Acquire an access token using OAuth2 client_credentials flow.
-     * Used for app-level authentication (e.g., Microsoft Graph API for SharePoint).
-     *
-     * Tokens are cached in the distributed cache. No refresh_token is used —
-     * when the token expires, a new one is requested with the same credentials.
-     *
-     * @return array|null {token: string, source: string}
-     */
-    private function acquireClientCredentialsToken(array $connection): ?array {
-        $tenantId = $connection['tenantId'] ?? '';
-        $clientId = $connection['clientId'] ?? '';
-        $encryptedSecret = $connection['clientSecret'] ?? '';
-
-        if (empty($tenantId) || empty($clientId) || empty($encryptedSecret)) {
-            return null;
-        }
-
-        $connectionId = $connection['id'] ?? '';
-        $cacheKey = 'cc_token_' . md5($connectionId);
-
-        // Check cache first
-        if ($this->cache !== null) {
-            $cached = $this->cache->get($cacheKey);
-            if ($cached !== null) {
-                return ['token' => $cached, 'source' => 'client_credentials'];
-            }
-        }
-
-        try {
-            $clientSecret = $this->crypto->decrypt($encryptedSecret);
-        } catch (\Exception $e) {
-            $this->logger->error('IntraVox: Failed to decrypt client secret for client_credentials', [
-                'connectionId' => $connectionId,
-            ]);
-            return null;
-        }
-
-        $tokenUrl = 'https://login.microsoftonline.com/' . urlencode($tenantId) . '/oauth2/v2.0/token';
-
-        try {
-            $client = $this->httpClient->newClient();
-            $response = $client->post($tokenUrl, [
-                'timeout' => self::HTTP_TIMEOUT,
-                'body' => [
-                    'grant_type' => 'client_credentials',
-                    'client_id' => $clientId,
-                    'client_secret' => $clientSecret,
-                    'scope' => 'https://graph.microsoft.com/.default',
-                ],
-            ]);
-
-            $data = json_decode($response->getBody(), true);
-            if (!is_array($data) || empty($data['access_token'])) {
-                $this->logger->error('IntraVox: client_credentials token response missing access_token', [
-                    'connectionId' => $connectionId,
-                ]);
-                return null;
-            }
-
-            $accessToken = $data['access_token'];
-            $expiresIn = isset($data['expires_in']) ? (int) $data['expires_in'] : 3600;
-
-            // Cache with safety buffer (2 minutes before actual expiry, minimum 60s)
-            if ($this->cache !== null) {
-                $cacheTtl = max(60, $expiresIn - 120);
-                $this->cache->set($cacheKey, $accessToken, $cacheTtl);
-            }
-
-            return ['token' => $accessToken, 'source' => 'client_credentials'];
-        } catch (\Exception $e) {
-            $this->logger->error('IntraVox: client_credentials token request failed', [
-                'connectionId' => $connectionId,
-                'error' => $e->getMessage(),
-            ]);
-            return null;
-        }
-    }
 
     /**
      * Fetch and parse an RSS or Atom feed.
@@ -896,7 +699,7 @@ class FeedReaderService {
 
         $baseUrl = rtrim($connection['baseUrl'], '/');
         $this->validateUrl($baseUrl);
-        $resolved = $this->resolveToken($connectionId, $userId);
+        $resolved = $this->tokens()->resolveToken($connectionId, $userId);
         if ($resolved === null) {
             throw new \RuntimeException('No Moodle token available. Please connect your account.');
         }
@@ -1146,7 +949,7 @@ class FeedReaderService {
 
         $baseUrl = rtrim($connection['baseUrl'], '/');
         $this->validateUrl($baseUrl);
-        $resolved = $this->resolveToken($connectionId, $userId);
+        $resolved = $this->tokens()->resolveToken($connectionId, $userId);
         if ($resolved === null) {
             throw new \RuntimeException('No Canvas token available. Please connect your account.');
         }
@@ -1360,7 +1163,7 @@ class FeedReaderService {
 
         $baseUrl = rtrim($connection['baseUrl'], '/');
         $this->validateUrl($baseUrl);
-        $resolved = $this->resolveToken($connectionId, $userId);
+        $resolved = $this->tokens()->resolveToken($connectionId, $userId);
         if ($resolved === null) {
             throw new \RuntimeException('No Brightspace token available. Please connect your account.');
         }
@@ -1545,7 +1348,7 @@ class FeedReaderService {
             return $this->fetchGenericRestApi($config, $userId);
         }
 
-        $resolved = $this->resolveToken($connectionId, $userId);
+        $resolved = $this->tokens()->resolveToken($connectionId, $userId);
         if ($resolved === null) {
             throw new \RuntimeException('No SharePoint token available');
         }
@@ -1748,7 +1551,7 @@ class FeedReaderService {
             throw new \RuntimeException('SharePoint site URL not configured');
         }
 
-        $resolved = $this->resolveToken($connectionId, null);
+        $resolved = $this->tokens()->resolveToken($connectionId, null);
         if ($resolved === null) {
             throw new \RuntimeException('No SharePoint token available');
         }
@@ -1865,18 +1668,18 @@ class FeedReaderService {
 
         // Build auth header
         if ($authMethod === 'bearer' || $authMethod === 'client_credentials') {
-            $resolved = $this->resolveToken($connectionId, $userId);
+            $resolved = $this->tokens()->resolveToken($connectionId, $userId);
             if ($resolved !== null) {
                 $headers['Authorization'] = 'Bearer ' . $resolved['token'];
             }
         } elseif ($authMethod === 'apikey') {
-            $resolved = $this->resolveToken($connectionId, $userId);
+            $resolved = $this->tokens()->resolveToken($connectionId, $userId);
             $headerName = $connection['apiKeyHeader'] ?? 'X-API-Key';
             if ($resolved !== null && preg_match('/^[a-zA-Z0-9\-]+$/', $headerName)) {
                 $headers[$headerName] = $resolved['token'];
             }
         } elseif ($authMethod === 'basic') {
-            $resolved = $this->resolveToken($connectionId, $userId);
+            $resolved = $this->tokens()->resolveToken($connectionId, $userId);
             if ($resolved !== null) {
                 $token = $resolved['token'];
                 // Jira Cloud: prepend email to token for Basic auth (email:api-token)
@@ -1964,7 +1767,7 @@ class FeedReaderService {
         $headers = ['Accept' => 'application/json'];
         $authMethod = $connection['authMethod'] ?? 'bearer';
 
-        $resolved = $this->resolveToken($connectionId, null);
+        $resolved = $this->tokens()->resolveToken($connectionId, null);
         if ($resolved === null) {
             return ['projects' => []];
         }
@@ -2254,6 +2057,24 @@ class FeedReaderService {
         }
 
         $this->config->setAppValue(Application::APP_ID, 'feed_connections', json_encode($toSave));
+    }
+
+    /**
+     * Built lazily because it closes over getConnection(), which stays here:
+     * the connection projection is pinned by FeedConnectionProjectionTest
+     * against this file (FEED-CRED).
+     */
+    private function tokens(): FeedTokenResolver {
+        return $this->tokenResolver ??= new FeedTokenResolver(
+            $this->lmsTokenService,
+            $this->lmsOAuthService,
+            $this->crypto,
+            $this->httpClient,
+            $this->logger,
+            fn (string $id): ?array => $this->getConnection($id),
+            $this->cache,
+            $this->oidcTokenBridge,
+        );
     }
 
     /**
