@@ -751,14 +751,30 @@ export default {
     min-height: 0;
   }
 
-  /* De twee tabpanels (paginaboom en inhoudsopgave) zijn wat er scrollt. */
-  .page-tree-content.is-panel .page-tree,
+  /* De twee tabpanels zijn .tree-view (paginaboom) en .panel-scroll-area
+     (inhoudsopgave). Die moeten meekrimpen, niet alleen de lijst erin:
+     .tree-view zit als display:block-wrapper tussen de content en de
+     .page-tree, en groeide zonder deze regel gewoon door tot 1872px --
+     dan heeft de lijst eronder niets om tegen af te kappen. Gemeten. */
+  .page-tree-content.is-panel .tree-view,
   .page-tree-content.is-panel .panel-scroll-area {
+    display: flex;
+    flex-direction: column;
     flex: 1;
     min-height: 0;
+  }
+
+  /* En dit is wat er daadwerkelijk scrollt. */
+  .page-tree-content.is-panel .page-tree,
+  .page-tree-content.is-panel .panel-scroll-area {
     max-height: none;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+  }
+
+  .page-tree-content.is-panel .page-tree {
+    flex: 1;
+    min-height: 0;
   }
 }
 
