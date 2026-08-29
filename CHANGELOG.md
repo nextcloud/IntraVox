@@ -33,6 +33,13 @@ IntraVox is a Nextcloud intranet page builder.
   would accept. Every export from such an instance was affected; exports from
   instances without MetaVox were fine. Re-export to get a working file — nothing
   else needs doing, and previously exported archives can be discarded.
+- **The page structure panel could not be scrolled on a phone.** The list ran off
+  the bottom of the screen with no way to reach the rest of it, so anything below
+  the fold was unreachable. The panel now keeps its title, tabs and close button
+  in place while the list itself scrolls.
+- **The panel title and close button sat behind the Nextcloud header on a phone.**
+  Part of the heading was cut off and the close button was mostly covered, which
+  made the panel hard to dismiss. Both are clear of the header now.
 
 ## [2.5.0] - 2026-08-26 — The API describes itself, and the description is checked
 
