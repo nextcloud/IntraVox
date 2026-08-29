@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace OCA\IntraVox\Service;
 
 use OCA\IntraVox\AppInfo\Application;
+use OCA\IntraVox\Service\Feed\FeedResponseReader;
 use OCA\IntraVox\Service\Sanitize\MediaSanitizer;
 use OCA\IntraVox\Service\Sanitize\OutboundUrlValidator;
 use OCP\Http\Client\IClientService;
@@ -24,7 +25,11 @@ class FeedReaderService {
     private const CACHE_TTL = 900; // 15 minutes
     private const HTTP_TIMEOUT = 5;
     private const MAX_ITEMS = 50;
-    private const EXCERPT_LENGTH = 300;
+    /**
+     * Still here for the XML path, which parses with simplexml rather than
+     * json_decode and therefore does not go through FeedResponseReader.
+     * Same ceiling, deliberately: see FeedResponseReader::MAX_RESPONSE_SIZE.
+     */
     private const MAX_RESPONSE_SIZE = 10 * 1024 * 1024; // 10 MB
 
     /** @var array Connection type presets with default configuration */
@@ -86,6 +91,7 @@ class FeedReaderService {
         private LmsOAuthService $lmsOAuthService,
         private OutboundUrlValidator $urlValidator,
         private MediaSanitizer $mediaSanitizer,
+        private FeedResponseReader $responses,
         private ?OidcTokenBridge $oidcTokenBridge = null,
     ) {
         if ($this->cacheFactory->isAvailable()) {
@@ -2292,19 +2298,7 @@ class FeedReaderService {
      * Validate that an HTTP response has a successful status code (2xx).
      */
     private function validateHttpResponse($response, string $context = ''): void {
-        $status = $response->getStatusCode();
-        if ($status >= 200 && $status < 300) {
-            return;
-        }
-        $prefix = $context ? "$context: " : '';
-        throw match (true) {
-            $status === 401 => new \RuntimeException("{$prefix}Authentication failed (401)"),
-            $status === 403 => new \RuntimeException("{$prefix}Access denied (403)"),
-            $status === 404 => new \RuntimeException("{$prefix}Not found (404)"),
-            $status === 429 => new \RuntimeException("{$prefix}Rate limited (429). Try again later."),
-            $status >= 500 => new \RuntimeException("{$prefix}Server error ($status)"),
-            default => new \RuntimeException("{$prefix}HTTP error ($status)"),
-        };
+        $this->responses->assertSuccessful($response, $context);
     }
 
     /**
@@ -2421,11 +2415,7 @@ class FeedReaderService {
      * Safely decode a JSON response body with size limit to prevent OOM.
      */
     private function safeJsonDecode($response): ?array {
-        $body = $response->getBody();
-        if (strlen($body) > self::MAX_RESPONSE_SIZE) {
-            throw new \RuntimeException('API response too large (' . round(strlen($body) / 1024 / 1024, 1) . ' MB, limit ' . (self::MAX_RESPONSE_SIZE / 1024 / 1024) . ' MB)');
-        }
-        return json_decode($body, true);
+        return $this->responses->decodeJson($response);
     }
 
     private function getImageProxySecret(): string {
@@ -2440,51 +2430,15 @@ class FeedReaderService {
     }
 
     private function sanitizeExcerpt(string $html): string {
-        // Strip HTML tags and decode entities
-        $text = html_entity_decode(strip_tags($html), ENT_QUOTES | ENT_HTML5, 'UTF-8');
-        $text = preg_replace('/\s+/', ' ', $text);
-        $text = trim($text);
-
-        if (mb_strlen($text) > self::EXCERPT_LENGTH) {
-            $truncated = mb_substr($text, 0, self::EXCERPT_LENGTH);
-            $lastSpace = mb_strrpos($truncated, ' ');
-            if ($lastSpace !== false && $lastSpace > self::EXCERPT_LENGTH * 0.7) {
-                $truncated = mb_substr($truncated, 0, $lastSpace);
-            }
-            $text = $truncated . '...';
-        }
-
-        return $text;
+        return $this->responses->excerpt($html);
     }
 
     private function extractImageFromHtml(string $html): ?string {
-        if (empty($html)) {
-            return null;
-        }
-        if (preg_match('/<img[^>]+src=["\']([^"\']+)["\']/', $html, $matches)) {
-            $src = html_entity_decode($matches[1], ENT_QUOTES | ENT_HTML5, 'UTF-8');
-            if (filter_var($src, FILTER_VALIDATE_URL)) {
-                return $src;
-            }
-        }
-        return null;
+        return $this->responses->firstImageIn($html);
     }
 
     private function parseDate(string $dateString): string {
-        if (empty($dateString)) {
-            return date('c');
-        }
-        // Use DateTime for proper timezone handling — ambiguous dates default to UTC
-        try {
-            $dt = new \DateTime($dateString, new \DateTimeZone('UTC'));
-            return $dt->format('c');
-        } catch (\Exception $e) {
-            $timestamp = strtotime($dateString);
-            if ($timestamp === false) {
-                return date('c');
-            }
-            return date('c', $timestamp);
-        }
+        return $this->responses->normaliseDate($dateString);
     }
 
     /**
@@ -2503,12 +2457,6 @@ class FeedReaderService {
     }
 
     private function buildCacheKey(string $sourceType, array $config, ?string $userId = null): string {
-        $key = $sourceType . json_encode($config);
-        if ($sourceType !== 'rss') {
-            // Isolate cache per user for LMS feeds (personalized content)
-            // Public/anonymous requests get a separate '_public' cache key
-            $key .= $userId !== null ? ('_user_' . $userId) : '_public';
-        }
-        return 'feed_' . md5($key);
+        return $this->responses->cacheKey($sourceType, $config, $userId);
     }
 }
