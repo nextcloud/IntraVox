@@ -56,7 +56,13 @@ parameters:
 		-
 			identifier: class.notFound
 			message: '#OCA\\(Files_Versions|MetaVox|UserOIDC|Circles|Activity)\\#'
+		# \OC is the server's internal namespace, not part of OCP, and is
+		# legitimately absent from the nextcloud/ocp package. Two phrasings: the
+		# class itself, and a static access through it (\OC::$WEBROOT).
 		-
 			identifier: class.notFound
 			message: '#Class OC\\?[A-Za-z\\]* not found\.#'
+		-
+			identifier: class.notFound
+			message: '#on an unknown class OC\\?[A-Za-z\\]*\.#'
 	reportUnmatchedIgnoredErrors: false

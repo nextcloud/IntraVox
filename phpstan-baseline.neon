@@ -13,12 +13,6 @@ parameters:
 			path: lib/BackgroundJob/FeedRefreshJob.php
 
 		-
-			message: '#^Offset ''rebuilt'' on array\{considered\: int, rebuilt\: int\} on left side of \?\? always exists and is not nullable\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: lib/BackgroundJob/PeopleCohortWarmupJob.php
-
-		-
 			message: '#^Property OCA\\IntraVox\\Command\\CreateLanguageHomepagesCommand\:\:\$logger is never read, only written\.$#'
 			identifier: property.onlyWritten
 			count: 1
@@ -127,12 +121,6 @@ parameters:
 			path: lib/Controller/CommentController.php
 
 		-
-			message: '#^Access to static property \$server on an unknown class OC\.$#'
-			identifier: class.notFound
-			count: 1
-			path: lib/Controller/FeedController.php
-
-		-
 			message: '#^Property OCA\\IntraVox\\Controller\\FeedController\:\:\$logger is never read, only written\.$#'
 			identifier: property.onlyWritten
 			count: 1
@@ -235,12 +223,6 @@ parameters:
 			path: lib/Controller/NavigationController.php
 
 		-
-			message: '#^Access to static property \$server on an unknown class OC\.$#'
-			identifier: class.notFound
-			count: 2
-			path: lib/Controller/PageContentApiController.php
-
-		-
 			message: '#^Parameter \#2 \$statusCode of class OCP\\AppFramework\\Http\\DataResponse constructor expects S of 100\|101\|102\|200\|201\|202\|203\|204\|205\|206\|207\|208\|226\|300\|301\|302\|303\|304\|305\|306\|307\|400\|401\|402\|403\|404\|405\|406\|407\|408\|409\|410\|411\|412\|413\|414\|415\|416\|417\|418\|422\|423\|424\|426\|428\|429\|431\|500\|501\|502\|503\|504\|505\|506\|507\|508\|509\|510\|511, int given\.$#'
 			identifier: argument.type
 			count: 2
@@ -287,12 +269,6 @@ parameters:
 			identifier: arrayValues.list
 			count: 1
 			path: lib/Controller/PhotoStoryController.php
-
-		-
-			message: '#^Access to static property \$server on an unknown class OC\.$#'
-			identifier: class.notFound
-			count: 1
-			path: lib/Controller/PublicShareController.php
 
 		-
 			message: '#^Method OCA\\IntraVox\\Controller\\PublicShareController\:\:getNavigationByShare\(\) should return OCP\\AppFramework\\Http\\JSONResponse but returns OCP\\AppFramework\\Http\\Response\.$#'
@@ -409,12 +385,6 @@ parameters:
 			path: lib/Service/CommentService.php
 
 		-
-			message: '#^Access to static property \$SERVERROOT on an unknown class OC\.$#'
-			identifier: class.notFound
-			count: 1
-			path: lib/Service/DemoDataService.php
-
-		-
 			message: '#^Call to an undefined method OCP\\Files\\Node\:\:get\(\)\.$#'
 			identifier: method.notFound
 			count: 1
@@ -475,12 +445,6 @@ parameters:
 			path: lib/Service/ExportService.php
 
 		-
-			message: '#^Access to static property \$server on an unknown class OC\.$#'
-			identifier: class.notFound
-			count: 1
-			path: lib/Service/ExportService.php
-
-		-
 			message: '#^Method OCA\\IntraVox\\Service\\FooterService\:\:getFooter\(\) invoked with 1 parameter, 0 required\.$#'
 			identifier: arguments.count
 			count: 2
@@ -503,12 +467,6 @@ parameters:
 			identifier: method.notFound
 			count: 1
 			path: lib/Service/FederatedPreviewService.php
-
-		-
-			message: '#^Access to static property \$WEBROOT on an unknown class OC\.$#'
-			identifier: class.notFound
-			count: 1
-			path: lib/Service/FeedReaderService.php
 
 		-
 			message: '#^Variable \$url on left side of \?\? always exists and is not nullable\.$#'
@@ -571,12 +529,6 @@ parameters:
 			path: lib/Service/FooterService.php
 
 		-
-			message: '#^Access to static property \$server on an unknown class OC\.$#'
-			identifier: class.notFound
-			count: 1
-			path: lib/Service/GroupFolders/GroupFoldersGateway.php
-
-		-
 			message: '#^Property OCA\\IntraVox\\Service\\HomepageService\:\:\$userSession is never read, only written\.$#'
 			identifier: property.onlyWritten
 			count: 1
@@ -623,12 +575,6 @@ parameters:
 			identifier: nullCoalesce.offset
 			count: 1
 			path: lib/Service/Import/SafeZipExtractor.php
-
-		-
-			message: '#^Access to static property \$SERVERROOT on an unknown class OC\.$#'
-			identifier: class.notFound
-			count: 1
-			path: lib/Service/ImportService.php
 
 		-
 			message: '#^Call to an undefined method OCP\\Files\\Node\:\:get\(\)\.$#'
@@ -745,12 +691,6 @@ parameters:
 			path: lib/Service/Media/PageMediaService.php
 
 		-
-			message: '#^Access to static property \$server on an unknown class OC\.$#'
-			identifier: class.notFound
-			count: 1
-			path: lib/Service/MetaVoxImportService.php
-
-		-
 			message: '#^Call to function is_array\(\) with array will always evaluate to true\.$#'
 			identifier: function.alreadyNarrowedType
 			count: 1
@@ -787,12 +727,6 @@ parameters:
 			path: lib/Service/OidcTokenBridge.php
 
 		-
-			message: '#^Access to static property \$SERVERROOT on an unknown class OC\.$#'
-			identifier: class.notFound
-			count: 2
-			path: lib/Service/OrphanedDataService.php
-
-		-
 			message: '#^Property OCA\\IntraVox\\Service\\OrphanedDataService\:\:\$appManager is never read, only written\.$#'
 			identifier: property.onlyWritten
 			count: 1
@@ -806,12 +740,6 @@ parameters:
 
 		-
 			message: '#^Access to constant PARAM_INT_ARRAY on an unknown class Doctrine\\DBAL\\Connection\.$#'
-			identifier: class.notFound
-			count: 1
-			path: lib/Service/PageService.php
-
-		-
-			message: '#^Access to static property \$server on an unknown class OC\.$#'
 			identifier: class.notFound
 			count: 1
 			path: lib/Service/PageService.php
@@ -1189,12 +1117,6 @@ parameters:
 			path: lib/Service/PhotoStory/PhotoTimelineBuilder.php
 
 		-
-			message: '#^Access to static property \$server on an unknown class OC\.$#'
-			identifier: class.notFound
-			count: 1
-			path: lib/Service/PhotoStoryService.php
-
-		-
 			message: '#^Call to function is_array\(\) with array\{field\?\: string, op\?\: string, value\?\: mixed\} will always evaluate to true\.$#'
 			identifier: function.alreadyNarrowedType
 			count: 1
@@ -1303,12 +1225,6 @@ parameters:
 			path: lib/Service/Sanitize/PageShapeSanitizer.php
 
 		-
-			message: '#^Access to static property \$SERVERROOT on an unknown class OC\.$#'
-			identifier: class.notFound
-			count: 2
-			path: lib/Service/SetupService.php
-
-		-
 			message: '#^Call to an undefined method OCP\\Files\\Node\:\:get\(\)\.$#'
 			identifier: method.notFound
 			count: 4
@@ -1387,12 +1303,6 @@ parameters:
 			path: lib/Service/UserCountService.php
 
 		-
-			message: '#^Call to an undefined method OCP\\ICache\:\:add\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: lib/Service/UserService.php
-
-		-
 			message: '#^Property OCA\\IntraVox\\Service\\UserService\:\:\$activityManager is never read, only written\.$#'
 			identifier: property.onlyWritten
 			count: 1
@@ -1409,12 +1319,6 @@ parameters:
 			identifier: argument.unresolvableType
 			count: 1
 			path: lib/Service/Version/PageVersionFormatter.php
-
-		-
-			message: '#^Access to static property \$server on an unknown class OC\.$#'
-			identifier: class.notFound
-			count: 1
-			path: lib/Service/Version/PageVersionService.php
 
 		-
 			message: '#^Call to an undefined method OCP\\Files\\Node\:\:getContent\(\)\.$#'

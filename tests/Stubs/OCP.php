@@ -25,6 +25,7 @@ interface IConfig {
     public function getUserValue(string $userId, string $appId, string $key, string $default = ''): string;
     public function setUserValue(string $userId, string $appId, string $key, string $value): void;
     public function getSystemValue(string $key, $default = '');
+    public function getSystemValueString(string $key, string $default = ''): string;
 }
 
 interface IUser {

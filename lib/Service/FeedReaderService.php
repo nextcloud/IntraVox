@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace OCA\IntraVox\Service;
 
 use OCA\IntraVox\AppInfo\Application;
+use OCA\IntraVox\Service\Feed\FeedImageProxy;
 use OCA\IntraVox\Service\Feed\FeedResponseReader;
 use OCA\IntraVox\Service\Feed\FeedTokenResolver;
 use OCA\IntraVox\Service\Sanitize\MediaSanitizer;
@@ -95,6 +96,7 @@ class FeedReaderService {
         private OutboundUrlValidator $urlValidator,
         private MediaSanitizer $mediaSanitizer,
         private FeedResponseReader $responses,
+        private FeedImageProxy $imageProxy,
         private ?OidcTokenBridge $oidcTokenBridge = null,
     ) {
         if ($this->cacheFactory->isAvailable()) {
@@ -617,7 +619,7 @@ class FeedReaderService {
         return [
             'items' => array_slice($items, 0, self::MAX_ITEMS),
             'source' => $source,
-            'feedImage' => $this->proxyImageUrl($feedImage),
+            'feedImage' => $this->imageProxy->proxyImageUrl($feedImage),
         ];
     }
 
@@ -649,7 +651,7 @@ class FeedReaderService {
             'title' => (string)($item->title ?? ''),
             'url' => (string)($item->link ?? ''),
             'excerpt' => $this->sanitizeExcerpt($content),
-            'image' => $this->proxyImageUrl($image),
+            'image' => $this->imageProxy->proxyImageUrl($image),
             'date' => $this->parseDate((string)($item->pubDate ?? '')),
             'source' => '',
             'author' => (string)($item->author ?? $item->children('dc', true)->creator ?? ''),
@@ -678,7 +680,7 @@ class FeedReaderService {
             'title' => (string)($entry->title ?? ''),
             'url' => $url,
             'excerpt' => $this->sanitizeExcerpt($content),
-            'image' => $this->proxyImageUrl($image),
+            'image' => $this->imageProxy->proxyImageUrl($image),
             'date' => $this->parseDate((string)($entry->updated ?? $entry->published ?? '')),
             'source' => '',
             'author' => (string)($entry->author->name ?? ''),
@@ -759,7 +761,7 @@ class FeedReaderService {
                         'title' => $course['fullname'] ?? $course['shortname'] ?? '',
                         'url' => $baseUrl . '/course/view.php?id=' . $course['id'],
                         'excerpt' => $this->sanitizeExcerpt($course['summary'] ?? ''),
-                        'image' => $this->proxyImageUrl($this->moodleFileUrl($image, $baseUrl, $token)),
+                        'image' => $this->imageProxy->proxyImageUrl($this->moodleFileUrl($image, $baseUrl, $token)),
                         'date' => date('c', $course['timemodified'] ?? time()),
                         'source' => $connection['name'] ?? 'Moodle',
                         'author' => null,
@@ -810,7 +812,7 @@ class FeedReaderService {
                 'title' => $course['fullname'] ?? $course['shortname'] ?? '',
                 'url' => $baseUrl . '/course/view.php?id=' . $courseId,
                 'excerpt' => $course['shortname'] ?? '',
-                'image' => $this->proxyImageUrl($this->moodleFileUrl($course['overviewfiles'][0]['fileurl'] ?? $course['courseimage'] ?? null, $baseUrl, $token)),
+                'image' => $this->imageProxy->proxyImageUrl($this->moodleFileUrl($course['overviewfiles'][0]['fileurl'] ?? $course['courseimage'] ?? null, $baseUrl, $token)),
                 'date' => isset($course['startdate']) ? date('c', $course['startdate']) : date('c'),
                 'source' => $connection['name'] ?? 'Moodle',
                 'author' => null,
@@ -925,7 +927,7 @@ class FeedReaderService {
                 'title' => $discussion['name'] ?? $discussion['subject'] ?? '',
                 'url' => $baseUrl . '/mod/forum/discuss.php?d=' . $discussion['discussion'],
                 'excerpt' => $this->sanitizeExcerpt($discussion['message'] ?? ''),
-                'image' => $this->proxyImageUrl($this->extractImageFromHtml($discussion['message'] ?? '')),
+                'image' => $this->imageProxy->proxyImageUrl($this->extractImageFromHtml($discussion['message'] ?? '')),
                 'date' => date('c', $discussion['timemodified'] ?? $discussion['created'] ?? time()),
                 'source' => $discussion['forum'] ?? 'Moodle',
                 'author' => ($discussion['userfullname'] ?? null),
@@ -1020,7 +1022,7 @@ class FeedReaderService {
                 'title' => $announcement['title'] ?? '',
                 'url' => $announcement['html_url'] ?? '',
                 'excerpt' => $this->sanitizeExcerpt($announcement['message'] ?? ''),
-                'image' => $this->proxyImageUrl($this->extractImageFromHtml($announcement['message'] ?? '')),
+                'image' => $this->imageProxy->proxyImageUrl($this->extractImageFromHtml($announcement['message'] ?? '')),
                 'date' => $announcement['posted_at'] ?? $announcement['created_at'] ?? date('c'),
                 'source' => $connection['name'] ?? 'Canvas',
                 'author' => $announcement['author']['display_name'] ?? null,
@@ -1065,7 +1067,7 @@ class FeedReaderService {
                 'title' => $course['name'] ?? '',
                 'url' => $baseUrl . '/courses/' . $courseId,
                 'excerpt' => $course['course_code'] ?? '',
-                'image' => $this->proxyImageUrl($course['image_download_url'] ?? null),
+                'image' => $this->imageProxy->proxyImageUrl($course['image_download_url'] ?? null),
                 'date' => $course['created_at'] ?? date('c'),
                 'source' => $connection['name'] ?? 'Canvas',
                 'author' => null,
@@ -1221,7 +1223,7 @@ class FeedReaderService {
                 'title' => $newsItem['Title'] ?? '',
                 'url' => $baseUrl . '/d2l/le/news/' . ($orgUnitId ?? '') . '/' . ($newsItem['Id'] ?? ''),
                 'excerpt' => $this->sanitizeExcerpt($newsItem['Body']['Html'] ?? $newsItem['Body']['Text'] ?? ''),
-                'image' => $this->proxyImageUrl($this->extractImageFromHtml($newsItem['Body']['Html'] ?? '')),
+                'image' => $this->imageProxy->proxyImageUrl($this->extractImageFromHtml($newsItem['Body']['Html'] ?? '')),
                 'date' => $newsItem['StartDate'] ?? $newsItem['CreatedDate'] ?? date('c'),
                 'source' => $connection['name'] ?? 'Brightspace',
                 'author' => null,
@@ -1396,7 +1398,7 @@ class FeedReaderService {
                 'title' => $page['title'] ?? '',
                 'url' => $page['webUrl'] ?? '',
                 'excerpt' => $this->sanitizeExcerpt($page['description'] ?? ''),
-                'image' => $this->proxyImageUrl($page['thumbnailWebUrl'] ?? null),
+                'image' => $this->imageProxy->proxyImageUrl($page['thumbnailWebUrl'] ?? null),
                 'date' => $this->parseDate($page['lastModifiedDateTime'] ?? ''),
                 'source' => $sourceName,
                 'author' => $page['lastModifiedBy']['user']['displayName'] ?? null,
@@ -1858,7 +1860,7 @@ class FeedReaderService {
                 'title' => (string) $title,
                 'url' => (string) $url,
                 'excerpt' => $this->sanitizeExcerpt(is_string($excerpt) ? $excerpt : ''),
-                'image' => $this->proxyImageUrl(is_string($image) ? $image : null),
+                'image' => $this->imageProxy->proxyImageUrl(is_string($image) ? $image : null),
                 'date' => $this->parseDate((string) $date),
                 'source' => $sourceName,
                 'author' => is_string($author) ? $author : null,
@@ -2078,6 +2080,16 @@ class FeedReaderService {
     }
 
     /**
+     * @deprecated Delegated to Feed\FeedImageProxy.
+     *
+     * Kept because Shared\FeedRequestTrait calls it on the service, from the
+     * #[PublicPage] proxy endpoint.
+     */
+    public function verifyImageSignature(string $url, string $sig): bool {
+        return $this->imageProxy->verifyImageSignature($url, $sig);
+    }
+
+    /**
      * Get a specific connection with decryptable token.
      */
     private function getConnection(string $connectionId, bool $includeInactive = false): ?array {
@@ -2131,33 +2143,7 @@ class FeedReaderService {
         $this->urlValidator->validate($url, OutboundUrlValidator::SCHEMES_HTTP);
     }
 
-    /**
-     * Generate a signed proxy URL for an external image.
-     * Uses HMAC-SHA256 to prevent the proxy from being used as an open relay.
-     */
-    public function signImageUrl(string $imageUrl): string {
-        $day = (string)intdiv(time(), 86400);
-        $sig = hash_hmac('sha256', $imageUrl . '|' . $day, $this->getImageProxySecret());
-        $webRoot = \OC::$WEBROOT ?: '';
-        return $webRoot . '/apps/intravox/api/feed/image?url=' . urlencode($imageUrl) . '&sig=' . $sig;
-    }
 
-    /**
-     * Verify the HMAC signature on a proxied image URL.
-     * Accepts signatures from today and yesterday (grace window for day boundary).
-     */
-    public function verifyImageSignature(string $url, string $sig): bool {
-        $today = (string)intdiv(time(), 86400);
-        $yesterday = (string)(intdiv(time(), 86400) - 1);
-
-        $expectedToday = hash_hmac('sha256', $url . '|' . $today, $this->getImageProxySecret());
-        if (hash_equals($expectedToday, $sig)) {
-            return true;
-        }
-
-        $expectedYesterday = hash_hmac('sha256', $url . '|' . $yesterday, $this->getImageProxySecret());
-        return hash_equals($expectedYesterday, $sig);
-    }
 
     /**
      * Fetch an external image for proxying.
@@ -2206,15 +2192,6 @@ class FeedReaderService {
         ];
     }
 
-    /**
-     * Sign an image URL for proxying, or return null if invalid.
-     */
-    private function proxyImageUrl(?string $url): ?string {
-        if ($url === null || !filter_var($url, FILTER_VALIDATE_URL)) {
-            return null;
-        }
-        return $this->signImageUrl($url);
-    }
 
     /**
      * Sanitize SVG content to prevent XSS attacks. Fails closed.
@@ -2239,9 +2216,6 @@ class FeedReaderService {
         return $this->responses->decodeJson($response);
     }
 
-    private function getImageProxySecret(): string {
-        return hash('sha256', 'intravox-img-' . $this->config->getSystemValueString('secret', ''));
-    }
 
     private function detectFileType(string $text): ?string {
         if (preg_match('/\.(\w{2,5})$/i', trim($text), $m)) {
