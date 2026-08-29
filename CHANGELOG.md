@@ -25,6 +25,15 @@ IntraVox is a Nextcloud intranet page builder.
   sanitising library absent, the upload path refused the file while this copy
   could fail in a way that was not handled.
 
+### Fixed
+
+- **Exporting a language produced an unusable file when MetaVox is installed.**
+  The export wrote its own `export.json` and removed one closing bracket too
+  many whenever MetaVox added its field definitions, leaving a file no importer
+  would accept. Every export from such an instance was affected; exports from
+  instances without MetaVox were fine. Re-export to get a working file — nothing
+  else needs doing, and previously exported archives can be discarded.
+
 ## [2.5.0] - 2026-08-26 — The API describes itself, and the description is checked
 
 ### Security
