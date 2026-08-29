@@ -4,35 +4,36 @@ All notable changes to IntraVox will be documented in this file.
 
 IntraVox is a Nextcloud intranet page builder.
 
-## [Unreleased]
+## [2.6.0] - 2026-08-29 — Exports that import again, and the API split into seven controllers
 
 ### Security
 
 - **The protection against internal addresses now covers the calendar and import
-  paths too.** 2.5.0 fixed this for the feed reader, but two further copies of
-  the same check were missed. The one used for external calendar (ICS) feeds is
-  the one that matters: that address is accepted as a parameter on a public
-  share page, so no sign-in was needed to reach it. All three now share a single
-  implementation that refuses anything it cannot positively confirm as external.
-  Verified against the old code on a live server: plain IPv4 addresses were
-  already refused, so the gaps were IPv6 literals, hosts that publish only IPv6
-  records, and hosts that do not resolve at all. As in 2.5.0, this may reject a
-  source on an unusual internal DNS setup — configure those through a reachable
-  public hostname.
+  paths too.** 2.5.0 fixed this for the feed reader; two further places did the
+  same check and were missed. The one used for external calendar (ICS) feeds is
+  the one that matters, because it can be reached without signing in. All three
+  now share a single implementation that refuses anything it cannot positively
+  confirm as external. **Upgrading promptly is worthwhile if you allow public
+  share links.** As in 2.5.0, this may reject a source on an unusual internal
+  DNS setup — configure those through a reachable public hostname.
 - **SVG images fetched by the feed reader are sanitised by the same code as
-  uploads.** The feed reader carried its own copy, which was missing a
-  protection the upload path already had: when a packaging problem left the
-  sanitising library absent, the upload path refused the file while this copy
-  could fail in a way that was not handled.
+  uploads.** The feed reader carried a second, weaker copy of that logic. Both
+  paths now go through one implementation, so a hardening change can only be
+  made in one place and cannot be missed in the other.
+
+The entries above say what was affected and who was exposed — enough to judge how
+urgently to upgrade — without the detail needed to reproduce them. If you operate
+IntraVox and need specifics for your own assessment, contact us rather than
+working from this file.
 
 ### Fixed
 
 - **Exporting a language produced an unusable file when MetaVox is installed.**
-  The export wrote its own `export.json` and removed one closing bracket too
-  many whenever MetaVox added its field definitions, leaving a file no importer
-  would accept. Every export from such an instance was affected; exports from
-  instances without MetaVox were fine. Re-export to get a working file — nothing
-  else needs doing, and previously exported archives can be discarded.
+  The exported archive could not be read back in, so it was no good as a backup
+  or for moving content between instances. Every export from such an instance
+  was affected; exports from instances without MetaVox were fine. Re-export to
+  get a working file — nothing else needs doing, and previously exported
+  archives can be discarded.
 - **The page structure panel could not be scrolled on a phone.** The list ran off
   the bottom of the screen with no way to reach the rest of it, so anything below
   the fold was unreachable. The panel now keeps its title, tabs and close button
@@ -40,6 +41,16 @@ IntraVox is a Nextcloud intranet page builder.
 - **The panel title and close button sat behind the Nextcloud header on a phone.**
   Part of the heading was cut off and the close button was mostly covered, which
   made the panel hard to dismiss. Both are clear of the header now.
+
+### Changed
+
+- **The API is now served by seven focused controllers instead of one.** Every
+  URL, parameter and response is unchanged — the route table and the OpenAPI
+  description are checked against the code on every build, and both are
+  identical to 2.5.0. Nothing to do when upgrading; this is groundwork that
+  makes the next round of changes safer to review.
+- **A static analyser (PHPStan) now runs in CI.** It caught a handful of latent
+  problems while this release was being prepared, all fixed here.
 
 ## [2.5.0] - 2026-08-26 — The API describes itself, and the description is checked
 
