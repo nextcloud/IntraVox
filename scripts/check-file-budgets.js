@@ -21,6 +21,11 @@
  * Targets (from the refactor plan, for orientation — not enforced yet):
  *   controller <= 600 . service <= 1200 . .vue <= 800
  *
+ * A file may be listed in DELIBERATELY_LARGE when splitting it would cost more
+ * than it saves. That does not relax the ratchet -- it still may not grow -- it
+ * only stops it being counted as debt, so the "above target" number stays a
+ * list of files someone should still shrink.
+ *
  * Run standalone, via `npm run lint:budgets`, or `--update` to re-record.
  */
 
@@ -36,6 +41,28 @@ const TARGETS = [
 	{ label: 'service', target: 1200, match: (f) => f.startsWith('lib/Service/') && f.endsWith('.php') },
 	{ label: 'vue', target: 800, match: (f) => f.startsWith('src/') && f.endsWith('.vue') },
 ]
+
+/**
+ * Files that are deliberately over target, with the reason.
+ *
+ * NOT an escape hatch for "we did not get round to it" — the ratchet already
+ * handles that by letting a file sit above target while forbidding growth. This
+ * is for the narrower case where splitting the file would COST something, and
+ * the entry has to say what.
+ *
+ * An exempt file still may not grow: the ratchet applies exactly as before. All
+ * this changes is that it stops being counted as debt in the summary line, so
+ * "29 still above target" means 29 files someone should still shrink.
+ */
+const DELIBERATELY_LARGE = {
+	'lib/Controller/PublicShareController.php':
+		'The anonymous surface is this one file, by design (F6/F6d) and enforced by '
+		+ 'PublicEndpointInventoryTest: a #[PublicPage] outside this namespace fails the '
+		+ 'suite. Splitting it would answer "what can an anonymous visitor reach?" with '
+		+ 'two files instead of one, and the four widget endpoints only account for 248 '
+		+ 'lines -- not enough to reach the 600 target anyway. Shrink it by moving logic '
+		+ 'into lib/Service/PublicShare/, as PR-B and PR-C did, not by splitting the class.',
+}
 
 function categoryOf(file) {
 	return TARGETS.find((t) => t.match(file)) || null
@@ -85,6 +112,21 @@ function main() {
 	const update = process.argv.includes('--update')
 	const sizes = measure()
 	const budgets = loadBudgets()
+
+	// A stale exemption is worse than none: it hides a file that has since been
+	// brought under target, and nobody notices the note is obsolete.
+	for (const file of Object.keys(DELIBERATELY_LARGE)) {
+		if (sizes[file] === undefined) {
+			console.error(`✗ ${file} is exempt in DELIBERATELY_LARGE but is not a tracked, measured file.`)
+			process.exit(1)
+		}
+		const cat = categoryOf(file)
+		if (sizes[file] <= cat.target) {
+			console.error(`✗ ${file} is exempt in DELIBERATELY_LARGE but is now ${sizes[file]} lines, within the ${cat.target} target.`)
+			console.error('  Remove the exemption -- it no longer describes anything.')
+			process.exit(1)
+		}
+	}
 
 	if (!budgets) {
 		writeBudgets(sizes)
@@ -139,8 +181,11 @@ function main() {
 		process.exit(1)
 	}
 
-	const over = Object.entries(sizes).filter(([f, s]) => s > categoryOf(f).target).length
-	console.log(`✓ File budgets: ${Object.keys(sizes).length} files, none grew (${over} still above target)`)
+	const over = Object.entries(sizes)
+		.filter(([f, s]) => s > categoryOf(f).target && !DELIBERATELY_LARGE[f]).length
+	const exempt = Object.keys(sizes).filter((f) => DELIBERATELY_LARGE[f]).length
+	const note = exempt > 0 ? `, ${exempt} deliberately large` : ''
+	console.log(`✓ File budgets: ${Object.keys(sizes).length} files, none grew (${over} still above target${note})`)
 }
 
 main()
