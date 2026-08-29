@@ -1183,6 +1183,12 @@ parameters:
 			path: lib/Service/PhotoStory/GeocodeCache.php
 
 		-
+			message: '#^Variable \$timestamps in empty\(\) always exists and is not falsy\.$#'
+			identifier: empty.variable
+			count: 1
+			path: lib/Service/PhotoStory/PhotoTimelineBuilder.php
+
+		-
 			message: '#^Access to static property \$server on an unknown class OC\.$#'
 			identifier: class.notFound
 			count: 1
@@ -1252,12 +1258,6 @@ parameters:
 			message: '#^Strict comparison using \!\=\= between null and null will always evaluate to false\.$#'
 			identifier: notIdentical.alwaysFalse
 			count: 2
-			path: lib/Service/PhotoStoryService.php
-
-		-
-			message: '#^Variable \$timestamps in empty\(\) always exists and is not falsy\.$#'
-			identifier: empty.variable
-			count: 1
 			path: lib/Service/PhotoStoryService.php
 
 		-
