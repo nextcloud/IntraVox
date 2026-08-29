@@ -29,6 +29,7 @@ OC.L10N.register(
     "Learn more" : "もっと見る",
     "Configured" : "設定済み",
     "Invalid URL" : "無効なURL",
+    "Empty folder" : "空のフォルダー",
     "Deletion failed" : "削除失敗",
     "Languages" : "言語",
     "Sharing" : "共有",
