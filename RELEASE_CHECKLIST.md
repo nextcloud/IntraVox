@@ -882,6 +882,23 @@ https://github.com/nextcloud/IntraVox/releases/download/vX.Y.Z/intravox-X.Y.Z.ta
 - **Signature:** Output from step 9.5
 - **Note:** Regenerate signature after any tarball change!
 
+**Upload via de API met Riks eigen token** (gemeten 29-08-2026: intravox staat op
+Riks App Store-account, zijn token authenticeert daar):
+
+```bash
+TOKEN=$(tr -d '[:space:]' < ~/Documents/Development/.claude/NextcloudApps/Keys/appstore-api-token-rikdekker.txt)
+SIG=$(tr -d '\r\n' < ~/Documents/Development/voxcloud-infra/app-tooling/intravox/intravox-X.Y.Z.sig)
+curl -s -w "\nHTTP %{http_code}\n" -X POST https://apps.nextcloud.com/api/v1/apps/releases \
+  -H "Authorization: Token $TOKEN" -H "Content-Type: application/json" \
+  -d "{\"download\":\"https://github.com/nextcloud/IntraVox/releases/download/vX.Y.Z/intravox-X.Y.Z.tar.gz\",\"signature\":\"$SIG\"}"
+```
+
+`201` = gelukt. **`403 You do not have permission` betekent bijna altijd de
+verkeerde token**, niet een verlopen token: `appstore-api-token.txt` is van Sam
+en bezit alleen `metavox`. De rechtencheck komt vóór de signature-check, dus een
+`403` zegt niets over je pakket. Web-UI blijft als terugval beschikbaar.
+
+
 ---
 
 ### 9.8 Is de release echt af?
