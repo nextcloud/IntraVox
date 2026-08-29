@@ -729,11 +729,17 @@ export default {
     /* Een fixed box met top EN bottom legt zijn hoogte NIET vast zodra de
        inhoud groter is: die wint, en de box groeit door tot voorbij het
        scherm. Gemeten op 390x844: paneel 2004px hoog, scrollHeight ook
-       2004px, dus geen overflow en niets te scrollen. Daarom een echte
-       hoogtebegrenzing terug. dvh volgt de in- en uitschuivende adresbalk
-       van Safari/iOS; vh is de fallback voor oudere browsers. */
-    max-height: calc(100vh - var(--header-height, 50px) - var(--intravox-topbar-height, 0px));
-    max-height: calc(100dvh - var(--header-height, 50px) - var(--intravox-topbar-height, 0px));
+       2004px, dus geen overflow en niets te scrollen.
+
+       HEIGHT en niet max-height, want met alleen een maximum krimpt het
+       paneel juist mee met korte inhoud: op de tab "Op deze pagina" bleef
+       er dan een lege witte strook van 178px over. Een vaste hoogte houdt
+       het paneel op beide tabs even groot.
+
+       dvh volgt de in- en uitschuivende adresbalk van Safari/iOS; de
+       vh-regel erboven is de fallback voor browsers zonder dvh. */
+    height: calc(100vh - var(--header-height, 50px) - var(--intravox-topbar-height, 0px));
+    height: calc(100dvh - var(--header-height, 50px) - var(--intravox-topbar-height, 0px));
 
     /* Niet het hele paneel laten scrollen maar de lijst erin, zodat de
        titel, de tabs en de sluitknop in beeld blijven. */
