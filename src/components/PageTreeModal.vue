@@ -54,6 +54,7 @@
       <div v-if="isPanel"
            v-show="activeTab === 'toc'"
            id="intravox-tabpanel-toc"
+           class="panel-scroll-area"
            role="tabpanel"
            aria-labelledby="intravox-tab-toc">
         <PageToc :page-key="tocPageKey"
@@ -593,9 +594,15 @@ export default {
   padding: 12px 16px 16px;
 }
 
-.page-tree-content.is-panel .page-tree {
-  max-height: none;
-  overflow-y: visible;
+/* Op desktop scrollt het PANEEL zelf, dus de binnenste lijst mag geen tweede
+   scrollbalk krijgen. Bewust begrensd tot >=1025px: onder die breedte haalt
+   de media query hieronder de max-height van het paneel weg, en dan is dit
+   de enige laag die nog kan scrollen. */
+@media (min-width: 1025px) {
+  .page-tree-content.is-panel .page-tree {
+    max-height: none;
+    overflow-y: visible;
+  }
 }
 
 /* Voettekst: beheer + uitleg, visueel ondergeschikt aan de boom */
@@ -715,10 +722,43 @@ export default {
     left: 0;
     top: calc(var(--header-height, 50px) + var(--intravox-topbar-height, 0px));
     bottom: 0;
-    max-height: none;
     width: min(320px, 85vw);
     z-index: 2000;
     box-shadow: 4px 0 16px var(--color-box-shadow);
+
+    /* Een fixed box met top EN bottom legt zijn hoogte NIET vast zodra de
+       inhoud groter is: die wint, en de box groeit door tot voorbij het
+       scherm. Gemeten op 390x844: paneel 2004px hoog, scrollHeight ook
+       2004px, dus geen overflow en niets te scrollen. Daarom een echte
+       hoogtebegrenzing terug. dvh volgt de in- en uitschuivende adresbalk
+       van Safari/iOS; vh is de fallback voor oudere browsers. */
+    max-height: calc(100vh - var(--header-height, 50px) - var(--intravox-topbar-height, 0px));
+    max-height: calc(100dvh - var(--header-height, 50px) - var(--intravox-topbar-height, 0px));
+
+    /* Niet het hele paneel laten scrollen maar de lijst erin, zodat de
+       titel, de tabs en de sluitknop in beeld blijven. */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .page-tree-panel .page-tree-content.is-panel {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    /* Zonder min-height:0 weigert een flex-item te krimpen onder zijn
+       inhoud en scrollt er alsnog niets -- het klassieke struikelblok. */
+    min-height: 0;
+  }
+
+  /* De twee tabpanels (paginaboom en inhoudsopgave) zijn wat er scrollt. */
+  .page-tree-content.is-panel .page-tree,
+  .page-tree-content.is-panel .panel-scroll-area {
+    flex: 1;
+    min-height: 0;
+    max-height: none;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 }
 
