@@ -388,9 +388,19 @@ class ExportService {
 
         // Write opening JSON (everything except "pages")
         $headerJson = json_encode($header, $jsonFlags);
-        // Remove closing "}" and append "pages" array start
-        $headerJson = rtrim($headerJson, "\n}");
-        fwrite($fh, $headerJson . ",\n  \"pages\": [\n");
+        if ($headerJson === false) {
+            throw new \Exception('Failed to encode export header');
+        }
+
+        // Drop the ONE closing brace of the header object and append the pages
+        // array. rtrim($headerJson, "\n}") was wrong here: rtrim strips a
+        // CHARACTER SET, not a suffix, so a header ending in "}}}" -- which it
+        // does as soon as MetaVox is installed and adds a nested
+        // metavox.fieldDefinitions object -- lost all three braces. The document
+        // was then permanently unbalanced and every such export produced a ZIP
+        // that importFromZip() refuses as invalid JSON.
+        $headerJson = substr($headerJson, 0, strrpos($headerJson, '}'));
+        fwrite($fh, rtrim($headerJson) . ",\n  \"pages\": [\n");
 
         // Get pages and stream them one by one
         $pages = $this->getPagesFromLanguageFolder($language);

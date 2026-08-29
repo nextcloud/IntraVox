@@ -49,7 +49,7 @@
     "lib/Service/CommentService.php": 739,
     "lib/Service/DemoDataService.php": 1094,
     "lib/Service/EngagementSettingsService.php": 183,
-    "lib/Service/ExportService.php": 996,
+    "lib/Service/ExportService.php": 1006,
     "lib/Service/ExternalIcsService.php": 207,
     "lib/Service/FederatedPreviewService.php": 273,
     "lib/Service/Feed/FeedImageProxy.php": 82,
