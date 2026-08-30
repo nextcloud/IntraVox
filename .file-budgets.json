@@ -185,7 +185,7 @@
     "src/components/SaveAsTemplateModal.vue": 200,
     "src/components/ShareButton.vue": 143,
     "src/components/ShareDialog.vue": 276,
-    "src/components/SupportSettings.vue": 691,
+    "src/components/SupportSettings.vue": 710,
     "src/components/TemplatePreviewCard.vue": 362,
     "src/components/TranslationsPanel.vue": 450,
     "src/components/UserSelect.vue": 381,

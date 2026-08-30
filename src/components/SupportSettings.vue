@@ -14,7 +14,13 @@
 					:href="pricingUrl"
 					target="_blank"
 					rel="noopener noreferrer">
-					{{ t('intravox', 'View pricing & plans') }}
+					{{ t('intravox', 'Pricing details') }}
+				</NcButton>
+				<NcButton type="tertiary"
+					:href="appStoreUrl"
+					target="_blank"
+					rel="noopener noreferrer">
+					{{ t('intravox', 'View in the Nextcloud App Store') }}
 				</NcButton>
 				<p class="cta-contact">
 					{{ t('intravox', 'Questions?') }}
@@ -202,9 +208,22 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * The information page, not the purchase route — subscriptions are sold
+		 * through Nextcloud. The App Store has no price field at all, so linking
+		 * there for pricing would move the reader away from the answer; Collabora
+		 * and OnlyOffice point at their own sites for the same reason. Moves to a
+		 * Nextcloud-hosted page once one exists; not linked speculatively, since a
+		 * 404 would ship in a release that sits on the App Store for months.
+		 */
 		pricingUrl() {
 			const lang = (window.document?.documentElement?.lang || '').split('-')[0]
 			return lang === 'nl' ? 'https://voxcloud.nl/pricing/#intravox' : 'https://voxcloud.nl/en/pricing/#intravox'
+		},
+
+		/** Reviews, changelog and install — a different question from the price. */
+		appStoreUrl() {
+			return 'https://apps.nextcloud.com/apps/intravox'
 		},
 
 		/**

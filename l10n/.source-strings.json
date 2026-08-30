@@ -1,6 +1,6 @@
 {
-    "count": 1379,
-    "sha256": "ece2dc714ad93aedfa2156d1e0d49443c14a7500ac660301da46eafb330e1132",
+    "count": 1380,
+    "sha256": "b4c711b7e1258396343b57155843c5016f078c6b06d79acdd24bd34dc9b5e876",
     "strings": [
         "— Not configured —",
         "… and {n} more",
@@ -968,6 +968,7 @@
         "Previous page",
         "Previous photo",
         "Previous slide",
+        "Pricing details",
         "Primary",
         "Primary light",
         "Privacy warnings:",
@@ -1327,8 +1328,8 @@
         "Video will start automatically (muted for browser compatibility)",
         "Video:",
         "video.example.org (HTTPS required)",
+        "View in the Nextcloud App Store",
         "View larger map",
-        "View pricing & plans",
         "Visit support",
         "Visit website",
         "Visitor filters",
