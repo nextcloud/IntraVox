@@ -1,6 +1,6 @@
 {
-    "count": 1380,
-    "sha256": "42dbe6c9d8ce8b0ab2386cdb816979faf36f78b2c912b3d26534e1aea90ad5bd",
+    "count": 1379,
+    "sha256": "b28579ae5e7966013c8d5eb5f7fca88b40cbecba4cfab90358759c9d12689a94",
     "strings": [
         "— Not configured —",
         "… and {n} more",
@@ -1329,7 +1329,6 @@
         "Video will start automatically (muted for browser compatibility)",
         "Video:",
         "video.example.org (HTTPS required)",
-        "View in the Nextcloud App Store",
         "View larger map",
         "Visit support",
         "Visit website",

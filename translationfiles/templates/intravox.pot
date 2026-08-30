@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: IntraVox 2.6.0\n"
 "Report-Msgid-Bugs-To: translations@nextcloud.com\n"
-"POT-Creation-Date: 2026-08-30 19:15+0000\n"
+"POT-Creation-Date: 2026-08-30 19:25+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -3943,9 +3943,6 @@ msgid "Video:"
 msgstr ""
 
 msgid "video.example.org (HTTPS required)"
-msgstr ""
-
-msgid "View in the Nextcloud App Store"
 msgstr ""
 
 msgid "View larger map"

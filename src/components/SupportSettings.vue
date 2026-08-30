@@ -16,12 +16,6 @@
 					rel="noopener noreferrer">
 					{{ t('intravox', 'Pricing details') }}
 				</NcButton>
-				<NcButton type="tertiary"
-					:href="appStoreUrl"
-					target="_blank"
-					rel="noopener noreferrer">
-					{{ t('intravox', 'View in the Nextcloud App Store') }}
-				</NcButton>
 				<p class="cta-contact">
 					{{ t('intravox', 'Questions?') }}
 					<a href="mailto:info@voxcloud.nl">info@voxcloud.nl</a>
@@ -221,10 +215,6 @@ export default {
 			return lang === 'nl' ? 'https://voxcloud.nl/pricing/#intravox' : 'https://voxcloud.nl/en/pricing/#intravox'
 		},
 
-		/** Reviews, changelog and install — a different question from the price. */
-		appStoreUrl() {
-			return 'https://apps.nextcloud.com/apps/intravox'
-		},
 
 		/**
 		 * The licence server distinguishes four refusals, and each needs a
