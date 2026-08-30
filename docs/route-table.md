@@ -8,8 +8,8 @@ diff rather than staying buried in 14 controllers.
 
 175 routes.
 
-- **admin (checked in body)**: 23
 - **admin**: 13
+- **admin (checked in body)**: 23
 - **anonymous**: 17
 - **any logged-in user**: 122
 
