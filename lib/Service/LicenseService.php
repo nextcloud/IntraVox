@@ -5,6 +5,7 @@ namespace OCA\IntraVox\Service;
 
 use OCA\IntraVox\AppInfo\Application;
 use OCP\Files\Folder;
+use OCP\Support\Subscription\IRegistry;
 use OCP\Files\NotFoundException;
 use OCP\Http\Client\IClientService;
 use OCP\IConfig;
@@ -17,6 +18,14 @@ use OCA\IntraVox\Service\Path\PagePathHelper;
  */
 class LicenseService {
     private const FREE_LIMIT = 50; // Pages per language in free version
+    /**
+     * Above this many users the interface suggests a support subscription.
+     *
+     * Not a limit and not enforced anywhere -- the app behaves identically on
+     * either side of it. It marks where paid subscriptions begin in the price
+     * list, so below it there is genuinely nothing to suggest.
+     */
+    private const SUPPORT_NUDGE_USER_THRESHOLD = 100;
 
     private const DEFAULT_LICENSE_SERVER_URL = 'https://licenses.voxcloud.nl';
 
@@ -27,6 +36,7 @@ class LicenseService {
     private LanguageService $languageService;
     private IURLGenerator $urlGenerator;
     private UserCountService $userCounts;
+    private ?IRegistry $subscriptionRegistry;
 
     public function __construct(
         SetupService $setupService,
@@ -35,7 +45,8 @@ class LicenseService {
         LoggerInterface $logger,
         LanguageService $languageService,
         IURLGenerator $urlGenerator,
-        UserCountService $userCounts
+        UserCountService $userCounts,
+        ?IRegistry $subscriptionRegistry = null
     ) {
         $this->setupService = $setupService;
         $this->config = $config;
@@ -44,6 +55,7 @@ class LicenseService {
         $this->languageService = $languageService;
         $this->urlGenerator = $urlGenerator;
         $this->userCounts = $userCounts;
+        $this->subscriptionRegistry = $subscriptionRegistry;
     }
 
     /**
@@ -713,6 +725,12 @@ class LicenseService {
             'totalPages' => $this->getTotalPageCount(),
             'freeLimit' => self::FREE_LIMIT,
             'supportedLanguages' => $this->languageService->getEnabledLanguages(),
+            // For the subscription notice: the same figure a subscription is
+            // priced on, every account including disabled ones.
+            'totalUsers' => $this->userCounts->getTotal(),
+            'supportNudgeUserThreshold' => self::SUPPORT_NUDGE_USER_THRESHOLD,
+            'hasValidSubscription' => $this->hasValidSubscription(),
+            'hasExtendedSupport' => $this->hasExtendedSupport(),
             'hasLicense' => $hasLicense,
             'licenseValid' => $licenseValid,
             'licenseInfo' => $licenseInfo,
@@ -725,4 +743,44 @@ class LicenseService {
             'perLanguage' => true,
         ];
     }
+
+    /**
+     * Whether the host Nextcloud has a valid Enterprise subscription.
+     *
+     * Asks IRegistry rather than OCP\Util::hasExtendedSupport(), which answers a
+     * different question: that helper reports the paid Extended Support add-on,
+     * so an ordinary Enterprise customer without it answers false and looks like
+     * Community. It also falls back to the `extendedSupport` system config value
+     * when the registry is missing, which an admin can set by hand.
+     *
+     * Mirrors TelemetryService, so the settings page and the report sent to the
+     * licence server cannot disagree about the same instance.
+     */
+    private function hasValidSubscription(): bool {
+        try {
+            return $this->subscriptionRegistry?->delegateHasValidSubscription() ?? false;
+        } catch (\Throwable $e) {
+            $this->logger->debug('LicenseService: delegateHasValidSubscription() check failed', [
+                'error' => $e->getMessage()
+            ]);
+        }
+        return false;
+    }
+
+    /**
+     * Whether that subscription also carries the Extended Support add-on. A
+     * strict subset of hasValidSubscription(), reported separately so the two
+     * signals stay distinguishable.
+     */
+    private function hasExtendedSupport(): bool {
+        try {
+            return $this->subscriptionRegistry?->delegateHasExtendedSupport() ?? false;
+        } catch (\Throwable $e) {
+            $this->logger->debug('LicenseService: delegateHasExtendedSupport() check failed', [
+                'error' => $e->getMessage()
+            ]);
+        }
+        return false;
+    }
+
 }

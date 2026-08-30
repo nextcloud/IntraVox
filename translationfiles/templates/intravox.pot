@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: IntraVox 2.6.0\n"
 "Report-Msgid-Bugs-To: translations@nextcloud.com\n"
-"POT-Creation-Date: 2026-08-30 13:28+0000\n"
+"POT-Creation-Date: 2026-08-30 19:15+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1779,6 +1779,9 @@ msgstr ""
 msgid "IntraVox is not yet configured. To get started, you can install demo data or create your own pages."
 msgstr ""
 
+msgid "IntraVox is running for {count} users here and keeps working in full without a subscription. If your organisation gets value from it, a subscription is much appreciated — it funds the maintenance. Sold through Nextcloud: contact your account manager or sales@nextcloud.com."
+msgstr ""
+
 msgid "IntraVox page"
 msgstr ""
 
@@ -2271,6 +2274,9 @@ msgstr ""
 msgid "Next year"
 msgstr ""
 
+msgid "Nextcloud Enterprise subscription detected on this instance. IntraVox subscriptions are sold through Nextcloud — contact your Nextcloud account manager or sales@nextcloud.com."
+msgstr ""
+
 msgid "No active public share links found. Share links can be created in the Files app on IntraVox folders or pages."
 msgstr ""
 
@@ -2629,9 +2635,6 @@ msgid "Page deleted"
 msgstr ""
 
 msgid "Page details and history"
-msgstr ""
-
-msgid "Page limit reached for one or more languages. Upgrade for unlimited pages."
 msgstr ""
 
 msgid "Page media"
@@ -4081,9 +4084,6 @@ msgid "You viewed \\\"%s\\\""
 msgstr ""
 
 msgid "You will get a fresh empty homepage and empty navigation."
-msgstr ""
-
-msgid "You're approaching the free tier limit. Consider a subscription to support continued development."
 msgstr ""
 
 msgid "you@example.com"

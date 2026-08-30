@@ -1,14 +1,16 @@
 <template>
 	<div class="intravox-admin-settings">
-		<!-- License Warning Banner -->
-		<div v-if="licenseBanner && !bannerDismissed" :class="['license-banner', licenseBanner.type]">
+		<!-- Subscription notice. Deliberately not dismissible: the close button
+		     used to forget the choice on the next page load, which is worse than
+		     no button at all — it asks for a decision and then ignores it. The
+		     link is hidden on Support itself, where it would do nothing. -->
+		<div v-if="licenseBanner" :class="['license-banner', licenseBanner.type]">
 			<span class="license-banner-text">
 				{{ licenseBanner.message }}
-				<a href="#" @click.prevent="activeTab = 'support'">
+				<a v-if="activeTab !== 'support'" href="#" @click.prevent="activeTab = 'support'">
 					{{ licenseBanner.linkText }}
 				</a>
 			</span>
-			<button class="license-banner-close" @click="bannerDismissed = true" :aria-label="t('intravox', 'Dismiss banner')">&times;</button>
 		</div>
 
 		<!-- Orphaned Data Banner -->
@@ -1422,6 +1424,7 @@ import HeartOutline from 'vue-material-design-icons/HeartOutline.vue'
 import Translate from 'vue-material-design-icons/Translate.vue'
 import ConfluenceImport from '../admin/components/ConfluenceImport.vue'
 import SupportSettings from './SupportSettings.vue'
+import { subscriptionNudge as buildSubscriptionNudge } from '../composables/useSubscriptionNudge.js'
 
 export default {
 	name: 'AdminSettings',
@@ -1559,8 +1562,6 @@ export default {
 			importTimeoutId: null,
 			// Bound event handler for proper cleanup
 			boundBeforeUnloadHandler: null,
-			// Banner dismiss state
-			bannerDismissed: false,
 			// License stats
 			licenseStats: this.initialState.licenseStats || {
 				pageCounts: {},
@@ -1703,17 +1704,15 @@ export default {
 			if (hasKey && s.licenseValid === false) {
 				return { type: 'info', message: this.t('intravox', 'Your IntraVox subscription key needs attention.'), linkText: this.t('intravox', 'Visit support') }
 			}
-			// No subscription + page limit exceeded (>=50 pages in any language)
-			if (!hasKey && s.pageCounts) {
-				const exceeded = Object.values(s.pageCounts).some(count => count >= s.freeLimit)
-				if (exceeded) {
-					return { type: 'warning', message: this.t('intravox', 'Page limit reached for one or more languages. Upgrade for unlimited pages.'), linkText: this.t('intravox', 'Learn more') }
-				}
-				// Approaching limit (>=80% = 40 pages)
-				const approaching = Object.values(s.pageCounts).some(count => count >= s.freeLimit * 0.8)
-				if (approaching) {
-					return { type: 'info', message: this.t('intravox', 'You\'re approaching the free tier limit. Consider a subscription to support continued development.'), linkText: this.t('intravox', 'Learn more') }
-				}
+			// The subscription suggestion, shared with the Support tab so the two
+			// cannot drift apart. Replaces the old page-limit wording: it spoke of
+			// a limit being "reached" and promised "unlimited pages", but nothing
+			// was ever enforced — the message described a restriction that does
+			// not exist. The trigger is now the user count, which is what a
+			// subscription is actually priced on.
+			const nudge = buildSubscriptionNudge(s)
+			if (nudge) {
+				return { type: 'info', message: nudge, linkText: this.t('intravox', 'Learn more') }
 			}
 			return null
 		},
@@ -2230,7 +2229,6 @@ export default {
 				const response = await axios.get(generateUrl('/apps/intravox/api/license/stats'))
 				if (response.data.success) {
 					this.licenseStats = response.data
-					this.bannerDismissed = false
 				}
 			} catch (e) { /* silently fail — banner just won't show */ }
 		},
