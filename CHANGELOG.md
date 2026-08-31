@@ -34,6 +34,11 @@ IntraVox is a Nextcloud intranet page builder.
   editor now keeps showing it, so building a structure first and linking pages
   later works as expected.
   ([#104](https://github.com/nextcloud/IntraVox/issues/104))
+- **Sub-items in the mobile menu were not indented and long names ran on.** The
+  level styling targeted a class Nextcloud only applies to some labels, so for
+  most items the indent, smaller type and muted colour silently did nothing —
+  and a long name was cut off by the menu edge. Sub-levels now indent again, and
+  a name too long for one line wraps with every line kept at its level.
 - **The page structure panel could not be scrolled on an iPhone.** A swipe at the
   end of the list dragged the page behind the panel instead of scrolling the
   list itself, and on iOS the panel was sized against a viewport taller than the
