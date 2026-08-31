@@ -4,6 +4,17 @@ All notable changes to IntraVox will be documented in this file.
 
 IntraVox is a Nextcloud intranet page builder.
 
+## [Unreleased]
+
+### Fixed
+
+- **The page structure panel could not be scrolled on an iPhone.** A swipe at the
+  end of the list dragged the page behind the panel instead of scrolling the
+  list itself, and on iOS the panel was sized against a viewport taller than the
+  visible screen, so its lower entries sat behind Safari's toolbar. The panel now
+  measures against the visible screen and keeps a swipe inside the list.
+  ([#103](https://github.com/nextcloud/IntraVox/issues/103))
+
 ## [2.6.0] - 2026-08-29 — Exports that import again, and the API split into seven controllers
 
 ### Security

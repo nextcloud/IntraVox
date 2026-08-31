@@ -38,7 +38,12 @@
 
 #app-intravox {
     width: 100%;
+    /* dvh rekent met het ZICHTBARE deel van het scherm. Op iOS is 100vh groter
+       dan wat de gebruiker ziet, want de adresbalk ligt eroverheen: de
+       container werd daardoor hoger dan het scherm en alles wat aan de
+       onderkant hangt zakte erachter. De vh-regel blijft als fallback. */
     min-height: 100vh;
+    min-height: 100dvh;
     background: var(--color-main-background);
 }
 
@@ -48,8 +53,12 @@
     overflow-y: auto !important;
 }
 
+/* Bewust GEEN overflow-y hier. height:auto laat de container met zijn inhoud
+   meegroeien, dus overflowen doet hij nooit en een overflow-y erbij deed dan
+   ook niets -- behalve de indruk wekken dat dit de scrollende laag is. De
+   pagina scrollt op het document; PageToc.findScroller() zoekt de echte
+   scroller op en komt zo op window uit. */
 #app-intravox {
-    overflow-y: auto !important;
     height: auto !important;
 }
 

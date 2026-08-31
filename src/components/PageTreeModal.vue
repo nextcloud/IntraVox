@@ -586,8 +586,15 @@ export default {
   position: sticky;
   top: var(--intravox-topbar-height, 0px);
   align-self: flex-start;
+  /* dvh volgt de in- en uitschuivende browserbalk op mobiel; de vh-regel
+     erboven is de fallback voor browsers zonder dvh. Deze kolom is weliswaar
+     de brede variant, maar een tablet in liggende stand haalt 1025px ook. */
   max-height: calc(100vh - var(--header-height, 50px) - var(--intravox-topbar-height, 0px));
+  max-height: calc(100dvh - var(--header-height, 50px) - var(--intravox-topbar-height, 0px));
   overflow-y: auto;
+  /* Het paneel is hier zelf de scrollende laag, dus ook hier geen doorslaande
+     swipe naar de pagina eronder. */
+  overscroll-behavior: contain;
 }
 
 .page-tree-panel .page-tree-content {
@@ -776,6 +783,10 @@ export default {
     max-height: none;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+    /* Zonder dit slaat een swipe aan het einde van de lijst door naar de
+       pagina ACHTER de overlay: die scrollt dan weg terwijl de boom stil
+       blijft staan. contain houdt de swipe binnen dit element. */
+    overscroll-behavior: contain;
   }
 
   .page-tree-content.is-panel .page-tree {
