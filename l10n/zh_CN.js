@@ -280,7 +280,6 @@ OC.L10N.register(
     "Subscription key saved but validation failed: {reason}" : "订阅密钥已保存但验证失败: {reason}",
     "Subscription key removed." : "订阅密钥已移除。",
     "Failed to remove subscription key" : "移除订阅密钥失败",
-    "View pricing & plans" : "查看价格 & 计划",
     "Questions?" : "有问题？",
     "Your installation" : "你的安装",
     "Total" : "总量",

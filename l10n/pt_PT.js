@@ -440,7 +440,6 @@ OC.L10N.register(
     "Failed to remove subscription key" : "Falha ao remover a chave de assinatura",
     "IntraVox is free and open source (AGPL-3.0). All features work without a subscription. If IntraVox is valuable to your organization, a subscription supports active development and gives you guaranteed Nextcloud compatibility and email support." : "O IntraVox é livre e de código aberto (AGPL-3.0). Todos os recursos funcionam sem a necessidade de assinatura. Se o IntraVox for útil para sua organização, uma assinatura contribui para o desenvolvimento ativo do projeto e garante compatibilidade com o Nextcloud e suporte por e-mail.",
     "A subscription includes: guaranteed Nextcloud compatibility, email support, priority bug fixes, and active development." : "A assinatura inclui: compatibilidade garantida com o Nextcloud, suporte por e-mail, correção prioritária de bugs e desenvolvimento ativo.",
-    "View pricing & plans" : "Ver preços e planos",
     "Questions?" : "Dúvidas?",
     "Your installation" : "Sua instalação",
     "Total" : "Total",
