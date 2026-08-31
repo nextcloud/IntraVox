@@ -273,6 +273,12 @@ export default {
   align-items: center;
   padding: 4px 0;
   border-radius: 4px;
+  /* Een flex-item weigert standaard te krimpen onder de breedte van zijn
+     inhoud (min-width:auto). Zonder deze regel kan de rij dus breder worden
+     dan het paneel en heeft de ellipsis op .tree-item-title niets om tegen af
+     te kappen: de titel wijkt uit naar een tweede regel, die door de
+     inspringing van .tree-children links buiten de tekstkolom begint. */
+  min-width: 0;
 }
 
 .tree-item-row:hover {
