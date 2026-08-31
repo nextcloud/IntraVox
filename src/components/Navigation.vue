@@ -944,3 +944,31 @@ a.megamenu-column-header:active {
   }
 }
 </style>
+
+<!-- Not scoped: NcActions teleports its popover to the end of <body>, so a
+     scoped selector never reaches it. -->
+<style>
+/* The popover sizes itself to its content. On a phone that left the menu about
+   40% of the screen wide (measured: 157px of 390px), with the page showing
+   beside it and item names wrapping in a narrow column. A navigation menu on a
+   phone should be the thing you are looking at, so give it the screen width,
+   minus a margin so it still reads as a panel over the page.
+
+   Capped at 320px: wider than that it stops reading as a panel on a tablet,
+   which this breakpoint also covers.
+
+   Matched on what the menu CONTAINS, because there is no handle on the popover
+   itself: it is teleported out of this component and NcActions gives every
+   popover in the app the same action-item__popper class, so styling that would
+   also resize the page-actions and comment menus. popoverBaseClass looks like
+   the proper answer but is not wired through in this @nextcloud/vue build --
+   setting it changed nothing (verified in the browser). :has() keeps this to
+   the one popover holding mobile nav items. */
+@media (max-width: 768px) {
+  .v-popper__inner:has(.mobile-nav-level-1, .mobile-nav-level-2, .mobile-expand-btn) {
+    box-sizing: border-box;
+    min-width: min(320px, calc(100vw - 24px));
+    max-width: calc(100vw - 24px);
+  }
+}
+</style>
