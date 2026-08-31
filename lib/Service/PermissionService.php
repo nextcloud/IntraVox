@@ -705,7 +705,16 @@ class PermissionService {
      * @param array|null $pagePathMap Optional pre-built map of uniqueId => path for performance
      * @return array Filtered navigation items
      */
-    public function filterNavigation(array $items, string $language, ?array $pagePathMap = null): array {
+    /**
+     * @param bool $keepLinkless Keep items that have no link and no visible
+     *   children. The menu drops those -- a heading that goes nowhere and holds
+     *   nothing is noise for a visitor. The navigation EDITOR must keep them:
+     *   an item is saved before its page link is set, and dropping it there
+     *   makes it unreachable, so the link can never be added (issue #104).
+     *   Permission filtering above still applies either way: an editor must not
+     *   see items for pages they cannot read.
+     */
+    public function filterNavigation(array $items, string $language, ?array $pagePathMap = null, bool $keepLinkless = false): array {
         $filtered = [];
 
         foreach ($items as $item) {
@@ -739,11 +748,11 @@ class PermissionService {
 
             // Recursively filter children
             if (isset($item['children']) && is_array($item['children'])) {
-                $filteredChildren = $this->filterNavigation($item['children'], $language, $pagePathMap);
+                $filteredChildren = $this->filterNavigation($item['children'], $language, $pagePathMap, $keepLinkless);
                 $filteredItem['children'] = $filteredChildren;
 
                 // If this item has no link (no uniqueId and no url), only include if it has accessible children
-                if (empty($item['uniqueId']) && empty($item['url']) && empty($filteredChildren)) {
+                if (!$keepLinkless && empty($item['uniqueId']) && empty($item['url']) && empty($filteredChildren)) {
                     continue;
                 }
             }

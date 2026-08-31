@@ -80,16 +80,40 @@ class NavigationController extends Controller {
             $pagePathMap = $this->permissionService->buildPagePathMap($currentLang);
 
             // Filter navigation items based on user's actual read permissions
+            $navigationForEditor = null;
             if (isset($navigation['items']) && is_array($navigation['items'])) {
+                $rawItems = $navigation['items'];
+
                 $navigation['items'] = $this->permissionService->filterNavigation(
-                    $navigation['items'],
+                    $rawItems,
                     $currentLang,
                     $pagePathMap
                 );
+
+                // The editor needs the items the menu deliberately hides: one
+                // without a link and without children. Those are saved fine but
+                // filtered out of the menu, so feeding the menu's copy back into
+                // the editor made a freshly created item vanish on the next load
+                // -- and with it any way to add the link (issue #104).
+                //
+                // Same permission filtering, only the linkless rule relaxed: an
+                // editor still never sees items for pages they cannot read.
+                // Only sent to users who may actually edit, so a reader's payload
+                // does not grow and holds nothing extra.
+                if ($canEdit) {
+                    $navigationForEditor = $navigation;
+                    $navigationForEditor['items'] = $this->permissionService->filterNavigation(
+                        $rawItems,
+                        $currentLang,
+                        $pagePathMap,
+                        true
+                    );
+                }
             }
 
             $responseData = [
                 'navigation' => $navigation,
+                'navigationForEditor' => $navigationForEditor,
                 'canEdit' => $canEdit,
                 'language' => $currentLang,
                 'permissions' => $permissions

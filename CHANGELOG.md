@@ -25,6 +25,15 @@ IntraVox is a Nextcloud intranet page builder.
 
 ### Fixed
 
+- **A navigation item without a link disappeared after a refresh.** Adding a menu
+  item and saving it before setting its page or URL appeared to work, but the
+  item was gone on the next load — from the menu and from the edit dialogue, so
+  the link could never be added afterwards. Nothing was lost: the item stayed in
+  navigation.json, it was only unreachable. The menu still hides such an item —
+  a heading that leads nowhere and holds nothing has no place there — but the
+  editor now keeps showing it, so building a structure first and linking pages
+  later works as expected.
+  ([#104](https://github.com/nextcloud/IntraVox/issues/104))
 - **The page structure panel could not be scrolled on an iPhone.** A swipe at the
   end of the list dragged the page behind the panel instead of scrolling the
   list itself, and on iOS the panel was sized against a viewport taller than the

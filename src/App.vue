@@ -326,7 +326,7 @@
 
     <NavigationEditor
       v-if="showNavigationEditor"
-      :navigation="navigation"
+      :navigation="navigationForEditor"
       :pages="pages"
       @close="showNavigationEditor = false"
       @save="saveNavigation"
@@ -496,6 +496,12 @@ export default {
       showDetailsSidebar: window.localStorage?.getItem('intravox:details-open') === '1',
       breadcrumb: [],
       navigation: {
+        type: 'dropdown',
+        items: []
+      },
+      // Same structure, but with the items the menu hides (no link, no
+      // children) still present -- see loadNavigation() and issue #104.
+      navigationForEditor: {
         type: 'dropdown',
         items: []
       },
@@ -2002,6 +2008,12 @@ export default {
         const url = generateUrl('/apps/intravox/api/navigation');
         const response = await axios.get(url);
         this.navigation = response.data.navigation;
+        // The menu hides an item without a link and without children; the editor
+        // must still show it, otherwise a just-created item disappears on the
+        // next load and its link can never be set (issue #104). The server only
+        // sends this to users who may edit; fall back to the menu copy so an
+        // older server keeps working.
+        this.navigationForEditor = response.data.navigationForEditor || response.data.navigation;
         // Editing navigation writes navigation.json at the language root, so it
         // requires write on the root — gate strictly on canWrite. (The legacy
         // `canEdit` fallback is dropped: it mirrored canWrite anyway and a stale
@@ -2015,13 +2027,19 @@ export default {
           type: 'dropdown',
           items: []
         };
+        this.navigationForEditor = this.navigation;
         this.canEditNavigation = false;
       }
     },
     async saveNavigation(navigation) {
       try {
-        const response = await axios.post(generateUrl('/apps/intravox/api/navigation'), navigation);
-        this.navigation = response.data.navigation;
+        await axios.post(generateUrl('/apps/intravox/api/navigation'), navigation);
+        // The POST returns the stored structure unfiltered, so assigning it to
+        // this.navigation put linkless items straight into the visitor menu --
+        // and made the item seem saved until the next load contradicted it
+        // (issue #104). Re-read instead: one round trip, and menu and editor
+        // each get the copy they should have.
+        await this.loadNavigation();
         this.showNavigationEditor = false;
         showSuccess(this.t('intravox', 'Navigation saved'));
       } catch (err) {
