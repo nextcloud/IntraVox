@@ -53,12 +53,18 @@
     overflow-y: auto !important;
 }
 
-/* Bewust GEEN overflow-y hier. height:auto laat de container met zijn inhoud
-   meegroeien, dus overflowen doet hij nooit en een overflow-y erbij deed dan
-   ook niets -- behalve de indruk wekken dat dit de scrollende laag is. De
-   pagina scrollt op het document; PageToc.findScroller() zoekt de echte
-   scroller op en komt zo op window uit. */
+/* Deze twee horen bij elkaar en zijn de scroll van de HELE pagina -- niet weg
+   te halen, ook al lijkt het duplicaat.
+
+   height:auto oogt alsof de container met zijn inhoud meegroeit en dus nooit
+   overflowt, maar auto lost hier op tegen de min-height hierboven: de hoogte
+   wordt 100dvh. De inhoud is veel langer (gemeten: 5865px inhoud in een doos
+   van 844px), dus hij overflowt wel degelijk en overflow-y maakt hem tot de
+   scrollende laag. Het document zelf scrollt niet (scrollHeight ==
+   clientHeight), dus zonder deze overflow-y scrollt de pagina NERGENS meer.
+   Precies dat gebeurde toen ik hem in 2.6.1 als 'dode CSS' weghaalde. */
 #app-intravox {
+    overflow-y: auto !important;
     height: auto !important;
 }
 
