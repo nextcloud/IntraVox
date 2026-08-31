@@ -1370,6 +1370,17 @@ OC.L10N.register(
     "{count} people reacted with {emoji}" : "{count} personen reageerden met {emoji}",
     "React" : "Reageer",
     "This widget already filters on {fields}. Visitors cannot widen that, so those fields would only show empty options and are not offered here." : "Deze widget filtert al op {fields}. Bezoekers kunnen dat niet verbreden, dus die velden zouden alleen lege opties tonen en worden hier niet aangeboden.",
-    "Contains IntraVox data for {languages}" : "Bevat IntraVox-gegevens voor {languages}"
+    "Contains IntraVox data for {languages}" : "Bevat IntraVox-gegevens voor {languages}",
+    "Your IntraVox subscription expired on {date}. Renew it to keep receiving support." : "Uw IntraVox-abonnement is op {date} verlopen. Verleng het om ondersteuning te blijven ontvangen.",
+    "Your IntraVox subscription has expired. Renew it to keep receiving support." : "Uw IntraVox-abonnement is verlopen. Verleng het om ondersteuning te blijven ontvangen.",
+    "This IntraVox subscription key is not known to the licence server. Check it for typos." : "Deze IntraVox-abonnementssleutel is niet bekend bij de licentieserver. Controleer hem op typefouten.",
+    "This IntraVox subscription key is already registered to another Nextcloud instance. Contact us if this server replaces that one." : "Deze IntraVox-abonnementssleutel is al geregistreerd op een andere Nextcloud-installatie. Neem contact met ons op als deze server die vervangt.",
+    "This IntraVox subscription key has been deactivated. Contact us to reactivate it." : "Deze IntraVox-abonnementssleutel is gedeactiveerd. Neem contact met ons op om hem weer te activeren.",
+    "This IntraVox subscription key is not valid yet." : "Deze IntraVox-abonnementssleutel is nog niet geldig.",
+    "Could not reach the licence server, so the IntraVox subscription status could not be confirmed." : "De licentieserver was niet bereikbaar, dus de status van het IntraVox-abonnement kon niet worden bevestigd.",
+    "IntraVox subscription key was refused: {reason}" : "IntraVox-abonnementssleutel is geweigerd: {reason}",
+    "Pricing details" : "Prijsinformatie",
+    "Nextcloud Enterprise subscription detected on this instance. IntraVox subscriptions are sold through Nextcloud — contact your Nextcloud account manager or sales@nextcloud.com." : "Er is een Nextcloud Enterprise-abonnement op deze installatie gevonden. IntraVox-abonnementen worden verkocht via Nextcloud — neem contact op met uw Nextcloud-accountmanager of sales@nextcloud.com.",
+    "IntraVox is running for {count} users here and keeps working in full without a subscription. If your organisation gets value from it, a subscription is much appreciated — it funds the maintenance. Sold through Nextcloud: contact your account manager or sales@nextcloud.com." : "IntraVox draait hier voor {count} gebruikers en blijft volledig werken zonder abonnement. Als uw organisatie er waarde uit haalt, wordt een abonnement zeer gewaardeerd — het bekostigt het onderhoud. Verkocht via Nextcloud: neem contact op met uw accountmanager of sales@nextcloud.com."
 },
 "nplurals=2; plural=(n != 1);");

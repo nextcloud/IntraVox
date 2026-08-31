@@ -4,7 +4,24 @@ All notable changes to IntraVox will be documented in this file.
 
 IntraVox is a Nextcloud intranet page builder.
 
-## [Unreleased]
+## [2.6.1] - 2026-08-31 — One honest subscription notice, and a page tree that scrolls on a phone
+
+### Changed
+
+- **The subscription notice says something true.** The settings banner claimed
+  "Page limit reached for one or more languages. Upgrade for unlimited pages",
+  but that limit is not enforced anywhere — it announced a restriction that does
+  not exist. IntraVox has no feature gating and never will: it behaves
+  identically with and without a subscription. The notice now appears above 100
+  users, the point where paid subscriptions begin in the price list, and says
+  plainly that everything keeps working either way. An instance with a Nextcloud
+  Enterprise subscription sees a notice pointing at its own account manager
+  instead, since IntraVox subscriptions are sold and invoiced through Nextcloud.
+  At most one notice ever shows, and the banner and the Support tab now draw
+  their text from one place so they cannot drift apart.
+- **The close button on that banner is gone.** It set a flag that was forgotten
+  on reload, so the banner came back anyway — an offer to dismiss that did not
+  dismiss.
 
 ### Fixed
 
