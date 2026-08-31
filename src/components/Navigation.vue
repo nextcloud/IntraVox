@@ -470,22 +470,58 @@ export default {
   display: none;
 }
 
-.mobile-nav-level-2 :deep(.action-button__longtext) {
+.mobile-nav-level-2 :deep(.action-button__longtext-wrapper) {
+  /* NcActionButton only adds .action-button__longtext to labels it considers
+     long; the wrapper around it is always there. Targeting the inner class
+     therefore matched nothing for most items and the whole level style --
+     indent, size, colour -- silently did not apply. Measured on dev: computed
+     padding-left 0px and font-size 15px instead of 14px.
+
+     white-space is set because the wrapper defaults to nowrap: a long title
+     was then clipped by the menu instead of wrapping. Wrapping is safe here --
+     padding-left on this block indents every line, not just the first (checked:
+     both lines start at the same x) -- and it beats an ellipsis, because
+     NcActionButton leaves title="" so a cut-off name would be unreadable. */
   padding-left: 32px !important;
+  white-space: normal !important;
   font-size: 14px !important;
   color: var(--color-text-maxcontrast) !important;
   font-weight: 400 !important;
 }
 
-.mobile-nav-level-3 :deep(.action-button__longtext) {
+.mobile-nav-level-3 :deep(.action-button__longtext-wrapper) {
+  /* NcActionButton only adds .action-button__longtext to labels it considers
+     long; the wrapper around it is always there. Targeting the inner class
+     therefore matched nothing for most items and the whole level style --
+     indent, size, colour -- silently did not apply. Measured on dev: computed
+     padding-left 0px and font-size 15px instead of 13px.
+
+     white-space is set because the wrapper defaults to nowrap: a long title
+     was then clipped by the menu instead of wrapping. Wrapping is safe here --
+     padding-left on this block indents every line, not just the first (checked:
+     both lines start at the same x) -- and it beats an ellipsis, because
+     NcActionButton leaves title="" so a cut-off name would be unreadable. */
   padding-left: 56px !important;
+  white-space: normal !important;
   font-size: 13px !important;
   color: var(--color-text-maxcontrast) !important;
   font-weight: 300 !important;
 }
 
-.mobile-nav-level-4 :deep(.action-button__longtext) {
+.mobile-nav-level-4 :deep(.action-button__longtext-wrapper) {
+  /* NcActionButton only adds .action-button__longtext to labels it considers
+     long; the wrapper around it is always there. Targeting the inner class
+     therefore matched nothing for most items and the whole level style --
+     indent, size, colour -- silently did not apply. Measured on dev: computed
+     padding-left 0px and font-size 15px instead of 12px.
+
+     white-space is set because the wrapper defaults to nowrap: a long title
+     was then clipped by the menu instead of wrapping. Wrapping is safe here --
+     padding-left on this block indents every line, not just the first (checked:
+     both lines start at the same x) -- and it beats an ellipsis, because
+     NcActionButton leaves title="" so a cut-off name would be unreadable. */
   padding-left: 80px !important;
+  white-space: normal !important;
   font-size: 12px !important;
   color: var(--color-text-maxcontrast) !important;
   font-weight: 300 !important;
