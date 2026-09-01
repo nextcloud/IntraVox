@@ -292,6 +292,8 @@ OC.L10N.register(
     "Slideshow speed" : "幻燈片速度",
     "Normal" : "一般",
     "Show in Files" : "在「檔案」中顯示",
+    "Previous photo" : "前一張照片",
+    "Next photo" : "下一張照片",
     "Close details" : "關閉詳細資訊",
     "Camera" : "攝影機",
     "Failed to load photos" : "載入照片失敗",

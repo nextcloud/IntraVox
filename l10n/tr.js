@@ -1167,6 +1167,7 @@ OC.L10N.register(
     "Support IntraVox" : "IntraVox uygulamasını destekleyin",
     "IntraVox is free and open source (AGPL-3.0). All features work without a subscription. If IntraVox is valuable to your organization, a subscription supports active development and gives you guaranteed Nextcloud compatibility and email support." : "IntraVox ücretsiz ve açık kaynaklıdır (AGPL-3.0). Tüm özellikler abonelik olmadan çalışır. IntraVox kuruluşunuz için değerliyse, bir abonelik geliştirme çalışmalarını destekler ve size garantili Nextcloud uyumluluğu ve e-posta ile destek sağlar.",
     "A subscription includes: guaranteed Nextcloud compatibility, email support, priority bug fixes, and active development." : "Bir abonelikte şunlar bulunur: Garantili Nextcloud uyumluluğu, e-posta ile destek, öncelikli hata düzeltmeleri ve etkin geliştirme.",
+    "Pricing details" : "Fyatlandırma bilgileri",
     "Questions?" : "Sorularınız mı var?",
     "Your installation" : "Kurulumunuz",
     "Total" : "Toplam",
@@ -1375,6 +1376,8 @@ OC.L10N.register(
     "{count} people reacted with {emoji}" : "{count} kişi {emoji} ile tepki verdi",
     "React" : "Tepki ver",
     "This widget already filters on {fields}. Visitors cannot widen that, so those fields would only show empty options and are not offered here." : "Bu pano bileşeni zaten {fields} ile süzülüyor. Ziyaretçiler bunu genişletemez. Bu nedenle bu alanlarda yalnızca boş seçenekler görüntülenir ve burada sunulmaz.",
-    "Contains IntraVox data for {languages}" : "{languages} için IntraVox verilerini içerir"
+    "Contains IntraVox data for {languages}" : "{languages} için IntraVox verilerini içerir",
+    "Nextcloud Enterprise subscription detected on this instance. IntraVox subscriptions are sold through Nextcloud — contact your Nextcloud account manager or sales@nextcloud.com." : "Bu kopyada Nextcloud Enterprise aboneliği bulundu. IntraVox abonelikleri Nextcloud aracılığı ile satılıyor. Nextcloud hesap yöneticinizle veya sales@nextcloud.com adresi ile görüşün.",
+    "IntraVox is running for {count} users here and keeps working in full without a subscription. If your organisation gets value from it, a subscription is much appreciated — it funds the maintenance. Sold through Nextcloud: contact your account manager or sales@nextcloud.com." : "IntraVox burada {count} kullanıcı için çalışıyor ve abonelik olmadan tam olarak çalışmayı sürdürüyor. Kuruluşunuz bu uygulamadan yarar sağlıyorsa, abone olmanıza çok seviniriz. Böylece  uygulamanın geliştirilmesini desteklemiş olursunuz. Nextcloud aracılığı ile satılır: Hesap yöneticinizle veya sales@nextcloud.com adresi ile görüşün."
 },
 "nplurals=2; plural=(n > 1);");

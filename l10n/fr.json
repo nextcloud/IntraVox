@@ -1165,6 +1165,7 @@
     "Support IntraVox" : "Soutenir IntraVox",
     "IntraVox is free and open source (AGPL-3.0). All features work without a subscription. If IntraVox is valuable to your organization, a subscription supports active development and gives you guaranteed Nextcloud compatibility and email support." : "IntraVox est gratuit et open source (AGPL-3.0). Toutes les fonctionnalités fonctionnent sans abonnement. Si IntraVox est utile à votre organisation, un abonnement soutient le développement actif et vous garantit une compatibilité Nextcloud et une assistance par e-mail.",
     "A subscription includes: guaranteed Nextcloud compatibility, email support, priority bug fixes, and active development." : "Un abonnement comprend : une compatibilité Nextcloud garantie, une assistance par e-mail, des corrections de bugs prioritaires et un développement actif.",
+    "Pricing details" : "Détails des tarifs",
     "Questions?" : "Des questions ?",
     "Your installation" : "Votre installation",
     "Total" : "Total",
@@ -1373,6 +1374,8 @@
     "{count} people reacted with {emoji}" : "{count} personnes ont réagi avec {emoji}",
     "React" : "Réagir",
     "This widget already filters on {fields}. Visitors cannot widen that, so those fields would only show empty options and are not offered here." : "Ce widget filtre déjà sur {fields}. Les visiteurs ne peuvent pas élargir ce périmètre : ces champs n'afficheraient donc que des options vides et ne sont pas proposés ici.",
-    "Contains IntraVox data for {languages}" : "Contient les données IntraVox pour {languages}"
+    "Contains IntraVox data for {languages}" : "Contient les données IntraVox pour {languages}",
+    "Nextcloud Enterprise subscription detected on this instance. IntraVox subscriptions are sold through Nextcloud — contact your Nextcloud account manager or sales@nextcloud.com." : "Un abonnement à Nextcloud Enterprise a été détecté sur cette instance. Les abonnements à IntraVox sont vendus via Nextcloud — contactez votre gestionnaire de compte ou sales@nextcloud.com.",
+    "IntraVox is running for {count} users here and keeps working in full without a subscription. If your organisation gets value from it, a subscription is much appreciated — it funds the maintenance. Sold through Nextcloud: contact your account manager or sales@nextcloud.com." : "IntraVox est utilisé par {count} utilisateurs et reste totalement fonctionnel sans abonnement. Si votre organisation en tire des bénéfices, un abonnement serait fortement apprécié — il finance la maintenance. Vendu via Nextcloud : contactez votre gestionnaire de compte ou sales@nextcloud.com."
 },"pluralForm" :"nplurals=3; plural=(n == 0 || n == 1) ? 0 : n != 0 && n % 1000000 == 0 ? 1 : 2;"
 }
