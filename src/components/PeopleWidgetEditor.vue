@@ -416,6 +416,7 @@ export default {
       return {
         text: [
           { value: 'equals', label: this.t('intravox', 'equals') },
+          { value: 'not_equals', label: this.t('intravox', 'does not equal') },
           { value: 'contains', label: this.t('intravox', 'contains') },
           { value: 'not_contains', label: this.t('intravox', 'does not contain') },
           { value: 'not_empty', label: this.t('intravox', 'is not empty') },
@@ -423,7 +424,9 @@ export default {
         ],
         select: [
           { value: 'equals', label: this.t('intravox', 'equals') },
+          { value: 'not_equals', label: this.t('intravox', 'does not equal') },
           { value: 'in', label: this.t('intravox', 'is one of') },
+          { value: 'not_in', label: this.t('intravox', 'is none of') },
           { value: 'not_empty', label: this.t('intravox', 'is not empty') },
         ],
         date: [

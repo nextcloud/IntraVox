@@ -152,6 +152,15 @@ final class ProfileFilterMatcher {
                 }
                 return $actualValue === $filterValue;
 
+            case 'not_equals':
+                // Mirror of 'equals'. For a list-valued field such as groups
+                // this means the user is in none of the given groups, which is
+                // what "exclude this group" has to mean.
+                return !$this->matchesSingleFilter($actualValue, 'equals', $filterValue);
+
+            case 'not_in':
+                return !$this->matchesSingleFilter($actualValue, 'in', $filterValue);
+
             case 'contains':
                 if (is_string($actualValue) && is_string($filterValue)) {
                     return stripos($actualValue, $filterValue) !== false;

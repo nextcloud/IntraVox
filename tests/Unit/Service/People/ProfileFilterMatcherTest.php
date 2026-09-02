@@ -53,6 +53,39 @@ class ProfileFilterMatcherTest extends TestCase {
         $this->assertTrue($this->match(null, 'not_contains', 'x'));
     }
 
+    /**
+     * The case from issue #108: show Domain Users, minus Board Members.
+     * On a list-valued field "does not equal" has to mean "is in none of
+     * them" — an implementation that returns true as soon as one entry
+     * differs would let every excluded user straight through.
+     */
+    public function testNotEqualsOnAnArrayMeansMembershipInNone(): void {
+        $groups = ['Domain Users', 'Board Members'];
+
+        $this->assertFalse($this->match($groups, 'not_equals', 'Board Members'));
+        $this->assertTrue($this->match($groups, 'not_equals', 'Service accounts'));
+        $this->assertTrue($this->match([], 'not_equals', 'Board Members'));
+    }
+
+    public function testNotEqualsIsTheExactInverseOfEqualsOnScalars(): void {
+        foreach ([['Sales', 'Sales'], ['Sales', 'sales'], ['Sales', 'Support']] as [$actual, $expected]) {
+            $this->assertSame(
+                !$this->match($actual, 'equals', $expected),
+                $this->match($actual, 'not_equals', $expected),
+                "not_equals must invert equals for {$actual}/{$expected}"
+            );
+        }
+    }
+
+    public function testNotInExcludesEveryListedValue(): void {
+        $groups = ['Domain Users', 'Service accounts'];
+
+        $this->assertFalse($this->match($groups, 'not_in', ['Board Members', 'Service accounts']));
+        $this->assertTrue($this->match($groups, 'not_in', ['Board Members', 'Contractors']));
+        $this->assertFalse($this->match('Sales', 'not_in', ['Sales', 'Support']));
+        $this->assertTrue($this->match('Sales', 'not_in', ['Support']));
+    }
+
     public function testInAcceptsBothScalarAndArrayValues(): void {
         $this->assertTrue($this->match('Sales', 'in', ['Sales', 'Finance']));
         $this->assertFalse($this->match('HR', 'in', ['Sales', 'Finance']));

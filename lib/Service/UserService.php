@@ -39,6 +39,14 @@ class UserService {
     private const APP_ID = 'intravox';
     private const CUSTOM_FIELDS_KEY = 'custom_fields';
 
+    /**
+     * Operators that exclude rather than select.
+     *
+     * These must never be used to narrow the cohort scan; they can only be
+     * applied while filtering the rows it produced.
+     */
+    private const NEGATIVE_OPERATORS = ['not_equals', 'not_in', 'not_contains', 'empty'];
+
     /** Preference rows sampled when discovering custom field names. */
     private const CUSTOM_FIELD_SAMPLE = 50;
 
@@ -461,6 +469,12 @@ class UserService {
     /**
      * Extract group ids from the editor filters, if any.
      *
+     * Only *positive* group filters may narrow the scan. A negative one
+     * ("not in Service accounts") names the group to exclude, so using it as
+     * the scan set would return exactly the users that must be filtered out —
+     * the result would come out inverted rather than empty, which is the kind
+     * of bug nobody notices until the wrong people are on the page.
+     *
      * @return array<int, string>
      */
     private function groupIdsFromFilters(array $editorFilters): array {
@@ -468,6 +482,9 @@ class UserService {
 
         foreach ($editorFilters as $filter) {
             if (($filter['field'] ?? '') !== 'group') {
+                continue;
+            }
+            if (in_array($filter['operator'] ?? '', self::NEGATIVE_OPERATORS, true)) {
                 continue;
             }
             $value = $filter['value'] ?? null;
@@ -628,11 +645,16 @@ class UserService {
             return $returnTotal ? ['users' => [], 'total' => 0] : [];
         }
 
-        // Check if we have a group filter - this is more efficient
+        // Check if we have a group filter - this is more efficient.
+        // Only a positive one may seed the candidate set: a negative filter
+        // names the group to leave out, so seeding from it would return
+        // exactly the users that must be excluded. Those stay in
+        // $otherFilters and are applied by the matcher instead.
         $groupFilter = null;
         $otherFilters = [];
         foreach ($filters as $filter) {
-            if ($filter['fieldName'] === 'group') {
+            $isNegative = in_array($filter['operator'] ?? '', self::NEGATIVE_OPERATORS, true);
+            if (($filter['fieldName'] ?? '') === 'group' && !$isNegative) {
                 $groupFilter = $filter;
             } else {
                 $otherFilters[] = $filter;

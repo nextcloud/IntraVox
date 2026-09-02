@@ -310,6 +310,15 @@ final class FacetCalculator {
 				}
 				return in_array((string)$actual, $needles, true);
 
+			case 'not_equals':
+				// Mirror of 'equals'. For a list-valued field (groups) this
+				// means "none of the values match", which is what excluding a
+				// group has to mean — not "at least one differs".
+				return !self::valueMatches($actual, 'equals', $expected);
+
+			case 'not_in':
+				return !self::valueMatches($actual, 'in', $expected);
+
 			case 'contains':
 				if (!is_string($actual) || !is_string($expected) || $expected === '') {
 					return false;

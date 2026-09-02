@@ -54,6 +54,39 @@ class FacetCalculatorTest extends TestCase {
 		self::fail('facet not found: ' . $field);
 	}
 
+	/**
+	 * Issue #108: exclude a group instead of only selecting one. On the
+	 * list-valued `thema` field, "none of" is the meaning that matters —
+	 * u7 holds both Werk and Zorg and must be excluded by either.
+	 */
+	public function testNotEqualsExcludesEveryRowHoldingTheValue(): void {
+		$rows = FacetCalculator::applyFilters(self::cohort(), [self::refine('thema', 'Werk', 'not_equals')]);
+		$uids = array_column($rows, 'uid');
+
+		$this->assertNotContains('u7', $uids, 'a row holding the value must be excluded');
+		$this->assertContains('u5', $uids, 'a row without it stays');
+		$this->assertContains('u4', $uids, 'an empty list is "not it"');
+	}
+
+	public function testNotInExcludesRowsMatchingAnyListedValue(): void {
+		$rows = FacetCalculator::applyFilters(self::cohort(), [self::refine('role', ['Stagiair', 'Manager'], 'not_in')]);
+		$roles = array_unique(array_column($rows, 'role'));
+
+		$this->assertNotContains('Stagiair', $roles);
+		$this->assertNotContains('Manager', $roles);
+		$this->assertContains('Adviseur', $roles);
+	}
+
+	/** Negation must partition the cohort exactly: nothing lost, nothing double. */
+	public function testNegationPartitionsTheCohort(): void {
+		$all = self::cohort();
+		$in = FacetCalculator::applyFilters($all, [self::refine('role', 'Adviseur', 'equals')]);
+		$out = FacetCalculator::applyFilters($all, [self::refine('role', 'Adviseur', 'not_equals')]);
+
+		$this->assertCount(count($all), array_merge($in, $out));
+		$this->assertSame([], array_intersect(array_column($in, 'uid'), array_column($out, 'uid')));
+	}
+
 	public function testUnrefinedCountsMatchNaiveTally(): void {
 		$facets = FacetCalculator::compute(self::cohort(), ['role', 'gebouw']);
 

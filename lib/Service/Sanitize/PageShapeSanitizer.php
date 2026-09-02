@@ -508,7 +508,8 @@ final class PageShapeSanitizer {
                         if (isset($filter['fieldName']) && !empty($filter['fieldName'])) {
                             $allowedOperators = [
                                 // Text
-                                'equals', 'contains', 'not_contains', 'in',
+                                'equals', 'not_equals', 'contains', 'not_contains',
+                                'in', 'not_in',
                                 // Empty
                                 'not_empty', 'empty',
                                 // Date
@@ -579,7 +580,8 @@ final class PageShapeSanitizer {
                     foreach ($widget['filters'] as $filter) {
                         if (isset($filter['fieldName']) && !empty($filter['fieldName'])) {
                             $allowedOperators = [
-                                'equals', 'contains', 'not_contains', 'in', 'not_empty', 'empty',
+                                'equals', 'not_equals', 'contains', 'not_contains',
+                                'in', 'not_in', 'not_empty', 'empty',
                                 // Date operators
                                 'is_today', 'within_next_days', 'before', 'after',
                             ];
