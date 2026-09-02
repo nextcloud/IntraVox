@@ -4,6 +4,20 @@ All notable changes to IntraVox will be documented in this file.
 
 IntraVox is a Nextcloud intranet page builder.
 
+## [Unreleased]
+
+### Added
+
+- **Filters can now exclude instead of only include.** Text fields already had
+  "does not contain", but the group field and other choice fields offered no
+  negation at all — so "everyone in Domain Users except Board Members and
+  Service accounts" could not be expressed, and the only way out was to create
+  a dedicated directory group just to feed the widget. Two operators are added:
+  **does not equal** and **is none of**. On a field holding several values, such
+  as group membership, they mean "in none of these" — a person in both an
+  included and an excluded group is excluded.
+  ([#108](https://github.com/nextcloud/IntraVox/issues/108))
+
 ## [2.6.3] - 2026-09-02 — A patched editor library
 
 ### Security
