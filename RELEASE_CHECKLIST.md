@@ -819,9 +819,16 @@ tar -tzf intravox-X.Y.Z.tar.gz | grep 'src/' | wc -l
 ### 9.3 Push & Tag
 
 ```bash
-git push gitea main --tags
-git push github main --tags
+git push origin main --tags        # Forgejo — triggert OOK de docs-pipeline
+./push-to-github.sh main           # nooit `git push github` direct
+git push github vX.Y.Z             # tag apart: het script pusht geen tags
 ```
+
+> **Forgejo is niet optioneel.** `.forgejo/workflows/notify-website.yml` triggert
+> op een push naar `origin` met wijzigingen in `docs/**` en rebuildt
+> voxcloud.nl/docs. Push je alleen naar GitHub, dan blijft de documentatie
+> stilletjes op de oude versie staan — geen foutmelding, alleen verouderde docs.
+> (Overkomen bij 2.6.2, 02-09-2026.)
 
 ### 9.4 Deploy to Test Server
 
@@ -902,6 +909,19 @@ en bezit alleen `metavox`. De rechtencheck komt vóór de signature-check, dus e
 ---
 
 ### 9.8 Is de release echt af?
+
+> ⚠️ **Draai dit OOK direct ná elke tag-wijziging.** `git tag -d` + opnieuw
+> pushen ontkoppelt de release van zijn tag en zet 'm stil terug op
+> **draft**; de download-URL geeft dan 404 met 9 bytes "Not Found" en elke
+> Nextcloud-update faalt met "An error occurred during the request."
+> Herstel: `gh release edit vX.Y.Z --draft=false` (~1 min CDN-propagatie).
+> De download zelf is het enige echte bewijs:
+>
+> ```bash
+> curl -s -o /dev/null -w "%{http_code} %{size_download}\n" -L \
+>   https://github.com/nextcloud/IntraVox/releases/download/vX.Y.Z/intravox-X.Y.Z.tar.gz
+> # 200 + volledige bytes = goed; 404 + 9 = nog draft
+> ```
 
 Een release kan halverwege blijven steken zonder dat iets faalt: 2.4.0 en 2.4.1
 zijn gebouwd, getest en gedeployed, maar nooit getagd en nooit gepubliceerd. Dat
