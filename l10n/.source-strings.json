@@ -1,6 +1,6 @@
 {
-    "count": 1380,
-    "sha256": "5d97bab0b1106d36aa7312fc8e3bfca524620bd1d8f1683a164d14d4ec86f9a6",
+    "count": 1382,
+    "sha256": "935f46295052ac15047edb27e65a193e191bfbd2086187c28f105b04b19dfd41",
     "strings": [
         "— Not configured —",
         "… and {n} more",
@@ -353,6 +353,7 @@
         "Documents",
         "Documents per page",
         "does not contain",
+        "does not equal",
         "Domain",
         "Domain added. Do not forget to save your settings.",
         "Domain contains invalid characters. Only letters, numbers, dots and hyphens are allowed.",
@@ -627,6 +628,7 @@
         "is greater than",
         "is less or equal",
         "is less than",
+        "is none of",
         "is not empty",
         "is one of",
         "is today",

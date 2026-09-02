@@ -4,9 +4,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: IntraVox 2.6.1\n"
+"Project-Id-Version: IntraVox 2.6.3\n"
 "Report-Msgid-Bugs-To: translations@nextcloud.com\n"
-"POT-Creation-Date: 2026-09-02 13:50+0000\n"
+"POT-Creation-Date: 2026-09-02 21:08+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1035,6 +1035,9 @@ msgstr ""
 msgid "does not contain"
 msgstr ""
 
+msgid "does not equal"
+msgstr ""
+
 msgid "Domain"
 msgstr ""
 
@@ -1837,6 +1840,9 @@ msgid "is less or equal"
 msgstr ""
 
 msgid "is less than"
+msgstr ""
+
+msgid "is none of"
 msgstr ""
 
 msgid "is not empty"
