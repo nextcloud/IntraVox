@@ -4,6 +4,23 @@ All notable changes to IntraVox will be documented in this file.
 
 IntraVox is a Nextcloud intranet page builder.
 
+## [2.6.3] - 2026-09-02 — A patched editor library
+
+### Security
+
+- **The rich-text editor is updated against a prototype-pollution flaw.** In the
+  editor library IntraVox uses, `mergeAttributes()` turned an own `__proto__`
+  key into inherited, executable DOM attributes — a route to running script
+  through crafted content. The library is updated to a patched version, where
+  such a key stays an inert value and no attribute is inherited from it.
+  Nothing changes in how the editor behaves.
+
+### Changed
+
+- **Build dependencies updated.** Several packages used only while building
+  IntraVox were updated to patched versions. They are not part of the shipped
+  app and change nothing at runtime.
+
 ## [2.6.2] - 2026-09-02 — A display option that promised directory fields it could never show
 
 ### Fixed
