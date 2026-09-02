@@ -19,7 +19,7 @@ De People-widget toont gebruikers-profielen uit je Nextcloud-instantie. Perfect 
 - **Nextcloud-integratie**: klik op avatars om profielen, e-mail en beschikbaarheid te zien
 - **Bezoekersfilters**: laat lezers de lijst zelf verfijnen met facetten en live aantallen
 - **Privacybewust**: respecteert de zichtbaarheid die elke gebruiker per veld instelt; standaard verborgen op publieke sharelinks
-- **LDAP-/OIDC-ondersteuning**: custom velden uit LDAP of OIDC worden automatisch gedetecteerd
+- **LDAP-/OIDC-ondersteuning**: directory-gegevens verschijnen in de standaard Nextcloud-profielvelden waaraan je ze koppelt
 
 ## Layouts
 
@@ -89,7 +89,7 @@ Velden zijn georganiseerd in logische volgorde die matched met de weergave-optie
 | **Basis-informatie** | Naam, voornaamwoorden, rol, headline, organisatie |
 | **Contact** | E-mail, telefoon, adres, website |
 | **Uitgebreid** | Biografie, geboortedatum, Twitter/X, Fediverse, Bluesky |
-| **Custom** | Aanvullende LDAP-/OIDC-velden |
+| **Custom** | Extra velden uit de gebruikersvoorkeuren (zie [Custom velden](#custom-velden-ldapoidc)) |
 
 #### Filter-operators
 
@@ -173,7 +173,7 @@ Controleer welke informatie per gebruiker wordt getoond. Alle weergave-opties zi
 | **Biografie** | Gebruikers-bio | Uit |
 | **Geboortedatum** | Verjaardag met taart-icoon | Uit |
 | **Social-links** | Twitter/X-, Fediverse- en Bluesky-links | Uit |
-| **Custom velden** | Aanvullende LDAP-/OIDC-velden | Uit |
+| **Custom velden** | Extra velden uit de gebruikersvoorkeuren | Uit |
 
 ### Verjaardag-weergave
 
@@ -183,19 +183,30 @@ Wanneer het **Geboortedatum**-veld is ingeschakeld, wordt de verjaardag van elke
 
 ## Custom velden (LDAP/OIDC)
 
-Wanneer je Nextcloud verbonden is met LDAP, Active Directory of OIDC, zijn er mogelijk aanvullende gebruikersprofiel-velden beschikbaar. De People-widget detecteert deze velden automatisch en maakt ze beschikbaar voor weergave.
+> **Belangrijk**: Nextcloud kan geen willekeurige directory-attributen opslaan. `IAccountManager::ALLOWED_PROPERTIES` is een vaste allowlist van 16 properties; alles daarbuiten wordt bij het opslaan weggegooid. Een LDAP-attribuut als `employeeNumber` heeft dus geen plek om te landen, en geen enkele app — ook IntraVox niet — kan het terugleren. **Wil je directory-gegevens tonen, koppel ze dan aan een van de bestaande profielvelden.**
+
+### Directory-attributen koppelen aan profielvelden
+
+Onder **Instellingen → Beheer → LDAP-/AD-integratie → Geavanceerd → Speciale attributen** kun je elk profielveld aan een LDAP-attribuut koppelen. Alles wat je daar mapt verschijnt automatisch in de People-widget, met een eigen weergave-optie en filter — de custom-velden-toggle is daar niet voor nodig.
+
+| Wat je wilt tonen | Koppel je LDAP-attribuut aan |
+|-------------------|------------------------------|
+| Afdeling, business unit | **Organisatie** |
+| Functietitel, employee type | **Rol** |
+| Kantoorlocatie, werkplek | **Adres** |
+| Korte tagline, team | **Headline** |
+| Telefoon / toestelnummer | **Telefoon** |
+| Langere vrije tekst (bv. manager, kostenplaats) | **Biografie** |
+
+De velden die je kunt koppelen zijn: telefoon, website, adres, twitter, fediverse, organisatie, rol, headline, biografie, geboortedatum en voornaamwoorden.
+
+### De custom-velden-toggle
 
 ![People-widget custom properties](../../screenshots/People-Custom-properties.png)
 
-Veelvoorkomende custom velden zijn:
+De weergave-optie **Custom velden (LDAP/OIDC)** toont extra sleutel/waarde-paren uit de gebruikersvoorkeur `intravox`/`custom_fields`. De widget formatteert veldnamen automatisch voor leesbaarheid (bv. `employee_id` wordt "Employee Id").
 
-- Employee ID
-- Cost Center
-- Office Location
-- Employee Type
-- Manager
-
-Schakel "Custom velden (LDAP/OIDC)" in bij weergave-opties om deze velden op gebruikers-cards te tonen. De widget formatteert veldnamen automatisch voor leesbaarheid (bv. `employee_id` wordt "Employee Id").
+IntraVox léést deze voorkeur, maar **schrijft hem momenteel niet** — er is geen ingebouwde LDAP- of OIDC-synchronisatie die hem vult. Hij wordt gevuld door het commando `occ intravox:add-demo-fields` voor demodata, of door je eigen provisioning-script. Zet je de toggle aan zonder zo'n bron, dan verschijnen er geen extra velden. Zie [issue #106](https://github.com/nextcloud/IntraVox/issues/106).
 
 > **Let op**: Geboortedatum en Bluesky zijn nu first-class velden met dedicated weergave-opties en vereisen de custom-velden-toggle niet.
 
@@ -245,17 +256,11 @@ Deze velden zijn beschikbaar in alle Nextcloud-installaties:
 
 ### LDAP-/Active-Directory-velden
 
-Als je Nextcloud verbonden is met LDAP of Active Directory, kunnen aanvullende velden beschikbaar zijn afhankelijk van je LDAP-configuratie. Veelvoorkomende voorbeelden:
-
-- Employee ID
-- Afdeling
-- Manager
-- Office-locatie
-- Cost-center
+LDAP en Active Directory voegen geen nieuwe velden toe. Ze vullen de standaardvelden hierboven, volgens de attribuut-mapping die je instelt onder **Speciale attributen** in de LDAP-instellingen. Directory-gegevens als afdeling of functietitel worden dus filterbaar zodra je ze koppelt aan Organisatie, Rol, Adres, Headline of Biografie.
 
 ### OIDC-velden
 
-Bij gebruik van OpenID Connect voor authenticatie kunnen aanvullende profile-claims gemapped worden naar gebruikers-velden.
+Hetzelfde geldt voor OpenID Connect: profile-claims zijn filterbaar zodra ze gekoppeld zijn aan een van de standaardvelden hierboven.
 
 ## Groep-gebaseerde filtering
 
@@ -299,7 +304,7 @@ Actieve keuzes verschijnen als verwijderbare chips boven de resultaten, en de se
 3. Kies op welke velden bezoekers mogen filteren — de eerste drie worden voor je gekozen
 4. Hernoem eventueel een filter (het label is wat bezoekers zien) en sleep om de volgorde te wijzigen
 
-Elk profielveld kan een facet worden, ook custom LDAP-/OIDC-velden. De schermafbeelding hierboven gebruikt drie custom velden: *Werking*, *Thema* en *Gebouw*.
+Elk profielveld kan een facet worden. De schermafbeelding hierboven gebruikt drie velden met directory-gegevens: *Werking*, *Thema* en *Gebouw* — elk gekoppeld aan een standaard profielveld in de LDAP-instellingen.
 
 ### Instellingen
 
@@ -335,7 +340,7 @@ De widget respecteert de zichtbaarheid die elke gebruiker zelf instelt onder **I
 | **Lokaal** | zichtbaar | verborgen |
 | **Gefedereerd** / **Gepubliceerd** | zichtbaar | zichtbaar |
 
-Velden die gebruikers op privé hebben gezet worden nooit getoond, ongeacht wat de widget zou moeten weergeven. IntraVox custom velden (uit LDAP-/OIDC-synchronisatie) hebben geen eigen zichtbaarheidsinstelling en worden behandeld als **Lokaal**: beschikbaar voor ingelogde gebruikers, nooit op een publieke share.
+Velden die gebruikers op privé hebben gezet worden nooit getoond, ongeacht wat de widget zou moeten weergeven. IntraVox custom velden (uit de gebruikersvoorkeur `custom_fields`) hebben geen eigen zichtbaarheidsinstelling en worden behandeld als **Lokaal**: beschikbaar voor ingelogde gebruikers, nooit op een publieke share.
 
 > **Upgrade je vanaf een versie vóór IntraVox 1.9.4?** Eerdere versies controleerden deze instellingen niet, dus velden die op privé stonden werden tóch getoond. Na de upgrade verdwijnen ze — dat is de fix, maar het is een zichtbare verandering. Draai `occ intravox:people:scope-report` om precies te zien welke velden dit op jouw instance raakt en voor hoeveel accounts.
 

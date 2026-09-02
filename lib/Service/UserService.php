@@ -39,6 +39,9 @@ class UserService {
     private const APP_ID = 'intravox';
     private const CUSTOM_FIELDS_KEY = 'custom_fields';
 
+    /** Preference rows sampled when discovering custom field names. */
+    private const CUSTOM_FIELD_SAMPLE = 50;
+
     // Standard account properties that are always available
     private const STANDARD_PROPERTIES = [
         IAccountManager::PROPERTY_DISPLAYNAME => ['label' => 'Name', 'type' => 'text'],
@@ -1165,6 +1168,27 @@ class UserService {
                 // Skip if account not available
             }
         });
+
+        // IntraVox custom fields live in a user preference, not in
+        // oc_accounts, so the account sampling above can never see them.
+        // They carry no scope of their own and count as v2-local, hence the
+        // audience check. Flagged 'custom' so the editor can hide a display
+        // option that would otherwise render nothing.
+        $customNames = ($this->bulkLoader !== null && $audience === AccountScopePolicy::AUDIENCE_LOCAL)
+            ? $this->bulkLoader->sampleCustomFieldNames(self::APP_ID, self::CUSTOM_FIELDS_KEY, self::CUSTOM_FIELD_SAMPLE)
+            : [];
+        foreach ($customNames as $name) {
+            $key = FilterSpec::aliasField($name);
+            if (in_array($key, $knownFields, true) || isset($detectedFields[$key])) {
+                continue;
+            }
+            $detectedFields[$key] = [
+                'fieldName' => $key,
+                'label' => ucfirst(str_replace('_', ' ', $key)),
+                'type' => 'text',
+                'custom' => true,
+            ];
+        }
 
         // Sort additional fields: social fields first (bluesky), then alphabetically
         $socialFields = ['bluesky', 'mastodon', 'linkedin', 'github', 'instagram'];

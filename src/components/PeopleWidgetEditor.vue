@@ -329,7 +329,11 @@
             <input type="checkbox" v-model="localWidget.showFields.socialLinks" @change="emitUpdate" />
             <span>{{ t('intravox', 'Social links (X/Bluesky/Fediverse)') }}</span>
           </label>
-          <label class="checkbox-option">
+          <!-- Only offered when the instance actually has custom fields.
+               Nextcloud cannot store arbitrary LDAP/OIDC attributes, so on
+               most instances this preference is empty and the toggle would
+               silently do nothing. -->
+          <label v-if="hasCustomFields" class="checkbox-option">
             <input type="checkbox" v-model="localWidget.showFields.customFields" @change="emitUpdate" />
             <span>{{ t('intravox', 'Custom fields (LDAP/OIDC)') }}</span>
           </label>
@@ -397,6 +401,12 @@ export default {
     };
   },
   computed: {
+    // Whether this instance has any IntraVox custom fields at all. The
+    // backend flags them when it discovers them; an instance without them
+    // never sees the display option.
+    hasCustomFields() {
+      return this.availableFields.some(f => f.custom === true);
+    },
     // Operator labels are translated here (and via literal t('intravox', …)
     // calls so the l10n extractor picks them up). Previously the template
     // called t(op.label) with a single argument, which the @nextcloud/l10n

@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "IntraVox API",
-    "version": "2.6.1",
+    "version": "2.6.2",
     "description": "IntraVox is a modern intranet page builder for Nextcloud. This API provides endpoints for managing pages, media, navigation, comments, reactions, the Photo Story widget (galleries with EXIF, maps and lightbox) and the File Story widget (document libraries with MetaVox-aware filtering and federated-share awareness).\n\n## Authentication failures and 429\n\nNextcloud applies brute-force protection to failed authentication at the platform level. Any authenticated endpoint here can therefore answer 429 Too Many Requests after repeated bad credentials from one address, whether or not that operation documents its own rate limit — and once tripped it keeps answering 429 even for correct credentials until the window expires.\n\nThis surprises automated clients most: a retry loop on a wrong token does not eventually succeed, it locks the address out. Treat 401 as terminal and fix the credentials rather than retrying.",
     "license": {
       "name": "AGPL-3.0",

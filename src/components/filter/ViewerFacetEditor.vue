@@ -9,7 +9,7 @@
 		</label>
 
 		<p class="vfe__hint">
-			{{ t('intravox', 'Adds a filter panel with counts. Visitors can only narrow what this widget already shows — never widen it.') }}
+			{{ t('intravox', 'Visitors pick from these fields themselves. They can only narrow the selection above further — never widen it.') }}
 		</p>
 
 		<template v-if="config.enabled">
@@ -25,16 +25,23 @@
 					{{ t('intravox', 'This widget already has a group filter, so its own results are scoped — but the group is larger than the scan limit.') }}
 				</p>
 			</NcNoteCard>
-			<NcNoteCard v-else-if="preflight.userCount > 0" type="success" class="vfe__note">
-				{{ t('intravox', '{count} accounts in scope — counts will be exact.', { count: preflight.userCount }) }}
-			</NcNoteCard>
-
 			<div class="vfe__block">
 				<label class="vfe__label">{{ t('intravox', 'Filterable fields') }}</label>
 
 				<p v-if="selectableFields.length === 0" class="vfe__empty">
 					{{ t('intravox', 'No fields available to filter on.') }}
 				</p>
+
+				<div v-else class="vfe__facet-head" aria-hidden="true">
+					<span class="vfe__grip vfe__grip--ghost">
+						<DragHorizontalVariant :size="18" />
+					</span>
+					<span class="vfe__facet-name">{{ t('intravox', 'Field') }}</span>
+					<span class="vfe__facet-label vfe__facet-head-label">{{ t('intravox', 'Name shown to visitors') }}</span>
+					<span class="vfe__remove vfe__remove--ghost">
+						<Close :size="18" />
+					</span>
+				</div>
 
 				<draggable
 					v-model="facetList"
@@ -51,7 +58,7 @@
 								v-model="element.label"
 								type="text"
 								class="vfe__facet-label"
-								:placeholder="labelForField(element.field)"
+								:placeholder="t('intravox', 'Default: {label}', { label: labelForField(element.field) })"
 								:aria-label="t('intravox', 'Label shown to visitors')"
 								@input="emit">
 							<button
@@ -337,6 +344,35 @@ export default {
 	display: flex;
 	flex-direction: column;
 	gap: 6px;
+}
+
+/* Column headings for the rows below.
+   This carries the same children and the same box model as .vfe__facet — a
+   transparent border standing in for the row's 1px — so flex resolves the
+   identical column widths. Deriving the offsets by hand drifts the moment the
+   row changes; letting the layout do it cannot. */
+.vfe__facet-head {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 4px;
+	border: 1px solid transparent;
+	margin-bottom: 2px;
+	font-size: 0.85em;
+	color: var(--color-text-maxcontrast);
+}
+
+/* Reserve the grip and remove columns without showing an icon. */
+.vfe__grip--ghost,
+.vfe__remove--ghost {
+	visibility: hidden;
+}
+
+.vfe__facet-head-label {
+	/* The heading is a plain span where the row has an input, so it has to
+	   reproduce that input's own insets to line up with the placeholder:
+	   2px border + 12px padding, plus the 3px margin inputs carry here. */
+	padding-inline-start: 17px;
 }
 
 .vfe__label {

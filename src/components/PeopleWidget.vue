@@ -20,6 +20,7 @@
           :approximate="approximate"
           :cap-count="capCount"
           :active-count="activeRefinementCount"
+          :dark="isDarkBackground"
           @toggle-value="toggleRefinement"
           @update:search-term="setSearchTerm"
           @clear-all="clearAllRefinements" />

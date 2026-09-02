@@ -151,7 +151,7 @@ export default {
 
 <style scoped>
 .facet-group {
-	border-bottom: 1px solid var(--color-border);
+	border-bottom: 1px solid var(--iv-filter-border, var(--color-border));
 	padding-bottom: 4px;
 }
 
@@ -170,13 +170,13 @@ export default {
 	border-radius: var(--border-radius);
 	cursor: pointer;
 	font-weight: 600;
-	color: var(--color-main-text);
+	color: var(--iv-filter-text, var(--color-main-text));
 	text-align: left;
 }
 
 .facet-group__header:hover,
 .facet-group__header:focus-visible {
-	background-color: var(--color-background-hover);
+	background-color: var(--iv-filter-hover, var(--color-background-hover));
 }
 
 .facet-group__label {
@@ -204,6 +204,14 @@ export default {
 .facet-group__search {
 	width: 100%;
 	margin-bottom: 6px;
+	background-color: var(--iv-filter-field-bg, var(--color-main-background));
+	color: var(--iv-filter-field-text, var(--color-main-text));
+	border-color: var(--iv-filter-field-border, var(--color-border-maxcontrast));
+}
+
+.facet-group__search::placeholder {
+	color: var(--iv-filter-muted, var(--color-text-maxcontrast));
+	opacity: 1;
 }
 
 .facet-group__list {
@@ -222,7 +230,7 @@ export default {
 }
 
 .facet-group__option:hover {
-	background-color: var(--color-background-hover);
+	background-color: var(--iv-filter-hover, var(--color-background-hover));
 }
 
 /* A value at zero stays clickable — it may be the one the viewer selected —
@@ -236,6 +244,7 @@ export default {
 	flex: 0 0 auto;
 	margin: 0;
 	cursor: pointer;
+	accent-color: var(--iv-filter-accent, var(--color-primary-element));
 }
 
 .facet-group__value {
@@ -243,15 +252,15 @@ export default {
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	color: var(--color-main-text);
+	color: var(--iv-filter-text, var(--color-main-text));
 }
 
 .facet-group__count {
 	flex: 0 0 auto;
 	padding: 0 6px;
 	border-radius: var(--border-radius-pill);
-	background-color: var(--color-background-dark);
-	color: var(--color-text-maxcontrast);
+	background-color: var(--iv-filter-count-bg, var(--color-background-dark));
+	color: var(--iv-filter-count-text, var(--color-text-maxcontrast));
 	font-size: 0.85em;
 	font-variant-numeric: tabular-nums;
 }
@@ -262,7 +271,7 @@ export default {
 	padding: 4px 6px;
 	background: transparent;
 	border: none;
-	color: var(--color-text-maxcontrast);
+	color: var(--iv-filter-muted, var(--color-text-maxcontrast));
 	font-size: 0.9em;
 }
 
@@ -272,6 +281,6 @@ export default {
 }
 
 .facet-group__more:hover {
-	color: var(--color-main-text);
+	color: var(--iv-filter-text, var(--color-main-text));
 }
 </style>

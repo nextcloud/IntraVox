@@ -3,6 +3,44 @@ import {
 	parseRefinements,
 	serializeRefinements,
 } from '../services/FacetQueryService.js'
+import { aliasField } from '../services/filterSpec.js'
+import { translate } from '@nextcloud/l10n'
+
+/**
+ * Readable headings for the fields a viewer can filter on.
+ *
+ * The editor shows these names when picking fields, but stores only the field
+ * itself, so the viewer side needs its own copy. Keyed by the aliased field
+ * name, which is what the facet results use.
+ */
+const FACET_LABELS = {
+	group: 'Group',
+	displayName: 'Name',
+	pronouns: 'Pronouns',
+	role: 'Role',
+	headline: 'Headline',
+	organisation: 'Organisation',
+	email: 'Email',
+	phone: 'Phone',
+	address: 'Address',
+	website: 'Website',
+	birthdate: 'Date of birth',
+	biography: 'Biography',
+	twitter: 'X (Twitter)',
+	bluesky: 'Bluesky',
+	fediverse: 'Fediverse',
+}
+
+/**
+ * Heading for a field the editor did not rename.
+ *
+ * An unknown field — a custom one, say — keeps its own name rather than being
+ * forced into a guessed label.
+ */
+function defaultFacetLabel(field) {
+	const source = FACET_LABELS[field]
+	return source ? translate('intravox', source) : field
+}
 
 /**
  * Reactive state for a widget that lets viewers refine its own results.
@@ -68,13 +106,28 @@ export default {
 				.filter(Boolean)
 		},
 
-		/** Per-facet display labels set by the editor. */
+		/**
+		 * Per-facet headings for the panel, keyed the way the server names the
+		 * field.
+		 *
+		 * Two things this has to get right. The stored config keeps the field
+		 * as the editor wrote it (`displayname`) while facet results come back
+		 * aliased (`displayName`), so the key is aliased here or the lookup
+		 * silently misses and the panel falls back to the raw field name. And a
+		 * facet the editor never renamed carries an empty label, which is not a
+		 * reason to show `displayName` to a visitor — it falls back to the
+		 * readable default for that field.
+		 */
 		facetLabels() {
 			const labels = {}
 			for (const facet of this.widget?.viewerFilters?.facets ?? []) {
-				if (facet && typeof facet === 'object' && facet.field && facet.label) {
-					labels[facet.field] = facet.label
+				const field = typeof facet === 'string' ? facet : facet?.field
+				if (!field) {
+					continue
 				}
+				const custom = (typeof facet === 'object' && facet.label) ? String(facet.label).trim() : ''
+				const key = aliasField(field)
+				labels[key] = custom || defaultFacetLabel(key)
 			}
 			return labels
 		},

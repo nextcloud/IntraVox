@@ -138,6 +138,54 @@ class AccountBulkLoader {
 	}
 
 	/**
+	 * Distinct field names present in a custom-fields preference.
+	 *
+	 * Used to discover which custom fields an instance has at all, so the
+	 * editor can hide a display option that would render nothing. Samples a
+	 * bounded number of rows rather than scanning the whole table.
+	 *
+	 * @return array<int, string>
+	 */
+	public function sampleCustomFieldNames(string $appId, string $configKey, int $limit): array {
+		if ($this->db === null || $limit < 1) {
+			return [];
+		}
+
+		$names = [];
+
+		try {
+			$qb = $this->db->getQueryBuilder();
+			$qb->select('configvalue')
+				->from('preferences')
+				->where($qb->expr()->eq('appid', $qb->createNamedParameter($appId)))
+				->andWhere($qb->expr()->eq('configkey', $qb->createNamedParameter($configKey)))
+				->setMaxResults($limit);
+
+			$result = $qb->executeQuery();
+			while ($row = $result->fetch()) {
+				$decoded = json_decode((string)($row['configvalue'] ?? '{}'), true);
+				if (!is_array($decoded)) {
+					continue;
+				}
+				foreach ($decoded as $key => $value) {
+					if (!is_string($key) || $key === '' || $value === null || $value === '') {
+						continue;
+					}
+					$names[$key] = true;
+				}
+			}
+			$result->closeCursor();
+		} catch (\Throwable $e) {
+			$this->logger->debug(
+				'IntraVox: custom-field name sampling failed: ' . $e->getMessage()
+			);
+			return [];
+		}
+
+		return array_keys($names);
+	}
+
+	/**
 	 * Decode one oc_accounts row.
 	 *
 	 * Nextcloud stores `{"propertyName": {"value": "...", "scope": "v2-..."}}`.

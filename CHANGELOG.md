@@ -4,6 +4,52 @@ All notable changes to IntraVox will be documented in this file.
 
 IntraVox is a Nextcloud intranet page builder.
 
+## [2.6.2] - 2026-09-02 — A display option that promised directory fields it could never show
+
+### Fixed
+
+- **The "Custom fields (LDAP/OIDC)" display option did nothing on almost every
+  instance.** Enabling it changed nothing on the cards, with no empty section
+  and no warning — so an administrator with a perfectly healthy LDAP connection
+  was left looking for a fault in their directory configuration. The option is
+  now only offered when the instance actually has custom fields to show, and
+  IntraVox detects those fields instead of assuming they exist. Nothing changes
+  for an instance that does populate them: the option appears as before, and a
+  widget that already had it switched on keeps working.
+  ([#106](https://github.com/nextcloud/IntraVox/issues/106))
+- **Visitor filters showed raw field names instead of their labels.** A filter
+  panel listed its groups as `displayName` and `pronouns`, and a label set in
+  the widget settings was ignored entirely. Two things went wrong: the settings
+  store a field the way it was written while the results come back in the
+  server's spelling, so the two never matched; and a group that was never
+  renamed had no name to fall back on. Groups now carry their proper heading —
+  translated — and a custom label reaches the panel again.
+- **The filter panel was hard to read on a coloured widget.** It used the theme
+  text colours, which assume the page background, so on a widget with its own
+  background the headings, counts and search boxes ran from faint to
+  practically invisible. The panel now takes its colours from the background it
+  sits on, keeping text legible at any theme colour.
+
+### Changed
+
+- **The People widget documentation no longer promises fields Nextcloud cannot
+  store.** It listed Employee ID, Cost Center, Office Location, Employee Type
+  and Manager as automatically detected from LDAP or OIDC. Nextcloud keeps a
+  fixed allowlist of sixteen account properties and discards anything outside
+  it, so a directory attribute such as `employeeNumber` has nowhere to be saved
+  and no app can read it back. The English and Dutch pages now explain that
+  limit and document what does work: mapping a directory attribute onto an
+  existing profile field — Organisation, Role, Address, Headline, Phone or
+  Biography — under Special Attributes in the LDAP settings. Fields mapped that
+  way appear in the widget on their own, each with its own display option and
+  filter.
+- **The visitor filter settings explain themselves better.** The box beside each
+  filterable field is for renaming the group visitors see, but sat unlabelled
+  next to a value filter and read as somewhere to type a value. The list now has
+  column headings, and the box shows the name it would use by default. A green
+  notice announcing that filter counts would be exact has been dropped: it only
+  ever appeared when nothing was wrong.
+
 ## [2.6.1] - 2026-08-31 — One honest subscription notice, and a page tree that scrolls on a phone
 
 ### Changed

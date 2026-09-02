@@ -19,7 +19,7 @@ The People Widget displays user profiles from your Nextcloud instance. It's perf
 - **Nextcloud integration**: Click avatars to see profiles, email, and availability
 - **Visitor filters**: Let readers narrow the list themselves with faceted filters and live counts
 - **Privacy-aware**: Honours each user's field visibility settings; hidden from public share links by default
-- **LDAP/OIDC support**: Custom fields from LDAP or OIDC are automatically detected
+- **LDAP/OIDC support**: Directory data shows up in the standard Nextcloud profile fields it is mapped to
 
 ## Layouts
 
@@ -89,7 +89,7 @@ Fields are organized in logical order matching the Display Options:
 | **Basic Information** | Name, Pronouns, Role, Headline, Organisation |
 | **Contact** | Email, Phone, Address, Website |
 | **Extended** | Biography, Birthdate, Twitter/X, Fediverse, Bluesky |
-| **Custom** | Additional LDAP/OIDC fields |
+| **Custom** | Extra fields synced into user preferences (see [Custom fields](#custom-fields-ldapoidc)) |
 
 #### Filter Operators
 
@@ -173,7 +173,7 @@ Control which information is shown for each user. All display options are availa
 | **Biography** | User bio | Off |
 | **Birthdate** | Birthday with cake icon | Off |
 | **Social links** | Twitter/X, Fediverse, and Bluesky links | Off |
-| **Custom fields** | Additional LDAP/OIDC fields | Off |
+| **Custom fields** | Extra fields synced into user preferences | Off |
 
 ### Birthdate Display
 
@@ -183,19 +183,30 @@ When the **Birthdate** field is enabled, each user's birthday is displayed with 
 
 ## Custom Fields (LDAP/OIDC)
 
-When your Nextcloud is connected to LDAP, Active Directory, or OIDC, additional user profile fields may be available. The People Widget automatically detects these fields and makes them available for display.
+> **Important**: Nextcloud cannot store arbitrary directory attributes. `IAccountManager::ALLOWED_PROPERTIES` is a fixed allowlist of 16 properties, and anything outside it is discarded on write. An LDAP attribute such as `employeeNumber` therefore has nowhere to land, and no app — IntraVox included — can read it back. **To show directory data, map it onto one of the existing profile fields.**
+
+### Mapping directory attributes onto profile fields
+
+Under **Settings → Administration → LDAP/AD integration → Advanced → Special Attributes**, Nextcloud lets you point a profile field at any LDAP attribute. Everything you map there appears in the People Widget automatically, with its own display option and filter — no custom fields toggle needed.
+
+| You want to show | Map your LDAP attribute onto |
+|------------------|------------------------------|
+| Department, business unit | **Organisation** |
+| Job title, employee type | **Role** |
+| Office location, desk | **Address** |
+| Short tagline, team | **Headline** |
+| Phone / extension | **Phone** |
+| Longer free text (e.g. manager, cost centre) | **Biography** |
+
+The fields available for mapping are: phone, website, address, twitter, fediverse, organisation, role, headline, biography, birthdate and pronouns.
+
+### The custom fields toggle
 
 ![People Widget Custom Properties](../../screenshots/People-Custom-properties.png)
 
-Common custom fields include:
+The **Custom fields (LDAP/OIDC)** display option renders extra key/value pairs stored in the `intravox`/`custom_fields` user preference. The widget formats field names for readability (e.g. `employee_id` becomes "Employee Id").
 
-- Employee ID
-- Cost Center
-- Office Location
-- Employee Type
-- Manager
-
-Enable "Custom fields (LDAP/OIDC)" in Display Options to show these fields on user cards. The widget automatically formats field names for readability (e.g., `employee_id` becomes "Employee Id").
+IntraVox reads this preference but **does not currently write it** — there is no built-in LDAP or OIDC sync that fills it. It is populated by the `occ intravox:add-demo-fields` command for demo data, or by your own provisioning script. If you enable the toggle without such a source, no extra fields appear. See [issue #106](https://github.com/nextcloud/IntraVox/issues/106).
 
 > **Note**: Birthdate and Bluesky are now first-class fields with dedicated display options and don't require the custom fields toggle.
 
@@ -245,17 +256,11 @@ These fields are available in all Nextcloud installations:
 
 ### LDAP/Active Directory Fields
 
-If your Nextcloud is connected to LDAP or Active Directory, additional fields may be available depending on your LDAP configuration. Common examples:
-
-- Employee ID
-- Department
-- Manager
-- Office location
-- Cost center
+LDAP and Active Directory do not add new fields. They fill the standard fields above, according to the attribute mapping configured under **Special Attributes** in the LDAP settings. So directory data like department or job title becomes filterable once mapped onto Organisation, Role, Address, Headline or Biography.
 
 ### OIDC Fields
 
-If using OpenID Connect for authentication, additional profile claims may be mapped to user fields.
+The same applies to OpenID Connect: profile claims are filterable once mapped onto one of the standard fields listed above.
 
 ## Group-Based Filtering
 
@@ -299,7 +304,7 @@ Active choices appear as removable chips above the results, and the selection is
 3. Pick the fields visitors may filter on — the first three are chosen for you
 4. Optionally rename a filter (the label is what visitors see) and drag to reorder
 
-Any profile field can be a facet, including custom LDAP/OIDC fields. The screenshot above uses three custom fields: *Werking*, *Thema* and *Gebouw*.
+Any profile field can be a facet. The screenshot above uses three fields carrying directory data: *Werking*, *Thema* and *Gebouw* — each mapped onto a standard profile field in the LDAP settings.
 
 ### Settings
 
@@ -335,7 +340,7 @@ The widget honours the visibility each user set for their own profile fields und
 | **Local** | visible | hidden |
 | **Federated** / **Published** | visible | visible |
 
-Fields your users marked private are never shown, regardless of what the widget is configured to display. IntraVox custom fields (from LDAP/OIDC sync) carry no visibility setting of their own and are treated as **Local**: available to logged-in users, never on a public share.
+Fields your users marked private are never shown, regardless of what the widget is configured to display. IntraVox custom fields (from the `custom_fields` user preference) carry no visibility setting of their own and are treated as **Local**: available to logged-in users, never on a public share.
 
 > **Upgrading from before IntraVox 1.9.4?** Earlier versions did not check these settings, so fields marked private were shown anyway. After upgrading they disappear — which is the fix, but it is a visible change. Run `occ intravox:people:scope-report` to see exactly which fields are affected on your instance and for how many accounts.
 
