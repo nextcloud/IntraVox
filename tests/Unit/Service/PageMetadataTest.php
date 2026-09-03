@@ -158,4 +158,26 @@ class PageMetadataTest extends TestCase {
             $this->assertArrayHasKey($key, $meta, "metadata must expose '$key'");
         }
     }
+
+    /**
+     * Pins the enrichWithPathData step specifically: the metadata below is derived
+     * from the FOLDER STRUCTURE, not copied from the page JSON (which carries no
+     * depth/parentId/parentPath). If the enrichment were skipped these would be the
+     * defaults (depth 0, null parents), so this catches an extraction that drops
+     * enrichWithPathData — which the plain shape test above cannot.
+     */
+    public function testDerivedPathMetadataProvesEnrichmentRan(): void {
+        // The page lives at en/about. enrichWithPathData resolves that relative
+        // path and derives the parent from its segments: parentPath 'en',
+        // parentId 'en'. The page JSON carries none of these, so a non-null parent
+        // is only produced when the enrichment actually ran — this catches an
+        // extraction that drops enrichWithPathData, which the shape test cannot.
+        $svc = $this->makeService(ctime: 1_600_000_000);
+
+        $meta = $svc->getPageMetadata('page-about');
+
+        $this->assertSame('en', $meta['parentPath'], 'parentPath is derived from the folder path by enrichment');
+        $this->assertSame('en', $meta['parentId'], 'parentId is the parent folder segment');
+        $this->assertSame('en', $meta['language'], 'language is the first path segment');
+    }
 }
