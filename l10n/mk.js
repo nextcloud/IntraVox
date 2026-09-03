@@ -95,7 +95,7 @@ OC.L10N.register(
     "Sort by" : "Сортирај по",
     "Date" : "Датум",
     "Title" : "Наслов",
-    "Show image" : "Прикаши слика",
+    "Show image" : "Прикажи слика",
     "Retry" : "Обидете се повторно",
     "Open {name}" : "Отвори {name}",
     "Timeline" : "Времеплов",
