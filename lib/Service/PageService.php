@@ -3587,10 +3587,6 @@ class PageService {
     }
 
     /**
-     * Generate a UUID v4
-     */
-
-    /**
      * Get the actual file ID from the database using the groupfolder storage
      *
      * This is necessary because $file->getId() may return the user mount file ID

@@ -106,10 +106,4 @@ class ExportController extends Controller {
             return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_INTERNAL_SERVER_ERROR);
         }
     }
-
-    /**
-     * Cleanup temporary directory
-     *
-     * @param string $dir Directory to cleanup
-     */
 }

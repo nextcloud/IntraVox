@@ -1217,13 +1217,6 @@ class ImportService {
     }
 
     /**
-     * Cleanup temporary directory
-     *
-     * @param string $dir Directory to cleanup
-     */
-
-
-    /**
      * Find the folder path for a page by its uniqueId
      *
      * @param string $uniqueId Page unique ID
