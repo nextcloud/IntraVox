@@ -2277,13 +2277,6 @@ class PageService {
      * @return string 'department'|'container'|'page'
      */
     /**
-     * @deprecated Delegated to PagePathHelper::determinePageType.
-     */
-    private function determinePageType(string $path, bool $hasChildren): string {
-        return $this->pathHelper->determinePageType($path, $hasChildren);
-    }
-
-    /**
      * @deprecated Delegated to PagePathHelper::parseDepartmentFromPath.
      */
     private function parseDepartmentFromPath(string $path): ?string {
@@ -4400,12 +4393,6 @@ class PageService {
     /**
      * Format bytes to human readable format
      */
-    /**
-     * @deprecated Delegated to PageIdUtils::formatBytes.
-     */
-    private function formatBytes(int $bytes): string {
-        return $this->idUtils->formatBytes($bytes);
-    }
 
     /**
      * Check if a page is visible in the Nextcloud file cache
@@ -5044,12 +5031,6 @@ class PageService {
     /**
      * Extract a snippet of text around a search query match
      */
-    /**
-     * @deprecated Delegated to PageSearchHelper::extractSnippet.
-     */
-    private function extractSnippet(string $text, string $query, int $contextLength = 100): string {
-        return $this->searchHelper->extractSnippet($text, $query, $contextLength);
-    }
 
     /**
      * Search a single widget for matches
@@ -5415,30 +5396,11 @@ class PageService {
     /**
      * Extract an excerpt from page content (first text widget)
      */
-    /**
-     * @deprecated Delegated to NewsContentExtractor::getExcerpt.
-     */
-    public function getPageExcerpt(array $pageData, int $length = 150): string {
-        return $this->newsContent->getExcerpt($pageData, $length);
-    }
-
-    /**
-     * @deprecated Delegated to NewsContentExtractor::stripMarkdown.
-     */
-    private function stripMarkdown(string $text): string {
-        return $this->newsContent->stripMarkdown($text);
-    }
 
     /**
      * Find the first image in a page's layout
      * Returns array with 'src' and 'mediaFolder' or null if no image found
      */
-    /**
-     * @deprecated Delegated to NewsContentExtractor::getFirstImage.
-     */
-    public function getPageFirstImage(array $pageData): ?array {
-        return $this->newsContent->getFirstImage($pageData);
-    }
 
     /**
      * Check if MetaVox app is available

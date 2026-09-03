@@ -20,8 +20,8 @@ use PHPUnit\Framework\TestCase;
 class PageServicePublicSurfaceTest extends TestCase {
 
     /**
-     * The 59 public methods (excluding the constructor) and their declared
-     * parameter counts. Sorted by name so a diff is readable.
+     * The public methods (excluding the constructor) and their declared parameter
+     * counts. Sorted by name so a diff is readable.
      *
      * @return array<string,int>
      */
@@ -48,8 +48,6 @@ class PageServicePublicSurfaceTest extends TestCase {
         'getNewsPages' => 8,
         'getPage' => 1,
         'getPageCountByLanguage' => 0,
-        'getPageExcerpt' => 2,
-        'getPageFirstImage' => 1,
         'getPageMetadata' => 1,
         'getPageTree' => 3,
         'getPageVersions' => 1,
@@ -120,7 +118,7 @@ class PageServicePublicSurfaceTest extends TestCase {
 
     public function testSurfaceCountIsPinned(): void {
         $this->assertCount(
-            59,
+            57,
             $this->currentSurface(),
             'the public method count changed; see testPublicSurfaceMatchesTheFrozenExpectation'
         );
