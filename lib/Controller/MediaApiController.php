@@ -49,6 +49,7 @@ class MediaApiController extends Controller {
         // traits having no abstract accessor.
         private IConfig $config,
         private LoggerInterface $logger,
+        private \OCA\IntraVox\Service\Sanitize\MediaSanitizer $mediaSanitizer,
     ) {
         parent::__construct($appName, $request);
     }
@@ -136,7 +137,7 @@ class MediaApiController extends Controller {
             // "no duplicate" and then collided on write.
             $exists = $this->pageService->checkMediaExists(
                 $pageId,
-                $this->pageService->sanitizeFilename($filename),
+                $this->mediaSanitizer->sanitizeFilename($filename),
                 $target
             );
 

@@ -5010,14 +5010,6 @@ class PageService {
      * @throws \InvalidArgumentException If extension is not allowed
      */
     /**
-     * @deprecated Delegated to MediaSanitizer::sanitizeFilename.
-     * Thin wrapper for existing call-sites in ApiController and templates.
-     */
-    public function sanitizeFilename(string $filename, bool $validateExtension = true): string {
-        return $this->mediaSanitizer->sanitizeFilename($filename, $validateExtension);
-    }
-
-    /**
      * SVG sanitizing and the polyglot image check are no longer reached from
      * here: the upload paths that called them now validate through
      * PageMediaService::validateUpload(), which uses the same MediaSanitizer.
@@ -5067,7 +5059,7 @@ class PageService {
         $validated = $this->media()->validateUpload($file);
 
         // Sanitize original filename
-        $filename = $this->sanitizeFilename($file['name']);
+        $filename = $this->mediaSanitizer->sanitizeFilename($file['name']);
 
         // Check if file exists
         $fileExists = $this->checkMediaExists($pageId, $filename, $targetFolder);
