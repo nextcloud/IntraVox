@@ -5,6 +5,7 @@ namespace OCA\IntraVox\Tests\Unit\Service;
 
 use OCA\IntraVox\Service\PageIndexService;
 use OCA\IntraVox\Service\PageService;
+use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageService;
 use OCP\Files\File;
 use OCP\Files\FileInfo;
 use OCP\Files\Folder;
@@ -25,6 +26,8 @@ use PHPUnit\Framework\TestCase;
  * outside their own language at all, so the bug was latent.
  */
 class PageIndexLanguageTest extends TestCase {
+
+    use BuildsPageService;
 
     /** Calls recorded from PageIndexService::indexPage(). */
     private array $indexed = [];
@@ -140,40 +143,7 @@ class PageIndexLanguageTest extends TestCase {
             'languageService' => $languageService,
             'pageIndexService' => $index,
         ];
-        foreach ($explicit as $name => $value) {
-            (new \ReflectionProperty(PageService::class, $name))->setValue($svc, $value);
-        }
-
-        foreach ((new \ReflectionClass(PageService::class))->getProperties() as $prop) {
-            if ($prop->isStatic() || isset($explicit[$prop->getName()])) {
-                continue;
-            }
-            $type = $prop->getType();
-            if (!$type instanceof \ReflectionNamedType || $type->isBuiltin()) {
-                continue;
-            }
-            $lazySeamServices = [
-                \OCA\IntraVox\Service\Locator\PageLocator::class,
-                \OCA\IntraVox\Service\Translation\TranslationGroupService::class,
-                \OCA\IntraVox\Service\Media\PageMediaService::class,
-                \OCA\IntraVox\Service\News\NewsPageService::class,
-            ];
-            if (in_array($type->getName(), $lazySeamServices, true)) {
-                // Leave unset: PageService's lazy seam accessors build the
-                // REAL service from the pageIndexService + logger this test
-                // sets, reproducing the pre-split inline behaviour. An
-                // auto-mock here would answer null to every lookup.
-                continue;
-            }
-            if ($prop->isInitialized($svc)) {
-                continue;
-            }
-            $class = $type->getName();
-            if (!interface_exists($class) && !class_exists($class)) {
-                continue;
-            }
-            $prop->setValue($svc, $this->doubleOrBuild($class));
-        }
+        $this->injectPageServiceDependencies($svc, $explicit);
 
         return $svc;
     }
@@ -341,25 +311,5 @@ class PageIndexLanguageTest extends TestCase {
         );
     }
 
-    /**
-     * Mock $class, or — when it is final and therefore not doubleable — build a
-     * real one and recurse for its own final dependencies (PageShapeSanitizer
-     * takes three final leaf sanitizers).
-     */
-    private function doubleOrBuild(string $class): object {
-        try {
-            return $this->createMock($class);
-        } catch (\PHPUnit\Framework\MockObject\Generator\ClassIsFinalException $e) {
-            $ctor = (new \ReflectionClass($class))->getConstructor();
-            $args = [];
-            foreach ($ctor?->getParameters() ?? [] as $param) {
-                $pType = $param->getType();
-                $args[] = $pType instanceof \ReflectionNamedType && !$pType->isBuiltin()
-                    ? $this->doubleOrBuild($pType->getName())
-                    : null;
-            }
-            return new $class(...$args);
-        }
-    }
 
 }
