@@ -16,6 +16,7 @@ interface IRequest {
     public function getParams(): array;
     public function getUploadedFile(string $key);
     public function getHeader(string $name): string;
+    public function getRemoteAddress(): string;
 }
 
 interface IConfig {
@@ -353,6 +354,79 @@ class StreamResponse extends Response {
     }
 }
 
+class TemplateResponse extends Response {
+    public const RENDER_AS_USER = 'user';
+    public const RENDER_AS_PUBLIC = 'public';
+    public const RENDER_AS_GUEST = 'guest';
+
+    private string $appName;
+    private string $templateName;
+    private array $params;
+    private string $renderAs;
+    private ?ContentSecurityPolicy $csp = null;
+
+    public function __construct(string $appName, string $templateName, array $params = [], string $renderAs = self::RENDER_AS_USER) {
+        $this->appName = $appName;
+        $this->templateName = $templateName;
+        $this->params = $params;
+        $this->renderAs = $renderAs;
+    }
+
+    public function getTemplateName(): string {
+        return $this->templateName;
+    }
+
+    public function getParams(): array {
+        return $this->params;
+    }
+
+    public function getRenderAs(): string {
+        return $this->renderAs;
+    }
+
+    public function setContentSecurityPolicy(ContentSecurityPolicy $csp): void {
+        $this->csp = $csp;
+    }
+
+    public function getContentSecurityPolicy(): ?ContentSecurityPolicy {
+        return $this->csp;
+    }
+}
+
+class RedirectResponse extends Response {
+    private string $redirectUrl;
+
+    public function __construct(string $redirectUrl) {
+        $this->redirectUrl = $redirectUrl;
+        $this->status = 303;
+    }
+
+    public function getRedirectUrl(): string {
+        return $this->redirectUrl;
+    }
+}
+
+class ContentSecurityPolicy {
+    public function addAllowedFrameDomain(string $domain): self {
+        return $this;
+    }
+    public function addAllowedChildSrcDomain(string $domain): self {
+        return $this;
+    }
+    public function addAllowedScriptDomain(string $domain): self {
+        return $this;
+    }
+    public function addAllowedConnectDomain(string $domain): self {
+        return $this;
+    }
+    public function addAllowedImageDomain(string $domain): self {
+        return $this;
+    }
+    public function addAllowedMediaDomain(string $domain): self {
+        return $this;
+    }
+}
+
 namespace OCP\AppFramework\Http\Attribute;
 
 use Attribute;
@@ -365,6 +439,47 @@ class NoCSRFRequired {}
 
 #[Attribute(Attribute::TARGET_METHOD | Attribute::TARGET_CLASS)]
 class PublicPage {}
+
+#[Attribute(Attribute::TARGET_METHOD | Attribute::TARGET_CLASS)]
+class AnonRateLimit {
+    public function __construct(int $limit = 0, int $period = 0) {
+    }
+}
+
+#[Attribute(Attribute::TARGET_METHOD | Attribute::TARGET_CLASS)]
+class UserRateLimit {
+    public function __construct(int $limit = 0, int $period = 0) {
+    }
+}
+
+#[Attribute(Attribute::TARGET_METHOD | Attribute::TARGET_CLASS)]
+class BruteForceProtection {
+    public function __construct(string $action = '') {
+    }
+}
+
+namespace OCP\AppFramework\Services;
+
+interface IInitialState {
+    public function provideInitialState(string $key, $data): void;
+    public function provideLazyInitialState(string $key, \Closure $closure): void;
+}
+
+namespace OCP\Security\Bruteforce;
+
+interface IThrottler {
+    public function registerAttempt(string $action, string $ip, array $metadata = []): void;
+    public function sleepDelayOrThrowOnMax(string $ip, string $action = ''): int;
+}
+
+namespace OCP;
+
+class Util {
+    public static function addScript(string $application, string $file, ?string $afterAppId = null): void {
+    }
+    public static function addStyle(string $application, string $file): void {
+    }
+}
 
 namespace OCP\Comments;
 
