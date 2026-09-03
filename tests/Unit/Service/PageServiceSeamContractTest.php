@@ -120,22 +120,31 @@ class PageServiceSeamContractTest extends TestCase {
      * skip-list guard.
      */
     public function testLazySeamListPairsWithAccessors(): void {
-        // Accessor return types map 1:1 to the skip-list classes.
+        // The four lazy-SEAM accessors — the ones whose service must be left unset
+        // in tests so the accessor builds the real collaborator. shape()/cache()
+        // are excluded: their services are ordinary auto-filled mocks, not seams.
+        $seamAccessors = ['locator', 'translationGroups', 'media', 'news'];
+
         $ref = new \ReflectionClass(PageService::class);
         $accessorReturns = [];
-        foreach (['shape', 'cache', 'locator', 'translationGroups', 'media', 'news'] as $accessor) {
+        foreach ($seamAccessors as $accessor) {
             $this->assertTrue($ref->hasMethod($accessor), "lazy accessor $accessor() must exist");
-            $rt = (string) (new \ReflectionMethod(PageService::class, $accessor))->getReturnType();
-            $accessorReturns[$accessor] = $rt;
+            $accessorReturns[] = (string) (new \ReflectionMethod(PageService::class, $accessor))->getReturnType();
         }
 
-        // Each skip-list class must be produced by exactly one accessor.
-        foreach (self::LAZY_SEAM_SERVICES as $class) {
-            $this->assertContains(
-                $class,
-                array_values($accessorReturns),
-                "lazy-seam service $class must have a matching lazy accessor"
-            );
-        }
+        // Bidirectional set equality: every skip-list service is produced by a seam
+        // accessor AND every seam accessor's service is in the skip-list. A one-way
+        // check let a DELETION from LAZY_SEAM_SERVICES pass (the exact M3 regression
+        // in the plan's risk table) — this catches drift in both directions.
+        sort($accessorReturns);
+        $skipList = self::LAZY_SEAM_SERVICES;
+        sort($skipList);
+
+        $this->assertSame(
+            $skipList,
+            $accessorReturns,
+            'LAZY_SEAM_SERVICES must equal exactly the set of seam-accessor return types; '
+            . 'a mismatch means a seam service was added/removed without its accessor (or vice versa)'
+        );
     }
 }
