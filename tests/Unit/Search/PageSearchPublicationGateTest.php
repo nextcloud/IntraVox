@@ -6,6 +6,7 @@ namespace OCA\IntraVox\Tests\Unit\Search;
 use OCA\IntraVox\Search\PageSearchProvider;
 use OCA\IntraVox\Service\PageIndexService;
 use OCA\IntraVox\Service\PageService;
+use OCA\IntraVox\Service\Publication\PublicationStateService;
 use OCP\IConfig;
 use OCP\IL10N;
 use OCP\IURLGenerator;
@@ -29,6 +30,9 @@ use PHPUnit\Framework\TestCase;
  */
 class PageSearchPublicationGateTest extends TestCase {
 
+	/** The publication gate now lives on PublicationStateService, not PageService. */
+	private PublicationStateService $publicationState;
+
 	private function provider(PageService $pageService): PageSearchProvider {
 		$l10n = $this->createMock(IL10N::class);
 		$l10n->method('t')->willReturnArgument(0);
@@ -39,6 +43,7 @@ class PageSearchPublicationGateTest extends TestCase {
 			$this->createMock(IConfig::class),
 			$l10n,
 			$this->createMock(IURLGenerator::class),
+			$this->publicationState,
 		);
 	}
 
@@ -49,10 +54,16 @@ class PageSearchPublicationGateTest extends TestCase {
 		return (bool)$method->invoke($this->provider($pageService), $uniqueId);
 	}
 
+	/**
+	 * getPage() still comes from PageService; the hidden/visible decision now
+	 * comes from PublicationStateService::isHiddenFromReaders, which this stubs.
+	 */
 	private function pageServiceReturning(array $page, bool $hidden): PageService {
 		$service = $this->createMock(PageService::class);
 		$service->method('getPage')->willReturn($page);
-		$service->method('isHiddenFromReaders')->willReturn($hidden);
+
+		$this->publicationState = $this->createMock(PublicationStateService::class);
+		$this->publicationState->method('isHiddenFromReaders')->willReturn($hidden);
 
 		return $service;
 	}
@@ -86,6 +97,7 @@ class PageSearchPublicationGateTest extends TestCase {
 
 	/** Fail closed: an unloadable page costs a hit rather than leaking one. */
 	public function testUnloadablePageIsHidden(): void {
+		$this->publicationState = $this->createMock(PublicationStateService::class);
 		$service = $this->createMock(PageService::class);
 		$service->method('getPage')->willThrowException(new \RuntimeException('gone'));
 
@@ -93,6 +105,7 @@ class PageSearchPublicationGateTest extends TestCase {
 	}
 
 	public function testEmptyPageIsHidden(): void {
+		$this->publicationState = $this->createMock(PublicationStateService::class);
 		$service = $this->createMock(PageService::class);
 		$service->method('getPage')->willReturn([]);
 
@@ -100,6 +113,7 @@ class PageSearchPublicationGateTest extends TestCase {
 	}
 
 	public function testMissingUniqueIdIsHidden(): void {
+		$this->publicationState = $this->createMock(PublicationStateService::class);
 		$service = $this->createMock(PageService::class);
 
 		$this->assertTrue($this->isHidden($service, null));
@@ -116,7 +130,7 @@ class PageSearchPublicationGateTest extends TestCase {
 		);
 
 		$this->assertStringContainsString(
-			'$this->pageService->isHiddenFromReaders($result)',
+			'$this->publicationState->isHiddenFromReaders($result)',
 			$source,
 			'the full-text search loop must gate on the publication state'
 		);

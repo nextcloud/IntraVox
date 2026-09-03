@@ -5,6 +5,7 @@ namespace OCA\IntraVox\Search;
 
 use OCA\IntraVox\Service\PageIndexService;
 use OCA\IntraVox\Service\PageService;
+use OCA\IntraVox\Service\Publication\PublicationStateService;
 use OCP\IConfig;
 use OCP\IL10N;
 use OCP\IURLGenerator;
@@ -20,19 +21,22 @@ class PageSearchProvider implements IProvider {
     private IConfig $config;
     private IL10N $l10n;
     private IURLGenerator $urlGenerator;
+    private PublicationStateService $publicationState;
 
     public function __construct(
         PageService $pageService,
         PageIndexService $pageIndexService,
         IConfig $config,
         IL10N $l10n,
-        IURLGenerator $urlGenerator
+        IURLGenerator $urlGenerator,
+        PublicationStateService $publicationState
     ) {
         $this->pageService = $pageService;
         $this->pageIndexService = $pageIndexService;
         $this->config = $config;
         $this->l10n = $l10n;
         $this->urlGenerator = $urlGenerator;
+        $this->publicationState = $publicationState;
     }
 
     public function getId(): string {
@@ -86,7 +90,7 @@ class PageSearchProvider implements IProvider {
             return true;
         }
 
-        if (!$this->pageService->isHiddenFromReaders($page)) {
+        if (!$this->publicationState->isHiddenFromReaders($page)) {
             return false;
         }
 
@@ -163,7 +167,7 @@ class PageSearchProvider implements IProvider {
 
                 // Unpublished pages must not surface to readers. searchPages()
                 // returns the page body, so the state is decided directly.
-                if ($this->pageService->isHiddenFromReaders($result)
+                if ($this->publicationState->isHiddenFromReaders($result)
                     && !($result['permissions']['canWrite'] ?? false)
                 ) {
                     continue;
