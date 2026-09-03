@@ -204,10 +204,18 @@ interface ICrypto {
 
 namespace OCP\EventDispatcher;
 
-abstract class Event {}
+abstract class Event {
+    public function __construct() {
+    }
+}
 
 interface IEventListener {
     public function handle(Event $event): void;
+}
+
+interface IEventDispatcher {
+    public function dispatch(string $eventName, Event $event): void;
+    public function dispatchTyped(Event $event): void;
 }
 
 namespace OCP\Group\Events;
