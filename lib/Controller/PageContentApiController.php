@@ -59,13 +59,9 @@ class PageContentApiController extends Controller {
             $existingPage = $this->pageService->getPage($pageId);
             $this->logger->info('[ApiController::getPageVersions] Got page, checking permissions...');
 
-            // Check read permission using Nextcloud's permissions
-            if (!($existingPage['permissions']['canRead'] ?? false)) {
+            if (($denied = $this->denyUnlessReadable($existingPage)) !== null) {
                 $this->logger->warning('[ApiController::getPageVersions] Access denied for pageId: ' . $pageId);
-                return new DataResponse(
-                    ['error' => 'Access denied'],
-                    Http::STATUS_FORBIDDEN
-                );
+                return $denied;
             }
 
             $this->logger->info('[ApiController::getPageVersions] Calling pageService->getPageVersions...');
@@ -130,12 +126,8 @@ class PageContentApiController extends Controller {
             // First get the page to check permissions (from Nextcloud filesystem)
             $existingPage = $this->pageService->getPage($pageId);
 
-            // Check read permission using Nextcloud's permissions
-            if (!($existingPage['permissions']['canRead'] ?? false)) {
-                return new DataResponse(
-                    ['error' => 'Access denied'],
-                    Http::STATUS_FORBIDDEN
-                );
+            if (($denied = $this->denyUnlessReadable($existingPage)) !== null) {
+                return $denied;
             }
 
             $content = $this->pageService->getVersionContent($pageId, (int)$timestamp);
@@ -156,12 +148,8 @@ class PageContentApiController extends Controller {
             // First get the page to check permissions (from Nextcloud filesystem)
             $existingPage = $this->pageService->getPage($pageId);
 
-            // Check read permission using Nextcloud's permissions
-            if (!($existingPage['permissions']['canRead'] ?? false)) {
-                return new DataResponse(
-                    ['error' => 'Access denied'],
-                    Http::STATUS_FORBIDDEN
-                );
+            if (($denied = $this->denyUnlessReadable($existingPage)) !== null) {
+                return $denied;
             }
 
             $content = $this->pageService->getCurrentPageContent($pageId);
@@ -182,12 +170,8 @@ class PageContentApiController extends Controller {
             // First get the page to check permissions (from Nextcloud filesystem)
             $existingPage = $this->pageService->getPage($pageId);
 
-            // Check read permission using Nextcloud's permissions
-            if (!($existingPage['permissions']['canRead'] ?? false)) {
-                return new DataResponse(
-                    ['error' => 'Access denied'],
-                    Http::STATUS_FORBIDDEN
-                );
+            if (($denied = $this->denyUnlessReadable($existingPage)) !== null) {
+                return $denied;
             }
 
             $metadata = $this->pageService->getPageMetadata($pageId);
