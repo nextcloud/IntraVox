@@ -392,6 +392,7 @@ export default {
         { value: 'web', label: this.t('intravox', 'Website') },
         { value: 'file-document', label: this.t('intravox', 'Document') },
         { value: 'download', label: this.t('intravox', 'Download') },
+        // TRANSLATORS: Icon name in the link-icon picker (question-mark symbol). Noun.
         { value: 'help', label: this.t('intravox', 'Help') },
         { value: 'cog', label: this.t('intravox', 'Settings') },
         { value: 'account', label: this.t('intravox', 'Account') },
@@ -400,11 +401,16 @@ export default {
         { value: 'chart-line', label: this.t('intravox', 'Analytics') },
         { value: 'briefcase', label: this.t('intravox', 'Business') },
         { value: 'school', label: this.t('intravox', 'Education') },
+        // TRANSLATORS: Icon name in the link-icon picker (star symbol). Noun, not the verb "to favorite".
         { value: 'star', label: this.t('intravox', 'Favorite') },
+        // TRANSLATORS: Icon name in the link-icon picker (heart symbol). Noun, not the verb "to like": the name of the reaction/symbol.
         { value: 'heart', label: this.t('intravox', 'Like') },
         { value: 'lightbulb-on', label: this.t('intravox', 'Idea') },
+        // TRANSLATORS: Icon name in the link-icon picker (rocket symbol). Noun, not the verb "to launch": a launch/lift-off.
         { value: 'rocket', label: this.t('intravox', 'Launch') },
+        // TRANSLATORS: Icon name in the link-icon picker (rocket taking off). Noun phrase.
         { value: 'rocket-launch', label: this.t('intravox', 'Rocket launch') },
+        // TRANSLATORS: Icon name in the link-icon picker (archive box symbol). Noun, not the verb "to archive".
         { value: 'archive', label: this.t('intravox', 'Archive') },
         { value: 'open-in-new', label: this.t('intravox', 'External link') },
         { value: 'help-circle', label: this.t('intravox', 'Help circle') },
@@ -416,23 +422,29 @@ export default {
         { value: 'newspaper', label: this.t('intravox', 'News') },
         { value: 'bullhorn', label: this.t('intravox', 'Announcement') },
         { value: 'forum', label: this.t('intravox', 'Forum') },
+        // TRANSLATORS: Icon name in the link-icon picker (palette symbol). Noun, not the verb "to design".
         { value: 'palette', label: this.t('intravox', 'Design') },
         { value: 'code-tags', label: this.t('intravox', 'Code') },
+        // TRANSLATORS: Icon name in the link-icon picker (lifebuoy symbol). Noun: help desk / assistance, not the verb "to support".
         { value: 'lifebuoy', label: this.t('intravox', 'Support') },
         { value: 'folder', label: this.t('intravox', 'Folder') },
         { value: 'folder-multiple', label: this.t('intravox', 'Folders') },
+        // TRANSLATORS: Icon name in the link-icon picker (speech-bubble symbol). Noun, not the verb "to chat".
         { value: 'chat', label: this.t('intravox', 'Chat') },
+        // TRANSLATORS: Icon name in the link-icon picker (message symbol). Noun, not the verb "to message".
         { value: 'message-text', label: this.t('intravox', 'Message') },
         { value: 'view-column', label: this.t('intravox', 'Kanban') },
         { value: 'form-select', label: this.t('intravox', 'Form') },
         { value: 'clipboard-check', label: this.t('intravox', 'Tasks') },
         { value: 'view-dashboard', label: this.t('intravox', 'Dashboard') },
         { value: 'image-multiple', label: this.t('intravox', 'Photos') },
+        // TRANSLATORS: Icon name in the link-icon picker (pencil/drawing symbol). Noun, not the verb "to draw": drawing/sketching.
         { value: 'draw', label: this.t('intravox', 'Draw') },
         { value: 'puzzle', label: this.t('intravox', 'Plugin') },
         { value: 'robot', label: this.t('intravox', 'AI/Robot') },
         { value: 'table-large', label: this.t('intravox', 'Table') },
         { value: 'book-open-variant', label: this.t('intravox', 'Knowledge base') },
+        // TRANSLATORS: Icon name in the link-icon picker (bar-chart symbol). Noun: a survey/vote, not the verb "to poll".
         { value: 'poll', label: this.t('intravox', 'Poll') },
         { value: 'calendar-clock', label: this.t('intravox', 'Appointment') },
         { value: 'earth', label: this.t('intravox', 'Globe') },

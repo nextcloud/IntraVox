@@ -152,7 +152,7 @@
     "src/components/Footer.vue": 288,
     "src/components/InlineTextEditor.vue": 1657,
     "src/components/LanguageFallbackNotice.vue": 188,
-    "src/components/LinksEditor.vue": 897,
+    "src/components/LinksEditor.vue": 909,
     "src/components/LinksWidget.vue": 536,
     "src/components/MediaPicker.vue": 970,
     "src/components/MetaVoxPanel.vue": 396,

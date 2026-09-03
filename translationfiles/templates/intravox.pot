@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: IntraVox 2.6.3\n"
 "Report-Msgid-Bugs-To: translations@nextcloud.com\n"
-"POT-Creation-Date: 2026-09-02 21:08+0000\n"
+"POT-Creation-Date: 2026-09-03 15:34+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -348,6 +348,8 @@ msgstr ""
 msgid "Apps"
 msgstr ""
 
+#. Icon name in the link-icon picker (archive box symbol). Noun, not the
+#. verb "to archive".
 msgid "Archive"
 msgstr ""
 
@@ -516,6 +518,8 @@ msgstr ""
 msgid "Changes here move and rename the actual pages and their folders. This is different from \"Edit navigation\", which only changes the links in the navigation bar."
 msgstr ""
 
+#. Icon name in the link-icon picker (speech-bubble symbol). Noun, not the
+#. verb "to chat".
 msgid "Chat"
 msgstr ""
 
@@ -543,6 +547,8 @@ msgstr ""
 msgid "Chronological — photos grouped by day with sticky date headers."
 msgstr ""
 
+#. Name of a photo-gallery layout style — a clean grid of equal-sized tiles
+#. grouped by day (the default).
 msgid "Clean grid"
 msgstr ""
 
@@ -975,6 +981,8 @@ msgstr ""
 msgid "Description of the image …"
 msgstr ""
 
+#. Icon name in the link-icon picker (palette symbol). Noun, not the verb
+#. "to design".
 msgid "Design"
 msgstr ""
 
@@ -1077,6 +1085,8 @@ msgstr ""
 msgid "Drag to reorder row"
 msgstr ""
 
+#. Icon name in the link-icon picker (pencil/drawing symbol). Noun, not the
+#. verb "to draw": drawing/sketching.
 msgid "Draw"
 msgstr ""
 
@@ -1197,6 +1207,8 @@ msgstr ""
 msgid "Enter your heading …"
 msgstr ""
 
+#. Hint for the "Clean grid" photo layout style — every photo is the same
+#. size, grouped by day. This is the default style.
 msgid "Equal-sized tiles, grouped by day (default)"
 msgstr ""
 
@@ -1389,6 +1401,8 @@ msgstr ""
 msgid "Fast"
 msgstr ""
 
+#. Icon name in the link-icon picker (star symbol). Noun, not the verb "to
+#. favorite".
 msgid "Favorite"
 msgstr ""
 
@@ -1620,6 +1634,7 @@ msgstr ""
 msgid "Height will automatically adjust to maintain aspect ratio"
 msgstr ""
 
+#. Icon name in the link-icon picker (question-mark symbol). Noun.
 msgid "Help"
 msgstr ""
 
@@ -1923,6 +1938,8 @@ msgstr ""
 msgid "Last report sent"
 msgstr ""
 
+#. Icon name in the link-icon picker (rocket symbol). Noun, not the verb
+#. "to launch": a launch/lift-off.
 msgid "Launch"
 msgstr ""
 
@@ -1956,6 +1973,8 @@ msgstr ""
 msgid "Light background"
 msgstr ""
 
+#. Icon name in the link-icon picker (heart symbol). Noun, not the verb "to
+#. like": the name of the reaction/symbol.
 msgid "Like"
 msgstr ""
 
@@ -2079,6 +2098,8 @@ msgstr ""
 msgid "Loop video"
 msgstr ""
 
+#. Name of a photo-gallery layout style (not to be translated literally as
+#. the magazine publication); an editorial, glossy look.
 msgid "Magazine"
 msgstr ""
 
@@ -2139,6 +2160,8 @@ msgstr ""
 msgid "Merge (keep existing, add missing)"
 msgstr ""
 
+#. Icon name in the link-icon picker (message symbol). Noun, not the verb
+#. "to message".
 msgid "Message"
 msgstr ""
 
@@ -2844,6 +2867,8 @@ msgstr ""
 msgid "Plugin"
 msgstr ""
 
+#. Icon name in the link-icon picker (bar-chart symbol). Noun: a
+#. survey/vote, not the verb "to poll".
 msgid "Poll"
 msgstr ""
 
@@ -3081,6 +3106,7 @@ msgstr ""
 msgid "Right column"
 msgstr ""
 
+#. Icon name in the link-icon picker (rocket taking off). Noun phrase.
 msgid "Rocket launch"
 msgstr ""
 
@@ -3495,6 +3521,8 @@ msgstr ""
 msgid "Subtitle:"
 msgstr ""
 
+#. Icon name in the link-icon picker (lifebuoy symbol). Noun: help desk /
+#. assistance, not the verb "to support".
 msgid "Support"
 msgstr ""
 
@@ -3780,9 +3808,13 @@ msgstr ""
 msgid "Translations"
 msgstr ""
 
+#. Hint for the "Travelogue" style. A "timeline rail" is a vertical
+#. timeline strip running alongside the photos, marking chronological
+#. order.
 msgid "Travel diary with timeline rail"
 msgstr ""
 
+#. Name of a photo-gallery layout style — a travel-diary look.
 msgid "Travelogue"
 msgstr ""
 
