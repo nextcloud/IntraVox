@@ -74,8 +74,8 @@ class PageService {
      * Get the effective upload limit in bytes (minimum of upload_max_filesize and post_max_size)
      */
     public function getUploadLimit(): int {
-        $uploadMax = $this->parsePhpSize(ini_get('upload_max_filesize') ?: '2M');
-        $postMax = $this->parsePhpSize(ini_get('post_max_size') ?: '8M');
+        $uploadMax = $this->idUtils->parsePhpSize(ini_get('upload_max_filesize') ?: '2M');
+        $postMax = $this->idUtils->parsePhpSize(ini_get('post_max_size') ?: '8M');
 
         // Use the smaller of the two, but cap at our app's MAX_MEDIA_SIZE
         $phpLimit = min($uploadMax, $postMax);
@@ -85,12 +85,6 @@ class PageService {
     /**
      * Parse PHP size notation (e.g., '2M', '8M', '512K') to bytes
      */
-    /**
-     * @deprecated Delegated to PageIdUtils::parsePhpSize.
-     */
-    private function parsePhpSize(string $size): int {
-        return $this->idUtils->parsePhpSize($size);
-    }
 
     /**
      * Public flush hook for callers that mutate the underlying filesystem
@@ -828,7 +822,7 @@ class PageService {
             }
             // Legacy slug ids (and uniqueIds that predate the page- prefix)
             // stay resolvable, matching the fallback the callers already had.
-            return $this->findPageById($folder, $this->sanitizeId($pageId));
+            return $this->findPageById($folder, $this->idUtils->sanitizeId($pageId));
         };
 
         $result = $this->locateAcrossLanguages($primary, $find);
@@ -901,7 +895,7 @@ class PageService {
             }
         }
 
-        return $this->locatePageBySlugAnyLanguage($folder, $this->sanitizeId($pageId));
+        return $this->locatePageBySlugAnyLanguage($folder, $this->idUtils->sanitizeId($pageId));
     }
 
     /**
@@ -1352,10 +1346,10 @@ class PageService {
 
         $pageData = $sourceData;
         unset($pageData['order']);
-        $baseTitle = $this->decodeHtmlEntitiesRecursive((string)($sourceData['title'] ?? 'Untitled'));
+        $baseTitle = $this->htmlSanitizer->decodeEntitiesRecursive((string)($sourceData['title'] ?? 'Untitled'));
         $pageData['title'] = ($title !== null && $title !== '') ? $title : $baseTitle;
-        $pageData['id'] = $this->sanitizeId($pageData['title']);
-        $pageData['uniqueId'] = 'page-' . $this->generateUUID();
+        $pageData['id'] = $this->idUtils->sanitizeId($pageData['title']);
+        $pageData['uniqueId'] = 'page-' . $this->idUtils->generateUUID();
         $pageData['translationGroup'] = $group;
         // Draft: an untranslated copy is not something readers should meet.
         $pageData['status'] = 'draft';
@@ -1994,7 +1988,7 @@ class PageService {
 
         // Only sanitize for legacy ID fallback
         if ($result === null) {
-            $id = $this->sanitizeId($originalId);
+            $id = $this->idUtils->sanitizeId($originalId);
             $result = $this->findPageById($folder, $id);
             // Slug links get the same cross-language treatment as uniqueId
             // links, so which kind of link a reader follows never decides
@@ -2017,7 +2011,7 @@ class PageService {
 
         // Ensure uniqueId exists for legacy pages
         if (!isset($data['uniqueId'])) {
-            $data['uniqueId'] = 'page-' . $this->generateUUID();
+            $data['uniqueId'] = 'page-' . $this->idUtils->generateUUID();
             // Save the page with the new uniqueId
             try {
                 $result['file']->putContent(json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
@@ -2130,7 +2124,7 @@ class PageService {
         $page['path'] = $this->getRelativePathFromRoot($folder);
 
         // Calculate depth
-        $page['depth'] = $this->calculateDepth($page['path']);
+        $page['depth'] = $this->pathHelper->calculateDepth($page['path']);
 
         // Calculate parent path
         $pathParts = explode('/', $page['path']);
@@ -2146,7 +2140,7 @@ class PageService {
         // Parse language and department from path
         $parsedPath = explode('/', $page['path']);
         $page['language'] = $parsedPath[0] ?? $this->getUserLanguage();
-        $page['department'] = $this->parseDepartmentFromPath($page['path']);
+        $page['department'] = $this->pathHelper->parseDepartmentFromPath($page['path']);
 
         // Get permissions directly from Nextcloud's filesystem, combining the
         // bitmask with the node capability methods so a read-only GroupFolder
@@ -2223,12 +2217,6 @@ class PageService {
      * - nl/public/ (public pages)
      * - nl/departments/{dept}/ (department pages)
      */
-    /**
-     * @deprecated Delegated to PagePathHelper::calculateDepth.
-     */
-    private function calculateDepth(string $path): int {
-        return $this->pathHelper->calculateDepth($path);
-    }
 
     /**
      * Get maximum allowed depth for a given path
@@ -2261,7 +2249,7 @@ class PageService {
      * Validate that creating a child page at the given path wouldn't exceed max depth
      */
     private function validateDepth(string $parentPath): void {
-        $currentDepth = $this->calculateDepth($parentPath);
+        $currentDepth = $this->pathHelper->calculateDepth($parentPath);
         $maxDepth = $this->getMaxDepthForPath($parentPath);
 
         if ($currentDepth >= $maxDepth) {
@@ -2276,12 +2264,6 @@ class PageService {
      *
      * @return string 'department'|'container'|'page'
      */
-    /**
-     * @deprecated Delegated to PagePathHelper::parseDepartmentFromPath.
-     */
-    private function parseDepartmentFromPath(string $path): ?string {
-        return $this->pathHelper->parseDepartmentFromPath($path);
-    }
 
     /**
      * Get breadcrumb trail for a page
@@ -2711,7 +2693,7 @@ class PageService {
             throw new \InvalidArgumentException('Missing required fields: id, title');
         }
 
-        $data['id'] = $this->sanitizeId($data['id']);
+        $data['id'] = $this->idUtils->sanitizeId($data['id']);
 
         // If the slug is taken by a SIBLING at the destination, append a number.
         // Resolved once, outside the loop: nodeExists() is cheap, walking the
@@ -2732,7 +2714,7 @@ class PageService {
 
         // Generate uniqueId if not provided
         if (!isset($data['uniqueId'])) {
-            $data['uniqueId'] = 'page-' . $this->generateUUID();
+            $data['uniqueId'] = 'page-' . $this->idUtils->generateUUID();
         }
 
         // Every page belongs to a translation group, even when it is the only
@@ -2742,7 +2724,7 @@ class PageService {
         // than a structural one. A caller that supplies a group (adding a
         // translation of an existing page) keeps it.
         if (empty($data['translationGroup'])) {
-            $data['translationGroup'] = 'tg-' . $this->generateUUID();
+            $data['translationGroup'] = 'tg-' . $this->idUtils->generateUUID();
         }
 
         $validatedData = $this->validateAndSanitizePage($data);
@@ -2836,7 +2818,7 @@ class PageService {
         // Fallback to legacy ID lookup if not found by uniqueId
         if ($result === null) {
             try {
-                $id = $this->sanitizeId($originalId);
+                $id = $this->idUtils->sanitizeId($originalId);
                 $result = $this->findPageById($languageFolder, $id);
             } catch (\Exception $e) {
                 throw new \InvalidArgumentException('Failed to find page: ' . $e->getMessage());
@@ -2996,14 +2978,14 @@ class PageService {
         $languageFolder = $this->getLanguageFolder();
         $result = strpos($id, 'page-') === 0
             ? $this->locatePageAnyLanguage($languageFolder, $id)
-            : $this->findPageById($languageFolder, $this->sanitizeId($id));
+            : $this->findPageById($languageFolder, $this->idUtils->sanitizeId($id));
 
         if ($result === null) {
             throw new PageNotFoundException('Page not found: ' . $id);
         }
 
         // Normalize $id to the folder name for downstream index/event use.
-        $id = isset($result['folder']) ? $result['folder']->getName() : $this->sanitizeId($id);
+        $id = isset($result['folder']) ? $result['folder']->getName() : $this->idUtils->sanitizeId($id);
 
         // Read the page JSON once for uniqueId (homepage guard + comment cleanup).
         $pageData = [];
@@ -3127,7 +3109,7 @@ class PageService {
         // is what would relocate content between languages.
         $source = strpos($pageId, 'page-') === 0
             ? $this->locatePageAnyLanguage($languageFolder, $pageId)
-            : $this->locatePageBySlugAnyLanguage($languageFolder, $this->sanitizeId($pageId));
+            : $this->locatePageBySlugAnyLanguage($languageFolder, $this->idUtils->sanitizeId($pageId));
         if (!$source || !isset($source['folder'])) {
             throw new PageNotFoundException('Page not found: ' . $pageId);
         }
@@ -3166,7 +3148,7 @@ class PageService {
             // with the source rather than with the user's profile language.
             $targetResult = strpos($targetParentId, 'page-') === 0
                 ? $this->locatePageAnyLanguage($sourceLanguageFolder, $targetParentId)
-                : $this->findPageById($sourceLanguageFolder, $this->sanitizeId($targetParentId));
+                : $this->findPageById($sourceLanguageFolder, $this->idUtils->sanitizeId($targetParentId));
             if (!$targetResult || !isset($targetResult['folder'])) {
                 throw new PageNotFoundException('Target parent page not found: ' . $targetParentId);
             }
@@ -3253,7 +3235,7 @@ class PageService {
         try {
             $movedResult = strpos($pageId, 'page-') === 0
                 ? $this->findPageByUniqueId($targetParentFolder, $pageId)
-                : $this->findPageById($targetParentFolder, $this->sanitizeId($pageId));
+                : $this->findPageById($targetParentFolder, $this->idUtils->sanitizeId($pageId));
             if ($movedResult && isset($movedResult['file'])) {
                 $file = $movedResult['file'];
                 $data = json_decode($file->getContent(), true);
@@ -3281,7 +3263,7 @@ class PageService {
         // id too), then the rest of the upload validation.
         $this->media()->assertUploadShape($file);
 
-        $pageId = $this->sanitizeId($pageId);
+        $pageId = $this->idUtils->sanitizeId($pageId);
 
         $validated = $this->media()->validateUpload($file);
 
@@ -3359,7 +3341,7 @@ class PageService {
 
             // Try cache with BOTH original and sanitized IDs
             $mediaFolder = null;
-            $pageId = $this->sanitizeId($originalPageId);
+            $pageId = $this->idUtils->sanitizeId($originalPageId);
 
             if ($this->cache()->hasPageFolder($originalPageId)) {
                 // Cache hit with original ID (page-abc-123...)
@@ -3410,12 +3392,6 @@ class PageService {
     /**
      * Sanitize page ID
      */
-    /**
-     * @deprecated Delegated to PageIdUtils::sanitizeId.
-     */
-    private function sanitizeId(string $id): string {
-        return $this->idUtils->sanitizeId($id);
-    }
 
     /**
      * Recursively find media folder for a page by uniqueId
@@ -3452,14 +3428,6 @@ class PageService {
         return $this->shape()->sanitizeText($text);
     }
 
-    /**
-     * @deprecated Use HtmlSanitizer::decodeEntitiesRecursive directly.
-     * Kept as a thin wrapper so internal call-sites continue to work; will be
-     * removed once all call-sites are migrated to the injected sanitizer.
-     */
-    private function decodeHtmlEntitiesRecursive(string $value): string {
-        return $this->htmlSanitizer->decodeEntitiesRecursive($value);
-    }
 
     /**
      * @see PageShapeSanitizer::sanitizeFolderPath()
@@ -3537,7 +3505,7 @@ class PageService {
 
         // Fall back to legacy ID lookup
         if ($result === null) {
-            $result = $this->findPageById($folder, $this->sanitizeId($pageId));
+            $result = $this->findPageById($folder, $this->idUtils->sanitizeId($pageId));
         }
 
         if (!$result) {
@@ -3573,7 +3541,7 @@ class PageService {
 
         // Fall back to legacy ID lookup
         if ($result === null) {
-            $result = $this->findPageById($folder, $this->sanitizeId($pageId));
+            $result = $this->findPageById($folder, $this->idUtils->sanitizeId($pageId));
         }
 
         if (!$result) {
@@ -3621,12 +3589,6 @@ class PageService {
     /**
      * Generate a UUID v4
      */
-    /**
-     * @deprecated Delegated to PageIdUtils::generateUUID.
-     */
-    private function generateUUID(): string {
-        return $this->idUtils->generateUUID();
-    }
 
     /**
      * Get the actual file ID from the database using the groupfolder storage
@@ -3687,7 +3649,7 @@ class PageService {
 
         // Fall back to legacy ID lookup
         if ($result === null) {
-            $result = $this->findPageById($folder, $this->sanitizeId($pageId));
+            $result = $this->findPageById($folder, $this->idUtils->sanitizeId($pageId));
         }
 
         if (!$result) {
@@ -3791,7 +3753,7 @@ class PageService {
 
         // Fall back to legacy ID lookup
         if ($result === null) {
-            $result = $this->findPageById($folder, $this->sanitizeId($pageId));
+            $result = $this->findPageById($folder, $this->idUtils->sanitizeId($pageId));
         }
 
         if (!$result) {
@@ -3956,7 +3918,7 @@ class PageService {
         }
 
         try {
-            $newName = $this->sanitizeId($requestedName);
+            $newName = $this->idUtils->sanitizeId($requestedName);
         } catch (\InvalidArgumentException $e) {
             return ['status' => 'failed', 'reason' => 'invalid_name'];
         }
@@ -4521,7 +4483,7 @@ class PageService {
 
         // Fall back to legacy ID lookup
         if ($result === null) {
-            $result = $this->findPageById($folder, $this->sanitizeId($pageId));
+            $result = $this->findPageById($folder, $this->idUtils->sanitizeId($pageId));
         }
 
         if (!$result) {
@@ -4674,7 +4636,7 @@ class PageService {
         }
         // markCurrentPageInTree deep-copies the (group-shared) cached tree, so it
         // is safe to overwrite permissions on the copy without polluting the cache.
-        $tree = $this->markCurrentPageInTree($tree, $currentPageId);
+        $tree = $this->pathHelper->markCurrentPageInTree($tree, $currentPageId);
         // The tree is cached per group-set, but GroupFolder ACLs can grant/deny
         // per USER within the same group. Recompute each node's permissions for
         // the current user from the live filesystem view so per-user ACLs are
@@ -4713,12 +4675,6 @@ class PageService {
      * Mark the current page in a tree structure
      * Creates a deep copy to avoid modifying cached data
      */
-    /**
-     * @deprecated Delegated to PagePathHelper::markCurrentPageInTree.
-     */
-    private function markCurrentPageInTree(array $tree, ?string $currentPageId): array {
-        return $this->pathHelper->markCurrentPageInTree($tree, $currentPageId);
-    }
 
     /**
      * Recursively build the page tree from folder structure
@@ -4974,7 +4930,7 @@ class PageService {
 
             // Search through all collected widgets
             foreach ($allWidgets as $widget) {
-                $widgetMatches = $this->searchWidget($widget, $query);
+                $widgetMatches = $this->searchHelper->searchWidget($widget, $query);
                 foreach ($widgetMatches as $match) {
                     $score += $match['score'];
                     $matches[] = [
@@ -5039,12 +4995,6 @@ class PageService {
      * @param string $query Search query (lowercase)
      * @return array Array of matches with type, text, and score
      */
-    /**
-     * @deprecated Delegated to PageSearchHelper::searchWidget.
-     */
-    private function searchWidget(array $widget, string $query): array {
-        return $this->searchHelper->searchWidget($widget, $query);
-    }
 
     /**
      * Sanitize filename for safe storage
@@ -5967,11 +5917,11 @@ class PageService {
             // Reserve a collision-free template folder (+_media)
             $langFolder = $this->getLanguageFolder();
             [$templateId, $templateFolder, $templateMediaFolder] =
-                $this->pageTemplateService->newTemplateFolder($langFolder, $this->sanitizeId($templateTitle));
+                $this->pageTemplateService->newTemplateFolder($langFolder, $this->idUtils->sanitizeId($templateTitle));
 
             // Prepare template data
             $templateData = $pageData;
-            $templateData['uniqueId'] = 'template-' . $this->generateUUID();
+            $templateData['uniqueId'] = 'template-' . $this->idUtils->generateUUID();
             $templateData['title'] = $templateTitle;
             $templateData['description'] = $templateDescription ?? '';
             $templateData['isTemplate'] = true;
@@ -6051,10 +6001,10 @@ class PageService {
             $pageData = $templateData;
 
             // Generate new page ID and uniqueId
-            $pageId = $this->sanitizeId($pageTitle);
+            $pageId = $this->idUtils->sanitizeId($pageTitle);
             $pageData['id'] = $pageId;
             $pageData['title'] = $pageTitle;
-            $pageData['uniqueId'] = 'page-' . $this->generateUUID();
+            $pageData['uniqueId'] = 'page-' . $this->idUtils->generateUUID();
             $pageData['created'] = time();
             $pageData['modified'] = time();
 
@@ -6183,7 +6133,7 @@ class PageService {
         // Decode the source title first: it is stored HTML-encoded (sanitizeText),
         // and createPage re-encodes it — without decoding, "Tips &amp; Tricks"
         // would double-encode to "Tips &amp;amp; Tricks (copy)".
-        $baseTitle = $this->decodeHtmlEntitiesRecursive((string)($sourceData['title'] ?? 'Untitled'));
+        $baseTitle = $this->htmlSanitizer->decodeEntitiesRecursive((string)($sourceData['title'] ?? 'Untitled'));
         $title = $newTitle !== null && $newTitle !== '' ? $newTitle : $baseTitle . ' (copy)';
         $pageData = $sourceData;
         unset($pageData['order']); // never inherit sibling order
@@ -6192,9 +6142,9 @@ class PageService {
         // state createTranslation() refuses to create because it makes the
         // language switcher ambiguous. createPage() assigns a fresh group.
         unset($pageData['translationGroup']);
-        $pageData['id'] = $this->sanitizeId($title);
+        $pageData['id'] = $this->idUtils->sanitizeId($title);
         $pageData['title'] = $title;
-        $pageData['uniqueId'] = 'page-' . $this->generateUUID();
+        $pageData['uniqueId'] = 'page-' . $this->idUtils->generateUUID();
         $pageData['status'] = 'draft';
         $pageData['created'] = time();
         $pageData['modified'] = time();
