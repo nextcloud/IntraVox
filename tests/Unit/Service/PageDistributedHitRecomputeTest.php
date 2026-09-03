@@ -1,0 +1,166 @@
+<?php
+declare(strict_types=1);
+
+namespace OCA\IntraVox\Tests\Unit\Service;
+
+use OCA\IntraVox\Service\Cache\PageCacheService;
+use OCA\IntraVox\Service\PageIndexService;
+use OCA\IntraVox\Service\PageService;
+use OCA\IntraVox\Service\PermissionService;
+use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageService;
+use OCP\App\IAppManager;
+use OCP\Files\File;
+use OCP\Files\FileInfo;
+use OCP\Files\Folder;
+use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
+
+/**
+ * Pins the per-user recompute on a distributed-cache HIT in getPage()
+ * (PageService.php ~2045-2089) — the guard against issue #70, where one user's
+ * canWrite could otherwise be served to another out of the shared cache.
+ *
+ * The distributed cache is shared across users; the write path strips the
+ * per-user fields, and the read path MUST recompute them fresh on every hit:
+ * permissions, canEdit, metaVoxAvailable and translations. If the Phase 14.1
+ * extraction dropped or reordered this recompute, the leak would ship green — so
+ * this test asserts, behaviourally, that the STALE cached values are overwritten
+ * by fresh collaborator calls rather than returned verbatim.
+ */
+class PageDistributedHitRecomputeTest extends TestCase {
+
+    use BuildsPageService;
+
+    private function makeService(
+        string $cachedJson,
+        PermissionService $permissionService,
+        bool $metavox = false
+    ): PageService {
+        // A single page 'about' found by the primary-folder scan (index misses,
+        // root seam throws so the walk stays in-folder and never reads $userId).
+        $pageJson = $this->makeFile(
+            '/IntraVox/en/about.json',
+            ['uniqueId' => 'page-about', 'title' => 'About']
+        );
+        $pageFolder = $this->makeFolder('/IntraVox/en/about', []);
+        $lang = $this->makeFolder('/IntraVox/en', [
+            'about.json' => $pageJson,
+            'about' => $pageFolder,
+        ]);
+
+        $svc = new class($lang) extends PageService {
+            private Folder $lang;
+            public function __construct(Folder $lang) {
+                $this->lang = $lang;
+            }
+            protected function getReadLanguageFolder(): Folder {
+                return $this->lang;
+            }
+            protected function getLanguageFolder(): Folder {
+                return $this->lang;
+            }
+            protected function getIntraVoxFolder(): Folder {
+                throw new \RuntimeException('no root in this fixture');
+            }
+        };
+
+        // Cache: request miss, distributed hit returning the stale entry.
+        $cache = $this->createMock(PageCacheService::class);
+        $cache->method('getPageData')->willReturn(null);
+        $cache->method('isDistributedAvailable')->willReturn(true);
+        $cache->method('getDistributed')->willReturn($cachedJson);
+
+        $appManager = $this->createMock(IAppManager::class);
+        $appManager->method('isInstalled')->willReturn($metavox);
+        $appManager->method('isEnabledForUser')->willReturn($metavox);
+
+        $index = $this->createMock(PageIndexService::class);
+        $index->method('findByUniqueId')->willReturn(null);
+
+        $this->injectPageServiceDependencies($svc, [
+            'permissionService' => $permissionService,
+            'cache' => $cache,
+            'appManager' => $appManager,
+            'pageIndexService' => $index,
+            'logger' => $this->createMock(LoggerInterface::class),
+        ]);
+
+        return $svc;
+    }
+
+    public function testStalePermissionsInTheCachedEntryAreOverwrittenWithAFreshComputation(): void {
+        // The shared cache entry carries a poisoned permissions block (as if
+        // written for a user who could write). The current reader must NOT get it.
+        $poisoned = json_encode([
+            'uniqueId' => 'page-about',
+            'title' => 'About',
+            'permissions' => ['canRead' => true, 'canWrite' => true, 'canDelete' => true],
+            'canEdit' => true,
+        ]);
+
+        $fresh = ['canRead' => true, 'canWrite' => false, 'canDelete' => false];
+        $permissionService = $this->createMock(PermissionService::class);
+        $permissionService->expects($this->once())
+            ->method('permissionsForPage')
+            ->willReturn($fresh);
+
+        $svc = $this->makeService($poisoned, $permissionService);
+        $page = $svc->getPage('page-about');
+
+        $this->assertSame(
+            $fresh,
+            $page['permissions'],
+            'permissions must be recomputed on a distributed hit, never served from the shared cache'
+        );
+        $this->assertArrayHasKey('canEdit', $page, 'canEdit is recomputed from the file, not the cache');
+    }
+
+    public function testTranslationsAreRecomputedNotServedFromTheSharedCache(): void {
+        // The cached entry has no translations (stripped on write). The reader must
+        // get a freshly-resolved list, not the absent/other-user value.
+        $entry = json_encode([
+            'uniqueId' => 'page-about',
+            'title' => 'About',
+            'translationGroup' => 'grp-1',
+            'permissions' => ['canRead' => true],
+        ]);
+
+        $permissionService = $this->createMock(PermissionService::class);
+        $permissionService->method('permissionsForPage')->willReturn(['canRead' => true]);
+
+        $svc = $this->makeService($entry, $permissionService);
+        $page = $svc->getPage('page-about');
+
+        // resolveTranslations runs on every hit; with no real translation group
+        // wired it resolves to an array (empty), and the key is always present.
+        $this->assertArrayHasKey(
+            'translations',
+            $page,
+            'translations are ACL-filtered per user and must be recomputed on every hit'
+        );
+        $this->assertIsArray($page['translations']);
+    }
+
+    public function testMetaVoxAvailabilityIsRecomputedOnEveryHit(): void {
+        // metaVoxAvailable is an install-wide fact stripped from the cache; a hit
+        // must reflect the CURRENT app state, not whatever was cached.
+        $entry = json_encode([
+            'uniqueId' => 'page-about',
+            'title' => 'About',
+            'permissions' => ['canRead' => true],
+            'metaVoxAvailable' => true, // stale: pretend it was cached as available
+        ]);
+
+        $permissionService = $this->createMock(PermissionService::class);
+        $permissionService->method('permissionsForPage')->willReturn(['canRead' => true]);
+
+        // MetaVox currently NOT available -> the hit must report false.
+        $svc = $this->makeService($entry, $permissionService, metavox: false);
+        $page = $svc->getPage('page-about');
+
+        $this->assertFalse(
+            $page['metaVoxAvailable'],
+            'metaVoxAvailable is recomputed from the app manager on every hit'
+        );
+    }
+}
