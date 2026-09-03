@@ -75,6 +75,9 @@ class PagePublicationStateTest extends TestCase {
             'appManager' => $appManager,
             'publicationSettings' => $settings,
             'config' => $config,
+            // userId is read when the lazy MetaVoxGateway is built (Phase 3); it is
+            // nullable so the harness auto-fill skips it — set it explicitly.
+            'userId' => 'tester',
             'userSession' => $this->createMock(IUserSession::class),
             'logger' => $this->createMock(LoggerInterface::class),
         ]);

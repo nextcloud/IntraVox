@@ -57,12 +57,8 @@ class PageService {
     private IAppManager $appManager;
     private IConfig $config;
     private IDBConnection $db;
-    /** @var array<string, string>|null Request-lifetime cache of MetaVox field labels */
-    private ?array $metaVoxFieldLabelsCache = null;
-    /** @var array<string, bool> Request-lifetime cache of per-field view permissions */
-    private array $metaVoxFieldViewCache = [];
-    /** @var array<int, int> file_id => groupfolder_id, filled by getMetaVoxDataForFiles */
-    private array $metaVoxGroupfolderByFile = [];
+    /** Lazily-built MetaVox gateway; owns the memos that used to live here (Phase 3). */
+    private ?\OCA\IntraVox\Service\Publication\MetaVoxGateway $metaVoxGateway = null;
     private LoggerInterface $logger;
     private IEventDispatcher $eventDispatcher;
     private PublicationSettingsService $publicationSettings;
@@ -480,6 +476,25 @@ class PageService {
             );
         }
         return $this->newsPageService;
+    }
+
+    /**
+     * The MetaVox DB/app-manager gateway (cluster U, Phase 3). Same lazy seam
+     * convention as news()/locator(): DI does not inject it, and the accessor
+     * builds the real one from the deps this service already holds. Memoised so a
+     * single instance per request preserves the file->groupfolder map that
+     * getMetaVoxDataForFiles() fills and searchPages() reads back.
+     */
+    private function metaVox(): \OCA\IntraVox\Service\Publication\MetaVoxGateway {
+        if (!isset($this->metaVoxGateway)) {
+            $this->metaVoxGateway = new \OCA\IntraVox\Service\Publication\MetaVoxGateway(
+                $this->db,
+                $this->appManager,
+                $this->userId,
+                $this->logger
+            );
+        }
+        return $this->metaVoxGateway;
     }
 
     /**
@@ -4945,7 +4960,7 @@ class PageService {
                 $pageMeta,
                 $query,
                 $metaVoxLabels,
-                $fileId !== null ? ($this->metaVoxGroupfolderByFile[$fileId] ?? null) : null
+                $fileId !== null ? $this->metaVox()->groupfolderIdForFile($fileId) : null
             );
             if (!empty($metaMatches)) {
                 $score += 7;
@@ -5344,11 +5359,7 @@ class PageService {
      * Check if MetaVox app is available
      */
     private function isMetaVoxAvailable(): bool {
-        try {
-            return $this->appManager->isInstalled('metavox') && $this->appManager->isEnabledForUser('metavox');
-        } catch (\Exception $e) {
-            return false;
-        }
+        return $this->metaVox()->isMetaVoxAvailable();
     }
 
     /**
@@ -5629,46 +5640,7 @@ class PageService {
      * @return array Associative array: fileId => [fieldName => value, ...]
      */
     private function getMetaVoxDataForFiles(array $fileIds): array {
-        if (empty($fileIds) || !$this->isMetaVoxAvailable()) {
-            return [];
-        }
-
-        try {
-            // Query the metavox_file_gf_meta table directly
-            $qb = $this->db->getQueryBuilder();
-            $qb->select('file_id', 'field_name', 'field_value', 'groupfolder_id')
-                ->from('metavox_file_gf_meta')
-                ->where($qb->expr()->in('file_id', $qb->createNamedParameter($fileIds, \Doctrine\DBAL\Connection::PARAM_INT_ARRAY)));
-
-            $result = $qb->executeQuery();
-            $rows = $result->fetchAll();
-            $result->closeCursor();
-
-            // Organize by file ID. The shape stays field_name => value (callers
-            // like applyMetaVoxFilters rely on it); the owning groupfolder is
-            // recorded separately so per-field view permissions can be scoped.
-            $metaData = [];
-            foreach ($rows as $row) {
-                $fileId = (int)$row['file_id'];
-                $fieldName = $row['field_name'];
-                $fieldValue = $row['field_value'];
-
-                if (!isset($metaData[$fileId])) {
-                    $metaData[$fileId] = [];
-                }
-                $metaData[$fileId][$fieldName] = $fieldValue;
-                $this->metaVoxGroupfolderByFile[$fileId] = (int)$row['groupfolder_id'];
-            }
-
-            return $metaData;
-
-        } catch (\Exception $e) {
-            $this->logger->error('Failed to get MetaVox data', [
-                'error' => $e->getMessage(),
-                'fileIds' => $fileIds
-            ]);
-            return [];
-        }
+        return $this->metaVox()->getMetaVoxDataForFiles($fileIds);
     }
 
     /**
@@ -5680,33 +5652,7 @@ class PageService {
      * @return array<string, string>
      */
     private function getMetaVoxFieldLabels(): array {
-        if ($this->metaVoxFieldLabelsCache !== null) {
-            return $this->metaVoxFieldLabelsCache;
-        }
-
-        $this->metaVoxFieldLabelsCache = [];
-
-        if (!$this->isMetaVoxAvailable()) {
-            return $this->metaVoxFieldLabelsCache;
-        }
-
-        try {
-            $qb = $this->db->getQueryBuilder();
-            $qb->select('field_name', 'field_label')
-                ->from('metavox_gf_fields');
-
-            $result = $qb->executeQuery();
-            while ($row = $result->fetch()) {
-                $this->metaVoxFieldLabelsCache[$row['field_name']] = $row['field_label'];
-            }
-            $result->closeCursor();
-        } catch (\Exception $e) {
-            $this->logger->warning('Failed to load MetaVox field labels', [
-                'error' => $e->getMessage(),
-            ]);
-        }
-
-        return $this->metaVoxFieldLabelsCache;
+        return $this->metaVox()->getMetaVoxFieldLabels();
     }
 
     /**
@@ -5727,82 +5673,9 @@ class PageService {
      * @return array{subline: string}|null null when nothing matched
      */
     private function searchMetaVoxValues(array $meta, string $query, array $labels, ?int $groupfolderId = null): ?array {
-        if (empty($meta) || $query === '') {
-            return null;
-        }
-
-        $matching = [];
-        $other = [];
-        $found = false;
-
-        foreach ($meta as $fieldName => $value) {
-            // Multiselect values are stored JSON-encoded; flatten to a string so
-            // both the match test and the subline read naturally.
-            if (is_string($value) && str_starts_with($value, '[')) {
-                $decoded = json_decode($value, true);
-                if (is_array($decoded)) {
-                    $value = implode(', ', array_filter($decoded, 'is_scalar'));
-                }
-            }
-            if (!is_scalar($value)) {
-                continue;
-            }
-            $value = (string)$value;
-            if ($value === '') {
-                continue;
-            }
-            if (!$this->canViewMetaVoxField($fieldName, $groupfolderId)) {
-                continue;
-            }
-
-            $part = ($labels[$fieldName] ?? $fieldName) . ': ' . $value;
-            if (mb_stripos($value, $query) !== false) {
-                $matching[] = $part;
-                $found = true;
-            } else {
-                $other[] = $part;
-            }
-        }
-
-        if (!$found) {
-            return null;
-        }
-
-        $parts = array_merge($matching, $other);
-        return ['subline' => implode(' • ', array_slice($parts, 0, 3))];
+        return $this->metaVox()->searchMetaVoxValues($meta, $query, $labels, $groupfolderId);
     }
 
-    /**
-     * Whether the current user may view a MetaVox field. Delegates to MetaVox's
-     * own PermissionService (resolved lazily — MetaVox is an optional app).
-     *
-     * On any failure we return false: hiding a field costs a subline entry,
-     * showing one the user may not see would leak metadata.
-     */
-    private function canViewMetaVoxField(string $fieldName, ?int $groupfolderId = null): bool {
-        $cacheKey = $fieldName . ':' . ($groupfolderId ?? 'null');
-        if (isset($this->metaVoxFieldViewCache[$cacheKey])) {
-            return $this->metaVoxFieldViewCache[$cacheKey];
-        }
-
-        $allowed = false;
-        try {
-            if ($this->userId !== '') {
-                $permissionService = \OC::$server->get(\OCA\MetaVox\Service\PermissionService::class);
-                $allowed = $permissionService->hasPermission(
-                    $this->userId,
-                    \OCA\MetaVox\Service\PermissionService::PERM_VIEW_METADATA,
-                    $groupfolderId,
-                    $fieldName
-                );
-            }
-        } catch (\Throwable $e) {
-            $allowed = false;
-        }
-
-        $this->metaVoxFieldViewCache[$cacheKey] = $allowed;
-        return $allowed;
-    }
 
     /**
      * Format a timestamp in a localized date format

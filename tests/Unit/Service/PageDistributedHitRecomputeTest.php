@@ -82,6 +82,8 @@ class PageDistributedHitRecomputeTest extends TestCase {
             'cache' => $cache,
             'appManager' => $appManager,
             'pageIndexService' => $index,
+            // userId is read when the lazy MetaVoxGateway is built (Phase 3).
+            'userId' => 'tester',
             'logger' => $this->createMock(LoggerInterface::class),
         ]);
 
