@@ -84,6 +84,7 @@ class PublicShareController extends Controller {
         private ShareTreeShaper $treeShaper,
         private PagePathHelper $pathHelper,
         private ShareMediaServer $mediaServer,
+        private \OCA\IntraVox\Service\Publication\PublicationStateService $publicationState,
     ) {
         parent::__construct($appName, $request);
     }
@@ -148,7 +149,7 @@ class PublicShareController extends Controller {
 
             // Draft, scheduled (not-yet-published) and expired pages are never
             // accessible via a public share — anonymous visitors are never editors.
-            if ($this->pageService->isHiddenFromReaders($pageData)) {
+            if ($this->publicationState->isHiddenFromReaders($pageData)) {
                 return $this->shareNotFoundResponse();
             }
 
@@ -517,7 +518,7 @@ class PublicShareController extends Controller {
             // itself was in scope — the page 404s while its illustrations, org
             // charts and screenshots do not.
             $pageData = $validation['pageData'] ?? null;
-            if (is_array($pageData) && $this->pageService->isHiddenFromReaders($pageData)) {
+            if (is_array($pageData) && $this->publicationState->isHiddenFromReaders($pageData)) {
                 return new DataResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
             }
 
@@ -1144,12 +1145,12 @@ class PublicShareController extends Controller {
         // pages — there is never an editor here to reveal them. Batch the
         // publication metadata once and thread it through the recursion.
         if ($pubMeta === null) {
-            $pubMeta = $this->pageService->publicationMetaForFiles($this->collectTreeFileIds($tree));
+            $pubMeta = $this->publicationState->publicationMetaForFiles($this->collectTreeFileIds($tree));
         }
         $filtered = [];
         foreach ($tree as $node) {
             $meta = $pubMeta[$node['fileId'] ?? null] ?? [];
-            if ($this->pageService->isHiddenFromReaders($node, $meta)) {
+            if ($this->publicationState->isHiddenFromReaders($node, $meta)) {
                 continue;
             }
             if (!empty($node['children'])) {
@@ -1173,7 +1174,7 @@ class PublicShareController extends Controller {
      */
     private function filterUnpublishedNewsItems(array $items): array {
         return array_values(array_filter($items, function (array $item): bool {
-            return !$this->pageService->isHiddenFromReaders($item);
+            return !$this->publicationState->isHiddenFromReaders($item);
         }));
     }
 
@@ -1190,12 +1191,12 @@ class PublicShareController extends Controller {
         } catch (\Exception $e) {
             return [];
         }
-        $pubMeta = $this->pageService->publicationMetaForFiles($this->collectTreeFileIds($tree));
+        $pubMeta = $this->publicationState->publicationMetaForFiles($this->collectTreeFileIds($tree));
         $hidden = [];
         $walk = function (array $nodes) use (&$walk, $pubMeta, &$hidden) {
             foreach ($nodes as $node) {
                 $meta = $pubMeta[$node['fileId'] ?? null] ?? [];
-                if ($this->pageService->isHiddenFromReaders($node, $meta) && !empty($node['uniqueId'])) {
+                if ($this->publicationState->isHiddenFromReaders($node, $meta) && !empty($node['uniqueId'])) {
                     $hidden[$node['uniqueId']] = true;
                 }
                 if (!empty($node['children'])) {

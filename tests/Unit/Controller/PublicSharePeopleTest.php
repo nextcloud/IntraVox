@@ -79,6 +79,7 @@ class PublicSharePeopleTest extends TestCase {
 			new ShareTreeShaper(),
 			new PagePathHelper(),
 			new ShareMediaServer(),
+			$this->createMock(\OCA\IntraVox\Service\Publication\PublicationStateService::class),
 		);
 	}
 
@@ -274,6 +275,7 @@ class PublicSharePeopleTest extends TestCase {
 			new ShareTreeShaper(),
 			new PagePathHelper(),
 			new ShareMediaServer(),
+			$this->createMock(\OCA\IntraVox\Service\Publication\PublicationStateService::class),
 		);
 
 		$this->publicShareService->expects($this->never())->method('resolveIntraVoxLinkShare');
