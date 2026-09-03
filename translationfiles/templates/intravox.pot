@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: IntraVox 2.6.3\n"
 "Report-Msgid-Bugs-To: translations@nextcloud.com\n"
-"POT-Creation-Date: 2026-09-03 15:34+0000\n"
+"POT-Creation-Date: 2026-09-03 16:06+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -918,6 +918,9 @@ msgstr ""
 msgid "Default (transparent)"
 msgstr ""
 
+#. Placeholder text shown in an empty input. {label} is the field's own
+#. name, so it reads e.g. "Default: Department" — it means "leave this
+#. empty and that name is used". Not a heading.
 msgid "Default: {label}"
 msgstr ""
 
@@ -4001,6 +4004,10 @@ msgstr ""
 msgid "Visitors must enter a password to access this link. Manage in Files."
 msgstr ""
 
+#. Hint under the "Let visitors filter these results" toggle. "the
+#. selection above" = the group/field filters the admin set higher up in
+#. this same widget editor; visitors can narrow within that, never escape
+#. it.
 msgid "Visitors pick from these fields themselves. They can only narrow the selection above further — never widen it."
 msgstr ""
 

@@ -200,7 +200,7 @@
     "src/components/filter/FilterChips.vue": 149,
     "src/components/filter/FilterPanel.vue": 267,
     "src/components/filter/FilterableWidgetShell.vue": 139,
-    "src/components/filter/ViewerFacetEditor.vue": 457,
+    "src/components/filter/ViewerFacetEditor.vue": 467,
     "src/components/icons/MetaVoxIcon.vue": 31,
     "src/components/news/NewsItem.vue": 287,
     "src/components/news/NewsLayoutCarousel.vue": 439,

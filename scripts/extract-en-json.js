@@ -78,7 +78,17 @@ function makeRegexes() {
 // Consecutive `// TRANSLATORS:`/continuation lines are joined into one comment,
 // which generate-pot.js emits as `#.` lines in the POT. Transifex shows those
 // as the developer comment on the string.
-const TRANSLATORS_RE = /^\s*\/\/\s*TRANSLATORS:\s?(.*)$/;
+// Two comment syntaxes, because a `.vue` file has two languages in it:
+//   <script>   // TRANSLATORS: …
+//   <template> <!-- TRANSLATORS: … -->
+// A `//` inside a template is NOT a comment — Vue renders it as literal text —
+// so template strings can only be annotated with the HTML form. Note that an
+// HTML comment may not sit between an element's attributes (the Vue compiler
+// rejects it), so for a t() call in an attribute put the comment on the line
+// directly above that attribute's own line is impossible — annotate such
+// strings from <script> instead, or accept the element-level placement only
+// when the element has a single translatable attribute.
+const TRANSLATORS_RE = /^\s*(?:\/\/|<!--)\s*TRANSLATORS:\s?(.*?)\s*(?:-->)?$/;
 
 function findTranslatorComment(content, index) {
 	// Walk backwards over the lines above the call.
