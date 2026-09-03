@@ -660,7 +660,7 @@ pipeline.
 
 ## 6. Nextcloud Compatibility
 
-- [ ] Check `appinfo/info.xml`: `<nextcloud min-version="32" max-version="34"/>` (update max as new NC versions release; current confirmed range as of June 2026)
+- [ ] Check `appinfo/info.xml`: `<nextcloud min-version="32" max-version="35"/>` (update max as new NC versions release; 35 audited against RC2 on 03-09-2026 — see CHANGELOG for the method: OCP symbols, PHPStan against the stableXX stubs, `OC.*` globals, bundled Vue majors)
 - [ ] PHP requirement: `<php min-version="8.2"/>` (matches composer.json; NC34 requires PHP `>=8.2 <8.6`)
 - [ ] Test on target Nextcloud version — hetzner `nc-dev` runs **NC34** (34.0.2.1, checked 26-08-2026).
       Verify with: `ssh rik@178.63.205.103 "docker exec -u www-data nc-dev php occ config:system:get version"`

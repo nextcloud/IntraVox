@@ -154,7 +154,7 @@ IntraVox se ejecuta donde ejecutas Nextcloud: tu propio hardware, un proveedor e
     <screenshot>https://raw.githubusercontent.com/nextcloud/IntraVox/main/screenshots/Engagement.png</screenshot>
     <dependencies>
         <php min-version="8.2"/>
-        <nextcloud min-version="32" max-version="34"/>
+        <nextcloud min-version="32" max-version="35"/>
     </dependencies>
     <navigations>
         <navigation>

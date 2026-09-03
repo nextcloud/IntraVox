@@ -6,6 +6,22 @@ IntraVox is a Nextcloud intranet page builder.
 
 ## [Unreleased]
 
+### Changed
+
+- **Nextcloud 35 compatibility declared** — `info.xml` now ships
+  `<nextcloud min-version="32" max-version="35"/>`. Audit against 35.0.0 RC2
+  (the latest candidate at the time of writing; no stable release or Docker
+  image exists yet): all 95 `OCP\` symbols `lib/` imports still exist in the
+  35 API, and static analysis against the stable35 stubs reports no errors.
+  The three `OC.*` JS globals still in use (`OC.dialogs.filepicker`,
+  `OC.MimeType.getIconUrl`, `OC.requestToken`) remain exported in 35 —
+  `mimetype.js` was renamed to `mimeType.js`, but `OC.MimeType` and the
+  `getIconUrl(mimeType)` signature are unchanged, and our call site is guarded
+  by a `typeof` check either way. Bundled `@nextcloud/vue` (9.8.1) and Vue
+  (3.5.35) are the same majors Nextcloud 35 ships (9.10.0 / 3.5.41). PHP
+  `>=8.2` is unchanged. Verification on a running Nextcloud 35 is still
+  outstanding and will follow once an image is published.
+
 ### Added
 
 - **Filters can now exclude instead of only include.** Text fields already had
