@@ -19,8 +19,11 @@ IntraVox is a Nextcloud intranet page builder.
   `getIconUrl(mimeType)` signature are unchanged, and our call site is guarded
   by a `typeof` check either way. Bundled `@nextcloud/vue` (9.8.1) and Vue
   (3.5.35) are the same majors Nextcloud 35 ships (9.10.0 / 3.5.41). PHP
-  `>=8.2` is unchanged. Verification on a running Nextcloud 35 is still
-  outstanding and will follow once an image is published.
+  `>=8.2` is unchanged. Verified on a running Nextcloud 35 (35.0.0 beta 4):
+  the app installs and enables, `occ intravox:setup` creates the groupfolder
+  and imports the demo content, 34 pages index, the page renders with all 37
+  widgets, and the pages, navigation and user endpoints all answer. No
+  IntraVox errors in the log or the browser console.
 
 ### Added
 
