@@ -54,6 +54,36 @@ trait RequiresPagePermission {
     }
 
     /**
+     * The read-permission companion. Unlike requireWritablePage it does NOT
+     * fetch the page: the read endpoints already call getPage() once (they need
+     * the page anyway) and check permissions on that array, so re-fetching here
+     * would double the call and could diverge if the two reads disagreed. It
+     * therefore takes the already-loaded page and returns the refusal, or null
+     * when access is allowed.
+     *
+     * The default denial body is the bare 'Access denied' every read gate uses
+     * today; a caller with a different message (e.g. the source-page check in
+     * ApiController) passes its own so consolidating changes no response body.
+     *
+     * Usage:
+     *     $page = $this->pageService->getPage($id);
+     *     if (($denied = $this->denyUnlessReadable($page)) !== null) {
+     *         return $denied;
+     *     }
+     *
+     * @param array<string, mixed> $page the page as returned by getPage()
+     */
+    protected function denyUnlessReadable(array $page, string $denialBody = 'Access denied'): ?DataResponse {
+        if (!($page['permissions']['canRead'] ?? false)) {
+            return new DataResponse(
+                ['error' => $denialBody],
+                Http::STATUS_FORBIDDEN
+            );
+        }
+        return null;
+    }
+
+    /**
      * Explicit accessor rather than reaching for $this->pageService directly:
      * the Shared/ traits do the latter and a controller that forgets the
      * property only finds out at runtime, on the first request.
