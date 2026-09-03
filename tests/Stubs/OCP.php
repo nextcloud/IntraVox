@@ -141,6 +141,9 @@ interface Node {
     public function getOwner();
     public function getStorage();
     public function delete(): void;
+    // getInternalPath() is untyped on the real OCP\Files\Node; the groupfolder
+    // detection and metadata paths in PageService both call it.
+    public function getInternalPath();
 }
 
 /**
@@ -155,6 +158,9 @@ interface File extends Node {
     public function putContent($data): void;
     public function getMimetype(): string;
     public function fopen(string $mode);
+    // getCreationTime(): int on the real OCP\Files\FileInfo; getPageMetadata()
+    // reads it (with a 0 fallback) for the page's created-at.
+    public function getCreationTime(): int;
 }
 
 interface Folder extends Node {

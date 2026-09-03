@@ -38,16 +38,10 @@ class PageSlugUniquenessTest extends TestCase {
      * name a page got AND the folder it landed in.
      */
     private function makeFolder(string $path, array $entries = []): Folder {
-        // getInternalPath() is not on the OCP\Files\Folder stub but
-        // scanPageFolder() calls it on its fallback branch, so it is added
-        // explicitly — an auto-mock would fatal on the missing method instead
-        // of letting the scan degrade harmlessly. getStorage() joined the stub
-        // interface with the PageVersionService tests (PR-13), so it is
-        // configured the normal way.
-        $folder = $this->getMockBuilder(Folder::class)
-            ->disableOriginalConstructor()
-            ->addMethods(['getInternalPath'])
-            ->getMockForAbstractClass();
+        // getInternalPath() is on the OCP\Files\Folder stub (the scanPageFolder()
+        // fallback branch calls it); getStorage() joined the stub interface with
+        // the PageVersionService tests (PR-13). Both are configured the normal way.
+        $folder = $this->createMock(Folder::class);
         // The storage/scanner/cache trio has no OCP stub in this test suite, so
         // it is a hand-rolled no-op: the scan is a cache-warming side effect,
         // irrelevant to where a page lands.
