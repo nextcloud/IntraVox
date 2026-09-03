@@ -36,7 +36,6 @@ class PageServicePublicSurfaceTest extends TestCase {
         'createTranslation' => 3,
         'deletePage' => 1,
         'deleteTemplate' => 1,
-        'effectivePublishState' => 2,
         'endDeferredClear' => 0,
         'getBreadcrumb' => 1,
         'getCurrentPageContent' => 1,
@@ -57,9 +56,7 @@ class PageServicePublicSurfaceTest extends TestCase {
         'getTranslationCandidates' => 2,
         'getUploadLimit' => 0,
         'getVersionContent' => 2,
-        'hasPublicationDate' => 2,
         'invalidateAllCaches' => 0,
-        'isHiddenFromReaders' => 2,
         'isHomepage' => 2,
         'linkTranslation' => 2,
         'listPages' => 0,
@@ -67,7 +64,6 @@ class PageServicePublicSurfaceTest extends TestCase {
         'listTemplates' => 0,
         'movePage' => 2,
         'pageExistsByUniqueId' => 1,
-        'publicationMetaForFiles' => 1,
         'rebuildIndex' => 1,
         'reorderSiblings' => 2,
         'repairEntities' => 1,
@@ -117,7 +113,7 @@ class PageServicePublicSurfaceTest extends TestCase {
 
     public function testSurfaceCountIsPinned(): void {
         $this->assertCount(
-            56,
+            52,
             $this->currentSurface(),
             'the public method count changed; see testPublicSurfaceMatchesTheFrozenExpectation'
         );

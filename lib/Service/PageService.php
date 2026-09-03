@@ -2094,7 +2094,7 @@ class PageService {
                     // written before these fields existed would otherwise never
                     // gain them. Both are cheap: an in-memory app-manager lookup
                     // and a regex over a path.
-                    $decoded['metaVoxAvailable'] = $this->isMetaVoxAvailable();
+                    $decoded['metaVoxAvailable'] = $this->metaVox()->isMetaVoxAvailable();
                     if ($decoded['metaVoxAvailable'] && $result['file'] instanceof \OCP\Files\File) {
                         $decoded['groupfolderId'] = $this->groupfolderIdForNode($result['file']);
                     }
@@ -2213,7 +2213,7 @@ class PageService {
             // in-memory app-manager lookup, no query and no HTTP, so it is
             // cheaper than the separate /api/metavox/status call the sidebar
             // used to make every time it opened.
-            $page['metaVoxAvailable'] = $this->isMetaVoxAvailable();
+            $page['metaVoxAvailable'] = $this->metaVox()->isMetaVoxAvailable();
 
             // The groupfolder holding this page. MetaVox's field definitions are
             // assigned per groupfolder, and its groupfolder-scoped endpoint
@@ -4903,10 +4903,10 @@ class PageService {
         // JSON, so a page tagged "Stad: Luik" is invisible to a content-only
         // search. Batch-load it for every page in one query (no N+1) and treat
         // it as an additional match source below.
-        $metaVoxData = $this->getMetaVoxDataForFiles(
+        $metaVoxData = $this->metaVox()->getMetaVoxDataForFiles(
             array_values(array_filter(array_column($pagesWithContent, 'fileId')))
         );
-        $metaVoxLabels = empty($metaVoxData) ? [] : $this->getMetaVoxFieldLabels();
+        $metaVoxLabels = empty($metaVoxData) ? [] : $this->metaVox()->getMetaVoxFieldLabels();
 
         foreach ($pagesWithContent as $pageData) {
             $matches = [];
@@ -4974,7 +4974,7 @@ class PageService {
             // never outranks the page actually being named after the term.
             $fileId = $pageData['fileId'] ?? null;
             $pageMeta = $fileId !== null ? ($metaVoxData[$fileId] ?? []) : [];
-            $metaMatches = $this->searchMetaVoxValues(
+            $metaMatches = $this->metaVox()->searchMetaVoxValues(
                 $pageMeta,
                 $query,
                 $metaVoxLabels,
@@ -5285,11 +5285,11 @@ class PageService {
                     }
                 } else {
                     $this->logger->warning('News widget: Source page not found', ['sourcePageId' => $sourcePageId]);
-                    return ['items' => [], 'total' => 0, 'metavoxAvailable' => $this->isMetaVoxAvailable()];
+                    return ['items' => [], 'total' => 0, 'metavoxAvailable' => $this->metaVox()->isMetaVoxAvailable()];
                 }
             } catch (\Exception $e) {
                 $this->logger->warning('News widget: Error finding source page', ['sourcePageId' => $sourcePageId, 'error' => $e->getMessage()]);
-                return ['items' => [], 'total' => 0, 'metavoxAvailable' => $this->isMetaVoxAvailable()];
+                return ['items' => [], 'total' => 0, 'metavoxAvailable' => $this->metaVox()->isMetaVoxAvailable()];
             }
         }
         // Legacy: If sourcePath is provided (but no sourcePageId), navigate to that folder
@@ -5299,7 +5299,7 @@ class PageService {
                 $folder = $folder->get($sourcePath);
             } catch (NotFoundException $e) {
                 $this->logger->warning('News widget: Source folder not found', ['path' => $sourcePath]);
-                return ['items' => [], 'total' => 0, 'metavoxAvailable' => $this->isMetaVoxAvailable()];
+                return ['items' => [], 'total' => 0, 'metavoxAvailable' => $this->metaVox()->isMetaVoxAvailable()];
             }
         }
 
@@ -5318,7 +5318,7 @@ class PageService {
         }
 
         // Apply MetaVox filters if any and if MetaVox is available
-        if (!empty($filters) && $this->isMetaVoxAvailable()) {
+        if (!empty($filters) && $this->metaVox()->isMetaVoxAvailable()) {
             $pages = $this->applyMetaVoxFilters($pages, $filters, $filterOperator);
         }
 
@@ -5336,7 +5336,7 @@ class PageService {
         $result = [
             'items' => $pages,
             'total' => $total,
-            'metavoxAvailable' => $this->isMetaVoxAvailable(),
+            'metavoxAvailable' => $this->metaVox()->isMetaVoxAvailable(),
         ];
 
         // Cache for 5 minutes — the version-counter scheme makes correctness
@@ -5374,13 +5374,6 @@ class PageService {
      */
 
     /**
-     * Check if MetaVox app is available
-     */
-    private function isMetaVoxAvailable(): bool {
-        return $this->metaVox()->isMetaVoxAvailable();
-    }
-
-    /**
      * Apply MetaVox filters to pages
      *
      * @param array $pages Pages to filter
@@ -5389,7 +5382,7 @@ class PageService {
      * @return array Filtered pages
      */
     private function applyMetaVoxFilters(array $pages, array $filters, string $operator = 'AND'): array {
-        if (empty($filters) || !$this->isMetaVoxAvailable()) {
+        if (empty($filters) || !$this->metaVox()->isMetaVoxAvailable()) {
             return $pages;
         }
 
@@ -5397,7 +5390,7 @@ class PageService {
             $pages,
             $filters,
             $operator,
-            fn(array $fileIds): array => $this->getMetaVoxDataForFiles($fileIds)
+            fn(array $fileIds): array => $this->metaVox()->getMetaVoxDataForFiles($fileIds)
         );
     }
 
@@ -5415,59 +5408,9 @@ class PageService {
         // share it — and is handed to the news service as callables.
         return $this->news()->applyPublicationDateFilter(
             $pages,
-            fn(array $fileIds): array => $this->publicationMetaForFiles($fileIds),
-            fn(array $page, array $meta): string => $this->effectivePublishState($page, $meta)
+            fn(array $fileIds): array => $this->publicationState()->publicationMetaForFiles($fileIds),
+            fn(array $page, array $meta): string => $this->publicationState()->effectivePublishState($page, $meta)
         );
-    }
-
-    /**
-     * Effective publication state of a single page, evaluated live ("lazy") so a
-     * scheduled page flips to published the moment its publish time passes — no
-     * cron needed. Combines the manual draft/published status with the
-     * admin-configured MetaVox publish/expiration date fields.
-     *
-     * Returns one of:
-     *   'published' — publicly visible now
-     *   'draft'     — manually held back
-     *   'scheduled' — publish date is in the future
-     *   'expired'   — expiration date has passed
-     *
-     * Only 'published' is visible to readers/anonymous visitors; the other three
-     * are hidden from them but shown to users with write permission.
-     *
-     * @param array      $page        Page array (needs 'status' and 'fileId')
-     * @param array|null $metaForFile Pre-fetched MetaVox fields for this file
-     *                                (fieldName => value). Pass this in list
-     *                                contexts to avoid an N+1 query; when null it
-     *                                is looked up on demand.
-     */
-    public function effectivePublishState(array $page, ?array $metaForFile = null): string {
-        return $this->publicationState()->effectivePublishState($page, $metaForFile);
-    }
-
-    /**
-     * Whether a page must be hidden from a viewer WITHOUT write permission.
-     * True for draft, scheduled (future) and expired pages.
-     *
-     * @param array      $page
-     * @param array|null $metaForFile Optional pre-fetched MetaVox fields (see
-     *                                effectivePublishState) to avoid N+1 queries.
-     */
-    public function isHiddenFromReaders(array $page, ?array $metaForFile = null): bool {
-        return $this->publicationState()->isHiddenFromReaders($page, $metaForFile);
-    }
-
-    /**
-     * Whether a page has an active publish/expiration date (from the configured
-     * MetaVox fields). When true, that date governs publication and the manual
-     * draft/published toggle is overridden — the editor UI uses this to explain
-     * why the toggle is showing the effective state instead of the raw status.
-     *
-     * @param array      $page
-     * @param array|null $metaForFile Optional pre-fetched MetaVox fields.
-     */
-    public function hasPublicationDate(array $page, ?array $metaForFile = null): bool {
-        return $this->publicationState()->hasPublicationDate($page, $metaForFile);
     }
 
     /**
@@ -5475,63 +5418,6 @@ class PageService {
      * NewsPageService with matchesFilter(), its only caller. The publication
      * paths here use the time-aware parseDateTime() above instead.
      */
-
-    /**
-     * Public batch accessor for MetaVox fields, so list-context callers (page
-     * loading, tree, search) can fetch once and hand per-page metadata to
-     * effectivePublishState()/isHiddenFromReaders() — avoiding an N+1 query.
-     * Returns [] when scheduling is not configured or MetaVox is unavailable.
-     *
-     * @param int[] $fileIds
-     * @return array<int, array<string, string>> fileId => [fieldName => value]
-     */
-    public function publicationMetaForFiles(array $fileIds): array {
-        return $this->publicationState()->publicationMetaForFiles($fileIds);
-    }
-
-    /**
-     * Get MetaVox metadata for multiple files
-     *
-     * @param array $fileIds Array of file IDs
-     * @return array Associative array: fileId => [fieldName => value, ...]
-     */
-    private function getMetaVoxDataForFiles(array $fileIds): array {
-        return $this->metaVox()->getMetaVoxDataForFiles($fileIds);
-    }
-
-    /**
-     * Map field_name => field_label for MetaVox fields, so search sublines show
-     * the human label ("Stad") rather than the raw column name ("stad").
-     * Cached for the request; falls back to an empty map when MetaVox is absent,
-     * in which case callers use the raw field name.
-     *
-     * @return array<string, string>
-     */
-    private function getMetaVoxFieldLabels(): array {
-        return $this->metaVox()->getMetaVoxFieldLabels();
-    }
-
-    /**
-     * Search a page's MetaVox metadata for the query and build a subline.
-     *
-     * The subline format deliberately mirrors MetaVox's own search provider
-     * (MetadataSearchProvider::formatMetadataSubline): "Label: value" parts
-     * joined with " • ", the matching field first, capped at three fields — so
-     * the same document reads identically in both providers' results.
-     *
-     * Fields the user may not view are skipped, so a restricted MetaVox field
-     * cannot leak through an IntraVox search result.
-     *
-     * @param array<string, mixed> $meta   field_name => value for one file
-     * @param string $query                lowercased search term
-     * @param array<string, string> $labels field_name => field_label
-     * @param int|null $groupfolderId      folder owning the file, for permission scoping
-     * @return array{subline: string}|null null when nothing matched
-     */
-    private function searchMetaVoxValues(array $meta, string $query, array $labels, ?int $groupfolderId = null): ?array {
-        return $this->metaVox()->searchMetaVoxValues($meta, $query, $labels, $groupfolderId);
-    }
-
 
     /**
      * Format a timestamp in a localized date format

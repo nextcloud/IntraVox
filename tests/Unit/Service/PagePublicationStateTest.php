@@ -3,39 +3,33 @@ declare(strict_types=1);
 
 namespace OCA\IntraVox\Tests\Unit\Service;
 
-use OCA\IntraVox\Service\PageService;
+use OCA\IntraVox\Service\Publication\MetaVoxGateway;
+use OCA\IntraVox\Service\Publication\PublicationStateService;
 use OCA\IntraVox\Service\PublicationSettingsService;
-use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageService;
-use OCP\App\IAppManager;
 use OCP\IConfig;
 use OCP\IUserSession;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\LoggerInterface;
 
 /**
- * Characterizes the publication/MetaVox state cluster (effectivePublishState,
- * isHiddenFromReaders, hasPublicationDate, publicationMetaForFiles) as it behaves
- * TODAY, so the Phase 3 extraction into Publication/PublicationStateService can be
- * proven byte-for-byte equivalent. These pin the live "lazy" scheduling model:
- * a page flips published the moment its publish time passes, with no cron.
+ * Characterizes the publication scheduling cluster (effectivePublishState,
+ * isHiddenFromReaders, hasPublicationDate, publicationMetaForFiles). Written in
+ * Phase 0 against PageService's public API; in Phase 3 that API moved to
+ * Publication/PublicationStateService behind delegators, and once the delegators
+ * were removed this test drives the extracted service directly. The rich edge-case
+ * matrix (unparseable dates, empty meta, expiration-on-draft, not-yet-expired) is
+ * kept here — it is deeper than the class's own PublicationStateServiceTest.
  *
- * All state is driven through the public methods with a pre-fetched $metaForFile,
- * so no database is touched — the MetaVox DB read (getMetaVoxDataForFiles) is a
- * separate concern pinned by the guard tests below and by the Phase 3 unit tests.
- *
- * Dates are chosen ±10 years from a fixed reference so the assertions never flip
- * with the wall clock (no clock seam exists; "now" is real time in a fixed tz).
+ * All state is driven with a pre-fetched $metaForFile, so no database is touched.
+ * Dates are ±10 years from real now in a fixed UTC instance timezone, so the
+ * assertions never flip with the wall clock.
  */
 class PagePublicationStateTest extends TestCase {
-
-    use BuildsPageService;
 
     private const PUBLISH_FIELD = 'publish_at';
     private const EXPIRE_FIELD = 'expire_at';
 
     /** A datetime-local string (naive, no zone) N years from real now. */
     private function yearsFromNow(int $years): string {
-        // Real "now" in UTC; the service compares in the fixed instance tz below.
         $dt = new \DateTime('now', new \DateTimeZone('UTC'));
         $dt->modify(($years >= 0 ? '+' : '') . $years . ' years');
         return $dt->format('Y-m-d\TH:i:s');
@@ -50,16 +44,7 @@ class PagePublicationStateTest extends TestCase {
         bool $metavox = true,
         string $publishField = self::PUBLISH_FIELD,
         string $expireField = self::EXPIRE_FIELD
-    ): PageService {
-        $svc = new class extends PageService {
-            public function __construct() {
-            }
-        };
-
-        $appManager = $this->createMock(IAppManager::class);
-        $appManager->method('isInstalled')->willReturn($metavox);
-        $appManager->method('isEnabledForUser')->willReturn($metavox);
-
+    ): PublicationStateService {
         $settings = $this->createMock(PublicationSettingsService::class);
         $settings->method('getPublishDateField')->willReturn($publishField);
         $settings->method('getExpirationDateField')->willReturn($expireField);
@@ -71,18 +56,21 @@ class PagePublicationStateTest extends TestCase {
             fn($key, $default = '') => $key === 'logtimezone' ? 'UTC' : $default
         );
 
-        $this->injectPageServiceDependencies($svc, [
-            'appManager' => $appManager,
-            'publicationSettings' => $settings,
-            'config' => $config,
-            // userId is read when the lazy MetaVoxGateway is built (Phase 3); it is
-            // nullable so the harness auto-fill skips it — set it explicitly.
-            'userId' => 'tester',
-            'userSession' => $this->createMock(IUserSession::class),
-            'logger' => $this->createMock(LoggerInterface::class),
-        ]);
+        // Only isMetaVoxAvailable/getMetaVoxDataForFiles are consulted (meta is
+        // passed in), so a partial mock over the real gateway is enough.
+        $gateway = $this->getMockBuilder(MetaVoxGateway::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['isMetaVoxAvailable', 'getMetaVoxDataForFiles'])
+            ->getMock();
+        $gateway->method('isMetaVoxAvailable')->willReturn($metavox);
+        $gateway->method('getMetaVoxDataForFiles')->willReturn([]);
 
-        return $svc;
+        return new PublicationStateService(
+            $settings,
+            $config,
+            $this->createMock(IUserSession::class),
+            $gateway,
+        );
     }
 
     // --- effectivePublishState: the no-scheduling / no-MetaVox fallback ---
