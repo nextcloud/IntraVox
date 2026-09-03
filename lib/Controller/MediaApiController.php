@@ -348,12 +348,8 @@ class MediaApiController extends Controller {
             // First get the page to check permissions (from Nextcloud filesystem)
             $existingPage = $this->pageService->getPage($pageId);
 
-            // Check read permission using Nextcloud's permissions
-            if (!($existingPage['permissions']['canRead'] ?? false)) {
-                return new DataResponse(
-                    ['error' => 'Access denied'],
-                    Http::STATUS_FORBIDDEN
-                );
+            if (($denied = $this->denyUnlessReadable($existingPage)) !== null) {
+                return $denied;
             }
 
             return $this->pageService->getMedia($pageId, $filename);

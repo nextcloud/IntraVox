@@ -15,10 +15,12 @@ use OCP\AppFramework\Http\DataDownloadResponse;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\IGroupManager;
 use OCP\IRequest;
+use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
 
 class FeedReaderController extends Controller {
     use FeedRequestTrait;
+    use ChecksAdminAccess;
 
     public function __construct(
         string $appName,
@@ -26,6 +28,7 @@ class FeedReaderController extends Controller {
         private FeedReaderService $feedReaderService,
         private IGroupManager $groupManager,
         private LoggerInterface $logger,
+        private IUserSession $userSession,
         private ?string $userId = null,
     ) {
         parent::__construct($appName, $request);
@@ -275,7 +278,7 @@ class FeedReaderController extends Controller {
             );
         }
 
-        if (!$this->groupManager->isAdmin($this->userId)) {
+        if (!$this->isAdmin()) {
             return new DataResponse(
                 ['error' => 'Admin access required'],
                 Http::STATUS_FORBIDDEN
