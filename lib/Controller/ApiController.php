@@ -262,11 +262,8 @@ class ApiController extends Controller {
             // which automatically respects GroupFolder ACL rules
 
             // Check if user can read (permissions are already in the page data)
-            if (!($page['permissions']['canRead'] ?? false)) {
-                return new DataResponse(
-                    ['error' => 'Access denied'],
-                    Http::STATUS_FORBIDDEN
-                );
+            if (($denied = $this->denyUnlessReadable($page)) !== null) {
+                return $denied;
             }
 
             // Draft / scheduled (future) / expired pages are only accessible to
@@ -670,11 +667,8 @@ class ApiController extends Controller {
             $existingPage = $this->pageService->getPage($id);
 
             // Check read permission using Nextcloud's permissions
-            if (!($existingPage['permissions']['canRead'] ?? false)) {
-                return new DataResponse(
-                    ['error' => 'Access denied'],
-                    Http::STATUS_FORBIDDEN
-                );
+            if (($denied = $this->denyUnlessReadable($existingPage)) !== null) {
+                return $denied;
             }
 
             $breadcrumb = $this->pageService->getBreadcrumb($id);
@@ -743,11 +737,8 @@ class ApiController extends Controller {
 
             // Need read on the source page…
             $source = $this->pageService->getPage($sourceId);
-            if (!($source['permissions']['canRead'] ?? false)) {
-                return new DataResponse(
-                    ['error' => 'Permission denied: cannot read the source page'],
-                    Http::STATUS_FORBIDDEN
-                );
+            if (($denied = $this->denyUnlessReadable($source, 'Permission denied: cannot read the source page')) !== null) {
+                return $denied;
             }
 
             // …and create permission on the destination parent (root = '').
