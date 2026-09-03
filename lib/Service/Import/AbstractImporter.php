@@ -68,7 +68,7 @@ abstract class AbstractImporter {
      */
     protected function convertPageToIntraVoxFormat(IntermediatePage $page): array {
         // Use existing uniqueId if available, otherwise generate new one
-        $uniqueId = $page->uniqueId ?? ('page-' . $this->generateUuid());
+        $uniqueId = $page->uniqueId ?? ('page-' . (new \OCA\IntraVox\Service\Util\PageIdUtils())->generateUUID());
 
         // Convert content blocks to widgets
         $widgets = [];
@@ -289,19 +289,6 @@ abstract class AbstractImporter {
     protected function downloadFile(string $url, string $targetFilename): ?string {
         // To be implemented by subclasses or use a shared download service
         return $targetFilename;
-    }
-
-    /**
-     * Generate a UUID v4
-     *
-     * @return string UUID
-     */
-    protected function generateUuid(): string {
-        $data = random_bytes(16);
-        $data[6] = chr(ord($data[6]) & 0x0f | 0x40);
-        $data[8] = chr(ord($data[8]) & 0x3f | 0x80);
-
-        return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
     }
 
     /**
