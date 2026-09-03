@@ -50,12 +50,14 @@ class ApiControllerTest extends TestCase {
     private IRequest $request;
     private PageLockService $pageLockService;
     private IAppManager $appManager;
+    private \OCA\IntraVox\Service\Publication\PublicationStateService $publicationState;
 
     protected function setUp(): void {
         parent::setUp();
 
         // Create mocks
         $this->pageService = $this->createMock(PageService::class);
+        $this->publicationState = $this->createMock(\OCA\IntraVox\Service\Publication\PublicationStateService::class);
         $this->setupService = $this->createMock(SetupService::class);
         $this->engagementSettings = $this->createMock(EngagementSettingsService::class);
         $this->publicationSettings = $this->createMock(PublicationSettingsService::class);
@@ -82,7 +84,8 @@ class ApiControllerTest extends TestCase {
             $this->groupManager,
             $this->userSession,
             $this->pageLockService,
-            $this->appManager
+            $this->appManager,
+            $this->publicationState
         );
     }
 
@@ -274,7 +277,8 @@ class ApiControllerTest extends TestCase {
             $this->groupManager,
             $this->userSession,
             $this->pageLockService,
-            $this->appManager
+            $this->appManager,
+            $this->publicationState
         );
 
         $second = $controller->getPage('page-etag');
@@ -761,7 +765,8 @@ class ApiControllerTest extends TestCase {
             $this->groupManager,
             $this->userSession,
             $this->pageLockService,
-            $this->appManager
+            $this->appManager,
+            $this->publicationState
         );
 
         // Use reflection to test private method
@@ -792,7 +797,8 @@ class ApiControllerTest extends TestCase {
             $this->groupManager,
             $this->userSession,
             $this->pageLockService,
-            $this->appManager
+            $this->appManager,
+            $this->publicationState
         );
 
         $reflection = new \ReflectionClass($this->controller);

@@ -73,6 +73,7 @@ class ApiController extends Controller {
     private IUserSession $userSession;
     private PageLockService $pageLockService;
     private IAppManager $appManager;
+    private \OCA\IntraVox\Service\Publication\PublicationStateService $publicationState;
 
     public function __construct(
         string $appName,
@@ -84,7 +85,8 @@ class ApiController extends Controller {
         IGroupManager $groupManager,
         IUserSession $userSession,
         PageLockService $pageLockService,
-        IAppManager $appManager
+        IAppManager $appManager,
+        \OCA\IntraVox\Service\Publication\PublicationStateService $publicationState
     ) {
         parent::__construct($appName, $request);
         $this->pageService = $pageService;
@@ -95,6 +97,7 @@ class ApiController extends Controller {
         $this->userSession = $userSession;
         $this->pageLockService = $pageLockService;
         $this->appManager = $appManager;
+        $this->publicationState = $publicationState;
     }
 
     /**
@@ -125,14 +128,14 @@ class ApiController extends Controller {
             // Filter to pages the user can read. Draft/scheduled/expired pages are
             // only visible to users with write permission. Batch the publication
             // metadata once to avoid an N+1 lookup.
-            $pubMeta = $this->pageService->publicationMetaForFiles(array_column($pages, 'fileId'));
+            $pubMeta = $this->publicationState->publicationMetaForFiles(array_column($pages, 'fileId'));
             $filteredPages = [];
             foreach ($pages as $page) {
                 if (!($page['permissions']['canRead'] ?? false)) {
                     continue;
                 }
                 $meta = $pubMeta[$page['fileId'] ?? null] ?? [];
-                if ($this->pageService->isHiddenFromReaders($page, $meta) && !($page['permissions']['canWrite'] ?? false)) {
+                if ($this->publicationState->isHiddenFromReaders($page, $meta) && !($page['permissions']['canWrite'] ?? false)) {
                     continue;
                 }
                 $filteredPages[] = $page;
@@ -268,7 +271,7 @@ class ApiController extends Controller {
 
             // Draft / scheduled (future) / expired pages are only accessible to
             // users with write permission.
-            if ($this->pageService->isHiddenFromReaders($page) && !($page['permissions']['canWrite'] ?? false)) {
+            if ($this->publicationState->isHiddenFromReaders($page) && !($page['permissions']['canWrite'] ?? false)) {
                 return new DataResponse(
                     ['error' => 'Page not found'],
                     Http::STATUS_NOT_FOUND
@@ -279,8 +282,8 @@ class ApiController extends Controller {
             // "Scheduled"/"Expired" indicator (only meaningful for canWrite users),
             // plus whether a publish/expiration date is governing publication (so
             // the edit-mode toggle can explain that it defers to the date).
-            $page['effectivePublishState'] = $this->pageService->effectivePublishState($page);
-            $page['publicationDateActive'] = $this->pageService->hasPublicationDate($page);
+            $page['effectivePublishState'] = $this->publicationState->effectivePublishState($page);
+            $page['publicationDateActive'] = $this->publicationState->hasPublicationDate($page);
 
             // Add breadcrumb to page response
             try {
@@ -631,14 +634,14 @@ class ApiController extends Controller {
             // Filter results based on Nextcloud's permissions (already in the results).
             // Draft/scheduled/expired pages are only visible to users with write
             // permission. Batch publication metadata once (N+1 avoidance).
-            $pubMeta = $this->pageService->publicationMetaForFiles(array_column($results, 'fileId'));
+            $pubMeta = $this->publicationState->publicationMetaForFiles(array_column($results, 'fileId'));
             $filteredResults = [];
             foreach ($results as $result) {
                 if (!($result['permissions']['canRead'] ?? false)) {
                     continue;
                 }
                 $meta = $pubMeta[$result['fileId'] ?? null] ?? [];
-                if ($this->pageService->isHiddenFromReaders($result, $meta) && !($result['permissions']['canWrite'] ?? false)) {
+                if ($this->publicationState->isHiddenFromReaders($result, $meta) && !($result['permissions']['canWrite'] ?? false)) {
                     continue;
                 }
                 $filteredResults[] = $result;
@@ -857,7 +860,7 @@ class ApiController extends Controller {
      */
     private function filterTreeByPermissions(array $tree, ?array $pubMeta = null): array {
         if ($pubMeta === null) {
-            $pubMeta = $this->pageService->publicationMetaForFiles($this->collectTreeFileIds($tree));
+            $pubMeta = $this->publicationState->publicationMetaForFiles($this->collectTreeFileIds($tree));
         }
         $filtered = [];
         foreach ($tree as $item) {
@@ -865,7 +868,7 @@ class ApiController extends Controller {
                 continue;
             }
             $meta = $pubMeta[$item['fileId'] ?? null] ?? [];
-            if ($this->pageService->isHiddenFromReaders($item, $meta) && !($item['permissions']['canWrite'] ?? false)) {
+            if ($this->publicationState->isHiddenFromReaders($item, $meta) && !($item['permissions']['canWrite'] ?? false)) {
                 continue;
             }
             if (!empty($item['children'])) {
