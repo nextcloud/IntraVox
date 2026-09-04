@@ -74,6 +74,8 @@ class PageService {
     private ?\OCA\IntraVox\Service\Maintenance\PageMaintenanceService $maintenanceSvc = null;
     /** Lazily-built stateless language resolver (Phase 9). */
     private ?LanguageResolver $languageResolver = null;
+    /** Lazily-built page-search scorer (Phase "search"). */
+    private ?\OCA\IntraVox\Service\Search\PageSearchEngine $searchEngine = null;
     private LoggerInterface $logger;
     private IEventDispatcher $eventDispatcher;
     private PublicationSettingsService $publicationSettings;
@@ -313,6 +315,19 @@ class PageService {
      */
     private function language(): LanguageResolver {
         return $this->languageResolver ??= new LanguageResolver();
+    }
+
+    /**
+     * Lazy seam for the page-search scorer (Phase "search"). Built from the
+     * already-injected searchHelper and the shared metaVox() gateway, so the
+     * request-scoped MetaVox memo stays a single instance. Nullable-default so
+     * the harness auto-fill skips it (see the load-bearing `= null` note above).
+     */
+    private function searchEngine(): \OCA\IntraVox\Service\Search\PageSearchEngine {
+        return $this->searchEngine ??= new \OCA\IntraVox\Service\Search\PageSearchEngine(
+            $this->searchHelper,
+            $this->metaVox()
+        );
     }
 
     private function locator(): PageLocator {
@@ -4497,124 +4512,10 @@ class PageService {
      * OPTIMIZED: Loads all content in a single filesystem traversal
      */
     public function searchPages(string $query): array {
-        $results = [];
-        $query = mb_strtolower($query);
-
-        // Get all pages with full content in a single traversal
-        $pagesWithContent = $this->listPagesWithContent();
-
-        // MetaVox metadata is stored alongside the file, not inside the page
-        // JSON, so a page tagged "Stad: Luik" is invisible to a content-only
-        // search. Batch-load it for every page in one query (no N+1) and treat
-        // it as an additional match source below.
-        $metaVoxData = $this->metaVox()->getMetaVoxDataForFiles(
-            array_values(array_filter(array_column($pagesWithContent, 'fileId')))
-        );
-        $metaVoxLabels = empty($metaVoxData) ? [] : $this->metaVox()->getMetaVoxFieldLabels();
-
-        foreach ($pagesWithContent as $pageData) {
-            $matches = [];
-            $score = 0;
-
-            // Skip pages without uniqueId
-            if (!isset($pageData['uniqueId']) || empty($pageData['uniqueId'])) {
-                continue;
-            }
-
-            // Search in title (higher weight)
-            if (isset($pageData['title']) && mb_stripos($pageData['title'], $query) !== false) {
-                $score += 10;
-                $matches[] = [
-                    'type' => 'title',
-                    'text' => $pageData['title']
-                ];
-            }
-
-            // Search in uniqueId (medium weight)
-            if (mb_stripos($pageData['uniqueId'], $query) !== false) {
-                $score += 5;
-            }
-
-            // Search in content - layout is already loaded
-            // Collect all widgets from all layout areas
-            $allWidgets = [];
-
-            // Main rows
-            if (isset($pageData['layout']['rows'])) {
-                foreach ($pageData['layout']['rows'] as $row) {
-                    if (isset($row['widgets'])) {
-                        $allWidgets = array_merge($allWidgets, $row['widgets']);
-                    }
-                }
-            }
-
-            // Header row
-            if (isset($pageData['layout']['headerRow']['widgets'])) {
-                $allWidgets = array_merge($allWidgets, $pageData['layout']['headerRow']['widgets']);
-            }
-
-            // Side columns
-            if (isset($pageData['layout']['sideColumns']['left']['widgets'])) {
-                $allWidgets = array_merge($allWidgets, $pageData['layout']['sideColumns']['left']['widgets']);
-            }
-            if (isset($pageData['layout']['sideColumns']['right']['widgets'])) {
-                $allWidgets = array_merge($allWidgets, $pageData['layout']['sideColumns']['right']['widgets']);
-            }
-
-            // Search through all collected widgets
-            foreach ($allWidgets as $widget) {
-                $widgetMatches = $this->searchHelper->searchWidget($widget, $query);
-                foreach ($widgetMatches as $match) {
-                    $score += $match['score'];
-                    $matches[] = [
-                        'type' => $match['type'],
-                        'text' => $match['text']
-                    ];
-                }
-            }
-
-            // Search MetaVox metadata (Stad, Thema, ...). Scored between title
-            // (10) and plain content so a metadata hit ranks meaningfully but
-            // never outranks the page actually being named after the term.
-            $fileId = $pageData['fileId'] ?? null;
-            $pageMeta = $fileId !== null ? ($metaVoxData[$fileId] ?? []) : [];
-            $metaMatches = $this->metaVox()->searchMetaVoxValues(
-                $pageMeta,
-                $query,
-                $metaVoxLabels,
-                $fileId !== null ? $this->metaVox()->groupfolderIdForFile($fileId) : null
-            );
-            if (!empty($metaMatches)) {
-                $score += 7;
-                // The subline mirrors MetaVox's own format so results read the
-                // same in both providers: "Label: value" joined with " • ",
-                // matching field first, capped at 3 fields.
-                $matches[] = [
-                    'type' => 'metadata',
-                    'text' => $metaMatches['subline'],
-                ];
-            }
-
-            // If we have matches, add to results
-            if ($score > 0) {
-                $results[] = [
-                    'uniqueId' => $pageData['uniqueId'] ?? null,
-                    'title' => $pageData['title'] ?? 'Untitled',
-                    'path' => $pageData['path'] ?? '',
-                    'score' => $score,
-                    'matches' => array_slice($matches, 0, 3), // Limit to 3 matches per page
-                    'matchCount' => count($matches)
-                ];
-            }
-        }
-
-        // Sort by score (highest first)
-        usort($results, function($a, $b) {
-            return $b['score'] - $a['score'];
-        });
-
-        // Limit to top 20 results
-        return array_slice($results, 0, 20);
+        // Discovery (the filesystem walk) stays here; the scoring/sort/limit is
+        // the PageSearchEngine's job (Phase "search"). Passing metaVox() in via
+        // the engine keeps the request-scoped MetaVox memo a single instance.
+        return $this->searchEngine()->search($this->listPagesWithContent(), $query);
     }
 
     /**
