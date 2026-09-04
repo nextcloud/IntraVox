@@ -84,6 +84,8 @@ class PageService {
     private ?\OCA\IntraVox\Service\Reorder\PageReorderer $reorderer = null;
     /** Lazily-built page-data enricher (Phase "crud" — fresh-build enrichment). */
     private ?\OCA\IntraVox\Service\Path\PageDataEnricher $pageDataEnricher = null;
+    /** Lazily-built single-page reader (god-class dissolution — read cluster). */
+    private ?\OCA\IntraVox\Service\Read\PageReadService $readService = null;
     private LoggerInterface $logger;
     private IEventDispatcher $eventDispatcher;
     private PublicationSettingsService $publicationSettings;
@@ -393,6 +395,31 @@ class PageService {
             $this->permissionService,
             $this->metaVox(),
             fn($folder): string => $this->getRelativePathFromRoot($folder),
+            fn(?string $group, ?string $uniqueId): array => $this->resolveTranslations($group, $uniqueId),
+            fn(\OCP\Files\Node $node): ?int => $this->groupfolderIdForNode($node)
+        );
+    }
+
+    /**
+     * Lazy seam for the single-page reader (god-class dissolution, read cluster).
+     * Built from the real read collaborators + four $this-bound closures for the
+     * seams and #70-shared concerns that stay on PageService (getReadLanguageFolder,
+     * getIntraVoxFolder, resolveTranslations, groupfolderIdForNode). Nullable-
+     * default so the harness auto-fill skips it; the seam closures bind $this so
+     * the 26 subclasses keep intercepting getReadLanguageFolder/getIntraVoxFolder.
+     */
+    private function readService(): \OCA\IntraVox\Service\Read\PageReadService {
+        return $this->readService ??= new \OCA\IntraVox\Service\Read\PageReadService(
+            $this->cache(),
+            $this->locator(),
+            fn(): \OCA\IntraVox\Service\Publication\MetaVoxGateway => $this->metaVox(),
+            fn(): \OCA\IntraVox\Service\Path\PageDataEnricher => $this->pageDataEnricher(),
+            $this->shape(),
+            $this->permissionService,
+            $this->idUtils,
+            $this->logger,
+            fn(): \OCP\Files\Folder => $this->getReadLanguageFolder(),
+            fn(): \OCP\Files\Folder => $this->getIntraVoxFolder(),
             fn(?string $group, ?string $uniqueId): array => $this->resolveTranslations($group, $uniqueId),
             fn(\OCP\Files\Node $node): ?int => $this->groupfolderIdForNode($node)
         );
@@ -1908,156 +1935,12 @@ class PageService {
      * Get a specific page by uniqueId or legacy id
      */
     public function getPage(string $id): array {
-        // Check request-level cache first
-        $cachedPage = $this->cache()->getPageData($id);
-        if ($cachedPage !== null) {
-            return $cachedPage;
-        }
-
-        $folder = $this->getReadLanguageFolder();
-        $result = null;
-
-        // Save original ID before sanitization
-        $originalId = $id;
-
-        // Check for uniqueId pattern BEFORE sanitization. The cross-language
-        // scan inside locatePageAnyLanguage() lets feed links and shared links
-        // resolve regardless of which language folder holds the page.
-        if (strpos($originalId, 'page-') === 0) {
-            $result = $this->locatePageAnyLanguage($folder, $originalId);
-            if (!$result) {
-                $this->logger->warning('IntraVox: Not found by uniqueId', ['uniqueId' => $originalId]);
-            }
-        }
-
-        // Only sanitize for legacy ID fallback
-        if ($result === null) {
-            $id = $this->idUtils->sanitizeId($originalId);
-            $result = $this->findPageById($folder, $id);
-            // Slug links get the same cross-language treatment as uniqueId
-            // links, so which kind of link a reader follows never decides
-            // whether the page resolves.
-            if ($result === null) {
-                $result = $this->locatePageBySlugAnyLanguage($folder, $id);
-            }
-        }
-
-        if ($result === null) {
-            throw new \Exception('Page not found');
-        }
-
-        $content = $result['file']->getContent();
-        $data = json_decode($content, true);
-
-        if (!$data) {
-            throw new \Exception('Invalid page data');
-        }
-
-        // Ensure uniqueId exists for legacy pages
-        if (!isset($data['uniqueId'])) {
-            $data['uniqueId'] = 'page-' . $this->idUtils->generateUUID();
-            // Save the page with the new uniqueId
-            try {
-                $result['file']->putContent(json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-            } catch (\Exception $e) {
-                // Failed to save uniqueId - page will work but won't have permanent link
-            }
-        }
-
-        // Cache folder location using both uniqueId and pageId for fast image access
-        $pageFolder = $result['folder'];
-        $uniqueId = $data['uniqueId'];
-        $this->cache()->setPageFolder($uniqueId, $pageFolder);
-        $this->cache()->setPageFolder($originalId, $pageFolder);
-        if (isset($id)) {
-            $this->cache()->setPageFolder($id, $pageFolder);
-        }
-
-        // Distributed content cache. Key is content-addressable via mtime, so
-        // invalidation is automatic — a write bumps mtime, the next read
-        // misses cache and rebuilds. The sanitize+enrich pipeline is the
-        // expensive part (~500 lines of widget processing); cache stores
-        // the post-sanitize result keyed by `{uniqueId}_{mtime}`.
-        $mtime = $result['file']->getMTime();
-        $contentCacheKey = 'content_' . $uniqueId . '_' . $mtime;
-        if ($this->cache()->isDistributedAvailable()) {
-            $cached = $this->cache()->getDistributed($contentCacheKey);
-            if (is_string($cached)) {
-                $decoded = json_decode($cached, true);
-                if (is_array($decoded)) {
-                    // Permissions are per-user and are NOT stored in the shared
-                    // distributed cache (see the set() below). Recompute them
-                    // fresh on every hit so one user's canWrite can never leak to
-                    // another (issue #70). $result['file']/['folder'] are already
-                    // resolved above. This also overwrites any stale permissions
-                    // baked in by pre-fix cache entries, so no flush is needed.
-                    $decoded['permissions'] = $this->permissionService->permissionsForPage($result['folder'], $result['file']);
-                    $decoded['canEdit'] = $result['file']->isUpdateable();
-                    // fileId is user-independent but may be absent from older cache
-                    // entries; ensure it's present so the publication gate works.
-                    if (!isset($decoded['fileId']) && $result['file'] instanceof \OCP\Files\File) {
-                        $decoded['fileId'] = $result['file']->getId();
-                    }
-                    // MetaVox availability is an install-wide fact and the
-                    // groupfolder id is a property of the file's mount, so
-                    // neither is cached — availability can change under a cache
-                    // entry when the app is enabled or disabled, and entries
-                    // written before these fields existed would otherwise never
-                    // gain them. Both are cheap: an in-memory app-manager lookup
-                    // and a regex over a path.
-                    $decoded['metaVoxAvailable'] = $this->metaVox()->isMetaVoxAvailable();
-                    if ($decoded['metaVoxAvailable'] && $result['file'] instanceof \OCP\Files\File) {
-                        $decoded['groupfolderId'] = $this->groupfolderIdForNode($result['file']);
-                    }
-                    // Translations are ACL-filtered per user (resolveTranslations
-                    // skips group members the caller's mount does not grant), so
-                    // one user's list must never be served to another. Stripped
-                    // from the shared cache on write — recomputed here on every
-                    // hit: one indexed query plus a filecache lookup per group
-                    // member.
-                    $decoded['translations'] = $this->resolveTranslations(
-                        $decoded['translationGroup'] ?? null,
-                        $decoded['uniqueId'] ?? null
-                    );
-                    $this->cache()->setPageData($originalId, $decoded);
-                    $this->cache()->setPageData($uniqueId, $decoded);
-                    return $decoded;
-                }
-            }
-        }
-
-        // Enrich with real-time path data. Pass the page file so canWrite/canEdit
-        // are gated on the file the write path actually targets (issue #70).
-        $data = $this->enrichWithPathData($data, $result['folder'], $result['file']);
-
-        $sanitizedData = $this->sanitizePage($data);
-
-        // Cache the result for this request
-        $this->cache()->setPageData($originalId, $sanitizedData);
-        if (isset($data['uniqueId'])) {
-            $this->cache()->setPageData($data['uniqueId'], $sanitizedData);
-        }
-
-        // Cache for cross-request reuse (1 hour TTL; older entries are
-        // naturally orphaned when mtime changes, distributed-cache GC will
-        // clean them up). The distributed cache is shared across users, so the
-        // per-user permissions/canEdit are stripped before storing and are
-        // recomputed on every read (issue #70). The user-independent enriched
-        // fields (path/depth/parent/language/department) stay cached.
-        if ($this->cache()->isDistributedAvailable()) {
-            $cacheable = $sanitizedData;
-            // metaVoxAvailable is stripped for the same reason as permissions:
-            // enabling or disabling the app must take effect immediately rather
-            // than waiting out an hour-long cache entry. It is recomputed on
-            // every read above.
-            // translations joins the per-user list: it is ACL-filtered through
-            // the caller's mount, so caching it would leak one user's view to
-            // another. Recomputed on every cache hit above.
-            unset($cacheable['permissions'], $cacheable['canEdit'], $cacheable['metaVoxAvailable'], $cacheable['translations']);
-            $this->cache()->setDistributed($contentCacheKey, json_encode($cacheable), PageCacheService::PAGE_CONTENT_TTL);
-        }
-
-        return $sanitizedData;
+        // The single-page read (resolution, #70 cache-hit recompute + strip,
+        // enrich + sanitize) lives in Read/PageReadService — the first service
+        // carved out of the god-class. The delegator supplies the folder seams
+        // and the two #70-shared concerns as $this-bound closures so the 26
+        // seam-subclasses keep intercepting.
+        return $this->readService()->getPage($id);
     }
 
     /**
