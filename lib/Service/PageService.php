@@ -82,6 +82,8 @@ class PageService {
     private ?\OCA\IntraVox\Service\Listing\PageLister $pageLister = null;
     /** Lazily-built sibling reorderer (Phase "reorder"). */
     private ?\OCA\IntraVox\Service\Reorder\PageReorderer $reorderer = null;
+    /** Lazily-built page-data enricher (Phase "crud" — fresh-build enrichment). */
+    private ?\OCA\IntraVox\Service\Path\PageDataEnricher $pageDataEnricher = null;
     private LoggerInterface $logger;
     private IEventDispatcher $eventDispatcher;
     private PublicationSettingsService $publicationSettings;
@@ -376,6 +378,24 @@ class PageService {
      */
     private function reorderer(): \OCA\IntraVox\Service\Reorder\PageReorderer {
         return $this->reorderer ??= new \OCA\IntraVox\Service\Reorder\PageReorderer($this->locator());
+    }
+
+    /**
+     * Lazy seam for the fresh-build page-data enricher (Phase "crud"). Built from
+     * pathHelper + permissionService + the metaVox() gateway, with the three
+     * seam-bound concerns (getRelativePathFromRoot, resolveTranslations,
+     * groupfolderIdForNode) passed in as closures so they stay on PageService.
+     * Nullable-default so the harness auto-fill skips it.
+     */
+    private function pageDataEnricher(): \OCA\IntraVox\Service\Path\PageDataEnricher {
+        return $this->pageDataEnricher ??= new \OCA\IntraVox\Service\Path\PageDataEnricher(
+            $this->pathHelper,
+            $this->permissionService,
+            $this->metaVox(),
+            fn($folder): string => $this->getRelativePathFromRoot($folder),
+            fn(?string $group, ?string $uniqueId): array => $this->resolveTranslations($group, $uniqueId),
+            fn(\OCP\Files\Node $node): ?int => $this->groupfolderIdForNode($node)
+        );
     }
 
     private function locator(): PageLocator {
@@ -2044,87 +2064,12 @@ class PageService {
      * Enrich page data with real-time path information calculated from filesystem
      */
     private function enrichWithPathData(array $page, $folder, ?\OCP\Files\Node $file = null): array {
-        // Get relative path from IntraVox root
-        $page['path'] = $this->getRelativePathFromRoot($folder);
-
-        // Calculate depth
-        $page['depth'] = $this->pathHelper->calculateDepth($page['path']);
-
-        // Calculate parent path
-        $pathParts = explode('/', $page['path']);
-        if (count($pathParts) > 1) {
-            array_pop($pathParts); // Remove current page
-            $page['parentPath'] = implode('/', $pathParts);
-            $page['parentId'] = basename($page['parentPath']);
-        } else {
-            $page['parentPath'] = null;
-            $page['parentId'] = null;
-        }
-
-        // Parse language and department from path
-        $parsedPath = explode('/', $page['path']);
-        $page['language'] = $parsedPath[0] ?? $this->getUserLanguage();
-        $page['department'] = $this->pathHelper->parseDepartmentFromPath($page['path']);
-
-        // Get permissions directly from Nextcloud's filesystem, combining the
-        // bitmask with the node capability methods so a read-only GroupFolder
-        // member (without ACLs) is reported correctly — see permissionsFromNode().
-        // When the page's file node is available, gate canWrite/canEdit on the
-        // FILE (the real edit target) rather than the folder, so the "Edit page"
-        // affordance matches what the write path actually allows (issue #70).
-        if ($file !== null) {
-            $page['permissions'] = $this->permissionService->permissionsForPage($folder, $file);
-            $page['canEdit'] = $file->isUpdateable();
-            // Expose the page file's id so the publication gate can resolve the
-            // scheduled-publish MetaVox fields (publish/expiration) for this page.
-            if ($file instanceof \OCP\Files\File) {
-                $page['fileId'] = $file->getId();
-            }
-            // Concurrency token: the editor sends this back on save, and
-            // updatePage() refuses a write whose baseVersion predates the file
-            // on disk. Deliberately the file's mtime rather than the `modified`
-            // field in the JSON, which is client-supplied and would compare a
-            // value against itself.
-            $page['baseVersion'] = $file->getMTime();
-
-            // Which languages this page exists in. Powers the reader's "also
-            // available in X" notice and the language switcher, and tells an
-            // editor at a glance what still needs translating.
-            //
-            // Excludes the page's own language: the list answers "where ELSE
-            // can I read this", so including the page you are on would only add
-            // a no-op entry to every switcher.
-            $page['translations'] = $this->resolveTranslations(
-                $page['translationGroup'] ?? null,
-                $page['uniqueId'] ?? null
-            );
-
-            // Whether the MetaVox tab and its menu entry should exist at all.
-            // Rides along on a response the client already fetches: this is an
-            // in-memory app-manager lookup, no query and no HTTP, so it is
-            // cheaper than the separate /api/metavox/status call the sidebar
-            // used to make every time it opened.
-            $page['metaVoxAvailable'] = $this->metaVox()->isMetaVoxAvailable();
-
-            // The groupfolder holding this page. MetaVox's field definitions are
-            // assigned per groupfolder, and its groupfolder-scoped endpoint
-            // returns exactly the fields for that folder — where the
-            // auto-detecting variant returned every field of every folder.
-            //
-            // Derived from the file's mount path rather than from MetaVox's
-            // value table: that table only holds rows for files that already
-            // have values SAVED, so looking there would return nothing for a
-            // page whose fields are still empty — precisely the freshly copied
-            // and translated pages that need the form most.
-            if ($page['metaVoxAvailable'] && $file instanceof \OCP\Files\File) {
-                $page['groupfolderId'] = $this->groupfolderIdForNode($file);
-            }
-        } else {
-            $page['permissions'] = $this->permissionService->permissionsFromNode($folder);
-            $page['canEdit'] = $folder->isUpdateable();
-        }
-
-        return $page;
+        // The fresh-build enrichment lives in Path/PageDataEnricher (Phase "crud").
+        // The four seam-bound concerns (getRelativePathFromRoot, getUserLanguage,
+        // resolveTranslations, groupfolderIdForNode) are handed in as closures so
+        // they stay on PageService (resolveTranslations/groupfolderIdForNode are
+        // shared with the #70 cache-hit block, which stays inline in getPage).
+        return $this->pageDataEnricher()->enrich($page, $folder, $file);
     }
 
     /**
