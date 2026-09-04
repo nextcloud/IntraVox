@@ -49,6 +49,10 @@ class PageControllerShareFlowTest extends TestCase {
         $this->shareService->method('isValidShareTokenFormat')->willReturnCallback(
             fn(?string $t) => $t !== null && $t !== '' && strlen($t) >= 10 && strlen($t) <= 32 && ctype_alnum($t)
         );
+        // The session-key literal moved to the service too (Phase 6.3).
+        $this->shareService->method('sharePasswordSessionKey')->willReturnCallback(
+            fn(string $t) => 'intravox_share_pw_' . $t
+        );
         $this->config = $this->createMock(IConfig::class);
         // Default: NC link sharing enabled.
         $this->config->method('getAppValue')->willReturnCallback(

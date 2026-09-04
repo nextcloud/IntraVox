@@ -28,42 +28,21 @@ use Psr\Log\LoggerInterface;
 class PageController extends Controller {
     use RendersAppShell;
 
-    private PageService $pageService;
-    private PublicShareService $publicShareService;
-    private LoggerInterface $logger;
-    private IConfig $config;
-    private IUserSession $userSession;
-    private IThrottler $throttler;
-    private ISession $session;
-    private IURLGenerator $urlGenerator;
-    private \OCP\AppFramework\Services\IInitialState $initialState;
-    private \OCP\App\IAppManager $appManager;
-
     public function __construct(
         string $appName,
         IRequest $request,
-        PageService $pageService,
-        PublicShareService $publicShareService,
-        LoggerInterface $logger,
-        IConfig $config,
-        IUserSession $userSession,
-        IThrottler $throttler,
-        ISession $session,
-        IURLGenerator $urlGenerator,
-        \OCP\AppFramework\Services\IInitialState $initialState,
-        \OCP\App\IAppManager $appManager
+        private PageService $pageService,
+        private PublicShareService $publicShareService,
+        private LoggerInterface $logger,
+        private IConfig $config,
+        private IUserSession $userSession,
+        private IThrottler $throttler,
+        private ISession $session,
+        private IURLGenerator $urlGenerator,
+        private \OCP\AppFramework\Services\IInitialState $initialState,
+        private \OCP\App\IAppManager $appManager
     ) {
         parent::__construct($appName, $request);
-        $this->initialState = $initialState;
-        $this->appManager = $appManager;
-        $this->pageService = $pageService;
-        $this->publicShareService = $publicShareService;
-        $this->logger = $logger;
-        $this->config = $config;
-        $this->userSession = $userSession;
-        $this->throttler = $throttler;
-        $this->session = $session;
-        $this->urlGenerator = $urlGenerator;
     }
 
     /**
@@ -222,7 +201,7 @@ class PageController extends Controller {
 
         // Check if share requires a password
         if ($this->publicShareService->shareRequiresPassword($shareToken)) {
-            $sessionKey = 'intravox_share_pw_' . $shareToken;
+            $sessionKey = $this->publicShareService->sharePasswordSessionKey($shareToken);
             $sessionPassword = $this->session->get($sessionKey);
 
             if ($sessionPassword === null || $sessionPassword === '') {
@@ -298,7 +277,7 @@ class PageController extends Controller {
         }
 
         // Password correct — store in session
-        $this->session->set('intravox_share_pw_' . $shareToken, $password);
+        $this->session->set($this->publicShareService->sharePasswordSessionKey($shareToken), $password);
 
         // Preserve query string (e.g., ?page=xxx)
         $queryString = $this->request->getParam('returnQuery', '');
