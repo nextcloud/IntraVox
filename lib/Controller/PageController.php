@@ -125,7 +125,7 @@ class PageController extends Controller {
         // If share token is provided, validate it (for both anonymous and logged-in users)
         if ($isShareAccess) {
             // Validate the share token format first (cheap check)
-            if (!$this->isValidShareTokenFormat($shareToken)) {
+            if (!$this->publicShareService->isValidShareTokenFormat($shareToken)) {
                 if ($isAnonymous) {
                     $this->registerBruteForceAttempt();
                     return $this->buildPublicNotFoundResponse();
@@ -209,7 +209,7 @@ class PageController extends Controller {
         ]);
 
         // Validate the share token format
-        if (!$this->isValidShareTokenFormat($shareToken)) {
+        if (!$this->publicShareService->isValidShareTokenFormat($shareToken)) {
             $this->registerBruteForceAttempt();
             return $this->buildPublicNotFoundResponse();
         }
@@ -280,7 +280,7 @@ class PageController extends Controller {
     #[BruteForceProtection(action: 'intravox_share_password')]
     public function shareAuthenticate(string $shareToken): TemplateResponse|RedirectResponse {
         // Validate the share token format
-        if (!$this->isValidShareTokenFormat($shareToken)) {
+        if (!$this->publicShareService->isValidShareTokenFormat($shareToken)) {
             $this->registerBruteForceAttempt();
             return $this->buildPublicNotFoundResponse();
         }
@@ -308,17 +308,6 @@ class PageController extends Controller {
         }
 
         return new RedirectResponse($redirectUrl);
-    }
-
-    /**
-     * Validate share token format (NC share tokens are typically 15-20 alphanumeric chars).
-     */
-    private function isValidShareTokenFormat(?string $token): bool {
-        if ($token === null || $token === '') {
-            return false;
-        }
-        // NC share tokens are alphanumeric, typically 15-20 chars
-        return strlen($token) >= 10 && strlen($token) <= 32 && ctype_alnum($token);
     }
 
     /**

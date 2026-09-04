@@ -46,6 +46,11 @@ class PublicSharePeopleTest extends TestCase {
 		parent::setUp();
 		$this->userService = $this->createMock(UserService::class);
 		$this->publicShareService = $this->createMock(PublicShareService::class);
+		// Token-shape validation moved onto the service (Phase 6.2); reproduce the
+		// real rule so well-formed tokens pass and the malformed 'abc' is refused.
+		$this->publicShareService->method('isValidShareTokenFormat')->willReturnCallback(
+			static fn(?string $t) => $t !== null && $t !== '' && strlen($t) >= 10 && strlen($t) <= 32 && ctype_alnum($t)
+		);
 	}
 
 	private function controller(?IRequest $request = null, string $allowPeople = 'no'): PublicShareController {

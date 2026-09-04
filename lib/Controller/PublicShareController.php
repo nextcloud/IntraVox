@@ -95,7 +95,7 @@ class PublicShareController extends Controller {
     #[BruteForceProtection(action: 'intravox_share_page')]
     public function getPageByShare(string $token, string $uniqueId): JSONResponse {
         // Validate token format first (cheap check)
-        if (!$this->isValidShareTokenFormat($token)) {
+        if (!$this->publicShareService->isValidShareTokenFormat($token)) {
             $this->registerShareBruteForceAttempt();
             return $this->shareNotFoundResponse();
         }
@@ -992,7 +992,7 @@ class PublicShareController extends Controller {
      * @return IShare|Response the share, or the response to return
      */
     private function openShare(string $token, callable $deny): IShare|Response {
-        if (!$this->isValidShareTokenFormat($token)) {
+        if (!$this->publicShareService->isValidShareTokenFormat($token)) {
             return $deny();
         }
 
@@ -1013,17 +1013,6 @@ class PublicShareController extends Controller {
         }
 
         return $share;
-    }
-
-    /**
-     * Validate share token format.
-     */
-    private function isValidShareTokenFormat(?string $token): bool {
-        if ($token === null || $token === '') {
-            return false;
-        }
-        // NC share tokens are alphanumeric, typically 15-20 chars
-        return strlen($token) >= 10 && strlen($token) <= 32 && ctype_alnum($token);
     }
 
     /**

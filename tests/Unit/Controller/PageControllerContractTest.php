@@ -55,16 +55,29 @@ class PageControllerContractTest extends TestCase {
         $this->assertStringContainsString('#[BruteForceProtection', $block, "$method must be brute-force protected");
     }
 
-    public function testShareTokenValidatorIsByteIdenticalToPublicShareController(): void {
-        $page = $this->extractMethodBody($this->pageSrc, 'isValidShareTokenFormat');
-        $share = $this->extractMethodBody($this->publicShareSrc, 'isValidShareTokenFormat');
-
-        $this->assertNotSame('', $page, 'PageController must have the token validator');
-        $this->assertNotSame('', $share, 'PublicShareController must have the token validator');
+    public function testShareTokenValidatorIsConsolidatedOnTheService(): void {
+        // Phase 6.2 removed the byte-identical private copies from both controllers
+        // and put isValidShareTokenFormat on PublicShareService. Neither controller
+        // may carry its own copy again; both must call it on the service.
         $this->assertSame(
-            $share,
-            $page,
-            'the two validators are byte-identical duplicates; Phase 6 consolidates them'
+            '',
+            $this->extractMethodBody($this->pageSrc, 'isValidShareTokenFormat'),
+            'PageController must not re-declare the token validator'
+        );
+        $this->assertSame(
+            '',
+            $this->extractMethodBody($this->publicShareSrc, 'isValidShareTokenFormat'),
+            'PublicShareController must not re-declare the token validator'
+        );
+        $this->assertStringContainsString(
+            '$this->publicShareService->isValidShareTokenFormat(',
+            $this->pageSrc,
+            'PageController calls the validator on the service'
+        );
+        $this->assertStringContainsString(
+            '$this->publicShareService->isValidShareTokenFormat(',
+            $this->publicShareSrc,
+            'PublicShareController calls the validator on the service'
         );
     }
 

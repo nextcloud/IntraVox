@@ -268,6 +268,20 @@ class PublicShareService {
     }
 
     /**
+     * Validate a share token's SHAPE (not its existence): NC share tokens are
+     * 10-32 alphanumeric characters. A cheap gate before any lookup, shared by
+     * PageController and PublicShareController which used to carry byte-identical
+     * private copies (Phase 6).
+     */
+    public function isValidShareTokenFormat(?string $token): bool {
+        if ($token === null || $token === '') {
+            return false;
+        }
+        // NC share tokens are alphanumeric, typically 15-20 chars
+        return strlen($token) >= 10 && strlen($token) <= 32 && ctype_alnum($token);
+    }
+
+    /**
      * Resolve a token to an IntraVox link share, or null. (SHARE-ROOT)
      *
      * This is THE gate for every anonymous endpoint. getShareByToken() used to

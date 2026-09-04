@@ -44,6 +44,11 @@ class PageControllerShareFlowTest extends TestCase {
 
     private function makeController(): PageController {
         $this->shareService = $this->createMock(PublicShareService::class);
+        // Token-shape validation moved to PublicShareService (Phase 6.2); reproduce
+        // the real rule so a valid token passes and 'bad' is rejected as before.
+        $this->shareService->method('isValidShareTokenFormat')->willReturnCallback(
+            fn(?string $t) => $t !== null && $t !== '' && strlen($t) >= 10 && strlen($t) <= 32 && ctype_alnum($t)
+        );
         $this->config = $this->createMock(IConfig::class);
         // Default: NC link sharing enabled.
         $this->config->method('getAppValue')->willReturnCallback(
