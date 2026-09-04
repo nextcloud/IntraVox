@@ -78,6 +78,8 @@ class PageService {
     private ?\OCA\IntraVox\Service\Search\PageSearchEngine $searchEngine = null;
     /** Lazily-built recursive tree walker (Phase "tree"). */
     private ?\OCA\IntraVox\Service\Tree\PageTreeBuilder $treeBuilder = null;
+    /** Lazily-built index-based page lister (Phase "listing"). */
+    private ?\OCA\IntraVox\Service\Listing\PageLister $pageLister = null;
     private LoggerInterface $logger;
     private IEventDispatcher $eventDispatcher;
     private PublicationSettingsService $publicationSettings;
@@ -345,6 +347,22 @@ class PageService {
             $this->permissionService,
             fn($item) => $this->getRelativePathFromRoot($item),
             fn(): string => $this->getUserLanguage()
+        );
+    }
+
+    /**
+     * Lazy seam for the index-based page lister (Phase "listing"). Built from
+     * locator() + pageIndexService + permissionService + logger, with the
+     * IntraVox-root seam passed in as a closure. Nullable-default so the harness
+     * auto-fill skips it (see the load-bearing `= null` note above).
+     */
+    private function pageLister(): \OCA\IntraVox\Service\Listing\PageLister {
+        return $this->pageLister ??= new \OCA\IntraVox\Service\Listing\PageLister(
+            $this->locator(),
+            $this->pageIndexService,
+            $this->permissionService,
+            $this->logger,
+            fn() => $this->getIntraVoxFolder()
         );
     }
 
@@ -730,10 +748,6 @@ class PageService {
 
     private function locateViaIndex(string $uniqueId, \OCP\Files\Folder $primaryFolder): ?array {
         return $this->locator()->locateViaIndex(fn() => $this->getIntraVoxFolder(), $uniqueId, $primaryFolder);
-    }
-
-    private function folderFromAbsolutePath(string $absolutePath): ?\OCP\Files\Folder {
-        return $this->locator()->folderFromAbsolutePath($this->getIntraVoxFolder(), $absolutePath);
     }
 
     private function indexPathToRelative(string $storedPath): ?string {
@@ -1514,77 +1528,10 @@ class PageService {
      * @return array|null the page list, or null to fall back to the walk
      */
     private function listPagesFromIndex(\OCP\Files\Folder $folder): ?array {
-        $language = $this->languageOfFolder($folder);
-        if ($language === null) {
-            return null;
-        }
-
-        try {
-            if (!$this->pageIndexService->hasEntries($language)) {
-                return null;
-            }
-            $rows = $this->pageIndexService->getPagesByLanguage($language);
-        } catch (\Throwable $e) {
-            $this->logger->warning('[PageService] index listing failed, falling back to scan', [
-                'language' => $language,
-                'error' => $e->getMessage(),
-            ]);
-            return null;
-        }
-
-        if (empty($rows)) {
-            return null;
-        }
-
-        // The homepage must be in the list. It lives as home.json at the
-        // language ROOT rather than in a page folder, and on real installs it
-        // turns out not to reach the index at all — so serving the index list
-        // as-is would silently drop the homepage from the sidebar. Rather than
-        // depend on that ever being fixed upstream, verify it here and fall
-        // back to the walk when it is missing: a slow, complete list beats a
-        // fast one with a hole in it.
-        $homeUniqueId = null;
-        try {
-            $homeFile = $folder->get('home.json');
-            if ($homeFile instanceof \OCP\Files\File) {
-                $homeData = json_decode($this->getCachedFileContent($homeFile), true);
-                $homeUniqueId = is_array($homeData) ? ($homeData['uniqueId'] ?? null) : null;
-            }
-        } catch (NotFoundException $e) {
-            // No loose homepage in this language; nothing to guarantee.
-        }
-        if ($homeUniqueId !== null) {
-            $indexedIds = array_column($rows, 'unique_id');
-            if (!in_array($homeUniqueId, $indexedIds, true)) {
-                return null;
-            }
-        }
-
-        $pages = [];
-        foreach ($rows as $row) {
-            if (empty($row['unique_id']) || empty($row['path'])) {
-                continue;
-            }
-
-            // Resolve the page folder to read permissions from. A row pointing
-            // at something the user cannot reach is skipped rather than served
-            // without permissions — the same mount-scoped resolution the
-            // uniqueId lookup uses, so the index can never widen access.
-            $pageFolder = $this->folderFromAbsolutePath((string)$row['path']);
-            if ($pageFolder === null) {
-                continue;
-            }
-
-            $pages[] = [
-                'uniqueId' => (string)$row['unique_id'],
-                'title' => (string)($row['title'] ?? ''),
-                'modified' => (int)($row['modified_at'] ?? 0),
-                'status' => (string)($row['status'] ?? 'published'),
-                'permissions' => $this->permissionService->permissionsFromNode($pageFolder),
-            ];
-        }
-
-        return $pages;
+        // The index-listing body lives in Listing/PageLister (Phase "listing");
+        // kept here as a delegator because listPages() calls it and
+        // PageServiceSeamContractTest reflection-anchors its existence.
+        return $this->pageLister()->fromIndex($folder);
     }
 
     /**
