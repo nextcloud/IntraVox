@@ -732,11 +732,6 @@ parameters:
 			count: 1
 			path: lib/Service/OrphanedDataService.php
 
-		-
-			message: '#^Access to an undefined property OCA\\IntraVox\\Service\\PageService\:\:\$fileContentCache\.$#'
-			identifier: property.notFound
-			count: 1
-			path: lib/Service/PageService.php
 
 		-
 			message: '#^Call to an undefined method OCP\\Files\\Cache\\ICache\:\:correctFolderSize\(\)\.$#'

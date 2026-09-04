@@ -80,6 +80,8 @@ class PageService {
     private ?\OCA\IntraVox\Service\Tree\PageTreeBuilder $treeBuilder = null;
     /** Lazily-built index-based page lister (Phase "listing"). */
     private ?\OCA\IntraVox\Service\Listing\PageLister $pageLister = null;
+    /** Lazily-built sibling reorderer (Phase "reorder"). */
+    private ?\OCA\IntraVox\Service\Reorder\PageReorderer $reorderer = null;
     private LoggerInterface $logger;
     private IEventDispatcher $eventDispatcher;
     private PublicationSettingsService $publicationSettings;
@@ -364,6 +366,16 @@ class PageService {
             $this->logger,
             fn() => $this->getIntraVoxFolder()
         );
+    }
+
+    /**
+     * Lazy seam for the sibling reorderer (Phase "reorder"). Built from
+     * locator(); the getLanguageFolder seam is resolved by the delegator and
+     * passed in, and isHomepage/clearCache are passed as closures. Nullable-
+     * default so the harness auto-fill skips it (see the load-bearing note).
+     */
+    private function reorderer(): \OCA\IntraVox\Service\Reorder\PageReorderer {
+        return $this->reorderer ??= new \OCA\IntraVox\Service\Reorder\PageReorderer($this->locator());
     }
 
     private function locator(): PageLocator {
@@ -3874,95 +3886,18 @@ class PageService {
      * @throws \Exception When the parent cannot be located.
      */
     public function reorderSiblings(?string $parentUniqueId, array $orderedChildIds): void {
-        $languageFolder = $this->getLanguageFolder();
-
-        // Resolve the parent folder whose direct children we are reordering.
-        if ($parentUniqueId === null || $parentUniqueId === '') {
-            $parentFolder = $languageFolder;
-        } else {
-            $parentResult = $this->findPageByUniqueId($languageFolder, $parentUniqueId);
-            if (!$parentResult || !isset($parentResult['folder'])) {
-                throw new \Exception('Parent page not found: ' . $parentUniqueId);
+        // The order-writing walk lives in Reorder/PageReorderer (Phase "reorder").
+        // The getLanguageFolder seam is resolved here; isHomepage and the private
+        // clearCache are handed in as closures so both stay overridable/private.
+        $this->reorderer()->reorder(
+            $parentUniqueId,
+            $orderedChildIds,
+            $this->getLanguageFolder(),
+            fn(string $id): bool => $this->isHomepage($id),
+            function (): void {
+                $this->clearCache();
             }
-            $parentFolder = $parentResult['folder'];
-        }
-
-        // Build a uniqueId => page-JSON File map of this parent's DIRECT children
-        // in a single cached directory pass. Reorder only touches direct children,
-        // so we do NOT recurse into their subtrees (the old per-child
-        // findPageByUniqueId() walked the whole subtree per id — O(N²) plus
-        // uncached reads on a wide set). A child page is a subfolder holding
-        // {folderName}.json (the canonical layout, mirrors buildPageTree); the
-        // legacy loose {slug}.json at the parent level is also honoured.
-        $isLanguageRoot = ($parentFolder->getPath() === $languageFolder->getPath());
-        $childMap = [];
-        foreach ($this->getCachedDirectoryListing($parentFolder) as $item) {
-            $itemName = $item->getName();
-            $file = null;
-
-            if ($item->getType() === \OCP\Files\FileInfo::TYPE_FOLDER) {
-                // Skip media/special folders (mirror findPageByUniqueId).
-                if ($itemName === '_media' || $itemName === 'images' || $itemName === 'files' || $itemName === '.nomedia') {
-                    continue;
-                }
-                try {
-                    $candidate = $item->get($itemName . '.json');
-                    if ($candidate instanceof \OCP\Files\File) {
-                        $file = $candidate;
-                    }
-                } catch (NotFoundException $e) {
-                    continue; // a folder without its page-JSON is not a page
-                }
-            } else {
-                // Loose {slug}.json directly in the parent (legacy flat layout).
-                if (substr($itemName, -5) !== '.json' || $itemName === 'home.json') {
-                    continue; // home.json is the homepage, never ordered
-                }
-                if ($isLanguageRoot && ($itemName === 'navigation.json' || $itemName === 'footer.json' || $itemName === 'homepage.json')) {
-                    continue; // root config files are not pages
-                }
-                $file = $item;
-            }
-
-            if ($file === null) {
-                continue;
-            }
-            $data = json_decode($this->getCachedFileContent($file), true);
-            if (is_array($data) && isset($data['uniqueId'])) {
-                $childMap[$data['uniqueId']] = $file;
-            }
-        }
-
-        foreach ($orderedChildIds as $index => $childId) {
-            // The homepage is pinned first and never carries an order — skip the
-            // legacy 'home' id as well as a configured pointer target.
-            if ($childId === 'home' || $this->isHomepage($childId)) {
-                continue;
-            }
-
-            // A foreign id (not among this parent's direct children) is simply
-            // absent from the map and is skipped, rather than reordered.
-            $file = $childMap[$childId] ?? null;
-            if ($file === null) {
-                continue;
-            }
-
-            $data = json_decode($this->getCachedFileContent($file), true);
-            if (!is_array($data)) {
-                continue;
-            }
-
-            if (($data['order'] ?? null) !== $index) {
-                $data['order'] = $index;
-                $encoded = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-                $file->putContent($encoded);
-                // Keep the per-request content cache honest with what we just wrote.
-                $this->fileContentCache[$file->getPath()] = $encoded;
-            }
-        }
-
-        // Critical: without this the new order stays invisible for up to 5 min.
-        $this->clearCache();
+        );
     }
 
     /**
