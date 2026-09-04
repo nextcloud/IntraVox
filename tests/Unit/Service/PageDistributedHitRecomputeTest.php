@@ -143,6 +143,57 @@ class PageDistributedHitRecomputeTest extends TestCase {
         $this->assertIsArray($page['translations']);
     }
 
+    public function testFileIdIsBackfilledOnHitWhenAbsentFromTheCachedEntry(): void {
+        // Older cache entries predate the fileId field. On a hit it must be
+        // backfilled from the resolved file so the publication gate keeps working
+        // — a user-independent value, but one that must not be absent.
+        $entry = json_encode([
+            'uniqueId' => 'page-about',
+            'title' => 'About',
+            'permissions' => ['canRead' => true],
+            // no 'fileId' key — simulates a pre-fileId cache entry
+        ]);
+
+        $permissionService = $this->createMock(PermissionService::class);
+        $permissionService->method('permissionsForPage')->willReturn(['canRead' => true]);
+
+        $svc = $this->makeService($entry, $permissionService);
+        $page = $svc->getPage('page-about');
+
+        // The harness makeFile() gives getId() = abs(crc32($path)); the recompute
+        // must have populated fileId from the resolved file, not left it absent.
+        $this->assertArrayHasKey('fileId', $page, 'fileId is backfilled on a hit when the cached entry lacks it');
+        $this->assertSame(abs(crc32('/IntraVox/en/about.json')), $page['fileId']);
+    }
+
+    public function testGroupfolderIdIsRecomputedOnHitNotServedFromTheStaleCache(): void {
+        // groupfolderId is a property of the file's mount, stripped from the shared
+        // cache. With MetaVox available the recompute branch runs and overwrites any
+        // stale value baked into the entry — it must never be served verbatim.
+        $entry = json_encode([
+            'uniqueId' => 'page-about',
+            'title' => 'About',
+            'permissions' => ['canRead' => true],
+            'groupfolderId' => 999999, // poisoned: as if cached for another mount
+        ]);
+
+        $permissionService = $this->createMock(PermissionService::class);
+        $permissionService->method('permissionsForPage')->willReturn(['canRead' => true]);
+
+        // MetaVox available -> the groupfolderId recompute branch executes. The
+        // fixture file has no real groupfolder mount, so the fresh value is null,
+        // which must overwrite the poisoned 999999.
+        $svc = $this->makeService($entry, $permissionService, metavox: true);
+        $page = $svc->getPage('page-about');
+
+        $this->assertTrue($page['metaVoxAvailable']);
+        $this->assertNotSame(
+            999999,
+            $page['groupfolderId'] ?? null,
+            'groupfolderId must be recomputed from the mount on every hit, never served from the shared cache'
+        );
+    }
+
     public function testMetaVoxAvailabilityIsRecomputedOnEveryHit(): void {
         // metaVoxAvailable is an install-wide fact stripped from the cache; a hit
         // must reflect the CURRENT app state, not whatever was cached.

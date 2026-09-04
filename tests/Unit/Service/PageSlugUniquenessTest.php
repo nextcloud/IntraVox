@@ -40,7 +40,7 @@ class PageSlugUniquenessTest extends TestCase {
      * check consults; newFolder() records the call so a test can assert both the
      * name a page got AND the folder it landed in.
      */
-    private function makeFolder(string $path, array $entries = []): Folder {
+    private function makeFolder(string $path, array $entries = [], bool $creatable = true): Folder {
         // getInternalPath() is on the OCP\Files\Folder stub (the scanPageFolder()
         // fallback branch calls it); getStorage() joined the stub interface with
         // the PageVersionService tests (PR-13). Both are configured the normal way.
@@ -66,7 +66,7 @@ class PageSlugUniquenessTest extends TestCase {
         $folder->method('getName')->willReturn(basename($path));
         $folder->method('getType')->willReturn(FileInfo::TYPE_FOLDER);
         $folder->method('getPath')->willReturn($path);
-        $folder->method('isCreatable')->willReturn(true);
+        $folder->method('isCreatable')->willReturn($creatable);
         // Only the node entries are listable; bare string entries stand for
         // files whose content no test reads (they exist to occupy a name).
         $folder->method('getDirectoryListing')->willReturn(
@@ -289,6 +289,33 @@ class PageSlugUniquenessTest extends TestCase {
 
         $this->assertSame('news', $created['id']);
         $this->assertContains('news', $this->createdIn('/IntraVox/en'));
+    }
+
+    /**
+     * The #70 create preflight: a read-only target folder must yield a clean 403
+     * BEFORE any write, not a filesystem-level error mid-create. A read-only
+     * GroupFolder member trying to create a page here gets ForbiddenException, and
+     * nothing is written to disk (no newFolder/newFile ran).
+     */
+    public function testReadOnlyTargetFolderYields403BeforeAnyWrite(): void {
+        // The read-language folder (where a null-parentPath create lands) is not
+        // creatable — the acting user is a read-only member.
+        $readOnly = $this->makeFolder('/IntraVox/nl', [], creatable: false);
+        $svc = $this->makeService(['nl' => $readOnly], 'nl');
+
+        try {
+            $svc->createPage($this->pageData('news', 'News'), null);
+            $this->fail('a read-only target must throw ForbiddenException');
+        } catch (\OCA\IntraVox\Exception\ForbiddenException $e) {
+            $this->assertStringContainsString('permission to create', $e->getMessage());
+        }
+
+        // The preflight fires before any folder/file is written.
+        $this->assertSame(
+            [],
+            $this->createdIn('/IntraVox/nl'),
+            'a denied create must not touch the filesystem'
+        );
     }
 
     /**
