@@ -276,15 +276,7 @@ class NavigationService {
      * IMPORTANT: Uses the user's mounted folder view to respect GroupFolder ACL
      */
     private function getIntraVoxFolder() {
-        if (!$this->userId) {
-            throw new \Exception('User not logged in');
-        }
-
-        // Get user's folder (this respects GroupFolder ACL)
-        $userFolder = $this->rootFolder->getUserFolder($this->userId);
-
-        // Get folder from user's perspective (mounted GroupFolder)
-        return $userFolder->get('IntraVox');
+        return (new \OCA\IntraVox\Service\Locator\IntraVoxFolderResolver($this->rootFolder, $this->userId))->resolve();
     }
 
     /**
