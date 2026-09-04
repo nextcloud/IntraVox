@@ -58,6 +58,14 @@ class PageService {
     private IAppManager $appManager;
     private IConfig $config;
     private IDBConnection $db;
+    // The `= null` defaults below are LOAD-BEARING, not cosmetic. They are the
+    // only reason the test harness leaves these lazy services alone: a
+    // nullable-default property reports isInitialized()===true, so
+    // BuildsPageService::fillPageServiceDependencies skips it and the real
+    // accessor (metaVox()/publicationState()/maintenance()/language()) builds
+    // the genuine collaborator. Drop a default to `?Foo $x;` and the auto-fill
+    // mocks it with a double that answers null/[] to everything, silently
+    // breaking the path it backs. Keep the `= null`.
     /** Lazily-built MetaVox gateway; owns the memos that used to live here (Phase 3). */
     private ?\OCA\IntraVox\Service\Publication\MetaVoxGateway $metaVoxGateway = null;
     /** Lazily-built publication scheduling service (Phase 3). */
