@@ -719,7 +719,7 @@ OC.L10N.register(
     "Favorite" : "Favoriet",
     "Like" : "Leuk vinden",
     "Idea" : "Idee",
-    "Launch" : "Lanceren",
+    "Launch" : "Lancering",
     "Rocket launch" : "Raketlancering",
     "Archive" : "Archief",
     "External link" : "Externe link",
