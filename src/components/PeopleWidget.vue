@@ -31,6 +31,7 @@
           :refinements="refinements"
           :facet-labels="facetLabels"
           :search-term="searchTerm"
+          :dark="isDarkBackground"
           @remove="removeRefinement"
           @remove-search="setSearchTerm('')"
           @clear-all="clearAllRefinements" />
@@ -156,6 +157,7 @@ import PeopleLayoutGrid from './people/PeopleLayoutGrid.vue';
 import FilterableWidgetShell from './filter/FilterableWidgetShell.vue';
 import FilterPanel from './filter/FilterPanel.vue';
 import FilterChips from './filter/FilterChips.vue';
+import { isDarkBackground as isDarkBg } from '../utils/colorUtils.js';
 import facetedWidget from '../mixins/facetedWidget.js';
 import { runFacetedQuery } from '../services/FacetQueryService.js';
 
@@ -246,15 +248,14 @@ export default {
       return style;
     },
     isDarkBackground() {
-      const bgColor = this.effectiveBackgroundColor;
-      // These background colors need light text
-      const darkBackgrounds = [
-        'var(--color-primary-element)',
-        'var(--color-error)',
-        'var(--color-warning)',
-        'var(--color-success)',
-      ];
-      return darkBackgrounds.includes(bgColor);
+      // One shared list (colorUtils), not a private copy. This used to repeat
+      // titleStyle's colour mappings, which listed --color-error, --color-warning
+      // and --color-success as dark. They are pale pastels in the Nextcloud theme
+      // (#FFE7E7, #FFEEC5, #D8F3DA), so that forced white text onto near-white:
+      // 1.15:1, where the paired --color-*-text gives 7.4-8.6:1. The filter panel,
+      // the footer and the card text all read this, so one wrong entry made a
+      // whole widget unreadable.
+      return isDarkBg(this.effectiveBackgroundColor);
     },
     showPaginationFooter() {
       // Show footer if there are more items than shown, or if we loaded additional items

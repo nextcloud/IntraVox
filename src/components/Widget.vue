@@ -215,6 +215,7 @@ import { showSuccess } from '@nextcloud/dialogs';
 import { markdownToHtml, markdownToInlineHtml } from '../utils/markdownSerializer.js';
 import { buildSectionFragment } from '../utils/headingAnchors.js';
 import { encodeMediaPath } from '../utils/mediaUrl.js';
+import { isDarkBackground as isDarkBg } from '../utils/colorUtils.js';
 import LinkVariant from 'vue-material-design-icons/LinkVariant.vue';
 
 export default {
@@ -519,15 +520,13 @@ export default {
       const style = {};
       const bgColor = this.rowBackgroundColor || '';
 
-      // Dark backgrounds get light divider, light backgrounds get primary divider
-      const darkBackgrounds = [
-        'var(--color-primary-element)',
-        'var(--color-error)',
-        'var(--color-warning)',
-        'var(--color-success)',
-      ];
-
-      if (darkBackgrounds.includes(bgColor)) {
+      // Dark backgrounds get light divider, light backgrounds get primary divider.
+      //
+      // Via colorUtils, which is the one place that knows which backgrounds are
+      // actually dark. The private copy this used to carry listed the three
+      // status colours as dark; they are pale pastels, so the divider was drawn
+      // near-white onto near-white (1.01:1, against ~5.2:1 the other way).
+      if (isDarkBg(bgColor)) {
         style.background = 'var(--color-primary-element-light)';
       } else {
         style.background = 'var(--color-primary-element)';
