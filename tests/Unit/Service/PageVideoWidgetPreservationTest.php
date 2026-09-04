@@ -3,15 +3,14 @@ declare(strict_types=1);
 
 namespace OCA\IntraVox\Tests\Unit\Service;
 
-use OCA\IntraVox\Service\PageService;
+use OCA\IntraVox\Service\Sanitize\VideoOriginalUrlPreserver;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Pins preserveVideoOriginalUrls() and its helpers (cluster B) before they move
- * into Sanitize/VideoOriginalUrlPreserver in Phase 5. These are pure array
- * transformations with no collaborators, so they are driven directly via
- * reflection on a constructor-less PageService — the whole point is that the
- * extracted class must reproduce this transform byte-for-byte.
+ * Pins the video-widget originalSrc preservation (cluster B). Written in Phase 0
+ * against PageService's private method; in Phase 5 the transform moved into
+ * Sanitize/VideoOriginalUrlPreserver, and this test drives that class directly.
+ * Pure array transformation with no collaborators.
  *
  * The behaviour: when a page is re-saved, a video widget that lost its src/
  * originalSrc (e.g. because the domain whitelist changed) has its originalSrc
@@ -19,21 +18,15 @@ use PHPUnit\Framework\TestCase;
  */
 class PageVideoWidgetPreservationTest extends TestCase {
 
-    private PageService $svc;
-    private \ReflectionMethod $preserve;
+    private VideoOriginalUrlPreserver $preserver;
 
     protected function setUp(): void {
-        $this->svc = new class extends PageService {
-            public function __construct() {
-            }
-        };
-        // Since PHP 8.1 reflection reaches private methods without setAccessible().
-        $this->preserve = new \ReflectionMethod(PageService::class, 'preserveVideoOriginalUrls');
+        $this->preserver = new VideoOriginalUrlPreserver();
     }
 
     /** @param array $new @param array $existing */
     private function preserveUrls(array $new, array $existing): array {
-        return $this->preserve->invoke($this->svc, $new, $existing);
+        return $this->preserver->preserve($new, $existing);
     }
 
     private function videoWidget(string $id, array $extra = []): array {
