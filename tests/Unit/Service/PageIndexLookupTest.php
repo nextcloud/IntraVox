@@ -277,13 +277,100 @@ class PageIndexLookupTest extends TestCase {
         $this->assertSame(['page-idx'], array_column($result, 'uniqueId'));
     }
 
+    /** No index entries for this language -> fall back to the scan (null). */
+    public function testEmptyIndexForLanguageFallsBack(): void {
+        // hasEntries() returns false when indexRows is empty (see the mock).
+        $svc = $this->makeServiceWithHome([], null);
+
+        $result = (new \ReflectionMethod(PageService::class, 'listPagesFromIndex'))
+            ->invoke($svc, (new \ReflectionMethod(PageService::class, 'getReadLanguageFolder'))->invoke($svc));
+
+        $this->assertNull($result, 'no entries for the language means fall back to the walk');
+    }
+
+    /** An index query that throws must fall back to the scan, not blow up. */
+    public function testIndexQueryFailureFallsBack(): void {
+        $svc = $this->makeServiceWithHome(
+            [['unique_id' => 'page-idx', 'title' => 'About', 'path' => '/IntraVox/en/about',
+              'status' => 'published', 'modified_at' => 100]],
+            null,
+            throwOnGetPages: true
+        );
+
+        $result = (new \ReflectionMethod(PageService::class, 'listPagesFromIndex'))
+            ->invoke($svc, (new \ReflectionMethod(PageService::class, 'getReadLanguageFolder'))->invoke($svc));
+
+        $this->assertNull($result, 'an index failure falls back to the walk rather than throwing');
+    }
+
+    /** Rows with a blank unique_id or path are skipped, not served. */
+    public function testRowsWithBlankIdOrPathAreSkipped(): void {
+        $svc = $this->makeServiceWithHome(
+            [
+                ['unique_id' => '', 'title' => 'No id', 'path' => '/IntraVox/en/about',
+                 'status' => 'published', 'modified_at' => 10],
+                ['unique_id' => 'page-nopath', 'title' => 'No path', 'path' => '',
+                 'status' => 'published', 'modified_at' => 20],
+                ['unique_id' => 'page-idx', 'title' => 'About', 'path' => '/IntraVox/en/about',
+                 'status' => 'published', 'modified_at' => 100],
+            ],
+            null
+        );
+
+        $result = (new \ReflectionMethod(PageService::class, 'listPagesFromIndex'))
+            ->invoke($svc, (new \ReflectionMethod(PageService::class, 'getReadLanguageFolder'))->invoke($svc));
+
+        $this->assertNotNull($result);
+        $this->assertSame(['page-idx'], array_column($result, 'uniqueId'), 'blank-id and blank-path rows are dropped');
+    }
+
+    /** A row whose path resolves nowhere in the tree is skipped. */
+    public function testRowWithUnresolvablePathIsSkipped(): void {
+        $svc = $this->makeServiceWithHome(
+            [
+                ['unique_id' => 'page-ghost', 'title' => 'Ghost', 'path' => '/IntraVox/en/does-not-exist',
+                 'status' => 'published', 'modified_at' => 10],
+                ['unique_id' => 'page-idx', 'title' => 'About', 'path' => '/IntraVox/en/about',
+                 'status' => 'published', 'modified_at' => 100],
+            ],
+            null
+        );
+
+        $result = (new \ReflectionMethod(PageService::class, 'listPagesFromIndex'))
+            ->invoke($svc, (new \ReflectionMethod(PageService::class, 'getReadLanguageFolder'))->invoke($svc));
+
+        $this->assertNotNull($result);
+        $this->assertSame(['page-idx'], array_column($result, 'uniqueId'), 'a row pointing nowhere is skipped');
+    }
+
+    /** The served rows carry the index title/status/modified verbatim. */
+    public function testServedRowShapeCarriesIndexFields(): void {
+        $svc = $this->makeServiceWithHome(
+            [['unique_id' => 'page-idx', 'title' => 'About Us', 'path' => '/IntraVox/en/about',
+              'status' => 'draft', 'modified_at' => 1234]],
+            null
+        );
+
+        $result = (new \ReflectionMethod(PageService::class, 'listPagesFromIndex'))
+            ->invoke($svc, (new \ReflectionMethod(PageService::class, 'getReadLanguageFolder'))->invoke($svc));
+
+        $this->assertNotNull($result);
+        $this->assertSame('page-idx', $result[0]['uniqueId']);
+        $this->assertSame('About Us', $result[0]['title']);
+        $this->assertSame('draft', $result[0]['status']);
+        $this->assertSame(1234, $result[0]['modified']);
+        $this->assertArrayHasKey('permissions', $result[0]);
+    }
+
     /**
      * Build a service whose en/ folder optionally holds a loose home.json.
      *
      * @param array $indexRows rows getPagesByLanguage() should return
      * @param array|null $homeJson contents of en/home.json, or null for none
+     * @param bool $throwOnGetPages make getPagesByLanguage() throw, to pin the
+     *   fall-back-on-failure branch
      */
-    private function makeServiceWithHome(array $indexRows, ?array $homeJson): PageService {
+    private function makeServiceWithHome(array $indexRows, ?array $homeJson, bool $throwOnGetPages = false): PageService {
         $aboutJson = $this->makeFile(
             '/IntraVox/en/about.json',
             ['uniqueId' => 'page-idx', 'title' => 'About']
@@ -321,7 +408,12 @@ class PageIndexLookupTest extends TestCase {
 
         $index = $this->createMock(PageIndexService::class);
         $index->method('hasEntries')->willReturn(!empty($indexRows));
-        $index->method('getPagesByLanguage')->willReturn($indexRows);
+        if ($throwOnGetPages) {
+            $index->method('getPagesByLanguage')
+                ->willThrowException(new \RuntimeException('index query blew up'));
+        } else {
+            $index->method('getPagesByLanguage')->willReturn($indexRows);
+        }
 
         $explicit = [
             'userSession' => $this->createMock(\OCP\IUserSession::class),
