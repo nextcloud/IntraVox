@@ -747,7 +747,7 @@ parameters:
 		-
 			message: '#^Call to an undefined method OCP\\Files\\Node\:\:getContent\(\)\.$#'
 			identifier: method.notFound
-			count: 6
+			count: 5
 			path: lib/Service/PageService.php
 
 		-
