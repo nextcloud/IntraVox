@@ -181,11 +181,16 @@ export default {
 	--iv-filter-text: #fff;
 	--iv-filter-muted: rgba(255, 255, 255, 0.85);
 	--iv-filter-border: rgba(255, 255, 255, 0.25);
-	--iv-filter-hover: rgba(255, 255, 255, 0.15);
+	--iv-filter-hover: rgba(0, 0, 0, 0.18);
 	--iv-filter-field-bg: rgba(0, 0, 0, 0.25);
 	--iv-filter-field-text: #fff;
 	--iv-filter-field-border: rgba(255, 255, 255, 0.4);
-	--iv-filter-count-bg: rgba(255, 255, 255, 0.2);
+	/* Darkening, not lightening. A translucent WHITE overlay lifts the
+	   background towards the text colour, so white-on-white loses contrast:
+	   the count badge sat at 4.07:1 and the hovered header at 4.51:1, both
+	   below or barely at AA. Black at the same strength moves the other way
+	   and lands near 8:1, whatever colour the widget is set to. */
+	--iv-filter-count-bg: rgba(0, 0, 0, 0.22);
 	--iv-filter-count-text: #fff;
 	/* A checkbox tinted with the widget colour would vanish into it. */
 	--iv-filter-accent: #fff;

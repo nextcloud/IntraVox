@@ -1,5 +1,5 @@
 <template>
-	<div v-if="chips.length > 0" class="filter-chips">
+	<div v-if="chips.length > 0" class="filter-chips" :class="{ 'filter-chips--on-dark': dark }">
 		<button
 			v-for="chip in chips"
 			:key="chip.key"
@@ -33,6 +33,16 @@ export default {
 	},
 
 	props: {
+		/**
+		 * Whether the chips sit on a dark widget background. The theme's text
+		 * colours are computed against the page background, so on a coloured
+		 * widget "Clear all" renders near-invisible; this switches to the
+		 * panel's own tokens. Same switch as FilterPanel.
+		 */
+		dark: {
+			type: Boolean,
+			default: false,
+		},
 		/** field => array of selected values */
 		refinements: {
 			type: Object,
@@ -100,11 +110,23 @@ export default {
 
 <style scoped>
 .filter-chips {
+	--iv-chip-clear-text: var(--color-text-maxcontrast);
+	--iv-chip-clear-hover-text: var(--color-main-text);
+	--iv-chip-clear-hover-bg: var(--color-background-hover);
+
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
 	gap: 6px;
 	margin-bottom: 12px;
+}
+
+/* On a dark widget background --color-text-maxcontrast is a mid grey computed
+   against the page, which all but disappears. Mirrors .filter-panel--on-dark. */
+.filter-chips--on-dark {
+	--iv-chip-clear-text: rgba(255, 255, 255, 0.85);
+	--iv-chip-clear-hover-text: #fff;
+	--iv-chip-clear-hover-bg: rgba(255, 255, 255, 0.15);
 }
 
 .filter-chips__chip {
@@ -137,13 +159,15 @@ export default {
 	background: transparent;
 	border: none;
 	border-radius: var(--border-radius-pill);
-	color: var(--color-text-maxcontrast);
+	color: var(--iv-chip-clear-text);
 	font-size: 0.9em;
 	cursor: pointer;
 	text-decoration: underline;
 }
 
-.filter-chips__clear:hover {
-	color: var(--color-main-text);
+.filter-chips__clear:hover,
+.filter-chips__clear:focus-visible {
+	color: var(--iv-chip-clear-hover-text);
+	background-color: var(--iv-chip-clear-hover-bg);
 }
 </style>
