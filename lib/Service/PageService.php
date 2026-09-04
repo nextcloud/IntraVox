@@ -61,6 +61,8 @@ class PageService {
     private ?\OCA\IntraVox\Service\Publication\MetaVoxGateway $metaVoxGateway = null;
     /** Lazily-built publication scheduling service (Phase 3). */
     private ?\OCA\IntraVox\Service\Publication\PublicationStateService $publicationStateSvc = null;
+    /** Lazily-built CLI maintenance service (Phase 4). */
+    private ?\OCA\IntraVox\Service\Maintenance\PageMaintenanceService $maintenanceSvc = null;
     private LoggerInterface $logger;
     private IEventDispatcher $eventDispatcher;
     private PublicationSettingsService $publicationSettings;
@@ -513,6 +515,22 @@ class PageService {
             );
         }
         return $this->publicationStateSvc;
+    }
+
+    /**
+     * The CLI maintenance operations (repair/reindex, Phase 4). Same lazy seam
+     * convention; built from the deps this service already holds.
+     */
+    private function maintenance(): \OCA\IntraVox\Service\Maintenance\PageMaintenanceService {
+        if (!isset($this->maintenanceSvc)) {
+            $this->maintenanceSvc = new \OCA\IntraVox\Service\Maintenance\PageMaintenanceService(
+                $this->pageIndexService,
+                $this->locator(),
+                $this->htmlSanitizer,
+                $this->logger
+            );
+        }
+        return $this->maintenanceSvc;
     }
 
     /**
@@ -4051,58 +4069,7 @@ class PageService {
      * @return array{scanned:int, changed:int, files:string[]} Repair stats.
      */
     public function repairEntities(bool $dryRun = false): array {
-        $stats = ['scanned' => 0, 'changed' => 0, 'files' => []];
-        $base = $this->getIntraVoxFolder();
-        foreach ($this->getCachedDirectoryListing($base) as $langFolder) {
-            if (!($langFolder instanceof \OCP\Files\Folder)) {
-                continue;
-            }
-            // Language folders are 2–3 letter codes; skip _media/_resources/etc.
-            if (!preg_match('/^[a-z]{2,3}$/', $langFolder->getName())) {
-                continue;
-            }
-            $this->repairEntitiesInFolder($langFolder, $dryRun, $stats);
-        }
-        return $stats;
-    }
-
-    /**
-     * Recurse a folder, decoding entity-encoded plain-text in each page JSON.
-     *
-     * @param array{scanned:int, changed:int, files:string[]} $stats
-     */
-    private function repairEntitiesInFolder(\OCP\Files\Folder $folder, bool $dryRun, array &$stats): void {
-        foreach ($this->getCachedDirectoryListing($folder) as $node) {
-            if ($node instanceof \OCP\Files\File && str_ends_with($node->getName(), '.json')) {
-                // Only page JSONs carry the fields we repair; navigation.json,
-                // footer.json, homepage.json are handled/normalised elsewhere.
-                $name = $node->getName();
-                if (in_array($name, ['navigation.json', 'footer.json', 'homepage.json'], true)) {
-                    continue;
-                }
-                $stats['scanned']++;
-                try {
-                    $data = json_decode($node->getContent(), true);
-                    if (!is_array($data) || !isset($data['title'])) {
-                        continue;
-                    }
-                    $before = json_encode($data);
-                    $this->decodePlainTextFields($data);
-                    $after = json_encode($data);
-                    if ($before !== $after) {
-                        $stats['changed']++;
-                        $stats['files'][] = $node->getPath();
-                        if (!$dryRun) {
-                            $node->putContent(json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-                        }
-                    }
-                } catch (\Throwable $e) {
-                    $this->logger->warning('[PageService] repairEntities skipped ' . $node->getPath() . ': ' . $e->getMessage());
-                }
-            } elseif ($node instanceof \OCP\Files\Folder) {
-                $this->repairEntitiesInFolder($node, $dryRun, $stats);
-            }
-        }
+        return $this->maintenance()->repairEntities($this->getIntraVoxFolder(), $dryRun);
     }
 
     /**
@@ -4129,155 +4096,7 @@ class PageService {
      * @return array{scanned:int, indexed:int, languages:array<string,int>}
      */
     public function rebuildIndex(bool $dryRun = false): array {
-        $stats = ['scanned' => 0, 'indexed' => 0, 'languages' => []];
-
-        $base = $this->getIntraVoxFolder();
-        $languageFolders = [];
-        foreach ($this->getCachedDirectoryListing($base) as $node) {
-            if (!($node instanceof \OCP\Files\Folder)) {
-                continue;
-            }
-            // Language folders are 2–3 letter codes; skips _media/_resources.
-            if (!preg_match('/^[a-z]{2,3}$/', $node->getName())) {
-                continue;
-            }
-            $languageFolders[] = $node;
-        }
-
-        // Clear only after the tree is readable: wiping first and then failing
-        // to read would leave the install with no index at all.
-        if (!$dryRun) {
-            $this->pageIndexService->clearAll();
-        }
-
-        foreach ($languageFolders as $langFolder) {
-            $lang = $langFolder->getName();
-            $stats['languages'][$lang] = 0;
-            $this->rebuildIndexInFolder($langFolder, $lang, $dryRun, $stats);
-        }
-
-        return $stats;
-    }
-
-    /**
-     * Recurse one language folder, indexing every page JSON found.
-     *
-     * @param array{scanned:int, indexed:int, languages:array<string,int>} $stats
-     */
-    private function rebuildIndexInFolder(
-        \OCP\Files\Folder $folder,
-        string $language,
-        bool $dryRun,
-        array &$stats
-    ): void {
-        // Two passes over one listing: subfolder names first, because whether a
-        // JSON file IS a page depends on them (see below).
-        $listing = $this->getCachedDirectoryListing($folder);
-        $subfolders = [];
-        foreach ($listing as $node) {
-            if ($node instanceof \OCP\Files\Folder) {
-                $subfolders[$node->getName()] = $node;
-            }
-        }
-
-        foreach ($subfolders as $name => $node) {
-            // Media, asset and infrastructure folders hold no pages.
-            if (PagePathHelper::isInfrastructureFolder($name)) {
-                continue;
-            }
-            $this->rebuildIndexInFolder($node, $language, $dryRun, $stats);
-        }
-
-        foreach ($listing as $node) {
-            if (!($node instanceof \OCP\Files\File) || !str_ends_with($node->getName(), '.json')) {
-                continue;
-            }
-            // Per-language config files are not pages.
-            if (in_array($node->getName(), ['navigation.json', 'footer.json', 'homepage.json'], true)) {
-                continue;
-            }
-
-            // Only files that fit the PAGE MODEL are pages. Indexing every JSON
-            // in sight put loose files (POC data dropped beside a real page)
-            // into the index, and since 2.0 serves the page list FROM the
-            // index, those rows became ghost entries that 404 when clicked —
-            // the tree never showed them and getPage cannot resolve them.
-            $base = substr($node->getName(), 0, -5);
-            if ($base === $folder->getName()) {
-                $pageFolder = $folder;               // {slug}/{slug}.json — canonical
-            } elseif ($node->getName() === 'home.json' && $folder->getName() === $language) {
-                $pageFolder = $folder;               // language-root homepage
-            } elseif (isset($subfolders[$base])) {
-                $pageFolder = $subfolders[$base];    // legacy beside-layout: {slug}.json next to {slug}/
-            } else {
-                continue;                            // loose JSON — not a page
-            }
-
-            $stats['scanned']++;
-            try {
-                $data = json_decode($node->getContent(), true);
-                if (!is_array($data) || empty($data['uniqueId'])) {
-                    // A JSON file without a uniqueId is not an indexable page.
-                    continue;
-                }
-                if (!$dryRun) {
-                    $this->pageIndexService->indexPage(
-                        $data,
-                        $language,
-                        // The page's OWN folder, matching createPage/updatePage —
-                        // locateViaIndex derives its candidates from this path.
-                        $pageFolder->getPath(),
-                        $node->getId(),
-                        $pageFolder->getId()
-                    );
-                }
-                $stats['indexed']++;
-                $stats['languages'][$language]++;
-            } catch (\Throwable $e) {
-                // One unreadable file must not abort the whole rebuild.
-                $this->logger->warning(
-                    '[PageService] rebuildIndex skipped ' . $node->getPath() . ': ' . $e->getMessage()
-                );
-            }
-        }
-    }
-
-    /**
-     * Decode HTML entities in the plain-text fields of a page-data array,
-     * in place: title, and each widget's content/alt/title and link titles.
-     */
-    private function decodePlainTextFields(array &$data): void {
-        if (isset($data['title']) && is_string($data['title'])) {
-            $data['title'] = $this->htmlSanitizer->decodeEntitiesRecursive($data['title']);
-        }
-        $rows = $data['layout']['rows'] ?? null;
-        if (!is_array($rows)) {
-            return;
-        }
-        foreach ($rows as &$row) {
-            if (isset($row['sectionTitle']) && is_string($row['sectionTitle'])) {
-                $row['sectionTitle'] = $this->htmlSanitizer->decodeEntitiesRecursive($row['sectionTitle']);
-            }
-            $columns = $row['columns'] ?? (isset($row['widgets']) ? [$row] : []);
-            foreach ($columns as &$col) {
-                foreach (($col['widgets'] ?? []) as &$widget) {
-                    foreach (['content', 'alt', 'title'] as $field) {
-                        if (isset($widget[$field]) && is_string($widget[$field])) {
-                            $widget[$field] = $this->htmlSanitizer->decodeEntitiesRecursive($widget[$field]);
-                        }
-                    }
-                    foreach (($widget['links'] ?? []) as &$link) {
-                        if (isset($link['title']) && is_string($link['title'])) {
-                            $link['title'] = $this->htmlSanitizer->decodeEntitiesRecursive($link['title']);
-                        }
-                    }
-                    unset($link);
-                }
-                unset($widget);
-            }
-            unset($col);
-        }
-        unset($row);
+        return $this->maintenance()->rebuildIndex($this->getIntraVoxFolder(), $dryRun);
     }
 
     /**
