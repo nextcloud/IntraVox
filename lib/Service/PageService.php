@@ -2422,8 +2422,9 @@ class PageService {
             // Cache the folder reference for immediate reuse (e.g., when copying media from template)
             if (isset($data['uniqueId'])) {
                 $this->cache()->setPageFolder($data['uniqueId'], $pageFolder);
-                $indexFolder = $pageFolder;
-        }
+            }
+
+            // Every non-home page is indexed under its OWN folder.
             $indexFolder = $pageFolder;
         }
 
