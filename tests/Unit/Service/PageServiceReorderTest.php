@@ -188,6 +188,40 @@ class PageServiceReorderTest extends TestCase {
         $this->assertCount(0, $writes);
     }
 
+    /**
+     * The exact bytes written are determined solely by the page data + the
+     * encode flags — nothing reads back the per-request content cache mid-reorder
+     * to influence them. Pinning the full written string (not just the order
+     * field) makes it provable that the dead `$this->fileContentCache[...] =`
+     * bookkeeping line has zero effect on output, so removing it in the
+     * extraction is behaviour-identical.
+     */
+    public function testReorderWrittenBytesAreFullyDeterminedByDataAndFlags(): void {
+        $writes = [];
+        $a = $this->makeFile('/lang/a.json', ['uniqueId' => 'page-a', 'title' => 'A', 'order' => 5], $writes);
+        $b = $this->makeFile('/lang/b.json', ['uniqueId' => 'page-b', 'title' => 'B', 'order' => 9], $writes);
+
+        $parent = $this->createMock(Folder::class);
+        $parent->method('getPath')->willReturn('/lang');
+        $parent->method('getDirectoryListing')->willReturn([$a, $b]);
+
+        $svc = $this->makeService($parent, null);
+        $svc->reorderSiblings(null, ['page-b', 'page-a']);
+
+        // b -> index 0, a -> index 1. The written bytes are exactly the source
+        // JSON with `order` replaced, re-encoded pretty + unescaped-unicode.
+        $expectedB = json_encode(
+            ['uniqueId' => 'page-b', 'title' => 'B', 'order' => 0],
+            JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE
+        );
+        $expectedA = json_encode(
+            ['uniqueId' => 'page-a', 'title' => 'A', 'order' => 1],
+            JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE
+        );
+        $this->assertSame($expectedB, $writes['/lang/b.json']);
+        $this->assertSame($expectedA, $writes['/lang/a.json']);
+    }
+
     public function testReorderEncodesWithPrettyPrintAndUnescapedUnicode(): void {
         $writes = [];
         // A title with a non-ASCII char and a nested structure to observe the flags.
