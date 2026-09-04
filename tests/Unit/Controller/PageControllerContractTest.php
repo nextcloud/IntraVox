@@ -21,10 +21,12 @@ class PageControllerContractTest extends TestCase {
 
     private string $pageSrc;
     private string $publicShareSrc;
+    private string $shellTraitSrc;
 
     protected function setUp(): void {
         $this->pageSrc = file_get_contents(__DIR__ . '/../../../lib/Controller/PageController.php');
         $this->publicShareSrc = file_get_contents(__DIR__ . '/../../../lib/Controller/PublicShareController.php');
+        $this->shellTraitSrc = file_get_contents(__DIR__ . '/../../../lib/Controller/RendersAppShell.php');
     }
 
     public function testTheFiveRenderEndpointsExistAndArePublicWhereExpected(): void {
@@ -67,22 +69,36 @@ class PageControllerContractTest extends TestCase {
     }
 
     public function testEveryRenderPathEmitsTheWebpackAssetTriple(): void {
-        // The three bundles (vendors/shared/main) must load on every render path;
-        // a path that emits only some yields a half-initialised SPA.
+        // Since Phase 6 the triple is emitted once, in RendersAppShell; the trait
+        // must load all three bundles (a path that emits only some yields a
+        // half-initialised SPA), and every render path must call it.
         $this->assertSame(
-            substr_count($this->pageSrc, 'intravox-vendors'),
-            substr_count($this->pageSrc, 'intravox-shared'),
-            'vendors and shared bundles must be emitted the same number of times'
+            1,
+            substr_count($this->shellTraitSrc, 'intravox-vendors'),
+            'the vendors bundle is emitted exactly once, in the trait'
         );
         $this->assertSame(
-            substr_count($this->pageSrc, 'intravox-shared'),
-            substr_count($this->pageSrc, 'intravox-main'),
-            'shared and main bundles must be emitted the same number of times'
+            substr_count($this->shellTraitSrc, 'intravox-vendors'),
+            substr_count($this->shellTraitSrc, 'intravox-shared'),
+            'vendors and shared bundles are emitted together in the trait'
         );
+        $this->assertSame(
+            substr_count($this->shellTraitSrc, 'intravox-shared'),
+            substr_count($this->shellTraitSrc, 'intravox-main'),
+            'shared and main bundles are emitted together in the trait'
+        );
+
+        // Every render path in PageController pulls the shell in via the trait —
+        // no path may hand-roll a partial set of bundles.
         $this->assertGreaterThanOrEqual(
             4,
-            substr_count($this->pageSrc, 'intravox-main'),
-            'the triple appears on each render path (index/show/showByUniqueId/shareAccess + notfound)'
+            substr_count($this->pageSrc, '$this->emitAppShellAssets()'),
+            'each render path (index/show/showByUniqueId/shareAccess + notfound) emits the shell'
+        );
+        $this->assertSame(
+            0,
+            substr_count($this->pageSrc, 'intravox-vendors'),
+            'PageController no longer hand-rolls the bundle list'
         );
     }
 

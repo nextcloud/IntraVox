@@ -26,6 +26,8 @@ use OCP\Util;
 use Psr\Log\LoggerInterface;
 
 class PageController extends Controller {
+    use RendersAppShell;
+
     private PageService $pageService;
     private PublicShareService $publicShareService;
     private LoggerInterface $logger;
@@ -84,37 +86,6 @@ class PageController extends Controller {
                 && $this->appManager->isInstalled('metavox')
                 && $this->appManager->isEnabledForUser('metavox', $user)
         );
-    }
-
-    /**
-     * Build CSP with video domain whitelist
-     */
-    private function buildContentSecurityPolicy(): ContentSecurityPolicy {
-        $csp = new ContentSecurityPolicy();
-        $csp->addAllowedScriptDomain('\'self\'');
-        $csp->addAllowedFrameDomain('\'self\'');
-
-        // Add whitelisted video domains from config
-        $domains = $this->config->getAppValue(
-            'intravox',
-            'video_domains',
-            Constants::getDefaultVideoDomainsJson()
-        );
-
-        // Decode the stored JSON
-        $decoded = json_decode($domains, true);
-
-        // Only use defaults if JSON decode FAILED (null), not for empty array
-        // This allows admins to explicitly block all video embeds by removing all domains
-        if ($decoded === null) {
-            $decoded = Constants::DEFAULT_VIDEO_DOMAINS;
-        }
-
-        foreach ($decoded as $domain) {
-            $csp->addAllowedFrameDomain($domain);
-        }
-
-        return $csp;
     }
 
     /**
@@ -183,10 +154,7 @@ class PageController extends Controller {
         // Webpack splits into: vendors (node_modules) → shared (code used by
         // both main+admin, e.g. PageTreeSelect) → main. All three must load or
         // the main entry's runtime never fires its mount (blank page, no error).
-        Util::addScript('intravox', 'intravox-vendors');
-        Util::addScript('intravox', 'intravox-shared');
-        Util::addScript('intravox', 'intravox-main');
-        Util::addStyle('intravox', 'main');
+        $this->emitAppShellAssets();
 
         // Whether MetaVox is installed, which gates its sidebar tab and menu
         // entry. Delivered as initial state rather than as a field on the page
@@ -273,10 +241,7 @@ class PageController extends Controller {
         // Webpack splits into: vendors (node_modules) → shared (code used by
         // both main+admin, e.g. PageTreeSelect) → main. All three must load or
         // the main entry's runtime never fires its mount (blank page, no error).
-        Util::addScript('intravox', 'intravox-vendors');
-        Util::addScript('intravox', 'intravox-shared');
-        Util::addScript('intravox', 'intravox-main');
-        Util::addStyle('intravox', 'main');
+        $this->emitAppShellAssets();
 
         $renderAs = $isAnonymous
             ? TemplateResponse::RENDER_AS_PUBLIC
@@ -376,10 +341,7 @@ class PageController extends Controller {
         // Webpack splits into: vendors (node_modules) → shared (code used by
         // both main+admin, e.g. PageTreeSelect) → main. All three must load or
         // the main entry's runtime never fires its mount (blank page, no error).
-        Util::addScript('intravox', 'intravox-vendors');
-        Util::addScript('intravox', 'intravox-shared');
-        Util::addScript('intravox', 'intravox-main');
-        Util::addStyle('intravox', 'main');
+        $this->emitAppShellAssets();
 
         $response = new TemplateResponse(
             'intravox',
@@ -425,10 +387,7 @@ class PageController extends Controller {
         // Webpack splits into: vendors (node_modules) → shared (code used by
         // both main+admin, e.g. PageTreeSelect) → main. All three must load or
         // the main entry's runtime never fires its mount (blank page, no error).
-        Util::addScript('intravox', 'intravox-vendors');
-        Util::addScript('intravox', 'intravox-shared');
-        Util::addScript('intravox', 'intravox-main');
-        Util::addStyle('intravox', 'main');
+        $this->emitAppShellAssets();
 
         $this->provideAppInitialState();
 
@@ -451,10 +410,7 @@ class PageController extends Controller {
         // Webpack splits into: vendors (node_modules) → shared (code used by
         // both main+admin, e.g. PageTreeSelect) → main. All three must load or
         // the main entry's runtime never fires its mount (blank page, no error).
-        Util::addScript('intravox', 'intravox-vendors');
-        Util::addScript('intravox', 'intravox-shared');
-        Util::addScript('intravox', 'intravox-main');
-        Util::addStyle('intravox', 'main');
+        $this->emitAppShellAssets();
 
         // Try to load page by uniqueId to get metadata
         // getPage() supports direct uniqueId lookup (no need to list all pages first)
