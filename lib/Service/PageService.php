@@ -11,6 +11,7 @@ use OCA\IntraVox\Exception\ForbiddenException;
 use OCA\IntraVox\Exception\PageConflictException;
 use OCA\IntraVox\Exception\PageNotFoundException;
 use OCA\IntraVox\Service\GroupContextService;
+use OCA\IntraVox\Service\Language\LanguageResolver;
 use OCA\IntraVox\Service\News\NewsContentExtractor;
 use OCA\IntraVox\Service\News\NewsPageService;
 use OCA\IntraVox\Service\Path\PagePathHelper;
@@ -63,6 +64,8 @@ class PageService {
     private ?\OCA\IntraVox\Service\Publication\PublicationStateService $publicationStateSvc = null;
     /** Lazily-built CLI maintenance service (Phase 4). */
     private ?\OCA\IntraVox\Service\Maintenance\PageMaintenanceService $maintenanceSvc = null;
+    /** Lazily-built stateless language resolver (Phase 9). */
+    private ?LanguageResolver $languageResolver = null;
     private LoggerInterface $logger;
     private IEventDispatcher $eventDispatcher;
     private PublicationSettingsService $publicationSettings;
@@ -294,6 +297,16 @@ class PageService {
         return $this->cache;
     }
 
+    /**
+     * Lazy seam for the stateless language resolver (Phase 9). Like cache(), it
+     * can always synthesise its collaborator — it has no dependencies — so a test
+     * that never wires it gets the real behaviour for free. Nullable-default so
+     * the harness auto-fill's isInitialized() check skips it (never mocked).
+     */
+    private function language(): LanguageResolver {
+        return $this->languageResolver ??= new LanguageResolver();
+    }
+
     private function locator(): PageLocator {
         if (!isset($this->pageLocator)) {
             $this->pageLocator = new PageLocator($this->pageIndexService, $this->logger);
@@ -421,11 +434,8 @@ class PageService {
 
         $lang = $this->config->getUserValue($this->userId, 'core', 'lang', self::DEFAULT_LANGUAGE);
 
-        // Extract base language code (e.g., 'nl_NL' -> 'nl').
-        $langCode = explode('_', $lang)[0];
-
-        // Guard against malformed values; fall back to the default language.
-        return preg_match('/^[a-z]{2,3}$/', $langCode) ? $langCode : self::DEFAULT_LANGUAGE;
+        // Base-code extraction + malformed-value guard (Phase 9: LanguageResolver).
+        return $this->language()->baseLanguageCode($lang);
     }
 
     /**
@@ -590,16 +600,12 @@ class PageService {
      * already defaults to 'en', so when unset the chain collapses to user → en.
      */
     private function resolveEffectiveLanguage(): ?string {
-        $userLang = $this->getUserLanguage();
-        $candidates = [$userLang];
-
-        $primary = $this->languageService->getPrimaryLanguage();
-        if ($primary !== $userLang) {
-            $candidates[] = $primary;
-        }
-        if (!in_array(self::DEFAULT_LANGUAGE, $candidates, true)) {
-            $candidates[] = self::DEFAULT_LANGUAGE;
-        }
+        // Candidate order (user -> primary -> en, deduped) via LanguageResolver;
+        // the folder probing below stays here (Phase 9).
+        $candidates = $this->language()->candidateOrder(
+            $this->getUserLanguage(),
+            $this->languageService->getPrimaryLanguage()
+        );
 
         $baseFolder = $this->getIntraVoxFolder();
         foreach ($candidates as $code) {
