@@ -1007,6 +1007,8 @@ OC.L10N.register(
     "No users match the current filters" : "Keine Benutzer entsprechen den aktuellen Filtern",
     "Showing {shown} of {total} people" : "{shown} von {total} Personen werden angezeigt",
     "Show more" : "Mehr anzeigen",
+    "does not equal" : "Ist nicht gleich",
+    "is none of" : "Ist keiner von",
     "is today" : "Ist heute",
     "is within next X days" : "Ist innerhalb der nächsten X Tage",
     "Cards" : "Karten",

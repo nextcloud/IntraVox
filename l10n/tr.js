@@ -1007,6 +1007,8 @@ OC.L10N.register(
     "No users match the current filters" : "Var olan süzgeçlerle eşleşen bir kullanıcı yok",
     "Showing {shown} of {total} people" : "{shown} / {total} insan görüntüleniyor",
     "Show more" : "Daha fazla görüntüle",
+    "does not equal" : "şuna eşit olmayan",
+    "is none of" : "şunlardan hiç biri olmayan",
     "is today" : "bugün",
     "is within next X days" : "gelecek X gün içinde",
     "Cards" : "Kartlar",
