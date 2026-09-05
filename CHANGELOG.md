@@ -25,7 +25,9 @@ IntraVox is a Nextcloud intranet page builder.
   content, 34 pages index, the page renders with all 37 widgets, and the
   pages, navigation and user endpoints all answer. IntraVox also survived the
   major upgrade from beta 4 to RC2 with its data intact and stayed enabled. No
-  IntraVox errors in the log or the browser console.
+  IntraVox errors in the log or the browser console. Re-verified on 35.0.0 RC3
+  with MetaVox enabled alongside it, so the MetaVox-backed filters are covered
+  too, not just the app on its own.
 
 ### Added
 
@@ -38,6 +40,50 @@ IntraVox is a Nextcloud intranet page builder.
   as group membership, they mean "in none of these" — a person in both an
   included and an excluded group is excluded.
   ([#108](https://github.com/nextcloud/IntraVox/issues/108))
+
+### Fixed
+
+- **A News widget filtering on a MetaVox multiselect field returned a 500.**
+  MetaVox stores a multiselect as one `;#`-joined string ("News;#Internal") and
+  IntraVox never split it, so `contains` — the editor's default operator for
+  such a field — passed the chosen values straight into `str_contains()` as an
+  array, which is a TypeError on PHP 8. Two more operators failed silently on
+  the same cause: `is one of` and `contains all` returned no match at all, so a
+  correctly configured widget showed "no news" while matching pages existed.
+  All three now agree with what the editor promises.
+  ([#111](https://github.com/nextcloud/IntraVox/issues/111))
+
+- **"Does not contain" quietly matched everything.** The chosen values never
+  reached the matcher for that one operator, so it fell back to an empty value —
+  and "does not contain nothing" is true for every page. The filter therefore
+  did nothing at all instead of excluding.
+
+- **Picking several filter values needed ctrl/cmd-click, with nothing saying
+  so.** The MetaVox filter row used plain `<select>` elements, so every click
+  replaced the previous choice instead of adding to it, and the value box was
+  too short to show a third option. The three controls now use the same
+  `NcSelect` the rest of the app uses: values appear as chips with their own
+  remove button, a search box appears once the list grows, and the list stays
+  open while picking. ([#111](https://github.com/nextcloud/IntraVox/issues/111))
+
+- **Text was unreadable on a widget with a coloured background.** Three status
+  colours (`--color-error`, `--color-warning`, `--color-success`) are pale
+  pastels in the Nextcloud theme, but were treated as dark, which forced white
+  text onto near-white: a contrast ratio of 1.15:1 where the theme's own paired
+  text colour gives 13.5:1. On a People widget set to one of those, names, roles
+  and email addresses were effectively invisible.
+
+- **The filter panel's hover and count badges sat below the accessibility
+  threshold.** Their translucent white overlays lightened the background towards
+  the white text, so the count badge measured 4.07:1 and a hovered heading
+  4.51:1 — at or under the WCAG AA minimum of 4.5:1. They now darken instead,
+  reaching 8.6:1 and 8.1:1, and "Clear all" no longer renders in a near-invisible
+  brown on a coloured widget.
+
+- **Translator hints written in Vue templates never reached the translators.**
+  The POT generator only read `// TRANSLATORS:` line comments, so the
+  HTML-comment form used inside a `<template>` was dropped — the hint was in the
+  code but never in the file translators receive.
 
 ## [2.6.3] - 2026-09-02 — A patched editor library
 
