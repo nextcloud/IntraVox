@@ -57,6 +57,17 @@ const STR = "'((?:[^'\\\\]|\\\\.)*)'";
 // literal `$t(`/`$n(` token, which can't be a false positive.
 const T_PREFIX = `(?:this\\.|\\$\\w+->|->)?`;
 
+// The app id is never a translatable string.
+//
+// The `'intravox',` prefix is optional in the patterns below, because both
+// `t('text')` and `t('intravox', 'text')` are valid call forms. That makes a
+// bare `t('intravox'` match too, capturing the app id itself as the string —
+// and the extractor reads source as plain text, so it cannot tell code from a
+// comment. Five comment lines explaining the `t('intravox', …)` convention
+// therefore put a meaningless "intravox" entry on Transifex, shown to
+// translators in every language.
+const APP_ID = 'intravox';
+
 // Factory functions so every caller gets fresh, non-shared RegExp instances
 // (a shared /g regex carries lastIndex state between files).
 function makeRegexes() {
@@ -172,7 +183,7 @@ function computeSourceStrings() {
 			while ((m = re.exec(content)) !== null) {
 				const sing = unescapeLiteral(m[1]);
 				const plur = unescapeLiteral(m[2]);
-				if (sing) {
+				if (sing && sing !== APP_ID) {
 					plurals.set(sing, plur);
 					const c = findTranslatorComment(content, m.index);
 					if (c && !comments.has(sing)) comments.set(sing, c);
@@ -183,7 +194,7 @@ function computeSourceStrings() {
 		for (const re of [T_RE, DT_RE]) {
 			while ((m = re.exec(content)) !== null) {
 				const s = unescapeLiteral(m[1]);
-				if (s) {
+				if (s && s !== APP_ID) {
 					singulars.add(s);
 					const c = findTranslatorComment(content, m.index);
 					if (c && !comments.has(s)) comments.set(s, c);

@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: IntraVox 2.6.3\n"
 "Report-Msgid-Bugs-To: translations@nextcloud.com\n"
-"POT-Creation-Date: 2026-09-03 16:06+0000\n"
+"POT-Creation-Date: 2026-09-05 08:47+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1783,9 +1783,6 @@ msgid "Internal page"
 msgstr ""
 
 msgid "Intranet languages"
-msgstr ""
-
-msgid "intravox"
 msgstr ""
 
 msgid "IntraVox"
