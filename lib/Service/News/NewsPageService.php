@@ -276,8 +276,14 @@ class NewsPageService {
                 $filterValues = $filter['values'] ?? [];
                 $actualValue = $meta[$fieldName] ?? null;
 
-                // Use values array for operators that work with multiple values
-                if (in_array($filterOperator, ['in', 'contains', 'contains_all']) && !empty($filterValues)) {
+                // Use values array for operators that work with multiple values.
+                // not_contains belongs here too: the editor only offers it for
+                // text fields today (which carry `value`), but leaving it out
+                // means a values[] payload silently falls back to an empty
+                // `value`, and "does not contain nothing" is true for every
+                // page -- the filter would quietly do nothing at all.
+                if (in_array($filterOperator, ['in', 'contains', 'not_contains', 'contains_all'], true)
+                    && !empty($filterValues)) {
                     $filterValue = $filterValues;
                 }
 

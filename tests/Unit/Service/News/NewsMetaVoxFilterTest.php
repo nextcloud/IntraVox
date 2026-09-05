@@ -94,6 +94,35 @@ class NewsMetaVoxFilterTest extends TestCase {
         $this->assertTrue($this->service->matchesFilter('iets', 'not_empty', null));
     }
 
+    /**
+     * A filter row carries its choices in values[]; applyMetaVoxFilters() has to
+     * hand that array to the matcher. not_contains was missing from the list
+     * that does so, which made it fall back to an empty `value` -- and "does not
+     * contain nothing" is true for every page, so the filter quietly did
+     * nothing. Only reachable for text fields today, but silent-pass is the
+     * worst failure mode a filter has.
+     */
+    public function testNotContainsReceivesTheChosenValues(): void {
+        $pages = [
+            ['id' => 'blauw', 'fileId' => 1],
+            ['id' => 'groen', 'fileId' => 2],
+        ];
+        $meta = [
+            1 => ['kleur' => 'Blue;#Red'],
+            2 => ['kleur' => 'Green'],
+        ];
+        $filters = [['fieldName' => 'kleur', 'operator' => 'not_contains', 'values' => ['Blue']]];
+
+        $matched = $this->service->applyMetaVoxFilters(
+            $pages,
+            $filters,
+            'AND',
+            static fn(array $fileIds): array => $meta
+        );
+
+        $this->assertSame(['groen'], array_values(array_column($matched, 'id')));
+    }
+
     public function testEdgeCases(): void {
         // Nothing selected cannot match.
         $this->assertFalse($this->service->matchesFilter('Nieuws;#Intern', 'contains', []));
