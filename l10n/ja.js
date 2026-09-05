@@ -207,6 +207,8 @@ OC.L10N.register(
     "Filter operator" : "フィルター 演算子",
     "Select value" : "値を選択",
     "all" : "すべて",
+    "Rename page" : "ページ名を変更する",
+    "New page" : "新規ページ",
     "Delete page" : "ページの削除",
     "Now" : "現在",
     "Modified" : "更新日時",

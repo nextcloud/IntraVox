@@ -885,6 +885,7 @@ OC.L10N.register(
     "To enable anonymous access to IntraVox pages, an administrator must first enable \"Allow users to share via link and emails\" in the Nextcloud Sharing settings." : "För att aktivera anonym åtkomst till IntraVox-sidor måste en administratör först aktivera ”Tillåt användare att dela via länk och e-post” i Nextclouds delningsinställningar.",
     "Open sharing settings" : "Öppna delningsinställningar",
     "To make this page accessible without login, create a public share link in the Files app." : "Skapa en offentlig delningslänk i appen Filer för att göra sidan tillgänglig utan inloggning.",
+    "Rename page" : "Byt namn på sida",
     "Page settings" : "Sidinställningar",
     "Copy page" : "Kopiera sida",
     "Save as template" : "Spara som mall",

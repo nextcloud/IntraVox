@@ -31,6 +31,7 @@ OC.L10N.register(
     "Configured" : "Beállítva",
     "Invalid URL" : "Érvénytelen webcím",
     "Not installed" : "Nincs telepítve",
+    "Unavailable" : "Nem érhető el",
     "Deletion failed" : "Törlés sikertelen",
     "Languages" : "Nyelvek",
     "Sharing" : "Megosztás",
