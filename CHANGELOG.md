@@ -6,28 +6,32 @@ IntraVox is a Nextcloud intranet page builder.
 
 ## [Unreleased]
 
+## [2.7.0] - 2026-09-05 — Filters that can exclude, and a News filter that stopped returning 500
+
 ### Changed
 
 - **Nextcloud 35 compatibility declared** — `info.xml` now ships
-  `<nextcloud min-version="32" max-version="35"/>`. Audit against 35.0.0 RC2
-  (the latest candidate at the time of writing; no stable release or Docker
-  image exists yet): all 95 `OCP\` symbols `lib/` imports still exist in the
-  35 API, and static analysis against the stable35 stubs reports no errors.
-  The three `OC.*` JS globals still in use (`OC.dialogs.filepicker`,
+  `<nextcloud min-version="32" max-version="35"/>`. Audited against 35.0.0 RC3,
+  the latest candidate at the time of writing; no stable release or Docker image
+  exists yet. All 95 `OCP\` symbols `lib/` imports still exist in the 35 API,
+  and static analysis against the stable35 stubs reports no errors. The three
+  `OC.*` JS globals still in use (`OC.dialogs.filepicker`,
   `OC.MimeType.getIconUrl`, `OC.requestToken`) remain exported in 35 —
   `mimetype.js` was renamed to `mimeType.js`, but `OC.MimeType` and the
   `getIconUrl(mimeType)` signature are unchanged, and our call site is guarded
   by a `typeof` check either way. Bundled `@nextcloud/vue` (9.8.1) and Vue
   (3.5.35) are the same majors Nextcloud 35 ships (9.10.0 / 3.5.41). PHP
-  `>=8.2` is unchanged. Verified on a running Nextcloud 35, on both beta 4 and
-  RC2 (the latest candidate; no stable release yet): the app installs and
-  enables, `occ intravox:setup` creates the groupfolder and imports the demo
-  content, 34 pages index, the page renders with all 37 widgets, and the
-  pages, navigation and user endpoints all answer. IntraVox also survived the
-  major upgrade from beta 4 to RC2 with its data intact and stayed enabled. No
-  IntraVox errors in the log or the browser console. Re-verified on 35.0.0 RC3
-  with MetaVox enabled alongside it, so the MetaVox-backed filters are covered
-  too, not just the app on its own.
+  `>=8.2` is unchanged.
+
+  Verified on a running Nextcloud 35 across beta 4, RC2 and RC3: the app
+  installs and enables, `occ intravox:setup` creates the groupfolder and imports
+  the demo content, 34 pages index, the page renders with all 37 widgets, and
+  the pages, navigation and user endpoints all answer. IntraVox also survived
+  the major upgrades between those candidates with its data intact and stayed
+  enabled. No IntraVox errors in the log or the browser console. The RC3 round
+  ran with MetaVox enabled alongside it, so the MetaVox-backed filters are
+  covered too, not just the app on its own — MetaVox itself needs 2.2.2 or
+  later, which is the first release that allows Nextcloud 35.
 
 ### Added
 
