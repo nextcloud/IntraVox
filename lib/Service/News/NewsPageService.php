@@ -295,26 +295,114 @@ class NewsPageService {
     }
 
     /**
+     * The separator MetaVox joins a multiselect's chosen options with.
+     *
+     * Its own API takes an array and stores implode(';#', $value); every read
+     * path in MetaVox explodes on the same token. IntraVox reads the
+     * metavox_file_gf_meta table directly (there is no bulk endpoint for many
+     * files), so it inherits the job of decoding this itself -- which is what
+     * PhotoStoryService::splitMultiselect() already does.
+     */
+    private const MULTISELECT_DELIMITER = ';#';
+
+    /**
+     * Split a stored MetaVox value into the options it actually holds.
+     *
+     * A single-choice value has no separator and comes back as a one-element
+     * list, so callers do not have to care which kind of field they have.
+     *
+     * @return array<int, string>
+     */
+    private function splitMultiselect(string $raw): array {
+        $out = [];
+        foreach (explode(self::MULTISELECT_DELIMITER, $raw) as $part) {
+            $part = trim($part);
+            if ($part !== '') {
+                $out[] = $part;
+            }
+        }
+        return $out;
+    }
+
+    /**
+     * Whether the value holds at least one of the wanted options.
+     *
+     * Both sides may be lists: the stored value after a multiselect is decoded,
+     * and the filter value whenever the editor wrote a values[] array. A plain
+     * text field keeps its substring behaviour, which is what "contains" means
+     * there.
+     *
+     * @param mixed $value       decoded stored value
+     * @param mixed $filterValue single wanted value, or a list of them
+     */
+    private function containsAny($value, $filterValue): bool {
+        $wanted = is_array($filterValue) ? array_values($filterValue) : [$filterValue];
+        if ($wanted === []) {
+            return false;
+        }
+
+        foreach ($wanted as $needle) {
+            if (is_array($needle)) {
+                continue;
+            }
+
+            if (is_array($value)) {
+                if (in_array($needle, $value)) {
+                    return true;
+                }
+                continue;
+            }
+
+            // Substring match keeps a text field working as before.
+            if (is_string($value) && $needle !== '' && str_contains($value, (string)$needle)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Check if a value matches a filter
+     *
+     * MetaVox hands us the stored string, never an array: a multiselect
+     * arrives as "Nieuws;#Intern". The array branches below were therefore
+     * unreachable, and the widget's own default operator for a multiselect
+     * field ('contains') fed that array straight into str_contains(), which is
+     * a TypeError on PHP 8 -- the 500 in #111. 'in' and 'contains_all' did not
+     * crash but silently returned false, so a correctly configured widget
+     * showed "no news". Decoding the value up front is what makes all three
+     * agree with what the editor promises.
      */
     public function matchesFilter($value, string $operator, $filterValue): bool {
+        // Only the set-membership operators care about the individual options;
+        // the date, number and checkbox ones want the raw stored value.
+        if (is_string($value)
+            && in_array($operator, ['contains', 'not_contains', 'in', 'contains_all'], true)
+            && str_contains($value, self::MULTISELECT_DELIMITER)) {
+            $value = $this->splitMultiselect($value);
+        }
+
         switch ($operator) {
             // Text/general operators
             case 'equals':
                 return $value === $filterValue;
             case 'contains':
-                if (is_array($value)) {
-                    // For multiselect: check if filterValue is in the array
-                    return in_array($filterValue, $value);
-                }
-                return is_string($value) && str_contains($value, $filterValue);
+                // "any of the chosen options is present". The editor writes a
+                // values[] array for a multiselect field, so both sides can be
+                // lists; comparing the whole array with in_array() matched
+                // nothing, and str_contains() with an array needle was the
+                // TypeError behind #111.
+                return $this->containsAny($value, $filterValue);
             case 'not_contains':
-                if (is_array($value)) {
-                    return !in_array($filterValue, $value);
-                }
-                return is_string($value) && !str_contains($value, $filterValue);
+                return !$this->containsAny($value, $filterValue);
             case 'in':
                 $allowedValues = is_array($filterValue) ? $filterValue : [$filterValue];
+                if (is_array($value)) {
+                    // A multiselect is "one of" the allowed set when any of the
+                    // options it holds is in that set.
+                    return array_intersect($value, $allowedValues) !== [];
+                }
                 return in_array($value, $allowedValues);
             case 'not_empty':
                 return !empty($value);
