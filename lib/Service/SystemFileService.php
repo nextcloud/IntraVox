@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace OCA\IntraVox\Service;
 
+use OCP\Files\Folder;
 use OCP\Files\IRootFolder;
 use OCP\Files\NotFoundException;
 use OCP\ICache;
@@ -186,6 +187,14 @@ class SystemFileService {
         try {
             $userFolder = $this->rootFolder->getUserFolder($userId);
             $languageFolder = $userFolder->get('IntraVox/' . $language);
+
+            // get() is typed as Node; only a Folder can be asked what it
+            // contains. Anything else in that path means the install is not
+            // shaped the way IntraVox expects, which is not a
+            // department-only user -- so it is not a case for the bypass.
+            if (!$languageFolder instanceof Folder) {
+                return false;
+            }
 
             // The user CAN see the language folder. Whether the file is
             // missing or denied, the department-only rationale does not
