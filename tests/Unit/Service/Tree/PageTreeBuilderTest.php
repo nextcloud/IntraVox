@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace OCA\IntraVox\Tests\Unit\Service\Tree;
 
+use OCA\IntraVox\Service\Folder\FolderContext;
+use OCA\IntraVox\Service\Language\LanguageResolver;
 use OCA\IntraVox\Service\Locator\PageLocator;
 use OCA\IntraVox\Service\PageIndexService;
 use OCA\IntraVox\Service\PermissionService;
@@ -67,16 +69,23 @@ class PageTreeBuilderTest extends TestCase {
             public function __construct() {
             }
         };
-        // The seam closures: relativePathFromRoot mirrors the folder's IntraVox-
-        // relative path (strip the leading "/IntraVox/"); userLanguage is only the
-        // fallback, unused here because every node carries an explicit language.
-        $relativePath = fn(Folder $item): string => ltrim(
-            substr($item->getPath(), strlen('/IntraVox/')),
-            '/'
+        // FolderContext supplies relativePathFromRoot (root path '/IntraVox', so
+        // locator->relativePathFromRoot strips exactly that prefix) and
+        // userLanguage ('de' — the $language ?? … fallback, unused here since every
+        // node carries an explicit language). primaryLanguage/hasRealContent are
+        // never reached by the tree walk.
+        $root = $this->createMock(Folder::class);
+        $root->method('getPath')->willReturn('/IntraVox');
+        $folders = new FolderContext(
+            fn() => $root,
+            fn(): string => 'de',
+            fn(): string => 'en',
+            fn(Folder $f): bool => false,
+            new LanguageResolver(),
+            $locator
         );
-        $userLanguage = fn(): string => 'de';
 
-        return new PageTreeBuilder($locator, $permissionService, $relativePath, $userLanguage);
+        return new PageTreeBuilder($locator, $permissionService, $folders);
     }
 
     /**

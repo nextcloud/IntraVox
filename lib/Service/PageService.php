@@ -357,8 +357,7 @@ class PageService {
         return $this->treeBuilder ??= new \OCA\IntraVox\Service\Tree\PageTreeBuilder(
             $this->locator(),
             $this->permissionService,
-            fn($item) => $this->getRelativePathFromRoot($item),
-            fn(): string => $this->getUserLanguage()
+            $this->folders()
         );
     }
 

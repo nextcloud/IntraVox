@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace OCA\IntraVox\Service\Tree;
 
+use OCA\IntraVox\Service\Folder\FolderContext;
 use OCA\IntraVox\Service\Locator\PageLocator;
 use OCA\IntraVox\Service\Path\PagePathHelper;
 use OCA\IntraVox\Service\PermissionService;
@@ -18,26 +19,19 @@ use OCA\IntraVox\Service\PermissionService;
  *
  * The cache/home.json/homepage-pointer orchestration and the per-user
  * permission recompute (issue #86/#70) stay on PageService — this class owns
- * only the walk. The two bits that lean on PageService's protected folder seams
- * (getRelativePathFromRoot, getUserLanguage) are passed in as closures so the
- * seams remain on PageService; everything else is a direct collaborator.
+ * only the walk. Folder-root-relative paths and the current-user language come
+ * from the injected FolderContext (the substrate); everything else is a direct
+ * collaborator.
  *
  * Behaviour is byte-identical to the original body: PageTreePlaceholderTest
  * (which drives PageService::buildPageTree by reflection through a thin
  * delegator) and PageTreeBuilderTest (which drives build() directly) pin it.
  */
 final class PageTreeBuilder {
-    /**
-     * @param \Closure(\OCP\Files\Folder): string $relativePathFromRoot maps a page
-     *   folder to its IntraVox-root-relative path (PageService seam)
-     * @param \Closure(): string $userLanguage the current user's language code
-     *   (PageService seam), used only as the `$language ?? …` fallback
-     */
     public function __construct(
         private PageLocator $locator,
         private PermissionService $permissionService,
-        private \Closure $relativePathFromRoot,
-        private \Closure $userLanguage,
+        private FolderContext $folders,
     ) {
     }
 
@@ -116,8 +110,8 @@ final class PageTreeBuilder {
                         // fileId of the page JSON, so the tree gate can resolve the
                         // publish/expiration MetaVox fields for scheduled visibility.
                         'fileId' => ($jsonFile instanceof \OCP\Files\File) ? $jsonFile->getId() : null,
-                        'path' => ($this->relativePathFromRoot)($item),
-                        'language' => $language ?? ($this->userLanguage)(),
+                        'path' => $this->folders->relativePathFromRoot($item),
+                        'language' => $language ?? $this->folders->userLanguage(),
                         'isCurrent' => ($currentPageId === $data['uniqueId']),
                         'children' => [],
                         'permissions' => $perm
@@ -167,7 +161,7 @@ final class PageTreeBuilder {
                             // the tree needs a key for expand/collapse state
                             // and list rendering. The 'folder:' prefix cannot
                             // collide with real ids, which are 'page-…'.
-                            'uniqueId' => 'folder:' . ($this->relativePathFromRoot)($item),
+                            'uniqueId' => 'folder:' . $this->folders->relativePathFromRoot($item),
                             // Same label derivation the breadcrumb uses for a
                             // missing ancestor. This is the SOURCE-language
                             // slug until the ancestor is translated — accepted,
@@ -176,8 +170,8 @@ final class PageTreeBuilder {
                             'status' => 'published',
                             'isPlaceholder' => true,
                             'fileId' => null,
-                            'path' => ($this->relativePathFromRoot)($item),
-                            'language' => $language ?? ($this->userLanguage)(),
+                            'path' => $this->folders->relativePathFromRoot($item),
+                            'language' => $language ?? $this->folders->userLanguage(),
                             'isCurrent' => false,
                             'children' => $children,
                             'permissions' => $perm,
