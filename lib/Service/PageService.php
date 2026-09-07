@@ -368,7 +368,7 @@ class PageService {
             $this->pageIndexService,
             $this->permissionService,
             $this->logger,
-            fn() => $this->getIntraVoxFolder()
+            $this->rootClosure()
         );
     }
 
@@ -802,11 +802,11 @@ class PageService {
      * @return array|null findPageByUniqueId() result, or null when unknown.
      */
     private function locatePageAnyLanguage(\OCP\Files\Folder $primaryFolder, string $uniqueId): ?array {
-        return $this->locator()->locatePageAnyLanguage(fn() => $this->getIntraVoxFolder(), $primaryFolder, $uniqueId);
+        return $this->locator()->locatePageAnyLanguage($this->rootClosure(), $primaryFolder, $uniqueId);
     }
 
     private function locateViaIndex(string $uniqueId, \OCP\Files\Folder $primaryFolder): ?array {
-        return $this->locator()->locateViaIndex(fn() => $this->getIntraVoxFolder(), $uniqueId, $primaryFolder);
+        return $this->locator()->locateViaIndex($this->rootClosure(), $uniqueId, $primaryFolder);
     }
 
     private function indexPathToRelative(string $storedPath): ?string {
@@ -814,11 +814,11 @@ class PageService {
     }
 
     private function locatePageBySlugAnyLanguage(\OCP\Files\Folder $primaryFolder, string $id): ?array {
-        return $this->locator()->locatePageBySlugAnyLanguage(fn() => $this->getIntraVoxFolder(), $primaryFolder, $id);
+        return $this->locator()->locatePageBySlugAnyLanguage($this->rootClosure(), $primaryFolder, $id);
     }
 
     private function locateAcrossLanguages(\OCP\Files\Folder $primaryFolder, callable $find): ?array {
-        return $this->locator()->locateAcrossLanguages(fn() => $this->getIntraVoxFolder(), $primaryFolder, $find);
+        return $this->locator()->locateAcrossLanguages($this->rootClosure(), $primaryFolder, $find);
     }
 
     /**
@@ -1022,6 +1022,21 @@ class PageService {
         } catch (NotFoundException $e) {
             throw new \Exception("IntraVox folder not found. Please check that you have access to the IntraVox GroupFolder.");
         }
+    }
+
+    /**
+     * The "where is the IntraVox root?" question, as a late-bound closure the
+     * folder-shaped collaborators (PageLocator, PageLister, …) need.
+     *
+     * A single home for what was six identical `fn() => $this->getIntraVoxFolder()`
+     * call-sites — the first, cheap step of giving the scattered folder-location
+     * concept an owner. It MUST resolve the seam on every call (not cache a
+     * folder): the closure captures $this, so a test subclass overriding the
+     * getIntraVoxFolder seam still wins, and the eventual folder-context must be
+     * built the same way (from the seams, never owning them).
+     */
+    private function rootClosure(): \Closure {
+        return fn() => $this->getIntraVoxFolder();
     }
 
     /**
@@ -1567,7 +1582,7 @@ class PageService {
         return $this->translationGroups()->resolveTranslations(
             $translationGroup,
             $ownUniqueId,
-            fn() => $this->getIntraVoxFolder()
+            $this->rootClosure()
         );
     }
 
