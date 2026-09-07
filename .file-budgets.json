@@ -126,7 +126,7 @@
     "lib/Service/Sanitize/UrlSanitizer.php": 33,
     "lib/Service/Search/PageSearchHelper.php": 118,
     "lib/Service/SetupService.php": 1023,
-    "lib/Service/SystemFileService.php": 838,
+    "lib/Service/SystemFileService.php": 847,
     "lib/Service/TelemetryService.php": 333,
     "lib/Service/Template/PageTemplateService.php": 222,
     "lib/Service/Template/TemplateMetadataExtractor.php": 95,
