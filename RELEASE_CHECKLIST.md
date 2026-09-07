@@ -623,10 +623,24 @@ pipeline.
 
 - [ ] Every guard, in one go:
   ```bash
-  for s in lint:imports lint:facets lint:eol lint:budgets lint:security lint:routes; do
-    printf '%-16s ' "$s"; npm run --silent $s >/dev/null 2>&1 && echo ok || echo FAIL
-  done
+  npm run ci          # ./scripts/ci-local.sh — add --fix to re-record the budget ratchet
   ```
+  > ⚠️ **Use this, not a hand-rolled loop.** 2.7.1 went out with a red pipeline
+  > twice because the checks were run as a subset. The loop that used to stand
+  > here covered six guards; the gate has twelve, and the two that failed —
+  > **phpstan** and the **file-budget ratchet after the phpstan fix** — were not
+  > among the six. `npm run build` does not close the gap either: `prebuild`
+  > runs the frontend guards but neither phpstan nor the PHP tests, so a green
+  > build reads like a green pipeline and is not one.
+  >
+  > phpstan is the one that matters most here, because it catches what testing
+  > on dev cannot. The 2.7.1 failure was `Node::nodeExists()` — `Folder::get()`
+  > is typed as `Node` — and on a real install that path *is* a Folder, so no
+  > amount of runtime verification would ever have shown it.
+  >
+  > One caveat the script prints: CI pins **PHP 8.2** (the floor in
+  > `composer.json`), so a local 8.5 accepts syntax CI rejects. For a release,
+  > let the pipeline confirm rather than assuming a local pass is the last word.
   | script | what it refuses |
   |---|---|
   | `lint:imports` | mixed sync/async `.vue` imports (webpack chunk race) |
@@ -1013,11 +1027,10 @@ git merge github/main --no-edit
 # 2. Prep — do NOT run npm run l10n:generate-js (js is the bot's output)
 npm run build                                # prebuild re-runs check-l10n-sync.js
 
-# 2b. Quality gate — all of it, not a subset (§4b)
-for s in lint:imports lint:facets lint:eol lint:budgets lint:security lint:routes; do
-  printf '%-16s ' "$s"; npm run --silent $s >/dev/null 2>&1 && echo ok || echo FAIL
-done
-./vendor/bin/phpunit --testsuite Unit --no-coverage
+# 2b. Quality gate — all twelve checks, phpstan included (§4b).
+#     Never hand-roll a loop here: the one that used to stand in this spot ran
+#     six of the twelve and let 2.7.1 out with a red pipeline twice.
+npm run ci
 ./scripts/run-integration-tests.sh
 
 # 3. Commit & tag
