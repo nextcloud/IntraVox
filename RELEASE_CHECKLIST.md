@@ -48,91 +48,41 @@ show. Two things must not be skipped.
 
 ---
 
-## 0c. 2.7.1 — Team folder ACL fixes (#112), still to do
+## 0d. Two release gates that catch real drift
 
-These fixes are merged and verified, but the release itself is **not finished**.
-Work through this section before uploading, then delete it once 2.7.1 is out.
+Kept from the 2.7.1 release, because both are easy to hit again.
 
-### Must happen before upload
+- **Bump versions with `npm run version:sync -- <version>`, not by hand.**
+  `openapi.json` carries its own version field next to `package.json` and
+  `appinfo/info.xml`. Editing two of the three leaves the build refusing to
+  start (`sync-version.js --check`), which is the gate doing its job.
+- **A rebuild that re-emits nothing is not a failed build.** The app version is
+  NOT stamped into the JS bundles: `Util::addScript()` lets Nextcloud derive the
+  cache-buster from `info.xml`, so bumping that is what invalidates the browser
+  cache. On a PHP-only release webpack reports `[compared for emit]` and writes
+  nothing — correct, and no reason to go hunting.
 
-- [x] **Rebuild the frontend on the release commit.** DONE for 2.7.1.
-      ```bash
-      npm ci && npm run build
-      ```
-      Note for future releases: webpack reported `[compared for emit]` and wrote
-      nothing, because 2.7.1 changed PHP only and the bundle bytes were identical.
-      That is correct, not a failed build — the version is NOT stamped into the
-      bundles. `Util::addScript()` lets Nextcloud append the cache-buster, which
-      it derives from the version in `info.xml`, so bumping that is what
-      invalidates the browser cache. Unchanged bundles need no re-emit.
-      The build is still worth running: its prebuild gates are the real value
-      (see the two they caught below).
-- [x] **Verify on dev at 2.7.1 code.** DONE — deployed and confirmed at 2.7.1. The #112 fixes were verified on
-      nc-dev while it ran 2.6.3.2 (the three affected code paths were confirmed
-      identical). That is enough for the diagnosis, not for the release.
-      Re-run the reproduction on the real release build:
-      ```bash
-      NO_AUTO_BUMP=1 ./deploy.sh dev
-      ```
-- [x] **Re-run the ACL reproduction** DONE on the 2.7.1 build: tree visibility,
-      menu contents and canEdit were identical in all three cache-fill orders and
-      matched `--test` in every case; with ACLs disabled both users saw everything
-      (no regression for normal installations). Instance restored afterwards. (the scenario from #112), because nothing
-      in the automated suite covers a live groupfolder:
-      1. `occ groupfolders:permissions <id> --enable`
-      2. two users in *one* group, one denied read on a page folder
-      3. clear the IntraVox caches, then load the tree as each user **in both
-         orders** — visibility must be identical either way and must match
-         `occ groupfolders:permissions <id> <path> -u <user> --test`
-      4. deny read on `<lang>/navigation.json` for one user: the menu must be
-         empty for them and the Edit button gone
-      5. `occ groupfolders:permissions <id> --disable` and confirm nothing
-         changed for a normal (non-ACL) installation
-      6. **restore the instance**: delete the test users, group, pages and ACL
-         rules, and put Advanced Permissions back the way you found it
-- [x] **Run the unit suite** DONE — 1055 tests, `Errors: 2, Failures: 1`,
-      exactly the pre-existing OpenAPI baseline.
-      Verify again after any rebase on the refactor: and compare against the baseline — three failures
-      are pre-existing (OpenAPI spec tests), so the count must be exactly
-      `Errors: 2, Failures: 1` and no more:
-      ```bash
-      ./vendor/bin/phpunit --configuration phpunit.xml --testsuite Unit
-      ```
+---
 
-### Caught by the prebuild gates during the 2.7.1 build (already fixed)
+## 0e. Open: the second ACL implementation (from #112)
 
-Both are recorded because they are easy to hit again on any release:
+Not a release step — a standing note, so it is not rediscovered a third time.
 
-- `openapi.json` carries its own version field and was still on 2.7.0 after the
-  bump. `sync-version.js --check` refuses to build on a mismatch; the fix is
-  `npm run version:sync -- <version>`, which updates all three files at once.
-  Bump versions with that command rather than editing files by hand.
-- `check-file-budgets.js` blocks growth in files already over their size target.
-  The #112 fixes added lines to eight of them (all still well under the 1200-line
-  service target), so the budgets were re-recorded with
-  `npm run lint:budgets -- --update` — 0 lowered, so nothing else drifted in.
+`PermissionService::applyAclRules()` reimplements groupfolders' ACL evaluation
+in raw SQL against `group_folders_acl`, alongside the native node-permission
+path the page tree uses. The two disagree: measured on dev, it reported
+permissions `7` on a file where the native layer reported `3`. It also queries
+only `mapping_type` `group` and `user`, so **an ACL set on a Team/Circle is
+invisible to it**, and it resolves storage ids through hardcoded `LIKE`
+patterns — a groupfolders schema change breaks it silently, and it is not
+fail-safe (an exception yields `PERMISSION_READ`).
 
-### After the App Store upload is confirmed
+Left out of 2.7.1 deliberately: it touches the same code as the
+PageService/PermissionService refactor and does not belong in a patch release.
+Do not fix it piecemeal.
 
-- [ ] **Reply on [#112](https://github.com/nextcloud/IntraVox/issues/112)** that
-      it is fixed in 2.7.1 — only once the upload is actually live, never before.
-      Mention the two behaviours that change for the reporter: the menu no longer
-      appears past a deny, and tree visibility no longer depends on which
-      colleague loaded the page first.
-- [ ] **Take `0. Needs triage` off the issue** and close it.
-
-### Deliberately NOT in this release
-
-- [ ] `PermissionService::applyAclRules()` still reimplements groupfolders' ACL
-      evaluation in raw SQL against `group_folders_acl`. It ignores
-      `mapping_type = 'circle'` entirely (so ACLs on a Team are invisible to it),
-      applies group rules in arbitrary order, and resolves storage ids through
-      hardcoded `LIKE` patterns. Measured divergence on dev: it reported
-      permissions `7` on a file where the native layer reported `3`.
-      **This is left for the PageService/PermissionService refactor**, since that
-      touches the same code. Do not ship a partial fix for it in a patch release.
-      Background and measurements:
-      `voxcloud-business/docs/IntraVox doorontwikkeling/onderzoek-issue-112-acl-divergentie.md`
+Background, measurements and the reproduction:
+`voxcloud-business/docs/IntraVox doorontwikkeling/onderzoek-issue-112-acl-divergentie.md`
 
 ---
 
