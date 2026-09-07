@@ -48,6 +48,70 @@ show. Two things must not be skipped.
 
 ---
 
+## 0c. 2.7.1 — Team folder ACL fixes (#112), still to do
+
+These fixes are merged and verified, but the release itself is **not finished**.
+Work through this section before uploading, then delete it once 2.7.1 is out.
+
+### Must happen before upload
+
+- [ ] **Rebuild the frontend on the release commit.** The app version is stamped
+      into the JS bundles and the cache-buster is `md5(appVersion)`, so a bundle
+      built at 2.7.0 keeps serving stale assets after the bump.
+      ```bash
+      npm ci && npm run build
+      ```
+- [ ] **Verify on dev at 2.7.0-or-later code.** The #112 fixes were verified on
+      nc-dev while it ran 2.6.3.2 (the three affected code paths were confirmed
+      identical). That is enough for the diagnosis, not for the release.
+      Re-run the reproduction on the real release build:
+      ```bash
+      NO_AUTO_BUMP=1 ./deploy.sh dev
+      ```
+- [ ] **Re-run the ACL reproduction** (the scenario from #112), because nothing
+      in the automated suite covers a live groupfolder:
+      1. `occ groupfolders:permissions <id> --enable`
+      2. two users in *one* group, one denied read on a page folder
+      3. clear the IntraVox caches, then load the tree as each user **in both
+         orders** — visibility must be identical either way and must match
+         `occ groupfolders:permissions <id> <path> -u <user> --test`
+      4. deny read on `<lang>/navigation.json` for one user: the menu must be
+         empty for them and the Edit button gone
+      5. `occ groupfolders:permissions <id> --disable` and confirm nothing
+         changed for a normal (non-ACL) installation
+      6. **restore the instance**: delete the test users, group, pages and ACL
+         rules, and put Advanced Permissions back the way you found it
+- [ ] **Run the unit suite** and compare against the baseline — three failures
+      are pre-existing (OpenAPI spec tests), so the count must be exactly
+      `Errors: 2, Failures: 1` and no more:
+      ```bash
+      ./vendor/bin/phpunit --configuration phpunit.xml --testsuite Unit
+      ```
+
+### After the App Store upload is confirmed
+
+- [ ] **Reply on [#112](https://github.com/nextcloud/IntraVox/issues/112)** that
+      it is fixed in 2.7.1 — only once the upload is actually live, never before.
+      Mention the two behaviours that change for the reporter: the menu no longer
+      appears past a deny, and tree visibility no longer depends on which
+      colleague loaded the page first.
+- [ ] **Take `0. Needs triage` off the issue** and close it.
+
+### Deliberately NOT in this release
+
+- [ ] `PermissionService::applyAclRules()` still reimplements groupfolders' ACL
+      evaluation in raw SQL against `group_folders_acl`. It ignores
+      `mapping_type = 'circle'` entirely (so ACLs on a Team are invisible to it),
+      applies group rules in arbitrary order, and resolves storage ids through
+      hardcoded `LIKE` patterns. Measured divergence on dev: it reported
+      permissions `7` on a file where the native layer reported `3`.
+      **This is left for the PageService/PermissionService refactor**, since that
+      touches the same code. Do not ship a partial fix for it in a patch release.
+      Background and measurements:
+      `voxcloud-business/docs/IntraVox doorontwikkeling/onderzoek-issue-112-acl-divergentie.md`
+
+---
+
 ## 1. Code Quality & Security
 
 - [ ] Remove all debug `console.log()` statements from JavaScript (`src/`)

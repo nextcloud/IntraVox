@@ -6,6 +6,40 @@ IntraVox is a Nextcloud intranet page builder.
 
 ## [Unreleased]
 
+## [2.7.1] - 2026-09-07 — Team folder ACLs are honoured where they were not
+
+### Fixed
+
+- **Navigation and footer no longer served past an explicit ACL deny.**
+  ([#112](https://github.com/nextcloud/IntraVox/issues/112)) IntraVox reads
+  `navigation.json` and `footer.json` through the user's own view and falls back
+  to a system-context read when that fails — a department-only member has no
+  read right on the language root and must still get a menu. An explicit deny on
+  the *file* arrived as the same failure, so the fallback served exactly what the
+  administrator had forbidden, page titles included. The fallback is now limited
+  to the case it exists for: if a user can reach the language folder, a file they
+  cannot see there is a deliberate deny and stays denied. The check fails open, so
+  an unexpected error can never blank out everyone's menu.
+
+- **The Edit button no longer appears for a navigation or footer nobody may
+  save.** ([#112](https://github.com/nextcloud/IntraVox/issues/112)) The check
+  asked whether the language *folder* was writable, while saving writes
+  `navigation.json`; an ACL denying just that file left an Edit affordance whose
+  save then failed with a permission error. It now gates on the file — the same
+  correction pages received in
+  [#70](https://github.com/nextcloud/IntraVox/issues/70).
+
+- **Pages no longer stay invisible for users who are allowed to read them.**
+  ([#112](https://github.com/nextcloud/IntraVox/issues/112)) The page tree is
+  cached per group set, which assumes group members see the same content. With
+  Advanced Permissions that does not hold: rights differ per user *within* a
+  group, so whoever loaded a page first decided what the rest of their group saw
+  for the next five minutes. Cache entries are now scoped to the user whenever
+  ACLs are enabled; installations without ACLs keep the shared, cheaper key and
+  see no change. The News widget draws from the same pages and got the same
+  treatment.
+
+
 ## [2.7.0] - 2026-09-05 — Filters that can exclude, and a News filter that stopped returning 500
 
 ### Changed
