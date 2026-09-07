@@ -73,21 +73,14 @@ class PageHomepageResolutionTest extends TestCase {
         $nl = $this->makeFolder('/IntraVox/nl', $children);
         $base = $this->makeFolder('/IntraVox', ['nl' => $nl]);
 
-        $svc = new class($nl, $base) extends PageService {
-            private Folder $langFolder;
-            private Folder $baseFolder;
-            public function __construct(Folder $langFolder, Folder $baseFolder) {
-                $this->langFolder = $langFolder;
-                $this->baseFolder = $baseFolder;
-            }
-            protected function getLanguageFolder() {
-                return $this->langFolder;
-            }
-            protected function getReadLanguageFolder(): Folder {
-                return $this->langFolder;
-            }
-            protected function getIntraVoxFolder() {
-                return $this->baseFolder;
+        // getHomepageUniqueId resolves its folder purely through the injected
+        // FolderContext (languageFolderByCode('nl') + the #75 effective-language
+        // probe over the base folder), so a fakeFolderContext replaces the old
+        // triple-seam override. userLanguage/primaryLanguage 'nl' mirror the config
+        // + languageService this fixture wired; the real-content probe reads the
+        // same nl/home.json.
+        $svc = new class extends PageService {
+            public function __construct() {
             }
             public function clearCache(): void {
             }
@@ -110,6 +103,11 @@ class PageHomepageResolutionTest extends TestCase {
             'logger' => $this->createMock(\Psr\Log\LoggerInterface::class),
             'languageService' => $languageService,
             'homepageService' => $homepageService,
+            'folderContext' => $this->fakeFolderContext(
+                intraVox: $base,
+                userLanguage: 'nl',
+                primaryLanguage: 'nl'
+            ),
         ];
         $this->injectPageServiceDependencies($svc, $explicit);
         return $svc;

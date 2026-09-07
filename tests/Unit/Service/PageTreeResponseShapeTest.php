@@ -6,7 +6,6 @@ namespace OCA\IntraVox\Tests\Unit\Service;
 use OCA\IntraVox\Service\Cache\PageCacheService;
 use OCA\IntraVox\Service\PageService;
 use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageService;
-use OCP\Files\Folder;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -68,22 +67,21 @@ class PageTreeResponseShapeTest extends TestCase {
         $svc = new class extends PageService {
             public function __construct() {
             }
-            // refreshTreePermissions resolves getFolderPermissions via the root;
-            // let it degrade so the cached permissions survive (the quirk we pin).
-            protected function getIntraVoxFolder(): Folder {
-                throw new \RuntimeException('no root in this fixture');
-            }
-            protected function getLanguageFolder(): Folder {
-                throw new \RuntimeException('not needed for a cache hit');
-            }
         };
 
         // GroupContextService is final; the harness builds the real one via
         // doubleOrBuild. Its group hash only forms the cache key, which is
         // irrelevant here because getTree() is stubbed to always return the blob.
+        //
+        // getPageTree resolves its folder through the injected FolderContext
+        // (languageFolderByCode / effectiveLanguage); with language 'en' given and
+        // the cache hitting, neither is reached. A fakeFolderContext with no folder
+        // wired reproduces the old "must not resolve" guards exactly — its intraVox
+        // closure throws if anything on the hit path tried to touch it.
         $this->injectPageServiceDependencies($svc, [
             'cache' => $cache,
             'logger' => $this->createMock(LoggerInterface::class),
+            'folderContext' => $this->fakeFolderContext(),
         ]);
 
         return $svc;
