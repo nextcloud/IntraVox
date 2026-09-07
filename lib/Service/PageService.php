@@ -90,6 +90,8 @@ class PageService {
     private ?\OCA\IntraVox\Service\Write\PageWriteService $writeService = null;
     /** Lazily-built tree-structure service (god-class dissolution — STRUCTURE domain). */
     private ?\OCA\IntraVox\Service\Structure\PageStructureService $structureService = null;
+    /** Lazily-built folder/location substrate (clean-target step 1; shipped unused). */
+    private ?\OCA\IntraVox\Service\Folder\FolderContext $folderContext = null;
     private LoggerInterface $logger;
     private IEventDispatcher $eventDispatcher;
     private PublicationSettingsService $publicationSettings;
@@ -458,6 +460,26 @@ class PageService {
             $this->idUtils,
             $this->pageIndexService,
             $this->logger
+        );
+    }
+
+    /**
+     * Lazy seam for the folder/location substrate (clean-target step 1). Built
+     * from the same deps the seams already use, with the #75 real-content probe
+     * (page-lookup-bound) injected as a closure. SHIPPED UNUSED: nothing calls
+     * this yet — it exists so FolderContextSeamTest can prove the substrate is
+     * byte-extractable before any caller depends on it. Nullable-default AND in
+     * LAZY_SEAM_SERVICES so the harness auto-fill leaves it (and the 27
+     * subclasses) untouched until they opt in.
+     */
+    private function folders(): \OCA\IntraVox\Service\Folder\FolderContext {
+        return $this->folderContext ??= new \OCA\IntraVox\Service\Folder\FolderContext(
+            fn() => $this->getIntraVoxFolder(),
+            fn(): string => $this->getUserLanguage(),
+            fn(): string => $this->languageService->getPrimaryLanguage(),
+            fn(\OCP\Files\Folder $folder): bool => $this->languageFolderHasRealContent($folder),
+            $this->language(),
+            $this->locator()
         );
     }
 
@@ -1933,7 +1955,10 @@ class PageService {
      * Get relative path from IntraVox root folder
      */
     private function getRelativePathFromRoot($folder): string {
-        return $this->locator()->relativePathFromRoot($this->getIntraVoxFolder(), $folder);
+        // First consumer of the FolderContext substrate (clean-target step 1).
+        // Byte-identical: relativePathFromRoot resolves the root via the
+        // getIntraVoxFolder seam closure, so test-subclass overrides still flow.
+        return $this->folders()->relativePathFromRoot($folder);
     }
 
     /**
