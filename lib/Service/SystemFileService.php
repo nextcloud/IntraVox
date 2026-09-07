@@ -150,6 +150,74 @@ class SystemFileService {
     }
 
     /**
+     * Whether the ACL-bypassing fallback is legitimate for this user and file.
+     *
+     * getSharedResource() reads in system context and deliberately ignores
+     * user ACLs, so that a user with department-only access (no read on the
+     * language root) still gets a menu and footer. That fallback is correct
+     * for exactly one situation: the user cannot reach the PARENT FOLDER.
+     *
+     * It is wrong for a second situation that used to arrive as the very same
+     * exception: an administrator put an explicit deny on the FILE itself.
+     * Honouring the fallback there serves content the admin just forbade
+     * (issue #112) — navigation.json stayed visible, with its page titles,
+     * for a user configured to have no access to it at all.
+     *
+     * The two are told apart from the USER's view, not the system view: if the
+     * user can list the language folder, they were not shut out at the folder
+     * level, so a file they cannot read there is a deliberate deny and must
+     * stay denied. Only when the language folder itself is unreachable does
+     * the department-only case apply and the fallback stand.
+     *
+     * Fails OPEN on an unexpected error, which preserves the pre-existing
+     * behaviour for every case this check was not written for: navigation is
+     * infrastructure, and a broken check must not blank out everyone's menu.
+     *
+     * @param string $userId   The user the request is for.
+     * @param string $language Language code (already validated by the caller).
+     * @param string $filename One of ALLOWED_SHARED_FILES.
+     * @return bool True when the system-context read may proceed.
+     */
+    public function mayUseSystemFallback(string $userId, string $language, string $filename): bool {
+        if (!in_array($filename, self::ALLOWED_SHARED_FILES, true)) {
+            return false;
+        }
+
+        try {
+            $userFolder = $this->rootFolder->getUserFolder($userId);
+            $languageFolder = $userFolder->get('IntraVox/' . $language);
+
+            // The user CAN see the language folder. Whether the file is
+            // missing or denied, the department-only rationale does not
+            // apply here, so the fallback must not fire.
+            if (!$languageFolder->nodeExists($filename)) {
+                $this->logger->debug('[SystemFileService] Denying system fallback: user can read the language folder', [
+                    'user' => $userId,
+                    'language' => $language,
+                    'filename' => $filename,
+                ]);
+                return false;
+            }
+
+            // Present and readable through the user's own view: the caller
+            // never needed the fallback, and does not need it now.
+            return false;
+        } catch (NotFoundException $e) {
+            // Language folder unreachable for this user — the department-only
+            // case the fallback exists for.
+            return true;
+        } catch (\Throwable $e) {
+            $this->logger->warning('[SystemFileService] Fallback eligibility check failed; allowing fallback', [
+                'user' => $userId,
+                'language' => $language,
+                'filename' => $filename,
+                'error' => $e->getMessage(),
+            ]);
+            return true;
+        }
+    }
+
+    /**
      * Get navigation.json for a language using system context.
      *
      * @param string $language Language code

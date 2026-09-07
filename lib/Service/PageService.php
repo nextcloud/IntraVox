@@ -4589,7 +4589,14 @@ class PageService {
         // filter from that cached blob (issue #45). Caching subtrees
         // separately would multiply key cardinality by the number of
         // candidate roots without saving work.
-        $cacheKey = $this->groupContext->getGroupHash() . '_' . $lang;
+        // Group-shared by default; per-user once Advanced Permissions are on,
+        // because then two users in the same groups can legitimately see
+        // different trees and a group-keyed entry serves one to the other
+        // (issue #112). getCacheDiscriminator() returns '' when ACLs are off,
+        // so the cheap shared key is unchanged for those installations.
+        $cacheKey = $this->groupContext->getGroupHash()
+            . $this->permissionService->getCacheDiscriminator()
+            . '_' . $lang;
         $distributedCacheKey = 'tree_' . $cacheKey;
         $now = time();
 
@@ -5308,7 +5315,11 @@ class PageService {
                 $sourcePath, $filters, $filterOperator, $limit, $sortBy,
                 $sortOrder, $sourcePageId, $filterPublished,
             ]));
+            // Same ACL scoping as the page tree: news items are drawn from
+            // pages the user may read, so a group-keyed entry would leak one
+            // user's result set to another under Advanced Permissions (#112).
             $newsCacheKey = 'news_' . $language . '_' . $this->groupContext->getGroupHash()
+                . $this->permissionService->getCacheDiscriminator()
                 . '_v' . $newsVersion . '_' . $paramHash;
             $cached = $this->cache()->getDistributed($newsCacheKey);
             if (is_string($cached)) {

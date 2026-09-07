@@ -90,7 +90,20 @@ class NavigationService {
         }
 
         // Fallback: Use SystemFileService to read navigation via system context
-        // This allows users with department-level access to still see the navigation
+        // This allows users with department-level access to still see the navigation.
+        //
+        // Gated: the fallback bypasses ACLs by design, so it may only run for
+        // the case it exists for -- a user who cannot reach the language root
+        // at all. An explicit deny on navigation.json itself used to arrive as
+        // the same exception and was silently overridden (issue #112).
+        if ($this->userId !== ''
+            && !$this->systemFileService->mayUseSystemFallback($this->userId, $lang, 'navigation.json')) {
+            return [
+                'type' => 'dropdown',
+                'items' => []
+            ];
+        }
+
         try {
             $navigation = $this->systemFileService->getNavigation($lang);
 
@@ -336,9 +349,32 @@ class NavigationService {
             $lang = $this->getCurrentLanguage();
             $languageFolder = $this->getLanguageFolder($lang);
 
-            // Check if the language folder is writable for this user
-            // This respects Nextcloud's ACLs, group permissions, and file locks
-            return $languageFolder->isUpdateable();
+            // Gate on the FILE when it exists, not on the folder. Editing the
+            // navigation writes navigation.json; an ACL can deny that single
+            // file while the language folder stays writable, and a
+            // folder-derived answer then showed an Edit button whose save
+            // fails with NotPermittedException (issue #112). Same reasoning as
+            // permissionsForPage() for pages (issue #70).
+            //
+            // Falls back to the folder only when the file genuinely does not
+            // exist yet: creating it is a folder-level operation.
+            //
+            // Careful: under an ACL deny nodeExists() also returns false --
+            // the file is hidden from this user's view, not absent. Treating
+            // that as "not created yet" would hand back isCreatable() and put
+            // the Edit button straight back. SystemFileService reads in system
+            // context and therefore sees the file for what it is, so it settles
+            // which of the two cases this is.
+            if ($languageFolder->nodeExists('navigation.json')) {
+                return $languageFolder->get('navigation.json')->isUpdateable();
+            }
+
+            if ($this->systemFileService->getNavigation($lang) !== null) {
+                // Exists, but this user cannot see it: a deliberate deny.
+                return false;
+            }
+
+            return $languageFolder->isCreatable();
         } catch (\Exception $e) {
             return false;
         }

@@ -55,9 +55,15 @@ class FooterController extends Controller {
 
             $footer = $this->footerService->getFooter();
 
-            // Add permissions to response
+            // Add permissions to response.
+            //
+            // canEdit stays with FooterService: it gates on footer.json itself,
+            // where $permissions describes the IntraVox ROOT folder. An ACL can
+            // deny the file while the root stays writable, and overwriting the
+            // service's answer here reintroduced the Edit button whose save then
+            // fails (issue #112).
             $footer['permissions'] = $permissions;
-            $footer['canEdit'] = $permissions['canWrite'];
+            $footer['canEdit'] = $footer['canEdit'] ?? $permissions['canWrite'];
 
             // Same as navigation: the ETag was sent but never compared against
             // If-None-Match, so the 304 branch could not happen.
