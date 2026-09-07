@@ -8,11 +8,13 @@ use OCA\IntraVox\Event\PageDeletedEvent;
 use OCA\IntraVox\Exception\ForbiddenException;
 use OCA\IntraVox\Exception\PageConflictException;
 use OCA\IntraVox\Exception\PageNotFoundException;
+use OCA\IntraVox\Service\LanguageService;
 use OCA\IntraVox\Service\PageIndexService;
 use OCA\IntraVox\Service\Sanitize\VideoOriginalUrlPreserver;
 use OCA\IntraVox\Service\Util\PageIdUtils;
 use OCA\IntraVox\Service\Version\PageVersionService;
 use OCP\EventDispatcher\IEventDispatcher;
+use OCP\Files\NotFoundException;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
 
@@ -36,6 +38,7 @@ final class PageWriteService {
         private IUserSession $userSession,
         private PageVersionService $pageVersionService,
         private PageIndexService $pageIndexService,
+        private LanguageService $languageService,
     ) {
     }
 
@@ -311,5 +314,367 @@ final class PageWriteService {
             $validatedData,
             ['baseVersion' => $file->getMTime()]
         );
+    }
+
+    /**
+     * Create a page at a specific path with parent support.
+     *
+     * The protected folder seams stay on PageService; the seam-bound folder
+     * concerns are passed in as $this-bound closures. The write-exclusive helpers
+     * (resolveExistingFolderPath, slugTakenIn, scanPageFolder) co-locate here as
+     * private methods — that is what dissolves the old 7-closure knot: they become
+     * in-class calls again instead of closures. getOrCreateFolderPath (reflection-
+     * anchored) and validateDepth (shared with movePage) stay on PageService and
+     * come in as closures.
+     *
+     * @param \Closure(): \OCP\Files\Folder $readLanguageFolder getReadLanguageFolder seam
+     * @param \Closure(string): \OCP\Files\Folder $getOrCreateFolderPath
+     * @param \Closure(string): void $validateDepth
+     * @param \Closure(): string $userLanguage
+     * @param \Closure(\OCP\Files\Folder): ?string $languageOfFolder
+     * @param \Closure(\OCP\Files\Node): void $createMediaFolderMarker
+     * @param \Closure(string, \OCP\Files\Folder): void $cachePageFolder setPageFolder
+     */
+    public function createPageAtPath(
+        string $pageId,
+        array $data,
+        ?string $parentPath,
+        \Closure $readLanguageFolder,
+        \Closure $getOrCreateFolderPath,
+        \Closure $validateDepth,
+        \Closure $userLanguage,
+        \Closure $languageOfFolder,
+        \Closure $createMediaFolderMarker,
+        \Closure $cachePageFolder
+    ): array {
+        $language = $userLanguage();
+
+        // Determine target folder
+        if ($parentPath) {
+            // Validate depth before creating
+            $validateDepth($parentPath);
+
+            // Get or create parent folder path
+            $targetFolder = $getOrCreateFolderPath($parentPath);
+        } else {
+            // No parent = create at the root of the language being VIEWED, so a
+            // new page lands in the structure the author is actually working in
+            // rather than in their profile language. getReadLanguageFolder()
+            // resolves own language → recommended → en, and falls back to the
+            // author's own folder when nothing else resolves.
+            $targetFolder = $readLanguageFolder();
+        }
+
+        // Preflight: creating a page writes a file (and a folder) into $targetFolder.
+        // A read-only GroupFolder member must get a clean 403 here instead of a
+        // filesystem-level 400 (issue #70).
+        if (!$targetFolder->isCreatable()) {
+            throw new ForbiddenException('You do not have permission to create a page here');
+        }
+
+        // The folder whose path the index must store: the one holding the page
+        // JSON. For home that is the language root itself; for every other page
+        // it is the page's OWN folder, set in the else-branch below. Indexing
+        // the PARENT here made every freshly created page unresolvable via the
+        // index (the lookup derives candidates from this path and the verify
+        // step then rejects them), silently demoting each first lookup to the
+        // full scan until the next save or reindex repaired the row.
+        $indexFolder = $targetFolder;
+
+        // Special handling for home page (always at root)
+        if ($pageId === 'home') {
+            $file = $targetFolder->newFile('home.json');
+            $file->putContent(json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+
+            // Create _media folder for home if it doesn't exist
+            try {
+                $mediaFolder = $targetFolder->get('_media');
+                $createMediaFolderMarker($mediaFolder);
+            } catch (NotFoundException $e) {
+                $mediaFolder = $targetFolder->newFolder('_media');
+                $createMediaFolderMarker($mediaFolder);
+            }
+
+            $this->scanPageFolder($targetFolder);
+        } else {
+            // Create folder for page
+            try {
+                $pageFolder = $targetFolder->newFolder($pageId);
+            } catch (\Exception $e) {
+                throw new \InvalidArgumentException('Failed to create page folder: ' . $e->getMessage());
+            }
+
+            // Create {pageId}.json inside the folder
+            try {
+                $file = $pageFolder->newFile($pageId . '.json');
+                $file->putContent(json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+            } catch (\Exception $e) {
+                throw new \InvalidArgumentException('Failed to create page file: ' . $e->getMessage());
+            }
+
+            // Create _media subfolder
+            try {
+                $mediaFolder = $pageFolder->newFolder('_media');
+                // Add a .nomedia file to indicate this is a special folder
+                $createMediaFolderMarker($mediaFolder);
+            } catch (\Exception $e) {
+                // Media folder might already exist, that's okay
+                try {
+                    $mediaFolder = $pageFolder->get('_media');
+                    $createMediaFolderMarker($mediaFolder);
+                } catch (\Exception $ex) {
+                    // Couldn't get media folder
+                }
+            }
+
+            $this->scanPageFolder($pageFolder);
+
+            // Cache the folder reference for immediate reuse (e.g., when copying media from template)
+            if (isset($data['uniqueId'])) {
+                $cachePageFolder($data['uniqueId'], $pageFolder);
+            }
+
+            // Every non-home page is indexed under its OWN folder.
+            $indexFolder = $pageFolder;
+        }
+
+        // Update page metadata index (non-blocking — page was already saved).
+        // Index the language the page actually LANDED in, which is not always
+        // the author's own (a sub-page follows its parent's language).
+        //
+        // The stored path is the ABSOLUTE path of the folder holding the page
+        // JSON, matching updatePage() and rebuildIndex(). This used to store a
+        // relative parent path here and an absolute one everywhere else, so the
+        // same table held two incompatible path shapes — which breaks both the
+        // index lookup (it resolves the stored path) and repathSubtree() (it
+        // matches on a path prefix).
+        try {
+            $language = $languageOfFolder($indexFolder) ?? $userLanguage();
+            $this->pageIndexService->indexPage(
+                $data,
+                $language,
+                $indexFolder->getPath(),
+                $file->getId(),
+                $indexFolder->getId()
+            );
+        } catch (\Exception $e) {
+            $this->logger->warning('Failed to index new page', ['error' => $e->getMessage()]);
+        }
+
+        // Return data with id for frontend (id is derived from folder name)
+        return array_merge(['id' => $pageId], $data);
+    }
+
+    /**
+     * Resolve an EXISTING folder path for the slug-dedup scan (no create). Write-
+     * exclusive helper co-located from PageService. Uses the seams via closures.
+     *
+     * @param \Closure(): \OCP\Files\Folder $readLanguageFolder
+     * @param \Closure(): \OCP\Files\Folder $intraVoxFolder
+     * @param \Closure(): \OCP\Files\Folder $languageFolder
+     */
+    private function resolveExistingFolderPath(
+        ?string $parentPath,
+        \Closure $readLanguageFolder,
+        \Closure $intraVoxFolder,
+        \Closure $languageFolder
+    ): ?\OCP\Files\Folder {
+        try {
+            if ($parentPath === null || trim($parentPath, '/') === '') {
+                // No parent = the language root createPageAtPath() falls back to.
+                return $readLanguageFolder();
+            }
+
+            $pathParts = explode('/', trim($parentPath, '/'));
+
+            $currentFolder = null;
+            // explode() always yields >=1 element, so the old `count($pathParts) > 0`
+            // guard was always true (dead) — dropped; $pathParts[0] always exists.
+            if ($this->languageService->isLanguageAvailable($pathParts[0])) {
+                $langCode = array_shift($pathParts);
+                try {
+                    $candidate = $intraVoxFolder()->get($langCode);
+                    if ($candidate instanceof \OCP\Files\Folder) {
+                        $currentFolder = $candidate;
+                    }
+                } catch (NotFoundException $e) {
+                    // No folder for that language — fall through to the author's own.
+                }
+            }
+            if ($currentFolder === null) {
+                $currentFolder = $languageFolder();
+            }
+
+            foreach ($pathParts as $folderName) {
+                try {
+                    $next = $currentFolder->get($folderName);
+                } catch (NotFoundException $e) {
+                    return null;
+                }
+                if (!($next instanceof \OCP\Files\Folder)
+                    || $next->getType() !== \OCP\Files\FileInfo::TYPE_FOLDER) {
+                    // createPageAtPath() will raise its own error for this.
+                    return null;
+                }
+                $currentFolder = $next;
+            }
+
+            return $currentFolder;
+        } catch (\Throwable $e) {
+            // A destination we cannot resolve simply gets no de-duplication;
+            // failing the create over it would be worse than a suffix-free name.
+            return null;
+        }
+    }
+
+    /**
+     * Create a new page (validation, slug-dedup, uniqueId + translation-group
+     * minting, then the write via createPageAtPath). PageService keeps a thin
+     * public delegator; the seam-bound folder concerns come in as closures.
+     *
+     * @param \Closure(array): array $validateAndSanitizePage
+     * @param \Closure(?string): void $clearCache
+     * @param \Closure(): \OCP\Files\Folder $readLanguageFolder
+     * @param \Closure(): \OCP\Files\Folder $intraVoxFolder
+     * @param \Closure(): \OCP\Files\Folder $languageFolder
+     * @param \Closure(string): \OCP\Files\Folder $getOrCreateFolderPath
+     * @param \Closure(string): void $validateDepth
+     * @param \Closure(): string $userLanguage
+     * @param \Closure(\OCP\Files\Folder): ?string $languageOfFolder
+     * @param \Closure(\OCP\Files\Node): void $createMediaFolderMarker
+     * @param \Closure(string, \OCP\Files\Folder): void $cachePageFolder
+     */
+    public function createPage(
+        array $data,
+        ?string $parentPath,
+        \Closure $validateAndSanitizePage,
+        \Closure $clearCache,
+        \Closure $readLanguageFolder,
+        \Closure $intraVoxFolder,
+        \Closure $languageFolder,
+        \Closure $getOrCreateFolderPath,
+        \Closure $validateDepth,
+        \Closure $userLanguage,
+        \Closure $languageOfFolder,
+        \Closure $createMediaFolderMarker,
+        \Closure $cachePageFolder
+    ): array {
+        if (!isset($data['id']) || !isset($data['title'])) {
+            throw new \InvalidArgumentException('Missing required fields: id, title');
+        }
+
+        $data['id'] = $this->idUtils->sanitizeId($data['id']);
+
+        // If the slug is taken by a SIBLING at the destination, append a number.
+        // Resolved once, outside the loop: nodeExists() is cheap, walking the
+        // path is not.
+        //
+        // 'home' is exempt: createPageAtPath() writes it as home.json at the
+        // language root with no folder of its own, so a 'home-2' would only
+        // create a page folder the homepage resolver never looks at.
+        if ($data['id'] !== 'home') {
+            $targetFolder = $this->resolveExistingFolderPath($parentPath, $readLanguageFolder, $intraVoxFolder, $languageFolder);
+            $originalId = $data['id'];
+            $counter = 2;
+            while ($this->slugTakenIn($targetFolder, $data['id'])) {
+                $data['id'] = $originalId . '-' . $counter;
+                $counter++;
+            }
+        }
+
+        // Generate uniqueId if not provided
+        if (!isset($data['uniqueId'])) {
+            $data['uniqueId'] = 'page-' . $this->idUtils->generateUUID();
+        }
+
+        // Every page belongs to a translation group, even when it is the only
+        // member. Giving each new page its own group from the start means
+        // "linked" and "not linked" are the same shape — there is no special
+        // case for an unlinked page, and linking later is a value change rather
+        // than a structural one. A caller that supplies a group (adding a
+        // translation of an existing page) keeps it.
+        if (empty($data['translationGroup'])) {
+            $data['translationGroup'] = 'tg-' . $this->idUtils->generateUUID();
+        }
+
+        $validatedData = $validateAndSanitizePage($data);
+
+        // Use the createPageAtPath helper - pass id separately (not stored in JSON)
+        $created = $this->createPageAtPath(
+            $data['id'],
+            $validatedData,
+            $parentPath,
+            $readLanguageFolder,
+            $getOrCreateFolderPath,
+            $validateDepth,
+            $userLanguage,
+            $languageOfFolder,
+            $createMediaFolderMarker,
+            $cachePageFolder
+        );
+
+        // Flush all cached page-tree + permission map entries so subsequent
+        // reads (loadPages, getPageTree) immediately see the new page.
+        // Historically only updatePage/deletePage did this; createPage
+        // relied on the static cache's TTL to age out, which became
+        // visible as "create page from template renders blank" once PR-3
+        // shifted to a 5-minute distributed tree cache.
+        $clearCache(null);
+
+        return $created;
+    }
+
+    /** True when $id is already a sibling in $parent (folder or loose json). */
+    private function slugTakenIn(?\OCP\Files\Folder $parent, string $id): bool {
+        if ($parent === null) {
+            return false;
+        }
+        return $parent->nodeExists($id) || $parent->nodeExists($id . '.json');
+    }
+
+    /**
+     * Scan a page folder to make it immediately visible in the Files app.
+     * Uses Nextcloud's Scanner to add the folder to the file cache.
+     */
+    private function scanPageFolder($folder): void {
+        try {
+            // There used to be a groupfolders branch here that shelled out to
+            // `php /var/www/nextcloud/occ files:scan` per page and returned
+            // unconditionally. It never ran. The regex tested getPath(), which is
+            // the user-facing view (/rik/files/IntraVox/nl/page) and never
+            // contains /__groupfolders/ — that only appears in getInternalPath(),
+            // which is exactly what the code below matches on.
+            //
+            // So the fork was unreachable and the in-process scanner has been
+            // doing the work all along. Verified on dev: four page creations, zero
+            // 'Failed to scan page folder' warnings, on a container where the
+            // hardcoded /var/www/nextcloud/occ does not even exist — had the
+            // branch been live, every one of them would have logged a failure.
+            //
+            // Removing it takes out a hardcoded occ path, a hardcoded 'IntraVox'
+            // mount name, and a synchronous process fork from the request path,
+            // none of which were earning anything.
+            // Fallback for non-groupfolder paths (shouldn't happen in IntraVox)
+            $storage = $folder->getStorage();
+            $scanner = $storage->getScanner();
+            $cache = $storage->getCache();
+
+            $internalPath = $folder->getInternalPath();
+            if (preg_match('#__groupfolders/\d+/(.+)$#', $internalPath, $matches)) {
+                $scanPath = $matches[1];
+            } else {
+                $scanPath = $internalPath;
+            }
+
+            $scanner->scan($scanPath, true);
+            $cache->correctFolderSize($scanPath, ['recursive' => true]);
+
+        } catch (\Exception $e) {
+            // Log but don't throw - if scanning fails, the page is still created
+            $this->logger->error('Failed to scan page folder', [
+                'path' => $folder->getPath(),
+                'error' => $e->getMessage()
+            ]);
+        }
     }
 }

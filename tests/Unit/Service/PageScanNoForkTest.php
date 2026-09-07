@@ -29,7 +29,9 @@ use PHPUnit\Framework\TestCase;
  */
 class PageScanNoForkTest extends TestCase {
     private function source(): string {
-        return file_get_contents(__DIR__ . '/../../../lib/Service/PageService.php');
+        // scanPageFolder moved to Write/PageWriteService when the create body was
+        // carved into the AUTHOR domain (god-class dissolution).
+        return file_get_contents(__DIR__ . '/../../../lib/Service/Write/PageWriteService.php');
     }
 
     /**
