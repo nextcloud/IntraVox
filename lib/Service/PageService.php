@@ -399,7 +399,7 @@ class PageService {
             $this->pathHelper,
             $this->permissionService,
             $this->metaVox(),
-            fn($folder): string => $this->getRelativePathFromRoot($folder),
+            $this->folders(),
             fn(?string $group, ?string $uniqueId): array => $this->resolveTranslations($group, $uniqueId),
             fn(\OCP\Files\Node $node): ?int => $this->groupfolderIdForNode($node)
         );

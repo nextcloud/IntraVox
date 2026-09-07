@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace OCA\IntraVox\Service\Path;
 
+use OCA\IntraVox\Service\Folder\FolderContext;
 use OCA\IntraVox\Service\PermissionService;
 use OCA\IntraVox\Service\Publication\MetaVoxGateway;
 
@@ -19,15 +20,14 @@ use OCA\IntraVox\Service\Publication\MetaVoxGateway;
  * boundary) — this is the fresh-build enrichment shared by getPage,
  * findPageByFolderPath and getPageMetadata.
  *
- * Three PageService concerns it leans on stay on PageService and are passed in as
- * closures: getRelativePathFromRoot (a folder seam), and resolveTranslations and
- * groupfolderIdForNode (both also used by the #70 block, so they must not be
- * duplicated here). PageMetadataTest and the getPage suites pin the derived
- * fields.
+ * The folder-root-relative path comes from the injected FolderContext (the
+ * substrate). Two PageService concerns it still leans on stay on PageService and
+ * are passed in as closures: resolveTranslations and groupfolderIdForNode (both
+ * also used by the #70 block, so they must not be duplicated here).
+ * PageMetadataTest and the getPage suites pin the derived fields.
  */
 final class PageDataEnricher {
     /**
-     * @param \Closure(\OCP\Files\Folder): string $relativePathFromRoot
      * @param \Closure(?string, ?string): array $resolveTranslations (group, uniqueId) -> list
      * @param \Closure(\OCP\Files\Node): ?int $groupfolderIdForNode
      */
@@ -35,7 +35,7 @@ final class PageDataEnricher {
         private PagePathHelper $pathHelper,
         private PermissionService $permissionService,
         private MetaVoxGateway $metaVox,
-        private \Closure $relativePathFromRoot,
+        private FolderContext $folders,
         private \Closure $resolveTranslations,
         private \Closure $groupfolderIdForNode,
     ) {
@@ -47,7 +47,7 @@ final class PageDataEnricher {
      */
     public function enrich(array $page, $folder, ?\OCP\Files\Node $file = null): array {
         // Get relative path from IntraVox root
-        $page['path'] = ($this->relativePathFromRoot)($folder);
+        $page['path'] = $this->folders->relativePathFromRoot($folder);
 
         // Calculate depth
         $page['depth'] = $this->pathHelper->calculateDepth($page['path']);
