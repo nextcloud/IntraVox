@@ -1085,41 +1085,11 @@ class PageService {
      * @return array Permissions object with canRead, canWrite, canCreate, canDelete, canShare
      */
     public function getFolderPermissions(string $relativePath): array {
-        try {
-            if (!$this->userId) {
-                return [
-                    'canRead' => false,
-                    'canWrite' => false,
-                    'canCreate' => false,
-                    'canDelete' => false,
-                    'canShare' => false,
-                    'raw' => 0
-                ];
-            }
-
-            // Get user's folder (this respects GroupFolder ACL)
-            $userFolder = $this->rootFolder->getUserFolder($this->userId);
-
-            // Get IntraVox folder from user's perspective (mounted GroupFolder)
-            $intraVoxPath = 'IntraVox';
-            if (!empty($relativePath)) {
-                $intraVoxPath .= '/' . ltrim($relativePath, '/');
-            }
-
-            $folder = $userFolder->get($intraVoxPath);
-            return $this->permissionService->permissionsFromNode($folder);
-        } catch (\Exception $e) {
-            // If folder doesn't exist, return no permissions
-            $this->logger->debug('getFolderPermissions failed for path: ' . $relativePath . ' - ' . $e->getMessage());
-            return [
-                'canRead' => false,
-                'canWrite' => false,
-                'canCreate' => false,
-                'canDelete' => false,
-                'canShare' => false,
-                'raw' => 0
-            ];
-        }
+        // The permission decision moved to PermissionService (permission-shell
+        // step 1). Kept as a thin delegator for the ~12 callers + the public
+        // surface contract; refreshTreePermissions (the #70/#86 tree-COW) still
+        // reaches it here, byte-identically.
+        return $this->permissionService->getFolderPermissions($relativePath);
     }
 
     /**

@@ -619,6 +619,56 @@ class PermissionService {
     }
 
     /**
+     * Permissions for a folder path relative to the IntraVox root, resolved
+     * through the user's mounted folder view so GroupFolder ACLs apply.
+     *
+     * Moved verbatim from PageService (permission-shell step 1): the permission
+     * decision "resolve the mounted IntraVox folder and derive ACL perms" belongs
+     * with the service that owns permissionsFromNode/permissionsForPage.
+     * PageService keeps a thin delegator for its ~12 callers.
+     *
+     * @param string $relativePath e.g. "en/about" or "" for the root
+     * @return array{canRead:bool,canWrite:bool,canCreate:bool,canDelete:bool,canShare:bool,raw:int}
+     */
+    public function getFolderPermissions(string $relativePath): array {
+        try {
+            if (!$this->userId) {
+                return [
+                    'canRead' => false,
+                    'canWrite' => false,
+                    'canCreate' => false,
+                    'canDelete' => false,
+                    'canShare' => false,
+                    'raw' => 0
+                ];
+            }
+
+            // Get user's folder (this respects GroupFolder ACL)
+            $userFolder = $this->rootFolder->getUserFolder($this->userId);
+
+            // Get IntraVox folder from user's perspective (mounted GroupFolder)
+            $intraVoxPath = 'IntraVox';
+            if (!empty($relativePath)) {
+                $intraVoxPath .= '/' . ltrim($relativePath, '/');
+            }
+
+            $folder = $userFolder->get($intraVoxPath);
+            return $this->permissionsFromNode($folder);
+        } catch (\Exception $e) {
+            // If folder doesn't exist, return no permissions
+            $this->logger->debug('getFolderPermissions failed for path: ' . $relativePath . ' - ' . $e->getMessage());
+            return [
+                'canRead' => false,
+                'canWrite' => false,
+                'canCreate' => false,
+                'canDelete' => false,
+                'canShare' => false,
+                'raw' => 0
+            ];
+        }
+    }
+
+    /**
      * Permissions for a single page, where "write" is gated on the page FILE and
      * the remaining capabilities describe operations on the page FOLDER.
      *
