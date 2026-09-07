@@ -68,7 +68,12 @@ class NavigationController extends Controller {
 
             try {
                 $permissions = $this->pageService->getFolderPermissions('');
-                $canEdit = $permissions['canWrite'] ?? false;
+                // getFolderPermissions('') describes the IntraVox ROOT folder.
+                // Editing the menu writes navigation.json, which an ACL can deny
+                // on its own, so the root answer is only an upper bound -- the
+                // file-level gate in NavigationService decides (issue #112).
+                $canEdit = ($permissions['canWrite'] ?? false)
+                    && $this->navigationService->canEdit();
             } catch (\Exception $e) {
                 // User might have limited access (e.g., department-only)
                 // Navigation was already loaded via SystemFileService, so continue

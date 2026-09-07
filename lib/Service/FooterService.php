@@ -120,7 +120,21 @@ class FooterService {
         }
 
         // Fallback: Use SystemFileService to read footer via system context
-        // This allows users with department-level access to still see the footer
+        // This allows users with department-level access to still see the footer.
+        //
+        // Gated for the same reason as the navigation fallback: it bypasses
+        // ACLs by design, so an explicit deny on footer.json must not be
+        // overridden by it (issue #112).
+        $uid = $this->userSession->getUser()?->getUID();
+        if ($uid !== null
+            && !$this->systemFileService->mayUseSystemFallback($uid, $language, 'footer.json')) {
+            return [
+                'content' => '',
+                'language' => $language,
+                'canEdit' => false
+            ];
+        }
+
         try {
             $data = $this->systemFileService->getFooter($language);
 
@@ -213,9 +227,20 @@ class FooterService {
             $groupFolder = $this->getIntraVoxFolder();
             $languageFolder = $groupFolder->get($language);
 
-            // Check if the language folder is writable for this user
-            // This respects Nextcloud's ACLs, group permissions, and file locks
-            return $languageFolder->isUpdateable();
+            // Gate on the FILE when it exists, not on the folder -- an ACL can
+            // deny footer.json while the language folder stays writable, which
+            // showed an Edit affordance whose save then fails (issue #112).
+            if ($languageFolder->nodeExists('footer.json')) {
+                return $languageFolder->get('footer.json')->isUpdateable();
+            }
+
+            // An ACL deny also makes nodeExists() false, so confirm through
+            // system context before treating this as "not created yet".
+            if ($this->systemFileService->getFooter($language) !== null) {
+                return false;
+            }
+
+            return $languageFolder->isCreatable();
         } catch (\Exception $e) {
             // If we can't access the folder, user can't edit
             return false;
