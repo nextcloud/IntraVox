@@ -67,14 +67,17 @@ Work through this section before uploading, then delete it once 2.7.1 is out.
       invalidates the browser cache. Unchanged bundles need no re-emit.
       The build is still worth running: its prebuild gates are the real value
       (see the two they caught below).
-- [ ] **Verify on dev at 2.7.1 code.** The #112 fixes were verified on
+- [x] **Verify on dev at 2.7.1 code.** DONE — deployed and confirmed at 2.7.1. The #112 fixes were verified on
       nc-dev while it ran 2.6.3.2 (the three affected code paths were confirmed
       identical). That is enough for the diagnosis, not for the release.
       Re-run the reproduction on the real release build:
       ```bash
       NO_AUTO_BUMP=1 ./deploy.sh dev
       ```
-- [ ] **Re-run the ACL reproduction** (the scenario from #112), because nothing
+- [x] **Re-run the ACL reproduction** DONE on the 2.7.1 build: tree visibility,
+      menu contents and canEdit were identical in all three cache-fill orders and
+      matched `--test` in every case; with ACLs disabled both users saw everything
+      (no regression for normal installations). Instance restored afterwards. (the scenario from #112), because nothing
       in the automated suite covers a live groupfolder:
       1. `occ groupfolders:permissions <id> --enable`
       2. two users in *one* group, one denied read on a page folder
@@ -87,7 +90,9 @@ Work through this section before uploading, then delete it once 2.7.1 is out.
          changed for a normal (non-ACL) installation
       6. **restore the instance**: delete the test users, group, pages and ACL
          rules, and put Advanced Permissions back the way you found it
-- [ ] **Run the unit suite** and compare against the baseline — three failures
+- [x] **Run the unit suite** DONE — 1055 tests, `Errors: 2, Failures: 1`,
+      exactly the pre-existing OpenAPI baseline.
+      Verify again after any rebase on the refactor: and compare against the baseline — three failures
       are pre-existing (OpenAPI spec tests), so the count must be exactly
       `Errors: 2, Failures: 1` and no more:
       ```bash
