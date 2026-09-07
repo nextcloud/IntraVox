@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace OCA\IntraVox\Controller;
 
 use OCA\IntraVox\Service\NavigationService;
-use OCA\IntraVox\Service\PageService;
 use OCA\IntraVox\Service\PermissionService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -28,7 +27,6 @@ class NavigationController extends Controller {
     use HasConditionalResponse;
 
     private NavigationService $navigationService;
-    private PageService $pageService;
     private PermissionService $permissionService;
     private IL10N $l10n;
     private LoggerInterface $logger;
@@ -37,14 +35,12 @@ class NavigationController extends Controller {
         string $appName,
         IRequest $request,
         NavigationService $navigationService,
-        PageService $pageService,
         PermissionService $permissionService,
         IL10N $l10n,
         LoggerInterface $logger
     ) {
         parent::__construct($appName, $request);
         $this->navigationService = $navigationService;
-        $this->pageService = $pageService;
         $this->permissionService = $permissionService;
         $this->l10n = $l10n;
         $this->logger = $logger;
@@ -67,8 +63,9 @@ class NavigationController extends Controller {
             $permissions = ['canRead' => true, 'canWrite' => false];
 
             try {
-                $permissions = $this->pageService->getFolderPermissions('');
-                $canEdit = $permissions['canWrite'] ?? false;
+                $permissions = $this->permissionService->getFolderPermissions('');
+                // getFolderPermissions always returns a fixed shape with canWrite.
+                $canEdit = $permissions['canWrite'];
             } catch (\Exception $e) {
                 // User might have limited access (e.g., department-only)
                 // Navigation was already loaded via SystemFileService, so continue
@@ -143,7 +140,7 @@ class NavigationController extends Controller {
     public function save(): JSONResponse {
         try {
             // Check write permission on root using Nextcloud's filesystem
-            $permissions = $this->pageService->getFolderPermissions('');
+            $permissions = $this->permissionService->getFolderPermissions('');
             if (!$permissions['canWrite']) {
                 return new JSONResponse([
                     'error' => 'Permission denied: cannot edit navigation'

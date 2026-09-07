@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace OCA\IntraVox\Controller;
 
 use OCA\IntraVox\Service\FooterService;
-use OCA\IntraVox\Service\PageService;
+use OCA\IntraVox\Service\PermissionService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
@@ -23,17 +23,17 @@ class FooterController extends Controller {
     use HasConditionalResponse;
 
     private FooterService $footerService;
-    private PageService $pageService;
+    private PermissionService $permissionService;
 
     public function __construct(
         string $appName,
         IRequest $request,
         FooterService $footerService,
-        PageService $pageService
+        PermissionService $permissionService
     ) {
         parent::__construct($appName, $request);
         $this->footerService = $footerService;
-        $this->pageService = $pageService;
+        $this->permissionService = $permissionService;
     }
 
     /**
@@ -43,7 +43,7 @@ class FooterController extends Controller {
     public function get(): JSONResponse {
         try {
             // Get root permissions using Nextcloud's filesystem
-            $permissions = $this->pageService->getFolderPermissions('');
+            $permissions = $this->permissionService->getFolderPermissions('');
 
             // Check if user has access
             if (!$permissions['canRead']) {
@@ -83,7 +83,7 @@ class FooterController extends Controller {
     public function save(): JSONResponse {
         try {
             // Check write permission using Nextcloud's filesystem
-            $permissions = $this->pageService->getFolderPermissions('');
+            $permissions = $this->permissionService->getFolderPermissions('');
             if (!$permissions['canWrite']) {
                 return new JSONResponse(
                     ['error' => 'Permission denied: cannot edit footer'],
