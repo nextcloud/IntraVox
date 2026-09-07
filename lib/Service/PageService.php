@@ -423,8 +423,7 @@ class PageService {
             $this->permissionService,
             $this->idUtils,
             $this->logger,
-            fn(): \OCP\Files\Folder => $this->getReadLanguageFolder(),
-            fn(): \OCP\Files\Folder => $this->getIntraVoxFolder(),
+            $this->folders(),
             fn(?string $group, ?string $uniqueId): array => $this->resolveTranslations($group, $uniqueId),
             fn(\OCP\Files\Node $node): ?int => $this->groupfolderIdForNode($node)
         );
@@ -465,9 +464,11 @@ class PageService {
     /**
      * Lazy seam for the folder/location substrate (clean-target step 1). Built
      * from the same deps the seams already use, with the #75 real-content probe
-     * (page-lookup-bound) injected as a closure. SHIPPED UNUSED: nothing calls
-     * this yet — it exists so FolderContextSeamTest can prove the substrate is
-     * byte-extractable before any caller depends on it. Nullable-default AND in
+     * (page-lookup-bound) and the getReadLanguageFolder seam injected as closures
+     * so wholesale subclass overrides still win. Now the single source of folder-
+     * root-relative paths, language resolution, and the read-language folder for
+     * the migrated collaborators (getRelativePathFromRoot, PageTreeBuilder,
+     * PageDataEnricher, PageReadService). Nullable-default AND in
      * LAZY_SEAM_SERVICES so the harness auto-fill leaves it (and the 27
      * subclasses) untouched until they opt in.
      */
@@ -478,7 +479,11 @@ class PageService {
             fn(): string => $this->languageService->getPrimaryLanguage(),
             fn(\OCP\Files\Folder $folder): bool => $this->languageFolderHasRealContent($folder),
             $this->language(),
-            $this->locator()
+            $this->locator(),
+            // getReadLanguageFolder seam: 26 test-subclasses override it wholesale,
+            // so bind it here rather than let FolderContext recompose — keeps their
+            // override winning and preserves getPage's #70 lazy timing.
+            fn(): \OCP\Files\Folder => $this->getReadLanguageFolder()
         );
     }
 

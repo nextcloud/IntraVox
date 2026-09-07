@@ -46,6 +46,12 @@ final class FolderContext {
      * @param \Closure(): string $primaryLanguage languageService->getPrimaryLanguage
      * @param \Closure(Folder): bool $hasRealContent the #75 real-content probe
      *   (page-lookup-bound, so injected rather than owned)
+     * @param \Closure(): \OCP\Files\Folder|null $readLanguageFolder getReadLanguageFolder
+     *   seam. FolderContext owns the SAME composition (effectiveLanguage ->
+     *   write-target fallback), but this seam is honoured when supplied so the 26
+     *   test-subclasses that override getReadLanguageFolder WHOLESALE keep winning
+     *   — exactly as the atomic intraVox seam already flows. Null = use the owned
+     *   composition (readLanguageFolderComposed).
      */
     public function __construct(
         private \Closure $intraVox,
@@ -54,6 +60,7 @@ final class FolderContext {
         private \Closure $hasRealContent,
         private LanguageResolver $language,
         private PageLocator $locator,
+        private ?\Closure $readLanguageFolder = null,
     ) {
     }
 
@@ -117,10 +124,23 @@ final class FolderContext {
 
     /**
      * The content folder for READING for the current user (#75 own -> recommended
-     * -> en), falling back to the write-target. Composition owned here; verbatim
-     * from PageService::getReadLanguageFolder().
+     * -> en), falling back to the write-target. Honours the getReadLanguageFolder
+     * seam closure when supplied (so wholesale subclass overrides win); otherwise
+     * runs the owned composition.
      */
     public function readLanguageFolder(): Folder {
+        if ($this->readLanguageFolder !== null) {
+            return ($this->readLanguageFolder)();
+        }
+        return $this->readLanguageFolderComposed();
+    }
+
+    /**
+     * The #75 read-folder composition, owned here; verbatim from
+     * PageService::getReadLanguageFolder(). Split out so readLanguageFolder() can
+     * prefer an injected seam without duplicating the body.
+     */
+    private function readLanguageFolderComposed(): Folder {
         $lang = $this->effectiveLanguage();
         if ($lang !== null) {
             try {

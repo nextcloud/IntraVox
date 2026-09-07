@@ -23,17 +23,15 @@ use Psr\Log\LoggerInterface;
  * canWrite can never leak to another) plus the matching strip before a write.
  *
  * Extracted verbatim from PageService::getPage() as the first step of dissolving
- * the god-class. PageService keeps a thin delegator that supplies the folder
- * seams (getReadLanguageFolder, getIntraVoxFolder) and the two concerns that
- * stay on it (resolveTranslations, groupfolderIdForNode) as $this-bound
+ * the god-class. The folder seams (getReadLanguageFolder, getIntraVoxFolder) come
+ * from the injected FolderContext (the substrate); the two concerns that stay on
+ * PageService (resolveTranslations, groupfolderIdForNode) go in as $this-bound
  * closures, so the 26 seam-subclasses keep intercepting through the closures
  * with zero test edits. PageDistributedHitRecomputeTest (#70), PageCrudReadTest
  * and PageServiceCrossLanguageTest (#90) pin the behaviour byte-for-byte.
  */
 final class PageReadService {
     /**
-     * @param \Closure(): \OCP\Files\Folder $readLanguageFolder getReadLanguageFolder seam
-     * @param \Closure(): \OCP\Files\Folder $intraVoxFolder getIntraVoxFolder seam (for cross-language locate)
      * @param \Closure(?string, ?string): array $resolveTranslations (group, uniqueId) -> ACL-filtered list
      * @param \Closure(\OCP\Files\Node): ?int $groupfolderIdForNode
      */
@@ -45,7 +43,8 @@ final class PageReadService {
      * reads $userId (the enricher builds the MetaVox gateway too), and the
      * request-cache-hit path — the very first thing getPage() does — must return
      * without forcing that. Resolving them lazily keeps the hit path free of
-     * $userId, matching the original inline getPage() timing exactly.
+     * $userId, matching the original inline getPage() timing exactly. For the
+     * same reason FolderContext is only consulted AFTER the cache-hit return.
      */
     public function __construct(
         private PageCacheService $cache,
@@ -56,8 +55,7 @@ final class PageReadService {
         private PermissionService $permissionService,
         private PageIdUtils $idUtils,
         private LoggerInterface $logger,
-        private \Closure $readLanguageFolder,
-        private \Closure $intraVoxFolder,
+        private \OCA\IntraVox\Service\Folder\FolderContext $folders,
         private \Closure $resolveTranslations,
         private \Closure $groupfolderIdForNode,
     ) {
@@ -70,8 +68,13 @@ final class PageReadService {
             return $cachedPage;
         }
 
-        $folder = ($this->readLanguageFolder)();
+        $folder = $this->folders->readLanguageFolder();
         $result = null;
+
+        // The cross-language locate takes a lazy root (invoked per language
+        // iteration inside the locator), so hand it a closure resolving the same
+        // getIntraVoxFolder seam — byte-identical to the old $intraVoxFolder.
+        $intraVoxRoot = fn(): \OCP\Files\Folder => $this->folders->intraVox();
 
         // Save original ID before sanitization
         $originalId = $id;
@@ -80,7 +83,7 @@ final class PageReadService {
         // scan inside locatePageAnyLanguage() lets feed links and shared links
         // resolve regardless of which language folder holds the page.
         if (strpos($originalId, 'page-') === 0) {
-            $result = $this->locator->locatePageAnyLanguage($this->intraVoxFolder, $folder, $originalId);
+            $result = $this->locator->locatePageAnyLanguage($intraVoxRoot, $folder, $originalId);
             if (!$result) {
                 $this->logger->warning('IntraVox: Not found by uniqueId', ['uniqueId' => $originalId]);
             }
@@ -94,7 +97,7 @@ final class PageReadService {
             // links, so which kind of link a reader follows never decides
             // whether the page resolves.
             if ($result === null) {
-                $result = $this->locator->locatePageBySlugAnyLanguage($this->intraVoxFolder, $folder, $id);
+                $result = $this->locator->locatePageBySlugAnyLanguage($intraVoxRoot, $folder, $id);
             }
         }
 
