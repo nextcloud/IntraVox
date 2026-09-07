@@ -86,6 +86,8 @@ class PageService {
     private ?\OCA\IntraVox\Service\Path\PageDataEnricher $pageDataEnricher = null;
     /** Lazily-built single-page reader (god-class dissolution — read cluster). */
     private ?\OCA\IntraVox\Service\Read\PageReadService $readService = null;
+    /** Lazily-built page mutation service (god-class dissolution — write cluster). */
+    private ?\OCA\IntraVox\Service\Write\PageWriteService $writeService = null;
     private LoggerInterface $logger;
     private IEventDispatcher $eventDispatcher;
     private PublicationSettingsService $publicationSettings;
@@ -422,6 +424,20 @@ class PageService {
             fn(): \OCP\Files\Folder => $this->getIntraVoxFolder(),
             fn(?string $group, ?string $uniqueId): array => $this->resolveTranslations($group, $uniqueId),
             fn(\OCP\Files\Node $node): ?int => $this->groupfolderIdForNode($node)
+        );
+    }
+
+    /**
+     * Lazy seam for the page mutation service (god-class dissolution, write
+     * cluster). Built from the real deps; the resolved language folder and the
+     * lookups/isHomepage/clearCache seams are passed per-call as arg + closures.
+     * Nullable-default so the harness auto-fill skips it.
+     */
+    private function writeService(): \OCA\IntraVox\Service\Write\PageWriteService {
+        return $this->writeService ??= new \OCA\IntraVox\Service\Write\PageWriteService(
+            $this->idUtils,
+            $this->eventDispatcher,
+            $this->logger
         );
     }
 
@@ -2639,77 +2655,20 @@ class PageService {
      * Delete a page and all its assets
      */
     public function deletePage(string $id): void {
-        if ($id === 'home') {
-            throw new \InvalidArgumentException('Cannot delete home page');
-        }
-
-        // Resolve by uniqueId (page-…) first, then fall back to legacy folder id.
-        // Deletion follows the page across language folders, so a page the user
-        // can see is also a page the user can delete (issue #90); the caller's
-        // permission check still decides whether the delete is allowed.
-        $languageFolder = $this->getLanguageFolder();
-        $result = strpos($id, 'page-') === 0
-            ? $this->locatePageAnyLanguage($languageFolder, $id)
-            : $this->findPageById($languageFolder, $this->idUtils->sanitizeId($id));
-
-        if ($result === null) {
-            throw new PageNotFoundException('Page not found: ' . $id);
-        }
-
-        // Normalize $id to the folder name for downstream index/event use.
-        $id = isset($result['folder']) ? $result['folder']->getName() : $this->idUtils->sanitizeId($id);
-
-        // Read the page JSON once for uniqueId (homepage guard + comment cleanup).
-        $pageData = [];
-        if (isset($result['file'])) {
-            $decoded = json_decode($result['file']->getContent(), true);
-            if (is_array($decoded)) {
-                $pageData = $decoded;
+        // The delete body lives in Write/PageWriteService (god-class dissolution,
+        // write cluster). getLanguageFolder is resolved here and passed in; the
+        // cross-language lookups + isHomepage + clearCache go in as closures so
+        // the seam-subclasses keep intercepting.
+        $this->writeService()->deletePage(
+            $id,
+            $this->getLanguageFolder(),
+            fn(\OCP\Files\Folder $folder, string $uid): ?array => $this->locatePageAnyLanguage($folder, $uid),
+            fn(\OCP\Files\Folder $folder, string $legacyId): ?array => $this->findPageById($folder, $legacyId),
+            fn(string $uid): bool => $this->isHomepage($uid),
+            function (): void {
+                $this->clearCache();
             }
-        }
-
-        // The configured homepage cannot be deleted — reassign it first
-        // (issue: configurable homepage). Distinguishable error so the UI can
-        // prompt the user to pick another homepage.
-        $resolvedUniqueId = $pageData['uniqueId'] ?? '';
-        if ($resolvedUniqueId !== '' && $this->isHomepage($resolvedUniqueId)) {
-            throw new \InvalidArgumentException('HOMEPAGE_PROTECTED');
-        }
-
-        // Get page data before deletion to retrieve uniqueId for comment cleanup
-        try {
-            $uniqueId = $pageData['uniqueId'] ?? '';
-
-            // Dispatch event to cleanup comments/reactions before deleting the page
-            if (!empty($uniqueId)) {
-                $this->eventDispatcher->dispatchTyped(new PageDeletedEvent($id, $uniqueId));
-            }
-        } catch (\Exception $e) {
-            // Log but don't block deletion if event dispatch fails
-            $this->logger->warning('Failed to dispatch PageDeletedEvent for page ' . $id . ': ' . $e->getMessage());
-        }
-
-        // The index rows are deliberately LEFT IN PLACE. Deleting a page moves
-        // its folder to the trashbin, which is reversible, so anything dropped
-        // here would have to be rebuilt on restore — and restoring fires no
-        // event at all (verified on NC34: trashing gives NodeDeletedEvent,
-        // restoring gives nothing). Rows removed here could therefore never
-        // come back, which is exactly why a restored page used to reappear in
-        // Files but stay missing from the IntraVox page structure until
-        // `occ intravox:reindex` was run by hand.
-        //
-        // Instead the rows stay and readers ask the filecache whether the file
-        // is still live (PageIndexService::whereFileIsLive()). A trashed page has
-        // its filecache path moved out of `files/`, so it drops out of every
-        // listing without a flag to maintain, and a restore puts it back —
-        // no event, no repair step. The rows are removed for good by
-        // CacheCleanupListener once the trashbin is emptied.
-
-        // Delete the entire folder (includes .json, images/, files/)
-        $result['folder']->delete();
-
-        // Clear caches
-        $this->clearCache();
+        );
     }
 
     /**
