@@ -1005,6 +1005,8 @@
     "No users match the current filters" : "Aucun utilisateur ne correspond aux filtres actuels",
     "Showing {shown} of {total} people" : "{shown} sur {total} personnes affichées",
     "Show more" : "Afficher plus",
+    "does not equal" : "n'est pas égal à",
+    "is none of" : "n'est aucun de",
     "is today" : "est aujourd'hui",
     "is within next X days" : "est dans les X prochains jours",
     "Cards" : "Cartes",

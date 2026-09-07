@@ -31,6 +31,7 @@ OC.L10N.register(
     "Learn more" : "Дізнатися більше",
     "Configured" : "Налаштовано",
     "Invalid URL" : "Неправильний URL",
+    "Unavailable" : "Недоступно",
     "Deletion failed" : "Помилка під час вилучення",
     "Languages" : "Мови",
     "Sharing" : "Спільне",

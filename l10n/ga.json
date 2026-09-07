@@ -1005,6 +1005,8 @@
     "No users match the current filters" : "Níl aon úsáideoirí ag teacht leis na scagairí reatha",
     "Showing {shown} of {total} people" : "Ag taispeáint {shown} de {total} duine",
     "Show more" : "Taispeáin níos mó",
+    "does not equal" : "ní ionann é",
+    "is none of" : "nach bhfuil aon cheann de",
     "is today" : "atá inniu ann",
     "is within next X days" : "laistigh de na X lá atá romhainn",
     "Cards" : "Cártaí",
@@ -1165,6 +1167,7 @@
     "Support IntraVox" : "Tacaigh le IntraVox",
     "IntraVox is free and open source (AGPL-3.0). All features work without a subscription. If IntraVox is valuable to your organization, a subscription supports active development and gives you guaranteed Nextcloud compatibility and email support." : "Tá IntraVox saor in aisce agus foinse oscailte (AGPL-3.0). Oibríonn gach gné gan síntiús. Má tá IntraVox luachmhar do d'eagraíocht, tacaíonn síntiús le forbairt ghníomhach agus tugann sé comhoiriúnacht Nextcloud agus tacaíocht ríomhphoist ráthaithe duit.",
     "A subscription includes: guaranteed Nextcloud compatibility, email support, priority bug fixes, and active development." : "Áirítear leis an síntiús: comhoiriúnacht ráthaithe Nextcloud, tacaíocht ríomhphoist, socruithe tosaíochta fabhtanna, agus forbairt ghníomhach.",
+    "Pricing details" : "Sonraí praghsála",
     "Questions?" : "Ceisteanna?",
     "Your installation" : "Do shuiteáil",
     "Total" : "Iomlán",
@@ -1330,13 +1333,16 @@
     "No filters available" : "Níl aon scagairí ar fáil",
     "Filters ({count})" : "Scagairí ({count})",
     "Show results" : "Taispeáin torthaí",
+    "Default: {label}" : "Réamhshocrú: {label}",
     "Let visitors filter these results" : "Lig do chuairteoirí na torthaí seo a scagadh",
+    "Visitors pick from these fields themselves. They can only narrow the selection above further — never widen it." : "Roghnaíonn cuairteoirí ó na réimsí seo iad féin. Ní féidir leo ach an rogha thuas a chúngú tuilleadh — ná leathnaigh riamh é.",
     "This instance has {total} accounts, more than the {cap} this widget scans. Filter counts will be approximate and shown as \"~12\"." : "Tá {total} cuntas sa chás seo, níos mó ná an {cap} a scanann an giuirléid seo. Beidh comhaireamh na scagairí garbh agus taispeánfar iad mar \"~12\".",
     "Add a group filter above" : "Cuir scagaire grúpa leis thuas",
     "to scope this widget to one or more groups. Counts then become exact, and the widget loads faster." : "chun an giuirléid seo a raon feidhme chuig grúpa amháin nó níos mó. Ansin bíonn na comhaireamh cruinn, agus luchtóidh an giuirléid níos tapúla.",
     "This widget already has a group filter, so its own results are scoped — but the group is larger than the scan limit." : "Tá scagaire grúpa ag an ngiuirléid seo cheana féin, mar sin tá a thorthaí féin scóipithe — ach tá an grúpa níos mó ná an teorainn scanadh.",
     "Filterable fields" : "Réimsí inscagtha",
     "No fields available to filter on." : "Níl aon réimsí ar fáil le scagadh orthu.",
+    "Name shown to visitors" : "Ainm a thaispeántar do chuairteoirí",
     "Label shown to visitors" : "Lipéad a thaispeántar do chuairteoirí",
     "+ Add filter field" : "+ Cuir réimse scagaire leis",
     "Show a search box" : "Taispeáin bosca cuardaigh",
@@ -1371,6 +1377,8 @@
     "{count} people reacted with {emoji}" : "D'imoibrigh {count} duine le {emoji}",
     "React" : "Imoibriú",
     "This widget already filters on {fields}. Visitors cannot widen that, so those fields would only show empty options and are not offered here." : "Scagann an giuirléid seo ar {fields} cheana féin. Ní féidir le cuairteoirí é sin a leathnú, mar sin ní thaispeánfadh na réimsí sin ach roghanna folamha agus ní thairgtear iad anseo.",
-    "Contains IntraVox data for {languages}" : "Tá sonraí IntraVox ann do {languages}"
+    "Contains IntraVox data for {languages}" : "Tá sonraí IntraVox ann do {languages}",
+    "Nextcloud Enterprise subscription detected on this instance. IntraVox subscriptions are sold through Nextcloud — contact your Nextcloud account manager or sales@nextcloud.com." : "Braitheadh ​​síntiús Nextcloud Enterprise sa chás seo. Díoltar síntiúis IntraVox trí Nextcloud — déan teagmháil le do bhainisteoir cuntais Nextcloud nó le sales@nextcloud.com.",
+    "IntraVox is running for {count} users here and keeps working in full without a subscription. If your organisation gets value from it, a subscription is much appreciated — it funds the maintenance. Sold through Nextcloud: contact your account manager or sales@nextcloud.com." : "Tá IntraVox ag rith do {count} úsáideoir anseo agus leanann sé ag obair go hiomlán gan síntiús. Má bhaineann d'eagraíocht luach as, is mór an meas a bheidh ar shíntiús — maoiníonn sé an chothabháil. Díolta trí Nextcloud: déan teagmháil le do bhainisteoir cuntais nó sales@nextcloud.com."
 },"pluralForm" :"nplurals=5; plural=(n==1 ? 0 : n==2 ? 1 : n<7 ? 2 : n<11 ? 3 : 4);"
 }
