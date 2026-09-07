@@ -776,26 +776,7 @@ class PageService {
      * already defaults to 'en', so when unset the chain collapses to user → en.
      */
     private function resolveEffectiveLanguage(): ?string {
-        // Candidate order (user -> primary -> en, deduped) via LanguageResolver;
-        // the folder probing below stays here (Phase 9).
-        $candidates = $this->language()->candidateOrder(
-            $this->getUserLanguage(),
-            $this->languageService->getPrimaryLanguage()
-        );
-
-        $baseFolder = $this->getIntraVoxFolder();
-        foreach ($candidates as $code) {
-            try {
-                $folder = $baseFolder->get($code);
-            } catch (NotFoundException $e) {
-                continue;
-            }
-            if ($folder instanceof \OCP\Files\Folder
-                && $this->languageFolderHasRealContent($folder)) {
-                return $code;
-            }
-        }
-        return null;
+        return $this->folders()->effectiveLanguage();
     }
 
     /**
@@ -834,7 +815,7 @@ class PageService {
      *   the IntraVox tree or is the tree root itself.
      */
     private function languageOfFolder(\OCP\Files\Folder $folder): ?string {
-        return $this->locator()->languageOfFolder($this->getIntraVoxFolder(), $folder);
+        return $this->folders()->languageOfFolder($folder);
     }
 
     /**
@@ -1038,23 +1019,7 @@ class PageService {
      * Get language folder by language code
      */
     private function getLanguageFolderByCode(string $lang) {
-        $baseFolder = $this->getIntraVoxFolder();
-
-        try {
-            return $baseFolder->get($lang);
-        } catch (NotFoundException $e) {
-            // If language folder doesn't exist, try default language
-            if ($lang !== self::DEFAULT_LANGUAGE) {
-                try {
-                    return $baseFolder->get(self::DEFAULT_LANGUAGE);
-                } catch (NotFoundException $e2) {
-                    // Create default language folder if it doesn't exist
-                    return $baseFolder->newFolder(self::DEFAULT_LANGUAGE);
-                }
-            }
-            // Create the requested language folder
-            return $baseFolder->newFolder($lang);
-        }
+        return $this->folders()->languageFolderByCode($lang);
     }
 
     /**
