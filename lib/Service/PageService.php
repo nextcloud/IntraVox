@@ -1076,23 +1076,6 @@ class PageService {
     }
 
     /**
-     * Get permissions for a folder path (relative to IntraVox root)
-     * Uses Nextcloud's native filesystem permissions which respect GroupFolder ACL
-     *
-     * IMPORTANT: Uses the user's mounted folder view to get ACL-aware permissions
-     *
-     * @param string $relativePath Path relative to IntraVox folder (e.g., "en/about" or "")
-     * @return array Permissions object with canRead, canWrite, canCreate, canDelete, canShare
-     */
-    public function getFolderPermissions(string $relativePath): array {
-        // The permission decision moved to PermissionService (permission-shell
-        // step 1). Kept as a thin delegator for the ~12 callers + the public
-        // surface contract; refreshTreePermissions (the #70/#86 tree-COW) still
-        // reaches it here, byte-identically.
-        return $this->permissionService->getFolderPermissions($relativePath);
-    }
-
-    /**
      * Public method to check if a page exists by uniqueId
      * Used by CommentsEntityListener to validate comment objectIds
      */
@@ -3411,7 +3394,7 @@ class PageService {
             $path = $node['path'] ?? null;
             if (is_string($path) && $path !== '') {
                 try {
-                    $node['permissions'] = $this->getFolderPermissions($path);
+                    $node['permissions'] = $this->permissionService->getFolderPermissions($path);
                 } catch (\Throwable $e) {
                     // Leave the cached (group-level) permissions as a safe fallback.
                 }
