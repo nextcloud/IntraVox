@@ -12,6 +12,7 @@ use OCA\IntraVox\Exception\PageNotFoundException;
 use OCA\IntraVox\Http\EtagBuilder;
 use OCA\IntraVox\Service\PageLockService;
 use OCA\IntraVox\Service\PageService;
+use OCA\IntraVox\Service\PermissionService;
 use OCA\IntraVox\Share\ShareScope;
 use OCA\IntraVox\Service\SetupService;
 use OCP\AppFramework\Controller;
@@ -66,6 +67,7 @@ class ApiController extends Controller {
     use HasConditionalResponse;
 
     private PageService $pageService;
+    private PermissionService $permissionService;
     private SetupService $setupService;
     private LoggerInterface $logger;
     private IConfig $config;
@@ -79,6 +81,7 @@ class ApiController extends Controller {
         string $appName,
         IRequest $request,
         PageService $pageService,
+        PermissionService $permissionService,
         SetupService $setupService,
         LoggerInterface $logger,
         IConfig $config,
@@ -90,6 +93,7 @@ class ApiController extends Controller {
     ) {
         parent::__construct($appName, $request);
         $this->pageService = $pageService;
+        $this->permissionService = $permissionService;
         $this->setupService = $setupService;
         $this->logger = $logger;
         $this->config = $config;
@@ -342,7 +346,7 @@ class ApiController extends Controller {
 
             // Check create permission on parent path using Nextcloud's filesystem permissions
             $checkPath = $parentPath ?? '';
-            $folderPerms = $this->pageService->getFolderPermissions($checkPath);
+            $folderPerms = $this->permissionService->getFolderPermissions($checkPath);
             if (!$folderPerms['canCreate']) {
                 return new DataResponse(
                     ['error' => 'Permission denied: cannot create pages in this location'],
@@ -501,7 +505,7 @@ class ApiController extends Controller {
                 $parentPage = $this->pageService->getPage($parentId);
                 $relPath = $parentPage['path'] ?? '';
             }
-            if (!($this->pageService->getFolderPermissions($relPath)['canWrite'] ?? false)) {
+            if (!$this->permissionService->getFolderPermissions($relPath)['canWrite']) {
                 return new DataResponse(
                     ['error' => 'Permission denied: cannot reorder pages here'],
                     Http::STATUS_FORBIDDEN
@@ -705,8 +709,8 @@ class ApiController extends Controller {
             }
 
             // Write permission on the language root (mirror NavigationController::save).
-            $permissions = $this->pageService->getFolderPermissions('');
-            if (!($permissions['canWrite'] ?? false)) {
+            $permissions = $this->permissionService->getFolderPermissions('');
+            if (!($permissions['canWrite'])) {
                 return new DataResponse(
                     ['error' => 'Permission denied: cannot set the homepage'],
                     Http::STATUS_FORBIDDEN
@@ -749,7 +753,7 @@ class ApiController extends Controller {
             if (is_string($targetParentId) && $targetParentId !== '') {
                 $parentRelPath = $this->pageService->getPage($targetParentId)['path'] ?? '';
             }
-            if (!($this->pageService->getFolderPermissions($parentRelPath)['canCreate'] ?? false)) {
+            if (!$this->permissionService->getFolderPermissions($parentRelPath)['canCreate']) {
                 return new DataResponse(
                     ['error' => 'Permission denied: cannot create a page here'],
                     Http::STATUS_FORBIDDEN
@@ -791,7 +795,7 @@ class ApiController extends Controller {
             if (is_string($targetParentId) && $targetParentId !== '') {
                 $parentRelPath = $this->pageService->getPage($targetParentId)['path'] ?? '';
             }
-            if (!($this->pageService->getFolderPermissions($parentRelPath)['canCreate'] ?? false)) {
+            if (!$this->permissionService->getFolderPermissions($parentRelPath)['canCreate']) {
                 return new DataResponse(
                     ['error' => 'Permission denied: cannot move a page here'],
                     Http::STATUS_FORBIDDEN
@@ -834,7 +838,7 @@ class ApiController extends Controller {
             // Root-folder permissions so the tree UI can gate actions that target
             // the language root — a sibling copy of a top-level page lands there,
             // so the Copy button on root-level items needs root canCreate (#86).
-            $rootPermissions = $this->pageService->getFolderPermissions('');
+            $rootPermissions = $this->permissionService->getFolderPermissions('');
 
             return new DataResponse([
                 'tree' => $filteredTree,
@@ -889,7 +893,7 @@ class ApiController extends Controller {
         try {
             $checkPath = $path ?? '';
             // Use Nextcloud's native filesystem permissions
-            $permissions = $this->pageService->getFolderPermissions($checkPath);
+            $permissions = $this->permissionService->getFolderPermissions($checkPath);
 
             $response = [
                 'path' => $checkPath,
