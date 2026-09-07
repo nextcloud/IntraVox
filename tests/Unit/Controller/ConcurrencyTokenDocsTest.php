@@ -95,9 +95,14 @@ class ConcurrencyTokenDocsTest extends TestCase {
         );
     }
 
-    /** And the behaviour it documents still exists in the service. */
+    /**
+     * And the behaviour it documents still exists in the service. The updatePage
+     * body — and with it the concurrency mechanism — moved to Write/
+     * PageWriteService during the god-class dissolution, so the mechanism lives
+     * there now.
+     */
     public function testTheMechanismIsStillImplemented(): void {
-        $source = file_get_contents(__DIR__ . '/../../../lib/Service/PageService.php');
+        $source = file_get_contents(__DIR__ . '/../../../lib/Service/Write/PageWriteService.php');
 
         $this->assertStringContainsString('PageConflictException', $source);
         $this->assertStringContainsString(

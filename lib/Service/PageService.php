@@ -437,7 +437,10 @@ class PageService {
         return $this->writeService ??= new \OCA\IntraVox\Service\Write\PageWriteService(
             $this->idUtils,
             $this->eventDispatcher,
-            $this->logger
+            $this->logger,
+            $this->userSession,
+            $this->pageVersionService,
+            $this->pageIndexService
         );
     }
 
@@ -2483,171 +2486,23 @@ class PageService {
      * Update an existing page
      */
     public function updatePage(string $id, array $data): array {
-        // Save original ID before sanitization
-        $originalId = $id;
-
-        // Get the current user
-        $user = $this->userSession->getUser();
-        if (!$user) {
-            throw new \InvalidArgumentException('No user in session');
-        }
-
-        $languageFolder = $this->getLanguageFolder();
-        $result = null;
-
-        // Check for uniqueId pattern (page-xxx) BEFORE sanitization. Editing an
-        // existing page writes back to wherever that page actually lives, which
-        // is not necessarily the current user's own language folder (issue #90);
-        // the isUpdateable() preflight below still gates the write.
-        if (strpos($originalId, 'page-') === 0) {
-            $result = $this->locatePageAnyLanguage($languageFolder, $originalId);
-        }
-
-        // Fallback to legacy ID lookup if not found by uniqueId
-        if ($result === null) {
-            try {
-                $id = $this->idUtils->sanitizeId($originalId);
-                $result = $this->findPageById($languageFolder, $id);
-            } catch (\Exception $e) {
-                throw new \InvalidArgumentException('Failed to find page: ' . $e->getMessage());
+        // The update body lives in Write/PageWriteService (write cluster).
+        // getLanguageFolder is resolved here; the lookups + languageOfFolder +
+        // getUserLanguage + validateAndSanitizePage + clearCache go in as
+        // closures so the seam-subclasses keep intercepting. clearCache here
+        // forwards the page id (unlike deletePage's arg-less call).
+        return $this->writeService()->updatePage(
+            $id,
+            $data,
+            $this->getLanguageFolder(),
+            fn(\OCP\Files\Folder $folder, string $uid): ?array => $this->locatePageAnyLanguage($folder, $uid),
+            fn(\OCP\Files\Folder $folder, string $legacyId): ?array => $this->findPageById($folder, $legacyId),
+            fn(\OCP\Files\Folder $folder): ?string => $this->languageOfFolder($folder),
+            fn(): string => $this->getUserLanguage(),
+            fn(array $page): array => $this->validateAndSanitizePage($page),
+            function (?string $pageId = null): void {
+                $this->clearCache($pageId);
             }
-        }
-
-        if ($result === null) {
-            throw new PageNotFoundException('Page not found: ' . $originalId);
-        }
-
-        // Get the file
-        $file = $result['file'];
-
-        // Preflight the write capability on the actual file/mount. permissionsFromNode
-        // already gates canWrite on this, but a read-only GroupFolder member must get a
-        // clean 403 here rather than a filesystem-level 400 if anything reported wrong
-        // (issue #70). This also avoids Nextcloud core's share-access-list side effect
-        // ("foreach() on null") that a doomed putContent would otherwise trigger.
-        if (!$file->isUpdateable()) {
-            throw new ForbiddenException('You do not have permission to edit this page');
-        }
-
-        try {
-            $existingContent = $file->getContent();
-            $existingData = json_decode($existingContent, true);
-            if (!is_array($existingData)) {
-                $existingData = [];
-            }
-        } catch (\Exception $e) {
-            throw new \InvalidArgumentException('Failed to read existing page data: ' . $e->getMessage());
-        }
-
-        // Optimistic concurrency. putContent() replaces the WHOLE document, so
-        // a save built on stale content erases everything written since — not a
-        // field, the entire page. PageLockService catches the common case, but
-        // locks expire after 15 minutes without a heartbeat, so a tab left open
-        // comes back with stale content and no lock to stop it.
-        //
-        // The FILE's mtime is the version token, not the `modified` field in the
-        // JSON: that field is whatever the client last sent (updatePage never
-        // stamps it), so it would compare a value against itself. The mtime is
-        // set by the filesystem on every write and cannot be spoofed by a stale
-        // client.
-        //
-        // A client that sends no baseVersion — an older frontend, a script, an
-        // import — is not blocked. This rejects only a save that demonstrably
-        // started from an older version, never one that merely failed to say.
-        $submittedBase = $data['baseVersion'] ?? null;
-        if (is_numeric($submittedBase)) {
-            $currentMtime = $file->getMTime();
-            if ((int)$submittedBase < $currentMtime) {
-                $this->logger->warning('[updatePage] stale write rejected', [
-                    'pageId' => $originalId,
-                    'baseVersion' => (int)$submittedBase,
-                    'currentMtime' => $currentMtime,
-                ]);
-                throw new PageConflictException(
-                    'This page was changed by someone else while you were editing it. '
-                    . 'Reload the page to get the latest version before saving again.'
-                );
-            }
-        }
-
-        // Never persist the transport-only concurrency token.
-        unset($data['baseVersion']);
-
-        // Preserve uniqueId from existing data
-        if (isset($existingData['uniqueId'])) {
-            $data['uniqueId'] = $existingData['uniqueId'];
-        }
-
-        // Same for the translation group: it belongs to the page, not to the
-        // payload a client happens to send. An editor saving from a UI that
-        // knows nothing about translation groups (or an older frontend, or a
-        // script) must not silently unlink the page from its other languages.
-        //
-        // Linking and unlinking are explicit operations with their own entry
-        // points; an ordinary save is never one of them.
-        if (isset($existingData['translationGroup'])) {
-            $data['translationGroup'] = $existingData['translationGroup'];
-        }
-
-        // Preserve originalSrc for video widgets to prevent URL loss when whitelist changes
-        $data = (new \OCA\IntraVox\Service\Sanitize\VideoOriginalUrlPreserver())->preserve($data, $existingData);
-
-        try {
-            $validatedData = $this->validateAndSanitizePage($data);
-        } catch (\Exception $e) {
-            $this->logger->error('[updatePage] Validation failed: ' . $e->getMessage(), [
-                'pageId' => $originalId,
-                'trace' => $e->getTraceAsString(),
-            ]);
-            throw new \InvalidArgumentException('Page validation failed: ' . $e->getMessage());
-        }
-
-        try {
-            // Create version before update using GroupFolders VersionsBackend
-            // GroupFolders 20.1.7+ has reliable versioning support
-            $this->pageVersionService->createBeforeUpdate($file);
-
-            // Update the file
-            $file->putContent(json_encode($validatedData, JSON_PRETTY_PRINT));
-
-        } catch (\Exception $e) {
-            throw new \InvalidArgumentException('Failed to write updated page data: ' . $e->getMessage());
-        }
-
-        // Clear caches for this page (and uniqueId if present)
-        $this->clearCache($originalId);
-        if (isset($validatedData['uniqueId'])) {
-            $this->clearCache($validatedData['uniqueId']);
-        }
-
-        // Update page metadata index (non-blocking — page was already saved).
-        // Index the language the page actually LIVES in, never the editor's
-        // own: since #90 an editor can save a page outside their own language,
-        // and getUserLanguage() here wrote rows under the WRONG language. The
-        // index is keyed (unique_id, language), so those rows did not match the
-        // existing entry — every such save INSERTed a duplicate under a
-        // language the page was never in, and nothing ever cleaned them up.
-        // Mirrors createPageAtPath(), which already derives it from the folder.
-        try {
-            $folderPath = $result['folder']->getPath();
-            $language = $this->languageOfFolder($result['folder']) ?? $this->getUserLanguage();
-            $this->pageIndexService->indexPage($validatedData, $language, $folderPath, $file->getId(), $result['folder']->getId());
-        } catch (\Exception $e) {
-            $this->logger->warning('Failed to update page index', ['error' => $e->getMessage()]);
-        }
-
-        // Return data with id for frontend (id is derived from folder name)
-        // Get id from folder name (for home page it's 'home', otherwise folder basename)
-        $pageId = ($result['isHome'] ?? false) ? 'home' : $result['folder']->getName();
-
-        // Hand back the version this write produced, so the editor can keep
-        // saving without reloading. Without it the client would still hold the
-        // token from page load, and its NEXT save would look stale against the
-        // file it just wrote — a conflict with itself.
-        return array_merge(
-            ['id' => $pageId],
-            $validatedData,
-            ['baseVersion' => $file->getMTime()]
         );
     }
 
