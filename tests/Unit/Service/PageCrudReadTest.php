@@ -27,34 +27,24 @@ class PageCrudReadTest extends TestCase {
 
     /**
      * @param PageCacheService $cache the (mocked) request/distributed cache
-     * @param Folder|null $readFolder folder returned by getReadLanguageFolder()
+     * @param Folder|null $readFolder folder returned by readLanguageFolder()
      */
     private function makeService(PageCacheService $cache, ?Folder $readFolder = null): PageService {
-        // Override all three folder seams: getPage resolves via a real PageLocator
-        // which calls back into getIntraVoxFolder() (reads $userId), so an empty
-        // read folder alone is not enough to drive a clean miss.
-        $svc = new class($readFolder) extends PageService {
-            private ?Folder $readFolder;
-            public function __construct(?Folder $readFolder) {
-                $this->readFolder = $readFolder;
-            }
-            protected function getReadLanguageFolder(): Folder {
-                if ($this->readFolder === null) {
-                    throw new \LogicException('read folder not needed for this test');
-                }
-                return $this->readFolder;
-            }
-            protected function getLanguageFolder(): Folder {
-                return $this->getReadLanguageFolder();
-            }
-            protected function getIntraVoxFolder(): Folder {
-                return $this->readFolder ?? throw new \LogicException('not needed');
+        // getPage resolves its folder through the injected FolderContext (both the
+        // read-language folder and the cross-language intraVox root come from it),
+        // so injecting one directly replaces the old triple-seam override — no
+        // subclass needed at all. A null readFolder leaves the context unable to
+        // resolve, driving the clean-miss / hit-short-circuit paths exactly as the
+        // throwing seams used to. (clean-target step 8: seam overrides retired.)
+        $svc = new class extends PageService {
+            public function __construct() {
             }
         };
 
         $this->injectPageServiceDependencies($svc, [
             'cache' => $cache,
             'logger' => $this->createMock(LoggerInterface::class),
+            'folderContext' => $this->fakeFolderContext(readLanguageFolder: $readFolder),
         ]);
 
         return $svc;
