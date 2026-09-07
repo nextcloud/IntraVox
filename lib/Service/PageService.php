@@ -88,6 +88,8 @@ class PageService {
     private ?\OCA\IntraVox\Service\Read\PageReadService $readService = null;
     /** Lazily-built page mutation service (god-class dissolution — write cluster). */
     private ?\OCA\IntraVox\Service\Write\PageWriteService $writeService = null;
+    /** Lazily-built tree-structure service (god-class dissolution — STRUCTURE domain). */
+    private ?\OCA\IntraVox\Service\Structure\PageStructureService $structureService = null;
     private LoggerInterface $logger;
     private IEventDispatcher $eventDispatcher;
     private PublicationSettingsService $publicationSettings;
@@ -442,6 +444,20 @@ class PageService {
             $this->pageVersionService,
             $this->pageIndexService,
             $this->languageService
+        );
+    }
+
+    /**
+     * Lazy seam for the tree-structure service (god-class dissolution, STRUCTURE
+     * domain). Built from the real deps; every seam / cross-language lookup /
+     * folder helper is passed per-call as a $this-bound closure. Nullable-default
+     * so the harness auto-fill skips it.
+     */
+    private function structureService(): \OCA\IntraVox\Service\Structure\PageStructureService {
+        return $this->structureService ??= new \OCA\IntraVox\Service\Structure\PageStructureService(
+            $this->idUtils,
+            $this->pageIndexService,
+            $this->logger
         );
     }
 
@@ -2290,162 +2306,31 @@ class PageService {
     }
 
     public function movePage(string $pageId, string $targetParentId): void {
-        if ($pageId === 'home') {
-            throw new \InvalidArgumentException('The home page cannot be moved');
-        }
-
-        $languageFolder = $this->getLanguageFolder();
-
-        // Locate the source page folder, following it across language folders
-        // like every other operation on an existing page (#90). This is safe
-        // ONLY because the destination is anchored to the source's own language
-        // below and the language guard backs it up: resolving the source
-        // cross-language while leaving the destination on the user's language
-        // is what would relocate content between languages.
-        $source = strpos($pageId, 'page-') === 0
-            ? $this->locatePageAnyLanguage($languageFolder, $pageId)
-            : $this->locatePageBySlugAnyLanguage($languageFolder, $this->idUtils->sanitizeId($pageId));
-        if (!$source || !isset($source['folder'])) {
-            throw new PageNotFoundException('Page not found: ' . $pageId);
-        }
-
-        // The page's OWN language folder governs this move, not the user's.
-        // Everything below (the root destination, the depth check, the language
-        // guard) is anchored here so a move can never leave the tree the page
-        // lives in. Falls back to the user's folder only when the language
-        // cannot be derived, which keeps single-language installs unchanged.
-        $sourceLanguageFolder = $this->languageFolderOfPageResult($source) ?? $languageFolder;
-
-        // The configured homepage cannot be moved — reassign it first
-        // (issue: configurable homepage).
-        $sourceUniqueId = strpos($pageId, 'page-') === 0 ? $pageId : '';
-        if ($sourceUniqueId === '' && isset($source['file'])) {
-            $decoded = json_decode($source['file']->getContent(), true);
-            $sourceUniqueId = is_array($decoded) ? ($decoded['uniqueId'] ?? '') : '';
-        }
-        if ($sourceUniqueId !== '' && $this->isHomepage($sourceUniqueId)) {
-            throw new \InvalidArgumentException('HOMEPAGE_PROTECTED');
-        }
-
-        $sourceFolder = $source['folder'];
-        $sourcePath = $sourceFolder->getPath();
-
-        // Resolve the destination parent folder (root or a page's own folder).
-        if ($targetParentId === '' ) {
-            // Root of the page's OWN language, never the user's. Using the
-            // user's folder here would physically relocate the page (and its
-            // whole subtree) into another language the moment the source
-            // resolved cross-language — silently, with no undo.
-            $targetParentFolder = $sourceLanguageFolder;
-        } else {
-            // Search from the source's language first: a move within one tree
-            // is the normal case, and it keeps the parent lookup consistent
-            // with the source rather than with the user's profile language.
-            $targetResult = strpos($targetParentId, 'page-') === 0
-                ? $this->locatePageAnyLanguage($sourceLanguageFolder, $targetParentId)
-                : $this->findPageById($sourceLanguageFolder, $this->idUtils->sanitizeId($targetParentId));
-            if (!$targetResult || !isset($targetResult['folder'])) {
-                throw new PageNotFoundException('Target parent page not found: ' . $targetParentId);
+        // The move body lives in Structure/PageStructureService (STRUCTURE domain).
+        // Every seam / cross-language lookup / folder helper is handed in as a
+        // $this-bound closure so the seam-subclasses keep intercepting; the
+        // guards (#90 cross-language, HOMEPAGE_PROTECTED, cycle, depth) and the
+        // index repath ride along in the moved body.
+        $this->structureService()->movePage(
+            $pageId,
+            $targetParentId,
+            fn(): \OCP\Files\Folder => $this->getLanguageFolder(),
+            fn(\OCP\Files\Folder $folder, string $uid): ?array => $this->locatePageAnyLanguage($folder, $uid),
+            fn(\OCP\Files\Folder $folder, string $slug): ?array => $this->locatePageBySlugAnyLanguage($folder, $slug),
+            fn(\OCP\Files\Folder $folder, string $legacyId): ?array => $this->findPageById($folder, $legacyId),
+            fn(\OCP\Files\Folder $folder, string $uid): ?array => $this->findPageByUniqueId($folder, $uid),
+            fn(array $result): ?\OCP\Files\Folder => $this->languageFolderOfPageResult($result),
+            fn(string $uid): bool => $this->isHomepage($uid),
+            fn(\OCP\Files\Folder $folder): ?string => $this->languageOfFolder($folder),
+            fn(string $code): string => $this->languageDisplayName($code),
+            fn(\OCP\Files\Folder $folder): string => $this->getRelativePathFromRoot($folder),
+            function (string $path): void {
+                $this->validateDepth($path);
+            },
+            function (): void {
+                $this->clearCache();
             }
-            $targetParentFolder = $targetResult['folder'];
-        }
-        $targetParentPath = $targetParentFolder->getPath();
-
-        // Language guard — the backstop for everything above. Even if a future
-        // change miscomputes the destination, a move that would cross language
-        // folders is refused rather than performed. Language folders are
-        // independent content trees, so this is a relocation between intranets,
-        // not a translation.
-        $sourceLanguage = $this->languageOfFolder($sourceFolder);
-        $targetLanguage = $this->languageOfFolder($targetParentFolder);
-        if ($sourceLanguage !== null && $targetLanguage !== null && $sourceLanguage !== $targetLanguage) {
-            throw new CrossLanguageMoveException(sprintf(
-                'This page is in %s and cannot be moved into the %s structure. Pages stay in the language they were written in.',
-                $this->languageDisplayName($sourceLanguage),
-                $this->languageDisplayName($targetLanguage)
-            ));
-        }
-
-        // Cycle guard: refuse moving into itself or one of its own descendants,
-        // which would detach (and lose) the subtree.
-        if ($targetParentPath === $sourcePath
-            || strpos($targetParentPath . '/', $sourcePath . '/') === 0) {
-            throw new \InvalidArgumentException('Cannot move a page into itself or its descendant');
-        }
-
-        // No-op if already directly under the target parent.
-        if (dirname($sourcePath) === $targetParentPath) {
-            return;
-        }
-
-        // Respect the configured max nesting depth at the destination.
-        $targetRelPath = $this->getRelativePathFromRoot($targetParentFolder);
-        $this->validateDepth($targetRelPath);
-
-        // Permission preflight. movePage() had none at all: it called move()
-        // and relied on the filesystem to throw, which surfaces as an opaque
-        // 500 and leaves any partial state unguarded. Mirrors the checks in
-        // createPageAtPath() (isCreatable) and updatePage() (isUpdateable).
-        // A move both removes from the source and creates at the destination,
-        // so both sides are checked.
-        if (!$sourceFolder->isDeletable()) {
-            throw new ForbiddenException('You do not have permission to move this page');
-        }
-        if (!$targetParentFolder->isCreatable()) {
-            throw new ForbiddenException('You do not have permission to move a page here');
-        }
-
-        // Resolve a non-colliding folder name at the destination (mirror createPage).
-        $baseName = $sourceFolder->getName();
-        $newName = $baseName;
-        $counter = 2;
-        while ($targetParentFolder->nodeExists($newName)) {
-            $newName = $baseName . '-' . $counter;
-            $counter++;
-        }
-
-        // Relocate the whole folder; children travel inside it.
-        $newPath = $targetParentPath . '/' . $newName;
-        $sourceFolder->move($newPath);
-
-        // The index stores a path per page, and the move just invalidated it
-        // for this page AND every descendant that travelled with it. Rewriting
-        // the prefix is one statement per affected row; re-walking the subtree
-        // would be the filesystem traversal the index exists to avoid.
-        // Non-blocking: the move already succeeded on disk, so a failure here
-        // must not surface as a failed move — `occ intravox:reindex` repairs it.
-        try {
-            $this->pageIndexService->repathSubtree($sourcePath, $newPath);
-        } catch (\Throwable $e) {
-            $this->logger->warning('movePage: could not repath index subtree', [
-                'from' => $sourcePath,
-                'to' => $newPath,
-                'error' => $e->getMessage(),
-            ]);
-        }
-
-        // Send the moved page to the end of its new siblings by clearing its
-        // explicit order — the stable comparator then places it after ordered
-        // siblings, i.e. last. (A fresh reorder can pin it precisely later.)
-        try {
-            $movedResult = strpos($pageId, 'page-') === 0
-                ? $this->findPageByUniqueId($targetParentFolder, $pageId)
-                : $this->findPageById($targetParentFolder, $this->idUtils->sanitizeId($pageId));
-            if ($movedResult && isset($movedResult['file'])) {
-                $file = $movedResult['file'];
-                $data = json_decode($file->getContent(), true);
-                if (is_array($data) && array_key_exists('order', $data)) {
-                    unset($data['order']);
-                    $file->putContent(json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-                }
-            }
-        } catch (\Throwable $e) {
-            // Non-fatal: the move succeeded; ordering just falls back to legacy.
-            $this->logger->warning('movePage: could not reset order after move', ['error' => $e->getMessage()]);
-        }
-
-        // Critical: refresh tree + permission caches so the move is visible.
-        $this->clearCache();
+        );
     }
 
     /**
