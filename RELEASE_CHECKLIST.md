@@ -55,13 +55,19 @@ Work through this section before uploading, then delete it once 2.7.1 is out.
 
 ### Must happen before upload
 
-- [ ] **Rebuild the frontend on the release commit.** The app version is stamped
-      into the JS bundles and the cache-buster is `md5(appVersion)`, so a bundle
-      built at 2.7.0 keeps serving stale assets after the bump.
+- [x] **Rebuild the frontend on the release commit.** DONE for 2.7.1.
       ```bash
       npm ci && npm run build
       ```
-- [ ] **Verify on dev at 2.7.0-or-later code.** The #112 fixes were verified on
+      Note for future releases: webpack reported `[compared for emit]` and wrote
+      nothing, because 2.7.1 changed PHP only and the bundle bytes were identical.
+      That is correct, not a failed build — the version is NOT stamped into the
+      bundles. `Util::addScript()` lets Nextcloud append the cache-buster, which
+      it derives from the version in `info.xml`, so bumping that is what
+      invalidates the browser cache. Unchanged bundles need no re-emit.
+      The build is still worth running: its prebuild gates are the real value
+      (see the two they caught below).
+- [ ] **Verify on dev at 2.7.1 code.** The #112 fixes were verified on
       nc-dev while it ran 2.6.3.2 (the three affected code paths were confirmed
       identical). That is enough for the diagnosis, not for the release.
       Re-run the reproduction on the real release build:
@@ -87,6 +93,19 @@ Work through this section before uploading, then delete it once 2.7.1 is out.
       ```bash
       ./vendor/bin/phpunit --configuration phpunit.xml --testsuite Unit
       ```
+
+### Caught by the prebuild gates during the 2.7.1 build (already fixed)
+
+Both are recorded because they are easy to hit again on any release:
+
+- `openapi.json` carries its own version field and was still on 2.7.0 after the
+  bump. `sync-version.js --check` refuses to build on a mismatch; the fix is
+  `npm run version:sync -- <version>`, which updates all three files at once.
+  Bump versions with that command rather than editing files by hand.
+- `check-file-budgets.js` blocks growth in files already over their size target.
+  The #112 fixes added lines to eight of them (all still well under the 1200-line
+  service target), so the budgets were re-recorded with
+  `npm run lint:budgets -- --update` — 0 lowered, so nothing else drifted in.
 
 ### After the App Store upload is confirmed
 
