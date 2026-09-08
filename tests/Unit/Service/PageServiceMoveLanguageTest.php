@@ -115,13 +115,8 @@ class PageServiceMoveLanguageTest extends TestCase {
         // language folder, and languageOfFolder/relativePathFromRoot use the
         // intraVox() root ($base). getIntraVoxFolder stays for the cross-language
         // locate walks (locatePageAnyLanguage/BySlug -> rootClosure()).
-        $svc = new class($base) extends PageService {
-            private Folder $baseFolder;
-            public function __construct(Folder $baseFolder) {
-                $this->baseFolder = $baseFolder;
-            }
-            protected function getIntraVoxFolder() {
-                return $this->baseFolder;
+        $svc = new class() extends PageService {
+            public function __construct() {
             }
             public function clearCache(): void {
             }

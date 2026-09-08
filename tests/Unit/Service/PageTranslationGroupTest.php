@@ -96,16 +96,10 @@ class PageTranslationGroupTest extends TestCase {
 
         // link/unlinkTranslation resolve via folders()->readLanguageFolder ($nl);
         // updatePage via folders()->languageFolder ($nl) + languageOfFolder/
-        // userLanguage. getIntraVoxFolder stays for the cross-language locate walk
-        // (rootClosure()).
-        $svc = new class($base) extends PageService {
-            private Folder $baseFolder;
-            public function __construct(Folder $baseFolder) {
-                $this->baseFolder = $baseFolder;
-            }
-            protected function getIntraVoxFolder() {
-                return $this->baseFolder;
-            }
+        // userLanguage; the cross-language locate root ($base) also comes from the
+        // injected FolderContext (intraVox).
+        $svc = new class() extends PageService {
+            public function __construct() {}
             public function clearCache(): void {
             }
         };

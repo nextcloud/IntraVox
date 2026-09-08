@@ -85,14 +85,8 @@ class PageIndexLanguageTest extends TestCase {
         // updatePage resolves its write-target ($userLanguageFolder) via
         // folders()->languageFolder() and languageOfFolder/userLanguage via the
         // intraVox() root ($base); rebuildIndex uses folders()->intraVox().
-        // getIntraVoxFolder stays for the cross-language locate walk (rootClosure()).
-        $svc = new class($base) extends PageService {
-            private Folder $baseFolder;
-            public function __construct(Folder $baseFolder) {
-                $this->baseFolder = $baseFolder;
-            }
-            protected function getIntraVoxFolder() {
-                return $this->baseFolder;
+        $svc = new class() extends PageService {
+            public function __construct() {
             }
             protected function createVersionBeforeUpdate($file): void {
             }

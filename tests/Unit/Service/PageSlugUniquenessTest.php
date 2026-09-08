@@ -134,15 +134,9 @@ class PageSlugUniquenessTest extends TestCase {
         // createPage resolves its write-target ($writeFolder) via
         // folders()->languageFolder(), the no-parent fallback ($readFolder) via
         // readLanguageFolder(), and the language-code/getOrCreateFolderPath branch
-        // via intraVox() ($base). getIntraVoxFolder stays for the cross-language
-        // locate walk (rootClosure()).
-        $svc = new class($base) extends PageService {
-            private Folder $baseFolder;
-            public function __construct(Folder $baseFolder) {
-                $this->baseFolder = $baseFolder;
-            }
-            protected function getIntraVoxFolder() {
-                return $this->baseFolder;
+        // via intraVox() ($base) — all from the injected FolderContext below.
+        $svc = new class extends PageService {
+            public function __construct() {
             }
             public function clearCache(): void {
             }

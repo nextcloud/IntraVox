@@ -79,16 +79,9 @@ class PageConcurrencyTest extends TestCase {
 
         // updatePage resolves its write-target ($languageFolder) via
         // folders()->languageFolder(), languageOfFolder + userLanguage via the
-        // intraVox() root ($base). getIntraVoxFolder stays for the cross-language
-        // locatePageAnyLanguage walk (rootClosure()).
-        $svc = new class($base) extends PageService {
-            private Folder $baseFolder;
-            public function __construct(Folder $baseFolder) {
-                $this->baseFolder = $baseFolder;
-            }
-            protected function getIntraVoxFolder() {
-                return $this->baseFolder;
-            }
+        // intraVox() root ($base) — all supplied by the injected FolderContext.
+        $svc = new class() extends PageService {
+            public function __construct() {}
             protected function createVersionBeforeUpdate($file): void {
             }
             public function clearCache(): void {

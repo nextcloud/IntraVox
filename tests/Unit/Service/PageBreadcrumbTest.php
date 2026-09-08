@@ -59,9 +59,6 @@ class PageBreadcrumbTest extends TestCase {
             public function isHomepage(string $uniqueId, ?string $language = null): bool {
                 return $this->home;
             }
-            protected function getIntraVoxFolder(): Folder {
-                throw new \RuntimeException('no root in this fixture');
-            }
         };
 
         $config = $this->createMock(\OCP\IConfig::class);

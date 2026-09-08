@@ -73,10 +73,6 @@ class PageCrudWriteTest extends TestCase {
             public function __construct(bool $home) {
                 $this->home = $home;
             }
-            protected function getIntraVoxFolder(): Folder {
-                // Force the index/root path to degrade to the in-folder walk.
-                throw new \RuntimeException('no root in this fixture');
-            }
             public function isHomepage(string $uniqueId, ?string $language = null): bool {
                 return $this->home;
             }
@@ -153,13 +149,8 @@ class PageCrudWriteTest extends TestCase {
         $base = $this->makeFolder('/IntraVox', ['en' => $empty]);
         // languageFolder ($empty) via the seam; getIntraVoxFolder ($base) kept for
         // the cross-language walk (locatePageAnyLanguage -> rootClosure()).
-        $svc = new class($base) extends PageService {
-            private Folder $base;
-            public function __construct(Folder $base) {
-                $this->base = $base;
-            }
-            protected function getIntraVoxFolder(): Folder {
-                return $this->base;
+        $svc = new class extends PageService {
+            public function __construct() {
             }
         };
         $index = $this->createMock(PageIndexService::class);

@@ -11,7 +11,6 @@ use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageService;
 use OCP\App\IAppManager;
 use OCP\Files\File;
 use OCP\Files\FileInfo;
-use OCP\Files\Folder;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -49,13 +48,10 @@ class PageDistributedHitRecomputeTest extends TestCase {
         ]);
 
         // getPage (the #70 distributed-hit recompute path) resolves its folder via
-        // folders()->readLanguageFolder() ($lang). getIntraVoxFolder stays THROWING
-        // for the cross-language locate walk (rootClosure()), pinning the degrade.
+        // folders()->readLanguageFolder() ($lang), driven by the injected
+        // folderContext below.
         $svc = new class extends PageService {
             public function __construct() {
-            }
-            protected function getIntraVoxFolder(): Folder {
-                throw new \RuntimeException('no root in this fixture');
             }
         };
 

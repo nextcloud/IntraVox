@@ -79,17 +79,11 @@ class PageMoveGuardTest extends TestCase {
 
         // movePage resolves its write-target folder ($en) via
         // folders()->languageFolder(), and languageOfFolder/relativePathFromRoot via
-        // the intraVox() root ($base). getIntraVoxFolder stays for the
-        // cross-language locate walk (locatePageAnyLanguage -> rootClosure()).
-        $svc = new class($base, $homepageUniqueId) extends PageService {
-            private Folder $baseFolder;
+        // the intraVox() root ($base), both from the injected FolderContext.
+        $svc = new class($homepageUniqueId) extends PageService {
             private ?string $homeId;
-            public function __construct(Folder $baseFolder, ?string $homeId) {
-                $this->baseFolder = $baseFolder;
+            public function __construct(?string $homeId) {
                 $this->homeId = $homeId;
-            }
-            protected function getIntraVoxFolder() {
-                return $this->baseFolder;
             }
             public function isHomepage(string $uniqueId, ?string $language = null): bool {
                 return $this->homeId !== null && $uniqueId === $this->homeId;

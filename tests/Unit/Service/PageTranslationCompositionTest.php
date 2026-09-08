@@ -81,18 +81,12 @@ class PageTranslationCompositionTest extends TestCase {
         $base = $this->makeFolder('/IntraVox', $languages);
 
         // createTranslation resolves readLanguageFolder ($en) and intraVox->get($lang)
-        // ($base) through the injected FolderContext, so those two seams are gone.
-        // getIntraVoxFolder stays for the cross-language locatePageAnyLanguage walk
-        // (rootClosure()). The createPage spy is orthogonal to folders.
-        $svc = new class($base) extends PageService {
+        // ($base) through the injected FolderContext, so all folder seams are gone.
+        // The createPage spy is orthogonal to folders.
+        $svc = new class() extends PageService {
             public ?array $seenData = null;
             public ?string $seenParentPath = null;
-            private Folder $baseFolder;
-            public function __construct(Folder $baseFolder) {
-                $this->baseFolder = $baseFolder;
-            }
-            protected function getIntraVoxFolder() {
-                return $this->baseFolder;
+            public function __construct() {
             }
             public function createPage(array $data, ?string $parentPath = null): array {
                 $this->seenData = $data;

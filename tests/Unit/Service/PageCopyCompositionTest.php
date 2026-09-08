@@ -83,15 +83,10 @@ class PageCopyCompositionTest extends TestCase {
         // folders()->languageFolder() and walks cross-language via
         // locatePageAnyLanguage -> rootClosure() -> getIntraVoxFolder ($base, kept).
         // createPage/getPage spies + clearCache stay (orthogonal to folders).
-        $svc = new class($base) extends PageService {
+        $svc = new class extends PageService {
             public ?array $seenData = null;
             public ?string $seenParentPath = null;
-            private Folder $baseFolder;
-            public function __construct(Folder $baseFolder) {
-                $this->baseFolder = $baseFolder;
-            }
-            protected function getIntraVoxFolder() {
-                return $this->baseFolder;
+            public function __construct() {
             }
             public function createPage(array $data, ?string $parentPath = null): array {
                 $this->seenData = $data;

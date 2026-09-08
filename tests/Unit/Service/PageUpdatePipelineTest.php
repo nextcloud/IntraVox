@@ -91,9 +91,6 @@ class PageUpdatePipelineTest extends TestCase {
         $svc = new class extends PageService {
             public function __construct() {
             }
-            protected function getIntraVoxFolder(): Folder {
-                throw new \RuntimeException('no root in this fixture');
-            }
             public function clearCache(): void {
                 // Observed via the steps log so cache-clear position is pinned too.
             }
@@ -156,12 +153,7 @@ class PageUpdatePipelineTest extends TestCase {
         // languageFolder ($empty) via the seam; getIntraVoxFolder ($base) kept for
         // the cross-language locate walk (rootClosure()).
         $svc = new class($base) extends PageService {
-            private Folder $base;
-            public function __construct(Folder $base) {
-                $this->base = $base;
-            }
-            protected function getIntraVoxFolder(): Folder {
-                return $this->base;
+            public function __construct() {
             }
         };
         $user = $this->createMock(IUser::class);

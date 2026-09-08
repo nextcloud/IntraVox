@@ -61,14 +61,8 @@ class PageMetadataTest extends TestCase {
         // are gone. getIntraVoxFolder stays ONLY for the cross-language locate walk
         // (locatePageAnyLanguage -> rootClosure()), not covered by FolderContext
         // until the terminal step.
-        $svc = new class($base) extends PageService {
-            private Folder $base;
-            public function __construct(Folder $base) {
-                $this->base = $base;
-            }
-            protected function getIntraVoxFolder(): Folder {
-                return $this->base;
-            }
+        $svc = new class() extends PageService {
+            public function __construct() {}
             public function isHomepage(string $uniqueId, ?string $language = null): bool {
                 return false;
             }
@@ -92,14 +86,8 @@ class PageMetadataTest extends TestCase {
         $base = $this->makeFolder('/IntraVox', ['en' => $empty]);
         // languageFolder() = base->get('en') = $empty; getIntraVoxFolder kept for
         // the cross-language locate walk (rootClosure()).
-        $svc = new class($base) extends PageService {
-            private Folder $base;
-            public function __construct(Folder $base) {
-                $this->base = $base;
-            }
-            protected function getIntraVoxFolder(): Folder {
-                return $this->base;
-            }
+        $svc = new class() extends PageService {
+            public function __construct() {}
         };
         $index = $this->createMock(PageIndexService::class);
         $index->method('findByUniqueId')->willReturn(null);

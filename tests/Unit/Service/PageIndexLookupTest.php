@@ -97,14 +97,9 @@ class PageIndexLookupTest extends TestCase {
 
         // locatePageAnyLanguage (driven by reflection below) resolves its read
         // folder via folders()->readLanguageFolder() ($en) and walks cross-language
-        // via rootClosure() -> getIntraVoxFolder ($base, kept).
-        $svc = new class($base) extends PageService {
-            private Folder $baseFolder;
-            public function __construct(Folder $baseFolder) {
-                $this->baseFolder = $baseFolder;
-            }
-            protected function getIntraVoxFolder() {
-                return $this->baseFolder;
+        // via the injected FolderContext ($base -> intraVox).
+        $svc = new class() extends PageService {
+            public function __construct() {
             }
             public function clearCache(): void {
             }
@@ -388,15 +383,10 @@ class PageIndexLookupTest extends TestCase {
         $base = $this->makeFolder('/IntraVox', ['en' => $en]);
 
         // listPagesFromIndex (driven by reflection) resolves its folder via
-        // folders()->readLanguageFolder() ($en). getIntraVoxFolder stays for any
-        // cross-language locate (rootClosure()).
-        $svc = new class($base) extends PageService {
-            private Folder $baseFolder;
-            public function __construct(Folder $baseFolder) {
-                $this->baseFolder = $baseFolder;
-            }
-            protected function getIntraVoxFolder() {
-                return $this->baseFolder;
+        // folders()->readLanguageFolder() ($en). Cross-language locate resolves
+        // its root via the injected FolderContext ($base -> intraVox).
+        $svc = new class() extends PageService {
+            public function __construct() {
             }
             public function clearCache(): void {
             }

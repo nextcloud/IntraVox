@@ -121,17 +121,9 @@ class PageServiceMediaLanguageTest extends TestCase {
 
         // The media methods resolve their read/language folder through the injected
         // FolderContext now, so getReadLanguageFolder/getLanguageFolder are gone.
-        // getIntraVoxFolder is kept ONLY for the cross-language locate walk, which
-        // reaches the root via rootClosure() (fn()=>getIntraVoxFolder()) — a seam
-        // consumer FolderContext does not cover until the terminal step.
-        $svc = new class($base) extends PageService {
-            private Folder $baseFolder;
+        $svc = new class extends PageService {
             // Deliberately bypass the real (25-arg) constructor.
-            public function __construct(Folder $baseFolder) {
-                $this->baseFolder = $baseFolder;
-            }
-            protected function getIntraVoxFolder() {
-                return $this->baseFolder;
+            public function __construct() {
             }
             public function clearCache(): void {
             }

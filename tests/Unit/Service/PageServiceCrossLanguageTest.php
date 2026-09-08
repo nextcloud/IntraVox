@@ -102,16 +102,10 @@ class PageServiceCrossLanguageTest extends TestCase {
 
         // updatePage resolves its write-target ($writeFolder) via
         // folders()->languageFolder(), and languageOfFolder + userLanguage via the
-        // intraVox() root ($base). getIntraVoxFolder stays for the cross-language
-        // locatePageAnyLanguage walk (rootClosure()).
-        $svc = new class($base) extends PageService {
-            private Folder $baseFolder;
+        // intraVox() root ($base) — all through the injected FolderContext below.
+        $svc = new class extends PageService {
             // Deliberately bypass the real 25-arg constructor.
-            public function __construct(Folder $baseFolder) {
-                $this->baseFolder = $baseFolder;
-            }
-            protected function getIntraVoxFolder() {
-                return $this->baseFolder;
+            public function __construct() {
             }
             // Isolate from version creation, events, navigation sync and caches.
             protected function createVersionBeforeUpdate($file): void {

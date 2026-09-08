@@ -287,13 +287,8 @@ class PageLookupBenchmark extends TestCase {
         // measured against the same fixture.
         $base = new BenchFolder('/IntraVox', $byLang);
 
-        $svc = new class($base) extends PageService {
-            private Folder $baseFolder;
-            public function __construct(Folder $baseFolder) {
-                $this->baseFolder = $baseFolder;
-            }
-            protected function getIntraVoxFolder() {
-                return $this->baseFolder;
+        $svc = new class extends PageService {
+            public function __construct() {
             }
             public function clearCache(): void {
             }
