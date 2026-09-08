@@ -88,15 +88,14 @@ class PageTreePlaceholderTest extends TestCase {
         ]);
 
         $base = $this->makeFolder('/IntraVox', ['de' => $de]);
-        $svc = new class($base) extends PageService {
-            private Folder $baseFolder;
-            public function __construct(Folder $baseFolder) {
-                $this->baseFolder = $baseFolder;
-            }
-            protected function getIntraVoxFolder() {
-                return $this->baseFolder;
+        $svc = new class extends PageService {
+            public function __construct() {
             }
         };
+        $locator = new \OCA\IntraVox\Service\Locator\PageLocator(
+            $this->createMock(\OCA\IntraVox\Service\PageIndexService::class),
+            $this->createMock(\Psr\Log\LoggerInterface::class)
+        );
         (new \ReflectionProperty(PageService::class, 'logger'))
             ->setValue($svc, $this->createMock(\Psr\Log\LoggerInterface::class));
         (new \ReflectionProperty(PageService::class, 'permissionService'))
@@ -105,9 +104,18 @@ class PageTreePlaceholderTest extends TestCase {
                 }
             });
         (new \ReflectionProperty(PageService::class, 'pageLocator'))
-            ->setValue($svc, new \OCA\IntraVox\Service\Locator\PageLocator(
-                $this->createMock(\OCA\IntraVox\Service\PageIndexService::class),
-                $this->createMock(\Psr\Log\LoggerInterface::class)
+            ->setValue($svc, $locator);
+        // buildPageTree -> treeBuilder() reaches the root via folders()->intraVox();
+        // inject a FolderContext with $base wired (the getIntraVoxFolder seam is
+        // being retired). Language/read seams unused by the tree walk.
+        (new \ReflectionProperty(PageService::class, 'folderContext'))
+            ->setValue($svc, new \OCA\IntraVox\Service\Folder\FolderContext(
+                fn() => $base,
+                fn(): string => 'de',
+                fn(): string => 'en',
+                fn(Folder $f): bool => false,
+                new \OCA\IntraVox\Service\Language\LanguageResolver(),
+                $locator
             ));
 
         $m = new \ReflectionMethod(PageService::class, 'buildPageTree');

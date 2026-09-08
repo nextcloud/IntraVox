@@ -8,58 +8,20 @@ use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageService;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Pins the test-seam contract that the whole PageService decomposition depends
- * on. Thirteen unit test files subclass PageService with anonymous classes that
- * override protected folder seams (and shadow the private clearCache) to drive
- * the filesystem-heavy code paths without a real Nextcloud stack. As method
- * bodies move out to focused services, those seams MUST keep their exact
- * signature and visibility, or the anonymous subclasses stop intercepting (or,
- * worse, fatal on a visibility mismatch) and the safety net silently evaporates.
+ * Pins the test-seam contract the PageService decomposition depends on.
  *
- * This test makes any such change a loud, deliberate red instead.
+ * The three protected FOLDER seams (getIntraVoxFolder / getLanguageFolder /
+ * getReadLanguageFolder) are RETIRED (clean-target step 11): the folder/language
+ * substrate is now FolderContext, and tests inject one directly instead of
+ * subclass-overriding a seam. What remains contract-pinned here is the public
+ * isHomepage() de-facto seam, the private clearCache() (nine subclasses redeclare
+ * it), and the reflection-anchored private delegators.
+ *
+ * This test makes any change to those a loud, deliberate red instead.
  */
 class PageServiceSeamContractTest extends TestCase {
 
     use BuildsPageService;
-
-    /**
-     * The three protected folder seams the subclasses override. Overridable ==
-     * protected or public (never private), same name, unchanged required-arg
-     * count so an override with the recorded signature is legal.
-     *
-     * @return array<string,array{0:string,1:string,2:int}>
-     */
-    public static function seamProvider(): array {
-        return [
-            // name => [expected visibility, return type spelling, required params]
-            // getLanguageFolder + getReadLanguageFolder RETIRED (clean-target step
-            // 11): their composition moved to FolderContext and tests inject one
-            // directly. getIntraVoxFolder stays — the atomic GroupFolder mount
-            // lookup ($rootFolder->getUserFolder($userId)->get('IntraVox')), still
-            // the single test seam + the FolderContext intraVox atom.
-            'getIntraVoxFolder'    => ['getIntraVoxFolder', 'protected', 0],
-        ];
-    }
-
-    /**
-     * @dataProvider seamProvider
-     */
-    public function testProtectedSeamStaysOverridable(string $name, string $visibility, int $requiredParams): void {
-        $m = new \ReflectionMethod(PageService::class, $name);
-
-        $this->assertFalse($m->isPrivate(), "$name must not be private — subclasses override it");
-        $this->assertFalse($m->isFinal(), "$name must not be final — subclasses override it");
-        $this->assertSame(
-            $visibility === 'protected',
-            $m->isProtected(),
-            "$name is expected to be $visibility"
-        );
-        $this->assertSame(
-            $requiredParams,
-            $m->getNumberOfRequiredParameters(),
-            "$name required-arg count is part of the override contract"
-        );
-    }
 
     /**
      * isHomepage() is a public de-facto seam: three tests override it because the

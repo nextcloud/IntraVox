@@ -120,11 +120,11 @@ class HarnessSmokeTest extends TestCase {
     }
 
     private function makeSeamOverridingService(): PageService {
+        // A bare constructorless PageService — this smoke test only exercises the
+        // harness auto-fill mechanics, never a folder path, so no seam/context is
+        // wired.
         return new class extends PageService {
             public function __construct() {
-            }
-            protected function getIntraVoxFolder(): Folder {
-                throw new \LogicException('not needed for the smoke test');
             }
         };
     }

@@ -475,19 +475,41 @@ class PageService {
      * subclasses) untouched until they opt in.
      */
     private function folders(): \OCA\IntraVox\Service\Folder\FolderContext {
+        // All three former folder seams are RETIRED. FolderContext owns the
+        // language/path composition; the mount atom is resolveIntraVoxMount() below,
+        // passed as a lazy closure so a request-cache hit never forces $userId.
+        // Tests inject a FolderContext with a fake intraVox rather than overriding
+        // any seam.
         return $this->folderContext ??= new \OCA\IntraVox\Service\Folder\FolderContext(
-            fn() => $this->getIntraVoxFolder(),
+            fn(): \OCP\Files\Folder => $this->resolveIntraVoxMount(),
             fn(): string => $this->getUserLanguage(),
             fn(): string => $this->languageService->getPrimaryLanguage(),
             fn(\OCP\Files\Folder $folder): bool => $this->languageFolderHasRealContent($folder),
             $this->language(),
             $this->locator()
-            // getReadLanguageFolder / getLanguageFolder seams are RETIRED: FolderContext
-            // owns their composition (readLanguageFolderComposed / languageFolderComposed),
-            // built on the getIntraVoxFolder + getUserLanguage atoms above — so the two
-            // optional seam closures are omitted (null) and the owned composition runs.
-            // Tests inject a FolderContext directly rather than overriding those methods.
         );
+    }
+
+    /**
+     * The atomic IntraVox GroupFolder mount lookup (formerly the getIntraVoxFolder
+     * seam). Uses the user's mounted folder view so GroupFolder ACLs apply; throws
+     * "not logged in" without a user, and a specific "folder not found" when the
+     * mount is missing or is not a folder.
+     */
+    private function resolveIntraVoxMount(): \OCP\Files\Folder {
+        if (!$this->userId) {
+            throw new \Exception('User not logged in');
+        }
+        $userFolder = $this->rootFolder->getUserFolder($this->userId);
+        try {
+            $node = $userFolder->get('IntraVox');
+        } catch (NotFoundException $e) {
+            throw new \Exception('IntraVox folder not found. Please check that you have access to the IntraVox GroupFolder.');
+        }
+        if (!$node instanceof \OCP\Files\Folder) {
+            throw new \Exception('IntraVox folder not found. Please check that you have access to the IntraVox GroupFolder.');
+        }
+        return $node;
     }
 
     private function locator(): PageLocator {
@@ -977,30 +999,6 @@ class PageService {
         return $this->folders()->languageFolderByCode($lang);
     }
 
-    /**
-     * Get the IntraVox folder from user's perspective (mounted GroupFolder)
-     *
-     * IMPORTANT: Uses the user's mounted folder view to respect GroupFolder ACL
-     * This is essential for non-admin users to access the IntraVox folder
-     *
-     * `protected` (like getLanguageFolder) only to give unit tests a seam for
-     * the mounted-folder lookup; no runtime behaviour depends on it.
-     */
-    protected function getIntraVoxFolder() {
-        if (!$this->userId) {
-            throw new \Exception('User not logged in');
-        }
-
-        // Get user's folder (this respects GroupFolder ACL)
-        $userFolder = $this->rootFolder->getUserFolder($this->userId);
-
-        // Get folder from user's perspective (mounted GroupFolder)
-        try {
-            return $userFolder->get('IntraVox');
-        } catch (NotFoundException $e) {
-            throw new \Exception("IntraVox folder not found. Please check that you have access to the IntraVox GroupFolder.");
-        }
-    }
 
     /**
      * The "where is the IntraVox root?" question, as a late-bound closure the
