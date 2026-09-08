@@ -66,7 +66,8 @@ class PageServiceSeamContractTest extends TestCase {
             'buildPageTree',
             'listPagesFromIndex',
             'getOrCreateFolderPath',
-            'renamePageFolder',
+            // renamePageFolder RETIRED from PageService — it moved to
+            // Metadata/PageMetadataService (PageRenameFolderTest reflects it there).
             'resolveTranslations',
         ];
         foreach ($anchored as $name) {

@@ -3,10 +3,14 @@ declare(strict_types=1);
 
 namespace OCA\IntraVox\Tests\Unit\Service;
 
+use OCA\IntraVox\Service\Folder\FolderContext;
+use OCA\IntraVox\Service\Language\LanguageResolver;
+use OCA\IntraVox\Service\Locator\PageLocator;
+use OCA\IntraVox\Service\Metadata\PageMetadataService;
 use OCA\IntraVox\Service\PageIndexService;
-use OCA\IntraVox\Service\PageService;
-use OCA\IntraVox\Service\PermissionService;
+use OCA\IntraVox\Service\Sanitize\PageShapeSanitizer;
 use OCA\IntraVox\Service\Util\PageIdUtils;
+use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageService;
 use OCP\Files\File;
 use OCP\Files\Folder;
 use PHPUnit\Framework\TestCase;
@@ -19,41 +23,74 @@ use PHPUnit\Framework\TestCase;
  * exactly the mismatch the index rebuild skips as "not a page", so a half
  * rename would make the page vanish from the index. Hence the rollback
  * test is the one that matters most here.
+ *
+ * renamePageFolder now lives in Metadata/PageMetadataService (private); this test
+ * builds that service directly and drives it by reflection, with isHomepage and
+ * clearCache passed as the closures the domain receives per call.
  */
 class PageRenameFolderTest extends TestCase {
 
-    private function makeService(bool $isHomepage, PageIndexService $index): PageService {
-        $svc = new class($isHomepage) extends PageService {
-            private bool $homepageAnswer;
-            public function __construct(bool $homepageAnswer) {
-                $this->homepageAnswer = $homepageAnswer;
-            }
-            public function isHomepage(string $uniqueId, ?string $language = null): bool {
-                return $this->homepageAnswer;
-            }
-        };
-        (new \ReflectionProperty(PageService::class, 'logger'))
-            ->setValue($svc, $this->createMock(\Psr\Log\LoggerInterface::class));
-        (new \ReflectionProperty(PageService::class, 'idUtils'))
-            ->setValue($svc, new PageIdUtils());
-        (new \ReflectionProperty(PageService::class, 'pageIndexService'))
-            ->setValue($svc, $index);
-        (new \ReflectionProperty(PageService::class, 'permissionService'))
-            ->setValue($svc, new class extends PermissionService {
-                public function __construct() {
-                }
-            });
-        (new \ReflectionProperty(PageService::class, 'pageLocator'))
-            ->setValue($svc, new \OCA\IntraVox\Service\Locator\PageLocator(
-                $this->createMock(\OCA\IntraVox\Service\PageIndexService::class),
-                $this->createMock(\Psr\Log\LoggerInterface::class)
-            ));
-        return $svc;
+    use BuildsPageService;
+
+    /** Records clearCache() calls so a rename's cache-clear is observable. */
+    private int $clearCacheCalls = 0;
+    /** The isHomepage answer the rename() closure returns for this fixture. */
+    private bool $isHomepageAnswer = false;
+
+    private function makeService(bool $isHomepage, PageIndexService $index): PageMetadataService {
+        $this->clearCacheCalls = 0;
+        $this->isHomepageAnswer = $isHomepage;
+        // renamePageFolder touches only idUtils/pageIndexService/logger + the
+        // isHomepage closure; the other ctor deps are irrelevant here, so they are
+        // plain mocks / a bare FolderContext.
+        $locator = new PageLocator(
+            $this->createMock(PageIndexService::class),
+            $this->createMock(\Psr\Log\LoggerInterface::class)
+        );
+        $folders = new FolderContext(
+            fn(): Folder => $this->createMock(Folder::class),
+            fn(): string => 'en',
+            fn(): string => 'en',
+            fn(Folder $f): bool => false,
+            new LanguageResolver(),
+            $locator
+        );
+        // PageShapeSanitizer + PageDataEnricher are final and unused by
+        // renamePageFolder (they serve sanitizeText / getPageMetadata). Build real
+        // instances: the sanitizer via doubleOrBuild (mockable leaves), the enricher
+        // directly with trivial closures since enrich() is never called here.
+        $enricher = new \OCA\IntraVox\Service\Path\PageDataEnricher(
+            $this->doubleOrBuild(\OCA\IntraVox\Service\Path\PagePathHelper::class),
+            $this->createMock(\OCA\IntraVox\Service\PermissionService::class),
+            $this->createMock(\OCA\IntraVox\Service\Publication\MetaVoxGateway::class),
+            $folders,
+            fn(?string $g, ?string $u): array => [],
+            fn(\OCP\Files\Node $n): ?int => null
+        );
+        return new PageMetadataService(
+            new PageIdUtils(),
+            $this->createMock(\OCA\IntraVox\Service\Version\PageVersionService::class),
+            $index,
+            $this->createMock(\OCA\IntraVox\Service\NavigationService::class),
+            $this->doubleOrBuild(PageShapeSanitizer::class),
+            $folders,
+            $enricher,
+            $this->createMock(\Psr\Log\LoggerInterface::class)
+        );
     }
 
-    private function rename(PageService $svc, array $result, string $requested): array {
-        $m = new \ReflectionMethod(PageService::class, 'renamePageFolder');
-        return $m->invoke($svc, $result, $requested, ['uniqueId' => 'page-x', 'language' => 'en']);
+    private function rename(PageMetadataService $svc, array $result, string $requested): array {
+        $m = new \ReflectionMethod(PageMetadataService::class, 'renamePageFolder');
+        return $m->invoke(
+            $svc,
+            $result,
+            $requested,
+            ['uniqueId' => 'page-x', 'language' => 'en'],
+            fn(string $uid, ?string $language = null): bool => $this->isHomepageAnswer,
+            function (): void {
+                $this->clearCacheCalls++;
+            }
+        );
     }
 
     /** Inside layout: folder first, then the JSON inside; index repathed. */
