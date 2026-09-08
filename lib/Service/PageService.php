@@ -94,6 +94,8 @@ class PageService {
     private ?\OCA\IntraVox\Service\Metadata\PageMetadataService $metadataService = null;
     /** Lazily-built media orchestration service (MEDIA domain). */
     private ?\OCA\IntraVox\Service\Media\PageMediaOrchestrator $mediaOrchestrator = null;
+    /** Lazily-built page-composition service (COMPOSE domain: copy/translate/template). */
+    private ?\OCA\IntraVox\Service\Compose\PageCompositionService $compositionService = null;
     /** Lazily-built folder/location substrate (clean-target step 1; shipped unused). */
     private ?\OCA\IntraVox\Service\Folder\FolderContext $folderContext = null;
     private LoggerInterface $logger;
@@ -501,6 +503,26 @@ class PageService {
             $this->locator(),
             $this->idUtils,
             $this->mediaSanitizer
+        );
+    }
+
+    /**
+     * Lazy seam for the page-composition service (COMPOSE domain). Built from the
+     * template/translation-group/media engines + html sanitizer + id utils +
+     * FolderContext substrate + userId; createPage/getPage and the page-lookup
+     * concerns are passed per call as $this-bound closures. Nullable-default so the
+     * harness auto-fill skips it.
+     */
+    private function composition(): \OCA\IntraVox\Service\Compose\PageCompositionService {
+        return $this->compositionService ??= new \OCA\IntraVox\Service\Compose\PageCompositionService(
+            $this->pageTemplateService,
+            $this->translationGroups(),
+            $this->media(),
+            $this->htmlSanitizer,
+            $this->idUtils,
+            $this->folders(),
+            $this->userId,
+            $this->logger
         );
     }
 
@@ -1207,102 +1229,23 @@ class PageService {
         string $language,
         ?string $title = null
     ): array {
-        if (!preg_match('/^[a-z]{2,3}$/', $language)) {
-            throw new \InvalidArgumentException('Invalid language code: ' . $language);
-        }
-
-        $source = $this->locatePageAnyLanguage($this->folders()->readLanguageFolder(), $sourceUniqueId);
-        if ($source === null || !isset($source['file'])) {
-            throw new PageNotFoundException('Page not found: ' . $sourceUniqueId);
-        }
-
-        $sourceLanguage = $this->languageOfFolder($source['folder']);
-        if ($sourceLanguage === $language) {
-            throw new \InvalidArgumentException(
-                'This page is already in that language.'
-            );
-        }
-
-        $sourceData = json_decode($source['file']->getContent(), true);
-        if (!is_array($sourceData)) {
-            throw new \InvalidArgumentException('Could not read the source page');
-        }
-
-        // One page per language per group — refuse rather than create a second
-        // German version that would make the switcher ambiguous.
-        $group = $sourceData['translationGroup'] ?? null;
-        if (!empty($group) && $this->translationGroups()->groupHasLanguage($group, $language)) {
-            throw new \InvalidArgumentException(
-                'A version of this page already exists in that language.'
-            );
-        }
-
-        // The target language folder must exist; creating one silently would
-        // add a language to the intranet as a side effect of translating.
-        try {
-            $targetFolder = $this->folders()->intraVox()->get($language);
-        } catch (NotFoundException $e) {
-            throw new \InvalidArgumentException(
-                'That language has no content folder yet. Add the language in the admin settings first.'
-            );
-        }
-        if (!($targetFolder instanceof \OCP\Files\Folder)) {
-            throw new \InvalidArgumentException('Invalid language folder: ' . $language);
-        }
-        if (!$targetFolder->isCreatable()) {
-            throw new ForbiddenException('You do not have permission to create a page in that language');
-        }
-
-        // Assign the group up front so both sides land linked in one write
-        // each, rather than being linked afterwards as a second step that
-        // could half-fail.
-        //
-        // Known half-state: if createPage() below fails, the SOURCE keeps this
-        // fresh group as its only member. That is harmless by construction —
-        // resolveTranslations() excludes the page itself, so a singleton group
-        // renders nothing — and the next successful link or unlink rewrites it.
-        if (empty($group)) {
-            $group = $this->translationGroups()->newGroupId();
-            $this->writeTranslationGroup($source, $group);
-        }
-
-        $pageData = $sourceData;
-        unset($pageData['order']);
-        $baseTitle = $this->htmlSanitizer->decodeEntitiesRecursive((string)($sourceData['title'] ?? 'Untitled'));
-        $pageData['title'] = ($title !== null && $title !== '') ? $title : $baseTitle;
-        $pageData['id'] = $this->idUtils->sanitizeId($pageData['title']);
-        $pageData['uniqueId'] = 'page-' . $this->idUtils->generateUUID();
-        $pageData['translationGroup'] = $group;
-        // Draft: an untranslated copy is not something readers should meet.
-        $pageData['status'] = 'draft';
-        $pageData['created'] = time();
-        $pageData['modified'] = time();
-
-        // Mirror the source's position within its own language tree, so the
-        // German page sits where the English one does rather than at the root.
-        $sourceRelative = $this->getRelativePathFromRoot($source['folder']);
-        $sourceParent = dirname($sourceRelative);
-        $parentPath = $language;
-        if ($sourceParent !== '.' && $sourceParent !== '') {
-            $segments = explode('/', $sourceParent);
-            // Swap the language segment for the target language; the rest of
-            // the path only exists in the target tree if the parents were
-            // translated too, and getOrCreateFolderPath() creates what is missing.
-            array_shift($segments);
-            $parentPath = $language . (empty($segments) ? '' : '/' . implode('/', $segments));
-        }
-
-        $created = $this->createPage($pageData, $parentPath);
-
-        // A translation starts as a copy of the source, so it needs the
-        // source's images too — the same way copyPage does it. Without this the
-        // text carried over but every image 404'd, because the JSON stores bare
-        // file names that resolve against the page being viewed.
-        $this->copyPageMedia($source['folder'] ?? null, $created['uniqueId'], 'createTranslation');
-
-        $this->clearCache();
-
-        return $created;
+        // Body lives in Compose/PageCompositionService (COMPOSE domain). createPage
+        // + page lookup + writeTranslationGroup + clearCache go in as $this-bound
+        // closures so subclasses keep intercepting and #70 stays on create/read.
+        return $this->composition()->createTranslation(
+            $sourceUniqueId,
+            $language,
+            $title,
+            fn(array $data, ?string $parentPath = null): array => $this->createPage($data, $parentPath),
+            fn(\OCP\Files\Folder $folder, string $uid): ?array => $this->locatePageAnyLanguage($folder, $uid),
+            fn(string $id): ?\OCP\Files\Folder => $this->findPageFolder($id),
+            function (array $result, string $group): void {
+                $this->writeTranslationGroup($result, $group);
+            },
+            function (): void {
+                $this->clearCache();
+            }
+        );
     }
 
     /**
@@ -1839,15 +1782,6 @@ class PageService {
         return $this->pageDataEnricher()->enrich($page, $folder, $file);
     }
 
-    /**
-     * Get relative path from IntraVox root folder
-     */
-    private function getRelativePathFromRoot($folder): string {
-        // First consumer of the FolderContext substrate (clean-target step 1).
-        // Byte-identical: relativePathFromRoot resolves the root via the
-        // getIntraVoxFolder seam closure, so test-subclass overrides still flow.
-        return $this->folders()->relativePathFromRoot($folder);
-    }
 
     /**
      * Calculate nesting depth from path
@@ -3273,63 +3207,13 @@ class PageService {
      * @return array Result with success status and template data or error message
      */
     public function saveAsTemplate(string $pageUniqueId, string $templateTitle, ?string $templateDescription = null): array {
-        try {
-            // Get the source page
-            $pageData = $this->getPage($pageUniqueId);
-            if (!$pageData) {
-                return ['success' => false, 'error' => 'Page not found'];
-            }
-
-            // Reserve a collision-free template folder (+_media)
-            $langFolder = $this->folders()->languageFolder();
-            [$templateId, $templateFolder, $templateMediaFolder] =
-                $this->pageTemplateService->newTemplateFolder($langFolder, $this->idUtils->sanitizeId($templateTitle));
-
-            // Prepare template data
-            $templateData = $pageData;
-            $templateData['uniqueId'] = 'template-' . $this->idUtils->generateUUID();
-            $templateData['title'] = $templateTitle;
-            $templateData['description'] = $templateDescription ?? '';
-            $templateData['isTemplate'] = true;
-            $templateData['created'] = time();
-            $templateData['createdBy'] = $this->userId;
-            $templateData['sourcePageId'] = $pageUniqueId;
-
-            // Remove page-specific data
-            unset($templateData['path']);
-            unset($templateData['parentPath']);
-
-            // Copy media files from source page to template
-            $pageFolder = $this->findPageFolder($pageUniqueId);
-            if ($pageFolder && $pageFolder->nodeExists('_media')) {
-                $sourceMediaFolder = $pageFolder->get('_media');
-                if ($sourceMediaFolder instanceof \OCP\Files\Folder) {
-                    $this->copyMediaFolderContents($sourceMediaFolder, $templateMediaFolder);
-                }
-            }
-
-            // Write template JSON
-            $jsonFile = $templateFolder->newFile($templateId . '.json');
-            $jsonFile->putContent(json_encode($templateData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-
-            $this->logger->info('Created template: ' . $templateId . ' from page: ' . $pageUniqueId);
-
-            return [
-                'success' => true,
-                'templateId' => $templateId,
-                'template' => [
-                    'id' => $templateId,
-                    'uniqueId' => $templateData['uniqueId'],
-                    'title' => $templateData['title'],
-                    'description' => $templateData['description'],
-                    'created' => $templateData['created'],
-                    'createdBy' => $templateData['createdBy'],
-                ],
-            ];
-        } catch (\Exception $e) {
-            $this->logger->error('Failed to save as template: ' . $e->getMessage());
-            return ['success' => false, 'error' => $e->getMessage()];
-        }
+        return $this->composition()->saveAsTemplate(
+            $pageUniqueId,
+            $templateTitle,
+            $templateDescription,
+            fn(string $id): array => $this->getPage($id),
+            fn(string $id): ?\OCP\Files\Folder => $this->findPageFolder($id)
+        );
     }
 
     /**
@@ -3356,86 +3240,15 @@ class PageService {
      * @return array Result with success status and page data
      */
     public function createPageFromTemplate(string $templateId, string $pageTitle, ?string $parentPath = null): array {
-        try {
-            // Get template data
-            $templateData = $this->getTemplate($templateId);
-            if ($templateData === null) {
-                return ['success' => false, 'error' => 'Template not found'];
-            }
-
-            // Prepare page data from template
-            $pageData = $templateData;
-
-            // Generate new page ID and uniqueId
-            $pageId = $this->idUtils->sanitizeId($pageTitle);
-            $pageData['id'] = $pageId;
-            $pageData['title'] = $pageTitle;
-            $pageData['uniqueId'] = 'page-' . $this->idUtils->generateUUID();
-            $pageData['created'] = time();
-            $pageData['modified'] = time();
-
-            // Remove template-specific fields
-            unset($pageData['isTemplate']);
-            unset($pageData['description']);
-            unset($pageData['createdBy']);
-            unset($pageData['sourcePageId']);
-
-            // New pages from templates always start as draft
-            $pageData['status'] = 'draft';
-
-            // Create the page using existing method
-            $createdPage = $this->createPage($pageData, $parentPath);
-
-            // Copy media files from template to new page
-            $templatesFolder = $this->pageTemplateService->templatesFolder($this->folders()->languageFolder());
-            if ($templatesFolder && $templatesFolder->nodeExists($templateId)) {
-                $templateFolder = $templatesFolder->get($templateId);
-                if ($templateFolder instanceof \OCP\Files\Folder && $templateFolder->nodeExists('_media')) {
-                    $templateMediaFolder = $templateFolder->get('_media');
-
-                    // Get the new page's folder (should be in cache from createPage)
-                    $newPageFolder = $this->findPageFolder($createdPage['uniqueId']);
-                    $this->logger->info('Template media copy: page folder found = ' . ($newPageFolder ? 'yes' : 'no') . ' for ' . $createdPage['uniqueId']);
-                    if ($newPageFolder && $templateMediaFolder instanceof \OCP\Files\Folder) {
-                        // Create _media folder if not exists
-                        if (!$newPageFolder->nodeExists('_media')) {
-                            $newPageFolder->newFolder('_media');
-                        }
-                        $pageMediaFolder = $newPageFolder->get('_media');
-                        if ($pageMediaFolder instanceof \OCP\Files\Folder) {
-                            $this->copyMediaFolderContents($templateMediaFolder, $pageMediaFolder);
-                        }
-                    }
-                }
-            }
-
-            $this->logger->info('Created page from template: ' . $templateId . ' -> ' . $createdPage['uniqueId']);
-
-            // Re-fetch through getPage() so the response includes
-            // enrichWithPathData (path, breadcrumb info, permissions) and
-            // a sanitize pass — the same shape the frontend gets on a
-            // normal page load. Without this the editor mounts with a
-            // half-populated page and rendered blank until manual save +
-            // reload. Falls back to createdPage if the fresh read fails
-            // for any reason (e.g. ACL race on a brand-new folder).
-            try {
-                $fullPage = $this->getPage($createdPage['uniqueId']);
-            } catch (\Exception $e) {
-                $this->logger->warning(
-                    '[createPageFromTemplate] getPage failed on freshly created page, falling back to validated data',
-                    ['uniqueId' => $createdPage['uniqueId'], 'error' => $e->getMessage()]
-                );
-                $fullPage = $createdPage;
-            }
-
-            return [
-                'success' => true,
-                'page' => $fullPage,
-            ];
-        } catch (\Exception $e) {
-            $this->logger->error('Failed to create page from template: ' . $e->getMessage());
-            return ['success' => false, 'error' => $e->getMessage()];
-        }
+        return $this->composition()->createPageFromTemplate(
+            $templateId,
+            $pageTitle,
+            $parentPath,
+            fn(array $data, ?string $parentPath = null): array => $this->createPage($data, $parentPath),
+            fn(string $id): array => $this->getPage($id),
+            fn(string $id): ?array => $this->getTemplate($id),
+            fn(string $id): ?\OCP\Files\Folder => $this->findPageFolder($id)
+        );
     }
 
     /**
@@ -3454,110 +3267,18 @@ class PageService {
      * @throws \Exception When the source cannot be located.
      */
     public function copyPage(string $sourceUniqueId, ?string $targetParentId = null, ?string $newTitle = null): array {
-        $languageFolder = $this->folders()->languageFolder();
-
-        // A copy follows its source across language folders, like every other
-        // operation on an existing page (#90).
-        $source = $this->locatePageAnyLanguage($languageFolder, $sourceUniqueId);
-        if ($source === null || !isset($source['file'])) {
-            throw new PageNotFoundException('Page not found: ' . $sourceUniqueId);
-        }
-
-        $sourceData = json_decode($source['file']->getContent(), true);
-        if (!is_array($sourceData)) {
-            throw new \Exception('Could not read source page');
-        }
-
-        // Determine the destination parent path.
-        $parentPath = null;
-        if ($targetParentId !== null && $targetParentId !== '') {
-            $targetParent = $this->locatePageAnyLanguage($languageFolder, $targetParentId);
-            if ($targetParent === null || !isset($targetParent['folder'])) {
-                throw new PageNotFoundException('Target parent not found: ' . $targetParentId);
+        return $this->composition()->copyPage(
+            $sourceUniqueId,
+            $targetParentId,
+            $newTitle,
+            fn(array $data, ?string $parentPath = null): array => $this->createPage($data, $parentPath),
+            fn(string $id): array => $this->getPage($id),
+            fn(\OCP\Files\Folder $folder, string $uid): ?array => $this->locatePageAnyLanguage($folder, $uid),
+            fn(string $id): ?\OCP\Files\Folder => $this->findPageFolder($id),
+            function (): void {
+                $this->clearCache();
             }
-            // getRelativePathFromRoot() keeps the leading language segment, and
-            // getOrCreateFolderPath() honours it, so the copy lands in the
-            // target parent's language rather than the copier's.
-            $parentPath = $this->getRelativePathFromRoot($targetParent['folder']);
-        } elseif (isset($source['folder'])) {
-            // Same parent as the source. For a page at the language ROOT,
-            // dirname() yields '.', which used to become null and sent the copy
-            // to the reader's own language folder — an English page copied by a
-            // German user landed in de/. Fall back to the source's own language
-            // root instead, so a copy never changes language.
-            $sourceRelPath = $this->getRelativePathFromRoot($source['folder']);
-            $sourceParentPath = dirname($sourceRelPath);
-            if ($sourceParentPath === '.' || $sourceParentPath === '') {
-                $sourceLanguage = $this->languageOfFolder($source['folder']);
-                $parentPath = $sourceLanguage;
-            } else {
-                $parentPath = $sourceParentPath;
-            }
-        }
-
-        // Build the copy's page data (fresh identity, draft status).
-        // Decode the source title first: it is stored HTML-encoded (sanitizeText),
-        // and createPage re-encodes it — without decoding, "Tips &amp; Tricks"
-        // would double-encode to "Tips &amp;amp; Tricks (copy)".
-        $baseTitle = $this->htmlSanitizer->decodeEntitiesRecursive((string)($sourceData['title'] ?? 'Untitled'));
-        $title = $newTitle !== null && $newTitle !== '' ? $newTitle : $baseTitle . ' (copy)';
-        $pageData = $sourceData;
-        unset($pageData['order']); // never inherit sibling order
-        // A copy is a new page, not a translation of the source. Inheriting the
-        // group made the copy a same-language member of it, which is the exact
-        // state createTranslation() refuses to create because it makes the
-        // language switcher ambiguous. createPage() assigns a fresh group.
-        unset($pageData['translationGroup']);
-        $pageData['id'] = $this->idUtils->sanitizeId($title);
-        $pageData['title'] = $title;
-        $pageData['uniqueId'] = 'page-' . $this->idUtils->generateUUID();
-        $pageData['status'] = 'draft';
-        $pageData['created'] = time();
-        $pageData['modified'] = time();
-
-        $createdPage = $this->createPage($pageData, $parentPath);
-
-        // Copy media assets from the source page folder into the copy.
-        $this->copyPageMedia($source['folder'] ?? null, $createdPage['uniqueId'], 'copyPage');
-
-        $this->clearCache();
-
-        try {
-            return $this->getPage($createdPage['uniqueId']);
-        } catch (\Exception $e) {
-            return $createdPage;
-        }
-    }
-
-    /**
-     * Give a newly derived page its own copy of the source page's media.
-     *
-     * A page's images live in a `_media` folder beside its JSON, and the JSON
-     * stores only the FILE NAME — the URL is built client-side from whichever
-     * page is being viewed (see WidgetEditor.vue:696). So a derived page needs
-     * the files themselves and nothing rewritten; without them every image
-     * resolves to a 404 under the new page id.
-     *
-     * Copies rather than shares the files, so editing or deleting an image on
-     * the translation cannot alter the original.
-     *
-     * Failure is logged, not thrown: losing the images is bad, but it is not
-     * worth discarding a page that was already written to disk.
-     *
-     * @param \OCP\Files\Folder|null $sourceFolder folder holding the source page
-     * @param string $newUniqueId the derived page
-     * @param string $context caller name, for the log line
-     */
-    private function copyPageMedia(?\OCP\Files\Folder $sourceFolder, string $newUniqueId, string $context): void {
-        $this->media()->copyPageMedia(
-            $sourceFolder,
-            $this->findPageFolder($newUniqueId),
-            $context
         );
-    }
-
-    private function copyMediaFolderContents(\OCP\Files\Folder $source, \OCP\Files\Folder $target): void {
-        $this->media()->copyMediaFolderContents($source, $target);
     }
 
     /**
