@@ -84,15 +84,29 @@ class PageWalkerSkipTest extends TestCase {
             ]),
         ]);
 
-        $svc = new class($en) extends PageService {
-            private Folder $langFolder;
-            public function __construct(Folder $langFolder) {
-                $this->langFolder = $langFolder;
-            }
-            protected function getReadLanguageFolder(): Folder {
-                return $this->langFolder;
+        // listPagesWithContent resolves its folder via folders()->readLanguageFolder
+        // and never runs a cross-language locate, so the seam override goes away
+        // entirely — a FolderContext whose readLanguageFolder seam returns $en
+        // covers it. (This file has its own fixture helpers, not the shared
+        // harness, so the context is built inline rather than via fakeFolderContext.)
+        $svc = new class extends PageService {
+            public function __construct() {
             }
         };
+        $folderContext = new \OCA\IntraVox\Service\Folder\FolderContext(
+            fn() => $en,
+            fn(): string => 'en',
+            fn(): string => 'en',
+            fn(Folder $f): bool => false,
+            new \OCA\IntraVox\Service\Language\LanguageResolver(),
+            new \OCA\IntraVox\Service\Locator\PageLocator(
+                $this->createMock(\OCA\IntraVox\Service\PageIndexService::class),
+                $this->createMock(\Psr\Log\LoggerInterface::class)
+            ),
+            fn(): Folder => $en
+        );
+        (new \ReflectionProperty(PageService::class, 'folderContext'))
+            ->setValue($svc, $folderContext);
         (new \ReflectionProperty(PageService::class, 'logger'))
             ->setValue($svc, $this->createMock(\Psr\Log\LoggerInterface::class));
         (new \ReflectionProperty(PageService::class, 'pageLocator'))

@@ -42,20 +42,14 @@ class PageNewsTest extends TestCase {
         array $collected = [],
         bool $metaVoxAvailable = false
     ): PageService {
-        $svc = new class($readFolder) extends PageService {
-            private Folder $readFolder;
-            public function __construct(Folder $readFolder) {
-                $this->readFolder = $readFolder;
+        // getNewsPages resolves its folder via folders()->readLanguageFolder +
+        // folders()->intraVox (findNewsPagesInFolder) and runs no cross-language
+        // locate, so both seam overrides go away. Language falls through
+        // resolveEffectiveLanguage() (no real content -> null) to userLanguage 'en',
+        // matching the old collaborator-resolved path.
+        $svc = new class extends PageService {
+            public function __construct() {
             }
-            protected function getReadLanguageFolder(): Folder {
-                return $this->readFolder;
-            }
-            protected function getIntraVoxFolder() {
-                return $this->readFolder;
-            }
-            // resolveEffectiveLanguage is private; but getReadLanguageFolder is
-            // the only seam getNewsPages needs for the folder. Language is
-            // resolved via the (mocked) collaborators below.
             public function clearCache(): void {
             }
         };
@@ -91,6 +85,10 @@ class PageNewsTest extends TestCase {
             'cache' => $cache,
             'logger' => $this->createMock(LoggerInterface::class),
             'userId' => 'tester',
+            'folderContext' => $this->fakeFolderContext(
+                readLanguageFolder: $readFolder,
+                intraVox: $readFolder
+            ),
         ]);
         return $svc;
     }
