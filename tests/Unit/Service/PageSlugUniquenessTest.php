@@ -371,46 +371,49 @@ class PageSlugUniquenessTest extends TestCase {
 
         $pageFolder = $this->makeFolder('/IntraVox/nl/handbook', ['handbook.json' => $file]);
         $nl = $this->makeFolder('/IntraVox/nl', ['handbook' => $pageFolder]);
+        $base = $this->makeFolder('/IntraVox', ['nl' => $nl]);
 
-        // Build the wired service, then hand its dependencies to a subclass that
-        // captures createPage() instead of running it — what matters here is the
-        // data copyPage() hands over, not the write that follows.
-        $wired = $this->makeService(['nl' => $nl], 'nl');
-        $spy = new class extends PageService {
-            public ?array $seen = null;
-            public function __construct() {
-            }
-            public function createPage(array $data, ?string $parentPath = null): array {
-                $this->seen = $data;
+        // Drive PageCompositionService directly with a stub createPage closure that
+        // captures the data copyPage hands over (what this test targets) — no
+        // PageService subclass, no reflection property-copy.
+        $svc = new \OCA\IntraVox\Service\Compose\PageCompositionService(
+            $this->createMock(\OCA\IntraVox\Service\Template\PageTemplateService::class),
+            $this->createMock(\OCA\IntraVox\Service\Translation\TranslationGroupService::class),
+            $this->createMock(\OCA\IntraVox\Service\Media\PageMediaService::class),
+            $this->doubleOrBuild(\OCA\IntraVox\Service\Sanitize\HtmlSanitizer::class),
+            new \OCA\IntraVox\Service\Util\PageIdUtils(),
+            $this->fakeFolderContext(intraVox: $base, languageFolder: $nl),
+            'tester',
+            $this->createMock(\Psr\Log\LoggerInterface::class)
+        );
+        $locator = new \OCA\IntraVox\Service\Locator\PageLocator(
+            $this->createMock(\OCA\IntraVox\Service\PageIndexService::class),
+            $this->createMock(\Psr\Log\LoggerInterface::class)
+        );
+
+        $seen = null;
+        $svc->copyPage(
+            'page-aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
+            null,
+            null,
+            function (array $data, ?string $parentPath = null) use (&$seen): array {
+                $seen = $data;
                 return $data + ['translationGroup' => 'tg-fresh'];
+            },
+            fn(string $id): array => $seen ?? [],
+            fn(Folder $folder, string $uid): ?array => $locator->locatePageAnyLanguage(fn() => $base, $folder, $uid),
+            fn(string $id): ?Folder => null,
+            function (): void {
             }
-            public function getPage(string $id): array {
-                return $this->seen ?? [];
-            }
-            public function clearCache(): void {
-            }
-        };
-        foreach ((new \ReflectionClass(PageService::class))->getProperties() as $prop) {
-            if ($prop->isStatic() || !$prop->isInitialized($wired) || $prop->isInitialized($spy)) {
-                continue;
-            }
-            $prop->setValue($spy, $prop->getValue($wired));
-        }
-        // copyPage resolves its folder via folders()->languageFolder() ($nl) and
-        // walks cross-language via rootClosure()->folders()->intraVox() ($nl);
-        // inject a FolderContext directly (the property-copy above skips it).
-        (new \ReflectionProperty(PageService::class, 'folderContext'))
-            ->setValue($spy, $this->fakeFolderContext(intraVox: $nl, languageFolder: $nl));
+        );
 
-        $spy->copyPage('page-aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee');
-
-        $this->assertNotNull($spy->seen, 'copyPage should have reached createPage()');
+        $this->assertNotNull($seen, 'copyPage should have reached createPage()');
         $this->assertArrayNotHasKey(
             'translationGroup',
-            $spy->seen,
+            $seen,
             'a copy must not inherit the source translationGroup'
         );
-        $this->assertArrayNotHasKey('order', $spy->seen, 'a copy must not inherit sibling order');
+        $this->assertArrayNotHasKey('order', $seen, 'a copy must not inherit sibling order');
     }
 
 

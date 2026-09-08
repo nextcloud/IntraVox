@@ -5,9 +5,12 @@ namespace OCA\IntraVox\Tests\Unit\Service;
 
 use OCA\IntraVox\Exception\ForbiddenException;
 use OCA\IntraVox\Exception\PageNotFoundException;
+use OCA\IntraVox\Service\Compose\PageCompositionService;
 use OCA\IntraVox\Service\Media\PageMediaService;
-use OCA\IntraVox\Service\PageService;
+use OCA\IntraVox\Service\Sanitize\HtmlSanitizer;
+use OCA\IntraVox\Service\Template\PageTemplateService;
 use OCA\IntraVox\Service\Translation\TranslationGroupService;
+use OCA\IntraVox\Service\Util\PageIdUtils;
 use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageService;
 use OCP\Files\File;
 use OCP\Files\FileInfo;
@@ -15,17 +18,26 @@ use OCP\Files\Folder;
 use PHPUnit\Framework\TestCase;
 
 /**
- * createTranslation() is TRANSLATE-domain composition: it reads the source,
+ * createTranslation() is COMPOSE-domain composition: it reads the source,
  * refuses the invalid cases, mints/assigns a translation group, builds fresh
  * draft copy data mirrored into the target language tree, delegates the write to
  * createPage(), and copies the source's media. PageTranslationGroupTest covers
  * the link/unlink group mechanics; this pins createTranslation's own contract —
- * the refusal guards and the group/parent/media composition — before any TRANSLATE
- * hardening, using the proven subclass spy (createPage captured, seams overridden).
+ * the refusal guards and the group/parent/media composition.
+ *
+ * Drives PageCompositionService DIRECTLY with a stub createPage closure (which
+ * records into $seenData/$seenParentPath) instead of subclass-overriding
+ * createPage on PageService — the composition IS what this test targets.
  */
 class PageTranslationCompositionTest extends TestCase {
 
     use BuildsPageService;
+
+    /** What the stub createPage closure last received. */
+    private ?array $seenData = null;
+    private ?string $seenParentPath = null;
+    /** The /IntraVox base folder, so the locate closure walks cross-language (#90). */
+    private ?Folder $base = null;
 
     private function makeFile(string $path, array $json): File {
         $file = $this->createMock(File::class);
@@ -76,39 +88,55 @@ class PageTranslationCompositionTest extends TestCase {
         TranslationGroupService $groups,
         PageMediaService $media,
         bool $existingGroup = false
-    ): PageService {
+    ): PageCompositionService {
+        $this->seenData = null;
+        $this->seenParentPath = null;
         $en = $languages['en'];
         $base = $this->makeFolder('/IntraVox', $languages);
+        $this->base = $base;
 
         // createTranslation resolves readLanguageFolder ($en) and intraVox->get($lang)
-        // ($base) through the injected FolderContext, so all folder seams are gone.
-        // The createPage spy is orthogonal to folders.
-        $svc = new class() extends PageService {
-            public ?array $seenData = null;
-            public ?string $seenParentPath = null;
-            public function __construct() {
-            }
-            public function createPage(array $data, ?string $parentPath = null): array {
+        // ($base) through the injected FolderContext. The template service is unused
+        // by createTranslation; the html sanitizer + id utils are real.
+        return new PageCompositionService(
+            $this->createMock(PageTemplateService::class),
+            $groups,
+            $media,
+            $this->doubleOrBuild(HtmlSanitizer::class),
+            new PageIdUtils(),
+            $this->fakeFolderContext(readLanguageFolder: $en, intraVox: $base),
+            'tester',
+            $this->createMock(\Psr\Log\LoggerInterface::class)
+        );
+    }
+
+    /**
+     * Drive createTranslation with a stub createPage closure that records the data
+     * it is handed (replacing the old subclass createPage spy), plus the page-lookup
+     * / group / cache closures the PageService delegator would supply. locate uses a
+     * real PageLocator against the fixture tree, so the #90 cross-language walk runs.
+     */
+    private function translate(PageCompositionService $svc, string $sourceUniqueId, string $language, ?string $title = null): array {
+        $locator = new \OCA\IntraVox\Service\Locator\PageLocator(
+            $this->createMock(\OCA\IntraVox\Service\PageIndexService::class),
+            $this->createMock(\Psr\Log\LoggerInterface::class)
+        );
+        return $svc->createTranslation(
+            $sourceUniqueId,
+            $language,
+            $title,
+            function (array $data, ?string $parentPath = null): array {
                 $this->seenData = $data;
                 $this->seenParentPath = $parentPath;
                 return $data;
+            },
+            fn(Folder $folder, string $uid): ?array => $locator->locatePageAnyLanguage(fn() => $this->base, $folder, $uid),
+            fn(string $id): ?Folder => null,
+            function (array $result, string $group): void {
+            },
+            function (): void {
             }
-            public function clearCache(): void {
-            }
-        };
-
-        $this->injectPageServiceDependencies($svc, [
-            'userId' => 'tester',
-            'logger' => $this->createMock(\Psr\Log\LoggerInterface::class),
-            'languageService' => $this->createMock(\OCA\IntraVox\Service\LanguageService::class),
-            'translationGroupService' => $groups,
-            'pageMediaService' => $media,
-            'folderContext' => $this->fakeFolderContext(
-                readLanguageFolder: $en,
-                intraVox: $base
-            ),
-        ]);
-        return $svc;
+        );
     }
 
     private function noopGroups(): TranslationGroupService {
@@ -126,7 +154,7 @@ class PageTranslationCompositionTest extends TestCase {
 
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Invalid language code');
-        $svc->createTranslation('page-src', 'XX');
+        $this->translate($svc, 'page-src', 'XX');
     }
 
     public function testTranslatingIntoTheSourceOwnLanguageIsRefused(): void {
@@ -137,7 +165,7 @@ class PageTranslationCompositionTest extends TestCase {
 
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('already in that language');
-        $svc->createTranslation('page-src', 'en');
+        $this->translate($svc, 'page-src', 'en');
     }
 
     public function testAMissingTargetLanguageFolderIsRefused(): void {
@@ -148,7 +176,7 @@ class PageTranslationCompositionTest extends TestCase {
 
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('no content folder yet');
-        $svc->createTranslation('page-src', 'de');
+        $this->translate($svc, 'page-src', 'de');
     }
 
     public function testAReadOnlyTargetLanguageYields403(): void {
@@ -158,7 +186,7 @@ class PageTranslationCompositionTest extends TestCase {
         $svc = $this->makeSpy(['en' => $en, 'de' => $de], $this->noopGroups(), $this->createMock(PageMediaService::class));
 
         $this->expectException(ForbiddenException::class);
-        $svc->createTranslation('page-src', 'de');
+        $this->translate($svc, 'page-src', 'de');
     }
 
     public function testDuplicateLanguageInTheGroupIsRefused(): void {
@@ -173,7 +201,7 @@ class PageTranslationCompositionTest extends TestCase {
 
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('already exists in that language');
-        $svc->createTranslation('page-src', 'de');
+        $this->translate($svc, 'page-src', 'de');
     }
 
     public function testUnknownSourceIsRefused(): void {
@@ -181,7 +209,7 @@ class PageTranslationCompositionTest extends TestCase {
         $svc = $this->makeSpy(['en' => $en], $this->noopGroups(), $this->createMock(PageMediaService::class));
 
         $this->expectException(PageNotFoundException::class);
-        $svc->createTranslation('page-nope', 'de');
+        $this->translate($svc, 'page-nope', 'de');
     }
 
     // ------------------------------------------------------------ composition
@@ -195,9 +223,9 @@ class PageTranslationCompositionTest extends TestCase {
         $de = $this->makeFolder('/IntraVox/de', []);
         $svc = $this->makeSpy(['en' => $en, 'de' => $de], $this->noopGroups(), $this->createMock(PageMediaService::class));
 
-        $svc->createTranslation('page-src', 'de');
+        $this->translate($svc, 'page-src', 'de');
 
-        $seen = $svc->seenData;
+        $seen = $this->seenData;
         $this->assertSame('draft', $seen['status'], 'a fresh translation is a draft');
         $this->assertArrayNotHasKey('order', $seen, 'a translation does not inherit sibling order');
         $this->assertNotSame('page-src', $seen['uniqueId'], 'a translation gets a fresh uniqueId');
@@ -211,9 +239,9 @@ class PageTranslationCompositionTest extends TestCase {
         $de = $this->makeFolder('/IntraVox/de', []);
         $svc = $this->makeSpy(['en' => $en, 'de' => $de], $this->noopGroups(), $this->createMock(PageMediaService::class));
 
-        $svc->createTranslation('page-src', 'de');
+        $this->translate($svc, 'page-src', 'de');
 
-        $this->assertSame('de', $svc->seenParentPath, 'a root-level source translates into the target language root');
+        $this->assertSame('de', $this->seenParentPath, 'a root-level source translates into the target language root');
     }
 
     public function testTranslationCopiesTheSourceMedia(): void {
@@ -227,6 +255,6 @@ class PageTranslationCompositionTest extends TestCase {
             ->with($this->identicalTo($enPage), $this->anything(), 'createTranslation');
 
         $svc = $this->makeSpy(['en' => $en, 'de' => $de], $this->noopGroups(), $media);
-        $svc->createTranslation('page-src', 'de');
+        $this->translate($svc, 'page-src', 'de');
     }
 }

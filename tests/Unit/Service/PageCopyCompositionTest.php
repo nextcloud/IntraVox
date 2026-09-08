@@ -3,8 +3,12 @@ declare(strict_types=1);
 
 namespace OCA\IntraVox\Tests\Unit\Service;
 
+use OCA\IntraVox\Service\Compose\PageCompositionService;
 use OCA\IntraVox\Service\Media\PageMediaService;
-use OCA\IntraVox\Service\PageService;
+use OCA\IntraVox\Service\Sanitize\HtmlSanitizer;
+use OCA\IntraVox\Service\Template\PageTemplateService;
+use OCA\IntraVox\Service\Translation\TranslationGroupService;
+use OCA\IntraVox\Service\Util\PageIdUtils;
 use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageService;
 use OCP\Files\File;
 use OCP\Files\FileInfo;
@@ -12,17 +16,24 @@ use OCP\Files\Folder;
 use PHPUnit\Framework\TestCase;
 
 /**
- * copyPage() is TEMPLATE-domain composition: it reads the source (getPage/locate),
+ * copyPage() is COMPOSE-domain composition: it reads the source (getPage/locate),
  * builds fresh copy data, delegates the write to createPage(), and copies the
- * source's media into the new page. Only the group-strip + order-strip were
- * pinned (PageSlugUniquenessTest). This pins the rest of the observable contract
- * before the TEMPLATE hardening — the media-copy (a memory-flagged gap), the
- * draft status, and the #90 own-language behaviour — using the proven subclass
- * spy: createPage/getPage are captured, the seams overridden.
+ * source's media into the new page. This pins the observable contract — the
+ * group/order strip, the media-copy (a memory-flagged gap), the draft status, and
+ * the #90 own-language behaviour.
+ *
+ * Drives PageCompositionService DIRECTLY with stub createPage/getPage closures
+ * (recording into $seenData/$seenParentPath) instead of subclass-overriding them.
  */
 class PageCopyCompositionTest extends TestCase {
 
     use BuildsPageService;
+
+    /** What the stub createPage closure last received. */
+    private ?array $seenData = null;
+    private ?string $seenParentPath = null;
+    /** The /IntraVox base folder, so the locate closure walks cross-language (#90). */
+    private ?Folder $base = null;
 
     private function makeFile(string $path, array $json): File {
         $file = $this->createMock(File::class);
@@ -71,49 +82,61 @@ class PageCopyCompositionTest extends TestCase {
      * @param array<string,Folder> $languages code => language folder under /IntraVox
      * @param PageMediaService $mediaSpy explicit media service (records copy calls)
      */
-    private function makeSpy(array $languages, string $writeLang, PageMediaService $mediaSpy): PageService {
+    private function makeSpy(array $languages, string $writeLang, PageMediaService $mediaSpy): PageCompositionService {
+        $this->seenData = null;
+        $this->seenParentPath = null;
         $byName = [];
         foreach ($languages as $code => $f) {
             $byName[$code] = $f;
         }
         $base = $this->makeFolder('/IntraVox', $byName);
+        $this->base = $base;
         $writeFolder = $languages[$writeLang];
 
         // copyPage resolves its write-target ($writeFolder) via
-        // folders()->languageFolder() and walks cross-language via
-        // locatePageAnyLanguage -> rootClosure() -> getIntraVoxFolder ($base, kept).
-        // createPage/getPage spies + clearCache stay (orthogonal to folders).
-        $svc = new class extends PageService {
-            public ?array $seenData = null;
-            public ?string $seenParentPath = null;
-            public function __construct() {
-            }
-            public function createPage(array $data, ?string $parentPath = null): array {
+        // folders()->languageFolder() and walks cross-language via the injected
+        // locatePageAnyLanguage closure. The template/translation engines are unused
+        // by copyPage; the html sanitizer + id utils are real; media records copies.
+        return new PageCompositionService(
+            $this->createMock(PageTemplateService::class),
+            $this->createMock(TranslationGroupService::class),
+            $mediaSpy,
+            $this->doubleOrBuild(HtmlSanitizer::class),
+            new PageIdUtils(),
+            $this->fakeFolderContext(intraVox: $base, languageFolder: $writeFolder),
+            'tester',
+            $this->createMock(\Psr\Log\LoggerInterface::class)
+        );
+    }
+
+    /**
+     * Drive copyPage with stub createPage/getPage closures (recording into
+     * $seenData/$seenParentPath) + the page-lookup/cache closures the PageService
+     * delegator would supply. locate uses a real PageLocator against the fixture
+     * tree so the #90 cross-language walk runs; getPage echoes the created data.
+     */
+    private function copy(PageCompositionService $svc, string $sourceUniqueId, ?string $targetParentId = null, ?string $newTitle = null): array {
+        $locator = new \OCA\IntraVox\Service\Locator\PageLocator(
+            $this->createMock(\OCA\IntraVox\Service\PageIndexService::class),
+            $this->createMock(\Psr\Log\LoggerInterface::class)
+        );
+        return $svc->copyPage(
+            $sourceUniqueId,
+            $targetParentId,
+            $newTitle,
+            function (array $data, ?string $parentPath = null): array {
                 $this->seenData = $data;
                 $this->seenParentPath = $parentPath;
                 return $data; // carries the fresh uniqueId copyPage set
+            },
+            fn(string $id): array => $this->seenData ?? [],
+            // Root = the /IntraVox base (both language folders), so the locate walks
+            // cross-language (#90) exactly as PageService's rootClosure() did.
+            fn(Folder $folder, string $uid): ?array => $locator->locatePageAnyLanguage(fn() => $this->base, $folder, $uid),
+            fn(string $id): ?Folder => null,
+            function (): void {
             }
-            public function getPage(string $id): array {
-                return $this->seenData ?? [];
-            }
-            public function clearCache(): void {
-            }
-        };
-
-        $languageService = $this->createMock(\OCA\IntraVox\Service\LanguageService::class);
-        $languageService->method('isLanguageAvailable')->willReturnCallback(
-            fn(string $c) => in_array($c, ['en', 'de', 'nl', 'fr'], true)
         );
-        $languageService->method('getPrimaryLanguage')->willReturn('en');
-
-        $this->injectPageServiceDependencies($svc, [
-            'userId' => 'tester',
-            'logger' => $this->createMock(\Psr\Log\LoggerInterface::class),
-            'languageService' => $languageService,
-            'pageMediaService' => $mediaSpy,
-            'folderContext' => $this->fakeFolderContext(intraVox: $base, languageFolder: $writeFolder),
-        ]);
-        return $svc;
     }
 
     public function testCopyStripsGroupAndOrderAndIsDraftWithFreshIdentity(): void {
@@ -129,9 +152,9 @@ class PageCopyCompositionTest extends TestCase {
         $media = $this->createMock(PageMediaService::class);
         $svc = $this->makeSpy(['en' => $en], 'en', $media);
 
-        $svc->copyPage('page-src');
+        $this->copy($svc, 'page-src');
 
-        $seen = $svc->seenData;
+        $seen = $this->seenData;
         $this->assertArrayNotHasKey('translationGroup', $seen, 'a copy must not inherit the group');
         $this->assertArrayNotHasKey('order', $seen, 'a copy must not inherit sibling order');
         $this->assertSame('draft', $seen['status'], 'a copy starts as draft');
@@ -157,7 +180,7 @@ class PageCopyCompositionTest extends TestCase {
             );
 
         $svc = $this->makeSpy(['en' => $en], 'en', $media);
-        $svc->copyPage('page-src');
+        $this->copy($svc, 'page-src');
     }
 
     public function testCopyOfALanguageRootPageStaysInItsOwnLanguage(): void {
@@ -173,9 +196,9 @@ class PageCopyCompositionTest extends TestCase {
         // The DE user's write/read seam is de/, but the source resolves cross-language to en/.
         $svc = $this->makeSpy(['en' => $en, 'de' => $de], 'de', $media);
         // Source located via the base folder scan; drive by uniqueId across languages.
-        $svc->copyPage('page-src');
+        $this->copy($svc, 'page-src');
 
-        $this->assertSame('en', $svc->seenParentPath, 'a root-page copy stays in the source language (en), not the copier de');
+        $this->assertSame('en', $this->seenParentPath, 'a root-page copy stays in the source language (en), not the copier de');
     }
 
     public function testNewTitleOverridesTheCopySuffix(): void {
@@ -187,8 +210,8 @@ class PageCopyCompositionTest extends TestCase {
         $media = $this->createMock(PageMediaService::class);
         $svc = $this->makeSpy(['en' => $en], 'en', $media);
 
-        $svc->copyPage('page-src', null, 'My New Name');
+        $this->copy($svc, 'page-src', null, 'My New Name');
 
-        $this->assertSame('My New Name', $svc->seenData['title'], 'an explicit newTitle wins over "… (copy)"');
+        $this->assertSame('My New Name', $this->seenData['title'], 'an explicit newTitle wins over "… (copy)"');
     }
 }
