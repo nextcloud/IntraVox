@@ -56,18 +56,15 @@ class PageMetadataTest extends TestCase {
         // index mock misses), so the root is only used for path math.
         $base = $this->makeFolder('/IntraVox', ['en' => $lang]);
 
-        $svc = new class($lang, $base) extends PageService {
-            private Folder $lang;
+        // getPageMetadata resolves its folder via folders()->languageFolder()
+        // (= base->get('en') = $lang), so getLanguageFolder/getReadLanguageFolder
+        // are gone. getIntraVoxFolder stays ONLY for the cross-language locate walk
+        // (locatePageAnyLanguage -> rootClosure()), not covered by FolderContext
+        // until the terminal step.
+        $svc = new class($base) extends PageService {
             private Folder $base;
-            public function __construct(Folder $lang, Folder $base) {
-                $this->lang = $lang;
+            public function __construct(Folder $base) {
                 $this->base = $base;
-            }
-            protected function getLanguageFolder(): Folder {
-                return $this->lang;
-            }
-            protected function getReadLanguageFolder(): Folder {
-                return $this->lang;
             }
             protected function getIntraVoxFolder(): Folder {
                 return $this->base;
@@ -84,6 +81,7 @@ class PageMetadataTest extends TestCase {
             'userId' => 'tester',
             'pageIndexService' => $index,
             'logger' => $this->createMock(LoggerInterface::class),
+            'folderContext' => $this->fakeFolderContext(intraVox: $base),
         ]);
 
         return $svc;
@@ -92,18 +90,12 @@ class PageMetadataTest extends TestCase {
     public function testUnknownPageThrowsPageNotFoundWithTheIdInTheMessage(): void {
         $empty = $this->makeFolder('/IntraVox/en', []);
         $base = $this->makeFolder('/IntraVox', ['en' => $empty]);
-        $svc = new class($empty, $base) extends PageService {
-            private Folder $empty;
+        // languageFolder() = base->get('en') = $empty; getIntraVoxFolder kept for
+        // the cross-language locate walk (rootClosure()).
+        $svc = new class($base) extends PageService {
             private Folder $base;
-            public function __construct(Folder $empty, Folder $base) {
-                $this->empty = $empty;
+            public function __construct(Folder $base) {
                 $this->base = $base;
-            }
-            protected function getLanguageFolder(): Folder {
-                return $this->empty;
-            }
-            protected function getReadLanguageFolder(): Folder {
-                return $this->empty;
             }
             protected function getIntraVoxFolder(): Folder {
                 return $this->base;
@@ -115,6 +107,7 @@ class PageMetadataTest extends TestCase {
             'userId' => 'tester',
             'pageIndexService' => $index,
             'logger' => $this->createMock(LoggerInterface::class),
+            'folderContext' => $this->fakeFolderContext(intraVox: $base),
         ]);
 
         $this->expectException(\Exception::class);

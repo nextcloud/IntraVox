@@ -2642,7 +2642,7 @@ class PageService {
      */
     public function getPageMetadata(string $pageId): array {
         // Get page and file info
-        $folder = $this->getLanguageFolder();
+        $folder = $this->folders()->languageFolder();
         $result = null;
 
         // Check for uniqueId pattern (page-xxxx). Follows the page across
