@@ -230,8 +230,7 @@ class PageIndexLookupTest extends TestCase {
             ['uniqueId' => 'page-home', 'title' => 'Home']
         );
 
-        $result = (new \ReflectionMethod(PageService::class, 'listPagesFromIndex'))
-            ->invoke($svc, (new \ReflectionMethod(PageService::class, 'folders'))->invoke($svc)->readLanguageFolder());
+        $result = (new \ReflectionMethod(PageService::class, 'pageLister'))->invoke($svc)->fromIndex((new \ReflectionMethod(PageService::class, 'folders'))->invoke($svc)->readLanguageFolder());
 
         $this->assertNull($result, 'an index list missing the homepage must not be served');
     }
@@ -248,8 +247,7 @@ class PageIndexLookupTest extends TestCase {
             ['uniqueId' => 'page-home', 'title' => 'Home']
         );
 
-        $result = (new \ReflectionMethod(PageService::class, 'listPagesFromIndex'))
-            ->invoke($svc, (new \ReflectionMethod(PageService::class, 'folders'))->invoke($svc)->readLanguageFolder());
+        $result = (new \ReflectionMethod(PageService::class, 'pageLister'))->invoke($svc)->fromIndex((new \ReflectionMethod(PageService::class, 'folders'))->invoke($svc)->readLanguageFolder());
 
         $this->assertNotNull($result);
         $this->assertSame(['page-home', 'page-idx'], array_column($result, 'uniqueId'));
@@ -266,8 +264,7 @@ class PageIndexLookupTest extends TestCase {
             null // no home.json in the language root
         );
 
-        $result = (new \ReflectionMethod(PageService::class, 'listPagesFromIndex'))
-            ->invoke($svc, (new \ReflectionMethod(PageService::class, 'folders'))->invoke($svc)->readLanguageFolder());
+        $result = (new \ReflectionMethod(PageService::class, 'pageLister'))->invoke($svc)->fromIndex((new \ReflectionMethod(PageService::class, 'folders'))->invoke($svc)->readLanguageFolder());
 
         $this->assertNotNull($result);
         $this->assertSame(['page-idx'], array_column($result, 'uniqueId'));
@@ -278,8 +275,7 @@ class PageIndexLookupTest extends TestCase {
         // hasEntries() returns false when indexRows is empty (see the mock).
         $svc = $this->makeServiceWithHome([], null);
 
-        $result = (new \ReflectionMethod(PageService::class, 'listPagesFromIndex'))
-            ->invoke($svc, (new \ReflectionMethod(PageService::class, 'folders'))->invoke($svc)->readLanguageFolder());
+        $result = (new \ReflectionMethod(PageService::class, 'pageLister'))->invoke($svc)->fromIndex((new \ReflectionMethod(PageService::class, 'folders'))->invoke($svc)->readLanguageFolder());
 
         $this->assertNull($result, 'no entries for the language means fall back to the walk');
     }
@@ -293,8 +289,7 @@ class PageIndexLookupTest extends TestCase {
             throwOnGetPages: true
         );
 
-        $result = (new \ReflectionMethod(PageService::class, 'listPagesFromIndex'))
-            ->invoke($svc, (new \ReflectionMethod(PageService::class, 'folders'))->invoke($svc)->readLanguageFolder());
+        $result = (new \ReflectionMethod(PageService::class, 'pageLister'))->invoke($svc)->fromIndex((new \ReflectionMethod(PageService::class, 'folders'))->invoke($svc)->readLanguageFolder());
 
         $this->assertNull($result, 'an index failure falls back to the walk rather than throwing');
     }
@@ -313,8 +308,7 @@ class PageIndexLookupTest extends TestCase {
             null
         );
 
-        $result = (new \ReflectionMethod(PageService::class, 'listPagesFromIndex'))
-            ->invoke($svc, (new \ReflectionMethod(PageService::class, 'folders'))->invoke($svc)->readLanguageFolder());
+        $result = (new \ReflectionMethod(PageService::class, 'pageLister'))->invoke($svc)->fromIndex((new \ReflectionMethod(PageService::class, 'folders'))->invoke($svc)->readLanguageFolder());
 
         $this->assertNotNull($result);
         $this->assertSame(['page-idx'], array_column($result, 'uniqueId'), 'blank-id and blank-path rows are dropped');
@@ -332,8 +326,7 @@ class PageIndexLookupTest extends TestCase {
             null
         );
 
-        $result = (new \ReflectionMethod(PageService::class, 'listPagesFromIndex'))
-            ->invoke($svc, (new \ReflectionMethod(PageService::class, 'folders'))->invoke($svc)->readLanguageFolder());
+        $result = (new \ReflectionMethod(PageService::class, 'pageLister'))->invoke($svc)->fromIndex((new \ReflectionMethod(PageService::class, 'folders'))->invoke($svc)->readLanguageFolder());
 
         $this->assertNotNull($result);
         $this->assertSame(['page-idx'], array_column($result, 'uniqueId'), 'a row pointing nowhere is skipped');
@@ -347,8 +340,7 @@ class PageIndexLookupTest extends TestCase {
             null
         );
 
-        $result = (new \ReflectionMethod(PageService::class, 'listPagesFromIndex'))
-            ->invoke($svc, (new \ReflectionMethod(PageService::class, 'folders'))->invoke($svc)->readLanguageFolder());
+        $result = (new \ReflectionMethod(PageService::class, 'pageLister'))->invoke($svc)->fromIndex((new \ReflectionMethod(PageService::class, 'folders'))->invoke($svc)->readLanguageFolder());
 
         $this->assertNotNull($result);
         $this->assertSame('page-idx', $result[0]['uniqueId']);

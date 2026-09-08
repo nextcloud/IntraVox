@@ -109,6 +109,13 @@ class PageWalkerSkipTest extends TestCase {
             ->setValue($svc, $folderContext);
         (new \ReflectionProperty(PageService::class, 'logger'))
             ->setValue($svc, $this->createMock(\Psr\Log\LoggerInterface::class));
+        // listPagesWithContent now routes through pageLister(), whose accessor
+        // eagerly reads these two — set them (the content walk itself never calls
+        // permissionService, but the lister is constructed regardless).
+        (new \ReflectionProperty(PageService::class, 'permissionService'))
+            ->setValue($svc, $this->createMock(\OCA\IntraVox\Service\PermissionService::class));
+        (new \ReflectionProperty(PageService::class, 'pageIndexService'))
+            ->setValue($svc, $this->createMock(\OCA\IntraVox\Service\PageIndexService::class));
         (new \ReflectionProperty(PageService::class, 'pageLocator'))
             ->setValue($svc, new \OCA\IntraVox\Service\Locator\PageLocator(
                 $this->createMock(\OCA\IntraVox\Service\PageIndexService::class),

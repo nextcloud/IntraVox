@@ -4,17 +4,27 @@ declare(strict_types=1);
 
 namespace OCA\IntraVox\Service\Listing;
 
+use OCA\IntraVox\Service\Cache\PageCacheService;
+use OCA\IntraVox\Service\Folder\FolderContext;
 use OCA\IntraVox\Service\Locator\PageLocator;
 use OCA\IntraVox\Service\PageIndexService;
+use OCA\IntraVox\Service\Path\PageDataEnricher;
+use OCA\IntraVox\Service\Path\PagePathHelper;
 use OCA\IntraVox\Service\PermissionService;
+use OCA\IntraVox\Service\Sanitize\PageShapeSanitizer;
+use OCP\Files\File;
+use OCP\Files\FileInfo;
+use OCP\Files\Folder;
 use OCP\Files\NotFoundException;
 use Psr\Log\LoggerInterface;
 
 /**
- * Builds the page list from the index instead of walking the filesystem tree,
- * extracted verbatim from PageService::listPagesFromIndex().
+ * The LISTING domain: turns the page tree into flat page lists. Holds the
+ * index-backed list (fromIndex, the fast path) AND the filesystem walks
+ * (listAll / listAllWithContent / byFolderPath) it falls back to, carved verbatim
+ * from PageService.
  *
- * The index is a CACHE over the filesystem, never an authority: this returns
+ * The index is a CACHE over the filesystem, never an authority: fromIndex returns
  * null whenever the index cannot serve the language completely (no entries, a
  * query failure, an empty result, or a homepage that is missing from the
  * index), so the caller falls back to the slow-but-complete walk. Permissions
@@ -22,15 +32,20 @@ use Psr\Log\LoggerInterface;
  * ACLs and the current user, so an index row cannot carry them and caching them
  * across users would leak access.
  *
- * The one PageService seam this needs — the IntraVox root folder, used by
- * languageOfFolder/folderFromAbsolutePath — is passed in as a closure so the
- * protected getIntraVoxFolder seam stays on PageService. PageIndexLookupTest
- * pins the behaviour end-to-end through the PageService delegator.
+ * Folder resolution comes from the injected FolderContext; the shape sanitizer,
+ * request cache and (lazy) enricher are the real read collaborators. The
+ * getIntraVoxFolder seam still flows to fromIndex as the $intraVoxFolder closure
+ * (kept deliberately, so PageIndexLookupTest drives it byte-for-byte). The
+ * enricher is a lazy closure — building it forces $userId, and byFolderPath's
+ * request-cache hit must return without that (the #70 timing PageReadService pins).
+ * PageIndexLookupTest / PageWalkerSkipTest / PageBreadcrumbTest pin the behaviour.
  */
 final class PageLister {
     /**
      * @param \Closure(): \OCP\Files\Folder $intraVoxFolder resolves the IntraVox
-     *   root (PageService's getIntraVoxFolder seam)
+     *   root (PageService's getIntraVoxFolder seam), used by fromIndex
+     * @param \Closure(): PageDataEnricher $enricher lazily resolves the enricher
+     *   (byFolderPath's #70 canWrite gate)
      */
     public function __construct(
         private PageLocator $locator,
@@ -38,6 +53,10 @@ final class PageLister {
         private PermissionService $permissionService,
         private LoggerInterface $logger,
         private \Closure $intraVoxFolder,
+        private FolderContext $folders,
+        private PageShapeSanitizer $shape,
+        private PageCacheService $cache,
+        private \Closure $enricher,
     ) {
     }
 
@@ -114,6 +133,268 @@ final class PageLister {
                 'permissions' => $this->permissionService->permissionsFromNode($pageFolder),
             ];
         }
+
+        return $pages;
+    }
+
+    /**
+     * The full page list for the current read language: index fast-path when it
+     * can serve the language completely, else the filesystem walk. Both branches
+     * come back in the same stable order.
+     */
+    public function listAll(): array {
+        $folder = $this->folders->readLanguageFolder();
+
+        // Titles and statuses come from the index when it has this language,
+        // which removes the read + json_decode of every page file. Permissions
+        // still come from the filesystem: they depend on GroupFolder ACLs and
+        // on who is asking, so they are not derivable from an index row and
+        // must never be cached across users.
+        $indexed = $this->fromIndex($folder);
+        if ($indexed !== null) {
+            return $this->inStableOrder($indexed);
+        }
+
+        $intraVoxFolder = $this->folders->intraVox();
+        $pages = [];
+
+        // Get base path for relative path calculation
+        $basePath = $intraVoxFolder->getPath();
+
+        // Check for home.json in root
+        try {
+            $homeFile = $folder->get('home.json');
+            $content = $homeFile instanceof File ? $homeFile->getContent() : null;
+            $data = $content !== null ? json_decode($content, true) : null;
+
+            if ($homeFile instanceof File && $data && isset($data['uniqueId'], $data['title'])) {
+                // Calculate relative path from IntraVox root
+                $relativePath = substr($folder->getPath(), strlen($basePath) + 1);
+
+                $pages[] = [
+                    'uniqueId' => $data['uniqueId'],
+                    'title' => $data['title'],
+                    'modified' => $data['modified'] ?? $homeFile->getMTime(),
+                    'status' => $data['status'] ?? 'published',
+                    'permissions' => $this->permissionService->permissionsFromNode($folder)
+                ];
+            }
+        } catch (NotFoundException $e) {
+            // No home page yet
+        }
+
+        // Recursively find all pages in subfolders
+        $this->walkPlain($folder, $pages, $basePath);
+
+        return $this->inStableOrder($pages);
+    }
+
+    /**
+     * List all pages with full content (including layout), a single filesystem
+     * traversal for search — eliminates the N+1 of listAll() + getPage() each.
+     */
+    public function listAllWithContent(): array {
+        $folder = $this->folders->readLanguageFolder();
+        $pages = [];
+
+        // Check for home.json in root
+        try {
+            $homeFile = $folder->get('home.json');
+            $content = $homeFile instanceof File ? $homeFile->getContent() : null;
+            $data = $content !== null ? json_decode($content, true) : null;
+
+            if ($homeFile instanceof File && $data && isset($data['uniqueId'])) {
+                // fileId lets callers (search) join MetaVox metadata onto the page.
+                $data['fileId'] = $homeFile->getId();
+                $pages[] = $this->shape->sanitizePage($data);
+            }
+        } catch (NotFoundException $e) {
+            // No home page yet
+        }
+
+        // Recursively find all pages with full content
+        $this->walkWithContent($folder, $pages);
+
+        return $pages;
+    }
+
+    /**
+     * Resolve the page whose folder is at $folderPath (relative to IntraVox root),
+     * enriched + sanitised. Request-cached; enrich gates canWrite/canEdit (#70).
+     */
+    public function byFolderPath(string $folderPath): ?array {
+        // Check request-level cache first
+        if ($this->cache->hasFolderPath($folderPath)) {
+            return $this->cache->getFolderPath($folderPath);
+        }
+
+        try {
+            $intraVoxFolder = $this->folders->intraVox();
+            $folder = $intraVoxFolder->get($folderPath);
+
+            if (!($folder instanceof Folder)) {
+                $this->cache->setFolderPath($folderPath, null);
+                return null;
+            }
+
+            // Look for a JSON file in this folder (page definition)
+            $files = $this->locator->cachedDirectoryListing($folder);
+            foreach ($files as $file) {
+                if ($file instanceof File &&
+                    pathinfo($file->getName(), PATHINFO_EXTENSION) === 'json' &&
+                    $file->getName() !== 'images.json') {
+
+                    $content = $file->getContent();
+                    $data = json_decode($content, true);
+
+                    if ($data && isset($data['uniqueId'])) {
+                        // Enrich with path data (file gates canWrite/canEdit, #70)
+                        $data = ($this->enricher)()->enrich($data, $folder, $file);
+                        $result = $this->shape->sanitizePage($data);
+                        $this->cache->setFolderPath($folderPath, $result);
+                        return $result;
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            // Folder or page not found
+            $this->logger->debug("Could not find page at path {$folderPath}: " . $e->getMessage());
+        }
+
+        $this->cache->setFolderPath($folderPath, null);
+        return null;
+    }
+
+    /**
+     * Recursively append the pages (title/status/permissions, no content) under
+     * $folder. Public because getPageCountByLanguage (language-status domain)
+     * shares this walk.
+     *
+     * @param array<int,array> $pages accumulator, appended by reference
+     */
+    public function walkPlain($folder, array &$pages, string $basePath = ''): void {
+        foreach ($this->locator->cachedDirectoryListing($folder) as $item) {
+            if ($item->getType() === FileInfo::TYPE_FOLDER) {
+                $folderName = $item->getName();
+
+                // Skip asset and infrastructure folders. The underscore rule
+                // matters: _templates holds page-shaped JSON, and every walker
+                // that forgot to skip it served TEMPLATES as pages — search
+                // returned "Knowledge Base" the template above the real page,
+                // and an empty index made them appear in the page list. One
+                // rule for every walker, same as buildPageTree.
+                if (PagePathHelper::isInfrastructureFolder($folderName)) {
+                    continue;
+                }
+
+                // Look for {foldername}.json inside the folder
+                try {
+                    $jsonFile = $item->get($folderName . '.json');
+
+                    // Check if file is readable before trying to get content
+                    if (!$jsonFile->isReadable()) {
+                        continue;
+                    }
+
+                    // Use cached file content to avoid repeated reads
+                    $content = $jsonFile instanceof File
+                        ? $this->locator->cachedFileContent($jsonFile)
+                        : @$jsonFile->getContent();
+
+                    if ($content === false || $content === null) {
+                        continue;
+                    }
+
+                    $data = json_decode($content, true);
+
+                    if ($data && isset($data['uniqueId'], $data['title'])) {
+                        $pages[] = [
+                            'uniqueId' => $data['uniqueId'],
+                            'title' => $data['title'],
+                            'modified' => $data['modified'] ?? $jsonFile->getMTime(),
+                            'status' => $data['status'] ?? 'published',
+                            'permissions' => $this->permissionService->permissionsFromNode($item)
+                        ];
+                    }
+                } catch (\Exception $e) {
+                    // This folder doesn't contain a valid page or can't be read, continue
+                } catch (\Throwable $e) {
+                    // Catch any other errors including PHP errors
+                    continue;
+                }
+
+                // Recursively search subfolders
+                $this->walkPlain($item, $pages, $basePath);
+            }
+        }
+    }
+
+    /**
+     * Recursively append the pages WITH full content (layout + fileId) under
+     * $folder, sanitised.
+     *
+     * @param array<int,array> $pages accumulator, appended by reference
+     */
+    private function walkWithContent($folder, array &$pages): void {
+        foreach ($this->locator->cachedDirectoryListing($folder) as $item) {
+            if ($item->getType() === FileInfo::TYPE_FOLDER) {
+                $folderName = $item->getName();
+
+                // Skip special folders
+                if (PagePathHelper::isInfrastructureFolder($folderName)) {
+                    continue;
+                }
+
+                // Look for {foldername}.json inside the folder
+                try {
+                    $jsonFile = $item->get($folderName . '.json');
+
+                    if (!$jsonFile->isReadable()) {
+                        continue;
+                    }
+
+                    // Use cached file content to avoid repeated reads
+                    $content = $jsonFile instanceof File
+                        ? $this->locator->cachedFileContent($jsonFile)
+                        : @$jsonFile->getContent();
+
+                    if ($content === false || $content === null) {
+                        continue;
+                    }
+
+                    $data = json_decode($content, true);
+
+                    if ($data && isset($data['uniqueId'])) {
+                        // fileId lets callers (search) join MetaVox metadata onto the page.
+                        $data['fileId'] = $jsonFile->getId();
+                        $pages[] = $this->shape->sanitizePage($data);
+                    }
+                } catch (\Exception $e) {
+                    // This folder doesn't contain a valid page
+                } catch (\Throwable $e) {
+                    continue;
+                }
+
+                // Recursively search subfolders
+                $this->walkWithContent($item, $pages);
+            }
+        }
+    }
+
+    /**
+     * One deterministic order for the page listing (title, then uniqueId as the
+     * tie-breaker; byte comparison, not locale collation — the order exists to be
+     * STABLE so a cursor can rely on it). Verbatim from PageService::inStableOrder
+     * (which is retained there as a reflection anchor).
+     *
+     * @param list<array<string,mixed>> $pages
+     * @return list<array<string,mixed>>
+     */
+    private function inStableOrder(array $pages): array {
+        usort($pages, static function (array $a, array $b): int {
+            return [(string)($a['title'] ?? ''), (string)($a['uniqueId'] ?? '')]
+                <=> [(string)($b['title'] ?? ''), (string)($b['uniqueId'] ?? '')];
+        });
 
         return $pages;
     }

@@ -379,7 +379,11 @@ class PageService {
             $this->pageIndexService,
             $this->permissionService,
             $this->logger,
-            $this->rootClosure()
+            $this->rootClosure(),
+            $this->folders(),
+            $this->shape(),
+            $this->cache(),
+            fn(): \OCA\IntraVox\Service\Path\PageDataEnricher => $this->pageDataEnricher()
         );
     }
 
@@ -1035,90 +1039,7 @@ class PageService {
      * List all pages (recursively)
      */
     public function listPages(): array {
-        $folder = $this->folders()->readLanguageFolder();
-
-        // Titles and statuses come from the index when it has this language,
-        // which removes the read + json_decode of every page file. Permissions
-        // still come from the filesystem: they depend on GroupFolder ACLs and
-        // on who is asking, so they are not derivable from an index row and
-        // must never be cached across users.
-        $indexed = $this->listPagesFromIndex($folder);
-        if ($indexed !== null) {
-            return $this->inStableOrder($indexed);
-        }
-
-        $intraVoxFolder = $this->folders()->intraVox();
-        $pages = [];
-
-        // Get base path for relative path calculation
-        $basePath = $intraVoxFolder->getPath();
-
-        // Check for home.json in root
-        try {
-            $homeFile = $folder->get('home.json');
-            $content = $homeFile->getContent();
-            $data = json_decode($content, true);
-
-            if ($data && isset($data['uniqueId'], $data['title'])) {
-                // Calculate relative path from IntraVox root
-                $relativePath = substr($folder->getPath(), strlen($basePath) + 1);
-
-                $pages[] = [
-                    'uniqueId' => $data['uniqueId'],
-                    'title' => $data['title'],
-                    'modified' => $data['modified'] ?? $homeFile->getMTime(),
-                    'status' => $data['status'] ?? 'published',
-                    'permissions' => $this->permissionService->permissionsFromNode($folder)
-                ];
-            }
-        } catch (NotFoundException $e) {
-            // No home page yet
-        }
-
-        // Recursively find all pages in subfolders
-        $this->findPagesInFolder($folder, $pages, $basePath);
-
-        return $this->inStableOrder($pages);
-    }
-
-    /**
-     * One deterministic order for the page listing.
-     *
-     * There was none. The indexed branch returned whatever the database handed
-     * back (no ORDER BY) and the fallback branch whatever the filesystem walk
-     * produced, so the same instance could answer the same request in a different
-     * order — and which of the two branches ran depended on whether the index
-     * happened to cover the language.
-     *
-     * That is a problem beyond tidiness. Cursor pagination needs a total order to
-     * be correct: without one, the same cursor silently skips some rows and
-     * repeats others between two requests. plan-multisite-uitvoering.md §4.15 has
-     * already settled on keyset paging over (slug, id) and 'never OFFSET', so the
-     * order has to exist before that can be built.
-     *
-     * Sorted on title, then uniqueId as the tie-breaker. Title because it is the
-     * only human-meaningful field this listing actually carries — it returns
-     * uniqueId, title, status, modified and permissions, and no path, so sorting
-     * on a path would silently degrade to sorting on nothing. uniqueId last
-     * because titles are not unique and a sort whose final key repeats is not a
-     * total order.
-     *
-     * Byte comparison, not locale collation: two pages whose titles differ only in
-     * accents may not land where a Dutch reader would file them. That is a
-     * deliberate trade — this order exists to be STABLE, so that a cursor can
-     * rely on it, and locale-aware collation would make it depend on the server's
-     * locale, which is the opposite of what a cursor needs.
-     *
-     * @param list<array<string,mixed>> $pages
-     * @return list<array<string,mixed>>
-     */
-    private function inStableOrder(array $pages): array {
-        usort($pages, static function (array $a, array $b): int {
-            return [(string)($a['title'] ?? ''), (string)($a['uniqueId'] ?? '')]
-                <=> [(string)($b['title'] ?? ''), (string)($b['uniqueId'] ?? '')];
-        });
-
-        return $pages;
+        return $this->pageLister()->listAll();
     }
 
     /**
@@ -1399,28 +1320,6 @@ class PageService {
     }
 
     /**
-     * Build the page list from the index instead of walking the tree.
-     *
-     * Returns null when the index cannot serve this language, so the caller
-     * falls back to the filesystem walk. That is the whole safety story: the
-     * index is a cache, and an empty or partial one costs a slow path, never a
-     * short list. A page the index does not know about would otherwise silently
-     * disappear from the sidebar — a far worse failure than being slow.
-     *
-     * Permissions are still read per page from the filesystem. They depend on
-     * GroupFolder ACLs and on the current user, so an index row cannot carry
-     * them and caching them across users would leak access.
-     *
-     * @return array|null the page list, or null to fall back to the walk
-     */
-    private function listPagesFromIndex(\OCP\Files\Folder $folder): ?array {
-        // The index-listing body lives in Listing/PageLister (Phase "listing");
-        // kept here as a delegator because listPages() calls it and
-        // PageServiceSeamContractTest reflection-anchors its existence.
-        return $this->pageLister()->fromIndex($folder);
-    }
-
-    /**
      * Whether a language folder holds a REAL (editor-authored) homepage, as
      * opposed to an auto-generated placeholder or no homepage at all.
      *
@@ -1605,7 +1504,7 @@ class PageService {
                     continue;
                 }
                 $pages = [];
-                $this->findPagesInFolder($item, $pages, '');
+                $this->pageLister()->walkPlain($item, $pages, '');
                 $count = count($pages);
                 // Homepage counts as a page when present (findPagesInFolder skips it).
                 if ($item->nodeExists('home.json')) {
@@ -1620,142 +1519,12 @@ class PageService {
     }
 
     /**
-     * Recursively find pages in folders
-     */
-    private function findPagesInFolder($folder, array &$pages, string $basePath = ''): void {
-        foreach ($this->getCachedDirectoryListing($folder) as $item) {
-            if ($item->getType() === \OCP\Files\FileInfo::TYPE_FOLDER) {
-                $folderName = $item->getName();
-
-                // Skip asset and infrastructure folders. The underscore rule
-                // matters: _templates holds page-shaped JSON, and every walker
-                // that forgot to skip it served TEMPLATES as pages — search
-                // returned "Knowledge Base" the template above the real page,
-                // and an empty index made them appear in the page list. One
-                // rule for every walker, same as buildPageTree.
-                if (PagePathHelper::isInfrastructureFolder($folderName)) {
-                    continue;
-                }
-
-                // Look for {foldername}.json inside the folder
-                try {
-                    $jsonFile = $item->get($folderName . '.json');
-
-                    // Check if file is readable before trying to get content
-                    if (!$jsonFile->isReadable()) {
-                        continue;
-                    }
-
-                    // Use cached file content to avoid repeated reads
-                    $content = $jsonFile instanceof \OCP\Files\File
-                        ? $this->getCachedFileContent($jsonFile)
-                        : @$jsonFile->getContent();
-
-                    if ($content === false || $content === null) {
-                        continue;
-                    }
-
-                    $data = json_decode($content, true);
-
-                    if ($data && isset($data['uniqueId'], $data['title'])) {
-                        $pages[] = [
-                            'uniqueId' => $data['uniqueId'],
-                            'title' => $data['title'],
-                            'modified' => $data['modified'] ?? $jsonFile->getMTime(),
-                            'status' => $data['status'] ?? 'published',
-                            'permissions' => $this->permissionService->permissionsFromNode($item)
-                        ];
-                    }
-                } catch (\Exception $e) {
-                    // This folder doesn't contain a valid page or can't be read, continue
-                } catch (\Throwable $e) {
-                    // Catch any other errors including PHP errors
-                    continue;
-                }
-
-                // Recursively search subfolders
-                $this->findPagesInFolder($item, $pages, $basePath);
-            }
-        }
-    }
-
-    /**
      * List all pages with full content (including layout)
      * OPTIMIZED: Single filesystem traversal for search operations
      * This eliminates the N+1 query pattern where listPages() + getPage() for each
      */
     public function listPagesWithContent(): array {
-        $folder = $this->folders()->readLanguageFolder();
-        $pages = [];
-
-        // Check for home.json in root
-        try {
-            $homeFile = $folder->get('home.json');
-            $content = $homeFile->getContent();
-            $data = json_decode($content, true);
-
-            if ($data && isset($data['uniqueId'])) {
-                // fileId lets callers (search) join MetaVox metadata onto the page.
-                $data['fileId'] = $homeFile->getId();
-                $pages[] = $this->sanitizePage($data);
-            }
-        } catch (NotFoundException $e) {
-            // No home page yet
-        }
-
-        // Recursively find all pages with full content
-        $this->findPagesWithContentInFolder($folder, $pages);
-
-        return $pages;
-    }
-
-    /**
-     * Recursively find pages with full content in folders
-     */
-    private function findPagesWithContentInFolder($folder, array &$pages): void {
-        foreach ($this->getCachedDirectoryListing($folder) as $item) {
-            if ($item->getType() === \OCP\Files\FileInfo::TYPE_FOLDER) {
-                $folderName = $item->getName();
-
-                // Skip special folders
-                if (PagePathHelper::isInfrastructureFolder($folderName)) {
-                    continue;
-                }
-
-                // Look for {foldername}.json inside the folder
-                try {
-                    $jsonFile = $item->get($folderName . '.json');
-
-                    if (!$jsonFile->isReadable()) {
-                        continue;
-                    }
-
-                    // Use cached file content to avoid repeated reads
-                    $content = $jsonFile instanceof \OCP\Files\File
-                        ? $this->getCachedFileContent($jsonFile)
-                        : @$jsonFile->getContent();
-
-                    if ($content === false || $content === null) {
-                        continue;
-                    }
-
-                    $data = json_decode($content, true);
-
-                    if ($data && isset($data['uniqueId'])) {
-                        // fileId lets callers (search) join MetaVox metadata onto the page.
-                        $data['fileId'] = $jsonFile->getId();
-                        $pages[] = $this->sanitizePage($data);
-                    }
-                } catch (\Exception $e) {
-                    // This folder doesn't contain a valid page
-                } catch (\Throwable $e) {
-                    continue;
-                }
-
-                // Recursively search subfolders
-                $this->findPagesWithContentInFolder($item, $pages);
-            }
-        }
+        return $this->pageLister()->listAllWithContent();
     }
 
     /**
@@ -1768,18 +1537,6 @@ class PageService {
         // and the two #70-shared concerns as $this-bound closures so the 26
         // seam-subclasses keep intercepting.
         return $this->readService()->getPage($id);
-    }
-
-    /**
-     * Enrich page data with real-time path information calculated from filesystem
-     */
-    private function enrichWithPathData(array $page, $folder, ?\OCP\Files\Node $file = null): array {
-        // The fresh-build enrichment lives in Path/PageDataEnricher (Phase "crud").
-        // The four seam-bound concerns (getRelativePathFromRoot, getUserLanguage,
-        // resolveTranslations, groupfolderIdForNode) are handed in as closures so
-        // they stay on PageService (resolveTranslations/groupfolderIdForNode are
-        // shared with the #70 cache-hit block, which stays inline in getPage).
-        return $this->pageDataEnricher()->enrich($page, $folder, $file);
     }
 
 
@@ -1876,46 +1633,7 @@ class PageService {
      * @return array|null Page data or null if not found
      */
     private function findPageByFolderPath(string $folderPath): ?array {
-        // Check request-level cache first
-        if ($this->cache()->hasFolderPath($folderPath)) {
-            return $this->cache()->getFolderPath($folderPath);
-        }
-
-        try {
-            $intraVoxFolder = $this->folders()->intraVox();
-            $folder = $intraVoxFolder->get($folderPath);
-
-            if (!($folder instanceof \OCP\Files\Folder)) {
-                $this->cache()->setFolderPath($folderPath, null);
-                return null;
-            }
-
-            // Look for a JSON file in this folder (page definition)
-            $files = $this->getCachedDirectoryListing($folder);
-            foreach ($files as $file) {
-                if ($file instanceof \OCP\Files\File &&
-                    pathinfo($file->getName(), PATHINFO_EXTENSION) === 'json' &&
-                    $file->getName() !== 'images.json') {
-
-                    $content = $file->getContent();
-                    $data = json_decode($content, true);
-
-                    if ($data && isset($data['uniqueId'])) {
-                        // Enrich with path data (file gates canWrite/canEdit, #70)
-                        $data = $this->enrichWithPathData($data, $folder, $file);
-                        $result = $this->sanitizePage($data);
-                        $this->cache()->setFolderPath($folderPath, $result);
-                        return $result;
-                    }
-                }
-            }
-        } catch (\Exception $e) {
-            // Folder or page not found
-            $this->logger->debug("Could not find page at path {$folderPath}: " . $e->getMessage());
-        }
-
-        $this->cache()->setFolderPath($folderPath, null);
-        return null;
+        return $this->pageLister()->byFolderPath($folderPath);
     }
 
     /**
@@ -2235,13 +1953,6 @@ class PageService {
      */
     private function sanitizeVideoEmbedUrl(string $url): string {
         return $this->shape()->sanitizeVideoEmbedUrl($url);
-    }
-
-    /**
-     * @see PageShapeSanitizer::sanitizePage()
-     */
-    private function sanitizePage(array $data): array {
-        return $this->shape()->sanitizePage($data);
     }
 
     /**
