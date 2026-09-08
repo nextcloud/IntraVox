@@ -110,18 +110,15 @@ class PageServiceMoveLanguageTest extends TestCase {
             throw new \OCP\Files\NotFoundException($p);
         });
 
-        $svc = new class($userLanguageFolder, $base) extends PageService {
-            private Folder $userLanguageFolder;
+        // movePage + getCurrentPageContent/updateVersionLabel resolve their folders
+        // through FolderContext: languageFolder + readLanguageFolder are the user's
+        // language folder, and languageOfFolder/relativePathFromRoot use the
+        // intraVox() root ($base). getIntraVoxFolder stays for the cross-language
+        // locate walks (locatePageAnyLanguage/BySlug -> rootClosure()).
+        $svc = new class($base) extends PageService {
             private Folder $baseFolder;
-            public function __construct(Folder $userLanguageFolder, Folder $baseFolder) {
-                $this->userLanguageFolder = $userLanguageFolder;
+            public function __construct(Folder $baseFolder) {
                 $this->baseFolder = $baseFolder;
-            }
-            protected function getLanguageFolder() {
-                return $this->userLanguageFolder;
-            }
-            protected function getReadLanguageFolder(): Folder {
-                return $this->userLanguageFolder;
             }
             protected function getIntraVoxFolder() {
                 return $this->baseFolder;
@@ -176,6 +173,13 @@ class PageServiceMoveLanguageTest extends TestCase {
             'logger' => $this->createMock(\Psr\Log\LoggerInterface::class),
             'languageService' => $languageService,
             'pageIndexService' => $index,
+            'folderContext' => $this->fakeFolderContext(
+                readLanguageFolder: $userLanguageFolder,
+                intraVox: $base,
+                userLanguage: 'de',
+                primaryLanguage: 'en',
+                languageFolder: $userLanguageFolder
+            ),
         ];
         $this->injectPageServiceDependencies($svc, $explicit);
 

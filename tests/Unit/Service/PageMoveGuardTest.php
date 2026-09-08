@@ -77,20 +77,16 @@ class PageMoveGuardTest extends TestCase {
         $en = $this->makeFolder('/IntraVox/en', $enChildren);
         $base = $this->makeFolder('/IntraVox', ['en' => $en]);
 
-        $svc = new class($en, $base, $homepageUniqueId) extends PageService {
-            private Folder $en;
+        // movePage resolves its write-target folder ($en) via
+        // folders()->languageFolder(), and languageOfFolder/relativePathFromRoot via
+        // the intraVox() root ($base). getIntraVoxFolder stays for the
+        // cross-language locate walk (locatePageAnyLanguage -> rootClosure()).
+        $svc = new class($base, $homepageUniqueId) extends PageService {
             private Folder $baseFolder;
             private ?string $homeId;
-            public function __construct(Folder $en, Folder $baseFolder, ?string $homeId) {
-                $this->en = $en;
+            public function __construct(Folder $baseFolder, ?string $homeId) {
                 $this->baseFolder = $baseFolder;
                 $this->homeId = $homeId;
-            }
-            protected function getLanguageFolder() {
-                return $this->en;
-            }
-            protected function getReadLanguageFolder(): Folder {
-                return $this->en;
             }
             protected function getIntraVoxFolder() {
                 return $this->baseFolder;
@@ -112,6 +108,7 @@ class PageMoveGuardTest extends TestCase {
             'userId' => 'tester',
             'logger' => $this->createMock(\Psr\Log\LoggerInterface::class),
             'languageService' => $languageService,
+            'folderContext' => $this->fakeFolderContext(intraVox: $base, languageFolder: $en),
         ]);
         return $svc;
     }

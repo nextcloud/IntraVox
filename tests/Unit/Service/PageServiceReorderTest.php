@@ -65,31 +65,42 @@ class PageServiceReorderTest extends TestCase {
      *   isHomepage() returns true only for $homeUniqueId.
      */
     private function makeService(Folder $parent, ?string $homeUniqueId): PageService {
-        $svc = new class($parent, $homeUniqueId) extends PageService {
-            private Folder $fakeFolder;
+        // reorderSiblings resolves its write-target folder via
+        // folders()->languageFolder(); wiring $parent as the getLanguageFolder seam
+        // returns it verbatim (no composition, so the bare '/lang' path is fine).
+        // isHomepage stays overridden; reorder runs no cross-language locate.
+        $svc = new class($homeUniqueId) extends PageService {
             private ?string $homeId;
             // Deliberately bypass the real 25-arg constructor.
-            public function __construct(Folder $folder, ?string $homeId) {
-                $this->fakeFolder = $folder;
+            public function __construct(?string $homeId) {
                 $this->homeId = $homeId;
-            }
-            protected function getLanguageFolder() {
-                return $this->fakeFolder;
             }
             public function isHomepage(string $uniqueId, ?string $language = null): bool {
                 return $this->homeId !== null && $uniqueId === $this->homeId;
             }
         };
+        $locator = new \OCA\IntraVox\Service\Locator\PageLocator(
+            $this->createMock(\OCA\IntraVox\Service\PageIndexService::class),
+            $this->createMock(\Psr\Log\LoggerInterface::class)
+        );
+        (new \ReflectionProperty(PageService::class, 'folderContext'))
+            ->setValue($svc, new \OCA\IntraVox\Service\Folder\FolderContext(
+                fn() => $parent,
+                fn(): string => 'en',
+                fn(): string => 'en',
+                fn(Folder $f): bool => false,
+                new \OCA\IntraVox\Service\Language\LanguageResolver(),
+                $locator,
+                null,
+                fn(): Folder => $parent
+            ));
         (new \ReflectionProperty(PageService::class, 'permissionService'))
             ->setValue($svc, new class extends PermissionService {
                 public function __construct() {
                 }
             });
         (new \ReflectionProperty(PageService::class, 'pageLocator'))
-            ->setValue($svc, new \OCA\IntraVox\Service\Locator\PageLocator(
-                $this->createMock(\OCA\IntraVox\Service\PageIndexService::class),
-                $this->createMock(\Psr\Log\LoggerInterface::class)
-            ));
+            ->setValue($svc, $locator);
         return $svc;
     }
 
