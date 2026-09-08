@@ -41,13 +41,16 @@ class PageBreadcrumbTest extends TestCase {
             $langFolder->method('get')->willReturn($navFile);
         }
 
-        $svc = new class($currentPage, $langFolder, $isHomepage) extends PageService {
+        // getBreadcrumb reads the folder via folders()->readLanguageFolder()
+        // ($langFolder) and userLanguage ('en'); getIntraVoxFolder stays THROWING
+        // for the findPageByFolderPath cross-language walk (rootClosure()), which
+        // pins the humanised-folder degrade fallback. getPage + isHomepage stay
+        // overridden (unrelated to folders).
+        $svc = new class($currentPage, $isHomepage) extends PageService {
             private array $currentPage;
-            private Folder $langFolder;
             private bool $home;
-            public function __construct(array $currentPage, Folder $langFolder, bool $home) {
+            public function __construct(array $currentPage, bool $home) {
                 $this->currentPage = $currentPage;
-                $this->langFolder = $langFolder;
                 $this->home = $home;
             }
             public function getPage(string $id): array {
@@ -55,12 +58,6 @@ class PageBreadcrumbTest extends TestCase {
             }
             public function isHomepage(string $uniqueId, ?string $language = null): bool {
                 return $this->home;
-            }
-            protected function getReadLanguageFolder(): Folder {
-                return $this->langFolder;
-            }
-            protected function getLanguageFolder(): Folder {
-                return $this->langFolder;
             }
             protected function getIntraVoxFolder(): Folder {
                 throw new \RuntimeException('no root in this fixture');
@@ -91,6 +88,10 @@ class PageBreadcrumbTest extends TestCase {
             'cache' => $cache,
             'userSession' => $this->createMock(\OCP\IUserSession::class),
             'logger' => $this->createMock(LoggerInterface::class),
+            'folderContext' => $this->fakeFolderContext(
+                readLanguageFolder: $langFolder,
+                userLanguage: 'en'
+            ),
         ]);
 
         return $svc;

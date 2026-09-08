@@ -79,20 +79,16 @@ class PageCopyCompositionTest extends TestCase {
         $base = $this->makeFolder('/IntraVox', $byName);
         $writeFolder = $languages[$writeLang];
 
-        $svc = new class($writeFolder, $base) extends PageService {
+        // copyPage resolves its write-target ($writeFolder) via
+        // folders()->languageFolder() and walks cross-language via
+        // locatePageAnyLanguage -> rootClosure() -> getIntraVoxFolder ($base, kept).
+        // createPage/getPage spies + clearCache stay (orthogonal to folders).
+        $svc = new class($base) extends PageService {
             public ?array $seenData = null;
             public ?string $seenParentPath = null;
-            private Folder $writeFolder;
             private Folder $baseFolder;
-            public function __construct(Folder $writeFolder, Folder $baseFolder) {
-                $this->writeFolder = $writeFolder;
+            public function __construct(Folder $baseFolder) {
                 $this->baseFolder = $baseFolder;
-            }
-            protected function getLanguageFolder() {
-                return $this->writeFolder;
-            }
-            protected function getReadLanguageFolder(): Folder {
-                return $this->writeFolder;
             }
             protected function getIntraVoxFolder() {
                 return $this->baseFolder;
@@ -120,6 +116,7 @@ class PageCopyCompositionTest extends TestCase {
             'logger' => $this->createMock(\Psr\Log\LoggerInterface::class),
             'languageService' => $languageService,
             'pageMediaService' => $mediaSpy,
+            'folderContext' => $this->fakeFolderContext(intraVox: $base, languageFolder: $writeFolder),
         ]);
         return $svc;
     }
