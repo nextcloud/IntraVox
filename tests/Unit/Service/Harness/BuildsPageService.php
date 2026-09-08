@@ -130,7 +130,8 @@ trait BuildsPageService {
         ?Folder $readLanguageFolder = null,
         ?Folder $intraVox = null,
         string $userLanguage = 'en',
-        string $primaryLanguage = 'en'
+        string $primaryLanguage = 'en',
+        ?Folder $languageFolder = null
     ): FolderContext {
         $base = $intraVox ?? $readLanguageFolder;
         $resolver = new LanguageResolver();
@@ -163,9 +164,16 @@ trait BuildsPageService {
             },
             $resolver,
             $locator,
+            // getReadLanguageFolder seam: wired when a read folder is given, so a
+            // wholesale override is reproduced. Null -> owned composition.
             $readLanguageFolder === null
                 ? null
-                : fn(): Folder => $readLanguageFolder
+                : fn(): Folder => $readLanguageFolder,
+            // getLanguageFolder seam: wired when a write-target folder is given.
+            // Null -> owned create-on-miss composition (intraVox->get(userLang)).
+            $languageFolder === null
+                ? null
+                : fn(): Folder => $languageFolder
         );
     }
 
