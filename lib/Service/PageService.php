@@ -967,7 +967,7 @@ class PageService {
      * @return array|null findPageByUniqueId()/findPageById() result, or null.
      */
     private function locatePageForOperation(string $pageId): ?array {
-        $folder = $this->getReadLanguageFolder();
+        $folder = $this->folders()->readLanguageFolder();
 
         if (strpos($pageId, 'page-') === 0) {
             $byUniqueId = $this->locatePageAnyLanguage($folder, $pageId);
@@ -2520,7 +2520,7 @@ class PageService {
      * @throws \Exception if page not found
      */
     public function getPageVersions(string $pageId): array {
-        $folder = $this->getLanguageFolder();
+        $folder = $this->folders()->languageFolder();
         $result = null;
 
         // Check for uniqueId pattern (page-xxxx) like getPage() does. Follows
@@ -2556,7 +2556,7 @@ class PageService {
      * @throws \Exception if page or version not found
      */
     public function restorePageVersion(string $pageId, int $timestamp): array {
-        $folder = $this->getLanguageFolder();
+        $folder = $this->folders()->languageFolder();
         $result = null;
 
         // Check for uniqueId pattern (page-xxxx) like getPage() does. Follows
@@ -2746,7 +2746,7 @@ class PageService {
      * Update page metadata (title only for now, similar to Files rename)
      */
     public function updatePageMetadata(string $pageId, array $metadata): array {
-        $folder = $this->getLanguageFolder();
+        $folder = $this->folders()->languageFolder();
         $result = null;
 
         // Check for uniqueId pattern (page-xxxx). Follows the page across
@@ -3094,8 +3094,7 @@ class PageService {
      */
     public function checkPageCacheStatus(string $pageId): array {
         try {
-            $folder = $this->getLanguageFolder();
-            $lang = $this->getUserLanguage();
+            $folder = $this->folders()->languageFolder();
 
             // For home page, check the JSON file directly
             if ($pageId === 'home') {
@@ -3200,7 +3199,7 @@ class PageService {
      * Uses IVersionManager for reliable version content retrieval across all storage types.
      */
     public function getVersionContent(string $pageId, int $timestamp): array {
-        $folder = $this->getLanguageFolder();
+        $folder = $this->folders()->languageFolder();
         $result = null;
 
         // Check for uniqueId pattern (page-xxxx) like getPage() does. Follows
