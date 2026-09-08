@@ -450,15 +450,16 @@ class PageService {
 
     /**
      * Lazy seam for the tree-structure service (god-class dissolution, STRUCTURE
-     * domain). Built from the real deps; every seam / cross-language lookup /
-     * folder helper is passed per-call as a $this-bound closure. Nullable-default
-     * so the harness auto-fill skips it.
+     * domain). Built from the real deps + the FolderContext substrate; the
+     * remaining cross-language lookups pass per-call as $this-bound closures.
+     * Nullable-default so the harness auto-fill skips it.
      */
     private function structureService(): \OCA\IntraVox\Service\Structure\PageStructureService {
         return $this->structureService ??= new \OCA\IntraVox\Service\Structure\PageStructureService(
             $this->idUtils,
             $this->pageIndexService,
-            $this->logger
+            $this->logger,
+            $this->folders()
         );
     }
 
@@ -2253,23 +2254,21 @@ class PageService {
 
     public function movePage(string $pageId, string $targetParentId): void {
         // The move body lives in Structure/PageStructureService (STRUCTURE domain).
-        // Every seam / cross-language lookup / folder helper is handed in as a
-        // $this-bound closure so the seam-subclasses keep intercepting; the
-        // guards (#90 cross-language, HOMEPAGE_PROTECTED, cycle, depth) and the
-        // index repath ride along in the moved body.
+        // Folder-substrate concerns come from the injected FolderContext; the
+        // remaining cross-language lookups are handed in as $this-bound closures so
+        // the seam-subclasses keep intercepting; the guards (#90 cross-language,
+        // HOMEPAGE_PROTECTED, cycle, depth) and the index repath ride along in the
+        // moved body.
         $this->structureService()->movePage(
             $pageId,
             $targetParentId,
-            fn(): \OCP\Files\Folder => $this->getLanguageFolder(),
             fn(\OCP\Files\Folder $folder, string $uid): ?array => $this->locatePageAnyLanguage($folder, $uid),
             fn(\OCP\Files\Folder $folder, string $slug): ?array => $this->locatePageBySlugAnyLanguage($folder, $slug),
             fn(\OCP\Files\Folder $folder, string $legacyId): ?array => $this->findPageById($folder, $legacyId),
             fn(\OCP\Files\Folder $folder, string $uid): ?array => $this->findPageByUniqueId($folder, $uid),
             fn(array $result): ?\OCP\Files\Folder => $this->languageFolderOfPageResult($result),
             fn(string $uid): bool => $this->isHomepage($uid),
-            fn(\OCP\Files\Folder $folder): ?string => $this->languageOfFolder($folder),
             fn(string $code): string => $this->languageDisplayName($code),
-            fn(\OCP\Files\Folder $folder): string => $this->getRelativePathFromRoot($folder),
             function (string $path): void {
                 $this->validateDepth($path);
             },
@@ -3067,12 +3066,14 @@ class PageService {
      */
     public function reorderSiblings(?string $parentUniqueId, array $orderedChildIds): void {
         // The order-writing walk lives in Reorder/PageReorderer (Phase "reorder").
-        // The getLanguageFolder seam is resolved here; isHomepage and the private
-        // clearCache are handed in as closures so both stay overridable/private.
+        // The write-target folder is resolved here through FolderContext; isHomepage
+        // and the private clearCache are handed in as closures so both stay
+        // overridable/private. PageReorderer's signature is unchanged (it still
+        // takes the resolved Folder).
         $this->reorderer()->reorder(
             $parentUniqueId,
             $orderedChildIds,
-            $this->getLanguageFolder(),
+            $this->folders()->languageFolder(),
             fn(string $id): bool => $this->isHomepage($id),
             function (): void {
                 $this->clearCache();

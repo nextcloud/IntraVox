@@ -7,6 +7,7 @@ namespace OCA\IntraVox\Service\Structure;
 use OCA\IntraVox\Exception\CrossLanguageMoveException;
 use OCA\IntraVox\Exception\ForbiddenException;
 use OCA\IntraVox\Exception\PageNotFoundException;
+use OCA\IntraVox\Service\Folder\FolderContext;
 use OCA\IntraVox\Service\PageIndexService;
 use OCA\IntraVox\Service\Util\PageIdUtils;
 use Psr\Log\LoggerInterface;
@@ -19,9 +20,11 @@ use Psr\Log\LoggerInterface;
  * through the public getFolderPermissions permission surface, which belongs with
  * the future permission shell, not here).
  *
- * The protected folder seams stay on PageService; every seam / cross-language
- * lookup / folder helper this needs comes in as a $this-bound closure, so the
- * seam-subclasses keep intercepting with zero test edits. PageMoveGuardTest and
+ * Folder-substrate concerns (languageFolder / languageOfFolder /
+ * relativePathFromRoot) come from the injected FolderContext; the remaining
+ * cross-language lookups + isHomepage + languageDisplayName + validateDepth +
+ * clearCache come in as $this-bound closures, so the seam-subclasses keep
+ * intercepting with zero test edits. PageMoveGuardTest and
  * PageServiceMoveLanguageTest pin the behaviour byte-for-byte.
  */
 final class PageStructureService {
@@ -29,38 +32,36 @@ final class PageStructureService {
         private PageIdUtils $idUtils,
         private PageIndexService $pageIndexService,
         private LoggerInterface $logger,
+        private FolderContext $folders,
     ) {
     }
 
     /**
      * Move a page (with its whole subtree) under a different parent.
      *
-     * @param \Closure(): \OCP\Files\Folder $languageFolder getLanguageFolder seam
+     * Folder-substrate concerns (languageFolder / languageOfFolder /
+     * relativePathFromRoot) come from the injected FolderContext.
+     *
      * @param \Closure(\OCP\Files\Folder, string): ?array $locatePageAnyLanguage
      * @param \Closure(\OCP\Files\Folder, string): ?array $locatePageBySlugAnyLanguage
      * @param \Closure(\OCP\Files\Folder, string): ?array $findPageById
      * @param \Closure(\OCP\Files\Folder, string): ?array $findPageByUniqueId
      * @param \Closure(array): ?\OCP\Files\Folder $languageFolderOfPageResult
      * @param \Closure(string): bool $isHomepage
-     * @param \Closure(\OCP\Files\Folder): ?string $languageOfFolder
      * @param \Closure(string): string $languageDisplayName
-     * @param \Closure(\OCP\Files\Folder): string $relativePathFromRoot
      * @param \Closure(string): void $validateDepth
      * @param \Closure(): void $clearCache
      */
     public function movePage(
         string $pageId,
         string $targetParentId,
-        \Closure $languageFolder,
         \Closure $locatePageAnyLanguage,
         \Closure $locatePageBySlugAnyLanguage,
         \Closure $findPageById,
         \Closure $findPageByUniqueId,
         \Closure $languageFolderOfPageResult,
         \Closure $isHomepage,
-        \Closure $languageOfFolder,
         \Closure $languageDisplayName,
-        \Closure $relativePathFromRoot,
         \Closure $validateDepth,
         \Closure $clearCache
     ): void {
@@ -68,7 +69,7 @@ final class PageStructureService {
             throw new \InvalidArgumentException('The home page cannot be moved');
         }
 
-        $languageFolderNode = $languageFolder();
+        $languageFolderNode = $this->folders->languageFolder();
 
         // Locate the source page folder, following it across language folders
         // like every other operation on an existing page (#90). This is safe
@@ -130,8 +131,8 @@ final class PageStructureService {
         // folders is refused rather than performed. Language folders are
         // independent content trees, so this is a relocation between intranets,
         // not a translation.
-        $sourceLanguage = $languageOfFolder($sourceFolder);
-        $targetLanguage = $languageOfFolder($targetParentFolder);
+        $sourceLanguage = $this->folders->languageOfFolder($sourceFolder);
+        $targetLanguage = $this->folders->languageOfFolder($targetParentFolder);
         if ($sourceLanguage !== null && $targetLanguage !== null && $sourceLanguage !== $targetLanguage) {
             throw new CrossLanguageMoveException(sprintf(
                 'This page is in %s and cannot be moved into the %s structure. Pages stay in the language they were written in.',
@@ -153,7 +154,7 @@ final class PageStructureService {
         }
 
         // Respect the configured max nesting depth at the destination.
-        $targetRelPath = $relativePathFromRoot($targetParentFolder);
+        $targetRelPath = $this->folders->relativePathFromRoot($targetParentFolder);
         $validateDepth($targetRelPath);
 
         // Permission preflight. movePage() had none at all: it called move()
