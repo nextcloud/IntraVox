@@ -80,20 +80,16 @@ class PageTranslationCompositionTest extends TestCase {
         $en = $languages['en'];
         $base = $this->makeFolder('/IntraVox', $languages);
 
-        $svc = new class($en, $base) extends PageService {
+        // createTranslation resolves readLanguageFolder ($en) and intraVox->get($lang)
+        // ($base) through the injected FolderContext, so those two seams are gone.
+        // getIntraVoxFolder stays for the cross-language locatePageAnyLanguage walk
+        // (rootClosure()). The createPage spy is orthogonal to folders.
+        $svc = new class($base) extends PageService {
             public ?array $seenData = null;
             public ?string $seenParentPath = null;
-            private Folder $en;
             private Folder $baseFolder;
-            public function __construct(Folder $en, Folder $baseFolder) {
-                $this->en = $en;
+            public function __construct(Folder $baseFolder) {
                 $this->baseFolder = $baseFolder;
-            }
-            protected function getReadLanguageFolder(): Folder {
-                return $this->en;
-            }
-            protected function getLanguageFolder() {
-                return $this->en;
             }
             protected function getIntraVoxFolder() {
                 return $this->baseFolder;
@@ -113,6 +109,10 @@ class PageTranslationCompositionTest extends TestCase {
             'languageService' => $this->createMock(\OCA\IntraVox\Service\LanguageService::class),
             'translationGroupService' => $groups,
             'pageMediaService' => $media,
+            'folderContext' => $this->fakeFolderContext(
+                readLanguageFolder: $en,
+                intraVox: $base
+            ),
         ]);
         return $svc;
     }
