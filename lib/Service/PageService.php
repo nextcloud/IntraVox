@@ -2353,7 +2353,7 @@ class PageService {
         // The language whose content this user is shown, which is where the
         // home page and the cache fast-path below look first. A page in another
         // language is picked up by the cross-language miss path further down.
-        $languageFolder = $this->getReadLanguageFolder();
+        $languageFolder = $this->folders()->readLanguageFolder();
 
         try {
             // Handle home page with original pageId
@@ -3592,14 +3592,14 @@ class PageService {
         // user reads first, then in the remaining language folders: a shared
         // asset referenced from a page in another language is still a legitimate
         // request, and answering 404 blanked those images (#92).
-        $readFolder = $this->getReadLanguageFolder();
+        $readFolder = $this->folders()->readLanguageFolder();
 
         $file = $this->findResourceIn($readFolder, $path);
         if ($file !== null) {
             return $file;
         }
 
-        $baseFolder = $this->getIntraVoxFolder();
+        $baseFolder = $this->folders()->intraVox();
         $searchedPath = $readFolder->getPath();
 
         foreach ($this->getCachedDirectoryListing($baseFolder) as $item) {
