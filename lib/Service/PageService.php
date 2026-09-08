@@ -443,7 +443,8 @@ class PageService {
             $this->userSession,
             $this->pageVersionService,
             $this->pageIndexService,
-            $this->languageService
+            $this->languageService,
+            $this->folders()
         );
     }
 
@@ -483,7 +484,9 @@ class PageService {
             // getReadLanguageFolder seam: 26 test-subclasses override it wholesale,
             // so bind it here rather than let FolderContext recompose — keeps their
             // override winning and preserves getPage's #70 lazy timing.
-            fn(): \OCP\Files\Folder => $this->getReadLanguageFolder()
+            fn(): \OCP\Files\Folder => $this->getReadLanguageFolder(),
+            // getLanguageFolder seam: same wholesale-override story (write cluster).
+            fn(): \OCP\Files\Folder => $this->getLanguageFolder()
         );
     }
 
@@ -2125,10 +2128,10 @@ class PageService {
      */
     public function createPage(array $data, ?string $parentPath = null): array {
         // The create body (validation, slug-dedup, group minting, write) lives in
-        // Write/PageWriteService (AUTHOR domain). The seam-bound folder concerns
-        // go in as $this-bound closures; getOrCreateFolderPath (reflection-
+        // Write/PageWriteService (AUTHOR domain). Folder-substrate concerns come
+        // from the injected FolderContext; getOrCreateFolderPath (reflection-
         // anchored) and validateDepth (shared with movePage) stay on PageService
-        // and are passed as closures too.
+        // and are passed as closures.
         return $this->writeService()->createPage(
             $data,
             $parentPath,
@@ -2136,15 +2139,10 @@ class PageService {
             function (?string $pageId = null): void {
                 $this->clearCache($pageId);
             },
-            fn(): \OCP\Files\Folder => $this->getReadLanguageFolder(),
-            fn(): \OCP\Files\Folder => $this->getIntraVoxFolder(),
-            fn(): \OCP\Files\Folder => $this->getLanguageFolder(),
             fn(string $path): \OCP\Files\Folder => $this->getOrCreateFolderPath($path),
             function (string $path): void {
                 $this->validateDepth($path);
             },
-            fn(): string => $this->getUserLanguage(),
-            fn(\OCP\Files\Folder $folder): ?string => $this->languageOfFolder($folder),
             function (\OCP\Files\Node $mediaFolder): void {
                 $this->createMediaFolderMarker($mediaFolder);
             },
@@ -2183,12 +2181,13 @@ class PageService {
      */
     public function deletePage(string $id): void {
         // The delete body lives in Write/PageWriteService (god-class dissolution,
-        // write cluster). getLanguageFolder is resolved here and passed in; the
+        // write cluster). The language folder is resolved here through FolderContext
+        // and passed in (same eager timing as the old getLanguageFolder seam); the
         // cross-language lookups + isHomepage + clearCache go in as closures so
         // the seam-subclasses keep intercepting.
         $this->writeService()->deletePage(
             $id,
-            $this->getLanguageFolder(),
+            $this->folders()->languageFolder(),
             fn(\OCP\Files\Folder $folder, string $uid): ?array => $this->locatePageAnyLanguage($folder, $uid),
             fn(\OCP\Files\Folder $folder, string $legacyId): ?array => $this->findPageById($folder, $legacyId),
             fn(string $uid): bool => $this->isHomepage($uid),

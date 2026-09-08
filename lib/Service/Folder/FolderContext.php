@@ -52,6 +52,11 @@ final class FolderContext {
      *   test-subclasses that override getReadLanguageFolder WHOLESALE keep winning
      *   — exactly as the atomic intraVox seam already flows. Null = use the owned
      *   composition (readLanguageFolderComposed).
+     * @param \Closure(): \OCP\Files\Folder|null $languageFolder getLanguageFolder seam.
+     *   Same story as readLanguageFolder: FolderContext owns the create-on-miss
+     *   composition, but the seam wins when supplied so wholesale getLanguageFolder
+     *   overrides keep intercepting. Null = use the owned composition
+     *   (languageFolderComposed).
      */
     public function __construct(
         private \Closure $intraVox,
@@ -61,6 +66,7 @@ final class FolderContext {
         private LanguageResolver $language,
         private PageLocator $locator,
         private ?\Closure $readLanguageFolder = null,
+        private ?\Closure $languageFolder = null,
     ) {
     }
 
@@ -76,10 +82,23 @@ final class FolderContext {
 
     /**
      * The write-target language folder for the current user, creating the
-     * language (or default) folder on miss. Composition owned here; verbatim from
-     * PageService::getLanguageFolder().
+     * language (or default) folder on miss. Honours the getLanguageFolder seam
+     * closure when supplied (so wholesale subclass overrides win); otherwise runs
+     * the owned composition.
      */
     public function languageFolder() {
+        if ($this->languageFolder !== null) {
+            return ($this->languageFolder)();
+        }
+        return $this->languageFolderComposed();
+    }
+
+    /**
+     * The create-on-miss write-target composition, owned here; verbatim from
+     * PageService::getLanguageFolder(). Split out so languageFolder() can prefer an
+     * injected seam without duplicating the body.
+     */
+    private function languageFolderComposed() {
         $baseFolder = $this->intraVox();
         $lang = $this->userLanguage();
 

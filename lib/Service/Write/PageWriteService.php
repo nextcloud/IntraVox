@@ -8,6 +8,7 @@ use OCA\IntraVox\Event\PageDeletedEvent;
 use OCA\IntraVox\Exception\ForbiddenException;
 use OCA\IntraVox\Exception\PageConflictException;
 use OCA\IntraVox\Exception\PageNotFoundException;
+use OCA\IntraVox\Service\Folder\FolderContext;
 use OCA\IntraVox\Service\LanguageService;
 use OCA\IntraVox\Service\PageIndexService;
 use OCA\IntraVox\Service\Sanitize\VideoOriginalUrlPreserver;
@@ -39,6 +40,7 @@ final class PageWriteService {
         private PageVersionService $pageVersionService,
         private PageIndexService $pageIndexService,
         private LanguageService $languageService,
+        private FolderContext $folders,
     ) {
     }
 
@@ -319,19 +321,15 @@ final class PageWriteService {
     /**
      * Create a page at a specific path with parent support.
      *
-     * The protected folder seams stay on PageService; the seam-bound folder
-     * concerns are passed in as $this-bound closures. The write-exclusive helpers
-     * (resolveExistingFolderPath, slugTakenIn, scanPageFolder) co-locate here as
-     * private methods — that is what dissolves the old 7-closure knot: they become
-     * in-class calls again instead of closures. getOrCreateFolderPath (reflection-
-     * anchored) and validateDepth (shared with movePage) stay on PageService and
-     * come in as closures.
+     * The folder-substrate concerns (readLanguageFolder / userLanguage /
+     * languageOfFolder) come from the injected FolderContext. The write-exclusive
+     * helpers (resolveExistingFolderPath, slugTakenIn, scanPageFolder) co-locate
+     * here as private methods. getOrCreateFolderPath (reflection-anchored) and
+     * validateDepth (shared with movePage) stay on PageService and come in as
+     * closures.
      *
-     * @param \Closure(): \OCP\Files\Folder $readLanguageFolder getReadLanguageFolder seam
      * @param \Closure(string): \OCP\Files\Folder $getOrCreateFolderPath
      * @param \Closure(string): void $validateDepth
-     * @param \Closure(): string $userLanguage
-     * @param \Closure(\OCP\Files\Folder): ?string $languageOfFolder
      * @param \Closure(\OCP\Files\Node): void $createMediaFolderMarker
      * @param \Closure(string, \OCP\Files\Folder): void $cachePageFolder setPageFolder
      */
@@ -339,15 +337,12 @@ final class PageWriteService {
         string $pageId,
         array $data,
         ?string $parentPath,
-        \Closure $readLanguageFolder,
         \Closure $getOrCreateFolderPath,
         \Closure $validateDepth,
-        \Closure $userLanguage,
-        \Closure $languageOfFolder,
         \Closure $createMediaFolderMarker,
         \Closure $cachePageFolder
     ): array {
-        $language = $userLanguage();
+        $language = $this->folders->userLanguage();
 
         // Determine target folder
         if ($parentPath) {
@@ -359,10 +354,10 @@ final class PageWriteService {
         } else {
             // No parent = create at the root of the language being VIEWED, so a
             // new page lands in the structure the author is actually working in
-            // rather than in their profile language. getReadLanguageFolder()
+            // rather than in their profile language. readLanguageFolder()
             // resolves own language → recommended → en, and falls back to the
             // author's own folder when nothing else resolves.
-            $targetFolder = $readLanguageFolder();
+            $targetFolder = $this->folders->readLanguageFolder();
         }
 
         // Preflight: creating a page writes a file (and a folder) into $targetFolder.
@@ -449,7 +444,7 @@ final class PageWriteService {
         // index lookup (it resolves the stored path) and repathSubtree() (it
         // matches on a path prefix).
         try {
-            $language = $languageOfFolder($indexFolder) ?? $userLanguage();
+            $language = $this->folders->languageOfFolder($indexFolder) ?? $this->folders->userLanguage();
             $this->pageIndexService->indexPage(
                 $data,
                 $language,
@@ -467,22 +462,16 @@ final class PageWriteService {
 
     /**
      * Resolve an EXISTING folder path for the slug-dedup scan (no create). Write-
-     * exclusive helper co-located from PageService. Uses the seams via closures.
-     *
-     * @param \Closure(): \OCP\Files\Folder $readLanguageFolder
-     * @param \Closure(): \OCP\Files\Folder $intraVoxFolder
-     * @param \Closure(): \OCP\Files\Folder $languageFolder
+     * exclusive helper co-located from PageService. Folder resolution comes from
+     * the injected FolderContext.
      */
     private function resolveExistingFolderPath(
-        ?string $parentPath,
-        \Closure $readLanguageFolder,
-        \Closure $intraVoxFolder,
-        \Closure $languageFolder
+        ?string $parentPath
     ): ?\OCP\Files\Folder {
         try {
             if ($parentPath === null || trim($parentPath, '/') === '') {
                 // No parent = the language root createPageAtPath() falls back to.
-                return $readLanguageFolder();
+                return $this->folders->readLanguageFolder();
             }
 
             $pathParts = explode('/', trim($parentPath, '/'));
@@ -493,7 +482,7 @@ final class PageWriteService {
             if ($this->languageService->isLanguageAvailable($pathParts[0])) {
                 $langCode = array_shift($pathParts);
                 try {
-                    $candidate = $intraVoxFolder()->get($langCode);
+                    $candidate = $this->folders->intraVox()->get($langCode);
                     if ($candidate instanceof \OCP\Files\Folder) {
                         $currentFolder = $candidate;
                     }
@@ -502,7 +491,7 @@ final class PageWriteService {
                 }
             }
             if ($currentFolder === null) {
-                $currentFolder = $languageFolder();
+                $currentFolder = $this->folders->languageFolder();
             }
 
             foreach ($pathParts as $folderName) {
@@ -532,15 +521,14 @@ final class PageWriteService {
      * minting, then the write via createPageAtPath). PageService keeps a thin
      * public delegator; the seam-bound folder concerns come in as closures.
      *
+     * The folder-substrate concerns (readLanguageFolder / intraVox / languageFolder
+     * / userLanguage / languageOfFolder) now come from the injected FolderContext;
+     * only the non-folder / reflection-anchored concerns stay as closures.
+     *
      * @param \Closure(array): array $validateAndSanitizePage
      * @param \Closure(?string): void $clearCache
-     * @param \Closure(): \OCP\Files\Folder $readLanguageFolder
-     * @param \Closure(): \OCP\Files\Folder $intraVoxFolder
-     * @param \Closure(): \OCP\Files\Folder $languageFolder
      * @param \Closure(string): \OCP\Files\Folder $getOrCreateFolderPath
      * @param \Closure(string): void $validateDepth
-     * @param \Closure(): string $userLanguage
-     * @param \Closure(\OCP\Files\Folder): ?string $languageOfFolder
      * @param \Closure(\OCP\Files\Node): void $createMediaFolderMarker
      * @param \Closure(string, \OCP\Files\Folder): void $cachePageFolder
      */
@@ -549,13 +537,8 @@ final class PageWriteService {
         ?string $parentPath,
         \Closure $validateAndSanitizePage,
         \Closure $clearCache,
-        \Closure $readLanguageFolder,
-        \Closure $intraVoxFolder,
-        \Closure $languageFolder,
         \Closure $getOrCreateFolderPath,
         \Closure $validateDepth,
-        \Closure $userLanguage,
-        \Closure $languageOfFolder,
         \Closure $createMediaFolderMarker,
         \Closure $cachePageFolder
     ): array {
@@ -573,7 +556,7 @@ final class PageWriteService {
         // language root with no folder of its own, so a 'home-2' would only
         // create a page folder the homepage resolver never looks at.
         if ($data['id'] !== 'home') {
-            $targetFolder = $this->resolveExistingFolderPath($parentPath, $readLanguageFolder, $intraVoxFolder, $languageFolder);
+            $targetFolder = $this->resolveExistingFolderPath($parentPath);
             $originalId = $data['id'];
             $counter = 2;
             while ($this->slugTakenIn($targetFolder, $data['id'])) {
@@ -604,11 +587,8 @@ final class PageWriteService {
             $data['id'],
             $validatedData,
             $parentPath,
-            $readLanguageFolder,
             $getOrCreateFolderPath,
             $validateDepth,
-            $userLanguage,
-            $languageOfFolder,
             $createMediaFolderMarker,
             $cachePageFolder
         );
