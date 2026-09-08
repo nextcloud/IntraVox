@@ -382,20 +382,9 @@ class PageSlugUniquenessTest extends TestCase {
         // captures createPage() instead of running it — what matters here is the
         // data copyPage() hands over, not the write that follows.
         $wired = $this->makeService(['nl' => $nl], 'nl');
-        $spy = new class($nl) extends PageService {
+        $spy = new class extends PageService {
             public ?array $seen = null;
-            private Folder $lang;
-            public function __construct(Folder $lang) {
-                $this->lang = $lang;
-            }
-            protected function getLanguageFolder() {
-                return $this->lang;
-            }
-            protected function getReadLanguageFolder(): Folder {
-                return $this->lang;
-            }
-            protected function getIntraVoxFolder() {
-                return $this->lang;
+            public function __construct() {
             }
             public function createPage(array $data, ?string $parentPath = null): array {
                 $this->seen = $data;
@@ -413,6 +402,11 @@ class PageSlugUniquenessTest extends TestCase {
             }
             $prop->setValue($spy, $prop->getValue($wired));
         }
+        // copyPage resolves its folder via folders()->languageFolder() ($nl) and
+        // walks cross-language via rootClosure()->folders()->intraVox() ($nl);
+        // inject a FolderContext directly (the property-copy above skips it).
+        (new \ReflectionProperty(PageService::class, 'folderContext'))
+            ->setValue($spy, $this->fakeFolderContext(intraVox: $nl, languageFolder: $nl));
 
         $spy->copyPage('page-aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee');
 

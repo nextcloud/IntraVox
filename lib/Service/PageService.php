@@ -481,13 +481,12 @@ class PageService {
             fn(): string => $this->languageService->getPrimaryLanguage(),
             fn(\OCP\Files\Folder $folder): bool => $this->languageFolderHasRealContent($folder),
             $this->language(),
-            $this->locator(),
-            // getReadLanguageFolder seam: 26 test-subclasses override it wholesale,
-            // so bind it here rather than let FolderContext recompose — keeps their
-            // override winning and preserves getPage's #70 lazy timing.
-            fn(): \OCP\Files\Folder => $this->getReadLanguageFolder(),
-            // getLanguageFolder seam: same wholesale-override story (write cluster).
-            fn(): \OCP\Files\Folder => $this->getLanguageFolder()
+            $this->locator()
+            // getReadLanguageFolder / getLanguageFolder seams are RETIRED: FolderContext
+            // owns their composition (readLanguageFolderComposed / languageFolderComposed),
+            // built on the getIntraVoxFolder + getUserLanguage atoms above — so the two
+            // optional seam closures are omitted (null) and the owned composition runs.
+            // Tests inject a FolderContext directly rather than overriding those methods.
         );
     }
 
@@ -738,33 +737,6 @@ class PageService {
     }
 
     /**
-     * Get the language folder within IntraVox
-     *
-     * `protected` (not private) purely to give unit tests a seam to inject a
-     * fake language folder; no runtime behaviour depends on the visibility.
-     */
-    protected function getLanguageFolder() {
-        $baseFolder = $this->getIntraVoxFolder();
-        $lang = $this->getUserLanguage();
-
-        try {
-            return $baseFolder->get($lang);
-        } catch (NotFoundException $e) {
-            // If language folder doesn't exist, try default language
-            if ($lang !== self::DEFAULT_LANGUAGE) {
-                try {
-                    return $baseFolder->get(self::DEFAULT_LANGUAGE);
-                } catch (NotFoundException $e2) {
-                    // Create default language folder if it doesn't exist
-                    return $baseFolder->newFolder(self::DEFAULT_LANGUAGE);
-                }
-            }
-            // Create the requested language folder
-            return $baseFolder->newFolder($lang);
-        }
-    }
-
-    /**
      * The language whose content the CURRENT user will actually be SHOWN on the
      * landing/read paths. Read-only resolution — NEVER used to decide where to
      * write (authoring must always target the user's own language folder).
@@ -785,31 +757,6 @@ class PageService {
      */
     private function resolveEffectiveLanguage(): ?string {
         return $this->folders()->effectiveLanguage();
-    }
-
-    /**
-     * Content folder for READING/VIEWING for the current user, honouring the
-     * recommended-language fallback (issue #75). When nothing resolves it falls
-     * back to the plain write-target folder (getLanguageFolder), so callers get
-     * a valid — possibly empty — folder rather than an exception; the fallback
-     * notice decides separately whether to blank the page.
-     *
-     * `protected` (like getLanguageFolder/getIntraVoxFolder) only to give unit
-     * tests a seam for language resolution; no runtime behaviour depends on it.
-     */
-    protected function getReadLanguageFolder(): \OCP\Files\Folder {
-        $lang = $this->resolveEffectiveLanguage();
-        if ($lang !== null) {
-            try {
-                $folder = $this->getIntraVoxFolder()->get($lang);
-                if ($folder instanceof \OCP\Files\Folder) {
-                    return $folder;
-                }
-            } catch (NotFoundException $e) {
-                // fall through to the write-target folder
-            }
-        }
-        return $this->getLanguageFolder();
     }
 
     /**

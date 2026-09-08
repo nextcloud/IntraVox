@@ -95,18 +95,13 @@ class PageIndexLookupTest extends TestCase {
 
         $base = $this->makeFolder('/IntraVox', ['en' => $en]);
 
-        $svc = new class($en, $base) extends PageService {
-            private Folder $langFolder;
+        // locatePageAnyLanguage (driven by reflection below) resolves its read
+        // folder via folders()->readLanguageFolder() ($en) and walks cross-language
+        // via rootClosure() -> getIntraVoxFolder ($base, kept).
+        $svc = new class($base) extends PageService {
             private Folder $baseFolder;
-            public function __construct(Folder $langFolder, Folder $baseFolder) {
-                $this->langFolder = $langFolder;
+            public function __construct(Folder $baseFolder) {
                 $this->baseFolder = $baseFolder;
-            }
-            protected function getLanguageFolder() {
-                return $this->langFolder;
-            }
-            protected function getReadLanguageFolder(): Folder {
-                return $this->langFolder;
             }
             protected function getIntraVoxFolder() {
                 return $this->baseFolder;
@@ -127,15 +122,21 @@ class PageIndexLookupTest extends TestCase {
             'logger' => $this->createMock(\Psr\Log\LoggerInterface::class),
             'languageService' => $this->createMock(\OCA\IntraVox\Service\LanguageService::class),
             'pageIndexService' => $index,
+            'folderContext' => $this->fakeFolderContext(readLanguageFolder: $en, intraVox: $base),
         ];
         $this->injectPageServiceDependencies($svc, $explicit);
         return $svc;
     }
 
-    /** Drive the private locator through reflection. */
+    /**
+     * Drive the private locator through reflection. The read folder now comes from
+     * the injected FolderContext (folders()->readLanguageFolder()) rather than the
+     * retired getReadLanguageFolder seam.
+     */
     private function locate(PageService $svc, string $uniqueId): ?array {
         $m = new \ReflectionMethod(PageService::class, 'locatePageAnyLanguage');
-        $readFolder = (new \ReflectionMethod(PageService::class, 'getReadLanguageFolder'))->invoke($svc);
+        $folders = (new \ReflectionMethod(PageService::class, 'folders'))->invoke($svc);
+        $readFolder = $folders->readLanguageFolder();
         return $m->invoke($svc, $readFolder, $uniqueId);
     }
 
@@ -235,7 +236,7 @@ class PageIndexLookupTest extends TestCase {
         );
 
         $result = (new \ReflectionMethod(PageService::class, 'listPagesFromIndex'))
-            ->invoke($svc, (new \ReflectionMethod(PageService::class, 'getReadLanguageFolder'))->invoke($svc));
+            ->invoke($svc, (new \ReflectionMethod(PageService::class, 'folders'))->invoke($svc)->readLanguageFolder());
 
         $this->assertNull($result, 'an index list missing the homepage must not be served');
     }
@@ -253,7 +254,7 @@ class PageIndexLookupTest extends TestCase {
         );
 
         $result = (new \ReflectionMethod(PageService::class, 'listPagesFromIndex'))
-            ->invoke($svc, (new \ReflectionMethod(PageService::class, 'getReadLanguageFolder'))->invoke($svc));
+            ->invoke($svc, (new \ReflectionMethod(PageService::class, 'folders'))->invoke($svc)->readLanguageFolder());
 
         $this->assertNotNull($result);
         $this->assertSame(['page-home', 'page-idx'], array_column($result, 'uniqueId'));
@@ -271,7 +272,7 @@ class PageIndexLookupTest extends TestCase {
         );
 
         $result = (new \ReflectionMethod(PageService::class, 'listPagesFromIndex'))
-            ->invoke($svc, (new \ReflectionMethod(PageService::class, 'getReadLanguageFolder'))->invoke($svc));
+            ->invoke($svc, (new \ReflectionMethod(PageService::class, 'folders'))->invoke($svc)->readLanguageFolder());
 
         $this->assertNotNull($result);
         $this->assertSame(['page-idx'], array_column($result, 'uniqueId'));
@@ -283,7 +284,7 @@ class PageIndexLookupTest extends TestCase {
         $svc = $this->makeServiceWithHome([], null);
 
         $result = (new \ReflectionMethod(PageService::class, 'listPagesFromIndex'))
-            ->invoke($svc, (new \ReflectionMethod(PageService::class, 'getReadLanguageFolder'))->invoke($svc));
+            ->invoke($svc, (new \ReflectionMethod(PageService::class, 'folders'))->invoke($svc)->readLanguageFolder());
 
         $this->assertNull($result, 'no entries for the language means fall back to the walk');
     }
@@ -298,7 +299,7 @@ class PageIndexLookupTest extends TestCase {
         );
 
         $result = (new \ReflectionMethod(PageService::class, 'listPagesFromIndex'))
-            ->invoke($svc, (new \ReflectionMethod(PageService::class, 'getReadLanguageFolder'))->invoke($svc));
+            ->invoke($svc, (new \ReflectionMethod(PageService::class, 'folders'))->invoke($svc)->readLanguageFolder());
 
         $this->assertNull($result, 'an index failure falls back to the walk rather than throwing');
     }
@@ -318,7 +319,7 @@ class PageIndexLookupTest extends TestCase {
         );
 
         $result = (new \ReflectionMethod(PageService::class, 'listPagesFromIndex'))
-            ->invoke($svc, (new \ReflectionMethod(PageService::class, 'getReadLanguageFolder'))->invoke($svc));
+            ->invoke($svc, (new \ReflectionMethod(PageService::class, 'folders'))->invoke($svc)->readLanguageFolder());
 
         $this->assertNotNull($result);
         $this->assertSame(['page-idx'], array_column($result, 'uniqueId'), 'blank-id and blank-path rows are dropped');
@@ -337,7 +338,7 @@ class PageIndexLookupTest extends TestCase {
         );
 
         $result = (new \ReflectionMethod(PageService::class, 'listPagesFromIndex'))
-            ->invoke($svc, (new \ReflectionMethod(PageService::class, 'getReadLanguageFolder'))->invoke($svc));
+            ->invoke($svc, (new \ReflectionMethod(PageService::class, 'folders'))->invoke($svc)->readLanguageFolder());
 
         $this->assertNotNull($result);
         $this->assertSame(['page-idx'], array_column($result, 'uniqueId'), 'a row pointing nowhere is skipped');
@@ -352,7 +353,7 @@ class PageIndexLookupTest extends TestCase {
         );
 
         $result = (new \ReflectionMethod(PageService::class, 'listPagesFromIndex'))
-            ->invoke($svc, (new \ReflectionMethod(PageService::class, 'getReadLanguageFolder'))->invoke($svc));
+            ->invoke($svc, (new \ReflectionMethod(PageService::class, 'folders'))->invoke($svc)->readLanguageFolder());
 
         $this->assertNotNull($result);
         $this->assertSame('page-idx', $result[0]['uniqueId']);
@@ -386,18 +387,13 @@ class PageIndexLookupTest extends TestCase {
         $en = $this->makeFolder('/IntraVox/en', $children + ['about' => $aboutFolder]);
         $base = $this->makeFolder('/IntraVox', ['en' => $en]);
 
-        $svc = new class($en, $base) extends PageService {
-            private Folder $langFolder;
+        // listPagesFromIndex (driven by reflection) resolves its folder via
+        // folders()->readLanguageFolder() ($en). getIntraVoxFolder stays for any
+        // cross-language locate (rootClosure()).
+        $svc = new class($base) extends PageService {
             private Folder $baseFolder;
-            public function __construct(Folder $langFolder, Folder $baseFolder) {
-                $this->langFolder = $langFolder;
+            public function __construct(Folder $baseFolder) {
                 $this->baseFolder = $baseFolder;
-            }
-            protected function getLanguageFolder() {
-                return $this->langFolder;
-            }
-            protected function getReadLanguageFolder(): Folder {
-                return $this->langFolder;
             }
             protected function getIntraVoxFolder() {
                 return $this->baseFolder;
@@ -422,6 +418,7 @@ class PageIndexLookupTest extends TestCase {
             'logger' => $this->createMock(\Psr\Log\LoggerInterface::class),
             'languageService' => $this->createMock(\OCA\IntraVox\Service\LanguageService::class),
             'pageIndexService' => $index,
+            'folderContext' => $this->fakeFolderContext(readLanguageFolder: $en, intraVox: $base),
         ];
         $this->injectPageServiceDependencies($svc, $explicit);
         return $svc;

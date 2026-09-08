@@ -153,18 +153,12 @@ class PageUpdatePipelineTest extends TestCase {
     public function testUnknownPageThrowsPageNotFound(): void {
         $empty = $this->makeFolder('/IntraVox/en', []);
         $base = $this->makeFolder('/IntraVox', ['en' => $empty]);
-        $svc = new class($empty, $base) extends PageService {
-            private Folder $empty;
+        // languageFolder ($empty) via the seam; getIntraVoxFolder ($base) kept for
+        // the cross-language locate walk (rootClosure()).
+        $svc = new class($base) extends PageService {
             private Folder $base;
-            public function __construct(Folder $empty, Folder $base) {
-                $this->empty = $empty;
+            public function __construct(Folder $base) {
                 $this->base = $base;
-            }
-            protected function getLanguageFolder(): Folder {
-                return $this->empty;
-            }
-            protected function getReadLanguageFolder(): Folder {
-                return $this->empty;
             }
             protected function getIntraVoxFolder(): Folder {
                 return $this->base;
@@ -180,6 +174,7 @@ class PageUpdatePipelineTest extends TestCase {
             'userId' => 'tester',
             'pageIndexService' => $index,
             'logger' => $this->createMock(LoggerInterface::class),
+            'folderContext' => $this->fakeFolderContext(intraVox: $base, languageFolder: $empty),
         ]);
 
         $this->expectException(PageNotFoundException::class);

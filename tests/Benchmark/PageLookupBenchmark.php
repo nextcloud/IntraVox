@@ -287,18 +287,10 @@ class PageLookupBenchmark extends TestCase {
         // measured against the same fixture.
         $base = new BenchFolder('/IntraVox', $byLang);
 
-        $svc = new class($readFolder, $base) extends PageService {
-            private Folder $readFolder;
+        $svc = new class($base) extends PageService {
             private Folder $baseFolder;
-            public function __construct(Folder $readFolder, Folder $baseFolder) {
-                $this->readFolder = $readFolder;
+            public function __construct(Folder $baseFolder) {
                 $this->baseFolder = $baseFolder;
-            }
-            protected function getLanguageFolder() {
-                return $this->readFolder;
-            }
-            protected function getReadLanguageFolder(): Folder {
-                return $this->readFolder;
             }
             protected function getIntraVoxFolder() {
                 return $this->baseFolder;
@@ -331,6 +323,19 @@ class PageLookupBenchmark extends TestCase {
             'logger' => $this->createMock(\Psr\Log\LoggerInterface::class),
             'languageService' => $languageService,
             'pageIndexService' => $index,
+            'folderContext' => new \OCA\IntraVox\Service\Folder\FolderContext(
+                fn() => $base,
+                fn(): string => 'en',
+                fn(): string => 'en',
+                fn(Folder $f): bool => false,
+                new \OCA\IntraVox\Service\Language\LanguageResolver(),
+                new \OCA\IntraVox\Service\Locator\PageLocator(
+                    $this->createMock(\OCA\IntraVox\Service\PageIndexService::class),
+                    $this->createMock(\Psr\Log\LoggerInterface::class)
+                ),
+                fn(): Folder => $readFolder,
+                fn(): Folder => $readFolder
+            ),
         ];
         foreach ($explicit as $name => $value) {
             (new \ReflectionProperty(PageService::class, $name))->setValue($svc, $value);
@@ -408,8 +413,8 @@ class PageLookupBenchmark extends TestCase {
                 // private on purpose, and a benchmark is not a reason to widen
                 // production visibility.
                 $locate = new \ReflectionMethod(PageService::class, 'locatePageAnyLanguage');
-                $readFolder = (new \ReflectionMethod(PageService::class, 'getReadLanguageFolder'))
-                    ->invoke($svc);
+                $readFolder = (new \ReflectionMethod(PageService::class, 'folders'))
+                    ->invoke($svc)->readLanguageFolder();
 
                 $start = microtime(true);
                 $result = $locate->invoke($svc, $readFolder, $uniqueId);

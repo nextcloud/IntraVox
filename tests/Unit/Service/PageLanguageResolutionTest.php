@@ -272,12 +272,13 @@ class PageLanguageResolutionTest extends TestCase {
     // ------------------------------------------------------ getLanguageFolder (user-language driven)
 
     public function testGetLanguageFolderUsesUserLanguageAndCreatesOnMiss(): void {
-        // getLanguageFolder() resolves the USER's language (nl_NL -> nl) and,
-        // when neither nl nor the default exist, creates the default.
+        // The write-target composition (retired getLanguageFolder, now
+        // FolderContext::languageFolder) resolves the USER's language (nl_NL -> nl)
+        // and, when neither nl nor the default exist, creates the default.
         $svc = $this->makeService($this->baseFolder([]), userLangValue: 'nl_NL');
 
-        $m = new \ReflectionMethod(PageService::class, 'getLanguageFolder');
-        $m->invoke($svc);
+        $folders = (new \ReflectionMethod(PageService::class, 'folders'))->invoke($svc);
+        $folders->languageFolder();
 
         $this->assertSame(['en'], $this->created);
     }
@@ -344,7 +345,8 @@ class PageLanguageResolutionTest extends TestCase {
         $this->assertSame('en', $this->callPrivate($svc, 'resolveEffectiveLanguage'));
     }
 
-    // ------------------------------------------------------ getReadLanguageFolder (protected, NOT overridden here)
+    // ------------------------- read-folder composition (retired getReadLanguageFolder,
+    //                           now FolderContext::readLanguageFolder, same #75 body)
 
     public function testReadLanguageFolderReturnsTheResolvedLanguageFolder(): void {
         $nl = $this->langFolder('/IntraVox/nl', $this->realHome('Welkom'));
@@ -354,14 +356,14 @@ class PageLanguageResolutionTest extends TestCase {
             primaryLanguage: 'nl'
         );
 
-        $m = new \ReflectionMethod(PageService::class, 'getReadLanguageFolder');
-        $this->assertSame($nl, $m->invoke($svc));
+        $folders = (new \ReflectionMethod(PageService::class, 'folders'))->invoke($svc);
+        $this->assertSame($nl, $folders->readLanguageFolder());
     }
 
     public function testReadLanguageFolderFallsBackToWriteTargetWhenNothingResolves(): void {
-        // resolveEffectiveLanguage() returns null (only a placeholder), so
-        // getReadLanguageFolder falls back to getLanguageFolder() — the user's
-        // own write-target folder ('nl'), even though it has no real content.
+        // effectiveLanguage() returns null (only a placeholder), so the read-folder
+        // composition falls back to the write-target — the user's own folder ('nl'),
+        // even though it has no real content.
         $nl = $this->langFolder('/IntraVox/nl', $this->placeholderHome());
         $svc = $this->makeService(
             $this->baseFolder(['nl' => $nl]),
@@ -369,8 +371,8 @@ class PageLanguageResolutionTest extends TestCase {
             primaryLanguage: 'nl'
         );
 
-        $m = new \ReflectionMethod(PageService::class, 'getReadLanguageFolder');
-        $this->assertSame($nl, $m->invoke($svc), 'must fall back to the plain write-target folder');
+        $folders = (new \ReflectionMethod(PageService::class, 'folders'))->invoke($svc);
+        $this->assertSame($nl, $folders->readLanguageFolder(), 'must fall back to the plain write-target folder');
         $this->assertSame([], $this->created, 'nl already exists — fallback must not create anything');
     }
 }

@@ -32,9 +32,12 @@ class PageServiceSeamContractTest extends TestCase {
     public static function seamProvider(): array {
         return [
             // name => [expected visibility, return type spelling, required params]
+            // getLanguageFolder + getReadLanguageFolder RETIRED (clean-target step
+            // 11): their composition moved to FolderContext and tests inject one
+            // directly. getIntraVoxFolder stays — the atomic GroupFolder mount
+            // lookup ($rootFolder->getUserFolder($userId)->get('IntraVox')), still
+            // the single test seam + the FolderContext intraVox atom.
             'getIntraVoxFolder'    => ['getIntraVoxFolder', 'protected', 0],
-            'getLanguageFolder'    => ['getLanguageFolder', 'protected', 0],
-            'getReadLanguageFolder' => ['getReadLanguageFolder', 'protected', 0],
         ];
     }
 

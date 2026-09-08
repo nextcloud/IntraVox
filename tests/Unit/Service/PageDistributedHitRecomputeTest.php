@@ -48,16 +48,11 @@ class PageDistributedHitRecomputeTest extends TestCase {
             'about' => $pageFolder,
         ]);
 
-        $svc = new class($lang) extends PageService {
-            private Folder $lang;
-            public function __construct(Folder $lang) {
-                $this->lang = $lang;
-            }
-            protected function getReadLanguageFolder(): Folder {
-                return $this->lang;
-            }
-            protected function getLanguageFolder(): Folder {
-                return $this->lang;
+        // getPage (the #70 distributed-hit recompute path) resolves its folder via
+        // folders()->readLanguageFolder() ($lang). getIntraVoxFolder stays THROWING
+        // for the cross-language locate walk (rootClosure()), pinning the degrade.
+        $svc = new class extends PageService {
+            public function __construct() {
             }
             protected function getIntraVoxFolder(): Folder {
                 throw new \RuntimeException('no root in this fixture');
@@ -85,6 +80,7 @@ class PageDistributedHitRecomputeTest extends TestCase {
             // userId is read when the lazy MetaVoxGateway is built (Phase 3).
             'userId' => 'tester',
             'logger' => $this->createMock(LoggerInterface::class),
+            'folderContext' => $this->fakeFolderContext(readLanguageFolder: $lang),
         ]);
 
         return $svc;
