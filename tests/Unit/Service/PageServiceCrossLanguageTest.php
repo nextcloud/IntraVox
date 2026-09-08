@@ -100,16 +100,15 @@ class PageServiceCrossLanguageTest extends TestCase {
             throw new \OCP\Files\NotFoundException($p);
         });
 
-        $svc = new class($writeFolder, $base) extends PageService {
-            private Folder $writeFolder;
+        // updatePage resolves its write-target ($writeFolder) via
+        // folders()->languageFolder(), and languageOfFolder + userLanguage via the
+        // intraVox() root ($base). getIntraVoxFolder stays for the cross-language
+        // locatePageAnyLanguage walk (rootClosure()).
+        $svc = new class($base) extends PageService {
             private Folder $baseFolder;
             // Deliberately bypass the real 25-arg constructor.
-            public function __construct(Folder $writeFolder, Folder $baseFolder) {
-                $this->writeFolder = $writeFolder;
+            public function __construct(Folder $baseFolder) {
                 $this->baseFolder = $baseFolder;
-            }
-            protected function getLanguageFolder() {
-                return $this->writeFolder;
             }
             protected function getIntraVoxFolder() {
                 return $this->baseFolder;
@@ -150,6 +149,11 @@ class PageServiceCrossLanguageTest extends TestCase {
             'config' => $config,
             'logger' => $logger,
             'languageService' => $languageService,
+            'folderContext' => $this->fakeFolderContext(
+                intraVox: $base,
+                languageFolder: $writeFolder,
+                userLanguage: 'de'
+            ),
         ];
         $this->injectPageServiceDependencies($svc, $explicit);
 

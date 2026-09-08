@@ -82,18 +82,14 @@ class PageIndexLanguageTest extends TestCase {
             throw new \OCP\Files\NotFoundException($p);
         });
 
-        $svc = new class($userLanguageFolder, $base) extends PageService {
-            private Folder $userLanguageFolder;
+        // updatePage resolves its write-target ($userLanguageFolder) via
+        // folders()->languageFolder() and languageOfFolder/userLanguage via the
+        // intraVox() root ($base); rebuildIndex uses folders()->intraVox().
+        // getIntraVoxFolder stays for the cross-language locate walk (rootClosure()).
+        $svc = new class($base) extends PageService {
             private Folder $baseFolder;
-            public function __construct(Folder $userLanguageFolder, Folder $baseFolder) {
-                $this->userLanguageFolder = $userLanguageFolder;
+            public function __construct(Folder $baseFolder) {
                 $this->baseFolder = $baseFolder;
-            }
-            protected function getLanguageFolder() {
-                return $this->userLanguageFolder;
-            }
-            protected function getReadLanguageFolder(): Folder {
-                return $this->userLanguageFolder;
             }
             protected function getIntraVoxFolder() {
                 return $this->baseFolder;
@@ -142,6 +138,11 @@ class PageIndexLanguageTest extends TestCase {
             'logger' => $this->createMock(\Psr\Log\LoggerInterface::class),
             'languageService' => $languageService,
             'pageIndexService' => $index,
+            'folderContext' => $this->fakeFolderContext(
+                intraVox: $base,
+                languageFolder: $userLanguageFolder,
+                userLanguage: 'de'
+            ),
         ];
         $this->injectPageServiceDependencies($svc, $explicit);
 

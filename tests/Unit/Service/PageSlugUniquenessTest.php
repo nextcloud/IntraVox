@@ -131,21 +131,15 @@ class PageSlugUniquenessTest extends TestCase {
         $writeFolder = $languages[$writeLang];
         $readFolder = $languages[$readLang ?? $writeLang];
 
-        $svc = new class($writeFolder, $readFolder, $base) extends PageService {
-            private Folder $writeFolder;
-            private Folder $readFolder;
+        // createPage resolves its write-target ($writeFolder) via
+        // folders()->languageFolder(), the no-parent fallback ($readFolder) via
+        // readLanguageFolder(), and the language-code/getOrCreateFolderPath branch
+        // via intraVox() ($base). getIntraVoxFolder stays for the cross-language
+        // locate walk (rootClosure()).
+        $svc = new class($base) extends PageService {
             private Folder $baseFolder;
-            // Deliberately bypass the real 25-arg constructor.
-            public function __construct(Folder $writeFolder, Folder $readFolder, Folder $baseFolder) {
-                $this->writeFolder = $writeFolder;
-                $this->readFolder = $readFolder;
+            public function __construct(Folder $baseFolder) {
                 $this->baseFolder = $baseFolder;
-            }
-            protected function getLanguageFolder() {
-                return $this->writeFolder;
-            }
-            protected function getReadLanguageFolder(): Folder {
-                return $this->readFolder;
             }
             protected function getIntraVoxFolder() {
                 return $this->baseFolder;
@@ -175,6 +169,12 @@ class PageSlugUniquenessTest extends TestCase {
             'config' => $config,
             'logger' => $this->createMock(\Psr\Log\LoggerInterface::class),
             'languageService' => $languageService,
+            'folderContext' => $this->fakeFolderContext(
+                readLanguageFolder: $readFolder,
+                intraVox: $base,
+                languageFolder: $writeFolder,
+                userLanguage: $writeLang
+            ),
         ];
         $this->injectPageServiceDependencies($svc, $explicit);
 

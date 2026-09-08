@@ -77,18 +77,14 @@ class PageConcurrencyTest extends TestCase {
             throw new \OCP\Files\NotFoundException($p);
         });
 
-        $svc = new class($languageFolder, $base) extends PageService {
-            private Folder $languageFolder;
+        // updatePage resolves its write-target ($languageFolder) via
+        // folders()->languageFolder(), languageOfFolder + userLanguage via the
+        // intraVox() root ($base). getIntraVoxFolder stays for the cross-language
+        // locatePageAnyLanguage walk (rootClosure()).
+        $svc = new class($base) extends PageService {
             private Folder $baseFolder;
-            public function __construct(Folder $languageFolder, Folder $baseFolder) {
-                $this->languageFolder = $languageFolder;
+            public function __construct(Folder $baseFolder) {
                 $this->baseFolder = $baseFolder;
-            }
-            protected function getLanguageFolder() {
-                return $this->languageFolder;
-            }
-            protected function getReadLanguageFolder(): Folder {
-                return $this->languageFolder;
             }
             protected function getIntraVoxFolder() {
                 return $this->baseFolder;
@@ -116,6 +112,11 @@ class PageConcurrencyTest extends TestCase {
             'config' => $config,
             'logger' => $this->createMock(\Psr\Log\LoggerInterface::class),
             'languageService' => $languageService,
+            'folderContext' => $this->fakeFolderContext(
+                intraVox: $base,
+                languageFolder: $languageFolder,
+                userLanguage: 'en'
+            ),
         ];
         $this->injectPageServiceDependencies($svc, $explicit);
         return $svc;

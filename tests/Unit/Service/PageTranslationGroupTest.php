@@ -94,18 +94,14 @@ class PageTranslationGroupTest extends TestCase {
         ]);
         $base = $this->makeFolder('/IntraVox', ['nl' => $nl, 'de' => $de]);
 
-        $svc = new class($nl, $base) extends PageService {
-            private Folder $langFolder;
+        // link/unlinkTranslation resolve via folders()->readLanguageFolder ($nl);
+        // updatePage via folders()->languageFolder ($nl) + languageOfFolder/
+        // userLanguage. getIntraVoxFolder stays for the cross-language locate walk
+        // (rootClosure()).
+        $svc = new class($base) extends PageService {
             private Folder $baseFolder;
-            public function __construct(Folder $langFolder, Folder $baseFolder) {
-                $this->langFolder = $langFolder;
+            public function __construct(Folder $baseFolder) {
                 $this->baseFolder = $baseFolder;
-            }
-            protected function getLanguageFolder() {
-                return $this->langFolder;
-            }
-            protected function getReadLanguageFolder(): Folder {
-                return $this->langFolder;
             }
             protected function getIntraVoxFolder() {
                 return $this->baseFolder;
@@ -134,6 +130,12 @@ class PageTranslationGroupTest extends TestCase {
             'logger' => $this->createMock(\Psr\Log\LoggerInterface::class),
             'languageService' => $this->createMock(\OCA\IntraVox\Service\LanguageService::class),
             'pageIndexService' => $index,
+            'folderContext' => $this->fakeFolderContext(
+                readLanguageFolder: $nl,
+                intraVox: $base,
+                languageFolder: $nl,
+                userLanguage: 'nl'
+            ),
         ];
         $this->injectPageServiceDependencies($svc, $explicit);
         return $svc;
