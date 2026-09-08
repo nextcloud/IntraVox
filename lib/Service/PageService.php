@@ -1292,7 +1292,7 @@ class PageService {
             throw new \InvalidArgumentException('Invalid language code: ' . $language);
         }
 
-        $source = $this->locatePageAnyLanguage($this->getReadLanguageFolder(), $sourceUniqueId);
+        $source = $this->locatePageAnyLanguage($this->folders()->readLanguageFolder(), $sourceUniqueId);
         if ($source === null || !isset($source['file'])) {
             throw new PageNotFoundException('Page not found: ' . $sourceUniqueId);
         }
@@ -1321,7 +1321,7 @@ class PageService {
         // The target language folder must exist; creating one silently would
         // add a language to the intranet as a side effect of translating.
         try {
-            $targetFolder = $this->getIntraVoxFolder()->get($language);
+            $targetFolder = $this->folders()->intraVox()->get($language);
         } catch (NotFoundException $e) {
             throw new \InvalidArgumentException(
                 'That language has no content folder yet. Add the language in the admin settings first.'
@@ -1396,7 +1396,7 @@ class PageService {
      * @return array<int, array{code:string, name:string}>
      */
     public function getTranslatableLanguages(string $pageId): array {
-        $result = $this->locatePageAnyLanguage($this->getReadLanguageFolder(), $pageId);
+        $result = $this->locatePageAnyLanguage($this->folders()->readLanguageFolder(), $pageId);
         if ($result === null) {
             throw new PageNotFoundException('Page not found: ' . $pageId);
         }
@@ -1405,7 +1405,7 @@ class PageService {
         $data = json_decode($result['file']->getContent(), true);
         $group = is_array($data) ? ($data['translationGroup'] ?? null) : null;
 
-        $root = $this->getIntraVoxFolder();
+        $root = $this->folders()->intraVox();
         $taken = $this->translationGroups()->languagesTaken($group);
 
         $languages = [];
@@ -1447,7 +1447,7 @@ class PageService {
      * @return array<int, array{uniqueId:string, title:string, language:string}>
      */
     public function getTranslationCandidates(string $pageId, ?string $language = null): array {
-        $folder = $this->getReadLanguageFolder();
+        $folder = $this->folders()->readLanguageFolder();
         $result = $this->locatePageAnyLanguage($folder, $pageId);
         if ($result === null) {
             throw new PageNotFoundException('Page not found: ' . $pageId);
@@ -1465,7 +1465,7 @@ class PageService {
         // listed through the caller's own mount so denied languages never
         // appear (see otherContentLanguages()).
         $languages = $this->translationGroups()->otherContentLanguages(
-            $this->getIntraVoxFolder(),
+            $this->folders()->intraVox(),
             $ownLanguage,
             $language
         );
@@ -1492,7 +1492,7 @@ class PageService {
      * @throws PageNotFoundException when the page cannot be found
      */
     public function unlinkTranslation(string $uniqueId): string {
-        $folder = $this->getReadLanguageFolder();
+        $folder = $this->folders()->readLanguageFolder();
         $result = $this->locatePageAnyLanguage($folder, $uniqueId);
         if ($result === null) {
             throw new PageNotFoundException('Page not found: ' . $uniqueId);
@@ -1667,12 +1667,12 @@ class PageService {
      * }
      */
     public function getLanguageContentStatus(): array {
-        $userLang = $this->getUserLanguage();
+        $userLang = $this->folders()->userLanguage();
         $withContent = [];
         $active = [];
 
         try {
-            $baseFolder = $this->getIntraVoxFolder();
+            $baseFolder = $this->folders()->intraVox();
             foreach ($this->getCachedDirectoryListing($baseFolder) as $item) {
                 if ($item->getType() !== \OCP\Files\FileInfo::TYPE_FOLDER) {
                     continue;
@@ -1733,7 +1733,7 @@ class PageService {
     public function getPageCountByLanguage(): array {
         $counts = [];
         try {
-            $baseFolder = $this->getIntraVoxFolder();
+            $baseFolder = $this->folders()->intraVox();
             foreach ($this->getCachedDirectoryListing($baseFolder) as $item) {
                 if ($item->getType() !== \OCP\Files\FileInfo::TYPE_FOLDER) {
                     continue;
