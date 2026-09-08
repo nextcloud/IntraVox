@@ -1208,7 +1208,7 @@ class PageService {
             throw new \InvalidArgumentException('A page cannot be a translation of itself');
         }
 
-        $folder = $this->getReadLanguageFolder();
+        $folder = $this->folders()->readLanguageFolder();
         $a = $this->locatePageAnyLanguage($folder, $uniqueIdA);
         $b = $this->locatePageAnyLanguage($folder, $uniqueIdB);
         if ($a === null) {
@@ -1996,7 +1996,7 @@ class PageService {
      */
     public function getBreadcrumb(string $pageId): array {
         $page = $this->getPage($pageId);
-        $language = $this->getUserLanguage();
+        $language = $this->folders()->userLanguage();
 
         // The configured-homepage pointer check, evaluated here so the builder
         // stays free of PageService seams (it keeps the same !empty() guard).
@@ -2005,7 +2005,7 @@ class PageService {
 
         $readFolder = null;
         try {
-            $readFolder = $this->getReadLanguageFolder();
+            $readFolder = $this->folders()->readLanguageFolder();
         } catch (\Exception $e) {
             // no folder — builder falls back to the 'Home' label
         }
@@ -3868,7 +3868,7 @@ class PageService {
             // callers treat as "no media" — so on a foreign-language page,
             // "Save as template" and copy-page silently produced a page with no
             // images at all rather than reporting anything (#90 family).
-            $result = $this->locatePageAnyLanguage($this->getReadLanguageFolder(), $uniqueId);
+            $result = $this->locatePageAnyLanguage($this->folders()->readLanguageFolder(), $uniqueId);
             if ($result !== null && isset($result['folder'])) {
                 $folder = $result['folder'];
                 $this->cache()->setPageFolder($uniqueId, $folder);
@@ -3931,7 +3931,7 @@ class PageService {
             }
 
             // Reserve a collision-free template folder (+_media)
-            $langFolder = $this->getLanguageFolder();
+            $langFolder = $this->folders()->languageFolder();
             [$templateId, $templateFolder, $templateMediaFolder] =
                 $this->pageTemplateService->newTemplateFolder($langFolder, $this->idUtils->sanitizeId($templateTitle));
 
@@ -4037,7 +4037,7 @@ class PageService {
             $createdPage = $this->createPage($pageData, $parentPath);
 
             // Copy media files from template to new page
-            $templatesFolder = $this->pageTemplateService->templatesFolder($this->getLanguageFolder());
+            $templatesFolder = $this->pageTemplateService->templatesFolder($this->folders()->languageFolder());
             if ($templatesFolder && $templatesFolder->nodeExists($templateId)) {
                 $templateFolder = $templatesFolder->get($templateId);
                 if ($templateFolder instanceof \OCP\Files\Folder && $templateFolder->nodeExists('_media')) {
@@ -4104,7 +4104,7 @@ class PageService {
      * @throws \Exception When the source cannot be located.
      */
     public function copyPage(string $sourceUniqueId, ?string $targetParentId = null, ?string $newTitle = null): array {
-        $languageFolder = $this->getLanguageFolder();
+        $languageFolder = $this->folders()->languageFolder();
 
         // A copy follows its source across language folders, like every other
         // operation on an existing page (#90).
