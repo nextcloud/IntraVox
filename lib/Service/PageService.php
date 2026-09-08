@@ -892,7 +892,7 @@ class PageService {
      *   null when the page exists in no language folder at all.
      */
     private function locatePageForMedia(string $pageId): ?array {
-        $primary = $this->getReadLanguageFolder();
+        $primary = $this->folders()->readLanguageFolder();
 
         $find = function (\OCP\Files\Folder $folder) use ($pageId): ?array {
             if (strpos($pageId, 'page-') === 0) {
@@ -942,7 +942,7 @@ class PageService {
         }
 
         try {
-            $candidate = $this->getIntraVoxFolder()->get($language);
+            $candidate = $this->folders()->intraVox()->get($language);
             return $candidate instanceof \OCP\Files\Folder ? $candidate : null;
         } catch (NotFoundException $e) {
             return null;
