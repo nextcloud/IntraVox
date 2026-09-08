@@ -1094,7 +1094,7 @@ class PageService {
      * List all pages (recursively)
      */
     public function listPages(): array {
-        $folder = $this->getReadLanguageFolder();
+        $folder = $this->folders()->readLanguageFolder();
 
         // Titles and statuses come from the index when it has this language,
         // which removes the read + json_decode of every page file. Permissions
@@ -1106,7 +1106,7 @@ class PageService {
             return $this->inStableOrder($indexed);
         }
 
-        $intraVoxFolder = $this->getIntraVoxFolder();
+        $intraVoxFolder = $this->folders()->intraVox();
         $pages = [];
 
         // Get base path for relative path calculation
@@ -1823,7 +1823,7 @@ class PageService {
      * This eliminates the N+1 query pattern where listPages() + getPage() for each
      */
     public function listPagesWithContent(): array {
-        $folder = $this->getReadLanguageFolder();
+        $folder = $this->folders()->readLanguageFolder();
         $pages = [];
 
         // Check for home.json in root
@@ -3648,11 +3648,11 @@ class PageService {
         ?string $sourcePageId = null,
         bool $filterPublished = false
     ): array {
-        $folder = $this->getReadLanguageFolder();
+        $folder = $this->folders()->readLanguageFolder();
         $pages = [];
         // Match the served language (recommended-language fallback, #75) so
         // the news cache key and date localisation agree with the folder.
-        $language = $this->resolveEffectiveLanguage() ?? $this->getUserLanguage();
+        $language = $this->resolveEffectiveLanguage() ?? $this->folders()->userLanguage();
 
         // Version-counter cache: the news widget result depends on all pages in
         // the source folder plus user-supplied filters/sort/limit, plus the
@@ -3769,7 +3769,7 @@ class PageService {
      */
     private function findNewsPagesInFolder($folder, array &$pages, string $language, int $maxCollect = 0): void {
         $this->news()->findNewsPagesInFolder(
-            $this->getIntraVoxFolder(),
+            $this->folders()->intraVox(),
             $folder,
             $pages,
             $language,
