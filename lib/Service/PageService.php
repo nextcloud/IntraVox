@@ -3027,7 +3027,7 @@ class PageService {
      * @return array{scanned:int, changed:int, files:string[]} Repair stats.
      */
     public function repairEntities(bool $dryRun = false): array {
-        return $this->maintenance()->repairEntities($this->getIntraVoxFolder(), $dryRun);
+        return $this->maintenance()->repairEntities($this->folders()->intraVox(), $dryRun);
     }
 
     /**
@@ -3054,7 +3054,7 @@ class PageService {
      * @return array{scanned:int, indexed:int, languages:array<string,int>}
      */
     public function rebuildIndex(bool $dryRun = false): array {
-        return $this->maintenance()->rebuildIndex($this->getIntraVoxFolder(), $dryRun);
+        return $this->maintenance()->rebuildIndex($this->folders()->intraVox(), $dryRun);
     }
 
     /**
@@ -3895,7 +3895,7 @@ class PageService {
      */
     public function listTemplates(): array {
         try {
-            $langFolder = $this->getLanguageFolder();
+            $langFolder = $this->folders()->languageFolder();
         } catch (\Exception $e) {
             return [];
         }
@@ -3907,7 +3907,7 @@ class PageService {
      */
     public function getTemplate(string $templateId): ?array {
         try {
-            $langFolder = $this->getLanguageFolder();
+            $langFolder = $this->folders()->languageFolder();
         } catch (\Exception $e) {
             return null;
         }
@@ -3990,7 +3990,7 @@ class PageService {
      */
     public function deleteTemplate(string $templateId): array {
         try {
-            $langFolder = $this->getLanguageFolder();
+            $langFolder = $this->folders()->languageFolder();
         } catch (\Exception $e) {
             return ['success' => false, 'error' => 'Templates folder not accessible'];
         }

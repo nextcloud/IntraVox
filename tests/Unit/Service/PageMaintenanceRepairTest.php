@@ -55,19 +55,18 @@ class PageMaintenanceRepairTest extends TestCase {
             $baseChildren
         ));
 
-        $svc = new class($base) extends PageService {
-            private Folder $base;
-            public function __construct(Folder $base) {
-                $this->base = $base;
-            }
-            protected function getIntraVoxFolder(): Folder {
-                return $this->base;
+        // repairEntities/rebuildIndex pass folders()->intraVox() to the maintenance
+        // service and run no cross-language locate, so the seam override goes away
+        // entirely — fakeFolderContext(intraVox: $base) covers it.
+        $svc = new class extends PageService {
+            public function __construct() {
             }
         };
 
         $this->injectPageServiceDependencies($svc, array_filter([
             'pageIndexService' => $index,
             'logger' => $this->createMock(LoggerInterface::class),
+            'folderContext' => $this->fakeFolderContext(intraVox: $base),
         ]));
 
         return $svc;
