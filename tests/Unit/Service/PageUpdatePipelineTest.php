@@ -83,16 +83,13 @@ class PageUpdatePipelineTest extends TestCase {
             'about' => $pageFolder,
         ]);
 
-        $svc = new class($lang) extends PageService {
-            private Folder $lang;
-            public function __construct(Folder $lang) {
-                $this->lang = $lang;
-            }
-            protected function getLanguageFolder(): Folder {
-                return $this->lang;
-            }
-            protected function getReadLanguageFolder(): Folder {
-                return $this->lang;
+        // updatePage resolves its write-target via folders()->languageFolder()
+        // ($lang) and derives the #90 index language via languageOfFolder (uses the
+        // intraVox() root). getIntraVoxFolder stays THROWING for the cross-language
+        // locatePageAnyLanguage walk (rootClosure()) — the primary-folder scan
+        // finds the page first, so the throw only pins the degrade path.
+        $svc = new class extends PageService {
+            public function __construct() {
             }
             protected function getIntraVoxFolder(): Folder {
                 throw new \RuntimeException('no root in this fixture');
@@ -128,6 +125,7 @@ class PageUpdatePipelineTest extends TestCase {
             'pageVersionService' => $version,
             'pageIndexService' => $index,
             'logger' => $this->createMock(LoggerInterface::class),
+            'folderContext' => $this->fakeFolderContext(intraVox: $lang, languageFolder: $lang),
         ]);
 
         return $svc;
@@ -139,6 +137,13 @@ class PageUpdatePipelineTest extends TestCase {
         $session = $this->createMock(IUserSession::class);
         $session->method('getUser')->willReturn(null);
         (new \ReflectionProperty(PageService::class, 'userSession'))->setValue($svc, $session);
+
+        // Guard-ordering pin: swap in an UNWIRED FolderContext that throws on any
+        // folder resolution. The cheap !$user guard must fire first — if it
+        // regressed (folder resolved before the guard, as the write-cluster carve
+        // once did), a LogicException would surface instead of 'No user in session'.
+        (new \ReflectionProperty(PageService::class, 'folderContext'))
+            ->setValue($svc, $this->fakeFolderContext());
 
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('No user in session');

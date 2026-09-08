@@ -45,7 +45,11 @@ final class PageWriteService {
     }
 
     /**
-     * @param \OCP\Files\Folder $languageFolder the resolved getLanguageFolder seam
+     * $languageFolder is a Closure (not a resolved Folder) so the cheap
+     * $id==='home' guard fires BEFORE the folder is resolved — resolving it can
+     * create-on-miss or throw, and the pre-carve monolith checked 'home' first.
+     *
+     * @param \Closure(): \OCP\Files\Folder $languageFolder getLanguageFolder seam
      * @param \Closure(\OCP\Files\Folder, string): ?array $locatePageAnyLanguage
      * @param \Closure(\OCP\Files\Folder, string): ?array $findPageById
      * @param \Closure(string): bool $isHomepage
@@ -53,7 +57,7 @@ final class PageWriteService {
      */
     public function deletePage(
         string $id,
-        \OCP\Files\Folder $languageFolder,
+        \Closure $languageFolder,
         \Closure $locatePageAnyLanguage,
         \Closure $findPageById,
         \Closure $isHomepage,
@@ -63,13 +67,17 @@ final class PageWriteService {
             throw new \InvalidArgumentException('Cannot delete home page');
         }
 
+        // Resolved only after the home guard (see the ctor note): the seam can
+        // create-on-miss / throw, so it must not run for a rejected 'home' delete.
+        $languageFolderNode = $languageFolder();
+
         // Resolve by uniqueId (page-…) first, then fall back to legacy folder id.
         // Deletion follows the page across language folders, so a page the user
         // can see is also a page the user can delete (issue #90); the caller's
         // permission check still decides whether the delete is allowed.
         $result = strpos($id, 'page-') === 0
-            ? $locatePageAnyLanguage($languageFolder, $id)
-            : $findPageById($languageFolder, $this->idUtils->sanitizeId($id));
+            ? $locatePageAnyLanguage($languageFolderNode, $id)
+            : $findPageById($languageFolderNode, $this->idUtils->sanitizeId($id));
 
         if ($result === null) {
             throw new PageNotFoundException('Page not found: ' . $id);
@@ -132,7 +140,12 @@ final class PageWriteService {
     }
 
     /**
-     * @param \OCP\Files\Folder $languageFolder the resolved getLanguageFolder seam
+     * $languageFolder is a Closure (not a resolved Folder) so the cheap
+     * !$user guard fires BEFORE the folder is resolved — resolving it can
+     * create-on-miss or throw, and the pre-carve monolith checked the session
+     * user first.
+     *
+     * @param \Closure(): \OCP\Files\Folder $languageFolder getLanguageFolder seam
      * @param \Closure(\OCP\Files\Folder, string): ?array $locatePageAnyLanguage
      * @param \Closure(\OCP\Files\Folder, string): ?array $findPageById
      * @param \Closure(\OCP\Files\Folder): ?string $languageOfFolder
@@ -143,7 +156,7 @@ final class PageWriteService {
     public function updatePage(
         string $id,
         array $data,
-        \OCP\Files\Folder $languageFolder,
+        \Closure $languageFolder,
         \Closure $locatePageAnyLanguage,
         \Closure $findPageById,
         \Closure $languageOfFolder,
@@ -160,6 +173,10 @@ final class PageWriteService {
             throw new \InvalidArgumentException('No user in session');
         }
 
+        // Resolved only after the user guard (see the ctor note): the seam can
+        // create-on-miss / throw, so it must not run for a rejected no-user update.
+        $languageFolderNode = $languageFolder();
+
         $result = null;
 
         // Check for uniqueId pattern (page-xxx) BEFORE sanitization. Editing an
@@ -167,14 +184,14 @@ final class PageWriteService {
         // is not necessarily the current user's own language folder (issue #90);
         // the isUpdateable() preflight below still gates the write.
         if (strpos($originalId, 'page-') === 0) {
-            $result = $locatePageAnyLanguage($languageFolder, $originalId);
+            $result = $locatePageAnyLanguage($languageFolderNode, $originalId);
         }
 
         // Fallback to legacy ID lookup if not found by uniqueId
         if ($result === null) {
             try {
                 $id = $this->idUtils->sanitizeId($originalId);
-                $result = $findPageById($languageFolder, $id);
+                $result = $findPageById($languageFolderNode, $id);
             } catch (\Exception $e) {
                 throw new \InvalidArgumentException('Failed to find page: ' . $e->getMessage());
             }

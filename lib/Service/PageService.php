@@ -2093,7 +2093,7 @@ class PageService {
         if (count($pathParts) > 0 && $this->languageService->isLanguageAvailable($pathParts[0])) {
             $langCode = array_shift($pathParts);
             try {
-                $candidate = $this->getIntraVoxFolder()->get($langCode);
+                $candidate = $this->folders()->intraVox()->get($langCode);
                 if ($candidate instanceof \OCP\Files\Folder) {
                     $currentFolder = $candidate;
                 }
@@ -2102,7 +2102,7 @@ class PageService {
             }
         }
         if ($currentFolder === null) {
-            $currentFolder = $this->getLanguageFolder();
+            $currentFolder = $this->folders()->languageFolder();
         }
 
         // Create each folder in path if it doesn't exist
@@ -2157,19 +2157,21 @@ class PageService {
      * Update an existing page
      */
     public function updatePage(string $id, array $data): array {
-        // The update body lives in Write/PageWriteService (write cluster).
-        // getLanguageFolder is resolved here; the lookups + languageOfFolder +
-        // getUserLanguage + validateAndSanitizePage + clearCache go in as
-        // closures so the seam-subclasses keep intercepting. clearCache here
-        // forwards the page id (unlike deletePage's arg-less call).
+        // The update body lives in Write/PageWriteService (write cluster). The
+        // language folder goes in as a CLOSURE (resolved inside, after the !$user
+        // guard — matching the pre-carve monolith). Folder-substrate concerns
+        // (languageFolder / languageOfFolder / userLanguage) come from FolderContext;
+        // the page lookups + validateAndSanitizePage + clearCache go in as closures
+        // so the seam-subclasses keep intercepting. clearCache here forwards the
+        // page id (unlike deletePage's arg-less call).
         return $this->writeService()->updatePage(
             $id,
             $data,
-            $this->getLanguageFolder(),
+            fn(): \OCP\Files\Folder => $this->folders()->languageFolder(),
             fn(\OCP\Files\Folder $folder, string $uid): ?array => $this->locatePageAnyLanguage($folder, $uid),
             fn(\OCP\Files\Folder $folder, string $legacyId): ?array => $this->findPageById($folder, $legacyId),
-            fn(\OCP\Files\Folder $folder): ?string => $this->languageOfFolder($folder),
-            fn(): string => $this->getUserLanguage(),
+            fn(\OCP\Files\Folder $folder): ?string => $this->folders()->languageOfFolder($folder),
+            fn(): string => $this->folders()->userLanguage(),
             fn(array $page): array => $this->validateAndSanitizePage($page),
             function (?string $pageId = null): void {
                 $this->clearCache($pageId);
@@ -2182,13 +2184,14 @@ class PageService {
      */
     public function deletePage(string $id): void {
         // The delete body lives in Write/PageWriteService (god-class dissolution,
-        // write cluster). The language folder is resolved here through FolderContext
-        // and passed in (same eager timing as the old getLanguageFolder seam); the
-        // cross-language lookups + isHomepage + clearCache go in as closures so
-        // the seam-subclasses keep intercepting.
+        // write cluster). The language folder goes in as a CLOSURE (not resolved
+        // here) so PageWriteService can fire its $id==='home' guard before
+        // resolving — matching the pre-carve monolith, which checked 'home' before
+        // touching getLanguageFolder(). The cross-language lookups + isHomepage +
+        // clearCache go in as closures so the seam-subclasses keep intercepting.
         $this->writeService()->deletePage(
             $id,
-            $this->folders()->languageFolder(),
+            fn(): \OCP\Files\Folder => $this->folders()->languageFolder(),
             fn(\OCP\Files\Folder $folder, string $uid): ?array => $this->locatePageAnyLanguage($folder, $uid),
             fn(\OCP\Files\Folder $folder, string $legacyId): ?array => $this->findPageById($folder, $legacyId),
             fn(string $uid): bool => $this->isHomepage($uid),

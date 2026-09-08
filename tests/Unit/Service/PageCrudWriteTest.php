@@ -118,6 +118,33 @@ class PageCrudWriteTest extends TestCase {
         $svc->deletePage('home');
     }
 
+    /**
+     * Guard-ordering pin: the cheap $id==='home' guard MUST fire before the
+     * language folder is resolved. Resolving it can create-on-miss or throw
+     * (getIntraVoxFolder), so a rejected 'home' delete must never touch it. The
+     * unwired FolderContext throws on any folder resolution; if the guard order
+     * regressed (folder resolved first, as the write-cluster carve once did) this
+     * would surface a LogicException instead of the crisp 'Cannot delete home page'.
+     */
+    public function testDeletingHomeRejectsBeforeResolvingTheFolder(): void {
+        $svc = new class extends PageService {
+            public function __construct() {
+            }
+            public function clearCache(): void {
+            }
+        };
+        $this->injectPageServiceDependencies($svc, [
+            'logger' => $this->createMock(LoggerInterface::class),
+            // No folder wired: languageFolder()/intraVox() throw LogicException if
+            // deletePage resolves the folder before checking $id==='home'.
+            'folderContext' => $this->fakeFolderContext(),
+        ]);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Cannot delete home page');
+        $svc->deletePage('home');
+    }
+
     public function testDeletingUnknownPageThrowsPageNotFound(): void {
         // An empty language folder under an empty IntraVox root: the primary-folder
         // scan misses and the cross-language walk (which resolves the root) finds
