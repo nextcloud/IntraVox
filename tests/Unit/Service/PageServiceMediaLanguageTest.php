@@ -119,19 +119,16 @@ class PageServiceMediaLanguageTest extends TestCase {
             throw new \OCP\Files\NotFoundException($p);
         });
 
-        $svc = new class($readFolder, $base) extends PageService {
-            private Folder $readFolder;
+        // The media methods resolve their read/language folder through the injected
+        // FolderContext now, so getReadLanguageFolder/getLanguageFolder are gone.
+        // getIntraVoxFolder is kept ONLY for the cross-language locate walk, which
+        // reaches the root via rootClosure() (fn()=>getIntraVoxFolder()) — a seam
+        // consumer FolderContext does not cover until the terminal step.
+        $svc = new class($base) extends PageService {
             private Folder $baseFolder;
             // Deliberately bypass the real (25-arg) constructor.
-            public function __construct(Folder $readFolder, Folder $baseFolder) {
-                $this->readFolder = $readFolder;
+            public function __construct(Folder $baseFolder) {
                 $this->baseFolder = $baseFolder;
-            }
-            protected function getLanguageFolder() {
-                return $this->readFolder;
-            }
-            protected function getReadLanguageFolder(): Folder {
-                return $this->readFolder;
             }
             protected function getIntraVoxFolder() {
                 return $this->baseFolder;
@@ -160,6 +157,12 @@ class PageServiceMediaLanguageTest extends TestCase {
             'config' => $config,
             'logger' => $this->createMock(\Psr\Log\LoggerInterface::class),
             'languageService' => $languageService,
+            'folderContext' => $this->fakeFolderContext(
+                readLanguageFolder: $readFolder,
+                intraVox: $base,
+                userLanguage: 'de',
+                primaryLanguage: 'en'
+            ),
         ];
         $this->injectPageServiceDependencies($svc, $explicit);
 

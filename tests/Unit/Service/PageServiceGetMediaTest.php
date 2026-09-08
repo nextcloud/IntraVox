@@ -65,16 +65,16 @@ class PageServiceGetMediaTest extends TestCase {
      * @param array<string,Folder> $cachedFolders
      */
     private function makeService(Folder $langFolder, array $cachedFolders = []): PageService {
+        // getMedia's read-language + intraVox folder resolution now flows through
+        // the injected FolderContext, so getReadLanguageFolder/getLanguageFolder
+        // are gone. getIntraVoxFolder is kept ONLY for the cross-language miss
+        // walk, which reaches the root via rootClosure() (fn()=>getIntraVoxFolder())
+        // — a separate seam consumer that FolderContext does not cover until the
+        // terminal step. This is the interim state until rootClosure() retires.
         $svc = new class($langFolder) extends PageService {
             private Folder $lang;
             public function __construct(Folder $lang) {
                 $this->lang = $lang;
-            }
-            protected function getReadLanguageFolder(): Folder {
-                return $this->lang;
-            }
-            protected function getLanguageFolder() {
-                return $this->lang;
             }
             protected function getIntraVoxFolder() {
                 return $this->lang;
@@ -100,6 +100,10 @@ class PageServiceGetMediaTest extends TestCase {
             'logger' => $this->createMock(\Psr\Log\LoggerInterface::class),
             'pageMediaService' => $media,
             'cache' => $cache,
+            'folderContext' => $this->fakeFolderContext(
+                readLanguageFolder: $langFolder,
+                intraVox: $langFolder
+            ),
         ]);
         return $svc;
     }
