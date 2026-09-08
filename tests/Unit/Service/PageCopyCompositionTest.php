@@ -201,6 +201,42 @@ class PageCopyCompositionTest extends TestCase {
         $this->assertSame('en', $this->seenParentPath, 'a root-page copy stays in the source language (en), not the copier de');
     }
 
+    public function testCopyOfATrueLanguageRootPageFallsBackToItsOwnLanguage(): void {
+        // The dirname === '.' fallback branch specifically: the source's OWN folder
+        // IS the language root (/IntraVox/en), so relativePathFromRoot is just 'en'
+        // and dirname('en') === '.'. A DE user copying it must still land in en/ via
+        // languageOfFolder(source), never in the copier's de/. (Without the fallback
+        // this is the pre-#90 bug: parentPath null -> copier's own language.)
+        $sourceJson = ['uniqueId' => 'page-src', 'title' => 'Home', 'isHome' => true, 'layout' => ['rows' => []]];
+        $en = $this->makeFolder('/IntraVox/en', [
+            'home.json' => $this->makeFile('/IntraVox/en/home.json', $sourceJson),
+        ]);
+        $de = $this->makeFolder('/IntraVox/de', []);
+
+        $media = $this->createMock(PageMediaService::class);
+        $svc = $this->makeSpy(['en' => $en, 'de' => $de], 'de', $media);
+
+        // The located source's folder IS the en language root itself (dirname '.').
+        $located = ['uniqueId' => 'page-src', 'file' => $en->get('home.json'), 'folder' => $en, 'isHome' => true];
+        $svc->copyPage(
+            'page-src',
+            null,
+            null,
+            function (array $data, ?string $parentPath = null): array {
+                $this->seenData = $data;
+                $this->seenParentPath = $parentPath;
+                return $data;
+            },
+            fn(string $id): array => $this->seenData ?? [],
+            fn(Folder $folder, string $uid): ?array => $located,
+            fn(string $id): ?Folder => null,
+            function (): void {
+            }
+        );
+
+        $this->assertSame('en', $this->seenParentPath, 'a true language-root page copy falls back to its own language (en), not the copier de');
+    }
+
     public function testNewTitleOverridesTheCopySuffix(): void {
         $sourceJson = ['uniqueId' => 'page-src', 'title' => 'Original', 'layout' => ['rows' => []]];
         $en = $this->makeFolder('/IntraVox/en', [
