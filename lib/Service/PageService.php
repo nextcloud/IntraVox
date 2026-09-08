@@ -857,7 +857,7 @@ class PageService {
     }
 
     private function indexPathToRelative(string $storedPath): ?string {
-        return $this->locator()->indexPathToRelative($this->getIntraVoxFolder(), $storedPath);
+        return $this->locator()->indexPathToRelative($this->folders()->intraVox(), $storedPath);
     }
 
     private function locatePageBySlugAnyLanguage(\OCP\Files\Folder $primaryFolder, string $id): ?array {
@@ -1060,14 +1060,13 @@ class PageService {
      * folder-shaped collaborators (PageLocator, PageLister, …) need.
      *
      * A single home for what was six identical `fn() => $this->getIntraVoxFolder()`
-     * call-sites — the first, cheap step of giving the scattered folder-location
-     * concept an owner. It MUST resolve the seam on every call (not cache a
-     * folder): the closure captures $this, so a test subclass overriding the
-     * getIntraVoxFolder seam still wins, and the eventual folder-context must be
-     * built the same way (from the seams, never owning them).
+     * call-sites. Now routes through the FolderContext substrate — folders()->
+     * intraVox() resolves the same getIntraVoxFolder seam (bound as a $this-closure
+     * in folders()), so a subclass override still wins, but the last locate-family
+     * consumers of the raw seam now go through the one front door.
      */
     private function rootClosure(): \Closure {
-        return fn() => $this->getIntraVoxFolder();
+        return fn() => $this->folders()->intraVox();
     }
 
     /**
@@ -1076,7 +1075,7 @@ class PageService {
      */
     public function pageExistsByUniqueId(string $uniqueId): bool {
         try {
-            $folder = $this->getReadLanguageFolder();
+            $folder = $this->folders()->readLanguageFolder();
             return $this->findPageByUniqueId($folder, $uniqueId) !== null;
         } catch (\Exception $e) {
             return false;
@@ -2033,7 +2032,7 @@ class PageService {
         }
 
         try {
-            $intraVoxFolder = $this->getIntraVoxFolder();
+            $intraVoxFolder = $this->folders()->intraVox();
             $folder = $intraVoxFolder->get($folderPath);
 
             if (!($folder instanceof \OCP\Files\Folder)) {
@@ -2224,8 +2223,8 @@ class PageService {
      * @throws \InvalidArgumentException When the page is unknown or not at root.
      */
     public function setHomepage(string $uniqueId): void {
-        $lang = $this->getUserLanguage();
-        $languageFolder = $this->getLanguageFolder();
+        $lang = $this->folders()->userLanguage();
+        $languageFolder = $this->folders()->languageFolder();
 
         // Resolve the target and require it to be a real page.
         $target = $this->findPageByUniqueId($languageFolder, $uniqueId);
@@ -4220,7 +4219,7 @@ class PageService {
      */
     public function canCreateTemplates(): bool {
         try {
-            $langFolder = $this->getLanguageFolder();
+            $langFolder = $this->folders()->languageFolder();
         } catch (\Exception $e) {
             return false;
         }
