@@ -157,5 +157,185 @@ class PageHomepageResolutionTest extends TestCase {
         $this->assertSame('page-about', $svc->getHomepageUniqueId('nl'));
     }
 
+    /**
+     * A stale pointer (naming a page that no longer resolves) must NOT be
+     * honoured — it falls through to the legacy loose-home resolution. The
+     * fixture wires no page-about-shaped folder for the pointer, so
+     * findPageByUniqueId(pointer) returns null and the loose home.json wins.
+     */
+    public function testStalePointerFallsThroughToLegacyHome(): void {
+        // Pointer names a page that isn't the resolvable loose home; about.json
+        // exists but the pointer 'page-ghost' resolves to nothing.
+        $svc = $this->makeService(
+            ['uniqueId' => 'page-nl-home', 'title' => 'Welkom'],
+            'page-ghost'
+        );
 
+        $this->assertSame(
+            'page-nl-home',
+            $svc->getHomepageUniqueId('nl'),
+            'a pointer that does not resolve must fall through to the loose home'
+        );
+    }
+
+    // -------------------------------------------------- resolveHomepageNodeUniqueId
+
+    /**
+     * resolveHomepageNodeUniqueId maps the legacy bare 'home' to the real
+     * uniqueId of the loose home.json (its own raw read, distinct from
+     * getHomepageUniqueId's cached read).
+     */
+    public function testResolveHomepageNodeMapsHomeToLooseUniqueId(): void {
+        $svc = $this->makeService([
+            'uniqueId' => 'page-nl-home',
+            'title' => 'Welkom bij IntraVox',
+        ]);
+
+        $this->assertSame('page-nl-home', $svc->resolveHomepageNodeUniqueId('nl'));
+    }
+
+    /**
+     * When nothing resolves and a pre-built tree is supplied, the first root
+     * node's uniqueId is the last resort.
+     */
+    public function testResolveHomepageNodeFallsBackToFirstTreeNode(): void {
+        $svc = $this->makeService(null);
+
+        $tree = [
+            ['uniqueId' => 'page-first', 'title' => 'First'],
+            ['uniqueId' => 'page-second', 'title' => 'Second'],
+        ];
+        $this->assertSame('page-first', $svc->resolveHomepageNodeUniqueId('nl', $tree));
+    }
+
+    /** No pointer, no home.json, no tree: the bare legacy 'home'. */
+    public function testResolveHomepageNodeBareHomeWhenNothingResolves(): void {
+        $svc = $this->makeService(null);
+        $this->assertSame('home', $svc->resolveHomepageNodeUniqueId('nl'));
+    }
+
+    // ------------------------------------------------------------- setHomepage
+
+    /**
+     * A page folder `{name}/` under nl/ holding `{name}.json` with the given
+     * uniqueId — what the real PageLocator::findPageByUniqueId walks to.
+     */
+    private function pageFolder(string $langPath, string $name, string $uniqueId): Folder {
+        $path = $langPath . '/' . $name;
+        return $this->makeFolder($path, [
+            $name . '.json' => $this->makeFile(
+                $path . '/' . $name . '.json',
+                ['uniqueId' => $uniqueId, 'title' => ucfirst($name)]
+            ),
+        ]);
+    }
+
+    /**
+     * A service driving the REAL setHomepage over a fixture nl/ tree. isHomepage
+     * (public seam) is overridden to $alreadyHome so the already-home short-
+     * circuit is testable without wiring the pointer; clearCache is recorded.
+     *
+     * @param array<string,Folder> $nlChildren the nl/ language-root children
+     */
+    private function makeSetHomepageService(
+        array $nlChildren,
+        bool $alreadyHome,
+        HomepageService $engine
+    ): PageService {
+        $langFolder = $this->makeFolder('/IntraVox/nl', $nlChildren);
+        $base = $this->makeFolder('/IntraVox', ['nl' => $langFolder]);
+
+        $svc = new class extends PageService {
+            public bool $stubAlreadyHome = false;
+            public function __construct() {
+            }
+            public function clearCache(?string $pageId = null): void {
+            }
+            public function isHomepage(string $uniqueId, ?string $language = null): bool {
+                return $this->stubAlreadyHome;
+            }
+        };
+        $svc->stubAlreadyHome = $alreadyHome;
+
+        $this->injectPageServiceDependencies($svc, [
+            'userId' => 'tester',
+            'logger' => $this->createMock(\Psr\Log\LoggerInterface::class),
+            'homepageService' => $engine,
+            'folderContext' => $this->fakeFolderContext(
+                intraVox: $base,
+                userLanguage: 'nl',
+                primaryLanguage: 'nl',
+                languageFolder: $langFolder,
+                readLanguageFolder: $langFolder
+            ),
+        ]);
+        return $svc;
+    }
+
+    public function testSetHomepageRejectsMissingPage(): void {
+        $engine = $this->createMock(HomepageService::class);
+        $engine->expects($this->never())->method('setHomepageUniqueId');
+        // Empty nl/: the target uniqueId resolves to nothing.
+        $svc = $this->makeSetHomepageService([], false, $engine);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Page not found');
+        $svc->setHomepage('page-x');
+    }
+
+    public function testSetHomepageRejectsNonRootPage(): void {
+        $engine = $this->createMock(HomepageService::class);
+        $engine->expects($this->never())->method('setHomepageUniqueId');
+        // page-x lives at nl/section/deep, whose parent is nl/section, not nl/.
+        $deep = $this->pageFolder('/IntraVox/nl/section', 'deep', 'page-x');
+        $section = $this->makeFolder('/IntraVox/nl/section', ['deep' => $deep]);
+        $svc = $this->makeSetHomepageService(['section' => $section], false, $engine);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Only root-level pages can be the homepage');
+        $svc->setHomepage('page-x');
+    }
+
+    public function testSetHomepageAlreadyHomeIsANoOp(): void {
+        $engine = $this->createMock(HomepageService::class);
+        $engine->expects($this->never())->method('setHomepageUniqueId');
+        $welcome = $this->pageFolder('/IntraVox/nl', 'welcome', 'page-x');
+        // isHomepage returns true -> short-circuit before any write. The
+        // never() expectation on the engine is the assertion.
+        $svc = $this->makeSetHomepageService(['welcome' => $welcome], true, $engine);
+
+        $svc->setHomepage('page-x');
+        $this->addToAssertionCount(1);
+    }
+
+    public function testSetHomepageWritesPointerAndClearsCache(): void {
+        $engine = $this->createMock(HomepageService::class);
+        $engine->expects($this->once())
+            ->method('setHomepageUniqueId')
+            ->with('page-x', 'nl');
+        $welcome = $this->pageFolder('/IntraVox/nl', 'welcome', 'page-x');
+        $svc = $this->makeSetHomepageService(['welcome' => $welcome], false, $engine);
+
+        // The once() expectation on setHomepageUniqueId is the assertion.
+        $svc->setHomepage('page-x');
+        $this->addToAssertionCount(1);
+    }
+
+    /**
+     * A loose home page counts as root-level even though the parent-path guard
+     * would otherwise reject it: findPageByUniqueId flags home.json with
+     * isHome=true, which bypasses the guard.
+     */
+    public function testSetHomepageAcceptsLooseHomeViaIsHomeFlag(): void {
+        $engine = $this->createMock(HomepageService::class);
+        $engine->expects($this->once())->method('setHomepageUniqueId')->with('page-x', 'nl');
+        // A loose home.json directly in nl/ resolves with isHome=true.
+        $svc = $this->makeSetHomepageService([
+            'home.json' => $this->makeFile('/IntraVox/nl/home.json',
+                ['uniqueId' => 'page-x', 'title' => 'Welkom']),
+        ], false, $engine);
+
+        $svc->setHomepage('page-x');
+        $this->addToAssertionCount(1);
+    }
 }
