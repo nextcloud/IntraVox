@@ -161,12 +161,26 @@ class LanguageContentStatusTest extends TestCase {
         $languageService = $this->createMock(LanguageService::class);
         $languageService->method('getPrimaryLanguage')->willReturn('en');
 
+        // The folder scan + #75 probe run through the REAL FolderContext (no
+        // intraVoxOverride -> genuine mount walk over $rootFolder).
+        $folderContext = new \OCA\IntraVox\Service\Folder\FolderContext(
+            $rootFolder,
+            'tester',
+            $config,
+            $languageService,
+            new \OCA\IntraVox\Service\Language\LanguageResolver(),
+            new \OCA\IntraVox\Service\Locator\PageLocator(
+                $this->createMock(\OCA\IntraVox\Service\PageIndexService::class),
+                $this->createMock(LoggerInterface::class)
+            )
+        );
+
         $this->injectPageServiceDependencies($svc, [
-            'rootFolder' => $rootFolder,
             'userId' => 'tester',
             'config' => $config,
             'languageService' => $languageService,
             'logger' => $logger ?? $this->createMock(LoggerInterface::class),
+            'folderContext' => $folderContext,
         ]);
         return $svc;
     }

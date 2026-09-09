@@ -140,30 +140,27 @@ trait BuildsPageService {
             $this->createMock(LoggerInterface::class)
         );
 
+        // FolderContext is DI-first-class now; the fixture supplies the substrate
+        // atoms as real deps. $base is passed as the intraVoxOverride so the mount
+        // walk (rootFolder->getUserFolder(userId)->get('IntraVox')) is never run —
+        // fixtures inject the fake mount directly. config->getUserValue returns
+        // $userLanguage (a base code, so baseLanguageCode() is idempotent) and the
+        // LanguageService mock returns $primaryLanguage. The #75 real-content probe
+        // now runs FolderContext's own resolveLanguageHomepageData over $locator,
+        // which the loose-home.json fixtures satisfy via its form-2 branch.
+        $config = $this->createMock(\OCP\IConfig::class);
+        $config->method('getUserValue')->willReturn($userLanguage);
+        $languageService = $this->createMock(\OCA\IntraVox\Service\LanguageService::class);
+        $languageService->method('getPrimaryLanguage')->willReturn($primaryLanguage);
+
         return new FolderContext(
-            function () use ($base) {
-                if ($base === null) {
-                    throw new \LogicException('intraVox folder not wired for this test');
-                }
-                return $base;
-            },
-            fn(): string => $userLanguage,
-            fn(): string => $primaryLanguage,
-            // Real-content probe: a language folder counts as real when it holds a
-            // home.json with a title and no _generated flag (mirrors #75).
-            function (Folder $folder): bool {
-                try {
-                    if (!$folder->nodeExists('home.json')) {
-                        return false;
-                    }
-                    $data = json_decode($folder->get('home.json')->getContent(), true);
-                    return is_array($data) && isset($data['title']) && empty($data['_generated']);
-                } catch (\Throwable $e) {
-                    return false;
-                }
-            },
+            $this->createMock(\OCP\Files\IRootFolder::class), // unused: $base override short-circuits the mount walk
+            'test-user',                                       // non-empty so userLanguage() reads config, not the logged-out 'en'
+            $config,
+            $languageService,
             $resolver,
             $locator,
+            $base, // intraVoxOverride — the fake mount
             // getReadLanguageFolder seam: wired when a read folder is given, so a
             // wholesale override is reproduced. Null -> owned composition.
             $readLanguageFolder === null
@@ -224,6 +221,14 @@ trait BuildsPageService {
                 continue;
             }
             $class = $type->getName();
+            // FolderContext is the DI-first-class substrate: doubleOrBuild would
+            // choke on its \Closure ctor params. A test that does not wire it gets a
+            // bare fixture context (no folders) — the same "left effectively real"
+            // outcome the old nullable-default property gave.
+            if ($class === FolderContext::class) {
+                $prop->setValue($svc, $this->fakeFolderContext());
+                continue;
+            }
             if (!interface_exists($class) && !class_exists($class)) {
                 continue;
             }

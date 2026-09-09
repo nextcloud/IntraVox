@@ -130,16 +130,17 @@ class PageWalkerSkipTest extends TestCase {
             }
         };
         $folderContext = new \OCA\IntraVox\Service\Folder\FolderContext(
-            fn() => $en,
-            fn(): string => 'en',
-            fn(): string => 'en',
-            fn(Folder $f): bool => false,
+            $this->createMock(\OCP\Files\IRootFolder::class),
+            'tester',
+            $this->createMock(\OCP\IConfig::class),
+            $this->createMock(\OCA\IntraVox\Service\LanguageService::class),
             new \OCA\IntraVox\Service\Language\LanguageResolver(),
             new \OCA\IntraVox\Service\Locator\PageLocator(
                 $this->createMock(\OCA\IntraVox\Service\PageIndexService::class),
                 $this->createMock(\Psr\Log\LoggerInterface::class)
             ),
-            fn(): Folder => $en
+            $en,                    // intraVoxOverride
+            fn(): Folder => $en     // readLanguageFolder seam (listPagesWithContent reads via it)
         );
         (new \ReflectionProperty(PageService::class, 'folderContext'))
             ->setValue($svc, $folderContext);

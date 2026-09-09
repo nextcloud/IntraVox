@@ -3,7 +3,11 @@ declare(strict_types=1);
 
 namespace OCA\IntraVox\Tests\Unit\Service;
 
+use OCA\IntraVox\Service\Folder\FolderContext;
+use OCA\IntraVox\Service\Language\LanguageResolver;
 use OCA\IntraVox\Service\LanguageService;
+use OCA\IntraVox\Service\Locator\PageLocator;
+use OCA\IntraVox\Service\PageIndexService;
 use OCA\IntraVox\Service\PageService;
 use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageService;
 use OCP\Files\File;
@@ -126,9 +130,12 @@ class PageLanguageResolutionTest extends TestCase {
         ?string $userLangValue = 'en',
         string $primaryLanguage = 'en'
     ): PageService {
-        // A subclass that shadows ONLY clearCache (private, like the rest of the
-        // suite) and overrides NO folder seam — the whole point is that
-        // getIntraVoxFolder & friends run their real bodies here.
+        // A subclass shadowing ONLY clearCache. The folder/language substrate now
+        // lives in FolderContext (DI-first-class); getUserLanguage/
+        // resolveEffectiveLanguage/getLanguageFolderByCode on PageService are thin
+        // folders() delegators. So this drives the REAL FolderContext built from
+        // the same atoms (rootFolder mount walk, config, userId) the old PageService
+        // substrate used — the reflected privates run the identical logic through it.
         $svc = new class extends PageService {
             public function __construct() {
             }
@@ -136,10 +143,8 @@ class PageLanguageResolutionTest extends TestCase {
             }
         };
 
-        // PageService::$userId is a non-nullable string; the constructor stores
-        // $userId ?? '' so a logged-out user is the EMPTY STRING, not null. That
-        // empty string is what getUserLanguage()/getIntraVoxFolder() test with
-        // `if (!$this->userId)`, so it is the faithful logged-out fixture.
+        // userId '' = logged out (empty-string sentinel): userLanguage() short-
+        // circuits to 'en' and intraVox() would throw "not logged in".
         $userId = $userLangValue === null ? '' : 'tester';
 
         $rootFolder = $this->createMock(IRootFolder::class);
@@ -155,9 +160,6 @@ class PageLanguageResolutionTest extends TestCase {
         }
 
         $config = $this->createMock(IConfig::class);
-        // getUserValue(userId, 'core', 'lang', default) — return the raw profile
-        // value; when null was requested we still return the default so the body
-        // sees "en", but userId is null so getUserLanguage short-circuits first.
         $config->method('getUserValue')->willReturnCallback(
             fn($uid, $app, $key, $default = '') => $userLangValue ?? $default
         );
@@ -165,12 +167,28 @@ class PageLanguageResolutionTest extends TestCase {
         $languageService = $this->createMock(LanguageService::class);
         $languageService->method('getPrimaryLanguage')->willReturn($primaryLanguage);
 
+        // A REAL FolderContext (no intraVoxOverride) so the mount walk, config
+        // read and #75 probe all run their genuine bodies — this is what the
+        // reflected getUserLanguage/resolveEffectiveLanguage/getLanguageFolderByCode
+        // exercise via folders().
+        $folderContext = new FolderContext(
+            $rootFolder,
+            $userId,
+            $config,
+            $languageService,
+            new LanguageResolver(),
+            new PageLocator(
+                $this->createMock(PageIndexService::class),
+                $this->createMock(\Psr\Log\LoggerInterface::class)
+            )
+        );
+
         $explicit = [
-            'rootFolder' => $rootFolder,
             'userId' => $userId,
             'config' => $config,
             'languageService' => $languageService,
             'logger' => $this->createMock(\Psr\Log\LoggerInterface::class),
+            'folderContext' => $folderContext,
         ];
         $this->injectPageServiceDependencies($svc, $explicit);
         return $svc;

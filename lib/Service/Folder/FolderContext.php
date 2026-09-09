@@ -5,9 +5,13 @@ declare(strict_types=1);
 namespace OCA\IntraVox\Service\Folder;
 
 use OCA\IntraVox\Service\Language\LanguageResolver;
+use OCA\IntraVox\Service\LanguageService;
 use OCA\IntraVox\Service\Locator\PageLocator;
+use OCP\Files\File;
 use OCP\Files\Folder;
+use OCP\Files\IRootFolder;
 use OCP\Files\NotFoundException;
+use OCP\IConfig;
 
 /**
  * The explicit folder/location substrate of IntraVox — the ground every page
@@ -17,67 +21,96 @@ use OCP\Files\NotFoundException;
  * (getIntraVoxFolder / getLanguageFolder / getReadLanguageFolder) plus the
  * language resolution and path helpers lived on it as protected/private methods
  * that ~11 collaborators reached back through as $this-bound closures and that
- * 27 test-subclasses overrode. That implicit shared surface IS the entanglement.
+ * 27 test-subclasses overrode. That implicit shared surface WAS the entanglement.
  * FolderContext makes it one explicit, injectable object with a single front
  * door.
  *
- * Built as a FACADE OVER THE SEAMS: the ATOMIC seams (the mounted IntraVox
- * folder, the user's language, the primary language, the #75 real-content probe)
- * come in as $this-bound closures, so a PageService subclass that overrides
- * getIntraVoxFolder/getUserLanguage still wins — its override is captured by the
- * closure and flows through the context. What FolderContext OWNS is the
- * COMPOSITION on top of those atoms: the create-on-miss language-folder
- * resolution, the #75 effective-language order, and the path helpers. That
- * composition is the scattered logic being centralised; the atoms stay
- * overridable so the 27 subclasses keep working while they migrate one by one.
+ * DI-FIRST-CLASS: the substrate atoms are now real constructor dependencies
+ * (rootFolder + userId + config + LanguageService + LanguageResolver +
+ * PageLocator), so the DI container builds FolderContext directly and any
+ * consumer can inject it. It owns BOTH the atoms (the mounted IntraVox mount
+ * walk, the user's language, the #75 real-content probe) AND the composition on
+ * top of them (create-on-miss language-folder resolution, the #75 effective-
+ * language order, the path helpers).
  *
- * NEVER owns page lookup (findPageByUniqueId) or the #70 permission decision.
+ * Two test-only seams remain as optional constructor params: an explicit
+ * $intraVoxOverride folder (so a fixture injects a fake mount without wiring a
+ * real user-folder walk) and the readLanguageFolder/languageFolder closures (so
+ * the not-yet-migrated subclasses that override those seams wholesale keep
+ * winning). Production/DI passes null for all three → the real mount walk + the
+ * owned composition, byte-identical to the pre-promotion behaviour.
  *
- * SHIPPED alongside a first non-seam consumer (getRelativePathFromRoot) so the
- * accessor is live and FolderContextSeamTest proves byte-equivalence with the
- * PageService seams before the seam-migration phases begin.
+ * NEVER owns page lookup for mutation or the #70 permission decision. Its only
+ * page-lookup touch is PageLocator::findPageByUniqueId inside the read-only #75
+ * real-content probe.
  */
 final class FolderContext {
     private const DEFAULT_LANGUAGE = 'en';
 
+    private string $userId;
+
     /**
-     * @param \Closure(): \OCP\Files\Folder $intraVox getIntraVoxFolder seam
-     * @param \Closure(): string $userLanguage getUserLanguage seam
-     * @param \Closure(): string $primaryLanguage languageService->getPrimaryLanguage
-     * @param \Closure(Folder): bool $hasRealContent the #75 real-content probe
-     *   (page-lookup-bound, so injected rather than owned)
-     * @param \Closure(): \OCP\Files\Folder|null $readLanguageFolder getReadLanguageFolder
-     *   seam. FolderContext owns the SAME composition (effectiveLanguage ->
-     *   write-target fallback), but this seam is honoured when supplied so the 26
-     *   test-subclasses that override getReadLanguageFolder WHOLESALE keep winning
-     *   — exactly as the atomic intraVox seam already flows. Null = use the owned
-     *   composition (readLanguageFolderComposed).
-     * @param \Closure(): \OCP\Files\Folder|null $languageFolder getLanguageFolder seam.
-     *   Same story as readLanguageFolder: FolderContext owns the create-on-miss
-     *   composition, but the seam wins when supplied so wholesale getLanguageFolder
-     *   overrides keep intercepting. Null = use the owned composition
-     *   (languageFolderComposed).
+     * @param ?string $userId the current user (null/'' = logged out).
+     * @param ?Folder $intraVoxOverride test seam: an explicit mount folder that
+     *   short-circuits the real user-folder walk. Null in production/DI.
+     * @param ?\Closure $readLanguageFolder getReadLanguageFolder seam. FolderContext
+     *   owns the SAME composition (readLanguageFolderComposed), but this seam is
+     *   honoured when supplied so the subclasses that override getReadLanguageFolder
+     *   WHOLESALE keep winning. Null = owned composition.
+     * @param ?\Closure $languageFolder getLanguageFolder seam. Same story
+     *   (languageFolderComposed). Null = owned composition.
      */
     public function __construct(
-        private \Closure $intraVox,
-        private \Closure $userLanguage,
-        private \Closure $primaryLanguage,
-        private \Closure $hasRealContent,
+        private IRootFolder $rootFolder,
+        ?string $userId,
+        private IConfig $config,
+        private LanguageService $languageService,
         private LanguageResolver $language,
         private PageLocator $locator,
+        private ?Folder $intraVoxOverride = null,
         private ?\Closure $readLanguageFolder = null,
         private ?\Closure $languageFolder = null,
     ) {
+        $this->userId = $userId ?? '';
     }
 
-    /** The mounted IntraVox folder (via the getIntraVoxFolder seam). */
-    public function intraVox() {
-        return ($this->intraVox)();
+    /**
+     * The mounted IntraVox folder (formerly the getIntraVoxFolder seam). Uses the
+     * user's mounted folder view so GroupFolder ACLs apply; throws "not logged in"
+     * without a user, and a specific "folder not found" when the mount is missing
+     * or is not a folder. A test $intraVoxOverride short-circuits the walk.
+     */
+    public function intraVox(): Folder {
+        // The override MUST come first — before the userId guard — so a fixture
+        // with an empty userId but an explicit mount returns the fake rather than
+        // throwing "not logged in" (matching the old injected seam closure that
+        // ignored userId entirely).
+        if ($this->intraVoxOverride !== null) {
+            return $this->intraVoxOverride;
+        }
+        if (!$this->userId) {
+            throw new \Exception('User not logged in');
+        }
+        $userFolder = $this->rootFolder->getUserFolder($this->userId);
+        try {
+            $node = $userFolder->get('IntraVox');
+        } catch (NotFoundException $e) {
+            throw new \Exception('IntraVox folder not found. Please check that you have access to the IntraVox GroupFolder.');
+        }
+        if (!$node instanceof Folder) {
+            throw new \Exception('IntraVox folder not found. Please check that you have access to the IntraVox GroupFolder.');
+        }
+        return $node;
     }
 
-    /** The current user's base language code (via the getUserLanguage seam). */
+    /** The current user's base language code (formerly the getUserLanguage seam). */
     public function userLanguage(): string {
-        return ($this->userLanguage)();
+        if (!$this->userId) {
+            return self::DEFAULT_LANGUAGE;
+        }
+        $lang = $this->config->getUserValue($this->userId, 'core', 'lang', self::DEFAULT_LANGUAGE);
+        // Base-code extraction + malformed-value guard (Phase 9: LanguageResolver).
+        return $this->language->baseLanguageCode($lang);
     }
 
     /**
@@ -119,12 +152,12 @@ final class FolderContext {
     /**
      * The language a user is actually SHOWN (recommended-language fallback #75),
      * or null when nothing serveable. Composition owned here; verbatim from
-     * PageService::resolveEffectiveLanguage(). The real-content probe is injected.
+     * PageService::resolveEffectiveLanguage().
      */
     public function effectiveLanguage(): ?string {
         $candidates = $this->language->candidateOrder(
             $this->userLanguage(),
-            ($this->primaryLanguage)()
+            $this->languageService->getPrimaryLanguage()
         );
 
         $baseFolder = $this->intraVox();
@@ -134,7 +167,7 @@ final class FolderContext {
             } catch (NotFoundException $e) {
                 continue;
             }
-            if ($folder instanceof Folder && ($this->hasRealContent)($folder)) {
+            if ($folder instanceof Folder && $this->hasRealContent($folder)) {
                 return $code;
             }
         }
@@ -210,5 +243,97 @@ final class FolderContext {
      */
     public function relativePathFromRoot($folder): string {
         return $this->locator->relativePathFromRoot($this->intraVox(), $folder);
+    }
+
+    /**
+     * Whether a language folder holds a REAL (editor-authored) homepage, as
+     * opposed to an auto-generated placeholder or no homepage at all — the #75
+     * real-content probe (formerly PageService::languageFolderHasRealContent,
+     * injected as the hasRealContent closure). Public because getLanguageContentStatus
+     * consumes it.
+     *
+     * A homepage counts as real when it exists, parses, and does NOT carry the
+     * `_generated` marker written by LanguageHomepageService / demo-data.
+     */
+    public function hasRealContent(Folder $langFolder): bool {
+        $data = $this->resolveLanguageHomepageData($langFolder);
+        if ($data === null) {
+            return false;
+        }
+        return empty($data['_generated']);
+    }
+
+    /**
+     * Whether a language folder has a homepage AT ALL — real OR an auto/placeholder
+     * one (`_generated`). The "active language" signal (formerly
+     * PageService::languageFolderHasHomepage). Public because getLanguageContentStatus
+     * consumes it.
+     */
+    public function hasHomepage(Folder $langFolder): bool {
+        return $this->resolveLanguageHomepageData($langFolder) !== null;
+    }
+
+    /**
+     * Resolve the homepage JSON for a language folder regardless of storage form
+     * (configurable homepage). Verbatim from PageService::resolveLanguageHomepageData.
+     * Checks, in order: (1) a `homepage.json` pointer -> the designated page's JSON;
+     * (2) the legacy loose `home.json`; (3) a normalized `home/home.json` folder page.
+     * Read-only; the only page-lookup touch (findPageByUniqueId) is via PageLocator.
+     */
+    private function resolveLanguageHomepageData(Folder $langFolder): ?array {
+        // 1. Pointer.
+        try {
+            $pointerFile = $langFolder->nodeExists('homepage.json') ? $langFolder->get('homepage.json') : null;
+            if ($pointerFile instanceof File) {
+                $ptr = json_decode($pointerFile->getContent(), true);
+                $uid = is_array($ptr) ? ($ptr['homepageUniqueId'] ?? null) : null;
+                if (is_string($uid) && $uid !== '') {
+                    $target = $this->locator->findPageByUniqueId($langFolder, $uid);
+                    if ($target !== null && isset($target['file'])) {
+                        $data = json_decode($target['file']->getContent(), true);
+                        if (is_array($data) && isset($data['title'])) {
+                            return $data;
+                        }
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            // Fall through to loose/normalized forms.
+        }
+
+        // 2. Legacy loose home.json.
+        try {
+            if ($langFolder->nodeExists('home.json')) {
+                $homeFile = $langFolder->get('home.json');
+                if ($homeFile instanceof File) {
+                    $data = json_decode($homeFile->getContent(), true);
+                    if (is_array($data) && isset($data['title'])) {
+                        return $data;
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            // Fall through.
+        }
+
+        // 3. Normalized home/home.json.
+        try {
+            if ($langFolder->nodeExists('home')) {
+                $homeFolder = $langFolder->get('home');
+                if ($homeFolder instanceof Folder && $homeFolder->nodeExists('home.json')) {
+                    $inner = $homeFolder->get('home.json');
+                    if ($inner instanceof File) {
+                        $data = json_decode($inner->getContent(), true);
+                        if (is_array($data) && isset($data['title'])) {
+                            return $data;
+                        }
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            // Fall through.
+        }
+
+        return null;
     }
 }

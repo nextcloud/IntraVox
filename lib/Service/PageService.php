@@ -27,7 +27,6 @@ use OCA\IntraVox\Service\Translation\TranslationGroupService;
 use OCA\IntraVox\Service\Util\PageIdUtils;
 use OCA\IntraVox\Service\Version\PageVersionService;
 use OCP\EventDispatcher\IEventDispatcher;
-use OCP\Files\IRootFolder;
 use OCP\Files\NotFoundException;
 use OCP\IUserSession;
 use OCP\IConfig;
@@ -50,9 +49,7 @@ class PageService {
     // still read here, by the upload-limit the editor is told about.
     private const MAX_MEDIA_SIZE = PageMediaService::MAX_MEDIA_SIZE;
     private const MAX_COLUMNS = 5;
-    private const DEFAULT_LANGUAGE = 'en';
 
-    private IRootFolder $rootFolder;
     private IUserSession $userSession;
     private string $userId;
     private IAppManager $appManager;
@@ -72,8 +69,6 @@ class PageService {
     private ?\OCA\IntraVox\Service\Publication\PublicationStateService $publicationStateSvc = null;
     /** Lazily-built CLI maintenance service (Phase 4). */
     private ?\OCA\IntraVox\Service\Maintenance\PageMaintenanceService $maintenanceSvc = null;
-    /** Lazily-built stateless language resolver (Phase 9). */
-    private ?LanguageResolver $languageResolver = null;
     /** Lazily-built page-search scorer (Phase "search"). */
     private ?\OCA\IntraVox\Service\Search\PageSearchEngine $searchEngine = null;
     /** Lazily-built recursive tree walker (Phase "tree"). */
@@ -106,8 +101,8 @@ class PageService {
     private ?\OCA\IntraVox\Service\Homepage\HomepageResolverService $homepageResolver = null;
     /** Lazily-built news-widget orchestration service (NEWS domain). */
     private ?\OCA\IntraVox\Service\News\NewsWidgetService $newsWidget = null;
-    /** Lazily-built folder/location substrate (clean-target step 1; shipped unused). */
-    private ?\OCA\IntraVox\Service\Folder\FolderContext $folderContext = null;
+    /** The folder/location substrate — now a DI-first-class ctor-injected service. */
+    private \OCA\IntraVox\Service\Folder\FolderContext $folderContext;
     private LoggerInterface $logger;
     private IEventDispatcher $eventDispatcher;
     private PublicationSettingsService $publicationSettings;
@@ -236,7 +231,6 @@ class PageService {
     private NewsPageService $newsPageService;
 
     public function __construct(
-        IRootFolder $rootFolder,
         IUserSession $userSession,
         IConfig $config,
         IDBConnection $db,
@@ -264,9 +258,10 @@ class PageService {
         PageMediaService $pageMediaService,
         NewsPageService $newsPageService,
         IAppManager $appManager,
+        \OCA\IntraVox\Service\Folder\FolderContext $folderContext,
         ?string $userId
     ) {
-        $this->rootFolder = $rootFolder;
+        $this->folderContext = $folderContext;
         $this->userSession = $userSession;
         $this->config = $config;
         $this->db = $db;
@@ -330,16 +325,6 @@ class PageService {
             $this->cache = new PageCacheService();
         }
         return $this->cache;
-    }
-
-    /**
-     * Lazy seam for the stateless language resolver (Phase 9). Like cache(), it
-     * can always synthesise its collaborator — it has no dependencies — so a test
-     * that never wires it gets the real behaviour for free. Nullable-default so
-     * the harness auto-fill's isInitialized() check skips it (never mocked).
-     */
-    private function language(): LanguageResolver {
-        return $this->languageResolver ??= new LanguageResolver();
     }
 
     /**
@@ -668,42 +653,12 @@ class PageService {
      * subclasses) untouched until they opt in.
      */
     private function folders(): \OCA\IntraVox\Service\Folder\FolderContext {
-        // All three former folder seams are RETIRED. FolderContext owns the
-        // language/path composition; the mount atom is resolveIntraVoxMount() below,
-        // passed as a lazy closure so a request-cache hit never forces $userId.
-        // Tests inject a FolderContext with a fake intraVox rather than overriding
-        // any seam.
-        return $this->folderContext ??= new \OCA\IntraVox\Service\Folder\FolderContext(
-            fn(): \OCP\Files\Folder => $this->resolveIntraVoxMount(),
-            fn(): string => $this->getUserLanguage(),
-            fn(): string => $this->languageService->getPrimaryLanguage(),
-            fn(\OCP\Files\Folder $folder): bool => $this->languageFolderHasRealContent($folder),
-            $this->language(),
-            $this->locator()
-        );
+        // FolderContext is now a DI-first-class service (all substrate atoms are
+        // real ctor deps: rootFolder/userId/config/LanguageService/LanguageResolver/
+        // PageLocator). It is ctor-injected; tests reflection-inject a fixture one.
+        return $this->folderContext;
     }
 
-    /**
-     * The atomic IntraVox GroupFolder mount lookup (formerly the getIntraVoxFolder
-     * seam). Uses the user's mounted folder view so GroupFolder ACLs apply; throws
-     * "not logged in" without a user, and a specific "folder not found" when the
-     * mount is missing or is not a folder.
-     */
-    private function resolveIntraVoxMount(): \OCP\Files\Folder {
-        if (!$this->userId) {
-            throw new \Exception('User not logged in');
-        }
-        $userFolder = $this->rootFolder->getUserFolder($this->userId);
-        try {
-            $node = $userFolder->get('IntraVox');
-        } catch (NotFoundException $e) {
-            throw new \Exception('IntraVox folder not found. Please check that you have access to the IntraVox GroupFolder.');
-        }
-        if (!$node instanceof \OCP\Files\Folder) {
-            throw new \Exception('IntraVox folder not found. Please check that you have access to the IntraVox GroupFolder.');
-        }
-        return $node;
-    }
 
     private function locator(): PageLocator {
         if (!isset($this->pageLocator)) {
@@ -826,14 +781,7 @@ class PageService {
      *     English, so the notice never showed.
      */
     private function getUserLanguage(): string {
-        if (!$this->userId) {
-            return self::DEFAULT_LANGUAGE;
-        }
-
-        $lang = $this->config->getUserValue($this->userId, 'core', 'lang', self::DEFAULT_LANGUAGE);
-
-        // Base-code extraction + malformed-value guard (Phase 9: LanguageResolver).
-        return $this->language()->baseLanguageCode($lang);
+        return $this->folders()->userLanguage();
     }
 
     /**
@@ -1254,64 +1202,6 @@ class PageService {
         );
     }
 
-    /**
-     * Resolve the homepage JSON for a language folder regardless of storage form
-     * (configurable homepage). Checks, in order:
-     *   1. a `homepage.json` pointer → the designated root page's JSON;
-     *   2. the legacy loose `home.json`;
-     *   3. a normalized `home/home.json` folder page (post-normalization default).
-     *
-     * Returns the decoded page data array, or null when no homepage exists.
-     */
-    private function resolveLanguageHomepageData(\OCP\Files\Folder $langFolder): ?array {
-        // 1. Pointer.
-        try {
-            if ($langFolder->nodeExists('homepage.json')) {
-                $ptr = json_decode($langFolder->get('homepage.json')->getContent(), true);
-                $uid = is_array($ptr) ? ($ptr['homepageUniqueId'] ?? null) : null;
-                if (is_string($uid) && $uid !== '') {
-                    $target = $this->findPageByUniqueId($langFolder, $uid);
-                    if ($target !== null && isset($target['file'])) {
-                        $data = json_decode($target['file']->getContent(), true);
-                        if (is_array($data) && isset($data['title'])) {
-                            return $data;
-                        }
-                    }
-                }
-            }
-        } catch (\Throwable $e) {
-            // Fall through to loose/normalized forms.
-        }
-
-        // 2. Legacy loose home.json.
-        try {
-            if ($langFolder->nodeExists('home.json')) {
-                $data = json_decode($langFolder->get('home.json')->getContent(), true);
-                if (is_array($data) && isset($data['title'])) {
-                    return $data;
-                }
-            }
-        } catch (\Throwable $e) {
-            // Fall through.
-        }
-
-        // 3. Normalized home/home.json.
-        try {
-            if ($langFolder->nodeExists('home')) {
-                $homeFolder = $langFolder->get('home');
-                if ($homeFolder instanceof \OCP\Files\Folder && $homeFolder->nodeExists('home.json')) {
-                    $data = json_decode($homeFolder->get('home.json')->getContent(), true);
-                    if (is_array($data) && isset($data['title'])) {
-                        return $data;
-                    }
-                }
-            }
-        } catch (\Throwable $e) {
-            // Fall through.
-        }
-
-        return null;
-    }
 
     /**
      * Whether a language folder holds a REAL (editor-authored) homepage, as
@@ -1325,11 +1215,7 @@ class PageService {
      * default.
      */
     private function languageFolderHasRealContent(\OCP\Files\Folder $langFolder): bool {
-        $data = $this->resolveLanguageHomepageData($langFolder);
-        if ($data === null) {
-            return false;
-        }
-        return empty($data['_generated']);
+        return $this->folders()->hasRealContent($langFolder);
     }
 
     /**
@@ -1339,7 +1225,7 @@ class PageService {
      * active intranet language even before an editor fills it.
      */
     private function languageFolderHasHomepage(\OCP\Files\Folder $langFolder): bool {
-        return $this->resolveLanguageHomepageData($langFolder) !== null;
+        return $this->folders()->hasHomepage($langFolder);
     }
 
     /**

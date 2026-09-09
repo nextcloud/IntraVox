@@ -319,17 +319,18 @@ class PageLookupBenchmark extends TestCase {
             'languageService' => $languageService,
             'pageIndexService' => $index,
             'folderContext' => new \OCA\IntraVox\Service\Folder\FolderContext(
-                fn() => $base,
-                fn(): string => 'en',
-                fn(): string => 'en',
-                fn(Folder $f): bool => false,
+                $this->createMock(\OCP\Files\IRootFolder::class),
+                'tester',
+                $this->createMock(\OCP\IConfig::class),
+                $this->createMock(\OCA\IntraVox\Service\LanguageService::class),
                 new \OCA\IntraVox\Service\Language\LanguageResolver(),
                 new \OCA\IntraVox\Service\Locator\PageLocator(
                     $this->createMock(\OCA\IntraVox\Service\PageIndexService::class),
                     $this->createMock(\Psr\Log\LoggerInterface::class)
                 ),
-                fn(): Folder => $readFolder,
-                fn(): Folder => $readFolder
+                $base,                       // intraVoxOverride
+                fn(): Folder => $readFolder, // readLanguageFolder seam
+                fn(): Folder => $readFolder  // languageFolder seam
             ),
         ];
         foreach ($explicit as $name => $value) {

@@ -48,12 +48,13 @@ class PageRenameFolderTest extends TestCase {
             $this->createMock(\Psr\Log\LoggerInterface::class)
         );
         $folders = new FolderContext(
-            fn(): Folder => $this->createMock(Folder::class),
-            fn(): string => 'en',
-            fn(): string => 'en',
-            fn(Folder $f): bool => false,
+            $this->createMock(\OCP\Files\IRootFolder::class),
+            'tester',
+            $this->createMock(\OCP\IConfig::class),
+            $this->createMock(\OCA\IntraVox\Service\LanguageService::class),
             new LanguageResolver(),
-            $locator
+            $locator,
+            $this->createMock(Folder::class) // intraVoxOverride (unused by renamePageFolder)
         );
         // PageShapeSanitizer + PageDataEnricher are final and unused by
         // renamePageFolder (they serve sanitizeText / getPageMetadata). Build real

@@ -110,12 +110,13 @@ class PageTreePlaceholderTest extends TestCase {
         // being retired). Language/read seams unused by the tree walk.
         (new \ReflectionProperty(PageService::class, 'folderContext'))
             ->setValue($svc, new \OCA\IntraVox\Service\Folder\FolderContext(
-                fn() => $base,
-                fn(): string => 'de',
-                fn(): string => 'en',
-                fn(Folder $f): bool => false,
+                $this->createMock(\OCP\Files\IRootFolder::class),
+                'tester',
+                $this->createMock(\OCP\IConfig::class),
+                $this->createMock(\OCA\IntraVox\Service\LanguageService::class),
                 new \OCA\IntraVox\Service\Language\LanguageResolver(),
-                $locator
+                $locator,
+                $base // intraVoxOverride
             ));
 
         $m = new \ReflectionMethod(PageService::class, 'buildPageTree');

@@ -5,12 +5,15 @@ namespace OCA\IntraVox\Tests\Unit\Service\Folder;
 
 use OCA\IntraVox\Service\Folder\FolderContext;
 use OCA\IntraVox\Service\Language\LanguageResolver;
+use OCA\IntraVox\Service\LanguageService;
 use OCA\IntraVox\Service\Locator\PageLocator;
 use OCA\IntraVox\Service\PageIndexService;
 use OCP\Files\File;
 use OCP\Files\FileInfo;
 use OCP\Files\Folder;
+use OCP\Files\IRootFolder;
 use OCP\Files\NotFoundException;
+use OCP\IConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -90,58 +93,65 @@ class FolderContextSeamTest extends TestCase {
         ?string $userLangValue = 'en',
         string $primaryLanguage = 'en'
     ): FolderContext {
-        $loggedIn = $userLangValue !== null;
+        // DI-first-class FolderContext: pass $base as the intraVoxOverride so the
+        // real mount walk is bypassed. A null $userLangValue models logged-out —
+        // reproduced by an empty userId, so userLanguage() short-circuits to 'en'
+        // and intraVox() would throw "not logged in" IF no override were set. Here
+        // an override IS set, so these tests exercise the composition over $base;
+        // the logged-out throw is pinned separately via the real-mount path below.
+        $userId = $userLangValue === null ? '' : 'tester';
 
-        // The getIntraVoxFolder seam closure: mirrors PageService — throws when
-        // logged out, else returns the mounted base folder.
-        $intraVox = function () use ($loggedIn, $base) {
-            if (!$loggedIn) {
-                throw new \Exception('User not logged in');
-            }
-            return $base;
-        };
+        $config = $this->createMock(IConfig::class);
+        $config->method('getUserValue')->willReturn($userLangValue ?? 'en');
 
-        // The getUserLanguage seam closure: default when logged out, else the
-        // base code of the profile value (via the real LanguageResolver).
-        $resolver = new LanguageResolver();
-        $userLanguage = fn(): string => $loggedIn ? $resolver->baseLanguageCode($userLangValue) : 'en';
-
-        $primary = fn(): string => $primaryLanguage;
-
-        // The #75 real-content probe, mirroring languageFolderHasRealContent: a
-        // loose home.json with a title and no _generated flag counts as real.
-        $hasRealContent = function (Folder $folder): bool {
-            try {
-                if (!$folder->nodeExists('home.json')) {
-                    return false;
-                }
-                $data = json_decode($folder->get('home.json')->getContent(), true);
-                return is_array($data) && isset($data['title']) && empty($data['_generated']);
-            } catch (\Throwable $e) {
-                return false;
-            }
-        };
-
-        $locator = new PageLocator(
-            $this->createMock(PageIndexService::class),
-            $this->createMock(LoggerInterface::class)
-        );
+        $languageService = $this->createMock(LanguageService::class);
+        $languageService->method('getPrimaryLanguage')->willReturn($primaryLanguage);
 
         return new FolderContext(
-            $intraVox,
-            $userLanguage,
-            $primary,
-            $hasRealContent,
-            $resolver,
-            $locator
+            $this->createMock(IRootFolder::class), // unused: $base override short-circuits the walk
+            $userId,
+            $config,
+            $languageService,
+            new LanguageResolver(),
+            new PageLocator(
+                $this->createMock(PageIndexService::class),
+                $this->createMock(LoggerInterface::class)
+            ),
+            $base // intraVoxOverride
+        );
+    }
+
+    /**
+     * A FolderContext with NO intraVox override — so intraVox() runs the real
+     * mount walk (rootFolder->getUserFolder(userId)->get('IntraVox')). Used to pin
+     * the mount-resolution throws that the injected-seam builds bypassed.
+     */
+    private function realMountContext(IRootFolder $rootFolder, string $userId = 'tester'): FolderContext {
+        $config = $this->createMock(IConfig::class);
+        $config->method('getUserValue')->willReturn('en');
+        $languageService = $this->createMock(LanguageService::class);
+        $languageService->method('getPrimaryLanguage')->willReturn('en');
+
+        return new FolderContext(
+            $rootFolder,
+            $userId,
+            $config,
+            $languageService,
+            new LanguageResolver(),
+            new PageLocator(
+                $this->createMock(PageIndexService::class),
+                $this->createMock(LoggerInterface::class)
+            )
         );
     }
 
     // ---------------------------------------------------------------- intraVox
 
     public function testLoggedOutIntraVoxThrows(): void {
-        $ctx = $this->context($this->baseFolder([]), userLangValue: null);
+        // No override + empty userId -> the real mount walk throws "not logged in".
+        $ctx = $this->realMountContext($this->createMock(IRootFolder::class), userId: '');
         $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('User not logged in');
         $ctx->intraVox();
     }
 
@@ -149,6 +159,52 @@ class FolderContextSeamTest extends TestCase {
         $base = $this->baseFolder([]);
         $ctx = $this->context($base);
         $this->assertSame($base, $ctx->intraVox());
+    }
+
+    /**
+     * The real mount walk resolves rootFolder->getUserFolder(userId)->get('IntraVox').
+     * Pins the resolution the injected-override builds bypass.
+     */
+    public function testIntraVoxWalksTheUserMount(): void {
+        $intraVox = $this->baseFolder([]);
+        $userFolder = $this->createMock(Folder::class);
+        $userFolder->method('get')->willReturnCallback(function ($p) use ($intraVox) {
+            if ($p === 'IntraVox') {
+                return $intraVox;
+            }
+            throw new NotFoundException($p);
+        });
+        $rootFolder = $this->createMock(IRootFolder::class);
+        $rootFolder->method('getUserFolder')->with('tester')->willReturn($userFolder);
+
+        $ctx = $this->realMountContext($rootFolder);
+        $this->assertSame($intraVox, $ctx->intraVox());
+    }
+
+    public function testIntraVoxThrowsWhenMountMissing(): void {
+        $userFolder = $this->createMock(Folder::class);
+        $userFolder->method('get')->willThrowException(new NotFoundException('IntraVox'));
+        $rootFolder = $this->createMock(IRootFolder::class);
+        $rootFolder->method('getUserFolder')->willReturn($userFolder);
+
+        $ctx = $this->realMountContext($rootFolder);
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('IntraVox folder not found');
+        $ctx->intraVox();
+    }
+
+    public function testIntraVoxThrowsWhenMountIsNotAFolder(): void {
+        // get('IntraVox') returns a File, not a Folder -> same not-found throw.
+        $notAFolder = $this->createMock(File::class);
+        $userFolder = $this->createMock(Folder::class);
+        $userFolder->method('get')->willReturn($notAFolder);
+        $rootFolder = $this->createMock(IRootFolder::class);
+        $rootFolder->method('getUserFolder')->willReturn($userFolder);
+
+        $ctx = $this->realMountContext($rootFolder);
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('IntraVox folder not found');
+        $ctx->intraVox();
     }
 
     // ---------------------------------------------------------------- userLanguage

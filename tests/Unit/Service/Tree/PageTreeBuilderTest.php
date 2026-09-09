@@ -76,13 +76,16 @@ class PageTreeBuilderTest extends TestCase {
         // never reached by the tree walk.
         $root = $this->createMock(Folder::class);
         $root->method('getPath')->willReturn('/IntraVox');
+        $config = $this->createMock(\OCP\IConfig::class);
+        $config->method('getUserValue')->willReturn('de');
         $folders = new FolderContext(
-            fn() => $root,
-            fn(): string => 'de',
-            fn(): string => 'en',
-            fn(Folder $f): bool => false,
+            $this->createMock(\OCP\Files\IRootFolder::class),
+            'tester',
+            $config,
+            $this->createMock(\OCA\IntraVox\Service\LanguageService::class),
             new LanguageResolver(),
-            $locator
+            $locator,
+            $root // intraVoxOverride
         );
 
         return new PageTreeBuilder($locator, $permissionService, $folders);

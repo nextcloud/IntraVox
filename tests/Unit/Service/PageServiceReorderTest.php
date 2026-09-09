@@ -85,12 +85,13 @@ class PageServiceReorderTest extends TestCase {
         );
         (new \ReflectionProperty(PageService::class, 'folderContext'))
             ->setValue($svc, new \OCA\IntraVox\Service\Folder\FolderContext(
-                fn() => $parent,
-                fn(): string => 'en',
-                fn(): string => 'en',
-                fn(Folder $f): bool => false,
+                $this->createMock(\OCP\Files\IRootFolder::class),
+                'tester',
+                $this->createMock(\OCP\IConfig::class),
+                $this->createMock(\OCA\IntraVox\Service\LanguageService::class),
                 new \OCA\IntraVox\Service\Language\LanguageResolver(),
                 $locator,
+                $parent, // intraVoxOverride
                 null,
                 fn(): Folder => $parent
             ));
