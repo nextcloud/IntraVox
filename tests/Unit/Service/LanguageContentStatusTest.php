@@ -1,0 +1,306 @@
+<?php
+declare(strict_types=1);
+
+namespace OCA\IntraVox\Tests\Unit\Service;
+
+use OCA\IntraVox\Service\LanguageService;
+use OCA\IntraVox\Service\PageService;
+use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageService;
+use OCP\Files\File;
+use OCP\Files\FileInfo;
+use OCP\Files\Folder;
+use OCP\Files\IRootFolder;
+use OCP\Files\NotFoundException;
+use OCP\IConfig;
+use Psr\Log\LoggerInterface;
+use PHPUnit\Framework\TestCase;
+
+/**
+ * Behavioural characterization of the two language-CONTENT-STATUS readers:
+ *
+ *   - getLanguageContentStatus() — the "where does content live, per language"
+ *     signal that drives the landing-page fallback notice and the admin
+ *     "Languages with content" chips.
+ *   - getPageCountByLanguage()   — the per-language page count the admin "remove
+ *     language" confirmation warns with.
+ *
+ * These two had only arity pins before; their real behaviour (the [a-z]{2,3}
+ * folder filter, the real-vs-placeholder split, the dual sort(), the +1 for a
+ * loose home.json, and the log-and-continue on a throwing folder) was untested.
+ * This file locks that behaviour in BEFORE the language-status carve, so the
+ * carve is proven byte-equivalent by tests that pin behaviour, not location.
+ *
+ * Like PageLanguageResolutionTest, this drives the REAL bodies (it overrides no
+ * folder seam — those were retired) through a mocked rootFolder->getUserFolder()
+ * ->get('IntraVox'), so getLanguageContentStatus/getPageCountByLanguage run
+ * their actual code over a fixture IntraVox tree.
+ */
+class LanguageContentStatusTest extends TestCase {
+
+    use BuildsPageService;
+
+    /** A File whose getContent()/cached read returns the given JSON. */
+    private function jsonFile(string $path, array $json): File {
+        $file = $this->createMock(File::class);
+        $file->method('getName')->willReturn(basename($path));
+        $file->method('getType')->willReturn(FileInfo::TYPE_FILE);
+        $file->method('getPath')->willReturn($path);
+        $file->method('getContent')->willReturn(json_encode($json));
+        $file->method('getId')->willReturn(abs(crc32($path)));
+        $file->method('getMTime')->willReturn(1000);
+        $file->method('isReadable')->willReturn(true);
+        return $file;
+    }
+
+    /**
+     * A folder with named children (files or folders).
+     *
+     * @param array<string,\OCP\Files\Node> $children
+     */
+    private function folder(string $path, array $children = []): Folder {
+        $folder = $this->createMock(Folder::class);
+        $folder->method('getName')->willReturn(basename($path));
+        $folder->method('getType')->willReturn(FileInfo::TYPE_FOLDER);
+        $folder->method('getPath')->willReturn($path);
+        $folder->method('getDirectoryListing')->willReturn(array_values($children));
+        $folder->method('nodeExists')->willReturnCallback(fn($n) => isset($children[$n]));
+        $folder->method('get')->willReturnCallback(function ($p) use ($children, $path) {
+            if (isset($children[$p])) {
+                return $children[$p];
+            }
+            throw new NotFoundException($path . '/' . $p);
+        });
+        return $folder;
+    }
+
+    /**
+     * A language folder with a loose home.json. With a real title it counts as
+     * real content; with `_generated` it is a placeholder that is "active" but
+     * not "with content".
+     *
+     * @param array<string,\OCP\Files\Node> $extra additional named children (subpages)
+     */
+    private function langFolder(string $path, ?array $home = null, array $extra = []): Folder {
+        $children = $extra;
+        if ($home !== null) {
+            $children['home.json'] = $this->jsonFile($path . '/home.json', $home);
+        }
+        return $this->folder($path, $children);
+    }
+
+    /** A subpage folder {name}/ holding {name}.json — what walkPlain counts. */
+    private function subpage(string $langPath, string $name): Folder {
+        $path = $langPath . '/' . $name;
+        return $this->folder($path, [
+            $name . '.json' => $this->jsonFile(
+                $path . '/' . $name . '.json',
+                ['uniqueId' => 'page-' . $name, 'title' => ucfirst($name)]
+            ),
+        ]);
+    }
+
+    private function realHome(string $title = 'Welcome'): array {
+        return ['uniqueId' => 'page-home', 'title' => $title];
+    }
+
+    private function placeholderHome(): array {
+        return ['uniqueId' => 'page-home', 'title' => 'Placeholder', '_generated' => true];
+    }
+
+    /**
+     * The /IntraVox base whose direct listing is the given code=>folder map,
+     * plus any non-language decoy folders passed in $decoys.
+     *
+     * @param array<string,Folder> $languages
+     * @param array<string,Folder> $decoys non-language-code siblings (e.g. _media)
+     */
+    private function baseFolder(array $languages, array $decoys = []): Folder {
+        $all = $languages + $decoys;
+        $base = $this->createMock(Folder::class);
+        $base->method('getName')->willReturn('IntraVox');
+        $base->method('getType')->willReturn(FileInfo::TYPE_FOLDER);
+        $base->method('getPath')->willReturn('/IntraVox');
+        $base->method('getDirectoryListing')->willReturn(array_values($all));
+        $base->method('nodeExists')->willReturnCallback(fn($n) => isset($all[$n]));
+        $base->method('get')->willReturnCallback(function ($code) use ($all) {
+            if (isset($all[$code])) {
+                return $all[$code];
+            }
+            throw new NotFoundException('/IntraVox/' . $code);
+        });
+        return $base;
+    }
+
+    /**
+     * A PageService running the real folder bodies over $base, with an injected
+     * logger so log assertions are possible.
+     */
+    private function makeService(Folder $base, ?LoggerInterface $logger = null): PageService {
+        $svc = new class extends PageService {
+            public function __construct() {
+            }
+            public function clearCache(): void {
+            }
+        };
+
+        $rootFolder = $this->createMock(IRootFolder::class);
+        $userFolder = $this->createMock(Folder::class);
+        $userFolder->method('get')->willReturnCallback(function ($p) use ($base) {
+            if ($p === 'IntraVox') {
+                return $base;
+            }
+            throw new NotFoundException('/' . $p);
+        });
+        $rootFolder->method('getUserFolder')->with('tester')->willReturn($userFolder);
+
+        $config = $this->createMock(IConfig::class);
+        $config->method('getUserValue')->willReturnCallback(
+            fn($uid, $app, $key, $default = '') => 'en'
+        );
+
+        $languageService = $this->createMock(LanguageService::class);
+        $languageService->method('getPrimaryLanguage')->willReturn('en');
+
+        $this->injectPageServiceDependencies($svc, [
+            'rootFolder' => $rootFolder,
+            'userId' => 'tester',
+            'config' => $config,
+            'languageService' => $languageService,
+            'logger' => $logger ?? $this->createMock(LoggerInterface::class),
+        ]);
+        return $svc;
+    }
+
+    // -------------------------------------------------- getLanguageContentStatus
+
+    public function testContentStatusSplitsRealFromPlaceholderAndFiltersNonLanguageFolders(): void {
+        $base = $this->baseFolder(
+            [
+                'nl' => $this->langFolder('/IntraVox/nl', $this->realHome('Welkom')),
+                'en' => $this->langFolder('/IntraVox/en', $this->placeholderHome()),
+                'de' => $this->langFolder('/IntraVox/de', $this->realHome('Willkommen')),
+            ],
+            [
+                // A non-language sibling and a 4-letter folder: both must be
+                // filtered by the /^[a-z]{2,3}$/ guard.
+                '_media' => $this->folder('/IntraVox/_media'),
+                'test' => $this->folder('/IntraVox/test', [
+                    'home.json' => $this->jsonFile('/IntraVox/test/home.json', $this->realHome()),
+                ]),
+            ]
+        );
+
+        $status = $this->makeService($base)->getLanguageContentStatus();
+
+        // languagesWithContent = only REAL homepages, sorted. en is a placeholder.
+        $this->assertSame(['de', 'nl'], $status['languagesWithContent']);
+        // activeLanguages = ANY homepage incl. placeholder, sorted.
+        $this->assertSame(['de', 'en', 'nl'], $status['activeLanguages']);
+        // Non-language folders never appear.
+        $this->assertNotContains('_media', $status['activeLanguages']);
+        $this->assertNotContains('test', $status['activeLanguages']);
+        $this->assertNotContains('test', $status['languagesWithContent']);
+
+        // The result carries all six keys.
+        foreach (['language', 'hasContent', 'servedLanguage', 'languagesWithContent', 'activeLanguages', 'homepageUniqueId'] as $key) {
+            $this->assertArrayHasKey($key, $status);
+        }
+        $this->assertSame('en', $status['language']);
+    }
+
+    public function testContentStatusHasContentTracksServedLanguage(): void {
+        // en has real content, so the served language resolves and hasContent is true.
+        $base = $this->baseFolder([
+            'en' => $this->langFolder('/IntraVox/en', $this->realHome()),
+        ]);
+        $status = $this->makeService($base)->getLanguageContentStatus();
+        $this->assertTrue($status['hasContent']);
+        $this->assertSame('en', $status['servedLanguage']);
+        $this->assertSame($status['hasContent'], $status['servedLanguage'] !== null);
+    }
+
+    public function testContentStatusNoRealContentAnywhereYieldsFalseAndNullServed(): void {
+        // Only a placeholder exists: active, but nothing real to serve → the
+        // sole trigger of the landing-page fallback notice.
+        $base = $this->baseFolder([
+            'en' => $this->langFolder('/IntraVox/en', $this->placeholderHome()),
+        ]);
+        $status = $this->makeService($base)->getLanguageContentStatus();
+        $this->assertFalse($status['hasContent']);
+        $this->assertNull($status['servedLanguage']);
+        $this->assertSame(['en'], $status['activeLanguages']);
+        $this->assertSame([], $status['languagesWithContent']);
+    }
+
+    public function testContentStatusLogsAndDegradesWhenTheBaseListingThrows(): void {
+        $base = $this->createMock(Folder::class);
+        $base->method('getName')->willReturn('IntraVox');
+        $base->method('getType')->willReturn(FileInfo::TYPE_FOLDER);
+        $base->method('getPath')->willReturn('/IntraVox');
+        // The directory walk blows up mid-status.
+        $base->method('getDirectoryListing')->willThrowException(new \RuntimeException('disk gone'));
+        $base->method('get')->willThrowException(new NotFoundException('/IntraVox/x'));
+
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->atLeastOnce())
+            ->method('warning')
+            ->with($this->stringContains('[PageService] getLanguageContentStatus failed:'));
+
+        $status = $this->makeService($base, $logger)->getLanguageContentStatus();
+
+        // The shape survives: empty content arrays, not a fatal.
+        $this->assertSame([], $status['languagesWithContent']);
+        $this->assertSame([], $status['activeLanguages']);
+        $this->assertArrayHasKey('homepageUniqueId', $status);
+    }
+
+    // ----------------------------------------------------- getPageCountByLanguage
+
+    public function testPageCountAddsOneForALooseHomeJsonButNotForNormalizedHome(): void {
+        // nl: loose home.json + two subpages → 2 walked + 1 for home.json = 3.
+        $nl = $this->langFolder('/IntraVox/nl', $this->realHome(), [
+            'about' => $this->subpage('/IntraVox/nl', 'about'),
+            'news' => $this->subpage('/IntraVox/nl', 'news'),
+        ]);
+        // en: normalized home/home.json (NO loose home.json) + one subpage. The
+        // +1 is loose-only, so en counts just its walked pages.
+        $en = $this->folder('/IntraVox/en', [
+            'home' => $this->folder('/IntraVox/en/home', [
+                'home.json' => $this->jsonFile('/IntraVox/en/home/home.json', $this->realHome()),
+            ]),
+            'about' => $this->subpage('/IntraVox/en', 'about'),
+        ]);
+
+        $base = $this->baseFolder(
+            ['nl' => $nl, 'en' => $en],
+            ['_media' => $this->folder('/IntraVox/_media')]
+        );
+
+        $counts = $this->makeService($base)->getPageCountByLanguage();
+
+        $this->assertSame(3, $counts['nl'], 'two subpages + the loose home.json');
+        // en: the normalized "home" folder holds home/home.json, which walkPlain
+        // DOES count as a page (folder "home" + "home.json" with uniqueId+title),
+        // plus one real subpage = 2. Crucially there is NO loose home.json at the
+        // language root, so the +1 does NOT fire — that +1 is loose-only.
+        $this->assertSame(2, $counts['en'], 'home page + one subpage, no +1 (no loose home.json)');
+        $this->assertArrayNotHasKey('_media', $counts, 'non-language folders are not counted');
+    }
+
+    public function testPageCountLogsAndDegradesWhenTheBaseListingThrows(): void {
+        $base = $this->createMock(Folder::class);
+        $base->method('getName')->willReturn('IntraVox');
+        $base->method('getType')->willReturn(FileInfo::TYPE_FOLDER);
+        $base->method('getPath')->willReturn('/IntraVox');
+        $base->method('getDirectoryListing')->willThrowException(new \RuntimeException('disk gone'));
+        $base->method('get')->willThrowException(new NotFoundException('/IntraVox/x'));
+
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->atLeastOnce())
+            ->method('warning')
+            ->with($this->stringContains('[PageService] getPageCountByLanguage failed:'));
+
+        $counts = $this->makeService($base, $logger)->getPageCountByLanguage();
+        $this->assertSame([], $counts, 'a failed listing yields an empty count map, not a fatal');
+    }
+}
