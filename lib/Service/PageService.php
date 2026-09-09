@@ -98,6 +98,8 @@ class PageService {
     private ?\OCA\IntraVox\Service\Compose\PageCompositionService $compositionService = null;
     /** Lazily-built language-content-status reader (LANGUAGE-STATUS domain). */
     private ?\OCA\IntraVox\Service\Language\LanguageStatusService $languageStatusService = null;
+    /** Lazily-built translation-query/link service (TRANSLATE-query domain). */
+    private ?\OCA\IntraVox\Service\Translation\TranslationQueryService $translationQueryService = null;
     /** Lazily-built folder/location substrate (clean-target step 1; shipped unused). */
     private ?\OCA\IntraVox\Service\Folder\FolderContext $folderContext = null;
     private LoggerInterface $logger;
@@ -395,6 +397,30 @@ class PageService {
             $this->pageLister(),
             $this->locator(),
             $this->logger
+        );
+    }
+
+    /**
+     * Lazy seam for the translation-query/link service (TRANSLATE-query domain).
+     * Built from the FolderContext substrate + the TranslationGroupService
+     * engine; page lookup / language-of-folder / display-name / the group-writer
+     * (shared with COMPOSE's createTranslation, so it stays resident) / clearCache
+     * go in as $this-bound closures. Nullable-default so the harness auto-fill
+     * skips it.
+     */
+    private function translationQuery(): \OCA\IntraVox\Service\Translation\TranslationQueryService {
+        return $this->translationQueryService ??= new \OCA\IntraVox\Service\Translation\TranslationQueryService(
+            $this->folders(),
+            $this->translationGroups(),
+            fn(\OCP\Files\Folder $folder, string $uid): ?array => $this->locatePageAnyLanguage($folder, $uid),
+            fn(\OCP\Files\Folder $folder): ?string => $this->languageOfFolder($folder),
+            fn(string $code): string => $this->languageDisplayName($code),
+            function (array $result, string $group): void {
+                $this->writeTranslationGroup($result, $group);
+            },
+            function (): void {
+                $this->clearCache();
+            }
         );
     }
 
@@ -1073,59 +1099,7 @@ class PageService {
      * @throws \InvalidArgumentException when both pages share a language
      */
     public function linkTranslation(string $uniqueIdA, string $uniqueIdB): string {
-        if ($uniqueIdA === $uniqueIdB) {
-            throw new \InvalidArgumentException('A page cannot be a translation of itself');
-        }
-
-        $folder = $this->folders()->readLanguageFolder();
-        $a = $this->locatePageAnyLanguage($folder, $uniqueIdA);
-        $b = $this->locatePageAnyLanguage($folder, $uniqueIdB);
-        if ($a === null) {
-            throw new PageNotFoundException('Page not found: ' . $uniqueIdA);
-        }
-        if ($b === null) {
-            throw new PageNotFoundException('Page not found: ' . $uniqueIdB);
-        }
-
-        $langA = $this->languageOfFolder($a['folder']);
-        $langB = $this->languageOfFolder($b['folder']);
-        if ($langA !== null && $langA === $langB) {
-            throw new \InvalidArgumentException(
-                'These pages are both in the same language, so one cannot be a translation of the other.'
-            );
-        }
-
-        // BOTH sides must be writable before either is written. The order
-        // matters more than it looks: the group is adopted from whichever side
-        // already has one, so writing A first and then failing on B would leave
-        // A a member of B's existing group — a link B's editors never made,
-        // created by someone without write access to B. Checking up front makes
-        // denial happen before any state changes.
-        foreach ([$a, $b] as $side) {
-            if (!$side['file']->isUpdateable()) {
-                throw new ForbiddenException('You need edit permission on both pages to link them');
-            }
-        }
-
-        // Adopt an existing group when there is one, so linking is additive.
-        $dataA = json_decode($a['file']->getContent(), true);
-        $dataB = json_decode($b['file']->getContent(), true);
-        $group = (is_array($dataA) ? ($dataA['translationGroup'] ?? null) : null)
-            ?: (is_array($dataB) ? ($dataB['translationGroup'] ?? null) : null)
-            ?: $this->translationGroups()->newGroupId();
-
-        // Adoption must not smuggle in a language the group already has —
-        // the invariant lives with the rest of the group rules.
-        $this->translationGroups()->assertAdoptionAddsNoDuplicateLanguage(
-            $group,
-            [[$uniqueIdA, $langA], [$uniqueIdB, $langB]]
-        );
-
-        $this->writeTranslationGroup($a, $group);
-        $this->writeTranslationGroup($b, $group);
-        $this->clearCache();
-
-        return $group;
+        return $this->translationQuery()->linkTranslation($uniqueIdA, $uniqueIdB);
     }
 
     /**
@@ -1190,40 +1164,7 @@ class PageService {
      * @return array<int, array{code:string, name:string}>
      */
     public function getTranslatableLanguages(string $pageId): array {
-        $result = $this->locatePageAnyLanguage($this->folders()->readLanguageFolder(), $pageId);
-        if ($result === null) {
-            throw new PageNotFoundException('Page not found: ' . $pageId);
-        }
-
-        $ownLanguage = $this->languageOfFolder($result['folder']);
-        $data = json_decode($result['file']->getContent(), true);
-        $group = is_array($data) ? ($data['translationGroup'] ?? null) : null;
-
-        $root = $this->folders()->intraVox();
-        $taken = $this->translationGroups()->languagesTaken($group);
-
-        $languages = [];
-        foreach ($this->translationGroups()->otherContentLanguages($root, $ownLanguage) as $code) {
-            if (isset($taken[$code])) {
-                continue;
-            }
-            $languages[] = [
-                'code' => $code,
-                // Naming stays here: it reads LanguageService's list, which is
-                // the interface-language source the admin tab shares.
-                'name' => $this->languageDisplayName($code),
-                // How many of this page's ancestors do not exist as pages in
-                // that language yet. The translation still lands mirrored
-                // (createTranslation creates the missing levels as bare
-                // folders, and the tree renders those as non-clickable
-                // pass-through nodes) — but the editor deserves to know
-                // BEFORE creating, not by discovering grey levels afterwards.
-                'missingAncestors' => $this->translationGroups()
-                    ->countMissingAncestors($root, $result['folder'], $code),
-            ];
-        }
-
-        return $languages;
+        return $this->translationQuery()->getTranslatableLanguages($pageId);
     }
 
     /**
@@ -1241,35 +1182,7 @@ class PageService {
      * @return array<int, array{uniqueId:string, title:string, language:string}>
      */
     public function getTranslationCandidates(string $pageId, ?string $language = null): array {
-        $folder = $this->folders()->readLanguageFolder();
-        $result = $this->locatePageAnyLanguage($folder, $pageId);
-        if ($result === null) {
-            throw new PageNotFoundException('Page not found: ' . $pageId);
-        }
-
-        $ownLanguage = $this->languageOfFolder($result['folder']);
-        $ownData = json_decode($result['file']->getContent(), true);
-        $ownGroup = is_array($ownData) ? ($ownData['translationGroup'] ?? null) : null;
-
-        // Languages this page's group already covers — candidates in those
-        // languages are filtered below, one indexed query for the whole list.
-        $takenLanguages = $this->translationGroups()->languagesTaken($ownGroup, $pageId);
-
-        // Languages to offer: everything with content except this page's own,
-        // listed through the caller's own mount so denied languages never
-        // appear (see otherContentLanguages()).
-        $languages = $this->translationGroups()->otherContentLanguages(
-            $this->folders()->intraVox(),
-            $ownLanguage,
-            $language
-        );
-
-        return $this->translationGroups()->candidatesInLanguages(
-            $pageId,
-            $ownGroup,
-            $languages,
-            $takenLanguages
-        );
+        return $this->translationQuery()->getTranslationCandidates($pageId, $language);
     }
 
     /**
@@ -1286,17 +1199,7 @@ class PageService {
      * @throws PageNotFoundException when the page cannot be found
      */
     public function unlinkTranslation(string $uniqueId): string {
-        $folder = $this->folders()->readLanguageFolder();
-        $result = $this->locatePageAnyLanguage($folder, $uniqueId);
-        if ($result === null) {
-            throw new PageNotFoundException('Page not found: ' . $uniqueId);
-        }
-
-        $group = $this->translationGroups()->newGroupId();
-        $this->writeTranslationGroup($result, $group);
-        $this->clearCache();
-
-        return $group;
+        return $this->translationQuery()->unlinkTranslation($uniqueId);
     }
 
     /**
