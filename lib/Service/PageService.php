@@ -100,6 +100,8 @@ class PageService {
     private ?\OCA\IntraVox\Service\Language\LanguageStatusService $languageStatusService = null;
     /** Lazily-built translation-query/link service (TRANSLATE-query domain). */
     private ?\OCA\IntraVox\Service\Translation\TranslationQueryService $translationQueryService = null;
+    /** Lazily-built version-history service (VERSION/HISTORY domain). */
+    private ?\OCA\IntraVox\Service\Version\PageVersionDomainService $versionDomain = null;
     /** Lazily-built folder/location substrate (clean-target step 1; shipped unused). */
     private ?\OCA\IntraVox\Service\Folder\FolderContext $folderContext = null;
     private LoggerInterface $logger;
@@ -422,6 +424,44 @@ class PageService {
                 $this->clearCache();
             }
         );
+    }
+
+    /**
+     * Lazy seam for the version-history service (VERSION/HISTORY domain). Built
+     * from the PageVersionService engine; page resolution stays on PageService
+     * (findPageById / locatePageForOperation are shared far beyond versions) and
+     * is bound as two $this-closures — one per pre-carve locate idiom, preserved
+     * verbatim. Nullable-default so the harness auto-fill skips it.
+     */
+    private function versionDomain(): \OCA\IntraVox\Service\Version\PageVersionDomainService {
+        return $this->versionDomain ??= new \OCA\IntraVox\Service\Version\PageVersionDomainService(
+            $this->pageVersionService,
+            $this->logger,
+            fn(string $pageId): ?array => $this->locateVersionPage($pageId),
+            fn(string $pageId): ?array => $this->locatePageForOperation($pageId)
+        );
+    }
+
+    /**
+     * Resolve a page for the version-manager reads: follow a page-… uniqueId
+     * across language folders (issue #90), else fall back to the legacy id
+     * lookup in the user's own language folder. Returns null on a miss so the
+     * caller owns the throw. This is the INLINE-A prologue the three
+     * version-manager reads shared verbatim.
+     */
+    private function locateVersionPage(string $pageId): ?array {
+        $folder = $this->folders()->languageFolder();
+        $result = null;
+
+        if (strpos($pageId, 'page-') === 0) {
+            $result = $this->locatePageAnyLanguage($folder, $pageId);
+        }
+
+        if ($result === null) {
+            $result = $this->findPageById($folder, $this->idUtils->sanitizeId($pageId));
+        }
+
+        return $result;
     }
 
     /**
@@ -1808,27 +1848,7 @@ class PageService {
      * @throws \Exception if page not found
      */
     public function getPageVersions(string $pageId): array {
-        $folder = $this->folders()->languageFolder();
-        $result = null;
-
-        // Check for uniqueId pattern (page-xxxx) like getPage() does. Follows
-        // the page across language folders so an operation on a page the user
-        // can see never fails with "Page not found" (issue #90).
-        if (strpos($pageId, 'page-') === 0) {
-            $result = $this->locatePageAnyLanguage($folder, $pageId);
-        }
-
-        // Fall back to legacy ID lookup
-        if ($result === null) {
-            $result = $this->findPageById($folder, $this->idUtils->sanitizeId($pageId));
-        }
-
-        if (!$result) {
-            $this->logger->warning('[getPageVersions] Page not found: ' . $pageId);
-            throw new \Exception('Page not found: ' . $pageId);
-        }
-
-        return $this->pageVersionService->listForFile($result['file']);
+        return $this->versionDomain()->getPageVersions($pageId);
     }
 
     /**
@@ -1844,35 +1864,7 @@ class PageService {
      * @throws \Exception if page or version not found
      */
     public function restorePageVersion(string $pageId, int $timestamp): array {
-        $folder = $this->folders()->languageFolder();
-        $result = null;
-
-        // Check for uniqueId pattern (page-xxxx) like getPage() does. Follows
-        // the page across language folders so an operation on a page the user
-        // can see never fails with "Page not found" (issue #90).
-        if (strpos($pageId, 'page-') === 0) {
-            $result = $this->locatePageAnyLanguage($folder, $pageId);
-        }
-
-        // Fall back to legacy ID lookup
-        if ($result === null) {
-            $result = $this->findPageById($folder, $this->idUtils->sanitizeId($pageId));
-        }
-
-        if (!$result) {
-            throw new \Exception('Page not found: ' . $pageId);
-        }
-
-        $restoredData = $this->pageVersionService->restoreToTimestamp(
-            $result['file'],
-            $result['folder'],
-            $timestamp
-        );
-
-        // Return data with id for frontend (id is derived from folder name)
-        // For home page it's 'home', otherwise use the folder basename
-        $resolvedId = ($pageId === 'home') ? 'home' : $result['folder']->getName();
-        return array_merge(['id' => $resolvedId], $restoredData);
+        return $this->versionDomain()->restorePageVersion($pageId, $timestamp);
     }
 
 
@@ -2123,16 +2115,7 @@ class PageService {
      * Uses IVersionManager with backend access for label updates.
      */
     public function updateVersionLabel(string $pageId, int $timestamp, ?string $label): void {
-        // Verify page exists. Had neither a uniqueId branch nor a cross-language
-        // fallback, so labelling a version failed on any page-… id and on any
-        // page outside the caller's own language (#90).
-        $result = $this->locatePageForOperation($pageId);
-
-        if (!$result) {
-            throw new PageNotFoundException('Page not found: ' . $pageId);
-        }
-
-        $this->pageVersionService->setLabel($result['file'], $timestamp, $label);
+        $this->versionDomain()->updateVersionLabel($pageId, $timestamp, $label);
     }
 
     /**
@@ -2140,49 +2123,14 @@ class PageService {
      * Uses IVersionManager for reliable version content retrieval across all storage types.
      */
     public function getVersionContent(string $pageId, int $timestamp): array {
-        $folder = $this->folders()->languageFolder();
-        $result = null;
-
-        // Check for uniqueId pattern (page-xxxx) like getPage() does. Follows
-        // the page across language folders so an operation on a page the user
-        // can see never fails with "Page not found" (issue #90).
-        if (strpos($pageId, 'page-') === 0) {
-            $result = $this->locatePageAnyLanguage($folder, $pageId);
-        }
-
-        // Fall back to legacy ID lookup
-        if ($result === null) {
-            $result = $this->findPageById($folder, $this->idUtils->sanitizeId($pageId));
-        }
-
-        if (!$result) {
-            throw new \Exception('Page not found: ' . $pageId);
-        }
-
-        return $this->pageVersionService->contentAtTimestamp($result['file'], $timestamp);
+        return $this->versionDomain()->getVersionContent($pageId, $timestamp);
     }
 
     /**
      * Get current page content for comparison
      */
     public function getCurrentPageContent(string $pageId): array {
-        // Same shape as updateVersionLabel(): no uniqueId branch and no
-        // cross-language fallback, so the "compare with current" panel in the
-        // version history broke on page-… ids and on foreign-language pages.
-        $result = $this->locatePageForOperation($pageId);
-
-        if (!$result) {
-            throw new PageNotFoundException('Page not found: ' . $pageId);
-        }
-
-        $file = $result['file'];
-        $content = $file->getContent();
-
-        return [
-            'title' => $result['page']['name'] ?? 'Untitled',
-            'content' => $content,
-            'rawContent' => $content
-        ];
+        return $this->versionDomain()->getCurrentPageContent($pageId);
     }
 
     /**
