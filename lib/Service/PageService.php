@@ -96,6 +96,8 @@ class PageService {
     private ?\OCA\IntraVox\Service\Media\PageMediaOrchestrator $mediaOrchestrator = null;
     /** Lazily-built page-composition service (COMPOSE domain: copy/translate/template). */
     private ?\OCA\IntraVox\Service\Compose\PageCompositionService $compositionService = null;
+    /** Lazily-built language-content-status reader (LANGUAGE-STATUS domain). */
+    private ?\OCA\IntraVox\Service\Language\LanguageStatusService $languageStatusService = null;
     /** Lazily-built folder/location substrate (clean-target step 1; shipped unused). */
     private ?\OCA\IntraVox\Service\Folder\FolderContext $folderContext = null;
     private LoggerInterface $logger;
@@ -197,13 +199,6 @@ class PageService {
     private function clearCollaboratorCaches(): void {
         SystemFileService::clearStaticTreeCache();
         $this->permissionService->clearDistributedCache();
-    }
-
-    /**
-     * Get cached directory listing for a folder
-     */
-    private function getCachedDirectoryListing(\OCP\Files\Folder $folder): array {
-        return $this->locator()->cachedDirectoryListing($folder);
     }
 
     /**
@@ -384,6 +379,22 @@ class PageService {
             $this->shape(),
             $this->cache(),
             fn(): \OCA\IntraVox\Service\Path\PageDataEnricher => $this->pageDataEnricher()
+        );
+    }
+
+    /**
+     * Lazy seam for the language-content-status reader (LANGUAGE-STATUS domain).
+     * Built from the FolderContext substrate + the plain PageLister/PageLocator
+     * engines; the homepage-resolution subsystem and the real-content probe stay
+     * on PageService and are passed to getContentStatus() as $this-bound closures.
+     * Nullable-default so the harness auto-fill skips it.
+     */
+    private function languageStatus(): \OCA\IntraVox\Service\Language\LanguageStatusService {
+        return $this->languageStatusService ??= new \OCA\IntraVox\Service\Language\LanguageStatusService(
+            $this->folders(),
+            $this->pageLister(),
+            $this->locator(),
+            $this->logger
         );
     }
 
@@ -1428,60 +1439,16 @@ class PageService {
      * }
      */
     public function getLanguageContentStatus(): array {
-        $userLang = $this->folders()->userLanguage();
-        $withContent = [];
-        $active = [];
-
-        try {
-            $baseFolder = $this->folders()->intraVox();
-            foreach ($this->getCachedDirectoryListing($baseFolder) as $item) {
-                if ($item->getType() !== \OCP\Files\FileInfo::TYPE_FOLDER) {
-                    continue;
-                }
-                $name = $item->getName();
-                // Language folders are two-letter base codes (nl, en, de, ...).
-                if (!preg_match('/^[a-z]{2,3}$/', $name) || !($item instanceof \OCP\Files\Folder)) {
-                    continue;
-                }
-                if ($this->languageFolderHasHomepage($item)) {
-                    $active[] = $name;
-                }
-                if ($this->languageFolderHasRealContent($item)) {
-                    $withContent[] = $name;
-                }
-            }
-        } catch (\Throwable $e) {
-            $this->logger->warning('[PageService] getLanguageContentStatus failed: ' . $e->getMessage());
-        }
-
-        sort($withContent);
-        sort($active);
-
-        // The language the user will actually be shown: own language, else the
-        // recommended (primary) language, else English — issue #75. null means
-        // nothing can be served (only then does the fallback notice appear).
-        $served = $this->resolveEffectiveLanguage();
-
-        // Resolve the homepage for the SERVED language (not necessarily the
-        // user's), so the app lands on the correct homepage after fallback.
-        $homepageUniqueId = null;
-        try {
-            $homepageUniqueId = $this->resolveHomepageNodeUniqueId($served ?? $userLang);
-        } catch (\Throwable $e) {
-            // Non-fatal: the frontend falls back to its own heuristic.
-        }
-
-        return [
-            'language' => $userLang,
-            // hasContent = "the user will see real content" (own language, the
-            // recommended language, or English all count). Only false when
-            // nothing resolves — the sole trigger for the fallback notice.
-            'hasContent' => $served !== null,
-            'servedLanguage' => $served,
-            'languagesWithContent' => $withContent,
-            'activeLanguages' => $active,
-            'homepageUniqueId' => $homepageUniqueId,
-        ];
+        // The content-status read (language-folder scan, real-vs-placeholder
+        // split, #75 served-language + homepage resolution) lives in the
+        // LANGUAGE-STATUS domain service. Homepage resolution and the real-
+        // content probe stay here (shared subsystem / FolderContext-circular
+        // seam) and are passed as $this-bound closures.
+        return $this->languageStatus()->getContentStatus(
+            fn(?string $language): string => $this->resolveHomepageNodeUniqueId($language),
+            fn(\OCP\Files\Folder $folder): bool => $this->languageFolderHasHomepage($folder),
+            fn(\OCP\Files\Folder $folder): bool => $this->languageFolderHasRealContent($folder)
+        );
     }
 
     /**
@@ -1492,30 +1459,7 @@ class PageService {
      * @return array<string,int>
      */
     public function getPageCountByLanguage(): array {
-        $counts = [];
-        try {
-            $baseFolder = $this->folders()->intraVox();
-            foreach ($this->getCachedDirectoryListing($baseFolder) as $item) {
-                if ($item->getType() !== \OCP\Files\FileInfo::TYPE_FOLDER) {
-                    continue;
-                }
-                $name = $item->getName();
-                if (!preg_match('/^[a-z]{2,3}$/', $name) || !($item instanceof \OCP\Files\Folder)) {
-                    continue;
-                }
-                $pages = [];
-                $this->pageLister()->walkPlain($item, $pages, '');
-                $count = count($pages);
-                // Homepage counts as a page when present (findPagesInFolder skips it).
-                if ($item->nodeExists('home.json')) {
-                    $count++;
-                }
-                $counts[$name] = $count;
-            }
-        } catch (\Throwable $e) {
-            $this->logger->warning('[PageService] getPageCountByLanguage failed: ' . $e->getMessage());
-        }
-        return $counts;
+        return $this->languageStatus()->getPageCountByLanguage();
     }
 
     /**
