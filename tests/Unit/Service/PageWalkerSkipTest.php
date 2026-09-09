@@ -84,11 +84,47 @@ class PageWalkerSkipTest extends TestCase {
             ]),
         ]);
 
-        // listPagesWithContent resolves its folder via folders()->readLanguageFolder
-        // and never runs a cross-language locate, so the seam override goes away
-        // entirely — a FolderContext whose readLanguageFolder seam returns $en
-        // covers it. (This file has its own fixture helpers, not the shared
-        // harness, so the context is built inline rather than via fakeFolderContext.)
+        $pages = $this->wire($en)->listPagesWithContent();
+        $ids = array_column($pages, 'uniqueId');
+
+        $this->assertContains('page-real', $ids, 'the real page is listed');
+        $this->assertNotContains('template-kb', $ids, 'template pages must never be served as pages');
+        $this->assertNotContains('page-library', $ids, 'resource-library files are not pages');
+    }
+
+    /**
+     * Robustness (LISTING carve #9 review): a filesystem node literally named
+     * `home.json` that is a DIRECTORY, not a file, must not crash the listing. The
+     * pre-carve listPages called getContent() on it (fatal PHP Error on a Folder,
+     * not caught by catch(NotFoundException)); PageLister's instanceof-File guard
+     * now skips it cleanly and still serves the real pages.
+     */
+    public function testDirectoryNamedHomeJsonDoesNotCrashTheListing(): void {
+        $realPage = $this->makeFolder('/IntraVox/en/about', [
+            'about.json' => $this->makeFile('/IntraVox/en/about/about.json',
+                ['uniqueId' => 'page-real', 'title' => 'About']),
+        ]);
+        // home.json exists at the root but is a FOLDER, not a File.
+        $en = $this->makeFolder('/IntraVox/en', [
+            'home.json' => $this->makeFolder('/IntraVox/en/home.json', []),
+            'about' => $realPage,
+        ]);
+
+        $pages = $this->wire($en)->listPages();
+        $ids = array_column($pages, 'uniqueId');
+
+        $this->assertContains('page-real', $ids, 'real pages are still listed');
+        $this->assertNotContains('home.json', $ids, 'a directory named home.json is not a page');
+    }
+
+    /**
+     * Wire a constructorless PageService whose read/language folder is $en. This
+     * file has its own fixture helpers (not the shared harness), so the
+     * FolderContext + the collaborators the pageLister() accessor reads are set
+     * inline. The sanitizer is real (a mock would return null and pass for the
+     * wrong reason).
+     */
+    private function wire(Folder $en): PageService {
         $svc = new class extends PageService {
             public function __construct() {
             }
@@ -109,9 +145,8 @@ class PageWalkerSkipTest extends TestCase {
             ->setValue($svc, $folderContext);
         (new \ReflectionProperty(PageService::class, 'logger'))
             ->setValue($svc, $this->createMock(\Psr\Log\LoggerInterface::class));
-        // listPagesWithContent now routes through pageLister(), whose accessor
-        // eagerly reads these two — set them (the content walk itself never calls
-        // permissionService, but the lister is constructed regardless).
+        // The listing routes through pageLister(), whose accessor eagerly reads
+        // these two even when the walk itself never calls permissionService.
         (new \ReflectionProperty(PageService::class, 'permissionService'))
             ->setValue($svc, $this->createMock(\OCA\IntraVox\Service\PermissionService::class));
         (new \ReflectionProperty(PageService::class, 'pageIndexService'))
@@ -121,8 +156,6 @@ class PageWalkerSkipTest extends TestCase {
                 $this->createMock(\OCA\IntraVox\Service\PageIndexService::class),
                 $this->createMock(\Psr\Log\LoggerInterface::class)
             ));
-        // The walker sanitizes every page it serves; a mock would return null
-        // and make the assertions pass for the wrong reason.
         (new \ReflectionProperty(PageService::class, 'shapeSanitizer'))
             ->setValue($svc, new \OCA\IntraVox\Service\Sanitize\PageShapeSanitizer(
                 $this->createMock(\OCP\IConfig::class),
@@ -131,12 +164,6 @@ class PageWalkerSkipTest extends TestCase {
                 new \OCA\IntraVox\Service\Sanitize\UrlSanitizer(),
                 new \OCA\IntraVox\Service\Sanitize\ColorSanitizer(),
             ));
-
-        $pages = $svc->listPagesWithContent();
-        $ids = array_column($pages, 'uniqueId');
-
-        $this->assertContains('page-real', $ids, 'the real page is listed');
-        $this->assertNotContains('template-kb', $ids, 'template pages must never be served as pages');
-        $this->assertNotContains('page-library', $ids, 'resource-library files are not pages');
+        return $svc;
     }
 }
