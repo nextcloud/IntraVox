@@ -322,5 +322,109 @@ class PageTranslationGroupTest extends TestCase {
         );
     }
 
+    // ------------------------------------------------- getTranslatableLanguages
 
+    /**
+     * The languages a page can still be created in: every content language
+     * except the page's own and any the group already covers. This picker had
+     * no behavioural coverage before the TRANSLATE-query carve.
+     */
+    public function testTranslatableLanguagesExcludesOwnLanguageAndCarriesName(): void {
+        // page-nl lives in nl/; base holds nl + de, so the only candidate is de.
+        $svc = $this->makeService();
+
+        $languages = $svc->getTranslatableLanguages('page-nl');
+        $codes = array_column($languages, 'code');
+
+        $this->assertSame(['de'], $codes, 'own language nl is excluded, de remains');
+        // name comes from languageDisplayName; with a bare LanguageService mock
+        // (no getAvailableLanguages) it falls back to the uppercased code.
+        $this->assertSame('DE', $languages[0]['name']);
+        $this->assertArrayHasKey('missingAncestors', $languages[0]);
+    }
+
+    /** A language the page's group already covers is not offered again. */
+    public function testTranslatableLanguagesExcludesAlreadyTakenLanguages(): void {
+        $existing = 'tg-11111111-2222-3333-4444-555555555555';
+        $svc = $this->makeService(
+            ['uniqueId' => 'page-nl', 'title' => 'Over ons', 'translationGroup' => $existing]
+        );
+        // The group already holds a German version, so de must drop out — the
+        // only other content language — leaving an empty offer.
+        $index = $this->createMock(PageIndexService::class);
+        $index->method('findByUniqueId')->willReturn(null);
+        $index->method('findByTranslationGroup')->willReturnCallback(
+            fn($g) => $g === $existing ? [['unique_id' => 'page-de', 'language' => 'de']] : []
+        );
+        (new \ReflectionProperty(PageService::class, 'pageIndexService'))->setValue($svc, $index);
+
+        $codes = array_column($svc->getTranslatableLanguages('page-nl'), 'code');
+        $this->assertSame([], $codes, 'de is already in the group, so nothing is offered');
+    }
+
+    public function testTranslatableLanguagesRejectsAnUnknownPage(): void {
+        $svc = $this->makeService();
+        $this->expectException(\OCA\IntraVox\Exception\PageNotFoundException::class);
+        $svc->getTranslatableLanguages('page-nope');
+    }
+
+    // ------------------------------------------------- getTranslationCandidates
+
+    /**
+     * Candidate pages to link to: excludes the page itself, its own language,
+     * and pages already grouped elsewhere. Answered from the index. No
+     * behavioural coverage before the carve.
+     */
+    public function testTranslationCandidatesExcludeSelfAndGroupedPages(): void {
+        $svc = $this->makeService();
+        $index = $this->createMock(PageIndexService::class);
+        $index->method('findByUniqueId')->willReturn(null);
+        // tg-other holds a member OTHER than page-de-taken, so hasOtherMembers()
+        // (which reads findByTranslationGroup) reports it as genuinely grouped.
+        $index->method('findByTranslationGroup')->willReturnCallback(
+            fn($g) => $g === 'tg-other'
+                ? [['unique_id' => 'page-en-partner', 'language' => 'en']]
+                : []
+        );
+        // de holds three pages: a free one, the page itself (must never appear),
+        // and one already in another multi-member group (must be excluded).
+        $index->method('getPagesByLanguage')->willReturnCallback(fn($code) => $code === 'de' ? [
+            ['unique_id' => 'page-de-free', 'language' => 'de', 'title' => 'Frei'],
+            ['unique_id' => 'page-nl', 'language' => 'de', 'title' => 'Self echo'],
+            ['unique_id' => 'page-de-taken', 'language' => 'de', 'title' => 'Belegt',
+                'translation_group' => 'tg-other'],
+        ] : []);
+        (new \ReflectionProperty(PageService::class, 'pageIndexService'))->setValue($svc, $index);
+
+        $ids = array_column($svc->getTranslationCandidates('page-nl'), 'uniqueId');
+
+        $this->assertContains('page-de-free', $ids, 'a free page in another language is offered');
+        $this->assertNotContains('page-nl', $ids, 'the page itself is never a candidate');
+        $this->assertNotContains('page-de-taken', $ids, 'a page already grouped elsewhere is excluded');
+    }
+
+    /** Passing a language narrows the offer to that one language. */
+    public function testTranslationCandidatesNarrowToOneLanguage(): void {
+        $svc = $this->makeService();
+        $index = $this->createMock(PageIndexService::class);
+        $index->method('findByUniqueId')->willReturn(null);
+        $index->method('findByTranslationGroup')->willReturn([]);
+        $index->method('getPagesByLanguage')->willReturnCallback(fn($code) => [
+            ['unique_id' => 'page-' . $code . '-x', 'language' => $code, 'title' => strtoupper($code)],
+        ]);
+        (new \ReflectionProperty(PageService::class, 'pageIndexService'))->setValue($svc, $index);
+
+        // Only de is a content language besides nl, and narrowing to de keeps it.
+        $ids = array_column($svc->getTranslationCandidates('page-nl', 'de'), 'uniqueId');
+        $this->assertSame(['page-de-x'], $ids);
+
+        // Narrowing to a language with no content folder yields nothing.
+        $this->assertSame([], $svc->getTranslationCandidates('page-nl', 'fr'));
+    }
+
+    public function testTranslationCandidatesRejectAnUnknownPage(): void {
+        $svc = $this->makeService();
+        $this->expectException(\OCA\IntraVox\Exception\PageNotFoundException::class);
+        $svc->getTranslationCandidates('page-nope');
+    }
 }
