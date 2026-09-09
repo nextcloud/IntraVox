@@ -102,6 +102,8 @@ class PageService {
     private ?\OCA\IntraVox\Service\Translation\TranslationQueryService $translationQueryService = null;
     /** Lazily-built version-history service (VERSION/HISTORY domain). */
     private ?\OCA\IntraVox\Service\Version\PageVersionDomainService $versionDomain = null;
+    /** Lazily-built homepage-resolution service (HOMEPAGE domain). */
+    private ?\OCA\IntraVox\Service\Homepage\HomepageResolverService $homepageResolver = null;
     /** Lazily-built folder/location substrate (clean-target step 1; shipped unused). */
     private ?\OCA\IntraVox\Service\Folder\FolderContext $folderContext = null;
     private LoggerInterface $logger;
@@ -439,6 +441,31 @@ class PageService {
             $this->logger,
             fn(string $pageId): ?array => $this->locateVersionPage($pageId),
             fn(string $pageId): ?array => $this->locatePageForOperation($pageId)
+        );
+    }
+
+    /**
+     * Lazy seam for the homepage-resolution service (HOMEPAGE domain). Built from
+     * the HomepageService pointer engine + the FolderContext substrate; page
+     * lookup / language-folder resolver / cached read / language resolution / the
+     * homepage predicate seam / clearCache stay resident on PageService (shared,
+     * reflection-anchored, or pinned) and are bound as $this-closures. The
+     * isHomepage closure keeps the resident, subclass-overridable seam
+     * authoritative. Nullable-default so the harness auto-fill skips it.
+     */
+    private function homepageResolver(): \OCA\IntraVox\Service\Homepage\HomepageResolverService {
+        return $this->homepageResolver ??= new \OCA\IntraVox\Service\Homepage\HomepageResolverService(
+            $this->homepageService,
+            $this->folders(),
+            fn(string $lang): \OCP\Files\Folder => $this->getLanguageFolderByCode($lang),
+            fn(\OCP\Files\Folder $folder, string $uid): ?array => $this->findPageByUniqueId($folder, $uid),
+            fn(\OCP\Files\File $file): string => $this->getCachedFileContent($file),
+            fn(): ?string => $this->resolveEffectiveLanguage(),
+            fn(): string => $this->getUserLanguage(),
+            fn(string $uid, ?string $language = null): bool => $this->isHomepage($uid, $language),
+            function (): void {
+                $this->clearCache();
+            }
         );
     }
 
@@ -799,53 +826,7 @@ class PageService {
      * @return string uniqueId of the homepage ('home' for the legacy default).
      */
     public function getHomepageUniqueId(?string $language = null): string {
-        // Without an explicit language, use the language the user is actually
-        // shown (recommended-language fallback, #75) so the homepage pointer is
-        // resolved in — and checked against — the served language's folder.
-        $lang = $language ?? $this->resolveEffectiveLanguage() ?? $this->getUserLanguage();
-
-        $pointer = $this->homepageService->getHomepageUniqueId($lang);
-        if ($pointer !== null && $pointer !== '' && $pointer !== 'home') {
-            // Only honour the pointer when it resolves to an existing page.
-            try {
-                $folder = $this->getLanguageFolderByCode($lang);
-                if ($this->findPageByUniqueId($folder, $pointer) !== null) {
-                    return $pointer;
-                }
-            } catch (\Exception $e) {
-                // Fall through to the legacy default.
-            }
-        }
-
-        // Legacy default: the loose home.json in the language root.
-        //
-        // Resolve it to the uniqueId the file actually carries. Returning the
-        // bare string 'home' hands the frontend an id that matches no page in
-        // listPages(), so `pages.find(p => p.uniqueId === homepageUniqueId)`
-        // came up empty and the reader fell through to a slug/path heuristic
-        // that ends at `pages[0]` — the alphabetically first page. On dev that
-        // put every Dutch reader on "API Referentie" instead of "Welkom bij
-        // IntraVox", while English (which uses the normalised home/home.json
-        // layout, so it already had a real uniqueId) worked fine.
-        //
-        // Falls back to the literal 'home' when the file is missing or carries
-        // no uniqueId, which is the pre-existing behaviour and what the rest of
-        // the legacy path still understands.
-        try {
-            $folder = $this->getLanguageFolderByCode($lang);
-            $homeFile = $folder->get('home.json');
-            if ($homeFile instanceof \OCP\Files\File) {
-                $data = json_decode($this->getCachedFileContent($homeFile), true);
-                $homeUniqueId = is_array($data) ? ($data['uniqueId'] ?? null) : null;
-                if (is_string($homeUniqueId) && $homeUniqueId !== '') {
-                    return $homeUniqueId;
-                }
-            }
-        } catch (\Exception $e) {
-            // No loose home.json in this language — fall through.
-        }
-
-        return 'home';
+        return $this->homepageResolver()->getHomepageUniqueId($language);
     }
 
     /**
@@ -869,29 +850,7 @@ class PageService {
      * @param array<int,array>|null $tree Optional pre-built page tree.
      */
     public function resolveHomepageNodeUniqueId(?string $language = null, ?array $tree = null): string {
-        $resolved = $this->getHomepageUniqueId($language);
-        if ($resolved !== 'home') {
-            return $resolved;
-        }
-
-        // Legacy default: map 'home' to the real uniqueId of the loose home.json.
-        try {
-            $folder = $this->getLanguageFolderByCode($language ?? $this->getUserLanguage());
-            if ($folder->nodeExists('home.json')) {
-                $data = json_decode($folder->get('home.json')->getContent(), true);
-                if (is_array($data) && !empty($data['uniqueId'])) {
-                    return (string)$data['uniqueId'];
-                }
-            }
-        } catch (\Exception $e) {
-            // Fall through.
-        }
-
-        // Last resort: first root node of a supplied tree.
-        if (is_array($tree) && isset($tree[0]['uniqueId'])) {
-            return (string)$tree[0]['uniqueId'];
-        }
-        return 'home';
+        return $this->homepageResolver()->resolveHomepageNodeUniqueId($language, $tree);
     }
 
     /**
@@ -1678,35 +1637,7 @@ class PageService {
      * @throws \InvalidArgumentException When the page is unknown or not at root.
      */
     public function setHomepage(string $uniqueId): void {
-        $lang = $this->folders()->userLanguage();
-        $languageFolder = $this->folders()->languageFolder();
-
-        // Resolve the target and require it to be a real page.
-        $target = $this->findPageByUniqueId($languageFolder, $uniqueId);
-        if ($target === null || !isset($target['folder'])) {
-            throw new \InvalidArgumentException('Page not found');
-        }
-
-        // Must be a ROOT-level page: its folder's parent is the language root
-        // (or it is the loose home itself). Compare parent paths.
-        $isLooseHome = !empty($target['isHome']);
-        if (!$isLooseHome) {
-            $parentPath = dirname($target['folder']->getPath());
-            if ($parentPath !== $languageFolder->getPath()) {
-                throw new \InvalidArgumentException('Only root-level pages can be the homepage');
-            }
-        }
-
-        // If the target is already the resolved homepage, nothing to do.
-        if ($this->isHomepage($uniqueId, $lang)) {
-            return;
-        }
-
-        // Pages never move when the homepage changes — only the pointer shifts.
-        // The old loose home.json simply stays where it is and shows up as a
-        // normal root page once the pointer designates a different page.
-        $this->homepageService->setHomepageUniqueId($uniqueId, $lang);
-        $this->clearCache();
+        $this->homepageResolver()->setHomepage($uniqueId);
     }
 
     public function movePage(string $pageId, string $targetParentId): void {
