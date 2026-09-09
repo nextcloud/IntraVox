@@ -99,9 +99,13 @@ class DistributedCacheScopeTest extends TestCase {
 
 	/**
 	 * The news cache is the third shared entry and carries the same risk.
+	 *
+	 * The news-widget orchestration (with this cache key) moved to
+	 * News/NewsWidgetService (NEWS domain carve); the group-scoping guard follows
+	 * it there.
 	 */
 	public function testNewsCacheKeyIsScopedByGroupHash(): void {
-		$source = $this->pageServiceSource();
+		$source = $this->sourceOf('lib/Service/News/NewsWidgetService.php');
 
 		$this->assertMatchesRegularExpression(
 			'/\$newsCacheKey\s*=\s*\'news_\'\s*\.\s*\$language\s*\.\s*\'_\'\s*\.\s*\$this->groupContext->getGroupHash\(\)/',

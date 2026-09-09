@@ -104,6 +104,8 @@ class PageService {
     private ?\OCA\IntraVox\Service\Version\PageVersionDomainService $versionDomain = null;
     /** Lazily-built homepage-resolution service (HOMEPAGE domain). */
     private ?\OCA\IntraVox\Service\Homepage\HomepageResolverService $homepageResolver = null;
+    /** Lazily-built news-widget orchestration service (NEWS domain). */
+    private ?\OCA\IntraVox\Service\News\NewsWidgetService $newsWidget = null;
     /** Lazily-built folder/location substrate (clean-target step 1; shipped unused). */
     private ?\OCA\IntraVox\Service\Folder\FolderContext $folderContext = null;
     private LoggerInterface $logger;
@@ -466,6 +468,26 @@ class PageService {
             function (): void {
                 $this->clearCache();
             }
+        );
+    }
+
+    /**
+     * Lazy seam for the news-widget orchestration service (NEWS domain). Built
+     * from the NewsPageService engine + its cache/group/metaVox/publication
+     * collaborators + the FolderContext substrate; page lookup stays resident on
+     * PageService (findPageByUniqueId is shared far beyond news) and is bound as
+     * a $this-closure. Nullable-default so the harness auto-fill skips it.
+     */
+    private function newsWidget(): \OCA\IntraVox\Service\News\NewsWidgetService {
+        return $this->newsWidget ??= new \OCA\IntraVox\Service\News\NewsWidgetService(
+            $this->news(),
+            $this->cache(),
+            $this->groupContext,
+            $this->metaVox(),
+            $this->publicationState(),
+            $this->folders(),
+            $this->logger,
+            fn(\OCP\Files\Folder $folder, string $uid): ?array => $this->findPageByUniqueId($folder, $uid)
         );
     }
 
@@ -2369,202 +2391,16 @@ class PageService {
         ?string $sourcePageId = null,
         bool $filterPublished = false
     ): array {
-        $folder = $this->folders()->readLanguageFolder();
-        $pages = [];
-        // Match the served language (recommended-language fallback, #75) so
-        // the news cache key and date localisation agree with the folder.
-        $language = $this->resolveEffectiveLanguage() ?? $this->folders()->userLanguage();
-
-        // Version-counter cache: the news widget result depends on all pages in
-        // the source folder plus user-supplied filters/sort/limit, plus the
-        // user's group context (permissions). We don't want to rebuild on every
-        // dashboard render, but invalidation must be instant on any page write.
-        //
-        // Strategy: a per-language counter that PageService::clearCache bumps
-        // on every mutation. Cache entries embed the current counter value;
-        // after a bump, every old entry is unreachable (no reader looks under
-        // the stale counter), so they age out via TTL without ever serving
-        // stale data. Plan B4 from the roadmap.
-        $newsVersionKey = 'news_version_' . $language;
-        $newsVersion = 0;
-        $newsCacheKey = null;
-        if ($this->cache()->isDistributedAvailable()) {
-            $newsVersion = (int) ($this->cache()->getDistributed($newsVersionKey) ?? 0);
-            $paramHash = md5(json_encode([
-                $sourcePath, $filters, $filterOperator, $limit, $sortBy,
-                $sortOrder, $sourcePageId, $filterPublished,
-            ]));
-            $newsCacheKey = 'news_' . $language . '_' . $this->groupContext->getGroupHash()
-                . '_v' . $newsVersion . '_' . $paramHash;
-            $cached = $this->cache()->getDistributed($newsCacheKey);
-            if (is_string($cached)) {
-                $decoded = json_decode($cached, true);
-                if (is_array($decoded)) {
-                    return $decoded;
-                }
-            }
-        }
-
-        // If sourcePageId is provided, find that page and use its folder as source
-        // Also include the selected page itself in the results
-        $sourcePageData = null;
-        if (!empty($sourcePageId)) {
-            try {
-                $result = $this->findPageByUniqueId($folder, $sourcePageId);
-                if ($result && isset($result['folder'])) {
-                    $folder = $result['folder'];
-                    // Store the source page data to include it in results
-                    if (isset($result['file'])) {
-                        $sourcePageData = $result;
-                    }
-                } else {
-                    $this->logger->warning('News widget: Source page not found', ['sourcePageId' => $sourcePageId]);
-                    return ['items' => [], 'total' => 0, 'metavoxAvailable' => $this->metaVox()->isMetaVoxAvailable()];
-                }
-            } catch (\Exception $e) {
-                $this->logger->warning('News widget: Error finding source page', ['sourcePageId' => $sourcePageId, 'error' => $e->getMessage()]);
-                return ['items' => [], 'total' => 0, 'metavoxAvailable' => $this->metaVox()->isMetaVoxAvailable()];
-            }
-        }
-        // Legacy: If sourcePath is provided (but no sourcePageId), navigate to that folder
-        elseif (!empty($sourcePath)) {
-            $sourcePath = trim($sourcePath, '/');
-            try {
-                $folder = $folder->get($sourcePath);
-            } catch (NotFoundException $e) {
-                $this->logger->warning('News widget: Source folder not found', ['path' => $sourcePath]);
-                return ['items' => [], 'total' => 0, 'metavoxAvailable' => $this->metaVox()->isMetaVoxAvailable()];
-            }
-        }
-
-        // Recursively collect pages from the source folder.
-        // Pass a hard cap to allow early-exit and prevent unbounded filesystem scans.
-        $collectLimit = max($limit * 4, 200); // collect enough for filtering/sorting, cap at 200 minimum
-        $this->findNewsPagesInFolder($folder, $pages, $language, $collectLimit);
-
-        // Add the selected source page itself to the results (if sourcePageId was provided)
-        if ($sourcePageData !== null && isset($sourcePageData['file'])) {
-            $newsItem = $this->news()->buildSourcePageItem($sourcePageData, $language);
-            if ($newsItem !== null) {
-                // Add to beginning of pages array (it's the "parent" page)
-                array_unshift($pages, $newsItem);
-            }
-        }
-
-        // Apply MetaVox filters if any and if MetaVox is available
-        if (!empty($filters) && $this->metaVox()->isMetaVoxAvailable()) {
-            $pages = $this->applyMetaVoxFilters($pages, $filters, $filterOperator);
-        }
-
-        // Apply the publication filter when the widget asks for published pages
-        // only. Not gated on MetaVox: the manual draft/published status must be
-        // honoured even when no publication date fields are configured.
-        if ($filterPublished) {
-            $pages = $this->applyPublicationDateFilter($pages);
-        }
-
-        $total = count($pages);
-
-        $pages = $this->news()->sortAndLimit($pages, $sortBy, $sortOrder, $limit);
-
-        $result = [
-            'items' => $pages,
-            'total' => $total,
-            'metavoxAvailable' => $this->metaVox()->isMetaVoxAvailable(),
-        ];
-
-        // Cache for 5 minutes — the version-counter scheme makes correctness
-        // independent of TTL (a counter bump renders this entry unreachable),
-        // so the TTL only bounds memory growth from orphaned entries.
-        if ($this->cache()->isDistributedAvailable() && $newsCacheKey !== null) {
-            $this->cache()->setDistributed($newsCacheKey, json_encode($result), PageCacheService::NEWS_TTL);
-        }
-
-        return $result;
-    }
-
-    /**
-     * Recursively find news pages in a folder
-     *
-     * @param int $maxCollect Hard cap on items to collect (0 = unlimited)
-     */
-    private function findNewsPagesInFolder($folder, array &$pages, string $language, int $maxCollect = 0): void {
-        $this->news()->findNewsPagesInFolder(
-            $this->folders()->intraVox(),
-            $folder,
-            $pages,
-            $language,
-            $maxCollect
-        );
-    }
-
-    /**
-     * Extract an excerpt from page content (first text widget)
-     */
-
-    /**
-     * Find the first image in a page's layout
-     * Returns array with 'src' and 'mediaFolder' or null if no image found
-     */
-
-    /**
-     * Apply MetaVox filters to pages
-     *
-     * @param array $pages Pages to filter
-     * @param array $filters Filter definitions
-     * @param string $operator 'AND' or 'OR'
-     * @return array Filtered pages
-     */
-    private function applyMetaVoxFilters(array $pages, array $filters, string $operator = 'AND'): array {
-        if (empty($filters) || !$this->metaVox()->isMetaVoxAvailable()) {
-            return $pages;
-        }
-
-        return $this->news()->applyMetaVoxFilters(
-            $pages,
+        return $this->newsWidget()->getNewsPages(
+            $sourcePath,
             $filters,
-            $operator,
-            fn(array $fileIds): array => $this->metaVox()->getMetaVoxDataForFiles($fileIds)
+            $filterOperator,
+            $limit,
+            $sortBy,
+            $sortOrder,
+            $sourcePageId,
+            $filterPublished
         );
-    }
-
-    /**
-     * Filter pages based on publication dates from MetaVox fields
-     *
-     * Logic: (Publish date is empty OR Publish date <= today)
-     *    AND (Expiration date is empty OR Expiration date > today)
-     *
-     * @param array $pages Pages to filter
-     * @return array Filtered pages that are currently published
-     */
-    private function applyPublicationDateFilter(array $pages): array {
-        // The gate itself stays here — the tree, search and single-page reads
-        // share it — and is handed to the news service as callables.
-        return $this->news()->applyPublicationDateFilter(
-            $pages,
-            fn(array $fileIds): array => $this->publicationState()->publicationMetaForFiles($fileIds),
-            fn(array $page, array $meta): string => $this->publicationState()->effectivePublishState($page, $meta)
-        );
-    }
-
-    /**
-     * The date-only parser used by the MetaVox filter operators moved to
-     * NewsPageService with matchesFilter(), its only caller. The publication
-     * paths here use the time-aware parseDateTime() above instead.
-     */
-
-    /**
-     * Format a timestamp in a localized date format
-     */
-    private function formatDateLocalized(int $timestamp, string $language): string {
-        return $this->news()->formatDateLocalized($timestamp, $language);
-    }
-
-    /**
-     * Check if a folder contains any pages (recursively)
-     */
-    private function folderContainsPages($folder): bool {
-        return $this->news()->folderContainsPages($folder);
     }
 
     // =========================================================================
