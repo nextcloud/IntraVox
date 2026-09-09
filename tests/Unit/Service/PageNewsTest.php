@@ -40,7 +40,8 @@ class PageNewsTest extends TestCase {
     private function makeService(
         Folder $readFolder,
         array $collected = [],
-        bool $metaVoxAvailable = false
+        bool $metaVoxAvailable = false,
+        ?array $sourceItem = null
     ): PageService {
         // getNewsPages resolves its folder via folders()->readLanguageFolder +
         // folders()->intraVox (findNewsPagesInFolder) and runs no cross-language
@@ -69,7 +70,7 @@ class PageNewsTest extends TestCase {
             fn(array $pages, string $sortBy, string $sortOrder, int $limit): array
                 => array_slice($pages, 0, $limit)
         );
-        $news->method('buildSourcePageItem')->willReturn(null);
+        $news->method('buildSourcePageItem')->willReturn($sourceItem);
 
         $metaVox = $this->createMock(MetaVoxGateway::class);
         $metaVox->method('isMetaVoxAvailable')->willReturn($metaVoxAvailable);
@@ -172,5 +173,196 @@ class PageNewsTest extends TestCase {
 
         $this->assertSame(5, $result['total'], 'total is the pre-limit count');
         $this->assertCount(2, $result['items'], 'items honour the limit');
+    }
+
+    // ----------------------------------------- source-page + filter branches
+
+    public function testSourcePageIsPrependedToTheResults(): void {
+        // A resolvable sourcePageId whose buildSourcePageItem yields an item:
+        // the source page is unshifted to the front of the collected children.
+        // The locator resolves a home.json whose uniqueId matches FIRST, so a
+        // loose home.json in the root is the simplest resolvable fixture.
+        $srcFile = $this->createMock(\OCP\Files\File::class);
+        $srcFile->method('getContent')->willReturn(json_encode(['uniqueId' => 'page-src', 'title' => 'Source']));
+        $srcFile->method('getName')->willReturn('home.json');
+        $srcFile->method('getId')->willReturn(42);
+        $root = $this->createMock(Folder::class);
+        $root->method('getName')->willReturn('en');
+        $root->method('getPath')->willReturn('/IntraVox/en');
+        $root->method('nodeExists')->willReturnCallback(fn($n) => $n === 'home.json');
+        $root->method('getDirectoryListing')->willReturn([]);
+        $root->method('get')->willReturnCallback(function ($p) use ($srcFile) {
+            if ($p === 'home.json') {
+                return $srcFile;
+            }
+            throw new NotFoundException($p);
+        });
+
+        // buildSourcePageItem returns a real item so the unshift branch fires.
+        $svc = $this->makeService(
+            $root,
+            collected: [['uniqueId' => 'page-child', 'title' => 'Child', 'modified' => 5]],
+            sourceItem: ['uniqueId' => 'page-src', 'title' => 'Source', 'modified' => 99]
+        );
+
+        $result = $svc->getNewsPages(sourcePageId: 'page-src');
+
+        $this->assertSame('page-src', $result['items'][0]['uniqueId'],
+            'the source page is prepended before the collected children');
+        $this->assertSame(2, $result['total']);
+    }
+
+    public function testFilterPublishedInvokesTheEnginePublicationFilter(): void {
+        $svc = $this->makeService(
+            $this->folderWith(),
+            collected: [
+                ['uniqueId' => 'page-1', 'title' => 'One', 'modified' => 1],
+                ['uniqueId' => 'page-2', 'title' => 'Two', 'modified' => 2],
+            ]
+        );
+        $news = $this->newsMockFrom($svc);
+        // The publication filter drops page-2, so total reflects the filtered set.
+        $news->expects($this->once())
+            ->method('applyPublicationDateFilter')
+            ->willReturnCallback(fn(array $pages) => array_slice($pages, 0, 1));
+
+        $result = $svc->getNewsPages(filterPublished: true);
+
+        $this->assertSame(1, $result['total'], 'total counts the publication-filtered set, pre-limit');
+    }
+
+    // -------------------------------------------------- distributed cache path
+
+    /**
+     * The distributed-cache path is entirely skipped by makeService
+     * (isDistributedAvailable=false). This variant enables it and records the
+     * key/value handed to getDistributed/setDistributed.
+     *
+     * The GroupContextService is final (cannot be mocked); a real instance with
+     * a userless session yields the deterministic ANONYMOUS_HASH ('anon'), which
+     * is what the cache-key assertions below expect.
+     *
+     * @param array<string,string> $store getDistributed lookups (key => JSON)
+     * @param array<int,array{0:string,1:string,2:int}> &$writes setDistributed calls
+     */
+    private function makeDistributedService(
+        array $store,
+        array &$writes,
+        array $collected = []
+    ): PageService {
+        $svc = new class extends PageService {
+            public function __construct() {
+            }
+            public function clearCache(): void {
+            }
+        };
+
+        $news = $this->createMock(NewsPageService::class);
+        $news->method('findNewsPagesInFolder')->willReturnCallback(
+            function ($root, $folder, array &$pages, string $language, int $maxCollect = 0) use ($collected): void {
+                foreach ($collected as $p) {
+                    $pages[] = $p;
+                }
+            }
+        );
+        $news->method('sortAndLimit')->willReturnCallback(
+            fn(array $pages, string $sortBy, string $sortOrder, int $limit): array => array_slice($pages, 0, $limit)
+        );
+        $news->method('buildSourcePageItem')->willReturn(null);
+
+        $metaVox = $this->createMock(MetaVoxGateway::class);
+        $metaVox->method('isMetaVoxAvailable')->willReturn(false);
+
+        $cache = $this->createMock(PageCacheService::class);
+        $cache->method('isDistributedAvailable')->willReturn(true);
+        $cache->method('getDistributed')->willReturnCallback(fn($k) => $store[$k] ?? null);
+        $cache->method('setDistributed')->willReturnCallback(
+            function ($k, $v, $ttl) use (&$writes): void {
+                $writes[] = [$k, $v, $ttl];
+            }
+        );
+
+        // Final class -> build a real one; a userless session -> 'anon' hash.
+        $session = $this->createMock(\OCP\IUserSession::class);
+        $session->method('getUser')->willReturn(null);
+        $groupContext = new \OCA\IntraVox\Service\GroupContextService(
+            $session,
+            $this->createMock(\OCP\IGroupManager::class)
+        );
+
+        $this->injectPageServiceDependencies($svc, [
+            'newsPageService' => $news,
+            'metaVoxGateway' => $metaVox,
+            'cache' => $cache,
+            'groupContext' => $groupContext,
+            'logger' => $this->createMock(LoggerInterface::class),
+            'userId' => 'tester',
+            'folderContext' => $this->fakeFolderContext(
+                readLanguageFolder: $this->folderWith(),
+                intraVox: $this->folderWith(),
+                userLanguage: 'en'
+            ),
+        ]);
+        return $svc;
+    }
+
+    public function testDistributedCacheHitReturnsDecodedWithoutCollecting(): void {
+        // Pre-seed the exact key getNewsPages builds for the default params.
+        $lang = 'en';
+        $paramHash = md5(json_encode(['', [], 'AND', 5, 'modified', 'desc', null, false]));
+        $key = 'news_' . $lang . '_anon_v0_' . $paramHash;
+        $cached = ['items' => [['uniqueId' => 'page-cached']], 'total' => 1, 'metavoxAvailable' => false];
+
+        $writes = [];
+        $svc = $this->makeDistributedService([$key => json_encode($cached)], $writes,
+            collected: [['uniqueId' => 'page-should-not-appear', 'title' => 'X', 'modified' => 1]]);
+
+        $result = $svc->getNewsPages();
+
+        $this->assertSame($cached, $result, 'a cache hit returns the decoded payload verbatim');
+        $this->assertSame([], $writes, 'a hit writes nothing');
+    }
+
+    public function testDistributedCacheMissWritesResultWithNewsTtl(): void {
+        $writes = [];
+        $svc = $this->makeDistributedService([], $writes,
+            collected: [['uniqueId' => 'page-1', 'title' => 'One', 'modified' => 1]]);
+
+        $result = $svc->getNewsPages();
+
+        $this->assertSame(1, $result['total']);
+        $this->assertCount(1, $writes, 'a miss writes exactly one cache entry');
+        [$key, $value, $ttl] = $writes[0];
+        $paramHash = md5(json_encode(['', [], 'AND', 5, 'modified', 'desc', null, false]));
+        $this->assertSame('news_en_anon_v0_' . $paramHash, $key,
+            'the key is news_{lang}_{groupHash}_v0_{paramHash} (v0 = read-only counter)');
+        $this->assertSame(PageCacheService::NEWS_TTL, $ttl);
+        $this->assertSame($result, json_decode($value, true), 'the written value is the json-encoded result');
+    }
+
+    /** A cached value that is not a JSON array falls through to the live pipeline. */
+    public function testDistributedCacheNonArrayValueFallsThrough(): void {
+        $lang = 'en';
+        $paramHash = md5(json_encode(['', [], 'AND', 5, 'modified', 'desc', null, false]));
+        $key = 'news_' . $lang . '_anon_v0_' . $paramHash;
+
+        $writes = [];
+        // A JSON string that decodes to a scalar, not an array -> no early return.
+        $svc = $this->makeDistributedService([$key => '"not-an-array"'], $writes,
+            collected: [['uniqueId' => 'page-live', 'title' => 'Live', 'modified' => 1]]);
+
+        $result = $svc->getNewsPages();
+
+        $this->assertSame(1, $result['total'], 'a non-array cached value does not short-circuit');
+        $this->assertCount(1, $writes, 'the freshly-built result is then cached');
+    }
+
+    /** Reach into the anonymous subclass's injected NewsPageService mock. */
+    private function newsMockFrom(PageService $svc): NewsPageService
+    {
+        $prop = new \ReflectionProperty(PageService::class, 'newsPageService');
+        /** @var NewsPageService $news */
+        $news = $prop->getValue($svc);
+        return $news;
     }
 }
