@@ -1331,17 +1331,6 @@ class PageService {
     }
 
     /**
-     * Whether a language folder holds a REAL (editor-authored) homepage, as
-     * opposed to an auto-generated placeholder or no homepage at all.
-     *
-     * A homepage counts as real when `home.json` exists, parses, and does NOT
-     * carry the `_generated` marker written by LanguageHomepageService /
-     * demo-data. The marker is dropped on the first editor save, so any edited
-     * homepage reads as real. Homepages from installs predating the marker also
-     * read as real (no marker present) — which is the safe, no-regression
-     * default.
-     */
-    /**
      * Resolve the homepage JSON for a language folder regardless of storage form
      * (configurable homepage). Checks, in order:
      *   1. a `homepage.json` pointer → the designated root page's JSON;
@@ -1400,6 +1389,17 @@ class PageService {
         return null;
     }
 
+    /**
+     * Whether a language folder holds a REAL (editor-authored) homepage, as
+     * opposed to an auto-generated placeholder or no homepage at all.
+     *
+     * A homepage counts as real when `home.json` exists, parses, and does NOT
+     * carry the `_generated` marker written by LanguageHomepageService /
+     * demo-data. The marker is dropped on the first editor save, so any edited
+     * homepage reads as real. Homepages from installs predating the marker also
+     * read as real (no marker present) — which is the safe, no-regression
+     * default.
+     */
     private function languageFolderHasRealContent(\OCP\Files\Folder $langFolder): bool {
         $data = $this->resolveLanguageHomepageData($langFolder);
         if ($data === null) {
