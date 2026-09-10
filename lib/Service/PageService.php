@@ -510,7 +510,7 @@ class PageService {
             $this->cache(),
             $this->locator(),
             $this->metaVox(),
-            fn(): \OCA\IntraVox\Service\Path\PageDataEnricher => $this->pageDataEnricher(),
+            $this->pageDataEnricher(),
             $this->shape(),
             $this->permissionService,
             $this->idUtils,

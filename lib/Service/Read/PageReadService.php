@@ -32,22 +32,19 @@ use Psr\Log\LoggerInterface;
  */
 final class PageReadService {
     /**
-     * @param \Closure(): PageDataEnricher $enricher lazily resolves the enricher
-     *
-     * The enricher is a closure rather than a built instance because building it
-     * reads $userId, and the request-cache-hit path — the very first thing
-     * getPage() does — must return without forcing that. Resolving it lazily
-     * keeps the hit path free of $userId, matching the original inline getPage()
-     * timing exactly. For the same reason FolderContext is only consulted AFTER
-     * the cache-hit return. MetaVoxGateway is injected directly (its ctor is inert
-     * — it only stores deps — and owns its own three request memos, so a single
-     * DI instance is byte-equivalent to the old lazily-built one).
+     * All collaborators are now DI-injected instances — no closures. The
+     * enricher was historically a lazy closure because building it forced $userId
+     * (it built the MetaVox gateway from $userId), which the getPage cache-hit
+     * early-return must not do. That reason is gone: MetaVoxGateway is now a
+     * DI-first-class dep with an inert ctor, so neither building the enricher nor
+     * building this service forces $userId. The enricher is only invoked on the
+     * cache-MISS fresh-build path (never on a hit), so the hit stays $userId-free.
      */
     public function __construct(
         private PageCacheService $cache,
         private PageLocator $locator,
         private MetaVoxGateway $metaVox,
-        private \Closure $enricher,
+        private PageDataEnricher $enricher,
         private PageShapeSanitizer $shape,
         private PermissionService $permissionService,
         private PageIdUtils $idUtils,
@@ -200,7 +197,7 @@ final class PageReadService {
 
         // Enrich with real-time path data. Pass the page file so canWrite/canEdit
         // are gated on the file the write path actually targets (issue #70).
-        $data = ($this->enricher)()->enrich($data, $result['folder'], $result['file']);
+        $data = $this->enricher->enrich($data, $result['folder'], $result['file']);
 
         $sanitizedData = $this->shape->sanitizePage($data);
 
