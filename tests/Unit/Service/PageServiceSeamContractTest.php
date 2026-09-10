@@ -10,49 +10,57 @@ use PHPUnit\Framework\TestCase;
 /**
  * Pins the test-seam contract the PageService decomposition depends on.
  *
- * The three protected FOLDER seams (getIntraVoxFolder / getLanguageFolder /
- * getReadLanguageFolder) are RETIRED (clean-target step 11): the folder/language
- * substrate is now FolderContext, and tests inject one directly instead of
- * subclass-overriding a seam. What remains contract-pinned here is the public
- * isHomepage() de-facto seam, the private clearCache() (nine subclasses redeclare
- * it), and the reflection-anchored private delegators.
+ * ALL of the old subclass-override seams are now RETIRED. The three protected
+ * FOLDER seams (getIntraVoxFolder / getLanguageFolder / getReadLanguageFolder)
+ * became the injected FolderContext; the clearCache (private no-op shadow) and
+ * isHomepage (public predicate override) seams became injected collaborators — an
+ * inert PageCacheInvalidator and a rigged HomepageResolverService, both supplied
+ * through the real DI ctor by BuildsPageService::buildRealPageService(). Tests no
+ * longer subclass PageService to intercept behaviour; they construct the real class
+ * and inject fakes.
  *
- * This test makes any change to those a loud, deliberate red instead.
+ * So the two visibility pins this test used to carry (clearCache-stays-private,
+ * isHomepage-stays-public) are gone — the facts they guarded no longer exist. In
+ * their place is a regression FENCE: no test may re-introduce a subclass override
+ * of a retired seam. What still needs pinning are the reflection-anchored private
+ * delegators and the lazy-seam/accessor pairing.
  */
 class PageServiceSeamContractTest extends TestCase {
 
     use BuildsPageService;
 
     /**
-     * isHomepage() is a public de-facto seam: three tests override it because the
-     * real body reads appconfig via collaborators that those fixtures do not wire.
-     * It must stay public and keep its (string, ?string) shape.
+     * The regression fence for the fase-3 seam retirement: no test file may declare
+     * its own clearCache(), isHomepage() or createVersionBeforeUpdate() on a
+     * PageService subclass. Those overrides were how tests intercepted behaviour
+     * before the collaborators (PageCacheInvalidator / HomepageResolverService /
+     * PageVersionService) were injectable; re-introducing one would resurrect the
+     * exact god-class coupling the migration removed. This globs the whole test tree
+     * so a re-added override is a loud, deliberate red.
      */
-    public function testIsHomepageStaysPublicSeam(): void {
-        $m = new \ReflectionMethod(PageService::class, 'isHomepage');
-
-        $this->assertTrue($m->isPublic(), 'isHomepage is overridden as a public method by 3 tests');
-        $this->assertFalse($m->isFinal());
-        $this->assertSame('bool', (string) $m->getReturnType());
-        $params = $m->getParameters();
-        $this->assertCount(2, $params);
-        $this->assertSame('uniqueId', $params[0]->getName());
-        $this->assertFalse($params[0]->allowsNull());
-        $this->assertTrue($params[1]->allowsNull(), 'the language arg is optional/nullable');
-    }
-
-    /**
-     * clearCache() is PRIVATE and must stay private. Nine test files declare their
-     * own clearCache() on the subclass; a child may redeclare a private parent
-     * method freely, but if PageService widened it to protected/public those nine
-     * declarations would become signature-conflict fatals. This is the single most
-     * fragile visibility fact in the suite.
-     */
-    public function testClearCacheStaysPrivate(): void {
-        $m = new \ReflectionMethod(PageService::class, 'clearCache');
-        $this->assertTrue(
-            $m->isPrivate(),
-            'clearCache must remain private or 9 subclass clearCache() declarations become fatals'
+    public function testNoTestOverridesRetiredSeams(): void {
+        $retired = ['clearCache', 'isHomepage', 'createVersionBeforeUpdate'];
+        $offenders = [];
+        $dir = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator(__DIR__ . '/../../', \FilesystemIterator::SKIP_DOTS)
+        );
+        foreach ($dir as $file) {
+            if ($file->getExtension() !== 'php') {
+                continue;
+            }
+            $src = file_get_contents($file->getPathname());
+            foreach ($retired as $method) {
+                if (preg_match('/function\s+' . $method . '\s*\(/', $src)) {
+                    $offenders[] = $file->getFilename() . ' declares ' . $method . '()';
+                }
+            }
+        }
+        $this->assertSame(
+            [],
+            $offenders,
+            "Retired seams must not be overridden in tests — inject the collaborator instead "
+            . "(fakeCacheInvalidator / fakeHomepageResolver / a PageVersionService mock):\n"
+            . implode("\n", $offenders)
         );
     }
 
