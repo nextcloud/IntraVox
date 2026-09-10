@@ -42,6 +42,12 @@ class MediaApiController extends Controller {
         string $appName,
         IRequest $request,
         private PageService $pageService,
+        // The read/resource media endpoints call the MEDIA-domain service directly
+        // (facade elimination phase 1). The two upload endpoints stay on
+        // pageService for now — they still need its clearCache invalidation
+        // closure. pageService also stays for getPage/getUploadLimit + the
+        // RequiresPagePermission gate.
+        private \OCA\IntraVox\Service\Media\PageMediaOrchestrator $mediaOrchestrator,
         // Required by Shared\SharePathTrait::peopleAllowedOnPublicShares().
         // This controller never calls that method, but the trait reaches for the
         // property and PHP would only complain at runtime, on a request that hits
@@ -135,7 +141,7 @@ class MediaApiController extends Controller {
             // checking the raw name answered a question nobody asked: two
             // different names that sanitize to the same one were reported as
             // "no duplicate" and then collided on write.
-            $exists = $this->pageService->checkMediaExists(
+            $exists = $this->mediaOrchestrator->checkMediaExists(
                 $pageId,
                 $this->mediaSanitizer->sanitizeFilename($filename),
                 $target
@@ -242,7 +248,7 @@ class MediaApiController extends Controller {
                 }
             }
 
-            $mediaList = $this->pageService->getMediaList($pageId, $folder, $path);
+            $mediaList = $this->mediaOrchestrator->getMediaList($pageId, $folder, $path);
 
             // Naturally bounded by one folder's contents, which is not the same as
             // bounded. The shared resources folder in particular grows with the
@@ -288,7 +294,13 @@ class MediaApiController extends Controller {
                 );
             }
 
-            $file = $this->pageService->getResourcesMediaFile($safePath);
+            $file = $this->mediaOrchestrator->getResourcesMediaFile($safePath);
+            if (!$file instanceof \OCP\Files\File) {
+                // A resources media path always resolves to a File; a null/Node
+                // result means the asset is absent (previously this fataled on
+                // getContent()). Answer the same 404 the NotFoundException path does.
+                return new DataResponse(['error' => 'Media not found'], Http::STATUS_NOT_FOUND);
+            }
 
             // Set appropriate content type
             $finfo = finfo_open(FILEINFO_MIME_TYPE);
@@ -352,7 +364,7 @@ class MediaApiController extends Controller {
                 return $denied;
             }
 
-            return $this->pageService->getMedia($pageId, $filename);
+            return $this->mediaOrchestrator->getMedia($pageId, $filename);
         } catch (\Exception $e) {
             return new DataResponse(
                 ['error' => $e->getMessage()],
