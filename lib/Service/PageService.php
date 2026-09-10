@@ -403,9 +403,8 @@ class PageService {
         return $this->translationQueryService ??= new \OCA\IntraVox\Service\Translation\TranslationQueryService(
             $this->folders(),
             $this->translationGroups(),
-            fn(\OCP\Files\Folder $folder, string $uid): ?array => $this->locatePageAnyLanguage($folder, $uid),
-            fn(\OCP\Files\Folder $folder): ?string => $this->languageOfFolder($folder),
-            fn(string $code): string => $this->languageDisplayName($code),
+            $this->locator(),
+            $this->languageService,
             function (array $result, string $group): void {
                 $this->writeTranslationGroup($result, $group);
             },

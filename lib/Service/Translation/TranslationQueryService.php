@@ -7,6 +7,8 @@ namespace OCA\IntraVox\Service\Translation;
 use OCA\IntraVox\Exception\ForbiddenException;
 use OCA\IntraVox\Exception\PageNotFoundException;
 use OCA\IntraVox\Service\Folder\FolderContext;
+use OCA\IntraVox\Service\LanguageService;
+use OCA\IntraVox\Service\Locator\PageLocator;
 use OCP\Files\Folder;
 
 /**
@@ -20,23 +22,17 @@ use OCP\Files\Folder;
  *   - getTranslationCandidates: the existing pages a page could be linked to.
  *
  * The mechanics live in the TranslationGroupService engine (ctor-injected).
- * Page lookup, the language-of-folder derivation, the display-name lookup, the
- * group-writer and the cache-clear stay on PageService and arrive as bound
- * closures — the group-writer especially, because it is also used by the
- * compose-domain createTranslation, so it belongs to the hub and both domains
- * reach the one definition. (TranslationQueryIsolationTest enforces that no
- * such shared symbol is referenced from this file, which is why the closures
- * are described here without naming them.)
+ * Page lookup (via PageLocator), the language-of-folder derivation (FolderContext)
+ * and the display-name lookup (LanguageService) are now real injected
+ * collaborators, so the two READ operations are closure-free and the service is
+ * directly injectable. Only the two shared WRITE concerns arrive as bound
+ * closures: the group-writer (also used by the compose-domain createTranslation,
+ * so it belongs to the hub and both domains reach the one definition) and the
+ * cache-clear (the cross-collaborator invalidation still resident on PageService).
  */
 final class TranslationQueryService {
 
     /**
-     * @param \Closure(Folder, string): ?array $locatePageAnyLanguage locate a
-     *        page by uniqueId across every language folder.
-     * @param \Closure(Folder): ?string $languageOfFolder the language code a
-     *        page folder sits in.
-     * @param \Closure(string): string $languageDisplayName human-readable name
-     *        for a language code.
      * @param \Closure(array, string): void $groupWriter write a translation
      *        group into a located page and its index row.
      * @param \Closure(): void $clearCache invalidate the page caches.
@@ -44,12 +40,49 @@ final class TranslationQueryService {
     public function __construct(
         private FolderContext $folders,
         private TranslationGroupService $groups,
-        private \Closure $locatePageAnyLanguage,
-        private \Closure $languageOfFolder,
-        private \Closure $languageDisplayName,
+        private PageLocator $locator,
+        private LanguageService $languageService,
         private \Closure $groupWriter,
         private \Closure $clearCache,
     ) {
+    }
+
+    /**
+     * Locate a page by uniqueId across every language folder (the former
+     * locatePageAnyLanguage closure, now over the injected PageLocator).
+     */
+    private function locatePageAnyLanguage(Folder $primaryFolder, string $uniqueId): ?array {
+        return $this->locator->locatePageAnyLanguage(
+            fn(): Folder => $this->folders->intraVox(),
+            $primaryFolder,
+            $uniqueId
+        );
+    }
+
+    /**
+     * Human-readable name for a language code ('en' -> 'English'), for messages a
+     * user reads (the former languageDisplayName closure, now over the injected
+     * LanguageService). Falls back to the uppercased code, and drops Nextcloud's
+     * interface-variant parenthetical since a content folder is a plain code.
+     */
+    private function languageDisplayName(string $code): string {
+        try {
+            // getAvailableLanguages() is typed array{code,name}[] — the keys are
+            // guaranteed present, so the old ?? '' guards on them were dead.
+            foreach ($this->languageService->getAvailableLanguages() as $lang) {
+                if ($lang['code'] === $code) {
+                    $name = $lang['name'];
+                    if ($name === '') {
+                        return strtoupper($code);
+                    }
+                    $base = trim(explode('(', $name)[0]);
+                    return $base !== '' ? $base : $name;
+                }
+            }
+        } catch (\Throwable $e) {
+            // Naming is cosmetic; never let it break the operation's real error.
+        }
+        return strtoupper($code);
     }
 
     /**
@@ -71,8 +104,8 @@ final class TranslationQueryService {
         }
 
         $folder = $this->folders->readLanguageFolder();
-        $a = ($this->locatePageAnyLanguage)($folder, $uniqueIdA);
-        $b = ($this->locatePageAnyLanguage)($folder, $uniqueIdB);
+        $a = $this->locatePageAnyLanguage($folder, $uniqueIdA);
+        $b = $this->locatePageAnyLanguage($folder, $uniqueIdB);
         if ($a === null) {
             throw new PageNotFoundException('Page not found: ' . $uniqueIdA);
         }
@@ -80,8 +113,8 @@ final class TranslationQueryService {
             throw new PageNotFoundException('Page not found: ' . $uniqueIdB);
         }
 
-        $langA = ($this->languageOfFolder)($a['folder']);
-        $langB = ($this->languageOfFolder)($b['folder']);
+        $langA = $this->folders->languageOfFolder($a['folder']);
+        $langB = $this->folders->languageOfFolder($b['folder']);
         if ($langA !== null && $langA === $langB) {
             throw new \InvalidArgumentException(
                 'These pages are both in the same language, so one cannot be a translation of the other.'
@@ -136,7 +169,7 @@ final class TranslationQueryService {
      */
     public function unlinkTranslation(string $uniqueId): string {
         $folder = $this->folders->readLanguageFolder();
-        $result = ($this->locatePageAnyLanguage)($folder, $uniqueId);
+        $result = $this->locatePageAnyLanguage($folder, $uniqueId);
         if ($result === null) {
             throw new PageNotFoundException('Page not found: ' . $uniqueId);
         }
@@ -159,12 +192,12 @@ final class TranslationQueryService {
      * @throws PageNotFoundException when the page cannot be found
      */
     public function getTranslatableLanguages(string $pageId): array {
-        $result = ($this->locatePageAnyLanguage)($this->folders->readLanguageFolder(), $pageId);
+        $result = $this->locatePageAnyLanguage($this->folders->readLanguageFolder(), $pageId);
         if ($result === null) {
             throw new PageNotFoundException('Page not found: ' . $pageId);
         }
 
-        $ownLanguage = ($this->languageOfFolder)($result['folder']);
+        $ownLanguage = $this->folders->languageOfFolder($result['folder']);
         $data = json_decode($result['file']->getContent(), true);
         $group = is_array($data) ? ($data['translationGroup'] ?? null) : null;
 
@@ -180,7 +213,7 @@ final class TranslationQueryService {
                 'code' => $code,
                 // Naming stays here: it reads LanguageService's list, which is
                 // the interface-language source the admin tab shares.
-                'name' => ($this->languageDisplayName)($code),
+                'name' => $this->languageDisplayName($code),
                 // How many of this page's ancestors do not exist as pages in
                 // that language yet. The translation still lands mirrored
                 // (createTranslation creates the missing levels as bare
@@ -212,12 +245,12 @@ final class TranslationQueryService {
      */
     public function getTranslationCandidates(string $pageId, ?string $language = null): array {
         $folder = $this->folders->readLanguageFolder();
-        $result = ($this->locatePageAnyLanguage)($folder, $pageId);
+        $result = $this->locatePageAnyLanguage($folder, $pageId);
         if ($result === null) {
             throw new PageNotFoundException('Page not found: ' . $pageId);
         }
 
-        $ownLanguage = ($this->languageOfFolder)($result['folder']);
+        $ownLanguage = $this->folders->languageOfFolder($result['folder']);
         $ownData = json_decode($result['file']->getContent(), true);
         $ownGroup = is_array($ownData) ? ($ownData['translationGroup'] ?? null) : null;
 
