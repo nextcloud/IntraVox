@@ -136,13 +136,6 @@ class LanguageContentStatusTest extends TestCase {
      * logger so log assertions are possible.
      */
     private function makeService(Folder $base, ?LoggerInterface $logger = null): PageService {
-        $svc = new class extends PageService {
-            public function __construct() {
-            }
-            public function clearCache(): void {
-            }
-        };
-
         $rootFolder = $this->createMock(IRootFolder::class);
         $userFolder = $this->createMock(Folder::class);
         $userFolder->method('get')->willReturnCallback(function ($p) use ($base) {
@@ -175,14 +168,14 @@ class LanguageContentStatusTest extends TestCase {
             )
         );
 
-        $this->injectPageServiceDependencies($svc, [
+        // fase-3: real DI ctor; inert invalidator no-ops clearCache.
+        return $this->buildRealPageService([
             'userId' => 'tester',
             'config' => $config,
             'languageService' => $languageService,
             'logger' => $logger ?? $this->createMock(LoggerInterface::class),
             'folderContext' => $folderContext,
         ]);
-        return $svc;
     }
 
     // -------------------------------------------------- getLanguageContentStatus

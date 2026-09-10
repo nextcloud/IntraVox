@@ -287,10 +287,11 @@ class PageLookupBenchmark extends TestCase {
         // measured against the same fixture.
         $base = new BenchFolder('/IntraVox', $byLang);
 
+        // fase-3: no clearCache override — the fill loop below auto-builds an inert
+        // PageCacheInvalidator (its doubleOrBuild handles the final class), so a
+        // lookup benchmark never triggers a real cache fan-out.
         $svc = new class extends PageService {
             public function __construct() {
-            }
-            public function clearCache(): void {
             }
         };
 
