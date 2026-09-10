@@ -4,9 +4,16 @@ declare(strict_types=1);
 namespace OCA\IntraVox\Tests\Unit\Controller;
 
 use OCA\IntraVox\Controller\PageContentApiController;
+use OCA\IntraVox\Service\Folder\FolderContext;
+use OCA\IntraVox\Service\Language\LanguageResolver;
+use OCA\IntraVox\Service\Locator\PageLocator;
 use OCA\IntraVox\Service\PageService;
+use OCA\IntraVox\Service\Util\PageIdUtils;
+use OCA\IntraVox\Service\Version\PageVersionDomainService;
+use OCA\IntraVox\Service\Version\PageVersionService;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Http;
+use OCP\Files\Folder;
 use OCP\IRequest;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -28,14 +35,49 @@ class PageContentApiControllerTest extends TestCase {
     private PageService $pageService;
     private IAppManager $appManager;
     private PageContentApiController $controller;
+    /** The mocked version-manager engine behind the real (final) versionDomain. */
+    private PageVersionService $versionEngine;
+    /** The mocked locator the real versionDomain resolves pages through. */
+    private PageLocator $versionLocator;
 
     protected function setUp(): void {
         $this->pageService = $this->createMock(PageService::class);
         $this->appManager = $this->createMock(IAppManager::class);
+
+        // PageVersionDomainService is final -> build a real one over mocked
+        // collaborators. The controller test only observes delegation + gate +
+        // response mapping; the engine mock is the observable sink.
+        $this->versionEngine = $this->createMock(PageVersionService::class);
+        $this->versionLocator = $this->createMock(PageLocator::class);
+        // FolderContext is final -> build a real one whose intraVoxOverride is a
+        // fake mount, so readLanguageFolder()/languageFolder() resolve without a
+        // real user session. Page resolution itself goes through $versionLocator.
+        $fakeMount = $this->createMock(Folder::class);
+        // get(<lang>) resolves to a language folder so readLanguageFolder()/
+        // languageFolder() never fall into the create-on-miss or null path.
+        $fakeMount->method('get')->willReturn($this->createMock(Folder::class));
+        $folders = new FolderContext(
+            $this->createMock(\OCP\Files\IRootFolder::class),
+            'tester',
+            $this->createMock(\OCP\IConfig::class),
+            $this->createMock(\OCA\IntraVox\Service\LanguageService::class),
+            new LanguageResolver(),
+            $this->versionLocator,
+            $fakeMount
+        );
+        $versionDomain = new PageVersionDomainService(
+            $this->versionEngine,
+            $this->createMock(LoggerInterface::class),
+            $folders,
+            $this->versionLocator,
+            new PageIdUtils()
+        );
+
         $this->controller = new PageContentApiController(
             'intravox',
             $this->createMock(IRequest::class),
             $this->pageService,
+            $versionDomain,
             $this->appManager,
             $this->createMock(LoggerInterface::class),
         );
@@ -49,12 +91,22 @@ class PageContentApiControllerTest extends TestCase {
 
     public function testGetCurrentContentHappyPathDelegates(): void {
         $this->pageService->method('getPage')->willReturn($this->pageReadable(true));
-        $this->pageService->method('getCurrentPageContent')->willReturn(['blocks' => [1, 2]]);
+        // getCurrentPageContent resolves the page via the locator, then returns
+        // {title, content, rawContent} from the file. Wire the locator to resolve
+        // page-x to a file with known content.
+        $file = $this->createMock(\OCP\Files\File::class);
+        $file->method('getContent')->willReturn('{"blocks":[1,2]}');
+        $this->versionLocator->method('locatePageAnyLanguage')
+            ->willReturn(['file' => $file, 'page' => ['name' => 'X Page']]);
 
         $res = $this->controller->getCurrentPageContent('page-x');
 
         $this->assertSame(Http::STATUS_OK, $res->getStatus());
-        $this->assertSame(['blocks' => [1, 2]], $res->getData());
+        $this->assertSame([
+            'title' => 'X Page',
+            'content' => '{"blocks":[1,2]}',
+            'rawContent' => '{"blocks":[1,2]}',
+        ], $res->getData());
     }
 
     public function testGetCurrentContentDeniedReturns403AccessDenied(): void {

@@ -33,6 +33,10 @@ class PageContentApiController extends Controller {
         string $appName,
         IRequest $request,
         private PageService $pageService,
+        // The five version-history endpoints call the VERSION domain service
+        // directly (facade elimination phase 1); pageService stays for getPage +
+        // metadata + checkPageCacheStatus + the RequiresPagePermission gate.
+        private \OCA\IntraVox\Service\Version\PageVersionDomainService $versionDomain,
         private IAppManager $appManager,
         private LoggerInterface $logger,
     ) {
@@ -64,8 +68,8 @@ class PageContentApiController extends Controller {
                 return $denied;
             }
 
-            $this->logger->info('[ApiController::getPageVersions] Calling pageService->getPageVersions...');
-            $versions = $this->pageService->getPageVersions($pageId);
+            $this->logger->info('[ApiController::getPageVersions] Calling versionDomain->getPageVersions...');
+            $versions = $this->versionDomain->getPageVersions($pageId);
             $this->logger->info('[ApiController::getPageVersions] Got ' . count($versions) . ' versions');
             return new DataResponse($versions);
         } catch (\Exception $e) {
@@ -87,7 +91,7 @@ class PageContentApiController extends Controller {
                 return $existingPage;
             }
 
-            $page = $this->pageService->restorePageVersion($pageId, (int)$timestamp);
+            $page = $this->versionDomain->restorePageVersion($pageId, (int)$timestamp);
             return new DataResponse($page);
         } catch (\Exception $e) {
             return new DataResponse(
@@ -108,7 +112,7 @@ class PageContentApiController extends Controller {
             }
 
             $label = $this->request->getParam('label');
-            $this->pageService->updateVersionLabel($pageId, (int)$timestamp, $label);
+            $this->versionDomain->updateVersionLabel($pageId, (int)$timestamp, $label);
             return new DataResponse(['success' => true]);
         } catch (\Exception $e) {
             return new DataResponse(
@@ -130,7 +134,7 @@ class PageContentApiController extends Controller {
                 return $denied;
             }
 
-            $content = $this->pageService->getVersionContent($pageId, (int)$timestamp);
+            $content = $this->versionDomain->getVersionContent($pageId, (int)$timestamp);
             return new DataResponse($content);
         } catch (\Exception $e) {
             return new DataResponse(
@@ -152,7 +156,7 @@ class PageContentApiController extends Controller {
                 return $denied;
             }
 
-            $content = $this->pageService->getCurrentPageContent($pageId);
+            $content = $this->versionDomain->getCurrentPageContent($pageId);
             return new DataResponse($content);
         } catch (\Exception $e) {
             return new DataResponse(
