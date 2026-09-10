@@ -98,14 +98,7 @@ class PageIndexLookupTest extends TestCase {
         // locatePageAnyLanguage (driven by reflection below) resolves its read
         // folder via folders()->readLanguageFolder() ($en) and walks cross-language
         // via the injected FolderContext ($base -> intraVox).
-        $svc = new class() extends PageService {
-            public function __construct() {
-            }
-            public function clearCache(): void {
-            }
-        };
-
-        $index = $this->createMock(PageIndexService::class);
+                $index = $this->createMock(PageIndexService::class);
         $index->method('findByUniqueId')->willReturnCallback(
             fn(string $uniqueId, ?string $pref = null) => $indexRows[$uniqueId] ?? null
         );
@@ -119,7 +112,8 @@ class PageIndexLookupTest extends TestCase {
             'pageIndexService' => $index,
             'folderContext' => $this->fakeFolderContext(readLanguageFolder: $en, intraVox: $base),
         ];
-        $this->injectPageServiceDependencies($svc, $explicit);
+        // fase-3: real DI ctor; inert invalidator no-ops clearCache.
+        $svc = $this->buildRealPageService($explicit);
         return $svc;
     }
 
@@ -377,14 +371,7 @@ class PageIndexLookupTest extends TestCase {
         // listPagesFromIndex (driven by reflection) resolves its folder via
         // folders()->readLanguageFolder() ($en). Cross-language locate resolves
         // its root via the injected FolderContext ($base -> intraVox).
-        $svc = new class() extends PageService {
-            public function __construct() {
-            }
-            public function clearCache(): void {
-            }
-        };
-
-        $index = $this->createMock(PageIndexService::class);
+                $index = $this->createMock(PageIndexService::class);
         $index->method('hasEntries')->willReturn(!empty($indexRows));
         if ($throwOnGetPages) {
             $index->method('getPagesByLanguage')
@@ -402,7 +389,8 @@ class PageIndexLookupTest extends TestCase {
             'pageIndexService' => $index,
             'folderContext' => $this->fakeFolderContext(readLanguageFolder: $en, intraVox: $base),
         ];
-        $this->injectPageServiceDependencies($svc, $explicit);
+        // fase-3: real DI ctor; inert invalidator no-ops clearCache.
+        $svc = $this->buildRealPageService($explicit);
         return $svc;
     }
 

@@ -88,14 +88,6 @@ class PageUpdatePipelineTest extends TestCase {
         // intraVox() root). getIntraVoxFolder stays THROWING for the cross-language
         // locatePageAnyLanguage walk (rootClosure()) — the primary-folder scan
         // finds the page first, so the throw only pins the degrade path.
-        $svc = new class extends PageService {
-            public function __construct() {
-            }
-            public function clearCache(): void {
-                // Observed via the steps log so cache-clear position is pinned too.
-            }
-        };
-
         $user = $this->createMock(IUser::class);
         $user->method('getUID')->willReturn('tester');
         $session = $this->createMock(IUserSession::class);
@@ -116,7 +108,10 @@ class PageUpdatePipelineTest extends TestCase {
             $this->steps[] = 'indexPage';
         });
 
-        $this->injectPageServiceDependencies($svc, [
+        // fase-3: real DI ctor; inert invalidator no-ops clearCache (no test pins
+        // clearCache's position in the steps log — only putContent/createBeforeUpdate/
+        // indexPage are observed).
+        return $this->buildRealPageService([
             'userSession' => $session,
             'userId' => 'tester',
             'pageVersionService' => $version,
@@ -124,8 +119,6 @@ class PageUpdatePipelineTest extends TestCase {
             'logger' => $this->createMock(LoggerInterface::class),
             'folderContext' => $this->fakeFolderContext(intraVox: $lang, languageFolder: $lang),
         ]);
-
-        return $svc;
     }
 
     public function testNoUserInSessionIsRejected(): void {
@@ -150,18 +143,14 @@ class PageUpdatePipelineTest extends TestCase {
     public function testUnknownPageThrowsPageNotFound(): void {
         $empty = $this->makeFolder('/IntraVox/en', []);
         $base = $this->makeFolder('/IntraVox', ['en' => $empty]);
-        // languageFolder ($empty) via the seam; getIntraVoxFolder ($base) kept for
-        // the cross-language locate walk (rootClosure()).
-        $svc = new class($base) extends PageService {
-            public function __construct() {
-            }
-        };
+        // languageFolder ($empty); intraVox ($base) kept for the cross-language
+        // locate walk (rootClosure()).
         $user = $this->createMock(IUser::class);
         $session = $this->createMock(IUserSession::class);
         $session->method('getUser')->willReturn($user);
         $index = $this->createMock(PageIndexService::class);
         $index->method('findByUniqueId')->willReturn(null);
-        $this->injectPageServiceDependencies($svc, [
+        $svc = $this->buildRealPageService([
             'userSession' => $session,
             'userId' => 'tester',
             'pageIndexService' => $index,

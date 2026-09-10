@@ -135,13 +135,6 @@ class PageSlugUniquenessTest extends TestCase {
         // folders()->languageFolder(), the no-parent fallback ($readFolder) via
         // readLanguageFolder(), and the language-code/getOrCreateFolderPath branch
         // via intraVox() ($base) — all from the injected FolderContext below.
-        $svc = new class extends PageService {
-            public function __construct() {
-            }
-            public function clearCache(): void {
-            }
-        };
-
         $user = $this->createMock(\OCP\IUser::class);
         $user->method('getUID')->willReturn('tester');
         $user->method('getDisplayName')->willReturn('Tester');
@@ -170,7 +163,8 @@ class PageSlugUniquenessTest extends TestCase {
                 userLanguage: $writeLang
             ),
         ];
-        $this->injectPageServiceDependencies($svc, $explicit);
+        // fase-3: real DI ctor; inert invalidator no-ops clearCache.
+        $svc = $this->buildRealPageService($explicit);
 
         return $svc;
     }
