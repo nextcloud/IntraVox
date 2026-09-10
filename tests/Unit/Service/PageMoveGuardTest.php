@@ -80,31 +80,24 @@ class PageMoveGuardTest extends TestCase {
         // movePage resolves its write-target folder ($en) via
         // folders()->languageFolder(), and languageOfFolder/relativePathFromRoot via
         // the intraVox() root ($base), both from the injected FolderContext.
-        $svc = new class($homepageUniqueId) extends PageService {
-            private ?string $homeId;
-            public function __construct(?string $homeId) {
-                $this->homeId = $homeId;
-            }
-            public function isHomepage(string $uniqueId, ?string $language = null): bool {
-                return $this->homeId !== null && $uniqueId === $this->homeId;
-            }
-            public function clearCache(): void {
-            }
-        };
-
+        //
+        // Built through the real DI ctor (fase-3): 'home' rigs the homepage resolver
+        // so isHomepage(uid) === (uid === $homepageUniqueId), and the injected inert
+        // PageCacheInvalidator makes clearCache() a no-op — reproducing the two
+        // overrides this test used to carry, with no subclass.
         $languageService = $this->createMock(\OCA\IntraVox\Service\LanguageService::class);
         $languageService->method('isLanguageAvailable')->willReturnCallback(
             fn(string $code) => in_array($code, ['en', 'de', 'fr', 'nl'], true)
         );
         $languageService->method('getPrimaryLanguage')->willReturn('en');
 
-        $this->injectPageServiceDependencies($svc, [
+        return $this->buildRealPageService([
+            'home' => $homepageUniqueId,
             'userId' => 'tester',
             'logger' => $this->createMock(\Psr\Log\LoggerInterface::class),
             'languageService' => $languageService,
             'folderContext' => $this->fakeFolderContext(intraVox: $base, languageFolder: $en),
         ]);
-        return $svc;
     }
 
     /** Build a page folder holding {slug}.json with the given uniqueId. */
