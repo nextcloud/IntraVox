@@ -3,9 +3,12 @@ declare(strict_types=1);
 
 namespace OCA\IntraVox\Tests\Unit\Service\Harness;
 
+use OCA\IntraVox\Service\Cache\PageCacheInvalidator;
+use OCA\IntraVox\Service\Cache\PageCacheService;
 use OCA\IntraVox\Service\Folder\FolderContext;
 use OCA\IntraVox\Service\Language\LanguageResolver;
 use OCA\IntraVox\Service\Locator\PageLocator;
+use OCA\IntraVox\Service\PermissionService;
 use OCA\IntraVox\Service\Media\PageMediaService;
 use OCA\IntraVox\Service\News\NewsPageService;
 use OCA\IntraVox\Service\PageService;
@@ -171,6 +174,26 @@ trait BuildsPageService {
             $languageFolder === null
                 ? null
                 : fn(): Folder => $languageFolder
+        );
+    }
+
+    /**
+     * A real (final) PageCacheInvalidator over inert doubles — the seam-free
+     * replacement for the empty `clearCache()` overrides the subclasses used to
+     * carry (fase-3). invalidate() over these mocks is a de-facto no-op: the
+     * PageCacheService mock's clearExpensive() returns false (default), so the
+     * static SystemFileService::clearStaticTreeCache() fan-out never fires and the
+     * per-user cache resets hit inert mocks — exactly what an empty override gave.
+     *
+     * Pass $spy to observe the clearRequest() calls (position-checking tests):
+     * wire it before handing it in, e.g. a mock whose clearRequest willReturnCallback
+     * records the call, then fakeCacheInvalidator($spy).
+     */
+    protected function fakeCacheInvalidator(?PageCacheService $spy = null): PageCacheInvalidator {
+        return new PageCacheInvalidator(
+            $spy ?? $this->createMock(PageCacheService::class),
+            $this->createMock(PageLocator::class),
+            $this->createMock(PermissionService::class)
         );
     }
 

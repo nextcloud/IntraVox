@@ -97,11 +97,7 @@ class PageCrudWriteTest extends TestCase {
         $cache->method('clearRequest')->willReturnCallback(function () {
             $this->clearCacheCalls++;
         });
-        $cacheInvalidator = new \OCA\IntraVox\Service\Cache\PageCacheInvalidator(
-            $cache,
-            $this->createMock(\OCA\IntraVox\Service\Locator\PageLocator::class),
-            $this->createMock(\OCA\IntraVox\Service\PermissionService::class)
-        );
+        $cacheInvalidator = $this->fakeCacheInvalidator($cache);
 
         $this->injectPageServiceDependencies($svc, [
             'eventDispatcher' => $dispatcher,
