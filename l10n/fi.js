@@ -238,6 +238,7 @@ OC.L10N.register(
     "Select group" : "Valitse ryhmä",
     "Days" : "Päivää",
     "Avatar" : "Profiilikuva",
+    "Pronouns" : "Pronominit",
     "Headline" : "Otsikko",
     "Contact" : "Yhteystieto",
     "Address" : "Osoite",
