@@ -61,37 +61,30 @@ class PageMetadataTest extends TestCase {
         // are gone. getIntraVoxFolder stays ONLY for the cross-language locate walk
         // (locatePageAnyLanguage -> rootClosure()), not covered by FolderContext
         // until the terminal step.
-        $svc = new class() extends PageService {
-            public function __construct() {}
-            public function isHomepage(string $uniqueId, ?string $language = null): bool {
-                return false;
-            }
-        };
-
         $index = $this->createMock(PageIndexService::class);
         $index->method('findByUniqueId')->willReturn(null);
 
-        $this->injectPageServiceDependencies($svc, [
+        // Built through the real DI ctor (fase-3). 'home' => null makes isHomepage()
+        // false for every real page id (any language), reproducing the old
+        // return-false override; the 2-arg (uid, language) path is honoured by the
+        // rigged resolver. No fixture page is the homepage.
+        return $this->buildRealPageService([
+            'home' => null,
             'userId' => 'tester',
             'pageIndexService' => $index,
             'logger' => $this->createMock(LoggerInterface::class),
             'folderContext' => $this->fakeFolderContext(intraVox: $base),
         ]);
-
-        return $svc;
     }
 
     public function testUnknownPageThrowsPageNotFoundWithTheIdInTheMessage(): void {
         $empty = $this->makeFolder('/IntraVox/en', []);
         $base = $this->makeFolder('/IntraVox', ['en' => $empty]);
-        // languageFolder() = base->get('en') = $empty; getIntraVoxFolder kept for
-        // the cross-language locate walk (rootClosure()).
-        $svc = new class() extends PageService {
-            public function __construct() {}
-        };
+        // languageFolder() = base->get('en') = $empty; intraVox kept for the
+        // cross-language locate walk (rootClosure()).
         $index = $this->createMock(PageIndexService::class);
         $index->method('findByUniqueId')->willReturn(null);
-        $this->injectPageServiceDependencies($svc, [
+        $svc = $this->buildRealPageService([
             'userId' => 'tester',
             'pageIndexService' => $index,
             'logger' => $this->createMock(LoggerInterface::class),

@@ -42,24 +42,26 @@ class PageBreadcrumbTest extends TestCase {
         }
 
         // getBreadcrumb reads the folder via folders()->readLanguageFolder()
-        // ($langFolder) and userLanguage ('en'); getIntraVoxFolder stays THROWING
-        // for the findPageByFolderPath cross-language walk (rootClosure()), which
-        // pins the humanised-folder degrade fallback. getPage + isHomepage stay
-        // overridden (unrelated to folders).
-        $svc = new class($currentPage, $isHomepage) extends PageService {
+        // ($langFolder) and userLanguage ('en'); intraVox() stays THROWING for the
+        // findPageByFolderPath cross-language walk (rootClosure()), which pins the
+        // humanised-folder degrade fallback. getPage stays overridden (it is a page-
+        // content test double, not a retired seam); isHomepage is no longer
+        // overridden — instead the homepage resolver is rigged (fase-3) so
+        // isHomepage(currentPage.uniqueId) === $isHomepage, which is the only id
+        // getBreadcrumb ever checks.
+        $svc = new class($currentPage) extends PageService {
             private array $currentPage;
-            private bool $home;
-            public function __construct(array $currentPage, bool $home) {
+            public function __construct(array $currentPage) {
                 $this->currentPage = $currentPage;
-                $this->home = $home;
             }
             public function getPage(string $id): array {
                 return $this->currentPage;
             }
-            public function isHomepage(string $uniqueId, ?string $language = null): bool {
-                return $this->home;
-            }
         };
+        (new \ReflectionProperty(PageService::class, 'homepageResolver'))->setValue(
+            $svc,
+            $this->fakeHomepageResolver($isHomepage ? ($currentPage['uniqueId'] ?? null) : null)
+        );
 
         $config = $this->createMock(\OCP\IConfig::class);
         $config->method('getUserValue')->willReturn('en');

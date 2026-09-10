@@ -68,15 +68,13 @@ class PageServiceReorderTest extends TestCase {
         // reorderSiblings resolves its write-target folder via
         // folders()->languageFolder(); wiring $parent as the getLanguageFolder seam
         // returns it verbatim (no composition, so the bare '/lang' path is fine).
-        // isHomepage stays overridden; reorder runs no cross-language locate.
-        $svc = new class($homeUniqueId) extends PageService {
-            private ?string $homeId;
-            // Deliberately bypass the real 25-arg constructor.
-            public function __construct(?string $homeId) {
-                $this->homeId = $homeId;
-            }
-            public function isHomepage(string $uniqueId, ?string $language = null): bool {
-                return $this->homeId !== null && $uniqueId === $this->homeId;
+        // This is a bespoke Style-2 fixture (custom ctor + reflection wiring), kept
+        // as-is per the fase-3 plan; only the isHomepage override is retired — see
+        // the rigged HomepageResolverService injected below. Reorder runs no
+        // cross-language locate.
+        $svc = new class() extends PageService {
+            // Deliberately bypass the real 30-arg constructor.
+            public function __construct() {
             }
         };
         $locator = new \OCA\IntraVox\Service\Locator\PageLocator(
@@ -113,6 +111,30 @@ class PageServiceReorderTest extends TestCase {
                 $locator,
                 $this->createMock(PermissionService::class)
             ));
+        // isHomepage → reorder's homepage-skip. PageService::isHomepage(uid) is
+        // (uid === resolveHomepageNodeUniqueId()), so replace the old isHomepage
+        // override (fase-3) with a real HomepageResolverService rigged so
+        // resolveHomepageNodeUniqueId() yields $homeUniqueId: the homepageService
+        // mock returns it as the pointer and locatePage succeeds so the pointer is
+        // honoured. null $homeUniqueId → resolver falls through to 'home', matching
+        // the old override's homeId===null → isHomepage false for every page id.
+        $engine = $this->createMock(\OCA\IntraVox\Service\HomepageService::class);
+        $engine->method('getHomepageUniqueId')->willReturn($homeUniqueId);
+        (new \ReflectionProperty(PageService::class, 'homepageResolver'))->setValue(
+            $svc,
+            new \OCA\IntraVox\Service\Homepage\HomepageResolverService(
+                $engine,
+                (new \ReflectionProperty(PageService::class, 'folderContext'))->getValue($svc),
+                fn(string $lang): Folder => $parent,
+                fn(Folder $f, string $uid): ?array => ['folder' => $f],
+                fn(\OCP\Files\File $file): string => '',
+                fn(): ?string => null,
+                fn(): string => 'en',
+                fn(string $uid, ?string $language = null): bool => $homeUniqueId !== null && $uid === $homeUniqueId,
+                function (): void {
+                }
+            )
+        );
         return $svc;
     }
 
