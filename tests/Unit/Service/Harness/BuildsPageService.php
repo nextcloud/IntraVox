@@ -178,6 +178,91 @@ trait BuildsPageService {
     }
 
     /**
+     * Construct a REAL PageService through its real DI constructor — the seam-free
+     * replacement for `new class extends PageService { ctor-bypass + shadows }`
+     * (fase-3). Every ctor param is filled reflectively (robust against ctor drift):
+     * from $explicit by param name when given, else fakeFolderContext /
+     * fakeCacheInvalidator for the substrate deps, else doubleOrBuild for the rest;
+     * ?string $userId defaults to 'tester'.
+     *
+     * Recognised non-ctor keys in $explicit:
+     *   'home'     => ?string — the homepage uniqueId; reflection-sets a
+     *                 fakeHomepageResolver so isHomepage(uid) === (uid === home).
+     *                 Omit the key to leave the real resolver (built lazily from the
+     *                 wired homepageService/folderContext, as before).
+     *   'cacheSpy' => PageCacheService — a spy cache for the invalidator (position
+     *                 tests), used only when 'cacheInvalidator' is not given.
+     *
+     * @param array<string,mixed> $explicit ctor-param-name => value, plus the keys above
+     */
+    protected function buildRealPageService(array $explicit = []): PageService {
+        $home = $explicit['home'] ?? null;
+        $hasHome = array_key_exists('home', $explicit);
+        $cacheSpy = $explicit['cacheSpy'] ?? null;
+        unset($explicit['home'], $explicit['cacheSpy']);
+
+        // First resolve the deps the lazy-seam services are built from, so any
+        // lazy-seam ctor param not explicitly wired gets a REAL instance (matching
+        // the old accessor path, which scans the folder fixtures) rather than a mock.
+        $ctor = (new \ReflectionClass(PageService::class))->getConstructor();
+        $pick = function (string $name, string $class) use ($explicit) {
+            return $explicit[$name] ?? $this->doubleOrBuild($class);
+        };
+        $pageIndexService = $pick('pageIndexService', \OCA\IntraVox\Service\PageIndexService::class);
+        $logger = $explicit['logger'] ?? $this->createMock(LoggerInterface::class);
+        $realLocator = $explicit['pageLocator'] ?? new PageLocator($pageIndexService, $logger);
+
+        $args = [];
+        foreach ($ctor->getParameters() as $param) {
+            $name = $param->getName();
+            if (array_key_exists($name, $explicit)) {
+                $args[] = $explicit[$name];
+                continue;
+            }
+            if ($name === 'userId') {
+                $args[] = 'tester';
+                continue;
+            }
+            if ($name === 'pageIndexService') { $args[] = $pageIndexService; continue; }
+            if ($name === 'logger') { $args[] = $logger; continue; }
+            $type = $param->getType();
+            if ($type instanceof \ReflectionNamedType && !$type->isBuiltin()) {
+                $class = $type->getName();
+                if ($class === FolderContext::class) {
+                    $args[] = $this->fakeFolderContext();
+                } elseif ($class === PageCacheInvalidator::class) {
+                    $args[] = $this->fakeCacheInvalidator($cacheSpy);
+                } elseif ($class === PageLocator::class) {
+                    $args[] = $realLocator;
+                } elseif ($class === TranslationGroupService::class) {
+                    $args[] = new TranslationGroupService($pageIndexService, $realLocator, $this->doubleOrBuild(\OCA\IntraVox\Service\Util\PageIdUtils::class), $logger);
+                } elseif ($class === PageMediaService::class) {
+                    $args[] = new PageMediaService($realLocator, $this->doubleOrBuild(\OCA\IntraVox\Service\Sanitize\MediaSanitizer::class), $logger);
+                } elseif ($class === NewsPageService::class) {
+                    $args[] = new NewsPageService($realLocator, $this->doubleOrBuild(\OCA\IntraVox\Service\PermissionService::class), $this->doubleOrBuild(\OCA\IntraVox\Service\News\NewsContentExtractor::class), $logger);
+                } else {
+                    $args[] = $this->doubleOrBuild($class);
+                }
+                continue;
+            }
+            // Any other builtin/nullable scalar: its default (none exist besides userId).
+            $args[] = $param->isDefaultValueAvailable() ? $param->getDefaultValue() : null;
+        }
+
+        $svc = new PageService(...$args);
+
+        // Reflection-set the homepage resolver so isHomepage() is a fixed predicate,
+        // replacing the old isHomepage() override. Only when 'home' was passed.
+        if ($hasHome) {
+            $folders = $explicit['folderContext'] ?? null;
+            (new \ReflectionProperty(PageService::class, 'homepageResolver'))
+                ->setValue($svc, $this->fakeHomepageResolver($home, $folders instanceof FolderContext ? $folders : null));
+        }
+
+        return $svc;
+    }
+
+    /**
      * A real (final) HomepageResolverService rigged so resolveHomepageNodeUniqueId()
      * (any language) yields exactly $homeUniqueId — the seam-free replacement for
      * the isHomepage() subclass overrides (fase-3). With the resolver injected,
