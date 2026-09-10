@@ -32,6 +32,13 @@ class TranslationApiController extends Controller {
         string $appName,
         IRequest $request,
         private PageService $pageService,
+        // The two translation-query reads (getTranslatableLanguages/
+        // getTranslationCandidates) call the TRANSLATE-query domain service
+        // directly (facade elimination phase 1) — its ctor is closure-free so DI
+        // builds it. link/unlink/createTranslation stay on pageService (their
+        // group-writer/clearCache/composition closures live there), as does
+        // getPage.
+        private \OCA\IntraVox\Service\Translation\TranslationQueryService $translationQuery,
         private LoggerInterface $logger,
     ) {
         parent::__construct($appName, $request);
@@ -106,7 +113,7 @@ class TranslationApiController extends Controller {
     #[NoAdminRequired]
     public function getTranslationCandidates(string $pageId, ?string $language = null): DataResponse {
         try {
-            $candidates = $this->pageService->getTranslationCandidates($pageId, $language);
+            $candidates = $this->translationQuery->getTranslationCandidates($pageId, $language);
             return new DataResponse(['candidates' => $candidates]);
         } catch (PageNotFoundException $e) {
             return new DataResponse(['error' => $e->getMessage()], Http::STATUS_NOT_FOUND);
@@ -160,7 +167,7 @@ class TranslationApiController extends Controller {
     public function getTranslatableLanguages(string $pageId): DataResponse {
         try {
             return new DataResponse([
-                'languages' => $this->pageService->getTranslatableLanguages($pageId),
+                'languages' => $this->translationQuery->getTranslatableLanguages($pageId),
             ]);
         } catch (PageNotFoundException $e) {
             return new DataResponse(['error' => $e->getMessage()], Http::STATUS_NOT_FOUND);

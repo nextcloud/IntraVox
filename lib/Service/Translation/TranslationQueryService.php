@@ -23,27 +23,22 @@ use OCP\Files\Folder;
  *
  * The mechanics live in the TranslationGroupService engine (ctor-injected).
  * Page lookup (via PageLocator), the language-of-folder derivation (FolderContext)
- * and the display-name lookup (LanguageService) are now real injected
- * collaborators, so the two READ operations are closure-free and the service is
- * directly injectable. Only the two shared WRITE concerns arrive as bound
- * closures: the group-writer (also used by the compose-domain createTranslation,
- * so it belongs to the hub and both domains reach the one definition) and the
- * cache-clear (the cross-collaborator invalidation still resident on PageService).
+ * and the display-name lookup (LanguageService) are all real injected
+ * collaborators, so the CTOR is closure-free and the service is directly
+ * injectable (container-buildable). The two shared WRITE concerns — the
+ * group-writer (also used by the compose-domain createTranslation, so it belongs
+ * to the hub) and the cache-clear (the cross-collaborator invalidation still
+ * resident on PageService) — are passed as per-call closures on the two write
+ * methods (link/unlink) rather than on the ctor, so only the write callers supply
+ * them and DI never has to autowire a \Closure.
  */
 final class TranslationQueryService {
 
-    /**
-     * @param \Closure(array, string): void $groupWriter write a translation
-     *        group into a located page and its index row.
-     * @param \Closure(): void $clearCache invalidate the page caches.
-     */
     public function __construct(
         private FolderContext $folders,
         private TranslationGroupService $groups,
         private PageLocator $locator,
         private LanguageService $languageService,
-        private \Closure $groupWriter,
-        private \Closure $clearCache,
     ) {
     }
 
@@ -97,8 +92,17 @@ final class TranslationQueryService {
      *   members in one language.
      * @throws PageNotFoundException when either page cannot be found.
      * @throws ForbiddenException when the caller lacks edit rights on both.
+     *
+     * @param \Closure(array, string): void $groupWriter write a translation group
+     *        into a located page + its index row (shared with the compose domain).
+     * @param \Closure(): void $clearCache invalidate the page caches.
      */
-    public function linkTranslation(string $uniqueIdA, string $uniqueIdB): string {
+    public function linkTranslation(
+        string $uniqueIdA,
+        string $uniqueIdB,
+        \Closure $groupWriter,
+        \Closure $clearCache
+    ): string {
         if ($uniqueIdA === $uniqueIdB) {
             throw new \InvalidArgumentException('A page cannot be a translation of itself');
         }
@@ -147,9 +151,9 @@ final class TranslationQueryService {
             [[$uniqueIdA, $langA], [$uniqueIdB, $langB]]
         );
 
-        ($this->groupWriter)($a, $group);
-        ($this->groupWriter)($b, $group);
-        ($this->clearCache)();
+        $groupWriter($a, $group);
+        $groupWriter($b, $group);
+        $clearCache();
 
         return $group;
     }
@@ -166,8 +170,15 @@ final class TranslationQueryService {
      * nothing here infers a relationship from similarity.
      *
      * @throws PageNotFoundException when the page cannot be found
+     *
+     * @param \Closure(array, string): void $groupWriter write a translation group.
+     * @param \Closure(): void $clearCache invalidate the page caches.
      */
-    public function unlinkTranslation(string $uniqueId): string {
+    public function unlinkTranslation(
+        string $uniqueId,
+        \Closure $groupWriter,
+        \Closure $clearCache
+    ): string {
         $folder = $this->folders->readLanguageFolder();
         $result = $this->locatePageAnyLanguage($folder, $uniqueId);
         if ($result === null) {
@@ -175,8 +186,8 @@ final class TranslationQueryService {
         }
 
         $group = $this->groups->newGroupId();
-        ($this->groupWriter)($result, $group);
-        ($this->clearCache)();
+        $groupWriter($result, $group);
+        $clearCache();
 
         return $group;
     }

@@ -404,13 +404,7 @@ class PageService {
             $this->folders(),
             $this->translationGroups(),
             $this->locator(),
-            $this->languageService,
-            function (array $result, string $group): void {
-                $this->writeTranslationGroup($result, $group);
-            },
-            function (): void {
-                $this->clearCache();
-            }
+            $this->languageService
         );
     }
 
@@ -1047,7 +1041,16 @@ class PageService {
      * @throws \InvalidArgumentException when both pages share a language
      */
     public function linkTranslation(string $uniqueIdA, string $uniqueIdB): string {
-        return $this->translationQuery()->linkTranslation($uniqueIdA, $uniqueIdB);
+        return $this->translationQuery()->linkTranslation(
+            $uniqueIdA,
+            $uniqueIdB,
+            function (array $result, string $group): void {
+                $this->writeTranslationGroup($result, $group);
+            },
+            function (): void {
+                $this->clearCache();
+            }
+        );
     }
 
     /**
@@ -1147,7 +1150,15 @@ class PageService {
      * @throws PageNotFoundException when the page cannot be found
      */
     public function unlinkTranslation(string $uniqueId): string {
-        return $this->translationQuery()->unlinkTranslation($uniqueId);
+        return $this->translationQuery()->unlinkTranslation(
+            $uniqueId,
+            function (array $result, string $group): void {
+                $this->writeTranslationGroup($result, $group);
+            },
+            function (): void {
+                $this->clearCache();
+            }
+        );
     }
 
     /**
