@@ -214,19 +214,37 @@ class PageTranslationGroupTest extends TestCase {
      * finding M1.)
      */
     public function testResolveTranslationsSkipsRowsTheMountDoesNotGrant(): void {
-        $svc = $this->makeService();
-        $mock = $this->createMock(PageIndexService::class);
-        $mock->method('findByTranslationGroup')->willReturn([
+        // The M1 ACL-filtering lives in TranslationGroupService::resolveTranslations
+        // (facade elimination phase 2 internalized the old PageService closure into
+        // PageReadService/PageDataEnricher, both over this engine). Drive the engine
+        // directly: a row whose path the caller's mount cannot resolve is skipped.
+        $index = $this->createMock(PageIndexService::class);
+        $index->method('findByTranslationGroup')->willReturn([
             ['unique_id' => 'page-de', 'language' => 'de', 'title' => 'Über uns',
                 'status' => 'published', 'path' => '/IntraVox/de/ueber-uns'],
             // fr/ is not mounted for this user — the ACL-denied case.
             ['unique_id' => 'page-fr', 'language' => 'fr', 'title' => 'Secret FR',
                 'status' => 'published', 'path' => '/IntraVox/fr/secret'],
         ]);
-        (new \ReflectionProperty(PageService::class, 'pageIndexService'))->setValue($svc, $mock);
 
-        $m = new \ReflectionMethod(PageService::class, 'resolveTranslations');
-        $rows = $m->invoke($svc, 'tg-x', 'page-nl');
+        $root = $this->createMock(Folder::class);
+        $locator = $this->createMock(\OCA\IntraVox\Service\Locator\PageLocator::class);
+        // The mount grants de/, denies fr/ — folderFromAbsolutePath returns null
+        // for the path the caller cannot read.
+        $locator->method('folderFromAbsolutePath')->willReturnCallback(
+            fn($rootFolder, string $path) => str_contains($path, '/fr/')
+                ? null
+                : $this->createMock(Folder::class)
+        );
+
+        $groups = new \OCA\IntraVox\Service\Translation\TranslationGroupService(
+            $index,
+            $locator,
+            new \OCA\IntraVox\Service\Util\PageIdUtils(),
+            $this->createMock(\Psr\Log\LoggerInterface::class)
+        );
+
+        $rows = $groups->resolveTranslations('tg-x', 'page-nl', fn(): Folder => $root);
 
         $this->assertCount(1, $rows, 'the fr row resolves to no folder on this mount and must be skipped');
         $this->assertSame('page-de', $rows[0]['uniqueId']);

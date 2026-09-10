@@ -70,7 +70,11 @@ class PageServiceSeamContractTest extends TestCase {
             'getOrCreateFolderPath',
             // renamePageFolder RETIRED from PageService — it moved to
             // Metadata/PageMetadataService (PageRenameFolderTest reflects it there).
-            'resolveTranslations',
+            // resolveTranslations RETIRED from PageService — facade elimination
+            // phase 2 internalized it into PageReadService/PageDataEnricher over
+            // the injected TranslationGroupService; the M1 ACL-filtering is pinned
+            // directly on TranslationGroupService::resolveTranslations
+            // (PageTranslationGroupTest::testResolveTranslationsSkipsRowsTheMountDoesNotGrant).
         ];
         foreach ($anchored as $name) {
             $this->assertTrue(

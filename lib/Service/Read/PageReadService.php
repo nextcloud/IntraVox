@@ -33,7 +33,6 @@ use Psr\Log\LoggerInterface;
 final class PageReadService {
     /**
      * @param \Closure(): PageDataEnricher $enricher lazily resolves the enricher
-     * @param \Closure(?string, ?string): array $resolveTranslations (group, uniqueId) -> ACL-filtered list
      *
      * The enricher is a closure rather than a built instance because building it
      * reads $userId, and the request-cache-hit path — the very first thing
@@ -54,9 +53,25 @@ final class PageReadService {
         private PageIdUtils $idUtils,
         private LoggerInterface $logger,
         private \OCA\IntraVox\Service\Folder\FolderContext $folders,
-        private \Closure $resolveTranslations,
+        private \OCA\IntraVox\Service\Translation\TranslationGroupService $translationGroups,
         private \OCA\IntraVox\Service\Util\GroupfolderResolver $groupfolders,
     ) {
+    }
+
+    /**
+     * The other language versions of a page, ACL-filtered per user (the former
+     * resolveTranslations closure, now over the injected TranslationGroupService +
+     * FolderContext root). One user's list must never be served to another — it is
+     * stripped from the shared cache and recomputed on every hit (issue #70).
+     *
+     * @return array<int, array{language:string, uniqueId:string, title:string, status:string}>
+     */
+    private function resolveTranslations(?string $translationGroup, ?string $ownUniqueId): array {
+        return $this->translationGroups->resolveTranslations(
+            $translationGroup,
+            $ownUniqueId,
+            fn(): \OCP\Files\Folder => $this->folders->intraVox()
+        );
     }
 
     public function getPage(string $id): array {
@@ -172,7 +187,7 @@ final class PageReadService {
                     // from the shared cache on write — recomputed here on every
                     // hit: one indexed query plus a filecache lookup per group
                     // member.
-                    $decoded['translations'] = ($this->resolveTranslations)(
+                    $decoded['translations'] = $this->resolveTranslations(
                         $decoded['translationGroup'] ?? null,
                         $decoded['uniqueId'] ?? null
                     );

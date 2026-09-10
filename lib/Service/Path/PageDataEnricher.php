@@ -27,17 +27,31 @@ use OCA\IntraVox\Service\Publication\MetaVoxGateway;
  * PageMetadataTest and the getPage suites pin the derived fields.
  */
 final class PageDataEnricher {
-    /**
-     * @param \Closure(?string, ?string): array $resolveTranslations (group, uniqueId) -> list
-     */
     public function __construct(
         private PagePathHelper $pathHelper,
         private PermissionService $permissionService,
         private MetaVoxGateway $metaVox,
         private FolderContext $folders,
-        private \Closure $resolveTranslations,
+        private \OCA\IntraVox\Service\Translation\TranslationGroupService $translationGroups,
         private \OCA\IntraVox\Service\Util\GroupfolderResolver $groupfolders,
     ) {
+    }
+
+    /**
+     * The other language versions of a page, from its translation group,
+     * ACL-filtered per user (the former resolveTranslations closure, now over the
+     * injected TranslationGroupService + FolderContext root). Returns [] on any
+     * problem — a missing switcher is a smaller failure than a page that won't
+     * load.
+     *
+     * @return array<int, array{language:string, uniqueId:string, title:string, status:string}>
+     */
+    private function resolveTranslations(?string $translationGroup, ?string $ownUniqueId): array {
+        return $this->translationGroups->resolveTranslations(
+            $translationGroup,
+            $ownUniqueId,
+            fn(): \OCP\Files\Folder => $this->folders->intraVox()
+        );
     }
 
     /**
@@ -98,7 +112,7 @@ final class PageDataEnricher {
             // Excludes the page's own language: the list answers "where ELSE
             // can I read this", so including the page you are on would only add
             // a no-op entry to every switcher.
-            $page['translations'] = ($this->resolveTranslations)(
+            $page['translations'] = $this->resolveTranslations(
                 $page['translationGroup'] ?? null,
                 $page['uniqueId'] ?? null
             );

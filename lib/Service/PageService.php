@@ -492,18 +492,18 @@ class PageService {
             $this->permissionService,
             $this->metaVox(),
             $this->folders(),
-            fn(?string $group, ?string $uniqueId): array => $this->resolveTranslations($group, $uniqueId),
+            $this->translationGroups(),
             $this->groupfolders
         );
     }
 
     /**
      * Lazy seam for the single-page reader (god-class dissolution, read cluster).
-     * Built from the real read collaborators + four $this-bound closures for the
-     * seams and #70-shared concerns that stay on PageService (getReadLanguageFolder,
-     * getIntraVoxFolder, resolveTranslations, groupfolderIdForNode). Nullable-
-     * default so the harness auto-fill skips it; the seam closures bind $this so
-     * the 26 subclasses keep intercepting getReadLanguageFolder/getIntraVoxFolder.
+     * Built from the real read collaborators; the enricher stays a lazy $this-bound
+     * closure (building it reads $userId, which the cache-hit early-return must not
+     * force). resolveTranslations/groupfolderId now live IN the read service over
+     * its own injected TranslationGroupService/GroupfolderResolver. Nullable-default
+     * so the harness auto-fill skips it.
      */
     private function readService(): \OCA\IntraVox\Service\Read\PageReadService {
         return $this->readService ??= new \OCA\IntraVox\Service\Read\PageReadService(
@@ -516,7 +516,7 @@ class PageService {
             $this->idUtils,
             $this->logger,
             $this->folders(),
-            fn(?string $group, ?string $uniqueId): array => $this->resolveTranslations($group, $uniqueId),
+            $this->translationGroups(),
             $this->groupfolders
         );
     }
@@ -1160,27 +1160,6 @@ class PageService {
     private function writeTranslationGroup(array $result, string $group): void {
         $language = $this->languageOfFolder($result['folder']) ?? $this->getUserLanguage();
         $this->translationGroups()->writeGroup($result, $group, $language);
-    }
-
-    /**
-     * The other language versions of a page, from its translation group.
-     *
-     * Answered entirely from the index — one lookup, no tree walk — which is
-     * what makes it cheap enough to attach to every page render.
-     *
-     * Returns [] rather than throwing on any problem: this decorates a page,
-     * and a missing switcher is a far smaller failure than a page that will
-     * not load. Also returns [] for a page with no group, which is the normal
-     * state of every page that is not linked to another language.
-     *
-     * @return array<int, array{language:string, uniqueId:string, title:string, status:string}>
-     */
-    private function resolveTranslations(?string $translationGroup, ?string $ownUniqueId): array {
-        return $this->translationGroups()->resolveTranslations(
-            $translationGroup,
-            $ownUniqueId,
-            $this->rootClosure()
-        );
     }
 
 
