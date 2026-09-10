@@ -79,13 +79,10 @@ class PageHomepageResolutionTest extends TestCase {
         // triple-seam override. userLanguage/primaryLanguage 'nl' mirror the config
         // + languageService this fixture wired; the real-content probe reads the
         // same nl/home.json.
-        $svc = new class extends PageService {
-            public function __construct() {
-            }
-            public function clearCache(): void {
-            }
-        };
-
+        // NO 'home' key here: this builder tests the REAL homepage resolution
+        // (getHomepageUniqueId / resolveHomepageNodeUniqueId), so the real resolver
+        // must run — built lazily from the wired homepageService mock + fakeFolder
+        // context, exactly as before. The inert invalidator no-ops clearCache.
         $homepageService = $this->createMock(HomepageService::class);
         $homepageService->method('getHomepageUniqueId')->willReturn($pointer);
 
@@ -96,7 +93,7 @@ class PageHomepageResolutionTest extends TestCase {
         $languageService->method('isLanguageAvailable')->willReturn(true);
         $languageService->method('getPrimaryLanguage')->willReturn('nl');
 
-        $explicit = [
+        return $this->buildRealPageService([
             'userSession' => $this->createMock(\OCP\IUserSession::class),
             'userId' => 'tester',
             'config' => $config,
@@ -108,9 +105,7 @@ class PageHomepageResolutionTest extends TestCase {
                 userLanguage: 'nl',
                 primaryLanguage: 'nl'
             ),
-        ];
-        $this->injectPageServiceDependencies($svc, $explicit);
-        return $svc;
+        ]);
     }
 
     /**
@@ -231,9 +226,14 @@ class PageHomepageResolutionTest extends TestCase {
     }
 
     /**
-     * A service driving the REAL setHomepage over a fixture nl/ tree. isHomepage
-     * (public seam) is overridden to $alreadyHome so the already-home short-
-     * circuit is testable without wiring the pointer; clearCache is recorded.
+     * A service driving the REAL setHomepage over a fixture nl/ tree — so the page
+     * lookup, root-level check and engine write all run for real. NO 'home' key
+     * here: setHomepage's already-home short-circuit calls the resolver's
+     * homepagePredicate (= PageService::isHomepage → the REAL resolver), so rigging
+     * a fake resolver would break setHomepage's own logic. Instead the already-home
+     * case is driven the honest way: the engine mock reports the target 'page-x' as
+     * the current homepage pointer, which the real resolver resolves as isHomepage
+     * true. The inert PageCacheInvalidator no-ops clearCache.
      *
      * @param array<string,Folder> $nlChildren the nl/ language-root children
      */
@@ -245,30 +245,42 @@ class PageHomepageResolutionTest extends TestCase {
         $langFolder = $this->makeFolder('/IntraVox/nl', $nlChildren);
         $base = $this->makeFolder('/IntraVox', ['nl' => $langFolder]);
 
-        $svc = new class extends PageService {
-            public bool $stubAlreadyHome = false;
-            public function __construct() {
-            }
-            public function clearCache(?string $pageId = null): void {
-            }
-            public function isHomepage(string $uniqueId, ?string $language = null): bool {
-                return $this->stubAlreadyHome;
-            }
-        };
-        $svc->stubAlreadyHome = $alreadyHome;
-
-        $this->injectPageServiceDependencies($svc, [
+        $folders = $this->fakeFolderContext(
+            intraVox: $base,
+            userLanguage: 'nl',
+            primaryLanguage: 'nl',
+            languageFolder: $langFolder,
+            readLanguageFolder: $langFolder
+        );
+        $svc = $this->buildRealPageService([
             'userId' => 'tester',
             'logger' => $this->createMock(\Psr\Log\LoggerInterface::class),
             'homepageService' => $engine,
-            'folderContext' => $this->fakeFolderContext(
-                intraVox: $base,
-                userLanguage: 'nl',
-                primaryLanguage: 'nl',
-                languageFolder: $langFolder,
-                readLanguageFolder: $langFolder
-            ),
+            'folderContext' => $folders,
         ]);
+
+        // setHomepage runs REAL (page lookup + root-level check + engine write), but
+        // its already-home short-circuit consults homepagePredicate. The old override
+        // forced that predicate to $alreadyHome regardless of the fixtures (e.g. a
+        // loose home.json whose real resolution would otherwise report page-x as
+        // home). Reproduce that precisely: inject a real HomepageResolverService with
+        // every real collaborator EXCEPT homepagePredicate, which is pinned to
+        // $alreadyHome. Locate/languageFolderByCode bind to $svc so the lookup hits
+        // the fixture tree exactly as PageService::homepageResolver() would.
+        $bind = fn(\Closure $c): \Closure => \Closure::bind($c, $svc, PageService::class);
+        $resolver = new \OCA\IntraVox\Service\Homepage\HomepageResolverService(
+            $engine,
+            $folders,
+            $bind(fn(string $lang): Folder => $this->getLanguageFolderByCode($lang)),
+            $bind(fn(Folder $f, string $uid): ?array => $this->findPageByUniqueId($f, $uid)),
+            $bind(fn(File $file): string => $this->getCachedFileContent($file)),
+            $bind(fn(): ?string => $this->resolveEffectiveLanguage()),
+            $bind(fn(): string => $this->getUserLanguage()),
+            fn(string $uid, ?string $language = null): bool => $alreadyHome,
+            function (): void {
+            }
+        );
+        (new \ReflectionProperty(PageService::class, 'homepageResolver'))->setValue($svc, $resolver);
         return $svc;
     }
 
