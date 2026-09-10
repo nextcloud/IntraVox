@@ -32,21 +32,22 @@ use Psr\Log\LoggerInterface;
  */
 final class PageReadService {
     /**
-     * @param \Closure(): MetaVoxGateway $metaVox lazily resolves the gateway
      * @param \Closure(): PageDataEnricher $enricher lazily resolves the enricher
      * @param \Closure(?string, ?string): array $resolveTranslations (group, uniqueId) -> ACL-filtered list
      *
-     * Both are closures rather than built instances because building either
-     * reads $userId (the enricher builds the MetaVox gateway too), and the
-     * request-cache-hit path — the very first thing getPage() does — must return
-     * without forcing that. Resolving them lazily keeps the hit path free of
-     * $userId, matching the original inline getPage() timing exactly. For the
-     * same reason FolderContext is only consulted AFTER the cache-hit return.
+     * The enricher is a closure rather than a built instance because building it
+     * reads $userId, and the request-cache-hit path — the very first thing
+     * getPage() does — must return without forcing that. Resolving it lazily
+     * keeps the hit path free of $userId, matching the original inline getPage()
+     * timing exactly. For the same reason FolderContext is only consulted AFTER
+     * the cache-hit return. MetaVoxGateway is injected directly (its ctor is inert
+     * — it only stores deps — and owns its own three request memos, so a single
+     * DI instance is byte-equivalent to the old lazily-built one).
      */
     public function __construct(
         private PageCacheService $cache,
         private PageLocator $locator,
-        private \Closure $metaVox,
+        private MetaVoxGateway $metaVox,
         private \Closure $enricher,
         private PageShapeSanitizer $shape,
         private PermissionService $permissionService,
@@ -161,7 +162,7 @@ final class PageReadService {
                     // written before these fields existed would otherwise never
                     // gain them. Both are cheap: an in-memory app-manager lookup
                     // and a regex over a path.
-                    $decoded['metaVoxAvailable'] = ($this->metaVox)()->isMetaVoxAvailable();
+                    $decoded['metaVoxAvailable'] = $this->metaVox->isMetaVoxAvailable();
                     if ($decoded['metaVoxAvailable'] && $result['file'] instanceof \OCP\Files\File) {
                         $decoded['groupfolderId'] = $this->groupfolders->forNode($result['file']);
                     }

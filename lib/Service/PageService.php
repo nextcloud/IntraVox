@@ -30,8 +30,6 @@ use OCP\EventDispatcher\IEventDispatcher;
 use OCP\Files\NotFoundException;
 use OCP\IUserSession;
 use OCP\IConfig;
-use OCP\IDBConnection;
-use OCP\App\IAppManager;
 use Psr\Log\LoggerInterface;
 use OCP\Files\Cache\ICacheEntry;
 
@@ -52,9 +50,7 @@ class PageService {
 
     private IUserSession $userSession;
     private string $userId;
-    private IAppManager $appManager;
     private IConfig $config;
-    private IDBConnection $db;
     // The `= null` defaults below are LOAD-BEARING, not cosmetic. They are the
     // only reason the test harness leaves these lazy services alone: a
     // nullable-default property reports isInitialized()===true, so
@@ -64,7 +60,7 @@ class PageService {
     // mocks it with a double that answers null/[] to everything, silently
     // breaking the path it backs. Keep the `= null`.
     /** Lazily-built MetaVox gateway; owns the memos that used to live here (Phase 3). */
-    private ?\OCA\IntraVox\Service\Publication\MetaVoxGateway $metaVoxGateway = null;
+    private \OCA\IntraVox\Service\Publication\MetaVoxGateway $metaVoxGateway;
     /** Lazily-built publication scheduling service (Phase 3). */
     private ?\OCA\IntraVox\Service\Publication\PublicationStateService $publicationStateSvc = null;
     /** Lazily-built CLI maintenance service (Phase 4). */
@@ -235,7 +231,6 @@ class PageService {
     public function __construct(
         IUserSession $userSession,
         IConfig $config,
-        IDBConnection $db,
         LoggerInterface $logger,
         IEventDispatcher $eventDispatcher,
         PublicationSettingsService $publicationSettings,
@@ -259,16 +254,16 @@ class PageService {
         TranslationGroupService $translationGroupService,
         PageMediaService $pageMediaService,
         NewsPageService $newsPageService,
-        IAppManager $appManager,
         \OCA\IntraVox\Service\Folder\FolderContext $folderContext,
         \OCA\IntraVox\Service\Util\GroupfolderResolver $groupfolders,
+        \OCA\IntraVox\Service\Publication\MetaVoxGateway $metaVoxGateway,
         ?string $userId
     ) {
         $this->folderContext = $folderContext;
         $this->groupfolders = $groupfolders;
+        $this->metaVoxGateway = $metaVoxGateway;
         $this->userSession = $userSession;
         $this->config = $config;
-        $this->db = $db;
         $this->logger = $logger;
         $this->eventDispatcher = $eventDispatcher;
         $this->publicationSettings = $publicationSettings;
@@ -291,7 +286,6 @@ class PageService {
         $this->translationGroupService = $translationGroupService;
         $this->pageMediaService = $pageMediaService;
         $this->newsPageService = $newsPageService;
-        $this->appManager = $appManager;
         $this->userId = $userId ?? '';
         $this->cache = $cache;
 
@@ -515,7 +509,7 @@ class PageService {
         return $this->readService ??= new \OCA\IntraVox\Service\Read\PageReadService(
             $this->cache(),
             $this->locator(),
-            fn(): \OCA\IntraVox\Service\Publication\MetaVoxGateway => $this->metaVox(),
+            $this->metaVox(),
             fn(): \OCA\IntraVox\Service\Path\PageDataEnricher => $this->pageDataEnricher(),
             $this->shape(),
             $this->permissionService,
@@ -693,21 +687,14 @@ class PageService {
     }
 
     /**
-     * The MetaVox DB/app-manager gateway (cluster U, Phase 3). Same lazy seam
-     * convention as news()/locator(): DI does not inject it, and the accessor
-     * builds the real one from the deps this service already holds. Memoised so a
-     * single instance per request preserves the file->groupfolder map that
-     * getMetaVoxDataForFiles() fills and searchPages() reads back.
+     * The MetaVox DB/app-manager gateway. Now a DI-first-class ctor-injected
+     * service (facade elimination phase 2): the container builds it with $userId
+     * resolved once, so reaching it never lazily forces $userId — which is what
+     * lets the getPage cache-hit early-return stay free of $userId. It owns its
+     * own three request memos, so a single instance per request still preserves
+     * the file->groupfolder map searchPages() reads back.
      */
     private function metaVox(): \OCA\IntraVox\Service\Publication\MetaVoxGateway {
-        if (!isset($this->metaVoxGateway)) {
-            $this->metaVoxGateway = new \OCA\IntraVox\Service\Publication\MetaVoxGateway(
-                $this->db,
-                $this->appManager,
-                $this->userId,
-                $this->logger
-            );
-        }
         return $this->metaVoxGateway;
     }
 

@@ -61,9 +61,10 @@ class PageDistributedHitRecomputeTest extends TestCase {
         $cache->method('isDistributedAvailable')->willReturn(true);
         $cache->method('getDistributed')->willReturn($cachedJson);
 
-        $appManager = $this->createMock(IAppManager::class);
-        $appManager->method('isInstalled')->willReturn($metavox);
-        $appManager->method('isEnabledForUser')->willReturn($metavox);
+        // MetaVoxGateway is now a DI-injected service (facade elimination phase 2),
+        // so wire its availability directly on the gateway rather than via IAppManager.
+        $metaVoxGateway = $this->createMock(\OCA\IntraVox\Service\Publication\MetaVoxGateway::class);
+        $metaVoxGateway->method('isMetaVoxAvailable')->willReturn($metavox);
 
         $index = $this->createMock(PageIndexService::class);
         $index->method('findByUniqueId')->willReturn(null);
@@ -71,9 +72,8 @@ class PageDistributedHitRecomputeTest extends TestCase {
         $this->injectPageServiceDependencies($svc, [
             'permissionService' => $permissionService,
             'cache' => $cache,
-            'appManager' => $appManager,
+            'metaVoxGateway' => $metaVoxGateway,
             'pageIndexService' => $index,
-            // userId is read when the lazy MetaVoxGateway is built (Phase 3).
             'userId' => 'tester',
             'logger' => $this->createMock(LoggerInterface::class),
             'folderContext' => $this->fakeFolderContext(readLanguageFolder: $lang),
