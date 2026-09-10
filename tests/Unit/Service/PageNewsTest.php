@@ -48,13 +48,6 @@ class PageNewsTest extends TestCase {
         // locate, so both seam overrides go away. Language falls through
         // resolveEffectiveLanguage() (no real content -> null) to userLanguage 'en',
         // matching the old collaborator-resolved path.
-        $svc = new class extends PageService {
-            public function __construct() {
-            }
-            public function clearCache(): void {
-            }
-        };
-
         $news = $this->createMock(NewsPageService::class);
         // findNewsPagesInFolder writes into the &$pages out-param.
         $news->method('findNewsPagesInFolder')->willReturnCallback(
@@ -80,7 +73,8 @@ class PageNewsTest extends TestCase {
         $cache = $this->createMock(PageCacheService::class);
         $cache->method('isDistributedAvailable')->willReturn(false);
 
-        $this->injectPageServiceDependencies($svc, [
+        // Built through the real DI ctor (fase-3); inert invalidator no-ops clearCache.
+        $svc = $this->buildRealPageService([
             'newsPageService' => $news,
             'metaVoxGateway' => $metaVox,
             'cache' => $cache,
@@ -250,13 +244,6 @@ class PageNewsTest extends TestCase {
         array &$writes,
         array $collected = []
     ): PageService {
-        $svc = new class extends PageService {
-            public function __construct() {
-            }
-            public function clearCache(): void {
-            }
-        };
-
         $news = $this->createMock(NewsPageService::class);
         $news->method('findNewsPagesInFolder')->willReturnCallback(
             function ($root, $folder, array &$pages, string $language, int $maxCollect = 0) use ($collected): void {
@@ -290,7 +277,8 @@ class PageNewsTest extends TestCase {
             $this->createMock(\OCP\IGroupManager::class)
         );
 
-        $this->injectPageServiceDependencies($svc, [
+        // Built through the real DI ctor (fase-3); inert invalidator no-ops clearCache.
+        $svc = $this->buildRealPageService([
             'newsPageService' => $news,
             'metaVoxGateway' => $metaVox,
             'cache' => $cache,

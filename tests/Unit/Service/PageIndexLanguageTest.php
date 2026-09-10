@@ -85,13 +85,6 @@ class PageIndexLanguageTest extends TestCase {
         // updatePage resolves its write-target ($userLanguageFolder) via
         // folders()->languageFolder() and languageOfFolder/userLanguage via the
         // intraVox() root ($base); rebuildIndex uses folders()->intraVox().
-        $svc = new class() extends PageService {
-            public function __construct() {
-            }
-            public function clearCache(): void {
-            }
-        };
-
         // Record what the index is told, without a database.
         $index = $this->createMock(PageIndexService::class);
         $index->method('indexPage')->willReturnCallback(
@@ -136,9 +129,9 @@ class PageIndexLanguageTest extends TestCase {
                 userLanguage: 'de'
             ),
         ];
-        $this->injectPageServiceDependencies($svc, $explicit);
-
-        return $svc;
+        // Built through the real DI ctor (fase-3); the inert PageCacheInvalidator
+        // no-ops clearCache.
+        return $this->buildRealPageService($explicit);
     }
 
     /**

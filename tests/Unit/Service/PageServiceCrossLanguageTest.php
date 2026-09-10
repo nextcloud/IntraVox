@@ -103,15 +103,6 @@ class PageServiceCrossLanguageTest extends TestCase {
         // updatePage resolves its write-target ($writeFolder) via
         // folders()->languageFolder(), and languageOfFolder + userLanguage via the
         // intraVox() root ($base) — all through the injected FolderContext below.
-        $svc = new class extends PageService {
-            // Deliberately bypass the real 25-arg constructor.
-            public function __construct() {
-            }
-            // Isolate from events, navigation sync and caches.
-            public function clearCache(): void {
-            }
-        };
-
         // updatePage() needs a session user and a uid before it resolves the
         // page. Both properties are private on PageService, so they are injected
         // here rather than widening production visibility for a test's sake.
@@ -147,9 +138,9 @@ class PageServiceCrossLanguageTest extends TestCase {
                 userLanguage: 'de'
             ),
         ];
-        $this->injectPageServiceDependencies($svc, $explicit);
-
-        return $svc;
+        // Built through the real DI ctor (fase-3); the inert PageCacheInvalidator
+        // no-ops clearCache.
+        return $this->buildRealPageService($explicit);
     }
 
     /**
