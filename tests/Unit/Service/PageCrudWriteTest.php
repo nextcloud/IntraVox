@@ -66,18 +66,9 @@ class PageCrudWriteTest extends TestCase {
 
         // deletePage resolves its language folder via folders()->languageFolder()
         // (wired to $lang below) and walks cross-language via locatePageAnyLanguage
-        // -> rootClosure() -> getIntraVoxFolder, which is kept THROWING here to pin
-        // the degrade-to-in-folder-walk behaviour.
-        $svc = new class($isHomepage) extends PageService {
-            private bool $home;
-            public function __construct(bool $home) {
-                $this->home = $home;
-            }
-            public function isHomepage(string $uniqueId, ?string $language = null): bool {
-                return $this->home;
-            }
-        };
-
+        // -> rootClosure() -> intraVox(). The only page in play is 'page-del', so
+        // 'home' => 'page-del' when $isHomepage reproduces the old blanket-true
+        // override (deletePage only ever asks isHomepage about the resolved page).
         $dispatcher = $this->createMock(IEventDispatcher::class);
         $dispatcher->method('dispatchTyped')->willReturnCallback(function ($event) {
             if ($event instanceof PageDeletedEvent) {
@@ -97,18 +88,15 @@ class PageCrudWriteTest extends TestCase {
         $cache->method('clearRequest')->willReturnCallback(function () {
             $this->clearCacheCalls++;
         });
-        $cacheInvalidator = $this->fakeCacheInvalidator($cache);
-
-        $this->injectPageServiceDependencies($svc, [
+        return $this->buildRealPageService([
+            'home' => $isHomepage ? 'page-del' : null,
             'eventDispatcher' => $dispatcher,
             'pageIndexService' => $index,
             'cache' => $cache,
-            'cacheInvalidator' => $cacheInvalidator,
+            'cacheSpy' => $cache,
             'logger' => $this->createMock(LoggerInterface::class),
             'folderContext' => $this->fakeFolderContext(languageFolder: $lang),
         ]);
-
-        return $svc;
     }
 
     public function testDeletingHomeIdIsRejectedOutright(): void {
@@ -128,13 +116,8 @@ class PageCrudWriteTest extends TestCase {
      * would surface a LogicException instead of the crisp 'Cannot delete home page'.
      */
     public function testDeletingHomeRejectsBeforeResolvingTheFolder(): void {
-        $svc = new class extends PageService {
-            public function __construct() {
-            }
-            public function clearCache(): void {
-            }
-        };
-        $this->injectPageServiceDependencies($svc, [
+        $svc = $this->buildRealPageService([
+            'home' => null,
             'logger' => $this->createMock(LoggerInterface::class),
             // No folder wired: languageFolder()/intraVox() throw LogicException if
             // deletePage resolves the folder before checking $id==='home'.
@@ -152,15 +135,11 @@ class PageCrudWriteTest extends TestCase {
         // no other language folders either, so the lookup returns null.
         $empty = $this->makeFolder('/IntraVox/en', []);
         $base = $this->makeFolder('/IntraVox', ['en' => $empty]);
-        // languageFolder ($empty) via the seam; getIntraVoxFolder ($base) kept for
-        // the cross-language walk (locatePageAnyLanguage -> rootClosure()).
-        $svc = new class extends PageService {
-            public function __construct() {
-            }
-        };
+        // languageFolder ($empty); intraVox ($base) for the cross-language walk
+        // (locatePageAnyLanguage -> rootClosure()).
         $index = $this->createMock(PageIndexService::class);
         $index->method('findByUniqueId')->willReturn(null);
-        $this->injectPageServiceDependencies($svc, [
+        $svc = $this->buildRealPageService([
             'pageIndexService' => $index,
             'logger' => $this->createMock(LoggerInterface::class),
             'folderContext' => $this->fakeFolderContext(intraVox: $base, languageFolder: $empty),
