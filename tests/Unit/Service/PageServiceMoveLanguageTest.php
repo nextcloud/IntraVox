@@ -115,18 +115,6 @@ class PageServiceMoveLanguageTest extends TestCase {
         // language folder, and languageOfFolder/relativePathFromRoot use the
         // intraVox() root ($base). getIntraVoxFolder stays for the cross-language
         // locate walks (locatePageAnyLanguage/BySlug -> rootClosure()).
-        $svc = new class() extends PageService {
-            public function __construct() {
-            }
-            public function clearCache(): void {
-            }
-            // isHomepage() reads appconfig via collaborators irrelevant here;
-            // no fixture page is the configured homepage.
-            public function isHomepage(string $uniqueId, ?string $language = null): bool {
-                return false;
-            }
-        };
-
         $user = $this->createMock(\OCP\IUser::class);
         $user->method('getUID')->willReturn('tester');
         $session = $this->createMock(\OCP\IUserSession::class);
@@ -161,7 +149,15 @@ class PageServiceMoveLanguageTest extends TestCase {
             }
         );
 
-        $explicit = [
+        // Built through the real DI ctor (fase-3). 'home' => null makes isHomepage()
+        // true only for the bare 'home' id — and no fixture page here is 'home' (and
+        // movePage guards the 'home' string before isHomepage anyway), so it
+        // reproduces the old always-false override for every id this suite exercises.
+        // The inert PageCacheInvalidator makes clearCache() a no-op. movePage,
+        // getCurrentPageContent and updateVersionLabel all run LIVE through the real
+        // service.
+        return $this->buildRealPageService([
+            'home' => null,
             'userSession' => $session,
             'userId' => 'tester',
             'config' => $config,
@@ -175,10 +171,7 @@ class PageServiceMoveLanguageTest extends TestCase {
                 primaryLanguage: 'en',
                 languageFolder: $userLanguageFolder
             ),
-        ];
-        $this->injectPageServiceDependencies($svc, $explicit);
-
-        return $svc;
+        ]);
     }
 
     /**
