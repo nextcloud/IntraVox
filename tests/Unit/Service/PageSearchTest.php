@@ -43,8 +43,6 @@ class PageSearchTest extends TestCase {
             public function listPagesWithContent(): array {
                 return $this->pages;
             }
-            public function clearCache(): void {
-            }
         };
 
         // metaVox() is private (not overridable); set the gateway property so the

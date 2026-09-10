@@ -136,14 +136,7 @@ class PageLanguageResolutionTest extends TestCase {
         // folders() delegators. So this drives the REAL FolderContext built from
         // the same atoms (rootFolder mount walk, config, userId) the old PageService
         // substrate used — the reflected privates run the identical logic through it.
-        $svc = new class extends PageService {
-            public function __construct() {
-            }
-            public function clearCache(): void {
-            }
-        };
-
-        // userId '' = logged out (empty-string sentinel): userLanguage() short-
+                // userId '' = logged out (empty-string sentinel): userLanguage() short-
         // circuits to 'en' and intraVox() would throw "not logged in".
         $userId = $userLangValue === null ? '' : 'tester';
 
@@ -190,7 +183,8 @@ class PageLanguageResolutionTest extends TestCase {
             'logger' => $this->createMock(\Psr\Log\LoggerInterface::class),
             'folderContext' => $folderContext,
         ];
-        $this->injectPageServiceDependencies($svc, $explicit);
+        // fase-3: real DI ctor; inert invalidator no-ops clearCache.
+        $svc = $this->buildRealPageService($explicit);
         return $svc;
     }
 

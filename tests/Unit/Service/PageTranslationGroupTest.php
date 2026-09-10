@@ -98,13 +98,7 @@ class PageTranslationGroupTest extends TestCase {
         // updatePage via folders()->languageFolder ($nl) + languageOfFolder/
         // userLanguage; the cross-language locate root ($base) also comes from the
         // injected FolderContext (intraVox).
-        $svc = new class() extends PageService {
-            public function __construct() {}
-            public function clearCache(): void {
-            }
-        };
-
-        $index = $this->createMock(PageIndexService::class);
+                $index = $this->createMock(PageIndexService::class);
         $index->method('findByUniqueId')->willReturn(null);
 
         $config = $this->createMock(\OCP\IConfig::class);
@@ -131,7 +125,8 @@ class PageTranslationGroupTest extends TestCase {
                 userLanguage: 'nl'
             ),
         ];
-        $this->injectPageServiceDependencies($svc, $explicit);
+        // fase-3: real DI ctor; inert invalidator no-ops clearCache.
+        $svc = $this->buildRealPageService($explicit);
         return $svc;
     }
 

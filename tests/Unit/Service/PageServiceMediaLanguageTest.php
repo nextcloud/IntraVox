@@ -121,14 +121,6 @@ class PageServiceMediaLanguageTest extends TestCase {
 
         // The media methods resolve their read/language folder through the injected
         // FolderContext now, so getReadLanguageFolder/getLanguageFolder are gone.
-        $svc = new class extends PageService {
-            // Deliberately bypass the real (25-arg) constructor.
-            public function __construct() {
-            }
-            public function clearCache(): void {
-            }
-        };
-
         $user = $this->createMock(\OCP\IUser::class);
         $user->method('getUID')->willReturn('tester');
         $session = $this->createMock(\OCP\IUserSession::class);
@@ -156,7 +148,8 @@ class PageServiceMediaLanguageTest extends TestCase {
                 primaryLanguage: 'en'
             ),
         ];
-        $this->injectPageServiceDependencies($svc, $explicit);
+        // fase-3: real DI ctor; inert invalidator no-ops clearCache.
+        $svc = $this->buildRealPageService($explicit);
 
         // sanitizeId() is delegated to a final helper that the loop above
         // instantiates with mocked collaborators; make it behave like the real

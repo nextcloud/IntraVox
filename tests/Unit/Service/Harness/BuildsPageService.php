@@ -201,17 +201,11 @@ trait BuildsPageService {
         $cacheSpy = $explicit['cacheSpy'] ?? null;
         unset($explicit['home'], $explicit['cacheSpy']);
 
-        // First resolve the deps the lazy-seam services are built from, so any
-        // lazy-seam ctor param not explicitly wired gets a REAL instance (matching
-        // the old accessor path, which scans the folder fixtures) rather than a mock.
+        // The ctor requires every param non-null, but the 4 lazy-seam services get
+        // unset again below so their accessor rebuilds them lazily — so a mock for
+        // the ctor arg is fine (it is thrown away). FolderContext / PageCacheInvalidator
+        // get the real fixtures because they are NOT lazy-seams (they stay).
         $ctor = (new \ReflectionClass(PageService::class))->getConstructor();
-        $pick = function (string $name, string $class) use ($explicit) {
-            return $explicit[$name] ?? $this->doubleOrBuild($class);
-        };
-        $pageIndexService = $pick('pageIndexService', \OCA\IntraVox\Service\PageIndexService::class);
-        $logger = $explicit['logger'] ?? $this->createMock(LoggerInterface::class);
-        $realLocator = $explicit['pageLocator'] ?? new PageLocator($pageIndexService, $logger);
-
         $args = [];
         foreach ($ctor->getParameters() as $param) {
             $name = $param->getName();
@@ -223,8 +217,6 @@ trait BuildsPageService {
                 $args[] = 'tester';
                 continue;
             }
-            if ($name === 'pageIndexService') { $args[] = $pageIndexService; continue; }
-            if ($name === 'logger') { $args[] = $logger; continue; }
             $type = $param->getType();
             if ($type instanceof \ReflectionNamedType && !$type->isBuiltin()) {
                 $class = $type->getName();
@@ -232,14 +224,6 @@ trait BuildsPageService {
                     $args[] = $this->fakeFolderContext();
                 } elseif ($class === PageCacheInvalidator::class) {
                     $args[] = $this->fakeCacheInvalidator($cacheSpy);
-                } elseif ($class === PageLocator::class) {
-                    $args[] = $realLocator;
-                } elseif ($class === TranslationGroupService::class) {
-                    $args[] = new TranslationGroupService($pageIndexService, $realLocator, $this->doubleOrBuild(\OCA\IntraVox\Service\Util\PageIdUtils::class), $logger);
-                } elseif ($class === PageMediaService::class) {
-                    $args[] = new PageMediaService($realLocator, $this->doubleOrBuild(\OCA\IntraVox\Service\Sanitize\MediaSanitizer::class), $logger);
-                } elseif ($class === NewsPageService::class) {
-                    $args[] = new NewsPageService($realLocator, $this->doubleOrBuild(\OCA\IntraVox\Service\PermissionService::class), $this->doubleOrBuild(\OCA\IntraVox\Service\News\NewsContentExtractor::class), $logger);
                 } else {
                     $args[] = $this->doubleOrBuild($class);
                 }
@@ -250,6 +234,25 @@ trait BuildsPageService {
         }
 
         $svc = new PageService(...$args);
+
+        // The 4 lazy-seam services were passed to the ctor as real instances (the
+        // ctor requires them non-null), but the old ctor-bypass subclasses left them
+        // UNSET so their lazy accessor (locator()/translationGroups()/media()/news())
+        // rebuilds from the CURRENT pageIndexService/logger on first use — which
+        // matters when a test reflection-sets a fresh pageIndexService after
+        // construction. Reproduce that: unset each lazy-seam property the caller did
+        // not explicitly wire, so isset()===false and the accessor rebuilds lazily.
+        $unset = \Closure::bind(function (string $prop): void {
+            unset($this->{$prop});
+        }, $svc, PageService::class);
+        foreach ((new \ReflectionClass(PageService::class))->getProperties() as $prop) {
+            $t = $prop->getType();
+            if ($t instanceof \ReflectionNamedType
+                && in_array($t->getName(), self::LAZY_SEAM_SERVICES, true)
+                && !array_key_exists($prop->getName(), $explicit)) {
+                $unset($prop->getName());
+            }
+        }
 
         // Reflection-set the homepage resolver so isHomepage() is a fixed predicate,
         // replacing the old isHomepage() override. Only when 'home' was passed.
