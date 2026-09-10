@@ -426,8 +426,9 @@ class PageService {
         return $this->versionDomain ??= new \OCA\IntraVox\Service\Version\PageVersionDomainService(
             $this->pageVersionService,
             $this->logger,
-            fn(string $pageId): ?array => $this->locateVersionPage($pageId),
-            fn(string $pageId): ?array => $this->locatePageForOperation($pageId)
+            $this->folders(),
+            $this->locator(),
+            $this->idUtils
         );
     }
 
@@ -476,27 +477,6 @@ class PageService {
         );
     }
 
-    /**
-     * Resolve a page for the version-manager reads: follow a page-… uniqueId
-     * across language folders (issue #90), else fall back to the legacy id
-     * lookup in the user's own language folder. Returns null on a miss so the
-     * caller owns the throw. This is the INLINE-A prologue the three
-     * version-manager reads shared verbatim.
-     */
-    private function locateVersionPage(string $pageId): ?array {
-        $folder = $this->folders()->languageFolder();
-        $result = null;
-
-        if (strpos($pageId, 'page-') === 0) {
-            $result = $this->locatePageAnyLanguage($folder, $pageId);
-        }
-
-        if ($result === null) {
-            $result = $this->findPageById($folder, $this->idUtils->sanitizeId($pageId));
-        }
-
-        return $result;
-    }
 
     /**
      * Lazy seam for the sibling reorderer (Phase "reorder"). Built from
