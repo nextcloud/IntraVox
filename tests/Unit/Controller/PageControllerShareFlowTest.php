@@ -4,8 +4,8 @@ declare(strict_types=1);
 namespace OCA\IntraVox\Tests\Unit\Controller;
 
 use OCA\IntraVox\Controller\PageController;
-use OCA\IntraVox\Service\PageService;
 use OCA\IntraVox\Service\PublicShareService;
+use OCA\IntraVox\Service\Read\PageReadService;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\RedirectResponse;
@@ -42,6 +42,14 @@ class PageControllerShareFlowTest extends TestCase {
     private IURLGenerator $urlGenerator;
     private IRequest $request;
 
+    /**
+     * PageReadService is final (cannot be mocked) and this share-flow suite never
+     * calls getPage() on it, so a constructor-less instance satisfies the ctor type.
+     */
+    private function unusedPageRead(): PageReadService {
+        return (new \ReflectionClass(PageReadService::class))->newInstanceWithoutConstructor();
+    }
+
     private function makeController(): PageController {
         $this->shareService = $this->createMock(PublicShareService::class);
         // Token-shape validation moved to PublicShareService (Phase 6.2); reproduce
@@ -72,7 +80,7 @@ class PageControllerShareFlowTest extends TestCase {
         return new PageController(
             'intravox',
             $this->request,
-            $this->createMock(PageService::class),
+            $this->unusedPageRead(),
             $this->shareService,
             $this->createMock(LoggerInterface::class),
             $this->config,
@@ -108,7 +116,7 @@ class PageControllerShareFlowTest extends TestCase {
             fn($app, $key, $default = '') => $key === 'shareapi_allow_links' ? 'no' : $default
         );
         $ctrl = new PageController(
-            'intravox', $this->request, $this->createMock(PageService::class), $this->shareService,
+            'intravox', $this->request, $this->unusedPageRead(), $this->shareService,
             $this->createMock(LoggerInterface::class), $config, $this->userSession, $this->throttler,
             $this->session, $this->urlGenerator, $this->createMock(IInitialState::class),
             $this->createMock(IAppManager::class),

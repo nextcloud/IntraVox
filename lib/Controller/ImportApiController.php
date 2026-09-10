@@ -6,7 +6,7 @@ namespace OCA\IntraVox\Controller;
 use OCA\IntraVox\Service\Import\ConfluenceHtmlImportOrchestrator;
 use OCA\IntraVox\Service\Import\ZipUploadValidator;
 use OCA\IntraVox\Service\ImportService;
-use OCA\IntraVox\Service\PageService;
+use OCA\IntraVox\Service\Read\PageReadService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
@@ -36,7 +36,7 @@ class ImportApiController extends Controller {
     public function __construct(
         string $appName,
         IRequest $request,
-        private PageService $pageService,
+        private PageReadService $pageRead,
         private ImportService $importService,
         private ZipUploadValidator $zipUploads,
         private ConfluenceHtmlImportOrchestrator $confluenceImport,
@@ -64,7 +64,7 @@ class ImportApiController extends Controller {
      */
     private function validateParentPageId(string $parentPageId, string $targetLanguage): array {
         try {
-            $parentPage = $this->pageService->getPage($parentPageId);
+            $parentPage = $this->pageRead->getPage($parentPageId);
         } catch (\Exception $e) {
             $this->logger->warning('[ApiController] Parent page validation failed: page not found', [
                 'parentPageId' => $parentPageId,

@@ -1247,9 +1247,10 @@ class PageService {
     public function getPage(string $id): array {
         // The single-page read (resolution, #70 cache-hit recompute + strip,
         // enrich + sanitize) lives in Read/PageReadService — the first service
-        // carved out of the god-class. The delegator supplies the folder seams
-        // and the two #70-shared concerns as $this-bound closures so the 26
-        // seam-subclasses keep intercepting.
+        // carved out of the god-class, now fully DI-buildable (closure-free ctor).
+        // This facade delegator stays only so the 26 seam-subclasses that still
+        // extend PageService keep resolving; new callers should inject
+        // PageReadService directly.
         return $this->readService()->getPage($id);
     }
 

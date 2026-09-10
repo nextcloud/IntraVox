@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace OCA\IntraVox\Controller;
 
-use OCA\IntraVox\Service\PageService;
+use OCA\IntraVox\Service\Read\PageReadService;
 use OCA\IntraVox\Service\PublicShareService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -29,7 +29,7 @@ class PageController extends Controller {
     public function __construct(
         string $appName,
         IRequest $request,
-        private PageService $pageService,
+        private PageReadService $pageRead,
         private PublicShareService $publicShareService,
         private LoggerInterface $logger,
         private IConfig $config,
@@ -384,7 +384,7 @@ class PageController extends Controller {
         $pageTitle = 'IntraVox';
 
         try {
-            $pageData = $this->pageService->getPage($uniqueId);
+            $pageData = $this->pageRead->getPage($uniqueId);
             if ($pageData && isset($pageData['title'])) {
                 $pageTitle = $pageData['title'] . ' - IntraVox';
             }

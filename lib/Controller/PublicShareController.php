@@ -11,7 +11,7 @@ use OCA\IntraVox\Service\FeedReaderService;
 use OCA\IntraVox\Service\NavigationService;
 use OCA\IntraVox\Service\People\PeopleQuery;
 use OCA\IntraVox\Service\People\PublicSharePeopleGuard;
-use OCA\IntraVox\Service\PageService;
+use OCA\IntraVox\Service\Read\PageReadService;
 use OCA\IntraVox\Service\Path\PagePathHelper;
 use OCA\IntraVox\Service\PublicShare\ShareBreadcrumbBuilder;
 use OCA\IntraVox\Service\PublicShare\ShareMediaServer;
@@ -68,7 +68,7 @@ class PublicShareController extends Controller {
     public function __construct(
         string $appName,
         IRequest $request,
-        private PageService $pageService,
+        private PageReadService $pageRead,
         private SetupService $setupService,
         private PublicShareService $publicShareService,
         private SystemFileService $systemFileService,
@@ -117,7 +117,7 @@ class PublicShareController extends Controller {
             // First try to get language from existing page data
             $language = 'en'; // Default
             try {
-                $existingPage = $this->pageService->getPage($uniqueId);
+                $existingPage = $this->pageRead->getPage($uniqueId);
                 $language = $existingPage['language'] ?? 'en';
             } catch (\Exception $e) {
                 // Page not found yet, will be handled by validateShareAccess
@@ -460,7 +460,7 @@ class PublicShareController extends Controller {
             );
 
             // READER-GATE: SystemFileService drops manual drafts, but it has no
-            // PageService and so cannot evaluate the publish/expiration dates
+            // PageReadService and so cannot evaluate the publish/expiration dates
             // that live in MetaVox. Its own comment claims "the share endpoints in
             // ApiController" enforce those — they did not, and a scheduled or
             // expired page appeared in the public news list. Enforce it here,
@@ -1154,7 +1154,7 @@ class PublicShareController extends Controller {
      * Drop news items that are not publicly published. (READER-GATE)
      *
      * The manual draft flag is already handled one layer down; what this adds is
-     * the publish/expiration dates, which only PageService can interpret. A page
+     * the publish/expiration dates, which the enriched page read interprets. A page
      * scheduled for next month, or one that expired last week, must not appear in
      * a public news list.
      *
