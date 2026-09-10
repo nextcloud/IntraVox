@@ -80,12 +80,6 @@ class PageConcurrencyTest extends TestCase {
         // updatePage resolves its write-target ($languageFolder) via
         // folders()->languageFolder(), languageOfFolder + userLanguage via the
         // intraVox() root ($base) — all supplied by the injected FolderContext.
-        $svc = new class() extends PageService {
-            public function __construct() {}
-            public function clearCache(): void {
-            }
-        };
-
         $user = $this->createMock(\OCP\IUser::class);
         $user->method('getUID')->willReturn('tester');
         $user->method('getDisplayName')->willReturn('Tester');
@@ -97,7 +91,9 @@ class PageConcurrencyTest extends TestCase {
         $languageService->method('isLanguageAvailable')->willReturn(true);
         $languageService->method('getPrimaryLanguage')->willReturn('en');
 
-        $explicit = [
+        // Built through the real DI ctor (fase-3); the inert PageCacheInvalidator
+        // no-ops clearCache.
+        return $this->buildRealPageService([
             'userSession' => $session,
             'userId' => 'tester',
             'config' => $config,
@@ -108,9 +104,7 @@ class PageConcurrencyTest extends TestCase {
                 languageFolder: $languageFolder,
                 userLanguage: 'en'
             ),
-        ];
-        $this->injectPageServiceDependencies($svc, $explicit);
-        return $svc;
+        ]);
     }
 
     /** Fixture: one page whose file on disk has mtime $mtime. */

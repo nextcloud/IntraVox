@@ -68,13 +68,6 @@ class PageServiceGetMediaTest extends TestCase {
         // getMedia's read-language + intraVox folder resolution now flows through
         // the injected FolderContext, so getReadLanguageFolder/getLanguageFolder
         // and the getIntraVoxFolder seam are gone.
-        $svc = new class extends PageService {
-            public function __construct() {
-            }
-            public function clearCache(): void {
-            }
-        };
-
         $media = $this->createMock(PageMediaService::class);
         $media->method('streamMediaFile')->willReturnCallback(
             function ($mediaFolder, $filename) {
@@ -87,7 +80,10 @@ class PageServiceGetMediaTest extends TestCase {
         $cache->method('hasPageFolder')->willReturnCallback(fn($id) => isset($cachedFolders[$id]));
         $cache->method('getPageFolder')->willReturnCallback(fn($id) => $cachedFolders[$id] ?? null);
 
-        $this->injectPageServiceDependencies($svc, [
+        // Built through the real DI ctor (fase-3); the inert PageCacheInvalidator
+        // no-ops clearCache. pageMediaService is passed explicitly so the factory
+        // uses this mock rather than building the lazy-seam engine.
+        $svc = $this->buildRealPageService([
             'userId' => 'tester',
             'logger' => $this->createMock(\Psr\Log\LoggerInterface::class),
             'pageMediaService' => $media,

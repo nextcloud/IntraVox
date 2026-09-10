@@ -73,14 +73,9 @@ class PageServiceVersionTest extends TestCase {
         ]);
         $base = $this->makeFolder('/IntraVox', ['en' => $en]);
 
-        $svc = new class extends PageService {
-            public function __construct() {
-            }
-            public function clearCache(): void {
-            }
-        };
-
-        $this->injectPageServiceDependencies($svc, [
+        // Built through the real DI ctor (fase-3); the inert PageCacheInvalidator
+        // no-ops clearCache.
+        $svc = $this->buildRealPageService([
             'userId' => 'tester',
             'logger' => $logger ?? $this->createMock(LoggerInterface::class),
             'pageVersionService' => $engine,
