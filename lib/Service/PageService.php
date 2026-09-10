@@ -101,6 +101,7 @@ class PageService {
     private \OCA\IntraVox\Service\Folder\FolderContext $folderContext;
     /** Stateless GroupFolder-id resolver (facade elimination phase 2). */
     private \OCA\IntraVox\Service\Util\GroupfolderResolver $groupfolders;
+    private \OCA\IntraVox\Service\Cache\PageCacheInvalidator $cacheInvalidator;
     private LoggerInterface $logger;
     private IEventDispatcher $eventDispatcher;
     private PublicationSettingsService $publicationSettings;
@@ -154,7 +155,7 @@ class PageService {
         // reports whether it did. The collaborator caches below belong to the
         // same flush, so they follow on exactly that condition.
         if ($this->cache()->endDeferred()) {
-            $this->clearCollaboratorCaches();
+            $this->cacheInvalidator->invalidateCollaborators();
         }
     }
 
@@ -162,44 +163,12 @@ class PageService {
      * Clear all request-level caches (call after mutations)
      */
     private function clearCache(?string $pageId = null): void {
-        // Request-level caches are always invalidated immediately: these are cheap
-        // array resets, and doing them per item keeps every mutation seeing a
-        // truthful filesystem view mid-batch (identical to the non-batch path).
-        $this->cache()->clearRequest($pageId);
-        if ($pageId === null) {
-            $this->locator()->clearRequestCaches();
-            $this->permissionService->clearNodePermissionsCache();
-        }
-
-        // The expensive part — the tree cache and the distributed cache
-        // (IPC/Redis clear()) — is what makes a 100-item bulk op wipe the
-        // distributed cache 100×. clearExpensive() defers it during a batch and
-        // returns false; the collaborator caches are part of that same flush and
-        // are skipped on the same condition.
-        //
-        // The clear is blanket rather than targeted: a single page mutation can
-        // be visible to any group with read access via GroupFolder ACL, and we
-        // cannot enumerate those from here. The bucket count is small (≤ groups
-        // × languages, typically ~40), so a blanket clear is cheaper than
-        // tracking dependencies. This also drops the news-version counters and
-        // content caches; subsequent reads re-initialize at 0 and rebuild.
-        if ($this->cache()->clearExpensive()) {
-            $this->clearCollaboratorCaches();
-        }
-    }
-
-    /**
-     * Caches owned by OTHER services that must drop whenever ours do.
-     *
-     * Separate because two paths reach it: an ordinary clearCache(), and the
-     * flush that closes a deferred batch. These are not ours to own —
-     * SystemFileService builds the public-share tree, PermissionService keeps
-     * the per-language path map — so we invalidate through their APIs rather
-     * than reaching into their state.
-     */
-    private function clearCollaboratorCaches(): void {
-        SystemFileService::clearStaticTreeCache();
-        $this->permissionService->clearDistributedCache();
+        // The whole cache fan-out now lives in Cache/PageCacheInvalidator (facade
+        // elimination phase 2). This stays a thin private delegator so the 19 test
+        // subclasses that shadow clearCache() keep intercepting unchanged, and the
+        // carved write/structure/reorder services keep receiving it as a $this-bound
+        // closure with the same (?string $pageId) shape.
+        $this->cacheInvalidator->invalidate($pageId);
     }
 
     /**
@@ -257,11 +226,13 @@ class PageService {
         \OCA\IntraVox\Service\Folder\FolderContext $folderContext,
         \OCA\IntraVox\Service\Util\GroupfolderResolver $groupfolders,
         \OCA\IntraVox\Service\Publication\MetaVoxGateway $metaVoxGateway,
+        \OCA\IntraVox\Service\Cache\PageCacheInvalidator $cacheInvalidator,
         ?string $userId
     ) {
         $this->folderContext = $folderContext;
         $this->groupfolders = $groupfolders;
         $this->metaVoxGateway = $metaVoxGateway;
+        $this->cacheInvalidator = $cacheInvalidator;
         $this->userSession = $userSession;
         $this->config = $config;
         $this->logger = $logger;

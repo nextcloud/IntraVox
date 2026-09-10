@@ -102,6 +102,16 @@ class PageServiceReorderTest extends TestCase {
             });
         (new \ReflectionProperty(PageService::class, 'pageLocator'))
             ->setValue($svc, $locator);
+        // reorderSiblings ends with clearCache() → cacheInvalidator->invalidate();
+        // this custom-ctor subclass bypasses the harness auto-fill, so wire a real
+        // invalidator over inert doubles (the reorder assertions are about the
+        // order writes, not the cache fan-out).
+        (new \ReflectionProperty(PageService::class, 'cacheInvalidator'))
+            ->setValue($svc, new \OCA\IntraVox\Service\Cache\PageCacheInvalidator(
+                new \OCA\IntraVox\Service\Cache\PageCacheService(),
+                $locator,
+                $this->createMock(PermissionService::class)
+            ));
         return $svc;
     }
 

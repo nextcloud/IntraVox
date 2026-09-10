@@ -89,16 +89,25 @@ class PageCrudWriteTest extends TestCase {
         $index->method('findByUniqueId')->willReturn(null);
 
         // clearCache() is private, so it cannot be overridden on the subclass; it
-        // is observed through its first collaborator call, cache()->clearRequest().
+        // is observed through its first collaborator call, clearRequest(). That call
+        // now lives in PageCacheInvalidator (phase 2), so the spy goes on the cache
+        // the invalidator holds — and the invalidator is wired explicitly over the
+        // same cache so PageService's own cache() accessor stays consistent.
         $cache = $this->createMock(\OCA\IntraVox\Service\Cache\PageCacheService::class);
         $cache->method('clearRequest')->willReturnCallback(function () {
             $this->clearCacheCalls++;
         });
+        $cacheInvalidator = new \OCA\IntraVox\Service\Cache\PageCacheInvalidator(
+            $cache,
+            $this->createMock(\OCA\IntraVox\Service\Locator\PageLocator::class),
+            $this->createMock(\OCA\IntraVox\Service\PermissionService::class)
+        );
 
         $this->injectPageServiceDependencies($svc, [
             'eventDispatcher' => $dispatcher,
             'pageIndexService' => $index,
             'cache' => $cache,
+            'cacheInvalidator' => $cacheInvalidator,
             'logger' => $this->createMock(LoggerInterface::class),
             'folderContext' => $this->fakeFolderContext(languageFolder: $lang),
         ]);
