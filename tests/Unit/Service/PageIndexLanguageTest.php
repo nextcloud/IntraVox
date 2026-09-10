@@ -88,8 +88,6 @@ class PageIndexLanguageTest extends TestCase {
         $svc = new class() extends PageService {
             public function __construct() {
             }
-            protected function createVersionBeforeUpdate($file): void {
-            }
             public function clearCache(): void {
             }
         };

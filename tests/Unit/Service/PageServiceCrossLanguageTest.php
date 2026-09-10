@@ -107,9 +107,7 @@ class PageServiceCrossLanguageTest extends TestCase {
             // Deliberately bypass the real 25-arg constructor.
             public function __construct() {
             }
-            // Isolate from version creation, events, navigation sync and caches.
-            protected function createVersionBeforeUpdate($file): void {
-            }
+            // Isolate from events, navigation sync and caches.
             public function clearCache(): void {
             }
         };

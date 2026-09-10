@@ -82,8 +82,6 @@ class PageConcurrencyTest extends TestCase {
         // intraVox() root ($base) — all supplied by the injected FolderContext.
         $svc = new class() extends PageService {
             public function __construct() {}
-            protected function createVersionBeforeUpdate($file): void {
-            }
             public function clearCache(): void {
             }
         };
