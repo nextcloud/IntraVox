@@ -509,7 +509,8 @@ class PageService {
             $this->pageVersionService,
             $this->pageIndexService,
             $this->languageService,
-            $this->folders()
+            $this->folders(),
+            $this->locator()
         );
     }
 
@@ -1423,8 +1424,6 @@ class PageService {
             $id,
             $data,
             fn(): \OCP\Files\Folder => $this->folders()->languageFolder(),
-            fn(\OCP\Files\Folder $folder, string $uid): ?array => $this->locatePageAnyLanguage($folder, $uid),
-            fn(\OCP\Files\Folder $folder, string $legacyId): ?array => $this->findPageById($folder, $legacyId),
             fn(\OCP\Files\Folder $folder): ?string => $this->folders()->languageOfFolder($folder),
             fn(): string => $this->folders()->userLanguage(),
             fn(array $page): array => $this->validateAndSanitizePage($page),
@@ -1447,8 +1446,6 @@ class PageService {
         $this->writeService()->deletePage(
             $id,
             fn(): \OCP\Files\Folder => $this->folders()->languageFolder(),
-            fn(\OCP\Files\Folder $folder, string $uid): ?array => $this->locatePageAnyLanguage($folder, $uid),
-            fn(\OCP\Files\Folder $folder, string $legacyId): ?array => $this->findPageById($folder, $legacyId),
             fn(string $uid): bool => $this->isHomepage($uid),
             function (): void {
                 $this->clearCache();

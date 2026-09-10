@@ -41,6 +41,7 @@ final class PageWriteService {
         private PageIndexService $pageIndexService,
         private LanguageService $languageService,
         private FolderContext $folders,
+        private \OCA\IntraVox\Service\Locator\PageLocator $locator,
     ) {
     }
 
@@ -50,16 +51,12 @@ final class PageWriteService {
      * create-on-miss or throw, and the pre-carve monolith checked 'home' first.
      *
      * @param \Closure(): \OCP\Files\Folder $languageFolder getLanguageFolder seam
-     * @param \Closure(\OCP\Files\Folder, string): ?array $locatePageAnyLanguage
-     * @param \Closure(\OCP\Files\Folder, string): ?array $findPageById
      * @param \Closure(string): bool $isHomepage
      * @param \Closure(): void $clearCache
      */
     public function deletePage(
         string $id,
         \Closure $languageFolder,
-        \Closure $locatePageAnyLanguage,
-        \Closure $findPageById,
         \Closure $isHomepage,
         \Closure $clearCache
     ): void {
@@ -74,10 +71,12 @@ final class PageWriteService {
         // Resolve by uniqueId (page-…) first, then fall back to legacy folder id.
         // Deletion follows the page across language folders, so a page the user
         // can see is also a page the user can delete (issue #90); the caller's
-        // permission check still decides whether the delete is allowed.
+        // permission check still decides whether the delete is allowed. The
+        // cross-language locate takes a lazy IntraVox root (invoked per language
+        // iteration inside the locator) — the same rootClosure the delegator built.
         $result = strpos($id, 'page-') === 0
-            ? $locatePageAnyLanguage($languageFolderNode, $id)
-            : $findPageById($languageFolderNode, $this->idUtils->sanitizeId($id));
+            ? $this->locator->locatePageAnyLanguage(fn(): \OCP\Files\Folder => $this->folders->intraVox(), $languageFolderNode, $id)
+            : $this->locator->findPageById($languageFolderNode, $this->idUtils->sanitizeId($id));
 
         if ($result === null) {
             throw new PageNotFoundException('Page not found: ' . $id);
@@ -146,8 +145,6 @@ final class PageWriteService {
      * user first.
      *
      * @param \Closure(): \OCP\Files\Folder $languageFolder getLanguageFolder seam
-     * @param \Closure(\OCP\Files\Folder, string): ?array $locatePageAnyLanguage
-     * @param \Closure(\OCP\Files\Folder, string): ?array $findPageById
      * @param \Closure(\OCP\Files\Folder): ?string $languageOfFolder
      * @param \Closure(): string $userLanguage
      * @param \Closure(array): array $validateAndSanitizePage
@@ -157,8 +154,6 @@ final class PageWriteService {
         string $id,
         array $data,
         \Closure $languageFolder,
-        \Closure $locatePageAnyLanguage,
-        \Closure $findPageById,
         \Closure $languageOfFolder,
         \Closure $userLanguage,
         \Closure $validateAndSanitizePage,
@@ -184,14 +179,14 @@ final class PageWriteService {
         // is not necessarily the current user's own language folder (issue #90);
         // the isUpdateable() preflight below still gates the write.
         if (strpos($originalId, 'page-') === 0) {
-            $result = $locatePageAnyLanguage($languageFolderNode, $originalId);
+            $result = $this->locator->locatePageAnyLanguage(fn(): \OCP\Files\Folder => $this->folders->intraVox(), $languageFolderNode, $originalId);
         }
 
         // Fallback to legacy ID lookup if not found by uniqueId
         if ($result === null) {
             try {
                 $id = $this->idUtils->sanitizeId($originalId);
-                $result = $findPageById($languageFolderNode, $id);
+                $result = $this->locator->findPageById($languageFolderNode, $id);
             } catch (\Exception $e) {
                 throw new \InvalidArgumentException('Failed to find page: ' . $e->getMessage());
             }
