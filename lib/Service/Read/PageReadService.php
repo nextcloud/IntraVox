@@ -32,12 +32,9 @@ use Psr\Log\LoggerInterface;
  */
 final class PageReadService {
     /**
-     * @param \Closure(?string, ?string): array $resolveTranslations (group, uniqueId) -> ACL-filtered list
-     * @param \Closure(\OCP\Files\Node): ?int $groupfolderIdForNode
-     */
-    /**
      * @param \Closure(): MetaVoxGateway $metaVox lazily resolves the gateway
      * @param \Closure(): PageDataEnricher $enricher lazily resolves the enricher
+     * @param \Closure(?string, ?string): array $resolveTranslations (group, uniqueId) -> ACL-filtered list
      *
      * Both are closures rather than built instances because building either
      * reads $userId (the enricher builds the MetaVox gateway too), and the
@@ -57,7 +54,7 @@ final class PageReadService {
         private LoggerInterface $logger,
         private \OCA\IntraVox\Service\Folder\FolderContext $folders,
         private \Closure $resolveTranslations,
-        private \Closure $groupfolderIdForNode,
+        private \OCA\IntraVox\Service\Util\GroupfolderResolver $groupfolders,
     ) {
     }
 
@@ -166,7 +163,7 @@ final class PageReadService {
                     // and a regex over a path.
                     $decoded['metaVoxAvailable'] = ($this->metaVox)()->isMetaVoxAvailable();
                     if ($decoded['metaVoxAvailable'] && $result['file'] instanceof \OCP\Files\File) {
-                        $decoded['groupfolderId'] = ($this->groupfolderIdForNode)($result['file']);
+                        $decoded['groupfolderId'] = $this->groupfolders->forNode($result['file']);
                     }
                     // Translations are ACL-filtered per user (resolveTranslations
                     // skips group members the caller's mount does not grant), so

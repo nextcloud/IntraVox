@@ -103,6 +103,8 @@ class PageService {
     private ?\OCA\IntraVox\Service\News\NewsWidgetService $newsWidget = null;
     /** The folder/location substrate — now a DI-first-class ctor-injected service. */
     private \OCA\IntraVox\Service\Folder\FolderContext $folderContext;
+    /** Stateless GroupFolder-id resolver (facade elimination phase 2). */
+    private \OCA\IntraVox\Service\Util\GroupfolderResolver $groupfolders;
     private LoggerInterface $logger;
     private IEventDispatcher $eventDispatcher;
     private PublicationSettingsService $publicationSettings;
@@ -259,9 +261,11 @@ class PageService {
         NewsPageService $newsPageService,
         IAppManager $appManager,
         \OCA\IntraVox\Service\Folder\FolderContext $folderContext,
+        \OCA\IntraVox\Service\Util\GroupfolderResolver $groupfolders,
         ?string $userId
     ) {
         $this->folderContext = $folderContext;
+        $this->groupfolders = $groupfolders;
         $this->userSession = $userSession;
         $this->config = $config;
         $this->db = $db;
@@ -495,7 +499,7 @@ class PageService {
             $this->metaVox(),
             $this->folders(),
             fn(?string $group, ?string $uniqueId): array => $this->resolveTranslations($group, $uniqueId),
-            fn(\OCP\Files\Node $node): ?int => $this->groupfolderIdForNode($node)
+            $this->groupfolders
         );
     }
 
@@ -519,7 +523,7 @@ class PageService {
             $this->logger,
             $this->folders(),
             fn(?string $group, ?string $uniqueId): array => $this->resolveTranslations($group, $uniqueId),
-            fn(\OCP\Files\Node $node): ?int => $this->groupfolderIdForNode($node)
+            $this->groupfolders
         );
     }
 
@@ -1703,37 +1707,6 @@ class PageService {
      * @param \OCP\Files\Folder $folder The parent folder
      * @return int The actual file ID from the groupfolder storage
      */
-    /**
-     * The groupfolder a node lives in, or null when it is not in one.
-     *
-     * Read from the mount path (`/__groupfolders/{id}/…`) rather than from
-     * MetaVox's value table, which only lists files that already have values
-     * stored and so cannot answer this for a page with empty fields.
-     *
-     * @param \OCP\Files\Node $node
-     */
-    private function groupfolderIdForNode($node): ?int {
-        try {
-            // The mount knows its own folder id. Note that getPath() is NOT a
-            // source for this: it returns the per-user mount path
-            // (/Rik/files/IntraVox/…), not /__groupfolders/{id}/…, so parsing
-            // it yields nothing.
-            $mount = $node->getMountPoint();
-            if (method_exists($mount, 'getFolderId')) {
-                return (int)$mount->getFolderId();
-            }
-
-            // Fallback for mount types that do not expose it: the storage id
-            // still carries the folder id (local::…/__groupfolders/1/).
-            if (preg_match('#/__groupfolders/(\d+)/#', $node->getStorage()->getId(), $m)) {
-                return (int)$m[1];
-            }
-        } catch (\Throwable $e) {
-            // A node whose mount cannot be read is not worth failing the page
-            // response over; the MetaVox tab simply stays empty.
-        }
-        return null;
-    }
 
     /**
      * Get metadata for a page (simplified version using already loaded page data)

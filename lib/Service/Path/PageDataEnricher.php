@@ -29,7 +29,6 @@ use OCA\IntraVox\Service\Publication\MetaVoxGateway;
 final class PageDataEnricher {
     /**
      * @param \Closure(?string, ?string): array $resolveTranslations (group, uniqueId) -> list
-     * @param \Closure(\OCP\Files\Node): ?int $groupfolderIdForNode
      */
     public function __construct(
         private PagePathHelper $pathHelper,
@@ -37,7 +36,7 @@ final class PageDataEnricher {
         private MetaVoxGateway $metaVox,
         private FolderContext $folders,
         private \Closure $resolveTranslations,
-        private \Closure $groupfolderIdForNode,
+        private \OCA\IntraVox\Service\Util\GroupfolderResolver $groupfolders,
     ) {
     }
 
@@ -122,7 +121,7 @@ final class PageDataEnricher {
             // page whose fields are still empty — precisely the freshly copied
             // and translated pages that need the form most.
             if ($page['metaVoxAvailable'] && $file instanceof \OCP\Files\File) {
-                $page['groupfolderId'] = ($this->groupfolderIdForNode)($file);
+                $page['groupfolderId'] = $this->groupfolders->forNode($file);
             }
         } else {
             $page['permissions'] = $this->permissionService->permissionsFromNode($folder);

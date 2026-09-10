@@ -66,7 +66,7 @@ class PageRenameFolderTest extends TestCase {
             $this->createMock(\OCA\IntraVox\Service\Publication\MetaVoxGateway::class),
             $folders,
             fn(?string $g, ?string $u): array => [],
-            fn(\OCP\Files\Node $n): ?int => null
+            new \OCA\IntraVox\Service\Util\GroupfolderResolver()
         );
         return new PageMetadataService(
             new PageIdUtils(),
