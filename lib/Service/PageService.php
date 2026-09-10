@@ -92,7 +92,6 @@ class PageService {
     /** Lazily-built translation-query/link service (TRANSLATE-query domain). */
     private ?\OCA\IntraVox\Service\Translation\TranslationQueryService $translationQueryService = null;
     /** Lazily-built version-history service (VERSION/HISTORY domain). */
-    private ?\OCA\IntraVox\Service\Version\PageVersionDomainService $versionDomain = null;
     /** Lazily-built homepage-resolution service (HOMEPAGE domain). */
     private ?\OCA\IntraVox\Service\Homepage\HomepageResolverService $homepageResolver = null;
     /** Lazily-built news-widget orchestration service (NEWS domain). */
@@ -374,23 +373,6 @@ class PageService {
             $this->translationGroups(),
             $this->locator(),
             $this->languageService
-        );
-    }
-
-    /**
-     * Lazy seam for the version-history service (VERSION/HISTORY domain). Built
-     * from the PageVersionService engine; page resolution stays on PageService
-     * (findPageById / locatePageForOperation are shared far beyond versions) and
-     * is bound as two $this-closures — one per pre-carve locate idiom, preserved
-     * verbatim. Nullable-default so the harness auto-fill skips it.
-     */
-    private function versionDomain(): \OCA\IntraVox\Service\Version\PageVersionDomainService {
-        return $this->versionDomain ??= new \OCA\IntraVox\Service\Version\PageVersionDomainService(
-            $this->pageVersionService,
-            $this->logger,
-            $this->folders(),
-            $this->locator(),
-            $this->idUtils
         );
     }
 
@@ -1609,30 +1591,11 @@ class PageService {
     }
 
     /**
-     * Get all versions of a page
-     * Uses the standard IVersionManager interface for reliable version retrieval.
-     * @throws \Exception if page not found
-     */
-    public function getPageVersions(string $pageId): array {
-        return $this->versionDomain()->getPageVersions($pageId);
-    }
-
-    /**
      * Find a file by its ID within a folder
      */
     private function findFileByIdInFolder(\OCP\Files\Folder $folder, int $fileId): ?\OCP\Files\File {
         return $this->locator()->findFileByIdInFolder($folder, $fileId);
     }
-
-    /**
-     * Restore a specific version of a page
-     * Uses IVersionManager for reliable version restoration across all storage types.
-     * @throws \Exception if page or version not found
-     */
-    public function restorePageVersion(string $pageId, int $timestamp): array {
-        return $this->versionDomain()->restorePageVersion($pageId, $timestamp);
-    }
-
 
     /**
      * Get the actual file ID from the database using the groupfolder storage
@@ -1843,29 +1806,6 @@ class PageService {
                 'message' => 'Unable to check cache status'
             ];
         }
-    }
-
-    /**
-     * Update version label
-     * Uses IVersionManager with backend access for label updates.
-     */
-    public function updateVersionLabel(string $pageId, int $timestamp, ?string $label): void {
-        $this->versionDomain()->updateVersionLabel($pageId, $timestamp, $label);
-    }
-
-    /**
-     * Get version content for preview
-     * Uses IVersionManager for reliable version content retrieval across all storage types.
-     */
-    public function getVersionContent(string $pageId, int $timestamp): array {
-        return $this->versionDomain()->getVersionContent($pageId, $timestamp);
-    }
-
-    /**
-     * Get current page content for comparison
-     */
-    public function getCurrentPageContent(string $pageId): array {
-        return $this->versionDomain()->getCurrentPageContent($pageId);
     }
 
     /**

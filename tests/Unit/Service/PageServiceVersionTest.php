@@ -59,10 +59,15 @@ class PageServiceVersionTest extends TestCase {
     }
 
     /**
-     * A PageService over one language folder `en` holding page `about`
-     * (uniqueId page-v1), with the given PageVersionService engine mock injected.
+     * The version domain service over one language folder `en` holding page
+     * `about` (uniqueId page-v1), with the given PageVersionService engine mock.
      *
-     * @return array{0: PageService, 1: File} the service and the page file
+     * These methods were delegators on PageService (pure forwards to
+     * versionDomain()); fase-4 deletes the delegators, so this drives
+     * PageVersionDomainService directly — the real owner of the cross-language
+     * locate + per-method exception/logging the assertions below pin.
+     *
+     * @return array{0: \OCA\IntraVox\Service\Version\PageVersionDomainService, 1: File}
      */
     private function makeService(PageVersionService $engine, ?LoggerInterface $logger = null): array {
         $file = $this->makeFile('/IntraVox/en/about.json',
@@ -73,19 +78,21 @@ class PageServiceVersionTest extends TestCase {
         ]);
         $base = $this->makeFolder('/IntraVox', ['en' => $en]);
 
-        // Built through the real DI ctor (fase-3); the inert PageCacheInvalidator
-        // no-ops clearCache.
-        $svc = $this->buildRealPageService([
-            'userId' => 'tester',
-            'logger' => $logger ?? $this->createMock(LoggerInterface::class),
-            'pageVersionService' => $engine,
-            'folderContext' => $this->fakeFolderContext(
+        $svc = new \OCA\IntraVox\Service\Version\PageVersionDomainService(
+            $engine,
+            $logger ?? $this->createMock(LoggerInterface::class),
+            $this->fakeFolderContext(
                 readLanguageFolder: $en,
                 intraVox: $base,
                 languageFolder: $en,
                 userLanguage: 'en'
             ),
-        ]);
+            new \OCA\IntraVox\Service\Locator\PageLocator(
+                $this->createMock(\OCA\IntraVox\Service\PageIndexService::class),
+                $logger ?? $this->createMock(LoggerInterface::class)
+            ),
+            new \OCA\IntraVox\Service\Util\PageIdUtils()
+        );
         return [$svc, $file];
     }
 

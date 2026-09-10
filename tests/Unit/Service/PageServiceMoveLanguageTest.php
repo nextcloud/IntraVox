@@ -175,6 +175,46 @@ class PageServiceMoveLanguageTest extends TestCase {
     }
 
     /**
+     * The version domain service over the same cross-language fixture. The
+     * getCurrentPageContent / updateVersionLabel cross-language locate they pin
+     * lives in PageVersionDomainService (fase-4 deletes the PageService
+     * delegators), so those two tests drive it directly.
+     *
+     * @param array<int,Folder> $allLanguages
+     */
+    private function versionDomain(Folder $userLanguageFolder, array $allLanguages): \OCA\IntraVox\Service\Version\PageVersionDomainService {
+        $byLang = [];
+        foreach ($allLanguages as $l) {
+            $byLang[$l->getName()] = $l;
+        }
+        $base = $this->createMock(Folder::class);
+        $base->method('getPath')->willReturn('/IntraVox');
+        $base->method('getDirectoryListing')->willReturn($allLanguages);
+        $base->method('get')->willReturnCallback(function ($p) use ($byLang) {
+            if (isset($byLang[$p])) {
+                return $byLang[$p];
+            }
+            throw new \OCP\Files\NotFoundException($p);
+        });
+        return new \OCA\IntraVox\Service\Version\PageVersionDomainService(
+            $this->createMock(\OCA\IntraVox\Service\Version\PageVersionService::class),
+            $this->createMock(\Psr\Log\LoggerInterface::class),
+            $this->fakeFolderContext(
+                readLanguageFolder: $userLanguageFolder,
+                intraVox: $base,
+                userLanguage: 'de',
+                primaryLanguage: 'en',
+                languageFolder: $userLanguageFolder
+            ),
+            new \OCA\IntraVox\Service\Locator\PageLocator(
+                $this->createMock(\OCA\IntraVox\Service\PageIndexService::class),
+                $this->createMock(\Psr\Log\LoggerInterface::class)
+            ),
+            new \OCA\IntraVox\Service\Util\PageIdUtils()
+        );
+    }
+
+    /**
      * Fixture: an English page `about` nested under `news`, a German user.
      * Returns the service; the en/ and de/ roots are addressable via $this.
      */
@@ -400,7 +440,7 @@ class PageServiceMoveLanguageTest extends TestCase {
         ]);
         $de = $this->makeFolder('/IntraVox/de', []);
 
-        $svc = $this->makeService($de, [$de, $en]);
+        $svc = $this->versionDomain($de, [$de, $en]);
         $content = $svc->getCurrentPageContent('page-cur1');
 
         $this->assertStringContainsString(
@@ -422,7 +462,7 @@ class PageServiceMoveLanguageTest extends TestCase {
         ]);
         $de = $this->makeFolder('/IntraVox/de', []);
 
-        $svc = $this->makeService($de, [$de, $en]);
+        $svc = $this->versionDomain($de, [$de, $en]);
 
         // The page must be FOUND: resolution is what was broken. It then fails
         // later on the version manager, which this fixture does not provide —
