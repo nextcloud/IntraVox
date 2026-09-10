@@ -178,6 +178,40 @@ trait BuildsPageService {
     }
 
     /**
+     * A real (final) HomepageResolverService rigged so resolveHomepageNodeUniqueId()
+     * (any language) yields exactly $homeUniqueId — the seam-free replacement for
+     * the isHomepage() subclass overrides (fase-3). With the resolver injected,
+     * PageService::isHomepage(uid) === (uid === $homeUniqueId), reproducing the old
+     * override's fixed predicate.
+     *
+     * The rig honours the pointer path of getHomepageUniqueId(): the homepageService
+     * mock returns $homeUniqueId as the pointer, and the languageFolderByCode +
+     * locatePage closures succeed (folder + non-null hit) so the pointer is returned
+     * verbatim. When $homeUniqueId is null the mock returns null → the resolver
+     * falls through to the legacy 'home', so isHomepage() is true only for the bare
+     * 'home' id (the "no homepage configured" fixture). The remaining closures are
+     * inert stubs (never reached on the pointer-honoured path). Model:
+     * PageHomepageResolutionTest, which wires the real resolver via homepageService.
+     */
+    protected function fakeHomepageResolver(?string $homeUniqueId, ?FolderContext $folders = null): \OCA\IntraVox\Service\Homepage\HomepageResolverService {
+        $homepageService = $this->createMock(\OCA\IntraVox\Service\HomepageService::class);
+        $homepageService->method('getHomepageUniqueId')->willReturn($homeUniqueId);
+        $folder = $this->createMock(Folder::class);
+        return new \OCA\IntraVox\Service\Homepage\HomepageResolverService(
+            $homepageService,
+            $folders ?? $this->fakeFolderContext(),
+            fn(string $lang): Folder => $folder,                              // languageFolderByCode
+            fn(Folder $f, string $uid): ?array => ['folder' => $f],          // locatePage: non-null honours the pointer
+            fn(File $file): string => '',                                     // cachedFileContent (unused on pointer path)
+            fn(): ?string => null,                                            // effectiveLanguage
+            fn(): string => 'en',                                             // userLanguage
+            fn(string $uid, ?string $language = null): bool => $uid === $homeUniqueId, // homepagePredicate (unused here)
+            function (): void {
+            }                                                                 // invalidateCache
+        );
+    }
+
+    /**
      * A real (final) PageCacheInvalidator over inert doubles — the seam-free
      * replacement for the empty `clearCache()` overrides the subclasses used to
      * carry (fase-3). invalidate() over these mocks is a de-facto no-op: the
