@@ -49,7 +49,6 @@ class PageServicePublicSurfaceTest extends TestCase {
         'getPageMetadata' => 1,
         'getPageTree' => 3,
         'getPageVersions' => 1,
-        'getResourcesMediaFile' => 1,
         'getTemplate' => 1,
         'getTranslatableLanguages' => 1,
         'getTranslationCandidates' => 2,
@@ -112,7 +111,7 @@ class PageServicePublicSurfaceTest extends TestCase {
 
     public function testSurfaceCountIsPinned(): void {
         $this->assertCount(
-            51,
+            50,
             $this->currentSurface(),
             'the public method count changed; see testPublicSurfaceMatchesTheFrozenExpectation'
         );

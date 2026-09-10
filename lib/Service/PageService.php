@@ -2136,17 +2136,6 @@ class PageService {
     }
 
     /**
-     * Get media file from _resources folder
-     *
-     * @param string $path File path (can include subfolders)
-     * @return \OCP\Files\File File object
-     * @throws NotFoundException If file not found
-     */
-    public function getResourcesMediaFile(string $path) {
-        return $this->mediaOrchestrator()->getResourcesMediaFile($path);
-    }
-
-    /**
      * Get news pages for the News widget
      *
      * @param string $sourcePath Source folder path (relative to language folder)
