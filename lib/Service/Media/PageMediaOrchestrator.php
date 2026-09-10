@@ -23,10 +23,12 @@ use OCP\Files\NotFoundException;
  *
  * The low-level media ops (validate/write/list/stream/mediaExists/mediaFolderFor…)
  * already live in PageMediaService, the engine this orchestrates. Folder concerns
- * come from the injected FolderContext; the cache, locator, id utils and media
- * sanitizer are real collaborators. Page lookup stays page-lookup-bound and comes
- * in per call as $this-bound closures (findPageByUniqueId / findPageById), as does
- * clearCache — so PageService's seam-overriding test subclasses keep intercepting.
+ * come from the injected FolderContext; page lookup runs through the injected
+ * PageLocator directly (findPageByUniqueId/findPageById are pure locator forwards,
+ * no longer per-call closures). Only clearCache stays a per-call closure — it is
+ * the cross-collaborator cache invalidation that still lives on PageService (a
+ * future PageCacheInvalidator), so its seam-overriding test subclasses keep
+ * intercepting.
  *
  * NEVER touches getPage/createPage or the #70 permission recompute. Behaviour is
  * byte-identical to the former PageService methods: PageServiceMediaLanguageTest
@@ -46,15 +48,11 @@ final class PageMediaOrchestrator {
     /**
      * Upload media (image or video) for a specific page.
      *
-     * @param \Closure(\OCP\Files\Folder, string): ?array $findPageByUniqueId
-     * @param \Closure(\OCP\Files\Folder, string): ?array $findPageById
      * @param \Closure(string): void $clearCache
      */
     public function uploadMedia(
         string $pageId,
         array $file,
-        \Closure $findPageByUniqueId,
-        \Closure $findPageById,
         \Closure $clearCache
     ): string {
         // Order matters and is preserved from before the split: the $_FILES
@@ -71,7 +69,7 @@ final class PageMediaOrchestrator {
 
         // Media belongs to the page, so resolve the page across every language
         // folder and upload into the language it actually lives in (issue #92).
-        $located = $this->locatePageForMedia($pageId, $findPageByUniqueId, $findPageById);
+        $located = $this->locatePageForMedia($pageId);
         if ($located === null) {
             throw new PageNotFoundException('Page not found: ' . $pageId);
         }
@@ -99,14 +97,10 @@ final class PageMediaOrchestrator {
      * Get media (image or video) for a specific page. Serves all media from a
      * single '_media' folder, falling back to a cross-language lookup (#92).
      *
-     * @param \Closure(\OCP\Files\Folder, string): ?array $findPageByUniqueId
-     * @param \Closure(\OCP\Files\Folder, string): ?array $findPageById
      */
     public function getMedia(
         string $pageId,
         string $filename,
-        \Closure $findPageByUniqueId,
-        \Closure $findPageById
     ) {
         // Save original BEFORE sanitization
         $originalPageId = $pageId;
@@ -160,7 +154,7 @@ final class PageMediaOrchestrator {
             // (#92). Only reached on a genuine miss, so the common case keeps
             // the single-folder walk above and pays nothing for this.
             if ($mediaFolder === null) {
-                $located = $this->locatePageForMedia($originalPageId, $findPageByUniqueId, $findPageById);
+                $located = $this->locatePageForMedia($originalPageId);
                 if ($located !== null) {
                     $mediaFolder = ($located['result']['isHome'] ?? false)
                         ? $this->locator->folderOrNull($located['languageFolder'], '_media')
@@ -181,22 +175,18 @@ final class PageMediaOrchestrator {
     /**
      * Whether $filename already exists in the page's target media folder.
      *
-     * @param \Closure(\OCP\Files\Folder, string): ?array $findPageByUniqueId
-     * @param \Closure(\OCP\Files\Folder, string): ?array $findPageById
      */
     public function checkMediaExists(
         string $pageId,
         string $filename,
         string $targetFolder,
-        \Closure $findPageByUniqueId,
-        \Closure $findPageById
     ): bool {
         try {
             // Must resolve the page exactly as the upload does, or the
             // duplicate check inspects a different folder than the one written
             // to — silently answering "no duplicate" and overwriting nothing,
             // or prompting about a file the upload will not touch (#92).
-            $located = $this->locatePageForMedia($pageId, $findPageByUniqueId, $findPageById);
+            $located = $this->locatePageForMedia($pageId);
             if ($located === null) {
                 return false;
             }
@@ -215,8 +205,6 @@ final class PageMediaOrchestrator {
     /**
      * Upload media with original filename.
      *
-     * @param \Closure(\OCP\Files\Folder, string): ?array $findPageByUniqueId
-     * @param \Closure(\OCP\Files\Folder, string): ?array $findPageById
      * @param \Closure(string): void $clearCache
      * @return array ['filename' => '...', 'exists' => bool]
      * @throws \Exception On upload failure or if file exists and overwrite is false
@@ -226,8 +214,6 @@ final class PageMediaOrchestrator {
         array $file,
         string $targetFolder,
         bool $overwrite,
-        \Closure $findPageByUniqueId,
-        \Closure $findPageById,
         \Closure $clearCache
     ): array {
         $validated = $this->media->validateUpload($file);
@@ -236,14 +222,14 @@ final class PageMediaOrchestrator {
         $filename = $this->mediaSanitizer->sanitizeFilename($file['name']);
 
         // Check if file exists
-        $fileExists = $this->checkMediaExists($pageId, $filename, $targetFolder, $findPageByUniqueId, $findPageById);
+        $fileExists = $this->checkMediaExists($pageId, $filename, $targetFolder);
         if ($fileExists && !$overwrite) {
             throw new \Exception('File already exists');
         }
 
         // Resolve the page first: both branches want the language folder the
         // page really lives in, not the uploader's own profile language (#92).
-        $located = $this->locatePageForMedia($pageId, $findPageByUniqueId, $findPageById);
+        $located = $this->locatePageForMedia($pageId);
         if ($located === null) {
             throw new PageNotFoundException('Page not found: ' . $pageId);
         }
@@ -282,16 +268,12 @@ final class PageMediaOrchestrator {
     /**
      * List media files in a page's folder or its _resources library.
      *
-     * @param \Closure(\OCP\Files\Folder, string): ?array $findPageByUniqueId
-     * @param \Closure(\OCP\Files\Folder, string): ?array $findPageById
      * @return array List of media files with metadata
      */
     public function getMediaList(
         string $pageId,
         string $folderType,
         string $subPath,
-        \Closure $findPageByUniqueId,
-        \Closure $findPageById
     ): array {
         try {
             // List from the page's own language folder. getReadLanguageFolder()
@@ -299,7 +281,7 @@ final class PageMediaOrchestrator {
             // of a specific page is the wrong question: it listed one language's
             // _resources while the widget resolved images from another, so the
             // picker showed names whose previews always 404'd (#92).
-            $located = $this->locatePageForMedia($pageId, $findPageByUniqueId, $findPageById);
+            $located = $this->locatePageForMedia($pageId);
             if ($located === null) {
                 return [];
             }
@@ -366,23 +348,21 @@ final class PageMediaOrchestrator {
      * Locate a page for a MEDIA operation, across every language folder, and
      * report which language folder it turned out to live in.
      *
-     * @param \Closure(\OCP\Files\Folder, string): ?array $findPageByUniqueId
-     * @param \Closure(\OCP\Files\Folder, string): ?array $findPageById
      * @return array{result: array, languageFolder: \OCP\Files\Folder}|null
      */
-    private function locatePageForMedia(string $pageId, \Closure $findPageByUniqueId, \Closure $findPageById): ?array {
+    private function locatePageForMedia(string $pageId): ?array {
         $primary = $this->folders->readLanguageFolder();
 
-        $find = function (Folder $folder) use ($pageId, $findPageByUniqueId, $findPageById): ?array {
+        $find = function (Folder $folder) use ($pageId): ?array {
             if (strpos($pageId, 'page-') === 0) {
-                $byUniqueId = $findPageByUniqueId($folder, $pageId);
+                $byUniqueId = $this->locator->findPageByUniqueId($folder, $pageId);
                 if ($byUniqueId !== null) {
                     return $byUniqueId;
                 }
             }
             // Legacy slug ids (and uniqueIds that predate the page- prefix)
             // stay resolvable, matching the fallback the callers already had.
-            return $findPageById($folder, $this->idUtils->sanitizeId($pageId));
+            return $this->locator->findPageById($folder, $this->idUtils->sanitizeId($pageId));
         };
 
         // The cross-language locate takes a lazy root (invoked per language

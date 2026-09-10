@@ -1582,8 +1582,6 @@ class PageService {
         return $this->mediaOrchestrator()->uploadMedia(
             $pageId,
             $file,
-            fn(\OCP\Files\Folder $folder, string $uid): ?array => $this->findPageByUniqueId($folder, $uid),
-            fn(\OCP\Files\Folder $folder, string $legacyId): ?array => $this->findPageById($folder, $legacyId),
             function (string $mediaPageId): void {
                 $this->clearCache($mediaPageId);
             }
@@ -1597,9 +1595,7 @@ class PageService {
     public function getMedia(string $pageId, string $filename) {
         return $this->mediaOrchestrator()->getMedia(
             $pageId,
-            $filename,
-            fn(\OCP\Files\Folder $folder, string $uid): ?array => $this->findPageByUniqueId($folder, $uid),
-            fn(\OCP\Files\Folder $folder, string $legacyId): ?array => $this->findPageById($folder, $legacyId)
+            $filename
         );
     }
 
@@ -2197,9 +2193,7 @@ class PageService {
         return $this->mediaOrchestrator()->checkMediaExists(
             $pageId,
             $filename,
-            $targetFolder,
-            fn(\OCP\Files\Folder $folder, string $uid): ?array => $this->findPageByUniqueId($folder, $uid),
-            fn(\OCP\Files\Folder $folder, string $legacyId): ?array => $this->findPageById($folder, $legacyId)
+            $targetFolder
         );
     }
 
@@ -2219,8 +2213,6 @@ class PageService {
             $file,
             $targetFolder,
             $overwrite,
-            fn(\OCP\Files\Folder $folder, string $uid): ?array => $this->findPageByUniqueId($folder, $uid),
-            fn(\OCP\Files\Folder $folder, string $legacyId): ?array => $this->findPageById($folder, $legacyId),
             function (string $mediaPageId): void {
                 $this->clearCache($mediaPageId);
             }
@@ -2239,9 +2231,7 @@ class PageService {
         return $this->mediaOrchestrator()->getMediaList(
             $pageId,
             $folderType,
-            $subPath,
-            fn(\OCP\Files\Folder $folder, string $uid): ?array => $this->findPageByUniqueId($folder, $uid),
-            fn(\OCP\Files\Folder $folder, string $legacyId): ?array => $this->findPageById($folder, $legacyId)
+            $subPath
         );
     }
 
