@@ -499,11 +499,13 @@ class PageService {
 
     /**
      * Lazy seam for the single-page reader (god-class dissolution, read cluster).
-     * Built from the real read collaborators; the enricher stays a lazy $this-bound
-     * closure (building it reads $userId, which the cache-hit early-return must not
-     * force). resolveTranslations/groupfolderId now live IN the read service over
-     * its own injected TranslationGroupService/GroupfolderResolver. Nullable-default
-     * so the harness auto-fill skips it.
+     * Built from the real read collaborators, all now plain DI instances — no
+     * closures. The enricher is injected eagerly (step 4): building it is
+     * $userId-free (MetaVoxGateway's ctor is inert), and it is only INVOKED on the
+     * cache-MISS path, so the cache-hit early-return stays $userId-free.
+     * resolveTranslations/groupfolderId live IN the read service over its own
+     * injected TranslationGroupService/GroupfolderResolver. Nullable-default so the
+     * harness auto-fill skips it.
      */
     private function readService(): \OCA\IntraVox\Service\Read\PageReadService {
         return $this->readService ??= new \OCA\IntraVox\Service\Read\PageReadService(

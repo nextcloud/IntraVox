@@ -21,10 +21,11 @@ use OCA\IntraVox\Service\Publication\MetaVoxGateway;
  * findPageByFolderPath and getPageMetadata.
  *
  * The folder-root-relative path comes from the injected FolderContext (the
- * substrate). Two PageService concerns it still leans on stay on PageService and
- * are passed in as closures: resolveTranslations and groupfolderIdForNode (both
- * also used by the #70 block, so they must not be duplicated here).
- * PageMetadataTest and the getPage suites pin the derived fields.
+ * substrate). Translations and the groupfolder id are resolved IN this service now
+ * (phase-2 steps 1+3), over its own injected TranslationGroupService (the private
+ * resolveTranslations() below) and GroupfolderResolver — no closures, and the same
+ * collaborators the #70 block uses. PageMetadataTest and the getPage suites pin the
+ * derived fields.
  */
 final class PageDataEnricher {
     public function __construct(
