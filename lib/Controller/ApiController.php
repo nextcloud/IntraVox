@@ -77,6 +77,7 @@ class ApiController extends Controller {
     private PageLockService $pageLockService;
     private IAppManager $appManager;
     private \OCA\IntraVox\Service\Publication\PublicationStateService $publicationState;
+    private \OCA\IntraVox\Service\Listing\PageLister $pageLister;
 
     public function __construct(
         string $appName,
@@ -91,7 +92,8 @@ class ApiController extends Controller {
         IUserSession $userSession,
         PageLockService $pageLockService,
         IAppManager $appManager,
-        \OCA\IntraVox\Service\Publication\PublicationStateService $publicationState
+        \OCA\IntraVox\Service\Publication\PublicationStateService $publicationState,
+        \OCA\IntraVox\Service\Listing\PageLister $pageLister
     ) {
         parent::__construct($appName, $request);
         $this->pageService = $pageService;
@@ -105,6 +107,7 @@ class ApiController extends Controller {
         $this->pageLockService = $pageLockService;
         $this->appManager = $appManager;
         $this->publicationState = $publicationState;
+        $this->pageLister = $pageLister;
     }
 
     /**
@@ -133,7 +136,7 @@ class ApiController extends Controller {
     #[NoCSRFRequired]
     public function listPages(?int $limit = null, ?string $cursor = null): DataResponse {
         try {
-            $pages = $this->pageService->listPages();
+            $pages = $this->pageLister->listAll();
 
             // PageService already includes permissions from Nextcloud's filesystem.
             // Filter to pages the user can read. Draft/scheduled/expired pages are

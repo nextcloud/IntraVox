@@ -789,13 +789,6 @@ class PageService {
     }
 
     /**
-     * List all pages (recursively)
-     */
-    public function listPages(): array {
-        return $this->pageLister->listAll();
-    }
-
-    /**
      * Link two pages as language versions of each other.
      *
      * Both pages end up sharing one translation group. Symmetric by design:

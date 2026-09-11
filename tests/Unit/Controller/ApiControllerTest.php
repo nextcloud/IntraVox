@@ -38,6 +38,7 @@ use Psr\Log\LoggerInterface;
 class ApiControllerTest extends TestCase {
 
     use \OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageRead;
+    use \OCA\IntraVox\Tests\Unit\Controller\Harness\BuildsPageLister;
     private ApiController $controller;
     private PageService $pageService;
     private \OCA\IntraVox\Service\Read\PageReadService $pageRead;
@@ -58,6 +59,7 @@ class ApiControllerTest extends TestCase {
     private PageLockService $pageLockService;
     private IAppManager $appManager;
     private \OCA\IntraVox\Service\Publication\PublicationStateService $publicationState;
+    private \OCA\IntraVox\Service\Listing\PageLister $pageLister;
 
     protected function setUp(): void {
         parent::setUp();
@@ -81,14 +83,28 @@ class ApiControllerTest extends TestCase {
         $this->request = $this->createMock(IRequest::class);
         $this->pageLockService = $this->createMock(PageLockService::class);
         $this->appManager = $this->createMock(IAppManager::class);
+        // PageLister is final (cannot be mocked). Default to a real one over an empty
+        // index; listPages tests reassign a rigged one via fakePageListerReturning /
+        // fakePageListerThrowing and rebuild the controller with buildController().
+        $this->pageLister = $this->fakePageListerReturning([]);
 
         // Use real mock implementations for user/group
         $this->userSession = MockUserSession::loggedInAs('testuser');
         $this->groupManager = MockGroupManager::noAdmins();
 
-        $this->controller = new ApiController(
+        $this->controller = $this->buildController();
+    }
+
+    /**
+     * Construct the ApiController from the current mock fields. Tests that reassign a
+     * field (a rigged PageLister, an admin userSession, an If-None-Match request)
+     * call this again to rebuild with the new collaborator. $request overrides the
+     * shared $this->request for the one ETag test that needs a second request.
+     */
+    private function buildController(?IRequest $request = null): ApiController {
+        return new ApiController(
             'intravox',
-            $this->request,
+            $request ?? $this->request,
             $this->pageService,
             $this->pageRead,
             $this->permissionService,
@@ -99,7 +115,8 @@ class ApiControllerTest extends TestCase {
             $this->userSession,
             $this->pageLockService,
             $this->appManager,
-            $this->publicationState
+            $this->publicationState,
+            $this->pageLister
         );
     }
 
@@ -108,7 +125,8 @@ class ApiControllerTest extends TestCase {
     // ==========================================
 
     public function testListPagesReturnsEmptyArrayWhenNoPages(): void {
-        $this->pageService->method('listPages')->willReturn([]);
+        $this->pageLister = $this->fakePageListerReturning([]);
+        $this->controller = $this->buildController();
 
         $response = $this->controller->listPages();
 
@@ -117,38 +135,29 @@ class ApiControllerTest extends TestCase {
     }
 
     public function testListPagesReturnsOnlyReadablePages(): void {
-        $pages = [
-            [
-                'id' => 'page-1',
-                'title' => 'Readable Page',
-                'permissions' => ['canRead' => true, 'canWrite' => true]
-            ],
-            [
-                'id' => 'page-2',
-                'title' => 'Unreadable Page',
-                'permissions' => ['canRead' => false, 'canWrite' => false]
-            ],
-            [
-                'id' => 'page-3',
-                'title' => 'Another Readable',
-                'permissions' => ['canRead' => true, 'canWrite' => false]
-            ]
-        ];
-
-        $this->pageService->method('listPages')->willReturn($pages);
+        // The real PageLister returns uniqueId-keyed rows in stable (title,uniqueId)
+        // order; titles are chosen so the two readable pages come back A-Page then
+        // C-Page. The unreadable middle page is dropped by the controller's canRead
+        // filter, not by the lister.
+        $this->pageLister = $this->fakePageListerReturning([
+            ['uniqueId' => 'page-1', 'title' => 'A Page', 'permissions' => ['canRead' => true, 'canWrite' => true]],
+            ['uniqueId' => 'page-2', 'title' => 'B Page', 'permissions' => ['canRead' => false, 'canWrite' => false]],
+            ['uniqueId' => 'page-3', 'title' => 'C Page', 'permissions' => ['canRead' => true, 'canWrite' => false]],
+        ]);
+        $this->controller = $this->buildController();
 
         $response = $this->controller->listPages();
 
         $this->assertEquals(Http::STATUS_OK, $response->getStatus());
         $data = $response->getData();
         $this->assertCount(2, $data);
-        $this->assertEquals('page-1', $data[0]['id']);
-        $this->assertEquals('page-3', $data[1]['id']);
+        $this->assertEquals('page-1', $data[0]['uniqueId']);
+        $this->assertEquals('page-3', $data[1]['uniqueId']);
     }
 
     public function testListPagesReturnsEmptyWhenFolderNotFound(): void {
-        $this->pageService->method('listPages')
-            ->willThrowException(new \Exception('IntraVox folder not found'));
+        $this->pageLister = $this->fakePageListerThrowing(new \Exception('IntraVox folder not found'));
+        $this->controller = $this->buildController();
 
         $response = $this->controller->listPages();
 
@@ -157,8 +166,8 @@ class ApiControllerTest extends TestCase {
     }
 
     public function testListPagesReturnsErrorOnException(): void {
-        $this->pageService->method('listPages')
-            ->willThrowException(new \Exception('Database error'));
+        $this->pageLister = $this->fakePageListerThrowing(new \Exception('Database error'));
+        $this->controller = $this->buildController();
 
         $response = $this->controller->listPages();
 
@@ -276,21 +285,7 @@ class ApiControllerTest extends TestCase {
         // controller so the new mock for getHeader takes effect.
         $newRequest = $this->createMock(\OCP\IRequest::class);
         $newRequest->method('getHeader')->willReturn($etag);
-        $controller = new ApiController(
-            'intravox',
-            $newRequest,
-            $this->pageService,
-            $this->pageRead,
-            $this->permissionService,
-            $this->setupService,
-            $this->logger,
-            $this->config,
-            $this->groupManager,
-            $this->userSession,
-            $this->pageLockService,
-            $this->appManager,
-            $this->publicationState
-        );
+        $controller = $this->buildController($newRequest);
 
         $second = $controller->getPage('page-etag');
 
@@ -756,21 +751,7 @@ class ApiControllerTest extends TestCase {
         $this->groupManager = MockGroupManager::withAdmin('admin');
 
         // Recreate controller with admin user
-        $this->controller = new ApiController(
-            'intravox',
-            $this->request,
-            $this->pageService,
-            $this->pageRead,
-            $this->permissionService,
-            $this->setupService,
-            $this->logger,
-            $this->config,
-            $this->groupManager,
-            $this->userSession,
-            $this->pageLockService,
-            $this->appManager,
-            $this->publicationState
-        );
+        $this->controller = $this->buildController();
 
         // Use reflection to test private method
         $reflection = new \ReflectionClass($this->controller);
@@ -790,21 +771,7 @@ class ApiControllerTest extends TestCase {
     public function testIsAdminReturnsFalseWhenNotLoggedIn(): void {
         $this->userSession = MockUserSession::anonymous();
 
-        $this->controller = new ApiController(
-            'intravox',
-            $this->request,
-            $this->pageService,
-            $this->pageRead,
-            $this->permissionService,
-            $this->setupService,
-            $this->logger,
-            $this->config,
-            $this->groupManager,
-            $this->userSession,
-            $this->pageLockService,
-            $this->appManager,
-            $this->publicationState
-        );
+        $this->controller = $this->buildController();
 
         $reflection = new \ReflectionClass($this->controller);
         $method = $reflection->getMethod('isAdmin');

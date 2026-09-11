@@ -176,6 +176,34 @@ trait BuildsPageService {
     }
 
     /**
+     * A real (final) FolderContext whose readLanguageFolder() THROWS the given
+     * exception — the getReadLanguageFolder seam closure re-throws, so any body that
+     * opens with `$this->folders->readLanguageFolder()` surfaces it verbatim. Lets a
+     * fixture reproduce the "IntraVox folder not found" / read-error branch without a
+     * subclass. All other substrate atoms are inert (the read seam fires first).
+     */
+    protected function fakeFolderContextThrowingRead(\Throwable $e): FolderContext {
+        $config = $this->createMock(\OCP\IConfig::class);
+        $config->method('getUserValue')->willReturn('en');
+        $languageService = $this->createMock(\OCA\IntraVox\Service\LanguageService::class);
+        $languageService->method('getPrimaryLanguage')->willReturn('en');
+
+        return new FolderContext(
+            $this->createMock(\OCP\Files\IRootFolder::class),
+            'test-user',
+            $config,
+            $languageService,
+            new LanguageResolver(),
+            new PageLocator(
+                $this->createMock(\OCA\IntraVox\Service\PageIndexService::class),
+                $this->createMock(LoggerInterface::class)
+            ),
+            null,
+            static function () use ($e): Folder { throw $e; }
+        );
+    }
+
+    /**
      * Construct a REAL PageService through its real DI constructor — the seam-free
      * replacement for `new class extends PageService { ctor-bypass + shadows }`
      * (fase-3). Every ctor param is filled reflectively (robust against ctor drift):
