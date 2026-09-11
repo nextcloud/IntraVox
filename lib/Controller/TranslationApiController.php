@@ -32,12 +32,11 @@ class TranslationApiController extends Controller {
         string $appName,
         IRequest $request,
         private PageService $pageService,
-        // The two translation-query reads (getTranslatableLanguages/
-        // getTranslationCandidates) call the TRANSLATE-query domain service
-        // directly (facade elimination phase 1) — its ctor is closure-free so DI
-        // builds it. link/unlink/createTranslation stay on pageService (their
-        // group-writer/clearCache/composition closures live there), as does
-        // getPage.
+        // getPage now comes from the READ-domain service (fase-4 C6). The two
+        // translation-query reads already call the TRANSLATE-query domain service
+        // directly (phase 1). link/unlink/createTranslation stay on pageService
+        // (their group-writer/clearCache/composition closures live there).
+        private \OCA\IntraVox\Service\Read\PageReadService $pageRead,
         private \OCA\IntraVox\Service\Translation\TranslationQueryService $translationQuery,
         private LoggerInterface $logger,
     ) {
@@ -69,7 +68,7 @@ class TranslationApiController extends Controller {
             return new DataResponse([
                 'success' => true,
                 'translationGroup' => $group,
-                'translations' => $this->pageService->getPage($pageId)['translations'] ?? [],
+                'translations' => $this->pageRead->getPage($pageId)['translations'] ?? [],
             ]);
         } catch (PageNotFoundException $e) {
             return new DataResponse(['error' => $e->getMessage()], Http::STATUS_NOT_FOUND);
@@ -143,7 +142,7 @@ class TranslationApiController extends Controller {
             return new DataResponse([
                 'success' => true,
                 'page' => $created,
-                'translations' => $this->pageService->getPage($pageId)['translations'] ?? [],
+                'translations' => $this->pageRead->getPage($pageId)['translations'] ?? [],
             ], Http::STATUS_CREATED);
         } catch (PageNotFoundException $e) {
             return new DataResponse(['error' => $e->getMessage()], Http::STATUS_NOT_FOUND);

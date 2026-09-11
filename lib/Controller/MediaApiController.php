@@ -42,11 +42,12 @@ class MediaApiController extends Controller {
         string $appName,
         IRequest $request,
         private PageService $pageService,
-        // The read/resource media endpoints call the MEDIA-domain service directly
-        // (facade elimination phase 1). The two upload endpoints stay on
-        // pageService for now — they still need its clearCache invalidation
-        // closure. pageService also stays for getPage/getUploadLimit + the
-        // RequiresPagePermission gate.
+        // getPage now comes from the READ-domain service (fase-4 C6). The
+        // read/resource media endpoints already call the MEDIA-domain service
+        // directly (phase 1). The two upload endpoints stay on pageService for now
+        // (clearCache invalidation closure); pageService also stays for
+        // getUploadLimit + the RequiresPagePermission gate.
+        private \OCA\IntraVox\Service\Read\PageReadService $pageRead,
         private \OCA\IntraVox\Service\Media\PageMediaOrchestrator $mediaOrchestrator,
         // Required by Shared\SharePathTrait::peopleAllowedOnPublicShares().
         // This controller never calls that method, but the trait reaches for the
@@ -358,7 +359,7 @@ class MediaApiController extends Controller {
     public function getMedia(string $pageId, string $filename) {
         try {
             // First get the page to check permissions (from Nextcloud filesystem)
-            $existingPage = $this->pageService->getPage($pageId);
+            $existingPage = $this->pageRead->getPage($pageId);
 
             if (($denied = $this->denyUnlessReadable($existingPage)) !== null) {
                 return $denied;
