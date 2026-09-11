@@ -79,6 +79,7 @@ class ApiController extends Controller {
     private \OCA\IntraVox\Service\Publication\PublicationStateService $publicationState;
     private \OCA\IntraVox\Service\Listing\PageLister $pageLister;
     private \OCA\IntraVox\Service\Homepage\HomepageResolverService $homepageResolver;
+    private \OCA\IntraVox\Service\News\NewsWidgetService $newsWidget;
 
     public function __construct(
         string $appName,
@@ -95,7 +96,8 @@ class ApiController extends Controller {
         IAppManager $appManager,
         \OCA\IntraVox\Service\Publication\PublicationStateService $publicationState,
         \OCA\IntraVox\Service\Listing\PageLister $pageLister,
-        \OCA\IntraVox\Service\Homepage\HomepageResolverService $homepageResolver
+        \OCA\IntraVox\Service\Homepage\HomepageResolverService $homepageResolver,
+        \OCA\IntraVox\Service\News\NewsWidgetService $newsWidget
     ) {
         parent::__construct($appName, $request);
         $this->pageService = $pageService;
@@ -111,6 +113,7 @@ class ApiController extends Controller {
         $this->publicationState = $publicationState;
         $this->pageLister = $pageLister;
         $this->homepageResolver = $homepageResolver;
+        $this->newsWidget = $newsWidget;
     }
 
     /**
@@ -596,7 +599,7 @@ class ApiController extends Controller {
                 $filterOperator = 'AND';
             }
 
-            $result = $this->pageService->getNewsPages(
+            $result = $this->newsWidget->getNewsPages(
                 $sourcePath,
                 $filters,
                 $filterOperator,

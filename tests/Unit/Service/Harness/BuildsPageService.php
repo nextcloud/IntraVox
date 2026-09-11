@@ -280,13 +280,13 @@ trait BuildsPageService {
             }
         }
 
-        // The ctor filled pageLister/newsWidget/homepageResolver with throw-away
-        // doubles (every ctor arg is required non-null). Unset the ones the caller
-        // did not explicitly wire so wirePromotedServices' $already() guard sees them
-        // as unwired and rebuilds them coherently — and, crucially, so a 'home'
-        // request rigs the homepage resolver instead of being blocked by the ctor's
-        // mock. A caller that passed the property by name keeps its exact value.
-        foreach (['pageLister', 'newsWidget', 'homepageResolver'] as $promoted) {
+        // The ctor filled pageLister/homepageResolver with throw-away doubles (every
+        // ctor arg is required non-null). Unset the ones the caller did not explicitly
+        // wire so wirePromotedServices' $already() guard sees them as unwired and
+        // rebuilds them coherently — and, crucially, so a 'home' request rigs the
+        // homepage resolver instead of being blocked by the ctor's mock. A caller that
+        // passed the property by name keeps its exact value.
+        foreach (['pageLister', 'homepageResolver'] as $promoted) {
             if (!array_key_exists($promoted, $explicit)) {
                 $unset($promoted);
             }
@@ -332,18 +332,10 @@ trait BuildsPageService {
             ));
         }
 
-        if (!$already('newsWidget')) {
-            $set('newsWidget', new \OCA\IntraVox\Service\News\NewsWidgetService(
-                $explicit['newsPageService'] ?? $this->doubleOrBuild(\OCA\IntraVox\Service\News\NewsPageService::class),
-                $cache,
-                $explicit['groupContext'] ?? $this->doubleOrBuild(\OCA\IntraVox\Service\GroupContextService::class),
-                $explicit['metaVoxGateway'] ?? $this->doubleOrBuild(\OCA\IntraVox\Service\Publication\MetaVoxGateway::class),
-                $this->doubleOrBuild(\OCA\IntraVox\Service\Publication\PublicationStateService::class),
-                $folders,
-                $logger,
-                new PageLocator($index, $logger),
-            ));
-        }
+        // NewsWidgetService is no longer a PageService dep (fase-5 Phase II C moved
+        // getNewsPages entirely to the ApiController→NewsWidgetService seam), so it is
+        // NOT wired onto PageService here. A News test builds it directly via
+        // buildNewsWidget().
 
         // When 'home' is passed, the resolver is rigged to a fixed isHomepage
         // predicate; otherwise built over the wired homepageService + folders so its
@@ -361,6 +353,36 @@ trait BuildsPageService {
                 $this->fakeCacheInvalidator()
             ));
         }
+    }
+
+    /**
+     * Build a real (final) NewsWidgetService from the same explicit deps a News test
+     * threads through — the direct-service replacement for the retired
+     * PageService::getNewsPages delegator (fase-5 Phase II C). The collect/sort
+     * engine (newsPageService), the metaVox gateway and the cache are taken from
+     * $explicit when given so the fixture drives the real getNewsPages pipeline; the
+     * folder substrate comes from the wired folderContext (else a bare fixture).
+     *
+     * @param array<string,mixed> $explicit
+     */
+    protected function buildNewsWidget(array $explicit): \OCA\IntraVox\Service\News\NewsWidgetService {
+        $folders = ($explicit['folderContext'] ?? null) instanceof FolderContext
+            ? $explicit['folderContext']
+            : $this->fakeFolderContext();
+        $logger = $explicit['logger'] ?? $this->createMock(LoggerInterface::class);
+        $index = $explicit['pageIndexService'] ?? $this->createMock(\OCA\IntraVox\Service\PageIndexService::class);
+        $cache = $explicit['cache'] ?? $this->createMock(PageCacheService::class);
+
+        return new \OCA\IntraVox\Service\News\NewsWidgetService(
+            $explicit['newsPageService'] ?? $this->doubleOrBuild(\OCA\IntraVox\Service\News\NewsPageService::class),
+            $cache,
+            $explicit['groupContext'] ?? $this->doubleOrBuild(\OCA\IntraVox\Service\GroupContextService::class),
+            $explicit['metaVoxGateway'] ?? $this->doubleOrBuild(\OCA\IntraVox\Service\Publication\MetaVoxGateway::class),
+            $this->doubleOrBuild(\OCA\IntraVox\Service\Publication\PublicationStateService::class),
+            $folders,
+            $logger,
+            new PageLocator($index, $logger),
+        );
     }
 
     /**
@@ -485,11 +507,12 @@ trait BuildsPageService {
             if (in_array($type->getName(), self::LAZY_SEAM_SERVICES, true)) {
                 continue;
             }
-            // The three fase-5 promoted services are built coherently by
-            // wirePromotedServices() at the end of this method (over the test's real
-            // cache/folderContext), never as a bare mock here — leaving them unset so
-            // that builder's $already() guard sees them as unwired and constructs them.
-            if (in_array($prop->getName(), ['pageLister', 'newsWidget', 'homepageResolver'], true)) {
+            // The two fase-5 promoted services still on PageService are built
+            // coherently by wirePromotedServices() at the end of this method (over the
+            // test's real cache/folderContext), never as a bare mock here — leaving
+            // them unset so that builder's $already() guard sees them as unwired and
+            // constructs them. (newsWidget left PageService in Phase II C.)
+            if (in_array($prop->getName(), ['pageLister', 'homepageResolver'], true)) {
                 continue;
             }
             if ($prop->isInitialized($svc)) {
@@ -510,14 +533,15 @@ trait BuildsPageService {
             $prop->setValue($svc, $this->doubleOrBuild($class));
         }
 
-        // The three fase-5 promoted services (pageLister / newsWidget /
-        // homepageResolver) are ordinary non-lazy ctor deps now, so the auto-fill
-        // loop above would leave them as bare doubleOrBuild()s built over a MOCKED
+        // The two fase-5 promoted services still on PageService (pageLister /
+        // homepageResolver) are ordinary non-lazy ctor deps, so the auto-fill loop
+        // above would leave them as bare doubleOrBuild()s built over a MOCKED
         // FolderContext/cache — which answers null to every folder/parent lookup and
         // silently breaks getBreadcrumb → findPageByFolderPath → pageLister->byFolderPath.
         // Rebuild them coherently from the test's explicit deps ($cache/$folderContext),
         // skipping any the caller reflection-set (the $already guard inside). Passing
         // (null, false) means "no rigged homepage" — the real resolver body runs.
+        // (newsWidget left PageService in Phase II C; News tests build it directly.)
         $this->wirePromotedServices($svc, $explicit, null, false);
     }
 

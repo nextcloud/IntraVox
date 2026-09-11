@@ -90,8 +90,6 @@ class PageService {
     /** Lazily-built version-history service (VERSION/HISTORY domain). */
     /** Lazily-built homepage-resolution service (HOMEPAGE domain). */
     private \OCA\IntraVox\Service\Homepage\HomepageResolverService $homepageResolver;
-    /** Lazily-built news-widget orchestration service (NEWS domain). */
-    private \OCA\IntraVox\Service\News\NewsWidgetService $newsWidget;
     /** The folder/location substrate — now a DI-first-class ctor-injected service. */
     private \OCA\IntraVox\Service\Folder\FolderContext $folderContext;
     /** Stateless GroupFolder-id resolver (facade elimination phase 2). */
@@ -209,7 +207,6 @@ class PageService {
         \OCA\IntraVox\Service\Publication\MetaVoxGateway $metaVoxGateway,
         \OCA\IntraVox\Service\Cache\PageCacheInvalidator $cacheInvalidator,
         \OCA\IntraVox\Service\Listing\PageLister $pageListerService,
-        \OCA\IntraVox\Service\News\NewsWidgetService $newsWidgetService,
         \OCA\IntraVox\Service\Homepage\HomepageResolverService $homepageResolverService,
         ?string $userId
     ) {
@@ -218,7 +215,6 @@ class PageService {
         $this->metaVoxGateway = $metaVoxGateway;
         $this->cacheInvalidator = $cacheInvalidator;
         $this->pageLister = $pageListerService;
-        $this->newsWidget = $newsWidgetService;
         $this->homepageResolver = $homepageResolverService;
         $this->userSession = $userSession;
         $this->logger = $logger;
@@ -1566,38 +1562,6 @@ class PageService {
         );
     }
 
-    /**
-     * Get news pages for the News widget
-     *
-     * @param string $sourcePath Source folder path (relative to language folder)
-     * @param array $filters MetaVox filters to apply
-     * @param string $filterOperator 'AND' or 'OR' for combining filters
-     * @param int $limit Maximum number of results
-     * @param string $sortBy Field to sort by ('modified' or 'title')
-     * @param string $sortOrder Sort direction ('asc' or 'desc')
-     * @return array News items with excerpts and images
-     */
-    public function getNewsPages(
-        string $sourcePath = '',
-        array $filters = [],
-        string $filterOperator = 'AND',
-        int $limit = 5,
-        string $sortBy = 'modified',
-        string $sortOrder = 'desc',
-        ?string $sourcePageId = null,
-        bool $filterPublished = false
-    ): array {
-        return $this->newsWidget->getNewsPages(
-            $sourcePath,
-            $filters,
-            $filterOperator,
-            $limit,
-            $sortBy,
-            $sortOrder,
-            $sourcePageId,
-            $filterPublished
-        );
-    }
 
     // =========================================================================
     // TEMPLATE METHODS

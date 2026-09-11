@@ -5,7 +5,7 @@ namespace OCA\IntraVox\Tests\Unit\Service;
 
 use OCA\IntraVox\Service\Cache\PageCacheService;
 use OCA\IntraVox\Service\News\NewsPageService;
-use OCA\IntraVox\Service\PageService;
+use OCA\IntraVox\Service\News\NewsWidgetService;
 use OCA\IntraVox\Service\Publication\MetaVoxGateway;
 use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageService;
 use OCP\Files\Folder;
@@ -42,7 +42,7 @@ class PageNewsTest extends TestCase {
         array $collected = [],
         bool $metaVoxAvailable = false,
         ?array $sourceItem = null
-    ): PageService {
+    ): NewsWidgetService {
         // getNewsPages resolves its folder via folders()->readLanguageFolder +
         // folders()->intraVox (findNewsPagesInFolder) and runs no cross-language
         // locate, so both seam overrides go away. Language falls through
@@ -73,8 +73,10 @@ class PageNewsTest extends TestCase {
         $cache = $this->createMock(PageCacheService::class);
         $cache->method('isDistributedAvailable')->willReturn(false);
 
-        // Built through the real DI ctor (fase-3); inert invalidator no-ops clearCache.
-        $svc = $this->buildRealPageService([
+        // getNewsPages moved off PageService in fase-5 Phase II C: build the real
+        // NewsWidgetService directly from the wired deps (buildNewsWidget mirrors the
+        // harness wiring the retired delegator relied on).
+        return $this->buildNewsWidget([
             'newsPageService' => $news,
             'metaVoxGateway' => $metaVox,
             'cache' => $cache,
@@ -85,7 +87,6 @@ class PageNewsTest extends TestCase {
                 intraVox: $readFolder
             ),
         ]);
-        return $svc;
     }
 
     /** A language folder that resolves $childName to $child, else throws. */
@@ -105,7 +106,7 @@ class PageNewsTest extends TestCase {
     }
 
     public function testEmptySourceCollectsAndReturnsShape(): void {
-        $svc = $this->makeService(
+        $widget = $this->makeService(
             $this->folderWith(),
             collected: [
                 ['uniqueId' => 'page-1', 'title' => 'One', 'modified' => 10],
@@ -114,7 +115,7 @@ class PageNewsTest extends TestCase {
             metaVoxAvailable: false
         );
 
-        $result = $svc->getNewsPages();
+        $result = $widget->getNewsPages();
 
         $this->assertSame(2, $result['total']);
         $this->assertCount(2, $result['items']);
@@ -123,9 +124,9 @@ class PageNewsTest extends TestCase {
     }
 
     public function testMetavoxAvailableIsReportedInTheShape(): void {
-        $svc = $this->makeService($this->folderWith(), collected: [], metaVoxAvailable: true);
+        $widget = $this->makeService($this->folderWith(), collected: [], metaVoxAvailable: true);
 
-        $result = $svc->getNewsPages();
+        $result = $widget->getNewsPages();
 
         $this->assertTrue($result['metavoxAvailable']);
         $this->assertSame(0, $result['total']);
@@ -135,9 +136,9 @@ class PageNewsTest extends TestCase {
     public function testUnknownSourcePageIdReturnsEmptyWithMetavoxFlag(): void {
         // The read folder holds no page with this uniqueId, so
         // findPageByUniqueId() returns null -> the early "not found" return.
-        $svc = $this->makeService($this->folderWith(), metaVoxAvailable: true);
+        $widget = $this->makeService($this->folderWith(), metaVoxAvailable: true);
 
-        $result = $svc->getNewsPages(sourcePageId: 'page-does-not-exist');
+        $result = $widget->getNewsPages(sourcePageId: 'page-does-not-exist');
 
         $this->assertSame(['items' => [], 'total' => 0, 'metavoxAvailable' => true], $result);
     }
@@ -145,16 +146,16 @@ class PageNewsTest extends TestCase {
     public function testMissingLegacySourcePathReturnsEmpty(): void {
         // A sourcePath that the language folder cannot resolve -> NotFound ->
         // the early empty return (legacy path branch).
-        $svc = $this->makeService($this->folderWith(), metaVoxAvailable: false);
+        $widget = $this->makeService($this->folderWith(), metaVoxAvailable: false);
 
-        $result = $svc->getNewsPages(sourcePath: 'nonexistent/folder');
+        $result = $widget->getNewsPages(sourcePath: 'nonexistent/folder');
 
         $this->assertSame(['items' => [], 'total' => 0, 'metavoxAvailable' => false], $result);
     }
 
     public function testTotalIsCountedBeforeTheLimitIsApplied(): void {
         // Five collected pages, limit 2: total reports 5, items is capped at 2.
-        $svc = $this->makeService(
+        $widget = $this->makeService(
             $this->folderWith(),
             collected: array_map(
                 fn(int $i) => ['uniqueId' => "page-$i", 'title' => "P$i", 'modified' => $i],
@@ -163,7 +164,7 @@ class PageNewsTest extends TestCase {
             metaVoxAvailable: false
         );
 
-        $result = $svc->getNewsPages(limit: 2);
+        $result = $widget->getNewsPages(limit: 2);
 
         $this->assertSame(5, $result['total'], 'total is the pre-limit count');
         $this->assertCount(2, $result['items'], 'items honour the limit');
@@ -193,13 +194,13 @@ class PageNewsTest extends TestCase {
         });
 
         // buildSourcePageItem returns a real item so the unshift branch fires.
-        $svc = $this->makeService(
+        $widget = $this->makeService(
             $root,
             collected: [['uniqueId' => 'page-child', 'title' => 'Child', 'modified' => 5]],
             sourceItem: ['uniqueId' => 'page-src', 'title' => 'Source', 'modified' => 99]
         );
 
-        $result = $svc->getNewsPages(sourcePageId: 'page-src');
+        $result = $widget->getNewsPages(sourcePageId: 'page-src');
 
         $this->assertSame('page-src', $result['items'][0]['uniqueId'],
             'the source page is prepended before the collected children');
@@ -207,20 +208,20 @@ class PageNewsTest extends TestCase {
     }
 
     public function testFilterPublishedInvokesTheEnginePublicationFilter(): void {
-        $svc = $this->makeService(
+        $widget = $this->makeService(
             $this->folderWith(),
             collected: [
                 ['uniqueId' => 'page-1', 'title' => 'One', 'modified' => 1],
                 ['uniqueId' => 'page-2', 'title' => 'Two', 'modified' => 2],
             ]
         );
-        $news = $this->newsMockFrom($svc);
+        $news = $this->newsMockFrom($widget);
         // The publication filter drops page-2, so total reflects the filtered set.
         $news->expects($this->once())
             ->method('applyPublicationDateFilter')
             ->willReturnCallback(fn(array $pages) => array_slice($pages, 0, 1));
 
-        $result = $svc->getNewsPages(filterPublished: true);
+        $result = $widget->getNewsPages(filterPublished: true);
 
         $this->assertSame(1, $result['total'], 'total counts the publication-filtered set, pre-limit');
     }
@@ -243,7 +244,7 @@ class PageNewsTest extends TestCase {
         array $store,
         array &$writes,
         array $collected = []
-    ): PageService {
+    ): NewsWidgetService {
         $news = $this->createMock(NewsPageService::class);
         $news->method('findNewsPagesInFolder')->willReturnCallback(
             function ($root, $folder, array &$pages, string $language, int $maxCollect = 0) use ($collected): void {
@@ -277,8 +278,10 @@ class PageNewsTest extends TestCase {
             $this->createMock(\OCP\IGroupManager::class)
         );
 
-        // Built through the real DI ctor (fase-3); inert invalidator no-ops clearCache.
-        $svc = $this->buildRealPageService([
+        // getNewsPages moved off PageService in fase-5 Phase II C: build the real
+        // NewsWidgetService directly (buildNewsWidget reads groupContext for the
+        // distributed-cache key's group hash).
+        return $this->buildNewsWidget([
             'newsPageService' => $news,
             'metaVoxGateway' => $metaVox,
             'cache' => $cache,
@@ -291,7 +294,6 @@ class PageNewsTest extends TestCase {
                 userLanguage: 'en'
             ),
         ]);
-        return $svc;
     }
 
     public function testDistributedCacheHitReturnsDecodedWithoutCollecting(): void {
@@ -302,10 +304,10 @@ class PageNewsTest extends TestCase {
         $cached = ['items' => [['uniqueId' => 'page-cached']], 'total' => 1, 'metavoxAvailable' => false];
 
         $writes = [];
-        $svc = $this->makeDistributedService([$key => json_encode($cached)], $writes,
+        $widget = $this->makeDistributedService([$key => json_encode($cached)], $writes,
             collected: [['uniqueId' => 'page-should-not-appear', 'title' => 'X', 'modified' => 1]]);
 
-        $result = $svc->getNewsPages();
+        $result = $widget->getNewsPages();
 
         $this->assertSame($cached, $result, 'a cache hit returns the decoded payload verbatim');
         $this->assertSame([], $writes, 'a hit writes nothing');
@@ -313,10 +315,10 @@ class PageNewsTest extends TestCase {
 
     public function testDistributedCacheMissWritesResultWithNewsTtl(): void {
         $writes = [];
-        $svc = $this->makeDistributedService([], $writes,
+        $widget = $this->makeDistributedService([], $writes,
             collected: [['uniqueId' => 'page-1', 'title' => 'One', 'modified' => 1]]);
 
-        $result = $svc->getNewsPages();
+        $result = $widget->getNewsPages();
 
         $this->assertSame(1, $result['total']);
         $this->assertCount(1, $writes, 'a miss writes exactly one cache entry');
@@ -336,25 +338,25 @@ class PageNewsTest extends TestCase {
 
         $writes = [];
         // A JSON string that decodes to a scalar, not an array -> no early return.
-        $svc = $this->makeDistributedService([$key => '"not-an-array"'], $writes,
+        $widget = $this->makeDistributedService([$key => '"not-an-array"'], $writes,
             collected: [['uniqueId' => 'page-live', 'title' => 'Live', 'modified' => 1]]);
 
-        $result = $svc->getNewsPages();
+        $result = $widget->getNewsPages();
 
         $this->assertSame(1, $result['total'], 'a non-array cached value does not short-circuit');
         $this->assertCount(1, $writes, 'the freshly-built result is then cached');
     }
 
     /**
-     * Reach the NewsPageService engine mock. Fase-5 DI-injected NewsWidgetService,
-     * which now holds the engine; the harness rebuilds newsWidget from the
-     * 'newsPageService' this test wired, so the mock lives inside newsWidget->news.
+     * Reach the NewsPageService engine mock held inside the NewsWidgetService.
+     * Fase-5 Phase II C moved getNewsPages off PageService entirely, so the widget
+     * (built directly by buildNewsWidget from the 'newsPageService' this test wired)
+     * is the subject; the mock lives inside newsWidget->news.
      */
-    private function newsMockFrom(PageService $svc): NewsPageService
+    private function newsMockFrom(NewsWidgetService $widget): NewsPageService
     {
-        $widget = (new \ReflectionProperty(PageService::class, 'newsWidget'))->getValue($svc);
         /** @var NewsPageService $news */
-        $news = (new \ReflectionProperty(\OCA\IntraVox\Service\News\NewsWidgetService::class, 'news'))->getValue($widget);
+        $news = (new \ReflectionProperty(NewsWidgetService::class, 'news'))->getValue($widget);
         return $news;
     }
 }

@@ -61,6 +61,7 @@ class ApiControllerTest extends TestCase {
     private \OCA\IntraVox\Service\Publication\PublicationStateService $publicationState;
     private \OCA\IntraVox\Service\Listing\PageLister $pageLister;
     private \OCA\IntraVox\Service\Homepage\HomepageResolverService $homepageResolver;
+    private \OCA\IntraVox\Service\News\NewsWidgetService $newsWidget;
 
     protected function setUp(): void {
         parent::setUp();
@@ -92,6 +93,9 @@ class ApiControllerTest extends TestCase {
         // exercised in this test, so an inert real instance suffices (closure-free
         // ctor → doubleOrBuild constructs it over auto-filled collaborators).
         $this->homepageResolver = $this->doubleOrBuild(\OCA\IntraVox\Service\Homepage\HomepageResolverService::class);
+        // NewsWidgetService is final too; the getNews endpoint is not exercised in this
+        // test, so an inert real one suffices (closure-free ctor → doubleOrBuild).
+        $this->newsWidget = $this->doubleOrBuild(\OCA\IntraVox\Service\News\NewsWidgetService::class);
 
         // Use real mock implementations for user/group
         $this->userSession = MockUserSession::loggedInAs('testuser');
@@ -122,7 +126,8 @@ class ApiControllerTest extends TestCase {
             $this->appManager,
             $this->publicationState,
             $this->pageLister,
-            $this->homepageResolver
+            $this->homepageResolver,
+            $this->newsWidget
         );
     }
 
