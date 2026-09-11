@@ -1053,37 +1053,6 @@ class PageService {
     }
 
     /**
-     * Languages this page could still be created in.
-     *
-     * A language qualifies when it has a content folder, is not the page's own,
-     * and does not already hold a version of this page. Offering anything else
-     * would produce a control that fails when used.
-     *
-     * @return array<int, array{code:string, name:string}>
-     */
-    public function getTranslatableLanguages(string $pageId): array {
-        return $this->translationQuery()->getTranslatableLanguages($pageId);
-    }
-
-    /**
-     * Pages this page could be linked to as a translation.
-     *
-     * Excludes three sets, each for a reason:
-     *   - the page's own language, since a group holds one page per language;
-     *   - pages already in a group with something else, so linking cannot
-     *     silently steal a page out of an existing set;
-     *   - the page itself.
-     *
-     * Answered from the index, so the picker stays cheap on a large intranet.
-     *
-     * @param string|null $language limit to one language, or null for all others
-     * @return array<int, array{uniqueId:string, title:string, language:string}>
-     */
-    public function getTranslationCandidates(string $pageId, ?string $language = null): array {
-        return $this->translationQuery()->getTranslationCandidates($pageId, $language);
-    }
-
-    /**
      * Detach a page from its translation group.
      *
      * The page gets a fresh group of its own rather than none at all, so

@@ -130,6 +130,34 @@ class PageTranslationGroupTest extends TestCase {
         return $svc;
     }
 
+    /**
+     * The translation-query service over the SAME deps a built PageService holds.
+     * getTranslatableLanguages / getTranslationCandidates were pure delegators to
+     * translationQuery() (fase-4 deletes them), so those read tests drive
+     * TranslationQueryService directly. Reading the deps off $svc via reflection
+     * keeps the existing makeService fixture + any post-construction
+     * pageIndexService reset (the tests reflection-set a custom index, then read)
+     * flowing through unchanged.
+     */
+    private function translationQuery(PageService $svc): \OCA\IntraVox\Service\Translation\TranslationQueryService {
+        $get = fn(string $p) => (new \ReflectionProperty(PageService::class, $p))->getValue($svc);
+        $index = $get('pageIndexService');
+        $logger = $this->createMock(\Psr\Log\LoggerInterface::class);
+        $locator = new \OCA\IntraVox\Service\Locator\PageLocator($index, $logger);
+        $groups = new \OCA\IntraVox\Service\Translation\TranslationGroupService(
+            $index,
+            $locator,
+            new \OCA\IntraVox\Service\Util\PageIdUtils(),
+            $logger
+        );
+        return new \OCA\IntraVox\Service\Translation\TranslationQueryService(
+            $get('folderContext'),
+            $groups,
+            $locator,
+            $get('languageService')
+        );
+    }
+
     private function writtenGroup(string $path): ?string {
         $data = json_decode($this->writes[$path] ?? '{}', true);
         return $data['translationGroup'] ?? null;
@@ -346,7 +374,7 @@ class PageTranslationGroupTest extends TestCase {
         // page-nl lives in nl/; base holds nl + de, so the only candidate is de.
         $svc = $this->makeService();
 
-        $languages = $svc->getTranslatableLanguages('page-nl');
+        $languages = $this->translationQuery($svc)->getTranslatableLanguages('page-nl');
         $codes = array_column($languages, 'code');
 
         $this->assertSame(['de'], $codes, 'own language nl is excluded, de remains');
@@ -371,14 +399,14 @@ class PageTranslationGroupTest extends TestCase {
         );
         (new \ReflectionProperty(PageService::class, 'pageIndexService'))->setValue($svc, $index);
 
-        $codes = array_column($svc->getTranslatableLanguages('page-nl'), 'code');
+        $codes = array_column($this->translationQuery($svc)->getTranslatableLanguages('page-nl'), 'code');
         $this->assertSame([], $codes, 'de is already in the group, so nothing is offered');
     }
 
     public function testTranslatableLanguagesRejectsAnUnknownPage(): void {
         $svc = $this->makeService();
         $this->expectException(\OCA\IntraVox\Exception\PageNotFoundException::class);
-        $svc->getTranslatableLanguages('page-nope');
+        $this->translationQuery($svc)->getTranslatableLanguages('page-nope');
     }
 
     // ------------------------------------------------- getTranslationCandidates
@@ -409,7 +437,7 @@ class PageTranslationGroupTest extends TestCase {
         ] : []);
         (new \ReflectionProperty(PageService::class, 'pageIndexService'))->setValue($svc, $index);
 
-        $ids = array_column($svc->getTranslationCandidates('page-nl'), 'uniqueId');
+        $ids = array_column($this->translationQuery($svc)->getTranslationCandidates('page-nl'), 'uniqueId');
 
         $this->assertContains('page-de-free', $ids, 'a free page in another language is offered');
         $this->assertNotContains('page-nl', $ids, 'the page itself is never a candidate');
@@ -428,16 +456,16 @@ class PageTranslationGroupTest extends TestCase {
         (new \ReflectionProperty(PageService::class, 'pageIndexService'))->setValue($svc, $index);
 
         // Only de is a content language besides nl, and narrowing to de keeps it.
-        $ids = array_column($svc->getTranslationCandidates('page-nl', 'de'), 'uniqueId');
+        $ids = array_column($this->translationQuery($svc)->getTranslationCandidates('page-nl', 'de'), 'uniqueId');
         $this->assertSame(['page-de-x'], $ids);
 
         // Narrowing to a language with no content folder yields nothing.
-        $this->assertSame([], $svc->getTranslationCandidates('page-nl', 'fr'));
+        $this->assertSame([], $this->translationQuery($svc)->getTranslationCandidates('page-nl', 'fr'));
     }
 
     public function testTranslationCandidatesRejectAnUnknownPage(): void {
         $svc = $this->makeService();
         $this->expectException(\OCA\IntraVox\Exception\PageNotFoundException::class);
-        $svc->getTranslationCandidates('page-nope');
+        $this->translationQuery($svc)->getTranslationCandidates('page-nope');
     }
 }
