@@ -31,10 +31,19 @@ trait BuildsPageRead {
      * @param array<string,array<string,mixed>> $byId optional per-id map
      */
     protected function fakePageReadReturning(?array $page, array $byId = []): PageReadService {
+        return $this->fakePageReadFrom(fn(string $id) => $byId[$id] ?? $page);
+    }
+
+    /**
+     * A real PageReadService whose getPage($id) runs $fn($id) — for per-id logic or
+     * throwing (a callback that throws propagates verbatim through the cache-hit
+     * short-circuit, reproducing a getPage that throws).
+     *
+     * @param callable(string):(array|null) $fn
+     */
+    protected function fakePageReadFrom(callable $fn): PageReadService {
         $cache = $this->createMock(PageCacheService::class);
-        $cache->method('getPageData')->willReturnCallback(
-            fn(string $id) => $byId[$id] ?? $page
-        );
+        $cache->method('getPageData')->willReturnCallback($fn);
 
         return new PageReadService(
             $cache,

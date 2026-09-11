@@ -6,8 +6,10 @@ namespace OCA\IntraVox\Tests\Unit\Controller;
 use OCA\IntraVox\Controller\AnalyticsController;
 use OCA\IntraVox\Service\AnalyticsService;
 use OCA\IntraVox\Service\PageService;
+use OCA\IntraVox\Service\Read\PageReadService;
 use OCA\IntraVox\Tests\Mocks\MockGroupManager;
 use OCA\IntraVox\Tests\Mocks\MockUserSession;
+use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageRead;
 use OCP\AppFramework\Http;
 use OCP\IConfig;
 use OCP\IRequest;
@@ -26,9 +28,14 @@ use Psr\Log\LoggerInterface;
  * - Permission checks
  */
 class AnalyticsControllerTest extends TestCase {
+    use BuildsPageRead;
+
     private AnalyticsController $controller;
     private AnalyticsService $analyticsService;
     private PageService $pageService;
+    private PageReadService $pageRead;
+    /** getPage(id) behaviour a test installs (fase-4 C6: getPage moved to PageReadService). */
+    private \Closure $getPageFn;
     private LoggerInterface $logger;
     private IConfig $config;
     private MockGroupManager $groupManager;
@@ -37,6 +44,10 @@ class AnalyticsControllerTest extends TestCase {
 
     protected function setUp(): void {
         parent::setUp();
+        // The real PageReadService delegates getPage($id) to whatever $this->getPageFn
+        // a test installs; default is "page not found" (empty).
+        $this->getPageFn = fn(string $id) => null;
+        $this->pageRead = $this->fakePageReadFrom(fn(string $id) => ($this->getPageFn)($id));
 
         $this->analyticsService = $this->createMock(AnalyticsService::class);
         $this->pageService = $this->createMock(PageService::class);
@@ -52,6 +63,7 @@ class AnalyticsControllerTest extends TestCase {
             $this->request,
             $this->analyticsService,
             $this->pageService,
+            $this->pageRead,
             $this->userSession,
             $this->groupManager,
             $this->config,
@@ -68,6 +80,7 @@ class AnalyticsControllerTest extends TestCase {
             $this->request,
             $this->analyticsService,
             $this->pageService,
+            $this->pageRead,
             $userSession,
             $groupManager,
             $this->config,
@@ -150,8 +163,7 @@ class AnalyticsControllerTest extends TestCase {
 
         $this->analyticsService->method('getTopPages')->willReturn($topPages);
 
-        $this->pageService->method('getPage')
-            ->willReturnCallback(function ($id) {
+        $this->getPageFn = (function ($id) {
                 return [
                     'title' => "Title for $id",
                     'path' => "/pages/$id",
@@ -176,8 +188,7 @@ class AnalyticsControllerTest extends TestCase {
 
         $this->analyticsService->method('getTopPages')->willReturn($topPages);
 
-        $this->pageService->method('getPage')
-            ->willReturnCallback(function ($id) {
+        $this->getPageFn = (function ($id) {
                 if ($id === 'page-1') {
                     return ['title' => 'Accessible', 'permissions' => ['canRead' => true]];
                 }
@@ -199,8 +210,7 @@ class AnalyticsControllerTest extends TestCase {
 
         $this->analyticsService->method('getTopPages')->willReturn($topPages);
 
-        $this->pageService->method('getPage')
-            ->willReturnCallback(function ($id) {
+        $this->getPageFn = (function ($id) {
                 if ($id === 'page-deleted') {
                     throw new \Exception('Page not found');
                 }
@@ -230,10 +240,10 @@ class AnalyticsControllerTest extends TestCase {
 
         $this->analyticsService->method('getDashboardStats')->willReturn($dashboardStats);
 
-        $this->pageService->method('getPage')->willReturn([
+        $this->getPageFn = fn(string $id) => [
             'title' => 'Test Page',
             'permissions' => ['canRead' => true]
-        ]);
+        ];
 
         $adminController = $this->createAdminController();
         $response = $adminController->getDashboard();

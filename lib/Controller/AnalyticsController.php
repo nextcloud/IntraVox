@@ -36,6 +36,7 @@ class AnalyticsController extends Controller {
         IRequest $request,
         private AnalyticsService $analyticsService,
         private PageService $pageService,
+        private \OCA\IntraVox\Service\Read\PageReadService $pageRead,
         private IUserSession $userSession,
         private IGroupManager $groupManager,
         private IConfig $config,
@@ -107,7 +108,7 @@ class AnalyticsController extends Controller {
             $enrichedPages = [];
             foreach ($topPages as $page) {
                 try {
-                    $pageData = $this->pageService->getPage($page['pageId']);
+                    $pageData = $this->pageRead->getPage($page['pageId']);
                     // Only include pages user can read
                     if ($pageData['permissions']['canRead'] ?? false) {
                         $page['title'] = $pageData['title'] ?? 'Untitled';
@@ -156,7 +157,7 @@ class AnalyticsController extends Controller {
             $enrichedTopPages = [];
             foreach ($stats['topPages'] as $page) {
                 try {
-                    $pageData = $this->pageService->getPage($page['pageId']);
+                    $pageData = $this->pageRead->getPage($page['pageId']);
                     if ($pageData['permissions']['canRead'] ?? false) {
                         $page['title'] = $pageData['title'] ?? 'Untitled';
                         $enrichedTopPages[] = $page;
