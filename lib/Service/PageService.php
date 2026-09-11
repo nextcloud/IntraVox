@@ -355,11 +355,10 @@ class PageService {
             $this->pageIndexService,
             $this->permissionService,
             $this->logger,
-            $this->rootClosure(),
             $this->folders(),
             $this->shape(),
             $this->cache(),
-            fn(): \OCA\IntraVox\Service\Path\PageDataEnricher => $this->pageDataEnricher()
+            $this->pageDataEnricher()
         );
     }
 

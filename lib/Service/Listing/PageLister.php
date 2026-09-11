@@ -33,30 +33,24 @@ use Psr\Log\LoggerInterface;
  * across users would leak access.
  *
  * Folder resolution comes from the injected FolderContext; the shape sanitizer,
- * request cache and (lazy) enricher are the real read collaborators. The
- * getIntraVoxFolder seam still flows to fromIndex as the $intraVoxFolder closure
- * (kept deliberately, so PageIndexLookupTest drives it byte-for-byte). The
- * enricher is a lazy closure — building it forces $userId, and byFolderPath's
- * request-cache hit must return without that (the #70 timing PageReadService pins).
+ * request cache and enricher are the real read collaborators — all DI-first-class
+ * now (fase-5): the former getIntraVoxFolder closure is FolderContext->intraVox()
+ * (via languageOfFolder/folderFromAbsolutePath), and the enricher is an eagerly
+ * injected PageDataEnricher. Building it is $userId-free (its ctor is inert, same
+ * as the readService() rationale), and byFolderPath only INVOKES it on the
+ * cache-MISS path, so the #70 request-cache hit stays $userId-free.
  * PageIndexLookupTest / PageWalkerSkipTest / PageBreadcrumbTest pin the behaviour.
  */
 final class PageLister {
-    /**
-     * @param \Closure(): \OCP\Files\Folder $intraVoxFolder resolves the IntraVox
-     *   root (PageService's getIntraVoxFolder seam), used by fromIndex
-     * @param \Closure(): PageDataEnricher $enricher lazily resolves the enricher
-     *   (byFolderPath's #70 canWrite gate)
-     */
     public function __construct(
         private PageLocator $locator,
         private PageIndexService $pageIndexService,
         private PermissionService $permissionService,
         private LoggerInterface $logger,
-        private \Closure $intraVoxFolder,
         private FolderContext $folders,
         private PageShapeSanitizer $shape,
         private PageCacheService $cache,
-        private \Closure $enricher,
+        private PageDataEnricher $enricher,
     ) {
     }
 
@@ -64,7 +58,7 @@ final class PageLister {
      * @return array|null the page list, or null to fall back to the walk
      */
     public function fromIndex(\OCP\Files\Folder $folder): ?array {
-        $language = $this->locator->languageOfFolder(($this->intraVoxFolder)(), $folder);
+        $language = $this->folders->languageOfFolder($folder);
         if ($language === null) {
             return null;
         }
@@ -120,7 +114,7 @@ final class PageLister {
             // at something the user cannot reach is skipped rather than served
             // without permissions — the same mount-scoped resolution the
             // uniqueId lookup uses, so the index can never widen access.
-            $pageFolder = $this->locator->folderFromAbsolutePath(($this->intraVoxFolder)(), (string)$row['path']);
+            $pageFolder = $this->locator->folderFromAbsolutePath($this->folders->intraVox(), (string)$row['path']);
             if ($pageFolder === null) {
                 continue;
             }
@@ -249,7 +243,7 @@ final class PageLister {
 
                     if ($data && isset($data['uniqueId'])) {
                         // Enrich with path data (file gates canWrite/canEdit, #70)
-                        $data = ($this->enricher)()->enrich($data, $folder, $file);
+                        $data = $this->enricher->enrich($data, $folder, $file);
                         $result = $this->shape->sanitizePage($data);
                         $this->cache->setFolderPath($folderPath, $result);
                         return $result;

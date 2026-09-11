@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace OCA\IntraVox\Tests\Unit\Service;
 
-use OCA\IntraVox\Service\PageService;
 use OCA\IntraVox\Service\Path\PagePathHelper;
 use OCP\Files\File;
 use OCP\Files\FileInfo;
@@ -84,7 +83,7 @@ class PageWalkerSkipTest extends TestCase {
             ]),
         ]);
 
-        $pages = $this->wire($en)->listPagesWithContent();
+        $pages = $this->lister($en)->listAllWithContent();
         $ids = array_column($pages, 'uniqueId');
 
         $this->assertContains('page-real', $ids, 'the real page is listed');
@@ -110,7 +109,7 @@ class PageWalkerSkipTest extends TestCase {
             'about' => $realPage,
         ]);
 
-        $pages = $this->wire($en)->listPages();
+        $pages = $this->lister($en)->listAll();
         $ids = array_column($pages, 'uniqueId');
 
         $this->assertContains('page-real', $ids, 'real pages are still listed');
@@ -118,53 +117,55 @@ class PageWalkerSkipTest extends TestCase {
     }
 
     /**
-     * Wire a constructorless PageService whose read/language folder is $en. This
-     * file has its own fixture helpers (not the shared harness), so the
-     * FolderContext + the collaborators the pageLister() accessor reads are set
-     * inline. The sanitizer is real (a mock would return null and pass for the
-     * wrong reason).
+     * Build the real PageLister over $en (fase-5: the listing walk is
+     * PageLister's, and it is now DI-buildable with a closure-free ctor, so this
+     * drives it directly instead of reflecting through a PageService subclass).
+     * The index service reports no entries so both listAll and listAllWithContent
+     * take the filesystem-walk path this test exercises. The sanitizer is real (a
+     * mock would return null and pass for the wrong reason).
      */
-    private function wire(Folder $en): PageService {
-        $svc = new class extends PageService {
-            public function __construct() {
-            }
-        };
-        $folderContext = new \OCA\IntraVox\Service\Folder\FolderContext(
+    private function lister(Folder $en): \OCA\IntraVox\Service\Listing\PageLister {
+        $index = $this->createMock(\OCA\IntraVox\Service\PageIndexService::class);
+        $index->method('hasEntries')->willReturn(false); // force the walk, not fromIndex
+        $locator = new \OCA\IntraVox\Service\Locator\PageLocator(
+            $index,
+            $this->createMock(\Psr\Log\LoggerInterface::class)
+        );
+        $folders = new \OCA\IntraVox\Service\Folder\FolderContext(
             $this->createMock(\OCP\Files\IRootFolder::class),
             'tester',
             $this->createMock(\OCP\IConfig::class),
             $this->createMock(\OCA\IntraVox\Service\LanguageService::class),
             new \OCA\IntraVox\Service\Language\LanguageResolver(),
-            new \OCA\IntraVox\Service\Locator\PageLocator(
-                $this->createMock(\OCA\IntraVox\Service\PageIndexService::class),
-                $this->createMock(\Psr\Log\LoggerInterface::class)
-            ),
+            $locator,
             $en,                    // intraVoxOverride
-            fn(): Folder => $en     // readLanguageFolder seam (listPagesWithContent reads via it)
+            fn(): Folder => $en     // readLanguageFolder seam
         );
-        (new \ReflectionProperty(PageService::class, 'folderContext'))
-            ->setValue($svc, $folderContext);
-        (new \ReflectionProperty(PageService::class, 'logger'))
-            ->setValue($svc, $this->createMock(\Psr\Log\LoggerInterface::class));
-        // The listing routes through pageLister(), whose accessor eagerly reads
-        // these two even when the walk itself never calls permissionService.
-        (new \ReflectionProperty(PageService::class, 'permissionService'))
-            ->setValue($svc, $this->createMock(\OCA\IntraVox\Service\PermissionService::class));
-        (new \ReflectionProperty(PageService::class, 'pageIndexService'))
-            ->setValue($svc, $this->createMock(\OCA\IntraVox\Service\PageIndexService::class));
-        (new \ReflectionProperty(PageService::class, 'pageLocator'))
-            ->setValue($svc, new \OCA\IntraVox\Service\Locator\PageLocator(
-                $this->createMock(\OCA\IntraVox\Service\PageIndexService::class),
-                $this->createMock(\Psr\Log\LoggerInterface::class)
-            ));
-        (new \ReflectionProperty(PageService::class, 'shapeSanitizer'))
-            ->setValue($svc, new \OCA\IntraVox\Service\Sanitize\PageShapeSanitizer(
-                $this->createMock(\OCP\IConfig::class),
-                $this->createMock(\Psr\Log\LoggerInterface::class),
-                new \OCA\IntraVox\Service\Sanitize\HtmlSanitizer(),
-                new \OCA\IntraVox\Service\Sanitize\UrlSanitizer(),
-                new \OCA\IntraVox\Service\Sanitize\ColorSanitizer(),
-            ));
-        return $svc;
+        $shape = new \OCA\IntraVox\Service\Sanitize\PageShapeSanitizer(
+            $this->createMock(\OCP\IConfig::class),
+            $this->createMock(\Psr\Log\LoggerInterface::class),
+            new \OCA\IntraVox\Service\Sanitize\HtmlSanitizer(),
+            new \OCA\IntraVox\Service\Sanitize\UrlSanitizer(),
+            new \OCA\IntraVox\Service\Sanitize\ColorSanitizer(),
+        );
+        return new \OCA\IntraVox\Service\Listing\PageLister(
+            $locator,
+            $index,
+            $this->createMock(\OCA\IntraVox\Service\PermissionService::class),
+            $this->createMock(\Psr\Log\LoggerInterface::class),
+            $folders,
+            $shape,
+            $this->createMock(\OCA\IntraVox\Service\Cache\PageCacheService::class),
+            // Enricher is only reached by byFolderPath, not the walks under test;
+            // an inert real instance satisfies the closure-free ctor.
+            new \OCA\IntraVox\Service\Path\PageDataEnricher(
+                new \OCA\IntraVox\Service\Path\PagePathHelper(),
+                $this->createMock(\OCA\IntraVox\Service\PermissionService::class),
+                $this->createMock(\OCA\IntraVox\Service\Publication\MetaVoxGateway::class),
+                $folders,
+                $this->createMock(\OCA\IntraVox\Service\Translation\TranslationGroupService::class),
+                new \OCA\IntraVox\Service\Util\GroupfolderResolver(),
+            ),
+        );
     }
 }
