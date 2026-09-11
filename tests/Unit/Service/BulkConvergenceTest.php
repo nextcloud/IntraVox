@@ -29,21 +29,29 @@ use Psr\Log\LoggerInterface;
  * again".
  */
 class BulkConvergenceTest extends TestCase {
+    use \OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageRead;
+
     private PageService $pageService;
     private BulkOperationService $service;
+    /** getPage(id) behaviour a test installs (fase-4 C6: getPage → PageReadService). */
+    private \Closure $getPageFn;
 
     protected function setUp(): void {
         parent::setUp();
         $this->pageService = $this->createMock(PageService::class);
+        $this->getPageFn = fn(string $id) => null;
+        $pageRead = $this->fakePageReadFrom(fn(string $id) => ($this->getPageFn)($id));
         $this->service = new BulkOperationService(
             $this->pageService,
+            $pageRead,
             $this->createMock(LoggerInterface::class)
         );
     }
 
     public function testDeletingAnAlreadyDeletedPageCountsAsDone(): void {
-        $this->pageService->method('getPage')
-            ->willThrowException(new \Exception('Page not found'));
+        $this->getPageFn = function (string $id): array {
+            throw new \Exception('Page not found');
+        };
 
         $result = $this->service->bulkDelete(['page-gone'], true);
 
@@ -52,8 +60,9 @@ class BulkConvergenceTest extends TestCase {
     }
 
     public function testAGenuineFailureIsStillAFailure(): void {
-        $this->pageService->method('getPage')
-            ->willThrowException(new \Exception('Storage is not writable'));
+        $this->getPageFn = function (string $id): array {
+            throw new \Exception('Storage is not writable');
+        };
 
         $result = $this->service->bulkDelete(['page-1'], true);
 
@@ -62,10 +71,10 @@ class BulkConvergenceTest extends TestCase {
     }
 
     public function testPermissionDenialIsNotSwallowedByConvergence(): void {
-        $this->pageService->method('getPage')->willReturn([
+        $this->getPageFn = fn(string $id) => [
             'title' => 'Protected',
             'permissions' => ['canDelete' => false],
-        ]);
+        ];
 
         $result = $this->service->bulkDelete(['page-1'], true);
 
@@ -77,14 +86,12 @@ class BulkConvergenceTest extends TestCase {
      * A mixed batch is the realistic retry: some already gone, some still there.
      */
     public function testAMixedRetryReportsEverythingAsDone(): void {
-        $this->pageService->method('getPage')->willReturnCallback(
-            static function (string $id): array {
-                if ($id === 'page-gone') {
-                    throw new \Exception('Page not found');
-                }
-                return ['title' => 'Still here', 'permissions' => ['canDelete' => true]];
+        $this->getPageFn = static function (string $id): array {
+            if ($id === 'page-gone') {
+                throw new \Exception('Page not found');
             }
-        );
+            return ['title' => 'Still here', 'permissions' => ['canDelete' => true]];
+        };
 
         $result = $this->service->bulkDelete(['page-gone', 'page-here'], true)->toArray();
 

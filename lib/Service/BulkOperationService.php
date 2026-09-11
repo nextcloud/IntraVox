@@ -21,6 +21,10 @@ class BulkOperationService {
 
     public function __construct(
         private PageService $pageService,
+        // getPage comes from the READ-domain service (fase-4 C6); pageService stays
+        // for the mutating batch ops (update/delete/move) + the deferred-clear
+        // begin/end pair.
+        private \OCA\IntraVox\Service\Read\PageReadService $pageRead,
         private LoggerInterface $logger
     ) {}
 
@@ -61,7 +65,7 @@ class BulkOperationService {
 
         foreach ($pageIds as $pageId) {
             try {
-                $page = $this->pageService->getPage($pageId);
+                $page = $this->pageRead->getPage($pageId);
                 if ($page['permissions'][$permissionKey] ?? false) {
                     $valid[] = [
                         'pageId' => $pageId,
@@ -107,7 +111,7 @@ class BulkOperationService {
             foreach ($pageIds as $pageId) {
                 try {
                     // Get page to check permissions
-                    $page = $this->pageService->getPage($pageId);
+                    $page = $this->pageRead->getPage($pageId);
 
                     if (!($page['permissions']['canDelete'] ?? false)) {
                         $result->addFailed($pageId, 'Permission denied');
@@ -168,7 +172,7 @@ class BulkOperationService {
 
         // Validate target parent exists and user has write permission
         try {
-            $targetParent = $this->pageService->getPage($targetParentId);
+            $targetParent = $this->pageRead->getPage($targetParentId);
             if (!($targetParent['permissions']['canWrite'] ?? false)) {
                 // All operations fail if target is not writable
                 foreach ($pageIds as $pageId) {
@@ -189,7 +193,7 @@ class BulkOperationService {
             foreach ($pageIds as $pageId) {
                 try {
                     // Get page to check permissions
-                    $page = $this->pageService->getPage($pageId);
+                    $page = $this->pageRead->getPage($pageId);
 
                     if (!($page['permissions']['canWrite'] ?? false)) {
                         $result->addFailed($pageId, 'Permission denied');
@@ -252,7 +256,7 @@ class BulkOperationService {
             foreach ($pageIds as $pageId) {
                 try {
                     // Get page to check permissions
-                    $page = $this->pageService->getPage($pageId);
+                    $page = $this->pageRead->getPage($pageId);
 
                     if (!($page['permissions']['canWrite'] ?? false)) {
                         $result->addFailed($pageId, 'Permission denied');
