@@ -109,6 +109,19 @@ class PageHomepageResolutionTest extends TestCase {
     }
 
     /**
+     * Read the homepage uniqueId directly off the injected HomepageResolverService.
+     * fase-5 Phase II deleted the PageService::getHomepageUniqueId delegator (it had
+     * no production caller — ApiController resolves via resolveHomepageNodeUniqueId),
+     * so these characterization tests reach the resolver through the property the
+     * harness wires, exactly what the one-line delegator forwarded to. Mirrors the
+     * reflection idiom makeSetHomepageService() already uses on the same property.
+     */
+    private function homepageUniqueId(PageService $svc, string $lang): string {
+        return (new \ReflectionProperty(PageService::class, 'homepageResolver'))
+            ->getValue($svc)->getHomepageUniqueId($lang);
+    }
+
+    /**
      * The regression: a legacy loose home.json must resolve to the uniqueId the
      * file really carries, so the frontend can match it against listPages().
      */
@@ -118,7 +131,7 @@ class PageHomepageResolutionTest extends TestCase {
             'title' => 'Welkom bij IntraVox',
         ]);
 
-        $this->assertSame('page-nl-home', $svc->getHomepageUniqueId('nl'));
+        $this->assertSame('page-nl-home', $this->homepageUniqueId($svc, 'nl'));
     }
 
     /**
@@ -129,14 +142,14 @@ class PageHomepageResolutionTest extends TestCase {
     public function testHomeJsonWithoutUniqueIdKeepsTheLegacyAnswer(): void {
         $svc = $this->makeService(['title' => 'Welcome']);
 
-        $this->assertSame('home', $svc->getHomepageUniqueId('nl'));
+        $this->assertSame('home', $this->homepageUniqueId($svc, 'nl'));
     }
 
     /** No loose home.json at all: unchanged legacy answer. */
     public function testMissingHomeJsonKeepsTheLegacyAnswer(): void {
         $svc = $this->makeService(null);
 
-        $this->assertSame('home', $svc->getHomepageUniqueId('nl'));
+        $this->assertSame('home', $this->homepageUniqueId($svc, 'nl'));
     }
 
     /**
@@ -149,7 +162,7 @@ class PageHomepageResolutionTest extends TestCase {
             'page-about'
         );
 
-        $this->assertSame('page-about', $svc->getHomepageUniqueId('nl'));
+        $this->assertSame('page-about', $this->homepageUniqueId($svc, 'nl'));
     }
 
     /**
@@ -168,7 +181,7 @@ class PageHomepageResolutionTest extends TestCase {
 
         $this->assertSame(
             'page-nl-home',
-            $svc->getHomepageUniqueId('nl'),
+            $this->homepageUniqueId($svc, 'nl'),
             'a pointer that does not resolve must fall through to the loose home'
         );
     }

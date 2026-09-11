@@ -607,21 +607,6 @@ class PageService {
     }
 
     /**
-     * Resolve which page is the homepage for a language (configurable homepage).
-     *
-     * Returns the configured pointer target if set AND it resolves to a real
-     * page; otherwise falls back to the legacy loose `home.json` (uniqueId
-     * 'home' / the page at the language root). This fallback is the entire
-     * back-compat story: installs without a homepage.json behave exactly as
-     * before.
-     *
-     * @return string uniqueId of the homepage ('home' for the legacy default).
-     */
-    public function getHomepageUniqueId(?string $language = null): string {
-        return $this->homepageResolver->getHomepageUniqueId($language);
-    }
-
-    /**
      * Whether the given uniqueId is the resolved homepage for the language.
      * Handles the legacy 'home' id as well as a configured pointer target.
      */
