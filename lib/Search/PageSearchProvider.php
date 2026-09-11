@@ -17,6 +17,7 @@ use OCP\Search\SearchResultEntry;
 
 class PageSearchProvider implements IProvider {
     private PageService $pageService;
+    private \OCA\IntraVox\Service\Read\PageReadService $pageRead;
     private PageIndexService $pageIndexService;
     private IConfig $config;
     private IL10N $l10n;
@@ -25,6 +26,7 @@ class PageSearchProvider implements IProvider {
 
     public function __construct(
         PageService $pageService,
+        \OCA\IntraVox\Service\Read\PageReadService $pageRead,
         PageIndexService $pageIndexService,
         IConfig $config,
         IL10N $l10n,
@@ -32,6 +34,7 @@ class PageSearchProvider implements IProvider {
         PublicationStateService $publicationState
     ) {
         $this->pageService = $pageService;
+        $this->pageRead = $pageRead;
         $this->pageIndexService = $pageIndexService;
         $this->config = $config;
         $this->l10n = $l10n;
@@ -81,7 +84,7 @@ class PageSearchProvider implements IProvider {
         }
 
         try {
-            $page = $this->pageService->getPage($uniqueId);
+            $page = $this->pageRead->getPage($uniqueId);
         } catch (\Throwable $e) {
             return true;
         }

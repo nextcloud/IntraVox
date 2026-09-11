@@ -7,6 +7,7 @@ use OCA\IntraVox\Search\PageSearchProvider;
 use OCA\IntraVox\Service\PageIndexService;
 use OCA\IntraVox\Service\PageService;
 use OCA\IntraVox\Service\Publication\PublicationStateService;
+use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageRead;
 use OCP\IConfig;
 use OCP\IL10N;
 use OCP\IURLGenerator;
@@ -30,15 +31,20 @@ use PHPUnit\Framework\TestCase;
  */
 class PageSearchPublicationGateTest extends TestCase {
 
+	use BuildsPageRead;
+
 	/** The publication gate now lives on PublicationStateService, not PageService. */
 	private PublicationStateService $publicationState;
+	/** The page getPage() returns (fase-4 C6: getPage moved to PageReadService). */
+	private array $page = [];
 
-	private function provider(PageService $pageService): PageSearchProvider {
+	private function provider(?\OCA\IntraVox\Service\Read\PageReadService $pageRead = null): PageSearchProvider {
 		$l10n = $this->createMock(IL10N::class);
 		$l10n->method('t')->willReturnArgument(0);
 
 		return new PageSearchProvider(
-			$pageService,
+			$this->createMock(PageService::class),   // searchPages path, not exercised here
+			$pageRead ?? $this->fakePageReadReturning($this->page),
 			$this->createMock(PageIndexService::class),
 			$this->createMock(IConfig::class),
 			$l10n,
@@ -48,76 +54,75 @@ class PageSearchPublicationGateTest extends TestCase {
 	}
 
 	/** Drive the private gate the indexed path uses. */
-	private function isHidden(PageService $pageService, ?string $uniqueId): bool {
+	private function isHidden(?string $uniqueId, ?\OCA\IntraVox\Service\Read\PageReadService $pageRead = null): bool {
 		$method = new \ReflectionMethod(PageSearchProvider::class, 'isHiddenFromThisUser');
 
-		return (bool)$method->invoke($this->provider($pageService), $uniqueId);
+		return (bool)$method->invoke($this->provider($pageRead), $uniqueId);
 	}
 
 	/**
-	 * getPage() still comes from PageService; the hidden/visible decision now
-	 * comes from PublicationStateService::isHiddenFromReaders, which this stubs.
+	 * getPage() now comes from PageReadService (fase-4 C6); the hidden/visible
+	 * decision comes from PublicationStateService::isHiddenFromReaders, stubbed here.
 	 */
-	private function pageServiceReturning(array $page, bool $hidden): PageService {
-		$service = $this->createMock(PageService::class);
-		$service->method('getPage')->willReturn($page);
-
+	private function pageReturning(array $page, bool $hidden): void {
+		$this->page = $page;
 		$this->publicationState = $this->createMock(PublicationStateService::class);
 		$this->publicationState->method('isHiddenFromReaders')->willReturn($hidden);
-
-		return $service;
 	}
 
 	public function testPublishedPageIsVisible(): void {
-		$service = $this->pageServiceReturning(['uniqueId' => 'p1', 'permissions' => ['canWrite' => false]], false);
+		$this->pageReturning(['uniqueId' => 'p1', 'permissions' => ['canWrite' => false]], false);
 
-		$this->assertFalse($this->isHidden($service, 'p1'));
+		$this->assertFalse($this->isHidden('p1'));
 	}
 
 	/** The regression: a draft must not appear for a reader. */
 	public function testDraftIsHiddenFromReader(): void {
-		$service = $this->pageServiceReturning(['uniqueId' => 'p1', 'permissions' => ['canWrite' => false]], true);
+		$this->pageReturning(['uniqueId' => 'p1', 'permissions' => ['canWrite' => false]], true);
 
-		$this->assertTrue($this->isHidden($service, 'p1'));
+		$this->assertTrue($this->isHidden('p1'));
 	}
 
 	/** ...but an editor must still find their own drafts. */
 	public function testDraftIsVisibleToUserWithWritePermission(): void {
-		$service = $this->pageServiceReturning(['uniqueId' => 'p1', 'permissions' => ['canWrite' => true]], true);
+		$this->pageReturning(['uniqueId' => 'p1', 'permissions' => ['canWrite' => true]], true);
 
-		$this->assertFalse($this->isHidden($service, 'p1'));
+		$this->assertFalse($this->isHidden('p1'));
 	}
 
 	/** A page with no permissions block is treated as read-only. */
 	public function testDraftWithoutPermissionsBlockIsHidden(): void {
-		$service = $this->pageServiceReturning(['uniqueId' => 'p1'], true);
+		$this->pageReturning(['uniqueId' => 'p1'], true);
 
-		$this->assertTrue($this->isHidden($service, 'p1'));
+		$this->assertTrue($this->isHidden('p1'));
 	}
 
 	/** Fail closed: an unloadable page costs a hit rather than leaking one. */
 	public function testUnloadablePageIsHidden(): void {
 		$this->publicationState = $this->createMock(PublicationStateService::class);
-		$service = $this->createMock(PageService::class);
-		$service->method('getPage')->willThrowException(new \RuntimeException('gone'));
+		// A PageReadService whose getPage throws: build one whose cache getPageData
+		// throws, so the cache-hit short-circuit propagates it verbatim.
+		$cache = $this->createMock(\OCA\IntraVox\Service\Cache\PageCacheService::class);
+		$cache->method('getPageData')->willThrowException(new \RuntimeException('gone'));
+		$pageRead = $this->fakePageReadReturning(null);
+		(new \ReflectionProperty(\OCA\IntraVox\Service\Read\PageReadService::class, 'cache'))
+			->setValue($pageRead, $cache);
 
-		$this->assertTrue($this->isHidden($service, 'p1'));
+		$this->assertTrue($this->isHidden('p1', $pageRead));
 	}
 
 	public function testEmptyPageIsHidden(): void {
 		$this->publicationState = $this->createMock(PublicationStateService::class);
-		$service = $this->createMock(PageService::class);
-		$service->method('getPage')->willReturn([]);
-
-		$this->assertTrue($this->isHidden($service, 'p1'));
+		// getPage returns [] — but PageReadService treats a null cache entry as a
+		// miss and would resolve for real; an empty array IS a hit, so return [].
+		$this->assertTrue($this->isHidden('p1', $this->fakePageReadReturning([])));
 	}
 
 	public function testMissingUniqueIdIsHidden(): void {
 		$this->publicationState = $this->createMock(PublicationStateService::class);
-		$service = $this->createMock(PageService::class);
 
-		$this->assertTrue($this->isHidden($service, null));
-		$this->assertTrue($this->isHidden($service, ''));
+		$this->assertTrue($this->isHidden(null));
+		$this->assertTrue($this->isHidden(''));
 	}
 
 	/**
