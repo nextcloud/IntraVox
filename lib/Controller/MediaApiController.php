@@ -68,6 +68,10 @@ class MediaApiController extends Controller {
     protected function getPageService(): PageService {
         return $this->pageService;
     }
+
+    protected function getPageReadService(): \OCA\IntraVox\Service\Read\PageReadService {
+        return $this->pageRead;
+    }
     /**
      * Upload media (image or video) for a page
      * Unified endpoint that stores all media in a single 'media' folder

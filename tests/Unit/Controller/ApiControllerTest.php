@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace OCA\IntraVox\Tests\Unit\Controller;
 
 use OCA\IntraVox\Controller\ApiController;
+use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageRead;
 use OCA\IntraVox\Exception\ForbiddenException;
 use OCA\IntraVox\Service\EngagementSettingsService;
 use OCA\IntraVox\Service\ImportService;
@@ -35,8 +36,13 @@ use Psr\Log\LoggerInterface;
  * - Admin-only endpoints
  */
 class ApiControllerTest extends TestCase {
+
+    use \OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageRead;
     private ApiController $controller;
     private PageService $pageService;
+    private \OCA\IntraVox\Service\Read\PageReadService $pageRead;
+    /** getPage(id) behaviour a test installs (fase-4 C6: getPage → PageReadService). */
+    private \Closure $getPageFn;
     private \OCA\IntraVox\Service\PermissionService $permissionService;
     private SetupService $setupService;
     private EngagementSettingsService $engagementSettings;
@@ -58,6 +64,10 @@ class ApiControllerTest extends TestCase {
 
         // Create mocks
         $this->pageService = $this->createMock(PageService::class);
+        // getPage now comes from a real PageReadService that delegates to the
+        // per-test $this->getPageFn (default: page not found). fase-4 C6.
+        $this->getPageFn = fn(string $id) => null;
+        $this->pageRead = $this->fakePageReadFrom(fn(string $id) => ($this->getPageFn)($id));
         $this->permissionService = $this->createMock(\OCA\IntraVox\Service\PermissionService::class);
         $this->publicationState = $this->createMock(\OCA\IntraVox\Service\Publication\PublicationStateService::class);
         $this->setupService = $this->createMock(SetupService::class);
@@ -80,6 +90,7 @@ class ApiControllerTest extends TestCase {
             'intravox',
             $this->request,
             $this->pageService,
+            $this->pageRead,
             $this->permissionService,
             $this->setupService,
             $this->logger,
@@ -167,9 +178,7 @@ class ApiControllerTest extends TestCase {
             'permissions' => ['canRead' => true, 'canWrite' => true]
         ];
 
-        $this->pageService->method('getPage')
-            ->with('page-123')
-            ->willReturn($page);
+        $this->getPageFn = fn(string $id) => $page;
 
         $this->pageService->method('getBreadcrumb')
             ->willReturn([['id' => 'page-123', 'title' => 'Test Page']]);
@@ -190,9 +199,7 @@ class ApiControllerTest extends TestCase {
             'permissions' => ['canRead' => false, 'canWrite' => false]
         ];
 
-        $this->pageService->method('getPage')
-            ->with('page-123')
-            ->willReturn($page);
+        $this->getPageFn = fn(string $id) => $page;
 
         $response = $this->controller->getPage('page-123');
 
@@ -201,8 +208,7 @@ class ApiControllerTest extends TestCase {
     }
 
     public function testGetPageReturnsNotFoundForInvalidId(): void {
-        $this->pageService->method('getPage')
-            ->willThrowException(new \Exception('Page not found'));
+        $this->getPageFn = function (string $id) { throw new \Exception('Page not found'); };
 
         $response = $this->controller->getPage('invalid-id');
 
@@ -217,7 +223,7 @@ class ApiControllerTest extends TestCase {
             'permissions' => ['canRead' => true]
         ];
 
-        $this->pageService->method('getPage')->willReturn($page);
+        $this->getPageFn = fn(string $id) => $page;
         $this->pageService->method('getBreadcrumb')
             ->willThrowException(new \Exception('Breadcrumb failed'));
 
@@ -236,7 +242,7 @@ class ApiControllerTest extends TestCase {
             'permissions' => ['canRead' => true]
         ];
 
-        $this->pageService->method('getPage')->willReturn($page);
+        $this->getPageFn = fn(string $id) => $page;
         $this->pageService->method('getBreadcrumb')->willReturn([]);
         $this->request->method('getHeader')->willReturn('');
 
@@ -258,7 +264,7 @@ class ApiControllerTest extends TestCase {
             'permissions' => ['canRead' => true]
         ];
 
-        $this->pageService->method('getPage')->willReturn($page);
+        $this->getPageFn = fn(string $id) => $page;
         $this->pageService->method('getBreadcrumb')->willReturn([]);
 
         // First request: capture the ETag the controller assigns.
@@ -274,6 +280,7 @@ class ApiControllerTest extends TestCase {
             'intravox',
             $newRequest,
             $this->pageService,
+            $this->pageRead,
             $this->permissionService,
             $this->setupService,
             $this->logger,
@@ -377,9 +384,7 @@ class ApiControllerTest extends TestCase {
             'permissions' => ['canRead' => true, 'canWrite' => true]
         ];
 
-        $this->pageService->method('getPage')
-            ->with('page-123')
-            ->willReturn($existingPage);
+        $this->getPageFn = fn(string $id) => $existingPage;
 
         $this->request->method('getParams')->willReturn(['title' => 'New Title']);
 
@@ -398,7 +403,7 @@ class ApiControllerTest extends TestCase {
             'permissions' => ['canRead' => true, 'canWrite' => false]
         ];
 
-        $this->pageService->method('getPage')->willReturn($existingPage);
+        $this->getPageFn = fn(string $id) => $existingPage;
 
         $response = $this->controller->updatePage('page-123');
 
@@ -411,7 +416,7 @@ class ApiControllerTest extends TestCase {
             'permissions' => ['canRead' => true, 'canWrite' => true]
         ];
 
-        $this->pageService->method('getPage')->willReturn($existingPage);
+        $this->getPageFn = fn(string $id) => $existingPage;
         $this->request->method('getParams')->willReturn(['title' => null]);
 
         $this->pageService->method('updatePage')
@@ -432,7 +437,7 @@ class ApiControllerTest extends TestCase {
             'permissions' => ['canRead' => true, 'canWrite' => true]
         ];
 
-        $this->pageService->method('getPage')->willReturn($existingPage);
+        $this->getPageFn = fn(string $id) => $existingPage;
         $this->request->method('getParams')->willReturn(['title' => 'x']);
         $this->pageService->method('updatePage')
             ->willThrowException(new ForbiddenException('You do not have permission to edit this page'));
@@ -464,7 +469,7 @@ class ApiControllerTest extends TestCase {
             'permissions' => ['canRead' => true, 'canDelete' => true]
         ];
 
-        $this->pageService->method('getPage')->willReturn($existingPage);
+        $this->getPageFn = fn(string $id) => $existingPage;
         $this->pageService->expects($this->once())
             ->method('deletePage')
             ->with('page-123');
@@ -481,7 +486,7 @@ class ApiControllerTest extends TestCase {
             'permissions' => ['canRead' => true, 'canDelete' => false]
         ];
 
-        $this->pageService->method('getPage')->willReturn($existingPage);
+        $this->getPageFn = fn(string $id) => $existingPage;
 
         $response = $this->controller->deletePage('page-123');
 
@@ -494,7 +499,7 @@ class ApiControllerTest extends TestCase {
             'permissions' => ['canRead' => true, 'canDelete' => true]
         ];
 
-        $this->pageService->method('getPage')->willReturn($existingPage);
+        $this->getPageFn = fn(string $id) => $existingPage;
         $this->pageService->method('deletePage')
             ->willThrowException(new \Exception('Delete failed'));
 
@@ -511,7 +516,7 @@ class ApiControllerTest extends TestCase {
             'permissions' => ['canRead' => true, 'canDelete' => true]
         ];
 
-        $this->pageService->method('getPage')->willReturn($existingPage);
+        $this->getPageFn = fn(string $id) => $existingPage;
         $this->pageService->method('deletePage')
             ->willThrowException(new \InvalidArgumentException('HOMEPAGE_PROTECTED'));
 
@@ -533,9 +538,7 @@ class ApiControllerTest extends TestCase {
     }
 
     public function testMovePageReturnsForbiddenWithoutWriteOnSource(): void {
-        $this->pageService->method('getPage')
-            ->with('page-1')
-            ->willReturn(['id' => 'page-1', 'permissions' => ['canWrite' => false]]);
+        $this->getPageFn = fn(string $id) => ['id' => 'page-1', 'permissions' => ['canWrite' => false]];
 
         $response = $this->controller->movePage('page-1', 'page-parent');
 
@@ -543,12 +546,12 @@ class ApiControllerTest extends TestCase {
     }
 
     public function testMovePageReturnsForbiddenWithoutCreateOnTarget(): void {
-        $this->pageService->method('getPage')->willReturnCallback(function ($id) {
+        $this->getPageFn = function ($id) {
             if ($id === 'page-1') {
                 return ['id' => 'page-1', 'permissions' => ['canWrite' => true]];
             }
             return ['id' => 'page-parent', 'path' => 'en/parent', 'permissions' => ['canWrite' => true]];
-        });
+        };
         $this->permissionService->method('getFolderPermissions')
             ->with('en/parent')
             ->willReturn(['canCreate' => false]);
@@ -559,12 +562,12 @@ class ApiControllerTest extends TestCase {
     }
 
     public function testMovePageHappyPathDelegatesToService(): void {
-        $this->pageService->method('getPage')->willReturnCallback(function ($id) {
+        $this->getPageFn = function ($id) {
             if ($id === 'page-1') {
                 return ['id' => 'page-1', 'permissions' => ['canWrite' => true]];
             }
             return ['id' => 'page-parent', 'path' => 'en/parent', 'permissions' => ['canWrite' => true]];
-        });
+        };
         $this->permissionService->method('getFolderPermissions')->willReturn(['canCreate' => true]);
         $this->pageService->expects($this->once())
             ->method('movePage')
@@ -577,12 +580,12 @@ class ApiControllerTest extends TestCase {
     }
 
     public function testMovePageRejectsCycleWithBadRequest(): void {
-        $this->pageService->method('getPage')->willReturnCallback(function ($id) {
+        $this->getPageFn = function ($id) {
             if ($id === 'page-1') {
                 return ['id' => 'page-1', 'permissions' => ['canWrite' => true]];
             }
             return ['id' => 'page-child', 'path' => 'en/1/child', 'permissions' => ['canWrite' => true]];
-        });
+        };
         $this->permissionService->method('getFolderPermissions')->willReturn(['canCreate' => true]);
         $this->pageService->method('movePage')
             ->willThrowException(new \InvalidArgumentException('Cannot move a page into itself or its descendant'));
@@ -594,12 +597,12 @@ class ApiControllerTest extends TestCase {
     }
 
     public function testMovePageRejectsDepthLimitWithBadRequest(): void {
-        $this->pageService->method('getPage')->willReturnCallback(function ($id) {
+        $this->getPageFn = function ($id) {
             if ($id === 'page-1') {
                 return ['id' => 'page-1', 'permissions' => ['canWrite' => true]];
             }
             return ['id' => 'page-deep', 'path' => 'en/a/b/c/d', 'permissions' => ['canWrite' => true]];
-        });
+        };
         $this->permissionService->method('getFolderPermissions')->willReturn(['canCreate' => true]);
         $this->pageService->method('movePage')
             ->willThrowException(new \InvalidArgumentException('Maximum nesting depth exceeded'));
@@ -610,12 +613,12 @@ class ApiControllerTest extends TestCase {
     }
 
     public function testMovePageHomepageProtectedReturnsBadRequest(): void {
-        $this->pageService->method('getPage')->willReturnCallback(function ($id) {
+        $this->getPageFn = function ($id) {
             if ($id === 'page-home') {
                 return ['id' => 'page-home', 'permissions' => ['canWrite' => true]];
             }
             return ['id' => 'page-parent', 'path' => 'en/parent', 'permissions' => ['canWrite' => true]];
-        });
+        };
         $this->permissionService->method('getFolderPermissions')->willReturn(['canCreate' => true]);
         $this->pageService->method('movePage')
             ->willThrowException(new \InvalidArgumentException('HOMEPAGE_PROTECTED'));
@@ -638,9 +641,7 @@ class ApiControllerTest extends TestCase {
     }
 
     public function testCopyPageForbiddenWhenSourceNotReadable(): void {
-        $this->pageService->method('getPage')
-            ->with('page-src')
-            ->willReturn(['id' => 'page-src', 'permissions' => ['canRead' => false]]);
+        $this->getPageFn = fn(string $id) => ['id' => 'page-src', 'permissions' => ['canRead' => false]];
 
         $response = $this->controller->copyPage('page-src', null, null);
 
@@ -648,12 +649,12 @@ class ApiControllerTest extends TestCase {
     }
 
     public function testCopyPageForbiddenWithoutCreateOnTarget(): void {
-        $this->pageService->method('getPage')->willReturnCallback(function ($id) {
+        $this->getPageFn = function ($id) {
             if ($id === 'page-src') {
                 return ['id' => 'page-src', 'permissions' => ['canRead' => true]];
             }
             return ['id' => 'page-parent', 'path' => 'en/parent', 'permissions' => ['canRead' => true]];
-        });
+        };
         $this->permissionService->method('getFolderPermissions')
             ->with('en/parent')
             ->willReturn(['canCreate' => false]);
@@ -664,9 +665,9 @@ class ApiControllerTest extends TestCase {
     }
 
     public function testCopyPageHappyPathReturnsCreated(): void {
-        $this->pageService->method('getPage')->willReturnCallback(function ($id) {
+        $this->getPageFn = function ($id) {
             return ['id' => $id, 'path' => 'en/parent', 'permissions' => ['canRead' => true]];
-        });
+        };
         $this->permissionService->method('getFolderPermissions')->willReturn(['canCreate' => true]);
         $copy = ['uniqueId' => 'page-new', 'title' => 'Thing (copy)', 'status' => 'draft'];
         $this->pageService->expects($this->once())
@@ -711,9 +712,7 @@ class ApiControllerTest extends TestCase {
     }
 
     public function testReorderForbiddenWithoutWriteOnParent(): void {
-        $this->pageService->method('getPage')
-            ->with('page-parent')
-            ->willReturn(['id' => 'page-parent', 'path' => 'en/parent']);
+        $this->getPageFn = fn(string $id) => ['id' => 'page-parent', 'path' => 'en/parent'];
         $this->permissionService->method('getFolderPermissions')
             ->with('en/parent')
             ->willReturn(['canWrite' => false]);
@@ -736,9 +735,7 @@ class ApiControllerTest extends TestCase {
     }
 
     public function testReorderHappyPathDelegatesWithParent(): void {
-        $this->pageService->method('getPage')
-            ->with('page-parent')
-            ->willReturn(['id' => 'page-parent', 'path' => 'en/parent']);
+        $this->getPageFn = fn(string $id) => ['id' => 'page-parent', 'path' => 'en/parent'];
         $this->permissionService->method('getFolderPermissions')->willReturn(['canWrite' => true]);
         $this->pageService->expects($this->once())
             ->method('reorderSiblings')
@@ -763,6 +760,7 @@ class ApiControllerTest extends TestCase {
             'intravox',
             $this->request,
             $this->pageService,
+            $this->pageRead,
             $this->permissionService,
             $this->setupService,
             $this->logger,
@@ -796,6 +794,7 @@ class ApiControllerTest extends TestCase {
             'intravox',
             $this->request,
             $this->pageService,
+            $this->pageRead,
             $this->permissionService,
             $this->setupService,
             $this->logger,

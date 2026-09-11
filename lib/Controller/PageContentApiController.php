@@ -54,6 +54,10 @@ class PageContentApiController extends Controller {
     protected function getPageService(): PageService {
         return $this->pageService;
     }
+
+    protected function getPageReadService(): \OCA\IntraVox\Service\Read\PageReadService {
+        return $this->pageRead;
+    }
     /**
      */
     #[NoAdminRequired]

@@ -67,6 +67,7 @@ class ApiController extends Controller {
     use HasConditionalResponse;
 
     private PageService $pageService;
+    private \OCA\IntraVox\Service\Read\PageReadService $pageRead;
     private PermissionService $permissionService;
     private SetupService $setupService;
     private LoggerInterface $logger;
@@ -81,6 +82,7 @@ class ApiController extends Controller {
         string $appName,
         IRequest $request,
         PageService $pageService,
+        \OCA\IntraVox\Service\Read\PageReadService $pageRead,
         PermissionService $permissionService,
         SetupService $setupService,
         LoggerInterface $logger,
@@ -93,6 +95,7 @@ class ApiController extends Controller {
     ) {
         parent::__construct($appName, $request);
         $this->pageService = $pageService;
+        $this->pageRead = $pageRead;
         $this->permissionService = $permissionService;
         $this->setupService = $setupService;
         $this->logger = $logger;
@@ -116,6 +119,10 @@ class ApiController extends Controller {
      */
     protected function getPageService(): PageService {
         return $this->pageService;
+    }
+
+    protected function getPageReadService(): \OCA\IntraVox\Service\Read\PageReadService {
+        return $this->pageRead;
     }
 
 
@@ -263,7 +270,7 @@ class ApiController extends Controller {
     #[NoCSRFRequired]
     public function getPage(string $id): DataResponse {
         try {
-            $page = $this->pageService->getPage($id);
+            $page = $this->pageRead->getPage($id);
 
             // PageService already includes permissions from Nextcloud's filesystem
             // which automatically respects GroupFolder ACL rules
@@ -449,7 +456,7 @@ class ApiController extends Controller {
     public function deletePage(string $id): DataResponse {
         try {
             // First get the page to check permissions (from Nextcloud filesystem)
-            $existingPage = $this->pageService->getPage($id);
+            $existingPage = $this->pageRead->getPage($id);
 
             // Check delete permission using Nextcloud's permissions
             if (!($existingPage['permissions']['canDelete'] ?? false)) {
@@ -502,7 +509,7 @@ class ApiController extends Controller {
             // within their own department but not elsewhere.
             $relPath = '';
             if ($parentId !== null && $parentId !== '') {
-                $parentPage = $this->pageService->getPage($parentId);
+                $parentPage = $this->pageRead->getPage($parentId);
                 $relPath = $parentPage['path'] ?? '';
             }
             if (!$this->permissionService->getFolderPermissions($relPath)['canWrite']) {
@@ -671,7 +678,7 @@ class ApiController extends Controller {
     public function getBreadcrumb(string $id): DataResponse {
         try {
             // First get the page to check permissions (from Nextcloud filesystem)
-            $existingPage = $this->pageService->getPage($id);
+            $existingPage = $this->pageRead->getPage($id);
 
             // Check read permission using Nextcloud's permissions
             if (($denied = $this->denyUnlessReadable($existingPage)) !== null) {
@@ -743,7 +750,7 @@ class ApiController extends Controller {
             }
 
             // Need read on the source page…
-            $source = $this->pageService->getPage($sourceId);
+            $source = $this->pageRead->getPage($sourceId);
             if (($denied = $this->denyUnlessReadable($source, 'Permission denied: cannot read the source page')) !== null) {
                 return $denied;
             }
@@ -751,7 +758,7 @@ class ApiController extends Controller {
             // …and create permission on the destination parent (root = '').
             $parentRelPath = '';
             if (is_string($targetParentId) && $targetParentId !== '') {
-                $parentRelPath = $this->pageService->getPage($targetParentId)['path'] ?? '';
+                $parentRelPath = $this->pageRead->getPage($targetParentId)['path'] ?? '';
             }
             if (!$this->permissionService->getFolderPermissions($parentRelPath)['canCreate']) {
                 return new DataResponse(
@@ -793,7 +800,7 @@ class ApiController extends Controller {
             // Create permission on the destination parent (root = '').
             $parentRelPath = '';
             if (is_string($targetParentId) && $targetParentId !== '') {
-                $parentRelPath = $this->pageService->getPage($targetParentId)['path'] ?? '';
+                $parentRelPath = $this->pageRead->getPage($targetParentId)['path'] ?? '';
             }
             if (!$this->permissionService->getFolderPermissions($parentRelPath)['canCreate']) {
                 return new DataResponse(

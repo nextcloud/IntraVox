@@ -24,6 +24,9 @@ class RequiresPagePermissionTest extends TestCase {
             protected function getPageService(): PageService {
                 throw new \LogicException('denyUnlessReadable must not fetch the page');
             }
+            protected function getPageReadService(): \OCA\IntraVox\Service\Read\PageReadService {
+                throw new \LogicException('denyUnlessReadable must not fetch the page');
+            }
             public function check(array $page, string $body = 'Access denied'): ?DataResponse {
                 return $this->denyUnlessReadable($page, $body);
             }

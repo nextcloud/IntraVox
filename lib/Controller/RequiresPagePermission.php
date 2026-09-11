@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace OCA\IntraVox\Controller;
 
 use OCA\IntraVox\Service\PageService;
+use OCA\IntraVox\Service\Read\PageReadService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\DataResponse;
 
@@ -35,7 +36,7 @@ trait RequiresPagePermission {
      * @return array<string, mixed>|DataResponse the page, or the refusal to return
      */
     protected function requireWritablePage(string $uniqueId, string $denialReason) {
-        $page = $this->getPageService()->getPage($uniqueId);
+        $page = $this->getPageReadService()->getPage($uniqueId);
 
         if (!($page['permissions']['canWrite'] ?? false)) {
             // Two callers historically answered with the bare phrase; keeping
@@ -89,4 +90,11 @@ trait RequiresPagePermission {
      * property only finds out at runtime, on the first request.
      */
     abstract protected function getPageService(): PageService;
+
+    /**
+     * The read service the write-gate resolves the page through (fase-4 C6:
+     * getPage moved off the PageService facade onto Read/PageReadService). Each
+     * consumer returns its injected instance.
+     */
+    abstract protected function getPageReadService(): PageReadService;
 }
