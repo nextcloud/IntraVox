@@ -13,7 +13,7 @@ use OCP\AppFramework\Http\DataResponse;
  *
  * Eight endpoints in ApiController each carried their own copy:
  *
- *     $page = $this->pageService->getPage($id);
+ *     $page = $this->getPageReadService()->getPage($id);
  *     if (!($page['permissions']['canWrite'] ?? false)) { ... 403 ... }
  *
  * Identical apart from the message. Eight copies of a security check is eight
@@ -67,7 +67,7 @@ trait RequiresPagePermission {
      * ApiController) passes its own so consolidating changes no response body.
      *
      * Usage:
-     *     $page = $this->pageService->getPage($id);
+     *     $page = $this->getPageReadService()->getPage($id);
      *     if (($denied = $this->denyUnlessReadable($page)) !== null) {
      *         return $denied;
      *     }
