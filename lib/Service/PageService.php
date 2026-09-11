@@ -1501,16 +1501,6 @@ class PageService {
         );
     }
 
-    /**
-     * Get media (image or video) for a specific page
-     * Unified endpoint that serves all media from a single '_media' folder
-     */
-    public function getMedia(string $pageId, string $filename) {
-        return $this->mediaOrchestrator()->getMedia(
-            $pageId,
-            $filename
-        );
-    }
 
     /**
      * Sanitize page ID
@@ -2022,22 +2012,6 @@ class PageService {
      */
 
     /**
-     * Check if media file exists in page/_media or _resources folder
-     *
-     * @param string $pageId Page unique ID
-     * @param string $filename Filename to check
-     * @param string $targetFolder 'page' or 'resources'
-     * @return bool True if file exists
-     */
-    public function checkMediaExists(string $pageId, string $filename, string $targetFolder): bool {
-        return $this->mediaOrchestrator()->checkMediaExists(
-            $pageId,
-            $filename,
-            $targetFolder
-        );
-    }
-
-    /**
      * Upload media with original filename
      *
      * @param string $pageId Page unique ID
@@ -2056,22 +2030,6 @@ class PageService {
             function (string $mediaPageId): void {
                 $this->clearCache($mediaPageId);
             }
-        );
-    }
-
-    /**
-     * Get list of media files in a folder
-     *
-     * @param string $pageId Page unique ID
-     * @param string $folderType 'page' or 'resources'
-     * @param string $subPath Subfolder path for resources (optional)
-     * @return array List of media files with metadata
-     */
-    public function getMediaList(string $pageId, string $folderType, string $subPath = ''): array {
-        return $this->mediaOrchestrator()->getMediaList(
-            $pageId,
-            $folderType,
-            $subPath
         );
     }
 

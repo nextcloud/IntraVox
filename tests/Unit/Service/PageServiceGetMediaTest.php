@@ -64,10 +64,10 @@ class PageServiceGetMediaTest extends TestCase {
      *
      * @param array<string,Folder> $cachedFolders
      */
-    private function makeService(Folder $langFolder, array $cachedFolders = []): PageService {
-        // getMedia's read-language + intraVox folder resolution now flows through
-        // the injected FolderContext, so getReadLanguageFolder/getLanguageFolder
-        // and the getIntraVoxFolder seam are gone.
+    private function makeService(Folder $langFolder, array $cachedFolders = []): \OCA\IntraVox\Service\Media\PageMediaOrchestrator {
+        // getMedia was a pure delegator to mediaOrchestrator()->getMedia (fase-4
+        // deletes it), so this drives PageMediaOrchestrator directly — the real
+        // owner of the folder resolution + streamMediaFile hand-off pinned below.
         $media = $this->createMock(PageMediaService::class);
         $media->method('streamMediaFile')->willReturnCallback(
             function ($mediaFolder, $filename) {
@@ -80,20 +80,20 @@ class PageServiceGetMediaTest extends TestCase {
         $cache->method('hasPageFolder')->willReturnCallback(fn($id) => isset($cachedFolders[$id]));
         $cache->method('getPageFolder')->willReturnCallback(fn($id) => $cachedFolders[$id] ?? null);
 
-        // Built through the real DI ctor (fase-3); the inert PageCacheInvalidator
-        // no-ops clearCache. pageMediaService is passed explicitly so the factory
-        // uses this mock rather than building the lazy-seam engine.
-        $svc = $this->buildRealPageService([
-            'userId' => 'tester',
-            'logger' => $this->createMock(\Psr\Log\LoggerInterface::class),
-            'pageMediaService' => $media,
-            'cache' => $cache,
-            'folderContext' => $this->fakeFolderContext(
+        return new \OCA\IntraVox\Service\Media\PageMediaOrchestrator(
+            $media,
+            $cache,
+            $this->fakeFolderContext(
                 readLanguageFolder: $langFolder,
                 intraVox: $langFolder
             ),
-        ]);
-        return $svc;
+            new \OCA\IntraVox\Service\Locator\PageLocator(
+                $this->createMock(\OCA\IntraVox\Service\PageIndexService::class),
+                $this->createMock(\Psr\Log\LoggerInterface::class)
+            ),
+            new \OCA\IntraVox\Service\Util\PageIdUtils(),
+            $this->doubleOrBuild(\OCA\IntraVox\Service\Sanitize\MediaSanitizer::class)
+        );
     }
 
     public function testHomeIdStreamsFromTheLanguageRootMediaFolder(): void {

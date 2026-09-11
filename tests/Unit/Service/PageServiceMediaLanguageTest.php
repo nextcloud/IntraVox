@@ -158,6 +158,54 @@ class PageServiceMediaLanguageTest extends TestCase {
     }
 
     /**
+     * The media orchestrator over the same cross-language fixture. getMediaList /
+     * checkMediaExists were pure delegators to mediaOrchestrator() (fase-4 deletes
+     * them), so those two read tests drive PageMediaOrchestrator directly — the
+     * real owner of the #92 cross-language resolution they pin. uploadMedia* stay
+     * on the facade, so makeService (PageService) is kept for the upload tests.
+     *
+     * @param array<int,Folder> $allLanguages
+     */
+    private function mediaOrchestrator(Folder $readFolder, array $allLanguages): \OCA\IntraVox\Service\Media\PageMediaOrchestrator {
+        $byLang = [];
+        foreach ($allLanguages as $l) {
+            $byLang[$l->getName()] = $l;
+        }
+        $base = $this->createMock(Folder::class);
+        $base->method('getPath')->willReturn('/IntraVox');
+        $base->method('getDirectoryListing')->willReturn($allLanguages);
+        $base->method('get')->willReturnCallback(function ($p) use ($byLang) {
+            if (isset($byLang[$p])) {
+                return $byLang[$p];
+            }
+            throw new \OCP\Files\NotFoundException($p);
+        });
+        $logger = $this->createMock(\Psr\Log\LoggerInterface::class);
+        $locator = new \OCA\IntraVox\Service\Locator\PageLocator(
+            $this->createMock(\OCA\IntraVox\Service\PageIndexService::class),
+            $logger
+        );
+        $sanitizer = $this->doubleOrBuild(\OCA\IntraVox\Service\Sanitize\MediaSanitizer::class);
+        // The engine is REAL (not a mock): checkMediaExists/getMediaList read the
+        // fixture folders through it, exactly as the old buildRealPageService path
+        // built it via the media() lazy accessor.
+        $engine = new \OCA\IntraVox\Service\Media\PageMediaService($locator, $sanitizer, $logger);
+        return new \OCA\IntraVox\Service\Media\PageMediaOrchestrator(
+            $engine,
+            $this->createMock(\OCA\IntraVox\Service\Cache\PageCacheService::class),
+            $this->fakeFolderContext(
+                readLanguageFolder: $readFolder,
+                intraVox: $base,
+                userLanguage: 'de',
+                primaryLanguage: 'en'
+            ),
+            $locator,
+            new \OCA\IntraVox\Service\Util\PageIdUtils(),
+            $sanitizer
+        );
+    }
+
+    /**
      * A PNG on disk, so uploads pass MIME sniffing and image validation.
      * @return array the $_FILES-shaped array uploadMedia* expects
      */
@@ -263,8 +311,8 @@ class PageServiceMediaLanguageTest extends TestCase {
             '_resources' => $this->makeFolder('/IntraVox/de/_resources', [], $created),
         ], $created);
 
-        $svc = $this->makeService($de, [$de, $en]);
-        $list = $svc->getMediaList('page-issue92', 'resources');
+        $svc = $this->mediaOrchestrator($de, [$de, $en]);
+        $list = $svc->getMediaList('page-issue92', 'resources', '');
 
         $this->assertCount(1, $list, 'the shared library of the page\'s language must be listed');
         $this->assertSame('logo.png', $list[0]['name']);
@@ -290,7 +338,7 @@ class PageServiceMediaLanguageTest extends TestCase {
         ], $created);
         $de = $this->makeFolder('/IntraVox/de', [], $created);
 
-        $svc = $this->makeService($de, [$de, $en]);
+        $svc = $this->mediaOrchestrator($de, [$de, $en]);
 
         $this->assertTrue(
             $svc->checkMediaExists('page-issue92', 'photo.png', 'page'),
