@@ -23,6 +23,7 @@ OC.L10N.register(
     "Cancel" : "Cancel",
     "Save changes" : "Desa els canvis",
     "Save" : "Desa",
+    "Loading …" : "S'està carregant ...",
     "Details" : "Detalls",
     "Learn more" : "Més informació",
     "Configured" : "Configurat",
