@@ -152,4 +152,60 @@ class PageTreeResponseShapeTest extends TestCase {
         $this->assertFalse($second[0]['isCurrent'], 'user 2 must not inherit user 1 marking on page-a');
         $this->assertTrue($second[1]['isCurrent'], 'user 2 marks page-b');
     }
+
+    /**
+     * #86/#70 cache-non-pollution on the currentPageId===null path — the one path
+     * the capstone AV flagged, because markCurrentPageInTree returns the array
+     * uncopied there and non-pollution rests on the by-ref refreshTreePermissions
+     * COW rather than an explicit deep copy. Uses a REAL PageCacheService (so the
+     * SAME blob is stored and re-served) and a permissionService whose
+     * getFolderPermissions returns a USER-specific marker: the served tree must get
+     * the USER perms while the cached blob keeps its GROUP-level perms untouched.
+     */
+    public function testNullCurrentPageDoesNotPolluteCachedPermissions(): void {
+        $tree = [[
+            'uniqueId' => 'page-a', 'title' => 'A', 'path' => 'en/a', 'language' => 'en',
+            'isCurrent' => false, 'children' => [],
+            'permissions' => ['canRead' => true, 'canWrite' => false, 'level' => 'GROUP'],
+        ]];
+
+        // A real in-process cache holding the group-level tree.
+        $cache = new PageCacheService();
+        // The permission service the tree-COW recomputes through, returning the
+        // current user's (distinct) live permissions.
+        $perms = $this->createMock(\OCA\IntraVox\Service\PermissionService::class);
+        $perms->method('getFolderPermissions')->willReturn(
+            ['canRead' => true, 'canWrite' => true, 'level' => 'USER']
+        );
+
+        $svc = new class extends PageService {
+            public function __construct() {
+            }
+        };
+        // GroupContextService is final; the harness builds a real one via doubleOrBuild.
+        // Its getGroupHash() forms the cache key, so read it to seed the right entry.
+        $groupContext = $this->doubleOrBuild(\OCA\IntraVox\Service\GroupContextService::class);
+        $this->injectPageServiceDependencies($svc, [
+            'cache' => $cache,
+            'permissionService' => $perms,
+            'groupContext' => $groupContext,
+            'logger' => $this->createMock(LoggerInterface::class),
+            'folderContext' => $this->fakeFolderContext(),
+        ]);
+        // Seed the in-process cache with the group-level tree under getPageTree's key.
+        $cacheKey = $groupContext->getGroupHash() . '_en';
+        $cache->setTree($cacheKey, ['tree' => $tree, 'time' => time()]);
+
+        $result = $svc->getPageTree(currentPageId: null, language: 'en');
+
+        // The served response reflects the current user's live ACL...
+        $this->assertSame('USER', $result[0]['permissions']['level'], 'the response carries the per-user recompute');
+        // ...but the shared cached blob must be untouched (still GROUP-level).
+        $stillCached = $cache->getTree($cacheKey)['tree'];
+        $this->assertSame(
+            'GROUP',
+            $stillCached[0]['permissions']['level'],
+            'the group-shared cache must NOT be polluted by one user\'s per-user recompute (#86/#70)'
+        );
+    }
 }
