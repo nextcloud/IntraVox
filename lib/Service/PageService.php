@@ -12,8 +12,6 @@ use OCA\IntraVox\Exception\PageConflictException;
 use OCA\IntraVox\Exception\PageNotFoundException;
 use OCA\IntraVox\Service\GroupContextService;
 use OCA\IntraVox\Service\Language\LanguageResolver;
-use OCA\IntraVox\Service\News\NewsContentExtractor;
-use OCA\IntraVox\Service\News\NewsPageService;
 use OCA\IntraVox\Service\Path\PagePathHelper;
 use OCA\IntraVox\Service\Sanitize\HtmlSanitizer;
 use OCA\IntraVox\Service\Sanitize\MediaSanitizer;
@@ -29,7 +27,6 @@ use OCA\IntraVox\Service\Version\PageVersionService;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\Files\NotFoundException;
 use OCP\IUserSession;
-use OCP\IConfig;
 use Psr\Log\LoggerInterface;
 use OCP\Files\Cache\ICacheEntry;
 
@@ -50,7 +47,6 @@ class PageService {
 
     private IUserSession $userSession;
     private string $userId;
-    private IConfig $config;
     // The `= null` defaults below are LOAD-BEARING, not cosmetic. They are the
     // only reason the test harness leaves these lazy services alone: a
     // nullable-default property reports isInitialized()===true, so
@@ -62,7 +58,6 @@ class PageService {
     /** Lazily-built MetaVox gateway; owns the memos that used to live here (Phase 3). */
     private \OCA\IntraVox\Service\Publication\MetaVoxGateway $metaVoxGateway;
     /** Lazily-built publication scheduling service (Phase 3). */
-    private ?\OCA\IntraVox\Service\Publication\PublicationStateService $publicationStateSvc = null;
     /** Lazily-built CLI maintenance service (Phase 4). */
     private ?\OCA\IntraVox\Service\Maintenance\PageMaintenanceService $maintenanceSvc = null;
     /** Lazily-built page-search scorer (Phase "search"). */
@@ -71,7 +66,7 @@ class PageService {
     private ?\OCA\IntraVox\Service\Tree\PageTreeBuilder $treeBuilder = null;
     private ?\OCA\IntraVox\Service\Tree\PageTreeService $treeService = null;
     /** Lazily-built index-based page lister (Phase "listing"). */
-    private ?\OCA\IntraVox\Service\Listing\PageLister $pageLister = null;
+    private \OCA\IntraVox\Service\Listing\PageLister $pageLister;
     /** Lazily-built sibling reorderer (Phase "reorder"). */
     private ?\OCA\IntraVox\Service\Reorder\PageReorderer $reorderer = null;
     /** Lazily-built page-data enricher (Phase "crud" — fresh-build enrichment). */
@@ -94,9 +89,9 @@ class PageService {
     private ?\OCA\IntraVox\Service\Translation\TranslationQueryService $translationQueryService = null;
     /** Lazily-built version-history service (VERSION/HISTORY domain). */
     /** Lazily-built homepage-resolution service (HOMEPAGE domain). */
-    private ?\OCA\IntraVox\Service\Homepage\HomepageResolverService $homepageResolver = null;
+    private \OCA\IntraVox\Service\Homepage\HomepageResolverService $homepageResolver;
     /** Lazily-built news-widget orchestration service (NEWS domain). */
-    private ?\OCA\IntraVox\Service\News\NewsWidgetService $newsWidget = null;
+    private \OCA\IntraVox\Service\News\NewsWidgetService $newsWidget;
     /** The folder/location substrate — now a DI-first-class ctor-injected service. */
     private \OCA\IntraVox\Service\Folder\FolderContext $folderContext;
     /** Stateless GroupFolder-id resolver (facade elimination phase 2). */
@@ -104,7 +99,6 @@ class PageService {
     private \OCA\IntraVox\Service\Cache\PageCacheInvalidator $cacheInvalidator;
     private LoggerInterface $logger;
     private IEventDispatcher $eventDispatcher;
-    private PublicationSettingsService $publicationSettings;
     private PageIndexService $pageIndexService;
     private PageCacheService $cache;
 
@@ -176,7 +170,6 @@ class PageService {
     private PageShapeSanitizer $shapeSanitizer;
     private PageVersionService $pageVersionService;
     private PageTemplateService $pageTemplateService;
-    private NewsContentExtractor $newsContent;
     private PageSearchHelper $searchHelper;
     private PagePathHelper $pathHelper;
     private PageIdUtils $idUtils;
@@ -188,14 +181,11 @@ class PageService {
     private PageLocator $pageLocator;
     private TranslationGroupService $translationGroupService;
     private PageMediaService $pageMediaService;
-    private NewsPageService $newsPageService;
 
     public function __construct(
         IUserSession $userSession,
-        IConfig $config,
         LoggerInterface $logger,
         IEventDispatcher $eventDispatcher,
-        PublicationSettingsService $publicationSettings,
         PageCacheService $cache,
         PageIndexService $pageIndexService,
         HtmlSanitizer $htmlSanitizer,
@@ -203,7 +193,6 @@ class PageService {
         PageShapeSanitizer $shapeSanitizer,
         PageVersionService $pageVersionService,
         PageTemplateService $pageTemplateService,
-        NewsContentExtractor $newsContent,
         PageSearchHelper $searchHelper,
         PagePathHelper $pathHelper,
         PageIdUtils $idUtils,
@@ -215,29 +204,31 @@ class PageService {
         PageLocator $pageLocator,
         TranslationGroupService $translationGroupService,
         PageMediaService $pageMediaService,
-        NewsPageService $newsPageService,
         \OCA\IntraVox\Service\Folder\FolderContext $folderContext,
         \OCA\IntraVox\Service\Util\GroupfolderResolver $groupfolders,
         \OCA\IntraVox\Service\Publication\MetaVoxGateway $metaVoxGateway,
         \OCA\IntraVox\Service\Cache\PageCacheInvalidator $cacheInvalidator,
+        \OCA\IntraVox\Service\Listing\PageLister $pageListerService,
+        \OCA\IntraVox\Service\News\NewsWidgetService $newsWidgetService,
+        \OCA\IntraVox\Service\Homepage\HomepageResolverService $homepageResolverService,
         ?string $userId
     ) {
         $this->folderContext = $folderContext;
         $this->groupfolders = $groupfolders;
         $this->metaVoxGateway = $metaVoxGateway;
         $this->cacheInvalidator = $cacheInvalidator;
+        $this->pageLister = $pageListerService;
+        $this->newsWidget = $newsWidgetService;
+        $this->homepageResolver = $homepageResolverService;
         $this->userSession = $userSession;
-        $this->config = $config;
         $this->logger = $logger;
         $this->eventDispatcher = $eventDispatcher;
-        $this->publicationSettings = $publicationSettings;
         $this->pageIndexService = $pageIndexService;
         $this->htmlSanitizer = $htmlSanitizer;
         $this->mediaSanitizer = $mediaSanitizer;
         $this->shapeSanitizer = $shapeSanitizer;
         $this->pageVersionService = $pageVersionService;
         $this->pageTemplateService = $pageTemplateService;
-        $this->newsContent = $newsContent;
         $this->searchHelper = $searchHelper;
         $this->pathHelper = $pathHelper;
         $this->idUtils = $idUtils;
@@ -249,7 +240,6 @@ class PageService {
         $this->pageLocator = $pageLocator;
         $this->translationGroupService = $translationGroupService;
         $this->pageMediaService = $pageMediaService;
-        $this->newsPageService = $newsPageService;
         $this->userId = $userId ?? '';
         $this->cache = $cache;
 
@@ -335,26 +325,6 @@ class PageService {
             $this->permissionService
         );
     }
-
-    /**
-     * Lazy seam for the index-based page lister (Phase "listing"). Built from
-     * locator() + pageIndexService + permissionService + logger, with the
-     * IntraVox-root seam passed in as a closure. Nullable-default so the harness
-     * auto-fill skips it (see the load-bearing `= null` note above).
-     */
-    private function pageLister(): \OCA\IntraVox\Service\Listing\PageLister {
-        return $this->pageLister ??= new \OCA\IntraVox\Service\Listing\PageLister(
-            $this->locator(),
-            $this->pageIndexService,
-            $this->permissionService,
-            $this->logger,
-            $this->folders(),
-            $this->shape(),
-            $this->cache(),
-            $this->pageDataEnricher()
-        );
-    }
-
     /**
      * Lazy seam for the language-content-status reader (LANGUAGE-STATUS domain).
      * Built from the FolderContext substrate + the plain PageLister/PageLocator
@@ -365,7 +335,7 @@ class PageService {
     private function languageStatus(): \OCA\IntraVox\Service\Language\LanguageStatusService {
         return $this->languageStatusService ??= new \OCA\IntraVox\Service\Language\LanguageStatusService(
             $this->folders(),
-            $this->pageLister(),
+            $this->pageLister,
             $this->locator(),
             $this->logger
         );
@@ -387,45 +357,6 @@ class PageService {
             $this->languageService
         );
     }
-
-    /**
-     * Lazy seam for the homepage-resolution service (HOMEPAGE domain). Built from
-     * the HomepageService pointer engine + the FolderContext substrate; page
-     * lookup / language-folder resolver / cached read / language resolution / the
-     * homepage predicate seam / clearCache stay resident on PageService (shared,
-     * reflection-anchored, or pinned) and are bound as $this-closures. The
-     * isHomepage closure keeps the resident, subclass-overridable seam
-     * authoritative. Nullable-default so the harness auto-fill skips it.
-     */
-    private function homepageResolver(): \OCA\IntraVox\Service\Homepage\HomepageResolverService {
-        return $this->homepageResolver ??= new \OCA\IntraVox\Service\Homepage\HomepageResolverService(
-            $this->homepageService,
-            $this->folders(),
-            $this->locator(),
-            $this->cacheInvalidator
-        );
-    }
-
-    /**
-     * Lazy seam for the news-widget orchestration service (NEWS domain). Built
-     * from the NewsPageService engine + its cache/group/metaVox/publication
-     * collaborators + the FolderContext substrate; page lookup stays resident on
-     * PageService (findPageByUniqueId is shared far beyond news) and is bound as
-     * a $this-closure. Nullable-default so the harness auto-fill skips it.
-     */
-    private function newsWidget(): \OCA\IntraVox\Service\News\NewsWidgetService {
-        return $this->newsWidget ??= new \OCA\IntraVox\Service\News\NewsWidgetService(
-            $this->news(),
-            $this->cache(),
-            $this->groupContext,
-            $this->metaVox(),
-            $this->publicationState(),
-            $this->folders(),
-            $this->logger,
-            $this->locator()
-        );
-    }
-
 
     /**
      * Lazy seam for the sibling reorderer (Phase "reorder"). Built from
@@ -630,23 +561,6 @@ class PageService {
         }
         return $this->pageMediaService;
     }
-
-    /**
-     * The News widget's collect/filter engine. Same lazy seam convention as
-     * locator() for the constructor-less test subclasses.
-     */
-    private function news(): NewsPageService {
-        if (!isset($this->newsPageService)) {
-            $this->newsPageService = new NewsPageService(
-                $this->locator(),
-                $this->permissionService,
-                $this->newsContent,
-                $this->logger
-            );
-        }
-        return $this->newsPageService;
-    }
-
     /**
      * The MetaVox DB/app-manager gateway. Now a DI-first-class ctor-injected
      * service (facade elimination phase 2): the container builds it with $userId
@@ -658,23 +572,6 @@ class PageService {
     private function metaVox(): \OCA\IntraVox\Service\Publication\MetaVoxGateway {
         return $this->metaVoxGateway;
     }
-
-    /**
-     * The publication scheduling logic (cluster U, Phase 3). Same lazy seam
-     * convention; reuses the metaVox() instance so its memos stay shared.
-     */
-    private function publicationState(): \OCA\IntraVox\Service\Publication\PublicationStateService {
-        if (!isset($this->publicationStateSvc)) {
-            $this->publicationStateSvc = new \OCA\IntraVox\Service\Publication\PublicationStateService(
-                $this->publicationSettings,
-                $this->config,
-                $this->userSession,
-                $this->metaVox()
-            );
-        }
-        return $this->publicationStateSvc;
-    }
-
     /**
      * The CLI maintenance operations (repair/reindex, Phase 4). Same lazy seam
      * convention; built from the deps this service already holds.
@@ -721,7 +618,7 @@ class PageService {
      * @return string uniqueId of the homepage ('home' for the legacy default).
      */
     public function getHomepageUniqueId(?string $language = null): string {
-        return $this->homepageResolver()->getHomepageUniqueId($language);
+        return $this->homepageResolver->getHomepageUniqueId($language);
     }
 
     /**
@@ -745,7 +642,7 @@ class PageService {
      * @param array<int,array>|null $tree Optional pre-built page tree.
      */
     public function resolveHomepageNodeUniqueId(?string $language = null, ?array $tree = null): string {
-        return $this->homepageResolver()->resolveHomepageNodeUniqueId($language, $tree);
+        return $this->homepageResolver->resolveHomepageNodeUniqueId($language, $tree);
     }
 
     /**
@@ -910,7 +807,7 @@ class PageService {
      * List all pages (recursively)
      */
     public function listPages(): array {
-        return $this->pageLister()->listAll();
+        return $this->pageLister->listAll();
     }
 
     /**
@@ -1108,7 +1005,7 @@ class PageService {
      * This eliminates the N+1 query pattern where listPages() + getPage() for each
      */
     public function listPagesWithContent(): array {
-        return $this->pageLister()->listAllWithContent();
+        return $this->pageLister->listAllWithContent();
     }
 
     /**
@@ -1218,7 +1115,7 @@ class PageService {
      * @return array|null Page data or null if not found
      */
     private function findPageByFolderPath(string $folderPath): ?array {
-        return $this->pageLister()->byFolderPath($folderPath);
+        return $this->pageLister->byFolderPath($folderPath);
     }
 
     /**
@@ -1372,7 +1269,7 @@ class PageService {
      * @throws \InvalidArgumentException When the page is unknown or not at root.
      */
     public function setHomepage(string $uniqueId): void {
-        $this->homepageResolver()->setHomepage($uniqueId);
+        $this->homepageResolver->setHomepage($uniqueId);
     }
 
     public function movePage(string $pageId, string $targetParentId): void {
@@ -1724,7 +1621,7 @@ class PageService {
         ?string $sourcePageId = null,
         bool $filterPublished = false
     ): array {
-        return $this->newsWidget()->getNewsPages(
+        return $this->newsWidget->getNewsPages(
             $sourcePath,
             $filters,
             $filterOperator,

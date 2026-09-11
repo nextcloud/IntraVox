@@ -345,12 +345,16 @@ class PageNewsTest extends TestCase {
         $this->assertCount(1, $writes, 'the freshly-built result is then cached');
     }
 
-    /** Reach into the anonymous subclass's injected NewsPageService mock. */
+    /**
+     * Reach the NewsPageService engine mock. Fase-5 DI-injected NewsWidgetService,
+     * which now holds the engine; the harness rebuilds newsWidget from the
+     * 'newsPageService' this test wired, so the mock lives inside newsWidget->news.
+     */
     private function newsMockFrom(PageService $svc): NewsPageService
     {
-        $prop = new \ReflectionProperty(PageService::class, 'newsPageService');
+        $widget = (new \ReflectionProperty(PageService::class, 'newsWidget'))->getValue($svc);
         /** @var NewsPageService $news */
-        $news = $prop->getValue($svc);
+        $news = (new \ReflectionProperty(\OCA\IntraVox\Service\News\NewsWidgetService::class, 'news'))->getValue($widget);
         return $news;
     }
 }

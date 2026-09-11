@@ -105,15 +105,16 @@ class HarnessSmokeTest extends TestCase {
         );
     }
 
-    public function testLazySeamListMatchesFourKnownServices(): void {
+    public function testLazySeamListMatchesKnownServices(): void {
         // Pins the current membership so a change to the extraction plan is a
-        // visible, deliberate edit to this list.
+        // visible, deliberate edit to this list. NewsPageService retired from the
+        // list in fase-5 S4: NewsWidgetService is DI-injected now, so PageService no
+        // longer lazily builds the news engine via a news() accessor.
         $this->assertSame(
             [
                 PageLocator::class,
                 \OCA\IntraVox\Service\Translation\TranslationGroupService::class,
                 \OCA\IntraVox\Service\Media\PageMediaService::class,
-                \OCA\IntraVox\Service\News\NewsPageService::class,
             ],
             self::LAZY_SEAM_SERVICES
         );

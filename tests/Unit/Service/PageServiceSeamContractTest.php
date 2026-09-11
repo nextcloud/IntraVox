@@ -103,10 +103,11 @@ class PageServiceSeamContractTest extends TestCase {
      * skip-list guard.
      */
     public function testLazySeamListPairsWithAccessors(): void {
-        // The four lazy-SEAM accessors — the ones whose service must be left unset
+        // The three lazy-SEAM accessors — the ones whose service must be left unset
         // in tests so the accessor builds the real collaborator. shape()/cache()
         // are excluded: their services are ordinary auto-filled mocks, not seams.
-        $seamAccessors = ['locator', 'translationGroups', 'media', 'news'];
+        // (news() retired: NewsWidgetService is DI-injected now, fase-5 S4.)
+        $seamAccessors = ['locator', 'translationGroups', 'media'];
 
         $ref = new \ReflectionClass(PageService::class);
         $accessorReturns = [];
