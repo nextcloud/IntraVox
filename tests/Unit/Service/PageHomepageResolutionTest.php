@@ -296,6 +296,18 @@ class PageHomepageResolutionTest extends TestCase {
         return $svc;
     }
 
+    /**
+     * Drive setHomepage on the injected HomepageResolverService. fase-5 Phase II
+     * deleted the PageService::setHomepage delegator (its sole caller, the
+     * ApiController endpoint, now calls the resolver directly), so these
+     * integration tests reach the rigged resolver through the property
+     * makeSetHomepageService wired — byte-identical to the one-line delegator.
+     */
+    private function setHomepageVia(PageService $svc, string $uniqueId): void {
+        (new \ReflectionProperty(PageService::class, 'homepageResolver'))
+            ->getValue($svc)->setHomepage($uniqueId);
+    }
+
     public function testSetHomepageRejectsMissingPage(): void {
         $engine = $this->createMock(HomepageService::class);
         $engine->expects($this->never())->method('setHomepageUniqueId');
@@ -304,7 +316,7 @@ class PageHomepageResolutionTest extends TestCase {
 
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Page not found');
-        $svc->setHomepage('page-x');
+        $this->setHomepageVia($svc, 'page-x');
     }
 
     public function testSetHomepageRejectsNonRootPage(): void {
@@ -317,7 +329,7 @@ class PageHomepageResolutionTest extends TestCase {
 
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Only root-level pages can be the homepage');
-        $svc->setHomepage('page-x');
+        $this->setHomepageVia($svc, 'page-x');
     }
 
     public function testSetHomepageAlreadyHomeIsANoOp(): void {
@@ -328,7 +340,7 @@ class PageHomepageResolutionTest extends TestCase {
         // never() expectation on the engine is the assertion.
         $svc = $this->makeSetHomepageService(['welcome' => $welcome], true, $engine);
 
-        $svc->setHomepage('page-x');
+        $this->setHomepageVia($svc, 'page-x');
         $this->addToAssertionCount(1);
     }
 
@@ -341,7 +353,7 @@ class PageHomepageResolutionTest extends TestCase {
         $svc = $this->makeSetHomepageService(['welcome' => $welcome], false, $engine);
 
         // The once() expectation on setHomepageUniqueId is the assertion.
-        $svc->setHomepage('page-x');
+        $this->setHomepageVia($svc, 'page-x');
         $this->addToAssertionCount(1);
     }
 
@@ -366,7 +378,7 @@ class PageHomepageResolutionTest extends TestCase {
 
         // Must NOT throw 'Only root-level pages can be the homepage' — the isHome
         // flag carried it past the guard.
-        $svc->setHomepage('page-x');
+        $this->setHomepageVia($svc, 'page-x');
         $this->addToAssertionCount(1);
     }
 }

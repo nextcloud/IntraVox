@@ -1238,18 +1238,6 @@ class PageService {
      * @throws \InvalidArgumentException On home, self/descendant cycles, depth.
      * @throws \Exception When source or target cannot be located.
      */
-    /**
-     * Set a root-level page as the homepage for the current language
-     * (issue: configurable homepage). Validates the page exists AND sits at the
-     * language root; lazily normalizes a still-loose home.json into a folder page
-     * first so the old homepage becomes reorderable; then writes the pointer.
-     *
-     * @throws \InvalidArgumentException When the page is unknown or not at root.
-     */
-    public function setHomepage(string $uniqueId): void {
-        $this->homepageResolver->setHomepage($uniqueId);
-    }
-
     public function movePage(string $pageId, string $targetParentId): void {
         // The move body lives in Structure/PageStructureService (STRUCTURE domain).
         // Folder-substrate concerns come from the injected FolderContext; the

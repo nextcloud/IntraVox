@@ -60,6 +60,7 @@ class ApiControllerTest extends TestCase {
     private IAppManager $appManager;
     private \OCA\IntraVox\Service\Publication\PublicationStateService $publicationState;
     private \OCA\IntraVox\Service\Listing\PageLister $pageLister;
+    private \OCA\IntraVox\Service\Homepage\HomepageResolverService $homepageResolver;
 
     protected function setUp(): void {
         parent::setUp();
@@ -87,6 +88,10 @@ class ApiControllerTest extends TestCase {
         // index; listPages tests reassign a rigged one via fakePageListerReturning /
         // fakePageListerThrowing and rebuild the controller with buildController().
         $this->pageLister = $this->fakePageListerReturning([]);
+        // HomepageResolverService is final too, but the setHomepage endpoint is not
+        // exercised in this test, so an inert real instance suffices (closure-free
+        // ctor → doubleOrBuild constructs it over auto-filled collaborators).
+        $this->homepageResolver = $this->doubleOrBuild(\OCA\IntraVox\Service\Homepage\HomepageResolverService::class);
 
         // Use real mock implementations for user/group
         $this->userSession = MockUserSession::loggedInAs('testuser');
@@ -116,7 +121,8 @@ class ApiControllerTest extends TestCase {
             $this->pageLockService,
             $this->appManager,
             $this->publicationState,
-            $this->pageLister
+            $this->pageLister,
+            $this->homepageResolver
         );
     }
 

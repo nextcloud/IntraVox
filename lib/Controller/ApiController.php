@@ -78,6 +78,7 @@ class ApiController extends Controller {
     private IAppManager $appManager;
     private \OCA\IntraVox\Service\Publication\PublicationStateService $publicationState;
     private \OCA\IntraVox\Service\Listing\PageLister $pageLister;
+    private \OCA\IntraVox\Service\Homepage\HomepageResolverService $homepageResolver;
 
     public function __construct(
         string $appName,
@@ -93,7 +94,8 @@ class ApiController extends Controller {
         PageLockService $pageLockService,
         IAppManager $appManager,
         \OCA\IntraVox\Service\Publication\PublicationStateService $publicationState,
-        \OCA\IntraVox\Service\Listing\PageLister $pageLister
+        \OCA\IntraVox\Service\Listing\PageLister $pageLister,
+        \OCA\IntraVox\Service\Homepage\HomepageResolverService $homepageResolver
     ) {
         parent::__construct($appName, $request);
         $this->pageService = $pageService;
@@ -108,6 +110,7 @@ class ApiController extends Controller {
         $this->appManager = $appManager;
         $this->publicationState = $publicationState;
         $this->pageLister = $pageLister;
+        $this->homepageResolver = $homepageResolver;
     }
 
     /**
@@ -727,7 +730,7 @@ class ApiController extends Controller {
                 );
             }
 
-            $this->pageService->setHomepage($pageUniqueId);
+            $this->homepageResolver->setHomepage($pageUniqueId);
             return new DataResponse(['success' => true]);
         } catch (\InvalidArgumentException $e) {
             return new DataResponse(['error' => $e->getMessage()], Http::STATUS_BAD_REQUEST);
