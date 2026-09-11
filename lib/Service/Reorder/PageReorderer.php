@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace OCA\IntraVox\Service\Reorder;
 
+use OCA\IntraVox\Service\Homepage\HomepageResolverService;
 use OCA\IntraVox\Service\Locator\PageLocator;
 use OCP\Files\NotFoundException;
 
@@ -13,10 +14,10 @@ use OCP\Files\NotFoundException;
  *
  * Self-contained: it does not touch the CRUD core (no createPage/getPage). The
  * cached directory-listing and file-content reads go through the injected
- * PageLocator (the same request caches PageService uses); the two PageService
- * seams it needs — isHomepage (public, overridable) and clearCache (private) —
- * are passed in as closures, and the already-resolved language folder is passed
- * in as an argument so the getLanguageFolder seam stays on PageService.
+ * PageLocator (the same request caches PageService uses); the homepage check
+ * comes from the injected HomepageResolverService and clearCache (private) is
+ * passed in as a closure, and the already-resolved language folder is passed in
+ * as an argument so the getLanguageFolder seam stays on PageService.
  *
  * PageServiceReorderTest pins the behaviour end-to-end through the PageService
  * delegator: sequential order writes, the folder-layout and loose-json layouts,
@@ -24,20 +25,21 @@ use OCP\Files\NotFoundException;
  * rule, and the exact pretty-printed/unescaped-unicode bytes.
  */
 final class PageReorderer {
-    public function __construct(private PageLocator $locator) {
+    public function __construct(
+        private PageLocator $locator,
+        private HomepageResolverService $homepageResolver,
+    ) {
     }
 
     /**
      * @param \OCP\Files\Folder $languageFolder the resolved language folder
      *   (PageService's getLanguageFolder seam)
-     * @param \Closure(string): bool $isHomepage PageService's isHomepage seam
      * @param \Closure(): void $clearCache PageService's private clearCache
      */
     public function reorder(
         ?string $parentUniqueId,
         array $orderedChildIds,
         \OCP\Files\Folder $languageFolder,
-        \Closure $isHomepage,
         \Closure $clearCache
     ): void {
         // Resolve the parent folder whose direct children we are reordering.
@@ -100,7 +102,7 @@ final class PageReorderer {
         foreach ($orderedChildIds as $index => $childId) {
             // The homepage is pinned first and never carries an order — skip the
             // legacy 'home' id as well as a configured pointer target.
-            if ($childId === 'home' || $isHomepage($childId)) {
+            if ($childId === 'home' || $this->homepageResolver->isHomepage($childId)) {
                 continue;
             }
 

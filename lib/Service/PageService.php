@@ -361,7 +361,7 @@ class PageService {
      * default so the harness auto-fill skips it (see the load-bearing note).
      */
     private function reorderer(): \OCA\IntraVox\Service\Reorder\PageReorderer {
-        return $this->reorderer ??= new \OCA\IntraVox\Service\Reorder\PageReorderer($this->locator());
+        return $this->reorderer ??= new \OCA\IntraVox\Service\Reorder\PageReorderer($this->locator(), $this->homepageResolver);
     }
 
     /**
@@ -1468,7 +1468,6 @@ class PageService {
             $parentUniqueId,
             $orderedChildIds,
             $this->folders()->languageFolder(),
-            fn(string $id): bool => $this->isHomepage($id),
             function (): void {
                 $this->clearCache();
             }
