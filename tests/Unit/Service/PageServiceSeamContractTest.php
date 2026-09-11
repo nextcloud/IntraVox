@@ -71,10 +71,13 @@ class PageServiceSeamContractTest extends TestCase {
      */
     public function testReflectionAnchoredPrivatesStillExist(): void {
         $anchored = [
-            'buildPageTree',
             // listPagesFromIndex + inStableOrder RETIRED from PageService — the
             // LISTING carve moved them to Listing/PageLister (fromIndex/inStableOrder);
             // PageIndexLookupTest + PageListingOrderTest reflect them there.
+            // buildPageTree RETIRED from PageService — the fase-4 capstone moved
+            // getPageTree (its only caller) to Tree/PageTreeService, so the by-ref
+            // wrapper is gone; the recursive walk is PageTreeBuilder::build, which
+            // PageTreePlaceholderTest + PageTreeBuilderTest now drive directly.
             'getOrCreateFolderPath',
             // renamePageFolder RETIRED from PageService — it moved to
             // Metadata/PageMetadataService (PageRenameFolderTest reflects it there).

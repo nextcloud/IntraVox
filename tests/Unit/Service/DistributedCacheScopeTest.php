@@ -81,7 +81,9 @@ class DistributedCacheScopeTest extends TestCase {
 	 * share an entry.
 	 */
 	public function testTreeCacheKeyIsScopedByGroupHash(): void {
-		$source = $this->pageServiceSource();
+		// The page-tree build + cache scoping moved to Tree/PageTreeService
+		// (fase-4 capstone); the group-hash key guard travels with it.
+		$source = $this->sourceOf('lib/Service/Tree/PageTreeService.php');
 
 		$this->assertMatchesRegularExpression(
 			'/\$cacheKey\s*=\s*\$this->groupContext->getGroupHash\(\)/',

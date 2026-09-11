@@ -88,41 +88,33 @@ class PageTreePlaceholderTest extends TestCase {
         ]);
 
         $base = $this->makeFolder('/IntraVox', ['de' => $de]);
-        $svc = new class extends PageService {
-            public function __construct() {
-            }
-        };
+        // The recursive walk lives in PageTreeBuilder (fase-4 capstone moved
+        // getPageTree to Tree/PageTreeService; the by-ref buildPageTree wrapper is
+        // retired). Drive the builder directly — the real owner of this behaviour.
         $locator = new \OCA\IntraVox\Service\Locator\PageLocator(
             $this->createMock(\OCA\IntraVox\Service\PageIndexService::class),
             $this->createMock(\Psr\Log\LoggerInterface::class)
         );
-        (new \ReflectionProperty(PageService::class, 'logger'))
-            ->setValue($svc, $this->createMock(\Psr\Log\LoggerInterface::class));
-        (new \ReflectionProperty(PageService::class, 'permissionService'))
-            ->setValue($svc, new class extends PermissionService {
+        $folders = new \OCA\IntraVox\Service\Folder\FolderContext(
+            $this->createMock(\OCP\Files\IRootFolder::class),
+            'tester',
+            $this->createMock(\OCP\IConfig::class),
+            $this->createMock(\OCA\IntraVox\Service\LanguageService::class),
+            new \OCA\IntraVox\Service\Language\LanguageResolver(),
+            $locator,
+            $base // intraVoxOverride
+        );
+        $builder = new \OCA\IntraVox\Service\Tree\PageTreeBuilder(
+            $locator,
+            new class extends PermissionService {
                 public function __construct() {
                 }
-            });
-        (new \ReflectionProperty(PageService::class, 'pageLocator'))
-            ->setValue($svc, $locator);
-        // buildPageTree -> treeBuilder() reaches the root via folders()->intraVox();
-        // inject a FolderContext with $base wired (the getIntraVoxFolder seam is
-        // being retired). Language/read seams unused by the tree walk.
-        (new \ReflectionProperty(PageService::class, 'folderContext'))
-            ->setValue($svc, new \OCA\IntraVox\Service\Folder\FolderContext(
-                $this->createMock(\OCP\Files\IRootFolder::class),
-                'tester',
-                $this->createMock(\OCP\IConfig::class),
-                $this->createMock(\OCA\IntraVox\Service\LanguageService::class),
-                new \OCA\IntraVox\Service\Language\LanguageResolver(),
-                $locator,
-                $base // intraVoxOverride
-            ));
+            },
+            $folders
+        );
 
-        $m = new \ReflectionMethod(PageService::class, 'buildPageTree');
         $tree = [];
-        $args = [$de, &$tree, null, 'de'];
-        $m->invokeArgs($svc, $args);
+        $builder->build($de, $tree, null, 'de');
         return $tree;
     }
 
