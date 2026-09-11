@@ -32,6 +32,8 @@ use Psr\Log\LoggerInterface;
  */
 class PageContentApiControllerTest extends TestCase {
 
+    use \OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageRead;
+
     private PageService $pageService;
     private IAppManager $appManager;
     private PageContentApiController $controller;
@@ -39,10 +41,16 @@ class PageContentApiControllerTest extends TestCase {
     private PageVersionService $versionEngine;
     /** The mocked locator the real versionDomain resolves pages through. */
     private PageLocator $versionLocator;
+    /** getPage(id) behaviour a test installs (fase-4 C6: getPage → PageReadService). */
+    private \Closure $getPageFn;
 
     protected function setUp(): void {
         $this->pageService = $this->createMock(PageService::class);
         $this->appManager = $this->createMock(IAppManager::class);
+        // getPage now comes from a real PageReadService that delegates to the
+        // per-test $this->getPageFn (default: page not found).
+        $this->getPageFn = fn(string $id) => null;
+        $pageRead = $this->fakePageReadFrom(fn(string $id) => ($this->getPageFn)($id));
 
         // PageVersionDomainService is final -> build a real one over mocked
         // collaborators. The controller test only observes delegation + gate +
@@ -86,6 +94,7 @@ class PageContentApiControllerTest extends TestCase {
             'intravox',
             $this->createMock(IRequest::class),
             $this->pageService,
+            $pageRead,
             $versionDomain,
             $cacheStatus,
             $this->appManager,
@@ -100,7 +109,7 @@ class PageContentApiControllerTest extends TestCase {
     // --- getCurrentPageContent ---
 
     public function testGetCurrentContentHappyPathDelegates(): void {
-        $this->pageService->method('getPage')->willReturn($this->pageReadable(true));
+        $this->getPageFn = fn(string $id) => $this->pageReadable(true);
         // getCurrentPageContent resolves the page via the locator, then returns
         // {title, content, rawContent} from the file. Wire the locator to resolve
         // page-x to a file with known content.
@@ -120,7 +129,7 @@ class PageContentApiControllerTest extends TestCase {
     }
 
     public function testGetCurrentContentDeniedReturns403AccessDenied(): void {
-        $this->pageService->method('getPage')->willReturn($this->pageReadable(false));
+        $this->getPageFn = fn(string $id) => $this->pageReadable(false);
 
         $res = $this->controller->getCurrentPageContent('page-x');
 
@@ -130,7 +139,7 @@ class PageContentApiControllerTest extends TestCase {
 
     public function testGetCurrentContentExceptionReturns500WithMessage(): void {
         // known leak: the raw message is returned (see class docblock).
-        $this->pageService->method('getPage')->willThrowException(new \RuntimeException('boom'));
+        $this->getPageFn = function (string $id) { throw new \RuntimeException('boom'); };
 
         $res = $this->controller->getCurrentPageContent('page-x');
 
@@ -141,7 +150,7 @@ class PageContentApiControllerTest extends TestCase {
     // --- getPageMetadata (same gate) ---
 
     public function testGetMetadataDeniedReturns403AccessDenied(): void {
-        $this->pageService->method('getPage')->willReturn($this->pageReadable(false));
+        $this->getPageFn = fn(string $id) => $this->pageReadable(false);
 
         $res = $this->controller->getPageMetadata('page-x');
 
@@ -150,7 +159,7 @@ class PageContentApiControllerTest extends TestCase {
     }
 
     public function testGetMetadataHappyPathDelegates(): void {
-        $this->pageService->method('getPage')->willReturn($this->pageReadable(true));
+        $this->getPageFn = fn(string $id) => $this->pageReadable(true);
         $this->pageService->method('getPageMetadata')->willReturn(['title' => 'X']);
 
         $res = $this->controller->getPageMetadata('page-x');
@@ -162,7 +171,7 @@ class PageContentApiControllerTest extends TestCase {
     // --- getPageVersions (same gate) ---
 
     public function testGetVersionsDeniedReturns403(): void {
-        $this->pageService->method('getPage')->willReturn($this->pageReadable(false));
+        $this->getPageFn = fn(string $id) => $this->pageReadable(false);
 
         $res = $this->controller->getPageVersions('page-x');
 
@@ -173,7 +182,7 @@ class PageContentApiControllerTest extends TestCase {
     // --- getVersionContent (same gate) ---
 
     public function testGetVersionContentDeniedReturns403(): void {
-        $this->pageService->method('getPage')->willReturn($this->pageReadable(false));
+        $this->getPageFn = fn(string $id) => $this->pageReadable(false);
 
         $res = $this->controller->getVersionContent('page-x', '12345');
 

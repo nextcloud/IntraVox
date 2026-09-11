@@ -35,8 +35,10 @@ class PageContentApiController extends Controller {
         private PageService $pageService,
         // The five version-history endpoints call the VERSION domain service
         // directly (facade elimination phase 1); the cache-status endpoint calls
-        // its own service (fase-4 C5); pageService stays for getPage + metadata +
-        // the RequiresPagePermission gate.
+        // its own service (fase-4 C5); getPage comes from the READ-domain service
+        // (fase-4 C6); pageService stays for metadata + the RequiresPagePermission
+        // gate.
+        private \OCA\IntraVox\Service\Read\PageReadService $pageRead,
         private \OCA\IntraVox\Service\Version\PageVersionDomainService $versionDomain,
         private \OCA\IntraVox\Service\Maintenance\PageCacheStatusService $cacheStatus,
         private IAppManager $appManager,
@@ -62,7 +64,7 @@ class PageContentApiController extends Controller {
         try {
             // First get the page to check permissions (from Nextcloud filesystem)
             $this->logger->info('[ApiController::getPageVersions] Getting page...');
-            $existingPage = $this->pageService->getPage($pageId);
+            $existingPage = $this->pageRead->getPage($pageId);
             $this->logger->info('[ApiController::getPageVersions] Got page, checking permissions...');
 
             if (($denied = $this->denyUnlessReadable($existingPage)) !== null) {
@@ -130,7 +132,7 @@ class PageContentApiController extends Controller {
     public function getVersionContent(string $pageId, string $timestamp): DataResponse {
         try {
             // First get the page to check permissions (from Nextcloud filesystem)
-            $existingPage = $this->pageService->getPage($pageId);
+            $existingPage = $this->pageRead->getPage($pageId);
 
             if (($denied = $this->denyUnlessReadable($existingPage)) !== null) {
                 return $denied;
@@ -152,7 +154,7 @@ class PageContentApiController extends Controller {
     public function getCurrentPageContent(string $pageId): DataResponse {
         try {
             // First get the page to check permissions (from Nextcloud filesystem)
-            $existingPage = $this->pageService->getPage($pageId);
+            $existingPage = $this->pageRead->getPage($pageId);
 
             if (($denied = $this->denyUnlessReadable($existingPage)) !== null) {
                 return $denied;
@@ -174,7 +176,7 @@ class PageContentApiController extends Controller {
     public function getPageMetadata(string $pageId): DataResponse {
         try {
             // First get the page to check permissions (from Nextcloud filesystem)
-            $existingPage = $this->pageService->getPage($pageId);
+            $existingPage = $this->pageRead->getPage($pageId);
 
             if (($denied = $this->denyUnlessReadable($existingPage)) !== null) {
                 return $denied;
