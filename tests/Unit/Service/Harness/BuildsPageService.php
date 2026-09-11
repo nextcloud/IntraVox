@@ -284,18 +284,30 @@ trait BuildsPageService {
     protected function fakeHomepageResolver(?string $homeUniqueId, ?FolderContext $folders = null): \OCA\IntraVox\Service\Homepage\HomepageResolverService {
         $homepageService = $this->createMock(\OCA\IntraVox\Service\HomepageService::class);
         $homepageService->method('getHomepageUniqueId')->willReturn($homeUniqueId);
-        $folder = $this->createMock(Folder::class);
+        // The resolver is DI-promoted (fase-5): a PageLocator whose findPageByUniqueId
+        // returns non-null makes getHomepageUniqueId honour the pointer, so
+        // resolveHomepageNodeUniqueId yields $homeUniqueId. A folders() that resolves
+        // a language folder keeps the pointer path from throwing.
+        $locator = $this->createMock(\OCA\IntraVox\Service\Locator\PageLocator::class);
+        $locator->method('findPageByUniqueId')->willReturn(['folder' => $this->createMock(Folder::class)]);
+        // The language folder resolves but has no loose home.json, so the legacy path
+        // of getHomepageUniqueId (reached when $homeUniqueId is null / not a pointer)
+        // falls through to 'home' cleanly instead of dereferencing a null folder.
+        $lang = $this->createMock(Folder::class);
+        $lang->method('get')->willThrowException(new NotFoundException('home.json'));
+        $base = $this->createMock(Folder::class);
+        $base->method('get')->willReturn($lang);
+        // Always a self-contained folders that resolves effectiveLanguage/
+        // languageFolderByCode — NOT the caller's $folders, which may be an unwired
+        // fixture (e.g. a delete guard-ordering test) whose intraVox() throws. The
+        // resolver only needs to yield $homeUniqueId; the caller's folders drive the
+        // OTHER services, not this fixed-predicate resolver. $folders is accepted for
+        // signature compatibility but intentionally not used here.
         return new \OCA\IntraVox\Service\Homepage\HomepageResolverService(
             $homepageService,
-            $folders ?? $this->fakeFolderContext(),
-            fn(string $lang): Folder => $folder,                              // languageFolderByCode
-            fn(Folder $f, string $uid): ?array => ['folder' => $f],          // locatePage: non-null honours the pointer
-            fn(File $file): string => '',                                     // cachedFileContent (unused on pointer path)
-            fn(): ?string => null,                                            // effectiveLanguage
-            fn(): string => 'en',                                             // userLanguage
-            fn(string $uid, ?string $language = null): bool => $uid === $homeUniqueId, // homepagePredicate (unused here)
-            function (): void {
-            }                                                                 // invalidateCache
+            $this->fakeFolderContext(languageFolder: $lang, intraVox: $base, userLanguage: 'en', primaryLanguage: 'en'),
+            $locator,
+            $this->fakeCacheInvalidator()
         );
     }
 

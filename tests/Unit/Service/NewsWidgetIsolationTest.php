@@ -3,46 +3,53 @@ declare(strict_types=1);
 
 namespace OCA\IntraVox\Tests\Unit\Service;
 
+use OCA\IntraVox\Service\News\NewsWidgetService;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Structural guard: the NEWS-widget carve keeps the shared/resident lookups OUT
- * of NewsWidgetService.
+ * Structural guard: the NEWS-widget carve keeps NewsWidgetService decoupled from
+ * the PageService god-class.
  *
- * findPageByUniqueId (shared far beyond news), resolveEffectiveLanguage /
- * getUserLanguage (resolved via the injected FolderContext), getCachedFileContent
- * and clearCache all stay resident on PageService and reach this service only as
- * a bound closure (locatePage) or the FolderContext substrate. If a future edit
- * reconstructs any of them inline here, it would pull a shared symbol into the
- * news orchestrator — the tangle this carve avoids. This test fails the moment
- * such a symbol is referenced from the carved file.
- *
- * The NewsPageService engine + its cache/group/metaVox/publication collaborators
- * are legitimately used, so they are not forbidden here.
+ * Originally the source-page lookup reached this service as a $this-bound
+ * `locatePage` closure from PageService. Fase-5 DI-promoted the service: that
+ * closure became a direct call on an injected PageLocator, so the invariant is no
+ * longer "must not name findPageByUniqueId" (it now legitimately calls
+ * locator->findPageByUniqueId) but the stronger, real one: the ctor must be
+ * CLOSURE-FREE and PageService-FREE — fully DI-autowirable, never reaching back
+ * into the facade.
  */
 class NewsWidgetIsolationTest extends TestCase {
 
-    public function testNewsWidgetServiceDoesNotReachResidentLookups(): void {
-        $file = __DIR__ . '/../../../lib/Service/News/NewsWidgetService.php';
-        $this->assertFileExists($file);
+    public function testNewsWidgetServiceHasNoClosureOrPageServiceDependency(): void {
+        $ctor = (new \ReflectionClass(NewsWidgetService::class))->getConstructor();
+        $this->assertNotNull($ctor);
 
-        $src = file_get_contents($file);
-        $this->assertIsString($src);
-
-        $forbidden = [
-            'findPageByUniqueId',
-            'resolveEffectiveLanguage',
-            'getUserLanguage',
-            'getCachedFileContent',
-            'clearCache',
-        ];
-        foreach ($forbidden as $symbol) {
-            $this->assertStringNotContainsString(
-                $symbol,
-                $src,
-                "NewsWidgetService must not reach the resident lookup '$symbol'"
-                    . ' — it arrives as a bound closure / the FolderContext substrate instead'
+        foreach ($ctor->getParameters() as $p) {
+            $type = $p->getType();
+            $name = $type instanceof \ReflectionNamedType ? $type->getName() : (string) $type;
+            $this->assertNotSame(
+                \Closure::class,
+                $name,
+                "NewsWidgetService ctor param \${$p->getName()} is a \\Closure — the fase-5 "
+                    . 'DI-promotion must leave the ctor closure-free (autowirable).'
+            );
+            $this->assertNotSame(
+                \OCA\IntraVox\Service\PageService::class,
+                $name,
+                "NewsWidgetService must not depend on the PageService facade (param \${$p->getName()})."
             );
         }
+    }
+
+    public function testNewsWidgetSourceDoesNotConstructOrCallPageService(): void {
+        $src = file_get_contents(
+            __DIR__ . '/../../../lib/Service/News/NewsWidgetService.php'
+        );
+        $this->assertIsString($src);
+        $this->assertDoesNotMatchRegularExpression(
+            '/\bnew\s+PageService\b|(?<![A-Za-z])PageService::/',
+            $src,
+            'NewsWidgetService must not construct or statically call the PageService facade.'
+        );
     }
 }

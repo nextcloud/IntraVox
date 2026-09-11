@@ -44,6 +44,7 @@ use PHPUnit\Framework\TestCase;
  * called directly (this subclass does not shadow it).
  */
 class PageLanguageResolutionTest extends TestCase {
+    private ?\OCA\IntraVox\Service\Folder\FolderContext $lastFolders = null;
 
     use BuildsPageService;
 
@@ -184,6 +185,10 @@ class PageLanguageResolutionTest extends TestCase {
             'folderContext' => $folderContext,
         ];
         // fase-3: real DI ctor; inert invalidator no-ops clearCache.
+        // Expose the FolderContext: fase-5 DI-promotions made getLanguageFolderByCode/
+        // resolveEffectiveLanguage thin folders() forwards (deleted from PageService),
+        // so those cases drive FolderContext directly; getUserLanguage stays resident.
+        $this->lastFolders = $folderContext;
         $svc = $this->buildRealPageService($explicit);
         return $svc;
     }
@@ -244,7 +249,7 @@ class PageLanguageResolutionTest extends TestCase {
         $nl = $this->langFolder('/IntraVox/nl');
         $svc = $this->makeService($this->baseFolder(['nl' => $nl]));
 
-        $folder = $this->callPrivate($svc, 'getLanguageFolderByCode', ['nl']);
+        $folder = $this->lastFolders->languageFolderByCode('nl');
 
         $this->assertSame($nl, $folder);
         $this->assertSame([], $this->created, 'an existing folder must never be re-created');
@@ -255,7 +260,7 @@ class PageLanguageResolutionTest extends TestCase {
         $en = $this->langFolder('/IntraVox/en');
         $svc = $this->makeService($this->baseFolder(['en' => $en]));
 
-        $folder = $this->callPrivate($svc, 'getLanguageFolderByCode', ['nl']);
+        $folder = $this->lastFolders->languageFolderByCode('nl');
 
         $this->assertSame($en, $folder);
         $this->assertSame([], $this->created, 'default already exists — no folder should be created');
@@ -267,7 +272,7 @@ class PageLanguageResolutionTest extends TestCase {
         // extraction that dropped it would still pass every seam-overriding test.
         $svc = $this->makeService($this->baseFolder([]));
 
-        $this->callPrivate($svc, 'getLanguageFolderByCode', ['nl']);
+        $this->lastFolders->languageFolderByCode('nl');
 
         $this->assertSame(['en'], $this->created, 'missing lang + missing default must create the default folder');
     }
@@ -276,7 +281,7 @@ class PageLanguageResolutionTest extends TestCase {
         // Asking for 'en' when it is missing takes the else-branch: create 'en'.
         $svc = $this->makeService($this->baseFolder([]));
 
-        $this->callPrivate($svc, 'getLanguageFolderByCode', ['en']);
+        $this->lastFolders->languageFolderByCode('en');
 
         $this->assertSame(['en'], $this->created);
     }
@@ -301,7 +306,7 @@ class PageLanguageResolutionTest extends TestCase {
         $nl = $this->langFolder('/IntraVox/nl', $this->realHome('Welkom'));
         $svc = $this->makeService($this->baseFolder(['nl' => $nl]), userLangValue: 'nl', primaryLanguage: 'nl');
 
-        $this->assertSame('nl', $this->callPrivate($svc, 'resolveEffectiveLanguage'));
+        $this->assertSame('nl', $this->lastFolders->effectiveLanguage());
     }
 
     public function testEffectiveLanguageFallsToPrimaryWhenUserLanguageIsEmpty(): void {
@@ -315,7 +320,7 @@ class PageLanguageResolutionTest extends TestCase {
             primaryLanguage: 'de'
         );
 
-        $this->assertSame('de', $this->callPrivate($svc, 'resolveEffectiveLanguage'));
+        $this->assertSame('de', $this->lastFolders->effectiveLanguage());
     }
 
     public function testEffectiveLanguageFallsToEnglishWhenUserAndPrimaryAreEmpty(): void {
@@ -329,7 +334,7 @@ class PageLanguageResolutionTest extends TestCase {
             primaryLanguage: 'nl'
         );
 
-        $this->assertSame('en', $this->callPrivate($svc, 'resolveEffectiveLanguage'));
+        $this->assertSame('en', $this->lastFolders->effectiveLanguage());
     }
 
     public function testEffectiveLanguageIsNullWhenNothingHasRealContent(): void {
@@ -341,7 +346,7 @@ class PageLanguageResolutionTest extends TestCase {
             primaryLanguage: 'nl'
         );
 
-        $this->assertNull($this->callPrivate($svc, 'resolveEffectiveLanguage'));
+        $this->assertNull($this->lastFolders->effectiveLanguage());
     }
 
     public function testEffectiveLanguageSkipsMissingCandidateFolders(): void {
@@ -354,7 +359,7 @@ class PageLanguageResolutionTest extends TestCase {
             primaryLanguage: 'de'
         );
 
-        $this->assertSame('en', $this->callPrivate($svc, 'resolveEffectiveLanguage'));
+        $this->assertSame('en', $this->lastFolders->effectiveLanguage());
     }
 
     // ------------------------- read-folder composition (retired getReadLanguageFolder,

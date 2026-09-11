@@ -118,21 +118,50 @@ class PageServiceReorderTest extends TestCase {
         // mock returns it as the pointer and locatePage succeeds so the pointer is
         // honoured. null $homeUniqueId → resolver falls through to 'home', matching
         // the old override's homeId===null → isHomepage false for every page id.
+        // isHomepage → reorder's homepage-skip. isHomepage(uid) is
+        // (uid === resolveHomepageNodeUniqueId()); the DI-promoted resolver (fase-5)
+        // resolves $homeUniqueId when the engine reports it as the pointer and the
+        // injected locator finds it. null → falls through to 'home' (isHomepage false
+        // for every real page id, as the old override gave).
+        // The DI-promoted resolver (fase-5) computes isHomepage via
+        // resolveHomepageNodeUniqueId → getHomepageUniqueId. The engine reports
+        // $homeUniqueId as the pointer, and a locator that resolves it makes the
+        // pointer path return it (so isHomepage(uid) === uid === $homeUniqueId). A
+        // dedicated FolderContext whose language folder has no loose home.json keeps
+        // the null-homepage case ($homeUniqueId===null) on the clean 'home' fallback
+        // (no page is 'home', so isHomepage is false for every reordered id).
         $engine = $this->createMock(\OCA\IntraVox\Service\HomepageService::class);
         $engine->method('getHomepageUniqueId')->willReturn($homeUniqueId);
+        $homeLocator = $this->createMock(\OCA\IntraVox\Service\Locator\PageLocator::class);
+        $homeLocator->method('findPageByUniqueId')->willReturn(['folder' => $parent]);
+        // A language folder with no home.json → getHomepageUniqueId falls through to
+        // 'home' cleanly (NotFoundException caught) when no pointer is set.
+        $langNoHome = $this->createMock(Folder::class);
+        $langNoHome->method('get')->willThrowException(new \OCP\Files\NotFoundException('home.json'));
+        $homeBase = $this->createMock(Folder::class);
+        $homeBase->method('get')->willReturn($langNoHome);
+        $homeFolders = new \OCA\IntraVox\Service\Folder\FolderContext(
+            $this->createMock(\OCP\Files\IRootFolder::class),
+            'tester',
+            $this->createMock(\OCP\IConfig::class),
+            $this->createMock(\OCA\IntraVox\Service\LanguageService::class),
+            new \OCA\IntraVox\Service\Language\LanguageResolver(),
+            $locator,
+            $homeBase, // intraVoxOverride
+            null,
+            fn(): Folder => $langNoHome
+        );
         (new \ReflectionProperty(PageService::class, 'homepageResolver'))->setValue(
             $svc,
             new \OCA\IntraVox\Service\Homepage\HomepageResolverService(
                 $engine,
-                (new \ReflectionProperty(PageService::class, 'folderContext'))->getValue($svc),
-                fn(string $lang): Folder => $parent,
-                fn(Folder $f, string $uid): ?array => ['folder' => $f],
-                fn(\OCP\Files\File $file): string => '',
-                fn(): ?string => null,
-                fn(): string => 'en',
-                fn(string $uid, ?string $language = null): bool => $homeUniqueId !== null && $uid === $homeUniqueId,
-                function (): void {
-                }
+                $homeFolders,
+                $homeLocator,
+                new \OCA\IntraVox\Service\Cache\PageCacheInvalidator(
+                    $this->createMock(\OCA\IntraVox\Service\Cache\PageCacheService::class),
+                    $locator,
+                    $this->createMock(PermissionService::class)
+                )
             )
         );
         return $svc;

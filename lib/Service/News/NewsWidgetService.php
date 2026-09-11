@@ -32,10 +32,6 @@ use Psr\Log\LoggerInterface;
  */
 final class NewsWidgetService {
 
-    /**
-     * @param \Closure(\OCP\Files\Folder, string): ?array $locatePage resolve a
-     *        page by uniqueId within a folder.
-     */
     public function __construct(
         private NewsPageService $news,
         private PageCacheService $cache,
@@ -44,7 +40,7 @@ final class NewsWidgetService {
         private PublicationStateService $publicationState,
         private FolderContext $folders,
         private LoggerInterface $logger,
-        private \Closure $locatePage,
+        private \OCA\IntraVox\Service\Locator\PageLocator $locator,
     ) {
     }
 
@@ -99,7 +95,7 @@ final class NewsWidgetService {
         $sourcePageData = null;
         if (!empty($sourcePageId)) {
             try {
-                $result = ($this->locatePage)($folder, $sourcePageId);
+                $result = $this->locator->findPageByUniqueId($folder, $sourcePageId);
                 if ($result && isset($result['folder'])) {
                     $folder = $result['folder'];
                     // Store the source page data to include it in results
@@ -177,8 +173,11 @@ final class NewsWidgetService {
 
         // Cache for 5 minutes — the version-counter scheme makes correctness
         // independent of TTL (a counter bump renders this entry unreachable),
-        // so the TTL only bounds memory growth from orphaned entries.
-        if ($this->cache->isDistributedAvailable() && $newsCacheKey !== null) {
+        // so the TTL only bounds memory growth from orphaned entries. The key is
+        // non-null exactly when the distributed cache was available at read time
+        // (it is built only inside that guard above), so a non-null key IS the
+        // availability check — the redundant re-call was dropped.
+        if ($newsCacheKey !== null) {
             $this->cache->setDistributed($newsCacheKey, json_encode($result), PageCacheService::NEWS_TTL);
         }
 

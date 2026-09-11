@@ -171,13 +171,6 @@ class PageService {
         $this->cacheInvalidator->invalidate($pageId);
     }
 
-    /**
-     * Get cached file content (prevents repeated reads of same file within request)
-     */
-    private function getCachedFileContent(\OCP\Files\File $file): string {
-        return $this->locator()->cachedFileContent($file);
-    }
-
     private HtmlSanitizer $htmlSanitizer;
     private MediaSanitizer $mediaSanitizer;
     private PageShapeSanitizer $shapeSanitizer;
@@ -408,15 +401,8 @@ class PageService {
         return $this->homepageResolver ??= new \OCA\IntraVox\Service\Homepage\HomepageResolverService(
             $this->homepageService,
             $this->folders(),
-            fn(string $lang): \OCP\Files\Folder => $this->getLanguageFolderByCode($lang),
-            fn(\OCP\Files\Folder $folder, string $uid): ?array => $this->findPageByUniqueId($folder, $uid),
-            fn(\OCP\Files\File $file): string => $this->getCachedFileContent($file),
-            fn(): ?string => $this->resolveEffectiveLanguage(),
-            fn(): string => $this->getUserLanguage(),
-            fn(string $uid, ?string $language = null): bool => $this->isHomepage($uid, $language),
-            function (): void {
-                $this->clearCache();
-            }
+            $this->locator(),
+            $this->cacheInvalidator
         );
     }
 
@@ -436,7 +422,7 @@ class PageService {
             $this->publicationState(),
             $this->folders(),
             $this->logger,
-            fn(\OCP\Files\Folder $folder, string $uid): ?array => $this->findPageByUniqueId($folder, $uid)
+            $this->locator()
         );
     }
 
@@ -771,29 +757,6 @@ class PageService {
     }
 
     /**
-     * The language whose content the CURRENT user will actually be SHOWN on the
-     * landing/read paths. Read-only resolution — NEVER used to decide where to
-     * write (authoring must always target the user's own language folder).
-     *
-     * Order (issue #75):
-     *   1. the user's own display language, if it has real content
-     *   2. the admin "recommended" (primary) language, if it has real content
-     *      and differs from the user's language — this is what the admin
-     *      settings promise: "if there is none, they are shown the recommended
-     *      language below"
-     *   3. English ('en'), if it has real content
-     *   4. null — nothing can be served (pure other-language install) → notice
-     *
-     * "Has real content" = languageFolderHasRealContent (a homepage that is not
-     * a _generated placeholder), matching how languagesWithContent is built, so
-     * a non-null result is always one of languagesWithContent. primaryLanguage
-     * already defaults to 'en', so when unset the chain collapses to user → en.
-     */
-    private function resolveEffectiveLanguage(): ?string {
-        return $this->folders()->effectiveLanguage();
-    }
-
-    /**
      * Which language content folder does $folder sit in?
      *
      * Walks up from $folder to the IntraVox root and returns the top-level
@@ -903,13 +866,6 @@ class PageService {
         return strtoupper($code);
     }
 
-
-    /**
-     * Get language folder by language code
-     */
-    private function getLanguageFolderByCode(string $lang) {
-        return $this->folders()->languageFolderByCode($lang);
-    }
 
 
     /**

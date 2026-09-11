@@ -26,25 +26,11 @@ use OCA\IntraVox\Service\HomepageService;
  */
 final class HomepageResolverService {
 
-    /**
-     * @param \Closure(string): \OCP\Files\Folder $languageFolderByCode
-     * @param \Closure(\OCP\Files\Folder, string): ?array $locatePage
-     * @param \Closure(\OCP\Files\File): string $cachedFileContent
-     * @param \Closure(): ?string $effectiveLanguage
-     * @param \Closure(): string $userLanguage
-     * @param \Closure(string, ?string): bool $homepagePredicate
-     * @param \Closure(): void $invalidateCache
-     */
     public function __construct(
         private HomepageService $homepageService,
         private FolderContext $folders,
-        private \Closure $languageFolderByCode,
-        private \Closure $locatePage,
-        private \Closure $cachedFileContent,
-        private \Closure $effectiveLanguage,
-        private \Closure $userLanguage,
-        private \Closure $homepagePredicate,
-        private \Closure $invalidateCache,
+        private \OCA\IntraVox\Service\Locator\PageLocator $locator,
+        private \OCA\IntraVox\Service\Cache\PageCacheInvalidator $cacheInvalidator,
     ) {
     }
 
@@ -58,14 +44,14 @@ final class HomepageResolverService {
         // Without an explicit language, use the language the user is actually
         // shown (recommended-language fallback, #75) so the homepage pointer is
         // resolved in — and checked against — the served language's folder.
-        $lang = $language ?? ($this->effectiveLanguage)() ?? ($this->userLanguage)();
+        $lang = $language ?? $this->folders->effectiveLanguage() ?? $this->folders->userLanguage();
 
         $pointer = $this->homepageService->getHomepageUniqueId($lang);
         if ($pointer !== null && $pointer !== '' && $pointer !== 'home') {
             // Only honour the pointer when it resolves to an existing page.
             try {
-                $folder = ($this->languageFolderByCode)($lang);
-                if (($this->locatePage)($folder, $pointer) !== null) {
+                $folder = $this->folders->languageFolderByCode($lang);
+                if ($this->locator->findPageByUniqueId($folder, $pointer) !== null) {
                     return $pointer;
                 }
             } catch (\Exception $e) {
@@ -88,10 +74,10 @@ final class HomepageResolverService {
         // no uniqueId, which is the pre-existing behaviour and what the rest of
         // the legacy path still understands.
         try {
-            $folder = ($this->languageFolderByCode)($lang);
+            $folder = $this->folders->languageFolderByCode($lang);
             $homeFile = $folder->get('home.json');
             if ($homeFile instanceof \OCP\Files\File) {
-                $data = json_decode(($this->cachedFileContent)($homeFile), true);
+                $data = json_decode($this->locator->cachedFileContent($homeFile), true);
                 $homeUniqueId = is_array($data) ? ($data['uniqueId'] ?? null) : null;
                 if (is_string($homeUniqueId) && $homeUniqueId !== '') {
                     return $homeUniqueId;
@@ -121,7 +107,7 @@ final class HomepageResolverService {
 
         // Legacy default: map 'home' to the real uniqueId of the loose home.json.
         try {
-            $folder = ($this->languageFolderByCode)($language ?? ($this->userLanguage)());
+            $folder = $this->folders->languageFolderByCode($language ?? $this->folders->userLanguage());
             if ($folder->nodeExists('home.json')) {
                 $homeFile = $folder->get('home.json');
                 // A loose home.json is always a File; the instanceof narrows the
@@ -156,7 +142,7 @@ final class HomepageResolverService {
         $languageFolder = $this->folders->languageFolder();
 
         // Resolve the target and require it to be a real page.
-        $target = ($this->locatePage)($languageFolder, $uniqueId);
+        $target = $this->locator->findPageByUniqueId($languageFolder, $uniqueId);
         if ($target === null || !isset($target['folder'])) {
             throw new \InvalidArgumentException('Page not found');
         }
@@ -171,8 +157,11 @@ final class HomepageResolverService {
             }
         }
 
-        // If the target is already the resolved homepage, nothing to do.
-        if (($this->homepagePredicate)($uniqueId, $lang)) {
+        // If the target is already the resolved homepage, nothing to do. Inlined
+        // from the former homepagePredicate closure (the isHomepage seam,
+        // which is $uid === resolveHomepageNodeUniqueId($lang)); the empty-string
+        // guard is preserved so byte-identity holds at the call site (fase-5 S3).
+        if ($uniqueId !== '' && $uniqueId === $this->resolveHomepageNodeUniqueId($lang)) {
             return;
         }
 
@@ -180,6 +169,6 @@ final class HomepageResolverService {
         // The old loose home.json simply stays where it is and shows up as a
         // normal root page once the pointer designates a different page.
         $this->homepageService->setHomepageUniqueId($uniqueId, $lang);
-        ($this->invalidateCache)();
+        $this->cacheInvalidator->invalidate();
     }
 }

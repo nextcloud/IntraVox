@@ -259,26 +259,25 @@ class PageHomepageResolutionTest extends TestCase {
             'folderContext' => $folders,
         ]);
 
-        // setHomepage runs REAL (page lookup + root-level check + engine write), but
-        // its already-home short-circuit consults homepagePredicate. The old override
-        // forced that predicate to $alreadyHome regardless of the fixtures (e.g. a
-        // loose home.json whose real resolution would otherwise report page-x as
-        // home). Reproduce that precisely: inject a real HomepageResolverService with
-        // every real collaborator EXCEPT homepagePredicate, which is pinned to
-        // $alreadyHome. Locate/languageFolderByCode bind to $svc so the lookup hits
-        // the fixture tree exactly as PageService::homepageResolver() would.
-        $bind = fn(\Closure $c): \Closure => \Closure::bind($c, $svc, PageService::class);
+        // setHomepage runs REAL (page lookup + root-level check + engine write) over
+        // a REAL PageLocator against the fixture tree, so the missing-page /
+        // non-root-page reject tests resolve genuinely. The already-home short-circuit
+        // is now `$uniqueId === resolveHomepageNodeUniqueId()` (fase-5 inlined the
+        // former homepagePredicate). $alreadyHome controls it via the engine pointer:
+        // true → pointer 'page-x' (resolves as home → no-op); false → no pointer, and
+        // the fixtures for the write tests carry no home.json that resolves to page-x,
+        // so page-x is genuinely not-home and the write path runs. DI-promoted resolver
+        // → real collaborators + inert cache-invalidator.
+        $engine->method('getHomepageUniqueId')->willReturn($alreadyHome ? 'page-x' : null);
+        $realLocator = new \OCA\IntraVox\Service\Locator\PageLocator(
+            $this->createMock(\OCA\IntraVox\Service\PageIndexService::class),
+            $this->createMock(\Psr\Log\LoggerInterface::class)
+        );
         $resolver = new \OCA\IntraVox\Service\Homepage\HomepageResolverService(
             $engine,
             $folders,
-            $bind(fn(string $lang): Folder => $this->getLanguageFolderByCode($lang)),
-            $bind(fn(Folder $f, string $uid): ?array => $this->findPageByUniqueId($f, $uid)),
-            $bind(fn(File $file): string => $this->getCachedFileContent($file)),
-            $bind(fn(): ?string => $this->resolveEffectiveLanguage()),
-            $bind(fn(): string => $this->getUserLanguage()),
-            fn(string $uid, ?string $language = null): bool => $alreadyHome,
-            function (): void {
-            }
+            $realLocator,
+            $this->fakeCacheInvalidator()
         );
         (new \ReflectionProperty(PageService::class, 'homepageResolver'))->setValue($svc, $resolver);
         return $svc;
@@ -339,14 +338,21 @@ class PageHomepageResolutionTest extends TestCase {
      * isHome=true, which bypasses the guard.
      */
     public function testSetHomepageAcceptsLooseHomeViaIsHomeFlag(): void {
+        // The isHome bypass in the root-level guard: a loose home.json's folder-parent
+        // is the language root's PARENT (not the root itself), so the strict parent-path
+        // check would reject it — but findPageByUniqueId flags it isHome=true, which
+        // bypasses the guard. Since fase-5 inlined the already-home predicate as a real
+        // self-call, setting the loose home (page-x) as homepage when it already resolves
+        // as home is a legitimate no-op AFTER the guard passes. The observable proof the
+        // guard accepted it is therefore the ABSENCE of the 'Only root-level' rejection.
         $engine = $this->createMock(HomepageService::class);
-        $engine->expects($this->once())->method('setHomepageUniqueId')->with('page-x', 'nl');
-        // A loose home.json directly in nl/ resolves with isHome=true.
         $svc = $this->makeSetHomepageService([
             'home.json' => $this->makeFile('/IntraVox/nl/home.json',
                 ['uniqueId' => 'page-x', 'title' => 'Welkom']),
         ], false, $engine);
 
+        // Must NOT throw 'Only root-level pages can be the homepage' — the isHome
+        // flag carried it past the guard.
         $svc->setHomepage('page-x');
         $this->addToAssertionCount(1);
     }
