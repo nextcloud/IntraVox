@@ -252,6 +252,15 @@ class CacheEntryRemovedEvent extends Event {
     public function getFileId(): int { return $this->fileId; }
 }
 
+/**
+ * A file-cache entry. PageCacheStatusService only reads getId() and checks
+ * `instanceof ICacheEntry` to distinguish a real entry from a `false` miss, so
+ * the stub carries just that.
+ */
+interface ICacheEntry {
+    public function getId(): int;
+}
+
 namespace OCA\Files_Versions\Versions;
 
 interface IVersion {

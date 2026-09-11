@@ -72,12 +72,22 @@ class PageContentApiControllerTest extends TestCase {
             $this->versionLocator,
             new PageIdUtils()
         );
+        // The cache-status endpoint calls its own service (fase-4 C5); this suite
+        // does not exercise it (PageCacheStatusServiceTest does), so an inert
+        // instance satisfies the ctor.
+        $cacheStatus = new \OCA\IntraVox\Service\Maintenance\PageCacheStatusService(
+            $folders,
+            $this->versionLocator,
+            new PageIdUtils(),
+            $this->createMock(LoggerInterface::class)
+        );
 
         $this->controller = new PageContentApiController(
             'intravox',
             $this->createMock(IRequest::class),
             $this->pageService,
             $versionDomain,
+            $cacheStatus,
             $this->appManager,
             $this->createMock(LoggerInterface::class),
         );

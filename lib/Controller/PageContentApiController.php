@@ -34,9 +34,11 @@ class PageContentApiController extends Controller {
         IRequest $request,
         private PageService $pageService,
         // The five version-history endpoints call the VERSION domain service
-        // directly (facade elimination phase 1); pageService stays for getPage +
-        // metadata + checkPageCacheStatus + the RequiresPagePermission gate.
+        // directly (facade elimination phase 1); the cache-status endpoint calls
+        // its own service (fase-4 C5); pageService stays for getPage + metadata +
+        // the RequiresPagePermission gate.
         private \OCA\IntraVox\Service\Version\PageVersionDomainService $versionDomain,
+        private \OCA\IntraVox\Service\Maintenance\PageCacheStatusService $cacheStatus,
         private IAppManager $appManager,
         private LoggerInterface $logger,
     ) {
@@ -279,7 +281,7 @@ class PageContentApiController extends Controller {
     #[NoCSRFRequired]
     public function checkPageCacheStatus(string $pageId): DataResponse {
         try {
-            $status = $this->pageService->checkPageCacheStatus($pageId);
+            $status = $this->cacheStatus->checkPageCacheStatus($pageId);
             return new DataResponse($status);
         } catch (\Exception $e) {
             return new DataResponse(

@@ -854,36 +854,6 @@ class PageService {
     }
 
     /**
-     * Locate an existing page by uniqueId OR legacy slug, across every language
-     * folder. The plain "find this page, wherever and however it is addressed"
-     * lookup.
-     *
-     * Several operations each open-coded a subset of this and got a different
-     * subset wrong: some tried the uniqueId branch but not the slug branch,
-     * some (updateVersionLabel, getCurrentPageContent) had no uniqueId branch at
-     * all and so failed on every modern page-… id, and none of them looked
-     * outside the caller's own language. Routing them through one helper is what
-     * stops that drift.
-     *
-     * Read-only resolution: callers that write still check permissions on the
-     * node they get back.
-     *
-     * @return array|null findPageByUniqueId()/findPageById() result, or null.
-     */
-    private function locatePageForOperation(string $pageId): ?array {
-        $folder = $this->folders()->readLanguageFolder();
-
-        if (strpos($pageId, 'page-') === 0) {
-            $byUniqueId = $this->locatePageAnyLanguage($folder, $pageId);
-            if ($byUniqueId !== null) {
-                return $byUniqueId;
-            }
-        }
-
-        return $this->locatePageBySlugAnyLanguage($folder, $this->idUtils->sanitizeId($pageId));
-    }
-
-    /**
      * Human-readable name for a language code ('en' -> 'English'), for messages
      * a user reads. Falls back to the uppercased code when the name is unknown,
      * so an exotic content folder still produces "EO" rather than nothing.
@@ -1674,98 +1644,6 @@ class PageService {
     /**
      * Format bytes to human readable format
      */
-
-    /**
-     * Check if a page is visible in the Nextcloud file cache
-     * This is useful to determine if a groupfolder page has been indexed
-     *
-     * @param string $pageId The page ID to check
-     * @return array Status information about the page's visibility
-     */
-    public function checkPageCacheStatus(string $pageId): array {
-        try {
-            $folder = $this->folders()->languageFolder();
-
-            // For home page, check the JSON file directly
-            if ($pageId === 'home') {
-                try {
-                    $file = $folder->get('home.json');
-                    $storage = $file->getStorage();
-                    $cache = $storage->getCache();
-
-                    // Try to get cache entry using the storage's cache directly
-                    $cacheEntry = $cache->get($file->getInternalPath());
-
-                    return [
-                        'visible' => $cacheEntry !== false,
-                        'inCache' => $cacheEntry !== false,
-                        'fileId' => $cacheEntry !== false ? $cacheEntry->getId() : null,
-                        'path' => $file->getPath(),
-                        'message' => $cacheEntry !== false ? 'Page is visible in Files app' : 'Page created but waiting for indexing'
-                    ];
-                } catch (NotFoundException $e) {
-                    return [
-                        'visible' => false,
-                        'inCache' => false,
-                        'fileId' => null,
-                        'message' => 'Home page file not found'
-                    ];
-                }
-            }
-
-            // For regular pages, check if the page folder exists in cache.
-            // Resolve the page itself rather than assuming a folder of that name
-            // sits in the caller's own language: this diagnostic reported
-            // "Page folder not found" for perfectly healthy pages that simply
-            // live in another language, which is a misleading support signal.
-            try {
-                $located = $this->locatePageForOperation($pageId);
-                $pageFolder = $located['folder'] ?? $folder->get($pageId);
-                $storage = $pageFolder->getStorage();
-                $cache = $storage->getCache();
-
-                // Try to get cache entry using the storage's cache directly
-                $cacheEntry = $cache->get($pageFolder->getInternalPath());
-
-                if ($cacheEntry !== false && $cacheEntry instanceof ICacheEntry) {
-                    return [
-                        'visible' => true,
-                        'inCache' => true,
-                        'folderId' => $cacheEntry->getId(),
-                        'path' => $pageFolder->getPath(),
-                        'message' => 'Page is visible in Files app'
-                    ];
-                } else {
-                    // Folder exists on disk but not in cache
-                    return [
-                        'visible' => false,
-                        'inCache' => false,
-                        'folderId' => null,
-                        'message' => 'Page created but waiting for Nextcloud to index it. This may take 5-15 minutes.'
-                    ];
-                }
-            } catch (NotFoundException $e) {
-                return [
-                    'visible' => false,
-                    'inCache' => false,
-                    'folderId' => null,
-                    'message' => 'Page folder not found'
-                ];
-            }
-        } catch (\Exception $e) {
-            $this->logger->error('Failed to check page cache status', [
-                'error' => $e->getMessage(),
-                'pageId' => $pageId
-            ]);
-
-            return [
-                'visible' => false,
-                'inCache' => false,
-                'error' => $e->getMessage(),
-                'message' => 'Unable to check cache status'
-            ];
-        }
-    }
 
     /**
      * Get the full page tree structure for the current language

@@ -28,7 +28,6 @@ class PageServicePublicSurfaceTest extends TestCase {
     private const PUBLIC_SURFACE = [
         'beginDeferredClear' => 0,
         'canCreateTemplates' => 0,
-        'checkPageCacheStatus' => 1,
         'copyPage' => 3,
         'createPage' => 2,
         'createPageFromTemplate' => 3,
@@ -101,7 +100,7 @@ class PageServicePublicSurfaceTest extends TestCase {
 
     public function testSurfaceCountIsPinned(): void {
         $this->assertCount(
-            40,
+            39,
             $this->currentSurface(),
             'the public method count changed; see testPublicSurfaceMatchesTheFrozenExpectation'
         );
