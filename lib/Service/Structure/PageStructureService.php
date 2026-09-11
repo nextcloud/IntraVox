@@ -8,6 +8,7 @@ use OCA\IntraVox\Exception\CrossLanguageMoveException;
 use OCA\IntraVox\Exception\ForbiddenException;
 use OCA\IntraVox\Exception\PageNotFoundException;
 use OCA\IntraVox\Service\Folder\FolderContext;
+use OCA\IntraVox\Service\Homepage\HomepageResolverService;
 use OCA\IntraVox\Service\PageIndexService;
 use OCA\IntraVox\Service\Util\PageIdUtils;
 use Psr\Log\LoggerInterface;
@@ -21,11 +22,12 @@ use Psr\Log\LoggerInterface;
  * the future permission shell, not here).
  *
  * Folder-substrate concerns (languageFolder / languageOfFolder /
- * relativePathFromRoot) come from the injected FolderContext; the remaining
- * cross-language lookups + isHomepage + languageDisplayName + validateDepth +
- * clearCache come in as $this-bound closures, so the seam-subclasses keep
- * intercepting with zero test edits. PageMoveGuardTest and
- * PageServiceMoveLanguageTest pin the behaviour byte-for-byte.
+ * relativePathFromRoot) come from the injected FolderContext; the homepage check
+ * comes from the injected HomepageResolverService; the remaining cross-language
+ * lookups + languageDisplayName + validateDepth + clearCache come in as
+ * $this-bound closures, so the seam-subclasses keep intercepting with zero test
+ * edits. PageMoveGuardTest and PageServiceMoveLanguageTest pin the behaviour
+ * byte-for-byte.
  */
 final class PageStructureService {
     public function __construct(
@@ -33,6 +35,7 @@ final class PageStructureService {
         private PageIndexService $pageIndexService,
         private LoggerInterface $logger,
         private FolderContext $folders,
+        private HomepageResolverService $homepageResolver,
     ) {
     }
 
@@ -47,7 +50,6 @@ final class PageStructureService {
      * @param \Closure(\OCP\Files\Folder, string): ?array $findPageById
      * @param \Closure(\OCP\Files\Folder, string): ?array $findPageByUniqueId
      * @param \Closure(array): ?\OCP\Files\Folder $languageFolderOfPageResult
-     * @param \Closure(string): bool $isHomepage
      * @param \Closure(string): string $languageDisplayName
      * @param \Closure(string): void $validateDepth
      * @param \Closure(): void $clearCache
@@ -60,7 +62,6 @@ final class PageStructureService {
         \Closure $findPageById,
         \Closure $findPageByUniqueId,
         \Closure $languageFolderOfPageResult,
-        \Closure $isHomepage,
         \Closure $languageDisplayName,
         \Closure $validateDepth,
         \Closure $clearCache
@@ -98,7 +99,7 @@ final class PageStructureService {
             $decoded = json_decode($source['file']->getContent(), true);
             $sourceUniqueId = is_array($decoded) ? ($decoded['uniqueId'] ?? '') : '';
         }
-        if ($sourceUniqueId !== '' && $isHomepage($sourceUniqueId)) {
+        if ($sourceUniqueId !== '' && $this->homepageResolver->isHomepage($sourceUniqueId)) {
             throw new \InvalidArgumentException('HOMEPAGE_PROTECTED');
         }
 

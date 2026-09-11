@@ -439,7 +439,8 @@ class PageService {
             $this->idUtils,
             $this->pageIndexService,
             $this->logger,
-            $this->folders()
+            $this->folders(),
+            $this->homepageResolver
         );
     }
 
@@ -1249,7 +1250,6 @@ class PageService {
             fn(\OCP\Files\Folder $folder, string $legacyId): ?array => $this->findPageById($folder, $legacyId),
             fn(\OCP\Files\Folder $folder, string $uid): ?array => $this->findPageByUniqueId($folder, $uid),
             fn(array $result): ?\OCP\Files\Folder => $this->languageFolderOfPageResult($result),
-            fn(string $uid): bool => $this->isHomepage($uid),
             fn(string $code): string => $this->languageDisplayName($code),
             function (string $path): void {
                 $this->validateDepth($path);
