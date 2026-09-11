@@ -133,6 +133,17 @@ final class HomepageResolverService {
     }
 
     /**
+     * Whether the given uniqueId is the resolved homepage for the language.
+     * Handles the legacy 'home' id as well as a configured pointer target.
+     */
+    public function isHomepage(string $uniqueId, ?string $language = null): bool {
+        if ($uniqueId === '') {
+            return false;
+        }
+        return $uniqueId === $this->resolveHomepageNodeUniqueId($language);
+    }
+
+    /**
      * Point the homepage at a root-level page (pointer only — pages never move).
      *
      * @throws \InvalidArgumentException when the page is missing or not root-level
