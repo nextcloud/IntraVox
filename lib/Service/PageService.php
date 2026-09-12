@@ -356,9 +356,10 @@ class PageService {
 
     /**
      * Lazy seam for the sibling reorderer (Phase "reorder"). Built from
-     * locator(); the getLanguageFolder seam is resolved by the delegator and
-     * passed in, and isHomepage/clearCache are passed as closures. Nullable-
-     * default so the harness auto-fill skips it (see the load-bearing note).
+     * locator() + the injected HomepageResolverService; the getLanguageFolder seam
+     * is resolved by the delegator and passed in, and clearCache is passed as a
+     * closure. Nullable-default so the harness auto-fill skips it (see the
+     * load-bearing note).
      */
     private function reorderer(): \OCA\IntraVox\Service\Reorder\PageReorderer {
         return $this->reorderer ??= new \OCA\IntraVox\Service\Reorder\PageReorderer($this->locator(), $this->homepageResolver);
@@ -410,9 +411,9 @@ class PageService {
 
     /**
      * Lazy seam for the page mutation service (god-class dissolution, write
-     * cluster). Built from the real deps; the resolved language folder and the
-     * lookups/isHomepage/clearCache seams are passed per-call as arg + closures.
-     * Nullable-default so the harness auto-fill skips it.
+     * cluster). Built from the real deps + the injected HomepageResolverService;
+     * the resolved language folder and the lookups/clearCache seams are passed
+     * per-call as arg + closures. Nullable-default so the harness auto-fill skips it.
      */
     private function writeService(): \OCA\IntraVox\Service\Write\PageWriteService {
         return $this->writeService ??= new \OCA\IntraVox\Service\Write\PageWriteService(
@@ -1460,10 +1461,10 @@ class PageService {
      */
     public function reorderSiblings(?string $parentUniqueId, array $orderedChildIds): void {
         // The order-writing walk lives in Reorder/PageReorderer (Phase "reorder").
-        // The write-target folder is resolved here through FolderContext; isHomepage
-        // and the private clearCache are handed in as closures so both stay
-        // overridable/private. PageReorderer's signature is unchanged (it still
-        // takes the resolved Folder).
+        // The write-target folder is resolved here through FolderContext; the
+        // homepage check comes from the injected HomepageResolverService and the
+        // private clearCache is handed in as a closure so it stays private.
+        // PageReorderer takes the resolved Folder.
         $this->reorderer()->reorder(
             $parentUniqueId,
             $orderedChildIds,
