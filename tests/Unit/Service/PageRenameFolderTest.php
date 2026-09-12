@@ -34,12 +34,9 @@ class PageRenameFolderTest extends TestCase {
 
     /** Records clearCache() calls so a rename's cache-clear is observable. */
     private int $clearCacheCalls = 0;
-    /** The isHomepage answer the rename() closure returns for this fixture. */
-    private bool $isHomepageAnswer = false;
 
     private function makeService(bool $isHomepage, PageIndexService $index): PageMetadataService {
         $this->clearCacheCalls = 0;
-        $this->isHomepageAnswer = $isHomepage;
         // renamePageFolder touches only idUtils/pageIndexService/logger + the
         // isHomepage closure; the other ctor deps are irrelevant here, so they are
         // plain mocks / a bare FolderContext.
@@ -68,6 +65,10 @@ class PageRenameFolderTest extends TestCase {
             $this->createMock(\OCA\IntraVox\Service\Translation\TranslationGroupService::class),
             new \OCA\IntraVox\Service\Util\GroupfolderResolver()
         );
+        // fase-5 Phase III: PageMetadataService's isHomepage \Closure became an
+        // injected HomepageResolverService. Rig it so isHomepage('page-x','en') ===
+        // $isHomepage — the fixture pageData below carries uniqueId 'page-x', and
+        // fakeHomepageResolver($home) makes isHomepage(uid) === (uid === $home).
         return new PageMetadataService(
             new PageIdUtils(),
             $this->createMock(\OCA\IntraVox\Service\Version\PageVersionService::class),
@@ -76,7 +77,8 @@ class PageRenameFolderTest extends TestCase {
             $this->doubleOrBuild(PageShapeSanitizer::class),
             $folders,
             $enricher,
-            $this->createMock(\Psr\Log\LoggerInterface::class)
+            $this->createMock(\Psr\Log\LoggerInterface::class),
+            $this->fakeHomepageResolver($isHomepage ? 'page-x' : null)
         );
     }
 
@@ -87,7 +89,6 @@ class PageRenameFolderTest extends TestCase {
             $result,
             $requested,
             ['uniqueId' => 'page-x', 'language' => 'en'],
-            fn(string $uid, ?string $language = null): bool => $this->isHomepageAnswer,
             function (): void {
                 $this->clearCacheCalls++;
             }

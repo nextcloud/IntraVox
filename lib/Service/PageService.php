@@ -460,7 +460,8 @@ class PageService {
             $this->shape(),
             $this->folders(),
             $this->pageDataEnricher(),
-            $this->logger
+            $this->logger,
+            $this->homepageResolver
         );
     }
 
@@ -1382,8 +1383,7 @@ class PageService {
         return $this->metadata()->getPageMetadata(
             $pageId,
             fn(\OCP\Files\Folder $folder, string $uid): ?array => $this->locatePageAnyLanguage($folder, $uid),
-            fn(\OCP\Files\Folder $folder, string $legacyId): ?array => $this->findPageById($folder, $legacyId),
-            fn(string $uid, ?string $language = null): bool => $this->isHomepage($uid, $language)
+            fn(\OCP\Files\Folder $folder, string $legacyId): ?array => $this->findPageById($folder, $legacyId)
         );
     }
 
@@ -1392,14 +1392,13 @@ class PageService {
      */
     public function updatePageMetadata(string $pageId, array $metadata): array {
         // Body lives in Metadata/PageMetadataService (METADATA domain). Folder
-        // concerns come from the injected FolderContext; page lookup + the
-        // homepage seam + clearCache go in as $this-bound closures.
+        // concerns come from the injected FolderContext; page lookup + clearCache
+        // go in as $this-bound closures.
         return $this->metadata()->updatePageMetadata(
             $pageId,
             $metadata,
             fn(\OCP\Files\Folder $folder, string $uid): ?array => $this->locatePageAnyLanguage($folder, $uid),
             fn(\OCP\Files\Folder $folder, string $legacyId): ?array => $this->findPageById($folder, $legacyId),
-            fn(string $uid, ?string $language = null): bool => $this->isHomepage($uid, $language),
             function (): void {
                 $this->clearCache();
             }

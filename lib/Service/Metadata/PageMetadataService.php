@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace OCA\IntraVox\Service\Metadata;
 
 use OCA\IntraVox\Service\Folder\FolderContext;
+use OCA\IntraVox\Service\Homepage\HomepageResolverService;
 use OCA\IntraVox\Service\NavigationService;
 use OCA\IntraVox\Service\PageIndexService;
 use OCA\IntraVox\Service\Path\PageDataEnricher;
@@ -23,8 +24,9 @@ use Psr\Log\LoggerInterface;
  * This is the first domain carve that leans on FolderContext: the folder concerns
  * arrive as ONE injected FolderContext (languageFolder / userLanguage) rather than
  * a bundle of seam closures. The #70 canWrite gate rides in through the shared
- * PageDataEnricher. Page lookup and the homepage seam stay page-lookup-bound and
- * come in per call as $this-bound closures, so a caller keeps intercepting them.
+ * PageDataEnricher. The homepage check comes from the injected
+ * HomepageResolverService; page lookup stays page-lookup-bound and comes in per
+ * call as $this-bound closures, so a caller keeps intercepting them.
  *
  * Behaviour is byte-identical to the former PageService methods: PageMetadataTest,
  * PageRenameFolderTest and PageServiceSeamContractTest pin it.
@@ -39,6 +41,7 @@ final class PageMetadataService {
         private FolderContext $folders,
         private PageDataEnricher $enricher,
         private LoggerInterface $logger,
+        private HomepageResolverService $homepageResolver,
     ) {
     }
 
@@ -49,13 +52,11 @@ final class PageMetadataService {
      *
      * @param \Closure(\OCP\Files\Folder, string): ?array $locatePageAnyLanguage
      * @param \Closure(\OCP\Files\Folder, string): ?array $findPageById
-     * @param \Closure(string, ?string): bool $isHomepage
      */
     public function getPageMetadata(
         string $pageId,
         \Closure $locatePageAnyLanguage,
-        \Closure $findPageById,
-        \Closure $isHomepage
+        \Closure $findPageById
     ): array {
         // Get page and file info
         $folder = $this->folders->languageFolder();
@@ -127,7 +128,7 @@ final class PageMetadataService {
         // hides the folder option in that case.
         // $data is the enriched array (enrich() returns array), so it is always an
         // array here — the former is_array() guard was dead and is dropped.
-        $renameLayout = $this->resolvePageLayoutForRename($result, $data, $isHomepage);
+        $renameLayout = $this->resolvePageLayoutForRename($result, $data);
 
         // Return metadata using filesystem timestamps
         $metadata = [
@@ -166,7 +167,6 @@ final class PageMetadataService {
      *
      * @param \Closure(\OCP\Files\Folder, string): ?array $locatePageAnyLanguage
      * @param \Closure(\OCP\Files\Folder, string): ?array $findPageById
-     * @param \Closure(string, ?string): bool $isHomepage
      * @param \Closure(): void $clearCache
      */
     public function updatePageMetadata(
@@ -174,7 +174,6 @@ final class PageMetadataService {
         array $metadata,
         \Closure $locatePageAnyLanguage,
         \Closure $findPageById,
-        \Closure $isHomepage,
         \Closure $clearCache
     ): array {
         $folder = $this->folders->languageFolder();
@@ -233,13 +232,13 @@ final class PageMetadataService {
         // a folder that keeps its old name is exactly today's behaviour.
         $folderRename = null;
         if (isset($metadata['folderName']) && is_string($metadata['folderName']) && $metadata['folderName'] !== '') {
-            $folderRename = $this->renamePageFolder($result, $metadata['folderName'], is_array($data) ? $data : [], $isHomepage, $clearCache);
+            $folderRename = $this->renamePageFolder($result, $metadata['folderName'], is_array($data) ? $data : [], $clearCache);
         }
 
         // Refetch by uniqueId when we have one: after a folder rename, a
         // legacy slug-shaped $pageId no longer resolves.
         $refetchId = (is_array($data) && !empty($data['uniqueId'])) ? (string)$data['uniqueId'] : $pageId;
-        $response = $this->getPageMetadata($refetchId, $locatePageAnyLanguage, $findPageById, $isHomepage);
+        $response = $this->getPageMetadata($refetchId, $locatePageAnyLanguage, $findPageById);
         if ($folderRename !== null) {
             $response['folderRename'] = $folderRename;
         }
@@ -310,17 +309,16 @@ final class PageMetadataService {
      *   - 'beside': legacy model, `{slug}.json` next to `{slug}/`
      *
      * @param array{file?:\OCP\Files\File, folder?:\OCP\Files\Folder, isHome?:bool} $result
-     * @param \Closure(string, ?string): bool $isHomepage
      * @return array{layout:string, file:\OCP\Files\File, folder:\OCP\Files\Folder}|null
      */
-    private function resolvePageLayoutForRename(array $result, array $pageData, \Closure $isHomepage): ?array {
+    private function resolvePageLayoutForRename(array $result, array $pageData): ?array {
         if (!empty($result['isHome'])) {
             return null;
         }
         $uniqueId = (string)($pageData['uniqueId'] ?? '');
         $language = isset($pageData['language']) && is_string($pageData['language'])
             ? $pageData['language'] : null;
-        if ($uniqueId !== '' && $isHomepage($uniqueId, $language)) {
+        if ($uniqueId !== '' && $this->homepageResolver->isHomepage($uniqueId, $language)) {
             return null;
         }
         $file = $result['file'] ?? null;
@@ -357,12 +355,11 @@ final class PageMetadataService {
      * Never throws: the title rename this rides along with has already
      * succeeded, so the outcome is reported instead.
      *
-     * @param \Closure(string, ?string): bool $isHomepage
      * @param \Closure(): void $clearCache
      * @return array{status:string, reason?:string, folderName?:string}
      */
-    private function renamePageFolder(array $result, string $requestedName, array $pageData, \Closure $isHomepage, \Closure $clearCache): array {
-        $layout = $this->resolvePageLayoutForRename($result, $pageData, $isHomepage);
+    private function renamePageFolder(array $result, string $requestedName, array $pageData, \Closure $clearCache): array {
+        $layout = $this->resolvePageLayoutForRename($result, $pageData);
         if ($layout === null) {
             return ['status' => 'skipped', 'reason' => 'layout'];
         }
