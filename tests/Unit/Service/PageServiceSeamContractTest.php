@@ -78,7 +78,10 @@ class PageServiceSeamContractTest extends TestCase {
             // getPageTree (its only caller) to Tree/PageTreeService, so the by-ref
             // wrapper is gone; the recursive walk is PageTreeBuilder::build, which
             // PageTreePlaceholderTest + PageTreeBuilderTest now drive directly.
-            'getOrCreateFolderPath',
+            // getOrCreateFolderPath RETIRED from PageService — the fase-5 Phase IV
+            // write-substrate carve moved it into Write/PageWriteService (its sole
+            // caller path); PageServiceCrossLanguageTest reflects it there. The
+            // move is pinned explicitly below rather than by presence on PageService.
             // renamePageFolder RETIRED from PageService — it moved to
             // Metadata/PageMetadataService (PageRenameFolderTest reflects it there).
             // resolveTranslations RETIRED from PageService — facade elimination
@@ -93,6 +96,20 @@ class PageServiceSeamContractTest extends TestCase {
                 "$name is reached by reflection in the test suite and must not vanish silently"
             );
         }
+
+        // fase-5 Phase IV: getOrCreateFolderPath is gone from PageService and now
+        // lives as a private method on PageWriteService. Pin the move in both
+        // directions so a regression (re-adding it to PageService, or losing it on
+        // PageWriteService) is a loud, deliberate red — and so this test always
+        // makes at least one assertion (failOnRisky).
+        $this->assertFalse(
+            method_exists(PageService::class, 'getOrCreateFolderPath'),
+            'getOrCreateFolderPath moved to PageWriteService in Phase IV — it must not return to PageService'
+        );
+        $this->assertTrue(
+            method_exists(\OCA\IntraVox\Service\Write\PageWriteService::class, 'getOrCreateFolderPath'),
+            'getOrCreateFolderPath must exist on PageWriteService (reached by reflection in PageServiceCrossLanguageTest)'
+        );
     }
 
     /**

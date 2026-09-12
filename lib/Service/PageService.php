@@ -1097,57 +1097,6 @@ class PageService {
     }
 
     /**
-     * Get or create folder path recursively
-     * Example: "nl/departments/marketing/campaigns" will create all intermediate folders
-     *
-     * A sub-page belongs in its PARENT's language folder, not in the author's
-     * own. When the path names a language, that language wins: an English
-     * editor adding a page under a German parent writes into de/, exactly where
-     * the parent lives. Previously the language segment was stripped and the
-     * remainder re-created under the author's own language, which fabricated an
-     * empty mirror tree (de/departments/marketing/) whose parent pages did not
-     * exist there — the created page vanished from the context it was made in.
-     *
-     * Mirrors resolveExistingFolderPath() — keep the two in step.
-     */
-    private function getOrCreateFolderPath(string $path): \OCP\Files\Folder {
-        $pathParts = explode('/', trim($path, '/'));
-
-        // A leading language segment selects the content folder to build in.
-        // Fall back to the author's own language folder when the path carries
-        // no language (legacy callers) or when that language has no folder yet.
-        $currentFolder = null;
-        if (count($pathParts) > 0 && $this->languageService->isLanguageAvailable($pathParts[0])) {
-            $langCode = array_shift($pathParts);
-            try {
-                $candidate = $this->folders()->intraVox()->get($langCode);
-                if ($candidate instanceof \OCP\Files\Folder) {
-                    $currentFolder = $candidate;
-                }
-            } catch (NotFoundException $e) {
-                // No folder for that language — fall through to the author's own.
-            }
-        }
-        if ($currentFolder === null) {
-            $currentFolder = $this->folders()->languageFolder();
-        }
-
-        // Create each folder in path if it doesn't exist
-        foreach ($pathParts as $folderName) {
-            try {
-                $currentFolder = $currentFolder->get($folderName);
-                if ($currentFolder->getType() !== \OCP\Files\FileInfo::TYPE_FOLDER) {
-                    throw new \InvalidArgumentException("Path component '{$folderName}' exists but is not a folder");
-                }
-            } catch (NotFoundException $e) {
-                $currentFolder = $currentFolder->newFolder($folderName);
-            }
-        }
-
-        return $currentFolder;
-    }
-
-    /**
      * Create a new page
      *
      * @param array $data Page data (id, title, content, etc.)
@@ -1156,10 +1105,10 @@ class PageService {
      */
     public function createPage(array $data, ?string $parentPath = null): array {
         // The create body (validation, slug-dedup, group minting, write) lives in
-        // Write/PageWriteService (AUTHOR domain). Folder-substrate concerns come
-        // from the injected FolderContext; getOrCreateFolderPath (reflection-
-        // anchored) and validateDepth (shared with movePage) stay on PageService
-        // and are passed as closures.
+        // Write/PageWriteService (AUTHOR domain), including the folder-path
+        // provisioning (getOrCreateFolderPath is a private method there now).
+        // Folder-substrate concerns come from the injected FolderContext;
+        // validateDepth (shared with movePage) stays on PageService as a closure.
         return $this->writeService()->createPage(
             $data,
             $parentPath,
@@ -1167,7 +1116,6 @@ class PageService {
             function (?string $pageId = null): void {
                 $this->clearCache($pageId);
             },
-            fn(string $path): \OCP\Files\Folder => $this->getOrCreateFolderPath($path),
             function (string $path): void {
                 $this->validateDepth($path);
             },

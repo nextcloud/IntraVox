@@ -336,12 +336,10 @@ final class PageWriteService {
      *
      * The folder-substrate concerns (readLanguageFolder / userLanguage /
      * languageOfFolder) come from the injected FolderContext. The write-exclusive
-     * helpers (resolveExistingFolderPath, slugTakenIn, scanPageFolder) co-locate
-     * here as private methods. getOrCreateFolderPath (reflection-anchored) and
-     * validateDepth (shared with movePage) stay on PageService and come in as
-     * closures.
+     * helpers (resolveExistingFolderPath, slugTakenIn, scanPageFolder,
+     * getOrCreateFolderPath) co-locate here as private methods. validateDepth
+     * (shared with movePage) stays on PageService and comes in as a closure.
      *
-     * @param \Closure(string): \OCP\Files\Folder $getOrCreateFolderPath
      * @param \Closure(string): void $validateDepth
      * @param \Closure(\OCP\Files\Node): void $createMediaFolderMarker
      * @param \Closure(string, \OCP\Files\Folder): void $cachePageFolder setPageFolder
@@ -350,7 +348,6 @@ final class PageWriteService {
         string $pageId,
         array $data,
         ?string $parentPath,
-        \Closure $getOrCreateFolderPath,
         \Closure $validateDepth,
         \Closure $createMediaFolderMarker,
         \Closure $cachePageFolder
@@ -363,7 +360,7 @@ final class PageWriteService {
             $validateDepth($parentPath);
 
             // Get or create parent folder path
-            $targetFolder = $getOrCreateFolderPath($parentPath);
+            $targetFolder = $this->getOrCreateFolderPath($parentPath);
         } else {
             // No parent = create at the root of the language being VIEWED, so a
             // new page lands in the structure the author is actually working in
@@ -530,17 +527,70 @@ final class PageWriteService {
     }
 
     /**
+     * Get or create folder path recursively
+     * Example: "nl/departments/marketing/campaigns" will create all intermediate folders
+     *
+     * A sub-page belongs in its PARENT's language folder, not in the author's
+     * own. When the path names a language, that language wins: an English
+     * editor adding a page under a German parent writes into de/, exactly where
+     * the parent lives. Previously the language segment was stripped and the
+     * remainder re-created under the author's own language, which fabricated an
+     * empty mirror tree (de/departments/marketing/) whose parent pages did not
+     * exist there — the created page vanished from the context it was made in.
+     *
+     * Mirrors resolveExistingFolderPath() — keep the two in step.
+     */
+    private function getOrCreateFolderPath(string $path): \OCP\Files\Folder {
+        $pathParts = explode('/', trim($path, '/'));
+
+        // A leading language segment selects the content folder to build in.
+        // Fall back to the author's own language folder when the path carries
+        // no language (legacy callers) or when that language has no folder yet.
+        $currentFolder = null;
+        // explode() always yields >=1 element, so the old `count($pathParts) > 0`
+        // guard was always true (dead) — dropped; $pathParts[0] always exists.
+        if ($this->languageService->isLanguageAvailable($pathParts[0])) {
+            $langCode = array_shift($pathParts);
+            try {
+                $candidate = $this->folders->intraVox()->get($langCode);
+                if ($candidate instanceof \OCP\Files\Folder) {
+                    $currentFolder = $candidate;
+                }
+            } catch (NotFoundException $e) {
+                // No folder for that language — fall through to the author's own.
+            }
+        }
+        if ($currentFolder === null) {
+            $currentFolder = $this->folders->languageFolder();
+        }
+
+        // Create each folder in path if it doesn't exist
+        foreach ($pathParts as $folderName) {
+            try {
+                $currentFolder = $currentFolder->get($folderName);
+                if ($currentFolder->getType() !== \OCP\Files\FileInfo::TYPE_FOLDER) {
+                    throw new \InvalidArgumentException("Path component '{$folderName}' exists but is not a folder");
+                }
+            } catch (NotFoundException $e) {
+                $currentFolder = $currentFolder->newFolder($folderName);
+            }
+        }
+
+        return $currentFolder;
+    }
+
+    /**
      * Create a new page (validation, slug-dedup, uniqueId + translation-group
      * minting, then the write via createPageAtPath). PageService keeps a thin
      * public delegator; the seam-bound folder concerns come in as closures.
      *
      * The folder-substrate concerns (readLanguageFolder / intraVox / languageFolder
-     * / userLanguage / languageOfFolder) now come from the injected FolderContext;
-     * only the non-folder / reflection-anchored concerns stay as closures.
+     * / userLanguage / languageOfFolder) now come from the injected FolderContext,
+     * and getOrCreateFolderPath is a private method here; only the non-folder
+     * concerns stay as closures.
      *
      * @param \Closure(array): array $validateAndSanitizePage
      * @param \Closure(?string): void $clearCache
-     * @param \Closure(string): \OCP\Files\Folder $getOrCreateFolderPath
      * @param \Closure(string): void $validateDepth
      * @param \Closure(\OCP\Files\Node): void $createMediaFolderMarker
      * @param \Closure(string, \OCP\Files\Folder): void $cachePageFolder
@@ -550,7 +600,6 @@ final class PageWriteService {
         ?string $parentPath,
         \Closure $validateAndSanitizePage,
         \Closure $clearCache,
-        \Closure $getOrCreateFolderPath,
         \Closure $validateDepth,
         \Closure $createMediaFolderMarker,
         \Closure $cachePageFolder
@@ -600,7 +649,6 @@ final class PageWriteService {
             $data['id'],
             $validatedData,
             $parentPath,
-            $getOrCreateFolderPath,
             $validateDepth,
             $createMediaFolderMarker,
             $cachePageFolder

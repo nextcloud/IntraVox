@@ -297,10 +297,16 @@ class PageServiceCrossLanguageTest extends TestCase {
         $this->assertSame('/IntraVox/en/zz/team', $target->getPath());
     }
 
-    /** Drive the private getOrCreateFolderPath() through reflection. */
+    /**
+     * Drive the moved getOrCreateFolderPath() on the real PageWriteService the
+     * facade builds. fase-5 Phase IV moved the method off PageService into
+     * Write/PageWriteService; writeService() lazily builds it from the SAME injected
+     * folderContext + languageService, so the walk hits the identical fixture folders.
+     */
     private function callGetOrCreateFolderPath(PageService $svc, string $path): Folder {
-        $m = new \ReflectionMethod(PageService::class, 'getOrCreateFolderPath');
-        return $m->invoke($svc, $path);
+        $writeService = (new \ReflectionMethod(PageService::class, 'writeService'))->invoke($svc);
+        $m = new \ReflectionMethod(\OCA\IntraVox\Service\Write\PageWriteService::class, 'getOrCreateFolderPath');
+        return $m->invoke($writeService, $path);
     }
 
 
