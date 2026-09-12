@@ -1,6 +1,7 @@
 OC.L10N.register(
     "intravox",
     {
+    "You deleted page \"%s\"" : "Tu izdzēsi lapu “%s”",
     "Text" : "Teksts",
     "Forms" : "Veidlapas",
     "Other" : "Cits",
