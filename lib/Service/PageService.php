@@ -424,7 +424,8 @@ class PageService {
             $this->pageIndexService,
             $this->languageService,
             $this->folders(),
-            $this->locator()
+            $this->locator(),
+            $this->homepageResolver
         );
     }
 
@@ -1210,12 +1211,12 @@ class PageService {
         // write cluster). The language folder goes in as a CLOSURE (not resolved
         // here) so PageWriteService can fire its $id==='home' guard before
         // resolving — matching the pre-carve monolith, which checked 'home' before
-        // touching getLanguageFolder(). The cross-language lookups + isHomepage +
-        // clearCache go in as closures so the seam-subclasses keep intercepting.
+        // touching getLanguageFolder(). The homepage check comes from the injected
+        // HomepageResolverService; clearCache goes in as a closure so the
+        // seam-subclasses keep intercepting.
         $this->writeService()->deletePage(
             $id,
             fn(): \OCP\Files\Folder => $this->folders()->languageFolder(),
-            fn(string $uid): bool => $this->isHomepage($uid),
             function (): void {
                 $this->clearCache();
             }

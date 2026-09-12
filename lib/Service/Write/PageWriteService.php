@@ -9,6 +9,7 @@ use OCA\IntraVox\Exception\ForbiddenException;
 use OCA\IntraVox\Exception\PageConflictException;
 use OCA\IntraVox\Exception\PageNotFoundException;
 use OCA\IntraVox\Service\Folder\FolderContext;
+use OCA\IntraVox\Service\Homepage\HomepageResolverService;
 use OCA\IntraVox\Service\LanguageService;
 use OCA\IntraVox\Service\PageIndexService;
 use OCA\IntraVox\Service\Sanitize\VideoOriginalUrlPreserver;
@@ -25,9 +26,10 @@ use Psr\Log\LoggerInterface;
  * create follows.
  *
  * The protected folder seams stay on PageService; this service receives the
- * already-resolved language folder as an argument and the cross-language
- * lookups + isHomepage + validateAndSanitizePage + clearCache as $this-bound
- * closures, so the 26 seam subclasses keep intercepting with zero test edits.
+ * already-resolved language folder as an argument, the homepage check from the
+ * injected HomepageResolverService, and the cross-language lookups +
+ * validateAndSanitizePage + clearCache as $this-bound closures, so the 26 seam
+ * subclasses keep intercepting with zero test edits.
  * PageCrudWriteTest / PageConcurrencyTest / PageUpdatePipelineTest pin the
  * behaviour byte-for-byte.
  */
@@ -42,6 +44,7 @@ final class PageWriteService {
         private LanguageService $languageService,
         private FolderContext $folders,
         private \OCA\IntraVox\Service\Locator\PageLocator $locator,
+        private HomepageResolverService $homepageResolver,
     ) {
     }
 
@@ -51,13 +54,11 @@ final class PageWriteService {
      * create-on-miss or throw, and the pre-carve monolith checked 'home' first.
      *
      * @param \Closure(): \OCP\Files\Folder $languageFolder getLanguageFolder seam
-     * @param \Closure(string): bool $isHomepage
      * @param \Closure(): void $clearCache
      */
     public function deletePage(
         string $id,
         \Closure $languageFolder,
-        \Closure $isHomepage,
         \Closure $clearCache
     ): void {
         if ($id === 'home') {
@@ -98,7 +99,7 @@ final class PageWriteService {
         // (issue: configurable homepage). Distinguishable error so the UI can
         // prompt the user to pick another homepage.
         $resolvedUniqueId = $pageData['uniqueId'] ?? '';
-        if ($resolvedUniqueId !== '' && $isHomepage($resolvedUniqueId)) {
+        if ($resolvedUniqueId !== '' && $this->homepageResolver->isHomepage($resolvedUniqueId)) {
             throw new \InvalidArgumentException('HOMEPAGE_PROTECTED');
         }
 
