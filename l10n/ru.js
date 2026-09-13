@@ -124,6 +124,7 @@ OC.L10N.register(
     "Retry" : "Попробовать снова",
     "Open {name}" : "Открыть {name}",
     "Previous page" : "Предыдущая страница",
+    "Page {current} of {total}" : "Страница {current} из {total}",
     "Next page" : "Следующая страница",
     "Timeline" : "Лента",
     "Small" : "Маленькая",
