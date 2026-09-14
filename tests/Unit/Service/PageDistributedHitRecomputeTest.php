@@ -50,11 +50,6 @@ class PageDistributedHitRecomputeTest extends TestCase {
         // getPage (the #70 distributed-hit recompute path) resolves its folder via
         // folders()->readLanguageFolder() ($lang), driven by the injected
         // folderContext below.
-        $svc = new class extends PageService {
-            public function __construct() {
-            }
-        };
-
         // Cache: request miss, distributed hit returning the stale entry.
         $cache = $this->createMock(PageCacheService::class);
         $cache->method('getPageData')->willReturn(null);
@@ -69,7 +64,8 @@ class PageDistributedHitRecomputeTest extends TestCase {
         $index = $this->createMock(PageIndexService::class);
         $index->method('findByUniqueId')->willReturn(null);
 
-        $this->injectPageServiceDependencies($svc, [
+        // Built through the real DI ctor (fase-6 Track 3a: no PageService subclass).
+        return $this->buildRealPageService([
             'permissionService' => $permissionService,
             'cache' => $cache,
             'metaVoxGateway' => $metaVoxGateway,
@@ -78,8 +74,6 @@ class PageDistributedHitRecomputeTest extends TestCase {
             'logger' => $this->createMock(LoggerInterface::class),
             'folderContext' => $this->fakeFolderContext(readLanguageFolder: $lang),
         ]);
-
-        return $svc;
     }
 
     public function testStalePermissionsInTheCachedEntryAreOverwrittenWithAFreshComputation(): void {

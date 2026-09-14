@@ -44,25 +44,20 @@ class PageSearchTest extends TestCase {
      * @param list<array> $pages page-data arrays as listAllWithContent yields
      */
     private function makeService(array $pages): PageService {
-        $svc = new class extends PageService {
-            public function __construct() {
-            }
-        };
-
-        // metaVox() is private (not overridable); set the gateway property so the
-        // lazy accessor finds it already built. It answers "no metadata" to every
-        // call, keeping the MetaVox scoring branch inert for these fixtures.
+        // metaVox() is private (not overridable); set the gateway so the lazy accessor
+        // finds it already built. It answers "no metadata" to every call, keeping the
+        // MetaVox scoring branch inert for these fixtures.
         $metaVox = $this->createMock(MetaVoxGateway::class);
         $metaVox->method('getMetaVoxDataForFiles')->willReturn([]);
         $metaVox->method('getMetaVoxFieldLabels')->willReturn([]);
         $metaVox->method('searchMetaVoxValues')->willReturn([]);
         $metaVox->method('groupfolderIdForFile')->willReturn(null);
 
-        $this->injectPageServiceDependencies($svc, [
+        // Built through the real DI ctor (fase-6 Track 3a: no PageService subclass).
+        return $this->buildRealPageService([
             'metaVoxGateway' => $metaVox,
             'pageLister' => $this->fakePageListerWithContent($pages),
         ]);
-        return $svc;
     }
 
     /** A page with a title and an optional list of layout rows/widgets. */

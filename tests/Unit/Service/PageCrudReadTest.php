@@ -32,22 +32,15 @@ class PageCrudReadTest extends TestCase {
     private function makeService(PageCacheService $cache, ?Folder $readFolder = null): PageService {
         // getPage resolves its folder through the injected FolderContext (both the
         // read-language folder and the cross-language intraVox root come from it),
-        // so injecting one directly replaces the old triple-seam override — no
-        // subclass needed at all. A null readFolder leaves the context unable to
-        // resolve, driving the clean-miss / hit-short-circuit paths exactly as the
-        // throwing seams used to. (clean-target step 8: seam overrides retired.)
-        $svc = new class extends PageService {
-            public function __construct() {
-            }
-        };
-
-        $this->injectPageServiceDependencies($svc, [
+        // so injecting one directly replaces the old triple-seam override. A null
+        // readFolder leaves the context unable to resolve, driving the clean-miss /
+        // hit-short-circuit paths exactly as the throwing seams used to. Built through
+        // the real DI ctor (fase-6 Track 3a: no PageService subclass anywhere).
+        return $this->buildRealPageService([
             'cache' => $cache,
             'logger' => $this->createMock(LoggerInterface::class),
             'folderContext' => $this->fakeFolderContext(readLanguageFolder: $readFolder),
         ]);
-
-        return $svc;
     }
 
     public function testRequestCacheHitReturnsVerbatimWithoutTouchingTheFilesystem(): void {

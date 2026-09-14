@@ -393,10 +393,20 @@ trait BuildsPageService {
         $index = $explicit['pageIndexService'] ?? $this->createMock(\OCA\IntraVox\Service\PageIndexService::class);
         $cache = $explicit['cache'] ?? $this->createMock(PageCacheService::class);
         $set = fn(string $p, object $v) => (new \ReflectionProperty(PageService::class, $p))->setValue($svc, $v);
+        // A caller can pass a promoted service by its PROPERTY name (pageLister /
+        // homepageResolver) — but the ctor-fill above matches by ctor-PARAM name
+        // (pageListerService / homepageResolverService), so such a value never reached
+        // the ctor. Reflection-set it here so it is honoured (mirrors what
+        // injectPageServiceDependencies does), then the $already guard sees it wired.
+        foreach (['pageLister', 'homepageResolver'] as $promoted) {
+            if (isset($explicit[$promoted]) && is_object($explicit[$promoted])) {
+                $set($promoted, $explicit[$promoted]);
+            }
+        }
         // A property already reflection-set by the caller (e.g. a test that rigged
         // its own homepageResolver) counts as "wired" too.
-        $already = fn(string $p) => array_key_exists($p, $explicit)
-            || (new \ReflectionProperty(PageService::class, $p))->isInitialized($svc);
+        $already = fn(string $p) => (new \ReflectionProperty(PageService::class, $p))->isInitialized($svc)
+            || array_key_exists($p, $explicit);
 
         if (!$already('pageLister')) {
             $set('pageLister', new \OCA\IntraVox\Service\Listing\PageLister(
