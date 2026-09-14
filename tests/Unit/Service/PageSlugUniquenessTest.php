@@ -387,11 +387,13 @@ class PageSlugUniquenessTest extends TestCase {
             // getPage closure ($seen ?? []) played, now the ctor PageReadService.
             $this->fakePageReadFrom(function (string $id) use (&$seen): array {
                 return $seen ?? [];
-            })
-        );
-        $locator = new \OCA\IntraVox\Service\Locator\PageLocator(
-            $this->createMock(\OCA\IntraVox\Service\PageIndexService::class),
-            $this->createMock(\Psr\Log\LoggerInterface::class)
+            }),
+            // fase-7: copyPage self-sources the #90 cross-language locate via a real
+            // PageLocator against the fixture tree (mocked index → folder-walk path).
+            new \OCA\IntraVox\Service\Locator\PageLocator(
+                $this->createMock(\OCA\IntraVox\Service\PageIndexService::class),
+                $this->createMock(\Psr\Log\LoggerInterface::class)
+            )
         );
 
         $svc->copyPage(
@@ -402,7 +404,6 @@ class PageSlugUniquenessTest extends TestCase {
                 $seen = $data;
                 return $data + ['translationGroup' => 'tg-fresh'];
             },
-            fn(Folder $folder, string $uid): ?array => $locator->locatePageAnyLanguage(fn() => $base, $folder, $uid),
             fn(string $id): ?Folder => null
         );
 

@@ -30,9 +30,10 @@ use Psr\Log\LoggerInterface;
  * in the Write service) with zero change — AND the composition tests can drive this
  * service directly with a stub createPage. The engines
  * (template/translation-group/media/html-sanitizer/id utils) + FolderContext +
- * PageReadService + PageCacheInvalidator are ctor-injected. Page lookup +
- * writeTranslationGroup + getTemplate + findPageFolder stay page-lookup-bound and
- * come in per call as closures.
+ * PageReadService + PageCacheInvalidator + PageLocator are ctor-injected — page
+ * lookup and the template read are self-sourced from those. Only
+ * writeTranslationGroup + findPageFolder stay page-lookup-bound and come in per
+ * call as closures.
  *
  * PageCopyCompositionTest, PageTranslationCompositionTest and PageSlugUniquenessTest
  * pin the behaviour byte-for-byte.
@@ -49,6 +50,7 @@ final class PageCompositionService {
         private LoggerInterface $logger,
         private \OCA\IntraVox\Service\Cache\PageCacheInvalidator $cacheInvalidator,
         private \OCA\IntraVox\Service\Read\PageReadService $pageRead,
+        private \OCA\IntraVox\Service\Locator\PageLocator $locator,
     ) {
     }
 
@@ -56,7 +58,6 @@ final class PageCompositionService {
      * Create a translation of a page into another language (#translations).
      *
      * @param \Closure(array, ?string): array $createPage
-     * @param \Closure(\OCP\Files\Folder, string): ?array $locatePageAnyLanguage
      * @param \Closure(string): ?\OCP\Files\Folder $findPageFolder
      * @param \Closure(array, string): void $writeTranslationGroup
      * @return array the created page
@@ -69,7 +70,6 @@ final class PageCompositionService {
         string $language,
         ?string $title,
         \Closure $createPage,
-        \Closure $locatePageAnyLanguage,
         \Closure $findPageFolder,
         \Closure $writeTranslationGroup
     ): array {
@@ -77,7 +77,11 @@ final class PageCompositionService {
             throw new \InvalidArgumentException('Invalid language code: ' . $language);
         }
 
-        $source = $locatePageAnyLanguage($this->folders->readLanguageFolder(), $sourceUniqueId);
+        // Self-sourced cross-language root (fase-7), byte-identical to the old
+        // rootClosure the delegator built.
+        $intraVoxRoot = fn(): \OCP\Files\Folder => $this->folders->intraVox();
+
+        $source = $this->locator->locatePageAnyLanguage($intraVoxRoot, $this->folders->readLanguageFolder(), $sourceUniqueId);
         if ($source === null || !isset($source['file'])) {
             throw new PageNotFoundException('Page not found: ' . $sourceUniqueId);
         }
@@ -246,7 +250,6 @@ final class PageCompositionService {
      * Create a new page from a template.
      *
      * @param \Closure(array, ?string): array $createPage
-     * @param \Closure(string): ?array $getTemplate
      * @param \Closure(string): ?\OCP\Files\Folder $findPageFolder
      * @return array Result with success status and page data
      */
@@ -255,12 +258,24 @@ final class PageCompositionService {
         string $pageTitle,
         ?string $parentPath,
         \Closure $createPage,
-        \Closure $getTemplate,
         \Closure $findPageFolder
     ): array {
         try {
-            // Get template data
-            $templateData = $getTemplate($templateId);
+            // Get template data (inlined from the retired PageService::getTemplate
+            // facade, fase-7). Byte-faithful to that facade: ONLY the language-folder
+            // resolution degrades to null; a throw from getTemplate() itself is NOT
+            // caught here — it propagates to the outer catch below, which surfaces the
+            // real $e->getMessage() exactly as the facade did (its getTemplate() call
+            // sat outside its own try, so the exception bubbled through the delegator
+            // into this same outer catch).
+            try {
+                $templateLangFolder = $this->folders->languageFolder();
+            } catch (\Exception $e) {
+                $templateLangFolder = null;
+            }
+            $templateData = $templateLangFolder === null
+                ? null
+                : $this->pageTemplateService->getTemplate($templateLangFolder, $templateId);
             if ($templateData === null) {
                 return ['success' => false, 'error' => 'Template not found'];
             }
@@ -344,7 +359,6 @@ final class PageCompositionService {
      * Copy a page (its content + media) into a new draft page (issue: copy page).
      *
      * @param \Closure(array, ?string): array $createPage
-     * @param \Closure(\OCP\Files\Folder, string): ?array $locatePageAnyLanguage
      * @param \Closure(string): ?\OCP\Files\Folder $findPageFolder
      * @return array The freshly created page (getPage shape).
      * @throws \Exception When the source cannot be located.
@@ -354,14 +368,15 @@ final class PageCompositionService {
         ?string $targetParentId,
         ?string $newTitle,
         \Closure $createPage,
-        \Closure $locatePageAnyLanguage,
         \Closure $findPageFolder
     ): array {
         $languageFolder = $this->folders->languageFolder();
+        // Self-sourced cross-language root (fase-7).
+        $intraVoxRoot = fn(): \OCP\Files\Folder => $this->folders->intraVox();
 
         // A copy follows its source across language folders, like every other
         // operation on an existing page (#90).
-        $source = $locatePageAnyLanguage($languageFolder, $sourceUniqueId);
+        $source = $this->locator->locatePageAnyLanguage($intraVoxRoot, $languageFolder, $sourceUniqueId);
         if ($source === null || !isset($source['file'])) {
             throw new PageNotFoundException('Page not found: ' . $sourceUniqueId);
         }
@@ -374,7 +389,7 @@ final class PageCompositionService {
         // Determine the destination parent path.
         $parentPath = null;
         if ($targetParentId !== null && $targetParentId !== '') {
-            $targetParent = $locatePageAnyLanguage($languageFolder, $targetParentId);
+            $targetParent = $this->locator->locatePageAnyLanguage($intraVoxRoot, $languageFolder, $targetParentId);
             if ($targetParent === null || !isset($targetParent['folder'])) {
                 throw new PageNotFoundException('Target parent not found: ' . $targetParentId);
             }

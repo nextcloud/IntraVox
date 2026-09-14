@@ -111,21 +111,24 @@ class PageTranslationCompositionTest extends TestCase {
             $this->createMock(\Psr\Log\LoggerInterface::class),
             $this->fakeCacheInvalidator(),
             // createTranslation never reads through PageReadService; any real one suffices.
-            $this->fakePageReadReturning(null)
+            $this->fakePageReadReturning(null),
+            // fase-7: createTranslation self-sources the #90 cross-language locate via
+            // a real PageLocator against the fixture tree (mocked index → folder-walk path).
+            new \OCA\IntraVox\Service\Locator\PageLocator(
+                $this->createMock(\OCA\IntraVox\Service\PageIndexService::class),
+                $this->createMock(\Psr\Log\LoggerInterface::class)
+            )
         );
     }
 
     /**
      * Drive createTranslation with a stub createPage closure that records the data
-     * it is handed (replacing the old subclass createPage spy), plus the page-lookup
-     * / group / cache closures the PageService delegator would supply. locate uses a
-     * real PageLocator against the fixture tree, so the #90 cross-language walk runs.
+     * it is handed (replacing the old subclass createPage spy), plus the findPageFolder
+     * / writeTranslationGroup closures the PageService delegator would supply. The #90
+     * cross-language locate is self-sourced by the service via the injected real
+     * PageLocator against the fixture tree.
      */
     private function translate(PageCompositionService $svc, string $sourceUniqueId, string $language, ?string $title = null): array {
-        $locator = new \OCA\IntraVox\Service\Locator\PageLocator(
-            $this->createMock(\OCA\IntraVox\Service\PageIndexService::class),
-            $this->createMock(\Psr\Log\LoggerInterface::class)
-        );
         return $svc->createTranslation(
             $sourceUniqueId,
             $language,
@@ -135,7 +138,6 @@ class PageTranslationCompositionTest extends TestCase {
                 $this->seenParentPath = $parentPath;
                 return $data;
             },
-            fn(Folder $folder, string $uid): ?array => $locator->locatePageAnyLanguage(fn() => $this->base, $folder, $uid),
             fn(string $id): ?Folder => null,
             function (array $result, string $group): void {
             }

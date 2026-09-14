@@ -23,11 +23,12 @@ use PHPUnit\Framework\TestCase;
  * pin existed); the compose adversarial review flagged that gap. This closes it:
  * pin the observable contract of both directions.
  *
- * Drives PageCompositionService directly with stub getPage/createPage/getTemplate
- * closures (the same style as PageCopyCompositionTest), so the composition is
- * exercised without a PageService subclass. The PageTemplateService engine is
- * mocked — these tests pin the ORCHESTRATION (what data is stamped/stripped, the
- * error-array fallbacks, the media copy), not the engine's folder mechanics.
+ * Drives PageCompositionService directly with stub getPage/createPage closures
+ * (the same style as PageCopyCompositionTest), so the composition is exercised
+ * without a PageService subclass. The template read is self-sourced via the
+ * injected PageTemplateService::getTemplate (mocked per test); these tests pin the
+ * ORCHESTRATION (what data is stamped/stripped, the error-array fallbacks, the
+ * media copy), not the engine's folder mechanics.
  */
 class PageTemplateCompositionTest extends TestCase {
 
@@ -82,7 +83,10 @@ class PageTemplateCompositionTest extends TestCase {
             // saveAsTemplate reads its source here; createPageFromTemplate re-fetches
             // the created page here. Each test injects the page (or echo) its old
             // getPage closure supplied; the default returns nothing (source missing).
-            $this->fakePageReadFrom($pageRead ?? fn(string $id): ?array => null)
+            $this->fakePageReadFrom($pageRead ?? fn(string $id): ?array => null),
+            // createPageFromTemplate/saveAsTemplate never call the locator (only
+            // copy/translation walk cross-language) — an inert mock suffices.
+            $this->createMock(\OCA\IntraVox\Service\Locator\PageLocator::class)
         );
     }
 
@@ -152,6 +156,12 @@ class PageTemplateCompositionTest extends TestCase {
     public function testCreateFromTemplateStartsADraftWithFreshIdentityAndStrippedFields(): void {
         $templates = $this->createMock(PageTemplateService::class);
         $templates->method('templatesFolder')->willReturn(null); // no media step
+        // fase-7: the template read is self-sourced via PageTemplateService::getTemplate.
+        $templates->method('getTemplate')->willReturn([
+            'uniqueId' => 'template-abc', 'title' => 'Blank', 'isTemplate' => true,
+            'description' => 'desc', 'createdBy' => 'someone', 'sourcePageId' => 'page-old',
+            'status' => 'published', 'layout' => ['rows' => []],
+        ]);
 
         $seen = null;
         // The closing re-fetch echoes the created page — the role the old getPage
@@ -160,18 +170,13 @@ class PageTemplateCompositionTest extends TestCase {
             return $seen ?? [];
         });
 
-        $getTemplate = fn(string $id): ?array => [
-            'uniqueId' => 'template-abc', 'title' => 'Blank', 'isTemplate' => true,
-            'description' => 'desc', 'createdBy' => 'someone', 'sourcePageId' => 'page-old',
-            'status' => 'published', 'layout' => ['rows' => []],
-        ];
         $createPage = function (array $data, ?string $parentPath = null) use (&$seen): array {
             $seen = $data;
             return $data;
         };
         $findPageFolder = fn(string $id): ?Folder => null;
 
-        $result = $svc->createPageFromTemplate('tpl-1', 'My New Page', 'en', $createPage, $getTemplate, $findPageFolder);
+        $result = $svc->createPageFromTemplate('tpl-1', 'My New Page', 'en', $createPage, $findPageFolder);
 
         $this->assertTrue($result['success']);
         $this->assertNotNull($seen, 'createPage was reached');
@@ -186,6 +191,7 @@ class PageTemplateCompositionTest extends TestCase {
     }
 
     public function testCreateFromTemplateReturnsErrorArrayForAnUnknownTemplate(): void {
+        // The default createMock's getTemplate returns null → template not found.
         $svc = $this->makeService($this->createMock(PageTemplateService::class));
 
         $result = $svc->createPageFromTemplate(
@@ -193,7 +199,6 @@ class PageTemplateCompositionTest extends TestCase {
             'X',
             null,
             fn(array $d, ?string $p = null): array => $d,
-            fn(string $id): ?array => null,   // template not found
             fn(string $id): ?Folder => null
         );
 
@@ -201,11 +206,40 @@ class PageTemplateCompositionTest extends TestCase {
         $this->assertSame('Template not found', $result['error']);
     }
 
+    public function testCreateFromTemplateSurfacesTheTemplateReadFailureMessage(): void {
+        // Byte-faithful contract of the retired PageService::getTemplate facade
+        // (fase-7): a THROW from the template engine's getTemplate() must NOT be
+        // swallowed into the generic "Template not found" — it propagates to the
+        // outer catch and surfaces the real message. The facade's getTemplate() call
+        // sat outside its own try, so an engine throw bubbled through the delegator
+        // into this same outer catch; the inline must preserve that. (A too-eager
+        // inner catch would have masked the real cause behind "Template not found".)
+        $templates = $this->createMock(PageTemplateService::class);
+        $templates->method('getTemplate')->willThrowException(new \RuntimeException('template store offline'));
+
+        $svc = $this->makeService($templates);
+
+        $result = $svc->createPageFromTemplate(
+            'tpl-1',
+            'X',
+            null,
+            fn(array $d, ?string $p = null): array => $d,
+            fn(string $id): ?Folder => null
+        );
+
+        $this->assertFalse($result['success']);
+        $this->assertSame('template store offline', $result['error'], 'the real engine error surfaces, not the generic miss');
+    }
+
     public function testCreateFromTemplateFallsBackToCreatedDataWhenGetPageFails(): void {
         // The re-fetch through getPage may fail on a brand-new folder (ACL race);
         // the response must fall back to the created page rather than blow up.
         $templates = $this->createMock(PageTemplateService::class);
         $templates->method('templatesFolder')->willReturn(null);
+        // fase-7: the template read is self-sourced via PageTemplateService::getTemplate.
+        $templates->method('getTemplate')->willReturn(
+            ['uniqueId' => 'template-abc', 'title' => 'T', 'layout' => ['rows' => []]]
+        );
 
         // The re-fetch through PageReadService throws (ACL race on the fresh folder);
         // the response must fall back to the created page — the role the old throwing
@@ -224,7 +258,6 @@ class PageTemplateCompositionTest extends TestCase {
             'Page',
             null,
             $createPage,
-            fn(string $id): ?array => ['uniqueId' => 'template-abc', 'title' => 'T', 'layout' => ['rows' => []]],
             fn(string $id): ?Folder => null
         );
 

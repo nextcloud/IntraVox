@@ -422,7 +422,8 @@ class PageService {
             $this->userId,
             $this->logger,
             $this->cacheInvalidator,
-            $this->readService()
+            $this->readService(),
+            $this->locator()
         );
     }
 
@@ -760,7 +761,6 @@ class PageService {
             $language,
             $title,
             fn(array $data, ?string $parentPath = null): array => $this->createPage($data, $parentPath),
-            fn(\OCP\Files\Folder $folder, string $uid): ?array => $this->locatePageAnyLanguage($folder, $uid),
             fn(string $id): ?\OCP\Files\Folder => $this->findPageFolder($id),
             function (array $result, string $group): void {
                 $this->writeTranslationGroup($result, $group);
@@ -1360,7 +1360,6 @@ class PageService {
             $pageTitle,
             $parentPath,
             fn(array $data, ?string $parentPath = null): array => $this->createPage($data, $parentPath),
-            fn(string $id): ?array => $this->getTemplate($id),
             fn(string $id): ?\OCP\Files\Folder => $this->findPageFolder($id)
         );
     }
@@ -1386,7 +1385,6 @@ class PageService {
             $targetParentId,
             $newTitle,
             fn(array $data, ?string $parentPath = null): array => $this->createPage($data, $parentPath),
-            fn(\OCP\Files\Folder $folder, string $uid): ?array => $this->locatePageAnyLanguage($folder, $uid),
             fn(string $id): ?\OCP\Files\Folder => $this->findPageFolder($id)
         );
     }

@@ -97,7 +97,7 @@ class PageCopyCompositionTest extends TestCase {
 
         // copyPage resolves its write-target ($writeFolder) via
         // folders()->languageFolder() and walks cross-language via the injected
-        // locatePageAnyLanguage closure. The template/translation engines are unused
+        // PageLocator (self-sourced root). The template/translation engines are unused
         // by copyPage; the html sanitizer + id utils are real; media records copies.
         return new PageCompositionService(
             $this->createMock(PageTemplateService::class),
@@ -112,21 +112,24 @@ class PageCopyCompositionTest extends TestCase {
             // copyPage's closing re-fetch echoes the freshly created page — the same
             // role the old getPage closure ($this->seenData ?? []) played. Lazy so it
             // reads $seenData set during the copyPage call.
-            $this->fakePageReadFrom(fn(string $id): array => $this->seenData ?? [])
+            $this->fakePageReadFrom(fn(string $id): array => $this->seenData ?? []),
+            // fase-7: copyPage self-sources the #90 cross-language locate via a real
+            // PageLocator against the fixture tree (mocked index → folder-walk path).
+            new \OCA\IntraVox\Service\Locator\PageLocator(
+                $this->createMock(\OCA\IntraVox\Service\PageIndexService::class),
+                $this->createMock(\Psr\Log\LoggerInterface::class)
+            )
         );
     }
 
     /**
      * Drive copyPage with stub createPage/getPage closures (recording into
-     * $seenData/$seenParentPath) + the page-lookup/cache closures the PageService
-     * delegator would supply. locate uses a real PageLocator against the fixture
-     * tree so the #90 cross-language walk runs; getPage echoes the created data.
+     * $seenData/$seenParentPath) + the findPageFolder closure the PageService
+     * delegator would supply. The #90 cross-language locate is self-sourced by the
+     * service via the injected real PageLocator against the fixture tree; getPage
+     * echoes the created data.
      */
     private function copy(PageCompositionService $svc, string $sourceUniqueId, ?string $targetParentId = null, ?string $newTitle = null): array {
-        $locator = new \OCA\IntraVox\Service\Locator\PageLocator(
-            $this->createMock(\OCA\IntraVox\Service\PageIndexService::class),
-            $this->createMock(\Psr\Log\LoggerInterface::class)
-        );
         return $svc->copyPage(
             $sourceUniqueId,
             $targetParentId,
@@ -136,9 +139,6 @@ class PageCopyCompositionTest extends TestCase {
                 $this->seenParentPath = $parentPath;
                 return $data; // carries the fresh uniqueId copyPage set
             },
-            // Root = the /IntraVox base (both language folders), so the locate walks
-            // cross-language (#90) exactly as PageService's rootClosure() did.
-            fn(Folder $folder, string $uid): ?array => $locator->locatePageAnyLanguage(fn() => $this->base, $folder, $uid),
             fn(string $id): ?Folder => null
         );
     }
@@ -220,8 +220,9 @@ class PageCopyCompositionTest extends TestCase {
         $media = $this->createMock(PageMediaService::class);
         $svc = $this->makeSpy(['en' => $en, 'de' => $de], 'de', $media);
 
-        // The located source's folder IS the en language root itself (dirname '.').
-        $located = ['uniqueId' => 'page-src', 'file' => $en->get('home.json'), 'folder' => $en, 'isHome' => true];
+        // The injected real PageLocator resolves the source across languages: the
+        // primary (de write-folder) misses, the walk finds page-src's home.json in
+        // en/, so the located folder IS the en language root itself (dirname '.').
         $svc->copyPage(
             'page-src',
             null,
@@ -231,7 +232,6 @@ class PageCopyCompositionTest extends TestCase {
                 $this->seenParentPath = $parentPath;
                 return $data;
             },
-            fn(Folder $folder, string $uid): ?array => $located,
             fn(string $id): ?Folder => null
         );
 
