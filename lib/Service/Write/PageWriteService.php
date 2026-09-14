@@ -47,6 +47,7 @@ final class PageWriteService {
         private HomepageResolverService $homepageResolver,
         private \OCA\IntraVox\Service\Cache\PageCacheInvalidator $cacheInvalidator,
         private \OCA\IntraVox\Service\Sanitize\PageShapeSanitizer $shape,
+        private \OCA\IntraVox\Service\Media\PageMediaService $media,
     ) {
     }
 
@@ -337,7 +338,6 @@ final class PageWriteService {
      * (shared with movePage) stays on PageService and comes in as a closure.
      *
      * @param \Closure(string): void $validateDepth
-     * @param \Closure(\OCP\Files\Node): void $createMediaFolderMarker
      * @param \Closure(string, \OCP\Files\Folder): void $cachePageFolder setPageFolder
      */
     public function createPageAtPath(
@@ -345,7 +345,6 @@ final class PageWriteService {
         array $data,
         ?string $parentPath,
         \Closure $validateDepth,
-        \Closure $createMediaFolderMarker,
         \Closure $cachePageFolder
     ): array {
         $language = $this->folders->userLanguage();
@@ -390,10 +389,10 @@ final class PageWriteService {
             // Create _media folder for home if it doesn't exist
             try {
                 $mediaFolder = $targetFolder->get('_media');
-                $createMediaFolderMarker($mediaFolder);
+                $this->media->createMediaFolderMarker($mediaFolder);
             } catch (NotFoundException $e) {
                 $mediaFolder = $targetFolder->newFolder('_media');
-                $createMediaFolderMarker($mediaFolder);
+                $this->media->createMediaFolderMarker($mediaFolder);
             }
 
             $this->scanPageFolder($targetFolder);
@@ -417,12 +416,12 @@ final class PageWriteService {
             try {
                 $mediaFolder = $pageFolder->newFolder('_media');
                 // Add a .nomedia file to indicate this is a special folder
-                $createMediaFolderMarker($mediaFolder);
+                $this->media->createMediaFolderMarker($mediaFolder);
             } catch (\Exception $e) {
                 // Media folder might already exist, that's okay
                 try {
                     $mediaFolder = $pageFolder->get('_media');
-                    $createMediaFolderMarker($mediaFolder);
+                    $this->media->createMediaFolderMarker($mediaFolder);
                 } catch (\Exception $ex) {
                     // Couldn't get media folder
                 }
@@ -586,14 +585,12 @@ final class PageWriteService {
      * concerns stay as closures.
      *
      * @param \Closure(string): void $validateDepth
-     * @param \Closure(\OCP\Files\Node): void $createMediaFolderMarker
      * @param \Closure(string, \OCP\Files\Folder): void $cachePageFolder
      */
     public function createPage(
         array $data,
         ?string $parentPath,
         \Closure $validateDepth,
-        \Closure $createMediaFolderMarker,
         \Closure $cachePageFolder
     ): array {
         if (!isset($data['id']) || !isset($data['title'])) {
@@ -642,7 +639,6 @@ final class PageWriteService {
             $validatedData,
             $parentPath,
             $validateDepth,
-            $createMediaFolderMarker,
             $cachePageFolder
         );
 

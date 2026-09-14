@@ -357,7 +357,8 @@ class PageService {
             $this->locator(),
             $this->homepageResolver,
             $this->cacheInvalidator,
-            $this->shape()
+            $this->shape(),
+            $this->media()
         );
     }
 
@@ -539,13 +540,6 @@ class PageService {
         return $this->homepageResolver->resolveHomepageNodeUniqueId($language, $tree);
     }
 
-    /**
-     * Create a simple .nomedia marker for the _media folder
-     * The folder name "_media" itself is the primary identifier
-     */
-    private function createMediaFolderMarker($mediaFolder): void {
-        $this->media()->createMediaFolderMarker($mediaFolder);
-    }
 
     /**
      * Which language content folder does $folder sit in?
@@ -958,9 +952,6 @@ class PageService {
             $parentPath,
             function (string $path): void {
                 $this->validateDepth($path);
-            },
-            function (\OCP\Files\Node $mediaFolder): void {
-                $this->createMediaFolderMarker($mediaFolder);
             },
             function (string $uniqueId, \OCP\Files\Folder $pageFolder): void {
                 $this->cache()->setPageFolder($uniqueId, $pageFolder);
