@@ -95,16 +95,6 @@ class PageService {
      * Parse PHP size notation (e.g., '2M', '8M', '512K') to bytes
      */
 
-    /**
-     * Public flush hook for callers that mutate the underlying filesystem
-     * outside of PageService (notably ImportService, NavigationService,
-     * BulkOperationService) and need the IntraVox cache layers to forget
-     * everything so a fresh read rebuilds. Equivalent to the internal
-     * clearCache() but exposed for cross-service invalidation.
-     */
-    public function invalidateAllCaches(): void {
-        $this->clearCache();
-    }
 
     /**
      * Begin a batch: suppress the (expensive, blanket) clearCache() that each

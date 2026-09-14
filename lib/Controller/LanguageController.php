@@ -27,6 +27,7 @@ class LanguageController extends Controller {
     private PageService $pageService;
     private PermissionService $permissionService;
     private LoggerInterface $logger;
+    private \OCA\IntraVox\Service\Cache\PageCacheInvalidator $cacheInvalidator;
 
     public function __construct(
         string $appName,
@@ -35,7 +36,8 @@ class LanguageController extends Controller {
         LanguageHomepageService $homepageService,
         PageService $pageService,
         PermissionService $permissionService,
-        LoggerInterface $logger
+        LoggerInterface $logger,
+        \OCA\IntraVox\Service\Cache\PageCacheInvalidator $cacheInvalidator
     ) {
         parent::__construct($appName, $request);
         $this->languageService = $languageService;
@@ -43,6 +45,7 @@ class LanguageController extends Controller {
         $this->pageService = $pageService;
         $this->permissionService = $permissionService;
         $this->logger = $logger;
+        $this->cacheInvalidator = $cacheInvalidator;
     }
 
     /**
@@ -167,7 +170,7 @@ class LanguageController extends Controller {
 
             // Drop cached page trees so the language disappears from the UI at once.
             try {
-                $this->pageService->invalidateAllCaches();
+                $this->cacheInvalidator->invalidate();
             } catch (\Throwable $e) {
                 $this->logger->warning('[LanguageController] cache invalidation after removeLanguage failed: ' . $e->getMessage());
             }

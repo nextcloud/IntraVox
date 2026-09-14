@@ -22,7 +22,7 @@ class ImportService {
     private const LOG_PREFIX = '[ImportService]';
 
     public function __construct(
-        private PageService $pageService,
+        private \OCA\IntraVox\Service\Cache\PageCacheInvalidator $cacheInvalidator,
         private SetupService $setupService,
         private CommentService $commentService,
         private NavigationService $navigationService,
@@ -280,7 +280,7 @@ class ImportService {
         // in tree, navigation and permission lookups immediately. Without
         // this the import "succeeds" but the new pages are invisible for
         // up to 5 minutes (PR-3 distributed tree TTL).
-        $this->pageService->invalidateAllCaches();
+        $this->cacheInvalidator->invalidate();
 
         $this->logger->info(self::LOG_PREFIX . ' Import complete', $stats);
 
