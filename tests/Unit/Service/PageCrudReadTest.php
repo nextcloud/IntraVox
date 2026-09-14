@@ -29,18 +29,20 @@ class PageCrudReadTest extends TestCase {
      * @param PageCacheService $cache the (mocked) request/distributed cache
      * @param Folder|null $readFolder folder returned by readLanguageFolder()
      */
-    private function makeService(PageCacheService $cache, ?Folder $readFolder = null): PageService {
-        // getPage resolves its folder through the injected FolderContext (both the
-        // read-language folder and the cross-language intraVox root come from it),
-        // so injecting one directly replaces the old triple-seam override. A null
-        // readFolder leaves the context unable to resolve, driving the clean-miss /
-        // hit-short-circuit paths exactly as the throwing seams used to. Built through
-        // the real DI ctor (fase-6 Track 3a: no PageService subclass anywhere).
-        return $this->buildRealPageService([
+    private function makeService(PageCacheService $cache, ?Folder $readFolder = null): \OCA\IntraVox\Service\Read\PageReadService {
+        // getPage moved off PageService (fase-6 Track 3b): the single-page read now
+        // lives ONLY on Read/PageReadService. Build a real PageService over the rigged
+        // deps and hand back the PageReadService its readService() accessor builds from
+        // the same cache/folderContext — the exact instance the retired PageService::getPage
+        // delegated to. A null readFolder leaves the FolderContext unable to resolve,
+        // driving the clean-miss / hit-short-circuit paths as before.
+        $svc = $this->buildRealPageService([
             'cache' => $cache,
             'logger' => $this->createMock(LoggerInterface::class),
             'folderContext' => $this->fakeFolderContext(readLanguageFolder: $readFolder),
         ]);
+        $accessor = new \ReflectionMethod(PageService::class, 'readService');
+        return $accessor->invoke($svc);
     }
 
     public function testRequestCacheHitReturnsVerbatimWithoutTouchingTheFilesystem(): void {

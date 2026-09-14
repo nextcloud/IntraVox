@@ -9,6 +9,7 @@ use OCA\IntraVox\Service\Sanitize\HtmlSanitizer;
 use OCA\IntraVox\Service\Template\PageTemplateService;
 use OCA\IntraVox\Service\Translation\TranslationGroupService;
 use OCA\IntraVox\Service\Util\PageIdUtils;
+use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageRead;
 use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageService;
 use OCP\Files\File;
 use OCP\Files\FileInfo;
@@ -28,6 +29,7 @@ use PHPUnit\Framework\TestCase;
 class PageCopyCompositionTest extends TestCase {
 
     use BuildsPageService;
+    use BuildsPageRead;
 
     /** What the stub createPage closure last received. */
     private ?array $seenData = null;
@@ -106,7 +108,11 @@ class PageCopyCompositionTest extends TestCase {
             $this->fakeFolderContext(intraVox: $base, languageFolder: $writeFolder),
             'tester',
             $this->createMock(\Psr\Log\LoggerInterface::class),
-            $this->fakeCacheInvalidator()
+            $this->fakeCacheInvalidator(),
+            // copyPage's closing re-fetch echoes the freshly created page — the same
+            // role the old getPage closure ($this->seenData ?? []) played. Lazy so it
+            // reads $seenData set during the copyPage call.
+            $this->fakePageReadFrom(fn(string $id): array => $this->seenData ?? [])
         );
     }
 
@@ -130,7 +136,6 @@ class PageCopyCompositionTest extends TestCase {
                 $this->seenParentPath = $parentPath;
                 return $data; // carries the fresh uniqueId copyPage set
             },
-            fn(string $id): array => $this->seenData ?? [],
             // Root = the /IntraVox base (both language folders), so the locate walks
             // cross-language (#90) exactly as PageService's rootClosure() did.
             fn(Folder $folder, string $uid): ?array => $locator->locatePageAnyLanguage(fn() => $this->base, $folder, $uid),
@@ -226,7 +231,6 @@ class PageCopyCompositionTest extends TestCase {
                 $this->seenParentPath = $parentPath;
                 return $data;
             },
-            fn(string $id): array => $this->seenData ?? [],
             fn(Folder $folder, string $uid): ?array => $located,
             fn(string $id): ?Folder => null
         );

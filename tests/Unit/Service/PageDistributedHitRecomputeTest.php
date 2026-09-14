@@ -34,7 +34,7 @@ class PageDistributedHitRecomputeTest extends TestCase {
         string $cachedJson,
         PermissionService $permissionService,
         bool $metavox = false
-    ): PageService {
+    ): \OCA\IntraVox\Service\Read\PageReadService {
         // A single page 'about' found by the primary-folder scan (index misses,
         // root seam throws so the walk stays in-folder and never reads $userId).
         $pageJson = $this->makeFile(
@@ -64,8 +64,12 @@ class PageDistributedHitRecomputeTest extends TestCase {
         $index = $this->createMock(PageIndexService::class);
         $index->method('findByUniqueId')->willReturn(null);
 
-        // Built through the real DI ctor (fase-6 Track 3a: no PageService subclass).
-        return $this->buildRealPageService([
+        // getPage moved off PageService (fase-6 Track 3b): the #70 distributed-hit
+        // recompute lives ONLY on Read/PageReadService now. Build a real PageService
+        // over the rigged deps and hand back the PageReadService its readService()
+        // accessor builds from the same cache/folderContext/permissionService — the
+        // exact instance the retired PageService::getPage delegated to.
+        $svc = $this->buildRealPageService([
             'permissionService' => $permissionService,
             'cache' => $cache,
             'metaVoxGateway' => $metaVoxGateway,
@@ -74,6 +78,7 @@ class PageDistributedHitRecomputeTest extends TestCase {
             'logger' => $this->createMock(LoggerInterface::class),
             'folderContext' => $this->fakeFolderContext(readLanguageFolder: $lang),
         ]);
+        return (new \ReflectionMethod(PageService::class, 'readService'))->invoke($svc);
     }
 
     public function testStalePermissionsInTheCachedEntryAreOverwrittenWithAFreshComputation(): void {

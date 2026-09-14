@@ -101,7 +101,7 @@ class PageLifecycleTest extends IntegrationTestCase {
         $this->createdPageIds[] = $uniqueId;
 
         // READ
-        $read = $this->actingAs($this->actingUser, fn() => $this->pageService()->getPage($uniqueId));
+        $read = $this->actingAs($this->actingUser, fn() => $this->pageReadService()->getPage($uniqueId));
         $this->assertSame('Integration test page', $read['title']);
         $this->assertSame(
             '<p>first</p>',
@@ -117,7 +117,7 @@ class PageLifecycleTest extends IntegrationTestCase {
             return $this->pageService()->updatePage($uniqueId, $data);
         });
 
-        $reread = $this->actingAs($this->actingUser, fn() => $this->pageService()->getPage($uniqueId));
+        $reread = $this->actingAs($this->actingUser, fn() => $this->pageReadService()->getPage($uniqueId));
         $this->assertSame('Integration test page (edited)', $reread['title']);
         $this->assertSame('<p>second</p>', $reread['layout']['rows'][0]['widgets'][0]['content']);
 
@@ -126,7 +126,7 @@ class PageLifecycleTest extends IntegrationTestCase {
         $this->createdPageIds = array_diff($this->createdPageIds, [$uniqueId]);
 
         $this->expectException(\Throwable::class);
-        $this->actingAs($this->actingUser, fn() => $this->pageService()->getPage($uniqueId));
+        $this->actingAs($this->actingUser, fn() => $this->pageReadService()->getPage($uniqueId));
     }
 
     /**
@@ -149,7 +149,7 @@ class PageLifecycleTest extends IntegrationTestCase {
         $uniqueId = $created['uniqueId'];
         $this->createdPageIds[] = $uniqueId;
 
-        $read = $this->actingAs($this->actingUser, fn() => $this->pageService()->getPage($uniqueId));
+        $read = $this->actingAs($this->actingUser, fn() => $this->pageReadService()->getPage($uniqueId));
         $content = $read['layout']['rows'][0]['widgets'][0]['content'];
 
         $this->assertStringNotContainsString('<script', $content, 'script tags must never reach disk');

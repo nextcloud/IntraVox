@@ -90,6 +90,15 @@ abstract class IntegrationTestCase extends TestCase {
         return self::server()->get(PageService::class);
     }
 
+    /**
+     * The single-page read lives on PageReadService (fase-6 Track 3b retired
+     * PageService::getPage). Resolve it from the container exactly as production
+     * consumers do.
+     */
+    protected function pageReadService(): \OCA\IntraVox\Service\Read\PageReadService {
+        return self::server()->get(\OCA\IntraVox\Service\Read\PageReadService::class);
+    }
+
     protected function permissionService(): PermissionService {
         return self::server()->get(PermissionService::class);
     }

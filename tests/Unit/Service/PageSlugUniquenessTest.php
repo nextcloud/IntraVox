@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace OCA\IntraVox\Tests\Unit\Service;
 
 use OCA\IntraVox\Service\PageService;
+use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageRead;
 use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageService;
 use OCP\Files\FileInfo;
 use OCP\Files\Folder;
@@ -29,6 +30,7 @@ use PHPUnit\Framework\TestCase;
 class PageSlugUniquenessTest extends TestCase {
 
     use BuildsPageService;
+    use BuildsPageRead;
 
     /** Names newFolder() was called with, per folder path. */
     private array $created = [];
@@ -370,6 +372,7 @@ class PageSlugUniquenessTest extends TestCase {
         // Drive PageCompositionService directly with a stub createPage closure that
         // captures the data copyPage hands over (what this test targets) — no
         // PageService subclass, no reflection property-copy.
+        $seen = null;
         $svc = new \OCA\IntraVox\Service\Compose\PageCompositionService(
             $this->createMock(\OCA\IntraVox\Service\Template\PageTemplateService::class),
             $this->createMock(\OCA\IntraVox\Service\Translation\TranslationGroupService::class),
@@ -379,14 +382,18 @@ class PageSlugUniquenessTest extends TestCase {
             $this->fakeFolderContext(intraVox: $base, languageFolder: $nl),
             'tester',
             $this->createMock(\Psr\Log\LoggerInterface::class),
-            $this->fakeCacheInvalidator()
+            $this->fakeCacheInvalidator(),
+            // copyPage's closing re-fetch echoes the created page — the role the old
+            // getPage closure ($seen ?? []) played, now the ctor PageReadService.
+            $this->fakePageReadFrom(function (string $id) use (&$seen): array {
+                return $seen ?? [];
+            })
         );
         $locator = new \OCA\IntraVox\Service\Locator\PageLocator(
             $this->createMock(\OCA\IntraVox\Service\PageIndexService::class),
             $this->createMock(\Psr\Log\LoggerInterface::class)
         );
 
-        $seen = null;
         $svc->copyPage(
             'page-aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
             null,
@@ -395,7 +402,6 @@ class PageSlugUniquenessTest extends TestCase {
                 $seen = $data;
                 return $data + ['translationGroup' => 'tg-fresh'];
             },
-            fn(string $id): array => $seen ?? [],
             fn(Folder $folder, string $uid): ?array => $locator->locatePageAnyLanguage(fn() => $base, $folder, $uid),
             fn(string $id): ?Folder => null
         );

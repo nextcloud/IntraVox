@@ -448,9 +448,10 @@ class PageService {
     /**
      * Lazy seam for the page-composition service (COMPOSE domain). Built from the
      * template/translation-group/media engines + html sanitizer + id utils +
-     * FolderContext substrate + userId; createPage/getPage and the page-lookup
-     * concerns are passed per call as $this-bound closures. Nullable-default so the
-     * harness auto-fill skips it.
+     * FolderContext substrate + userId + the injected PageReadService (the page
+     * read) + PageCacheInvalidator; createPage and the page-lookup concerns are
+     * passed per call as $this-bound closures. Nullable-default so the harness
+     * auto-fill skips it.
      */
     private function composition(): \OCA\IntraVox\Service\Compose\PageCompositionService {
         return $this->compositionService ??= new \OCA\IntraVox\Service\Compose\PageCompositionService(
@@ -462,7 +463,8 @@ class PageService {
             $this->folders(),
             $this->userId,
             $this->logger,
-            $this->cacheInvalidator
+            $this->cacheInvalidator,
+            $this->readService()
         );
     }
 
@@ -926,18 +928,6 @@ class PageService {
         return $this->languageStatus()->getPageCountByLanguage();
     }
 
-    /**
-     * Get a specific page by uniqueId or legacy id
-     */
-    public function getPage(string $id): array {
-        // The single-page read (resolution, #70 cache-hit recompute + strip,
-        // enrich + sanitize) lives in Read/PageReadService — the first service
-        // carved out of the god-class, now fully DI-buildable (closure-free ctor).
-        // This facade delegator stays only so the 26 seam-subclasses that still
-        // extend PageService keep resolving; new callers should inject
-        // PageReadService directly.
-        return $this->readService()->getPage($id);
-    }
 
 
     /**
@@ -1448,7 +1438,6 @@ class PageService {
             $pageUniqueId,
             $templateTitle,
             $templateDescription,
-            fn(string $id): array => $this->getPage($id),
             fn(string $id): ?\OCP\Files\Folder => $this->findPageFolder($id)
         );
     }
@@ -1482,7 +1471,6 @@ class PageService {
             $pageTitle,
             $parentPath,
             fn(array $data, ?string $parentPath = null): array => $this->createPage($data, $parentPath),
-            fn(string $id): array => $this->getPage($id),
             fn(string $id): ?array => $this->getTemplate($id),
             fn(string $id): ?\OCP\Files\Folder => $this->findPageFolder($id)
         );
@@ -1509,7 +1497,6 @@ class PageService {
             $targetParentId,
             $newTitle,
             fn(array $data, ?string $parentPath = null): array => $this->createPage($data, $parentPath),
-            fn(string $id): array => $this->getPage($id),
             fn(\OCP\Files\Folder $folder, string $uid): ?array => $this->locatePageAnyLanguage($folder, $uid),
             fn(string $id): ?\OCP\Files\Folder => $this->findPageFolder($id)
         );

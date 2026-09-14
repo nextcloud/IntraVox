@@ -11,6 +11,7 @@ use OCA\IntraVox\Service\Sanitize\HtmlSanitizer;
 use OCA\IntraVox\Service\Template\PageTemplateService;
 use OCA\IntraVox\Service\Translation\TranslationGroupService;
 use OCA\IntraVox\Service\Util\PageIdUtils;
+use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageRead;
 use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageService;
 use OCP\Files\File;
 use OCP\Files\FileInfo;
@@ -32,6 +33,7 @@ use PHPUnit\Framework\TestCase;
 class PageTranslationCompositionTest extends TestCase {
 
     use BuildsPageService;
+    use BuildsPageRead;
 
     /** What the stub createPage closure last received. */
     private ?array $seenData = null;
@@ -107,7 +109,9 @@ class PageTranslationCompositionTest extends TestCase {
             $this->fakeFolderContext(readLanguageFolder: $en, intraVox: $base),
             'tester',
             $this->createMock(\Psr\Log\LoggerInterface::class),
-            $this->fakeCacheInvalidator()
+            $this->fakeCacheInvalidator(),
+            // createTranslation never reads through PageReadService; any real one suffices.
+            $this->fakePageReadReturning(null)
         );
     }
 

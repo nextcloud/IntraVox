@@ -24,14 +24,15 @@ use Psr\Log\LoggerInterface;
  * and not in Template/ (copyPage/createTranslation have nothing to do with
  * templates, and saveAsTemplate runs page->template).
  *
- * createPage and getPage are INJECTED per call as $this-bound closures, so the
- * composition reaches PageService's real create/read (the #70 isCreatable
- * preflight in the Write service, the #70 recompute in the Read service) with zero
- * change — AND the composition tests can drive this service directly with stub
- * closures instead of subclass-overriding createPage/getPage. The engines
- * (template/translation-group/media/html-sanitizer/id utils) + FolderContext are
- * ctor-injected. Page lookup + writeTranslationGroup + getTemplate + findPageFolder
- * + clearCache stay page-lookup-bound and come in per call as closures.
+ * The page READ is the injected PageReadService (the #70 per-user recompute rides
+ * on it, unchanged); createPage is INJECTED per call as a $this-bound closure so
+ * the composition reaches PageService's real create (the #70 isCreatable preflight
+ * in the Write service) with zero change — AND the composition tests can drive this
+ * service directly with a stub createPage. The engines
+ * (template/translation-group/media/html-sanitizer/id utils) + FolderContext +
+ * PageReadService + PageCacheInvalidator are ctor-injected. Page lookup +
+ * writeTranslationGroup + getTemplate + findPageFolder stay page-lookup-bound and
+ * come in per call as closures.
  *
  * PageCopyCompositionTest, PageTranslationCompositionTest and PageSlugUniquenessTest
  * pin the behaviour byte-for-byte.
@@ -47,6 +48,7 @@ final class PageCompositionService {
         private string $userId,
         private LoggerInterface $logger,
         private \OCA\IntraVox\Service\Cache\PageCacheInvalidator $cacheInvalidator,
+        private \OCA\IntraVox\Service\Read\PageReadService $pageRead,
     ) {
     }
 
@@ -172,7 +174,6 @@ final class PageCompositionService {
     /**
      * Save a page as a template.
      *
-     * @param \Closure(string): array $getPage
      * @param \Closure(string): ?\OCP\Files\Folder $findPageFolder
      * @return array Result with success status and template data or error message
      */
@@ -180,12 +181,11 @@ final class PageCompositionService {
         string $pageUniqueId,
         string $templateTitle,
         ?string $templateDescription,
-        \Closure $getPage,
         \Closure $findPageFolder
     ): array {
         try {
             // Get the source page
-            $pageData = $getPage($pageUniqueId);
+            $pageData = $this->pageRead->getPage($pageUniqueId);
             if (!$pageData) {
                 return ['success' => false, 'error' => 'Page not found'];
             }
@@ -246,7 +246,6 @@ final class PageCompositionService {
      * Create a new page from a template.
      *
      * @param \Closure(array, ?string): array $createPage
-     * @param \Closure(string): array $getPage
      * @param \Closure(string): ?array $getTemplate
      * @param \Closure(string): ?\OCP\Files\Folder $findPageFolder
      * @return array Result with success status and page data
@@ -256,7 +255,6 @@ final class PageCompositionService {
         string $pageTitle,
         ?string $parentPath,
         \Closure $createPage,
-        \Closure $getPage,
         \Closure $getTemplate,
         \Closure $findPageFolder
     ): array {
@@ -323,7 +321,7 @@ final class PageCompositionService {
             // reload. Falls back to createdPage if the fresh read fails
             // for any reason (e.g. ACL race on a brand-new folder).
             try {
-                $fullPage = $getPage($createdPage['uniqueId']);
+                $fullPage = $this->pageRead->getPage($createdPage['uniqueId']);
             } catch (\Exception $e) {
                 $this->logger->warning(
                     '[createPageFromTemplate] getPage failed on freshly created page, falling back to validated data',
@@ -346,7 +344,6 @@ final class PageCompositionService {
      * Copy a page (its content + media) into a new draft page (issue: copy page).
      *
      * @param \Closure(array, ?string): array $createPage
-     * @param \Closure(string): array $getPage
      * @param \Closure(\OCP\Files\Folder, string): ?array $locatePageAnyLanguage
      * @param \Closure(string): ?\OCP\Files\Folder $findPageFolder
      * @return array The freshly created page (getPage shape).
@@ -357,7 +354,6 @@ final class PageCompositionService {
         ?string $targetParentId,
         ?string $newTitle,
         \Closure $createPage,
-        \Closure $getPage,
         \Closure $locatePageAnyLanguage,
         \Closure $findPageFolder
     ): array {
@@ -430,7 +426,7 @@ final class PageCompositionService {
         $this->cacheInvalidator->invalidate();
 
         try {
-            return $getPage($createdPage['uniqueId']);
+            return $this->pageRead->getPage($createdPage['uniqueId']);
         } catch (\Exception $e) {
             return $createdPage;
         }

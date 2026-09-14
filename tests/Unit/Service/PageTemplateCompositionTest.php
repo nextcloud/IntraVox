@@ -9,6 +9,7 @@ use OCA\IntraVox\Service\Sanitize\HtmlSanitizer;
 use OCA\IntraVox\Service\Template\PageTemplateService;
 use OCA\IntraVox\Service\Translation\TranslationGroupService;
 use OCA\IntraVox\Service\Util\PageIdUtils;
+use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageRead;
 use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageService;
 use OCP\Files\File;
 use OCP\Files\FileInfo;
@@ -31,6 +32,7 @@ use PHPUnit\Framework\TestCase;
 class PageTemplateCompositionTest extends TestCase {
 
     use BuildsPageService;
+    use BuildsPageRead;
 
     /** A folder that records putContent() on files created via newFile(). */
     private array $written = [];
@@ -62,7 +64,8 @@ class PageTemplateCompositionTest extends TestCase {
 
     private function makeService(
         PageTemplateService $templates,
-        ?PageMediaService $media = null
+        ?PageMediaService $media = null,
+        ?\Closure $pageRead = null
     ): PageCompositionService {
         $this->written = [];
         $base = $this->makeFolder('/IntraVox', ['en' => $this->makeFolder('/IntraVox/en')]);
@@ -75,7 +78,11 @@ class PageTemplateCompositionTest extends TestCase {
             $this->fakeFolderContext(intraVox: $base, languageFolder: $base->get('en')),
             'tester',
             $this->createMock(\Psr\Log\LoggerInterface::class),
-            $this->fakeCacheInvalidator()
+            $this->fakeCacheInvalidator(),
+            // saveAsTemplate reads its source here; createPageFromTemplate re-fetches
+            // the created page here. Each test injects the page (or echo) its old
+            // getPage closure supplied; the default returns nothing (source missing).
+            $this->fakePageReadFrom($pageRead ?? fn(string $id): ?array => null)
         );
     }
 
@@ -90,14 +97,14 @@ class PageTemplateCompositionTest extends TestCase {
             'handbook', $templateFolder, $this->makeFolder('/IntraVox/en/_templates/handbook/_media'),
         ]);
 
-        $svc = $this->makeService($templates);
         $getPage = fn(string $id): array => [
             'uniqueId' => 'page-src', 'title' => 'Handbook', 'status' => 'published',
             'path' => 'en/handbook', 'parentPath' => 'en', 'layout' => ['rows' => []],
         ];
+        $svc = $this->makeService($templates, pageRead: $getPage);
         $findPageFolder = fn(string $id): ?Folder => null; // no source _media to copy
 
-        $result = $svc->saveAsTemplate('page-src', 'Handbook Template', 'A description', $getPage, $findPageFolder);
+        $result = $svc->saveAsTemplate('page-src', 'Handbook Template', 'A description', $findPageFolder);
 
         $this->assertTrue($result['success']);
         $this->assertSame('handbook', $result['templateId']);
@@ -116,10 +123,10 @@ class PageTemplateCompositionTest extends TestCase {
 
     public function testSaveAsTemplateReturnsErrorArrayWhenSourceIsMissing(): void {
         $templates = $this->createMock(PageTemplateService::class);
-        $svc = $this->makeService($templates);
         $getPage = fn(string $id): array => [];   // page not found -> falsy
+        $svc = $this->makeService($templates, pageRead: $getPage);
 
-        $result = $svc->saveAsTemplate('page-nope', 'X', null, $getPage, fn(string $id): ?Folder => null);
+        $result = $svc->saveAsTemplate('page-nope', 'X', null, fn(string $id): ?Folder => null);
 
         $this->assertFalse($result['success']);
         $this->assertSame('Page not found', $result['error']);
@@ -131,10 +138,10 @@ class PageTemplateCompositionTest extends TestCase {
         $templates = $this->createMock(PageTemplateService::class);
         $templates->method('newTemplateFolder')->willThrowException(new \RuntimeException('disk full'));
 
-        $svc = $this->makeService($templates);
         $getPage = fn(string $id): array => ['uniqueId' => 'page-src', 'title' => 'X'];
+        $svc = $this->makeService($templates, pageRead: $getPage);
 
-        $result = $svc->saveAsTemplate('page-src', 'X', null, $getPage, fn(string $id): ?Folder => null);
+        $result = $svc->saveAsTemplate('page-src', 'X', null, fn(string $id): ?Folder => null);
 
         $this->assertFalse($result['success']);
         $this->assertSame('disk full', $result['error']);
@@ -146,9 +153,13 @@ class PageTemplateCompositionTest extends TestCase {
         $templates = $this->createMock(PageTemplateService::class);
         $templates->method('templatesFolder')->willReturn(null); // no media step
 
-        $svc = $this->makeService($templates);
-
         $seen = null;
+        // The closing re-fetch echoes the created page — the role the old getPage
+        // closure ($seen ?? []) played, now served by the ctor PageReadService.
+        $svc = $this->makeService($templates, pageRead: function (string $id) use (&$seen): array {
+            return $seen ?? [];
+        });
+
         $getTemplate = fn(string $id): ?array => [
             'uniqueId' => 'template-abc', 'title' => 'Blank', 'isTemplate' => true,
             'description' => 'desc', 'createdBy' => 'someone', 'sourcePageId' => 'page-old',
@@ -158,10 +169,9 @@ class PageTemplateCompositionTest extends TestCase {
             $seen = $data;
             return $data;
         };
-        $getPage = fn(string $id): array => $seen ?? [];
         $findPageFolder = fn(string $id): ?Folder => null;
 
-        $result = $svc->createPageFromTemplate('tpl-1', 'My New Page', 'en', $createPage, $getPage, $getTemplate, $findPageFolder);
+        $result = $svc->createPageFromTemplate('tpl-1', 'My New Page', 'en', $createPage, $getTemplate, $findPageFolder);
 
         $this->assertTrue($result['success']);
         $this->assertNotNull($seen, 'createPage was reached');
@@ -183,7 +193,6 @@ class PageTemplateCompositionTest extends TestCase {
             'X',
             null,
             fn(array $d, ?string $p = null): array => $d,
-            fn(string $id): array => [],
             fn(string $id): ?array => null,   // template not found
             fn(string $id): ?Folder => null
         );
@@ -198,14 +207,16 @@ class PageTemplateCompositionTest extends TestCase {
         $templates = $this->createMock(PageTemplateService::class);
         $templates->method('templatesFolder')->willReturn(null);
 
-        $svc = $this->makeService($templates);
+        // The re-fetch through PageReadService throws (ACL race on the fresh folder);
+        // the response must fall back to the created page — the role the old throwing
+        // getPage closure played.
+        $svc = $this->makeService($templates, pageRead: function (string $id): array {
+            throw new \RuntimeException('ACL race on fresh folder');
+        });
         $created = null;
         $createPage = function (array $data, ?string $parentPath = null) use (&$created): array {
             $created = $data;
             return $data;
-        };
-        $getPage = function (string $id): array {
-            throw new \RuntimeException('ACL race on fresh folder');
         };
 
         $result = $svc->createPageFromTemplate(
@@ -213,7 +224,6 @@ class PageTemplateCompositionTest extends TestCase {
             'Page',
             null,
             $createPage,
-            $getPage,
             fn(string $id): ?array => ['uniqueId' => 'template-abc', 'title' => 'T', 'layout' => ['rows' => []]],
             fn(string $id): ?Folder => null
         );
