@@ -358,7 +358,8 @@ class PageService {
             $this->homepageResolver,
             $this->cacheInvalidator,
             $this->shape(),
-            $this->media()
+            $this->media(),
+            $this->cache()
         );
     }
 
@@ -943,14 +944,14 @@ class PageService {
         // provisioning (getOrCreateFolderPath is a private method there now).
         // Folder-substrate concerns come from the injected FolderContext;
         // validateDepth (shared with movePage) stays on PageService as a closure.
+        // The page-folder cache write is self-sourced by the write service (fase-7
+        // T6): it holds the same PageCacheService singleton, so the setPageFolder
+        // there lands in the one pageFolders map findPageFolder reads back.
         return $this->writeService()->createPage(
             $data,
             $parentPath,
             function (string $path): void {
                 $this->validateDepth($path);
-            },
-            function (string $uniqueId, \OCP\Files\Folder $pageFolder): void {
-                $this->cache()->setPageFolder($uniqueId, $pageFolder);
             }
         );
     }

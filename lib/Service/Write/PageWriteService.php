@@ -48,6 +48,7 @@ final class PageWriteService {
         private \OCA\IntraVox\Service\Cache\PageCacheInvalidator $cacheInvalidator,
         private \OCA\IntraVox\Service\Sanitize\PageShapeSanitizer $shape,
         private \OCA\IntraVox\Service\Media\PageMediaService $media,
+        private \OCA\IntraVox\Service\Cache\PageCacheService $pageCache,
     ) {
     }
 
@@ -338,14 +339,12 @@ final class PageWriteService {
      * (shared with movePage) stays on PageService and comes in as a closure.
      *
      * @param \Closure(string): void $validateDepth
-     * @param \Closure(string, \OCP\Files\Folder): void $cachePageFolder setPageFolder
      */
     public function createPageAtPath(
         string $pageId,
         array $data,
         ?string $parentPath,
-        \Closure $validateDepth,
-        \Closure $cachePageFolder
+        \Closure $validateDepth
     ): array {
         $language = $this->folders->userLanguage();
 
@@ -429,9 +428,12 @@ final class PageWriteService {
 
             $this->scanPageFolder($pageFolder);
 
-            // Cache the folder reference for immediate reuse (e.g., when copying media from template)
+            // Cache the folder reference for immediate reuse (e.g., when copying media from template).
+            // Self-sourced (fase-7 T6): the injected PageCacheService IS the same
+            // per-request singleton PageService hands every service, so this write
+            // lands in the one pageFolders map findPageFolder reads back.
             if (isset($data['uniqueId'])) {
-                $cachePageFolder($data['uniqueId'], $pageFolder);
+                $this->pageCache->setPageFolder($data['uniqueId'], $pageFolder);
             }
 
             // Every non-home page is indexed under its OWN folder.
@@ -585,13 +587,11 @@ final class PageWriteService {
      * concerns stay as closures.
      *
      * @param \Closure(string): void $validateDepth
-     * @param \Closure(string, \OCP\Files\Folder): void $cachePageFolder
      */
     public function createPage(
         array $data,
         ?string $parentPath,
-        \Closure $validateDepth,
-        \Closure $cachePageFolder
+        \Closure $validateDepth
     ): array {
         if (!isset($data['id']) || !isset($data['title'])) {
             throw new \InvalidArgumentException('Missing required fields: id, title');
@@ -638,8 +638,7 @@ final class PageWriteService {
             $data['id'],
             $validatedData,
             $parentPath,
-            $validateDepth,
-            $cachePageFolder
+            $validateDepth
         );
 
         // Flush all cached page-tree + permission map entries so subsequent
