@@ -62,6 +62,7 @@ class ApiControllerTest extends TestCase {
     private \OCA\IntraVox\Service\Listing\PageLister $pageLister;
     private \OCA\IntraVox\Service\Homepage\HomepageResolverService $homepageResolver;
     private \OCA\IntraVox\Service\News\NewsWidgetService $newsWidget;
+    private \OCA\IntraVox\Service\Path\BreadcrumbService $breadcrumbService;
 
     protected function setUp(): void {
         parent::setUp();
@@ -96,6 +97,9 @@ class ApiControllerTest extends TestCase {
         // NewsWidgetService is final too; the getNews endpoint is not exercised in this
         // test, so an inert real one suffices (closure-free ctor → doubleOrBuild).
         $this->newsWidget = $this->doubleOrBuild(\OCA\IntraVox\Service\News\NewsWidgetService::class);
+        // BreadcrumbService is final; getBreadcrumb moved off PageService (fase-6 T1).
+        // Default returns a trail; the breadcrumb-fails test rebuilds with a throw.
+        $this->breadcrumbService = $this->fakeBreadcrumbService();
 
         // Use real mock implementations for user/group
         $this->userSession = MockUserSession::loggedInAs('testuser');
@@ -127,7 +131,8 @@ class ApiControllerTest extends TestCase {
             $this->publicationState,
             $this->pageLister,
             $this->homepageResolver,
-            $this->newsWidget
+            $this->newsWidget,
+            $this->breadcrumbService
         );
     }
 
@@ -200,8 +205,8 @@ class ApiControllerTest extends TestCase {
 
         $this->getPageFn = fn(string $id) => $page;
 
-        $this->pageService->method('getBreadcrumb')
-            ->willReturn([['id' => 'page-123', 'title' => 'Test Page']]);
+        // breadcrumbService (fake) returns a trail; the test only asserts the response
+        // carries a 'breadcrumb' key, not its content (that is BreadcrumbServiceTest's).
 
         $response = $this->controller->getPage('page-123');
 
@@ -244,8 +249,10 @@ class ApiControllerTest extends TestCase {
         ];
 
         $this->getPageFn = fn(string $id) => $page;
-        $this->pageService->method('getBreadcrumb')
-            ->willThrowException(new \Exception('Breadcrumb failed'));
+        // A breadcrumb service whose build() throws -> the getPage handler's catch
+        // falls back to an empty breadcrumb.
+        $this->breadcrumbService = $this->fakeBreadcrumbService(new \Exception('Breadcrumb failed'));
+        $this->controller = $this->buildController();
 
         $response = $this->controller->getPage('page-123');
 
@@ -263,7 +270,6 @@ class ApiControllerTest extends TestCase {
         ];
 
         $this->getPageFn = fn(string $id) => $page;
-        $this->pageService->method('getBreadcrumb')->willReturn([]);
         $this->request->method('getHeader')->willReturn('');
 
         $response = $this->controller->getPage('page-etag');
@@ -285,7 +291,6 @@ class ApiControllerTest extends TestCase {
         ];
 
         $this->getPageFn = fn(string $id) => $page;
-        $this->pageService->method('getBreadcrumb')->willReturn([]);
 
         // First request: capture the ETag the controller assigns.
         $this->request->method('getHeader')->willReturn('');

@@ -1047,47 +1047,6 @@ class PageService {
      */
 
     /**
-     * Get breadcrumb trail for a page
-     *
-     * Returns array of breadcrumb items from home to current page
-     */
-    public function getBreadcrumb(string $pageId): array {
-        $page = $this->getPage($pageId);
-        $language = $this->folders()->userLanguage();
-
-        // The configured-homepage pointer check, evaluated here so the builder
-        // stays free of PageService seams (it keeps the same !empty() guard).
-        $isHomepagePointer = !empty($page['uniqueId'])
-            && $this->isHomepage((string)$page['uniqueId'], $language);
-
-        $readFolder = null;
-        try {
-            $readFolder = $this->folders()->readLanguageFolder();
-        } catch (\Exception $e) {
-            // no folder — builder falls back to the 'Home' label
-        }
-
-        return (new \OCA\IntraVox\Service\Path\BreadcrumbBuilder($this->languageService))->build(
-            $pageId,
-            $page,
-            $language,
-            $isHomepagePointer,
-            $readFolder,
-            fn(string $folderPath): ?array => $this->findPageByFolderPath($folderPath)
-        );
-    }
-
-    /**
-     * Find a page by its folder path relative to IntraVox root
-     *
-     * @param string $folderPath e.g., "en/departments" or "en/departments/marketing"
-     * @return array|null Page data or null if not found
-     */
-    private function findPageByFolderPath(string $folderPath): ?array {
-        return $this->pageLister->byFolderPath($folderPath);
-    }
-
-    /**
      * Create a new page
      *
      * @param array $data Page data (id, title, content, etc.)

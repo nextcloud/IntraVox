@@ -80,6 +80,7 @@ class ApiController extends Controller {
     private \OCA\IntraVox\Service\Listing\PageLister $pageLister;
     private \OCA\IntraVox\Service\Homepage\HomepageResolverService $homepageResolver;
     private \OCA\IntraVox\Service\News\NewsWidgetService $newsWidget;
+    private \OCA\IntraVox\Service\Path\BreadcrumbService $breadcrumbService;
 
     public function __construct(
         string $appName,
@@ -97,7 +98,8 @@ class ApiController extends Controller {
         \OCA\IntraVox\Service\Publication\PublicationStateService $publicationState,
         \OCA\IntraVox\Service\Listing\PageLister $pageLister,
         \OCA\IntraVox\Service\Homepage\HomepageResolverService $homepageResolver,
-        \OCA\IntraVox\Service\News\NewsWidgetService $newsWidget
+        \OCA\IntraVox\Service\News\NewsWidgetService $newsWidget,
+        \OCA\IntraVox\Service\Path\BreadcrumbService $breadcrumbService
     ) {
         parent::__construct($appName, $request);
         $this->pageService = $pageService;
@@ -114,6 +116,7 @@ class ApiController extends Controller {
         $this->pageLister = $pageLister;
         $this->homepageResolver = $homepageResolver;
         $this->newsWidget = $newsWidget;
+        $this->breadcrumbService = $breadcrumbService;
     }
 
     /**
@@ -307,7 +310,7 @@ class ApiController extends Controller {
 
             // Add breadcrumb to page response
             try {
-                $page['breadcrumb'] = $this->pageService->getBreadcrumb($id);
+                $page['breadcrumb'] = $this->breadcrumbService->build($id);
             } catch (\Exception $e) {
                 // Breadcrumb failed, but page is still valid
                 $page['breadcrumb'] = [];
@@ -694,7 +697,7 @@ class ApiController extends Controller {
                 return $denied;
             }
 
-            $breadcrumb = $this->pageService->getBreadcrumb($id);
+            $breadcrumb = $this->breadcrumbService->build($id);
             return new DataResponse($breadcrumb);
         } catch (\Exception $e) {
             return new DataResponse(

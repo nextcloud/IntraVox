@@ -123,4 +123,34 @@ trait BuildsPageLister {
             $this->doubleOrBuild(PageDataEnricher::class),
         );
     }
+
+    /**
+     * A real (final) BreadcrumbService for the controller tests. fase-6 Track 1 moved
+     * getBreadcrumb off PageService, so ApiController calls breadcrumbService->build().
+     * The breadcrumb CONTENT is BreadcrumbServiceTest's concern; the controller tests
+     * only care that build() either returns an array (the response carries a
+     * breadcrumb) or throws (the getPage handler's catch falls back to []). So this
+     * builds a real service whose page-read either returns a minimal page (build()
+     * yields a non-empty trail) or throws $throw (build() propagates it).
+     *
+     * Requires the host to also use BuildsPageRead (for fakePageReadFrom).
+     */
+    protected function fakeBreadcrumbService(?\Throwable $throw = null): \OCA\IntraVox\Service\Path\BreadcrumbService {
+        $pageRead = $this->fakePageReadFrom(function (string $id) use ($throw) {
+            if ($throw !== null) {
+                throw $throw;
+            }
+            // A minimal page: no uniqueId (isHomepagePointer false), a bare path so the
+            // builder runs cleanly and returns the always-present Home entry.
+            return ['uniqueId' => '', 'title' => '', 'path' => ''];
+        });
+        $folders = $this->fakeFolderContext(userLanguage: 'en');
+        return new \OCA\IntraVox\Service\Path\BreadcrumbService(
+            $pageRead,
+            $folders,
+            $this->fakeHomepageResolver(null),
+            $this->createMock(\OCA\IntraVox\Service\LanguageService::class),
+            $this->fakePageListerReturning([]),
+        );
+    }
 }
