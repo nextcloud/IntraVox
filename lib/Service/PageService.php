@@ -568,16 +568,6 @@ class PageService {
         return $this->folders()->userLanguage();
     }
 
-    /**
-     * Whether the given uniqueId is the resolved homepage for the language.
-     * Handles the legacy 'home' id as well as a configured pointer target.
-     */
-    public function isHomepage(string $uniqueId, ?string $language = null): bool {
-        if ($uniqueId === '') {
-            return false;
-        }
-        return $uniqueId === $this->resolveHomepageNodeUniqueId($language);
-    }
 
     /**
      * The concrete uniqueId (page-…) of the homepage for a language, suitable
