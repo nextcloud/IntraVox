@@ -45,6 +45,7 @@ final class PageWriteService {
         private FolderContext $folders,
         private \OCA\IntraVox\Service\Locator\PageLocator $locator,
         private HomepageResolverService $homepageResolver,
+        private \OCA\IntraVox\Service\Cache\PageCacheInvalidator $cacheInvalidator,
     ) {
     }
 
@@ -54,12 +55,10 @@ final class PageWriteService {
      * create-on-miss or throw, and the pre-carve monolith checked 'home' first.
      *
      * @param \Closure(): \OCP\Files\Folder $languageFolder getLanguageFolder seam
-     * @param \Closure(): void $clearCache
      */
     public function deletePage(
         string $id,
-        \Closure $languageFolder,
-        \Closure $clearCache
+        \Closure $languageFolder
     ): void {
         if ($id === 'home') {
             throw new \InvalidArgumentException('Cannot delete home page');
@@ -136,7 +135,7 @@ final class PageWriteService {
         $result['folder']->delete();
 
         // Clear caches
-        $clearCache();
+        $this->cacheInvalidator->invalidate();
     }
 
     /**
@@ -149,7 +148,6 @@ final class PageWriteService {
      * @param \Closure(\OCP\Files\Folder): ?string $languageOfFolder
      * @param \Closure(): string $userLanguage
      * @param \Closure(array): array $validateAndSanitizePage
-     * @param \Closure(?string): void $clearCache takes an optional page id
      */
     public function updatePage(
         string $id,
@@ -157,8 +155,7 @@ final class PageWriteService {
         \Closure $languageFolder,
         \Closure $languageOfFolder,
         \Closure $userLanguage,
-        \Closure $validateAndSanitizePage,
-        \Closure $clearCache
+        \Closure $validateAndSanitizePage
     ): array {
         // Save original ID before sanitization
         $originalId = $id;
@@ -295,9 +292,9 @@ final class PageWriteService {
         }
 
         // Clear caches for this page (and uniqueId if present)
-        $clearCache($originalId);
+        $this->cacheInvalidator->invalidate($originalId);
         if (isset($validatedData['uniqueId'])) {
-            $clearCache($validatedData['uniqueId']);
+            $this->cacheInvalidator->invalidate($validatedData['uniqueId']);
         }
 
         // Update page metadata index (non-blocking — page was already saved).
@@ -590,7 +587,6 @@ final class PageWriteService {
      * concerns stay as closures.
      *
      * @param \Closure(array): array $validateAndSanitizePage
-     * @param \Closure(?string): void $clearCache
      * @param \Closure(string): void $validateDepth
      * @param \Closure(\OCP\Files\Node): void $createMediaFolderMarker
      * @param \Closure(string, \OCP\Files\Folder): void $cachePageFolder
@@ -599,7 +595,6 @@ final class PageWriteService {
         array $data,
         ?string $parentPath,
         \Closure $validateAndSanitizePage,
-        \Closure $clearCache,
         \Closure $validateDepth,
         \Closure $createMediaFolderMarker,
         \Closure $cachePageFolder
@@ -660,7 +655,7 @@ final class PageWriteService {
         // relied on the static cache's TTL to age out, which became
         // visible as "create page from template renders blank" once PR-3
         // shifted to a 5-minute distributed tree cache.
-        $clearCache(null);
+        $this->cacheInvalidator->invalidate(null);
 
         return $created;
     }

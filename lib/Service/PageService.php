@@ -319,7 +319,7 @@ class PageService {
      * load-bearing note).
      */
     private function reorderer(): \OCA\IntraVox\Service\Reorder\PageReorderer {
-        return $this->reorderer ??= new \OCA\IntraVox\Service\Reorder\PageReorderer($this->locator(), $this->homepageResolver);
+        return $this->reorderer ??= new \OCA\IntraVox\Service\Reorder\PageReorderer($this->locator(), $this->homepageResolver, $this->cacheInvalidator);
     }
 
     /**
@@ -383,7 +383,8 @@ class PageService {
             $this->languageService,
             $this->folders(),
             $this->locator(),
-            $this->homepageResolver
+            $this->homepageResolver,
+            $this->cacheInvalidator
         );
     }
 
@@ -399,7 +400,8 @@ class PageService {
             $this->pageIndexService,
             $this->logger,
             $this->folders(),
-            $this->homepageResolver
+            $this->homepageResolver,
+            $this->cacheInvalidator
         );
     }
 
@@ -420,7 +422,8 @@ class PageService {
             $this->folders(),
             $this->pageDataEnricher(),
             $this->logger,
-            $this->homepageResolver
+            $this->homepageResolver,
+            $this->cacheInvalidator
         );
     }
 
@@ -437,7 +440,8 @@ class PageService {
             $this->folders(),
             $this->locator(),
             $this->idUtils,
-            $this->mediaSanitizer
+            $this->mediaSanitizer,
+            $this->cacheInvalidator
         );
     }
 
@@ -457,7 +461,8 @@ class PageService {
             $this->idUtils,
             $this->folders(),
             $this->userId,
-            $this->logger
+            $this->logger,
+            $this->cacheInvalidator
         );
     }
 
@@ -822,9 +827,6 @@ class PageService {
             fn(string $id): ?\OCP\Files\Folder => $this->findPageFolder($id),
             function (array $result, string $group): void {
                 $this->writeTranslationGroup($result, $group);
-            },
-            function (): void {
-                $this->clearCache();
             }
         );
     }
@@ -1020,9 +1022,6 @@ class PageService {
             $data,
             $parentPath,
             fn(array $page): array => $this->validateAndSanitizePage($page),
-            function (?string $pageId = null): void {
-                $this->clearCache($pageId);
-            },
             function (string $path): void {
                 $this->validateDepth($path);
             },
@@ -1043,19 +1042,16 @@ class PageService {
         // language folder goes in as a CLOSURE (resolved inside, after the !$user
         // guard — matching the pre-carve monolith). Folder-substrate concerns
         // (languageFolder / languageOfFolder / userLanguage) come from FolderContext;
-        // the page lookups + validateAndSanitizePage + clearCache go in as closures
-        // so the seam-subclasses keep intercepting. clearCache here forwards the
-        // page id (unlike deletePage's arg-less call).
+        // the page lookups + validateAndSanitizePage go in as closures so the
+        // seam-subclasses keep intercepting. Cache invalidation is the injected
+        // PageCacheInvalidator (fase-6 Track 2a).
         return $this->writeService()->updatePage(
             $id,
             $data,
             fn(): \OCP\Files\Folder => $this->folders()->languageFolder(),
             fn(\OCP\Files\Folder $folder): ?string => $this->folders()->languageOfFolder($folder),
             fn(): string => $this->folders()->userLanguage(),
-            fn(array $page): array => $this->validateAndSanitizePage($page),
-            function (?string $pageId = null): void {
-                $this->clearCache($pageId);
-            }
+            fn(array $page): array => $this->validateAndSanitizePage($page)
         );
     }
 
@@ -1067,15 +1063,11 @@ class PageService {
         // write cluster). The language folder goes in as a CLOSURE (not resolved
         // here) so PageWriteService can fire its $id==='home' guard before
         // resolving — matching the pre-carve monolith, which checked 'home' before
-        // touching getLanguageFolder(). The homepage check comes from the injected
-        // HomepageResolverService; clearCache goes in as a closure so the
-        // seam-subclasses keep intercepting.
+        // touching getLanguageFolder(). The homepage check + cache invalidation come
+        // from the injected HomepageResolverService + PageCacheInvalidator.
         $this->writeService()->deletePage(
             $id,
-            fn(): \OCP\Files\Folder => $this->folders()->languageFolder(),
-            function (): void {
-                $this->clearCache();
-            }
+            fn(): \OCP\Files\Folder => $this->folders()->languageFolder()
         );
     }
 
@@ -1111,9 +1103,6 @@ class PageService {
             fn(string $code): string => $this->languageDisplayName($code),
             function (string $path): void {
                 $this->validateDepth($path);
-            },
-            function (): void {
-                $this->clearCache();
             }
         );
     }
@@ -1125,10 +1114,7 @@ class PageService {
     public function uploadMedia(string $pageId, array $file): string {
         return $this->mediaOrchestrator()->uploadMedia(
             $pageId,
-            $file,
-            function (string $mediaPageId): void {
-                $this->clearCache($mediaPageId);
-            }
+            $file
         );
     }
 
@@ -1255,10 +1241,7 @@ class PageService {
             $pageId,
             $metadata,
             fn(\OCP\Files\Folder $folder, string $uid): ?array => $this->locatePageAnyLanguage($folder, $uid),
-            fn(\OCP\Files\Folder $folder, string $legacyId): ?array => $this->findPageById($folder, $legacyId),
-            function (): void {
-                $this->clearCache();
-            }
+            fn(\OCP\Files\Folder $folder, string $legacyId): ?array => $this->findPageById($folder, $legacyId)
         );
     }
 
@@ -1317,16 +1300,13 @@ class PageService {
     public function reorderSiblings(?string $parentUniqueId, array $orderedChildIds): void {
         // The order-writing walk lives in Reorder/PageReorderer (Phase "reorder").
         // The write-target folder is resolved here through FolderContext; the
-        // homepage check comes from the injected HomepageResolverService and the
-        // private clearCache is handed in as a closure so it stays private.
-        // PageReorderer takes the resolved Folder.
+        // homepage check + cache invalidation come from the injected
+        // HomepageResolverService + PageCacheInvalidator. PageReorderer takes the
+        // resolved Folder.
         $this->reorderer()->reorder(
             $parentUniqueId,
             $orderedChildIds,
-            $this->folders()->languageFolder(),
-            function (): void {
-                $this->clearCache();
-            }
+            $this->folders()->languageFolder()
         );
     }
 
@@ -1392,10 +1372,7 @@ class PageService {
             $pageId,
             $file,
             $targetFolder,
-            $overwrite,
-            function (string $mediaPageId): void {
-                $this->clearCache($mediaPageId);
-            }
+            $overwrite
         );
     }
 
@@ -1544,10 +1521,7 @@ class PageService {
             fn(array $data, ?string $parentPath = null): array => $this->createPage($data, $parentPath),
             fn(string $id): array => $this->getPage($id),
             fn(\OCP\Files\Folder $folder, string $uid): ?array => $this->locatePageAnyLanguage($folder, $uid),
-            fn(string $id): ?\OCP\Files\Folder => $this->findPageFolder($id),
-            function (): void {
-                $this->clearCache();
-            }
+            fn(string $id): ?\OCP\Files\Folder => $this->findPageFolder($id)
         );
     }
 

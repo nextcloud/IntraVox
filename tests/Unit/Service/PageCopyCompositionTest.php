@@ -105,7 +105,8 @@ class PageCopyCompositionTest extends TestCase {
             new PageIdUtils(),
             $this->fakeFolderContext(intraVox: $base, languageFolder: $writeFolder),
             'tester',
-            $this->createMock(\Psr\Log\LoggerInterface::class)
+            $this->createMock(\Psr\Log\LoggerInterface::class),
+            $this->fakeCacheInvalidator()
         );
     }
 
@@ -133,9 +134,7 @@ class PageCopyCompositionTest extends TestCase {
             // Root = the /IntraVox base (both language folders), so the locate walks
             // cross-language (#90) exactly as PageService's rootClosure() did.
             fn(Folder $folder, string $uid): ?array => $locator->locatePageAnyLanguage(fn() => $this->base, $folder, $uid),
-            fn(string $id): ?Folder => null,
-            function (): void {
-            }
+            fn(string $id): ?Folder => null
         );
     }
 
@@ -229,9 +228,7 @@ class PageCopyCompositionTest extends TestCase {
             },
             fn(string $id): array => $this->seenData ?? [],
             fn(Folder $folder, string $uid): ?array => $located,
-            fn(string $id): ?Folder => null,
-            function (): void {
-            }
+            fn(string $id): ?Folder => null
         );
 
         $this->assertSame('en', $this->seenParentPath, 'a true language-root page copy falls back to its own language (en), not the copier de');

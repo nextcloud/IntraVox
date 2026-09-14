@@ -201,7 +201,8 @@ class PageServiceMediaLanguageTest extends TestCase {
             ),
             $locator,
             new \OCA\IntraVox\Service\Util\PageIdUtils(),
-            $sanitizer
+            $sanitizer,
+            $this->fakeCacheInvalidator()
         );
     }
 

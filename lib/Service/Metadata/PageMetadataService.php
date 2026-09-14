@@ -42,6 +42,7 @@ final class PageMetadataService {
         private PageDataEnricher $enricher,
         private LoggerInterface $logger,
         private HomepageResolverService $homepageResolver,
+        private \OCA\IntraVox\Service\Cache\PageCacheInvalidator $cacheInvalidator,
     ) {
     }
 
@@ -167,14 +168,12 @@ final class PageMetadataService {
      *
      * @param \Closure(\OCP\Files\Folder, string): ?array $locatePageAnyLanguage
      * @param \Closure(\OCP\Files\Folder, string): ?array $findPageById
-     * @param \Closure(): void $clearCache
      */
     public function updatePageMetadata(
         string $pageId,
         array $metadata,
         \Closure $locatePageAnyLanguage,
-        \Closure $findPageById,
-        \Closure $clearCache
+        \Closure $findPageById
     ): array {
         $folder = $this->folders->languageFolder();
         $result = null;
@@ -232,7 +231,7 @@ final class PageMetadataService {
         // a folder that keeps its old name is exactly today's behaviour.
         $folderRename = null;
         if (isset($metadata['folderName']) && is_string($metadata['folderName']) && $metadata['folderName'] !== '') {
-            $folderRename = $this->renamePageFolder($result, $metadata['folderName'], is_array($data) ? $data : [], $clearCache);
+            $folderRename = $this->renamePageFolder($result, $metadata['folderName'], is_array($data) ? $data : []);
         }
 
         // Refetch by uniqueId when we have one: after a folder rename, a
@@ -355,10 +354,9 @@ final class PageMetadataService {
      * Never throws: the title rename this rides along with has already
      * succeeded, so the outcome is reported instead.
      *
-     * @param \Closure(): void $clearCache
      * @return array{status:string, reason?:string, folderName?:string}
      */
-    private function renamePageFolder(array $result, string $requestedName, array $pageData, \Closure $clearCache): array {
+    private function renamePageFolder(array $result, string $requestedName, array $pageData): array {
         $layout = $this->resolvePageLayoutForRename($result, $pageData);
         if ($layout === null) {
             return ['status' => 'skipped', 'reason' => 'layout'];
@@ -453,7 +451,7 @@ final class PageMetadataService {
             ]);
         }
 
-        $clearCache();
+        $this->cacheInvalidator->invalidate();
         return ['status' => 'renamed', 'folderName' => $candidate];
     }
 }

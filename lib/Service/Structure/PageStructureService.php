@@ -36,6 +36,7 @@ final class PageStructureService {
         private LoggerInterface $logger,
         private FolderContext $folders,
         private HomepageResolverService $homepageResolver,
+        private \OCA\IntraVox\Service\Cache\PageCacheInvalidator $cacheInvalidator,
     ) {
     }
 
@@ -52,7 +53,6 @@ final class PageStructureService {
      * @param \Closure(array): ?\OCP\Files\Folder $languageFolderOfPageResult
      * @param \Closure(string): string $languageDisplayName
      * @param \Closure(string): void $validateDepth
-     * @param \Closure(): void $clearCache
      */
     public function movePage(
         string $pageId,
@@ -63,8 +63,7 @@ final class PageStructureService {
         \Closure $findPageByUniqueId,
         \Closure $languageFolderOfPageResult,
         \Closure $languageDisplayName,
-        \Closure $validateDepth,
-        \Closure $clearCache
+        \Closure $validateDepth
     ): void {
         if ($pageId === 'home') {
             throw new \InvalidArgumentException('The home page cannot be moved');
@@ -221,6 +220,6 @@ final class PageStructureService {
         }
 
         // Critical: refresh tree + permission caches so the move is visible.
-        $clearCache();
+        $this->cacheInvalidator->invalidate();
     }
 }

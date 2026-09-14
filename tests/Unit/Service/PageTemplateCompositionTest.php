@@ -74,7 +74,8 @@ class PageTemplateCompositionTest extends TestCase {
             new PageIdUtils(),
             $this->fakeFolderContext(intraVox: $base, languageFolder: $base->get('en')),
             'tester',
-            $this->createMock(\Psr\Log\LoggerInterface::class)
+            $this->createMock(\Psr\Log\LoggerInterface::class),
+            $this->fakeCacheInvalidator()
         );
     }
 

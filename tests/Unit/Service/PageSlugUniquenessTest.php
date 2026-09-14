@@ -378,7 +378,8 @@ class PageSlugUniquenessTest extends TestCase {
             new \OCA\IntraVox\Service\Util\PageIdUtils(),
             $this->fakeFolderContext(intraVox: $base, languageFolder: $nl),
             'tester',
-            $this->createMock(\Psr\Log\LoggerInterface::class)
+            $this->createMock(\Psr\Log\LoggerInterface::class),
+            $this->fakeCacheInvalidator()
         );
         $locator = new \OCA\IntraVox\Service\Locator\PageLocator(
             $this->createMock(\OCA\IntraVox\Service\PageIndexService::class),
@@ -396,9 +397,7 @@ class PageSlugUniquenessTest extends TestCase {
             },
             fn(string $id): array => $seen ?? [],
             fn(Folder $folder, string $uid): ?array => $locator->locatePageAnyLanguage(fn() => $base, $folder, $uid),
-            fn(string $id): ?Folder => null,
-            function (): void {
-            }
+            fn(string $id): ?Folder => null
         );
 
         $this->assertNotNull($seen, 'copyPage should have reached createPage()');

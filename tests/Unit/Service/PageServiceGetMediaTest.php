@@ -92,7 +92,8 @@ class PageServiceGetMediaTest extends TestCase {
                 $this->createMock(\Psr\Log\LoggerInterface::class)
             ),
             new \OCA\IntraVox\Service\Util\PageIdUtils(),
-            $this->doubleOrBuild(\OCA\IntraVox\Service\Sanitize\MediaSanitizer::class)
+            $this->doubleOrBuild(\OCA\IntraVox\Service\Sanitize\MediaSanitizer::class),
+            $this->fakeCacheInvalidator()
         );
     }
 

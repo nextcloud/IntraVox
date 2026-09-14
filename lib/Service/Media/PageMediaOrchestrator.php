@@ -25,10 +25,8 @@ use OCP\Files\NotFoundException;
  * already live in PageMediaService, the engine this orchestrates. Folder concerns
  * come from the injected FolderContext; page lookup runs through the injected
  * PageLocator directly (findPageByUniqueId/findPageById are pure locator forwards,
- * no longer per-call closures). Only clearCache stays a per-call closure — it is
- * the cross-collaborator cache invalidation that still lives on PageService (a
- * future PageCacheInvalidator), so its seam-overriding test subclasses keep
- * intercepting.
+ * no longer per-call closures). Cache invalidation is the injected
+ * PageCacheInvalidator (fase-6 Track 2a — no per-call closure).
  *
  * NEVER touches getPage/createPage or the #70 permission recompute. Behaviour is
  * byte-identical to the former PageService methods: PageServiceMediaLanguageTest
@@ -42,18 +40,16 @@ final class PageMediaOrchestrator {
         private PageLocator $locator,
         private PageIdUtils $idUtils,
         private MediaSanitizer $mediaSanitizer,
+        private \OCA\IntraVox\Service\Cache\PageCacheInvalidator $cacheInvalidator,
     ) {
     }
 
     /**
      * Upload media (image or video) for a specific page.
-     *
-     * @param \Closure(string): void $clearCache
      */
     public function uploadMedia(
         string $pageId,
-        array $file,
-        \Closure $clearCache
+        array $file
     ): string {
         // Order matters and is preserved from before the split: the $_FILES
         // shape check runs first, then the id is sanitized (it can reject an
@@ -88,7 +84,7 @@ final class PageMediaOrchestrator {
         // navigate-back sequence served the cached page-render where the
         // media reference was still missing — particularly visible on
         // image widgets that just got their src bumped.
-        $clearCache($pageId);
+        $this->cacheInvalidator->invalidate($pageId);
 
         return $filename;
     }
@@ -205,7 +201,6 @@ final class PageMediaOrchestrator {
     /**
      * Upload media with original filename.
      *
-     * @param \Closure(string): void $clearCache
      * @return array ['filename' => '...', 'exists' => bool]
      * @throws \Exception On upload failure or if file exists and overwrite is false
      */
@@ -213,8 +208,7 @@ final class PageMediaOrchestrator {
         string $pageId,
         array $file,
         string $targetFolder,
-        bool $overwrite,
-        \Closure $clearCache
+        bool $overwrite
     ): array {
         $validated = $this->media->validateUpload($file);
 
@@ -257,7 +251,7 @@ final class PageMediaOrchestrator {
 
         // Invalidate the per-page content cache so the next getPage()
         // reflects the new media file. See uploadMedia() for context.
-        $clearCache($pageId);
+        $this->cacheInvalidator->invalidate($pageId);
 
         return [
             'filename' => $filename,

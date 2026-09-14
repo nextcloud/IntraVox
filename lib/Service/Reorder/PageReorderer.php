@@ -28,19 +28,18 @@ final class PageReorderer {
     public function __construct(
         private PageLocator $locator,
         private HomepageResolverService $homepageResolver,
+        private \OCA\IntraVox\Service\Cache\PageCacheInvalidator $cacheInvalidator,
     ) {
     }
 
     /**
      * @param \OCP\Files\Folder $languageFolder the resolved language folder
      *   (PageService's getLanguageFolder seam)
-     * @param \Closure(): void $clearCache PageService's private clearCache
      */
     public function reorder(
         ?string $parentUniqueId,
         array $orderedChildIds,
-        \OCP\Files\Folder $languageFolder,
-        \Closure $clearCache
+        \OCP\Files\Folder $languageFolder
     ): void {
         // Resolve the parent folder whose direct children we are reordering.
         if ($parentUniqueId === null || $parentUniqueId === '') {
@@ -126,6 +125,6 @@ final class PageReorderer {
         }
 
         // Critical: without this the new order stays invisible for up to 5 min.
-        $clearCache();
+        $this->cacheInvalidator->invalidate();
     }
 }

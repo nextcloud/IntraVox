@@ -46,6 +46,7 @@ final class PageCompositionService {
         private FolderContext $folders,
         private string $userId,
         private LoggerInterface $logger,
+        private \OCA\IntraVox\Service\Cache\PageCacheInvalidator $cacheInvalidator,
     ) {
     }
 
@@ -56,7 +57,6 @@ final class PageCompositionService {
      * @param \Closure(\OCP\Files\Folder, string): ?array $locatePageAnyLanguage
      * @param \Closure(string): ?\OCP\Files\Folder $findPageFolder
      * @param \Closure(array, string): void $writeTranslationGroup
-     * @param \Closure(): void $clearCache
      * @return array the created page
      * @throws PageNotFoundException when the source does not exist
      * @throws \InvalidArgumentException when the target language is invalid,
@@ -69,8 +69,7 @@ final class PageCompositionService {
         \Closure $createPage,
         \Closure $locatePageAnyLanguage,
         \Closure $findPageFolder,
-        \Closure $writeTranslationGroup,
-        \Closure $clearCache
+        \Closure $writeTranslationGroup
     ): array {
         if (!preg_match('/^[a-z]{2,3}$/', $language)) {
             throw new \InvalidArgumentException('Invalid language code: ' . $language);
@@ -165,7 +164,7 @@ final class PageCompositionService {
         // file names that resolve against the page being viewed.
         $this->media->copyPageMedia($source['folder'] ?? null, $findPageFolder($created['uniqueId']), 'createTranslation');
 
-        $clearCache();
+        $this->cacheInvalidator->invalidate();
 
         return $created;
     }
@@ -350,7 +349,6 @@ final class PageCompositionService {
      * @param \Closure(string): array $getPage
      * @param \Closure(\OCP\Files\Folder, string): ?array $locatePageAnyLanguage
      * @param \Closure(string): ?\OCP\Files\Folder $findPageFolder
-     * @param \Closure(): void $clearCache
      * @return array The freshly created page (getPage shape).
      * @throws \Exception When the source cannot be located.
      */
@@ -361,8 +359,7 @@ final class PageCompositionService {
         \Closure $createPage,
         \Closure $getPage,
         \Closure $locatePageAnyLanguage,
-        \Closure $findPageFolder,
-        \Closure $clearCache
+        \Closure $findPageFolder
     ): array {
         $languageFolder = $this->folders->languageFolder();
 
@@ -430,7 +427,7 @@ final class PageCompositionService {
         // Copy media assets from the source page folder into the copy.
         $this->media->copyPageMedia($source['folder'] ?? null, $findPageFolder($createdPage['uniqueId']), 'copyPage');
 
-        $clearCache();
+        $this->cacheInvalidator->invalidate();
 
         try {
             return $getPage($createdPage['uniqueId']);

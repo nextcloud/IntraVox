@@ -32,11 +32,7 @@ class PageRenameFolderTest extends TestCase {
 
     use BuildsPageService;
 
-    /** Records clearCache() calls so a rename's cache-clear is observable. */
-    private int $clearCacheCalls = 0;
-
     private function makeService(bool $isHomepage, PageIndexService $index): PageMetadataService {
-        $this->clearCacheCalls = 0;
         // renamePageFolder touches only idUtils/pageIndexService/logger + the
         // isHomepage closure; the other ctor deps are irrelevant here, so they are
         // plain mocks / a bare FolderContext.
@@ -69,6 +65,10 @@ class PageRenameFolderTest extends TestCase {
         // injected HomepageResolverService. Rig it so isHomepage('page-x','en') ===
         // $isHomepage — the fixture pageData below carries uniqueId 'page-x', and
         // fakeHomepageResolver($home) makes isHomepage(uid) === (uid === $home).
+        // fase-6 Track 2a: clearCache is no longer a \Closure — PageMetadataService
+        // invalidates via an injected PageCacheInvalidator (10th ctor arg). The rename
+        // tests assert on the folder-move / index-repath, not on cache invalidation, so
+        // an inert mock invalidator suffices.
         return new PageMetadataService(
             new PageIdUtils(),
             $this->createMock(\OCA\IntraVox\Service\Version\PageVersionService::class),
@@ -78,7 +78,8 @@ class PageRenameFolderTest extends TestCase {
             $folders,
             $enricher,
             $this->createMock(\Psr\Log\LoggerInterface::class),
-            $this->fakeHomepageResolver($isHomepage ? 'page-x' : null)
+            $this->fakeHomepageResolver($isHomepage ? 'page-x' : null),
+            $this->fakeCacheInvalidator()
         );
     }
 
@@ -88,10 +89,7 @@ class PageRenameFolderTest extends TestCase {
             $svc,
             $result,
             $requested,
-            ['uniqueId' => 'page-x', 'language' => 'en'],
-            function (): void {
-                $this->clearCacheCalls++;
-            }
+            ['uniqueId' => 'page-x', 'language' => 'en']
         );
     }
 

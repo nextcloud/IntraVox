@@ -106,7 +106,8 @@ class PageTranslationCompositionTest extends TestCase {
             new PageIdUtils(),
             $this->fakeFolderContext(readLanguageFolder: $en, intraVox: $base),
             'tester',
-            $this->createMock(\Psr\Log\LoggerInterface::class)
+            $this->createMock(\Psr\Log\LoggerInterface::class),
+            $this->fakeCacheInvalidator()
         );
     }
 
@@ -133,8 +134,6 @@ class PageTranslationCompositionTest extends TestCase {
             fn(Folder $folder, string $uid): ?array => $locator->locatePageAnyLanguage(fn() => $this->base, $folder, $uid),
             fn(string $id): ?Folder => null,
             function (array $result, string $group): void {
-            },
-            function (): void {
             }
         );
     }
