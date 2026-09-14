@@ -118,16 +118,21 @@ class PageCopyCompositionTest extends TestCase {
             new \OCA\IntraVox\Service\Locator\PageLocator(
                 $this->createMock(\OCA\IntraVox\Service\PageIndexService::class),
                 $this->createMock(\Psr\Log\LoggerInterface::class)
-            )
+            ),
+            // fase-7 T6: findPageFolder is self-sourced. A fresh empty PageCacheService
+            // → cache-miss → the locate-walk runs and finds nothing (the stub createPage
+            // never writes the created folder to the fixture tree), so findPageFolder
+            // returns null — byte-identical to the old `fn($id) => null` closure.
+            new \OCA\IntraVox\Service\Cache\PageCacheService()
         );
     }
 
     /**
      * Drive copyPage with stub createPage/getPage closures (recording into
-     * $seenData/$seenParentPath) + the findPageFolder closure the PageService
-     * delegator would supply. The #90 cross-language locate is self-sourced by the
-     * service via the injected real PageLocator against the fixture tree; getPage
-     * echoes the created data.
+     * $seenData/$seenParentPath). The #90 cross-language locate and findPageFolder
+     * (media-source resolve) are self-sourced by the service via the injected real
+     * PageLocator + PageCacheService against the fixture tree; getPage echoes the
+     * created data.
      */
     private function copy(PageCompositionService $svc, string $sourceUniqueId, ?string $targetParentId = null, ?string $newTitle = null): array {
         return $svc->copyPage(
@@ -138,8 +143,7 @@ class PageCopyCompositionTest extends TestCase {
                 $this->seenData = $data;
                 $this->seenParentPath = $parentPath;
                 return $data; // carries the fresh uniqueId copyPage set
-            },
-            fn(string $id): ?Folder => null
+            }
         );
     }
 
@@ -231,8 +235,7 @@ class PageCopyCompositionTest extends TestCase {
                 $this->seenData = $data;
                 $this->seenParentPath = $parentPath;
                 return $data;
-            },
-            fn(string $id): ?Folder => null
+            }
         );
 
         $this->assertSame('en', $this->seenParentPath, 'a true language-root page copy falls back to its own language (en), not the copier de');

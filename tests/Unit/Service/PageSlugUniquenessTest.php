@@ -393,7 +393,11 @@ class PageSlugUniquenessTest extends TestCase {
             new \OCA\IntraVox\Service\Locator\PageLocator(
                 $this->createMock(\OCA\IntraVox\Service\PageIndexService::class),
                 $this->createMock(\Psr\Log\LoggerInterface::class)
-            )
+            ),
+            // fase-7 T6: findPageFolder self-sourced; fresh empty PageCacheService →
+            // cache-miss → walk finds no created folder → null (byte-identical to the
+            // old `fn($id) => null` closure).
+            new \OCA\IntraVox\Service\Cache\PageCacheService()
         );
 
         $svc->copyPage(
@@ -403,8 +407,7 @@ class PageSlugUniquenessTest extends TestCase {
             function (array $data, ?string $parentPath = null) use (&$seen): array {
                 $seen = $data;
                 return $data + ['translationGroup' => 'tg-fresh'];
-            },
-            fn(string $id): ?Folder => null
+            }
         );
 
         $this->assertNotNull($seen, 'copyPage should have reached createPage()');

@@ -408,13 +408,16 @@ class PageLookupBenchmark extends TestCase {
 
                 // Reflection rather than a public test hook: the locator is
                 // private on purpose, and a benchmark is not a reason to widen
-                // production visibility.
-                $locate = new \ReflectionMethod(PageService::class, 'locatePageAnyLanguage');
-                $readFolder = (new \ReflectionMethod(PageService::class, 'folders'))
-                    ->invoke($svc)->readLanguageFolder();
+                // production visibility. fase-7 T6 retired PageService's private
+                // locatePageAnyLanguage delegator; drive the service's own PageLocator
+                // directly with the same root the delegator built (fn()=>intraVox()).
+                $folders = (new \ReflectionMethod(PageService::class, 'folders'))->invoke($svc);
+                $locator = (new \ReflectionMethod(PageService::class, 'locator'))->invoke($svc);
+                $readFolder = $folders->readLanguageFolder();
+                $intraVoxRoot = fn(): \OCP\Files\Folder => $folders->intraVox();
 
                 $start = microtime(true);
-                $result = $locate->invoke($svc, $readFolder, $uniqueId);
+                $result = $locator->locatePageAnyLanguage($intraVoxRoot, $readFolder, $uniqueId);
                 $measured[$mode] = [
                     'found' => $result !== null,
                     'reads' => $this->fileReads,

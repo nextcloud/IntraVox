@@ -118,15 +118,20 @@ class PageIndexLookupTest extends TestCase {
     }
 
     /**
-     * Drive the private locator through reflection. The read folder now comes from
-     * the injected FolderContext (folders()->readLanguageFolder()) rather than the
-     * retired getReadLanguageFolder seam.
+     * Drive the locator directly. PageService's private locatePageAnyLanguage
+     * delegator was retired in fase-7 T6 (its last caller, findPageFolder, moved to
+     * the compose service). It forwarded to $this->locator()->locatePageAnyLanguage(
+     * $this->rootClosure(), $readFolder, $uniqueId) with rootClosure() = fn() =>
+     * folders()->intraVox(); this reconstructs that call byte-for-byte against the
+     * service's own PageLocator + FolderContext, so the index-hit / scan-fallback /
+     * #90 cross-language behaviour is pinned exactly where it now lives.
      */
     private function locate(PageService $svc, string $uniqueId): ?array {
-        $m = new \ReflectionMethod(PageService::class, 'locatePageAnyLanguage');
         $folders = (new \ReflectionMethod(PageService::class, 'folders'))->invoke($svc);
+        $locator = (new \ReflectionMethod(PageService::class, 'locator'))->invoke($svc);
         $readFolder = $folders->readLanguageFolder();
-        return $m->invoke($svc, $readFolder, $uniqueId);
+        $intraVoxRoot = fn(): \OCP\Files\Folder => $folders->intraVox();
+        return $locator->locatePageAnyLanguage($intraVoxRoot, $readFolder, $uniqueId);
     }
 
     /** An indexed page resolves, and the result matches what a scan returns. */

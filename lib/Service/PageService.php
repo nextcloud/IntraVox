@@ -408,9 +408,10 @@ class PageService {
      * Lazy seam for the page-composition service (COMPOSE domain). Built from the
      * template/translation-group/media engines + html sanitizer + id utils +
      * FolderContext substrate + userId + the injected PageReadService (the page
-     * read) + PageCacheInvalidator; createPage and the page-lookup concerns are
-     * passed per call as $this-bound closures. Nullable-default so the harness
-     * auto-fill skips it.
+     * read) + PageCacheInvalidator + PageLocator + the shared PageCacheService
+     * singleton (so findPageFolder's read/write hits the one pageFolders map every
+     * service shares — #90); only createPage + writeTranslationGroup are passed per
+     * call as $this-bound closures. Nullable-default so the harness auto-fill skips it.
      */
     private function composition(): \OCA\IntraVox\Service\Compose\PageCompositionService {
         return $this->compositionService ??= new \OCA\IntraVox\Service\Compose\PageCompositionService(
@@ -424,7 +425,8 @@ class PageService {
             $this->logger,
             $this->cacheInvalidator,
             $this->readService(),
-            $this->locator()
+            $this->locator(),
+            $this->cache()
         );
     }
 
@@ -559,36 +561,6 @@ class PageService {
         return $this->folders()->languageOfFolder($folder);
     }
 
-    /**
-     * Locate a page by uniqueId across every language folder that exists on
-     * disk, starting with $primaryFolder.
-     *
-     * Reading and writing used to resolve the language folder differently:
-     * getPage() searched the *effective* language (recommended-language
-     * fallback, #75) and then every other language folder, while the write
-     * paths searched only the folder for the user's own display language. Any
-     * page that IntraVox could render but that lived outside the user's own
-     * language folder was therefore impossible to save — the save failed with
-     * "Page not found" on a page that was visibly on screen (issue #90).
-     *
-     * Both sides now locate pages through here. This decides only WHERE AN
-     * EXISTING PAGE LIVES, never where a NEW page is created: creation still
-     * targets the user's own language folder via getLanguageFolder(). Callers
-     * that write remain responsible for permissions — the file returned here
-     * is still subject to the isUpdateable() check on the caller's side.
-     *
-     * @param \OCP\Files\Folder $primaryFolder Folder to search first.
-     * @param string $uniqueId The page-… uniqueId to locate.
-     * @return array|null findPageByUniqueId() result, or null when unknown.
-     */
-    private function locatePageAnyLanguage(\OCP\Files\Folder $primaryFolder, string $uniqueId): ?array {
-        return $this->locator()->locatePageAnyLanguage($this->rootClosure(), $primaryFolder, $uniqueId);
-    }
-
-    private function locateViaIndex(string $uniqueId, \OCP\Files\Folder $primaryFolder): ?array {
-        return $this->locator()->locateViaIndex($this->rootClosure(), $uniqueId, $primaryFolder);
-    }
-
     private function indexPathToRelative(string $storedPath): ?string {
         return $this->locator()->indexPathToRelative($this->folders()->intraVox(), $storedPath);
     }
@@ -653,20 +625,6 @@ class PageService {
     }
 
 
-
-    /**
-     * The "where is the IntraVox root?" question, as a late-bound closure the
-     * folder-shaped collaborators (PageLocator, PageLister, …) need.
-     *
-     * A single home for what was six identical `fn() => $this->getIntraVoxFolder()`
-     * call-sites. Now routes through the FolderContext substrate — folders()->
-     * intraVox() resolves the same getIntraVoxFolder seam (bound as a $this-closure
-     * in folders()), so a subclass override still wins, but the last locate-family
-     * consumers of the raw seam now go through the one front door.
-     */
-    private function rootClosure(): \Closure {
-        return fn() => $this->folders()->intraVox();
-    }
 
     /**
      * Public method to check if a page exists by uniqueId
@@ -762,7 +720,6 @@ class PageService {
             $language,
             $title,
             fn(array $data, ?string $parentPath = null): array => $this->createPage($data, $parentPath),
-            fn(string $id): ?\OCP\Files\Folder => $this->findPageFolder($id),
             function (array $result, string $group): void {
                 $this->writeTranslationGroup($result, $group);
             }
@@ -1252,37 +1209,6 @@ class PageService {
     // =========================================================================
 
     /**
-     * Find a page folder by its uniqueId
-     *
-     * @param string $uniqueId Page uniqueId
-     * @return \OCP\Files\Folder|null The page folder or null if not found
-     */
-    private function findPageFolder(string $uniqueId): ?\OCP\Files\Folder {
-        // Check cache first
-        if ($this->cache()->hasPageFolder($uniqueId)) {
-            return $this->cache()->getPageFolder($uniqueId);
-        }
-
-        try {
-            // Follow the page across language folders. This resolves the folder
-            // media is copied FROM and TO, and it fails by returning null, which
-            // callers treat as "no media" — so on a foreign-language page,
-            // "Save as template" and copy-page silently produced a page with no
-            // images at all rather than reporting anything (#90 family).
-            $result = $this->locatePageAnyLanguage($this->folders()->readLanguageFolder(), $uniqueId);
-            if ($result !== null && isset($result['folder'])) {
-                $folder = $result['folder'];
-                $this->cache()->setPageFolder($uniqueId, $folder);
-                return $folder;
-            }
-        } catch (\Exception $e) {
-            $this->logger->warning('Could not find page folder for: ' . $uniqueId . ' - ' . $e->getMessage());
-        }
-
-        return null;
-    }
-
-    /**
      * Get the templates folder for the current user's language
      *
      * @return \OCP\Files\Folder|null The templates folder or null if not accessible
@@ -1327,8 +1253,7 @@ class PageService {
         return $this->composition()->saveAsTemplate(
             $pageUniqueId,
             $templateTitle,
-            $templateDescription,
-            fn(string $id): ?\OCP\Files\Folder => $this->findPageFolder($id)
+            $templateDescription
         );
     }
 
@@ -1360,8 +1285,7 @@ class PageService {
             $templateId,
             $pageTitle,
             $parentPath,
-            fn(array $data, ?string $parentPath = null): array => $this->createPage($data, $parentPath),
-            fn(string $id): ?\OCP\Files\Folder => $this->findPageFolder($id)
+            fn(array $data, ?string $parentPath = null): array => $this->createPage($data, $parentPath)
         );
     }
 
@@ -1385,8 +1309,7 @@ class PageService {
             $sourceUniqueId,
             $targetParentId,
             $newTitle,
-            fn(array $data, ?string $parentPath = null): array => $this->createPage($data, $parentPath),
-            fn(string $id): ?\OCP\Files\Folder => $this->findPageFolder($id)
+            fn(array $data, ?string $parentPath = null): array => $this->createPage($data, $parentPath)
         );
     }
 

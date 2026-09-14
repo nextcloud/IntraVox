@@ -30,10 +30,11 @@ use Psr\Log\LoggerInterface;
  * in the Write service) with zero change — AND the composition tests can drive this
  * service directly with a stub createPage. The engines
  * (template/translation-group/media/html-sanitizer/id utils) + FolderContext +
- * PageReadService + PageCacheInvalidator + PageLocator are ctor-injected — page
- * lookup and the template read are self-sourced from those. Only
- * writeTranslationGroup + findPageFolder stay page-lookup-bound and come in per
- * call as closures.
+ * PageReadService + PageCacheInvalidator + PageLocator + PageCacheService are
+ * ctor-injected — page lookup, the template read, and findPageFolder (the
+ * media-source folder resolve, moved here in fase-7 T6) are all self-sourced from
+ * those. Only writeTranslationGroup stays page-lookup-bound and comes in per call
+ * as a closure.
  *
  * PageCopyCompositionTest, PageTranslationCompositionTest and PageSlugUniquenessTest
  * pin the behaviour byte-for-byte.
@@ -51,6 +52,7 @@ final class PageCompositionService {
         private \OCA\IntraVox\Service\Cache\PageCacheInvalidator $cacheInvalidator,
         private \OCA\IntraVox\Service\Read\PageReadService $pageRead,
         private \OCA\IntraVox\Service\Locator\PageLocator $locator,
+        private \OCA\IntraVox\Service\Cache\PageCacheService $pageCache,
     ) {
     }
 
@@ -58,7 +60,6 @@ final class PageCompositionService {
      * Create a translation of a page into another language (#translations).
      *
      * @param \Closure(array, ?string): array $createPage
-     * @param \Closure(string): ?\OCP\Files\Folder $findPageFolder
      * @param \Closure(array, string): void $writeTranslationGroup
      * @return array the created page
      * @throws PageNotFoundException when the source does not exist
@@ -70,7 +71,6 @@ final class PageCompositionService {
         string $language,
         ?string $title,
         \Closure $createPage,
-        \Closure $findPageFolder,
         \Closure $writeTranslationGroup
     ): array {
         if (!preg_match('/^[a-z]{2,3}$/', $language)) {
@@ -168,7 +168,7 @@ final class PageCompositionService {
         // source's images too — the same way copyPage does it. Without this the
         // text carried over but every image 404'd, because the JSON stores bare
         // file names that resolve against the page being viewed.
-        $this->media->copyPageMedia($source['folder'] ?? null, $findPageFolder($created['uniqueId']), 'createTranslation');
+        $this->media->copyPageMedia($source['folder'] ?? null, $this->findPageFolder($created['uniqueId']), 'createTranslation');
 
         $this->cacheInvalidator->invalidate();
 
@@ -178,14 +178,12 @@ final class PageCompositionService {
     /**
      * Save a page as a template.
      *
-     * @param \Closure(string): ?\OCP\Files\Folder $findPageFolder
      * @return array Result with success status and template data or error message
      */
     public function saveAsTemplate(
         string $pageUniqueId,
         string $templateTitle,
-        ?string $templateDescription,
-        \Closure $findPageFolder
+        ?string $templateDescription
     ): array {
         try {
             // Get the source page
@@ -214,7 +212,7 @@ final class PageCompositionService {
             unset($templateData['parentPath']);
 
             // Copy media files from source page to template
-            $pageFolder = $findPageFolder($pageUniqueId);
+            $pageFolder = $this->findPageFolder($pageUniqueId);
             if ($pageFolder && $pageFolder->nodeExists('_media')) {
                 $sourceMediaFolder = $pageFolder->get('_media');
                 if ($sourceMediaFolder instanceof Folder) {
@@ -250,15 +248,13 @@ final class PageCompositionService {
      * Create a new page from a template.
      *
      * @param \Closure(array, ?string): array $createPage
-     * @param \Closure(string): ?\OCP\Files\Folder $findPageFolder
      * @return array Result with success status and page data
      */
     public function createPageFromTemplate(
         string $templateId,
         string $pageTitle,
         ?string $parentPath,
-        \Closure $createPage,
-        \Closure $findPageFolder
+        \Closure $createPage
     ): array {
         try {
             // Get template data (inlined from the retired PageService::getTemplate
@@ -311,7 +307,7 @@ final class PageCompositionService {
                     $templateMediaFolder = $templateFolder->get('_media');
 
                     // Get the new page's folder (should be in cache from createPage)
-                    $newPageFolder = $findPageFolder($createdPage['uniqueId']);
+                    $newPageFolder = $this->findPageFolder($createdPage['uniqueId']);
                     $this->logger->info('Template media copy: page folder found = ' . ($newPageFolder ? 'yes' : 'no') . ' for ' . $createdPage['uniqueId']);
                     if ($newPageFolder && $templateMediaFolder instanceof Folder) {
                         // Create _media folder if not exists
@@ -359,7 +355,6 @@ final class PageCompositionService {
      * Copy a page (its content + media) into a new draft page (issue: copy page).
      *
      * @param \Closure(array, ?string): array $createPage
-     * @param \Closure(string): ?\OCP\Files\Folder $findPageFolder
      * @return array The freshly created page (getPage shape).
      * @throws \Exception When the source cannot be located.
      */
@@ -367,8 +362,7 @@ final class PageCompositionService {
         string $sourceUniqueId,
         ?string $targetParentId,
         ?string $newTitle,
-        \Closure $createPage,
-        \Closure $findPageFolder
+        \Closure $createPage
     ): array {
         $languageFolder = $this->folders->languageFolder();
         // Self-sourced cross-language root (fase-7).
@@ -436,7 +430,7 @@ final class PageCompositionService {
         $createdPage = $createPage($pageData, $parentPath);
 
         // Copy media assets from the source page folder into the copy.
-        $this->media->copyPageMedia($source['folder'] ?? null, $findPageFolder($createdPage['uniqueId']), 'copyPage');
+        $this->media->copyPageMedia($source['folder'] ?? null, $this->findPageFolder($createdPage['uniqueId']), 'copyPage');
 
         $this->cacheInvalidator->invalidate();
 
@@ -445,5 +439,47 @@ final class PageCompositionService {
         } catch (\Exception $e) {
             return $createdPage;
         }
+    }
+
+    /**
+     * Find a page folder by its uniqueId (moved verbatim from PageService in
+     * fase-7 T6; the four compose facades were its only callers).
+     *
+     * Instance-identity is load-bearing: the injected PageCacheService is the
+     * same per-request singleton PageService, PageReadService and the write
+     * service all share, so the pageFolders map this reads was already populated
+     * by createPage's setPageFolder and the cross-language locate below writes
+     * back into the one map every service sees.
+     *
+     * @param string $uniqueId Page uniqueId
+     * @return \OCP\Files\Folder|null The page folder or null if not found
+     */
+    private function findPageFolder(string $uniqueId): ?\OCP\Files\Folder {
+        // Check cache first
+        if ($this->pageCache->hasPageFolder($uniqueId)) {
+            return $this->pageCache->getPageFolder($uniqueId);
+        }
+
+        // Self-sourced cross-language root (fase-7), byte-identical to the old
+        // rootClosure PageService::locatePageAnyLanguage built.
+        $intraVoxRoot = fn(): \OCP\Files\Folder => $this->folders->intraVox();
+
+        try {
+            // Follow the page across language folders. This resolves the folder
+            // media is copied FROM and TO, and it fails by returning null, which
+            // callers treat as "no media" — so on a foreign-language page,
+            // "Save as template" and copy-page silently produced a page with no
+            // images at all rather than reporting anything (#90 family).
+            $result = $this->locator->locatePageAnyLanguage($intraVoxRoot, $this->folders->readLanguageFolder(), $uniqueId);
+            if ($result !== null && isset($result['folder'])) {
+                $folder = $result['folder'];
+                $this->pageCache->setPageFolder($uniqueId, $folder);
+                return $folder;
+            }
+        } catch (\Exception $e) {
+            $this->logger->warning('Could not find page folder for: ' . $uniqueId . ' - ' . $e->getMessage());
+        }
+
+        return null;
     }
 }

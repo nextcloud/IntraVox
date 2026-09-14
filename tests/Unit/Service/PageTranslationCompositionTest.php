@@ -117,16 +117,20 @@ class PageTranslationCompositionTest extends TestCase {
             new \OCA\IntraVox\Service\Locator\PageLocator(
                 $this->createMock(\OCA\IntraVox\Service\PageIndexService::class),
                 $this->createMock(\Psr\Log\LoggerInterface::class)
-            )
+            ),
+            // fase-7 T6: findPageFolder self-sourced; a fresh empty PageCacheService
+            // → cache-miss → walk finds no created folder → null (byte-identical to the
+            // old `fn($id) => null` closure).
+            new \OCA\IntraVox\Service\Cache\PageCacheService()
         );
     }
 
     /**
      * Drive createTranslation with a stub createPage closure that records the data
-     * it is handed (replacing the old subclass createPage spy), plus the findPageFolder
-     * / writeTranslationGroup closures the PageService delegator would supply. The #90
-     * cross-language locate is self-sourced by the service via the injected real
-     * PageLocator against the fixture tree.
+     * it is handed (replacing the old subclass createPage spy), plus the
+     * writeTranslationGroup closure the PageService delegator would supply. The #90
+     * cross-language locate and findPageFolder are self-sourced by the service via
+     * the injected real PageLocator + PageCacheService against the fixture tree.
      */
     private function translate(PageCompositionService $svc, string $sourceUniqueId, string $language, ?string $title = null): array {
         return $svc->createTranslation(
@@ -138,7 +142,6 @@ class PageTranslationCompositionTest extends TestCase {
                 $this->seenParentPath = $parentPath;
                 return $data;
             },
-            fn(string $id): ?Folder => null,
             function (array $result, string $group): void {
             }
         );

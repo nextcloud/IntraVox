@@ -84,9 +84,16 @@ class PageTemplateCompositionTest extends TestCase {
             // the created page here. Each test injects the page (or echo) its old
             // getPage closure supplied; the default returns nothing (source missing).
             $this->fakePageReadFrom($pageRead ?? fn(string $id): ?array => null),
-            // createPageFromTemplate/saveAsTemplate never call the locator (only
-            // copy/translation walk cross-language) — an inert mock suffices.
-            $this->createMock(\OCA\IntraVox\Service\Locator\PageLocator::class)
+            // fase-7 T6: findPageFolder (media-source resolve) is now self-sourced and
+            // walks via this locator; a real one against the fixture tree with a mocked
+            // index → folder-walk path (the created folder is never written to the tree
+            // by the stub createPage, so the walk misses → null → no media copied,
+            // byte-identical to the old `fn($id) => null` findPageFolder closure).
+            new \OCA\IntraVox\Service\Locator\PageLocator(
+                $this->createMock(\OCA\IntraVox\Service\PageIndexService::class),
+                $this->createMock(\Psr\Log\LoggerInterface::class)
+            ),
+            new \OCA\IntraVox\Service\Cache\PageCacheService()
         );
     }
 
@@ -106,9 +113,8 @@ class PageTemplateCompositionTest extends TestCase {
             'path' => 'en/handbook', 'parentPath' => 'en', 'layout' => ['rows' => []],
         ];
         $svc = $this->makeService($templates, pageRead: $getPage);
-        $findPageFolder = fn(string $id): ?Folder => null; // no source _media to copy
 
-        $result = $svc->saveAsTemplate('page-src', 'Handbook Template', 'A description', $findPageFolder);
+        $result = $svc->saveAsTemplate('page-src', 'Handbook Template', 'A description');
 
         $this->assertTrue($result['success']);
         $this->assertSame('handbook', $result['templateId']);
@@ -130,7 +136,7 @@ class PageTemplateCompositionTest extends TestCase {
         $getPage = fn(string $id): array => [];   // page not found -> falsy
         $svc = $this->makeService($templates, pageRead: $getPage);
 
-        $result = $svc->saveAsTemplate('page-nope', 'X', null, fn(string $id): ?Folder => null);
+        $result = $svc->saveAsTemplate('page-nope', 'X', null);
 
         $this->assertFalse($result['success']);
         $this->assertSame('Page not found', $result['error']);
@@ -145,7 +151,7 @@ class PageTemplateCompositionTest extends TestCase {
         $getPage = fn(string $id): array => ['uniqueId' => 'page-src', 'title' => 'X'];
         $svc = $this->makeService($templates, pageRead: $getPage);
 
-        $result = $svc->saveAsTemplate('page-src', 'X', null, fn(string $id): ?Folder => null);
+        $result = $svc->saveAsTemplate('page-src', 'X', null);
 
         $this->assertFalse($result['success']);
         $this->assertSame('disk full', $result['error']);
@@ -174,9 +180,7 @@ class PageTemplateCompositionTest extends TestCase {
             $seen = $data;
             return $data;
         };
-        $findPageFolder = fn(string $id): ?Folder => null;
-
-        $result = $svc->createPageFromTemplate('tpl-1', 'My New Page', 'en', $createPage, $findPageFolder);
+        $result = $svc->createPageFromTemplate('tpl-1', 'My New Page', 'en', $createPage);
 
         $this->assertTrue($result['success']);
         $this->assertNotNull($seen, 'createPage was reached');
@@ -198,8 +202,7 @@ class PageTemplateCompositionTest extends TestCase {
             'missing',
             'X',
             null,
-            fn(array $d, ?string $p = null): array => $d,
-            fn(string $id): ?Folder => null
+            fn(array $d, ?string $p = null): array => $d
         );
 
         $this->assertFalse($result['success']);
@@ -223,8 +226,7 @@ class PageTemplateCompositionTest extends TestCase {
             'tpl-1',
             'X',
             null,
-            fn(array $d, ?string $p = null): array => $d,
-            fn(string $id): ?Folder => null
+            fn(array $d, ?string $p = null): array => $d
         );
 
         $this->assertFalse($result['success']);
@@ -257,8 +259,7 @@ class PageTemplateCompositionTest extends TestCase {
             'tpl-1',
             'Page',
             null,
-            $createPage,
-            fn(string $id): ?Folder => null
+            $createPage
         );
 
         $this->assertTrue($result['success'], 'a failed re-fetch still yields a success with the created data');
