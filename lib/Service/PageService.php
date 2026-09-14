@@ -356,7 +356,8 @@ class PageService {
             $this->folders(),
             $this->locator(),
             $this->homepageResolver,
-            $this->cacheInvalidator
+            $this->cacheInvalidator,
+            $this->shape()
         );
     }
 
@@ -955,7 +956,6 @@ class PageService {
         return $this->writeService()->createPage(
             $data,
             $parentPath,
-            fn(array $page): array => $this->validateAndSanitizePage($page),
             function (string $path): void {
                 $this->validateDepth($path);
             },
@@ -975,17 +975,15 @@ class PageService {
         // The update body lives in Write/PageWriteService (write cluster). The
         // language folder goes in as a CLOSURE (resolved inside, after the !$user
         // guard — matching the pre-carve monolith). Folder-substrate concerns
-        // (languageFolder / languageOfFolder / userLanguage) come from FolderContext;
-        // the page lookups + validateAndSanitizePage go in as closures so the
-        // seam-subclasses keep intercepting. Cache invalidation is the injected
-        // PageCacheInvalidator (fase-6 Track 2a).
+        // (languageFolder / languageOfFolder / userLanguage) come from FolderContext.
+        // Page sanitisation is the injected PageShapeSanitizer (fase-7) and cache
+        // invalidation the injected PageCacheInvalidator (fase-6 Track 2a).
         return $this->writeService()->updatePage(
             $id,
             $data,
             fn(): \OCP\Files\Folder => $this->folders()->languageFolder(),
             fn(\OCP\Files\Folder $folder): ?string => $this->folders()->languageOfFolder($folder),
-            fn(): string => $this->folders()->userLanguage(),
-            fn(array $page): array => $this->validateAndSanitizePage($page)
+            fn(): string => $this->folders()->userLanguage()
         );
     }
 
@@ -1046,12 +1044,6 @@ class PageService {
      * Sanitize page ID
      */
 
-    /**
-     * @see PageShapeSanitizer::validateAndSanitizePage()
-     */
-    private function validateAndSanitizePage(array $data): array {
-        return $this->shape()->validateAndSanitizePage($data);
-    }
 
     /**
      * @see PageShapeSanitizer::sanitizeViewerFilters()

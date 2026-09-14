@@ -27,9 +27,9 @@ use Psr\Log\LoggerInterface;
  *
  * The protected folder seams stay on PageService; this service receives the
  * already-resolved language folder as an argument, the homepage check from the
- * injected HomepageResolverService, and the cross-language lookups +
- * validateAndSanitizePage + clearCache as $this-bound closures, so the 26 seam
- * subclasses keep intercepting with zero test edits.
+ * injected HomepageResolverService, page sanitisation from the injected
+ * PageShapeSanitizer, and the cross-language lookups as $this-bound closures, so
+ * the seam subclasses keep intercepting with zero test edits.
  * PageCrudWriteTest / PageConcurrencyTest / PageUpdatePipelineTest pin the
  * behaviour byte-for-byte.
  */
@@ -46,6 +46,7 @@ final class PageWriteService {
         private \OCA\IntraVox\Service\Locator\PageLocator $locator,
         private HomepageResolverService $homepageResolver,
         private \OCA\IntraVox\Service\Cache\PageCacheInvalidator $cacheInvalidator,
+        private \OCA\IntraVox\Service\Sanitize\PageShapeSanitizer $shape,
     ) {
     }
 
@@ -147,15 +148,13 @@ final class PageWriteService {
      * @param \Closure(): \OCP\Files\Folder $languageFolder getLanguageFolder seam
      * @param \Closure(\OCP\Files\Folder): ?string $languageOfFolder
      * @param \Closure(): string $userLanguage
-     * @param \Closure(array): array $validateAndSanitizePage
      */
     public function updatePage(
         string $id,
         array $data,
         \Closure $languageFolder,
         \Closure $languageOfFolder,
-        \Closure $userLanguage,
-        \Closure $validateAndSanitizePage
+        \Closure $userLanguage
     ): array {
         // Save original ID before sanitization
         $originalId = $id;
@@ -270,7 +269,7 @@ final class PageWriteService {
         $data = (new VideoOriginalUrlPreserver())->preserve($data, $existingData);
 
         try {
-            $validatedData = $validateAndSanitizePage($data);
+            $validatedData = $this->shape->validateAndSanitizePage($data);
         } catch (\Exception $e) {
             $this->logger->error('[updatePage] Validation failed: ' . $e->getMessage(), [
                 'pageId' => $originalId,
@@ -586,7 +585,6 @@ final class PageWriteService {
      * and getOrCreateFolderPath is a private method here; only the non-folder
      * concerns stay as closures.
      *
-     * @param \Closure(array): array $validateAndSanitizePage
      * @param \Closure(string): void $validateDepth
      * @param \Closure(\OCP\Files\Node): void $createMediaFolderMarker
      * @param \Closure(string, \OCP\Files\Folder): void $cachePageFolder
@@ -594,7 +592,6 @@ final class PageWriteService {
     public function createPage(
         array $data,
         ?string $parentPath,
-        \Closure $validateAndSanitizePage,
         \Closure $validateDepth,
         \Closure $createMediaFolderMarker,
         \Closure $cachePageFolder
@@ -637,7 +634,7 @@ final class PageWriteService {
             $data['translationGroup'] = 'tg-' . $this->idUtils->generateUUID();
         }
 
-        $validatedData = $validateAndSanitizePage($data);
+        $validatedData = $this->shape->validateAndSanitizePage($data);
 
         // Use the createPageAtPath helper - pass id separately (not stored in JSON)
         $created = $this->createPageAtPath(
