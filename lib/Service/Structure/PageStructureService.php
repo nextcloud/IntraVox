@@ -23,10 +23,11 @@ use Psr\Log\LoggerInterface;
  *
  * Folder-substrate concerns (languageFolder / languageOfFolder /
  * relativePathFromRoot) come from the injected FolderContext; the homepage check
- * comes from the injected HomepageResolverService; the remaining cross-language
- * lookups + languageDisplayName + validateDepth + clearCache come in as
- * $this-bound closures, so the seam-subclasses keep intercepting with zero test
- * edits. PageMoveGuardTest and PageServiceMoveLanguageTest pin the behaviour
+ * from the injected HomepageResolverService; page lookup from the injected
+ * PageLocator; cache invalidation from the injected PageCacheInvalidator. Only
+ * languageFolderOfPageResult + languageDisplayName + validateDepth (resident
+ * PageService logic, the latter shared with createPage) come in as $this-bound
+ * closures. PageMoveGuardTest and PageServiceMoveLanguageTest pin the behaviour
  * byte-for-byte.
  */
 final class PageStructureService {
@@ -37,6 +38,7 @@ final class PageStructureService {
         private FolderContext $folders,
         private HomepageResolverService $homepageResolver,
         private \OCA\IntraVox\Service\Cache\PageCacheInvalidator $cacheInvalidator,
+        private \OCA\IntraVox\Service\Locator\PageLocator $locator,
     ) {
     }
 
@@ -46,10 +48,6 @@ final class PageStructureService {
      * Folder-substrate concerns (languageFolder / languageOfFolder /
      * relativePathFromRoot) come from the injected FolderContext.
      *
-     * @param \Closure(\OCP\Files\Folder, string): ?array $locatePageAnyLanguage
-     * @param \Closure(\OCP\Files\Folder, string): ?array $locatePageBySlugAnyLanguage
-     * @param \Closure(\OCP\Files\Folder, string): ?array $findPageById
-     * @param \Closure(\OCP\Files\Folder, string): ?array $findPageByUniqueId
      * @param \Closure(array): ?\OCP\Files\Folder $languageFolderOfPageResult
      * @param \Closure(string): string $languageDisplayName
      * @param \Closure(string): void $validateDepth
@@ -57,10 +55,6 @@ final class PageStructureService {
     public function movePage(
         string $pageId,
         string $targetParentId,
-        \Closure $locatePageAnyLanguage,
-        \Closure $locatePageBySlugAnyLanguage,
-        \Closure $findPageById,
-        \Closure $findPageByUniqueId,
         \Closure $languageFolderOfPageResult,
         \Closure $languageDisplayName,
         \Closure $validateDepth
@@ -71,6 +65,11 @@ final class PageStructureService {
 
         $languageFolderNode = $this->folders->languageFolder();
 
+        // The cross-language locate takes a lazy IntraVox root (invoked per language
+        // iteration inside the locator) — self-sourced from the injected FolderContext,
+        // byte-identical to the old rootClosure the delegator built.
+        $intraVoxRoot = fn(): \OCP\Files\Folder => $this->folders->intraVox();
+
         // Locate the source page folder, following it across language folders
         // like every other operation on an existing page (#90). This is safe
         // ONLY because the destination is anchored to the source's own language
@@ -78,8 +77,8 @@ final class PageStructureService {
         // cross-language while leaving the destination on the user's language
         // is what would relocate content between languages.
         $source = strpos($pageId, 'page-') === 0
-            ? $locatePageAnyLanguage($languageFolderNode, $pageId)
-            : $locatePageBySlugAnyLanguage($languageFolderNode, $this->idUtils->sanitizeId($pageId));
+            ? $this->locator->locatePageAnyLanguage($intraVoxRoot, $languageFolderNode, $pageId)
+            : $this->locator->locatePageBySlugAnyLanguage($intraVoxRoot, $languageFolderNode, $this->idUtils->sanitizeId($pageId));
         if (!$source || !isset($source['folder'])) {
             throw new PageNotFoundException('Page not found: ' . $pageId);
         }
@@ -117,8 +116,8 @@ final class PageStructureService {
             // is the normal case, and it keeps the parent lookup consistent
             // with the source rather than with the user's profile language.
             $targetResult = strpos($targetParentId, 'page-') === 0
-                ? $locatePageAnyLanguage($sourceLanguageFolder, $targetParentId)
-                : $findPageById($sourceLanguageFolder, $this->idUtils->sanitizeId($targetParentId));
+                ? $this->locator->locatePageAnyLanguage($intraVoxRoot, $sourceLanguageFolder, $targetParentId)
+                : $this->locator->findPageById($sourceLanguageFolder, $this->idUtils->sanitizeId($targetParentId));
             if (!$targetResult || !isset($targetResult['folder'])) {
                 throw new PageNotFoundException('Target parent page not found: ' . $targetParentId);
             }
@@ -204,8 +203,8 @@ final class PageStructureService {
         // siblings, i.e. last. (A fresh reorder can pin it precisely later.)
         try {
             $movedResult = strpos($pageId, 'page-') === 0
-                ? $findPageByUniqueId($targetParentFolder, $pageId)
-                : $findPageById($targetParentFolder, $this->idUtils->sanitizeId($pageId));
+                ? $this->locator->findPageByUniqueId($targetParentFolder, $pageId)
+                : $this->locator->findPageById($targetParentFolder, $this->idUtils->sanitizeId($pageId));
             if ($movedResult && isset($movedResult['file'])) {
                 $file = $movedResult['file'];
                 $data = json_decode($file->getContent(), true);

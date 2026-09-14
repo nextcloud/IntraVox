@@ -375,7 +375,8 @@ class PageService {
             $this->logger,
             $this->folders(),
             $this->homepageResolver,
-            $this->cacheInvalidator
+            $this->cacheInvalidator,
+            $this->locator()
         );
     }
 
@@ -590,9 +591,6 @@ class PageService {
         return $this->locator()->indexPathToRelative($this->folders()->intraVox(), $storedPath);
     }
 
-    private function locatePageBySlugAnyLanguage(\OCP\Files\Folder $primaryFolder, string $id): ?array {
-        return $this->locator()->locatePageBySlugAnyLanguage($this->rootClosure(), $primaryFolder, $id);
-    }
 
     /**
      * The language content folder that a findPageByUniqueId()/findPageById()
@@ -688,9 +686,6 @@ class PageService {
         return $this->locator()->findPageByUniqueId($folder, $uniqueId, $languageFolder);
     }
 
-    private function findPageById($folder, string $id): ?array {
-        return $this->locator()->findPageById($folder, $id);
-    }
 
     /**
      * Link two pages as language versions of each other.
@@ -1019,10 +1014,6 @@ class PageService {
         $this->structureService()->movePage(
             $pageId,
             $targetParentId,
-            fn(\OCP\Files\Folder $folder, string $uid): ?array => $this->locatePageAnyLanguage($folder, $uid),
-            fn(\OCP\Files\Folder $folder, string $slug): ?array => $this->locatePageBySlugAnyLanguage($folder, $slug),
-            fn(\OCP\Files\Folder $folder, string $legacyId): ?array => $this->findPageById($folder, $legacyId),
-            fn(\OCP\Files\Folder $folder, string $uid): ?array => $this->findPageByUniqueId($folder, $uid),
             fn(array $result): ?\OCP\Files\Folder => $this->languageFolderOfPageResult($result),
             fn(string $code): string => $this->languageDisplayName($code),
             function (string $path): void {
