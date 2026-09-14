@@ -397,7 +397,8 @@ class PageService {
             $this->pageDataEnricher(),
             $this->logger,
             $this->homepageResolver,
-            $this->cacheInvalidator
+            $this->cacheInvalidator,
+            $this->locator()
         );
     }
 
@@ -1125,30 +1126,20 @@ class PageService {
      * Get metadata for a page (simplified version using already loaded page data)
      */
     public function getPageMetadata(string $pageId): array {
-        // Body lives in Metadata/PageMetadataService (METADATA domain). Folder
-        // concerns come from the injected FolderContext; page lookup + the
-        // homepage seam go in as $this-bound closures so subclasses keep
-        // intercepting.
-        return $this->metadata()->getPageMetadata(
-            $pageId,
-            fn(\OCP\Files\Folder $folder, string $uid): ?array => $this->locatePageAnyLanguage($folder, $uid),
-            fn(\OCP\Files\Folder $folder, string $legacyId): ?array => $this->findPageById($folder, $legacyId)
-        );
+        // Body lives in Metadata/PageMetadataService (METADATA domain), which now
+        // self-sources page lookup via its injected PageLocator (fase-7) and folder
+        // concerns via its FolderContext.
+        return $this->metadata()->getPageMetadata($pageId);
     }
 
     /**
      * Update page metadata (title only for now, similar to Files rename)
      */
     public function updatePageMetadata(string $pageId, array $metadata): array {
-        // Body lives in Metadata/PageMetadataService (METADATA domain). Folder
-        // concerns come from the injected FolderContext; page lookup + clearCache
-        // go in as $this-bound closures.
-        return $this->metadata()->updatePageMetadata(
-            $pageId,
-            $metadata,
-            fn(\OCP\Files\Folder $folder, string $uid): ?array => $this->locatePageAnyLanguage($folder, $uid),
-            fn(\OCP\Files\Folder $folder, string $legacyId): ?array => $this->findPageById($folder, $legacyId)
-        );
+        // Body lives in Metadata/PageMetadataService (METADATA domain); page lookup
+        // is the service's injected PageLocator (fase-7), cache invalidation its
+        // injected PageCacheInvalidator.
+        return $this->metadata()->updatePageMetadata($pageId, $metadata);
     }
 
 

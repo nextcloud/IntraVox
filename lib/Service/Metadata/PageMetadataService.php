@@ -43,6 +43,7 @@ final class PageMetadataService {
         private LoggerInterface $logger,
         private HomepageResolverService $homepageResolver,
         private \OCA\IntraVox\Service\Cache\PageCacheInvalidator $cacheInvalidator,
+        private \OCA\IntraVox\Service\Locator\PageLocator $locator,
     ) {
     }
 
@@ -51,28 +52,29 @@ final class PageMetadataService {
      * permissions (canWrite/canEdit gated per user via enrich, #70) and the
      * folder-rename layout (#95).
      *
-     * @param \Closure(\OCP\Files\Folder, string): ?array $locatePageAnyLanguage
-     * @param \Closure(\OCP\Files\Folder, string): ?array $findPageById
      */
     public function getPageMetadata(
-        string $pageId,
-        \Closure $locatePageAnyLanguage,
-        \Closure $findPageById
+        string $pageId
     ): array {
         // Get page and file info
         $folder = $this->folders->languageFolder();
         $result = null;
 
+        // The cross-language locate takes a lazy IntraVox root (invoked per language
+        // iteration inside the locator) — self-sourced from the injected FolderContext,
+        // byte-identical to the old rootClosure the delegator built.
+        $intraVoxRoot = fn(): \OCP\Files\Folder => $this->folders->intraVox();
+
         // Check for uniqueId pattern (page-xxxx). Follows the page across
         // language folders so an operation on a page the user can see never
         // fails with "Page not found" (issue #90).
         if (strpos($pageId, 'page-') === 0) {
-            $result = $locatePageAnyLanguage($folder, $pageId);
+            $result = $this->locator->locatePageAnyLanguage($intraVoxRoot, $folder, $pageId);
         }
 
         // Fall back to legacy ID lookup
         if ($result === null) {
-            $result = $findPageById($folder, $this->idUtils->sanitizeId($pageId));
+            $result = $this->locator->findPageById($folder, $this->idUtils->sanitizeId($pageId));
         }
 
         if (!$result) {
@@ -166,28 +168,25 @@ final class PageMetadataService {
      * Update page metadata (title only for now, similar to Files rename), with an
      * optional folder rename riding along (#95).
      *
-     * @param \Closure(\OCP\Files\Folder, string): ?array $locatePageAnyLanguage
-     * @param \Closure(\OCP\Files\Folder, string): ?array $findPageById
      */
     public function updatePageMetadata(
         string $pageId,
-        array $metadata,
-        \Closure $locatePageAnyLanguage,
-        \Closure $findPageById
+        array $metadata
     ): array {
         $folder = $this->folders->languageFolder();
         $result = null;
+        $intraVoxRoot = fn(): \OCP\Files\Folder => $this->folders->intraVox();
 
         // Check for uniqueId pattern (page-xxxx). Follows the page across
         // language folders so an operation on a page the user can see never
         // fails with "Page not found" (issue #90).
         if (strpos($pageId, 'page-') === 0) {
-            $result = $locatePageAnyLanguage($folder, $pageId);
+            $result = $this->locator->locatePageAnyLanguage($intraVoxRoot, $folder, $pageId);
         }
 
         // Fall back to legacy ID lookup
         if ($result === null) {
-            $result = $findPageById($folder, $this->idUtils->sanitizeId($pageId));
+            $result = $this->locator->findPageById($folder, $this->idUtils->sanitizeId($pageId));
         }
 
         if (!$result) {
@@ -237,7 +236,7 @@ final class PageMetadataService {
         // Refetch by uniqueId when we have one: after a folder rename, a
         // legacy slug-shaped $pageId no longer resolves.
         $refetchId = (is_array($data) && !empty($data['uniqueId'])) ? (string)$data['uniqueId'] : $pageId;
-        $response = $this->getPageMetadata($refetchId, $locatePageAnyLanguage, $findPageById);
+        $response = $this->getPageMetadata($refetchId);
         if ($folderRename !== null) {
             $response['folderRename'] = $folderRename;
         }

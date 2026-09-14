@@ -79,7 +79,11 @@ class PageRenameFolderTest extends TestCase {
             $enricher,
             $this->createMock(\Psr\Log\LoggerInterface::class),
             $this->fakeHomepageResolver($isHomepage ? 'page-x' : null),
-            $this->fakeCacheInvalidator()
+            $this->fakeCacheInvalidator(),
+            // fase-7: PageMetadataService self-sources page lookup via PageLocator.
+            // renamePageFolder (the only method this test drives) never touches it, so
+            // an inert mock suffices.
+            $this->createMock(\OCA\IntraVox\Service\Locator\PageLocator::class)
         );
     }
 
