@@ -978,15 +978,6 @@ class PageService {
     }
 
     /**
-     * List all pages with full content (including layout)
-     * OPTIMIZED: Single filesystem traversal for search operations
-     * This eliminates the N+1 query pattern where listPages() + getPage() for each
-     */
-    public function listPagesWithContent(): array {
-        return $this->pageLister->listAllWithContent();
-    }
-
-    /**
      * Get a specific page by uniqueId or legacy id
      */
     public function getPage(string $id): array {
@@ -1454,7 +1445,7 @@ class PageService {
         // Discovery (the filesystem walk) stays here; the scoring/sort/limit is
         // the PageSearchEngine's job (Phase "search"). Passing metaVox() in via
         // the engine keeps the request-scoped MetaVox memo a single instance.
-        return $this->searchEngine()->search($this->listPagesWithContent(), $query);
+        return $this->searchEngine()->search($this->pageLister->listAllWithContent(), $query);
     }
 
     /**

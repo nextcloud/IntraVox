@@ -16,32 +16,36 @@ use PHPUnit\Framework\TestCase;
  * it (PageServicePublicSurfaceTest) is an arity map ('searchPages' => 1). This
  * pins the observable contract so the extraction can be proven byte-equivalent.
  *
- * Strategy: override the public listPagesWithContent() seam to feed fixture
- * pages straight into the scorer (bypassing the filesystem walk), stub the
- * private metaVox() collaborator to contribute nothing (so content scoring is
- * tested in isolation), and let the REAL final PageSearchHelper run the widget
- * scoring. What is asserted is the exact score weighting, the 3-match cap with
- * an uncapped matchCount, the score-descending sort, and the top-20 limit.
+ * Strategy: inject a real PageLister whose listAllWithContent() walk yields the
+ * fixture pages (see BuildsPageService::fakePageListerWithContent — searchPages
+ * now reads $this->pageLister->listAllWithContent() directly), stub the private
+ * metaVox() collaborator to contribute nothing (so content scoring is tested in
+ * isolation), and let the REAL final PageSearchHelper run the widget scoring. What
+ * is asserted is the exact score weighting, the 3-match cap with an uncapped
+ * matchCount, the score-descending sort, and the top-20 limit.
  */
 class PageSearchTest extends TestCase {
 
     use BuildsPageService;
 
     /**
-     * A PageService whose listPagesWithContent() returns $pages verbatim and
-     * whose metaVox() gateway contributes no metadata matches.
+     * A PageService whose pageLister->listAllWithContent() returns $pages verbatim
+     * (via a real PageLister walking a fixture folder tree) and whose metaVox()
+     * gateway contributes no metadata matches.
      *
-     * @param list<array> $pages page-data arrays as listPagesWithContent yields
+     * searchPages() now reads $this->pageLister->listAllWithContent() directly (the
+     * public listPagesWithContent() delegator was dissolved), so the fixtures are
+     * fed by injecting a real PageLister whose walk yields them — see
+     * fakePageListerWithContent(). The walk is identity for the scored fields
+     * (uniqueId/title/path/layout widgets); it only rewrites fileId, which the inert
+     * MetaVox gateway makes irrelevant. No fixture uses a video/people widget, so the
+     * real PageShapeSanitizer inside the walk leaves the layout untouched.
+     *
+     * @param list<array> $pages page-data arrays as listAllWithContent yields
      */
     private function makeService(array $pages): PageService {
-        $svc = new class($pages) extends PageService {
-            /** @var list<array> */
-            private array $pages;
-            public function __construct(array $pages) {
-                $this->pages = $pages;
-            }
-            public function listPagesWithContent(): array {
-                return $this->pages;
+        $svc = new class extends PageService {
+            public function __construct() {
             }
         };
 
@@ -56,6 +60,7 @@ class PageSearchTest extends TestCase {
 
         $this->injectPageServiceDependencies($svc, [
             'metaVoxGateway' => $metaVox,
+            'pageLister' => $this->fakePageListerWithContent($pages),
         ]);
         return $svc;
     }

@@ -108,6 +108,85 @@ trait BuildsPageService {
     }
 
     /**
+     * A real (final) PageLister whose listAllWithContent() yields exactly the given
+     * page-data arrays — the seam-free replacement for overriding the (now-removed)
+     * public listPagesWithContent() delegator on a PageService subclass.
+     *
+     * listAllWithContent() does NOT use the index; it always walks the read-language
+     * folder: it tries folder->get('home.json') (skipped here — the fixture root
+     * throws NotFoundException, so no loose homepage is prepended), then recurses the
+     * directory listing and, for each non-infrastructure SUBFOLDER, reads
+     * {slug}/{slug}.json, requiring isReadable() === true and a decodable body with a
+     * uniqueId. So this rigs that exact walk: one subfolder per page whose
+     * {slug}.json's getContent() is the page JSON. The real PageShapeSanitizer runs
+     * (doubleOrBuild builds it, it is final) and is identity for these fixtures — it
+     * only transforms video/people widgets, which the search fixtures never use.
+     *
+     * The walk overwrites $data['fileId'] with the json file's getId() (harmless: the
+     * search scorer only uses fileId to look up MetaVox, which the inert gateway
+     * answers empty). Pages are appended in directory-listing order; since no search
+     * assertion depends on order among equal-score pages (usort is stable on PHP 8),
+     * that order is behaviour-neutral. Pages with no uniqueId are naturally skipped by
+     * the walk's `isset($data['uniqueId'])` guard, matching the old in-memory feed.
+     *
+     * Slugs are derived from each page's uniqueId; they must not be infrastructure
+     * names (no leading '_' / '.', not 'images'/'files') — the fixture uniqueIds
+     * (page-a, page-0, …) all qualify. A synthetic /IntraVox/en tree gives every
+     * folder/file a distinct getPath() so PageLocator's per-path directory/content
+     * caches never collide.
+     *
+     * @param list<array> $pages page-data arrays as listAllWithContent() must yield
+     */
+    protected function fakePageListerWithContent(array $pages): \OCA\IntraVox\Service\Listing\PageLister {
+        $subfolders = [];
+        foreach ($pages as $i => $pageData) {
+            // A stable, infrastructure-safe slug per page. The uniqueId is used when
+            // present (the walk does not depend on it matching anything); id-less
+            // fixtures still get a folder so the walk reaches their {slug}.json and
+            // applies its own uniqueId guard, exactly as production would.
+            $slug = isset($pageData['uniqueId']) && $pageData['uniqueId'] !== ''
+                ? 'p-' . $pageData['uniqueId']
+                : 'p-noid-' . $i;
+            $slugPath = '/IntraVox/en/' . $slug;
+
+            // {slug}.json must be readable (walkWithContent gates on isReadable()) and
+            // carry the fixture JSON verbatim. makeFile does not stub isReadable, so
+            // build the file here with the extra stub.
+            $jsonFile = $this->createMock(File::class);
+            $jsonFile->method('getName')->willReturn($slug . '.json');
+            $jsonFile->method('getType')->willReturn(FileInfo::TYPE_FILE);
+            $jsonFile->method('getPath')->willReturn($slugPath . '/' . $slug . '.json');
+            $jsonFile->method('getContent')->willReturn(json_encode($pageData));
+            $jsonFile->method('getId')->willReturn(abs(crc32($slugPath)));
+            $jsonFile->method('isReadable')->willReturn(true);
+
+            // The subfolder whose {slug}.json the walk fetches via $item->get(...).
+            $subfolders[$slug] = $this->makeFolder($slugPath, [$slug . '.json' => $jsonFile]);
+        }
+
+        // The read-language folder: no home.json (get() throws NotFoundException for
+        // any unknown child, so the home-prepend branch is skipped), its directory
+        // listing is exactly the page subfolders in fixture order.
+        $langFolder = $this->makeFolder('/IntraVox/en', $subfolders);
+        $intraVox = $this->makeFolder('/IntraVox');
+        $folders = $this->fakeFolderContext(readLanguageFolder: $langFolder, intraVox: $intraVox);
+
+        $index = $this->createMock(\OCA\IntraVox\Service\PageIndexService::class);
+        $logger = $this->createMock(LoggerInterface::class);
+
+        return new \OCA\IntraVox\Service\Listing\PageLister(
+            new PageLocator($index, $logger),
+            $index,
+            $this->createMock(PermissionService::class),
+            $logger,
+            $folders,
+            $this->doubleOrBuild(\OCA\IntraVox\Service\Sanitize\PageShapeSanitizer::class),
+            $this->createMock(PageCacheService::class),
+            $this->doubleOrBuild(\OCA\IntraVox\Service\Path\PageDataEnricher::class),
+        );
+    }
+
+    /**
      * Build a real FolderContext wired for a test, so a migrating subclass can
      * inject it directly (folderContext: ...) instead of overriding the three
      * protected folder seams to smuggle a fake folder in.
