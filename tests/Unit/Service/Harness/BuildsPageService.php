@@ -465,6 +465,40 @@ trait BuildsPageService {
     }
 
     /**
+     * Build a real (final) PageTreeService from the explicit deps a tree test threads
+     * through — the direct-service replacement for the retired PageService::getPageTree
+     * delegator (fase-6 Track 3c). getPageTree's cache-hit path (which the shape tests
+     * drive) only touches cache / folders / groupContext / permissionService, so those
+     * come from $explicit when given; the fresh-build collaborators (treeBuilder /
+     * homepageService / pathHelper) are inert doubles, never reached on a hit.
+     *
+     * @param array<string,mixed> $explicit
+     */
+    protected function fakeTreeService(array $explicit): \OCA\IntraVox\Service\Tree\PageTreeService {
+        $folders = ($explicit['folderContext'] ?? null) instanceof FolderContext
+            ? $explicit['folderContext']
+            : $this->fakeFolderContext();
+        $cache = $explicit['cache'] ?? $this->createMock(PageCacheService::class);
+        $logger = $explicit['logger'] ?? $this->createMock(LoggerInterface::class);
+        $index = $explicit['pageIndexService'] ?? $this->createMock(\OCA\IntraVox\Service\PageIndexService::class);
+        $permissionService = $explicit['permissionService'] ?? $this->createMock(PermissionService::class);
+
+        return new \OCA\IntraVox\Service\Tree\PageTreeService(
+            $cache,
+            $explicit['groupContext'] ?? $this->doubleOrBuild(\OCA\IntraVox\Service\GroupContextService::class),
+            $folders,
+            new \OCA\IntraVox\Service\Tree\PageTreeBuilder(
+                new PageLocator($index, $logger),
+                $permissionService,
+                $folders
+            ),
+            $explicit['homepageService'] ?? $this->createMock(\OCA\IntraVox\Service\HomepageService::class),
+            $this->doubleOrBuild(\OCA\IntraVox\Service\Path\PagePathHelper::class),
+            $permissionService,
+        );
+    }
+
+    /**
      * A real (final) HomepageResolverService rigged so resolveHomepageNodeUniqueId()
      * (any language) yields exactly $homeUniqueId — the seam-free replacement for
      * the isHomepage() subclass overrides (fase-3). With the resolver injected,

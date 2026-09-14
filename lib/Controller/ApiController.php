@@ -81,6 +81,7 @@ class ApiController extends Controller {
     private \OCA\IntraVox\Service\Homepage\HomepageResolverService $homepageResolver;
     private \OCA\IntraVox\Service\News\NewsWidgetService $newsWidget;
     private \OCA\IntraVox\Service\Path\BreadcrumbService $breadcrumbService;
+    private \OCA\IntraVox\Service\Tree\PageTreeService $treeService;
 
     public function __construct(
         string $appName,
@@ -99,7 +100,8 @@ class ApiController extends Controller {
         \OCA\IntraVox\Service\Listing\PageLister $pageLister,
         \OCA\IntraVox\Service\Homepage\HomepageResolverService $homepageResolver,
         \OCA\IntraVox\Service\News\NewsWidgetService $newsWidget,
-        \OCA\IntraVox\Service\Path\BreadcrumbService $breadcrumbService
+        \OCA\IntraVox\Service\Path\BreadcrumbService $breadcrumbService,
+        \OCA\IntraVox\Service\Tree\PageTreeService $treeService
     ) {
         parent::__construct($appName, $request);
         $this->pageService = $pageService;
@@ -117,6 +119,7 @@ class ApiController extends Controller {
         $this->homepageResolver = $homepageResolver;
         $this->newsWidget = $newsWidget;
         $this->breadcrumbService = $breadcrumbService;
+        $this->treeService = $treeService;
     }
 
     /**
@@ -844,7 +847,7 @@ class ApiController extends Controller {
     #[NoCSRFRequired]
     public function getPageTree(?string $currentPageId = null, ?string $language = null, ?string $rootPageId = null): DataResponse {
         try {
-            $tree = $this->pageService->getPageTree($currentPageId, $language, $rootPageId);
+            $tree = $this->treeService->getPageTree($currentPageId, $language, $rootPageId);
 
             // Filter tree to only include pages user can read
             // PageService already includes Nextcloud permissions in each page

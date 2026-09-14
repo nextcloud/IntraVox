@@ -63,6 +63,7 @@ class ApiControllerTest extends TestCase {
     private \OCA\IntraVox\Service\Homepage\HomepageResolverService $homepageResolver;
     private \OCA\IntraVox\Service\News\NewsWidgetService $newsWidget;
     private \OCA\IntraVox\Service\Path\BreadcrumbService $breadcrumbService;
+    private \OCA\IntraVox\Service\Tree\PageTreeService $treeService;
 
     protected function setUp(): void {
         parent::setUp();
@@ -100,6 +101,9 @@ class ApiControllerTest extends TestCase {
         // BreadcrumbService is final; getBreadcrumb moved off PageService (fase-6 T1).
         // Default returns a trail; the breadcrumb-fails test rebuilds with a throw.
         $this->breadcrumbService = $this->fakeBreadcrumbService();
+        // PageTreeService is final; the getPageTree endpoint is not exercised here, so
+        // an inert real one suffices (closure-free ctor -> doubleOrBuild).
+        $this->treeService = $this->doubleOrBuild(\OCA\IntraVox\Service\Tree\PageTreeService::class);
 
         // Use real mock implementations for user/group
         $this->userSession = MockUserSession::loggedInAs('testuser');
@@ -132,7 +136,8 @@ class ApiControllerTest extends TestCase {
             $this->pageLister,
             $this->homepageResolver,
             $this->newsWidget,
-            $this->breadcrumbService
+            $this->breadcrumbService,
+            $this->treeService
         );
     }
 

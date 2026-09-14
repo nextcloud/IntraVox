@@ -5,7 +5,6 @@ namespace OCA\IntraVox\BackgroundJob;
 
 use OCA\IntraVox\AppInfo\Application;
 use OCA\IntraVox\Service\NavigationService;
-use OCA\IntraVox\Service\PageService;
 use OCA\IntraVox\Service\PermissionService;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
@@ -25,7 +24,7 @@ use Psr\Log\LoggerInterface;
  * This job runs every 15 minutes and forces a rebuild for each supported
  * language by walking the same code paths as a real request:
  * - PermissionService::buildPagePathMap → caches per-language path map
- * - PageService::getPageTree → caches per-group tree
+ * - PageTreeService::getPageTree → caches per-group tree
  *
  * Both of those store their result via distributed cache, so subsequent
  * real users see warm hits regardless of which front-end node serves
@@ -40,10 +39,10 @@ class CacheWarmupJob extends TimedJob {
 
     public function __construct(
         ITimeFactory $time,
-        private PageService $pageService,
         private PermissionService $permissionService,
         private NavigationService $navigationService,
         private LoggerInterface $logger,
+        private \OCA\IntraVox\Service\Tree\PageTreeService $treeService,
     ) {
         parent::__construct($time);
         $this->setInterval(self::INTERVAL_MINUTES * 60);
@@ -57,7 +56,7 @@ class CacheWarmupJob extends TimedJob {
         foreach (self::LANGUAGES as $lang) {
             try {
                 $this->permissionService->buildPagePathMap($lang);
-                $this->pageService->getPageTree(null, $lang);
+                $this->treeService->getPageTree(null, $lang);
                 $this->navigationService->getNavigation($lang);
                 $warmed[] = $lang;
             } catch (\Throwable $e) {

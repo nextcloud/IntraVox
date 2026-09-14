@@ -10,7 +10,6 @@ use OCA\IntraVox\Exception\CrossLanguageMoveException;
 use OCA\IntraVox\Exception\ForbiddenException;
 use OCA\IntraVox\Exception\PageConflictException;
 use OCA\IntraVox\Exception\PageNotFoundException;
-use OCA\IntraVox\Service\GroupContextService;
 use OCA\IntraVox\Service\Language\LanguageResolver;
 use OCA\IntraVox\Service\Path\PagePathHelper;
 use OCA\IntraVox\Service\Sanitize\HtmlSanitizer;
@@ -62,9 +61,6 @@ class PageService {
     private ?\OCA\IntraVox\Service\Maintenance\PageMaintenanceService $maintenanceSvc = null;
     /** Lazily-built page-search scorer (Phase "search"). */
     private ?\OCA\IntraVox\Service\Search\PageSearchEngine $searchEngine = null;
-    /** Lazily-built recursive tree walker (Phase "tree"). */
-    private ?\OCA\IntraVox\Service\Tree\PageTreeBuilder $treeBuilder = null;
-    private ?\OCA\IntraVox\Service\Tree\PageTreeService $treeService = null;
     /** Lazily-built index-based page lister (Phase "listing"). */
     private \OCA\IntraVox\Service\Listing\PageLister $pageLister;
     /** Lazily-built sibling reorderer (Phase "reorder"). */
@@ -171,9 +167,7 @@ class PageService {
     private PageSearchHelper $searchHelper;
     private PagePathHelper $pathHelper;
     private PageIdUtils $idUtils;
-    private GroupContextService $groupContext;
     private LanguageService $languageService;
-    private HomepageService $homepageService;
     private NavigationService $navigationService;
     private PermissionService $permissionService;
     private PageLocator $pageLocator;
@@ -194,9 +188,7 @@ class PageService {
         PageSearchHelper $searchHelper,
         PagePathHelper $pathHelper,
         PageIdUtils $idUtils,
-        GroupContextService $groupContext,
         LanguageService $languageService,
-        HomepageService $homepageService,
         NavigationService $navigationService,
         PermissionService $permissionService,
         PageLocator $pageLocator,
@@ -228,9 +220,7 @@ class PageService {
         $this->searchHelper = $searchHelper;
         $this->pathHelper = $pathHelper;
         $this->idUtils = $idUtils;
-        $this->groupContext = $groupContext;
         $this->languageService = $languageService;
-        $this->homepageService = $homepageService;
         $this->navigationService = $navigationService;
         $this->permissionService = $permissionService;
         $this->pageLocator = $pageLocator;
@@ -288,39 +278,6 @@ class PageService {
         );
     }
 
-    /**
-     * Lazy seam for the recursive tree walker (Phase "tree"). Built from the
-     * locator + permissionService, with the two seam-bound bits
-     * (getRelativePathFromRoot, getUserLanguage) passed in as closures so the
-     * protected folder seams stay on PageService. Nullable-default so the harness
-     * auto-fill skips it (see the load-bearing `= null` note above).
-     */
-    private function treeBuilder(): \OCA\IntraVox\Service\Tree\PageTreeBuilder {
-        return $this->treeBuilder ??= new \OCA\IntraVox\Service\Tree\PageTreeBuilder(
-            $this->locator(),
-            $this->permissionService,
-            $this->folders()
-        );
-    }
-
-    /**
-     * Lazy seam for the page-tree service (fase-4 capstone). Built from the tree
-     * builder + cache + group context + homepage engine + path helper + its own
-     * PermissionService (the #86 tree-COW recompute). Closure-free ctor, so it is
-     * fully DI-buildable; the accessor exists for the constructor-less test
-     * subclasses. Nullable-default so the harness auto-fill skips it.
-     */
-    private function treeService(): \OCA\IntraVox\Service\Tree\PageTreeService {
-        return $this->treeService ??= new \OCA\IntraVox\Service\Tree\PageTreeService(
-            $this->cache(),
-            $this->groupContext,
-            $this->folders(),
-            $this->treeBuilder(),
-            $this->homepageService,
-            $this->pathHelper,
-            $this->permissionService
-        );
-    }
     /**
      * Lazy seam for the language-content-status reader (LANGUAGE-STATUS domain).
      * Built from the FolderContext substrate + the plain PageLister/PageLocator
@@ -1376,24 +1333,6 @@ class PageService {
     /**
      * Format bytes to human readable format
      */
-
-    /**
-     * Get the full page tree structure for the current language
-     * Returns a hierarchical tree of all pages the user has access to
-     *
-     * OPTIMIZED: Uses static cache with TTL to avoid repeated filesystem traversals
-     *
-     * @param string|null $currentPageId Optional: uniqueId of the current page to highlight
-     * @return array Tree structure with pages and their children
-     */
-    public function getPageTree(?string $currentPageId = null, ?string $language = null, ?string $rootPageId = null): array {
-        // The tree build + per-language cache + the #86 tree-COW permission
-        // recompute live in Tree/PageTreeService (fase-4 capstone). This facade
-        // delegator stays for the constructor-less test subclasses; new callers
-        // inject PageTreeService directly.
-        return $this->treeService()->getPageTree($currentPageId, $language, $rootPageId);
-    }
-
 
     /**
      * Search pages by query string

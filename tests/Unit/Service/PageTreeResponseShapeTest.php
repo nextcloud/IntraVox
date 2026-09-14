@@ -4,16 +4,17 @@ declare(strict_types=1);
 namespace OCA\IntraVox\Tests\Unit\Service;
 
 use OCA\IntraVox\Service\Cache\PageCacheService;
-use OCA\IntraVox\Service\PageService;
+use OCA\IntraVox\Service\Tree\PageTreeService;
 use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageService;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
 /**
- * Characterizes getPageTree()'s cache/response-shaping orchestration before it
- * moves into Tree/PageTreeService in Phase 12 (v2). Complements the existing
- * PageTreePlaceholderTest (which covers fresh-build placeholder behaviour) by
- * pinning the parts that make the shared cache safe:
+ * Characterizes getPageTree()'s cache/response-shaping orchestration, now on
+ * Tree/PageTreeService (fase-6 Track 3c retired the PageService::getPageTree
+ * facade — the tree domain is tested on the service directly). Complements the
+ * existing PageTreePlaceholderTest (which covers fresh-build placeholder behaviour)
+ * by pinning the parts that make the shared cache safe:
  *
  *  - an in-process cache hit within TTL returns via shapeTreeResponse WITHOUT
  *    rebuilding from the filesystem;
@@ -61,30 +62,18 @@ class PageTreeResponseShapeTest extends TestCase {
     }
 
     /**
-     * @param array $cachedTree the in-process cached tree blob (by reference-able)
+     * A real PageTreeService driving the cache-hit path. getPageTree resolves its
+     * folder through the injected FolderContext (languageFolderByCode /
+     * effectiveLanguage); with language 'en' given and the cache hitting, neither is
+     * reached — a fakeFolderContext with no folder wired reproduces the old "must not
+     * resolve" guards (its intraVox closure throws if the hit path tried to touch it).
      */
-    private function makeService(array &$cachedTree, PageCacheService $cache): PageService {
-        $svc = new class extends PageService {
-            public function __construct() {
-            }
-        };
-
-        // GroupContextService is final; the harness builds the real one via
-        // doubleOrBuild. Its group hash only forms the cache key, which is
-        // irrelevant here because getTree() is stubbed to always return the blob.
-        //
-        // getPageTree resolves its folder through the injected FolderContext
-        // (languageFolderByCode / effectiveLanguage); with language 'en' given and
-        // the cache hitting, neither is reached. A fakeFolderContext with no folder
-        // wired reproduces the old "must not resolve" guards exactly — its intraVox
-        // closure throws if anything on the hit path tried to touch it.
-        $this->injectPageServiceDependencies($svc, [
+    private function makeService(PageCacheService $cache): PageTreeService {
+        return $this->fakeTreeService([
             'cache' => $cache,
             'logger' => $this->createMock(LoggerInterface::class),
             'folderContext' => $this->fakeFolderContext(),
         ]);
-
-        return $svc;
     }
 
     public function testInProcessCacheHitReturnsWithoutRebuilding(): void {
@@ -97,7 +86,7 @@ class PageTreeResponseShapeTest extends TestCase {
         $cache->expects($this->never())->method('setTree');
         $cache->expects($this->never())->method('setDistributed');
 
-        $svc = $this->makeService($tree, $cache);
+        $svc = $this->makeService($cache);
 
         // language 'en' provided so no effective-language resolution is needed.
         $result = $svc->getPageTree(currentPageId: null, language: 'en');
@@ -112,7 +101,7 @@ class PageTreeResponseShapeTest extends TestCase {
         $cache = $this->createMock(PageCacheService::class);
         $cache->method('getTree')->willReturn(['tree' => $tree, 'time' => time()]);
 
-        $svc = $this->makeService($tree, $cache);
+        $svc = $this->makeService($cache);
 
         $result = $svc->getPageTree(currentPageId: 'page-a1', language: 'en');
 
@@ -141,7 +130,7 @@ class PageTreeResponseShapeTest extends TestCase {
             fn() => ['tree' => $this->cachedTree(), 'time' => time()]
         );
 
-        $svc = $this->makeService($tree, $cache);
+        $svc = $this->makeService($cache);
 
         $first = $svc->getPageTree(currentPageId: 'page-a', language: 'en');
         $this->assertTrue($first[0]['isCurrent'], 'user 1 marks page-a');
@@ -178,14 +167,10 @@ class PageTreeResponseShapeTest extends TestCase {
             ['canRead' => true, 'canWrite' => true, 'level' => 'USER']
         );
 
-        $svc = new class extends PageService {
-            public function __construct() {
-            }
-        };
         // GroupContextService is final; the harness builds a real one via doubleOrBuild.
         // Its getGroupHash() forms the cache key, so read it to seed the right entry.
         $groupContext = $this->doubleOrBuild(\OCA\IntraVox\Service\GroupContextService::class);
-        $this->injectPageServiceDependencies($svc, [
+        $svc = $this->fakeTreeService([
             'cache' => $cache,
             'permissionService' => $perms,
             'groupContext' => $groupContext,
