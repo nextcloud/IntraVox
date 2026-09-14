@@ -39,7 +39,6 @@ class PageServicePublicSurfaceTest extends TestCase {
         'getPageCountByLanguage' => 0,
         'getPageMetadata' => 1,
         'getTemplate' => 1,
-        'getUploadLimit' => 0,
         'invalidateAllCaches' => 0,
         'linkTranslation' => 2,
         'listTemplates' => 0,
@@ -54,8 +53,6 @@ class PageServicePublicSurfaceTest extends TestCase {
         'unlinkTranslation' => 1,
         'updatePage' => 2,
         'updatePageMetadata' => 2,
-        'uploadMedia' => 2,
-        'uploadMediaWithOriginalName' => 4,
     ];
 
     /** @return array<string,int> name => parameter count for own public methods */
@@ -91,7 +88,7 @@ class PageServicePublicSurfaceTest extends TestCase {
 
     public function testSurfaceCountIsPinned(): void {
         $this->assertCount(
-            30,
+            27,
             $this->currentSurface(),
             'the public method count changed; see testPublicSurfaceMatchesTheFrozenExpectation'
         );

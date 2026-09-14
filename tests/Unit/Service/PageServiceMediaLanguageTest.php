@@ -158,11 +158,11 @@ class PageServiceMediaLanguageTest extends TestCase {
     }
 
     /**
-     * The media orchestrator over the same cross-language fixture. getMediaList /
-     * checkMediaExists were pure delegators to mediaOrchestrator() (fase-4 deletes
-     * them), so those two read tests drive PageMediaOrchestrator directly — the
-     * real owner of the #92 cross-language resolution they pin. uploadMedia* stay
-     * on the facade, so makeService (PageService) is kept for the upload tests.
+     * The media orchestrator over the cross-language fixture — the real owner of the
+     * #92 cross-language resolution. Every media op (getMediaList / checkMediaExists /
+     * uploadMedia / uploadMediaWithOriginalName) is driven through it directly now:
+     * their PageService facades were retired (read ones in fase-4, uploads in the
+     * fase-6 consumer campaign).
      *
      * @param array<int,Folder> $allLanguages
      */
@@ -223,7 +223,7 @@ class PageServiceMediaLanguageTest extends TestCase {
      * Build the two-language fixture used by most tests: the page lives in en/,
      * the user reads de/. Returns [service, createdPaths].
      */
-    private function twoLanguageFixture(array &$created): PageService {
+    private function twoLanguageFixture(array &$created): \OCA\IntraVox\Service\Media\PageMediaOrchestrator {
         $pageJson = $this->makeFile(
             '/IntraVox/en/about.json',
             ['uniqueId' => 'page-issue92', 'title' => 'About', 'widgets' => []]
@@ -237,7 +237,10 @@ class PageServiceMediaLanguageTest extends TestCase {
         ], $created);
         $de = $this->makeFolder('/IntraVox/de', [], $created);
 
-        return $this->makeService($de, [$de, $en]);
+        // fase-6 consumer campaign: uploadMedia* moved off PageService — the upload
+        // tests drive PageMediaOrchestrator directly (its real owner), like the
+        // read tests already did.
+        return $this->mediaOrchestrator($de, [$de, $en]);
     }
 
     /**
@@ -283,7 +286,7 @@ class PageServiceMediaLanguageTest extends TestCase {
         $created = [];
         $en = $this->makeFolder('/IntraVox/en', [], $created);
         $de = $this->makeFolder('/IntraVox/de', [], $created);
-        $svc = $this->makeService($de, [$de, $en]);
+        $svc = $this->mediaOrchestrator($de, [$de, $en]);
 
         $this->expectException(PageNotFoundException::class);
         $svc->uploadMediaWithOriginalName('page-nope', $this->makeUpload(), 'page', false);
@@ -374,7 +377,7 @@ class PageServiceMediaLanguageTest extends TestCase {
             'about' => $enPageFolder,
         ], $created);
 
-        $svc = $this->makeService($de, [$de, $en]);
+        $svc = $this->mediaOrchestrator($de, [$de, $en]);
         $svc->uploadMedia('page-shared', $this->makeUpload());
 
         $this->assertContains('/IntraVox/de/about/_media/', $created);
@@ -398,7 +401,7 @@ class PageServiceMediaLanguageTest extends TestCase {
         $en = $this->makeFolder('/IntraVox/en', ['home.json' => $homeJson], $created);
         $de = $this->makeFolder('/IntraVox/de', [], $created);
 
-        $svc = $this->makeService($de, [$de, $en]);
+        $svc = $this->mediaOrchestrator($de, [$de, $en]);
         $svc->uploadMedia('page-home92', $this->makeUpload());
 
         $this->assertContains(

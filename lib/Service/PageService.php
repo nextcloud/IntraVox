@@ -38,10 +38,6 @@ class PageService {
     ];
     private const MAX_IMAGE_SIZE = 2097152; // 2MB (PHP default upload limit)
     private const MAX_VIDEO_SIZE = 52428800; // 50MB
-    // The media allow-lists and the SVG ceiling moved with the upload paths
-    // (PR-17b); PageMediaService owns them now. Only the overall ceiling is
-    // still read here, by the upload-limit the editor is told about.
-    private const MAX_MEDIA_SIZE = PageMediaService::MAX_MEDIA_SIZE;
     private const MAX_COLUMNS = 5;
 
     private IUserSession $userSession;
@@ -75,8 +71,6 @@ class PageService {
     private ?\OCA\IntraVox\Service\Structure\PageStructureService $structureService = null;
     /** Lazily-built metadata projection service (METADATA domain). */
     private ?\OCA\IntraVox\Service\Metadata\PageMetadataService $metadataService = null;
-    /** Lazily-built media orchestration service (MEDIA domain). */
-    private ?\OCA\IntraVox\Service\Media\PageMediaOrchestrator $mediaOrchestrator = null;
     /** Lazily-built page-composition service (COMPOSE domain: copy/translate/template). */
     private ?\OCA\IntraVox\Service\Compose\PageCompositionService $compositionService = null;
     /** Lazily-built language-content-status reader (LANGUAGE-STATUS domain). */
@@ -96,18 +90,6 @@ class PageService {
     private PageIndexService $pageIndexService;
     private PageCacheService $cache;
 
-
-    /**
-     * Get the effective upload limit in bytes (minimum of upload_max_filesize and post_max_size)
-     */
-    public function getUploadLimit(): int {
-        $uploadMax = $this->idUtils->parsePhpSize(ini_get('upload_max_filesize') ?: '2M');
-        $postMax = $this->idUtils->parsePhpSize(ini_get('post_max_size') ?: '8M');
-
-        // Use the smaller of the two, but cap at our app's MAX_MEDIA_SIZE
-        $phpLimit = min($uploadMax, $postMax);
-        return min($phpLimit, self::MAX_MEDIA_SIZE);
-    }
 
     /**
      * Parse PHP size notation (e.g., '2M', '8M', '512K') to bytes
@@ -423,24 +405,6 @@ class PageService {
             $this->pageDataEnricher(),
             $this->logger,
             $this->homepageResolver,
-            $this->cacheInvalidator
-        );
-    }
-
-    /**
-     * Lazy seam for the media orchestration service (MEDIA domain). Built from the
-     * media engine + cache + FolderContext substrate + locator + id utils + media
-     * sanitizer; page lookup + clearCache are passed per call as $this-bound
-     * closures. Nullable-default so the harness auto-fill skips it.
-     */
-    private function mediaOrchestrator(): \OCA\IntraVox\Service\Media\PageMediaOrchestrator {
-        return $this->mediaOrchestrator ??= new \OCA\IntraVox\Service\Media\PageMediaOrchestrator(
-            $this->media(),
-            $this->cache(),
-            $this->folders(),
-            $this->locator(),
-            $this->idUtils,
-            $this->mediaSanitizer,
             $this->cacheInvalidator
         );
     }
@@ -1087,17 +1051,6 @@ class PageService {
         );
     }
 
-    /**
-     * Upload media (image or video) for a specific page
-     * Unified endpoint that stores all media in a single '_media' folder
-     */
-    public function uploadMedia(string $pageId, array $file): string {
-        return $this->mediaOrchestrator()->uploadMedia(
-            $pageId,
-            $file
-        );
-    }
-
 
     /**
      * Sanitize page ID
@@ -1336,25 +1289,6 @@ class PageService {
      * here: the upload paths that called them now validate through
      * PageMediaService::validateUpload(), which uses the same MediaSanitizer.
      */
-
-    /**
-     * Upload media with original filename
-     *
-     * @param string $pageId Page unique ID
-     * @param array $file Uploaded file data
-     * @param string $targetFolder 'page' or 'resources'
-     * @param bool $overwrite Whether to overwrite existing file
-     * @return array ['filename' => '...', 'exists' => bool]
-     * @throws \Exception On upload failure or if file exists and overwrite is false
-     */
-    public function uploadMediaWithOriginalName(string $pageId, array $file, string $targetFolder, bool $overwrite = false): array {
-        return $this->mediaOrchestrator()->uploadMediaWithOriginalName(
-            $pageId,
-            $file,
-            $targetFolder,
-            $overwrite
-        );
-    }
 
 
     // =========================================================================

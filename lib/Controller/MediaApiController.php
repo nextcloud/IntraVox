@@ -41,12 +41,11 @@ class MediaApiController extends Controller {
     public function __construct(
         string $appName,
         IRequest $request,
+        // pageService stays ONLY for the RequiresPagePermission gate (getPageService()
+        // accessor). Every media operation — read/resource, upload, upload-limit —
+        // now goes through the MEDIA-domain PageMediaOrchestrator directly (fase-6
+        // consumer campaign); getPage comes from the READ service (fase-4 C6).
         private PageService $pageService,
-        // getPage now comes from the READ-domain service (fase-4 C6). The
-        // read/resource media endpoints already call the MEDIA-domain service
-        // directly (phase 1). The two upload endpoints stay on pageService for now
-        // (clearCache invalidation closure); pageService also stays for
-        // getUploadLimit + the RequiresPagePermission gate.
         private \OCA\IntraVox\Service\Read\PageReadService $pageRead,
         private \OCA\IntraVox\Service\Media\PageMediaOrchestrator $mediaOrchestrator,
         // Required by Shared\SharePathTrait::peopleAllowedOnPublicShares().
@@ -102,7 +101,7 @@ class MediaApiController extends Controller {
                 throw new \InvalidArgumentException('File upload failed - tmp_name is empty. Upload error: ' . ($file['error'] ?? 'unknown'));
             }
 
-            $filename = $this->pageService->uploadMedia($pageId, $file);
+            $filename = $this->mediaOrchestrator->uploadMedia($pageId, $file);
             return new DataResponse(['filename' => $filename], Http::STATUS_CREATED);
         } catch (PageNotFoundException $e) {
             $this->logger->warning('[uploadMedia] PageNotFoundException: ' . $e->getMessage(), [
@@ -197,7 +196,7 @@ class MediaApiController extends Controller {
             $overwrite = $this->request->getParam('overwrite', '0') === '1';
 
             // Upload file
-            $result = $this->pageService->uploadMediaWithOriginalName($pageId, $file, $target, $overwrite);
+            $result = $this->mediaOrchestrator->uploadMediaWithOriginalName($pageId, $file, $target, $overwrite);
 
             return new DataResponse($result, Http::STATUS_CREATED);
 
@@ -342,7 +341,7 @@ class MediaApiController extends Controller {
     #[NoCSRFRequired]
     public function getUploadLimit(): DataResponse {
         try {
-            $limit = $this->pageService->getUploadLimit();
+            $limit = $this->mediaOrchestrator->getUploadLimit();
             return new DataResponse([
                 'limit' => $limit,
                 'limitMB' => round($limit / (1024 * 1024), 1)

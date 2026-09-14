@@ -45,6 +45,21 @@ final class PageMediaOrchestrator {
     }
 
     /**
+     * The effective upload limit in bytes (minimum of upload_max_filesize and
+     * post_max_size, capped at the app's MAX_MEDIA_SIZE). Carved verbatim from
+     * PageService::getUploadLimit (fase-6 consumer campaign) — the editor is told
+     * this ceiling before an upload, so it belongs with the media orchestration.
+     */
+    public function getUploadLimit(): int {
+        $uploadMax = $this->idUtils->parsePhpSize(ini_get('upload_max_filesize') ?: '2M');
+        $postMax = $this->idUtils->parsePhpSize(ini_get('post_max_size') ?: '8M');
+
+        // Use the smaller of the two, but cap at our app's MAX_MEDIA_SIZE
+        $phpLimit = min($uploadMax, $postMax);
+        return min($phpLimit, PageMediaService::MAX_MEDIA_SIZE);
+    }
+
+    /**
      * Upload media (image or video) for a specific page.
      */
     public function uploadMedia(
