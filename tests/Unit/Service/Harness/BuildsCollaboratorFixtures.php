@@ -132,6 +132,10 @@ trait BuildsCollaboratorFixtures {
             $folders,
             $logger,
             new PageLocator($index, $logger),
+            // #112: the news cache key carries the ACL discriminator, so the
+            // widget needs a PermissionService even on the paths that never
+            // reach an ACL check.
+            $explicit['permissionService'] ?? $this->doubleOrBuild(\OCA\IntraVox\Service\PermissionService::class),
         );
     }
 

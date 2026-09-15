@@ -41,6 +41,7 @@ final class NewsWidgetService {
         private FolderContext $folders,
         private LoggerInterface $logger,
         private \OCA\IntraVox\Service\Locator\PageLocator $locator,
+        private \OCA\IntraVox\Service\PermissionService $permissionService,
     ) {
     }
 
@@ -79,7 +80,11 @@ final class NewsWidgetService {
                 $sourcePath, $filters, $filterOperator, $limit, $sortBy,
                 $sortOrder, $sourcePageId, $filterPublished,
             ]));
+            // Same ACL scoping as the page tree: news items are drawn from
+            // pages the user may read, so a group-keyed entry would leak one
+            // user's result set to another under Advanced Permissions (#112).
             $newsCacheKey = 'news_' . $language . '_' . $this->groupContext->getGroupHash()
+                . $this->permissionService->getCacheDiscriminator()
                 . '_v' . $newsVersion . '_' . $paramHash;
             $cached = $this->cache->getDistributed($newsCacheKey);
             if (is_string($cached)) {
