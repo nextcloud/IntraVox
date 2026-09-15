@@ -106,6 +106,34 @@ class Application extends App implements IBootstrap {
             );
         });
 
+        // Register FolderContext (the folder/location substrate).
+        //
+        // Autowiring MISbuilds it: the ctor's `?Folder $intraVoxOverride = null` is a
+        // TEST-ONLY seam (a fixture injects a fake mount there), but Nextcloud's DI
+        // container satisfies the `?Folder` type by resolving a Folder — the user's
+        // LazyUserFolder (`/<uid>/files`) — instead of honouring the null default. That
+        // makes intraVox() short-circuit to the user's HOME root rather than walking to
+        // the mounted `IntraVox` groupfolder, so every content lookup reads an empty
+        // `/<uid>/files/<lang>` and the whole app degrades to the WelcomeScreen. The
+        // three seam params (intraVoxOverride + the two folder closures) MUST be null in
+        // production so the owned mount-walk / #75 compositions run. userId is the
+        // session UID (nullable here, matching the old PageService::getIntraVoxFolder
+        // which resolved the mount from the logged-in user); the substrate atoms come
+        // via $c->get().
+        $context->registerService(\OCA\IntraVox\Service\Folder\FolderContext::class, function ($c) {
+            return new \OCA\IntraVox\Service\Folder\FolderContext(
+                $c->get(\OCP\Files\IRootFolder::class),
+                $c->get(\OCP\IUserSession::class)->getUser()?->getUID(),
+                $c->get(\OCP\IConfig::class),
+                $c->get(\OCA\IntraVox\Service\LanguageService::class),
+                $c->get(\OCA\IntraVox\Service\Language\LanguageResolver::class),
+                $c->get(\OCA\IntraVox\Service\Locator\PageLocator::class),
+                null, // intraVoxOverride — TEST seam only; null in prod (owned mount-walk)
+                null, // readLanguageFolder seam — null in prod (owned #75 composition)
+                null, // languageFolder seam — null in prod (owned create-on-miss)
+            );
+        });
+
         // Register PageCompositionService (COMPOSE domain: copy/translate/template).
         //
         // Autowiring cannot build it because of the non-nullable `string $userId`
