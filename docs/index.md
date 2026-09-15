@@ -65,8 +65,7 @@ Design decisions and comparisons that shape the product.
 
 - [Nextcloud-Native Architecture](architecture/considerations/nextcloud-native-architecture.md) — Why "page = folder" inherits enterprise features from Nextcloud
 - [Collectives Comparison](architecture/considerations/collectives-comparison.md) — How IntraVox compares to Nextcloud Collectives
-- [OpenMetrics](architecture/considerations/openmetrics.md) — OpenMetrics exposition considerations
-- [Versioning](architecture/considerations/versioning.md) — Versioning design decisions
+- [IntraVox and Nextcloud Teams](architecture/considerations/intravox-and-nextcloud-teams.md) — Where IntraVox sits alongside Teams, and who owns the link to content
 
 ## Getting Started
 

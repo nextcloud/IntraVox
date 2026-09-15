@@ -75,6 +75,9 @@ class PermissionService {
      * @var array<string, int|null>
      */
     private array $groupFolderIdCache = [];
+
+    /** Per-request memo for {@see getCacheDiscriminator()}. */
+    private ?string $cacheDiscriminator = null;
     private GroupFoldersGateway $groupFolders;
 
     /** Distributed cache TTL for the per-language page path map (5 minutes). */
@@ -164,6 +167,43 @@ class PermissionService {
         }
 
         return $folderId;
+    }
+
+    /**
+     * Cache discriminator for content that is filtered by permissions.
+     *
+     * Page trees and similar responses are cached per GROUP SET, which assumes
+     * everyone in the same groups sees the same thing. Advanced Permissions
+     * break that assumption: two users in one group can have different rights
+     * per path, and a group-keyed entry then hands one user's filtered view to
+     * the other. Reported as pages that stayed invisible for a user who was
+     * allowed to see them (issue #112).
+     *
+     * So: ACLs off -> keep sharing per group (the cheap case, unchanged).
+     * ACLs on -> discriminate per user, because that is the only granularity
+     * the permissions actually have. The result is memoised per request.
+     *
+     * @return string Suffix to append to a group-keyed cache key.
+     */
+    public function getCacheDiscriminator(): string {
+        if ($this->cacheDiscriminator !== null) {
+            return $this->cacheDiscriminator;
+        }
+
+        $discriminator = '';
+        try {
+            $folderId = $this->getGroupFolderId();
+            if ($folderId !== null
+                && $this->userId !== null
+                && $this->groupFolders->hasAcl($folderId)) {
+                // Short, stable, and not the raw uid (cache keys travel).
+                $discriminator = '_u' . substr(hash('sha256', $this->userId), 0, 12);
+            }
+        } catch (\Throwable $e) {
+            $this->logger->debug('[PermissionService] Cache discriminator fell back to group scope: ' . $e->getMessage());
+        }
+
+        return $this->cacheDiscriminator = $discriminator;
     }
 
     /**

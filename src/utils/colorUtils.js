@@ -1,15 +1,22 @@
 /**
  * Color utility functions for consistent background color handling across widgets.
  *
- * Nextcloud CSS variable reference:
- * - --color-primary-element: the main theme color (typically dark blue), needs white text
+ * Nextcloud CSS variable reference, measured against a running instance rather
+ * than assumed from the variable names:
+ * - --color-primary-element: the main theme color (dark blue), needs white text
  * - --color-primary-element-light: a light tint of the theme color, needs dark text
  * - --color-primary: alias for primary-element
- * - --color-error: red, needs white text
- * - --color-success: green, needs white text
- * - --color-warning: amber/orange, needs dark text
+ * - --color-error: #FFE7E7, a pale pink BACKGROUND tint, needs dark text
+ * - --color-success: #D8F3DA, a pale green tint, needs dark text
+ * - --color-warning: #FFEEC5, a pale amber tint, needs dark text
  * - --color-background-hover: light gray hover, needs dark text
  * - --color-background-dark: slightly darker gray, needs dark text
+ *
+ * The three status colours are the trap: their names suggest the saturated
+ * red/green/amber that --color-*-text is drawn in, but the variables themselves
+ * are the pale backgrounds those texts sit ON. White text on them measures
+ * 1.15-1.18:1 -- invisible -- against 13.5:1 for dark text. Nextcloud ships the
+ * matching --color-error-text / -success-text / -warning-text for the foreground.
  */
 
 /**
@@ -18,8 +25,6 @@
 export const DARK_BACKGROUNDS = [
   'var(--color-primary-element)',
   'var(--color-primary)',
-  'var(--color-error)',
-  'var(--color-success)',
 ];
 
 /**
@@ -30,6 +35,8 @@ export const LIGHT_BACKGROUNDS = [
   'var(--color-primary-element-light)',
   'var(--color-background-hover)',
   'var(--color-background-dark)',
+  'var(--color-error)',
+  'var(--color-success)',
   'var(--color-warning)',
 ];
 

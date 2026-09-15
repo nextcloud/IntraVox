@@ -127,6 +127,37 @@ class GroupFoldersGateway {
 	 * harmless until a groupfolders release adds a real second parameter. Wrapped
 	 * here so there is one signature to get wrong.
 	 */
+	/**
+	 * Whether Advanced Permissions (per-path ACLs) are switched on for a folder.
+	 *
+	 * With ACLs off, every member of a group sees the same content, so results
+	 * may be cached per group set. With ACLs on that assumption breaks: two
+	 * users in the same groups can have different per-path rights, and a
+	 * group-keyed cache then serves one user's view to the other (issue #112).
+	 *
+	 * Returns false when the flag cannot be read, which keeps the cheaper
+	 * group-shared caching for installations this cannot inspect -- the
+	 * behaviour that shipped before this check existed.
+	 */
+	public function hasAcl(int $folderId): bool {
+		try {
+			$folder = $this->getFolder($folderId);
+			if ($folder === null) {
+				return false;
+			}
+			if (is_array($folder)) {
+				return (bool)($folder['acl'] ?? false);
+			}
+			if (is_object($folder) && property_exists($folder, 'acl')) {
+				return (bool)$folder->acl;
+			}
+		} catch (\Throwable $e) {
+			$this->logger->debug('[IntraVox] Could not determine ACL flag for groupfolder ' . $folderId . ': ' . $e->getMessage());
+		}
+
+		return false;
+	}
+
 	public function getFolder(int $folderId): mixed {
 		if (!$this->isAvailable()) {
 			return null;

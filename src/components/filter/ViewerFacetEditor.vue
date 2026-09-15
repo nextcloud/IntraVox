@@ -9,6 +9,7 @@
 		</label>
 
 		<p class="vfe__hint">
+			<!-- TRANSLATORS: Hint under the "Let visitors filter these results" toggle. "the selection above" = the group/field filters the admin set higher up in this same widget editor; visitors can narrow within that, never escape it. -->
 			{{ t('intravox', 'Visitors pick from these fields themselves. They can only narrow the selection above further — never widen it.') }}
 		</p>
 
@@ -58,7 +59,7 @@
 								v-model="element.label"
 								type="text"
 								class="vfe__facet-label"
-								:placeholder="t('intravox', 'Default: {label}', { label: labelForField(element.field) })"
+								:placeholder="placeholderForField(element.field)"
 								:aria-label="t('intravox', 'Label shown to visitors')"
 								@input="emit">
 							<button
@@ -251,6 +252,15 @@ export default {
 		labelForField(fieldName) {
 			const match = this.availableFields.find(f => f.fieldName === fieldName)
 			return match?.label || fieldName
+		},
+
+		// Placeholder for the per-facet label input. Lives here rather than inline
+		// in the template because an HTML comment cannot sit between an element's
+		// attributes, so this is the only place the TRANSLATORS hint below reaches
+		// the extractor.
+		placeholderForField(fieldName) {
+			// TRANSLATORS: Placeholder text shown in an empty input. {label} is the field's own name, so it reads e.g. "Default: Department" — it means "leave this empty and that name is used". Not a heading.
+			return this.t('intravox', 'Default: {label}', { label: this.labelForField(fieldName) })
 		},
 
 		setEnabled(enabled) {

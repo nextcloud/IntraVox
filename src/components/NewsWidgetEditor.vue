@@ -190,17 +190,24 @@
 
       <div v-if="filters.length > 0" class="filters-list">
         <div v-for="(filter, index) in filters" :key="index" class="filter-row">
-          <select v-model="filter.fieldName" class="filter-field" :aria-label="t('intravox', 'Filter field')" @change="handleFieldChange(filter)">
-            <option value="">{{ t('intravox', 'Select field') }}</option>
-            <option v-for="field in metavoxFields" :key="field.field_name" :value="field.field_name">
-              {{ field.field_label || field.field_name }}
-            </option>
-          </select>
-          <select v-model="filter.operator" class="filter-operator" :aria-label="t('intravox', 'Filter operator')" @change="handleOperatorChange(filter)">
-            <option v-for="op in getOperatorsForField(filter.fieldName)" :key="op.value" :value="op.value">
-              {{ op.label }}
-            </option>
-          </select>
+          <NcSelect
+            :model-value="fieldOptionFor(filter.fieldName)"
+            :options="fieldSelectOptions"
+            :clearable="false"
+            :aria-label="t('intravox', 'Filter field')"
+            :placeholder="t('intravox', 'Select field')"
+            label="label"
+            class="filter-field"
+            @update:model-value="setFilterField(filter, $event)" />
+          <NcSelect
+            :model-value="operatorOptionFor(filter)"
+            :options="getOperatorsForField(filter.fieldName)"
+            :clearable="false"
+            :aria-label="t('intravox', 'Filter operator')"
+            :placeholder="t('intravox', 'Operator')"
+            label="label"
+            class="filter-operator"
+            @update:model-value="setRowOperator(filter, $event)" />
 
           <!-- Value input - conditional based on field type and operator -->
           <template v-if="!requiresNoValue(filter.operator)">
@@ -226,46 +233,32 @@
             />
 
             <!-- Select field with equals operator -->
-            <select
+            <NcSelect
               v-else-if="getFieldType(filter.fieldName) === 'select' && filter.operator === 'equals'"
-              v-model="filter.value"
-              class="filter-value"
+              :model-value="filter.value || null"
+              :options="getFieldOptions(filter.fieldName)"
               :aria-label="t('intravox', 'Filter value')"
-              @change="emitUpdate"
-            >
-              <option value="">{{ t('intravox', 'Select value') }}</option>
-              <option v-for="option in getFieldOptions(filter.fieldName)" :key="option" :value="option">
-                {{ option }}
-              </option>
-            </select>
+              :placeholder="t('intravox', 'Select value')"
+              class="filter-value"
+              @update:model-value="setFilterValue(filter, $event)" />
 
-            <!-- Select field with 'in' operator (multiple) -->
-            <select
-              v-else-if="getFieldType(filter.fieldName) === 'select' && filter.operator === 'in'"
-              v-model="filter.values"
-              class="filter-value filter-value--multi"
-              multiple
+            <!-- Several options at once: a multiselect field, or a select
+                 field asked for with "is one of". One control for both; a
+                 native <select multiple> needed ctrl/cmd-click to pick more
+                 than one, with nothing in the UI saying so (#111).
+                 keep-open, not close-on-select: NcSelect derives the latter
+                 from the former, so setting close-on-select directly does
+                 nothing and the list shuts after every pick. -->
+            <NcSelect
+              v-else-if="isMultiValueFilter(filter)"
+              :model-value="filter.values || []"
+              :options="getFieldOptions(filter.fieldName)"
+              :multiple="true"
+              :keep-open="true"
               :aria-label="t('intravox', 'Filter values')"
-              @change="emitUpdate"
-            >
-              <option v-for="option in getFieldOptions(filter.fieldName)" :key="option" :value="option">
-                {{ option }}
-              </option>
-            </select>
-
-            <!-- Multiselect field -->
-            <select
-              v-else-if="getFieldType(filter.fieldName) === 'multiselect'"
-              v-model="filter.values"
+              :placeholder="t('intravox', 'Filter values')"
               class="filter-value filter-value--multi"
-              multiple
-              :aria-label="t('intravox', 'Filter values')"
-              @change="emitUpdate"
-            >
-              <option v-for="option in getFieldOptions(filter.fieldName)" :key="option" :value="option">
-                {{ option }}
-              </option>
-            </select>
+              @update:model-value="setFilterValues(filter, $event)" />
 
             <!-- Text/Textarea field (default) -->
             <input
@@ -331,6 +324,7 @@ import Close from 'vue-material-design-icons/Close.vue';
 import Information from 'vue-material-design-icons/Information.vue';
 import AlertCircle from 'vue-material-design-icons/AlertCircle.vue';
 import PageTreeSelect from './PageTreeSelect.vue';
+import { NcSelect } from '@nextcloud/vue';
 
 export default {
   name: 'NewsWidgetEditor',
@@ -345,6 +339,7 @@ export default {
     Information,
     AlertCircle,
     PageTreeSelect,
+    NcSelect,
   },
   props: {
     widget: {
@@ -363,6 +358,18 @@ export default {
     };
   },
   computed: {
+    /**
+     * The MetaVox fields as NcSelect options.
+     *
+     * The stored filter keeps the bare field_name; only the control needs the
+     * {value, label} shape.
+     */
+    fieldSelectOptions() {
+      return (this.metavoxFields || []).map(field => ({
+        value: field.field_name,
+        label: field.field_label || field.field_name,
+      }));
+    },
     // Operator labels translated here (via literal t('intravox', …) calls so the
     // l10n extractor finds them). The template previously used t(op.label) with
     // a single argument, which @nextcloud/l10n read as the app id → undefined →
@@ -593,6 +600,47 @@ export default {
       }
       this.emitUpdate();
     },
+    /**
+     * Whether this row lets the editor pick several options at once: a
+     * multiselect field, or a select field asked for with "is one of".
+     */
+    isMultiValueFilter(filter) {
+      const type = this.getFieldType(filter.fieldName);
+      return type === 'multiselect' || (type === 'select' && filter.operator === 'in');
+    },
+    /**
+     * NcSelect works with option objects, the stored filter with plain field
+     * names. These two map between them; the saved shape is unchanged.
+     */
+    fieldOptionFor(fieldName) {
+      return this.fieldSelectOptions.find(o => o.value === fieldName) || null;
+    },
+    operatorOptionFor(filter) {
+      const options = this.getOperatorsForField(filter.fieldName);
+      return options.find(o => o.value === filter.operator) || null;
+    },
+    setFilterField(filter, option) {
+      filter.fieldName = option?.value ?? '';
+      this.handleFieldChange(filter);
+    },
+    setRowOperator(filter, option) {
+      if (!option?.value) {
+        return;
+      }
+      filter.operator = option.value;
+      this.handleOperatorChange(filter);
+    },
+    setFilterValue(filter, value) {
+      // Options are plain strings here, but NcSelect hands back whatever it
+      // was given, so unwrap an object shape defensively.
+      filter.value = (value && typeof value === 'object') ? (value.value ?? '') : (value ?? '');
+      this.emitUpdate();
+    },
+    setFilterValues(filter, values) {
+      const list = Array.isArray(values) ? values : (values ? [values] : []);
+      filter.values = list.map(v => (v && typeof v === 'object') ? v.value : v).filter(v => v != null && v !== '');
+      this.emitUpdate();
+    },
     requiresNoValue(operator) {
       return ['not_empty', 'empty', 'is_true', 'is_false'].includes(operator);
     },
@@ -820,32 +868,35 @@ export default {
   align-items: center;
 }
 
+/* Widths only. The three filter controls are NcSelect now, which draws its own
+   border, padding and focus ring; repeating them here put a second box around
+   the component. The <input> variants below still need the native styling. */
 .filter-field {
   flex: 2;
-  padding: 6px 8px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--border-radius);
-  font-size: 13px;
+  min-width: 0;
 }
 
 .filter-operator {
   flex: 1;
-  padding: 6px 8px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--border-radius);
-  font-size: 13px;
+  min-width: 0;
 }
 
 .filter-value {
   flex: 2;
+  min-width: 0;
+}
+
+input.filter-value {
   padding: 6px 8px;
   border: 1px solid var(--color-border);
   border-radius: var(--border-radius);
   font-size: 13px;
 }
 
-.filter-value--multi {
-  min-height: 60px;
+/* A row can wrap to two lines once several chips are selected, so the controls
+   line up at the top rather than drifting apart vertically. */
+.filter-row {
+  align-items: flex-start;
 }
 
 .filter-remove {

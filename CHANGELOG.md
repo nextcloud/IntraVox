@@ -6,17 +6,94 @@ IntraVox is a Nextcloud intranet page builder.
 
 ## [Unreleased]
 
+## [2.7.1] - 2026-09-07 — Team folder ACLs are honoured where they were not
+
+### Fixed
+
+- **Navigation and footer no longer served past an explicit ACL deny.**
+  ([#112](https://github.com/nextcloud/IntraVox/issues/112)) IntraVox reads
+  `navigation.json` and `footer.json` through the user's own view and falls back
+  to a system-context read when that fails — a department-only member has no
+  read right on the language root and must still get a menu. An explicit deny on
+  the *file* arrived as the same failure, so the fallback served exactly what the
+  administrator had forbidden, page titles included. The fallback is now limited
+  to the case it exists for: if a user can reach the language folder, a file they
+  cannot see there is a deliberate deny and stays denied. The check fails open, so
+  an unexpected error can never blank out everyone's menu.
+
+- **The Edit button no longer appears for a navigation or footer nobody may
+  save.** ([#112](https://github.com/nextcloud/IntraVox/issues/112)) The check
+  asked whether the language *folder* was writable, while saving writes
+  `navigation.json`; an ACL denying just that file left an Edit affordance whose
+  save then failed with a permission error. It now gates on the file — the same
+  correction pages received in
+  [#70](https://github.com/nextcloud/IntraVox/issues/70).
+
+- **Pages no longer stay invisible for users who are allowed to read them.**
+  ([#112](https://github.com/nextcloud/IntraVox/issues/112)) The page tree is
+  cached per group set, which assumes group members see the same content. With
+  Advanced Permissions that does not hold: rights differ per user *within* a
+  group, so whoever loaded a page first decided what the rest of their group saw
+  for the next five minutes. Cache entries are now scoped to the user whenever
+  ACLs are enabled; installations without ACLs keep the shared, cheaper key and
+  see no change. The News widget draws from the same pages and got the same
+  treatment.
+
+
+## [2.7.0] - 2026-09-05 — Filters that can exclude, and a News filter that stopped returning 500
+
+### Changed
+
+- **Nextcloud 35 support declared** — `info.xml` now ships
+  `<nextcloud min-version="32" max-version="35"/>`. Verified on a running
+  Nextcloud 35 (beta 4 through RC3): the app installs, indexes and renders, and
+  survives the upgrades between candidates with its data intact. The RC3 round
+  ran with MetaVox alongside it, so the MetaVox-backed filters are covered too —
+  that needs MetaVox 2.2.2 or later, the first release allowing Nextcloud 35.
+
 ### Added
 
 - **Filters can now exclude instead of only include.** Text fields already had
   "does not contain", but the group field and other choice fields offered no
   negation at all — so "everyone in Domain Users except Board Members and
-  Service accounts" could not be expressed, and the only way out was to create
-  a dedicated directory group just to feed the widget. Two operators are added:
-  **does not equal** and **is none of**. On a field holding several values, such
-  as group membership, they mean "in none of these" — a person in both an
-  included and an excluded group is excluded.
+  Service accounts" could not be expressed without creating a dedicated
+  directory group to feed the widget. Two operators are added: **does not
+  equal** and **is none of**. On a field holding several values, such as group
+  membership, they mean "in none of these".
   ([#108](https://github.com/nextcloud/IntraVox/issues/108))
+
+### Fixed
+
+- **A News widget filtering on a MetaVox multiselect field returned a 500.**
+  MetaVox stores a multiselect as one `;#`-joined string and IntraVox never
+  split it. Two more operators failed silently on the same cause: "is one of"
+  and "contains all" matched nothing, so a correctly configured widget showed
+  "no news" while matching pages existed.
+  ([#111](https://github.com/nextcloud/IntraVox/issues/111))
+
+- **"Does not contain" quietly matched everything** instead of excluding: the
+  chosen values never reached the matcher for that one operator.
+
+- **Picking several filter values needed ctrl/cmd-click, with nothing saying
+  so.** The MetaVox filter row used plain `<select>` elements, so every click
+  replaced the previous choice. The three controls now use `NcSelect` like the
+  rest of the app: chips with their own remove button, a search box once the
+  list grows, and the list stays open while picking.
+  ([#111](https://github.com/nextcloud/IntraVox/issues/111))
+
+- **Text was unreadable on a widget with a coloured background.** The three
+  status colours are pale pastels in the Nextcloud theme but were treated as
+  dark, forcing white text onto near-white. On a People widget set to one of
+  those, names, roles and email addresses were effectively invisible.
+
+- **The filter panel's hover and count badges sat below the contrast minimum.**
+  Their translucent white overlays lightened the background towards the white
+  text; they now darken instead. "Clear all" no longer renders in a near-
+  invisible brown on a coloured widget.
+
+- **Translator hints written in Vue templates never reached the translators.**
+  The POT generator only read `// TRANSLATORS:` line comments, so the
+  HTML-comment form used inside a `<template>` was dropped.
 
 ## [2.6.3] - 2026-09-02 — A patched editor library
 

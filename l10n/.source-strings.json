@@ -1,6 +1,6 @@
 {
-    "count": 1382,
-    "sha256": "935f46295052ac15047edb27e65a193e191bfbd2086187c28f105b04b19dfd41",
+    "count": 1381,
+    "sha256": "59dd9ab49a2bf7c8f5a4d406df10fa8c4fc76f58f69ab08045d54f497337a9b6",
     "strings": [
         "— Not configured —",
         "… and {n} more",
@@ -603,7 +603,6 @@
         "Installing …",
         "Internal page",
         "Intranet languages",
-        "intravox",
         "IntraVox",
         "IntraVox is free and open source (AGPL-3.0). All features work without a subscription. If IntraVox is valuable to your organization, a subscription supports active development and gives you guaranteed Nextcloud compatibility and email support.",
         "IntraVox is not yet configured. To get started, you can install demo data or create your own pages.",
