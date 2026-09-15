@@ -42,7 +42,7 @@ class PageLifecycleTest extends IntegrationTestCase {
         foreach ($this->createdPageIds as $id) {
             try {
                 $this->actingAs($this->actingUser, function () use ($id) {
-                    $this->pageService()->deletePage($id);
+                    $this->pageWriteService()->deletePage($id);
                 });
             } catch (\Throwable $e) {
                 // Already gone, or never created.
@@ -87,13 +87,13 @@ class PageLifecycleTest extends IntegrationTestCase {
         $slug = $this->uniqueSlug();
 
         $created = $this->actingAs($this->actingUser, function () use ($slug) {
-            return $this->pageService()->createPage([
+            return $this->pageWriteService()->createPage([
                 'id' => $slug,
                 'title' => 'Integration test page',
                 'layout' => ['rows' => [['widgets' => [
                     ['type' => 'text', 'content' => '<p>first</p>', 'column' => 1, 'order' => 1],
                 ]]]],
-            ]);
+            ], null);
         });
 
         $uniqueId = $created['uniqueId'] ?? null;
@@ -114,7 +114,7 @@ class PageLifecycleTest extends IntegrationTestCase {
             $data = $read;
             $data['title'] = 'Integration test page (edited)';
             $data['layout']['rows'][0]['widgets'][0]['content'] = '<p>second</p>';
-            return $this->pageService()->updatePage($uniqueId, $data);
+            return $this->pageWriteService()->updatePage($uniqueId, $data);
         });
 
         $reread = $this->actingAs($this->actingUser, fn() => $this->pageReadService()->getPage($uniqueId));
@@ -122,7 +122,7 @@ class PageLifecycleTest extends IntegrationTestCase {
         $this->assertSame('<p>second</p>', $reread['layout']['rows'][0]['widgets'][0]['content']);
 
         // DELETE
-        $this->actingAs($this->actingUser, fn() => $this->pageService()->deletePage($uniqueId));
+        $this->actingAs($this->actingUser, fn() => $this->pageWriteService()->deletePage($uniqueId));
         $this->createdPageIds = array_diff($this->createdPageIds, [$uniqueId]);
 
         $this->expectException(\Throwable::class);
@@ -138,13 +138,13 @@ class PageLifecycleTest extends IntegrationTestCase {
         $slug = $this->uniqueSlug();
 
         $created = $this->actingAs($this->actingUser, function () use ($slug) {
-            return $this->pageService()->createPage([
+            return $this->pageWriteService()->createPage([
                 'id' => $slug,
                 'title' => 'Sanitizer probe',
                 'layout' => ['rows' => [['widgets' => [
                     ['type' => 'text', 'content' => '<p>ok</p><script>alert(1)</script>', 'column' => 1, 'order' => 1],
                 ]]]],
-            ]);
+            ], null);
         });
         $uniqueId = $created['uniqueId'];
         $this->createdPageIds[] = $uniqueId;
@@ -162,7 +162,7 @@ class PageLifecycleTest extends IntegrationTestCase {
      * page in search results.
      */
     public function testListPagesNeverServesTemplatesOrResources(): void {
-        $pages = $this->actingAs($this->actingUser, fn() => $this->pageService()->listPages());
+        $pages = $this->actingAs($this->actingUser, fn() => $this->pageLister()->listAll());
 
         $this->assertNotEmpty($pages, 'the instance must have pages for this to mean anything');
 

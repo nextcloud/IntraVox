@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace OCA\IntraVox\Tests\Benchmark;
 
-use OCA\IntraVox\Service\PageService;
 use OCP\Files\File;
 use OCP\Files\FileInfo;
 use OCP\Files\Folder;
@@ -95,6 +94,25 @@ final class BenchFile implements File {
     public function getParent() {
         return null;
     }
+    // OCP\Files\File methods the lookup path never touches, present only so the
+    // class satisfies the interface under PHP 8.5's stricter node contract.
+    public function getCreationTime(): int {
+        return 0;
+    }
+    public function isReadable(): bool {
+        return true;
+    }
+    public function getOwner() {
+        return null;
+    }
+    public function getStorage() {
+        return null;
+    }
+    public function delete(): void {
+    }
+    public function getInternalPath() {
+        return $this->path;
+    }
 }
 
 /** Minimal Folder stand-in; see BenchFile for why these are hand-written. */
@@ -174,6 +192,25 @@ final class BenchFolder implements Folder {
     }
     public function move(string $targetPath) {
         return null;
+    }
+    // OCP\Files\Folder methods the lookup path never touches, present only so the
+    // class satisfies the interface under PHP 8.5's stricter node contract.
+    public function isReadable(): bool {
+        return true;
+    }
+    public function getMimeType(): string {
+        return 'httpd/unix-directory';
+    }
+    public function getOwner() {
+        return null;
+    }
+    public function getStorage() {
+        return null;
+    }
+    public function delete(): void {
+    }
+    public function getInternalPath() {
+        return $this->path;
     }
 }
 
@@ -273,11 +310,22 @@ class PageLookupBenchmark extends TestCase {
     }
 
     /**
+     * Build the FolderContext + PageLocator the benchmark drives directly.
+     *
+     * fase-10 removed PageService. This used to build a `new class extends`
+     * PageService scaffold and reflection-fill its props purely so the caller
+     * could reflect folders()/locator() back off it — the same pattern
+     * PageIndexLookupTest was migrated away from. The benchmark only ever needed
+     * the FolderContext (for its readLanguageFolder()/intraVox() seams) and the
+     * PageLocator (the thing under measurement), so those are constructed and
+     * returned directly.
+     *
      * @param array<string, array{path:string, language:string}> $indexRows
      *   uniqueId => index row, simulating a warm page index. Empty means the
      *   index knows nothing and every lookup falls back to the tree walk.
+     * @return array{folders: \OCA\IntraVox\Service\Folder\FolderContext, locator: \OCA\IntraVox\Service\Locator\PageLocator}
      */
-    private function makeService(Folder $readFolder, array $allLanguages, array $indexRows = []): PageService {
+    private function makeService(Folder $readFolder, array $allLanguages, array $indexRows = []): array {
         $byLang = [];
         foreach ($allLanguages as $l) {
             $byLang[$l->getName()] = $l;
@@ -287,24 +335,6 @@ class PageLookupBenchmark extends TestCase {
         // measured against the same fixture.
         $base = new BenchFolder('/IntraVox', $byLang);
 
-        // fase-3: no clearCache override — the fill loop below auto-builds an inert
-        // PageCacheInvalidator (its doubleOrBuild handles the final class), so a
-        // lookup benchmark never triggers a real cache fan-out.
-        $svc = new class extends PageService {
-            public function __construct() {
-            }
-        };
-
-        $user = $this->createMock(\OCP\IUser::class);
-        $user->method('getUID')->willReturn('bench');
-        $session = $this->createMock(\OCP\IUserSession::class);
-        $session->method('getUser')->willReturn($user);
-        $config = $this->createMock(\OCP\IConfig::class);
-        $config->method('getUserValue')->willReturn('en');
-        $languageService = $this->createMock(\OCA\IntraVox\Service\LanguageService::class);
-        $languageService->method('isLanguageAvailable')->willReturn(true);
-        $languageService->method('getPrimaryLanguage')->willReturn('en');
-
         // Stands in for the DB-backed index: a hash lookup, which is what a
         // single indexed query amounts to next to a tree walk.
         $index = $this->createMock(\OCA\IntraVox\Service\PageIndexService::class);
@@ -312,49 +342,24 @@ class PageLookupBenchmark extends TestCase {
             fn(string $uniqueId, ?string $preferred = null) => $indexRows[$uniqueId] ?? null
         );
 
-        $explicit = [
-            'userSession' => $session,
-            'userId' => 'bench',
-            'config' => $config,
-            'logger' => $this->createMock(\Psr\Log\LoggerInterface::class),
-            'languageService' => $languageService,
-            'pageIndexService' => $index,
-            'folderContext' => new \OCA\IntraVox\Service\Folder\FolderContext(
-                $this->createMock(\OCP\Files\IRootFolder::class),
-                'tester',
-                $this->createMock(\OCP\IConfig::class),
-                $this->createMock(\OCA\IntraVox\Service\LanguageService::class),
-                new \OCA\IntraVox\Service\Language\LanguageResolver(),
-                new \OCA\IntraVox\Service\Locator\PageLocator(
-                    $this->createMock(\OCA\IntraVox\Service\PageIndexService::class),
-                    $this->createMock(\Psr\Log\LoggerInterface::class)
-                ),
-                $base,                       // intraVoxOverride
-                fn(): Folder => $readFolder, // readLanguageFolder seam
-                fn(): Folder => $readFolder  // languageFolder seam
-            ),
-        ];
-        foreach ($explicit as $name => $value) {
-            (new \ReflectionProperty(PageService::class, $name))->setValue($svc, $value);
-        }
-        foreach ((new \ReflectionClass(PageService::class))->getProperties() as $prop) {
-            if ($prop->isStatic() || isset($explicit[$prop->getName()])) {
-                continue;
-            }
-            $type = $prop->getType();
-            if (!$type instanceof \ReflectionNamedType || $type->isBuiltin()) {
-                continue;
-            }
-            if ($prop->isInitialized($svc)) {
-                continue;
-            }
-            $class = $type->getName();
-            if (!interface_exists($class) && !class_exists($class)) {
-                continue;
-            }
-            $prop->setValue($svc, $this->doubleOrBuild($class));
-        }
-        return $svc;
+        $locator = new \OCA\IntraVox\Service\Locator\PageLocator(
+            $index,
+            $this->createMock(\Psr\Log\LoggerInterface::class)
+        );
+
+        $folderContext = new \OCA\IntraVox\Service\Folder\FolderContext(
+            $this->createMock(\OCP\Files\IRootFolder::class),
+            'tester',
+            $this->createMock(\OCP\IConfig::class),
+            $this->createMock(\OCA\IntraVox\Service\LanguageService::class),
+            new \OCA\IntraVox\Service\Language\LanguageResolver(),
+            $locator,
+            $base,                       // intraVoxOverride
+            fn(): Folder => $readFolder, // readLanguageFolder seam
+            fn(): Folder => $readFolder  // languageFolder seam
+        );
+
+        return ['folders' => $folderContext, 'locator' => $locator];
     }
 
     /**
@@ -406,15 +411,16 @@ class PageLookupBenchmark extends TestCase {
                 $this->fileReads = 0;
                 $this->jsonDecodes = 0;
 
-                // Reflection rather than a public test hook: the locator is
-                // private on purpose, and a benchmark is not a reason to widen
-                // production visibility. fase-7 T6 retired PageService's private
-                // locatePageAnyLanguage delegator; drive the service's own PageLocator
-                // directly with the same root the delegator built (fn()=>intraVox()).
-                $folders = (new \ReflectionMethod(PageService::class, 'folders'))->invoke($svc);
-                $locator = (new \ReflectionMethod(PageService::class, 'locator'))->invoke($svc);
-                $readFolder = $folders->readLanguageFolder();
-                $intraVoxRoot = fn(): \OCP\Files\Folder => $folders->intraVox();
+                // makeService() hands back the FolderContext + PageLocator
+                // directly now (fase-10 retired the PageService scaffold this used
+                // to reflect them off). Drive the PageLocator with the same root
+                // the old delegator built (fn()=>intraVox()). Named $folderCtx so it
+                // never clobbers the outer $folders map of per-language trees the
+                // next makeService() call indexes into.
+                $folderCtx = $svc['folders'];
+                $locator = $svc['locator'];
+                $readFolder = $folderCtx->readLanguageFolder();
+                $intraVoxRoot = fn(): \OCP\Files\Folder => $folderCtx->intraVox();
 
                 $start = microtime(true);
                 $result = $locator->locatePageAnyLanguage($intraVoxRoot, $readFolder, $uniqueId);
@@ -468,27 +474,6 @@ class PageLookupBenchmark extends TestCase {
             $missReads,
             'a miss should walk beyond a single language tree'
         );
-    }
-
-    /**
-     * Mock $class, or — when it is final and therefore not doubleable — build a
-     * real one and recurse for its own final dependencies (PageShapeSanitizer
-     * takes three final leaf sanitizers).
-     */
-    private function doubleOrBuild(string $class): object {
-        try {
-            return $this->createMock($class);
-        } catch (\PHPUnit\Framework\MockObject\Generator\ClassIsFinalException $e) {
-            $ctor = (new \ReflectionClass($class))->getConstructor();
-            $args = [];
-            foreach ($ctor?->getParameters() ?? [] as $param) {
-                $pType = $param->getType();
-                $args[] = $pType instanceof \ReflectionNamedType && !$pType->isBuiltin()
-                    ? $this->doubleOrBuild($pType->getName())
-                    : null;
-            }
-            return new $class(...$args);
-        }
     }
 
 }

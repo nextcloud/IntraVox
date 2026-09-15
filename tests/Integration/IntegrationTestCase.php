@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace OCA\IntraVox\Tests\Integration;
 
-use OCA\IntraVox\Service\PageService;
 use OCA\IntraVox\Service\PermissionService;
 use OCA\IntraVox\Service\SetupService;
 use OCA\GroupFolders\Folder\FolderManager;
@@ -86,8 +85,14 @@ abstract class IntegrationTestCase extends TestCase {
         return self::server()->get(FolderManager::class);
     }
 
-    protected function pageService(): PageService {
-        return self::server()->get(PageService::class);
+    /**
+     * The page write path (create/update/delete) lives on Write\PageWriteService
+     * (fase-10 dissolved PageService, whose create/update/deletePage were thin
+     * delegators to this service). Resolve it from the container exactly as
+     * production consumers do.
+     */
+    protected function pageWriteService(): \OCA\IntraVox\Service\Write\PageWriteService {
+        return self::server()->get(\OCA\IntraVox\Service\Write\PageWriteService::class);
     }
 
     /**
@@ -97,6 +102,15 @@ abstract class IntegrationTestCase extends TestCase {
      */
     protected function pageReadService(): \OCA\IntraVox\Service\Read\PageReadService {
         return self::server()->get(\OCA\IntraVox\Service\Read\PageReadService::class);
+    }
+
+    /**
+     * The page listing walk lives on Listing\PageLister (fase-10 removed the old
+     * PageService, whose listPages() was `$this->pageLister->listAll()`; the production
+     * ApiController::listPages() resolves this same service and calls listAll()).
+     */
+    protected function pageLister(): \OCA\IntraVox\Service\Listing\PageLister {
+        return self::server()->get(\OCA\IntraVox\Service\Listing\PageLister::class);
     }
 
     protected function permissionService(): PermissionService {
