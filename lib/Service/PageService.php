@@ -103,7 +103,10 @@ class PageService {
      * finally block. Reentrant — nested begins are counted.
      */
     public function beginDeferredClear(): void {
-        $this->cache()->beginDeferred();
+        // The deferred-batch begin/end pair lives on PageCacheInvalidator now
+        // (CACHE-CONTROL, god-class dissolution); this stays as a thin facade
+        // delegator until BulkOperationService (the only caller) repoints.
+        $this->cacheInvalidator->beginDeferred();
     }
 
     /**
@@ -111,12 +114,11 @@ class PageService {
      * for a clear while suppressed, perform exactly one real clearCache() now.
      */
     public function endDeferredClear(): void {
-        // endDeferred() performs the deferred tree/distributed clear itself and
-        // reports whether it did. The collaborator caches below belong to the
-        // same flush, so they follow on exactly that condition.
-        if ($this->cache()->endDeferred()) {
-            $this->cacheInvalidator->invalidateCollaborators();
-        }
+        // Delegates to PageCacheInvalidator::endDeferred (CACHE-CONTROL), which
+        // performs the deferred tree/distributed clear and, on exactly the
+        // condition it reports, follows with the collaborator flush — the same
+        // two-step this facade used to inline.
+        $this->cacheInvalidator->endDeferred();
     }
 
     /**

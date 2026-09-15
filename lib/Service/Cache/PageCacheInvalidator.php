@@ -59,6 +59,28 @@ final class PageCacheInvalidator {
     }
 
     /**
+     * Open a deferred-clear batch: the expensive tree/distributed clears are held
+     * until endDeferred(), so a bulk op wipes the distributed cache once, not once
+     * per item. Verbatim from PageService::beginDeferredClear (the batch state
+     * lives on PageCacheService).
+     */
+    public function beginDeferred(): void {
+        $this->cache->beginDeferred();
+    }
+
+    /**
+     * Close a deferred-clear batch. endDeferred() performs the deferred
+     * tree/distributed clear itself and reports whether it did; the collaborator
+     * caches below belong to the same flush, so they follow on exactly that
+     * condition. Verbatim from PageService::endDeferredClear.
+     */
+    public function endDeferred(): void {
+        if ($this->cache->endDeferred()) {
+            $this->invalidateCollaborators();
+        }
+    }
+
+    /**
      * Caches owned by OTHER services that must drop whenever ours do.
      *
      * Separate because two paths reach it: an ordinary invalidate(), and the
