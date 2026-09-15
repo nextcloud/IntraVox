@@ -36,13 +36,15 @@ class PageContentApiController extends Controller {
         // The five version-history endpoints call the VERSION domain service
         // directly (facade elimination phase 1); the cache-status endpoint calls
         // its own service (fase-4 C5); getPage comes from the READ-domain service
-        // (fase-4 C6); pageService stays for metadata + the RequiresPagePermission
-        // gate.
+        // (fase-4 C6); metadata now goes straight to the METADATA domain service
+        // (fase-9); pageService stays ONLY for the RequiresPagePermission gate,
+        // whose getPageService() is dead (the gate runs on getPageReadService()).
         private \OCA\IntraVox\Service\Read\PageReadService $pageRead,
         private \OCA\IntraVox\Service\Version\PageVersionDomainService $versionDomain,
         private \OCA\IntraVox\Service\Maintenance\PageCacheStatusService $cacheStatus,
         private IAppManager $appManager,
         private LoggerInterface $logger,
+        private \OCA\IntraVox\Service\Metadata\PageMetadataService $pageMetadata,
     ) {
         parent::__construct($appName, $request);
     }
@@ -186,7 +188,7 @@ class PageContentApiController extends Controller {
                 return $denied;
             }
 
-            $metadata = $this->pageService->getPageMetadata($pageId);
+            $metadata = $this->pageMetadata->getPageMetadata($pageId);
             return new DataResponse($metadata);
         } catch (\Exception $e) {
             return new DataResponse(
@@ -207,7 +209,7 @@ class PageContentApiController extends Controller {
             }
 
             $metadata = $this->request->getParams();
-            $updated = $this->pageService->updatePageMetadata($pageId, $metadata);
+            $updated = $this->pageMetadata->updatePageMetadata($pageId, $metadata);
             return new DataResponse($updated);
         } catch (\Exception $e) {
             return new DataResponse(

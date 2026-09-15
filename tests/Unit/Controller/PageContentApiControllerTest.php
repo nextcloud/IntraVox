@@ -33,6 +33,7 @@ use Psr\Log\LoggerInterface;
 class PageContentApiControllerTest extends TestCase {
 
     use \OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageRead;
+    use \OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageService;
 
     private PageService $pageService;
     private IAppManager $appManager;
@@ -43,6 +44,12 @@ class PageContentApiControllerTest extends TestCase {
     private PageLocator $versionLocator;
     /** getPage(id) behaviour a test installs (fase-4 C6: getPage → PageReadService). */
     private \Closure $getPageFn;
+    /**
+     * The metadata locator's per-id resolution a test installs (fase-9: metadata →
+     * PageMetadataService). Returns ['file'=>File,'folder'=>Folder] for a hit, or
+     * null for "page not found". Read at call time so a test can flip it.
+     */
+    private \Closure $metadataResolveFn;
 
     protected function setUp(): void {
         $this->pageService = $this->createMock(PageService::class);
@@ -90,6 +97,38 @@ class PageContentApiControllerTest extends TestCase {
             $this->createMock(LoggerInterface::class)
         );
 
+        // Metadata now goes straight to the METADATA domain service (fase-9). It is
+        // final, so build a REAL one whose PageLocator resolves page ids through the
+        // per-test $this->metadataResolveFn (default: not found). getPageMetadata's
+        // happy path reads the resolved file's JSON and returns a dict whose 'title'
+        // is $data['title'] — the enricher (real, over inert collaborators) preserves
+        // it — so a fixture file carrying {"title":...} pins the delegated result.
+        $this->metadataResolveFn = fn(string $id) => null;
+        $metadataLocator = $this->createMock(PageLocator::class);
+        $metadataLocator->method('locatePageAnyLanguage')
+            ->willReturnCallback(fn($root, $folder, string $id) => ($this->metadataResolveFn)($id));
+        $metadataLocator->method('findPageById')
+            ->willReturnCallback(fn($folder, string $id) => ($this->metadataResolveFn)($id));
+        $pageMetadata = new \OCA\IntraVox\Service\Metadata\PageMetadataService(
+            new PageIdUtils(),
+            $this->createMock(PageVersionService::class),
+            $this->createMock(\OCA\IntraVox\Service\PageIndexService::class),
+            $this->doubleOrBuild(\OCA\IntraVox\Service\NavigationService::class),
+            $this->doubleOrBuild(\OCA\IntraVox\Service\Sanitize\PageShapeSanitizer::class),
+            // languageFolder()/intraVox() must resolve (not throw) so getPageMetadata
+            // reaches the mocked locator; the resolved page comes from that locator,
+            // not from walking these folders.
+            $this->fakeFolderContext(
+                languageFolder: $this->makeFolder('/IntraVox/en'),
+                intraVox: $this->makeFolder('/IntraVox')
+            ),
+            $this->doubleOrBuild(\OCA\IntraVox\Service\Path\PageDataEnricher::class),
+            $this->createMock(LoggerInterface::class),
+            $this->fakeHomepageResolver(null),
+            $this->fakeCacheInvalidator(),
+            $metadataLocator,
+        );
+
         $this->controller = new PageContentApiController(
             'intravox',
             $this->createMock(IRequest::class),
@@ -99,6 +138,7 @@ class PageContentApiControllerTest extends TestCase {
             $cacheStatus,
             $this->appManager,
             $this->createMock(LoggerInterface::class),
+            $pageMetadata,
         );
     }
 
@@ -160,12 +200,20 @@ class PageContentApiControllerTest extends TestCase {
 
     public function testGetMetadataHappyPathDelegates(): void {
         $this->getPageFn = fn(string $id) => $this->pageReadable(true);
-        $this->pageService->method('getPageMetadata')->willReturn(['title' => 'X']);
+        // The real PageMetadataService resolves page-x to a file carrying
+        // {"title":"X"} and returns a metadata dict whose 'title' is that value;
+        // the controller passes the dict through as a 200. (The full dict has more
+        // fields — timestamps, path, permissions — so pin the delegated title.)
+        $file = $this->makeFile('/IntraVox/en/page-x/page-x.json', ['title' => 'X', 'uniqueId' => 'page-x']);
+        $folder = $this->makeFolder('/IntraVox/en/page-x');
+        $this->metadataResolveFn = fn(string $id) => $id === 'page-x'
+            ? ['file' => $file, 'folder' => $folder]
+            : null;
 
         $res = $this->controller->getPageMetadata('page-x');
 
         $this->assertSame(Http::STATUS_OK, $res->getStatus());
-        $this->assertSame(['title' => 'X'], $res->getData());
+        $this->assertSame('X', $res->getData()['title']);
     }
 
     // --- getPageVersions (same gate) ---
