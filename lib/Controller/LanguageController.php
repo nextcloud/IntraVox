@@ -5,7 +5,6 @@ namespace OCA\IntraVox\Controller;
 
 use OCA\IntraVox\Service\LanguageHomepageService;
 use OCA\IntraVox\Service\LanguageService;
-use OCA\IntraVox\Service\PageService;
 use OCA\IntraVox\Service\PermissionService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -24,7 +23,9 @@ use Psr\Log\LoggerInterface;
 class LanguageController extends Controller {
     private LanguageService $languageService;
     private LanguageHomepageService $homepageService;
-    private PageService $pageService;
+    private \OCA\IntraVox\Service\Language\LanguageStatusService $languageStatus;
+    private \OCA\IntraVox\Service\Homepage\HomepageResolverService $homepageResolver;
+    private \OCA\IntraVox\Service\Folder\FolderContext $folders;
     private PermissionService $permissionService;
     private LoggerInterface $logger;
     private \OCA\IntraVox\Service\Cache\PageCacheInvalidator $cacheInvalidator;
@@ -34,7 +35,13 @@ class LanguageController extends Controller {
         IRequest $request,
         LanguageService $languageService,
         LanguageHomepageService $homepageService,
-        PageService $pageService,
+        // The content-status read is the LANGUAGE-STATUS domain service now
+        // (fase-9); the homepage-resolution + real-content probes it needs come
+        // from the injected HomepageResolverService / FolderContext, threaded in
+        // as the exact closures the retired PageService delegator supplied.
+        \OCA\IntraVox\Service\Language\LanguageStatusService $languageStatus,
+        \OCA\IntraVox\Service\Homepage\HomepageResolverService $homepageResolver,
+        \OCA\IntraVox\Service\Folder\FolderContext $folders,
         PermissionService $permissionService,
         LoggerInterface $logger,
         \OCA\IntraVox\Service\Cache\PageCacheInvalidator $cacheInvalidator
@@ -42,10 +49,31 @@ class LanguageController extends Controller {
         parent::__construct($appName, $request);
         $this->languageService = $languageService;
         $this->homepageService = $homepageService;
-        $this->pageService = $pageService;
+        $this->languageStatus = $languageStatus;
+        $this->homepageResolver = $homepageResolver;
+        $this->folders = $folders;
         $this->permissionService = $permissionService;
         $this->logger = $logger;
         $this->cacheInvalidator = $cacheInvalidator;
+    }
+
+    /**
+     * Language content status for the current user — byte-identical to the retired
+     * PageService::getLanguageContentStatus delegator: the LANGUAGE-STATUS domain
+     * service scans the language folders, with homepage resolution
+     * (HomepageResolverService) and the ANY-homepage / real-content probes
+     * (FolderContext) passed as closures, exactly as PageService threaded its own
+     * $this-bound resolveHomepageNodeUniqueId / languageFolderHasHomepage /
+     * languageFolderHasRealContent.
+     *
+     * @return array{language:string,hasContent:bool,servedLanguage:?string,languagesWithContent:string[],activeLanguages:string[],homepageUniqueId:?string}
+     */
+    private function getLanguageContentStatus(): array {
+        return $this->languageStatus->getContentStatus(
+            fn(?string $language): string => $this->homepageResolver->resolveHomepageNodeUniqueId($language),
+            fn(\OCP\Files\Folder $folder): bool => $this->folders->hasHomepage($folder),
+            fn(\OCP\Files\Folder $folder): bool => $this->folders->hasRealContent($folder)
+        );
     }
 
     /**
@@ -60,12 +88,12 @@ class LanguageController extends Controller {
      */
     public function list(): DataResponse {
         try {
-            $status = $this->pageService->getLanguageContentStatus();
+            $status = $this->getLanguageContentStatus();
             return new DataResponse([
                 'availableLanguages' => $this->languageService->getAvailableLanguages(),
                 // Admin view: active languages (any homepage incl. placeholder),
                 // so a just-added language appears right away.
-                'languagesWithContent' => $status['activeLanguages'] ?? [],
+                'languagesWithContent' => $status['activeLanguages'],
                 'primaryLanguage' => $this->languageService->getPrimaryLanguage(),
                 'defaultLanguage' => $this->languageService->getDefaultLanguage(),
                 // base code => UI translation coverage % (admin indicator)
@@ -99,7 +127,7 @@ class LanguageController extends Controller {
             // empty language (issue #73). English is always allowed: it is the
             // universal fallback and source language, resolvable even without pages.
             if ($code !== 'en') {
-                $withContent = $this->pageService->getLanguageContentStatus()['languagesWithContent'] ?? [];
+                $withContent = $this->getLanguageContentStatus()['languagesWithContent'];
                 if (!in_array($code, $withContent, true)) {
                     return new DataResponse(
                         ['error' => 'The recommended language must be a language that has content'],
@@ -193,7 +221,7 @@ class LanguageController extends Controller {
     #[NoAdminRequired]
     public function contentStatus(): DataResponse {
         try {
-            $status = $this->pageService->getLanguageContentStatus();
+            $status = $this->getLanguageContentStatus();
             $status['primaryLanguage'] = $this->languageService->getPrimaryLanguage();
             // Decorate the content languages with display names for the notice UI.
             $names = [];
