@@ -17,7 +17,7 @@ use OCA\IntraVox\Service\Sanitize\PageShapeSanitizer;
 use OCA\IntraVox\Service\Util\PageIdUtils;
 use OCA\IntraVox\Service\Version\PageVersionService;
 use OCA\IntraVox\Service\Write\PageWriteService;
-use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageService;
+use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsCollaboratorFixtures;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\Files\File;
 use OCP\Files\FileInfo;
@@ -59,8 +59,7 @@ use Psr\Log\LoggerInterface;
  */
 class PageWriteServiceTest extends TestCase {
 
-    use BuildsPageService;
-
+    use BuildsCollaboratorFixtures;
     /** Ordered log of side effects, used to assert event-before-delete. */
     private array $events = [];
 

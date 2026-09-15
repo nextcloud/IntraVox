@@ -10,7 +10,7 @@ use OCA\IntraVox\Service\PageIndexService;
 use OCA\IntraVox\Service\PermissionService;
 use OCA\IntraVox\Service\Structure\PageStructureService;
 use OCA\IntraVox\Service\Write\PageWriteService;
-use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageService;
+use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsCollaboratorFixtures;
 use OCP\Files\File;
 use OCP\Files\FileInfo;
 use OCP\Files\Folder;
@@ -39,8 +39,7 @@ use Psr\Log\LoggerInterface;
  */
 class BulkConvergenceTest extends TestCase {
     use \OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageRead;
-    use BuildsPageService;
-
+    use BuildsCollaboratorFixtures;
     private BulkOperationService $service;
     /** getPage(id) behaviour a test installs (fase-4 C6: getPage → PageReadService). */
     private \Closure $getPageFn;

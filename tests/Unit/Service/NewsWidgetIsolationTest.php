@@ -34,7 +34,10 @@ class NewsWidgetIsolationTest extends TestCase {
                     . 'DI-promotion must leave the ctor closure-free (autowirable).'
             );
             $this->assertNotSame(
-                \OCA\IntraVox\Service\PageService::class,
+                // String literal, not ::class — this guard outlives PageService.php
+                // (fase-10 removes it); it asserts the ctor param TYPE NAME is never
+                // that FQN, which is a plain string comparison.
+                'OCA\\IntraVox\\Service\\PageService',
                 $name,
                 "NewsWidgetService must not depend on the PageService facade (param \${$p->getName()})."
             );

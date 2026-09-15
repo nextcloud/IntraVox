@@ -10,7 +10,7 @@ use OCA\IntraVox\Service\Locator\PageLocator;
 use OCA\IntraVox\Service\PermissionService;
 use OCA\IntraVox\Service\Structure\PageStructureService;
 use OCA\IntraVox\Service\Write\PageWriteService;
-use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageService;
+use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsCollaboratorFixtures;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -35,8 +35,7 @@ use Psr\Log\LoggerInterface;
 class BulkOperationServiceTest extends TestCase {
 
     use \OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageRead;
-    use BuildsPageService;
-
+    use BuildsCollaboratorFixtures;
     /** beginDeferred/endDeferred calls the spy cache recorded, in order. */
     private array $deferredCalls = [];
 

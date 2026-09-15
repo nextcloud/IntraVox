@@ -3,9 +3,9 @@ declare(strict_types=1);
 
 namespace OCA\IntraVox\Tests\Unit\Service;
 
-use OCA\IntraVox\Service\PageService;
 use OCA\IntraVox\Service\Version\PageVersionService;
-use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageService;
+use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsFolderFixtures;
+use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsNodeFixtures;
 use OCP\Files\File;
 use OCP\Files\FileInfo;
 use OCP\Files\Folder;
@@ -30,8 +30,9 @@ use PHPUnit\Framework\TestCase;
  */
 class PageServiceVersionTest extends TestCase {
 
-    use BuildsPageService;
+    use BuildsFolderFixtures;
 
+    use BuildsNodeFixtures;
     private function makeFile(string $path, array $json): File {
         $file = $this->createMock(File::class);
         $file->method('getName')->willReturn(basename($path));

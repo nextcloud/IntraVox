@@ -7,7 +7,7 @@ use OCA\IntraVox\Service\Cache\PageCacheService;
 use OCA\IntraVox\Service\News\NewsPageService;
 use OCA\IntraVox\Service\News\NewsWidgetService;
 use OCA\IntraVox\Service\Publication\MetaVoxGateway;
-use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageService;
+use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsCollaboratorFixtures;
 use OCP\Files\Folder;
 use OCP\Files\NotFoundException;
 use PHPUnit\Framework\TestCase;
@@ -30,8 +30,7 @@ use Psr\Log\LoggerInterface;
  */
 class PageNewsTest extends TestCase {
 
-    use BuildsPageService;
-
+    use BuildsCollaboratorFixtures;
     /**
      * @param list<array> $collected what NewsPageService::findNewsPagesInFolder
      *   yields (written into the &$pages out-param)

@@ -5,7 +5,7 @@ namespace OCA\IntraVox\Tests\Unit\Service;
 
 use OCA\IntraVox\Service\Cache\PageCacheService;
 use OCA\IntraVox\Service\Tree\PageTreeService;
-use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageService;
+use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsCollaboratorFixtures;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -25,8 +25,7 @@ use Psr\Log\LoggerInterface;
  */
 class PageTreeResponseShapeTest extends TestCase {
 
-    use BuildsPageService;
-
+    use BuildsCollaboratorFixtures;
     /** A minimal cached tree: two root nodes, one with a child. */
     private function cachedTree(): array {
         return [

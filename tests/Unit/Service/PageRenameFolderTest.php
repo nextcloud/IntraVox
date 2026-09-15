@@ -10,7 +10,7 @@ use OCA\IntraVox\Service\Metadata\PageMetadataService;
 use OCA\IntraVox\Service\PageIndexService;
 use OCA\IntraVox\Service\Sanitize\PageShapeSanitizer;
 use OCA\IntraVox\Service\Util\PageIdUtils;
-use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageService;
+use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsCollaboratorFixtures;
 use OCP\Files\File;
 use OCP\Files\Folder;
 use PHPUnit\Framework\TestCase;
@@ -30,8 +30,7 @@ use PHPUnit\Framework\TestCase;
  */
 class PageRenameFolderTest extends TestCase {
 
-    use BuildsPageService;
-
+    use BuildsCollaboratorFixtures;
     private function makeService(bool $isHomepage, PageIndexService $index): PageMetadataService {
         // renamePageFolder touches only idUtils/pageIndexService/logger + the
         // isHomepage closure; the other ctor deps are irrelevant here, so they are

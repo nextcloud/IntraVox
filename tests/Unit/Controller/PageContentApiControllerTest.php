@@ -32,8 +32,7 @@ use Psr\Log\LoggerInterface;
 class PageContentApiControllerTest extends TestCase {
 
     use \OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageRead;
-    use \OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageService;
-
+    use \OCA\IntraVox\Tests\Unit\Service\Harness\BuildsCollaboratorFixtures;
     private IAppManager $appManager;
     private PageContentApiController $controller;
     /** The mocked version-manager engine behind the real (final) versionDomain. */

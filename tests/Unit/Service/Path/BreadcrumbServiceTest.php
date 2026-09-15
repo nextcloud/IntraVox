@@ -10,7 +10,7 @@ use OCA\IntraVox\Service\Locator\PageLocator;
 use OCA\IntraVox\Service\Path\BreadcrumbService;
 use OCA\IntraVox\Service\PermissionService;
 use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageRead;
-use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageService;
+use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsCollaboratorFixtures;
 use OCP\Files\Folder;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -27,7 +27,7 @@ use Psr\Log\LoggerInterface;
  */
 class BreadcrumbServiceTest extends TestCase {
 
-    use BuildsPageService;
+    use BuildsCollaboratorFixtures;
     use BuildsPageRead;
 
     /**

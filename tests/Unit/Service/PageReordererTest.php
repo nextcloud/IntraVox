@@ -6,7 +6,7 @@ namespace OCA\IntraVox\Tests\Unit\Service;
 use OCA\IntraVox\Service\Locator\PageLocator;
 use OCA\IntraVox\Service\PageIndexService;
 use OCA\IntraVox\Service\Reorder\PageReorderer;
-use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageService;
+use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsCollaboratorFixtures;
 use OCP\Files\File;
 use OCP\Files\FileInfo;
 use OCP\Files\Folder;
@@ -36,8 +36,7 @@ use Psr\Log\LoggerInterface;
  */
 class PageReordererTest extends TestCase {
 
-    use BuildsPageService;
-
+    use BuildsCollaboratorFixtures;
     /** Build a File mock that records putContent() calls into $writes. */
     private function reorderFile(string $path, array $json, array &$writes): File {
         $file = $this->createMock(File::class);

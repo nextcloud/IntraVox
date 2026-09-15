@@ -40,7 +40,8 @@ class ApiControllerTest extends TestCase {
     use \OCA\IntraVox\Tests\Unit\Controller\Harness\BuildsPageLister;
     // fakeFolderContext(): a real FolderContext whose getLanguageFolder seam returns
     // the fixture folder — reorderPages() is the only endpoint that resolves it.
-    use \OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageService;
+    use \OCA\IntraVox\Tests\Unit\Service\Harness\BuildsFolderFixtures;
+    use \OCA\IntraVox\Tests\Unit\Service\Harness\BuildsServiceDoubles;
     private ApiController $controller;
     // The PageService god-facade is gone from ApiController (fase-9): the eight
     // page endpoints call the domain services directly. These are the mocks the

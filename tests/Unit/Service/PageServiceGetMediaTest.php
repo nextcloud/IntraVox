@@ -5,8 +5,9 @@ namespace OCA\IntraVox\Tests\Unit\Service;
 
 use OCA\IntraVox\Service\Cache\PageCacheService;
 use OCA\IntraVox\Service\Media\PageMediaService;
-use OCA\IntraVox\Service\PageService;
-use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageService;
+use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsCacheFixtures;
+use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsFolderFixtures;
+use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsServiceDoubles;
 use OCP\Files\File;
 use OCP\Files\FileInfo;
 use OCP\Files\Folder;
@@ -26,8 +27,11 @@ use PHPUnit\Framework\TestCase;
  */
 class PageServiceGetMediaTest extends TestCase {
 
-    use BuildsPageService;
+    use BuildsCacheFixtures;
 
+    use BuildsFolderFixtures;
+
+    use BuildsServiceDoubles;
     /** The (folder, filename) the last streamMediaFile call received. */
     private ?array $streamed = null;
 

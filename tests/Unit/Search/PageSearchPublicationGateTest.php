@@ -33,8 +33,7 @@ use PHPUnit\Framework\TestCase;
 class PageSearchPublicationGateTest extends TestCase {
 
 	use BuildsPageRead;
-	use \OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageService;
-
+	use \OCA\IntraVox\Tests\Unit\Service\Harness\BuildsServiceDoubles;
 	/** The publication gate now lives on PublicationStateService, not PageService. */
 	private PublicationStateService $publicationState;
 	/** The page getPage() returns (fase-4 C6: getPage moved to PageReadService). */

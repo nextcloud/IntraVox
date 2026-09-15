@@ -14,7 +14,7 @@ use OCA\IntraVox\Service\PageIndexService;
 use OCA\IntraVox\Service\Path\PagePathHelper;
 use OCA\IntraVox\Service\Structure\PageStructureService;
 use OCA\IntraVox\Service\Util\PageIdUtils;
-use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageService;
+use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsCollaboratorFixtures;
 use OCP\Files\File;
 use OCP\Files\FileInfo;
 use OCP\Files\Folder;
@@ -46,8 +46,7 @@ use Psr\Log\LoggerInterface;
  */
 class PageStructureServiceTest extends TestCase {
 
-    use BuildsPageService;
-
+    use BuildsCollaboratorFixtures;
     /** Records every move() performed: [sourcePath => destinationPath]. */
     private array $moves = [];
     /** Index subtree repaths the service triggered. */

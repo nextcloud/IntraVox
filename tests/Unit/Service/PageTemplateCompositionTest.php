@@ -10,7 +10,10 @@ use OCA\IntraVox\Service\Template\PageTemplateService;
 use OCA\IntraVox\Service\Translation\TranslationGroupService;
 use OCA\IntraVox\Service\Util\PageIdUtils;
 use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageRead;
-use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageService;
+use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsCacheFixtures;
+use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsFolderFixtures;
+use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsNodeFixtures;
+use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsServiceDoubles;
 use OCP\Files\File;
 use OCP\Files\FileInfo;
 use OCP\Files\Folder;
@@ -32,7 +35,13 @@ use PHPUnit\Framework\TestCase;
  */
 class PageTemplateCompositionTest extends TestCase {
 
-    use BuildsPageService;
+    use BuildsCacheFixtures;
+
+    use BuildsFolderFixtures;
+
+    use BuildsNodeFixtures;
+
+    use BuildsServiceDoubles;
     use BuildsPageRead;
 
     /** A folder that records putContent() on files created via newFile(). */
