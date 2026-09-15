@@ -78,6 +78,7 @@ OC.L10N.register(
     "Tenant ID" : "租戶 ID",
     "Client ID" : "客戶端 ID",
     "Client secret" : "客戶端密碼",
+    "Test connection" : "測試連線",
     "_%n item_::_%n items_" : ["%n 個項目"],
     "Deleting …" : "正在刪除……",
     "Delete permanently" : "永久刪除",

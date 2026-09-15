@@ -231,6 +231,7 @@ OC.L10N.register(
     "Restore version" : "恢复版本",
     "Restore" : "恢复",
     "Header row" : "标题列",
+    "Duplicate row" : "复制列",
     "Column {column}" : "列 {column}",
     "Disabled" : "已禁用",
     "Current" : "当前",
