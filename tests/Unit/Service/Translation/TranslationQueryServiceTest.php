@@ -1,11 +1,15 @@
 <?php
 declare(strict_types=1);
 
-namespace OCA\IntraVox\Tests\Unit\Service;
+namespace OCA\IntraVox\Tests\Unit\Service\Translation;
 
+use OCA\IntraVox\Service\Folder\FolderContext;
+use OCA\IntraVox\Service\Locator\PageLocator;
 use OCA\IntraVox\Service\PageIndexService;
-use OCA\IntraVox\Service\PageService;
-use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageService;
+use OCA\IntraVox\Service\Translation\TranslationGroupService;
+use OCA\IntraVox\Service\Translation\TranslationQueryService;
+use OCA\IntraVox\Service\Util\PageIdUtils;
+use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsFolderFixtures;
 use OCP\Files\File;
 use OCP\Files\FileInfo;
 use OCP\Files\Folder;
@@ -24,10 +28,20 @@ use PHPUnit\Framework\TestCase;
  * Every version is equal, so removing one language shrinks the group rather
  * than orphaning anything — the failure mode that leaves SharePoint's
  * source-pointer model with dangling references and a hanging language menu.
+ *
+ * fase-10: the behaviour was carved off the retired PageService facade onto
+ * TranslationQueryService, built DIRECTLY here. link/unlink take the two shared
+ * WRITE concerns as per-call closures (the group-writer, shared with the compose
+ * domain, and the cache-clear); this test supplies the exact equivalents the
+ * TranslationApiController reproduces from its injected collaborators — a
+ * writeTranslationGroup that resolves the language via languageOfFolder() (else
+ * the caller's own language) and calls TranslationGroupService::writeGroup, and
+ * an inert clearCache. Only construction + those two closures change; every
+ * migrated assertion is byte-identical to the PageService-era test.
  */
-class PageTranslationGroupTest extends TestCase {
+class TranslationQueryServiceTest extends TestCase {
 
-    use BuildsPageService;
+    use BuildsFolderFixtures;
 
     /** Content written per path. */
     private array $writes = [];
@@ -76,8 +90,19 @@ class PageTranslationGroupTest extends TestCase {
         return $folder;
     }
 
-    /** Two languages, one page each: nl/over-ons and de/ueber-uns. */
-    private function makeService(?array $nlJson = null, ?array $deJson = null, bool $deUpdateable = true): PageService {
+    /**
+     * Two languages, one page each: nl/over-ons and de/ueber-uns. Returns the
+     * FolderContext + a lazily-buildable TranslationQueryService over an index the
+     * caller may reset (the query tests inject a custom index BEFORE reading).
+     *
+     * link/unlinkTranslation resolve via folders()->readLanguageFolder ($nl); the
+     * language derivation (languageOfFolder) and the cross-language locate root
+     * ($base) both come from the injected FolderContext (intraVox).
+     *
+     * @param PageIndexService|null $index the shared index; a bare no-hit mock by default.
+     * @return array{0: FolderContext, 1: Folder} [folderContext, base]
+     */
+    private function makeContext(?array $nlJson = null, ?array $deJson = null, bool $deUpdateable = true): array {
         $nlJson ??= ['uniqueId' => 'page-nl', 'title' => 'Over ons'];
         $deJson ??= ['uniqueId' => 'page-de', 'title' => 'Über uns'];
 
@@ -94,68 +119,66 @@ class PageTranslationGroupTest extends TestCase {
         ]);
         $base = $this->makeFolder('/IntraVox', ['nl' => $nl, 'de' => $de]);
 
-        // link/unlinkTranslation resolve via folders()->readLanguageFolder ($nl);
-        // updatePage via folders()->languageFolder ($nl) + languageOfFolder/
-        // userLanguage; the cross-language locate root ($base) also comes from the
-        // injected FolderContext (intraVox).
-                $index = $this->createMock(PageIndexService::class);
-        $index->method('findByUniqueId')->willReturn(null);
+        $folders = $this->fakeFolderContext(
+            readLanguageFolder: $nl,
+            intraVox: $base,
+            languageFolder: $nl,
+            userLanguage: 'nl'
+        );
 
-        $config = $this->createMock(\OCP\IConfig::class);
-        $config->method('getUserValue')->willReturn('nl');
-
-        // updatePage() needs a session user before it resolves the page.
-        $user = $this->createMock(\OCP\IUser::class);
-        $user->method('getUID')->willReturn('tester');
-        $user->method('getDisplayName')->willReturn('Tester');
-        $session = $this->createMock(\OCP\IUserSession::class);
-        $session->method('getUser')->willReturn($user);
-
-        $explicit = [
-            'userSession' => $session,
-            'userId' => 'tester',
-            'config' => $config,
-            'logger' => $this->createMock(\Psr\Log\LoggerInterface::class),
-            'languageService' => $this->createMock(\OCA\IntraVox\Service\LanguageService::class),
-            'pageIndexService' => $index,
-            'folderContext' => $this->fakeFolderContext(
-                readLanguageFolder: $nl,
-                intraVox: $base,
-                languageFolder: $nl,
-                userLanguage: 'nl'
-            ),
-        ];
-        // fase-3: real DI ctor; inert invalidator no-ops clearCache.
-        $svc = $this->buildRealPageService($explicit);
-        return $svc;
+        return [$folders, $base];
     }
 
     /**
-     * The translation-query service over the SAME deps a built PageService holds.
-     * getTranslatableLanguages / getTranslationCandidates were pure delegators to
-     * translationQuery() (fase-4 deletes them), so those read tests drive
-     * TranslationQueryService directly. Reading the deps off $svc via reflection
-     * keeps the existing makeService fixture + any post-construction
-     * pageIndexService reset (the tests reflection-set a custom index, then read)
-     * flowing through unchanged.
+     * Build the TranslationQueryService directly over a FolderContext and an
+     * index, the way TranslationApiController wires it: PageLocator over the
+     * index, TranslationGroupService over locator+index, and a bare
+     * LanguageService mock (no getAvailableLanguages) so display names fall back
+     * to the uppercased code.
      */
-    private function translationQuery(PageService $svc): \OCA\IntraVox\Service\Translation\TranslationQueryService {
-        $get = fn(string $p) => (new \ReflectionProperty(PageService::class, $p))->getValue($svc);
-        $index = $get('pageIndexService');
+    private function buildService(FolderContext $folders, ?PageIndexService $index = null): TranslationQueryService {
+        $index ??= $this->createMock(PageIndexService::class);
         $logger = $this->createMock(\Psr\Log\LoggerInterface::class);
-        $locator = new \OCA\IntraVox\Service\Locator\PageLocator($index, $logger);
-        $groups = new \OCA\IntraVox\Service\Translation\TranslationGroupService(
+        $locator = new PageLocator($index, $logger);
+        $groups = new TranslationGroupService(
             $index,
             $locator,
-            new \OCA\IntraVox\Service\Util\PageIdUtils(),
+            new PageIdUtils(),
             $logger
         );
-        return new \OCA\IntraVox\Service\Translation\TranslationQueryService(
-            $get('folderContext'),
+        return new TranslationQueryService(
+            $folders,
             $groups,
             $locator,
-            $get('languageService')
+            $this->createMock(\OCA\IntraVox\Service\LanguageService::class)
         );
+    }
+
+    /**
+     * The group-writer closure the write callers supply — byte-identical in effect
+     * to TranslationApiController::writeTranslationGroup: the language is where the
+     * page actually sits (languageOfFolder), else the caller's own language, then
+     * TranslationGroupService::writeGroup. Rebuilt here over the SAME index the
+     * service holds so the write and the reads stay in step.
+     */
+    private function groupWriter(FolderContext $folders, PageIndexService $index): \Closure {
+        $logger = $this->createMock(\Psr\Log\LoggerInterface::class);
+        $groups = new TranslationGroupService(
+            $index,
+            new PageLocator($index, $logger),
+            new PageIdUtils(),
+            $logger
+        );
+        return function (array $result, string $group) use ($folders, $groups): void {
+            $language = $folders->languageOfFolder($result['folder']) ?? $folders->userLanguage();
+            $groups->writeGroup($result, $group, $language);
+        };
+    }
+
+    /** The cache-clear closure: inert, as the unit fixture no-ops invalidation. */
+    private function inertClearCache(): \Closure {
+        return function (): void {
+        };
     }
 
     private function writtenGroup(string $path): ?string {
@@ -165,9 +188,17 @@ class PageTranslationGroupTest extends TestCase {
 
     /** Linking gives both pages one shared group. */
     public function testLinkingSharesOneGroup(): void {
-        $svc = $this->makeService();
+        [$folders] = $this->makeContext();
+        $index = $this->createMock(PageIndexService::class);
+        $index->method('findByUniqueId')->willReturn(null);
+        $svc = $this->buildService($folders, $index);
 
-        $group = $svc->linkTranslation('page-nl', 'page-de');
+        $group = $svc->linkTranslation(
+            'page-nl',
+            'page-de',
+            $this->groupWriter($folders, $index),
+            $this->inertClearCache()
+        );
 
         $this->assertMatchesRegularExpression('/^tg-[a-f0-9-]{36}$/', $group);
         $this->assertSame($group, $this->writtenGroup('/IntraVox/nl/over-ons.json'));
@@ -181,14 +212,22 @@ class PageTranslationGroupTest extends TestCase {
      * someone without write access to B. (2.0 audit, finding M2.)
      */
     public function testLinkRefusedBeforeAnyWriteWhenOneSideIsReadOnly(): void {
-        $svc = $this->makeService(
+        [$folders] = $this->makeContext(
             null,
             ['uniqueId' => 'page-de', 'title' => 'Über uns', 'translationGroup' => 'tg-existing'],
             false // de is read-only for this user
         );
+        $index = $this->createMock(PageIndexService::class);
+        $index->method('findByUniqueId')->willReturn(null);
+        $svc = $this->buildService($folders, $index);
 
         try {
-            $svc->linkTranslation('page-nl', 'page-de');
+            $svc->linkTranslation(
+                'page-nl',
+                'page-de',
+                $this->groupWriter($folders, $index),
+                $this->inertClearCache()
+            );
             $this->fail('Expected ForbiddenException');
         } catch (\OCA\IntraVox\Exception\ForbiddenException $e) {
             // expected
@@ -206,7 +245,7 @@ class PageTranslationGroupTest extends TestCase {
      * a screenshot during the 2.0 screenshot round.
      */
     public function testLinkRefusesWhenAdoptedGroupAlreadyHoldsThatLanguage(): void {
-        $svc = $this->makeService(
+        [$folders] = $this->makeContext(
             null,
             // de-side already belongs to a group…
             ['uniqueId' => 'page-de', 'title' => 'Über uns', 'translationGroup' => 'tg-existing']
@@ -218,10 +257,15 @@ class PageTranslationGroupTest extends TestCase {
             ['unique_id' => 'page-de', 'language' => 'de'],
             ['unique_id' => 'page-nl-other', 'language' => 'nl'],
         ] : []);
-        (new \ReflectionProperty(PageService::class, 'pageIndexService'))->setValue($svc, $mock);
+        $svc = $this->buildService($folders, $mock);
 
         try {
-            $svc->linkTranslation('page-nl', 'page-de');
+            $svc->linkTranslation(
+                'page-nl',
+                'page-de',
+                $this->groupWriter($folders, $mock),
+                $this->inertClearCache()
+            );
             $this->fail('Expected InvalidArgumentException');
         } catch (\InvalidArgumentException $e) {
             $this->assertStringContainsString('already has a version', $e->getMessage());
@@ -279,11 +323,19 @@ class PageTranslationGroupTest extends TestCase {
      */
     public function testLinkingAdoptsAnExistingGroup(): void {
         $existing = 'tg-11111111-2222-3333-4444-555555555555';
-        $svc = $this->makeService(
+        [$folders] = $this->makeContext(
             ['uniqueId' => 'page-nl', 'title' => 'Over ons', 'translationGroup' => $existing]
         );
+        $index = $this->createMock(PageIndexService::class);
+        $index->method('findByUniqueId')->willReturn(null);
+        $svc = $this->buildService($folders, $index);
 
-        $group = $svc->linkTranslation('page-nl', 'page-de');
+        $group = $svc->linkTranslation(
+            'page-nl',
+            'page-de',
+            $this->groupWriter($folders, $index),
+            $this->inertClearCache()
+        );
 
         $this->assertSame($existing, $group, 'the existing group must win');
         $this->assertSame($existing, $this->writtenGroup('/IntraVox/de/ueber-uns.json'));
@@ -294,22 +346,37 @@ class PageTranslationGroupTest extends TestCase {
      * would make "the German page" ambiguous for the switcher and the notice.
      */
     public function testCannotLinkTwoPagesInTheSameLanguage(): void {
-        $svc = $this->makeService();
+        [$folders] = $this->makeContext();
+        $index = $this->createMock(PageIndexService::class);
+        $index->method('findByUniqueId')->willReturn(null);
+        $svc = $this->buildService($folders, $index);
 
         // Both ids resolve inside nl/ — link must be refused.
         $this->expectException(\InvalidArgumentException::class);
-        $svc->linkTranslation('page-nl', 'page-nl');
+        $svc->linkTranslation(
+            'page-nl',
+            'page-nl',
+            $this->groupWriter($folders, $index),
+            $this->inertClearCache()
+        );
     }
 
     /** Unlinking gives the page a fresh group of its own, not none. */
     public function testUnlinkingAssignsAFreshGroup(): void {
         $shared = 'tg-11111111-2222-3333-4444-555555555555';
-        $svc = $this->makeService(
+        [$folders] = $this->makeContext(
             ['uniqueId' => 'page-nl', 'title' => 'Over ons', 'translationGroup' => $shared],
             ['uniqueId' => 'page-de', 'title' => 'Über uns', 'translationGroup' => $shared]
         );
+        $index = $this->createMock(PageIndexService::class);
+        $index->method('findByUniqueId')->willReturn(null);
+        $svc = $this->buildService($folders, $index);
 
-        $fresh = $svc->unlinkTranslation('page-nl');
+        $fresh = $svc->unlinkTranslation(
+            'page-nl',
+            $this->groupWriter($folders, $index),
+            $this->inertClearCache()
+        );
 
         $this->assertNotSame($shared, $fresh);
         $this->assertMatchesRegularExpression('/^tg-[a-f0-9-]{36}$/', $fresh);
@@ -320,46 +387,17 @@ class PageTranslationGroupTest extends TestCase {
 
     /** An unknown page is reported as not found. */
     public function testLinkingAnUnknownPageFails(): void {
-        $svc = $this->makeService();
+        [$folders] = $this->makeContext();
+        $index = $this->createMock(PageIndexService::class);
+        $index->method('findByUniqueId')->willReturn(null);
+        $svc = $this->buildService($folders, $index);
 
         $this->expectException(\OCA\IntraVox\Exception\PageNotFoundException::class);
-        $svc->linkTranslation('page-nl', 'page-nope');
-    }
-
-    /**
-     * The group survives an ordinary save. The sanitiser is a strict
-     * whitelist, so without explicit handling every edit would silently drop
-     * the field and unlink the page from its translations.
-     */
-    public function testGroupSurvivesAnOrdinarySave(): void {
-        $shared = 'tg-11111111-2222-3333-4444-555555555555';
-        $svc = $this->makeService(
-            ['uniqueId' => 'page-nl', 'title' => 'Over ons', 'translationGroup' => $shared]
-        );
-
-        // A client that knows nothing about translation groups saves the page.
-        $svc->updatePage('page-nl', ['title' => 'Over ons (bijgewerkt)', 'widgets' => []]);
-
-        $this->assertSame(
-            $shared,
-            $this->writtenGroup('/IntraVox/nl/over-ons.json'),
-            'an ordinary save must not unlink the page'
-        );
-    }
-
-    /** A malformed group is dropped rather than stored. */
-    public function testMalformedGroupIsRejected(): void {
-        $svc = $this->makeService();
-
-        $svc->updatePage('page-nl', [
-            'title' => 'Over ons',
-            'widgets' => [],
-            'translationGroup' => '../../etc/passwd',
-        ]);
-
-        $this->assertNull(
-            $this->writtenGroup('/IntraVox/nl/over-ons.json'),
-            'only well-formed group ids may be stored'
+        $svc->linkTranslation(
+            'page-nl',
+            'page-nope',
+            $this->groupWriter($folders, $index),
+            $this->inertClearCache()
         );
     }
 
@@ -372,9 +410,12 @@ class PageTranslationGroupTest extends TestCase {
      */
     public function testTranslatableLanguagesExcludesOwnLanguageAndCarriesName(): void {
         // page-nl lives in nl/; base holds nl + de, so the only candidate is de.
-        $svc = $this->makeService();
+        [$folders] = $this->makeContext();
+        $index = $this->createMock(PageIndexService::class);
+        $index->method('findByUniqueId')->willReturn(null);
+        $svc = $this->buildService($folders, $index);
 
-        $languages = $this->translationQuery($svc)->getTranslatableLanguages('page-nl');
+        $languages = $svc->getTranslatableLanguages('page-nl');
         $codes = array_column($languages, 'code');
 
         $this->assertSame(['de'], $codes, 'own language nl is excluded, de remains');
@@ -387,7 +428,7 @@ class PageTranslationGroupTest extends TestCase {
     /** A language the page's group already covers is not offered again. */
     public function testTranslatableLanguagesExcludesAlreadyTakenLanguages(): void {
         $existing = 'tg-11111111-2222-3333-4444-555555555555';
-        $svc = $this->makeService(
+        [$folders] = $this->makeContext(
             ['uniqueId' => 'page-nl', 'title' => 'Over ons', 'translationGroup' => $existing]
         );
         // The group already holds a German version, so de must drop out — the
@@ -397,16 +438,19 @@ class PageTranslationGroupTest extends TestCase {
         $index->method('findByTranslationGroup')->willReturnCallback(
             fn($g) => $g === $existing ? [['unique_id' => 'page-de', 'language' => 'de']] : []
         );
-        (new \ReflectionProperty(PageService::class, 'pageIndexService'))->setValue($svc, $index);
+        $svc = $this->buildService($folders, $index);
 
-        $codes = array_column($this->translationQuery($svc)->getTranslatableLanguages('page-nl'), 'code');
+        $codes = array_column($svc->getTranslatableLanguages('page-nl'), 'code');
         $this->assertSame([], $codes, 'de is already in the group, so nothing is offered');
     }
 
     public function testTranslatableLanguagesRejectsAnUnknownPage(): void {
-        $svc = $this->makeService();
+        [$folders] = $this->makeContext();
+        $index = $this->createMock(PageIndexService::class);
+        $index->method('findByUniqueId')->willReturn(null);
+        $svc = $this->buildService($folders, $index);
         $this->expectException(\OCA\IntraVox\Exception\PageNotFoundException::class);
-        $this->translationQuery($svc)->getTranslatableLanguages('page-nope');
+        $svc->getTranslatableLanguages('page-nope');
     }
 
     // ------------------------------------------------- getTranslationCandidates
@@ -417,7 +461,7 @@ class PageTranslationGroupTest extends TestCase {
      * behavioural coverage before the carve.
      */
     public function testTranslationCandidatesExcludeSelfAndGroupedPages(): void {
-        $svc = $this->makeService();
+        [$folders] = $this->makeContext();
         $index = $this->createMock(PageIndexService::class);
         $index->method('findByUniqueId')->willReturn(null);
         // tg-other holds a member OTHER than page-de-taken, so hasOtherMembers()
@@ -435,9 +479,9 @@ class PageTranslationGroupTest extends TestCase {
             ['unique_id' => 'page-de-taken', 'language' => 'de', 'title' => 'Belegt',
                 'translation_group' => 'tg-other'],
         ] : []);
-        (new \ReflectionProperty(PageService::class, 'pageIndexService'))->setValue($svc, $index);
+        $svc = $this->buildService($folders, $index);
 
-        $ids = array_column($this->translationQuery($svc)->getTranslationCandidates('page-nl'), 'uniqueId');
+        $ids = array_column($svc->getTranslationCandidates('page-nl'), 'uniqueId');
 
         $this->assertContains('page-de-free', $ids, 'a free page in another language is offered');
         $this->assertNotContains('page-nl', $ids, 'the page itself is never a candidate');
@@ -446,26 +490,29 @@ class PageTranslationGroupTest extends TestCase {
 
     /** Passing a language narrows the offer to that one language. */
     public function testTranslationCandidatesNarrowToOneLanguage(): void {
-        $svc = $this->makeService();
+        [$folders] = $this->makeContext();
         $index = $this->createMock(PageIndexService::class);
         $index->method('findByUniqueId')->willReturn(null);
         $index->method('findByTranslationGroup')->willReturn([]);
         $index->method('getPagesByLanguage')->willReturnCallback(fn($code) => [
             ['unique_id' => 'page-' . $code . '-x', 'language' => $code, 'title' => strtoupper($code)],
         ]);
-        (new \ReflectionProperty(PageService::class, 'pageIndexService'))->setValue($svc, $index);
+        $svc = $this->buildService($folders, $index);
 
         // Only de is a content language besides nl, and narrowing to de keeps it.
-        $ids = array_column($this->translationQuery($svc)->getTranslationCandidates('page-nl', 'de'), 'uniqueId');
+        $ids = array_column($svc->getTranslationCandidates('page-nl', 'de'), 'uniqueId');
         $this->assertSame(['page-de-x'], $ids);
 
         // Narrowing to a language with no content folder yields nothing.
-        $this->assertSame([], $this->translationQuery($svc)->getTranslationCandidates('page-nl', 'fr'));
+        $this->assertSame([], $svc->getTranslationCandidates('page-nl', 'fr'));
     }
 
     public function testTranslationCandidatesRejectAnUnknownPage(): void {
-        $svc = $this->makeService();
+        [$folders] = $this->makeContext();
+        $index = $this->createMock(PageIndexService::class);
+        $index->method('findByUniqueId')->willReturn(null);
+        $svc = $this->buildService($folders, $index);
         $this->expectException(\OCA\IntraVox\Exception\PageNotFoundException::class);
-        $this->translationQuery($svc)->getTranslationCandidates('page-nope');
+        $svc->getTranslationCandidates('page-nope');
     }
 }

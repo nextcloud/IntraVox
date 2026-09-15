@@ -232,4 +232,91 @@ class PageMaintenanceServiceTest extends TestCase {
         $this->assertArrayHasKey('en', $stats['languages']);
         $this->assertArrayNotHasKey('_resources', $stats['languages'], '_resources is not a language folder');
     }
+
+    // --- migrated from PageIndexLanguageTest (facade retired) ---
+
+    /**
+     * The rebuild walks the real tree and records what the files say — one
+     * entry per page, under the language folder it actually sits in.
+     */
+    public function testRebuildIndexesEveryPageUnderItsOwnLanguage(): void {
+        $en = $this->folder('/IntraVox/en', [
+            'home.json' => $this->file('/IntraVox/en/home.json', ['uniqueId' => 'page-en-home', 'title' => 'Home']),
+            // Canonical page shape: {slug}/{slug}.json.
+            'about' => $this->folder('/IntraVox/en/about', [
+                'about.json' => $this->file('/IntraVox/en/about/about.json', ['uniqueId' => 'page-en-about', 'title' => 'About']),
+            ]),
+            // A LOOSE json beside real pages is not a page: the tree cannot
+            // show it and getPage cannot resolve it, so indexing it created
+            // ghost list entries that 404 when clicked (the en/fleet POC files
+            // on dev, found by the J3 test round).
+            'stray-poc.json' => $this->file('/IntraVox/en/stray-poc.json', ['uniqueId' => 'page-loose-poc', 'title' => 'POC']),
+            // Per-language config files are not pages and must be skipped.
+            'navigation.json' => $this->file('/IntraVox/en/navigation.json', ['items' => []]),
+            'footer.json' => $this->file('/IntraVox/en/footer.json', ['columns' => []]),
+            // Asset folders hold no pages.
+            '_media' => $this->folder('/IntraVox/en/_media', [
+                'stray.json' => $this->file('/IntraVox/en/_media/stray.json', ['uniqueId' => 'page-should-not-index']),
+            ]),
+        ]);
+        $de = $this->folder('/IntraVox/de', [
+            'home.json' => $this->file('/IntraVox/de/home.json', ['uniqueId' => 'page-de-home', 'title' => 'Startseite']),
+        ]);
+        // de/ before en/ in the root listing gives the ['de' => 1, 'en' => 2] order.
+        $root = $this->folder('/IntraVox', ['de' => $de, 'en' => $en]);
+
+        $indexed = [];
+        $index = $this->createMock(PageIndexService::class);
+        $index->method('indexPage')->willReturnCallback(
+            function (array $pageData, string $language, string $path) use (&$indexed): void {
+                $indexed[] = [
+                    'uniqueId' => $pageData['uniqueId'] ?? null,
+                    'language' => $language,
+                    'path' => $path,
+                ];
+            }
+        );
+
+        $stats = $this->service($index)->rebuildIndex($root, dryRun: false);
+
+        $this->assertSame(3, $stats['indexed'], 'three real pages, config files excluded');
+        $this->assertSame(['de' => 1, 'en' => 2], $stats['languages']);
+
+        $byId = [];
+        foreach ($indexed as $row) {
+            $byId[$row['uniqueId']] = $row['language'];
+        }
+        $this->assertSame('en', $byId['page-en-about'] ?? null);
+        $this->assertSame('de', $byId['page-de-home'] ?? null);
+        $this->assertArrayNotHasKey(
+            'page-should-not-index',
+            $byId,
+            'JSON inside _media is not a page'
+        );
+        $this->assertArrayNotHasKey(
+            'page-loose-poc',
+            $byId,
+            'a loose JSON without its own page folder is not a page'
+        );
+    }
+
+    /**
+     * A JSON file without a uniqueId is counted as scanned but not indexed, so
+     * the command can report the gap instead of silently dropping it.
+     */
+    public function testRebuildSkipsFilesWithoutAUniqueId(): void {
+        $en = $this->folder('/IntraVox/en', [
+            'home.json' => $this->file('/IntraVox/en/home.json', ['uniqueId' => 'page-ok', 'title' => 'Home']),
+            // Page-model file (own folder) without a uniqueId: scanned, not indexed.
+            'broken' => $this->folder('/IntraVox/en/broken', [
+                'broken.json' => $this->file('/IntraVox/en/broken/broken.json', ['title' => 'No id']),
+            ]),
+        ]);
+        $root = $this->folder('/IntraVox', ['en' => $en]);
+
+        $stats = $this->service()->rebuildIndex($root, dryRun: false);
+
+        $this->assertSame(2, $stats['scanned']);
+        $this->assertSame(1, $stats['indexed']);
+    }
 }

@@ -338,6 +338,61 @@ class PageWriteServiceTest extends TestCase {
         $this->assertSame('en', $indexedLanguage, 'the index language is the page\'s own, not the editor\'s');
     }
 
+    public function testIndexFallsBackToTheEditorLanguageWhenPathHasNone(): void {
+        // #90 null-branch: a page whose folder sits outside any language folder
+        // (legacy layouts, odd mounts) must still index rather than throw — the
+        // index update is explicitly non-blocking, the page is already saved by
+        // this point. The page folder IS the IntraVox root, so
+        // FolderContext.languageOfFolder() returns null and the write falls back
+        // to the editor's OWN language ('de'), not a language in the path.
+        $pageJson = $this->createMock(File::class);
+        $pageJson->method('getName')->willReturn('loose.json');
+        $pageJson->method('getType')->willReturn(FileInfo::TYPE_FILE);
+        $pageJson->method('getPath')->willReturn('/IntraVox/loose.json');
+        $pageJson->method('getId')->willReturn(abs(crc32('/IntraVox/loose.json')));
+        $pageJson->method('isUpdateable')->willReturn(true);
+        $pageJson->method('getMTime')->willReturn(1000);
+        $pageJson->method('getContent')->willReturn(
+            json_encode(['uniqueId' => 'page-idx3', 'title' => 'Loose', 'widgets' => []])
+        );
+        $pageJson->method('putContent')->willReturnCallback(fn(string $json): int => strlen($json));
+
+        // The page folder IS the IntraVox root — languageOfFolder() returns null.
+        $root = $this->makeFolder('/IntraVox', [
+            'loose.json' => $pageJson,
+        ]);
+
+        $indexed = [];
+        $index = $this->createMock(PageIndexService::class);
+        $index->method('indexPage')->willReturnCallback(
+            function (array $pageData, string $language, string $path, ?int $fileId = null) use (&$indexed): void {
+                $indexed[] = [
+                    'uniqueId' => $pageData['uniqueId'] ?? null,
+                    'language' => $language,
+                    'path' => $path,
+                ];
+            }
+        );
+
+        $svc = $this->makeWriteService([
+            'userSession' => $this->userSessionWith($this->createMock(IUser::class)),
+            // The page folder IS the root; the editing user's own language is 'de'.
+            'folders' => $this->fakeFolderContext(intraVox: $root, languageFolder: $root, userLanguage: 'de'),
+            'locator' => $this->fixtureLocator(),
+            'shape' => $this->doubleOrBuild(PageShapeSanitizer::class),
+            'pageIndexService' => $index,
+        ]);
+
+        $svc->updatePage('page-idx3', ['title' => 'Loose page', 'widgets' => []]);
+
+        $this->assertCount(1, $indexed);
+        $this->assertSame(
+            'de',
+            $indexed[0]['language'],
+            'with no language in the path, fall back to the editor\'s own'
+        );
+    }
+
     // --------------------------------------------------------------- createPage
 
     public function testCreateRejectsMissingRequiredFields(): void {

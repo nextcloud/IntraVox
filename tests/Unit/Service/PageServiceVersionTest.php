@@ -97,6 +97,48 @@ class PageServiceVersionTest extends TestCase {
         return [$svc, $file];
     }
 
+    /**
+     * The version domain service over a cross-language fixture: an English page in
+     * `en` while the user's profile language is `de`. Drives the
+     * getCurrentPageContent / updateVersionLabel foreign-language locate directly
+     * (migrated from the retired PageServiceMoveLanguageTest, whose #90 movePage
+     * guards now live in PageStructureServiceTest — only these two version-domain
+     * locate tests remained, and they belong beside their sibling delegators here).
+     *
+     * @param array<int,Folder> $allLanguages every language folder under /IntraVox
+     */
+    private function versionDomainAcrossLanguages(Folder $userLanguageFolder, array $allLanguages): \OCA\IntraVox\Service\Version\PageVersionDomainService {
+        $byLang = [];
+        foreach ($allLanguages as $l) {
+            $byLang[$l->getName()] = $l;
+        }
+        $base = $this->createMock(Folder::class);
+        $base->method('getPath')->willReturn('/IntraVox');
+        $base->method('getDirectoryListing')->willReturn($allLanguages);
+        $base->method('get')->willReturnCallback(function ($p) use ($byLang) {
+            if (isset($byLang[$p])) {
+                return $byLang[$p];
+            }
+            throw new NotFoundException($p);
+        });
+        return new \OCA\IntraVox\Service\Version\PageVersionDomainService(
+            $this->createMock(PageVersionService::class),
+            $this->createMock(LoggerInterface::class),
+            $this->fakeFolderContext(
+                readLanguageFolder: $userLanguageFolder,
+                intraVox: $base,
+                userLanguage: 'de',
+                primaryLanguage: 'en',
+                languageFolder: $userLanguageFolder
+            ),
+            new \OCA\IntraVox\Service\Locator\PageLocator(
+                $this->createMock(\OCA\IntraVox\Service\PageIndexService::class),
+                $this->createMock(LoggerInterface::class)
+            ),
+            new \OCA\IntraVox\Service\Util\PageIdUtils()
+        );
+    }
+
     // -------------------------------------------------------- getPageVersions
 
     public function testGetPageVersionsDelegatesToListForFile(): void {
@@ -190,5 +232,63 @@ class PageServiceVersionTest extends TestCase {
         $this->expectException(\Exception::class);
         $this->expectExceptionMessage('Page not found: page-nope');
         $svc->restorePageVersion('page-nope', 999);
+    }
+
+    // ----------------------------------------------- foreign-language operation-locate
+
+    /**
+     * getCurrentPageContent() had no uniqueId branch at all — it passed a
+     * page-… id straight to findPageById() — and no cross-language fallback.
+     * The "compare with current" panel in version history therefore failed on
+     * every modern id, and on any foreign-language page.
+     */
+    public function testCurrentPageContentResolvesForeignLanguageByUniqueId(): void {
+        $pageJson = $this->makeFile(
+            '/IntraVox/en/about.json',
+            ['uniqueId' => 'page-cur1', 'title' => 'About', 'name' => 'About', 'widgets' => []]
+        );
+        $en = $this->makeFolder('/IntraVox/en', [
+            'about.json' => $pageJson,
+            'about' => $this->makeFolder('/IntraVox/en/about', []),
+        ]);
+        $de = $this->makeFolder('/IntraVox/de', []);
+
+        $svc = $this->versionDomainAcrossLanguages($de, [$de, $en]);
+        $content = $svc->getCurrentPageContent('page-cur1');
+
+        $this->assertStringContainsString(
+            'page-cur1',
+            $content['rawContent'],
+            'the current content of a foreign-language page must be readable'
+        );
+    }
+
+    /** The same lookup gap in updateVersionLabel's existence check. */
+    public function testUpdateVersionLabelFindsForeignLanguagePage(): void {
+        $pageJson = $this->makeFile(
+            '/IntraVox/en/about.json',
+            ['uniqueId' => 'page-lbl1', 'title' => 'About', 'widgets' => []]
+        );
+        $en = $this->makeFolder('/IntraVox/en', [
+            'about.json' => $pageJson,
+            'about' => $this->makeFolder('/IntraVox/en/about', []),
+        ]);
+        $de = $this->makeFolder('/IntraVox/de', []);
+
+        $svc = $this->versionDomainAcrossLanguages($de, [$de, $en]);
+
+        // The page must be FOUND: resolution is what was broken. It then fails
+        // later on the version manager, which this fixture does not provide —
+        // so anything other than "Page not found" proves the lookup succeeded.
+        try {
+            $svc->updateVersionLabel('page-lbl1', 12345, 'Release');
+            $this->addToAssertionCount(1);
+        } catch (\Throwable $e) {
+            $this->assertStringNotContainsString(
+                'Page not found',
+                $e->getMessage(),
+                'the page must resolve across languages; only later steps may fail'
+            );
+        }
     }
 }
