@@ -53,23 +53,24 @@ final class PageWriteService {
     }
 
     /**
-     * $languageFolder is a Closure (not a resolved Folder) so the cheap
-     * $id==='home' guard fires BEFORE the folder is resolved — resolving it can
+     * The language folder is self-sourced from the injected FolderContext, but
+     * resolved only AFTER the cheap $id==='home' guard: resolving it can
      * create-on-miss or throw, and the pre-carve monolith checked 'home' first.
-     *
-     * @param \Closure(): \OCP\Files\Folder $languageFolder getLanguageFolder seam
+     * (It used to arrive as a $this-bound closure so the caller controlled that
+     * timing; now the timing lives here, at the one call site, and the closure is
+     * gone — byte-identical, since the closure only ever forwarded to
+     * folders->languageFolder().)
      */
     public function deletePage(
-        string $id,
-        \Closure $languageFolder
+        string $id
     ): void {
         if ($id === 'home') {
             throw new \InvalidArgumentException('Cannot delete home page');
         }
 
-        // Resolved only after the home guard (see the ctor note): the seam can
+        // Resolved only after the home guard (see above): the seam can
         // create-on-miss / throw, so it must not run for a rejected 'home' delete.
-        $languageFolderNode = $languageFolder();
+        $languageFolderNode = $this->folders->languageFolder();
 
         // Resolve by uniqueId (page-…) first, then fall back to legacy folder id.
         // Deletion follows the page across language folders, so a page the user
@@ -142,21 +143,17 @@ final class PageWriteService {
     }
 
     /**
-     * $languageFolder is a Closure (not a resolved Folder) so the cheap
-     * !$user guard fires BEFORE the folder is resolved — resolving it can
-     * create-on-miss or throw, and the pre-carve monolith checked the session
-     * user first.
-     *
-     * @param \Closure(): \OCP\Files\Folder $languageFolder getLanguageFolder seam
-     * @param \Closure(\OCP\Files\Folder): ?string $languageOfFolder
-     * @param \Closure(): string $userLanguage
+     * The language folder is self-sourced from the injected FolderContext, but
+     * resolved only AFTER the cheap !$user guard: resolving it can create-on-miss
+     * or throw, and the pre-carve monolith checked the session user first. (The
+     * folder + languageOfFolder + userLanguage seams used to arrive as $this-bound
+     * closures so the caller controlled that timing; now the timing lives here and
+     * the closures are gone — byte-identical, since each only forwarded to the
+     * matching FolderContext method.)
      */
     public function updatePage(
         string $id,
-        array $data,
-        \Closure $languageFolder,
-        \Closure $languageOfFolder,
-        \Closure $userLanguage
+        array $data
     ): array {
         // Save original ID before sanitization
         $originalId = $id;
@@ -167,9 +164,9 @@ final class PageWriteService {
             throw new \InvalidArgumentException('No user in session');
         }
 
-        // Resolved only after the user guard (see the ctor note): the seam can
+        // Resolved only after the user guard (see above): the seam can
         // create-on-miss / throw, so it must not run for a rejected no-user update.
-        $languageFolderNode = $languageFolder();
+        $languageFolderNode = $this->folders->languageFolder();
 
         $result = null;
 
@@ -308,7 +305,7 @@ final class PageWriteService {
         // Mirrors createPageAtPath(), which already derives it from the folder.
         try {
             $folderPath = $result['folder']->getPath();
-            $language = $languageOfFolder($result['folder']) ?? $userLanguage();
+            $language = $this->folders->languageOfFolder($result['folder']) ?? $this->folders->userLanguage();
             $this->pageIndexService->indexPage($validatedData, $language, $folderPath, $file->getId(), $result['folder']->getId());
         } catch (\Exception $e) {
             $this->logger->warning('Failed to update page index', ['error' => $e->getMessage()]);

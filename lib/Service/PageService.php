@@ -918,18 +918,13 @@ class PageService {
      */
     public function updatePage(string $id, array $data): array {
         // The update body lives in Write/PageWriteService (write cluster). The
-        // language folder goes in as a CLOSURE (resolved inside, after the !$user
-        // guard — matching the pre-carve monolith). Folder-substrate concerns
-        // (languageFolder / languageOfFolder / userLanguage) come from FolderContext.
-        // Page sanitisation is the injected PageShapeSanitizer (fase-7) and cache
-        // invalidation the injected PageCacheInvalidator (fase-6 Track 2a).
-        return $this->writeService()->updatePage(
-            $id,
-            $data,
-            fn(): \OCP\Files\Folder => $this->folders()->languageFolder(),
-            fn(\OCP\Files\Folder $folder): ?string => $this->folders()->languageOfFolder($folder),
-            fn(): string => $this->folders()->userLanguage()
-        );
+        // folder-substrate concerns (languageFolder / languageOfFolder /
+        // userLanguage) are self-sourced there from the injected FolderContext —
+        // the service resolves the language folder itself, after its !$user guard,
+        // so the delegator no longer threads them in as closures. Page sanitisation
+        // is the injected PageShapeSanitizer and cache invalidation the injected
+        // PageCacheInvalidator.
+        return $this->writeService()->updatePage($id, $data);
     }
 
     /**
@@ -937,15 +932,12 @@ class PageService {
      */
     public function deletePage(string $id): void {
         // The delete body lives in Write/PageWriteService (god-class dissolution,
-        // write cluster). The language folder goes in as a CLOSURE (not resolved
-        // here) so PageWriteService can fire its $id==='home' guard before
-        // resolving — matching the pre-carve monolith, which checked 'home' before
+        // write cluster). The language folder is self-sourced there from the
+        // injected FolderContext, resolved only AFTER the service's $id==='home'
+        // guard — matching the pre-carve monolith, which checked 'home' before
         // touching getLanguageFolder(). The homepage check + cache invalidation come
         // from the injected HomepageResolverService + PageCacheInvalidator.
-        $this->writeService()->deletePage(
-            $id,
-            fn(): \OCP\Files\Folder => $this->folders()->languageFolder()
-        );
+        $this->writeService()->deletePage($id);
     }
 
     /**

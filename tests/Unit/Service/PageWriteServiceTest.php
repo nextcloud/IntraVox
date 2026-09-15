@@ -103,26 +103,6 @@ class PageWriteServiceTest extends TestCase {
     }
 
     /**
-     * The languageFolder closure PageService::deletePage / ::updatePage inject:
-     * a thin FolderContext forward. Building it here (rather than handing a resolved
-     * Folder) is what proves the guard-before-resolve contract — the closure records
-     * whether it was invoked.
-     */
-    private function languageFolderClosure(Folder $folder): \Closure {
-        return function () use ($folder): Folder {
-            $this->events[] = 'resolve.languageFolder';
-            return $folder;
-        };
-    }
-
-    /** A closure that MUST NOT run (guard-before-resolve tests). */
-    private function explodingFolderClosure(): \Closure {
-        return function (): Folder {
-            $this->fail('the language folder closure resolved before the cheap guard');
-        };
-    }
-
-    /**
      * The validateDepth closure PageService::createPage injects, reproduced
      * byte-faithfully: real PagePathHelper depth math vs getMaxDepthForPath, which
      * always returns 5.
@@ -150,15 +130,16 @@ class PageWriteServiceTest extends TestCase {
     // --------------------------------------------------------------- deletePage
 
     public function testDeletingHomeIdIsRejectedBeforeTheFolderIsResolved(): void {
-        // The cheap $id==='home' guard MUST fire before the languageFolder closure
-        // runs (resolving it can create-on-miss / throw). The closure fails the test
-        // if reached — mirroring the guard-ordering pin the PageService-routed test
-        // carried, now proven at the service boundary.
-        $svc = $this->makeWriteService();
+        // The cheap $id==='home' guard MUST fire before the language folder is
+        // self-sourced (resolving it can create-on-miss / throw). A bare
+        // FolderContext (no seam, no intraVox override) throws on languageFolder();
+        // if the guard order regressed to folder-first, this test would surface that
+        // "IntraVox folder not found" instead of the crisp 'Cannot delete home page'.
+        $svc = $this->makeWriteService(['folders' => $this->fakeFolderContext()]);
 
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Cannot delete home page');
-        $svc->deletePage('home', $this->explodingFolderClosure());
+        $svc->deletePage('home');
     }
 
     public function testDeletingUnknownPageThrowsPageNotFound(): void {
@@ -174,7 +155,7 @@ class PageWriteServiceTest extends TestCase {
 
         $this->expectException(PageNotFoundException::class);
         $this->expectExceptionMessage('Page not found: page-missing');
-        $svc->deletePage('page-missing', $this->languageFolderClosure($empty));
+        $svc->deletePage('page-missing');
     }
 
     public function testConfiguredHomepageCannotBeDeleted(): void {
@@ -187,7 +168,7 @@ class PageWriteServiceTest extends TestCase {
         ]);
 
         try {
-            $svc->deletePage('page-del', $this->languageFolderClosure($lang));
+            $svc->deletePage('page-del');
             $this->fail('the configured homepage must not be deletable');
         } catch (\InvalidArgumentException $e) {
             $this->assertSame('HOMEPAGE_PROTECTED', $e->getMessage());
@@ -216,10 +197,10 @@ class PageWriteServiceTest extends TestCase {
             'cacheInvalidator' => $this->fakeCacheInvalidator($cache),
         ]);
 
-        $svc->deletePage('page-del', $this->languageFolderClosure($lang));
+        $svc->deletePage('page-del');
 
         $this->assertSame(
-            ['resolve.languageFolder', 'event:del:page-del', 'folder.delete'],
+            ['event:del:page-del', 'folder.delete'],
             $this->events,
             'PageDeletedEvent must fire before the folder delete so cleanup sees a live page'
         );
@@ -229,20 +210,17 @@ class PageWriteServiceTest extends TestCase {
     // --------------------------------------------------------------- updatePage
 
     public function testUpdatingWithNoUserIsRejectedBeforeTheFolderIsResolved(): void {
-        // The !$user guard MUST fire before the languageFolder closure resolves.
+        // The !$user guard MUST fire before the language folder is self-sourced. A
+        // bare FolderContext throws on languageFolder(); the no-user guard must win,
+        // so this surfaces 'No user in session', not 'IntraVox folder not found'.
         $svc = $this->makeWriteService([
             'userSession' => $this->userSessionWith(null),
+            'folders' => $this->fakeFolderContext(),
         ]);
 
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('No user in session');
-        $svc->updatePage(
-            'page-x',
-            ['title' => 'X'],
-            $this->explodingFolderClosure(),
-            fn(Folder $f): ?string => null,
-            fn(): string => 'en'
-        );
+        $svc->updatePage('page-x', ['title' => 'X']);
     }
 
     public function testStaleWriteIsRejectedWithAConflict(): void {
@@ -270,10 +248,7 @@ class PageWriteServiceTest extends TestCase {
         $this->expectException(PageConflictException::class);
         $svc->updatePage(
             'page-doc',
-            ['title' => 'New', 'baseVersion' => 1000], // started from an older version
-            $this->languageFolderClosure($lang),
-            fn(Folder $f): ?string => 'en',
-            fn(): string => 'en'
+            ['title' => 'New', 'baseVersion' => 1000] // started from an older version
         );
     }
 
@@ -318,10 +293,7 @@ class PageWriteServiceTest extends TestCase {
 
         $svc->updatePage(
             'page-doc',
-            ['title' => 'Renamed'], // client sends NO uniqueId / translationGroup
-            $this->languageFolderClosure($lang),
-            fn(Folder $f): ?string => 'en',
-            fn(): string => 'en'
+            ['title' => 'Renamed'] // client sends NO uniqueId / translationGroup
         );
 
         $this->assertNotNull($written, 'the page was written');
@@ -331,9 +303,11 @@ class PageWriteServiceTest extends TestCase {
     }
 
     public function testUpdateIndexesTheLanguageThePageLivesInNotTheEditorsOwn(): void {
-        // #90: the index language comes from the languageOfFolder closure (the folder
-        // the page actually lives in), never the editor's userLanguage. A DE editor
-        // saving an EN page must index it under 'en'.
+        // #90: the index language is derived from the folder the page actually lives
+        // in (FolderContext.languageOfFolder, path-based), never the editor's
+        // userLanguage. The page folder is /IntraVox/en/doc, so it resolves to 'en'
+        // even though the editing user's own language is 'de' — proving the folder,
+        // not the editor, decides the indexed language.
         $file = $this->createMock(File::class);
         $file->method('getName')->willReturn('doc.json');
         $file->method('getType')->willReturn(FileInfo::TYPE_FILE);
@@ -356,19 +330,14 @@ class PageWriteServiceTest extends TestCase {
 
         $svc = $this->makeWriteService([
             'userSession' => $this->userSessionWith($this->createMock(IUser::class)),
-            'folders' => $this->fakeFolderContext(intraVox: $base, languageFolder: $lang),
+            // The editing user's own language is 'de'; the page lives in en/.
+            'folders' => $this->fakeFolderContext(intraVox: $base, languageFolder: $lang, userLanguage: 'de'),
             'locator' => $this->fixtureLocator(),
             'shape' => $this->doubleOrBuild(PageShapeSanitizer::class),
             'pageIndexService' => $index,
         ]);
 
-        $svc->updatePage(
-            'page-doc',
-            ['title' => 'Renamed'],
-            $this->languageFolderClosure($lang),
-            fn(Folder $f): ?string => 'en',   // the page's own folder is EN...
-            fn(): string => 'de'              // ...even though the editor is DE
-        );
+        $svc->updatePage('page-doc', ['title' => 'Renamed']);
 
         $this->assertSame('en', $indexedLanguage, 'the index language is the page\'s own, not the editor\'s');
     }
