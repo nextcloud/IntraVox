@@ -49,6 +49,7 @@ final class PageWriteService {
         private \OCA\IntraVox\Service\Sanitize\PageShapeSanitizer $shape,
         private \OCA\IntraVox\Service\Media\PageMediaService $media,
         private \OCA\IntraVox\Service\Cache\PageCacheService $pageCache,
+        private \OCA\IntraVox\Service\Path\PageDepthValidator $depthValidator,
     ) {
     }
 
@@ -332,23 +333,20 @@ final class PageWriteService {
      * The folder-substrate concerns (readLanguageFolder / userLanguage /
      * languageOfFolder) come from the injected FolderContext. The write-exclusive
      * helpers (resolveExistingFolderPath, slugTakenIn, scanPageFolder,
-     * getOrCreateFolderPath) co-locate here as private methods. validateDepth
-     * (shared with movePage) stays on PageService and comes in as a closure.
-     *
-     * @param \Closure(string): void $validateDepth
+     * getOrCreateFolderPath) co-locate here as private methods. The max-nesting
+     * depth rule (shared with movePage) comes from the injected PageDepthValidator.
      */
     public function createPageAtPath(
         string $pageId,
         array $data,
-        ?string $parentPath,
-        \Closure $validateDepth
+        ?string $parentPath
     ): array {
         $language = $this->folders->userLanguage();
 
         // Determine target folder
         if ($parentPath) {
             // Validate depth before creating
-            $validateDepth($parentPath);
+            $this->depthValidator->validate($parentPath);
 
             // Get or create parent folder path
             $targetFolder = $this->getOrCreateFolderPath($parentPath);
@@ -575,20 +573,17 @@ final class PageWriteService {
 
     /**
      * Create a new page (validation, slug-dedup, uniqueId + translation-group
-     * minting, then the write via createPageAtPath). PageService keeps a thin
-     * public delegator; the seam-bound folder concerns come in as closures.
+     * minting, then the write via createPageAtPath).
      *
-     * The folder-substrate concerns (readLanguageFolder / intraVox / languageFolder
-     * / userLanguage / languageOfFolder) now come from the injected FolderContext,
-     * and getOrCreateFolderPath is a private method here; only the non-folder
-     * concerns stay as closures.
-     *
-     * @param \Closure(string): void $validateDepth
+     * All substrate concerns are self-sourced now: the folder concerns
+     * (readLanguageFolder / intraVox / languageFolder / userLanguage /
+     * languageOfFolder) from the injected FolderContext, getOrCreateFolderPath as a
+     * private method here, and the max-nesting-depth rule from the injected
+     * PageDepthValidator — so the method takes no closures.
      */
     public function createPage(
         array $data,
-        ?string $parentPath,
-        \Closure $validateDepth
+        ?string $parentPath
     ): array {
         if (!isset($data['id']) || !isset($data['title'])) {
             throw new \InvalidArgumentException('Missing required fields: id, title');
@@ -634,8 +629,7 @@ final class PageWriteService {
         $created = $this->createPageAtPath(
             $data['id'],
             $validatedData,
-            $parentPath,
-            $validateDepth
+            $parentPath
         );
 
         // Flush all cached page-tree + permission map entries so subsequent

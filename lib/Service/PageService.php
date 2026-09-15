@@ -359,7 +359,8 @@ class PageService {
             $this->cacheInvalidator,
             $this->shape(),
             $this->media(),
-            $this->cache()
+            $this->cache(),
+            new \OCA\IntraVox\Service\Path\PageDepthValidator($this->pathHelper, $this->languageService)
         );
     }
 
@@ -377,7 +378,9 @@ class PageService {
             $this->folders(),
             $this->homepageResolver,
             $this->cacheInvalidator,
-            $this->locator()
+            $this->locator(),
+            $this->languageService,
+            new \OCA\IntraVox\Service\Path\PageDepthValidator($this->pathHelper, $this->languageService)
         );
     }
 
@@ -566,65 +569,10 @@ class PageService {
     }
 
 
-    /**
-     * The language content folder that a findPageByUniqueId()/findPageById()
-     * result sits in, derived from the page folder's own path. Kept on PageService
-     * because movePage still leans on it (the media orchestrator carries its own
-     * copy); walks up from the page folder to the language folder.
-     *
-     * @return \OCP\Files\Folder|null null when the path cannot be resolved.
-     */
-    private function languageFolderOfPageResult(array $result): ?\OCP\Files\Folder {
-        $folder = $result['folder'] ?? null;
-        if (!($folder instanceof \OCP\Files\Folder)) {
-            return null;
-        }
-
-        $language = $this->languageOfFolder($folder);
-        if ($language === null) {
-            return null;
-        }
-
-        try {
-            $candidate = $this->folders()->intraVox()->get($language);
-            return $candidate instanceof \OCP\Files\Folder ? $candidate : null;
-        } catch (NotFoundException $e) {
-            return null;
-        }
-    }
-
-    /**
-     * Human-readable name for a language code ('en' -> 'English'), for messages
-     * a user reads. Falls back to the uppercased code when the name is unknown,
-     * so an exotic content folder still produces "EO" rather than nothing.
-     *
-     * Reuses LanguageService::getAvailableLanguages(), the same source the
-     * admin Languages tab and the fallback notice display.
-     */
-    private function languageDisplayName(string $code): string {
-        try {
-            foreach ($this->languageService->getAvailableLanguages() as $lang) {
-                if (($lang['code'] ?? '') === $code) {
-                    $name = $lang['name'] ?? '';
-                    if ($name === '') {
-                        return strtoupper($code);
-                    }
-                    // Nextcloud's names describe INTERFACE translations and
-                    // carry variant suffixes ('English (US)', 'Deutsch
-                    // (Persönlich: Du)'). A content folder is a plain code, so
-                    // drop the parenthesised part — "this page is in Deutsch
-                    // (Persönlich: Du)" is nonsense to a reader.
-                    $base = trim(explode('(', $name)[0]);
-                    return $base !== '' ? $base : $name;
-                }
-            }
-        } catch (\Throwable $e) {
-            // Naming is cosmetic; never let it break the operation's real error.
-        }
-        return strtoupper($code);
-    }
-
-
+    // languageFolderOfPageResult + languageDisplayName moved into
+    // Structure/PageStructureService (god-class dissolution): movePage was their
+    // only caller and self-sources both there now (over FolderContext +
+    // LanguageService) instead of receiving them as $this-bound closures.
 
     /**
      * Public method to check if a page exists by uniqueId
@@ -833,60 +781,10 @@ class PageService {
 
 
 
-    /**
-     * Calculate nesting depth from path
-     *
-     * Base paths (depth 0):
-     * - nl/public/ (public pages)
-     * - nl/departments/{dept}/ (department pages)
-     */
-
-    /**
-     * Get maximum allowed depth for a given path
-     */
-    private function getMaxDepthForPath(string $path): int {
-        $pathParts = explode('/', trim($path, '/'));
-
-        // Remove language if present. Uses the available (= every NC-known)
-        // language set so paths in any language an admin added (e.g. 'da') get
-        // correct depth math, not only the ones IntraVox ships a translation for.
-        if (count($pathParts) > 0 && $this->languageService->isLanguageAvailable($pathParts[0])) {
-            array_shift($pathParts);
-        }
-
-        // Public pages: max depth 5
-        if (count($pathParts) > 0 && $pathParts[0] === 'public') {
-            return 5;
-        }
-
-        // Department pages: max depth 5
-        if (count($pathParts) > 0 && $pathParts[0] === 'departments') {
-            return 5;
-        }
-
-        // Default: max depth 5
-        return 5;
-    }
-
-    /**
-     * Validate that creating a child page at the given path wouldn't exceed max depth
-     */
-    private function validateDepth(string $parentPath): void {
-        $currentDepth = $this->pathHelper->calculateDepth($parentPath);
-        $maxDepth = $this->getMaxDepthForPath($parentPath);
-
-        if ($currentDepth >= $maxDepth) {
-            throw new \InvalidArgumentException(
-                "Cannot create child page: maximum nesting depth of {$maxDepth} would be exceeded"
-            );
-        }
-    }
-
-    /**
-     * Determine page type based on path and structure
-     *
-     * @return string 'department'|'container'|'page'
-     */
+    // The max-nesting-depth rule (getMaxDepthForPath + validateDepth) moved to
+    // Path/PageDepthValidator (god-class dissolution): both writers of it —
+    // createPage and movePage — now inject the validator instead of receiving the
+    // rule as a $this-bound closure.
 
     /**
      * Create a new page
@@ -899,18 +797,13 @@ class PageService {
         // The create body (validation, slug-dedup, group minting, write) lives in
         // Write/PageWriteService (AUTHOR domain), including the folder-path
         // provisioning (getOrCreateFolderPath is a private method there now).
-        // Folder-substrate concerns come from the injected FolderContext;
-        // validateDepth (shared with movePage) stays on PageService as a closure.
-        // The page-folder cache write is self-sourced by the write service (fase-7
-        // T6): it holds the same PageCacheService singleton, so the setPageFolder
-        // there lands in the one pageFolders map findPageFolder reads back.
-        return $this->writeService()->createPage(
-            $data,
-            $parentPath,
-            function (string $path): void {
-                $this->validateDepth($path);
-            }
-        );
+        // Folder-substrate concerns come from the injected FolderContext and the
+        // max-nesting-depth rule from the injected PageDepthValidator, so the
+        // delegator threads in no closures. The page-folder cache write is
+        // self-sourced by the write service (fase-7 T6): it holds the same
+        // PageCacheService singleton, so the setPageFolder there lands in the one
+        // pageFolders map findPageFolder reads back.
+        return $this->writeService()->createPage($data, $parentPath);
     }
 
     /**
@@ -956,20 +849,14 @@ class PageService {
      */
     public function movePage(string $pageId, string $targetParentId): void {
         // The move body lives in Structure/PageStructureService (STRUCTURE domain).
-        // Folder-substrate concerns come from the injected FolderContext; the
-        // remaining cross-language lookups are handed in as $this-bound closures so
-        // the seam-subclasses keep intercepting; the guards (#90 cross-language,
-        // HOMEPAGE_PROTECTED, cycle, depth) and the index repath ride along in the
-        // moved body.
-        $this->structureService()->movePage(
-            $pageId,
-            $targetParentId,
-            fn(array $result): ?\OCP\Files\Folder => $this->languageFolderOfPageResult($result),
-            fn(string $code): string => $this->languageDisplayName($code),
-            function (string $path): void {
-                $this->validateDepth($path);
-            }
-        );
+        // Every substrate concern is self-sourced there now: the folder concerns
+        // from the injected FolderContext, the page's own language folder + the
+        // language display name from private methods over FolderContext +
+        // LanguageService, and the max-nesting-depth rule from the injected
+        // PageDepthValidator. The guards (#90 cross-language, HOMEPAGE_PROTECTED,
+        // cycle, depth) and the index repath ride along in the moved body, so the
+        // delegator threads in no closures.
+        $this->structureService()->movePage($pageId, $targetParentId);
     }
 
 

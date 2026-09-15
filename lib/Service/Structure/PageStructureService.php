@@ -9,8 +9,11 @@ use OCA\IntraVox\Exception\ForbiddenException;
 use OCA\IntraVox\Exception\PageNotFoundException;
 use OCA\IntraVox\Service\Folder\FolderContext;
 use OCA\IntraVox\Service\Homepage\HomepageResolverService;
+use OCA\IntraVox\Service\LanguageService;
 use OCA\IntraVox\Service\PageIndexService;
+use OCA\IntraVox\Service\Path\PageDepthValidator;
 use OCA\IntraVox\Service\Util\PageIdUtils;
+use OCP\Files\NotFoundException;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -24,11 +27,13 @@ use Psr\Log\LoggerInterface;
  * Folder-substrate concerns (languageFolder / languageOfFolder /
  * relativePathFromRoot) come from the injected FolderContext; the homepage check
  * from the injected HomepageResolverService; page lookup from the injected
- * PageLocator; cache invalidation from the injected PageCacheInvalidator. Only
- * languageFolderOfPageResult + languageDisplayName + validateDepth (resident
- * PageService logic, the latter shared with createPage) come in as $this-bound
- * closures. PageMoveGuardTest and PageServiceMoveLanguageTest pin the behaviour
- * byte-for-byte.
+ * PageLocator; cache invalidation from the injected PageCacheInvalidator. The
+ * three seams that used to arrive as $this-bound closures are now self-sourced:
+ * the page's own language folder and the language display name are private
+ * methods here (over FolderContext + the injected LanguageService), and the
+ * max-nesting-depth rule comes from the injected PageDepthValidator (shared with
+ * createPage). PageMoveGuardTest and PageServiceMoveLanguageTest pin the
+ * behaviour byte-for-byte.
  */
 final class PageStructureService {
     public function __construct(
@@ -39,6 +44,8 @@ final class PageStructureService {
         private HomepageResolverService $homepageResolver,
         private \OCA\IntraVox\Service\Cache\PageCacheInvalidator $cacheInvalidator,
         private \OCA\IntraVox\Service\Locator\PageLocator $locator,
+        private LanguageService $languageService,
+        private PageDepthValidator $depthValidator,
     ) {
     }
 
@@ -46,18 +53,14 @@ final class PageStructureService {
      * Move a page (with its whole subtree) under a different parent.
      *
      * Folder-substrate concerns (languageFolder / languageOfFolder /
-     * relativePathFromRoot) come from the injected FolderContext.
-     *
-     * @param \Closure(array): ?\OCP\Files\Folder $languageFolderOfPageResult
-     * @param \Closure(string): string $languageDisplayName
-     * @param \Closure(string): void $validateDepth
+     * relativePathFromRoot) come from the injected FolderContext; the page's own
+     * language folder + the language display name are self-sourced (private methods
+     * below); the max-nesting-depth rule from the injected PageDepthValidator. No
+     * closures.
      */
     public function movePage(
         string $pageId,
-        string $targetParentId,
-        \Closure $languageFolderOfPageResult,
-        \Closure $languageDisplayName,
-        \Closure $validateDepth
+        string $targetParentId
     ): void {
         if ($pageId === 'home') {
             throw new \InvalidArgumentException('The home page cannot be moved');
@@ -88,7 +91,7 @@ final class PageStructureService {
         // guard) is anchored here so a move can never leave the tree the page
         // lives in. Falls back to the user's folder only when the language
         // cannot be derived, which keeps single-language installs unchanged.
-        $sourceLanguageFolder = $languageFolderOfPageResult($source) ?? $languageFolderNode;
+        $sourceLanguageFolder = $this->languageFolderOfPageResult($source) ?? $languageFolderNode;
 
         // The configured homepage cannot be moved — reassign it first
         // (issue: configurable homepage).
@@ -135,8 +138,8 @@ final class PageStructureService {
         if ($sourceLanguage !== null && $targetLanguage !== null && $sourceLanguage !== $targetLanguage) {
             throw new CrossLanguageMoveException(sprintf(
                 'This page is in %s and cannot be moved into the %s structure. Pages stay in the language they were written in.',
-                $languageDisplayName($sourceLanguage),
-                $languageDisplayName($targetLanguage)
+                $this->languageDisplayName($sourceLanguage),
+                $this->languageDisplayName($targetLanguage)
             ));
         }
 
@@ -154,7 +157,7 @@ final class PageStructureService {
 
         // Respect the configured max nesting depth at the destination.
         $targetRelPath = $this->folders->relativePathFromRoot($targetParentFolder);
-        $validateDepth($targetRelPath);
+        $this->depthValidator->validate($targetRelPath);
 
         // Permission preflight. movePage() had none at all: it called move()
         // and relied on the filesystem to throw, which surfaces as an opaque
@@ -220,5 +223,64 @@ final class PageStructureService {
 
         // Critical: refresh tree + permission caches so the move is visible.
         $this->cacheInvalidator->invalidate();
+    }
+
+    /**
+     * The page's OWN language folder, derived from a locate result — the #90
+     * anchor that keeps a move inside the source's language. Verbatim from
+     * PageService::languageFolderOfPageResult (now self-sourced here from the
+     * injected FolderContext instead of arriving as a closure).
+     */
+    private function languageFolderOfPageResult(array $result): ?\OCP\Files\Folder {
+        $folder = $result['folder'] ?? null;
+        if (!($folder instanceof \OCP\Files\Folder)) {
+            return null;
+        }
+
+        $language = $this->folders->languageOfFolder($folder);
+        if ($language === null) {
+            return null;
+        }
+
+        try {
+            $candidate = $this->folders->intraVox()->get($language);
+            return $candidate instanceof \OCP\Files\Folder ? $candidate : null;
+        } catch (NotFoundException $e) {
+            return null;
+        }
+    }
+
+    /**
+     * The human-readable name for a content-language code, used in the
+     * cross-language refusal message. Verbatim from PageService::languageDisplayName
+     * (now self-sourced here from the injected LanguageService instead of arriving
+     * as a closure).
+     */
+    private function languageDisplayName(string $code): string {
+        try {
+            foreach ($this->languageService->getAvailableLanguages() as $lang) {
+                // getAvailableLanguages() is typed array{code,name}, so both keys
+                // always exist — the old `?? ''` defensive reads (baseline-suppressed
+                // on PageService) are dropped rather than carried into a file with no
+                // baseline. An empty-string name is still a real value the guard below
+                // handles.
+                if ($lang['code'] === $code) {
+                    $name = $lang['name'];
+                    if ($name === '') {
+                        return strtoupper($code);
+                    }
+                    // Nextcloud's names describe INTERFACE translations and
+                    // carry variant suffixes ('English (US)', 'Deutsch
+                    // (Persönlich: Du)'). A content folder is a plain code, so
+                    // drop the parenthesised part — "this page is in Deutsch
+                    // (Persönlich: Du)" is nonsense to a reader.
+                    $base = trim(explode('(', $name)[0]);
+                    return $base !== '' ? $base : $name;
+                }
+            }
+        } catch (\Throwable $e) {
+            // Naming is cosmetic; never let it break the operation's real error.
+        }
+        return strtoupper($code);
     }
 }

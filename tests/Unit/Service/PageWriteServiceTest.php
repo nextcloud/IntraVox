@@ -73,7 +73,7 @@ class PageWriteServiceTest extends TestCase {
     }
 
     /**
-     * Build a real PageWriteService with the 14 ctor deps. Every dep defaults to an
+     * Build a real PageWriteService with the 15 ctor deps. Every dep defaults to an
      * inert double; a test overrides only what it drives, by ctor-param name.
      *
      * @param array<string,object> $over ctor-param-name => collaborator
@@ -99,25 +99,22 @@ class PageWriteServiceTest extends TestCase {
             $get('shape', fn() => $this->doubleOrBuild(PageShapeSanitizer::class)),
             $get('media', fn() => $this->createMock(PageMediaService::class)),
             $get('pageCache', fn() => $this->createMock(PageCacheService::class)),
+            $get('depthValidator', fn() => $this->realDepthValidator()),
         );
     }
 
     /**
-     * The validateDepth closure PageService::createPage injects, reproduced
-     * byte-faithfully: real PagePathHelper depth math vs getMaxDepthForPath, which
-     * always returns 5.
+     * A real PageDepthValidator (the create-path max-nesting rule the service now
+     * self-sources instead of receiving as a closure). Its LanguageService reports
+     * the standard codes available so the leading-language-strip in
+     * getMaxDepthForPath fires exactly as production.
      */
-    private function validateDepthClosure(): \Closure {
-        $pathHelper = new PagePathHelper();
-        return function (string $parentPath) use ($pathHelper): void {
-            $currentDepth = $pathHelper->calculateDepth($parentPath);
-            $maxDepth = 5;
-            if ($currentDepth >= $maxDepth) {
-                throw new \InvalidArgumentException(
-                    "Cannot create child page: maximum nesting depth of {$maxDepth} would be exceeded"
-                );
-            }
-        };
+    private function realDepthValidator(): \OCA\IntraVox\Service\Path\PageDepthValidator {
+        $ls = $this->createMock(LanguageService::class);
+        $ls->method('isLanguageAvailable')->willReturnCallback(
+            fn(string $code) => in_array($code, ['en', 'de', 'fr', 'nl'], true)
+        );
+        return new \OCA\IntraVox\Service\Path\PageDepthValidator(new PagePathHelper(), $ls);
     }
 
     /** A user session whose getUser() returns a stub user (update needs a user). */
@@ -349,15 +346,15 @@ class PageWriteServiceTest extends TestCase {
 
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Missing required fields: id, title');
-        $svc->createPage(['title' => 'No id'], null, $this->validateDepthClosure());
+        $svc->createPage(['title' => 'No id'], null);
     }
 
-    public function testCreateValidateDepthClosureRejectsTooDeepAParent(): void {
-        // A parent already at the depth cap must be rejected by the injected
-        // validateDepth closure BEFORE any folder write. 'en/public/a/b/c/d/e' strips
+    public function testCreateDepthRuleRejectsTooDeepAParent(): void {
+        // A parent already at the depth cap must be rejected by the self-sourced
+        // PageDepthValidator BEFORE any folder write. 'en/public/a/b/c/d/e' strips
         // the language, then 'public' is depth len-1 = 5 → at the cap. The slug-dedup
         // scan runs first and touches the folder substrate, so a resolvable EN folder
-        // is wired; the deep parentPath then trips validateDepth in createPageAtPath
+        // is wired; the deep parentPath then trips the validator in createPageAtPath
         // before any newFolder/newFile.
         $lang = $this->makeFolder('/IntraVox/en', []);
         $base = $this->makeFolder('/IntraVox', ['en' => $lang]);
@@ -374,8 +371,7 @@ class PageWriteServiceTest extends TestCase {
         $this->expectExceptionMessage('maximum nesting depth of 5');
         $svc->createPage(
             ['id' => 'kid', 'title' => 'Too deep'],
-            'en/public/a/b/c/d/e',
-            $this->validateDepthClosure()
+            'en/public/a/b/c/d/e'
         );
     }
 
@@ -392,8 +388,7 @@ class PageWriteServiceTest extends TestCase {
         $this->expectException(ForbiddenException::class);
         $svc->createPage(
             ['id' => 'newpage', 'title' => 'New'],
-            null,
-            $this->validateDepthClosure()
+            null
         );
     }
 
@@ -450,8 +445,7 @@ class PageWriteServiceTest extends TestCase {
 
         $result = $svc->createPage(
             ['id' => 'guide', 'title' => 'Guide'],
-            null,
-            $this->validateDepthClosure()
+            null
         );
 
         $this->assertSame('guide-2', $result['id'], 'a taken sibling slug is de-duplicated');

@@ -30,17 +30,15 @@ use Psr\Log\LoggerInterface;
  * PageMoveGuardTest + PageServiceMoveLanguageTest, both routed through PageService
  * (reflection `structureService()`), so they would evaporate with the god-class.
  *
- * The load-bearing part is the CLOSURE CONTRACT. PageService injects three
- * $this-bound closures into movePage; a container factory (not PageService) must
- * soon reproduce them. So the tests build the SAME closures the delegator builds:
- *   - languageFolderOfPageResult: the page's OWN language folder from its result
- *     (FolderContext.languageOfFolder → intraVox()->get(lang)), the #90 anchor that
- *     keeps a move inside the source's language.
- *   - languageDisplayName: the human language name for the cross-language refusal
- *     message (available-languages lookup, '(' variant stripped, code-upper fallback).
- *   - validateDepth: real PagePathHelper depth math vs the always-5 cap.
- * and pin every movePage refusal + the happy paths + the index repath, migrated
- * verbatim from the two PageService-routed suites.
+ * movePage self-sources every substrate concern from its ctor deps now (the
+ * three seams it once received as $this-bound closures are gone): the page's OWN
+ * language folder + the language display name from the injected FolderContext +
+ * LanguageService, and the max-nesting depth rule from the injected
+ * PageDepthValidator. So the tests wire those deps over the fixture tree and let
+ * the service resolve them itself, pinning every movePage refusal + the happy
+ * paths + the index repath — the #90 anchor (a move stays in the source's own
+ * language), the cross-language refusal with both display names, and the depth
+ * cap — migrated verbatim from the two PageService-routed suites.
  *
  * makeFile/makeFolder/fakeFolderContext/fakeCacheInvalidator/fakeHomepageResolver
  * are the seam-agnostic fixture primitives shared with the PageService
@@ -146,12 +144,17 @@ class PageStructureServiceTest extends TestCase {
     }
 
     /**
-     * A real PageStructureService over the given closure substrate. Every
-     * cross-language test builds its own FolderContext (the fixtures differ per
-     * test) and hands it here so the service and the move() closures share the one
-     * folders instance.
+     * A real PageStructureService over the given substrate. Every cross-language
+     * test builds its own FolderContext (the fixtures differ per test) and hands it
+     * here. The service now self-sources the three former closures: the page's own
+     * language folder + the display name from the injected FolderContext +
+     * LanguageService, and the depth rule from a real PageDepthValidator.
      */
-    private function serviceOver(FolderContext $folders, ?PageIndexService $index = null): PageStructureService {
+    private function serviceOver(
+        FolderContext $folders,
+        LanguageService $languageService,
+        ?PageIndexService $index = null
+    ): PageStructureService {
         return new PageStructureService(
             new PageIdUtils(),
             $index ?? $this->createMock(PageIndexService::class),
@@ -163,86 +166,38 @@ class PageStructureServiceTest extends TestCase {
                 $this->createMock(PageIndexService::class),
                 $this->createMock(LoggerInterface::class)
             ),
+            $languageService,
+            new \OCA\IntraVox\Service\Path\PageDepthValidator(new PagePathHelper(), $languageService),
         );
     }
 
     /**
-     * Drive movePage with the same three closures PageService::movePage injects,
-     * built here over the real FolderContext + LanguageService (byte-faithful to
-     * the resident helpers languageFolderOfPageResult / languageDisplayName /
-     * validateDepth).
+     * Drive movePage. The three seams it used to receive as closures are now
+     * self-sourced by the service from its injected FolderContext + LanguageService
+     * + PageDepthValidator, so this is a direct call — the byte-faithful behaviour
+     * is proven by the service resolving them itself over the wired fixtures.
      */
     private function move(
         PageStructureService $svc,
-        FolderContext $folders,
-        LanguageService $languageService,
         string $pageId,
         string $targetParentId
     ): void {
-        $pathHelper = new PagePathHelper();
-
-        $languageFolderOfPageResult = function (array $result) use ($folders): ?Folder {
-            $folder = $result['folder'] ?? null;
-            if (!($folder instanceof Folder)) {
-                return null;
-            }
-            $language = $folders->languageOfFolder($folder);
-            if ($language === null) {
-                return null;
-            }
-            try {
-                $candidate = $folders->intraVox()->get($language);
-                return $candidate instanceof Folder ? $candidate : null;
-            } catch (NotFoundException $e) {
-                return null;
-            }
-        };
-
-        $languageDisplayName = function (string $code) use ($languageService): string {
-            try {
-                foreach ($languageService->getAvailableLanguages() as $lang) {
-                    if (($lang['code'] ?? '') === $code) {
-                        $name = $lang['name'] ?? '';
-                        if ($name === '') {
-                            return strtoupper($code);
-                        }
-                        $baseName = trim(explode('(', $name)[0]);
-                        return $baseName !== '' ? $baseName : $name;
-                    }
-                }
-            } catch (\Throwable $e) {
-                // cosmetic
-            }
-            return strtoupper($code);
-        };
-
-        $validateDepth = function (string $path) use ($pathHelper): void {
-            $currentDepth = $pathHelper->calculateDepth($path);
-            $maxDepth = 5;
-            if ($currentDepth >= $maxDepth) {
-                throw new \InvalidArgumentException(
-                    "Cannot create child page: maximum nesting depth of {$maxDepth} would be exceeded"
-                );
-            }
-        };
-
-        $svc->movePage($pageId, $targetParentId, $languageFolderOfPageResult, $languageDisplayName, $validateDepth);
+        $svc->movePage($pageId, $targetParentId);
     }
 
     /**
-     * Assemble a single-language (en/) service + its closure substrate, so a guard
-     * test can drive move() with one call. Returns [service, folders, languageService].
+     * Assemble a single-language (en/) service, so a guard test can drive move()
+     * with one call. The homepage rig ($homepageUniqueId) is why this can't route
+     * through serviceOver (which fixes a null-homepage resolver).
      *
      * @param array<string,\OCP\Files\Node> $enChildren
-     * @return array{0:PageStructureService,1:FolderContext,2:LanguageService}
      */
-    private function enFixture(array $enChildren, ?string $homepageUniqueId = null): array {
+    private function enFixture(array $enChildren, ?string $homepageUniqueId = null): PageStructureService {
         $en = $this->moveFolder('/IntraVox/en', $enChildren);
         $base = $this->baseOver([$en]);
         $ls = $this->languageService();
         $folders = $this->fakeFolderContext(readLanguageFolder: $en, intraVox: $base, languageFolder: $en);
-        // Rebuild the service over the SAME folders instance the closures use.
-        $svc = new PageStructureService(
+        return new PageStructureService(
             new PageIdUtils(),
             $this->createMock(PageIndexService::class),
             $this->createMock(LoggerInterface::class),
@@ -250,26 +205,27 @@ class PageStructureServiceTest extends TestCase {
             $this->fakeHomepageResolver($homepageUniqueId),
             $this->fakeCacheInvalidator(),
             new PageLocator($this->createMock(PageIndexService::class), $this->createMock(LoggerInterface::class)),
+            $ls,
+            new \OCA\IntraVox\Service\Path\PageDepthValidator(new PagePathHelper(), $ls),
         );
-        return [$svc, $folders, $ls];
     }
 
     // ------------------------------------------------------------- refusal guards
 
     public function testTheHomeStringIdCanNeverBeMoved(): void {
-        [$svc, $folders, $ls] = $this->enFixture([]);
+        $svc = $this->enFixture([]);
 
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('The home page cannot be moved');
-        $this->move($svc, $folders, $ls, 'home', '');
+        $this->move($svc, 'home', '');
     }
 
     public function testTheConfiguredHomepageCanNeverBeMoved(): void {
         $about = $this->pageFolder('/IntraVox/en/about', 'page-home');
-        [$svc, $folders, $ls] = $this->enFixture(['about' => $about], homepageUniqueId: 'page-home');
+        $svc = $this->enFixture(['about' => $about], homepageUniqueId: 'page-home');
 
         try {
-            $this->move($svc, $folders, $ls, 'page-home', '');
+            $this->move($svc, 'page-home', '');
             $this->fail('the configured homepage must not be movable');
         } catch (\InvalidArgumentException $e) {
             $this->assertSame('HOMEPAGE_PROTECTED', $e->getMessage());
@@ -279,11 +235,11 @@ class PageStructureServiceTest extends TestCase {
 
     public function testAMoveIntoItselfIsRefused(): void {
         $about = $this->pageFolder('/IntraVox/en/about', 'page-about');
-        [$svc, $folders, $ls] = $this->enFixture(['about' => $about]);
+        $svc = $this->enFixture(['about' => $about]);
 
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Cannot move a page into itself or its descendant');
-        $this->move($svc, $folders, $ls, 'page-about', 'page-about');
+        $this->move($svc, 'page-about', 'page-about');
     }
 
     public function testAMoveIntoADescendantIsRefused(): void {
@@ -292,27 +248,27 @@ class PageStructureServiceTest extends TestCase {
             'about.json' => $this->makeFile('/IntraVox/en/about/about.json', ['uniqueId' => 'page-about', 'title' => 'About']),
             'child' => $child,
         ]);
-        [$svc, $folders, $ls] = $this->enFixture(['about' => $about]);
+        $svc = $this->enFixture(['about' => $about]);
 
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Cannot move a page into itself or its descendant');
-        $this->move($svc, $folders, $ls, 'page-about', 'page-child');
+        $this->move($svc, 'page-about', 'page-child');
     }
 
     public function testAMoveAlreadyUnderTheTargetIsASilentNoOp(): void {
         $about = $this->pageFolder('/IntraVox/en/about', 'page-about');
-        [$svc, $folders, $ls] = $this->enFixture(['about' => $about]);
+        $svc = $this->enFixture(['about' => $about]);
 
-        $this->move($svc, $folders, $ls, 'page-about', '');
+        $this->move($svc, 'page-about', '');
 
         $this->assertSame([], $this->moves, 'a page already under the target parent must not be moved');
     }
 
     public function testUnknownPageStillReportsNotFound(): void {
-        [$svc, $folders, $ls] = $this->enFixture([]);
+        $svc = $this->enFixture([]);
 
         $this->expectException(PageNotFoundException::class);
-        $this->move($svc, $folders, $ls, 'page-nope', '');
+        $this->move($svc, 'page-nope', '');
     }
 
     // --------------------------------------------------------- cross-language (#90)
@@ -333,9 +289,9 @@ class PageStructureServiceTest extends TestCase {
         $ls = $this->languageService();
         // The user's write-target is de/; the page is resolved cross-language in en/.
         $folders = $this->fakeFolderContext(readLanguageFolder: $de, intraVox: $base, languageFolder: $de);
-        $svc = $this->serviceOver($folders);
+        $svc = $this->serviceOver($folders, $ls);
 
-        $this->move($svc, $folders, $ls, 'page-move1', '');
+        $this->move($svc, 'page-move1', '');
 
         $this->assertArrayHasKey('/IntraVox/en/news/about', $this->moves, 'the page should have been moved');
         $this->assertSame(
@@ -357,10 +313,10 @@ class PageStructureServiceTest extends TestCase {
         $base = $this->baseOver([$de, $en]);
         $ls = $this->languageService();
         $folders = $this->fakeFolderContext(readLanguageFolder: $de, intraVox: $base, languageFolder: $de);
-        $svc = $this->serviceOver($folders);
+        $svc = $this->serviceOver($folders, $ls);
 
         try {
-            $this->move($svc, $folders, $ls, 'page-move2', 'page-detarget');
+            $this->move($svc, 'page-move2', 'page-detarget');
             $this->fail('a cross-language move must be refused');
         } catch (CrossLanguageMoveException $e) {
             $this->assertStringContainsString('English', $e->getMessage());
@@ -380,9 +336,9 @@ class PageStructureServiceTest extends TestCase {
         $base = $this->baseOver([$de, $en]);
         $ls = $this->languageService();
         $folders = $this->fakeFolderContext(readLanguageFolder: $de, intraVox: $base, languageFolder: $de);
-        $svc = $this->serviceOver($folders);
+        $svc = $this->serviceOver($folders, $ls);
 
-        $this->move($svc, $folders, $ls, 'page-move3', 'page-entarget');
+        $this->move($svc, 'page-move3', 'page-entarget');
 
         $this->assertSame(
             '/IntraVox/en/news/about',
@@ -404,10 +360,10 @@ class PageStructureServiceTest extends TestCase {
         $base = $this->baseOver([$de, $en]);
         $ls = $this->languageService();
         $folders = $this->fakeFolderContext(readLanguageFolder: $de, intraVox: $base, languageFolder: $de);
-        $svc = $this->serviceOver($folders);
+        $svc = $this->serviceOver($folders, $ls);
 
         $this->expectException(ForbiddenException::class);
-        $this->move($svc, $folders, $ls, 'page-move1', '');
+        $this->move($svc, 'page-move1', '');
     }
 
     public function testMoveIsRefusedWhenDestinationIsNotCreatable(): void {
@@ -422,10 +378,10 @@ class PageStructureServiceTest extends TestCase {
         $base = $this->baseOver([$de, $en]);
         $ls = $this->languageService();
         $folders = $this->fakeFolderContext(readLanguageFolder: $de, intraVox: $base, languageFolder: $de);
-        $svc = $this->serviceOver($folders);
+        $svc = $this->serviceOver($folders, $ls);
 
         $this->expectException(ForbiddenException::class);
-        $this->move($svc, $folders, $ls, 'page-move4', '');
+        $this->move($svc, 'page-move4', '');
     }
 
     // ------------------------------------------------------------- index subtree
@@ -447,9 +403,9 @@ class PageStructureServiceTest extends TestCase {
         $base = $this->baseOver([$de, $en]);
         $ls = $this->languageService();
         $folders = $this->fakeFolderContext(readLanguageFolder: $de, intraVox: $base, languageFolder: $de);
-        $svc = $this->serviceOver($folders, $index);
+        $svc = $this->serviceOver($folders, $ls, $index);
 
-        $this->move($svc, $folders, $ls, 'page-move1', '');
+        $this->move($svc, 'page-move1', '');
 
         $this->assertCount(1, $this->indexRepaths, 'a move must repath the index once');
         $this->assertSame(
@@ -477,10 +433,10 @@ class PageStructureServiceTest extends TestCase {
         $base = $this->baseOver([$de, $en]);
         $ls = $this->languageService();
         $folders = $this->fakeFolderContext(readLanguageFolder: $de, intraVox: $base, languageFolder: $de);
-        $svc = $this->serviceOver($folders, $index);
+        $svc = $this->serviceOver($folders, $ls, $index);
 
         try {
-            $this->move($svc, $folders, $ls, 'page-move5', 'page-detarget2');
+            $this->move($svc, 'page-move5', 'page-detarget2');
             $this->fail('a cross-language move must be refused');
         } catch (CrossLanguageMoveException $e) {
             // expected
