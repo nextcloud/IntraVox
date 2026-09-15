@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace OCA\IntraVox\Tests\Unit\Controller;
 
 use OCA\IntraVox\Controller\RequiresPagePermission;
-use OCA\IntraVox\Service\PageService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\DataResponse;
 use PHPUnit\Framework\TestCase;
@@ -21,9 +20,6 @@ class RequiresPagePermissionTest extends TestCase {
     private function host(): object {
         return new class {
             use RequiresPagePermission;
-            protected function getPageService(): PageService {
-                throw new \LogicException('denyUnlessReadable must not fetch the page');
-            }
             protected function getPageReadService(): \OCA\IntraVox\Service\Read\PageReadService {
                 throw new \LogicException('denyUnlessReadable must not fetch the page');
             }
@@ -65,7 +61,7 @@ class RequiresPagePermissionTest extends TestCase {
     }
 
     public function testDoesNotFetchThePage(): void {
-        // getPageService() throws; reaching it would fail this test. A readable
+        // getPageReadService() throws; reaching it would fail this test. A readable
         // page must be evaluated purely from the passed array.
         $result = $this->host()->check(['permissions' => ['canRead' => true]]);
         $this->assertNull($result);

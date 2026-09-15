@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace OCA\IntraVox\Controller;
 
-use OCA\IntraVox\Service\PageService;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -32,13 +31,13 @@ class PageContentApiController extends Controller {
     public function __construct(
         string $appName,
         IRequest $request,
-        private PageService $pageService,
         // The five version-history endpoints call the VERSION domain service
         // directly (facade elimination phase 1); the cache-status endpoint calls
         // its own service (fase-4 C5); getPage comes from the READ-domain service
         // (fase-4 C6); metadata now goes straight to the METADATA domain service
-        // (fase-9); pageService stays ONLY for the RequiresPagePermission gate,
-        // whose getPageService() is dead (the gate runs on getPageReadService()).
+        // (fase-9). The RequiresPagePermission gate runs entirely on that read
+        // service, so the PageService facade this controller used to hold purely
+        // for the gate's (now-removed) accessor is gone (fase-9).
         private \OCA\IntraVox\Service\Read\PageReadService $pageRead,
         private \OCA\IntraVox\Service\Version\PageVersionDomainService $versionDomain,
         private \OCA\IntraVox\Service\Maintenance\PageCacheStatusService $cacheStatus,
@@ -51,10 +50,6 @@ class PageContentApiController extends Controller {
 
     protected function getLogger(): LoggerInterface {
         return $this->logger;
-    }
-
-    protected function getPageService(): PageService {
-        return $this->pageService;
     }
 
     protected function getPageReadService(): \OCA\IntraVox\Service\Read\PageReadService {

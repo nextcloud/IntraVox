@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace OCA\IntraVox\Controller;
 
 use OCA\IntraVox\Exception\PageNotFoundException;
-use OCA\IntraVox\Service\PageService;
 use OCP\Files\NotFoundException;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -41,11 +40,11 @@ class MediaApiController extends Controller {
     public function __construct(
         string $appName,
         IRequest $request,
-        // pageService stays ONLY for the RequiresPagePermission gate (getPageService()
-        // accessor). Every media operation — read/resource, upload, upload-limit —
-        // now goes through the MEDIA-domain PageMediaOrchestrator directly (fase-6
-        // consumer campaign); getPage comes from the READ service (fase-4 C6).
-        private PageService $pageService,
+        // Every media operation — read/resource, upload, upload-limit — goes through
+        // the MEDIA-domain PageMediaOrchestrator directly (fase-6 consumer campaign);
+        // getPage comes from the READ service (fase-4 C6). The RequiresPagePermission
+        // gate now needs only that read service, so the PageService facade this
+        // controller used to hold purely for the gate's accessor is gone (fase-9).
         private \OCA\IntraVox\Service\Read\PageReadService $pageRead,
         private \OCA\IntraVox\Service\Media\PageMediaOrchestrator $mediaOrchestrator,
         // Required by Shared\SharePathTrait::peopleAllowedOnPublicShares().
@@ -62,10 +61,6 @@ class MediaApiController extends Controller {
 
     protected function getLogger(): LoggerInterface {
         return $this->logger;
-    }
-
-    protected function getPageService(): PageService {
-        return $this->pageService;
     }
 
     protected function getPageReadService(): \OCA\IntraVox\Service\Read\PageReadService {

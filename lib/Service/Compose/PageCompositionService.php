@@ -39,7 +39,7 @@ use Psr\Log\LoggerInterface;
  * PageCopyCompositionTest, PageTranslationCompositionTest and PageSlugUniquenessTest
  * pin the behaviour byte-for-byte.
  */
-final class PageCompositionService {
+class PageCompositionService {
     public function __construct(
         private PageTemplateService $pageTemplateService,
         private TranslationGroupService $translationGroups,

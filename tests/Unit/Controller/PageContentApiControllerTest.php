@@ -7,7 +7,6 @@ use OCA\IntraVox\Controller\PageContentApiController;
 use OCA\IntraVox\Service\Folder\FolderContext;
 use OCA\IntraVox\Service\Language\LanguageResolver;
 use OCA\IntraVox\Service\Locator\PageLocator;
-use OCA\IntraVox\Service\PageService;
 use OCA\IntraVox\Service\Util\PageIdUtils;
 use OCA\IntraVox\Service\Version\PageVersionDomainService;
 use OCA\IntraVox\Service\Version\PageVersionService;
@@ -22,7 +21,7 @@ use Psr\Log\LoggerInterface;
  * Characterizes PageContentApiController's read endpoints before Phase 2 replaces
  * their inline canRead gates with a requireReadablePage() trait helper. The pins
  * capture the exact observable contract each endpoint returns TODAY:
- *   - happy path delegates to PageService and returns its result;
+ *   - happy path delegates to the domain service and returns its result;
  *   - a page whose permissions.canRead is false -> 403 ['error' => 'Access denied'];
  *   - an exception -> 500 ['error' => <message>].
  *
@@ -35,7 +34,6 @@ class PageContentApiControllerTest extends TestCase {
     use \OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageRead;
     use \OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageService;
 
-    private PageService $pageService;
     private IAppManager $appManager;
     private PageContentApiController $controller;
     /** The mocked version-manager engine behind the real (final) versionDomain. */
@@ -52,7 +50,6 @@ class PageContentApiControllerTest extends TestCase {
     private \Closure $metadataResolveFn;
 
     protected function setUp(): void {
-        $this->pageService = $this->createMock(PageService::class);
         $this->appManager = $this->createMock(IAppManager::class);
         // getPage now comes from a real PageReadService that delegates to the
         // per-test $this->getPageFn (default: page not found).
@@ -132,7 +129,6 @@ class PageContentApiControllerTest extends TestCase {
         $this->controller = new PageContentApiController(
             'intravox',
             $this->createMock(IRequest::class),
-            $this->pageService,
             $pageRead,
             $versionDomain,
             $cacheStatus,

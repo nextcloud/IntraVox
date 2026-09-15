@@ -11,7 +11,6 @@ use OCA\IntraVox\Exception\PageConflictException;
 use OCA\IntraVox\Exception\PageNotFoundException;
 use OCA\IntraVox\Http\EtagBuilder;
 use OCA\IntraVox\Service\PageLockService;
-use OCA\IntraVox\Service\PageService;
 use OCA\IntraVox\Service\PermissionService;
 use OCA\IntraVox\Share\ShareScope;
 use OCA\IntraVox\Service\SetupService;
@@ -66,7 +65,12 @@ class ApiController extends Controller {
     use \OCA\IntraVox\Controller\Shared\SharePathTrait;
     use HasConditionalResponse;
 
-    private PageService $pageService;
+    private \OCA\IntraVox\Service\Write\PageWriteService $pageWrite;
+    private \OCA\IntraVox\Service\Compose\PageCompositionService $composition;
+    private \OCA\IntraVox\Service\Structure\PageStructureService $structure;
+    private \OCA\IntraVox\Service\Reorder\PageReorderer $reorderer;
+    private \OCA\IntraVox\Service\Search\PageSearchEngine $searchEngine;
+    private \OCA\IntraVox\Service\Folder\FolderContext $folders;
     private \OCA\IntraVox\Service\Read\PageReadService $pageRead;
     private PermissionService $permissionService;
     private SetupService $setupService;
@@ -86,7 +90,12 @@ class ApiController extends Controller {
     public function __construct(
         string $appName,
         IRequest $request,
-        PageService $pageService,
+        \OCA\IntraVox\Service\Write\PageWriteService $pageWrite,
+        \OCA\IntraVox\Service\Compose\PageCompositionService $composition,
+        \OCA\IntraVox\Service\Structure\PageStructureService $structure,
+        \OCA\IntraVox\Service\Reorder\PageReorderer $reorderer,
+        \OCA\IntraVox\Service\Search\PageSearchEngine $searchEngine,
+        \OCA\IntraVox\Service\Folder\FolderContext $folders,
         \OCA\IntraVox\Service\Read\PageReadService $pageRead,
         PermissionService $permissionService,
         SetupService $setupService,
@@ -104,7 +113,12 @@ class ApiController extends Controller {
         \OCA\IntraVox\Service\Tree\PageTreeService $treeService
     ) {
         parent::__construct($appName, $request);
-        $this->pageService = $pageService;
+        $this->pageWrite = $pageWrite;
+        $this->composition = $composition;
+        $this->structure = $structure;
+        $this->reorderer = $reorderer;
+        $this->searchEngine = $searchEngine;
+        $this->folders = $folders;
         $this->pageRead = $pageRead;
         $this->permissionService = $permissionService;
         $this->setupService = $setupService;
@@ -127,13 +141,6 @@ class ApiController extends Controller {
      */
     protected function getLogger(): LoggerInterface {
         return $this->logger;
-    }
-
-    /**
-     * Get the page service for RequiresPagePermission.
-     */
-    protected function getPageService(): PageService {
-        return $this->pageService;
     }
 
     protected function getPageReadService(): \OCA\IntraVox\Service\Read\PageReadService {
@@ -376,7 +383,7 @@ class ApiController extends Controller {
                 );
             }
 
-            $page = $this->pageService->createPage($data, $parentPath);
+            $page = $this->pageWrite->createPage($data, $parentPath);
             return new DataResponse($page, Http::STATUS_CREATED);
         } catch (ForbiddenException $e) {
             return new DataResponse(
@@ -420,7 +427,7 @@ class ApiController extends Controller {
             }
 
             $data = $this->request->getParams();
-            $page = $this->pageService->updatePage($id, $data);
+            $page = $this->pageWrite->updatePage($id, $data);
             return new DataResponse($page);
         } catch (ForbiddenException $e) {
             return new DataResponse(
@@ -481,7 +488,7 @@ class ApiController extends Controller {
                 );
             }
 
-            $this->pageService->deletePage($id);
+            $this->pageWrite->deletePage($id);
             return new DataResponse(['success' => true]);
         } catch (PageNotFoundException $e) {
             return new DataResponse(
@@ -534,7 +541,17 @@ class ApiController extends Controller {
                 );
             }
 
-            $this->pageService->reorderSiblings(($parentId !== '' ? $parentId : null), $orderedIds);
+            // PageService::reorderSiblings resolved the write-target language folder
+            // through FolderContext and handed the already-resolved Folder to
+            // PageReorderer::reorder (the getLanguageFolder seam stayed on the
+            // facade). Reproduce that exactly: the reorderer takes the resolved
+            // Folder as its third arg, and the homepage/cache concerns are its own
+            // injected HomepageResolverService / PageCacheInvalidator.
+            $this->reorderer->reorder(
+                ($parentId !== '' ? $parentId : null),
+                $orderedIds,
+                $this->folders->languageFolder()
+            );
             return new DataResponse(['success' => true]);
         } catch (\InvalidArgumentException $e) {
             return new DataResponse(
@@ -655,7 +672,11 @@ class ApiController extends Controller {
                 ]);
             }
 
-            $results = $this->pageService->searchPages($query);
+            // PageService::searchPages was the discovery walk feeding the scorer:
+            // listAllWithContent() (the injected PageLister, already here) into
+            // PageSearchEngine::search. The engine holds the same shared MetaVox
+            // gateway singleton, so the request-scoped MetaVox memo stays single.
+            $results = $this->searchEngine->search($this->pageLister->listAllWithContent(), $query);
 
             // Filter results based on Nextcloud's permissions (already in the results).
             // Draft/scheduled/expired pages are only visible to users with write
@@ -782,7 +803,18 @@ class ApiController extends Controller {
                 );
             }
 
-            $page = $this->pageService->copyPage($sourceId, $targetParentId, $title);
+            // copyPage is the COMPOSE domain (same userId-scoped service the retired
+            // PageService::copyPage forwarded to). createPage is supplied per call as
+            // the closure PageService bound to its own createPage delegator, which was
+            // a pure forward to the write service — bind it straight to the injected
+            // PageWriteService (the same container singleton) so the #70 isCreatable
+            // preflight runs unchanged.
+            $page = $this->composition->copyPage(
+                $sourceId,
+                $targetParentId,
+                $title,
+                fn(array $data, ?string $parentPath = null): array => $this->pageWrite->createPage($data, $parentPath)
+            );
             return new DataResponse(['success' => true, 'page' => $page], Http::STATUS_CREATED);
         } catch (\InvalidArgumentException $e) {
             return new DataResponse(['error' => $e->getMessage()], Http::STATUS_BAD_REQUEST);
@@ -824,7 +856,10 @@ class ApiController extends Controller {
                 );
             }
 
-            $this->pageService->movePage($pageId, is_string($targetParentId) ? $targetParentId : '');
+            // movePage is the STRUCTURE domain: PageService::movePage was a pure
+            // delegator to PageStructureService::movePage (no closures — every folder
+            // concern, the guards and the index repath are self-sourced there).
+            $this->structure->movePage($pageId, is_string($targetParentId) ? $targetParentId : '');
             return new DataResponse(['success' => true]);
         } catch (CrossLanguageMoveException $e) {
             // A refusal the user can act on, not a server fault: 409 Conflict
@@ -855,7 +890,9 @@ class ApiController extends Controller {
 
             // Resolve which page is the homepage so the UI can badge it and
             // offer "set as homepage" only on root pages (configurable homepage).
-            $homepageUniqueId = $this->pageService->resolveHomepageNodeUniqueId($language, $filteredTree);
+            // resolveHomepageNodeUniqueId was a pure forward through PageService to
+            // HomepageResolverService (already injected here for setHomepage).
+            $homepageUniqueId = $this->homepageResolver->resolveHomepageNodeUniqueId($language, $filteredTree);
 
             // Root-folder permissions so the tree UI can gate actions that target
             // the language root — a sibling copy of a top-level page lands there,

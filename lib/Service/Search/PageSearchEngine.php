@@ -21,7 +21,7 @@ use OCA\IntraVox\Service\Publication\MetaVoxGateway;
  * The MetaVox gateway is injected (not rebuilt) so the request-scoped memo it
  * shares with getMetaVoxDataForFiles/searchPages stays a single instance.
  */
-final class PageSearchEngine {
+class PageSearchEngine {
     public function __construct(
         private PageSearchHelper $searchHelper,
         private MetaVoxGateway $metaVox,

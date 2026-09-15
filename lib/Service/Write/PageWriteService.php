@@ -33,7 +33,7 @@ use Psr\Log\LoggerInterface;
  * PageCrudWriteTest / PageConcurrencyTest / PageUpdatePipelineTest pin the
  * behaviour byte-for-byte.
  */
-final class PageWriteService {
+class PageWriteService {
     public function __construct(
         private PageIdUtils $idUtils,
         private IEventDispatcher $eventDispatcher,

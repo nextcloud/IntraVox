@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace OCA\IntraVox\Controller;
 
-use OCA\IntraVox\Service\PageService;
 use OCA\IntraVox\Service\Read\PageReadService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\DataResponse;
@@ -85,16 +84,12 @@ trait RequiresPagePermission {
     }
 
     /**
-     * Explicit accessor rather than reaching for $this->pageService directly:
-     * the Shared/ traits do the latter and a controller that forgets the
-     * property only finds out at runtime, on the first request.
-     */
-    abstract protected function getPageService(): PageService;
-
-    /**
      * The read service the write-gate resolves the page through (fase-4 C6:
      * getPage moved off the PageService facade onto Read/PageReadService). Each
-     * consumer returns its injected instance.
+     * consumer returns its injected instance. This is now the trait's ONLY
+     * collaborator: the permission gate reads the page's own permissions map, so
+     * the PageService accessor the trait used to require is gone (fase-9 — the
+     * last consumer, ApiController, no longer holds the facade).
      */
     abstract protected function getPageReadService(): PageReadService;
 }

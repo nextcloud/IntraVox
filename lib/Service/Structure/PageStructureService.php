@@ -35,7 +35,7 @@ use Psr\Log\LoggerInterface;
  * createPage). PageMoveGuardTest and PageServiceMoveLanguageTest pin the
  * behaviour byte-for-byte.
  */
-final class PageStructureService {
+class PageStructureService {
     public function __construct(
         private PageIdUtils $idUtils,
         private PageIndexService $pageIndexService,

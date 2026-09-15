@@ -12,7 +12,6 @@ use OCA\IntraVox\Service\Import\ConfluenceHtmlImportOrchestrator;
 use OCA\IntraVox\Service\Import\ZipUploadValidator;
 use OCA\IntraVox\Service\VideoDomainPolicy;
 use OCA\IntraVox\Service\PageLockService;
-use OCA\IntraVox\Service\PageService;
 use OCA\IntraVox\Service\PublicationSettingsService;
 use OCA\IntraVox\Service\PublicShareService;
 use OCA\IntraVox\Service\SetupService;
@@ -39,8 +38,21 @@ class ApiControllerTest extends TestCase {
 
     use \OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageRead;
     use \OCA\IntraVox\Tests\Unit\Controller\Harness\BuildsPageLister;
+    // fakeFolderContext(): a real FolderContext whose getLanguageFolder seam returns
+    // the fixture folder — reorderPages() is the only endpoint that resolves it.
+    use \OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageService;
     private ApiController $controller;
-    private PageService $pageService;
+    // The PageService god-facade is gone from ApiController (fase-9): the eight
+    // page endpoints call the domain services directly. These are the mocks the
+    // create/update/delete/move/copy/reorder tests set expectations on — the same
+    // ->with()/->willReturn()/->willThrowException() pins, moved off the facade
+    // onto the concrete service that now owns each method.
+    private \OCA\IntraVox\Service\Write\PageWriteService $pageWrite;
+    private \OCA\IntraVox\Service\Compose\PageCompositionService $composition;
+    private \OCA\IntraVox\Service\Structure\PageStructureService $structure;
+    private \OCA\IntraVox\Service\Reorder\PageReorderer $reorderer;
+    private \OCA\IntraVox\Service\Search\PageSearchEngine $searchEngine;
+    private \OCA\IntraVox\Service\Folder\FolderContext $folders;
     private \OCA\IntraVox\Service\Read\PageReadService $pageRead;
     /** getPage(id) behaviour a test installs (fase-4 C6: getPage → PageReadService). */
     private \Closure $getPageFn;
@@ -68,8 +80,21 @@ class ApiControllerTest extends TestCase {
     protected function setUp(): void {
         parent::setUp();
 
-        // Create mocks
-        $this->pageService = $this->createMock(PageService::class);
+        // Create mocks. The domain services are no longer final (fase-9), so the
+        // create/update/delete/move/copy/reorder tests mock them directly — the
+        // same expectations that used to sit on the PageService facade.
+        $this->pageWrite = $this->createMock(\OCA\IntraVox\Service\Write\PageWriteService::class);
+        $this->composition = $this->createMock(\OCA\IntraVox\Service\Compose\PageCompositionService::class);
+        $this->structure = $this->createMock(\OCA\IntraVox\Service\Structure\PageStructureService::class);
+        $this->reorderer = $this->createMock(\OCA\IntraVox\Service\Reorder\PageReorderer::class);
+        // searchPages is not exercised here; an inert double keeps the ctor happy.
+        $this->searchEngine = $this->createMock(\OCA\IntraVox\Service\Search\PageSearchEngine::class);
+        // Only reorderPages() reaches folders->languageFolder(); the harness builds a
+        // real FolderContext whose getLanguageFolder seam returns this fixture folder
+        // (the reorderer mock intercepts reorder() regardless of the folder identity).
+        $this->folders = $this->fakeFolderContext(
+            languageFolder: $this->createMock(\OCP\Files\Folder::class)
+        );
         // getPage now comes from a real PageReadService that delegates to the
         // per-test $this->getPageFn (default: page not found). fase-4 C6.
         $this->getPageFn = fn(string $id) => null;
@@ -122,7 +147,12 @@ class ApiControllerTest extends TestCase {
         return new ApiController(
             'intravox',
             $request ?? $this->request,
-            $this->pageService,
+            $this->pageWrite,
+            $this->composition,
+            $this->structure,
+            $this->reorderer,
+            $this->searchEngine,
+            $this->folders,
             $this->pageRead,
             $this->permissionService,
             $this->setupService,
@@ -348,7 +378,7 @@ class ApiControllerTest extends TestCase {
         $this->permissionService->method('getFolderPermissions')
             ->willReturn(['canCreate' => true]);
 
-        $this->pageService->method('createPage')
+        $this->pageWrite->method('createPage')
             ->willReturn($createdPage);
 
         $response = $this->controller->createPage();
@@ -375,7 +405,7 @@ class ApiControllerTest extends TestCase {
         $this->permissionService->method('getFolderPermissions')
             ->willReturn(['canCreate' => true]);
 
-        $this->pageService->method('createPage')
+        $this->pageWrite->method('createPage')
             ->willThrowException(new \InvalidArgumentException('Title is required'));
 
         $response = $this->controller->createPage();
@@ -404,7 +434,7 @@ class ApiControllerTest extends TestCase {
 
         $this->request->method('getParams')->willReturn(['title' => 'New Title']);
 
-        $this->pageService->method('updatePage')
+        $this->pageWrite->method('updatePage')
             ->willReturn($updatedPage);
 
         $response = $this->controller->updatePage('page-123');
@@ -435,7 +465,7 @@ class ApiControllerTest extends TestCase {
         $this->getPageFn = fn(string $id) => $existingPage;
         $this->request->method('getParams')->willReturn(['title' => null]);
 
-        $this->pageService->method('updatePage')
+        $this->pageWrite->method('updatePage')
             ->willThrowException(new \InvalidArgumentException('Invalid page data'));
 
         $response = $this->controller->updatePage('page-123');
@@ -455,7 +485,7 @@ class ApiControllerTest extends TestCase {
 
         $this->getPageFn = fn(string $id) => $existingPage;
         $this->request->method('getParams')->willReturn(['title' => 'x']);
-        $this->pageService->method('updatePage')
+        $this->pageWrite->method('updatePage')
             ->willThrowException(new ForbiddenException('You do not have permission to edit this page'));
 
         $response = $this->controller->updatePage('page-123');
@@ -467,7 +497,7 @@ class ApiControllerTest extends TestCase {
     public function testCreatePageReturnsForbiddenWhenServiceThrowsForbidden(): void {
         $this->request->method('getParams')->willReturn(['title' => 'x']);
         $this->permissionService->method('getFolderPermissions')->willReturn(['canCreate' => true]);
-        $this->pageService->method('createPage')
+        $this->pageWrite->method('createPage')
             ->willThrowException(new ForbiddenException('You do not have permission to create a page here'));
 
         $response = $this->controller->createPage();
@@ -486,7 +516,7 @@ class ApiControllerTest extends TestCase {
         ];
 
         $this->getPageFn = fn(string $id) => $existingPage;
-        $this->pageService->expects($this->once())
+        $this->pageWrite->expects($this->once())
             ->method('deletePage')
             ->with('page-123');
 
@@ -516,7 +546,7 @@ class ApiControllerTest extends TestCase {
         ];
 
         $this->getPageFn = fn(string $id) => $existingPage;
-        $this->pageService->method('deletePage')
+        $this->pageWrite->method('deletePage')
             ->willThrowException(new \Exception('Delete failed'));
 
         $response = $this->controller->deletePage('page-123');
@@ -533,7 +563,7 @@ class ApiControllerTest extends TestCase {
         ];
 
         $this->getPageFn = fn(string $id) => $existingPage;
-        $this->pageService->method('deletePage')
+        $this->pageWrite->method('deletePage')
             ->willThrowException(new \InvalidArgumentException('HOMEPAGE_PROTECTED'));
 
         $response = $this->controller->deletePage('page-home');
@@ -585,7 +615,7 @@ class ApiControllerTest extends TestCase {
             return ['id' => 'page-parent', 'path' => 'en/parent', 'permissions' => ['canWrite' => true]];
         };
         $this->permissionService->method('getFolderPermissions')->willReturn(['canCreate' => true]);
-        $this->pageService->expects($this->once())
+        $this->structure->expects($this->once())
             ->method('movePage')
             ->with('page-1', 'page-parent');
 
@@ -603,7 +633,7 @@ class ApiControllerTest extends TestCase {
             return ['id' => 'page-child', 'path' => 'en/1/child', 'permissions' => ['canWrite' => true]];
         };
         $this->permissionService->method('getFolderPermissions')->willReturn(['canCreate' => true]);
-        $this->pageService->method('movePage')
+        $this->structure->method('movePage')
             ->willThrowException(new \InvalidArgumentException('Cannot move a page into itself or its descendant'));
 
         $response = $this->controller->movePage('page-1', 'page-child');
@@ -620,7 +650,7 @@ class ApiControllerTest extends TestCase {
             return ['id' => 'page-deep', 'path' => 'en/a/b/c/d', 'permissions' => ['canWrite' => true]];
         };
         $this->permissionService->method('getFolderPermissions')->willReturn(['canCreate' => true]);
-        $this->pageService->method('movePage')
+        $this->structure->method('movePage')
             ->willThrowException(new \InvalidArgumentException('Maximum nesting depth exceeded'));
 
         $response = $this->controller->movePage('page-1', 'page-deep');
@@ -636,7 +666,7 @@ class ApiControllerTest extends TestCase {
             return ['id' => 'page-parent', 'path' => 'en/parent', 'permissions' => ['canWrite' => true]];
         };
         $this->permissionService->method('getFolderPermissions')->willReturn(['canCreate' => true]);
-        $this->pageService->method('movePage')
+        $this->structure->method('movePage')
             ->willThrowException(new \InvalidArgumentException('HOMEPAGE_PROTECTED'));
 
         $response = $this->controller->movePage('page-home', 'page-parent');
@@ -686,9 +716,12 @@ class ApiControllerTest extends TestCase {
         };
         $this->permissionService->method('getFolderPermissions')->willReturn(['canCreate' => true]);
         $copy = ['uniqueId' => 'page-new', 'title' => 'Thing (copy)', 'status' => 'draft'];
-        $this->pageService->expects($this->once())
+        // copyPage now goes to the COMPOSE service with the createPage closure as a
+        // 4th arg (the write-service binding the #70 preflight rides on); the first
+        // three args are pinned exactly as before, the closure matched by type.
+        $this->composition->expects($this->once())
             ->method('copyPage')
-            ->with('page-src', 'page-parent', null)
+            ->with('page-src', 'page-parent', null, $this->isInstanceOf(\Closure::class))
             ->willReturn($copy);
 
         $response = $this->controller->copyPage('page-src', 'page-parent', null);
@@ -740,10 +773,12 @@ class ApiControllerTest extends TestCase {
 
     public function testReorderRootNormalizesEmptyParentToNull(): void {
         $this->permissionService->method('getFolderPermissions')->willReturn(['canWrite' => true]);
-        // The controller must pass null (not '') to the service for the root.
-        $this->pageService->expects($this->once())
-            ->method('reorderSiblings')
-            ->with(null, ['page-a', 'page-b']);
+        // The controller must pass null (not '') to the reorderer for the root, plus
+        // the resolved language folder as the third arg (PageService::reorderSiblings
+        // resolved it through FolderContext and handed it to PageReorderer::reorder).
+        $this->reorderer->expects($this->once())
+            ->method('reorder')
+            ->with(null, ['page-a', 'page-b'], $this->isInstanceOf(\OCP\Files\Folder::class));
 
         $response = $this->controller->reorderPages('', ['page-a', 'page-b']);
 
@@ -753,9 +788,9 @@ class ApiControllerTest extends TestCase {
     public function testReorderHappyPathDelegatesWithParent(): void {
         $this->getPageFn = fn(string $id) => ['id' => 'page-parent', 'path' => 'en/parent'];
         $this->permissionService->method('getFolderPermissions')->willReturn(['canWrite' => true]);
-        $this->pageService->expects($this->once())
-            ->method('reorderSiblings')
-            ->with('page-parent', ['page-b', 'page-a']);
+        $this->reorderer->expects($this->once())
+            ->method('reorder')
+            ->with('page-parent', ['page-b', 'page-a'], $this->isInstanceOf(\OCP\Files\Folder::class));
 
         $response = $this->controller->reorderPages('page-parent', ['page-b', 'page-a']);
 

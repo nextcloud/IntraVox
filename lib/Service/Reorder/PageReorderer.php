@@ -24,7 +24,7 @@ use OCP\Files\NotFoundException;
  * the homepage/config-file skips, foreign-id skips, the no-rewrite-when-correct
  * rule, and the exact pretty-printed/unescaped-unicode bytes.
  */
-final class PageReorderer {
+class PageReorderer {
     public function __construct(
         private PageLocator $locator,
         private HomepageResolverService $homepageResolver,
