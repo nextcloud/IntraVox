@@ -14,11 +14,13 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
 /**
- * Direct tests for PageMaintenanceService (Phase 4). The behaviour is already
- * pinned end-to-end by PageMaintenanceRepairTest through PageService's facade;
- * this drives the service standalone (root folder passed in, not resolved via a
- * seam) so it stays covered if the facade ever changes, and confirms the
- * root-as-parameter contract.
+ * Direct tests for PageMaintenanceService. Drives the service standalone (root
+ * folder passed in, not resolved via a seam), confirming the root-as-parameter
+ * contract for the CLI maintenance methods repairEntities() and rebuildIndex().
+ * These pins protect the occ commands' observable contract: the stats shape,
+ * the language-folder filter, the file-type filter, and — crucially — that a
+ * dry run counts but never writes, and that rebuildIndex clears the index only
+ * after the tree is readable.
  */
 class PageMaintenanceServiceTest extends TestCase {
 
@@ -141,5 +143,93 @@ class PageMaintenanceServiceTest extends TestCase {
         $stats = $this->service($index)->rebuildIndex($root, dryRun: true);
 
         $this->assertArrayHasKey('en', $stats['languages']);
+    }
+
+    // --- migrated from PageMaintenanceRepairTest (facade retired) ---
+
+    public function testRepairSkipsNonLanguageFoldersAndSpecialJsonFiles(): void {
+        // An 'en' language folder with one repairable page, plus a '_media' folder
+        // that must be skipped entirely, plus special JSONs that must be ignored.
+        $page = $this->file('/IntraVox/en/about.json', ['title' => 'A &amp; B']);
+        $nav = $this->file('/IntraVox/en/navigation.json', ['title' => 'Nav &amp; stuff']);
+        $en = $this->folder('/IntraVox/en', [
+            'about.json' => $page,
+            'navigation.json' => $nav,
+        ]);
+        $media = $this->folder('/IntraVox/_media', [
+            'junk.json' => $this->file('/IntraVox/_media/junk.json', ['title' => 'X &amp; Y']),
+        ]);
+        $root = $this->folder('/IntraVox', ['en' => $en, '_media' => $media]);
+
+        $stats = $this->service()->repairEntities($root, dryRun: true);
+
+        // Only the page JSON in the language folder is scanned; nav.json and the
+        // _media folder are skipped.
+        $this->assertSame(1, $stats['scanned']);
+        $this->assertSame(1, $stats['changed'], 'the &amp; entity decodes, so the page counts as changed');
+        $this->assertSame(['/IntraVox/en/about.json'], $stats['files']);
+    }
+
+    public function testNonDryRunWritesOnlyChangedFiles(): void {
+        $changing = $this->file('/IntraVox/en/a.json', ['title' => 'A &amp; B']);
+        $clean = $this->file('/IntraVox/en/b.json', ['title' => 'Plain title']);
+        $en = $this->folder('/IntraVox/en', [
+            'a.json' => $changing,
+            'b.json' => $clean,
+        ]);
+        $root = $this->folder('/IntraVox', ['en' => $en]);
+
+        $stats = $this->service()->repairEntities($root, dryRun: false);
+
+        $this->assertSame(2, $stats['scanned']);
+        $this->assertSame(1, $stats['changed']);
+        $this->assertArrayHasKey('/IntraVox/en/a.json', $this->written, 'the changed file is written');
+        $this->assertArrayNotHasKey('/IntraVox/en/b.json', $this->written, 'an unchanged file is left alone');
+    }
+
+    public function testRepairRecursesIntoSubfolders(): void {
+        $nested = $this->file('/IntraVox/en/news/item.json', ['title' => 'News &amp; more']);
+        $newsFolder = $this->folder('/IntraVox/en/news', ['item.json' => $nested]);
+        $en = $this->folder('/IntraVox/en', ['news' => $newsFolder]);
+        $root = $this->folder('/IntraVox', ['en' => $en]);
+
+        $stats = $this->service()->repairEntities($root, dryRun: true);
+
+        $this->assertSame(1, $stats['scanned']);
+        $this->assertSame(['/IntraVox/en/news/item.json'], $stats['files']);
+    }
+
+    public function testRebuildIndexDryRunDoesNotClearOrWriteTheIndex(): void {
+        $page = $this->file('/IntraVox/en/about.json', ['uniqueId' => 'page-a', 'title' => 'About']);
+        $en = $this->folder('/IntraVox/en', ['about.json' => $page]);
+        $root = $this->folder('/IntraVox', ['en' => $en]);
+
+        $index = $this->createMock(PageIndexService::class);
+        $index->expects($this->never())->method('clearAll');
+        $index->expects($this->never())->method('indexPage');
+
+        $stats = $this->service($index)->rebuildIndex($root, dryRun: true);
+
+        $this->assertArrayHasKey('scanned', $stats);
+        $this->assertArrayHasKey('indexed', $stats);
+        $this->assertArrayHasKey('languages', $stats);
+        $this->assertArrayHasKey('en', $stats['languages']);
+    }
+
+    public function testRebuildIndexOnlyVisitsLanguageFolders(): void {
+        $en = $this->folder('/IntraVox/en', [
+            'about.json' => $this->file('/IntraVox/en/about.json', ['uniqueId' => 'page-a', 'title' => 'A']),
+        ]);
+        $resources = $this->folder('/IntraVox/_resources', [
+            'x.json' => $this->file('/IntraVox/_resources/x.json', ['uniqueId' => 'page-x', 'title' => 'X']),
+        ]);
+        $root = $this->folder('/IntraVox', ['en' => $en, '_resources' => $resources]);
+
+        $index = $this->createMock(PageIndexService::class);
+
+        $stats = $this->service($index)->rebuildIndex($root, dryRun: true);
+
+        $this->assertArrayHasKey('en', $stats['languages']);
+        $this->assertArrayNotHasKey('_resources', $stats['languages'], '_resources is not a language folder');
     }
 }

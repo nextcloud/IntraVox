@@ -276,4 +276,65 @@ class FolderContextSeamTest extends TestCase {
         $this->assertSame($nl, $ctx->readLanguageFolder());
         $this->assertSame([], $this->created, 'nl exists — fallback must not create');
     }
+
+    // ---- branches folded in from the retired PageLanguageResolutionTest (fase-10) ----
+    // These exercise the same FolderContext front door and cover branches the tests
+    // above do not: default-exists-so-no-create, ask-default-when-missing, the
+    // user-language-driven languageFolder() write-target create-on-miss, and the
+    // #75 skip-past-a-missing-candidate-folder continue.
+
+    public function testLanguageFolderByCodeMissingFallsBackToExistingDefaultWithoutCreation(): void {
+        // 'nl' is missing but 'en' exists -> return 'en', create nothing.
+        $en = $this->langFolder('/IntraVox/en');
+        $ctx = $this->context($this->baseFolder(['en' => $en]));
+
+        $this->assertSame($en, $ctx->languageFolderByCode('nl'));
+        $this->assertSame([], $this->created, 'default already exists — no folder should be created');
+    }
+
+    public function testLanguageFolderByCodeMissingDefaultItselfCreatesIt(): void {
+        // Asking for 'en' when it is missing takes the else-branch: create 'en'.
+        $ctx = $this->context($this->baseFolder([]));
+
+        $ctx->languageFolderByCode('en');
+
+        $this->assertSame(['en'], $this->created);
+    }
+
+    public function testLanguageFolderUsesUserLanguageAndCreatesOnMiss(): void {
+        // The write-target languageFolder() resolves the USER's language (nl_NL -> nl)
+        // and, when neither nl nor the default exist, creates the default.
+        $ctx = $this->context($this->baseFolder([]), userLangValue: 'nl_NL');
+
+        $ctx->languageFolder();
+
+        $this->assertSame(['en'], $this->created);
+    }
+
+    public function testEffectiveLanguageFallsToEnglishWhenUserAndPrimaryAreEmpty(): void {
+        // #75 rule 3: neither the user's language nor the primary has real content,
+        // but English does -> serve English.
+        $nl = $this->langFolder('/IntraVox/nl', ['title' => 'PH', '_generated' => true]);
+        $en = $this->langFolder('/IntraVox/en', ['uniqueId' => 'page-home', 'title' => 'Welcome']);
+        $ctx = $this->context(
+            $this->baseFolder(['nl' => $nl, 'en' => $en]),
+            userLangValue: 'nl',
+            primaryLanguage: 'nl'
+        );
+
+        $this->assertSame('en', $ctx->effectiveLanguage());
+    }
+
+    public function testEffectiveLanguageSkipsMissingCandidateFolders(): void {
+        // primary 'de' folder does not exist on disk at all (get throws NotFound);
+        // the loop must `continue` past it and land on English.
+        $en = $this->langFolder('/IntraVox/en', ['uniqueId' => 'page-home', 'title' => 'Welcome']);
+        $ctx = $this->context(
+            $this->baseFolder(['en' => $en]),
+            userLangValue: 'nl',
+            primaryLanguage: 'de'
+        );
+
+        $this->assertSame('en', $ctx->effectiveLanguage());
+    }
 }

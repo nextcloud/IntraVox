@@ -1,15 +1,17 @@
 <?php
 declare(strict_types=1);
 
-namespace OCA\IntraVox\Tests\Unit\Service;
+namespace OCA\IntraVox\Tests\Unit\Service\Homepage;
 
 use OCA\IntraVox\Service\HomepageService;
-use OCA\IntraVox\Service\PageService;
-use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageService;
-use OCP\Files\File;
-use OCP\Files\FileInfo;
+use OCA\IntraVox\Service\Homepage\HomepageResolverService;
+use OCA\IntraVox\Service\Locator\PageLocator;
+use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsCacheFixtures;
+use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsFolderFixtures;
+use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsNodeFixtures;
 use OCP\Files\Folder;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 
 /**
  * getHomepageUniqueId() must name a page the frontend can actually find.
@@ -26,41 +28,17 @@ use PHPUnit\Framework\TestCase;
  * IntraVox", while English — which uses the normalised layout — was fine. The
  * two layouts coexisting is exactly what hid it.
  */
-class PageHomepageResolutionTest extends TestCase {
+class HomepageResolverServiceTest extends TestCase {
 
-    use BuildsPageService;
-
-    private function makeFile(string $path, array $json): File {
-        $file = $this->createMock(File::class);
-        $file->method('getName')->willReturn(basename($path));
-        $file->method('getType')->willReturn(FileInfo::TYPE_FILE);
-        $file->method('getPath')->willReturn($path);
-        $file->method('getContent')->willReturn(json_encode($json));
-        $file->method('getId')->willReturn(abs(crc32($path)));
-        return $file;
-    }
-
-    private function makeFolder(string $path, array $children): Folder {
-        $folder = $this->createMock(Folder::class);
-        $folder->method('getName')->willReturn(basename($path));
-        $folder->method('getType')->willReturn(FileInfo::TYPE_FOLDER);
-        $folder->method('getPath')->willReturn($path);
-        $folder->method('getDirectoryListing')->willReturn(array_values($children));
-        $folder->method('nodeExists')->willReturnCallback(fn($n) => isset($children[$n]));
-        $folder->method('get')->willReturnCallback(function ($p) use ($children, $path) {
-            if (isset($children[$p])) {
-                return $children[$p];
-            }
-            throw new \OCP\Files\NotFoundException($path . '/' . $p);
-        });
-        return $folder;
-    }
+    use BuildsNodeFixtures;
+    use BuildsFolderFixtures;
+    use BuildsCacheFixtures;
 
     /**
      * @param array|null $homeJson contents of nl/home.json, or null for none
      * @param string|null $pointer configured homepage pointer, if any
      */
-    private function makeService(?array $homeJson, ?string $pointer = null): PageService {
+    private function makeResolver(?array $homeJson, ?string $pointer = null): HomepageResolverService {
         $children = [
             'about.json' => $this->makeFile(
                 '/IntraVox/nl/about.json',
@@ -81,44 +59,37 @@ class PageHomepageResolutionTest extends TestCase {
         // same nl/home.json.
         // NO 'home' key here: this builder tests the REAL homepage resolution
         // (getHomepageUniqueId / resolveHomepageNodeUniqueId), so the real resolver
-        // must run — built lazily from the wired homepageService mock + fakeFolder
+        // must run — built directly from the wired homepageService mock + fakeFolder
         // context, exactly as before. The inert invalidator no-ops clearCache.
         $homepageService = $this->createMock(HomepageService::class);
         $homepageService->method('getHomepageUniqueId')->willReturn($pointer);
 
-        $config = $this->createMock(\OCP\IConfig::class);
-        $config->method('getUserValue')->willReturn('nl');
+        $folders = $this->fakeFolderContext(
+            intraVox: $base,
+            userLanguage: 'nl',
+            primaryLanguage: 'nl'
+        );
 
-        $languageService = $this->createMock(\OCA\IntraVox\Service\LanguageService::class);
-        $languageService->method('isLanguageAvailable')->willReturn(true);
-        $languageService->method('getPrimaryLanguage')->willReturn('nl');
-
-        return $this->buildRealPageService([
-            'userSession' => $this->createMock(\OCP\IUserSession::class),
-            'userId' => 'tester',
-            'config' => $config,
-            'logger' => $this->createMock(\Psr\Log\LoggerInterface::class),
-            'languageService' => $languageService,
-            'homepageService' => $homepageService,
-            'folderContext' => $this->fakeFolderContext(
-                intraVox: $base,
-                userLanguage: 'nl',
-                primaryLanguage: 'nl'
+        return new HomepageResolverService(
+            $homepageService,
+            $folders,
+            new PageLocator(
+                $this->createMock(\OCA\IntraVox\Service\PageIndexService::class),
+                $this->createMock(LoggerInterface::class)
             ),
-        ]);
+            $this->fakeCacheInvalidator()
+        );
     }
 
     /**
-     * Read the homepage uniqueId directly off the injected HomepageResolverService.
-     * fase-5 Phase II deleted the PageService::getHomepageUniqueId delegator (it had
+     * Read the homepage uniqueId directly off the HomepageResolverService.
+     * fase-5 Phase II deleted the getHomepageUniqueId facade delegator (it had
      * no production caller — ApiController resolves via resolveHomepageNodeUniqueId),
-     * so these characterization tests reach the resolver through the property the
-     * harness wires, exactly what the one-line delegator forwarded to. Mirrors the
-     * reflection idiom makeSetHomepageService() already uses on the same property.
+     * so these characterization tests reach the resolver directly, exactly what the
+     * one-line delegator forwarded to.
      */
-    private function homepageUniqueId(PageService $svc, string $lang): string {
-        return (new \ReflectionProperty(PageService::class, 'homepageResolver'))
-            ->getValue($svc)->getHomepageUniqueId($lang);
+    private function homepageUniqueId(HomepageResolverService $resolver, string $lang): string {
+        return $resolver->getHomepageUniqueId($lang);
     }
 
     /**
@@ -126,12 +97,12 @@ class PageHomepageResolutionTest extends TestCase {
      * file really carries, so the frontend can match it against listPages().
      */
     public function testLooseHomeJsonResolvesToItsRealUniqueId(): void {
-        $svc = $this->makeService([
+        $resolver = $this->makeResolver([
             'uniqueId' => 'page-nl-home',
             'title' => 'Welkom bij IntraVox',
         ]);
 
-        $this->assertSame('page-nl-home', $this->homepageUniqueId($svc, 'nl'));
+        $this->assertSame('page-nl-home', $this->homepageUniqueId($resolver, 'nl'));
     }
 
     /**
@@ -140,16 +111,16 @@ class PageHomepageResolutionTest extends TestCase {
      * here would be worse than saying "the legacy default".
      */
     public function testHomeJsonWithoutUniqueIdKeepsTheLegacyAnswer(): void {
-        $svc = $this->makeService(['title' => 'Welcome']);
+        $resolver = $this->makeResolver(['title' => 'Welcome']);
 
-        $this->assertSame('home', $this->homepageUniqueId($svc, 'nl'));
+        $this->assertSame('home', $this->homepageUniqueId($resolver, 'nl'));
     }
 
     /** No loose home.json at all: unchanged legacy answer. */
     public function testMissingHomeJsonKeepsTheLegacyAnswer(): void {
-        $svc = $this->makeService(null);
+        $resolver = $this->makeResolver(null);
 
-        $this->assertSame('home', $this->homepageUniqueId($svc, 'nl'));
+        $this->assertSame('home', $this->homepageUniqueId($resolver, 'nl'));
     }
 
     /**
@@ -157,12 +128,12 @@ class PageHomepageResolutionTest extends TestCase {
      * quietly override an admin's explicit homepage choice.
      */
     public function testConfiguredPointerStillWins(): void {
-        $svc = $this->makeService(
+        $resolver = $this->makeResolver(
             ['uniqueId' => 'page-nl-home', 'title' => 'Welkom'],
             'page-about'
         );
 
-        $this->assertSame('page-about', $this->homepageUniqueId($svc, 'nl'));
+        $this->assertSame('page-about', $this->homepageUniqueId($resolver, 'nl'));
     }
 
     /**
@@ -174,14 +145,14 @@ class PageHomepageResolutionTest extends TestCase {
     public function testStalePointerFallsThroughToLegacyHome(): void {
         // Pointer names a page that isn't the resolvable loose home; about.json
         // exists but the pointer 'page-ghost' resolves to nothing.
-        $svc = $this->makeService(
+        $resolver = $this->makeResolver(
             ['uniqueId' => 'page-nl-home', 'title' => 'Welkom'],
             'page-ghost'
         );
 
         $this->assertSame(
             'page-nl-home',
-            $this->homepageUniqueId($svc, 'nl'),
+            $this->homepageUniqueId($resolver, 'nl'),
             'a pointer that does not resolve must fall through to the loose home'
         );
     }
@@ -194,12 +165,12 @@ class PageHomepageResolutionTest extends TestCase {
      * getHomepageUniqueId's cached read).
      */
     public function testResolveHomepageNodeMapsHomeToLooseUniqueId(): void {
-        $svc = $this->makeService([
+        $resolver = $this->makeResolver([
             'uniqueId' => 'page-nl-home',
             'title' => 'Welkom bij IntraVox',
         ]);
 
-        $this->assertSame('page-nl-home', $svc->resolveHomepageNodeUniqueId('nl'));
+        $this->assertSame('page-nl-home', $resolver->resolveHomepageNodeUniqueId('nl'));
     }
 
     /**
@@ -207,19 +178,19 @@ class PageHomepageResolutionTest extends TestCase {
      * node's uniqueId is the last resort.
      */
     public function testResolveHomepageNodeFallsBackToFirstTreeNode(): void {
-        $svc = $this->makeService(null);
+        $resolver = $this->makeResolver(null);
 
         $tree = [
             ['uniqueId' => 'page-first', 'title' => 'First'],
             ['uniqueId' => 'page-second', 'title' => 'Second'],
         ];
-        $this->assertSame('page-first', $svc->resolveHomepageNodeUniqueId('nl', $tree));
+        $this->assertSame('page-first', $resolver->resolveHomepageNodeUniqueId('nl', $tree));
     }
 
     /** No pointer, no home.json, no tree: the bare legacy 'home'. */
     public function testResolveHomepageNodeBareHomeWhenNothingResolves(): void {
-        $svc = $this->makeService(null);
-        $this->assertSame('home', $svc->resolveHomepageNodeUniqueId('nl'));
+        $resolver = $this->makeResolver(null);
+        $this->assertSame('home', $resolver->resolveHomepageNodeUniqueId('nl'));
     }
 
     // ------------------------------------------------------------- setHomepage
@@ -239,22 +210,22 @@ class PageHomepageResolutionTest extends TestCase {
     }
 
     /**
-     * A service driving the REAL setHomepage over a fixture nl/ tree — so the page
+     * A resolver driving the REAL setHomepage over a fixture nl/ tree — so the page
      * lookup, root-level check and engine write all run for real. NO 'home' key
-     * here: setHomepage's already-home short-circuit calls the resolver's
-     * homepagePredicate (= PageService::isHomepage → the REAL resolver), so rigging
-     * a fake resolver would break setHomepage's own logic. Instead the already-home
-     * case is driven the honest way: the engine mock reports the target 'page-x' as
-     * the current homepage pointer, which the real resolver resolves as isHomepage
-     * true. The inert PageCacheInvalidator no-ops clearCache.
+     * here: setHomepage's already-home short-circuit calls resolveHomepageNodeUniqueId
+     * (the REAL resolver), so rigging a fake resolver would break setHomepage's own
+     * logic. Instead the already-home case is driven the honest way: the engine mock
+     * reports the target 'page-x' as the current homepage pointer, which the real
+     * resolver resolves as isHomepage true. The inert PageCacheInvalidator no-ops
+     * clearCache.
      *
      * @param array<string,Folder> $nlChildren the nl/ language-root children
      */
-    private function makeSetHomepageService(
+    private function makeSetHomepageResolver(
         array $nlChildren,
         bool $alreadyHome,
         HomepageService $engine
-    ): PageService {
+    ): HomepageResolverService {
         $langFolder = $this->makeFolder('/IntraVox/nl', $nlChildren);
         $base = $this->makeFolder('/IntraVox', ['nl' => $langFolder]);
 
@@ -265,12 +236,6 @@ class PageHomepageResolutionTest extends TestCase {
             languageFolder: $langFolder,
             readLanguageFolder: $langFolder
         );
-        $svc = $this->buildRealPageService([
-            'userId' => 'tester',
-            'logger' => $this->createMock(\Psr\Log\LoggerInterface::class),
-            'homepageService' => $engine,
-            'folderContext' => $folders,
-        ]);
 
         // setHomepage runs REAL (page lookup + root-level check + engine write) over
         // a REAL PageLocator against the fixture tree, so the missing-page /
@@ -279,44 +244,30 @@ class PageHomepageResolutionTest extends TestCase {
         // former homepagePredicate). $alreadyHome controls it via the engine pointer:
         // true → pointer 'page-x' (resolves as home → no-op); false → no pointer, and
         // the fixtures for the write tests carry no home.json that resolves to page-x,
-        // so page-x is genuinely not-home and the write path runs. DI-promoted resolver
-        // → real collaborators + inert cache-invalidator.
+        // so page-x is genuinely not-home and the write path runs. Real collaborators
+        // + inert cache-invalidator.
         $engine->method('getHomepageUniqueId')->willReturn($alreadyHome ? 'page-x' : null);
-        $realLocator = new \OCA\IntraVox\Service\Locator\PageLocator(
+        $realLocator = new PageLocator(
             $this->createMock(\OCA\IntraVox\Service\PageIndexService::class),
-            $this->createMock(\Psr\Log\LoggerInterface::class)
+            $this->createMock(LoggerInterface::class)
         );
-        $resolver = new \OCA\IntraVox\Service\Homepage\HomepageResolverService(
+        return new HomepageResolverService(
             $engine,
             $folders,
             $realLocator,
             $this->fakeCacheInvalidator()
         );
-        (new \ReflectionProperty(PageService::class, 'homepageResolver'))->setValue($svc, $resolver);
-        return $svc;
-    }
-
-    /**
-     * Drive setHomepage on the injected HomepageResolverService. fase-5 Phase II
-     * deleted the PageService::setHomepage delegator (its sole caller, the
-     * ApiController endpoint, now calls the resolver directly), so these
-     * integration tests reach the rigged resolver through the property
-     * makeSetHomepageService wired — byte-identical to the one-line delegator.
-     */
-    private function setHomepageVia(PageService $svc, string $uniqueId): void {
-        (new \ReflectionProperty(PageService::class, 'homepageResolver'))
-            ->getValue($svc)->setHomepage($uniqueId);
     }
 
     public function testSetHomepageRejectsMissingPage(): void {
         $engine = $this->createMock(HomepageService::class);
         $engine->expects($this->never())->method('setHomepageUniqueId');
         // Empty nl/: the target uniqueId resolves to nothing.
-        $svc = $this->makeSetHomepageService([], false, $engine);
+        $resolver = $this->makeSetHomepageResolver([], false, $engine);
 
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Page not found');
-        $this->setHomepageVia($svc, 'page-x');
+        $resolver->setHomepage('page-x');
     }
 
     public function testSetHomepageRejectsNonRootPage(): void {
@@ -325,11 +276,11 @@ class PageHomepageResolutionTest extends TestCase {
         // page-x lives at nl/section/deep, whose parent is nl/section, not nl/.
         $deep = $this->pageFolder('/IntraVox/nl/section', 'deep', 'page-x');
         $section = $this->makeFolder('/IntraVox/nl/section', ['deep' => $deep]);
-        $svc = $this->makeSetHomepageService(['section' => $section], false, $engine);
+        $resolver = $this->makeSetHomepageResolver(['section' => $section], false, $engine);
 
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Only root-level pages can be the homepage');
-        $this->setHomepageVia($svc, 'page-x');
+        $resolver->setHomepage('page-x');
     }
 
     public function testSetHomepageAlreadyHomeIsANoOp(): void {
@@ -338,9 +289,9 @@ class PageHomepageResolutionTest extends TestCase {
         $welcome = $this->pageFolder('/IntraVox/nl', 'welcome', 'page-x');
         // isHomepage returns true -> short-circuit before any write. The
         // never() expectation on the engine is the assertion.
-        $svc = $this->makeSetHomepageService(['welcome' => $welcome], true, $engine);
+        $resolver = $this->makeSetHomepageResolver(['welcome' => $welcome], true, $engine);
 
-        $this->setHomepageVia($svc, 'page-x');
+        $resolver->setHomepage('page-x');
         $this->addToAssertionCount(1);
     }
 
@@ -350,10 +301,10 @@ class PageHomepageResolutionTest extends TestCase {
             ->method('setHomepageUniqueId')
             ->with('page-x', 'nl');
         $welcome = $this->pageFolder('/IntraVox/nl', 'welcome', 'page-x');
-        $svc = $this->makeSetHomepageService(['welcome' => $welcome], false, $engine);
+        $resolver = $this->makeSetHomepageResolver(['welcome' => $welcome], false, $engine);
 
         // The once() expectation on setHomepageUniqueId is the assertion.
-        $this->setHomepageVia($svc, 'page-x');
+        $resolver->setHomepage('page-x');
         $this->addToAssertionCount(1);
     }
 
@@ -371,14 +322,14 @@ class PageHomepageResolutionTest extends TestCase {
         // as home is a legitimate no-op AFTER the guard passes. The observable proof the
         // guard accepted it is therefore the ABSENCE of the 'Only root-level' rejection.
         $engine = $this->createMock(HomepageService::class);
-        $svc = $this->makeSetHomepageService([
+        $resolver = $this->makeSetHomepageResolver([
             'home.json' => $this->makeFile('/IntraVox/nl/home.json',
                 ['uniqueId' => 'page-x', 'title' => 'Welkom']),
         ], false, $engine);
 
         // Must NOT throw 'Only root-level pages can be the homepage' — the isHome
         // flag carried it past the guard.
-        $this->setHomepageVia($svc, 'page-x');
+        $resolver->setHomepage('page-x');
         $this->addToAssertionCount(1);
     }
 }
