@@ -11,7 +11,7 @@ use OCA\IntraVox\Service\PageIndexService;
 use OCA\IntraVox\Service\Path\PageDataEnricher;
 use OCA\IntraVox\Service\PermissionService;
 use OCA\IntraVox\Service\Sanitize\PageShapeSanitizer;
-use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageService;
+use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsCollaboratorFixtures;
 use OCP\Files\Folder;
 use Psr\Log\LoggerInterface;
 
@@ -27,8 +27,8 @@ use Psr\Log\LoggerInterface;
  * listAll() takes the index fast-path when the read-language folder resolves to a
  * language whose index hasEntries(): it then returns inStableOrder(fromIndex()),
  * skipping the filesystem walk entirely. So this rigs exactly that path via the
- * injected PageIndexService + PageLocator + PermissionService, and reuses
- * BuildsPageService::fakeFolderContext / makeFolder for the folder substrate.
+ * injected PageIndexService + PageLocator + PermissionService, and reuses the
+ * facade-free fakeFolderContext / makeFolder fixtures for the folder substrate.
  * Because inStableOrder sorts by (title, uniqueId), callers that assert on
  * positional output must pass rows whose titles are already in sorted order.
  *
@@ -36,7 +36,11 @@ use Psr\Log\LoggerInterface;
  */
 trait BuildsPageLister {
 
-    use BuildsPageService;
+    // BuildsCollaboratorFixtures transitively brings the node/folder/cache/double
+    // leaf traits, so this one use covers makeFolder / fakeFolderContext(+ThrowingRead)
+    // / doubleOrBuild / fakeHomepageResolver — everything this harness needs, without
+    // the retired PageService facade machinery (fase-10).
+    use BuildsCollaboratorFixtures;
 
     /**
      * A real PageLister::listAll() returning one entry per given row (index
