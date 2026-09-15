@@ -3,7 +3,8 @@ declare(strict_types=1);
 
 namespace OCA\IntraVox\Command;
 
-use OCA\IntraVox\Service\PageService;
+use OCA\IntraVox\Service\Folder\FolderContext;
+use OCA\IntraVox\Service\Maintenance\PageMaintenanceService;
 use OCP\IUserManager;
 use OCP\IUserSession;
 use Symfony\Component\Console\Command\Command;
@@ -17,17 +18,23 @@ use Symfony\Component\Console\Output\OutputInterface;
  * Decodes the entity-encoded title + widget text fields back to readable text.
  */
 class RepairEntitiesCommand extends Command {
-    private PageService $pageService;
+    private PageMaintenanceService $maintenance;
+    private FolderContext $folders;
     private IUserSession $userSession;
     private IUserManager $userManager;
 
     public function __construct(
-        PageService $pageService,
+        // The repair walk lives in the MAINTAIN domain service; the IntraVox root
+        // is resolved here through FolderContext — the exact `folders()->intraVox()`
+        // the PageService::repairEntities delegator passed in.
+        PageMaintenanceService $maintenance,
+        FolderContext $folders,
         IUserSession $userSession,
         IUserManager $userManager
     ) {
         parent::__construct();
-        $this->pageService = $pageService;
+        $this->maintenance = $maintenance;
+        $this->folders = $folders;
         $this->userSession = $userSession;
         $this->userManager = $userManager;
     }
@@ -68,7 +75,7 @@ class RepairEntitiesCommand extends Command {
         }
 
         try {
-            $stats = $this->pageService->repairEntities($dryRun);
+            $stats = $this->maintenance->repairEntities($this->folders->intraVox(), $dryRun);
         } catch (\Throwable $e) {
             $output->writeln('<error>Repair failed: ' . $e->getMessage() . '</error>');
             return 1;
