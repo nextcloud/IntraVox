@@ -5,7 +5,6 @@ namespace OCA\IntraVox\Controller;
 
 use OCA\IntraVox\Exception\ForbiddenException;
 use OCA\IntraVox\Exception\PageNotFoundException;
-use OCA\IntraVox\Service\PageService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -16,11 +15,25 @@ use Psr\Log\LoggerInterface;
 /**
  * Linking pages across languages.
  *
- * Split out of ApiController (PR-A). Five routes, one collaborator:
- * PageService, which orchestrates and hands the group semantics to
- * TranslationGroupService (service split, PR-16 and PR-19).
+ * Split out of ApiController (PR-A). Five routes, each calling the TRANSLATE
+ * domain services directly (fase-9): the two reads and link/unlink go to
+ * TranslationQueryService, createTranslation to the COMPOSE service
+ * (PageCompositionService), and the group semantics to TranslationGroupService.
+ * This controller no longer touches PageService.
  *
- * The ACL boundary lives down there rather than here, and is worth knowing
+ * link/unlink/createTranslation each need two things the query/compose services
+ * take as per-call closures rather than owning, because both are shared across a
+ * domain boundary: the group-writer (writeTranslationGroup — also used by the
+ * compose-domain createTranslation) and the cache invalidation. The retired
+ * PageService delegators supplied them as $this-bound closures; they are
+ * reproduced here from the injected collaborators — writeTranslationGroup() below
+ * is byte-identical to PageService's private one (languageOfFolder, else the
+ * user's own language, then TranslationGroupService::writeGroup), and clearCache
+ * is PageCacheInvalidator::invalidate (the exact fan-out PageService::clearCache
+ * delegated to). createTranslation's createPage closure binds to PageWriteService,
+ * as TEMPLATE's createPageFromTemplate does — the #70 preflight rides on it.
+ *
+ * The ACL boundary lives in those services rather than here, and is worth knowing
  * when reading these endpoints: group membership comes from the index, but
  * readability comes from the mount the caller owns. A translation the caller
  * may not read must not leak its title through a listing.
@@ -31,13 +44,14 @@ class TranslationApiController extends Controller {
     public function __construct(
         string $appName,
         IRequest $request,
-        private PageService $pageService,
-        // getPage now comes from the READ-domain service (fase-4 C6). The two
-        // translation-query reads already call the TRANSLATE-query domain service
-        // directly (phase 1). link/unlink/createTranslation stay on pageService
-        // (their group-writer/clearCache/composition closures live there).
+        // getPage comes from the READ-domain service (fase-4 C6).
         private \OCA\IntraVox\Service\Read\PageReadService $pageRead,
         private \OCA\IntraVox\Service\Translation\TranslationQueryService $translationQuery,
+        private \OCA\IntraVox\Service\Compose\PageCompositionService $composition,
+        private \OCA\IntraVox\Service\Translation\TranslationGroupService $translationGroups,
+        private \OCA\IntraVox\Service\Folder\FolderContext $folders,
+        private \OCA\IntraVox\Service\Cache\PageCacheInvalidator $cacheInvalidator,
+        private \OCA\IntraVox\Service\Write\PageWriteService $pageWrite,
         private LoggerInterface $logger,
     ) {
         parent::__construct($appName, $request);
@@ -45,6 +59,19 @@ class TranslationApiController extends Controller {
 
     protected function getLogger(): LoggerInterface {
         return $this->logger;
+    }
+
+    /**
+     * Write a translation group into a page file and its index row — byte-identical
+     * to the private PageService::writeTranslationGroup the retired delegators used
+     * as a $this-bound closure. The language is where the page actually sits, else
+     * the caller's own language (matching PageService's getUserLanguage fallback).
+     *
+     * @param array $result findPageByUniqueId()-shaped result
+     */
+    private function writeTranslationGroup(array $result, string $group): void {
+        $language = $this->folders->languageOfFolder($result['folder']) ?? $this->folders->userLanguage();
+        $this->translationGroups->writeGroup($result, $group, $language);
     }
     /**
      * Link a page to another language version of itself.
@@ -64,7 +91,16 @@ class TranslationApiController extends Controller {
                 );
             }
 
-            $group = $this->pageService->linkTranslation($pageId, $targetUniqueId);
+            $group = $this->translationQuery->linkTranslation(
+                $pageId,
+                $targetUniqueId,
+                function (array $result, string $group): void {
+                    $this->writeTranslationGroup($result, $group);
+                },
+                function (): void {
+                    $this->cacheInvalidator->invalidate();
+                }
+            );
             return new DataResponse([
                 'success' => true,
                 'translationGroup' => $group,
@@ -90,7 +126,15 @@ class TranslationApiController extends Controller {
     #[NoAdminRequired]
     public function unlinkTranslation(string $pageId): DataResponse {
         try {
-            $this->pageService->unlinkTranslation($pageId);
+            $this->translationQuery->unlinkTranslation(
+                $pageId,
+                function (array $result, string $group): void {
+                    $this->writeTranslationGroup($result, $group);
+                },
+                function (): void {
+                    $this->cacheInvalidator->invalidate();
+                }
+            );
             return new DataResponse(['success' => true, 'translations' => []]);
         } catch (PageNotFoundException $e) {
             return new DataResponse(['error' => $e->getMessage()], Http::STATUS_NOT_FOUND);
@@ -138,7 +182,15 @@ class TranslationApiController extends Controller {
                 return new DataResponse(['error' => 'language is required'], Http::STATUS_BAD_REQUEST);
             }
 
-            $created = $this->pageService->createTranslation($pageId, $language, $title);
+            $created = $this->composition->createTranslation(
+                $pageId,
+                $language,
+                $title,
+                fn(array $data, ?string $parentPath = null): array => $this->pageWrite->createPage($data, $parentPath),
+                function (array $result, string $group): void {
+                    $this->writeTranslationGroup($result, $group);
+                }
+            );
             return new DataResponse([
                 'success' => true,
                 'page' => $created,
