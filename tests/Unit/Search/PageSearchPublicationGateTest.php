@@ -4,9 +4,10 @@ declare(strict_types=1);
 namespace OCA\IntraVox\Tests\Unit\Search;
 
 use OCA\IntraVox\Search\PageSearchProvider;
+use OCA\IntraVox\Service\Listing\PageLister;
 use OCA\IntraVox\Service\PageIndexService;
-use OCA\IntraVox\Service\PageService;
 use OCA\IntraVox\Service\Publication\PublicationStateService;
+use OCA\IntraVox\Service\Search\PageSearchEngine;
 use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageRead;
 use OCP\IConfig;
 use OCP\IL10N;
@@ -32,6 +33,7 @@ use PHPUnit\Framework\TestCase;
 class PageSearchPublicationGateTest extends TestCase {
 
 	use BuildsPageRead;
+	use \OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageService;
 
 	/** The publication gate now lives on PublicationStateService, not PageService. */
 	private PublicationStateService $publicationState;
@@ -43,7 +45,12 @@ class PageSearchPublicationGateTest extends TestCase {
 		$l10n->method('t')->willReturnArgument(0);
 
 		return new PageSearchProvider(
-			$this->createMock(PageService::class),   // searchPages path, not exercised here
+			// The full-text searchPages() path is not exercised by these gate tests,
+			// only the indexed isHiddenFromThisUser() path — so the engine/lister are
+			// inert real instances (both final; doubleOrBuild builds them over leaf
+			// doubles), never invoked.
+			$this->doubleOrBuild(PageSearchEngine::class),
+			$this->doubleOrBuild(PageLister::class),
 			$pageRead ?? $this->fakePageReadReturning($this->page),
 			$this->createMock(PageIndexService::class),
 			$this->createMock(IConfig::class),
