@@ -56,6 +56,22 @@ final class PageReadService {
     }
 
     /**
+     * Whether a page with the given uniqueId exists in the current read scope —
+     * a cheap existence probe (no permission recompute, no body read). Verbatim
+     * from PageService::pageExistsByUniqueId; used to validate comment/reaction
+     * objectIds and analytics targets. Any lookup failure reads as "does not
+     * exist" rather than propagating.
+     */
+    public function pageExistsByUniqueId(string $uniqueId): bool {
+        try {
+            $folder = $this->folders->readLanguageFolder();
+            return $this->locator->findPageByUniqueId($folder, $uniqueId) !== null;
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+    /**
      * The other language versions of a page, ACL-filtered per user (the former
      * resolveTranslations closure, now over the injected TranslationGroupService +
      * FolderContext root). One user's list must never be served to another — it is

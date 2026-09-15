@@ -5,9 +5,9 @@ namespace OCA\IntraVox\Tests\Unit\Controller;
 
 use OCA\IntraVox\Controller\CommentController;
 use OCA\IntraVox\Service\CommentService;
-use OCA\IntraVox\Service\PageService;
 use OCA\IntraVox\Tests\Mocks\MockGroupManager;
 use OCA\IntraVox\Tests\Mocks\MockUserSession;
+use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageRead;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
 use PHPUnit\Framework\TestCase;
@@ -23,9 +23,10 @@ use Psr\Log\LoggerInterface;
  * - Permission/access checks
  */
 class CommentControllerTest extends TestCase {
+    use BuildsPageRead;
+
     private CommentController $controller;
     private CommentService $commentService;
-    private PageService $pageService;
     private MockUserSession $userSession;
     private MockGroupManager $groupManager;
     private LoggerInterface $logger;
@@ -35,18 +36,25 @@ class CommentControllerTest extends TestCase {
         parent::setUp();
 
         $this->commentService = $this->createMock(CommentService::class);
-        $this->pageService = $this->createMock(PageService::class);
         $this->logger = $this->createMock(LoggerInterface::class);
         $this->request = $this->createMock(IRequest::class);
 
         $this->userSession = MockUserSession::loggedInAs('testuser');
         $this->groupManager = MockGroupManager::noAdmins();
 
+        // Default: the page exists. Tests that need a missing page call
+        // withPageExists(false). The existence probe now lives on PageReadService
+        // (fase-9), which is final, so it is a real service rigged to answer.
+        $this->withPageExists(true);
+    }
+
+    /** (Re)build the controller with a PageReadService whose page-existence probe answers $exists. */
+    private function withPageExists(bool $exists): void {
         $this->controller = new CommentController(
             'intravox',
             $this->request,
             $this->commentService,
-            $this->pageService,
+            $this->fakePageReadExisting($exists),
             $this->userSession,
             $this->groupManager,
             $this->logger
@@ -58,9 +66,6 @@ class CommentControllerTest extends TestCase {
     // ==========================================
 
     public function testGetCommentsReturnsCommentsForValidPage(): void {
-        $this->pageService->method('pageExistsByUniqueId')
-            ->with('page-123')
-            ->willReturn(true);
 
         $comments = [
             ['id' => '1', 'message' => 'First comment', 'author' => 'user1'],
@@ -84,9 +89,7 @@ class CommentControllerTest extends TestCase {
     }
 
     public function testGetCommentsReturnsNotFoundForInvalidPage(): void {
-        $this->pageService->method('pageExistsByUniqueId')
-            ->with('invalid-page')
-            ->willReturn(false);
+        $this->withPageExists(false);
 
         $response = $this->controller->getComments('invalid-page');
 
@@ -95,7 +98,7 @@ class CommentControllerTest extends TestCase {
     }
 
     public function testGetCommentsWithPagination(): void {
-        $this->pageService->method('pageExistsByUniqueId')->willReturn(true);
+
         $this->commentService->method('getComments')
             ->with('page-123', 10, 20)
             ->willReturn([]);
@@ -111,7 +114,7 @@ class CommentControllerTest extends TestCase {
     // ==========================================
 
     public function testCreateCommentSuccessful(): void {
-        $this->pageService->method('pageExistsByUniqueId')->willReturn(true);
+
 
         $newComment = [
             'id' => '123',
@@ -130,7 +133,7 @@ class CommentControllerTest extends TestCase {
     }
 
     public function testCreateCommentWithParentId(): void {
-        $this->pageService->method('pageExistsByUniqueId')->willReturn(true);
+
 
         $replyComment = [
             'id' => '456',
@@ -148,7 +151,7 @@ class CommentControllerTest extends TestCase {
     }
 
     public function testCreateCommentReturnsNotFoundForInvalidPage(): void {
-        $this->pageService->method('pageExistsByUniqueId')->willReturn(false);
+        $this->withPageExists(false);
 
         $response = $this->controller->createComment('invalid-page', 'Test');
 
@@ -156,7 +159,7 @@ class CommentControllerTest extends TestCase {
     }
 
     public function testCreateCommentReturnsBadRequestForEmptyMessage(): void {
-        $this->pageService->method('pageExistsByUniqueId')->willReturn(true);
+
 
         $response = $this->controller->createComment('page-123', '   ');
 
@@ -173,9 +176,6 @@ class CommentControllerTest extends TestCase {
             ->with('comment-123')
             ->willReturn('page-123');
 
-        $this->pageService->method('pageExistsByUniqueId')
-            ->with('page-123')
-            ->willReturn(true);
 
         $updatedComment = [
             'id' => 'comment-123',
@@ -194,7 +194,7 @@ class CommentControllerTest extends TestCase {
 
     public function testUpdateCommentReturnsForbiddenWhenNotAuthorized(): void {
         $this->commentService->method('getCommentPageId')->willReturn('page-123');
-        $this->pageService->method('pageExistsByUniqueId')->willReturn(true);
+
 
         $this->commentService->method('updateComment')
             ->willThrowException(new \RuntimeException('Not authorized to edit this comment'));
@@ -214,7 +214,7 @@ class CommentControllerTest extends TestCase {
 
     public function testUpdateCommentReturnsBadRequestForEmptyMessage(): void {
         $this->commentService->method('getCommentPageId')->willReturn('page-123');
-        $this->pageService->method('pageExistsByUniqueId')->willReturn(true);
+
 
         $response = $this->controller->updateComment('comment-123', '');
 
@@ -227,7 +227,7 @@ class CommentControllerTest extends TestCase {
 
     public function testDeleteCommentSuccessfulByOwner(): void {
         $this->commentService->method('getCommentPageId')->willReturn('page-123');
-        $this->pageService->method('pageExistsByUniqueId')->willReturn(true);
+
 
         $this->commentService->expects($this->once())
             ->method('deleteComment')
@@ -243,18 +243,11 @@ class CommentControllerTest extends TestCase {
         $this->userSession = MockUserSession::loggedInAs('admin');
         $this->groupManager = MockGroupManager::withAdmin('admin');
 
-        $this->controller = new CommentController(
-            'intravox',
-            $this->request,
-            $this->commentService,
-            $this->pageService,
-            $this->userSession,
-            $this->groupManager,
-            $this->logger
-        );
+        // Rebuild with the admin session (page exists by default).
+        $this->withPageExists(true);
 
         $this->commentService->method('getCommentPageId')->willReturn('page-123');
-        $this->pageService->method('pageExistsByUniqueId')->willReturn(true);
+
 
         $this->commentService->expects($this->once())
             ->method('deleteComment')
@@ -267,7 +260,7 @@ class CommentControllerTest extends TestCase {
 
     public function testDeleteCommentReturnsForbiddenWhenNotAuthorized(): void {
         $this->commentService->method('getCommentPageId')->willReturn('page-123');
-        $this->pageService->method('pageExistsByUniqueId')->willReturn(true);
+
 
         $this->commentService->method('deleteComment')
             ->willThrowException(new \RuntimeException('Not authorized to delete this comment'));
@@ -282,7 +275,7 @@ class CommentControllerTest extends TestCase {
     // ==========================================
 
     public function testGetPageReactionsSuccessful(): void {
-        $this->pageService->method('pageExistsByUniqueId')->willReturn(true);
+
 
         $reactions = [
             'reactions' => [
@@ -303,7 +296,7 @@ class CommentControllerTest extends TestCase {
     }
 
     public function testAddPageReactionSuccessful(): void {
-        $this->pageService->method('pageExistsByUniqueId')->willReturn(true);
+
 
         $reactions = ['reactions' => [['emoji' => '👍', 'count' => 1]]];
 
@@ -317,7 +310,7 @@ class CommentControllerTest extends TestCase {
     }
 
     public function testAddPageReactionReturnsNotFoundForInvalidPage(): void {
-        $this->pageService->method('pageExistsByUniqueId')->willReturn(false);
+        $this->withPageExists(false);
 
         $response = $this->controller->addPageReaction('invalid-page', '👍');
 
@@ -325,7 +318,7 @@ class CommentControllerTest extends TestCase {
     }
 
     public function testRemovePageReactionSuccessful(): void {
-        $this->pageService->method('pageExistsByUniqueId')->willReturn(true);
+
 
         $reactions = ['reactions' => []];
 
@@ -344,7 +337,7 @@ class CommentControllerTest extends TestCase {
 
     public function testGetCommentReactionsSuccessful(): void {
         $this->commentService->method('getCommentPageId')->willReturn('page-123');
-        $this->pageService->method('pageExistsByUniqueId')->willReturn(true);
+
 
         $reactions = ['reactions' => [['emoji' => '😀', 'count' => 2]]];
 
@@ -359,7 +352,7 @@ class CommentControllerTest extends TestCase {
 
     public function testAddCommentReactionSuccessful(): void {
         $this->commentService->method('getCommentPageId')->willReturn('page-123');
-        $this->pageService->method('pageExistsByUniqueId')->willReturn(true);
+
 
         $reactions = ['reactions' => [['emoji' => '🎉', 'count' => 1]]];
 
@@ -382,7 +375,7 @@ class CommentControllerTest extends TestCase {
 
     public function testRemoveCommentReactionSuccessful(): void {
         $this->commentService->method('getCommentPageId')->willReturn('page-123');
-        $this->pageService->method('pageExistsByUniqueId')->willReturn(true);
+
 
         $reactions = ['reactions' => []];
 
@@ -405,9 +398,7 @@ class CommentControllerTest extends TestCase {
             ->with('comment-from-other-page')
             ->willReturn('restricted-page');
 
-        $this->pageService->method('pageExistsByUniqueId')
-            ->with('restricted-page')
-            ->willReturn(false); // User can't see this page
+        $this->withPageExists(false); // User can't see this page
 
         $response = $this->controller->updateComment('comment-from-other-page', 'Hack attempt');
 
@@ -419,9 +410,7 @@ class CommentControllerTest extends TestCase {
             ->with('comment-from-other-page')
             ->willReturn('restricted-page');
 
-        $this->pageService->method('pageExistsByUniqueId')
-            ->with('restricted-page')
-            ->willReturn(false);
+        $this->withPageExists(false);
 
         $response = $this->controller->deleteComment('comment-from-other-page');
 

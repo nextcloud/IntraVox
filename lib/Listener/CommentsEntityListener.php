@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace OCA\IntraVox\Listener;
 
-use OCA\IntraVox\Service\PageService;
+use OCA\IntraVox\Service\Read\PageReadService;
 use OCP\Comments\CommentsEntityEvent;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
@@ -19,7 +19,7 @@ use Psr\Log\LoggerInterface;
  */
 class CommentsEntityListener implements IEventListener {
     public function __construct(
-        private PageService $pageService,
+        private PageReadService $pageRead,
         private LoggerInterface $logger
     ) {}
 
@@ -31,7 +31,7 @@ class CommentsEntityListener implements IEventListener {
         // Register 'intravox_page' as a valid object type for comments
         $event->addEntityCollection('intravox_page', function (string $pageUniqueId): bool {
             try {
-                return $this->pageService->pageExistsByUniqueId($pageUniqueId);
+                return $this->pageRead->pageExistsByUniqueId($pageUniqueId);
             } catch (\Exception $e) {
                 $this->logger->warning('CommentsEntityListener: Error checking page existence', [
                     'pageUniqueId' => $pageUniqueId,

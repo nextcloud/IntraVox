@@ -35,26 +35,67 @@ trait BuildsPageRead {
     }
 
     /**
+     * A real PageReadService whose pageExistsByUniqueId($id) returns $exists for any
+     * id — the fase-9 replacement for `createMock(PageService)->method('pageExistsByUniqueId')`.
+     * pageExistsByUniqueId resolves via folders->readLanguageFolder() +
+     * locator->findPageByUniqueId(); rigging the locator to return a hit (or null)
+     * makes the probe answer $exists. getPage is inert here (not the subject).
+     */
+    protected function fakePageReadExisting(bool $exists): PageReadService {
+        return $this->fakePageReadFrom(fn(string $id) => null, fn(string $id): bool => $exists);
+    }
+
+    /**
      * A real PageReadService whose getPage($id) runs $fn($id) — for per-id logic or
      * throwing (a callback that throws propagates verbatim through the cache-hit
      * short-circuit, reproducing a getPage that throws).
      *
+     * When $existsFn is given, the internal PageLocator's findPageByUniqueId is
+     * rigged so pageExistsByUniqueId($id) === $existsFn($id) (read at call time, so a
+     * test can flip a mutable predicate); the FolderContext's readLanguageFolder()
+     * resolves to a bare folder so the probe reaches the locator.
+     *
      * @param callable(string):(array|null) $fn
+     * @param callable(string):bool|null $existsFn
      */
-    protected function fakePageReadFrom(callable $fn): PageReadService {
+    protected function fakePageReadFrom(callable $fn, ?callable $existsFn = null): PageReadService {
         $cache = $this->createMock(PageCacheService::class);
         $cache->method('getPageData')->willReturnCallback($fn);
 
+        $locator = $this->createMock(\OCA\IntraVox\Service\Locator\PageLocator::class);
+        $folders = $this->buildInert(\OCA\IntraVox\Service\Folder\FolderContext::class);
+        if ($existsFn !== null) {
+            // pageExistsByUniqueId: readLanguageFolder() must resolve (not throw) so
+            // the probe reaches findPageByUniqueId, whose hit/miss decides existence.
+            // FolderContext is final, so build a REAL one whose getReadLanguageFolder
+            // seam closure yields a bare folder (all other atoms inert — the read seam
+            // fires first).
+            $folders = new \OCA\IntraVox\Service\Folder\FolderContext(
+                $this->createMock(\OCP\Files\IRootFolder::class),
+                'tester',
+                $this->createMock(\OCP\IConfig::class),
+                $this->createMock(\OCA\IntraVox\Service\LanguageService::class),
+                new \OCA\IntraVox\Service\Language\LanguageResolver(),
+                $this->createMock(\OCA\IntraVox\Service\Locator\PageLocator::class),
+                null,
+                fn(): \OCP\Files\Folder => $this->createMock(\OCP\Files\Folder::class)
+            );
+            $hitFolder = $this->createMock(\OCP\Files\Folder::class);
+            $locator->method('findPageByUniqueId')->willReturnCallback(
+                fn($folder, string $uniqueId, $lang = null) => $existsFn($uniqueId) ? ['folder' => $hitFolder] : null
+            );
+        }
+
         return new PageReadService(
             $cache,
-            $this->createMock(\OCA\IntraVox\Service\Locator\PageLocator::class),
+            $locator,
             $this->createMock(\OCA\IntraVox\Service\Publication\MetaVoxGateway::class),
             $this->buildInert(\OCA\IntraVox\Service\Path\PageDataEnricher::class),
             $this->buildInert(\OCA\IntraVox\Service\Sanitize\PageShapeSanitizer::class),
             $this->createMock(\OCA\IntraVox\Service\PermissionService::class),
             new \OCA\IntraVox\Service\Util\PageIdUtils(),
             $this->createMock(\Psr\Log\LoggerInterface::class),
-            $this->buildInert(\OCA\IntraVox\Service\Folder\FolderContext::class),
+            $folders,
             $this->buildInert(\OCA\IntraVox\Service\Translation\TranslationGroupService::class),
             new \OCA\IntraVox\Service\Util\GroupfolderResolver(),
         );

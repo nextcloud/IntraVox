@@ -581,19 +581,11 @@ class PageService {
      * Used by CommentsEntityListener to validate comment objectIds
      */
     public function pageExistsByUniqueId(string $uniqueId): bool {
-        try {
-            $folder = $this->folders()->readLanguageFolder();
-            return $this->findPageByUniqueId($folder, $uniqueId) !== null;
-        } catch (\Exception $e) {
-            return false;
-        }
-    }
-
-    /**
-     * Recursively find a page by uniqueId
-     */
-    private function findPageByUniqueId($folder, string $uniqueId, $languageFolder = null): ?array {
-        return $this->locator()->findPageByUniqueId($folder, $uniqueId, $languageFolder);
+        // The existence probe lives on Read/PageReadService now (RETRIEVE, god-class
+        // dissolution); this stays as a thin facade delegator until the three
+        // callers (AnalyticsController, CommentController, CommentsEntityListener)
+        // repoint.
+        return $this->readService()->pageExistsByUniqueId($uniqueId);
     }
 
 
