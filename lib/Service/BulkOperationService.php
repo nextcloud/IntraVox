@@ -20,10 +20,13 @@ class BulkOperationService {
     public const MAX_PAGES_PER_OPERATION = 100;
 
     public function __construct(
-        private PageService $pageService,
-        // getPage comes from the READ-domain service (fase-4 C6); pageService stays
-        // for the mutating batch ops (update/delete/move) + the deferred-clear
-        // begin/end pair.
+        // The mutating batch ops go straight to the domain sub-services now
+        // (god-class dissolution): create/update/delete to Write, move to
+        // Structure, and the deferred-clear begin/end pair to the CACHE-CONTROL
+        // invalidator. getPage comes from the READ-domain service (fase-4 C6).
+        private \OCA\IntraVox\Service\Write\PageWriteService $pageWrite,
+        private \OCA\IntraVox\Service\Structure\PageStructureService $pageStructure,
+        private \OCA\IntraVox\Service\Cache\PageCacheInvalidator $cacheInvalidator,
         private \OCA\IntraVox\Service\Read\PageReadService $pageRead,
         private LoggerInterface $logger
     ) {}
@@ -106,7 +109,7 @@ class BulkOperationService {
         // Clear the (blanket, distributed) cache once at the end of the batch
         // instead of once per deleted page. Request-level caches are still
         // invalidated per item, so each getPage() sees a truthful view.
-        $this->pageService->beginDeferredClear();
+        $this->cacheInvalidator->beginDeferred();
         try {
             foreach ($pageIds as $pageId) {
                 try {
@@ -119,7 +122,7 @@ class BulkOperationService {
                     }
 
                     // Delete the page
-                    $this->pageService->deletePage($pageId);
+                    $this->pageWrite->deletePage($pageId);
                     $result->addSucceeded($pageId, $page['title'] ?? 'Untitled');
 
                     $this->logger->info('IntraVox Bulk: Deleted page', [
@@ -152,7 +155,7 @@ class BulkOperationService {
                 }
             }
         } finally {
-            $this->pageService->endDeferredClear();
+            $this->cacheInvalidator->endDeferred();
         }
 
         return $result;
@@ -188,7 +191,7 @@ class BulkOperationService {
         }
 
         // One blanket cache clear for the whole batch (see bulkDelete).
-        $this->pageService->beginDeferredClear();
+        $this->cacheInvalidator->beginDeferred();
         try {
             foreach ($pageIds as $pageId) {
                 try {
@@ -207,7 +210,7 @@ class BulkOperationService {
                     }
 
                     // Move the page
-                    $this->pageService->movePage($pageId, $targetParentId);
+                    $this->pageStructure->movePage($pageId, $targetParentId);
                     $result->addSucceeded($pageId, $page['title'] ?? 'Untitled');
 
                     $this->logger->info('IntraVox Bulk: Moved page', [
@@ -225,7 +228,7 @@ class BulkOperationService {
                 }
             }
         } finally {
-            $this->pageService->endDeferredClear();
+            $this->cacheInvalidator->endDeferred();
         }
 
         return $result;
@@ -251,7 +254,7 @@ class BulkOperationService {
         }
 
         // One blanket cache clear for the whole batch (see bulkDelete).
-        $this->pageService->beginDeferredClear();
+        $this->cacheInvalidator->beginDeferred();
         try {
             foreach ($pageIds as $pageId) {
                 try {
@@ -264,7 +267,7 @@ class BulkOperationService {
                     }
 
                     // Apply updates
-                    $this->pageService->updatePage($pageId, $updates);
+                    $this->pageWrite->updatePage($pageId, $updates);
                     $result->addSucceeded($pageId, $page['title'] ?? 'Untitled');
 
                     $this->logger->info('IntraVox Bulk: Updated page', [
@@ -281,7 +284,7 @@ class BulkOperationService {
                 }
             }
         } finally {
-            $this->pageService->endDeferredClear();
+            $this->cacheInvalidator->endDeferred();
         }
 
         return $result;
