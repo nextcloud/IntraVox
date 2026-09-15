@@ -45,6 +45,37 @@ ssh "$SSH_HOST" "docker cp /tmp/ivtests.tar.gz ${CONTAINER}:/tmp/ivtests.tar.gz 
     && rm -f /tmp/ivtests.tar.gz"
 echo "    done"
 
+# deploy.sh rebuilds vendor/ with --no-dev on purpose: the dev tree pulls in
+# sabre/xml 4.x, which shadows the Nextcloud core's 2.x through PSR-4 and makes
+# CalDAV fatal. So the deployed app has no phpunit, and this suite cannot run
+# until we put one there. Ship the local vendor/ (which does have it) only when
+# the container is missing phpunit, and only for the duration of the run --
+# never as part of a deploy.
+if ! ssh "$SSH_HOST" "docker exec ${CONTAINER} test -x ${APP_DIR}/vendor/bin/phpunit" 2>/dev/null; then
+    echo "==> No phpunit in ${CONTAINER}; shipping dev dependencies"
+    if [ ! -x vendor/bin/phpunit ]; then
+        echo "    ERROR: no local vendor/bin/phpunit either. Run: composer install" >&2
+        exit 1
+    fi
+    # The whole tree, not just phpunit: the deployed autoloader was generated
+    # --no-dev, so a partial copy leaves PHPUnit\TextUI\Application unresolvable.
+    #
+    # Overlay it, never replace it. The deployed vendor/ carries the app's OWN
+    # autoload maps, generated at package time against the deployed lib/ --
+    # `rm -rf vendor` before unpacking takes those with it and every
+    # OCA\IntraVox class stops resolving, which reads as 27 mystery errors
+    # rather than as "you deleted the autoloader".
+    TMP_VENDOR="$(mktemp -d)"
+    tar -czf "$TMP_VENDOR/ivvendor.tar.gz" vendor
+    scp -q "$TMP_VENDOR/ivvendor.tar.gz" "${SSH_HOST}:/tmp/ivvendor.tar.gz"
+    ssh "$SSH_HOST" "docker cp /tmp/ivvendor.tar.gz ${CONTAINER}:/tmp/ivvendor.tar.gz \
+        && docker exec ${CONTAINER} sh -c 'cd ${APP_DIR} && tar -xzf /tmp/ivvendor.tar.gz && chown -R www-data:www-data vendor && rm -f /tmp/ivvendor.tar.gz' \
+        && rm -f /tmp/ivvendor.tar.gz"
+    rm -rf "$TMP_VENDOR"
+    echo "    done (this container now holds a DEV vendor/ — redeploy before"
+    echo "    using it for anything else, or CalDAV will fatal on sabre/xml)"
+fi
+
 echo "==> Running Integration suite in ${CONTAINER}"
 # www-data, because the tests touch the filesystem as a real user would.
 ssh "$SSH_HOST" "docker exec -u www-data ${CONTAINER} sh -c 'cd ${APP_DIR} && php vendor/bin/phpunit -c phpunit-integration.xml ${PHPUNIT_ARGS[*]:-}'"
