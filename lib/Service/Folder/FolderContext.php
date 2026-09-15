@@ -12,6 +12,7 @@ use OCP\Files\Folder;
 use OCP\Files\IRootFolder;
 use OCP\Files\NotFoundException;
 use OCP\IConfig;
+use OCP\IUserSession;
 
 /**
  * The explicit folder/location substrate of IntraVox — the ground every page
@@ -38,7 +39,11 @@ use OCP\IConfig;
  * real user-folder walk) and the readLanguageFolder/languageFolder closures (so
  * the not-yet-migrated subclasses that override those seams wholesale keep
  * winning). Production/DI passes null for all three → the real mount walk + the
- * owned composition, byte-identical to the pre-promotion behaviour.
+ * owned composition.
+ *
+ * The user id is deliberately NOT captured once: see userId(). Binding it at
+ * construction is correct for HTTP and wrong for everything else, which is how
+ * every occ command came to fail with "User not logged in".
  *
  * NEVER owns page lookup for mutation or the #70 permission decision. Its only
  * page-lookup touch is PageLocator::findPageByUniqueId inside the read-only #75
@@ -50,7 +55,15 @@ final class FolderContext {
     private string $userId;
 
     /**
-     * @param ?string $userId the current user (null/'' = logged out).
+     * @param ?string $userId the current user (null/'' = logged out). Captured at
+     *   CONSTRUCTION time, which is too early for any non-HTTP entry point: an occ
+     *   command calls IUserSession::setUser() in execute(), long after the DI
+     *   container built this object, so the value would be '' forever and every
+     *   folder lookup would throw "User not logged in". Pass $userSession as well
+     *   and the empty case is re-resolved from the session on each call instead.
+     * @param ?IUserSession $userSession late-binding fallback for exactly that
+     *   case. Only consulted when $userId is empty, so an explicitly supplied user
+     *   (tests, and any caller acting on someone else's behalf) still wins.
      * @param ?Folder $intraVoxOverride test seam: an explicit mount folder that
      *   short-circuits the real user-folder walk. Null in production/DI.
      * @param ?\Closure $readLanguageFolder getReadLanguageFolder seam. FolderContext
@@ -70,8 +83,24 @@ final class FolderContext {
         private ?Folder $intraVoxOverride = null,
         private ?\Closure $readLanguageFolder = null,
         private ?\Closure $languageFolder = null,
+        private ?IUserSession $userSession = null,
     ) {
         $this->userId = $userId ?? '';
+    }
+
+    /**
+     * The current user id, resolved as late as possible.
+     *
+     * The constructor value wins when it is set — that is the HTTP path, and it is
+     * also how a caller acts on behalf of a specific user. Only when it is empty do
+     * we ask the session, which is what makes occ commands work: they log a user in
+     * during execute(), after this object already exists.
+     */
+    private function userId(): string {
+        if ($this->userId !== '') {
+            return $this->userId;
+        }
+        return $this->userSession?->getUser()?->getUID() ?? '';
     }
 
     /**
@@ -88,10 +117,11 @@ final class FolderContext {
         if ($this->intraVoxOverride !== null) {
             return $this->intraVoxOverride;
         }
-        if (!$this->userId) {
+        $userId = $this->userId();
+        if (!$userId) {
             throw new \Exception('User not logged in');
         }
-        $userFolder = $this->rootFolder->getUserFolder($this->userId);
+        $userFolder = $this->rootFolder->getUserFolder($userId);
         try {
             $node = $userFolder->get('IntraVox');
         } catch (NotFoundException $e) {
@@ -105,10 +135,11 @@ final class FolderContext {
 
     /** The current user's base language code (formerly the getUserLanguage seam). */
     public function userLanguage(): string {
-        if (!$this->userId) {
+        $userId = $this->userId();
+        if (!$userId) {
             return self::DEFAULT_LANGUAGE;
         }
-        $lang = $this->config->getUserValue($this->userId, 'core', 'lang', self::DEFAULT_LANGUAGE);
+        $lang = $this->config->getUserValue($userId, 'core', 'lang', self::DEFAULT_LANGUAGE);
         // Base-code extraction + malformed-value guard (Phase 9: LanguageResolver).
         return $this->language->baseLanguageCode($lang);
     }

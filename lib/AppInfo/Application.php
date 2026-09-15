@@ -131,6 +131,12 @@ class Application extends App implements IBootstrap {
                 null, // intraVoxOverride — TEST seam only; null in prod (owned mount-walk)
                 null, // readLanguageFolder seam — null in prod (owned #75 composition)
                 null, // languageFolder seam — null in prod (owned create-on-miss)
+                // Late-binding fallback. The UID above is read while the container
+                // builds this service, which is before an occ command has logged
+                // anyone in — so on the CLI it is always null and every folder
+                // lookup would throw "User not logged in". FolderContext consults
+                // the session only when that captured value is empty.
+                $c->get(\OCP\IUserSession::class),
             );
         });
 

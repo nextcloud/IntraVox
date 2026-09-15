@@ -63,7 +63,7 @@
     "lib/Service/FeedTokenService.php": 165,
     "lib/Service/Filter/FacetCalculator.php": 345,
     "lib/Service/Filter/FilterSpec.php": 153,
-    "lib/Service/Folder/FolderContext.php": 339,
+    "lib/Service/Folder/FolderContext.php": 370,
     "lib/Service/FooterService.php": 241,
     "lib/Service/Format/RelativeTime.php": 38,
     "lib/Service/GroupContextService.php": 88,
