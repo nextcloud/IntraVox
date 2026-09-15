@@ -4,8 +4,9 @@ declare(strict_types=1);
 namespace OCA\IntraVox\Tests\Unit\Service;
 
 use OCA\IntraVox\Exception\PageNotFoundException;
-use OCA\IntraVox\Service\PageService;
-use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageService;
+use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsCacheFixtures;
+use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsFolderFixtures;
+use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsServiceDoubles;
 use OCP\Files\File;
 use OCP\Files\FileInfo;
 use OCP\Files\Folder;
@@ -32,7 +33,11 @@ use PHPUnit\Framework\TestCase;
  */
 class PageServiceMediaLanguageTest extends TestCase {
 
-    use BuildsPageService;
+    use BuildsFolderFixtures;
+
+    use BuildsServiceDoubles;
+
+    use BuildsCacheFixtures;
 
     /** A page JSON file. */
     private function makeFile(string $path, array $json): File {
@@ -93,68 +98,6 @@ class PageServiceMediaLanguageTest extends TestCase {
             }
         );
         return $folder;
-    }
-
-    /**
-     * Build the service with $readFolder as the language the user is shown and
-     * $allLanguages as every language folder under /IntraVox.
-     *
-     * getLanguageFolder() and getReadLanguageFolder() are both pinned to
-     * $readFolder: these tests are about the media paths ignoring BOTH in
-     * favour of the page's own language, so which of the two a path used to
-     * call must not change the outcome.
-     */
-    private function makeService(Folder $readFolder, array $allLanguages): PageService {
-        $byLang = [];
-        foreach ($allLanguages as $l) {
-            $byLang[$l->getName()] = $l;
-        }
-        $base = $this->createMock(Folder::class);
-        $base->method('getPath')->willReturn('/IntraVox');
-        $base->method('getDirectoryListing')->willReturn($allLanguages);
-        $base->method('get')->willReturnCallback(function ($p) use ($byLang) {
-            if (isset($byLang[$p])) {
-                return $byLang[$p];
-            }
-            throw new \OCP\Files\NotFoundException($p);
-        });
-
-        // The media methods resolve their read/language folder through the injected
-        // FolderContext now, so getReadLanguageFolder/getLanguageFolder are gone.
-        $user = $this->createMock(\OCP\IUser::class);
-        $user->method('getUID')->willReturn('tester');
-        $session = $this->createMock(\OCP\IUserSession::class);
-        $session->method('getUser')->willReturn($user);
-
-        $config = $this->createMock(\OCP\IConfig::class);
-        $config->method('getUserValue')->willReturn('de');
-
-        $languageService = $this->createMock(\OCA\IntraVox\Service\LanguageService::class);
-        $languageService->method('isLanguageAvailable')->willReturnCallback(
-            fn(string $code) => in_array($code, ['en', 'de', 'fr', 'nl'], true)
-        );
-        $languageService->method('getPrimaryLanguage')->willReturn('en');
-
-        $explicit = [
-            'userSession' => $session,
-            'userId' => 'tester',
-            'config' => $config,
-            'logger' => $this->createMock(\Psr\Log\LoggerInterface::class),
-            'languageService' => $languageService,
-            'folderContext' => $this->fakeFolderContext(
-                readLanguageFolder: $readFolder,
-                intraVox: $base,
-                userLanguage: 'de',
-                primaryLanguage: 'en'
-            ),
-        ];
-        // fase-3: real DI ctor; inert invalidator no-ops clearCache.
-        $svc = $this->buildRealPageService($explicit);
-
-        // sanitizeId() is delegated to a final helper that the loop above
-        // instantiates with mocked collaborators; make it behave like the real
-        // one for the ids these tests use.
-        return $svc;
     }
 
     /**
