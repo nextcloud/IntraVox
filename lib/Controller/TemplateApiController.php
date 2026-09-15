@@ -15,9 +15,14 @@ use Psr\Log\LoggerInterface;
  * Page templates: list, read, save, delete, and create a page from one.
  *
  * Split out of ApiController (PR-A), which carried 57 route methods across a
- * dozen unrelated resources. Templates is the most self-contained of them: one
- * collaborator (PageService, which delegates to PageTemplateService) and no
- * shared helpers.
+ * dozen unrelated resources. Templates is the most self-contained of them.
+ *
+ * The four query/delete routes call the TEMPLATE domain service
+ * (PageTemplateService) directly, resolving the language folder through
+ * FolderContext (fase-9) — the exact `folders()->languageFolder()` the retired
+ * PageService delegators wrapped, including their per-method degrade-to-fallback
+ * when it throws. The two composition routes (saveAsTemplate/createPageFromTemplate)
+ * still go through PageService, which owns the userId-scoped PageCompositionService.
  *
  * Method bodies are verbatim. The #[NoAdminRequired] attributes travel with
  * them, because those attributes ARE the authorization posture — see
@@ -32,6 +37,8 @@ class TemplateApiController extends Controller {
         IRequest $request,
         private PageService $pageService,
         private LoggerInterface $logger,
+        private \OCA\IntraVox\Service\Template\PageTemplateService $templates,
+        private \OCA\IntraVox\Service\Folder\FolderContext $folders,
     ) {
         parent::__construct($appName, $request);
     }
@@ -46,8 +53,18 @@ class TemplateApiController extends Controller {
     #[NoAdminRequired]
     public function listTemplates(): DataResponse {
         try {
-            $templates = $this->pageService->listTemplates();
-            $canCreate = $this->pageService->canCreateTemplates();
+            // PageService::listTemplates / canCreateTemplates each degraded ONLY a
+            // languageFolder() throw to [] / false (their inner catch wrapped just the
+            // folder resolution; a throw from the TEMPLATE service itself propagated).
+            // Reproduce that exact scoping: catch around the folder resolve, then call
+            // the service unguarded so its own errors still surface as a 500.
+            try {
+                $langFolder = $this->folders->languageFolder();
+            } catch (\Exception $e) {
+                $langFolder = null;
+            }
+            $templates = $langFolder !== null ? $this->templates->listTemplates($langFolder) : [];
+            $canCreate = $langFolder !== null ? $this->templates->canCreateTemplates($langFolder) : false;
 
             return new DataResponse([
                 'templates' => $templates,
@@ -67,7 +84,15 @@ class TemplateApiController extends Controller {
     #[NoAdminRequired]
     public function getTemplate(string $id): DataResponse {
         try {
-            $template = $this->pageService->getTemplate($id);
+            // PageService::getTemplate degraded a languageFolder() throw to null (which
+            // the 404 branch below already handles); a throw from the service itself
+            // propagated to the 500. Reproduce that scoping.
+            try {
+                $langFolder = $this->folders->languageFolder();
+            } catch (\Exception $e) {
+                $langFolder = null;
+            }
+            $template = $langFolder !== null ? $this->templates->getTemplate($langFolder, $id) : null;
 
             if ($template === null) {
                 return new DataResponse([
@@ -100,8 +125,15 @@ class TemplateApiController extends Controller {
                 ], Http::STATUS_BAD_REQUEST);
             }
 
-            // Check if user can create templates
-            if (!$this->pageService->canCreateTemplates()) {
+            // Check if user can create templates. PageService::canCreateTemplates
+            // degraded a languageFolder() throw to false (→ 403 here); reproduce it.
+            try {
+                $langFolder = $this->folders->languageFolder();
+                $canCreate = $this->templates->canCreateTemplates($langFolder);
+            } catch (\Exception $e) {
+                $canCreate = false;
+            }
+            if (!$canCreate) {
                 return new DataResponse([
                     'error' => 'You do not have permission to create templates',
                 ], Http::STATUS_FORBIDDEN);
@@ -130,7 +162,17 @@ class TemplateApiController extends Controller {
     #[NoAdminRequired]
     public function deleteTemplate(string $id): DataResponse {
         try {
-            $result = $this->pageService->deleteTemplate($id);
+            // PageService::deleteTemplate degraded a languageFolder() throw to
+            // ['success'=>false, 'error'=>'Templates folder not accessible'] (→ 400
+            // below); a throw from the service itself propagated. Reproduce that.
+            try {
+                $langFolder = $this->folders->languageFolder();
+            } catch (\Exception $e) {
+                $langFolder = null;
+            }
+            $result = $langFolder !== null
+                ? $this->templates->deleteTemplate($langFolder, $id)
+                : ['success' => false, 'error' => 'Templates folder not accessible'];
 
             if (!$result['success']) {
                 return new DataResponse([
