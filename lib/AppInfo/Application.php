@@ -106,6 +106,36 @@ class Application extends App implements IBootstrap {
             );
         });
 
+        // Register PageCompositionService (COMPOSE domain: copy/translate/template).
+        //
+        // Autowiring cannot build it because of the non-nullable `string $userId`
+        // scalar — the container has no value to bind a required string to when no
+        // user is in session. Mirror PageService's own resolution: the session UID,
+        // coalesced to '' (PageService does `$userId ?? ''` on its nullable param;
+        // here the param is non-nullable so the '' must be supplied).
+        //
+        // Every OTHER collaborator is fetched with $c->get() — NOT `new` — so this
+        // service holds the SAME per-request singletons (PageCacheService above all)
+        // that PageWriteService and PageReadService hold. findPageFolder's read/write
+        // rides on that shared pageFolders map; a forked cache instance would resolve
+        // an empty map and silently copy zero images on a foreign-language page (#90).
+        $context->registerService(\OCA\IntraVox\Service\Compose\PageCompositionService::class, function ($c) {
+            return new \OCA\IntraVox\Service\Compose\PageCompositionService(
+                $c->get(\OCA\IntraVox\Service\Template\PageTemplateService::class),
+                $c->get(\OCA\IntraVox\Service\Translation\TranslationGroupService::class),
+                $c->get(\OCA\IntraVox\Service\Media\PageMediaService::class),
+                $c->get(\OCA\IntraVox\Service\Sanitize\HtmlSanitizer::class),
+                $c->get(\OCA\IntraVox\Service\Util\PageIdUtils::class),
+                $c->get(\OCA\IntraVox\Service\Folder\FolderContext::class),
+                $c->get(\OCP\IUserSession::class)->getUser()?->getUID() ?? '',
+                $c->get(\Psr\Log\LoggerInterface::class),
+                $c->get(\OCA\IntraVox\Service\Cache\PageCacheInvalidator::class),
+                $c->get(\OCA\IntraVox\Service\Read\PageReadService::class),
+                $c->get(\OCA\IntraVox\Service\Locator\PageLocator::class),
+                $c->get(\OCA\IntraVox\Service\Cache\PageCacheService::class),
+            );
+        });
+
         // Register PermissionService
         $context->registerService(\OCA\IntraVox\Service\PermissionService::class, function ($c) {
             return new \OCA\IntraVox\Service\PermissionService(

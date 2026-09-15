@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace OCA\IntraVox\Controller;
 
-use OCA\IntraVox\Service\PageService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -22,7 +21,12 @@ use Psr\Log\LoggerInterface;
  * FolderContext (fase-9) — the exact `folders()->languageFolder()` the retired
  * PageService delegators wrapped, including their per-method degrade-to-fallback
  * when it throws. The two composition routes (saveAsTemplate/createPageFromTemplate)
- * still go through PageService, which owns the userId-scoped PageCompositionService.
+ * call the COMPOSE domain service (PageCompositionService) directly — the same
+ * userId-scoped instance the retired PageService::saveAsTemplate /
+ * createPageFromTemplate delegators built and forwarded to. createPageFromTemplate's
+ * per-call createPage closure now binds to the injected PageWriteService, which is
+ * exactly what PageService::createPage delegated to (the #70 isCreatable preflight
+ * rides on it, unchanged). This controller no longer touches PageService at all.
  *
  * Method bodies are verbatim. The #[NoAdminRequired] attributes travel with
  * them, because those attributes ARE the authorization posture — see
@@ -35,10 +39,11 @@ class TemplateApiController extends Controller {
     public function __construct(
         string $appName,
         IRequest $request,
-        private PageService $pageService,
         private LoggerInterface $logger,
         private \OCA\IntraVox\Service\Template\PageTemplateService $templates,
         private \OCA\IntraVox\Service\Folder\FolderContext $folders,
+        private \OCA\IntraVox\Service\Compose\PageCompositionService $composition,
+        private \OCA\IntraVox\Service\Write\PageWriteService $pageWrite,
     ) {
         parent::__construct($appName, $request);
     }
@@ -139,7 +144,7 @@ class TemplateApiController extends Controller {
                 ], Http::STATUS_FORBIDDEN);
             }
 
-            $result = $this->pageService->saveAsTemplate($pageUniqueId, $templateTitle, $templateDescription);
+            $result = $this->composition->saveAsTemplate($pageUniqueId, $templateTitle, $templateDescription);
 
             if (!$result['success']) {
                 return new DataResponse([
@@ -205,7 +210,16 @@ class TemplateApiController extends Controller {
                 ], Http::STATUS_BAD_REQUEST);
             }
 
-            $result = $this->pageService->createPageFromTemplate($templateId, $pageTitle, $parentPath);
+            // createPage is supplied per call as the closure PageService::createPageFromTemplate
+            // forwarded: `fn($data,$parent) => $this->createPage(...)`, which itself was a pure
+            // delegator to the write service. Bind it straight to the injected PageWriteService —
+            // the same container singleton — so the #70 isCreatable preflight runs unchanged.
+            $result = $this->composition->createPageFromTemplate(
+                $templateId,
+                $pageTitle,
+                $parentPath,
+                fn(array $data, ?string $parentPath = null): array => $this->pageWrite->createPage($data, $parentPath)
+            );
 
             if (!$result['success']) {
                 return new DataResponse([
