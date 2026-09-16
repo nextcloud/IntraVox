@@ -209,7 +209,14 @@ jobs:
           php occ group:adduser intravox-ci admin
           id=$(php occ groupfolders:create IntraVox)
           echo "created groupfolder id=$id"
-          php occ groupfolders:group "$id" intravox-ci
+          # The permissions are a positional list, and leaving it off means READ
+          # ONLY -- which the first run did, and the suite caught it: a read-only
+          # mount is not a content folder IntraVox accepts, so getSharedFolder()
+          # fell back to the user home and the test reported 'files' where
+          # 'IntraVox' was expected. That is bug A's exact shape, found by the
+          # assertion on the folder NAME rather than on two calls agreeing.
+          # dev grants its IntraVox group everything; so does this.
+          php occ groupfolders:group "$id" intravox-ci read write share delete
           php occ groupfolders:list
 
       - name: Integration suite
