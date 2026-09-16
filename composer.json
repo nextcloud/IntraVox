@@ -1,38 +1,42 @@
 {
-  "name": "voxcloud/intravox",
-  "description": "SharePoint-like pages for Nextcloud",
-  "type": "nextcloud-app",
-  "license": "AGPL-3.0",
-  "require": {
-    "php": ">=8.2",
-    "enshrined/svg-sanitize": "^0.22",
-    "lsolesen/pel": "^0.9.12"
-  },
-  "require-dev": {
-    "phpunit/phpunit": "^10.0",
-    "mockery/mockery": "^1.6"
-  },
-  "autoload": {
-    "psr-4": {
-      "OCA\\IntraVox\\": "lib/"
+    "name": "voxcloud/intravox",
+    "description": "SharePoint-like pages for Nextcloud",
+    "type": "nextcloud-app",
+    "license": "AGPL-3.0",
+    "require": {
+        "php": ">=8.2",
+        "enshrined/svg-sanitize": "^0.22",
+        "lsolesen/pel": "^0.9.12"
+    },
+    "require-dev": {
+        "mockery/mockery": "^1.6",
+        "nextcloud/ocp": "v32.0.9",
+        "phpstan/phpstan": "^2.2",
+        "phpunit/phpunit": "^10.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "OCA\\IntraVox\\": "lib/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "OCA\\IntraVox\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "phpunit",
+        "test:unit": "phpunit --testsuite Unit",
+        "test:integration": "echo 'Integration tests run inside the nc-dev container: scripts/run-integration-tests.sh'",
+        "test:coverage": "phpunit --coverage-html coverage",
+        "lint:phpstan": "phpstan analyse --memory-limit=2G",
+        "lint:phpstan:baseline": "phpstan analyse --memory-limit=2G --generate-baseline=phpstan-baseline.neon"
+    },
+    "config": {
+        "audit": {
+            "ignore": [
+                "PKSA-4g5g-4rkv-myqs"
+            ]
+        }
     }
-  },
-  "autoload-dev": {
-    "psr-4": {
-      "OCA\\IntraVox\\Tests\\": "tests/"
-    }
-  },
-  "scripts": {
-    "test": "phpunit",
-    "test:unit": "phpunit --testsuite Unit",
-    "test:integration": "echo 'Integration tests run inside the nc-dev container: scripts/run-integration-tests.sh'",
-    "test:coverage": "phpunit --coverage-html coverage",
-    "lint:phpstan": "phpstan analyse --memory-limit=2G",
-    "lint:phpstan:baseline": "phpstan analyse --memory-limit=2G --generate-baseline=phpstan-baseline.neon"
-  },
-  "config": {
-    "audit": {
-      "ignore": ["PKSA-4g5g-4rkv-myqs"]
-    }
-  }
 }
