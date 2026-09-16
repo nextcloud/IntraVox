@@ -17,9 +17,16 @@
 # That script drives the suite inside the live dev container. This installs a
 # THROWAWAY Nextcloud in the runner, which makes the suite a gate rather than a
 # ritual, and removes the two problems the script cannot avoid: it needs SSH to
-# a shared server, and it leaves a DEV vendor/ behind (sabre/xml 4.x shadows the
-# core's 2.x and makes CalDAV fatal -- it has bitten twice). Both keep their use:
-# the script tests against real content, this tests against a clean install.
+# a shared server, and it leaves a DEV vendor/ behind on a machine that outlives
+# the run. Both keep their use: the script tests against real content, this
+# tests against a clean install.
+#
+# The dev-vendor shadowing problem is NOT solved by throwing the server away --
+# it bites during the job. The app's vendor/ sits ahead of the server's
+# 3rdparty/ on the autoload path, so sabre/xml 4.x breaks CalDAV and
+# symfony/console 6.4 breaks occ on NC35. The install step therefore swaps in a
+# --no-dev vendor for everything that boots Nextcloud, and swaps the dev tree
+# back for phpunit.
 #
 # The suite needs groupfolders. Every test builds a throwaway groupfolder, so
 # without that app IntegrationTestCase skips the whole suite with an explanation
@@ -136,9 +143,24 @@ jobs:
         with: { path: server/apps/intravox }
 
       - name: Install IntraVox dev dependencies
-        # --dev on purpose: phpunit lives there. Safe here in a way it is not on
-        # a real server, because this Nextcloud is thrown away at the end of the
-        # job -- nothing outlives it to be poisoned by the sabre/xml shadow.
+        # --dev, because phpunit lives there. This was "safe because the server
+        # is thrown away", and that reasoning was wrong: the poisoning happens
+        # DURING the job, not after it.
+        #
+        # The app's vendor/ is on the autoload path ahead of the server's
+        # 3rdparty/, so 23 dev packages shadow core libraries -- among them
+        # sabre/xml 4.x (the CalDAV fatal we already know) and symfony/console
+        # 6.4, which killed every stable35 run with
+        #
+        #     Call to undefined method Symfony\...\Application::addCommand()
+        #
+        # NC35 moved to Symfony 7, where that method exists; 32-34 are still on
+        # 6.x, which is exactly why only stable35 failed. Nothing to do with
+        # this app's code.
+        #
+        # It does not affect the App Store tarball: composer.lock's production
+        # set is enshrined/svg-sanitize and lsolesen/pel, nothing else, and
+        # deploy.sh builds vendor/ with --no-dev. This is a CI artefact only.
         working-directory: server/apps/intravox
         # No COMPOSER_AUTH here, unlike ci.yml. Every dependency comes from
         # Packagist as a dist zip -- composer.json declares no vcs repositories
@@ -213,9 +235,17 @@ jobs:
         # other thing a bare server does not have.
         run: |
           set -e
+          # occ runs with the app's vendor/ shadowing core libraries, so move
+          # the dev tree aside for anything that boots Nextcloud. Restored just
+          # before phpunit, which is the only step that needs it.
+          mv apps/intravox/vendor apps/intravox/vendor-dev
+          composer install --no-dev --prefer-dist --no-progress \
+            --no-interaction --working-dir=apps/intravox
           php occ intravox:setup --language en --no-interaction
           php occ groupfolders:list
           php occ intravox:reindex
+          rm -rf apps/intravox/vendor
+          mv apps/intravox/vendor-dev apps/intravox/vendor
 
       - name: Integration suite
         working-directory: server/apps/intravox
