@@ -30,7 +30,7 @@ IntraVox runs wherever you run Nextcloud — your own hardware, an EU host, on-p
 * Public sharing, with optional password protection
 * Department access control through Team folders ACL
 
-**Requirements:** Nextcloud 32–34, PHP 8.2+, Team folders.
+**Requirements:** Nextcloud 32–35, PHP 8.2+, Team folders.
     ]]></description>
     <description lang="nl"><![CDATA[IntraVox maakt van Nextcloud een volwaardig intranet: pagina's die je bouwt met een visuele drag-and-drop-editor, zonder code.
 
@@ -54,7 +54,7 @@ IntraVox draait waar jij Nextcloud draait — eigen hardware, EU-hoster, on-prem
 * Publiek delen, optioneel met wachtwoord
 * Toegang per afdeling via Team folders-ACL
 
-**Vereisten:** Nextcloud 32–34, PHP 8.2+, Team folders.
+**Vereisten:** Nextcloud 32–35, PHP 8.2+, Team folders.
     ]]></description>
     <description lang="de"><![CDATA[IntraVox macht aus Nextcloud ein vollwertiges Intranet: Seiten, die Sie mit einem visuellen Drag-and-drop-Editor bauen — ohne Code.
 
@@ -78,7 +78,7 @@ IntraVox läuft dort, wo Sie Nextcloud betreiben — eigene Hardware, EU-Hoster,
 * Öffentliches Teilen, auf Wunsch mit Passwort
 * Zugriff pro Abteilung über Team-Folders-ACL
 
-**Voraussetzungen:** Nextcloud 32–34, PHP 8.2+, Team folders.
+**Voraussetzungen:** Nextcloud 32–35, PHP 8.2+, Team folders.
     ]]></description>
     <description lang="fr"><![CDATA[IntraVox transforme Nextcloud en véritable intranet : des pages que vous construisez avec un éditeur visuel par glisser-déposer, sans code.
 
@@ -102,7 +102,7 @@ IntraVox s'exécute là où vous exécutez Nextcloud — votre matériel, un hé
 * Partage public, avec mot de passe en option
 * Accès par service via les ACL des dossiers d'équipe
 
-**Prérequis :** Nextcloud 32–34, PHP 8.2+, Team folders.
+**Prérequis :** Nextcloud 32–35, PHP 8.2+, Team folders.
     ]]></description>
     <description lang="es"><![CDATA[IntraVox convierte Nextcloud en una intranet completa: páginas que construyes con un editor visual de arrastrar y soltar, sin escribir código.
 
@@ -126,7 +126,7 @@ IntraVox se ejecuta donde ejecutas Nextcloud: tu propio hardware, un proveedor e
 * Compartición pública, con contraseña opcional
 * Acceso por departamento mediante ACL de carpetas de equipo
 
-**Requisitos:** Nextcloud 32–34, PHP 8.2+, Team folders.
+**Requisitos:** Nextcloud 32–35, PHP 8.2+, Team folders.
     ]]></description>
     <version>2.7.1</version>
     <licence>agpl</licence>
