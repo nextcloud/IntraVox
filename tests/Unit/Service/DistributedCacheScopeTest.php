@@ -36,15 +36,22 @@ class DistributedCacheScopeTest extends TestCase {
 		'translations',
 	];
 
-	private function pageServiceSource(): string {
-		$path = \dirname(__DIR__, 3) . '/lib/Service/PageService.php';
+	private function sourceOf(string $relPath): string {
+		$path = \dirname(__DIR__, 3) . '/' . $relPath;
 		$this->assertFileExists($path);
 
 		return (string)file_get_contents($path);
 	}
 
+	private function pageServiceSource(): string {
+		return $this->sourceOf('lib/Service/PageService.php');
+	}
+
 	public function testPerUserFieldsAreStrippedBeforeDistributedCaching(): void {
-		$source = $this->pageServiceSource();
+		// The single-page read + its distributed-content cache moved to
+		// PageReadService (god-class dissolution, read cluster); the strip lives
+		// there now. The tree/news cache keys below still live on PageService.
+		$source = $this->sourceOf('lib/Service/Read/PageReadService.php');
 
 		// The single place a page body is written to the shared cache.
 		$this->assertStringContainsString(
@@ -74,7 +81,9 @@ class DistributedCacheScopeTest extends TestCase {
 	 * share an entry.
 	 */
 	public function testTreeCacheKeyIsScopedByGroupHash(): void {
-		$source = $this->pageServiceSource();
+		// The page-tree build + cache scoping moved to Tree/PageTreeService
+		// (fase-4 capstone); the group-hash key guard travels with it.
+		$source = $this->sourceOf('lib/Service/Tree/PageTreeService.php');
 
 		$this->assertMatchesRegularExpression(
 			'/\$cacheKey\s*=\s*\$this->groupContext->getGroupHash\(\)/',
@@ -92,9 +101,13 @@ class DistributedCacheScopeTest extends TestCase {
 
 	/**
 	 * The news cache is the third shared entry and carries the same risk.
+	 *
+	 * The news-widget orchestration (with this cache key) moved to
+	 * News/NewsWidgetService (NEWS domain carve); the group-scoping guard follows
+	 * it there.
 	 */
 	public function testNewsCacheKeyIsScopedByGroupHash(): void {
-		$source = $this->pageServiceSource();
+		$source = $this->sourceOf('lib/Service/News/NewsWidgetService.php');
 
 		$this->assertMatchesRegularExpression(
 			'/\$newsCacheKey\s*=\s*\'news_\'\s*\.\s*\$language\s*\.\s*\'_\'\s*\.\s*\$this->groupContext->getGroupHash\(\)/',

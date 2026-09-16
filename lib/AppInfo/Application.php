@@ -106,6 +106,70 @@ class Application extends App implements IBootstrap {
             );
         });
 
+        // Register FolderContext (the folder/location substrate).
+        //
+        // Autowiring MISbuilds it: the ctor's `?Folder $intraVoxOverride = null` is a
+        // TEST-ONLY seam (a fixture injects a fake mount there), but Nextcloud's DI
+        // container satisfies the `?Folder` type by resolving a Folder — the user's
+        // LazyUserFolder (`/<uid>/files`) — instead of honouring the null default. That
+        // makes intraVox() short-circuit to the user's HOME root rather than walking to
+        // the mounted `IntraVox` groupfolder, so every content lookup reads an empty
+        // `/<uid>/files/<lang>` and the whole app degrades to the WelcomeScreen. The
+        // three seam params (intraVoxOverride + the two folder closures) MUST be null in
+        // production so the owned mount-walk / #75 compositions run. userId is the
+        // session UID (nullable here, matching the old PageService::getIntraVoxFolder
+        // which resolved the mount from the logged-in user); the substrate atoms come
+        // via $c->get().
+        $context->registerService(\OCA\IntraVox\Service\Folder\FolderContext::class, function ($c) {
+            return new \OCA\IntraVox\Service\Folder\FolderContext(
+                $c->get(\OCP\Files\IRootFolder::class),
+                $c->get(\OCP\IUserSession::class)->getUser()?->getUID(),
+                $c->get(\OCP\IConfig::class),
+                $c->get(\OCA\IntraVox\Service\LanguageService::class),
+                $c->get(\OCA\IntraVox\Service\Language\LanguageResolver::class),
+                $c->get(\OCA\IntraVox\Service\Locator\PageLocator::class),
+                null, // intraVoxOverride — TEST seam only; null in prod (owned mount-walk)
+                null, // readLanguageFolder seam — null in prod (owned #75 composition)
+                null, // languageFolder seam — null in prod (owned create-on-miss)
+                // Late-binding fallback. The UID above is read while the container
+                // builds this service, which is before an occ command has logged
+                // anyone in — so on the CLI it is always null and every folder
+                // lookup would throw "User not logged in". FolderContext consults
+                // the session only when that captured value is empty.
+                $c->get(\OCP\IUserSession::class),
+            );
+        });
+
+        // Register PageCompositionService (COMPOSE domain: copy/translate/template).
+        //
+        // Autowiring cannot build it because of the non-nullable `string $userId`
+        // scalar — the container has no value to bind a required string to when no
+        // user is in session. Mirror PageService's own resolution: the session UID,
+        // coalesced to '' (PageService does `$userId ?? ''` on its nullable param;
+        // here the param is non-nullable so the '' must be supplied).
+        //
+        // Every OTHER collaborator is fetched with $c->get() — NOT `new` — so this
+        // service holds the SAME per-request singletons (PageCacheService above all)
+        // that PageWriteService and PageReadService hold. findPageFolder's read/write
+        // rides on that shared pageFolders map; a forked cache instance would resolve
+        // an empty map and silently copy zero images on a foreign-language page (#90).
+        $context->registerService(\OCA\IntraVox\Service\Compose\PageCompositionService::class, function ($c) {
+            return new \OCA\IntraVox\Service\Compose\PageCompositionService(
+                $c->get(\OCA\IntraVox\Service\Template\PageTemplateService::class),
+                $c->get(\OCA\IntraVox\Service\Translation\TranslationGroupService::class),
+                $c->get(\OCA\IntraVox\Service\Media\PageMediaService::class),
+                $c->get(\OCA\IntraVox\Service\Sanitize\HtmlSanitizer::class),
+                $c->get(\OCA\IntraVox\Service\Util\PageIdUtils::class),
+                $c->get(\OCA\IntraVox\Service\Folder\FolderContext::class),
+                $c->get(\OCP\IUserSession::class)->getUser()?->getUID() ?? '',
+                $c->get(\Psr\Log\LoggerInterface::class),
+                $c->get(\OCA\IntraVox\Service\Cache\PageCacheInvalidator::class),
+                $c->get(\OCA\IntraVox\Service\Read\PageReadService::class),
+                $c->get(\OCA\IntraVox\Service\Locator\PageLocator::class),
+                $c->get(\OCA\IntraVox\Service\Cache\PageCacheService::class),
+            );
+        });
+
         // Register PermissionService
         $context->registerService(\OCA\IntraVox\Service\PermissionService::class, function ($c) {
             return new \OCA\IntraVox\Service\PermissionService(

@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace OCA\IntraVox\Tests\Integration;
 
-use OCA\IntraVox\Service\PageService;
 use OCA\IntraVox\Service\PermissionService;
 use OCA\IntraVox\Service\SetupService;
 use OCA\GroupFolders\Folder\FolderManager;
@@ -58,6 +57,22 @@ abstract class IntegrationTestCase extends TestCase {
             );
         }
 
+        if (!self::isGroupFoldersAvailable()) {
+            // Every test in this suite builds a throwaway groupfolder, so
+            // without the app there is nothing to test against. Skipping says
+            // that; the alternative is a container error from the first
+            // folderManager() call, which reads as a broken suite rather than
+            // as a missing dependency.
+            //
+            // This matters outside nc-dev: a CI runner installs a bare
+            // Nextcloud, and groupfolders is a separate app that has to be
+            // installed and enabled on purpose.
+            self::markTestSkippedStatic(
+                'Integration tests need the groupfolders app, which is not enabled here. '
+                . 'Enable it with: occ app:install groupfolders && occ app:enable groupfolders'
+            );
+        }
+
         self::cleanUpStrayFolders();
         self::createTestFolder();
     }
@@ -69,6 +84,22 @@ abstract class IntegrationTestCase extends TestCase {
 
     protected static function isNextcloudBootstrapped(): bool {
         return class_exists(\OC::class, false) && \OC::$server !== null;
+    }
+
+    /**
+     * Whether groupfolders is not merely installed but actually usable.
+     *
+     * Resolving FolderManager through the container rather than checking
+     * class_exists(): the app ships its classes on disk whether or not it is
+     * enabled, so class_exists() answers yes for a disabled app and the suite
+     * would fail on the first real call instead of skipping here.
+     */
+    protected static function isGroupFoldersAvailable(): bool {
+        try {
+            return self::server()->get(FolderManager::class) instanceof FolderManager;
+        } catch (\Throwable $e) {
+            return false;
+        }
     }
 
     /**
@@ -86,8 +117,32 @@ abstract class IntegrationTestCase extends TestCase {
         return self::server()->get(FolderManager::class);
     }
 
-    protected function pageService(): PageService {
-        return self::server()->get(PageService::class);
+    /**
+     * The page write path (create/update/delete) lives on Write\PageWriteService
+     * (fase-10 dissolved PageService, whose create/update/deletePage were thin
+     * delegators to this service). Resolve it from the container exactly as
+     * production consumers do.
+     */
+    protected function pageWriteService(): \OCA\IntraVox\Service\Write\PageWriteService {
+        return self::server()->get(\OCA\IntraVox\Service\Write\PageWriteService::class);
+    }
+
+    /**
+     * The single-page read lives on PageReadService (fase-6 Track 3b retired
+     * PageService::getPage). Resolve it from the container exactly as production
+     * consumers do.
+     */
+    protected function pageReadService(): \OCA\IntraVox\Service\Read\PageReadService {
+        return self::server()->get(\OCA\IntraVox\Service\Read\PageReadService::class);
+    }
+
+    /**
+     * The page listing walk lives on Listing\PageLister (fase-10 removed the old
+     * PageService, whose listPages() was `$this->pageLister->listAll()`; the production
+     * ApiController::listPages() resolves this same service and calls listAll()).
+     */
+    protected function pageLister(): \OCA\IntraVox\Service\Listing\PageLister {
+        return self::server()->get(\OCA\IntraVox\Service\Listing\PageLister::class);
     }
 
     protected function permissionService(): PermissionService {

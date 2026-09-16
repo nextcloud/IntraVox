@@ -11,7 +11,7 @@ use OCA\IntraVox\Service\FeedReaderService;
 use OCA\IntraVox\Service\NavigationService;
 use OCA\IntraVox\Service\People\PeopleQuery;
 use OCA\IntraVox\Service\People\PublicSharePeopleGuard;
-use OCA\IntraVox\Service\PageService;
+use OCA\IntraVox\Service\Read\PageReadService;
 use OCA\IntraVox\Service\Path\PagePathHelper;
 use OCA\IntraVox\Service\PublicShare\ShareBreadcrumbBuilder;
 use OCA\IntraVox\Service\PublicShare\ShareMediaServer;
@@ -68,7 +68,7 @@ class PublicShareController extends Controller {
     public function __construct(
         string $appName,
         IRequest $request,
-        private PageService $pageService,
+        private PageReadService $pageRead,
         private SetupService $setupService,
         private PublicShareService $publicShareService,
         private SystemFileService $systemFileService,
@@ -84,6 +84,7 @@ class PublicShareController extends Controller {
         private ShareTreeShaper $treeShaper,
         private PagePathHelper $pathHelper,
         private ShareMediaServer $mediaServer,
+        private \OCA\IntraVox\Service\Publication\PublicationStateService $publicationState,
     ) {
         parent::__construct($appName, $request);
     }
@@ -94,7 +95,7 @@ class PublicShareController extends Controller {
     #[BruteForceProtection(action: 'intravox_share_page')]
     public function getPageByShare(string $token, string $uniqueId): JSONResponse {
         // Validate token format first (cheap check)
-        if (!$this->isValidShareTokenFormat($token)) {
+        if (!$this->publicShareService->isValidShareTokenFormat($token)) {
             $this->registerShareBruteForceAttempt();
             return $this->shareNotFoundResponse();
         }
@@ -116,7 +117,7 @@ class PublicShareController extends Controller {
             // First try to get language from existing page data
             $language = 'en'; // Default
             try {
-                $existingPage = $this->pageService->getPage($uniqueId);
+                $existingPage = $this->pageRead->getPage($uniqueId);
                 $language = $existingPage['language'] ?? 'en';
             } catch (\Exception $e) {
                 // Page not found yet, will be handled by validateShareAccess
@@ -148,7 +149,7 @@ class PublicShareController extends Controller {
 
             // Draft, scheduled (not-yet-published) and expired pages are never
             // accessible via a public share — anonymous visitors are never editors.
-            if ($this->pageService->isHiddenFromReaders($pageData)) {
+            if ($this->publicationState->isHiddenFromReaders($pageData)) {
                 return $this->shareNotFoundResponse();
             }
 
@@ -459,7 +460,7 @@ class PublicShareController extends Controller {
             );
 
             // READER-GATE: SystemFileService drops manual drafts, but it has no
-            // PageService and so cannot evaluate the publish/expiration dates
+            // PageReadService and so cannot evaluate the publish/expiration dates
             // that live in MetaVox. Its own comment claims "the share endpoints in
             // ApiController" enforce those — they did not, and a scheduled or
             // expired page appeared in the public news list. Enforce it here,
@@ -517,7 +518,7 @@ class PublicShareController extends Controller {
             // itself was in scope — the page 404s while its illustrations, org
             // charts and screenshots do not.
             $pageData = $validation['pageData'] ?? null;
-            if (is_array($pageData) && $this->pageService->isHiddenFromReaders($pageData)) {
+            if (is_array($pageData) && $this->publicationState->isHiddenFromReaders($pageData)) {
                 return new DataResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
             }
 
@@ -991,7 +992,7 @@ class PublicShareController extends Controller {
      * @return IShare|Response the share, or the response to return
      */
     private function openShare(string $token, callable $deny): IShare|Response {
-        if (!$this->isValidShareTokenFormat($token)) {
+        if (!$this->publicShareService->isValidShareTokenFormat($token)) {
             return $deny();
         }
 
@@ -1012,17 +1013,6 @@ class PublicShareController extends Controller {
         }
 
         return $share;
-    }
-
-    /**
-     * Validate share token format.
-     */
-    private function isValidShareTokenFormat(?string $token): bool {
-        if ($token === null || $token === '') {
-            return false;
-        }
-        // NC share tokens are alphanumeric, typically 15-20 chars
-        return strlen($token) >= 10 && strlen($token) <= 32 && ctype_alnum($token);
     }
 
     /**
@@ -1144,12 +1134,12 @@ class PublicShareController extends Controller {
         // pages — there is never an editor here to reveal them. Batch the
         // publication metadata once and thread it through the recursion.
         if ($pubMeta === null) {
-            $pubMeta = $this->pageService->publicationMetaForFiles($this->collectTreeFileIds($tree));
+            $pubMeta = $this->publicationState->publicationMetaForFiles($this->collectTreeFileIds($tree));
         }
         $filtered = [];
         foreach ($tree as $node) {
             $meta = $pubMeta[$node['fileId'] ?? null] ?? [];
-            if ($this->pageService->isHiddenFromReaders($node, $meta)) {
+            if ($this->publicationState->isHiddenFromReaders($node, $meta)) {
                 continue;
             }
             if (!empty($node['children'])) {
@@ -1164,7 +1154,7 @@ class PublicShareController extends Controller {
      * Drop news items that are not publicly published. (READER-GATE)
      *
      * The manual draft flag is already handled one layer down; what this adds is
-     * the publish/expiration dates, which only PageService can interpret. A page
+     * the publish/expiration dates, which the enriched page read interprets. A page
      * scheduled for next month, or one that expired last week, must not appear in
      * a public news list.
      *
@@ -1173,7 +1163,7 @@ class PublicShareController extends Controller {
      */
     private function filterUnpublishedNewsItems(array $items): array {
         return array_values(array_filter($items, function (array $item): bool {
-            return !$this->pageService->isHiddenFromReaders($item);
+            return !$this->publicationState->isHiddenFromReaders($item);
         }));
     }
 
@@ -1190,12 +1180,12 @@ class PublicShareController extends Controller {
         } catch (\Exception $e) {
             return [];
         }
-        $pubMeta = $this->pageService->publicationMetaForFiles($this->collectTreeFileIds($tree));
+        $pubMeta = $this->publicationState->publicationMetaForFiles($this->collectTreeFileIds($tree));
         $hidden = [];
         $walk = function (array $nodes) use (&$walk, $pubMeta, &$hidden) {
             foreach ($nodes as $node) {
                 $meta = $pubMeta[$node['fileId'] ?? null] ?? [];
-                if ($this->pageService->isHiddenFromReaders($node, $meta) && !empty($node['uniqueId'])) {
+                if ($this->publicationState->isHiddenFromReaders($node, $meta) && !empty($node['uniqueId'])) {
                     $hidden[$node['uniqueId']] = true;
                 }
                 if (!empty($node['children'])) {

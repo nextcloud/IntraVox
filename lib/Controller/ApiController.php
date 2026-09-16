@@ -11,7 +11,7 @@ use OCA\IntraVox\Exception\PageConflictException;
 use OCA\IntraVox\Exception\PageNotFoundException;
 use OCA\IntraVox\Http\EtagBuilder;
 use OCA\IntraVox\Service\PageLockService;
-use OCA\IntraVox\Service\PageService;
+use OCA\IntraVox\Service\PermissionService;
 use OCA\IntraVox\Share\ShareScope;
 use OCA\IntraVox\Service\SetupService;
 use OCP\AppFramework\Controller;
@@ -65,7 +65,14 @@ class ApiController extends Controller {
     use \OCA\IntraVox\Controller\Shared\SharePathTrait;
     use HasConditionalResponse;
 
-    private PageService $pageService;
+    private \OCA\IntraVox\Service\Write\PageWriteService $pageWrite;
+    private \OCA\IntraVox\Service\Compose\PageCompositionService $composition;
+    private \OCA\IntraVox\Service\Structure\PageStructureService $structure;
+    private \OCA\IntraVox\Service\Reorder\PageReorderer $reorderer;
+    private \OCA\IntraVox\Service\Search\PageSearchEngine $searchEngine;
+    private \OCA\IntraVox\Service\Folder\FolderContext $folders;
+    private \OCA\IntraVox\Service\Read\PageReadService $pageRead;
+    private PermissionService $permissionService;
     private SetupService $setupService;
     private LoggerInterface $logger;
     private IConfig $config;
@@ -73,21 +80,47 @@ class ApiController extends Controller {
     private IUserSession $userSession;
     private PageLockService $pageLockService;
     private IAppManager $appManager;
+    private \OCA\IntraVox\Service\Publication\PublicationStateService $publicationState;
+    private \OCA\IntraVox\Service\Listing\PageLister $pageLister;
+    private \OCA\IntraVox\Service\Homepage\HomepageResolverService $homepageResolver;
+    private \OCA\IntraVox\Service\News\NewsWidgetService $newsWidget;
+    private \OCA\IntraVox\Service\Path\BreadcrumbService $breadcrumbService;
+    private \OCA\IntraVox\Service\Tree\PageTreeService $treeService;
 
     public function __construct(
         string $appName,
         IRequest $request,
-        PageService $pageService,
+        \OCA\IntraVox\Service\Write\PageWriteService $pageWrite,
+        \OCA\IntraVox\Service\Compose\PageCompositionService $composition,
+        \OCA\IntraVox\Service\Structure\PageStructureService $structure,
+        \OCA\IntraVox\Service\Reorder\PageReorderer $reorderer,
+        \OCA\IntraVox\Service\Search\PageSearchEngine $searchEngine,
+        \OCA\IntraVox\Service\Folder\FolderContext $folders,
+        \OCA\IntraVox\Service\Read\PageReadService $pageRead,
+        PermissionService $permissionService,
         SetupService $setupService,
         LoggerInterface $logger,
         IConfig $config,
         IGroupManager $groupManager,
         IUserSession $userSession,
         PageLockService $pageLockService,
-        IAppManager $appManager
+        IAppManager $appManager,
+        \OCA\IntraVox\Service\Publication\PublicationStateService $publicationState,
+        \OCA\IntraVox\Service\Listing\PageLister $pageLister,
+        \OCA\IntraVox\Service\Homepage\HomepageResolverService $homepageResolver,
+        \OCA\IntraVox\Service\News\NewsWidgetService $newsWidget,
+        \OCA\IntraVox\Service\Path\BreadcrumbService $breadcrumbService,
+        \OCA\IntraVox\Service\Tree\PageTreeService $treeService
     ) {
         parent::__construct($appName, $request);
-        $this->pageService = $pageService;
+        $this->pageWrite = $pageWrite;
+        $this->composition = $composition;
+        $this->structure = $structure;
+        $this->reorderer = $reorderer;
+        $this->searchEngine = $searchEngine;
+        $this->folders = $folders;
+        $this->pageRead = $pageRead;
+        $this->permissionService = $permissionService;
         $this->setupService = $setupService;
         $this->logger = $logger;
         $this->config = $config;
@@ -95,6 +128,12 @@ class ApiController extends Controller {
         $this->userSession = $userSession;
         $this->pageLockService = $pageLockService;
         $this->appManager = $appManager;
+        $this->publicationState = $publicationState;
+        $this->pageLister = $pageLister;
+        $this->homepageResolver = $homepageResolver;
+        $this->newsWidget = $newsWidget;
+        $this->breadcrumbService = $breadcrumbService;
+        $this->treeService = $treeService;
     }
 
     /**
@@ -104,11 +143,8 @@ class ApiController extends Controller {
         return $this->logger;
     }
 
-    /**
-     * Get the page service for RequiresPagePermission.
-     */
-    protected function getPageService(): PageService {
-        return $this->pageService;
+    protected function getPageReadService(): \OCA\IntraVox\Service\Read\PageReadService {
+        return $this->pageRead;
     }
 
 
@@ -119,20 +155,20 @@ class ApiController extends Controller {
     #[NoCSRFRequired]
     public function listPages(?int $limit = null, ?string $cursor = null): DataResponse {
         try {
-            $pages = $this->pageService->listPages();
+            $pages = $this->pageLister->listAll();
 
             // PageService already includes permissions from Nextcloud's filesystem.
             // Filter to pages the user can read. Draft/scheduled/expired pages are
             // only visible to users with write permission. Batch the publication
             // metadata once to avoid an N+1 lookup.
-            $pubMeta = $this->pageService->publicationMetaForFiles(array_column($pages, 'fileId'));
+            $pubMeta = $this->publicationState->publicationMetaForFiles(array_column($pages, 'fileId'));
             $filteredPages = [];
             foreach ($pages as $page) {
                 if (!($page['permissions']['canRead'] ?? false)) {
                     continue;
                 }
                 $meta = $pubMeta[$page['fileId'] ?? null] ?? [];
-                if ($this->pageService->isHiddenFromReaders($page, $meta) && !($page['permissions']['canWrite'] ?? false)) {
+                if ($this->publicationState->isHiddenFromReaders($page, $meta) && !($page['permissions']['canWrite'] ?? false)) {
                     continue;
                 }
                 $filteredPages[] = $page;
@@ -256,22 +292,19 @@ class ApiController extends Controller {
     #[NoCSRFRequired]
     public function getPage(string $id): DataResponse {
         try {
-            $page = $this->pageService->getPage($id);
+            $page = $this->pageRead->getPage($id);
 
             // PageService already includes permissions from Nextcloud's filesystem
             // which automatically respects GroupFolder ACL rules
 
             // Check if user can read (permissions are already in the page data)
-            if (!($page['permissions']['canRead'] ?? false)) {
-                return new DataResponse(
-                    ['error' => 'Access denied'],
-                    Http::STATUS_FORBIDDEN
-                );
+            if (($denied = $this->denyUnlessReadable($page)) !== null) {
+                return $denied;
             }
 
             // Draft / scheduled (future) / expired pages are only accessible to
             // users with write permission.
-            if ($this->pageService->isHiddenFromReaders($page) && !($page['permissions']['canWrite'] ?? false)) {
+            if ($this->publicationState->isHiddenFromReaders($page) && !($page['permissions']['canWrite'] ?? false)) {
                 return new DataResponse(
                     ['error' => 'Page not found'],
                     Http::STATUS_NOT_FOUND
@@ -282,12 +315,12 @@ class ApiController extends Controller {
             // "Scheduled"/"Expired" indicator (only meaningful for canWrite users),
             // plus whether a publish/expiration date is governing publication (so
             // the edit-mode toggle can explain that it defers to the date).
-            $page['effectivePublishState'] = $this->pageService->effectivePublishState($page);
-            $page['publicationDateActive'] = $this->pageService->hasPublicationDate($page);
+            $page['effectivePublishState'] = $this->publicationState->effectivePublishState($page);
+            $page['publicationDateActive'] = $this->publicationState->hasPublicationDate($page);
 
             // Add breadcrumb to page response
             try {
-                $page['breadcrumb'] = $this->pageService->getBreadcrumb($id);
+                $page['breadcrumb'] = $this->breadcrumbService->build($id);
             } catch (\Exception $e) {
                 // Breadcrumb failed, but page is still valid
                 $page['breadcrumb'] = [];
@@ -342,7 +375,7 @@ class ApiController extends Controller {
 
             // Check create permission on parent path using Nextcloud's filesystem permissions
             $checkPath = $parentPath ?? '';
-            $folderPerms = $this->pageService->getFolderPermissions($checkPath);
+            $folderPerms = $this->permissionService->getFolderPermissions($checkPath);
             if (!$folderPerms['canCreate']) {
                 return new DataResponse(
                     ['error' => 'Permission denied: cannot create pages in this location'],
@@ -350,7 +383,7 @@ class ApiController extends Controller {
                 );
             }
 
-            $page = $this->pageService->createPage($data, $parentPath);
+            $page = $this->pageWrite->createPage($data, $parentPath);
             return new DataResponse($page, Http::STATUS_CREATED);
         } catch (ForbiddenException $e) {
             return new DataResponse(
@@ -394,7 +427,7 @@ class ApiController extends Controller {
             }
 
             $data = $this->request->getParams();
-            $page = $this->pageService->updatePage($id, $data);
+            $page = $this->pageWrite->updatePage($id, $data);
             return new DataResponse($page);
         } catch (ForbiddenException $e) {
             return new DataResponse(
@@ -445,7 +478,7 @@ class ApiController extends Controller {
     public function deletePage(string $id): DataResponse {
         try {
             // First get the page to check permissions (from Nextcloud filesystem)
-            $existingPage = $this->pageService->getPage($id);
+            $existingPage = $this->pageRead->getPage($id);
 
             // Check delete permission using Nextcloud's permissions
             if (!($existingPage['permissions']['canDelete'] ?? false)) {
@@ -455,7 +488,7 @@ class ApiController extends Controller {
                 );
             }
 
-            $this->pageService->deletePage($id);
+            $this->pageWrite->deletePage($id);
             return new DataResponse(['success' => true]);
         } catch (PageNotFoundException $e) {
             return new DataResponse(
@@ -498,17 +531,27 @@ class ApiController extends Controller {
             // within their own department but not elsewhere.
             $relPath = '';
             if ($parentId !== null && $parentId !== '') {
-                $parentPage = $this->pageService->getPage($parentId);
+                $parentPage = $this->pageRead->getPage($parentId);
                 $relPath = $parentPage['path'] ?? '';
             }
-            if (!($this->pageService->getFolderPermissions($relPath)['canWrite'] ?? false)) {
+            if (!$this->permissionService->getFolderPermissions($relPath)['canWrite']) {
                 return new DataResponse(
                     ['error' => 'Permission denied: cannot reorder pages here'],
                     Http::STATUS_FORBIDDEN
                 );
             }
 
-            $this->pageService->reorderSiblings(($parentId !== '' ? $parentId : null), $orderedIds);
+            // PageService::reorderSiblings resolved the write-target language folder
+            // through FolderContext and handed the already-resolved Folder to
+            // PageReorderer::reorder (the getLanguageFolder seam stayed on the
+            // facade). Reproduce that exactly: the reorderer takes the resolved
+            // Folder as its third arg, and the homepage/cache concerns are its own
+            // injected HomepageResolverService / PageCacheInvalidator.
+            $this->reorderer->reorder(
+                ($parentId !== '' ? $parentId : null),
+                $orderedIds,
+                $this->folders->languageFolder()
+            );
             return new DataResponse(['success' => true]);
         } catch (\InvalidArgumentException $e) {
             return new DataResponse(
@@ -579,7 +622,7 @@ class ApiController extends Controller {
                 $filterOperator = 'AND';
             }
 
-            $result = $this->pageService->getNewsPages(
+            $result = $this->newsWidget->getNewsPages(
                 $sourcePath,
                 $filters,
                 $filterOperator,
@@ -629,19 +672,23 @@ class ApiController extends Controller {
                 ]);
             }
 
-            $results = $this->pageService->searchPages($query);
+            // PageService::searchPages was the discovery walk feeding the scorer:
+            // listAllWithContent() (the injected PageLister, already here) into
+            // PageSearchEngine::search. The engine holds the same shared MetaVox
+            // gateway singleton, so the request-scoped MetaVox memo stays single.
+            $results = $this->searchEngine->search($this->pageLister->listAllWithContent(), $query);
 
             // Filter results based on Nextcloud's permissions (already in the results).
             // Draft/scheduled/expired pages are only visible to users with write
             // permission. Batch publication metadata once (N+1 avoidance).
-            $pubMeta = $this->pageService->publicationMetaForFiles(array_column($results, 'fileId'));
+            $pubMeta = $this->publicationState->publicationMetaForFiles(array_column($results, 'fileId'));
             $filteredResults = [];
             foreach ($results as $result) {
                 if (!($result['permissions']['canRead'] ?? false)) {
                     continue;
                 }
                 $meta = $pubMeta[$result['fileId'] ?? null] ?? [];
-                if ($this->pageService->isHiddenFromReaders($result, $meta) && !($result['permissions']['canWrite'] ?? false)) {
+                if ($this->publicationState->isHiddenFromReaders($result, $meta) && !($result['permissions']['canWrite'] ?? false)) {
                     continue;
                 }
                 $filteredResults[] = $result;
@@ -667,17 +714,14 @@ class ApiController extends Controller {
     public function getBreadcrumb(string $id): DataResponse {
         try {
             // First get the page to check permissions (from Nextcloud filesystem)
-            $existingPage = $this->pageService->getPage($id);
+            $existingPage = $this->pageRead->getPage($id);
 
             // Check read permission using Nextcloud's permissions
-            if (!($existingPage['permissions']['canRead'] ?? false)) {
-                return new DataResponse(
-                    ['error' => 'Access denied'],
-                    Http::STATUS_FORBIDDEN
-                );
+            if (($denied = $this->denyUnlessReadable($existingPage)) !== null) {
+                return $denied;
             }
 
-            $breadcrumb = $this->pageService->getBreadcrumb($id);
+            $breadcrumb = $this->breadcrumbService->build($id);
             return new DataResponse($breadcrumb);
         } catch (\Exception $e) {
             return new DataResponse(
@@ -708,15 +752,15 @@ class ApiController extends Controller {
             }
 
             // Write permission on the language root (mirror NavigationController::save).
-            $permissions = $this->pageService->getFolderPermissions('');
-            if (!($permissions['canWrite'] ?? false)) {
+            $permissions = $this->permissionService->getFolderPermissions('');
+            if (!($permissions['canWrite'])) {
                 return new DataResponse(
                     ['error' => 'Permission denied: cannot set the homepage'],
                     Http::STATUS_FORBIDDEN
                 );
             }
 
-            $this->pageService->setHomepage($pageUniqueId);
+            $this->homepageResolver->setHomepage($pageUniqueId);
             return new DataResponse(['success' => true]);
         } catch (\InvalidArgumentException $e) {
             return new DataResponse(['error' => $e->getMessage()], Http::STATUS_BAD_REQUEST);
@@ -742,27 +786,35 @@ class ApiController extends Controller {
             }
 
             // Need read on the source page…
-            $source = $this->pageService->getPage($sourceId);
-            if (!($source['permissions']['canRead'] ?? false)) {
-                return new DataResponse(
-                    ['error' => 'Permission denied: cannot read the source page'],
-                    Http::STATUS_FORBIDDEN
-                );
+            $source = $this->pageRead->getPage($sourceId);
+            if (($denied = $this->denyUnlessReadable($source, 'Permission denied: cannot read the source page')) !== null) {
+                return $denied;
             }
 
             // …and create permission on the destination parent (root = '').
             $parentRelPath = '';
             if (is_string($targetParentId) && $targetParentId !== '') {
-                $parentRelPath = $this->pageService->getPage($targetParentId)['path'] ?? '';
+                $parentRelPath = $this->pageRead->getPage($targetParentId)['path'] ?? '';
             }
-            if (!($this->pageService->getFolderPermissions($parentRelPath)['canCreate'] ?? false)) {
+            if (!$this->permissionService->getFolderPermissions($parentRelPath)['canCreate']) {
                 return new DataResponse(
                     ['error' => 'Permission denied: cannot create a page here'],
                     Http::STATUS_FORBIDDEN
                 );
             }
 
-            $page = $this->pageService->copyPage($sourceId, $targetParentId, $title);
+            // copyPage is the COMPOSE domain (same userId-scoped service the retired
+            // PageService::copyPage forwarded to). createPage is supplied per call as
+            // the closure PageService bound to its own createPage delegator, which was
+            // a pure forward to the write service — bind it straight to the injected
+            // PageWriteService (the same container singleton) so the #70 isCreatable
+            // preflight runs unchanged.
+            $page = $this->composition->copyPage(
+                $sourceId,
+                $targetParentId,
+                $title,
+                fn(array $data, ?string $parentPath = null): array => $this->pageWrite->createPage($data, $parentPath)
+            );
             return new DataResponse(['success' => true, 'page' => $page], Http::STATUS_CREATED);
         } catch (\InvalidArgumentException $e) {
             return new DataResponse(['error' => $e->getMessage()], Http::STATUS_BAD_REQUEST);
@@ -795,16 +847,19 @@ class ApiController extends Controller {
             // Create permission on the destination parent (root = '').
             $parentRelPath = '';
             if (is_string($targetParentId) && $targetParentId !== '') {
-                $parentRelPath = $this->pageService->getPage($targetParentId)['path'] ?? '';
+                $parentRelPath = $this->pageRead->getPage($targetParentId)['path'] ?? '';
             }
-            if (!($this->pageService->getFolderPermissions($parentRelPath)['canCreate'] ?? false)) {
+            if (!$this->permissionService->getFolderPermissions($parentRelPath)['canCreate']) {
                 return new DataResponse(
                     ['error' => 'Permission denied: cannot move a page here'],
                     Http::STATUS_FORBIDDEN
                 );
             }
 
-            $this->pageService->movePage($pageId, is_string($targetParentId) ? $targetParentId : '');
+            // movePage is the STRUCTURE domain: PageService::movePage was a pure
+            // delegator to PageStructureService::movePage (no closures — every folder
+            // concern, the guards and the index repath are self-sourced there).
+            $this->structure->movePage($pageId, is_string($targetParentId) ? $targetParentId : '');
             return new DataResponse(['success' => true]);
         } catch (CrossLanguageMoveException $e) {
             // A refusal the user can act on, not a server fault: 409 Conflict
@@ -827,7 +882,7 @@ class ApiController extends Controller {
     #[NoCSRFRequired]
     public function getPageTree(?string $currentPageId = null, ?string $language = null, ?string $rootPageId = null): DataResponse {
         try {
-            $tree = $this->pageService->getPageTree($currentPageId, $language, $rootPageId);
+            $tree = $this->treeService->getPageTree($currentPageId, $language, $rootPageId);
 
             // Filter tree to only include pages user can read
             // PageService already includes Nextcloud permissions in each page
@@ -835,12 +890,14 @@ class ApiController extends Controller {
 
             // Resolve which page is the homepage so the UI can badge it and
             // offer "set as homepage" only on root pages (configurable homepage).
-            $homepageUniqueId = $this->pageService->resolveHomepageNodeUniqueId($language, $filteredTree);
+            // resolveHomepageNodeUniqueId was a pure forward through PageService to
+            // HomepageResolverService (already injected here for setHomepage).
+            $homepageUniqueId = $this->homepageResolver->resolveHomepageNodeUniqueId($language, $filteredTree);
 
             // Root-folder permissions so the tree UI can gate actions that target
             // the language root — a sibling copy of a top-level page lands there,
             // so the Copy button on root-level items needs root canCreate (#86).
-            $rootPermissions = $this->pageService->getFolderPermissions('');
+            $rootPermissions = $this->permissionService->getFolderPermissions('');
 
             return new DataResponse([
                 'tree' => $filteredTree,
@@ -866,7 +923,7 @@ class ApiController extends Controller {
      */
     private function filterTreeByPermissions(array $tree, ?array $pubMeta = null): array {
         if ($pubMeta === null) {
-            $pubMeta = $this->pageService->publicationMetaForFiles($this->collectTreeFileIds($tree));
+            $pubMeta = $this->publicationState->publicationMetaForFiles($this->collectTreeFileIds($tree));
         }
         $filtered = [];
         foreach ($tree as $item) {
@@ -874,7 +931,7 @@ class ApiController extends Controller {
                 continue;
             }
             $meta = $pubMeta[$item['fileId'] ?? null] ?? [];
-            if ($this->pageService->isHiddenFromReaders($item, $meta) && !($item['permissions']['canWrite'] ?? false)) {
+            if ($this->publicationState->isHiddenFromReaders($item, $meta) && !($item['permissions']['canWrite'] ?? false)) {
                 continue;
             }
             if (!empty($item['children'])) {
@@ -895,7 +952,7 @@ class ApiController extends Controller {
         try {
             $checkPath = $path ?? '';
             // Use Nextcloud's native filesystem permissions
-            $permissions = $this->pageService->getFolderPermissions($checkPath);
+            $permissions = $this->permissionService->getFolderPermissions($checkPath);
 
             $response = [
                 'path' => $checkPath,

@@ -3,8 +3,7 @@ declare(strict_types=1);
 
 namespace OCA\IntraVox\Controller;
 
-use OCA\IntraVox\Constants;
-use OCA\IntraVox\Service\PageService;
+use OCA\IntraVox\Service\Read\PageReadService;
 use OCA\IntraVox\Service\PublicShareService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -13,7 +12,6 @@ use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\Attribute\BruteForceProtection;
-use OCP\AppFramework\Http\ContentSecurityPolicy;
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\AppFramework\Http\RedirectResponse;
 use OCP\IConfig;
@@ -26,42 +24,23 @@ use OCP\Util;
 use Psr\Log\LoggerInterface;
 
 class PageController extends Controller {
-    private PageService $pageService;
-    private PublicShareService $publicShareService;
-    private LoggerInterface $logger;
-    private IConfig $config;
-    private IUserSession $userSession;
-    private IThrottler $throttler;
-    private ISession $session;
-    private IURLGenerator $urlGenerator;
-    private \OCP\AppFramework\Services\IInitialState $initialState;
-    private \OCP\App\IAppManager $appManager;
+    use RendersAppShell;
 
     public function __construct(
         string $appName,
         IRequest $request,
-        PageService $pageService,
-        PublicShareService $publicShareService,
-        LoggerInterface $logger,
-        IConfig $config,
-        IUserSession $userSession,
-        IThrottler $throttler,
-        ISession $session,
-        IURLGenerator $urlGenerator,
-        \OCP\AppFramework\Services\IInitialState $initialState,
-        \OCP\App\IAppManager $appManager
+        private PageReadService $pageRead,
+        private PublicShareService $publicShareService,
+        private LoggerInterface $logger,
+        private IConfig $config,
+        private IUserSession $userSession,
+        private IThrottler $throttler,
+        private ISession $session,
+        private IURLGenerator $urlGenerator,
+        private \OCP\AppFramework\Services\IInitialState $initialState,
+        private \OCP\App\IAppManager $appManager
     ) {
         parent::__construct($appName, $request);
-        $this->initialState = $initialState;
-        $this->appManager = $appManager;
-        $this->pageService = $pageService;
-        $this->publicShareService = $publicShareService;
-        $this->logger = $logger;
-        $this->config = $config;
-        $this->userSession = $userSession;
-        $this->throttler = $throttler;
-        $this->session = $session;
-        $this->urlGenerator = $urlGenerator;
     }
 
     /**
@@ -84,37 +63,6 @@ class PageController extends Controller {
                 && $this->appManager->isInstalled('metavox')
                 && $this->appManager->isEnabledForUser('metavox', $user)
         );
-    }
-
-    /**
-     * Build CSP with video domain whitelist
-     */
-    private function buildContentSecurityPolicy(): ContentSecurityPolicy {
-        $csp = new ContentSecurityPolicy();
-        $csp->addAllowedScriptDomain('\'self\'');
-        $csp->addAllowedFrameDomain('\'self\'');
-
-        // Add whitelisted video domains from config
-        $domains = $this->config->getAppValue(
-            'intravox',
-            'video_domains',
-            Constants::getDefaultVideoDomainsJson()
-        );
-
-        // Decode the stored JSON
-        $decoded = json_decode($domains, true);
-
-        // Only use defaults if JSON decode FAILED (null), not for empty array
-        // This allows admins to explicitly block all video embeds by removing all domains
-        if ($decoded === null) {
-            $decoded = Constants::DEFAULT_VIDEO_DOMAINS;
-        }
-
-        foreach ($decoded as $domain) {
-            $csp->addAllowedFrameDomain($domain);
-        }
-
-        return $csp;
     }
 
     /**
@@ -154,7 +102,7 @@ class PageController extends Controller {
         // If share token is provided, validate it (for both anonymous and logged-in users)
         if ($isShareAccess) {
             // Validate the share token format first (cheap check)
-            if (!$this->isValidShareTokenFormat($shareToken)) {
+            if (!$this->publicShareService->isValidShareTokenFormat($shareToken)) {
                 if ($isAnonymous) {
                     $this->registerBruteForceAttempt();
                     return $this->buildPublicNotFoundResponse();
@@ -183,10 +131,7 @@ class PageController extends Controller {
         // Webpack splits into: vendors (node_modules) → shared (code used by
         // both main+admin, e.g. PageTreeSelect) → main. All three must load or
         // the main entry's runtime never fires its mount (blank page, no error).
-        Util::addScript('intravox', 'intravox-vendors');
-        Util::addScript('intravox', 'intravox-shared');
-        Util::addScript('intravox', 'intravox-main');
-        Util::addStyle('intravox', 'main');
+        $this->emitAppShellAssets();
 
         // Whether MetaVox is installed, which gates its sidebar tab and menu
         // entry. Delivered as initial state rather than as a field on the page
@@ -241,7 +186,7 @@ class PageController extends Controller {
         ]);
 
         // Validate the share token format
-        if (!$this->isValidShareTokenFormat($shareToken)) {
+        if (!$this->publicShareService->isValidShareTokenFormat($shareToken)) {
             $this->registerBruteForceAttempt();
             return $this->buildPublicNotFoundResponse();
         }
@@ -254,7 +199,7 @@ class PageController extends Controller {
 
         // Check if share requires a password
         if ($this->publicShareService->shareRequiresPassword($shareToken)) {
-            $sessionKey = 'intravox_share_pw_' . $shareToken;
+            $sessionKey = $this->publicShareService->sharePasswordSessionKey($shareToken);
             $sessionPassword = $this->session->get($sessionKey);
 
             if ($sessionPassword === null || $sessionPassword === '') {
@@ -273,10 +218,7 @@ class PageController extends Controller {
         // Webpack splits into: vendors (node_modules) → shared (code used by
         // both main+admin, e.g. PageTreeSelect) → main. All three must load or
         // the main entry's runtime never fires its mount (blank page, no error).
-        Util::addScript('intravox', 'intravox-vendors');
-        Util::addScript('intravox', 'intravox-shared');
-        Util::addScript('intravox', 'intravox-main');
-        Util::addStyle('intravox', 'main');
+        $this->emitAppShellAssets();
 
         $renderAs = $isAnonymous
             ? TemplateResponse::RENDER_AS_PUBLIC
@@ -315,7 +257,7 @@ class PageController extends Controller {
     #[BruteForceProtection(action: 'intravox_share_password')]
     public function shareAuthenticate(string $shareToken): TemplateResponse|RedirectResponse {
         // Validate the share token format
-        if (!$this->isValidShareTokenFormat($shareToken)) {
+        if (!$this->publicShareService->isValidShareTokenFormat($shareToken)) {
             $this->registerBruteForceAttempt();
             return $this->buildPublicNotFoundResponse();
         }
@@ -333,7 +275,7 @@ class PageController extends Controller {
         }
 
         // Password correct — store in session
-        $this->session->set('intravox_share_pw_' . $shareToken, $password);
+        $this->session->set($this->publicShareService->sharePasswordSessionKey($shareToken), $password);
 
         // Preserve query string (e.g., ?page=xxx)
         $queryString = $this->request->getParam('returnQuery', '');
@@ -343,17 +285,6 @@ class PageController extends Controller {
         }
 
         return new RedirectResponse($redirectUrl);
-    }
-
-    /**
-     * Validate share token format (NC share tokens are typically 15-20 alphanumeric chars).
-     */
-    private function isValidShareTokenFormat(?string $token): bool {
-        if ($token === null || $token === '') {
-            return false;
-        }
-        // NC share tokens are alphanumeric, typically 15-20 chars
-        return strlen($token) >= 10 && strlen($token) <= 32 && ctype_alnum($token);
     }
 
     /**
@@ -376,10 +307,7 @@ class PageController extends Controller {
         // Webpack splits into: vendors (node_modules) → shared (code used by
         // both main+admin, e.g. PageTreeSelect) → main. All three must load or
         // the main entry's runtime never fires its mount (blank page, no error).
-        Util::addScript('intravox', 'intravox-vendors');
-        Util::addScript('intravox', 'intravox-shared');
-        Util::addScript('intravox', 'intravox-main');
-        Util::addStyle('intravox', 'main');
+        $this->emitAppShellAssets();
 
         $response = new TemplateResponse(
             'intravox',
@@ -425,10 +353,7 @@ class PageController extends Controller {
         // Webpack splits into: vendors (node_modules) → shared (code used by
         // both main+admin, e.g. PageTreeSelect) → main. All three must load or
         // the main entry's runtime never fires its mount (blank page, no error).
-        Util::addScript('intravox', 'intravox-vendors');
-        Util::addScript('intravox', 'intravox-shared');
-        Util::addScript('intravox', 'intravox-main');
-        Util::addStyle('intravox', 'main');
+        $this->emitAppShellAssets();
 
         $this->provideAppInitialState();
 
@@ -451,10 +376,7 @@ class PageController extends Controller {
         // Webpack splits into: vendors (node_modules) → shared (code used by
         // both main+admin, e.g. PageTreeSelect) → main. All three must load or
         // the main entry's runtime never fires its mount (blank page, no error).
-        Util::addScript('intravox', 'intravox-vendors');
-        Util::addScript('intravox', 'intravox-shared');
-        Util::addScript('intravox', 'intravox-main');
-        Util::addStyle('intravox', 'main');
+        $this->emitAppShellAssets();
 
         // Try to load page by uniqueId to get metadata
         // getPage() supports direct uniqueId lookup (no need to list all pages first)
@@ -462,7 +384,7 @@ class PageController extends Controller {
         $pageTitle = 'IntraVox';
 
         try {
-            $pageData = $this->pageService->getPage($uniqueId);
+            $pageData = $this->pageRead->getPage($uniqueId);
             if ($pageData && isset($pageData['title'])) {
                 $pageTitle = $pageData['title'] . ' - IntraVox';
             }

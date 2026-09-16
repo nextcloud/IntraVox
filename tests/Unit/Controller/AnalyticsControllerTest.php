@@ -5,9 +5,10 @@ namespace OCA\IntraVox\Tests\Unit\Controller;
 
 use OCA\IntraVox\Controller\AnalyticsController;
 use OCA\IntraVox\Service\AnalyticsService;
-use OCA\IntraVox\Service\PageService;
+use OCA\IntraVox\Service\Read\PageReadService;
 use OCA\IntraVox\Tests\Mocks\MockGroupManager;
 use OCA\IntraVox\Tests\Mocks\MockUserSession;
+use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageRead;
 use OCP\AppFramework\Http;
 use OCP\IConfig;
 use OCP\IRequest;
@@ -26,9 +27,15 @@ use Psr\Log\LoggerInterface;
  * - Permission checks
  */
 class AnalyticsControllerTest extends TestCase {
+    use BuildsPageRead;
+
     private AnalyticsController $controller;
     private AnalyticsService $analyticsService;
-    private PageService $pageService;
+    private PageReadService $pageRead;
+    /** getPage(id) behaviour a test installs (fase-4 C6: getPage moved to PageReadService). */
+    private \Closure $getPageFn;
+    /** pageExistsByUniqueId(id) behaviour a test installs (fase-9: probe moved to PageReadService). */
+    private \Closure $pageExistsFn;
     private LoggerInterface $logger;
     private IConfig $config;
     private MockGroupManager $groupManager;
@@ -37,9 +44,17 @@ class AnalyticsControllerTest extends TestCase {
 
     protected function setUp(): void {
         parent::setUp();
+        // The real PageReadService delegates getPage($id)/pageExistsByUniqueId($id) to
+        // whatever $this->getPageFn / $this->pageExistsFn a test installs; defaults are
+        // "page not found" (empty) and "does not exist".
+        $this->getPageFn = fn(string $id) => null;
+        $this->pageExistsFn = fn(string $id) => false;
+        $this->pageRead = $this->fakePageReadFrom(
+            fn(string $id) => ($this->getPageFn)($id),
+            fn(string $id): bool => ($this->pageExistsFn)($id)
+        );
 
         $this->analyticsService = $this->createMock(AnalyticsService::class);
-        $this->pageService = $this->createMock(PageService::class);
         $this->logger = $this->createMock(LoggerInterface::class);
         $this->config = $this->createMock(IConfig::class);
         $this->request = $this->createMock(IRequest::class);
@@ -51,7 +66,7 @@ class AnalyticsControllerTest extends TestCase {
             'intravox',
             $this->request,
             $this->analyticsService,
-            $this->pageService,
+            $this->pageRead,
             $this->userSession,
             $this->groupManager,
             $this->config,
@@ -67,7 +82,7 @@ class AnalyticsControllerTest extends TestCase {
             'intravox',
             $this->request,
             $this->analyticsService,
-            $this->pageService,
+            $this->pageRead,
             $userSession,
             $groupManager,
             $this->config,
@@ -89,9 +104,7 @@ class AnalyticsControllerTest extends TestCase {
             'dailyStats' => []
         ];
 
-        $this->pageService->method('pageExistsByUniqueId')
-            ->with($pageId)
-            ->willReturn(true);
+        $this->pageExistsFn = fn(string $id): bool => true;
 
         $this->analyticsService->method('getPageStats')
             ->with($pageId, 30)
@@ -104,8 +117,7 @@ class AnalyticsControllerTest extends TestCase {
     }
 
     public function testGetPageStatsReturnsNotFoundForInvalidPage(): void {
-        $this->pageService->method('pageExistsByUniqueId')
-            ->willReturn(false);
+        $this->pageExistsFn = fn(string $id): bool => false;
 
         $response = $this->controller->getPageStats('invalid-page');
 
@@ -116,7 +128,7 @@ class AnalyticsControllerTest extends TestCase {
     public function testGetPageStatsLimitsDaysParameter(): void {
         $pageId = 'page-123';
 
-        $this->pageService->method('pageExistsByUniqueId')->willReturn(true);
+        $this->pageExistsFn = fn(string $id): bool => true;
 
         // Test max limit (365)
         $this->analyticsService->expects($this->once())
@@ -128,7 +140,7 @@ class AnalyticsControllerTest extends TestCase {
     }
 
     public function testGetPageStatsReturnsErrorOnException(): void {
-        $this->pageService->method('pageExistsByUniqueId')->willReturn(true);
+        $this->pageExistsFn = fn(string $id): bool => true;
         $this->analyticsService->method('getPageStats')
             ->willThrowException(new \Exception('Database error'));
 
@@ -150,8 +162,7 @@ class AnalyticsControllerTest extends TestCase {
 
         $this->analyticsService->method('getTopPages')->willReturn($topPages);
 
-        $this->pageService->method('getPage')
-            ->willReturnCallback(function ($id) {
+        $this->getPageFn = (function ($id) {
                 return [
                     'title' => "Title for $id",
                     'path' => "/pages/$id",
@@ -176,8 +187,7 @@ class AnalyticsControllerTest extends TestCase {
 
         $this->analyticsService->method('getTopPages')->willReturn($topPages);
 
-        $this->pageService->method('getPage')
-            ->willReturnCallback(function ($id) {
+        $this->getPageFn = (function ($id) {
                 if ($id === 'page-1') {
                     return ['title' => 'Accessible', 'permissions' => ['canRead' => true]];
                 }
@@ -199,8 +209,7 @@ class AnalyticsControllerTest extends TestCase {
 
         $this->analyticsService->method('getTopPages')->willReturn($topPages);
 
-        $this->pageService->method('getPage')
-            ->willReturnCallback(function ($id) {
+        $this->getPageFn = (function ($id) {
                 if ($id === 'page-deleted') {
                     throw new \Exception('Page not found');
                 }
@@ -230,10 +239,10 @@ class AnalyticsControllerTest extends TestCase {
 
         $this->analyticsService->method('getDashboardStats')->willReturn($dashboardStats);
 
-        $this->pageService->method('getPage')->willReturn([
+        $this->getPageFn = fn(string $id) => [
             'title' => 'Test Page',
             'permissions' => ['canRead' => true]
-        ]);
+        ];
 
         $adminController = $this->createAdminController();
         $response = $adminController->getDashboard();
@@ -332,9 +341,7 @@ class AnalyticsControllerTest extends TestCase {
     public function testTrackViewSuccessful(): void {
         $pageId = 'page-123';
 
-        $this->pageService->method('pageExistsByUniqueId')
-            ->with($pageId)
-            ->willReturn(true);
+        $this->pageExistsFn = fn(string $id): bool => true;
 
         $this->analyticsService->method('trackPageView')
             ->with($pageId)
@@ -347,7 +354,7 @@ class AnalyticsControllerTest extends TestCase {
     }
 
     public function testTrackViewReturnsNotFoundForInvalidPage(): void {
-        $this->pageService->method('pageExistsByUniqueId')->willReturn(false);
+        $this->pageExistsFn = fn(string $id): bool => false;
 
         $response = $this->controller->trackView('invalid-page');
 
@@ -355,7 +362,7 @@ class AnalyticsControllerTest extends TestCase {
     }
 
     public function testTrackViewReturnsErrorOnException(): void {
-        $this->pageService->method('pageExistsByUniqueId')->willReturn(true);
+        $this->pageExistsFn = fn(string $id): bool => true;
         $this->analyticsService->method('trackPageView')
             ->willThrowException(new \Exception('Tracking failed'));
 
@@ -365,7 +372,7 @@ class AnalyticsControllerTest extends TestCase {
     }
 
     public function testTrackViewReturnsFalseWhenDisabled(): void {
-        $this->pageService->method('pageExistsByUniqueId')->willReturn(true);
+        $this->pageExistsFn = fn(string $id): bool => true;
         $this->analyticsService->method('trackPageView')->willReturn(false);
 
         $response = $this->controller->trackView('page-123');

@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace OCA\IntraVox\Controller;
 
-use OCA\IntraVox\Service\PageService;
+use OCA\IntraVox\Service\Read\PageReadService;
 use OCA\IntraVox\Service\PublicShareService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -35,7 +35,7 @@ class ShareAdminApiController extends Controller {
     public function __construct(
         string $appName,
         IRequest $request,
-        private PageService $pageService,
+        private PageReadService $pageRead,
         private PublicShareService $publicShareService,
         private IGroupManager $groupManager,
         private IUserSession $userSession,
@@ -61,7 +61,7 @@ class ShareAdminApiController extends Controller {
     public function getShareInfo(string $uniqueId): JSONResponse {
         try {
             // Get the page to verify it exists and get its language
-            $page = $this->pageService->getPage($uniqueId);
+            $page = $this->pageRead->getPage($uniqueId);
 
             // Check read permission
             if (!($page['permissions']['canRead'] ?? false)) {

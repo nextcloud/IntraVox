@@ -9,8 +9,8 @@ in 14 controllers.
 
 175 routes.
 
-- **admin**: 13
-- **admin (gecontroleerd in de body)**: 23
+- **admin**: 12
+- **admin (gecontroleerd in de body)**: 24
 - **anoniem**: 17
 - **elke ingelogde gebruiker**: 122
 
@@ -150,7 +150,7 @@ in 14 controllers.
 | GET | `/api/feed/jira-projects/{connectionId}` | `feedReader#getJiraProjects` | elke ingelogde gebruiker | vrijgesteld |
 | GET | `/api/feed/moodle-forums/{connectionId}` | `feedReader#getMoodleForums` | elke ingelogde gebruiker | vrijgesteld |
 | GET | `/api/settings/feed-connections` | `feedReader#getConnections` | elke ingelogde gebruiker | vrijgesteld |
-| POST | `/api/settings/feed-connections` | `feedReader#setConnections` | admin | vereist |
+| POST | `/api/settings/feed-connections` | `feedReader#setConnections` | admin (gecontroleerd in de body) | vereist |
 | GET | `/api/lms/connections` | `lmsOAuth#getUserConnections` | elke ingelogde gebruiker | vrijgesteld |
 | POST | `/api/lms/connect/{connectionId}` | `lmsOAuth#startOAuth` | elke ingelogde gebruiker | vereist |
 | GET | `/api/lms/callback` | `lmsOAuth#callback` | elke ingelogde gebruiker | vrijgesteld |

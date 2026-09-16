@@ -3,7 +3,8 @@ declare(strict_types=1);
 
 namespace OCA\IntraVox\Command;
 
-use OCA\IntraVox\Service\PageService;
+use OCA\IntraVox\Service\Folder\FolderContext;
+use OCA\IntraVox\Service\Maintenance\PageMaintenanceService;
 use OCP\IUserManager;
 use OCP\IUserSession;
 use Symfony\Component\Console\Command\Command;
@@ -25,7 +26,11 @@ use Symfony\Component\Console\Output\OutputInterface;
  */
 class ReindexPagesCommand extends Command {
     public function __construct(
-        private PageService $pageService,
+        // The rebuild walk lives in the MAINTAIN domain service; the write-target
+        // root is resolved here through FolderContext — the exact
+        // `folders()->intraVox()` the PageService::rebuildIndex delegator passed in.
+        private PageMaintenanceService $maintenance,
+        private FolderContext $folders,
         private IUserSession $userSession,
         private IUserManager $userManager
     ) {
@@ -71,7 +76,7 @@ class ReindexPagesCommand extends Command {
         }
 
         try {
-            $stats = $this->pageService->rebuildIndex($dryRun);
+            $stats = $this->maintenance->rebuildIndex($this->folders->intraVox(), $dryRun);
         } catch (\Throwable $e) {
             $output->writeln('<error>Reindex failed: ' . $e->getMessage() . '</error>');
             return 1;

@@ -11,11 +11,19 @@
 #      that path IS a Folder.
 #   2. the file-budget ratchet then tripped on the nine lines the fix added.
 #
+# It also runs the Integration suite when the dev server is reachable, because
+# the unit suite alone cannot answer "does this work on a real install" -- the
+# PageService split passed 1302 unit tests while shipping an app with no pages.
+#
 # Run this before every push on a release branch. It is the only check that
 # claims to be complete.
 #
 # Usage: ./scripts/ci-local.sh [--fix]
 #   --fix  re-record the file-budget ratchet if it is the only thing failing
+# Env:
+#   SKIP_INTEGRATION=1  skip the integration suite (reported, never silent)
+#   INTRAVOX_DEV_SSH    user@host of the dev server; unset means the
+#                       integration step is skipped (and says so)
 
 set -uo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
@@ -66,7 +74,35 @@ step "route table" npm run --silent lint:routes
 step "openapi coverage" npm run --silent lint:openapi
 
 echo
+echo "Integration (real Nextcloud + groupfolders)"
+# The unit suite stubs OCP away, so it cannot tell you whether the app can find
+# a page on a real install. That gap is not hypothetical: the PageService split
+# passed 1302 green unit tests while shipping an app with no pages at all,
+# because FolderContext resolved the user's home folder instead of the mounted
+# IntraVox groupfolder. tests/Integration/GroupFolderResolutionTest.php exists
+# precisely to catch that, and it was never run.
+#
+# It needs a live server, so it cannot be a hard gate on a laptop with no SSH
+# access. It IS a hard gate whenever the server is reachable, and skipping is
+# reported loudly rather than silently passing.
+if [ "${SKIP_INTEGRATION:-0}" = "1" ]; then
+  printf '  %-34s%bskipped%b (SKIP_INTEGRATION=1)\n' "integration suite" "$YELLOW" "$NC"
+  SKIPPED_INTEGRATION=1
+elif ssh -o ConnectTimeout=8 -o BatchMode=yes "${INTRAVOX_DEV_SSH:-}" true >/dev/null 2>&1; then
+  step "integration suite" ./scripts/run-integration-tests.sh --no-deploy
+else
+  printf '  %-34s%bskipped%b (dev server unreachable)\n' "integration suite" "$YELLOW" "$NC"
+  SKIPPED_INTEGRATION=1
+fi
+
+echo
 if [ ${#FAILED[@]} -eq 0 ]; then
+  if [ "${SKIPPED_INTEGRATION:-0}" = "1" ]; then
+    printf '%b✓ unit gate green%b — but the integration suite did NOT run.\n' "$YELLOW" "$NC"
+    echo "  Green here does not mean the app works on a real install."
+    echo "  Run ./scripts/run-integration-tests.sh before merging to main."
+    exit 0
+  fi
   printf '%b✓ CI gate green%b — safe to push\n' "$GREEN" "$NC"
   exit 0
 fi

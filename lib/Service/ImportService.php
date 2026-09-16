@@ -22,7 +22,7 @@ class ImportService {
     private const LOG_PREFIX = '[ImportService]';
 
     public function __construct(
-        private PageService $pageService,
+        private \OCA\IntraVox\Service\Cache\PageCacheInvalidator $cacheInvalidator,
         private SetupService $setupService,
         private CommentService $commentService,
         private NavigationService $navigationService,
@@ -274,13 +274,13 @@ class ImportService {
         }
 
         // Cleanup
-        $this->cleanupTempDir($tempDir);
+        \OCA\IntraVox\Service\Import\TempDir::cleanup($tempDir);
 
         // Flush distributed caches so the freshly imported pages appear
         // in tree, navigation and permission lookups immediately. Without
         // this the import "succeeds" but the new pages are invisible for
         // up to 5 minutes (PR-3 distributed tree TTL).
-        $this->pageService->invalidateAllCaches();
+        $this->cacheInvalidator->invalidate();
 
         $this->logger->info(self::LOG_PREFIX . ' Import complete', $stats);
 
@@ -1215,32 +1215,6 @@ class ImportService {
             $this->logger->warning('Failed to trigger groupfolder scan: ' . $e->getMessage());
         }
     }
-
-    /**
-     * Cleanup temporary directory
-     *
-     * @param string $dir Directory to cleanup
-     */
-    private function cleanupTempDir(string $dir): void {
-        if (!is_dir($dir)) {
-            return;
-        }
-
-        $files = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS),
-            \RecursiveIteratorIterator::CHILD_FIRST
-        );
-
-        foreach ($files as $file) {
-            if ($file->isDir()) {
-                @rmdir($file->getPathname());
-            } else {
-                @unlink($file->getPathname());
-            }
-        }
-        @rmdir($dir);
-    }
-
 
     /**
      * Find the folder path for a page by its uniqueId

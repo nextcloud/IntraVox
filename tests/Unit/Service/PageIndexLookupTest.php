@@ -3,8 +3,11 @@ declare(strict_types=1);
 
 namespace OCA\IntraVox\Tests\Unit\Service;
 
+use OCA\IntraVox\Service\Folder\FolderContext;
+use OCA\IntraVox\Service\Language\LanguageResolver;
+use OCA\IntraVox\Service\Listing\PageLister;
+use OCA\IntraVox\Service\Locator\PageLocator;
 use OCA\IntraVox\Service\PageIndexService;
-use OCA\IntraVox\Service\PageService;
 use OCP\Files\File;
 use OCP\Files\FileInfo;
 use OCP\Files\Folder;
@@ -72,10 +75,67 @@ class PageIndexLookupTest extends TestCase {
     }
 
     /**
+     * Build a real PageLocator + FolderContext directly over the fixture tree —
+     * the fase-10 replacement for reflecting locator()/folders() off a
+     * buildRealPageService(). $index drives both the locator's findByUniqueId
+     * (index hits) and, for the listing builder, hasEntries/getPagesByLanguage.
+     *
+     * @return array{locator: PageLocator, folders: FolderContext}
+     */
+    private function build(PageIndexService $index, Folder $readFolder, Folder $intraVox): array {
+        $locator = new PageLocator($index, $this->createMock(\Psr\Log\LoggerInterface::class));
+        $folders = new FolderContext(
+            $this->createMock(\OCP\Files\IRootFolder::class),
+            'tester',
+            $this->createMock(\OCP\IConfig::class),
+            $this->createMock(\OCA\IntraVox\Service\LanguageService::class),
+            new LanguageResolver(),
+            $locator,
+            $intraVox,                          // intraVoxOverride -> intraVox()
+            fn(): Folder => $readFolder,        // readLanguageFolder seam
+        );
+        return ['locator' => $locator, 'folders' => $folders];
+    }
+
+    /**
+     * A real PageLister over the fixture tree — its fromIndex() fast path and its
+     * filesystem walk are what the listing tests exercise. Mirrors PageWalkerSkip's
+     * lister() ctor; the sanitizer is real (a mock would pass for the wrong reason).
+     */
+    private function lister(PageIndexService $index, FolderContext $folders, PageLocator $locator): PageLister {
+        $shape = new \OCA\IntraVox\Service\Sanitize\PageShapeSanitizer(
+            $this->createMock(\OCP\IConfig::class),
+            $this->createMock(\Psr\Log\LoggerInterface::class),
+            new \OCA\IntraVox\Service\Sanitize\HtmlSanitizer(),
+            new \OCA\IntraVox\Service\Sanitize\UrlSanitizer(),
+            new \OCA\IntraVox\Service\Sanitize\ColorSanitizer(),
+        );
+        return new PageLister(
+            $locator,
+            $index,
+            $this->createMock(\OCA\IntraVox\Service\PermissionService::class),
+            $this->createMock(\Psr\Log\LoggerInterface::class),
+            $folders,
+            $shape,
+            $this->createMock(\OCA\IntraVox\Service\Cache\PageCacheService::class),
+            new \OCA\IntraVox\Service\Path\PageDataEnricher(
+                new \OCA\IntraVox\Service\Path\PagePathHelper(),
+                $this->createMock(\OCA\IntraVox\Service\PermissionService::class),
+                $this->createMock(\OCA\IntraVox\Service\Publication\MetaVoxGateway::class),
+                $folders,
+                $this->createMock(\OCA\IntraVox\Service\Translation\TranslationGroupService::class),
+                new \OCA\IntraVox\Service\Util\GroupfolderResolver(),
+            ),
+        );
+    }
+
+    /**
      * Fixture: /IntraVox/en holds about.json beside an about/ folder.
      * $indexRows simulates the index; empty means it knows nothing.
+     *
+     * @return array{locator: PageLocator, folders: FolderContext}
      */
-    private function makeService(array $indexRows, ?array $pageJson = null): PageService {
+    private function makeService(array $indexRows, ?array $pageJson = null): array {
         $pageJson ??= ['uniqueId' => 'page-idx', 'title' => 'About', 'widgets' => []];
 
         $aboutJson = $this->makeFile('/IntraVox/en/about.json', $pageJson);
@@ -92,80 +152,32 @@ class PageIndexLookupTest extends TestCase {
 
         $base = $this->makeFolder('/IntraVox', ['en' => $en]);
 
-        $svc = new class($en, $base) extends PageService {
-            private Folder $langFolder;
-            private Folder $baseFolder;
-            public function __construct(Folder $langFolder, Folder $baseFolder) {
-                $this->langFolder = $langFolder;
-                $this->baseFolder = $baseFolder;
-            }
-            protected function getLanguageFolder() {
-                return $this->langFolder;
-            }
-            protected function getReadLanguageFolder(): Folder {
-                return $this->langFolder;
-            }
-            protected function getIntraVoxFolder() {
-                return $this->baseFolder;
-            }
-            public function clearCache(): void {
-            }
-        };
-
         $index = $this->createMock(PageIndexService::class);
         $index->method('findByUniqueId')->willReturnCallback(
             fn(string $uniqueId, ?string $pref = null) => $indexRows[$uniqueId] ?? null
         );
 
-        $explicit = [
-            'userSession' => $this->createMock(\OCP\IUserSession::class),
-            'userId' => 'tester',
-            'config' => $this->createMock(\OCP\IConfig::class),
-            'logger' => $this->createMock(\Psr\Log\LoggerInterface::class),
-            'languageService' => $this->createMock(\OCA\IntraVox\Service\LanguageService::class),
-            'pageIndexService' => $index,
-        ];
-        foreach ($explicit as $name => $value) {
-            (new \ReflectionProperty(PageService::class, $name))->setValue($svc, $value);
-        }
-        foreach ((new \ReflectionClass(PageService::class))->getProperties() as $prop) {
-            if ($prop->isStatic() || isset($explicit[$prop->getName()])) {
-                continue;
-            }
-            $type = $prop->getType();
-            if (!$type instanceof \ReflectionNamedType || $type->isBuiltin()) {
-                continue;
-            }
-            $lazySeamServices = [
-                \OCA\IntraVox\Service\Locator\PageLocator::class,
-                \OCA\IntraVox\Service\Translation\TranslationGroupService::class,
-                \OCA\IntraVox\Service\Media\PageMediaService::class,
-                \OCA\IntraVox\Service\News\NewsPageService::class,
-            ];
-            if (in_array($type->getName(), $lazySeamServices, true)) {
-                // Leave unset: PageService's lazy seam accessors build the
-                // REAL service from the pageIndexService + logger this test
-                // sets, reproducing the pre-split inline behaviour. An
-                // auto-mock here would answer null to every lookup.
-                continue;
-            }
-            if ($prop->isInitialized($svc)) {
-                continue;
-            }
-            $class = $type->getName();
-            if (!interface_exists($class) && !class_exists($class)) {
-                continue;
-            }
-            $prop->setValue($svc, $this->doubleOrBuild($class));
-        }
-        return $svc;
+        // locatePageAnyLanguage resolves its read folder via readLanguageFolder()
+        // ($en) and walks cross-language via the injected FolderContext ($base ->
+        // intraVox).
+        return $this->build($index, $en, $base);
     }
 
-    /** Drive the private locator through reflection. */
-    private function locate(PageService $svc, string $uniqueId): ?array {
-        $m = new \ReflectionMethod(PageService::class, 'locatePageAnyLanguage');
-        $readFolder = (new \ReflectionMethod(PageService::class, 'getReadLanguageFolder'))->invoke($svc);
-        return $m->invoke($svc, $readFolder, $uniqueId);
+    /**
+     * Drive the locator directly — the fase-10 replacement for the retired
+     * PageService::locatePageAnyLanguage delegator, which forwarded to
+     * $this->locator()->locatePageAnyLanguage(fn() => folders()->intraVox(),
+     * $readFolder, $uniqueId). Reconstructs that call byte-for-byte against the
+     * directly-built PageLocator + FolderContext, so the index-hit / scan-fallback /
+     * #90 cross-language behaviour is pinned exactly where it now lives.
+     *
+     * @param array{locator: PageLocator, folders: FolderContext} $svc
+     */
+    private function locate(array $svc, string $uniqueId): ?array {
+        $folders = $svc['folders'];
+        $readFolder = $folders->readLanguageFolder();
+        $intraVoxRoot = fn(): \OCP\Files\Folder => $folders->intraVox();
+        return $svc['locator']->locatePageAnyLanguage($intraVoxRoot, $readFolder, $uniqueId);
     }
 
     /** An indexed page resolves, and the result matches what a scan returns. */
@@ -263,8 +275,7 @@ class PageIndexLookupTest extends TestCase {
             ['uniqueId' => 'page-home', 'title' => 'Home']
         );
 
-        $result = (new \ReflectionMethod(PageService::class, 'listPagesFromIndex'))
-            ->invoke($svc, (new \ReflectionMethod(PageService::class, 'getReadLanguageFolder'))->invoke($svc));
+        $result = $svc['lister']->fromIndex($svc['folders']->readLanguageFolder());
 
         $this->assertNull($result, 'an index list missing the homepage must not be served');
     }
@@ -281,8 +292,7 @@ class PageIndexLookupTest extends TestCase {
             ['uniqueId' => 'page-home', 'title' => 'Home']
         );
 
-        $result = (new \ReflectionMethod(PageService::class, 'listPagesFromIndex'))
-            ->invoke($svc, (new \ReflectionMethod(PageService::class, 'getReadLanguageFolder'))->invoke($svc));
+        $result = $svc['lister']->fromIndex($svc['folders']->readLanguageFolder());
 
         $this->assertNotNull($result);
         $this->assertSame(['page-home', 'page-idx'], array_column($result, 'uniqueId'));
@@ -299,11 +309,90 @@ class PageIndexLookupTest extends TestCase {
             null // no home.json in the language root
         );
 
-        $result = (new \ReflectionMethod(PageService::class, 'listPagesFromIndex'))
-            ->invoke($svc, (new \ReflectionMethod(PageService::class, 'getReadLanguageFolder'))->invoke($svc));
+        $result = $svc['lister']->fromIndex($svc['folders']->readLanguageFolder());
 
         $this->assertNotNull($result);
         $this->assertSame(['page-idx'], array_column($result, 'uniqueId'));
+    }
+
+    /** No index entries for this language -> fall back to the scan (null). */
+    public function testEmptyIndexForLanguageFallsBack(): void {
+        // hasEntries() returns false when indexRows is empty (see the mock).
+        $svc = $this->makeServiceWithHome([], null);
+
+        $result = $svc['lister']->fromIndex($svc['folders']->readLanguageFolder());
+
+        $this->assertNull($result, 'no entries for the language means fall back to the walk');
+    }
+
+    /** An index query that throws must fall back to the scan, not blow up. */
+    public function testIndexQueryFailureFallsBack(): void {
+        $svc = $this->makeServiceWithHome(
+            [['unique_id' => 'page-idx', 'title' => 'About', 'path' => '/IntraVox/en/about',
+              'status' => 'published', 'modified_at' => 100]],
+            null,
+            throwOnGetPages: true
+        );
+
+        $result = $svc['lister']->fromIndex($svc['folders']->readLanguageFolder());
+
+        $this->assertNull($result, 'an index failure falls back to the walk rather than throwing');
+    }
+
+    /** Rows with a blank unique_id or path are skipped, not served. */
+    public function testRowsWithBlankIdOrPathAreSkipped(): void {
+        $svc = $this->makeServiceWithHome(
+            [
+                ['unique_id' => '', 'title' => 'No id', 'path' => '/IntraVox/en/about',
+                 'status' => 'published', 'modified_at' => 10],
+                ['unique_id' => 'page-nopath', 'title' => 'No path', 'path' => '',
+                 'status' => 'published', 'modified_at' => 20],
+                ['unique_id' => 'page-idx', 'title' => 'About', 'path' => '/IntraVox/en/about',
+                 'status' => 'published', 'modified_at' => 100],
+            ],
+            null
+        );
+
+        $result = $svc['lister']->fromIndex($svc['folders']->readLanguageFolder());
+
+        $this->assertNotNull($result);
+        $this->assertSame(['page-idx'], array_column($result, 'uniqueId'), 'blank-id and blank-path rows are dropped');
+    }
+
+    /** A row whose path resolves nowhere in the tree is skipped. */
+    public function testRowWithUnresolvablePathIsSkipped(): void {
+        $svc = $this->makeServiceWithHome(
+            [
+                ['unique_id' => 'page-ghost', 'title' => 'Ghost', 'path' => '/IntraVox/en/does-not-exist',
+                 'status' => 'published', 'modified_at' => 10],
+                ['unique_id' => 'page-idx', 'title' => 'About', 'path' => '/IntraVox/en/about',
+                 'status' => 'published', 'modified_at' => 100],
+            ],
+            null
+        );
+
+        $result = $svc['lister']->fromIndex($svc['folders']->readLanguageFolder());
+
+        $this->assertNotNull($result);
+        $this->assertSame(['page-idx'], array_column($result, 'uniqueId'), 'a row pointing nowhere is skipped');
+    }
+
+    /** The served rows carry the index title/status/modified verbatim. */
+    public function testServedRowShapeCarriesIndexFields(): void {
+        $svc = $this->makeServiceWithHome(
+            [['unique_id' => 'page-idx', 'title' => 'About Us', 'path' => '/IntraVox/en/about',
+              'status' => 'draft', 'modified_at' => 1234]],
+            null
+        );
+
+        $result = $svc['lister']->fromIndex($svc['folders']->readLanguageFolder());
+
+        $this->assertNotNull($result);
+        $this->assertSame('page-idx', $result[0]['uniqueId']);
+        $this->assertSame('About Us', $result[0]['title']);
+        $this->assertSame('draft', $result[0]['status']);
+        $this->assertSame(1234, $result[0]['modified']);
+        $this->assertArrayHasKey('permissions', $result[0]);
     }
 
     /**
@@ -311,8 +400,11 @@ class PageIndexLookupTest extends TestCase {
      *
      * @param array $indexRows rows getPagesByLanguage() should return
      * @param array|null $homeJson contents of en/home.json, or null for none
+     * @param bool $throwOnGetPages make getPagesByLanguage() throw, to pin the
+     *   fall-back-on-failure branch
+     * @return array{lister: PageLister, folders: FolderContext}
      */
-    private function makeServiceWithHome(array $indexRows, ?array $homeJson): PageService {
+    private function makeServiceWithHome(array $indexRows, ?array $homeJson, bool $throwOnGetPages = false): array {
         $aboutJson = $this->makeFile(
             '/IntraVox/en/about.json',
             ['uniqueId' => 'page-idx', 'title' => 'About']
@@ -328,93 +420,24 @@ class PageIndexLookupTest extends TestCase {
         $en = $this->makeFolder('/IntraVox/en', $children + ['about' => $aboutFolder]);
         $base = $this->makeFolder('/IntraVox', ['en' => $en]);
 
-        $svc = new class($en, $base) extends PageService {
-            private Folder $langFolder;
-            private Folder $baseFolder;
-            public function __construct(Folder $langFolder, Folder $baseFolder) {
-                $this->langFolder = $langFolder;
-                $this->baseFolder = $baseFolder;
-            }
-            protected function getLanguageFolder() {
-                return $this->langFolder;
-            }
-            protected function getReadLanguageFolder(): Folder {
-                return $this->langFolder;
-            }
-            protected function getIntraVoxFolder() {
-                return $this->baseFolder;
-            }
-            public function clearCache(): void {
-            }
-        };
-
+        // fromIndex resolves its folder via readLanguageFolder() ($en). Cross-
+        // language locate resolves its root via the injected FolderContext
+        // ($base -> intraVox).
         $index = $this->createMock(PageIndexService::class);
         $index->method('hasEntries')->willReturn(!empty($indexRows));
-        $index->method('getPagesByLanguage')->willReturn($indexRows);
+        if ($throwOnGetPages) {
+            $index->method('getPagesByLanguage')
+                ->willThrowException(new \RuntimeException('index query blew up'));
+        } else {
+            $index->method('getPagesByLanguage')->willReturn($indexRows);
+        }
 
-        $explicit = [
-            'userSession' => $this->createMock(\OCP\IUserSession::class),
-            'userId' => 'tester',
-            'config' => $this->createMock(\OCP\IConfig::class),
-            'logger' => $this->createMock(\Psr\Log\LoggerInterface::class),
-            'languageService' => $this->createMock(\OCA\IntraVox\Service\LanguageService::class),
-            'pageIndexService' => $index,
+        $built = $this->build($index, $en, $base);
+        return [
+            'lister' => $this->lister($index, $built['folders'], $built['locator']),
+            'folders' => $built['folders'],
         ];
-        foreach ($explicit as $name => $value) {
-            (new \ReflectionProperty(PageService::class, $name))->setValue($svc, $value);
-        }
-        foreach ((new \ReflectionClass(PageService::class))->getProperties() as $prop) {
-            if ($prop->isStatic() || isset($explicit[$prop->getName()])) {
-                continue;
-            }
-            $type = $prop->getType();
-            if (!$type instanceof \ReflectionNamedType || $type->isBuiltin()) {
-                continue;
-            }
-            $lazySeamServices = [
-                \OCA\IntraVox\Service\Locator\PageLocator::class,
-                \OCA\IntraVox\Service\Translation\TranslationGroupService::class,
-                \OCA\IntraVox\Service\Media\PageMediaService::class,
-                \OCA\IntraVox\Service\News\NewsPageService::class,
-            ];
-            if (in_array($type->getName(), $lazySeamServices, true)) {
-                // Leave unset: PageService's lazy seam accessors build the
-                // REAL service from the pageIndexService + logger this test
-                // sets, reproducing the pre-split inline behaviour. An
-                // auto-mock here would answer null to every lookup.
-                continue;
-            }
-            if ($prop->isInitialized($svc)) {
-                continue;
-            }
-            $class = $type->getName();
-            if (!interface_exists($class) && !class_exists($class)) {
-                continue;
-            }
-            $prop->setValue($svc, $this->doubleOrBuild($class));
-        }
-        return $svc;
     }
 
-    /**
-     * Mock $class, or — when it is final and therefore not doubleable — build a
-     * real one and recurse for its own final dependencies (PageShapeSanitizer
-     * takes three final leaf sanitizers).
-     */
-    private function doubleOrBuild(string $class): object {
-        try {
-            return $this->createMock($class);
-        } catch (\PHPUnit\Framework\MockObject\Generator\ClassIsFinalException $e) {
-            $ctor = (new \ReflectionClass($class))->getConstructor();
-            $args = [];
-            foreach ($ctor?->getParameters() ?? [] as $param) {
-                $pType = $param->getType();
-                $args[] = $pType instanceof \ReflectionNamedType && !$pType->isBuiltin()
-                    ? $this->doubleOrBuild($pType->getName())
-                    : null;
-            }
-            return new $class(...$args);
-        }
-    }
 
 }

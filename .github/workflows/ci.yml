@@ -13,17 +13,22 @@
 #   - the prebuild guards that need no node_modules and no build.
 #   - the packaging guard's own self-test, so the release contract stays honest.
 #
-# QG-2 (PHPStan, level 5) landed here with a baseline of 299 pre-existing errors,
-# which is what keeps main from going permanently red: new and refactored code
-# must be clean, and phpstan-baseline.neon may only ever shrink. It was brought
-# forward from "after the seam" because the service/controller split is what it
-# is meant to protect.
+# QG-2 (PHPStan, level 5) landed here with a baseline of 299 pre-existing errors
+# — 280 today, because the ratchet only ever shrinks. That baseline is what keeps
+# main from going permanently red: new and refactored code must be clean. It was
+# brought forward from "after the seam" because the service/controller split is
+# what it is meant to protect.
 #
 # Explicitly still NOT here: compliance.yml or a coverage threshold.
 
 name: CI
 
 on:
+  # Deliberately narrower than the Forgejo copy, which runs on every branch.
+  # This mirror only receives main and release tags — day-to-day branches live
+  # on forgejo.voxcloud.nl and are gated there. Widening this to every push
+  # would spend Actions minutes re-running what Forgejo already ran, on
+  # branches that are never pushed here in the first place.
   push:
     branches: [main]
   pull_request:
@@ -63,7 +68,7 @@ jobs:
       - name: Unit tests
         run: composer run test:unit
 
-      # QG-2. Level 5 against a baseline of 299 pre-existing errors: new and
+      # QG-2. Level 5 against a baseline of 280 pre-existing errors: new and
       # refactored code must be clean, and the baseline may only ever shrink.
       # Runs after the tests because a type error is easier to read once you
       # know the suite itself is green.
@@ -133,7 +138,7 @@ jobs:
         with:
           node-version: '20'
 
-      # These three are pure Node with no dependencies, so they run without an
+      # All seven are pure Node with no dependencies, so they run without an
       # npm install and stay fast. The l10n sync guard has its own workflow.
       - name: Import consistency
         run: node scripts/check-import-consistency.js

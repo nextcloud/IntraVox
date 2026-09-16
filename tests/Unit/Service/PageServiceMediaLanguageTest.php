@@ -4,7 +4,9 @@ declare(strict_types=1);
 namespace OCA\IntraVox\Tests\Unit\Service;
 
 use OCA\IntraVox\Exception\PageNotFoundException;
-use OCA\IntraVox\Service\PageService;
+use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsCacheFixtures;
+use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsFolderFixtures;
+use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsServiceDoubles;
 use OCP\Files\File;
 use OCP\Files\FileInfo;
 use OCP\Files\Folder;
@@ -30,6 +32,12 @@ use PHPUnit\Framework\TestCase;
  * two language folders, following PageServiceCrossLanguageTest.
  */
 class PageServiceMediaLanguageTest extends TestCase {
+
+    use BuildsFolderFixtures;
+
+    use BuildsServiceDoubles;
+
+    use BuildsCacheFixtures;
 
     /** A page JSON file. */
     private function makeFile(string $path, array $json): File {
@@ -93,15 +101,15 @@ class PageServiceMediaLanguageTest extends TestCase {
     }
 
     /**
-     * Build the service with $readFolder as the language the user is shown and
-     * $allLanguages as every language folder under /IntraVox.
+     * The media orchestrator over the cross-language fixture — the real owner of the
+     * #92 cross-language resolution. Every media op (getMediaList / checkMediaExists /
+     * uploadMedia / uploadMediaWithOriginalName) is driven through it directly now:
+     * their PageService facades were retired (read ones in fase-4, uploads in the
+     * fase-6 consumer campaign).
      *
-     * getLanguageFolder() and getReadLanguageFolder() are both pinned to
-     * $readFolder: these tests are about the media paths ignoring BOTH in
-     * favour of the page's own language, so which of the two a path used to
-     * call must not change the outcome.
+     * @param array<int,Folder> $allLanguages
      */
-    private function makeService(Folder $readFolder, array $allLanguages): PageService {
+    private function mediaOrchestrator(Folder $readFolder, array $allLanguages): \OCA\IntraVox\Service\Media\PageMediaOrchestrator {
         $byLang = [];
         foreach ($allLanguages as $l) {
             $byLang[$l->getName()] = $l;
@@ -115,92 +123,30 @@ class PageServiceMediaLanguageTest extends TestCase {
             }
             throw new \OCP\Files\NotFoundException($p);
         });
-
-        $svc = new class($readFolder, $base) extends PageService {
-            private Folder $readFolder;
-            private Folder $baseFolder;
-            // Deliberately bypass the real (25-arg) constructor.
-            public function __construct(Folder $readFolder, Folder $baseFolder) {
-                $this->readFolder = $readFolder;
-                $this->baseFolder = $baseFolder;
-            }
-            protected function getLanguageFolder() {
-                return $this->readFolder;
-            }
-            protected function getReadLanguageFolder(): Folder {
-                return $this->readFolder;
-            }
-            protected function getIntraVoxFolder() {
-                return $this->baseFolder;
-            }
-            public function clearCache(): void {
-            }
-        };
-
-        $user = $this->createMock(\OCP\IUser::class);
-        $user->method('getUID')->willReturn('tester');
-        $session = $this->createMock(\OCP\IUserSession::class);
-        $session->method('getUser')->willReturn($user);
-
-        $config = $this->createMock(\OCP\IConfig::class);
-        $config->method('getUserValue')->willReturn('de');
-
-        $languageService = $this->createMock(\OCA\IntraVox\Service\LanguageService::class);
-        $languageService->method('isLanguageAvailable')->willReturnCallback(
-            fn(string $code) => in_array($code, ['en', 'de', 'fr', 'nl'], true)
+        $logger = $this->createMock(\Psr\Log\LoggerInterface::class);
+        $locator = new \OCA\IntraVox\Service\Locator\PageLocator(
+            $this->createMock(\OCA\IntraVox\Service\PageIndexService::class),
+            $logger
         );
-        $languageService->method('getPrimaryLanguage')->willReturn('en');
-
-        $explicit = [
-            'userSession' => $session,
-            'userId' => 'tester',
-            'config' => $config,
-            'logger' => $this->createMock(\Psr\Log\LoggerInterface::class),
-            'languageService' => $languageService,
-        ];
-        foreach ($explicit as $name => $value) {
-            (new \ReflectionProperty(PageService::class, $name))->setValue($svc, $value);
-        }
-
-        // The constructor is bypassed, so fill every remaining typed object
-        // property with a dummy; an uninitialised one is a fatal Error that
-        // would mask what these tests assert. (Same approach as
-        // PageServiceCrossLanguageTest.)
-        foreach ((new \ReflectionClass(PageService::class))->getProperties() as $prop) {
-            if ($prop->isStatic() || isset($explicit[$prop->getName()])) {
-                continue;
-            }
-            $type = $prop->getType();
-            if (!$type instanceof \ReflectionNamedType || $type->isBuiltin()) {
-                continue;
-            }
-            $lazySeamServices = [
-                \OCA\IntraVox\Service\Locator\PageLocator::class,
-                \OCA\IntraVox\Service\Translation\TranslationGroupService::class,
-                \OCA\IntraVox\Service\Media\PageMediaService::class,
-                \OCA\IntraVox\Service\News\NewsPageService::class,
-            ];
-            if (in_array($type->getName(), $lazySeamServices, true)) {
-                // Leave unset: PageService's lazy seam accessors build the
-                // REAL service from the pageIndexService + logger this test
-                // sets, reproducing the pre-split inline behaviour. An
-                // auto-mock here would answer null to every lookup.
-                continue;
-            }
-            if ($prop->isInitialized($svc)) {
-                continue;
-            }
-            $class = $type->getName();
-            if (!interface_exists($class) && !class_exists($class)) {
-                continue;
-            }
-            $prop->setValue($svc, $this->doubleOrBuild($class));
-        }
-
-        // sanitizeId() is delegated to a final helper that the loop above
-        // instantiates with mocked collaborators; make it behave like the real
-        // one for the ids these tests use.
-        return $svc;
+        $sanitizer = $this->doubleOrBuild(\OCA\IntraVox\Service\Sanitize\MediaSanitizer::class);
+        // The engine is REAL (not a mock): checkMediaExists/getMediaList read the
+        // fixture folders through it, exactly as the old buildRealPageService path
+        // built it via the media() lazy accessor.
+        $engine = new \OCA\IntraVox\Service\Media\PageMediaService($locator, $sanitizer, $logger);
+        return new \OCA\IntraVox\Service\Media\PageMediaOrchestrator(
+            $engine,
+            $this->createMock(\OCA\IntraVox\Service\Cache\PageCacheService::class),
+            $this->fakeFolderContext(
+                readLanguageFolder: $readFolder,
+                intraVox: $base,
+                userLanguage: 'de',
+                primaryLanguage: 'en'
+            ),
+            $locator,
+            new \OCA\IntraVox\Service\Util\PageIdUtils(),
+            $sanitizer,
+            $this->fakeCacheInvalidator()
+        );
     }
 
     /**
@@ -220,7 +166,7 @@ class PageServiceMediaLanguageTest extends TestCase {
      * Build the two-language fixture used by most tests: the page lives in en/,
      * the user reads de/. Returns [service, createdPaths].
      */
-    private function twoLanguageFixture(array &$created): PageService {
+    private function twoLanguageFixture(array &$created): \OCA\IntraVox\Service\Media\PageMediaOrchestrator {
         $pageJson = $this->makeFile(
             '/IntraVox/en/about.json',
             ['uniqueId' => 'page-issue92', 'title' => 'About', 'widgets' => []]
@@ -234,7 +180,10 @@ class PageServiceMediaLanguageTest extends TestCase {
         ], $created);
         $de = $this->makeFolder('/IntraVox/de', [], $created);
 
-        return $this->makeService($de, [$de, $en]);
+        // fase-6 consumer campaign: uploadMedia* moved off PageService — the upload
+        // tests drive PageMediaOrchestrator directly (its real owner), like the
+        // read tests already did.
+        return $this->mediaOrchestrator($de, [$de, $en]);
     }
 
     /**
@@ -280,7 +229,7 @@ class PageServiceMediaLanguageTest extends TestCase {
         $created = [];
         $en = $this->makeFolder('/IntraVox/en', [], $created);
         $de = $this->makeFolder('/IntraVox/de', [], $created);
-        $svc = $this->makeService($de, [$de, $en]);
+        $svc = $this->mediaOrchestrator($de, [$de, $en]);
 
         $this->expectException(PageNotFoundException::class);
         $svc->uploadMediaWithOriginalName('page-nope', $this->makeUpload(), 'page', false);
@@ -309,8 +258,8 @@ class PageServiceMediaLanguageTest extends TestCase {
             '_resources' => $this->makeFolder('/IntraVox/de/_resources', [], $created),
         ], $created);
 
-        $svc = $this->makeService($de, [$de, $en]);
-        $list = $svc->getMediaList('page-issue92', 'resources');
+        $svc = $this->mediaOrchestrator($de, [$de, $en]);
+        $list = $svc->getMediaList('page-issue92', 'resources', '');
 
         $this->assertCount(1, $list, 'the shared library of the page\'s language must be listed');
         $this->assertSame('logo.png', $list[0]['name']);
@@ -336,7 +285,7 @@ class PageServiceMediaLanguageTest extends TestCase {
         ], $created);
         $de = $this->makeFolder('/IntraVox/de', [], $created);
 
-        $svc = $this->makeService($de, [$de, $en]);
+        $svc = $this->mediaOrchestrator($de, [$de, $en]);
 
         $this->assertTrue(
             $svc->checkMediaExists('page-issue92', 'photo.png', 'page'),
@@ -371,7 +320,7 @@ class PageServiceMediaLanguageTest extends TestCase {
             'about' => $enPageFolder,
         ], $created);
 
-        $svc = $this->makeService($de, [$de, $en]);
+        $svc = $this->mediaOrchestrator($de, [$de, $en]);
         $svc->uploadMedia('page-shared', $this->makeUpload());
 
         $this->assertContains('/IntraVox/de/about/_media/', $created);
@@ -395,7 +344,7 @@ class PageServiceMediaLanguageTest extends TestCase {
         $en = $this->makeFolder('/IntraVox/en', ['home.json' => $homeJson], $created);
         $de = $this->makeFolder('/IntraVox/de', [], $created);
 
-        $svc = $this->makeService($de, [$de, $en]);
+        $svc = $this->mediaOrchestrator($de, [$de, $en]);
         $svc->uploadMedia('page-home92', $this->makeUpload());
 
         $this->assertContains(
@@ -405,25 +354,5 @@ class PageServiceMediaLanguageTest extends TestCase {
         );
     }
 
-    /**
-     * Mock $class, or — when it is final and therefore not doubleable — build a
-     * real one and recurse for its own final dependencies (PageShapeSanitizer
-     * takes three final leaf sanitizers).
-     */
-    private function doubleOrBuild(string $class): object {
-        try {
-            return $this->createMock($class);
-        } catch (\PHPUnit\Framework\MockObject\Generator\ClassIsFinalException $e) {
-            $ctor = (new \ReflectionClass($class))->getConstructor();
-            $args = [];
-            foreach ($ctor?->getParameters() ?? [] as $param) {
-                $pType = $param->getType();
-                $args[] = $pType instanceof \ReflectionNamedType && !$pType->isBuiltin()
-                    ? $this->doubleOrBuild($pType->getName())
-                    : null;
-            }
-            return new $class(...$args);
-        }
-    }
 
 }

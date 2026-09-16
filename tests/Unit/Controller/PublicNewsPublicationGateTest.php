@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace OCA\IntraVox\Tests\Unit\Controller;
 
 use OCA\IntraVox\Controller\PublicShareController;
-use OCA\IntraVox\Service\PageService;
+use OCA\IntraVox\Service\Publication\PublicationStateService;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -24,13 +24,15 @@ class PublicNewsPublicationGateTest extends TestCase {
 
 	/** @param list<string> $hiddenIds ids isHiddenFromReaders() should reject */
 	private function controller(array $hiddenIds): PublicShareController {
-		$pageService = $this->createMock(PageService::class);
-		$pageService->method('isHiddenFromReaders')->willReturnCallback(
+		// The publication gate moved to PublicationStateService (Phase 3); the
+		// controller calls isHiddenFromReaders on it, so that is what we stub.
+		$publicationState = $this->createMock(PublicationStateService::class);
+		$publicationState->method('isHiddenFromReaders')->willReturnCallback(
 			static fn (array $page): bool => in_array($page['uniqueId'] ?? '', $hiddenIds, true)
 		);
 
 		$controller = (new \ReflectionClass(PublicShareController::class))->newInstanceWithoutConstructor();
-		(new \ReflectionProperty(PublicShareController::class, 'pageService'))->setValue($controller, $pageService);
+		(new \ReflectionProperty(PublicShareController::class, 'publicationState'))->setValue($controller, $publicationState);
 
 		return $controller;
 	}

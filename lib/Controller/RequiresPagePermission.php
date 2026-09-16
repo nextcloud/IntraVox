@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace OCA\IntraVox\Controller;
 
-use OCA\IntraVox\Service\PageService;
+use OCA\IntraVox\Service\Read\PageReadService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\DataResponse;
 
@@ -12,7 +12,7 @@ use OCP\AppFramework\Http\DataResponse;
  *
  * Eight endpoints in ApiController each carried their own copy:
  *
- *     $page = $this->pageService->getPage($id);
+ *     $page = $this->getPageReadService()->getPage($id);
  *     if (!($page['permissions']['canWrite'] ?? false)) { ... 403 ... }
  *
  * Identical apart from the message. Eight copies of a security check is eight
@@ -35,7 +35,7 @@ trait RequiresPagePermission {
      * @return array<string, mixed>|DataResponse the page, or the refusal to return
      */
     protected function requireWritablePage(string $uniqueId, string $denialReason) {
-        $page = $this->getPageService()->getPage($uniqueId);
+        $page = $this->getPageReadService()->getPage($uniqueId);
 
         if (!($page['permissions']['canWrite'] ?? false)) {
             // Two callers historically answered with the bare phrase; keeping
@@ -54,9 +54,42 @@ trait RequiresPagePermission {
     }
 
     /**
-     * Explicit accessor rather than reaching for $this->pageService directly:
-     * the Shared/ traits do the latter and a controller that forgets the
-     * property only finds out at runtime, on the first request.
+     * The read-permission companion. Unlike requireWritablePage it does NOT
+     * fetch the page: the read endpoints already call getPage() once (they need
+     * the page anyway) and check permissions on that array, so re-fetching here
+     * would double the call and could diverge if the two reads disagreed. It
+     * therefore takes the already-loaded page and returns the refusal, or null
+     * when access is allowed.
+     *
+     * The default denial body is the bare 'Access denied' every read gate uses
+     * today; a caller with a different message (e.g. the source-page check in
+     * ApiController) passes its own so consolidating changes no response body.
+     *
+     * Usage:
+     *     $page = $this->getPageReadService()->getPage($id);
+     *     if (($denied = $this->denyUnlessReadable($page)) !== null) {
+     *         return $denied;
+     *     }
+     *
+     * @param array<string, mixed> $page the page as returned by getPage()
      */
-    abstract protected function getPageService(): PageService;
+    protected function denyUnlessReadable(array $page, string $denialBody = 'Access denied'): ?DataResponse {
+        if (!($page['permissions']['canRead'] ?? false)) {
+            return new DataResponse(
+                ['error' => $denialBody],
+                Http::STATUS_FORBIDDEN
+            );
+        }
+        return null;
+    }
+
+    /**
+     * The read service the write-gate resolves the page through (fase-4 C6:
+     * getPage moved off the PageService facade onto Read/PageReadService). Each
+     * consumer returns its injected instance. This is now the trait's ONLY
+     * collaborator: the permission gate reads the page's own permissions map, so
+     * the PageService accessor the trait used to require is gone (fase-9 — the
+     * last consumer, ApiController, no longer holds the facade).
+     */
+    abstract protected function getPageReadService(): PageReadService;
 }

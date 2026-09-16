@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace OCA\IntraVox\Controller;
 
 use OCA\IntraVox\Exception\PageNotFoundException;
-use OCA\IntraVox\Service\PageService;
 use OCP\Files\NotFoundException;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -41,7 +40,13 @@ class MediaApiController extends Controller {
     public function __construct(
         string $appName,
         IRequest $request,
-        private PageService $pageService,
+        // Every media operation — read/resource, upload, upload-limit — goes through
+        // the MEDIA-domain PageMediaOrchestrator directly (fase-6 consumer campaign);
+        // getPage comes from the READ service (fase-4 C6). The RequiresPagePermission
+        // gate now needs only that read service, so the PageService facade this
+        // controller used to hold purely for the gate's accessor is gone (fase-9).
+        private \OCA\IntraVox\Service\Read\PageReadService $pageRead,
+        private \OCA\IntraVox\Service\Media\PageMediaOrchestrator $mediaOrchestrator,
         // Required by Shared\SharePathTrait::peopleAllowedOnPublicShares().
         // This controller never calls that method, but the trait reaches for the
         // property and PHP would only complain at runtime, on a request that hits
@@ -49,6 +54,7 @@ class MediaApiController extends Controller {
         // traits having no abstract accessor.
         private IConfig $config,
         private LoggerInterface $logger,
+        private \OCA\IntraVox\Service\Sanitize\MediaSanitizer $mediaSanitizer,
     ) {
         parent::__construct($appName, $request);
     }
@@ -57,8 +63,8 @@ class MediaApiController extends Controller {
         return $this->logger;
     }
 
-    protected function getPageService(): PageService {
-        return $this->pageService;
+    protected function getPageReadService(): \OCA\IntraVox\Service\Read\PageReadService {
+        return $this->pageRead;
     }
     /**
      * Upload media (image or video) for a page
@@ -90,7 +96,7 @@ class MediaApiController extends Controller {
                 throw new \InvalidArgumentException('File upload failed - tmp_name is empty. Upload error: ' . ($file['error'] ?? 'unknown'));
             }
 
-            $filename = $this->pageService->uploadMedia($pageId, $file);
+            $filename = $this->mediaOrchestrator->uploadMedia($pageId, $file);
             return new DataResponse(['filename' => $filename], Http::STATUS_CREATED);
         } catch (PageNotFoundException $e) {
             $this->logger->warning('[uploadMedia] PageNotFoundException: ' . $e->getMessage(), [
@@ -134,9 +140,9 @@ class MediaApiController extends Controller {
             // checking the raw name answered a question nobody asked: two
             // different names that sanitize to the same one were reported as
             // "no duplicate" and then collided on write.
-            $exists = $this->pageService->checkMediaExists(
+            $exists = $this->mediaOrchestrator->checkMediaExists(
                 $pageId,
-                $this->pageService->sanitizeFilename($filename),
+                $this->mediaSanitizer->sanitizeFilename($filename),
                 $target
             );
 
@@ -185,7 +191,7 @@ class MediaApiController extends Controller {
             $overwrite = $this->request->getParam('overwrite', '0') === '1';
 
             // Upload file
-            $result = $this->pageService->uploadMediaWithOriginalName($pageId, $file, $target, $overwrite);
+            $result = $this->mediaOrchestrator->uploadMediaWithOriginalName($pageId, $file, $target, $overwrite);
 
             return new DataResponse($result, Http::STATUS_CREATED);
 
@@ -241,7 +247,7 @@ class MediaApiController extends Controller {
                 }
             }
 
-            $mediaList = $this->pageService->getMediaList($pageId, $folder, $path);
+            $mediaList = $this->mediaOrchestrator->getMediaList($pageId, $folder, $path);
 
             // Naturally bounded by one folder's contents, which is not the same as
             // bounded. The shared resources folder in particular grows with the
@@ -287,7 +293,13 @@ class MediaApiController extends Controller {
                 );
             }
 
-            $file = $this->pageService->getResourcesMediaFile($safePath);
+            $file = $this->mediaOrchestrator->getResourcesMediaFile($safePath);
+            if (!$file instanceof \OCP\Files\File) {
+                // A resources media path always resolves to a File; a null/Node
+                // result means the asset is absent (previously this fataled on
+                // getContent()). Answer the same 404 the NotFoundException path does.
+                return new DataResponse(['error' => 'Media not found'], Http::STATUS_NOT_FOUND);
+            }
 
             // Set appropriate content type
             $finfo = finfo_open(FILEINFO_MIME_TYPE);
@@ -324,7 +336,7 @@ class MediaApiController extends Controller {
     #[NoCSRFRequired]
     public function getUploadLimit(): DataResponse {
         try {
-            $limit = $this->pageService->getUploadLimit();
+            $limit = $this->mediaOrchestrator->getUploadLimit();
             return new DataResponse([
                 'limit' => $limit,
                 'limitMB' => round($limit / (1024 * 1024), 1)
@@ -345,17 +357,13 @@ class MediaApiController extends Controller {
     public function getMedia(string $pageId, string $filename) {
         try {
             // First get the page to check permissions (from Nextcloud filesystem)
-            $existingPage = $this->pageService->getPage($pageId);
+            $existingPage = $this->pageRead->getPage($pageId);
 
-            // Check read permission using Nextcloud's permissions
-            if (!($existingPage['permissions']['canRead'] ?? false)) {
-                return new DataResponse(
-                    ['error' => 'Access denied'],
-                    Http::STATUS_FORBIDDEN
-                );
+            if (($denied = $this->denyUnlessReadable($existingPage)) !== null) {
+                return $denied;
             }
 
-            return $this->pageService->getMedia($pageId, $filename);
+            return $this->mediaOrchestrator->getMedia($pageId, $filename);
         } catch (\Exception $e) {
             return new DataResponse(
                 ['error' => $e->getMessage()],

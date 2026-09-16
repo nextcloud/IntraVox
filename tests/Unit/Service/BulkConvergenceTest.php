@@ -4,7 +4,16 @@ declare(strict_types=1);
 namespace OCA\IntraVox\Tests\Unit\Service;
 
 use OCA\IntraVox\Service\BulkOperationService;
-use OCA\IntraVox\Service\PageService;
+use OCA\IntraVox\Service\Cache\PageCacheService;
+use OCA\IntraVox\Service\Locator\PageLocator;
+use OCA\IntraVox\Service\PageIndexService;
+use OCA\IntraVox\Service\PermissionService;
+use OCA\IntraVox\Service\Structure\PageStructureService;
+use OCA\IntraVox\Service\Write\PageWriteService;
+use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsCollaboratorFixtures;
+use OCP\Files\File;
+use OCP\Files\FileInfo;
+use OCP\Files\Folder;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -29,21 +38,73 @@ use Psr\Log\LoggerInterface;
  * again".
  */
 class BulkConvergenceTest extends TestCase {
-    private PageService $pageService;
+    use \OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageRead;
+    use BuildsCollaboratorFixtures;
     private BulkOperationService $service;
+    /** getPage(id) behaviour a test installs (fase-4 C6: getPage → PageReadService). */
+    private \Closure $getPageFn;
 
     protected function setUp(): void {
         parent::setUp();
-        $this->pageService = $this->createMock(PageService::class);
+        $this->getPageFn = fn(string $id) => null;
+        $pageRead = $this->fakePageReadFrom(fn(string $id) => ($this->getPageFn)($id));
+        // The delete path goes to a REAL PageWriteService (god-class dissolution).
+        // Its fixture holds 'page-here' so a permitted delete succeeds; any other
+        // uniqueId resolves to nothing → PageNotFoundException, which convergence
+        // treats as done. (Most tests never reach it: the not-found / permission /
+        // genuine-error cases are all decided by the getPage gate upstream.)
         $this->service = new BulkOperationService(
-            $this->pageService,
+            $this->deleteCapableWriteService(),
+            $this->doubleOrBuild(PageStructureService::class),
+            $this->fakeCacheInvalidator(),
+            $pageRead,
             $this->createMock(LoggerInterface::class)
         );
     }
 
+    /**
+     * A real PageWriteService whose deletePage('page-here') resolves + deletes
+     * cleanly (the folder is present in its FolderContext) and whose any-other-id
+     * delete resolves to nothing → PageNotFoundException.
+     */
+    private function deleteCapableWriteService(): PageWriteService {
+        $pageJson = $this->makeFile('/IntraVox/en/here.json', ['uniqueId' => 'page-here', 'title' => 'Still here']);
+        $pageFolder = $this->createMock(Folder::class);
+        $pageFolder->method('getName')->willReturn('here');
+        $pageFolder->method('getType')->willReturn(FileInfo::TYPE_FOLDER);
+        $pageFolder->method('getPath')->willReturn('/IntraVox/en/here');
+        $pageFolder->method('getDirectoryListing')->willReturn([]);
+        $pageFolder->method('delete')->willReturnCallback(function (): void {});
+        $lang = $this->makeFolder('/IntraVox/en', ['here.json' => $pageJson, 'here' => $pageFolder]);
+        $base = $this->makeFolder('/IntraVox', ['en' => $lang]);
+
+        $ls = $this->createMock(\OCA\IntraVox\Service\LanguageService::class);
+        $index = $this->createMock(PageIndexService::class);
+        $index->method('findByUniqueId')->willReturn(null);
+
+        return new PageWriteService(
+            new \OCA\IntraVox\Service\Util\PageIdUtils(),
+            $this->createMock(\OCP\EventDispatcher\IEventDispatcher::class),
+            $this->createMock(LoggerInterface::class),
+            $this->createMock(\OCP\IUserSession::class),
+            $this->createMock(\OCA\IntraVox\Service\Version\PageVersionService::class),
+            $index,
+            $ls,
+            $this->fakeFolderContext(intraVox: $base, languageFolder: $lang),
+            new PageLocator($index, $this->createMock(LoggerInterface::class)),
+            $this->fakeHomepageResolver(null),
+            $this->fakeCacheInvalidator(),
+            $this->doubleOrBuild(\OCA\IntraVox\Service\Sanitize\PageShapeSanitizer::class),
+            $this->createMock(\OCA\IntraVox\Service\Media\PageMediaService::class),
+            $this->createMock(PageCacheService::class),
+            new \OCA\IntraVox\Service\Path\PageDepthValidator(new \OCA\IntraVox\Service\Path\PagePathHelper(), $ls),
+        );
+    }
+
     public function testDeletingAnAlreadyDeletedPageCountsAsDone(): void {
-        $this->pageService->method('getPage')
-            ->willThrowException(new \Exception('Page not found'));
+        $this->getPageFn = function (string $id): array {
+            throw new \Exception('Page not found');
+        };
 
         $result = $this->service->bulkDelete(['page-gone'], true);
 
@@ -52,8 +113,9 @@ class BulkConvergenceTest extends TestCase {
     }
 
     public function testAGenuineFailureIsStillAFailure(): void {
-        $this->pageService->method('getPage')
-            ->willThrowException(new \Exception('Storage is not writable'));
+        $this->getPageFn = function (string $id): array {
+            throw new \Exception('Storage is not writable');
+        };
 
         $result = $this->service->bulkDelete(['page-1'], true);
 
@@ -62,10 +124,10 @@ class BulkConvergenceTest extends TestCase {
     }
 
     public function testPermissionDenialIsNotSwallowedByConvergence(): void {
-        $this->pageService->method('getPage')->willReturn([
+        $this->getPageFn = fn(string $id) => [
             'title' => 'Protected',
             'permissions' => ['canDelete' => false],
-        ]);
+        ];
 
         $result = $this->service->bulkDelete(['page-1'], true);
 
@@ -77,14 +139,12 @@ class BulkConvergenceTest extends TestCase {
      * A mixed batch is the realistic retry: some already gone, some still there.
      */
     public function testAMixedRetryReportsEverythingAsDone(): void {
-        $this->pageService->method('getPage')->willReturnCallback(
-            static function (string $id): array {
-                if ($id === 'page-gone') {
-                    throw new \Exception('Page not found');
-                }
-                return ['title' => 'Still here', 'permissions' => ['canDelete' => true]];
+        $this->getPageFn = static function (string $id): array {
+            if ($id === 'page-gone') {
+                throw new \Exception('Page not found');
             }
-        );
+            return ['title' => 'Still here', 'permissions' => ['canDelete' => true]];
+        };
 
         $result = $this->service->bulkDelete(['page-gone', 'page-here'], true)->toArray();
 

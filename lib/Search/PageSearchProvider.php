@@ -3,8 +3,10 @@ declare(strict_types=1);
 
 namespace OCA\IntraVox\Search;
 
+use OCA\IntraVox\Service\Listing\PageLister;
 use OCA\IntraVox\Service\PageIndexService;
-use OCA\IntraVox\Service\PageService;
+use OCA\IntraVox\Service\Publication\PublicationStateService;
+use OCA\IntraVox\Service\Search\PageSearchEngine;
 use OCP\IConfig;
 use OCP\IL10N;
 use OCP\IURLGenerator;
@@ -15,24 +17,37 @@ use OCP\Search\SearchResult;
 use OCP\Search\SearchResultEntry;
 
 class PageSearchProvider implements IProvider {
-    private PageService $pageService;
+    // Full-text search is the PageSearchEngine's scoring/sort/limit over the
+    // pages the PageLister walks — the same pair PageService::searchPages()
+    // delegated to (god-class dissolution). The provider now injects them
+    // directly instead of routing through the retired facade.
+    private PageSearchEngine $searchEngine;
+    private PageLister $pageLister;
+    private \OCA\IntraVox\Service\Read\PageReadService $pageRead;
     private PageIndexService $pageIndexService;
     private IConfig $config;
     private IL10N $l10n;
     private IURLGenerator $urlGenerator;
+    private PublicationStateService $publicationState;
 
     public function __construct(
-        PageService $pageService,
+        PageSearchEngine $searchEngine,
+        PageLister $pageLister,
+        \OCA\IntraVox\Service\Read\PageReadService $pageRead,
         PageIndexService $pageIndexService,
         IConfig $config,
         IL10N $l10n,
-        IURLGenerator $urlGenerator
+        IURLGenerator $urlGenerator,
+        PublicationStateService $publicationState
     ) {
-        $this->pageService = $pageService;
+        $this->searchEngine = $searchEngine;
+        $this->pageLister = $pageLister;
+        $this->pageRead = $pageRead;
         $this->pageIndexService = $pageIndexService;
         $this->config = $config;
         $this->l10n = $l10n;
         $this->urlGenerator = $urlGenerator;
+        $this->publicationState = $publicationState;
     }
 
     public function getId(): string {
@@ -77,7 +92,7 @@ class PageSearchProvider implements IProvider {
         }
 
         try {
-            $page = $this->pageService->getPage($uniqueId);
+            $page = $this->pageRead->getPage($uniqueId);
         } catch (\Throwable $e) {
             return true;
         }
@@ -86,7 +101,7 @@ class PageSearchProvider implements IProvider {
             return true;
         }
 
-        if (!$this->pageService->isHiddenFromReaders($page)) {
+        if (!$this->publicationState->isHiddenFromReaders($page)) {
             return false;
         }
 
@@ -153,8 +168,10 @@ class PageSearchProvider implements IProvider {
             }
 
             // Full-text search (slower, reads all JSON files) — also the only
-            // path that matches MetaVox metadata.
-            $results = $this->pageService->searchPages($term);
+            // path that matches MetaVox metadata. Discovery (the filesystem walk)
+            // is the PageLister's job; scoring/sort/limit is the engine's — exactly
+            // what PageService::searchPages() composed.
+            $results = $this->searchEngine->search($this->pageLister->listAllWithContent(), $term);
 
             foreach ($results as $result) {
                 if (isset($seenIds[$result['uniqueId'] ?? ''])) {
@@ -163,7 +180,7 @@ class PageSearchProvider implements IProvider {
 
                 // Unpublished pages must not surface to readers. searchPages()
                 // returns the page body, so the state is decided directly.
-                if ($this->pageService->isHiddenFromReaders($result)
+                if ($this->publicationState->isHiddenFromReaders($result)
                     && !($result['permissions']['canWrite'] ?? false)
                 ) {
                     continue;

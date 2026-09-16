@@ -138,11 +138,7 @@ class HomepageService {
     // ---- helpers (mirror NavigationService) ----
 
     private function getIntraVoxFolder() {
-        if (!$this->userId) {
-            throw new \Exception('User not logged in');
-        }
-        $userFolder = $this->rootFolder->getUserFolder($this->userId);
-        return $userFolder->get('IntraVox');
+        return (new \OCA\IntraVox\Service\Locator\IntraVoxFolderResolver($this->rootFolder, $this->userId))->resolve();
     }
 
     private function getLanguageFolder(string $language) {

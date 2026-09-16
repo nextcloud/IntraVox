@@ -99,36 +99,11 @@ class ExportController extends Controller {
             // Cleanup temp files
             @unlink($zipPath);
             $tempDir = dirname($zipPath);
-            $this->cleanupTempDir($tempDir);
+            \OCA\IntraVox\Service\Import\TempDir::cleanup($tempDir);
 
             return new DataDownloadResponse($zipContent, $filename, 'application/zip');
         } catch (\Exception $e) {
             return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_INTERNAL_SERVER_ERROR);
         }
-    }
-
-    /**
-     * Cleanup temporary directory
-     *
-     * @param string $dir Directory to cleanup
-     */
-    private function cleanupTempDir(string $dir): void {
-        if (!is_dir($dir)) {
-            return;
-        }
-
-        $files = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS),
-            \RecursiveIteratorIterator::CHILD_FIRST
-        );
-
-        foreach ($files as $file) {
-            if ($file->isDir()) {
-                @rmdir($file->getPathname());
-            } else {
-                @unlink($file->getPathname());
-            }
-        }
-        @rmdir($dir);
     }
 }

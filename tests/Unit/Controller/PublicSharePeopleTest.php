@@ -7,8 +7,8 @@ use OCA\IntraVox\Controller\PublicShareController;
 use OCA\IntraVox\Service\CalendarService;
 use OCA\IntraVox\Service\FeedReaderService;
 use OCA\IntraVox\Service\NavigationService;
-use OCA\IntraVox\Service\PageService;
 use OCA\IntraVox\Service\Path\PagePathHelper;
+use OCA\IntraVox\Service\Read\PageReadService;
 use OCA\IntraVox\Service\PublicShare\ShareBreadcrumbBuilder;
 use OCA\IntraVox\Service\PublicShare\ShareMediaServer;
 use OCA\IntraVox\Service\PublicShare\ShareTreeShaper;
@@ -42,10 +42,24 @@ class PublicSharePeopleTest extends TestCase {
 	private UserService $userService;
 	private PublicShareService $publicShareService;
 
+	/**
+	 * PageReadService is final (cannot be mocked) and these People-facet tests
+	 * never call getPage() on it, so a constructor-less instance is enough to
+	 * satisfy the ctor type.
+	 */
+	private function unusedPageRead(): PageReadService {
+		return (new \ReflectionClass(PageReadService::class))->newInstanceWithoutConstructor();
+	}
+
 	protected function setUp(): void {
 		parent::setUp();
 		$this->userService = $this->createMock(UserService::class);
 		$this->publicShareService = $this->createMock(PublicShareService::class);
+		// Token-shape validation moved onto the service (Phase 6.2); reproduce the
+		// real rule so well-formed tokens pass and the malformed 'abc' is refused.
+		$this->publicShareService->method('isValidShareTokenFormat')->willReturnCallback(
+			static fn(?string $t) => $t !== null && $t !== '' && strlen($t) >= 10 && strlen($t) <= 32 && ctype_alnum($t)
+		);
 	}
 
 	private function controller(?IRequest $request = null, string $allowPeople = 'no'): PublicShareController {
@@ -61,7 +75,7 @@ class PublicSharePeopleTest extends TestCase {
 		return new PublicShareController(
 			'intravox',
 			$request ?? $this->createMock(IRequest::class),
-			$this->createMock(PageService::class),
+			$this->unusedPageRead(),
 			$this->createMock(SetupService::class),
 			$this->publicShareService,
 			$this->createMock(SystemFileService::class),
@@ -79,6 +93,7 @@ class PublicSharePeopleTest extends TestCase {
 			new ShareTreeShaper(),
 			new PagePathHelper(),
 			new ShareMediaServer(),
+			$this->createMock(\OCA\IntraVox\Service\Publication\PublicationStateService::class),
 		);
 	}
 
@@ -256,7 +271,7 @@ class PublicSharePeopleTest extends TestCase {
 		$controller = new PublicShareController(
 			'intravox',
 			$this->createMock(IRequest::class),
-			$this->createMock(PageService::class),
+			$this->unusedPageRead(),
 			$this->createMock(SetupService::class),
 			$this->publicShareService,
 			$this->createMock(SystemFileService::class),
@@ -274,6 +289,7 @@ class PublicSharePeopleTest extends TestCase {
 			new ShareTreeShaper(),
 			new PagePathHelper(),
 			new ShareMediaServer(),
+			$this->createMock(\OCA\IntraVox\Service\Publication\PublicationStateService::class),
 		);
 
 		$this->publicShareService->expects($this->never())->method('resolveIntraVoxLinkShare');

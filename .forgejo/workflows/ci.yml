@@ -13,14 +13,25 @@
 #     internal network.
 #   - the runner cache IS enabled, unlike on the old ax42 runner.
 #
+# This is the FAST gate: unit tests, phpstan, packaging and the frontend guards.
+# The integration suite lives in integration.yml, which installs a throwaway
+# Nextcloud + groupfolders per NC version and is therefore minutes rather than
+# seconds — it runs on PRs, on the main lines, and on demand.
+#
 # Kept deliberately close to the GitHub file so the two do not drift. When you
-# change one, change the other.
+# change one, change the other — with one intended exception: the triggers.
+# This file runs on EVERY branch, the GitHub one only on main, because that
+# mirror never receives our working branches. Do not "fix" that difference.
 
 name: CI
 
 on:
+  # Every branch, not just the main lines. A long-lived branch is exactly where
+  # an unreviewed regression accumulates: the 3.0 integration branch carried 52
+  # commits — a whole PageService refactor — without a single CI run, because
+  # the filter here used to be [main, master]. The first run would have been
+  # the one after the merge, which is far too late to be a gate.
   push:
-    branches: [main, master]
   pull_request:
 
 concurrency:
@@ -76,7 +87,7 @@ jobs:
       - name: Unit tests
         run: composer run test:unit
 
-      # QG-2. Level 5 against a baseline of 299 pre-existing errors: new and
+      # QG-2. Level 5 against a baseline of 280 pre-existing errors: new and
       # refactored code must be clean, and the baseline may only ever shrink.
       # Runs after the tests because a type error is easier to read once you
       # know the suite itself is green.

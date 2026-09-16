@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace OCA\IntraVox\Controller;
 
 use OCA\IntraVox\Service\CommentService;
-use OCA\IntraVox\Service\PageService;
+use OCA\IntraVox\Service\Read\PageReadService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\UserRateLimit;
@@ -28,7 +28,7 @@ class CommentController extends Controller {
         string $appName,
         IRequest $request,
         private CommentService $commentService,
-        private PageService $pageService,
+        private PageReadService $pageRead,
         private IUserSession $userSession,
         private IGroupManager $groupManager,
         private LoggerInterface $logger
@@ -46,7 +46,7 @@ class CommentController extends Controller {
      * Check if page exists and user has read access
      */
     private function checkPageAccess(string $pageId): bool {
-        return $this->pageService->pageExistsByUniqueId($pageId);
+        return $this->pageRead->pageExistsByUniqueId($pageId);
     }
 
     /**

@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace OCA\IntraVox\Controller;
 
 use OCA\IntraVox\Service\AnalyticsService;
-use OCA\IntraVox\Service\PageService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -35,7 +34,7 @@ class AnalyticsController extends Controller {
         string $appName,
         IRequest $request,
         private AnalyticsService $analyticsService,
-        private PageService $pageService,
+        private \OCA\IntraVox\Service\Read\PageReadService $pageRead,
         private IUserSession $userSession,
         private IGroupManager $groupManager,
         private IConfig $config,
@@ -65,7 +64,7 @@ class AnalyticsController extends Controller {
     public function getPageStats(string $pageId, int $days = 30): DataResponse {
         try {
             // Verify page exists and user has access
-            if (!$this->pageService->pageExistsByUniqueId($pageId)) {
+            if (!$this->pageRead->pageExistsByUniqueId($pageId)) {
                 return $this->notFoundResponse('Page not found');
             }
 
@@ -107,7 +106,7 @@ class AnalyticsController extends Controller {
             $enrichedPages = [];
             foreach ($topPages as $page) {
                 try {
-                    $pageData = $this->pageService->getPage($page['pageId']);
+                    $pageData = $this->pageRead->getPage($page['pageId']);
                     // Only include pages user can read
                     if ($pageData['permissions']['canRead'] ?? false) {
                         $page['title'] = $pageData['title'] ?? 'Untitled';
@@ -156,7 +155,7 @@ class AnalyticsController extends Controller {
             $enrichedTopPages = [];
             foreach ($stats['topPages'] as $page) {
                 try {
-                    $pageData = $this->pageService->getPage($page['pageId']);
+                    $pageData = $this->pageRead->getPage($page['pageId']);
                     if ($pageData['permissions']['canRead'] ?? false) {
                         $page['title'] = $pageData['title'] ?? 'Untitled';
                         $enrichedTopPages[] = $page;
@@ -237,7 +236,7 @@ class AnalyticsController extends Controller {
     public function trackView(string $pageId): DataResponse {
         try {
             // Verify page exists
-            if (!$this->pageService->pageExistsByUniqueId($pageId)) {
+            if (!$this->pageRead->pageExistsByUniqueId($pageId)) {
                 return $this->notFoundResponse('Page not found');
             }
 

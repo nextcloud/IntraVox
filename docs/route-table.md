@@ -8,8 +8,8 @@ diff rather than staying buried in 14 controllers.
 
 175 routes.
 
-- **admin**: 13
-- **admin (checked in body)**: 23
+- **admin**: 12
+- **admin (checked in body)**: 24
 - **anonymous**: 17
 - **any logged-in user**: 122
 
@@ -149,7 +149,7 @@ diff rather than staying buried in 14 controllers.
 | GET | `/api/feed/jira-projects/{connectionId}` | `feedReader#getJiraProjects` | any logged-in user | exempt |
 | GET | `/api/feed/moodle-forums/{connectionId}` | `feedReader#getMoodleForums` | any logged-in user | exempt |
 | GET | `/api/settings/feed-connections` | `feedReader#getConnections` | any logged-in user | exempt |
-| POST | `/api/settings/feed-connections` | `feedReader#setConnections` | admin | required |
+| POST | `/api/settings/feed-connections` | `feedReader#setConnections` | admin (checked in body) | required |
 | GET | `/api/lms/connections` | `lmsOAuth#getUserConnections` | any logged-in user | exempt |
 | POST | `/api/lms/connect/{connectionId}` | `lmsOAuth#startOAuth` | any logged-in user | required |
 | GET | `/api/lms/callback` | `lmsOAuth#callback` | any logged-in user | exempt |

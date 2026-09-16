@@ -79,7 +79,7 @@ class ConfluenceHtmlImportOrchestrator {
         } finally {
             // finally, not a trailing call: the temp directory holds the whole
             // export and must not survive a failed import.
-            $this->cleanupTempDir($tempDir);
+            TempDir::cleanup($tempDir);
         }
 
         return ['stats' => $stats, 'pages' => count($intermediateFormat->pages)];
@@ -142,23 +142,4 @@ class ConfluenceHtmlImportOrchestrator {
         $zip->close();
     }
 
-    private function cleanupTempDir(string $dir): void {
-        if (!is_dir($dir)) {
-            return;
-        }
-
-        $files = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS),
-            \RecursiveIteratorIterator::CHILD_FIRST
-        );
-
-        foreach ($files as $file) {
-            if ($file->isDir()) {
-                @rmdir($file->getPathname());
-            } else {
-                @unlink($file->getPathname());
-            }
-        }
-        @rmdir($dir);
-    }
 }

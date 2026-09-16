@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace OCA\IntraVox\Tests\Unit\Service;
 
-use OCA\IntraVox\Service\PageService;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -29,12 +28,13 @@ use PHPUnit\Framework\TestCase;
  */
 class PageListingOrderTest extends TestCase {
     private \ReflectionMethod $sort;
-    private PageService $service;
+    private \OCA\IntraVox\Service\Listing\PageLister $service;
 
     protected function setUp(): void {
         parent::setUp();
-        $class = new \ReflectionClass(PageService::class);
-        // inStableOrder() is a pure sort over the array it is handed.
+        // inStableOrder() lives on PageLister now (LISTING carve); it is a pure sort
+        // over the array it is handed, so a constructor-less instance suffices.
+        $class = new \ReflectionClass(\OCA\IntraVox\Service\Listing\PageLister::class);
         $this->service = $class->newInstanceWithoutConstructor();
         $this->sort = $class->getMethod('inStableOrder');
     }

@@ -5,7 +5,7 @@ namespace OCA\IntraVox\Tests\Unit\Controller;
 
 use OCA\IntraVox\Controller\FooterController;
 use OCA\IntraVox\Service\FooterService;
-use OCA\IntraVox\Service\PageService;
+use OCA\IntraVox\Service\PermissionService;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
 use PHPUnit\Framework\TestCase;
@@ -34,13 +34,13 @@ class ConditionalFooterTest extends TestCase {
             static fn(string $name) => $name === 'If-None-Match' ? $ifNoneMatch : ''
         );
 
-        $pageService = $this->createMock(PageService::class);
-        $pageService->method('getFolderPermissions')->willReturn(['canRead' => true, 'canWrite' => false]);
+        $permissionService = $this->createMock(PermissionService::class);
+        $permissionService->method('getFolderPermissions')->willReturn(['canRead' => true, 'canWrite' => false]);
 
         $footerService = $this->createMock(FooterService::class);
         $footerService->method('getFooter')->willReturn(self::FOOTER);
 
-        return new FooterController('intravox', $request, $footerService, $pageService);
+        return new FooterController('intravox', $request, $footerService, $permissionService);
     }
 
     /** The ETag the controller will produce for the fixture above. */

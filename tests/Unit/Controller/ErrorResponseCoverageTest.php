@@ -122,10 +122,21 @@ class ErrorResponseCoverageTest extends TestCase {
 
         $this->assertNotEmpty($limits, 'No AnonRateLimit found — the pattern went stale');
 
-        $routes = json_decode(shell_exec(
+        // Needs node on PATH: the route table is parsed by a JS helper, because
+        // appinfo/routes.php is the one source both this suite and the frontend
+        // guards read. Without node, shell_exec() returns null and the failure
+        // surfaces as "json_decode(): Argument #1 must be of type string, null
+        // given" -- which says nothing about node. The guard below does.
+        $routeJson = shell_exec(
             'cd ' . escapeshellarg(__DIR__ . '/../../../')
             . " && node -e \"const p=require('./scripts/lib/route-parser.js');console.log(JSON.stringify(p.parseRoutes()))\""
-        ), true);
+        );
+        self::assertIsString(
+            $routeJson,
+            'could not read the route table -- is node on PATH? '
+            . 'This test parses appinfo/routes.php through scripts/lib/route-parser.js.'
+        );
+        $routes = json_decode($routeJson, true);
 
         $missing = [];
         foreach ($routes as $route) {

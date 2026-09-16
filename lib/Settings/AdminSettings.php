@@ -9,7 +9,6 @@ use OCA\IntraVox\Service\DemoDataService;
 use OCA\IntraVox\Service\EngagementSettingsService;
 use OCA\IntraVox\Service\LanguageService;
 use OCA\IntraVox\Service\LicenseService;
-use OCA\IntraVox\Service\PageService;
 use OCA\IntraVox\Service\PublicationSettingsService;
 use OCA\IntraVox\Service\TelemetryService;
 use OCP\App\IAppManager;
@@ -27,7 +26,9 @@ class AdminSettings implements IDelegatedSettings {
     private EngagementSettingsService $engagementSettings;
     private LanguageService $languageService;
     private LicenseService $licenseService;
-    private PageService $pageService;
+    private \OCA\IntraVox\Service\Language\LanguageStatusService $languageStatus;
+    private \OCA\IntraVox\Service\Homepage\HomepageResolverService $homepageResolver;
+    private \OCA\IntraVox\Service\Folder\FolderContext $folders;
     private PublicationSettingsService $publicationSettings;
     private TelemetryService $telemetryService;
     private IInitialState $initialState;
@@ -39,7 +40,13 @@ class AdminSettings implements IDelegatedSettings {
         EngagementSettingsService $engagementSettings,
         LanguageService $languageService,
         LicenseService $licenseService,
-        PageService $pageService,
+        // Content-status + page-count reads are the LANGUAGE-STATUS domain service
+        // now (fase-9); getContentStatus needs the homepage-resolution and
+        // real-content probes, threaded in as the exact closures the retired
+        // PageService delegator supplied (HomepageResolverService / FolderContext).
+        \OCA\IntraVox\Service\Language\LanguageStatusService $languageStatus,
+        \OCA\IntraVox\Service\Homepage\HomepageResolverService $homepageResolver,
+        \OCA\IntraVox\Service\Folder\FolderContext $folders,
         PublicationSettingsService $publicationSettings,
         TelemetryService $telemetryService,
         IInitialState $initialState,
@@ -50,12 +57,31 @@ class AdminSettings implements IDelegatedSettings {
         $this->engagementSettings = $engagementSettings;
         $this->languageService = $languageService;
         $this->licenseService = $licenseService;
-        $this->pageService = $pageService;
+        $this->languageStatus = $languageStatus;
+        $this->homepageResolver = $homepageResolver;
+        $this->folders = $folders;
         $this->publicationSettings = $publicationSettings;
         $this->telemetryService = $telemetryService;
         $this->initialState = $initialState;
         $this->config = $config;
         $this->appManager = $appManager;
+    }
+
+    /**
+     * Language content status — byte-identical to the retired
+     * PageService::getLanguageContentStatus delegator: the LANGUAGE-STATUS domain
+     * service scans the language folders, with homepage resolution
+     * (HomepageResolverService) and the ANY-homepage / real-content probes
+     * (FolderContext) passed as the same closures PageService threaded in.
+     *
+     * @return array{language:string,hasContent:bool,servedLanguage:?string,languagesWithContent:string[],activeLanguages:string[],homepageUniqueId:?string}
+     */
+    private function getLanguageContentStatus(): array {
+        return $this->languageStatus->getContentStatus(
+            fn(?string $language): string => $this->homepageResolver->resolveHomepageNodeUniqueId($language),
+            fn(\OCP\Files\Folder $folder): bool => $this->folders->hasHomepage($folder),
+            fn(\OCP\Files\Folder $folder): bool => $this->folders->hasRealContent($folder)
+        );
     }
 
     /**
@@ -110,13 +136,13 @@ class AdminSettings implements IDelegatedSettings {
             'primaryLanguage' => $this->languageService->getPrimaryLanguage(),
             // Admin chips show ACTIVE languages (any homepage, incl. a just-added
             // placeholder) — not only real-content ones, so additions show up.
-            'languagesWithContent' => $this->pageService->getLanguageContentStatus()['activeLanguages'] ?? [],
+            'languagesWithContent' => $this->getLanguageContentStatus()['activeLanguages'],
             // base code => how much of the IntraVox UI is translated in that
             // language (Transifex), as a percentage. Drives the coverage hint.
             'translationCoverage' => $this->languageService->getTranslationCoverage(),
             // base code => number of pages, so the "remove language" dialog can
             // warn how many pages would be deleted.
-            'pageCountByLanguage' => $this->pageService->getPageCountByLanguage(),
+            'pageCountByLanguage' => $this->languageStatus->getPageCountByLanguage(),
         ]);
 
         // Load translations for JavaScript
