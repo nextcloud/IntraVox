@@ -24,6 +24,11 @@
 name: CI
 
 on:
+  # Deliberately narrower than the Forgejo copy, which runs on every branch.
+  # This mirror only receives main and release tags — day-to-day branches live
+  # on forgejo.voxcloud.nl and are gated there. Widening this to every push
+  # would spend Actions minutes re-running what Forgejo already ran, on
+  # branches that are never pushed here in the first place.
   push:
     branches: [main]
   pull_request:
