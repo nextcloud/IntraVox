@@ -6,6 +6,65 @@ IntraVox is a Nextcloud intranet page builder.
 
 ## [Unreleased]
 
+## [3.0.0] - 2026-09-16 — The page engine, taken apart
+
+A structural release. **No new features, and no change you should be able to
+see**: every behaviour of 2.7.1 is meant to be identical here. The version is
+3.0.0 because the internals moved wholesale, not because the app does anything
+new.
+
+### Changed
+
+- **`PageService` is gone.** A single 6309-line class held page reading,
+  writing, listing, the tree, search, media, import, export, permissions and
+  the news feed. It is now 126 service files under `lib/Service/`, each owning
+  one job, and the largest file left in `lib/` is 2257 lines. 139 refactor
+  commits, 73 files, roughly 9300 lines moved.
+
+  This matters for what comes next rather than for today: multi-site needs to
+  vary where content lives, and that was impossible while one class assumed a
+  single hardcoded folder.
+
+### Fixed
+
+- **Pages loaded again after the split.** `FolderContext` resolved the user's
+  home directory instead of the mounted IntraVox Team folder, because the
+  dependency container filled a seam meant only for tests. The app rendered
+  with no pages at all — HTTP 200, nothing in the log. It now refuses to be
+  built that way.
+
+- **`occ` commands work again.** The same class captured the user id when the
+  container built it, but `occ` sets the user during `execute()`, long after.
+  Every command that touches pages — `intravox:reindex`, `intravox:import`,
+  `intravox:repair-entities` — failed with "User not logged in". The user is
+  now resolved when asked for, not when constructed.
+
+- **Team folder ACLs are still honoured after the split.**
+  ([#112](https://github.com/nextcloud/IntraVox/issues/112)) The 2.7.1 fix
+  scoped page-tree and News cache entries per user when Advanced Permissions
+  are on. That fix lived in `PageService`, which this release deletes, so it
+  was re-applied by hand to the services that inherited the caches. An
+  integration test now asserts both call sites, because a hand-carried security
+  fix is exactly the kind that gets dropped.
+
+### Added
+
+- **An integration suite that actually runs.** 33 tests against a real
+  Nextcloud with real Team folders, exercising the folder resolution and ACL
+  paths that unit tests cannot reach — they stub the filesystem away. It runs
+  in CI against Nextcloud 32, 33, 34 and 35.
+
+  The three bugs above were all invisible to 1321 passing unit tests. Two of
+  them shipped an empty app.
+
+### Compatibility
+
+Nextcloud 32–35, PHP 8.2 or newer. Note that Nextcloud 35 itself requires PHP
+8.3, so that combination needs 8.3 regardless of what this app asks for.
+
+Upgrading is a normal app update: no migration, no configuration change, and
+no change to how content is stored on disk.
+
 ## [2.7.1] - 2026-09-07 — Team folder ACLs are honoured where they were not
 
 ### Fixed
