@@ -142,25 +142,10 @@ jobs:
         uses: actions/checkout@v4
         with: { path: server/apps/intravox }
 
-      - name: Install IntraVox dev dependencies
-        # --dev, because phpunit lives there. This was "safe because the server
-        # is thrown away", and that reasoning was wrong: the poisoning happens
-        # DURING the job, not after it.
-        #
-        # The app's vendor/ is on the autoload path ahead of the server's
-        # 3rdparty/, so 23 dev packages shadow core libraries -- among them
-        # sabre/xml 4.x (the CalDAV fatal we already know) and symfony/console
-        # 6.4, which killed every stable35 run with
-        #
-        #     Call to undefined method Symfony\...\Application::addCommand()
-        #
-        # NC35 moved to Symfony 7, where that method exists; 32-34 are still on
-        # 6.x, which is exactly why only stable35 failed. Nothing to do with
-        # this app's code.
-        #
-        # It does not affect the App Store tarball: composer.lock's production
-        # set is enshrined/svg-sanitize and lsolesen/pel, nothing else, and
-        # deploy.sh builds vendor/ with --no-dev. This is a CI artefact only.
+      - name: Install IntraVox production dependencies
+        # --no-dev: only enshrined/svg-sanitize and lsolesen/pel, exactly what
+        # the App Store tarball carries. The dev tree comes later, after every
+        # occ call is done -- see the step just before the suite for why.
         working-directory: server/apps/intravox
         # No COMPOSER_AUTH here, unlike ci.yml. Every dependency comes from
         # Packagist as a dist zip -- composer.json declares no vcs repositories
@@ -175,11 +160,9 @@ jobs:
         # message at all -- no error, no exit code, just a job that stopped --
         # so if this step dies again, the log should at least say where.
         run: |
-          composer install --prefer-dist --no-progress --no-interaction
-          echo "composer install exited $?"
-          echo "pwd: $(pwd)"
-          ls -la vendor/bin/ 2>&1 | head -20
-          echo "phpunit: $(command -v ./vendor/bin/phpunit || echo MISSING)"
+          composer install --no-dev --prefer-dist --no-progress --no-interaction
+          echo "production vendor installed (exit $?)"
+          ls vendor/
 
       - name: Install Nextcloud (sqlite)
         working-directory: server
@@ -235,17 +218,25 @@ jobs:
         # other thing a bare server does not have.
         run: |
           set -e
-          # occ runs with the app's vendor/ shadowing core libraries, so move
-          # the dev tree aside for anything that boots Nextcloud. Restored just
-          # before phpunit, which is the only step that needs it.
-          mv apps/intravox/vendor apps/intravox/vendor-dev
-          composer install --no-dev --prefer-dist --no-progress \
-            --no-interaction --working-dir=apps/intravox
           php occ intravox:setup --language en --no-interaction
           php occ groupfolders:list
           php occ intravox:reindex
-          rm -rf apps/intravox/vendor
-          mv apps/intravox/vendor-dev apps/intravox/vendor
+
+      - name: Add dev dependencies for phpunit
+        working-directory: server/apps/intravox
+        # Last, deliberately. Everything above boots Nextcloud through occ, and
+        # the app's vendor/ sits ahead of the server's 3rdparty/ on the autoload
+        # path -- so a dev tree here shadows core libraries. symfony/console 6.4
+        # over NC35's Symfony 7 is what broke every stable35 run:
+        #
+        #     Call to undefined method Symfony\...\Application::addCommand()
+        #
+        # sabre/xml 4.x is in that same set, which is the CalDAV fatal we have
+        # hit twice on dev. Installing --dev only once no further occ call
+        # follows keeps the shadow out of the part that matters.
+        run: |
+          composer install --prefer-dist --no-progress --no-interaction
+          test -x vendor/bin/phpunit && echo "phpunit present"
 
       - name: Integration suite
         working-directory: server/apps/intravox
