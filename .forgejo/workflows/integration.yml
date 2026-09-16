@@ -63,7 +63,7 @@ concurrency:
 
 jobs:
   integration:
-    name: NC ${{ matrix.server }} / sqlite
+    name: NC ${{ matrix.server }} / php ${{ matrix.php }} / sqlite
     runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
@@ -72,10 +72,22 @@ jobs:
         # info.xml says min-version 32, max-version 35. Both ends are claims:
         # phpstan proves the LOWER bound statically (nextcloud/ocp is pinned to
         # v32.0.9), and nothing proved the upper bound at all until this matrix.
-        server: [stable32, stable33, stable34, stable35]
+        include:
+          # PHP per NC version, read from each branch's lib/versioncheck.php
+          # rather than assumed: 32 needs 8.1+, 33/34 need 8.2+, and 35 needs
+          # 8.3 -- it refuses to install on 8.2 with "This version of Nextcloud
+          # requires at least PHP 8.3", which is what killed every stable35 run.
+          #
+          # 8.2 stays where it can, because that is the floor composer.json
+          # claims and the version ci.yml pins; building on it is how syntax
+          # newer than our own floor gets caught.
+          - { server: stable32, php: '8.2' }
+          - { server: stable33, php: '8.2' }
+          - { server: stable34, php: '8.2' }
+          - { server: stable35, php: '8.3' }
 
     steps:
-      - name: Install PHP 8.2 + Composer
+      - name: Install PHP ${{ matrix.php }} + Composer
         # 8.2 is the floor composer.json claims, matching ci.yml. Building on
         # the lowest supported version means syntax newer than our own floor
         # fails here rather than in a user's logs.
@@ -88,8 +100,8 @@ jobs:
           add-apt-repository -y ppa:ondrej/php >/dev/null
           apt-get update -qq
           apt-get install -y --no-install-recommends \
-            php8.2-cli php8.2-xml php8.2-mbstring php8.2-zip php8.2-curl \
-            php8.2-gd php8.2-intl php8.2-bcmath php8.2-gmp php8.2-sqlite3 >/dev/null
+            php${{ matrix.php }}-cli php${{ matrix.php }}-xml php${{ matrix.php }}-mbstring php${{ matrix.php }}-zip php${{ matrix.php }}-curl \
+            php${{ matrix.php }}-gd php${{ matrix.php }}-intl php${{ matrix.php }}-bcmath php${{ matrix.php }}-gmp php${{ matrix.php }}-sqlite3 >/dev/null
           curl -sS https://getcomposer.org/installer \
             | php -- --install-dir=/usr/local/bin --filename=composer
 
@@ -179,6 +191,26 @@ jobs:
           php occ app:enable --force groupfolders
           php occ app:enable --force intravox
           php occ app:list | grep -E 'intravox|groupfolders'
+
+      - name: Create the IntraVox groupfolder
+        working-directory: server
+        # Three tests resolve the app's own content folder by NAME through
+        # SetupService, which is not parameterisable -- on a fresh install they
+        # fail with "Groupfolder 'IntraVox' not found". That is an environment
+        # requirement, not a defect: dev has this folder, a clean server does
+        # not. The rest of the suite builds its own throwaway folders and does
+        # not care.
+        run: |
+          set -e
+          # admin is the only account a fresh install has, and the suite runs
+          # as whoever it logs in -- so give the folder to admin's group rather
+          # than provisioning a second user just to own it.
+          php occ group:add intravox-ci
+          php occ group:adduser intravox-ci admin
+          id=$(php occ groupfolders:create IntraVox)
+          echo "created groupfolder id=$id"
+          php occ groupfolders:group "$id" intravox-ci
+          php occ groupfolders:list
 
       - name: Integration suite
         working-directory: server/apps/intravox
