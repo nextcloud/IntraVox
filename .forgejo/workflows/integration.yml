@@ -106,9 +106,18 @@ jobs:
         # The suite's whole subject is groupfolder resolution, so this is a hard
         # dependency, not an optional extra. groupfolders follows the server's
         # stableNN naming (23.x on stable35, 22.x on stable32-34).
+        #
+        # Cloned into a holding area rather than straight into apps/: a git
+        # checkout of an app has no vendor/, and Nextcloud scans apps/ during
+        # bootstrap. An app whose classes cannot autoload can take occ down
+        # before it prints anything, which is exactly the symptom this job had.
+        # It moves into place after the server is installed.
         run: |
           git clone --depth=1 --branch "${{ matrix.server }}" \
-            https://github.com/nextcloud/groupfolders.git server/apps/groupfolders
+            https://github.com/nextcloud/groupfolders.git /tmp/groupfolders
+          ls /tmp/groupfolders/composer.json 2>/dev/null \
+            && echo "groupfolders ships a composer.json (vendor/ needed)" \
+            || echo "groupfolders has no composer.json"
 
       - name: Checkout IntraVox into apps/
         uses: actions/checkout@v4
@@ -142,14 +151,31 @@ jobs:
         working-directory: server
         run: |
           echo "=== step 5 started, pwd: $(pwd) ==="
-          ls -la occ version.php 2>&1 | head -5
+          # occ produced not a single line before -- not even with --verbose --
+          # which means PHP itself gave up before Nextcloud's bootstrap printed
+          # anything. Capture that: run it detached from -e, then show the exit
+          # code and whatever landed on stderr.
+          set +e
           php occ maintenance:install --verbose --database=sqlite \
-            --admin-user admin --admin-pass admin
+            --admin-user admin --admin-pass admin > /tmp/occ.out 2>/tmp/occ.err
+          rc=$?
+          set -e
+          echo "occ exit: $rc"
+          echo "--- stdout ---"; cat /tmp/occ.out
+          echo "--- stderr ---"; cat /tmp/occ.err
+          [ "$rc" -eq 0 ] || exit 1
 
       - name: Enable groupfolders and IntraVox
         working-directory: server
         run: |
           set -e
+          # groupfolders moves in only now, with the server already installed,
+          # and gets its own dependencies: a bare git checkout has no vendor/.
+          mv /tmp/groupfolders apps/groupfolders
+          if [ -f apps/groupfolders/composer.json ]; then
+            (cd apps/groupfolders && composer install --no-dev --prefer-dist \
+              --no-progress --no-interaction)
+          fi
           php occ app:enable --force groupfolders
           php occ app:enable --force intravox
           php occ app:list | grep -E 'intravox|groupfolders'
