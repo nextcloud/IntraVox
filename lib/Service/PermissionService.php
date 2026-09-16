@@ -67,6 +67,27 @@ class PermissionService {
     private array $permissionArrayCache = [];
 
     /**
+     * Per-request memo of getPermissions() results, keyed by "userId|relativePath".
+     *
+     * getPermissions() → calculatePermissions() → applyAclRules() reconstructs the
+     * ACL decision from the raw group_folders_acl/filecache/storages tables on every
+     * call, with NO caching — unlike permissionsFromNode(), which reads the bits the
+     * groupfolders mount already applied to the Node. filterNavigation() calls
+     * getPermissions() once per menu item, and NavigationController renders the menu
+     * TWICE for editors (menu + editor variant), so a 40-item tree recomputed the
+     * whole raw-SQL pass ~80×. The result is a pure function of (userId, path) within
+     * a request (nav-get performs no filesystem writes between the two passes), so it
+     * memoises trivially.
+     *
+     * The key MUST include userId: keying by path alone would serve user A's ACL
+     * bits to user B, breaking the per-user GroupFolder ACL guarantee. Flushed by
+     * {@see clearNodePermissionsCache()} on the same mutation hook as its siblings.
+     *
+     * @var array<string, int>
+     */
+    private array $permissionResultCache = [];
+
+    /**
      * Per-request memo of the groupfolder id, keyed by mount point name.
      * Uses array_key_exists, not isset: a resolved-to-null answer must be
      * cached too, otherwise a broken install re-walks every groupfolder on
@@ -223,10 +244,20 @@ class PermissionService {
             return 0;
         }
 
+        // Per-request memo, keyed by (userId, path). The ACL decision below is a
+        // pure function of those two within a request; without this, every
+        // filterNavigation item — and every editor second pass — re-ran the full
+        // raw-SQL ACL reconstruction. Keyed by userId so one user's bits are never
+        // served to another (the SACRED per-user ACL guarantee).
+        $memoKey = $userId . '|' . $relativePath;
+        if (isset($this->permissionResultCache[$memoKey])) {
+            return $this->permissionResultCache[$memoKey];
+        }
+
         try {
             $perms = $this->calculatePermissions($relativePath, $userId);
             $this->logger->info("[PermissionService] Final permissions for '{$relativePath}': {$perms}");
-            return $perms;
+            return $this->permissionResultCache[$memoKey] = $perms;
         } catch (\Exception $e) {
             $this->logger->error('Failed to get permissions for path ' . $relativePath . ': ' . $e->getMessage());
             return 0;
@@ -240,8 +271,12 @@ class PermissionService {
      * 1. Get base permissions from GroupFolder group membership
      * 2. Apply ACL rules (if ACL app is enabled)
      * 3. Child paths cannot have more permissions than parent paths
+     *
+     * Protected (not private) so the per-request memo in getPermissions() can be
+     * pinned with a counting seam, the same way resolveGroupFolderId() is opened
+     * for the fail-closed test — rather than widening it into the public surface.
      */
-    private function calculatePermissions(string $relativePath, string $userId): int {
+    protected function calculatePermissions(string $relativePath, string $userId): int {
         $folderId = $this->getGroupFolderId();
         if ($folderId === null) {
             // Fail CLOSED. This used to return PERMISSION_ALL "if groupfolders
@@ -728,12 +763,13 @@ class PermissionService {
     }
 
     /**
-     * Drop the per-request node permission cache. Called by
-     * PageService::clearCache() whenever the filesystem view mutates.
+     * Drop the per-request permission caches whenever the filesystem view
+     * mutates. Invoked via PageCacheInvalidator on create/update/delete.
      */
     public function clearNodePermissionsCache(): void {
         $this->nodePermissionsCache = [];
         $this->permissionArrayCache = [];
+        $this->permissionResultCache = [];
     }
 
     /**
@@ -819,9 +855,20 @@ class PermissionService {
                     $pagePath = $pagePathMap[$item['uniqueId']];
                 }
 
-                // If we have a path, check permissions
+                // If we have a path, check read access via the user's mounted
+                // folder view (getFolderPermissions → permissionsFromNode) rather
+                // than the raw-SQL canRead()/getPermissions() path. Both yield the
+                // SAME read decision — proven byte-identical for canRead across two
+                // users incl. a per-user ACL deny on a nested subtree (the
+                // ACL-equivalence gate) — but the node view reads the bits the
+                // groupfolders mount already applied (~0.4ms/node, request-memoised
+                // by permissionArrayCache) instead of reconstructing the ACL from
+                // group_folders_acl/filecache/storages per path segment (~3.3ms/item,
+                // the bulk of the 379ms nav render). A denied node makes get() throw,
+                // which getFolderPermissions maps to canRead=false — the correct,
+                // fail-closed outcome.
                 if ($pagePath !== null) {
-                    if (!$this->canRead($pagePath)) {
+                    if (!$this->getFolderPermissions($pagePath)['canRead']) {
                         $includeItem = false;
                     }
                 }
