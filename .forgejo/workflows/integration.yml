@@ -48,7 +48,13 @@ on:
   # demand while working on the folder/ACL code it protects.
   pull_request:
   push:
-    branches: [main, master]
+    # integration/3.0 is here on purpose and comes OUT once 3.0 has merged.
+    # Without it this workflow could not run at all before the merge: push
+    # ignores the branch, and Forgejo only offers the workflow_dispatch button
+    # for workflows present on the default branch. It would first execute at
+    # the moment it matters most, which is how the branch filter in ci.yml let
+    # 52 commits through ungated.
+    branches: [main, master, integration/3.0]
   workflow_dispatch:
 
 concurrency:
