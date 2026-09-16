@@ -22,7 +22,8 @@
 #   --fix  re-record the file-budget ratchet if it is the only thing failing
 # Env:
 #   SKIP_INTEGRATION=1  skip the integration suite (reported, never silent)
-#   INTRAVOX_DEV_SSH    override the dev host (default rik@178.63.205.103)
+#   INTRAVOX_DEV_SSH    user@host of the dev server; unset means the
+#                       integration step is skipped (and says so)
 
 set -uo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
@@ -87,7 +88,7 @@ echo "Integration (real Nextcloud + groupfolders)"
 if [ "${SKIP_INTEGRATION:-0}" = "1" ]; then
   printf '  %-34s%bskipped%b (SKIP_INTEGRATION=1)\n' "integration suite" "$YELLOW" "$NC"
   SKIPPED_INTEGRATION=1
-elif ssh -o ConnectTimeout=8 -o BatchMode=yes "${INTRAVOX_DEV_SSH:-rik@178.63.205.103}" true >/dev/null 2>&1; then
+elif ssh -o ConnectTimeout=8 -o BatchMode=yes "${INTRAVOX_DEV_SSH:-}" true >/dev/null 2>&1; then
   step "integration suite" ./scripts/run-integration-tests.sh --no-deploy
 else
   printf '  %-34s%bskipped%b (dev server unreachable)\n' "integration suite" "$YELLOW" "$NC"

@@ -2,13 +2,64 @@
 
 IntraVox has two test suites with deliberately opposite setups.
 
-| | Unit | Integration |
+| | Unit | Integration | Smoke |
+|---|---|---|---|
+| Runs | anywhere (`vendor/bin/phpunit`) | in CI, or against a dev container | against any deployed instance |
+| Nextcloud | stubbed (`tests/Stubs/OCP.php`) | the real thing | the real thing |
+| Groupfolders | not involved | real, version-pinned by the server | real |
+| Config | `phpunit.xml` | `phpunit-integration.xml` | — |
+| Speed | ~4s | ~7s (plus setup) | ~10s |
+| Count | 1321 tests | 33 tests | 12 checks |
+
+A fourth kind exists but is not automated: the **manual test plan** for a
+release, kept internally because it carries deploy targets and rollback
+commands. The smoke script is its automatable half.
+
+## Where these run
+
+```bash
+npm run ci        # the whole local gate: 12 checks, ~40s
+```
+
+That is the only command that claims to be complete. It runs the unit suite,
+phpstan, the frontend guards, and the integration suite when a dev server is
+reachable — and when it is not, it says so and withholds the "safe to push"
+verdict rather than printing green over an unproven build.
+
+On the server, two workflows:
+
+| Workflow | Trigger | What |
 |---|---|---|
-| Runs | anywhere (`vendor/bin/phpunit`) | inside the nc-dev container only |
-| Nextcloud | stubbed (`tests/Stubs/OCP.php`) | the real thing |
-| Groupfolders | not involved | real, version-pinned by the server |
-| Config | `phpunit.xml` | `phpunit-integration.xml` |
-| Speed | ~0.2s | ~4s (plus deploy) |
+| `.forgejo/workflows/ci.yml` | every branch | unit, phpstan, packaging, frontend guards — PHP 8.2 |
+| `.forgejo/workflows/integration.yml` | PR, main lines, dispatch | the integration suite on NC 32–35 |
+
+`integration.yml` installs a throwaway Nextcloud plus groupfolders per matrix
+entry and runs `occ intravox:setup` — the app's own provisioning, so a break in
+that path fails CI rather than someone's first install. PHP is paired per NC
+version, read from each branch's `lib/versioncheck.php`: 32 wants 8.1+, 33 and
+34 want 8.2+, and **35 requires 8.3**. Worth knowing when reading `info.xml`,
+which claims `max-version="35"` alongside PHP 8.2 — Nextcloud sets that floor,
+not us, but the pairing reads as if both hold.
+
+The GitHub mirror runs the same fast gate on `main` only. It never receives our
+working branches, so widening it would re-run what Forgejo already ran.
+
+## Smoke test
+
+```bash
+export INTRAVOX_DEV_SSH=user@your-dev-host
+scripts/smoke-test-dev.sh --expect 3.0.0
+```
+
+Everything provable about a deployed instance without opening a browser: folder
+resolution (the empty-app bug), the CLI path, the HTTP surface, the log, and
+the sabre/xml vendor trap that `run-integration-tests.sh` leaves behind. About
+ten seconds. It either hands you a green baseline to start clicking from, or it
+tells you not to bother yet.
+
+No host is hard-coded in any of these scripts. They are public on
+github.com/nextcloud/IntraVox, and a maintainer's account name and container
+layout are not something to publish for the convenience of never typing them.
 
 ## Unit suite
 
@@ -63,8 +114,10 @@ Most classes create their **own throwaway groupfolder** (mount point prefixed
 `tearDownAfterClass`. Stray objects from a crashed run are cleaned up at the
 start of the next one, so the suite is repeatable without manual work.
 
-`PageLifecycleTest` is the exception and has to be: `PageService::getIntraVoxFolder()`
-hardcodes the name `IntraVox` — that hardcoding *is* the single-site assumption.
+`PageLifecycleTest` is the exception and has to be: `SetupService` resolves the
+content folder by the hardcoded name `IntraVox` — that hardcoding *is* the
+single-site assumption. (The lookup used to live on `PageService`, which the
+3.0 split removed.)
 So it writes into the real groupfolder, but only into pages it creates itself,
 with a unique id, and it deletes them in `tearDown()` even when a test fails.
 

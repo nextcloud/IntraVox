@@ -13,9 +13,15 @@
 #   scripts/run-integration-tests.sh --filter Foo # pass through to phpunit
 set -euo pipefail
 
-SSH_HOST="${INTRAVOX_DEV_SSH:-rik@178.63.205.103}"
+SSH_HOST="${INTRAVOX_DEV_SSH:-}"
 CONTAINER="${INTRAVOX_DEV_CONTAINER:-nc-dev}"
 APP_DIR="/var/www/html/custom_apps/intravox"
+
+# Not hard-coded: this file is public on github.com/nextcloud/IntraVox.
+if [ -z "$SSH_HOST" ]; then
+    echo "INTRAVOX_DEV_SSH is not set -- export INTRAVOX_DEV_SSH=user@your-dev-host" >&2
+    exit 2
+fi
 
 DEPLOY=1
 PHPUNIT_ARGS=()

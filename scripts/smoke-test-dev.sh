@@ -2,7 +2,8 @@
 #
 # Server-side smoke test against a deployed IntraVox.
 #
-# This is the automatable half of docs/internal/TESTPLAN-3.0.md: everything that
+# This is the automatable half of the 3.0 manual test plan (kept internally,
+# because it carries deploy targets): everything that
 # can be proven without a browser. It exists because the 3.0 refactor shipped an
 # app that was completely empty while 1321 unit tests stayed green -- twice. The
 # checks below are the ones that would have caught that in seconds.
@@ -17,15 +18,33 @@
 #   scripts/smoke-test-dev.sh --expect 3.0    # also assert the deployed version
 #
 # Env:
-#   INTRAVOX_DEV_SSH        default rik@178.63.205.103
+#   INTRAVOX_DEV_SSH        required: user@host of the dev server
 #   INTRAVOX_DEV_CONTAINER  default nc-dev
 #   INTRAVOX_DEV_URL        default https://dev.rikdekker.nl
 set -uo pipefail
 
-SSH_HOST="${INTRAVOX_DEV_SSH:-rik@178.63.205.103}"
+SSH_HOST="${INTRAVOX_DEV_SSH:-}"
 CONTAINER="${INTRAVOX_DEV_CONTAINER:-nc-dev}"
 BASE_URL="${INTRAVOX_DEV_URL:-https://dev.rikdekker.nl}"
 APP_DIR="/var/www/html/custom_apps/intravox"
+
+# The dev host is not hard-coded: this file is public on github.com/nextcloud/
+# IntraVox, and a maintainer's username and container name are not something to
+# publish for the convenience of never typing them. The hostname is in DNS
+# anyway; the account and layout are not.
+if [ -z "$SSH_HOST" ]; then
+    cat >&2 <<'MSG'
+INTRAVOX_DEV_SSH is not set.
+
+  export INTRAVOX_DEV_SSH=user@your-dev-host
+  export INTRAVOX_DEV_URL=https://your-dev-host   # optional
+  export INTRAVOX_DEV_CONTAINER=nc-dev            # optional
+
+Put it in your shell profile; these tests need a live Nextcloud with the
+groupfolders app and cannot guess where yours is.
+MSG
+    exit 2
+fi
 
 EXPECT_VERSION=""
 while [ $# -gt 0 ]; do
@@ -248,7 +267,7 @@ if [ ${#FAILED[@]} -eq 0 ]; then
     echo "  surface answers and nothing is in the log. It proves nothing about"
     echo "  what the app DOES."
     echo
-    echo "  Next: docs/internal/TESTPLAN-3.0.md, sections C through J, in a browser."
+    echo "  Next: the manual test plan, sections C through J, in a browser."
     exit 0
 fi
 

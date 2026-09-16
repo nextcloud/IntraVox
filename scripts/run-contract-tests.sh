@@ -30,7 +30,7 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-SSH_HOST="${INTRAVOX_DEV_SSH:-rik@178.63.205.103}"
+SSH_HOST="${INTRAVOX_DEV_SSH:-}"
 CONTAINER="${INTRAVOX_DEV_CONTAINER:-nc-dev}"
 BASE_URL="${INTRAVOX_DEV_URL:-https://dev.rikdekker.nl}"
 VENV="${INTRAVOX_CONTRACT_VENV:-$HOME/.cache/intravox-contract-venv}"
