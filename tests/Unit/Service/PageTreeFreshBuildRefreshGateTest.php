@@ -353,4 +353,102 @@ class PageTreeFreshBuildRefreshGateTest extends TestCase {
         // Sanity: the build itself did resolve the subpage nodes (not zero work).
         $this->assertGreaterThanOrEqual(2, $fromNodeCalls, 'the build resolved the subpage nodes');
     }
+
+    /**
+     * The other half of the gate: a cache HIT must still be re-personalised.
+     *
+     * Skipping the refresh is only safe because the fresh build resolved every
+     * node for THIS user. A cached tree has no such guarantee — it is a
+     * group-shared blob built by whoever missed the cache first, and on most
+     * installs that is CacheWarmupJob running from cron every fifteen minutes.
+     * Serve it unrefreshed and every member of the group gets the builder's
+     * view of the tree, which is #112 in reverse.
+     *
+     * The five tests above all drive the fresh-build path, so flipping either
+     * cache-hit call site to $freshlyBuilt = true leaves them green. I checked:
+     * turning the DISTRIBUTED hit into a skip passes all 1345 unit tests. That
+     * is the path production actually takes — dev and every real install run
+     * Redis — so the one branch that matters most was the one nothing watched.
+     *
+     * Both hits get their own test rather than one parameterised case: they are
+     * separate call sites and a regression tends to touch one of them.
+     *
+     * @dataProvider cacheHitPaths
+     */
+    public function testCacheHitIsRePersonalisedForTheReadingUser(string $which): void {
+        // The cached blob carries the BUILDER's permissions: everything readable,
+        // including en/secret. The reading user is denied there.
+        $cachedTree = [
+            [
+                'uniqueId' => 'home', 'title' => 'Home', 'status' => 'published',
+                'fileId' => 1, 'path' => 'en', 'language' => 'en',
+                'isCurrent' => false, 'children' => [],
+                'permissions' => $this->allowAll(),
+            ],
+            [
+                'uniqueId' => 'secret', 'title' => 'Secret', 'status' => 'published',
+                'fileId' => 2, 'path' => 'en/secret', 'language' => 'en',
+                'isCurrent' => false, 'children' => [],
+                'permissions' => $this->allowAll(),
+            ],
+        ];
+
+        $cache = $this->createMock(\OCA\IntraVox\Service\Cache\PageCacheService::class);
+        if ($which === 'in-process') {
+            $cache->method('getTree')->willReturn(['tree' => $cachedTree, 'time' => time()]);
+            $cache->method('isDistributedAvailable')->willReturn(false);
+        } else {
+            $cache->method('getTree')->willReturn(null);
+            $cache->method('isDistributedAvailable')->willReturn(true);
+            $cache->method('getDistributed')->willReturn(json_encode($cachedTree));
+        }
+
+        $perms = $this->permsFor(['en/secret']);
+        $en = $this->enMount();
+        $homepageService = $this->createMock(\OCA\IntraVox\Service\HomepageService::class);
+        $homepageService->method('getHomepageUniqueId')->willReturn(null);
+
+        $svc = $this->fakeTreeService([
+            'cache' => $cache,
+            'permissionService' => $perms,
+            'folderContext' => $this->fakeFolderContext(
+                readLanguageFolder: $en,
+                intraVox: $this->baseMount($en),
+                userLanguage: 'en',
+            ),
+            'homepageService' => $homepageService,
+            'logger' => $this->createMock(LoggerInterface::class),
+        ]);
+
+        $served = $this->permsByPath($svc->getPageTree(language: 'en'));
+
+        self::assertArrayHasKey('en/secret', $served, 'the cached node must still be served');
+        self::assertFalse(
+            $served['en/secret']['canRead'],
+            "a {$which} cache hit served the builder's permissions unchanged: this "
+            . 'user is denied on en/secret but got canRead=true. The cached tree is '
+            . 'group-shared — usually built by cron — and must be re-personalised '
+            . 'on every hit (#86/#112)'
+        );
+        self::assertTrue(
+            $served['en']['canRead'],
+            'the refresh must not turn a readable node unreadable'
+        );
+    }
+
+    /** @return array<string, array{string}> */
+    public static function cacheHitPaths(): array {
+        return [
+            'in-process cache' => ['in-process'],
+            'distributed cache' => ['distributed'],
+        ];
+    }
+
+    /** The permission shape a fully-allowed node carries in a cached tree. */
+    private function allowAll(): array {
+        return [
+            'canRead' => true, 'canWrite' => true, 'canCreate' => true,
+            'canDelete' => true, 'canShare' => false, 'raw' => 31,
+        ];
+    }
 }
