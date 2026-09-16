@@ -8,10 +8,14 @@ IntraVox is a Nextcloud intranet page builder.
 
 ## [3.0.0] - 2026-09-16 — The page engine, taken apart
 
-A structural release. **No new features, and no change you should be able to
-see**: every behaviour of 2.7.1 is meant to be identical here. The version is
-3.0.0 because the internals moved wholesale, not because the app does anything
-new.
+A structural release: the page engine was taken apart, and almost nothing about
+using IntraVox changes. The version is 3.0.0 because the internals moved
+wholesale, not because the app does anything new.
+
+Two reported behaviours *do* change, both of them things that were wrong:
+Nextcloud admins are no longer forced back into "IntraVox Admins" on every
+update (#113), and feed items without a link no longer behave like broken ones
+(#114). Everything else should look and work exactly as 2.7.1 did.
 
 ### Changed
 
@@ -38,6 +42,33 @@ new.
   Every command that touches pages — `intravox:reindex`, `intravox:import`,
   `intravox:repair-entities` — failed with "User not logged in". The user is
   now resolved when asked for, not when constructed.
+
+- **Nextcloud admins are no longer permanently IntraVox admins.**
+  ([#113](https://github.com/nextcloud/IntraVox/issues/113)) Setup seeded every
+  member of the `admin` group into "IntraVox Admins" and granted `admin` full
+  rights on the Team folder. Both were re-applied on *every app update*, because
+  setup runs as a repair step — so removing someone worked until the next update
+  put them back. The intent was sound: an installation whose owner leaves should
+  not become unmanageable. Enforcing it forever was not, because managing
+  knowledge and administering a server are different jobs, held by different
+  people.
+
+  Provisioning now happens once. Existing installations keep exactly the access
+  they have — the first run after upgrading still seeds — and only the
+  overwriting stops. After that, removing someone from "IntraVox Admins", or
+  setting the `admin` group to read-only on the Team folder, sticks. Both are
+  done in the Team folders interface; IntraVox simply stops overruling it.
+
+  This is not a security boundary, and is not meant as one: a Nextcloud admin
+  can always add themselves back. What changes is that they no longer get it by
+  default.
+
+- **Feed items without a link no longer navigate back to the page they sit on.**
+  ([#114](https://github.com/nextcloud/IntraVox/issues/114)) An item whose
+  connection returned no URL rendered as `<a href="">`, and an empty `href`
+  resolves to the current document — so clicking it reloaded the IntraVox page,
+  looking like a broken link rather than an absent one. Such items are now plain
+  text. This affects any custom connection whose URL mapping comes back empty.
 
 - **Team folder ACLs are still honoured after the split.**
   ([#112](https://github.com/nextcloud/IntraVox/issues/112)) The 2.7.1 fix

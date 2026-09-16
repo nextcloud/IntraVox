@@ -1,14 +1,20 @@
 <template>
-  <a
-    :href="item.url"
+  <!--
+    No URL means a <span>, not an <a>: href="" resolves to the current document,
+    so items without a link navigated back to the page they sat on (#114).
+  -->
+  <component
+    :is="item.url ? 'a' : 'span'"
+    :href="item.url || undefined"
     class="feed-item"
     :aria-label="item.title + (formattedDate ? ' — ' + formattedDate : '')"
     :class="[
       { 'feed-item--compact': compact, 'feed-item--no-image': !showImage || (!item.image && (!feedImage || feedImageError) && !fallbackMeta) },
+      { 'feed-item--no-link': !item.url },
       `feed-item--bg-${itemBackground}`
     ]"
-    :target="openInNewTab ? '_blank' : '_self'"
-    :rel="openInNewTab ? 'noopener noreferrer' : undefined"
+    :target="item.url && openInNewTab ? '_blank' : undefined"
+    :rel="item.url && openInNewTab ? 'noopener noreferrer' : undefined"
   >
     <div v-if="showImage && item.image" class="feed-item-image">
       <img :src="item.image" :alt="item.title" loading="lazy" referrerpolicy="no-referrer" />
@@ -39,7 +45,7 @@
       </p>
     </div>
     <OpenInNew v-if="openInNewTab" :size="14" class="feed-item-external-icon" />
-  </a>
+  </component>
 </template>
 
 <script>

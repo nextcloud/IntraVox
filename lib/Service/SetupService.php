@@ -23,6 +23,18 @@ class SetupService {
     private const EDITOR_GROUP = 'IntraVox Editors';
     private const USER_GROUP = 'IntraVox Users';
     private const DEFAULT_LANGUAGE = 'en';
+    private const APP_ID = 'intravox';
+
+    /**
+     * Marks that first-install provisioning has happened.
+     *
+     * Everything guarded by this runs once and then leaves the administrator
+     * alone: seeding IntraVox Admins from the Nextcloud admins, and granting
+     * the admin group full rights on the Team folder. Both used to be
+     * re-applied on every app update, which meant a deliberate change could
+     * not survive one (#113).
+     */
+    private const ADMINS_SEEDED_KEY = 'admin_access_provisioned';
 
     private IRootFolder $rootFolder;
     private IConfig $config;
@@ -151,6 +163,13 @@ class SetupService {
             $this->scanFolder($folderId);
             $this->logger->info('=== STEP 7: Async scan initiated ===');
 
+            // Provisioning is done. From here on the administrator owns who is
+            // in IntraVox Admins and what the admin group may do in the Team
+            // folder; app updates no longer overrule either (#113). Written
+            // last on purpose: a run that fails halfway retries in full rather
+            // than leaving the install half-provisioned.
+            $this->config->setAppValue(self::APP_ID, self::ADMINS_SEEDED_KEY, 'true');
+
             $this->logger->info('=== SETUP COMPLETE: IntraVox groupfolder setup completed successfully ===');
             return ['success' => true];
 
@@ -180,18 +199,39 @@ class SetupService {
             }
         }
 
-        // Sync all Nextcloud admins to IntraVox Admins group
-        // This ensures all NC admins get IntraVox admin rights, regardless of who installs the app
+        // Seed IntraVox Admins from the Nextcloud admins — ONCE, at first
+        // install, so the app cannot end up unmanageable if whoever installed
+        // it leaves.
+        //
+        // This used to run on every update, which quietly took the decision
+        // away from the administrator: removing someone from IntraVox Admins
+        // worked until the next app update put them back
+        // ([#113](https://github.com/nextcloud/IntraVox/issues/113)). Knowledge
+        // management and server administration are different roles, and which
+        // people hold which is not ours to keep deciding.
+        //
+        // Existing installations are unaffected: the marker is written on the
+        // first run after upgrading too, so nobody loses access — the
+        // overwriting simply stops.
+        if ($this->config->getAppValue(self::APP_ID, self::ADMINS_SEEDED_KEY, 'false') === 'true') {
+            $this->logger->info('IntraVox Admins already seeded; leaving group membership to the administrator');
+            return;
+        }
+
         $ncAdminGroup = $this->groupManager->get('admin');
         $adminGroup = $this->groupManager->get(self::ADMIN_GROUP);
         if ($ncAdminGroup !== null && $adminGroup !== null) {
             foreach ($ncAdminGroup->getUsers() as $ncAdmin) {
                 if (!$adminGroup->inGroup($ncAdmin)) {
                     $adminGroup->addUser($ncAdmin);
-                    $this->logger->info("Synced NC admin '{$ncAdmin->getUID()}' to " . self::ADMIN_GROUP . " group");
+                    $this->logger->info("Seeded NC admin '{$ncAdmin->getUID()}' into " . self::ADMIN_GROUP . " group");
                 }
             }
         }
+
+        // The marker is written once, at the end of setupSharedFolder(), so
+        // that both this and configureGroupfolderPermissions() see the same
+        // answer for "is this the first run".
     }
 
     /**
@@ -206,6 +246,12 @@ class SetupService {
      * Idempotent: safe to run multiple times (on install and updates)
      */
     private function configureGroupfolderPermissions(int $folderId): void {
+        // Both halves of #113 read the same marker, and it is written only
+        // after all of setupSharedFolder() succeeds -- so a run that fails
+        // halfway is retried in full rather than half-provisioned.
+        $alreadyProvisioned = $this->config
+            ->getAppValue(self::APP_ID, self::ADMINS_SEEDED_KEY, 'false') === 'true';
+
         try {
             $this->logger->info("Getting FolderManager for permissions configuration...");
             // Setup-only group wiring: addApplicableGroup/setGroupPermissions have
@@ -241,7 +287,19 @@ class SetupService {
                     }
                 }
 
-                // Always set permissions to ensure they're correct (even on updates)
+                // Set permissions on the FIRST provisioning run only.
+                //
+                // This used to say "always, even on updates", which is the
+                // other half of #113: an administrator who set the admin
+                // group to read-only — or removed it — had that undone by the
+                // next app update. Adding the group stays unconditional, since
+                // it is a no-op when present, but the rights are the
+                // administrator's to decide after the initial setup.
+                if ($alreadyProvisioned) {
+                    $this->logger->info("Leaving '{$groupName}' permissions as configured by the administrator");
+                    continue;
+                }
+
                 $this->logger->info("Setting permissions for '{$groupName}'...");
                 $groupfolderManager->setGroupPermissions($folderId, $groupName, $permissions);
 
