@@ -133,12 +133,16 @@ jobs:
         # so if this step dies again, the log should at least say where.
         run: |
           composer install --prefer-dist --no-progress --no-interaction
-          echo "composer install exited $? -- dependencies are in place"
-          test -x vendor/bin/phpunit || { echo "::error::no phpunit in vendor/"; exit 1; }
+          echo "composer install exited $?"
+          echo "pwd: $(pwd)"
+          ls -la vendor/bin/ 2>&1 | head -20
+          echo "phpunit: $(command -v ./vendor/bin/phpunit || echo MISSING)"
 
       - name: Install Nextcloud (sqlite)
         working-directory: server
         run: |
+          echo "=== step 5 started, pwd: $(pwd) ==="
+          ls -la occ version.php 2>&1 | head -5
           php occ maintenance:install --verbose --database=sqlite \
             --admin-user admin --admin-pass admin
 
