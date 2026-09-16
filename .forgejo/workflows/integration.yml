@@ -119,9 +119,22 @@ jobs:
         # a real server, because this Nextcloud is thrown away at the end of the
         # job -- nothing outlives it to be poisoned by the sabre/xml shadow.
         working-directory: server/apps/intravox
-        env:
-          COMPOSER_AUTH: '{"github-oauth":{"github.com":"${{ secrets.PAT_GITHUB }}"}}'
-        run: composer install --prefer-dist --no-progress --no-interaction
+        # No COMPOSER_AUTH here, unlike ci.yml. Every dependency comes from
+        # Packagist as a dist zip -- composer.json declares no vcs repositories
+        # and nothing private -- so the token only ever bought a higher GitHub
+        # rate limit. Passing it when the secret resolves empty hands composer
+        # {"github-oauth":{"github.com":""}}, which it accepts and then exits
+        # non-zero on, after doing all the work and printing nothing useful.
+        # That is what killed this job: 55 packages installed, autoload
+        # generated, then a silent failure with no step 5.
+        #
+        # The explicit echo is not decoration. The failure above produced no
+        # message at all -- no error, no exit code, just a job that stopped --
+        # so if this step dies again, the log should at least say where.
+        run: |
+          composer install --prefer-dist --no-progress --no-interaction
+          echo "composer install exited $? -- dependencies are in place"
+          test -x vendor/bin/phpunit || { echo "::error::no phpunit in vendor/"; exit 1; }
 
       - name: Install Nextcloud (sqlite)
         working-directory: server
