@@ -83,35 +83,44 @@ final class LanguageStatusService {
         $withContent = [];
         $active = [];
 
+        // One scan reads each language's home.json up to four times (hasHomepage +
+        // hasRealContent per folder, plus effectiveLanguage()'s candidate walk).
+        // Bracket the whole scan so those reads share one decode per folder, and
+        // discard the memo on the way out so it never crosses a request mutation.
+        $this->folders->beginHomepageProbeScan();
         try {
-            $baseFolder = $this->folders->intraVox();
-            foreach ($this->locator->cachedDirectoryListing($baseFolder) as $item) {
-                if ($item->getType() !== FileInfo::TYPE_FOLDER) {
-                    continue;
+            try {
+                $baseFolder = $this->folders->intraVox();
+                foreach ($this->locator->cachedDirectoryListing($baseFolder) as $item) {
+                    if ($item->getType() !== FileInfo::TYPE_FOLDER) {
+                        continue;
+                    }
+                    $name = $item->getName();
+                    // Language folders are two-letter base codes (nl, en, de, ...).
+                    if (!preg_match('/^[a-z]{2,3}$/', $name) || !($item instanceof Folder)) {
+                        continue;
+                    }
+                    if ($hasHomepage($item)) {
+                        $active[] = $name;
+                    }
+                    if ($hasRealContent($item)) {
+                        $withContent[] = $name;
+                    }
                 }
-                $name = $item->getName();
-                // Language folders are two-letter base codes (nl, en, de, ...).
-                if (!preg_match('/^[a-z]{2,3}$/', $name) || !($item instanceof Folder)) {
-                    continue;
-                }
-                if ($hasHomepage($item)) {
-                    $active[] = $name;
-                }
-                if ($hasRealContent($item)) {
-                    $withContent[] = $name;
-                }
+            } catch (\Throwable $e) {
+                $this->logger->warning('[PageService] getLanguageContentStatus failed: ' . $e->getMessage());
             }
-        } catch (\Throwable $e) {
-            $this->logger->warning('[PageService] getLanguageContentStatus failed: ' . $e->getMessage());
+
+            sort($withContent);
+            sort($active);
+
+            // The language the user will actually be shown: own language, else the
+            // recommended (primary) language, else English — issue #75. null means
+            // nothing can be served (only then does the fallback notice appear).
+            $served = $this->folders->effectiveLanguage();
+        } finally {
+            $this->folders->endHomepageProbeScan();
         }
-
-        sort($withContent);
-        sort($active);
-
-        // The language the user will actually be shown: own language, else the
-        // recommended (primary) language, else English — issue #75. null means
-        // nothing can be served (only then does the fallback notice appear).
-        $served = $this->folders->effectiveLanguage();
 
         // Resolve the homepage for the SERVED language (not necessarily the
         // user's), so the app lands on the correct homepage after fallback.

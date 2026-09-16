@@ -55,6 +55,27 @@ final class FolderContext {
     private string $userId;
 
     /**
+     * Per-scan memo of resolveLanguageHomepageData() results, keyed by the
+     * language folder's path. One content-status scan reads the same home.json
+     * up to FOUR times — hasHomepage + hasRealContent per language folder, PLUS
+     * hasRealContent again from effectiveLanguage()'s candidate walk — each doing
+     * a raw getContent()+json_decode. This memo collapses that to ONE read+decode
+     * per folder (measured ~2/3 of the endpoint's cold cost).
+     *
+     * DELIBERATELY NOT a long-lived cache. It is null except while a scan is in
+     * flight (beginHomepageProbeScan/endHomepageProbeScan bracket it), so it can
+     * never carry a decoded homepage across a mutation within the same request —
+     * the failure mode a FolderContext-resident, invalidator-gated cache would
+     * have, because the mutation callers that matter invalidate with a non-null
+     * pageId and skip the request-cache clear. Values are ?array; a resolved-null
+     * homepage is stored as the false sentinel so "resolved to nothing" is not
+     * re-read as "not memoised yet".
+     *
+     * @var array<string, array|false>|null
+     */
+    private ?array $homepageProbeMemo = null;
+
+    /**
      * @param ?string $userId the current user (null/'' = logged out). Captured at
      *   CONSTRUCTION time, which is too early for any non-HTTP entry point: an occ
      *   command calls IUserSession::setUser() in execute(), long after the DI
@@ -312,6 +333,45 @@ final class FolderContext {
      * Read-only; the only page-lookup touch (findPageByUniqueId) is via PageLocator.
      */
     private function resolveLanguageHomepageData(Folder $langFolder): ?array {
+        // Serve from the per-scan memo when a content-status scan is in flight.
+        // Outside a scan ($homepageProbeMemo === null) this is a straight read,
+        // so nothing is cached beyond the bracketed scan.
+        if ($this->homepageProbeMemo !== null) {
+            $memoKey = $langFolder->getPath();
+            if (array_key_exists($memoKey, $this->homepageProbeMemo)) {
+                $hit = $this->homepageProbeMemo[$memoKey];
+                return $hit === false ? null : $hit;
+            }
+            $data = $this->resolveLanguageHomepageDataUncached($langFolder);
+            $this->homepageProbeMemo[$memoKey] = $data ?? false;
+            return $data;
+        }
+        return $this->resolveLanguageHomepageDataUncached($langFolder);
+    }
+
+    /**
+     * Begin a content-status probe scan: enable the per-scan homepage memo so the
+     * hasHomepage/hasRealContent/effectiveLanguage reads of the same home.json
+     * share one decode. MUST be paired with endHomepageProbeScan() in a finally so
+     * the memo never outlives the scan. Idempotent-safe: a nested begin keeps the
+     * outer scan's memo rather than dropping warmed entries.
+     */
+    public function beginHomepageProbeScan(): void {
+        if ($this->homepageProbeMemo === null) {
+            $this->homepageProbeMemo = [];
+        }
+    }
+
+    /** End the scan and discard the per-scan homepage memo. */
+    public function endHomepageProbeScan(): void {
+        $this->homepageProbeMemo = null;
+    }
+
+    /**
+     * The raw resolve, unmemoised. Verbatim from PageService::resolveLanguage-
+     * HomepageData; resolveLanguageHomepageData() wraps it with the per-scan memo.
+     */
+    private function resolveLanguageHomepageDataUncached(Folder $langFolder): ?array {
         // 1. Pointer.
         try {
             $pointerFile = $langFolder->nodeExists('homepage.json') ? $langFolder->get('homepage.json') : null;

@@ -69,7 +69,9 @@ final class PageTreeService {
         $cached = $this->cache->getTree($cacheKey);
         if ($cached !== null) {
             if (($now - $cached['time']) < PageCacheService::PAGE_TREE_TTL) {
-                return $this->shapeTreeResponse($cached['tree'], $currentPageId, $rootPageId);
+                // Cache HIT: the cached tree is a group-shared blob carrying
+                // group-level permissions, so it MUST be re-personalised per user.
+                return $this->shapeTreeResponse($cached['tree'], $currentPageId, $rootPageId, false);
             }
         }
 
@@ -84,7 +86,8 @@ final class PageTreeService {
                         'tree' => $decoded,
                         'time' => $now
                     ]);
-                    return $this->shapeTreeResponse($decoded, $currentPageId, $rootPageId);
+                    // Distributed cache HIT: a group-shared blob — re-personalise.
+                    return $this->shapeTreeResponse($decoded, $currentPageId, $rootPageId, false);
                 }
             }
         }
@@ -109,7 +112,18 @@ final class PageTreeService {
                     'language' => $lang,
                     'isCurrent' => false, // Will be set by markCurrentPageInTree
                     'children' => [],
-                    'permissions' => $this->permissionService->permissionsFromNode($folder)
+                    // Resolve the home node's permissions through the SAME path-based
+                    // call the per-user refresh uses (getFolderPermissions($lang)),
+                    // not permissionsFromNode($folder). $folder here is
+                    // languageFolderByCode($lang), which silently falls back to the
+                    // DEFAULT_LANGUAGE folder when $lang is missing — so a
+                    // node-derived permission would describe the WRONG (fallback)
+                    // folder while the node's 'path' still says $lang. Deriving from
+                    // the path keeps build-time perms byte-identical to what
+                    // refreshTreePermissions would compute, so skipping that second
+                    // pass on a fresh build (below) is provably equivalent even for
+                    // the missing-language home node (fail-closed to canRead=false).
+                    'permissions' => $this->permissionService->getFolderPermissions($lang)
                 ];
             }
         } catch (NotFoundException $e) {
@@ -144,7 +158,15 @@ final class PageTreeService {
         // Store in distributed cache (shared across requests)
         $this->cache->setDistributed($distributedCacheKey, json_encode($tree), PageCacheService::PAGE_TREE_TTL);
 
-        return $this->shapeTreeResponse($tree, $currentPageId, $rootPageId);
+        // Fresh BUILD: every node's permissions were just computed for THIS user
+        // from the live filesystem view (PageTreeBuilder::permissionsFromNode on
+        // the mounted node, and getFolderPermissions($lang) for the home node), so
+        // the per-user refresh would recompute the identical values (VM-measured:
+        // 0 divergences for both a full-access and an ACL-denied user). Skip that
+        // redundant second pass here — it is the tree's dominant cost (~14ms/35
+        // nodes, O(nodes)) and buys nothing on a build. It is retained on both
+        // cache-HIT paths above, where the tree is a group-shared blob.
+        return $this->shapeTreeResponse($tree, $currentPageId, $rootPageId, true);
     }
 
     /**
@@ -152,8 +174,13 @@ final class PageTreeService {
      * optionally narrow to a subtree, then mark the current page.
      * Centralised so the three cache paths (static, distributed, fresh)
      * stay identical.
+     *
+     * @param bool $freshlyBuilt true only on the fresh-build path, where every
+     *   node's permissions were just resolved for THIS user from the live view, so
+     *   the per-user refresh is redundant and is skipped. On a cache HIT it is
+     *   false: the tree is a group-shared blob and MUST be re-personalised.
      */
-    private function shapeTreeResponse(array $tree, ?string $currentPageId, ?string $rootPageId): array {
+    private function shapeTreeResponse(array $tree, ?string $currentPageId, ?string $rootPageId, bool $freshlyBuilt): array {
         if ($rootPageId !== null && $rootPageId !== '') {
             $tree = $this->pathHelper->findSubtree($tree, $rootPageId);
         }
@@ -161,11 +188,14 @@ final class PageTreeService {
         // is safe to overwrite permissions on the copy without polluting the cache.
         $tree = $this->pathHelper->markCurrentPageInTree($tree, $currentPageId);
         // The tree is cached per group-set, but GroupFolder ACLs can grant/deny
-        // per USER within the same group. Recompute each node's permissions for
-        // the current user from the live filesystem view so per-user ACLs are
-        // reflected (issue #86) — same reasoning as the per-read permission
-        // recompute in getPage() (issue #70).
-        $this->refreshTreePermissions($tree);
+        // per USER within the same group. On a cache hit, recompute each node's
+        // permissions for the current user from the live filesystem view so
+        // per-user ACLs are reflected (issue #86) — same reasoning as the per-read
+        // permission recompute in getPage() (issue #70). On a fresh build this was
+        // already done during the build, so the recompute is skipped.
+        if (!$freshlyBuilt) {
+            $this->refreshTreePermissions($tree);
+        }
         return $tree;
     }
 

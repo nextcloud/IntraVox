@@ -335,6 +335,87 @@ class LanguageStatusServiceTest extends TestCase {
         $this->assertArrayHasKey('homepageUniqueId', $status);
     }
 
+    /**
+     * A File whose getContent() is counted, so a test can prove the per-scan memo
+     * collapses the repeated home.json reads to one decode per folder.
+     *
+     * @param int $counter by-reference call counter
+     */
+    private function countingJsonFile(string $path, array $json, int &$counter): File {
+        $file = $this->createMock(File::class);
+        $file->method('getName')->willReturn(basename($path));
+        $file->method('getType')->willReturn(FileInfo::TYPE_FILE);
+        $file->method('getPath')->willReturn($path);
+        $file->method('getContent')->willReturnCallback(function () use ($json, &$counter) {
+            $counter++;
+            return json_encode($json);
+        });
+        $file->method('getId')->willReturn(abs(crc32($path)));
+        $file->method('getMTime')->willReturn(1000);
+        $file->method('isReadable')->willReturn(true);
+        return $file;
+    }
+
+    public function testContentStatusReadsEachHomeJsonOncePerScan(): void {
+        // en's home.json is probed by hasHomepage, hasRealContent, AND
+        // effectiveLanguage()'s candidate walk within one getContentStatus scan.
+        // Before the per-scan memo that was up to four raw getContent()+decode
+        // reads of the SAME file; the memo must collapse it to exactly one.
+        $reads = 0;
+        $enHome = $this->countingJsonFile('/IntraVox/en/home.json', $this->realHome(), $reads);
+        $base = $this->baseFolder([
+            'en' => $this->folder('/IntraVox/en', ['home.json' => $enHome]),
+        ]);
+
+        $status = $this->contentStatus($this->makeService($base));
+
+        // Behaviour unchanged: en resolves as real content and is served.
+        $this->assertSame(['en'], $status['languagesWithContent']);
+        $this->assertSame('en', $status['servedLanguage']);
+        // The dedup: one decode for the whole scan, not one per probe.
+        $this->assertSame(1, $reads, 'the per-scan memo must read en/home.json exactly once');
+    }
+
+    public function testHomepageProbeMemoDoesNotSurviveBetweenScans(): void {
+        // The memo is per-scan by design (it must never carry a decoded homepage
+        // across a request mutation). Two independent scans over the SAME folder
+        // must therefore each perform their own single read — never zero.
+        $reads = 0;
+        $enHome = $this->countingJsonFile('/IntraVox/en/home.json', $this->realHome(), $reads);
+        $base = $this->baseFolder([
+            'en' => $this->folder('/IntraVox/en', ['home.json' => $enHome]),
+        ]);
+        $svc = $this->makeService($base);
+
+        $this->contentStatus($svc);
+        $this->assertSame(1, $reads, 'first scan reads once');
+        $this->contentStatus($svc);
+        $this->assertSame(2, $reads, 'second scan re-reads — the memo did not leak across scans');
+    }
+
+    public function testHomepageProbeMemoIsClearedEvenWhenTheScanThrows(): void {
+        // beginHomepageProbeScan/endHomepageProbeScan must bracket in a finally, so
+        // a throw mid-scan still discards the memo. Prove it by reflection: after a
+        // failing scan the memo property is back to null (disabled).
+        $base = $this->createMock(Folder::class);
+        $base->method('getName')->willReturn('IntraVox');
+        $base->method('getType')->willReturn(FileInfo::TYPE_FOLDER);
+        $base->method('getPath')->willReturn('/IntraVox');
+        $base->method('getDirectoryListing')->willThrowException(new \RuntimeException('disk gone'));
+        $base->method('get')->willThrowException(new NotFoundException('/IntraVox/x'));
+
+        $svc = $this->makeService($base);
+        $folders = (new \ReflectionObject($svc))->getProperty('folders');
+        $fc = $folders->getValue($svc);
+
+        // The inner try/catch swallows the listing failure, but effectiveLanguage()
+        // still runs under the same bracket; the finally must clear regardless.
+        $this->contentStatus($svc);
+
+        $memo = (new \ReflectionProperty(FolderContext::class, 'homepageProbeMemo'));
+        $this->assertNull($memo->getValue($fc), 'the per-scan memo must be null (disabled) after the scan returns');
+    }
+
     // ----------------------------------------------------- getPageCountByLanguage
 
     public function testPageCountAddsOneForALooseHomeJsonButNotForNormalizedHome(): void {
