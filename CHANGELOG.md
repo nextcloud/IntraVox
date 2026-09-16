@@ -17,18 +17,6 @@ Nextcloud admins are no longer forced back into "IntraVox Admins" on every
 update (#113), and feed items without a link no longer behave like broken ones
 (#114). Everything else should look and work exactly as 2.7.1 did.
 
-### Changed
-
-- **`PageService` is gone.** A single 6309-line class held page reading,
-  writing, listing, the tree, search, media, import, export, permissions and
-  the news feed. It is now 126 service files under `lib/Service/`, each owning
-  one job, and the largest file left in `lib/` is 2257 lines. 139 refactor
-  commits, 73 files, roughly 9300 lines moved.
-
-  This matters for what comes next rather than for today: multi-site needs to
-  vary where content lives, and that was impossible while one class assumed a
-  single hardcoded folder.
-
 ### Fixed
 
 - **Pages loaded again after the split.** `FolderContext` resolved the user's
