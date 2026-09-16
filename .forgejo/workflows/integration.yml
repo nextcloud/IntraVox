@@ -1,0 +1,153 @@
+# Forgejo Actions: the IntraVox INTEGRATION suite against a real Nextcloud.
+#
+# Why this exists
+# ---------------
+# The unit suite stubs OCP away, and that is exactly where this app has broken.
+# The PageService split shipped an intranet with NO PAGES AT ALL while 1321 unit
+# tests stayed green: FolderContext resolved the user's home folder instead of
+# the mounted IntraVox groupfolder, because the DI container filled a TEST-ONLY
+# seam that the unit suite always injects by hand. A second defect in the same
+# class made every occ command fail. Neither is reachable from a mocked test.
+#
+# tests/Integration exists to catch precisely that, and until now it ran in one
+# place only: a developer's laptop with an SSH key to nc-dev. So it did not run.
+#
+# What is different here from scripts/run-integration-tests.sh
+# ------------------------------------------------------------
+# That script drives the suite inside the live dev container. This installs a
+# THROWAWAY Nextcloud in the runner, which makes the suite a gate rather than a
+# ritual, and removes the two problems the script cannot avoid: it needs SSH to
+# a shared server, and it leaves a DEV vendor/ behind (sabre/xml 4.x shadows the
+# core's 2.x and makes CalDAV fatal -- it has bitten twice). Both keep their use:
+# the script tests against real content, this tests against a clean install.
+#
+# The suite needs groupfolders. Every test builds a throwaway groupfolder, so
+# without that app IntegrationTestCase skips the whole suite with an explanation
+# rather than erroring -- which is why a missing app here reads as "skipped", not
+# as a broken run. groupfolders tracks the server's stableNN branches.
+#
+# Scope: sqlite only, and only the NC versions info.xml actually claims (32-35).
+# IntraVox's integration tests exercise folder resolution, ACLs and mounts --
+# nothing DB-specific -- so a three-database matrix would triple the runtime to
+# re-prove the same thing. FormVox does run one, because its tests hit real DB
+# locks and filecache behaviour.
+#
+# Runner notes, same constraints as ci.yml (checked against voxcloud-srv-runner-1):
+#   - image catthehacker/ubuntu:act-22.04: Node, but no PHP and no composer.
+#   - actions resolve from data.forgejo.org, where shivammathur/setup-php is
+#     absent -- so PHP comes from ondrej/php on the host.
+#   - actions/checkout clones from the LOCAL instance, so nextcloud/server and
+#     groupfolders are cloned from GitHub explicitly.
+
+name: Integration
+
+on:
+  # Not on every push: this installs a full Nextcloud per matrix entry, which is
+  # minutes rather than seconds. The fast gate in ci.yml runs on every branch;
+  # this runs where it pays off -- before something lands on a main line, and on
+  # demand while working on the folder/ACL code it protects.
+  pull_request:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+concurrency:
+  group: integration-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  integration:
+    name: NC ${{ matrix.server }} / sqlite
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        # info.xml says min-version 32, max-version 35. Both ends are claims:
+        # phpstan proves the LOWER bound statically (nextcloud/ocp is pinned to
+        # v32.0.9), and nothing proved the upper bound at all until this matrix.
+        server: [stable32, stable33, stable34, stable35]
+
+    steps:
+      - name: Install PHP 8.2 + Composer
+        # 8.2 is the floor composer.json claims, matching ci.yml. Building on
+        # the lowest supported version means syntax newer than our own floor
+        # fails here rather than in a user's logs.
+        run: |
+          set -e
+          export DEBIAN_FRONTEND=noninteractive
+          apt-get update -qq
+          apt-get install -y --no-install-recommends \
+            software-properties-common ca-certificates curl unzip git >/dev/null
+          add-apt-repository -y ppa:ondrej/php >/dev/null
+          apt-get update -qq
+          apt-get install -y --no-install-recommends \
+            php8.2-cli php8.2-xml php8.2-mbstring php8.2-zip php8.2-curl \
+            php8.2-gd php8.2-intl php8.2-bcmath php8.2-gmp php8.2-sqlite3 >/dev/null
+          curl -sS https://getcomposer.org/installer \
+            | php -- --install-dir=/usr/local/bin --filename=composer
+
+      - name: Clone Nextcloud server ${{ matrix.server }}
+        # NOT actions/checkout: on this runner it resolves bare owner/repo
+        # against the local Forgejo instance and fails with "not found".
+        # Shallow, with submodules -- 3rdparty is required to boot.
+        run: |
+          git clone --depth=1 --branch "${{ matrix.server }}" \
+            --recurse-submodules --shallow-submodules \
+            https://github.com/nextcloud/server.git server
+
+      - name: Clone groupfolders ${{ matrix.server }}
+        # The suite's whole subject is groupfolder resolution, so this is a hard
+        # dependency, not an optional extra. groupfolders follows the server's
+        # stableNN naming (23.x on stable35, 22.x on stable32-34).
+        run: |
+          git clone --depth=1 --branch "${{ matrix.server }}" \
+            https://github.com/nextcloud/groupfolders.git server/apps/groupfolders
+
+      - name: Checkout IntraVox into apps/
+        uses: actions/checkout@v4
+        with: { path: server/apps/intravox }
+
+      - name: Install IntraVox dev dependencies
+        # --dev on purpose: phpunit lives there. Safe here in a way it is not on
+        # a real server, because this Nextcloud is thrown away at the end of the
+        # job -- nothing outlives it to be poisoned by the sabre/xml shadow.
+        working-directory: server/apps/intravox
+        env:
+          COMPOSER_AUTH: '{"github-oauth":{"github.com":"${{ secrets.PAT_GITHUB }}"}}'
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Install Nextcloud (sqlite)
+        working-directory: server
+        run: |
+          php occ maintenance:install --verbose --database=sqlite \
+            --admin-user admin --admin-pass admin
+
+      - name: Enable groupfolders and IntraVox
+        working-directory: server
+        run: |
+          set -e
+          php occ app:enable --force groupfolders
+          php occ app:enable --force intravox
+          php occ app:list | grep -E 'intravox|groupfolders'
+
+      - name: Integration suite
+        working-directory: server/apps/intravox
+        # NEXTCLOUD_ROOT is what tests/bootstrap-integration.php reads; its
+        # default (/var/www/html) is the container layout, not this one.
+        env:
+          NEXTCLOUD_ROOT: ${{ github.workspace }}/server
+        run: |
+          set -o pipefail
+          php vendor/bin/phpunit -c phpunit-integration.xml 2>&1 | tee result.txt
+
+          # A skipped suite exits 0. IntegrationTestCase skips when Nextcloud is
+          # not bootstrapped or groupfolders is missing, and either would mean
+          # this job proved nothing while reporting success -- the exact failure
+          # mode that let the suite go unrun for months. So assert it actually
+          # ran, rather than trusting the exit code.
+          if grep -qE 'No tests executed|Skipped: [0-9]+' result.txt; then
+            echo "::error::the integration suite skipped tests instead of running them"
+            grep -E 'Skipped|No tests executed' result.txt
+            exit 1
+          fi
