@@ -189,10 +189,25 @@ class SpecMatchesHandlersTest extends TestCase {
 
     /** @return list<array{0:string,1:string}> controller class + method for a documented path */
     private function handlersFor(string $verb, string $path): array {
-        $routes = json_decode(shell_exec(
+        // Needs node on PATH: the route table is parsed by a JS helper, because
+        // appinfo/routes.php is the one source both this suite and the frontend
+        // guards read.
+        //
+        // The `?: '[]'` that used to stand here was worse than a crash. With no
+        // node, shell_exec() returns null, the fallback made that an empty route
+        // table, and the test then reported every documented parameter as unread
+        // by any handler -- a long, specific, entirely false failure. Assert
+        // instead, and name the actual cause.
+        $routeJson = shell_exec(
             'cd ' . escapeshellarg(__DIR__ . '/../../../')
             . " && node -e \"const p=require('./scripts/lib/route-parser.js');console.log(JSON.stringify(p.parseRoutes()))\""
-        ) ?: '[]', true);
+        );
+        self::assertIsString(
+            $routeJson,
+            'could not read the route table -- is node on PATH? '
+            . 'This test parses appinfo/routes.php through scripts/lib/route-parser.js.'
+        );
+        $routes = json_decode($routeJson, true);
 
         $norm = static fn (string $u): string => preg_replace('/\{[^}]*\}/', '{}', rtrim($u, '/')) ?: '/';
         $want = $verb . ' ' . $norm($path);
