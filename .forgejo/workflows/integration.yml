@@ -192,32 +192,30 @@ jobs:
           php occ app:enable --force intravox
           php occ app:list | grep -E 'intravox|groupfolders'
 
-      - name: Create the IntraVox groupfolder
+      - name: Set IntraVox up the way it sets itself up
         working-directory: server
-        # Three tests resolve the app's own content folder by NAME through
-        # SetupService, which is not parameterisable -- on a fresh install they
-        # fail with "Groupfolder 'IntraVox' not found". That is an environment
-        # requirement, not a defect: dev has this folder, a clean server does
-        # not. The rest of the suite builds its own throwaway folders and does
-        # not care.
+        # `occ intravox:setup` -- the app's own provisioning, not a hand-rolled
+        # imitation of it.
+        #
+        # Two rounds were spent building this by hand: create a groupfolder, add
+        # a group, grant permissions. Both failed, and the second failure was the
+        # instructive one. SetupService does not look for any group with access;
+        # it looks for 'IntraVox Admins', 'IntraVox Editors' and 'IntraVox Users'
+        # by name (lib/Service/SetupService.php:22-24). A folder owned by an
+        # invented 'intravox-ci' group is not a folder this app recognises, so
+        # getSharedFolder() fell back to the user home -- reporting 'files' where
+        # the test wanted 'IntraVox', which is bug A's exact shape.
+        #
+        # Calling the app's own setup fixes that and is the better test anyway:
+        # provisioning is a code path that ships, so exercising it here means a
+        # break in it fails CI rather than a first install. The demo data it
+        # imports also gives PageLifecycleTest actual pages to list, which is the
+        # other thing a bare server does not have.
         run: |
           set -e
-          # admin is the only account a fresh install has, and the suite runs
-          # as whoever it logs in -- so give the folder to admin's group rather
-          # than provisioning a second user just to own it.
-          php occ group:add intravox-ci
-          php occ group:adduser intravox-ci admin
-          id=$(php occ groupfolders:create IntraVox)
-          echo "created groupfolder id=$id"
-          # The permissions are a positional list, and leaving it off means READ
-          # ONLY -- which the first run did, and the suite caught it: a read-only
-          # mount is not a content folder IntraVox accepts, so getSharedFolder()
-          # fell back to the user home and the test reported 'files' where
-          # 'IntraVox' was expected. That is bug A's exact shape, found by the
-          # assertion on the folder NAME rather than on two calls agreeing.
-          # dev grants its IntraVox group everything; so does this.
-          php occ groupfolders:group "$id" intravox-ci read write share delete
+          php occ intravox:setup --language en --no-interaction
           php occ groupfolders:list
+          php occ intravox:reindex
 
       - name: Integration suite
         working-directory: server/apps/intravox
