@@ -388,6 +388,36 @@ class ApiControllerTest extends TestCase {
         $this->assertEquals('page-new', $response->getData()['id']);
     }
 
+    /**
+     * IV-06: createPage must NOT honour a client-supplied uniqueId or
+     * translationGroup — otherwise an editor could hijack the identity of a
+     * page they cannot edit. The service mints these server-side.
+     */
+    public function testCreatePageStripsClientUniqueIdAndTranslationGroup(): void {
+        $this->request->method('getParams')->willReturn([
+            'title' => 'New Page',
+            'uniqueId' => 'page-victim-uuid',
+            'translationGroup' => 'tg-victim',
+        ]);
+
+        $this->permissionService->method('getFolderPermissions')
+            ->willReturn(['canCreate' => true]);
+
+        $captured = null;
+        $this->pageWrite->method('createPage')
+            ->willReturnCallback(function (array $data) use (&$captured) {
+                $captured = $data;
+                return ['id' => 'page-new', 'uniqueId' => 'page-new', 'title' => 'New Page'];
+            });
+
+        $this->controller->createPage();
+
+        $this->assertIsArray($captured);
+        $this->assertArrayNotHasKey('uniqueId', $captured, 'client uniqueId must be stripped');
+        $this->assertArrayNotHasKey('translationGroup', $captured, 'client translationGroup must be stripped');
+        $this->assertSame('New Page', $captured['title']);
+    }
+
     public function testCreatePageReturnsForbiddenWithoutPermission(): void {
         $this->request->method('getParams')->willReturn(['title' => 'New Page']);
 

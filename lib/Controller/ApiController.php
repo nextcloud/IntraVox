@@ -369,6 +369,11 @@ class ApiController extends Controller {
         try {
             $data = $this->request->getParams();
 
+            // IV-06: identity fields are minted server-side, never taken from an
+            // HTTP caller (a client uniqueId let an editor hijack another page's
+            // id). Import/translation flows call the service directly, untouched.
+            unset($data['uniqueId'], $data['translationGroup']);
+
             // Extract parentPath from request if provided
             $parentPath = $data['parentPath'] ?? null;
             unset($data['parentPath']); // Remove from data array to avoid storing it
