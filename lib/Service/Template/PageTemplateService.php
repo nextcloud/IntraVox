@@ -212,6 +212,35 @@ class PageTemplateService {
     }
 
     /**
+     * Whether this user may delete the given template: the delete permission on
+     * the template's own folder, in the user's ACL-filtered view.
+     *
+     * The controller gates saveAsTemplate on canCreateTemplates() but deleteTemplate
+     * gated on nothing at the app layer, so any member whose base group permission
+     * included delete (typically 7) could remove any template regardless of a per-user
+     * ACL rule that revoked it. This is the delete-side companion: it answers against
+     * the exact folder that delete() would remove, so an ACL revoking delete on
+     * `_templates` (or on the specific template) is honoured. A missing/invalid
+     * template or an unreadable `_templates` reads as "no" — never as "unset, so allow".
+     */
+    public function canDeleteTemplate(Folder $languageFolder, string $templateId): bool {
+        try {
+            if (!$this->isValidTemplateId($templateId)) {
+                return false;
+            }
+
+            $templatesFolder = $this->templatesFolder($languageFolder);
+            if ($templatesFolder === null || !$templatesFolder->nodeExists($templateId)) {
+                return false;
+            }
+
+            return $templatesFolder->get($templateId)->isDeletable();
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+    /**
      * Reserve a collision-free template folder — creating `_templates` when
      * missing — plus its `_media` subfolder.
      *

@@ -175,9 +175,20 @@ class TemplateApiController extends Controller {
             } catch (\Exception $e) {
                 $langFolder = null;
             }
-            $result = $langFolder !== null
-                ? $this->templates->deleteTemplate($langFolder, $id)
-                : ['success' => false, 'error' => 'Templates folder not accessible'];
+
+            // Deleting a template is gated like creating one (saveAsTemplate checks
+            // canCreateTemplates): without this, any member whose base group permission
+            // included delete could remove any template, ignoring a per-user ACL that
+            // revoked it. A null langFolder means the templates area is unreachable for
+            // this user, which is itself a denial.
+            if ($langFolder === null || !$this->templates->canDeleteTemplate($langFolder, $id)) {
+                return new DataResponse([
+                    'error' => 'You do not have permission to delete this template',
+                ], Http::STATUS_FORBIDDEN);
+            }
+
+            // $langFolder is non-null past the gate above.
+            $result = $this->templates->deleteTemplate($langFolder, $id);
 
             if (!$result['success']) {
                 return new DataResponse([
