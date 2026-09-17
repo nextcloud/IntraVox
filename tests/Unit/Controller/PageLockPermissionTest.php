@@ -88,4 +88,22 @@ class PageLockPermissionTest extends TestCase {
 
         $this->assertEquals(Http::STATUS_FORBIDDEN, $response->getStatus());
     }
+
+    /**
+     * A user with no IntraVox access at all makes getPage() throw (the folder
+     * is not mounted for them). That must be a clean 403, not an uncaught 500
+     * with a leaky message.
+     */
+    public function testAcquireLockReturns403WhenPageCannotBeResolved(): void {
+        $this->getPageFn = function (string $id) {
+            throw new \Exception('IntraVox folder not found. Please check that you have access to the IntraVox GroupFolder.');
+        };
+        $this->lockService = $this->createMock(PageLockService::class);
+        $this->lockService->expects($this->never())->method('acquireLock');
+
+        $response = $this->buildController()->acquireLock('page-x');
+
+        $this->assertEquals(Http::STATUS_FORBIDDEN, $response->getStatus());
+        $this->assertSame(['error' => 'Permission denied'], $response->getData());
+    }
 }
