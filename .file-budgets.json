@@ -15,7 +15,7 @@
     "lib/Controller/CommentController.php": 443,
     "lib/Controller/DemoDataController.php": 150,
     "lib/Controller/ExportController.php": 109,
-    "lib/Controller/FeedController.php": 340,
+    "lib/Controller/FeedController.php": 357,
     "lib/Controller/FeedReaderController.php": 310,
     "lib/Controller/FileStoryController.php": 356,
     "lib/Controller/FooterController.php": 110,

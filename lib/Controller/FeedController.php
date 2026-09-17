@@ -30,6 +30,7 @@ class FeedController extends Controller {
         private IURLGenerator $urlGenerator,
         private IUserSession $userSession,
         private IConfig $config,
+        private \OCA\IntraVox\Service\PermissionService $permissionService,
         private LoggerInterface $logger
     ) {
         parent::__construct($appName, $request);
@@ -194,8 +195,8 @@ class FeedController extends Controller {
     #[NoCSRFRequired]
     public function getToken(): DataResponse {
         $userId = $this->getCurrentUserId();
-        if ($userId === null) {
-            return new DataResponse(['error' => 'Not authenticated'], Http::STATUS_UNAUTHORIZED);
+        if (($denied = $this->denyUnlessIntraVoxAccess($userId)) !== null) {
+            return $denied;
         }
 
         // If NC link sharing is disabled, inform the frontend
@@ -223,8 +224,8 @@ class FeedController extends Controller {
     #[NoAdminRequired]
     public function regenerateToken(): DataResponse {
         $userId = $this->getCurrentUserId();
-        if ($userId === null) {
-            return new DataResponse(['error' => 'Not authenticated'], Http::STATUS_UNAUTHORIZED);
+        if (($denied = $this->denyUnlessIntraVoxAccess($userId)) !== null) {
+            return $denied;
         }
 
         // NC sharing must be enabled to generate feed tokens
@@ -261,8 +262,8 @@ class FeedController extends Controller {
     #[NoAdminRequired]
     public function revokeToken(): DataResponse {
         $userId = $this->getCurrentUserId();
-        if ($userId === null) {
-            return new DataResponse(['error' => 'Not authenticated'], Http::STATUS_UNAUTHORIZED);
+        if (($denied = $this->denyUnlessIntraVoxAccess($userId)) !== null) {
+            return $denied;
         }
 
         $this->feedTokenService->revokeToken($userId);
@@ -276,8 +277,8 @@ class FeedController extends Controller {
     #[NoAdminRequired]
     public function updateConfig(): DataResponse {
         $userId = $this->getCurrentUserId();
-        if ($userId === null) {
-            return new DataResponse(['error' => 'Not authenticated'], Http::STATUS_UNAUTHORIZED);
+        if (($denied = $this->denyUnlessIntraVoxAccess($userId)) !== null) {
+            return $denied;
         }
 
         $existing = $this->feedTokenService->getTokenForUser($userId);
@@ -307,6 +308,22 @@ class FeedController extends Controller {
     private function getCurrentUserId(): ?string {
         $user = $this->userSession->getUser();
         return $user?->getUID();
+    }
+
+    /**
+     * The token endpoints answered any logged-in account, including users with
+     * no IntraVox access at all (IV-12). Require IntraVox access so managing a
+     * personal feed token is consistent with the rest of the app. Returns the
+     * refusal to return, or null when access is granted.
+     */
+    private function denyUnlessIntraVoxAccess(?string $userId): ?DataResponse {
+        if ($userId === null) {
+            return new DataResponse(['error' => 'Not authenticated'], Http::STATUS_UNAUTHORIZED);
+        }
+        if (!$this->permissionService->hasAccess($userId)) {
+            return new DataResponse(['error' => 'Access denied'], Http::STATUS_FORBIDDEN);
+        }
+        return null;
     }
 
     private function buildFeedUrl(string $token): string {
