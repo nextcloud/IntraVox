@@ -829,6 +829,32 @@ class PublicShareController extends Controller {
                 }
             }
 
+            // connectionId/feedUrl were not enough: the SECONDARY selectors
+            // (contentType, listId, jiraProject, courseId, moodleForumId) decide
+            // WHICH data the connection's credentials return. buildConfigFromRequest
+            // only format-checks them, so an anonymous holder of any share token
+            // could pin a published connectionId and then swap in e.g. an arbitrary
+            // SharePoint listId, reading data the share never published (IV-03).
+            // Each non-empty selector must match a value this share actually
+            // publishes on a feed widget.
+            foreach (['contentType', 'listId', 'jiraProject', 'courseId', 'moodleForumId'] as $selector) {
+                if (($config[$selector] ?? '') === '') {
+                    continue;
+                }
+                $allowedSelector = $this->publicShareService->allowedWidgetValues($share, 'feed', $selector);
+                if (!in_array($config[$selector], $allowedSelector, true)) {
+                    $this->logger->warning('IntraVox: share requested a feed selector it does not publish', [
+                        'token' => substr($token, 0, 8) . '...',
+                        'selector' => $selector,
+                    ]);
+
+                    return new DataResponse(
+                        ['error' => 'Unknown feed parameter for this share', 'items' => []],
+                        Http::STATUS_FORBIDDEN
+                    );
+                }
+            }
+
             [$sortBy, $sortOrder, $filterKeyword] = $this->parseSortAndFilter();
             $result = $this->feedReaderService->fetchFeed($sourceType, $config, $limit, null, $sortBy, $sortOrder, $filterKeyword);
 
