@@ -38,6 +38,24 @@ class PageLockController extends Controller {
 	}
 
 	/**
+	 * Require write permission on the page before a lock may be taken/held.
+	 *
+	 * Returns a DataResponse to return on refusal, or null when allowed.
+	 * requireWritablePage() resolves the page through getPage(), which THROWS
+	 * for a user who has no IntraVox folder at all (raw:0) — left uncaught that
+	 * surfaced as a 500 with a leaky message. A user who cannot resolve the page
+	 * plainly may not write it, so any resolution failure is a clean 403.
+	 */
+	private function denyUnlessMayLock(string $pageId): ?DataResponse {
+		try {
+			$page = $this->requireWritablePage($pageId, 'cannot lock this page');
+		} catch (\Exception $e) {
+			return new DataResponse(['error' => 'Permission denied'], Http::STATUS_FORBIDDEN);
+		}
+		return $page instanceof DataResponse ? $page : null;
+	}
+
+	/**
 	 * Get the current lock status for a page.
 	 *
 	 */
@@ -64,9 +82,9 @@ class PageLockController extends Controller {
 		// A lock is an edit primitive: only a user who may write the page may
 		// take it. Without this check any authenticated user — even one with no
 		// IntraVox access — could lock any page and block its editors (IV-07).
-		$page = $this->requireWritablePage($pageId, 'cannot lock this page');
-		if ($page instanceof DataResponse) {
-			return $page;
+		$denied = $this->denyUnlessMayLock($pageId);
+		if ($denied !== null) {
+			return $denied;
 		}
 
 		$result = $this->lockService->acquireLock($pageId, $user->getUID(), $user->getDisplayName());
@@ -95,9 +113,9 @@ class PageLockController extends Controller {
 		}
 
 		// Same gate as acquireLock: refreshing is holding the edit lock.
-		$page = $this->requireWritablePage($pageId, 'cannot lock this page');
-		if ($page instanceof DataResponse) {
-			return $page;
+		$denied = $this->denyUnlessMayLock($pageId);
+		if ($denied !== null) {
+			return $denied;
 		}
 
 		$refreshed = $this->lockService->refreshLock($pageId, $user->getUID());
