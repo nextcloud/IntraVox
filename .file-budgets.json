@@ -6,7 +6,7 @@
     "vue": 800
   },
   "files": {
-    "lib/Controller/AnalyticsController.php": 257,
+    "lib/Controller/AnalyticsController.php": 279,
     "lib/Controller/ApiController.php": 1051,
     "lib/Controller/ApiErrorTrait.php": 112,
     "lib/Controller/BulkController.php": 292,
