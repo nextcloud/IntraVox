@@ -412,6 +412,52 @@ class SystemFileService {
     }
 
     /**
+     * Build the page tree for a public share by walking the SHARE OWNER'S node,
+     * not the admin/system view of the whole groupfolder (IV-02).
+     *
+     * getPageTree() resolves the groupfolder through SetupService in a system or
+     * IntraVox-Admin context, so its tree contains pages the sharer is ACL-denied
+     * on; slicing that by path prefix then republishes them through a folder
+     * share. $shareNode is the shared folder as the OWNER sees it, so a
+     * GroupFolders ACL that hides a subtree from the owner also hides it here —
+     * getDirectoryListing() never returns a folder the owner may not read.
+     *
+     * Paths are made relative to the groupfolder root (…/IntraVox) so the nodes
+     * line up with the share scope path and the existing tree consumers, exactly
+     * as getPageTree() produces them.
+     *
+     * @param \OCP\Files\Folder $shareNode the share's node (owner's view)
+     * @return array<int, array<string, mixed>>
+     */
+    public function getPageTreeForShareNode(\OCP\Files\Folder $shareNode, string $language): array {
+        if (!$this->languageService->isLanguageEnabled($language)) {
+            $language = self::FALLBACK_LANGUAGE;
+        }
+
+        try {
+            // basePath is the groupfolder root: the share node's own path with
+            // everything from the language segment onward removed, so relative
+            // paths read "<lang>/…" just like the system tree.
+            $nodePath = rtrim($shareNode->getPath(), '/');
+            $marker = '/' . $language;
+            $pos = strpos($nodePath, $marker);
+            // Fall back to the node's own path when the language segment is not in
+            // it (root-of-language share); the recursion still lists correctly.
+            $basePath = $pos !== false ? substr($nodePath, 0, $pos) : $nodePath;
+
+            $tree = [];
+            $this->buildPageTreeRecursive($shareNode, $tree, $language, $basePath);
+            return $tree;
+        } catch (\Exception $e) {
+            $this->logger->error('[SystemFileService] Error building share page tree', [
+                'language' => $language,
+                'error' => $e->getMessage(),
+            ]);
+            return [];
+        }
+    }
+
+    /**
      * Recursively build the page tree from folder structure.
      */
     private function buildPageTreeRecursive($folder, array &$tree, string $language, string $basePath): void {
