@@ -182,6 +182,22 @@ class PageContentApiControllerTest extends TestCase {
         $this->assertSame(['error' => 'boom'], $res->getData());
     }
 
+    /**
+     * IV-11: a missing page must be a 404 with a fixed body, not a broad-catch
+     * 500 that echoes the raw exception message (which enabled enumeration and
+     * leaked internal architecture).
+     */
+    public function testGetCurrentContentMissingPageReturns404(): void {
+        $this->getPageFn = function (string $id) {
+            throw new \OCA\IntraVox\Exception\PageNotFoundException('Page not found: ' . $id);
+        };
+
+        $res = $this->controller->getCurrentPageContent('page-x');
+
+        $this->assertSame(Http::STATUS_NOT_FOUND, $res->getStatus());
+        $this->assertSame(['error' => 'Page not found'], $res->getData());
+    }
+
     // --- getPageMetadata (same gate) ---
 
     public function testGetMetadataDeniedReturns403AccessDenied(): void {
