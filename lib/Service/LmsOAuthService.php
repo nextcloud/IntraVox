@@ -75,7 +75,7 @@ class LmsOAuthService {
     /**
      * Exchange an authorization code for access + refresh tokens.
      *
-     * @return array{access_token: string, refresh_token: ?string, expires_in: ?int}
+     * @return array{access_token: string, refresh_token: ?string, expires_in: ?int, connectionId: string, userId: string}
      */
     public function handleCallback(string $code, string $state): array {
         $stateData = $this->validateState($state);
