@@ -372,8 +372,8 @@ class DataDisplayResponse extends Response {
 }
 
 class StreamResponse extends Response {
-    public function __construct(string $filePath) {
-        parent::__construct();
+    /** @param string|resource $filePath the real OCP signature accepts either */
+    public function __construct($filePath) {
     }
 }
 

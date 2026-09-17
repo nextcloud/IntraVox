@@ -160,15 +160,24 @@ class FeedController extends Controller {
             return new DataResponse(['error' => 'Media not found'], Http::STATUS_NOT_FOUND);
         }
 
-        return new class($media['content'], $media['mimeType'], $media['filename']) extends Response {
+        // A page's _media folder can hold arbitrary files placed via WebDAV
+        // (bypassing the upload allowlist/sanitiser). Only render images and
+        // video inline; serve anything else (text/html, raw SVG) as a download
+        // with nosniff so it cannot execute under the Nextcloud origin (IV-08).
+        $mimeType = $media['mimeType'];
+        $inlineSafe = (str_starts_with($mimeType, 'image/') || str_starts_with($mimeType, 'video/'))
+            && $mimeType !== 'image/svg+xml';
+
+        return new class($media['content'], $mimeType, $media['filename'], $inlineSafe) extends Response {
             private string $body;
 
-            public function __construct(string $body, string $mimeType, string $filename) {
+            public function __construct(string $body, string $mimeType, string $filename, bool $inlineSafe) {
                 parent::__construct();
                 $this->body = $body;
                 $this->setStatus(Http::STATUS_OK);
                 $this->addHeader('Content-Type', $mimeType);
-                $this->addHeader('Content-Disposition', 'inline; filename="' . $filename . '"');
+                $this->addHeader('Content-Disposition', ($inlineSafe ? 'inline' : 'attachment') . '; filename="' . $filename . '"');
+                $this->addHeader('X-Content-Type-Options', 'nosniff');
                 $this->addHeader('Cache-Control', 'public, max-age=86400');
             }
 
