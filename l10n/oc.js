@@ -73,6 +73,7 @@ OC.L10N.register(
     "Insert link" : "Inserir un ligam",
     "Table" : "Tablèu",
     "Apply" : "Aplicar",
+    "Home" : "Acuèlh",
     "Information" : "Informacions",
     "Email" : "Adreiça electronica",
     "Phone" : "Telefòn",
