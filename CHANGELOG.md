@@ -6,6 +6,39 @@ IntraVox is a Nextcloud intranet page builder.
 
 ## [Unreleased]
 
+## [3.0.1] - 2026-09-17 — Export and import ask who you are
+
+### Security
+
+- **Export no longer hands the whole intranet to any logged-in account.**
+  All four export endpoints were annotated `#[NoAdminRequired]` with no
+  permission check in the body, and `ExportService` reads the Team folder
+  through a system context rather than the caller's ACL-filtered view. A
+  penetration test confirmed it live: an account with no IntraVox rights at
+  all downloaded the complete site — every page, every language, drafts and
+  ACL-restricted pages included, with comments. They were also exempt from
+  CSRF, so a link on another site could trigger the download on behalf of
+  whoever clicked it. Export now requires administering the Team folder
+  IntraVox lives in, and is CSRF-protected like every other state-changing
+  route.
+
+### Changed
+
+- **Export and import are now for Team folder administrators, not only
+  Nextcloud admins.** Both used to require membership of the server's `admin`
+  group. That was the wrong question: they act on the whole folder, so what
+  matters is who administers *that folder* — which Nextcloud already answers
+  through the Team folder's "Manage advanced permissions". A delegated manager
+  can now export and import without being a server administrator, continuing
+  where 3.0.0 left off when it stopped forcing Nextcloud admins into "IntraVox
+  Admins" ([#113](https://github.com/nextcloud/IntraVox/issues/113)):
+  managing knowledge and administering a server stay different jobs.
+
+  Nextcloud admins keep access, so nothing is taken away from an existing
+  installation. Note that this is an API-level change: the export and import
+  screens still live in the Nextcloud admin settings, so a delegated manager
+  reaches them through the API rather than that page for now.
+
 ## [3.0.0] - 2026-09-16 — The page engine, taken apart
 
 A structural release: the page engine was taken apart, and almost nothing about

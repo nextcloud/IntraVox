@@ -597,19 +597,59 @@ class PermissionService {
     }
 
     /**
+     * Check if user administers the team folder IntraVox lives in.
+     *
+     * Import and export act on the whole folder -- every language, every page,
+     * drafts and ACL-restricted subtrees included -- so the per-path ACL that
+     * guards /api/pages/* cannot express who may do them. The question is who
+     * administers the container, and groupfolders answers it already:
+     * FolderManager::canManageACL(). This is deliberately NOT a new IntraVox
+     * role; the multi-site design is explicit that structural permissions
+     * belong to "the administrator of that team folder" and that IntraVox adds
+     * no authorisation layer of its own.
+     *
+     * Note this is wider than the NC admin group it replaces: a delegated
+     * folder manager who is not a Nextcloud admin now qualifies. That is the
+     * point. It is far narrower than what shipped before, which was every
+     * logged-in account on the instance.
+     *
+     * Fails closed. Renaming the IntraVox team folder makes the id
+     * unresolvable, which denies everyone rather than granting anyone --
+     * logged by resolveGroupFolderId().
+     */
+    private function canManageIntraVoxFolder(?string $userId = null): bool {
+        $userId = $userId ?? $this->userId;
+        if (!$userId) {
+            return false;
+        }
+
+        $user = $this->userManager->get($userId);
+        if (!$user) {
+            return false;
+        }
+
+        $folderId = $this->getGroupFolderId();
+        if ($folderId === null) {
+            return false;
+        }
+
+        return $this->groupFolders->canManageAcl($folderId, $user);
+    }
+
+    /**
      * Check if user can import content.
-     * Requires system admin privileges.
+     * Requires administering the IntraVox team folder.
      */
     public function canImport(?string $userId = null): bool {
-        return $this->isSystemAdmin($userId);
+        return $this->canManageIntraVoxFolder($userId);
     }
 
     /**
      * Check if user can export all content.
-     * Requires system admin privileges for full export.
+     * Requires administering the IntraVox team folder.
      */
     public function canExport(?string $userId = null): bool {
-        return $this->isSystemAdmin($userId);
+        return $this->canManageIntraVoxFolder($userId);
     }
 
     /**

@@ -67,10 +67,18 @@ function postures() {
 			}
 		}
 
-		// Which methods guard on isAdmin() in their body? Bounded by the NEXT
-		// method, otherwise a guard in the following method is attributed to this
-		// one — which briefly labelled the anonymous /api/health as admin-checked.
+		// Which methods guard in their body? Bounded by the NEXT method,
+		// otherwise a guard in the following method is attributed to this one —
+		// which briefly labelled the anonymous /api/health as admin-checked.
+		//
+		// Two guards, two authorities. isAdmin() is the Nextcloud admin group.
+		// canExport()/canImport() ask whether the caller administers the team
+		// folder IntraVox lives in, which a delegated folder manager can do
+		// without being a Nextcloud admin — so they get their own label rather
+		// than being folded into "admin", which would overstate what is
+		// required and hide the widening from this diff.
 		const bodyGuards = new Set()
+		const folderManagerGuards = new Set()
 		const methodRe = /(?:public|private|protected) function (\w+)\s*\([^)]*\)[^{]*\{/g
 		const starts = []
 		let mm
@@ -79,10 +87,15 @@ function postures() {
 			const end = s + 1 < starts.length ? starts[s + 1].at : source.length
 			const body = source.slice(starts[s].at, end)
 			if (/!\$this->isAdmin\(\)|isAdmin\(\)\s*\)\s*\{/.test(body)) bodyGuards.add(starts[s].name)
+			if (/!\$this->permissionService->can(?:Export|Import)\(\)/.test(body)) folderManagerGuards.add(starts[s].name)
 		}
 		for (const name of bodyGuards) {
 			const entry = map.get(`${key}#${name}`)
 			if (entry) entry.adminGuard = true
+		}
+		for (const name of folderManagerGuards) {
+			const entry = map.get(`${key}#${name}`)
+			if (entry) entry.folderManagerGuard = true
 		}
 	}
 
@@ -98,9 +111,10 @@ function postures() {
  */
 function requirementKey(entry) {
 	if (!entry) return 'unknown'
-	const { markers, adminGuard } = entry
+	const { markers, adminGuard, folderManagerGuard } = entry
 	if (markers.includes('PublicPage')) return adminGuard ? 'anonymousAdminCheck' : 'anonymous'
 	if (adminGuard) return 'adminBody'
+	if (folderManagerGuard) return 'folderManagerBody'
 	if (markers.includes('NoAdminRequired')) return 'user'
 	return 'admin'
 }
@@ -112,6 +126,7 @@ const REQUIREMENTS = {
 		anonymousAdminCheck: 'anonymous + admin check (!)',
 		anonymous: 'anonymous',
 		adminBody: 'admin (checked in body)',
+		folderManagerBody: 'team folder admin (checked in body)',
 		user: 'any logged-in user',
 		admin: 'admin',
 	},
@@ -120,6 +135,7 @@ const REQUIREMENTS = {
 		anonymousAdminCheck: 'anoniem + admin-controle (!)',
 		anonymous: 'anoniem',
 		adminBody: 'admin (gecontroleerd in de body)',
+		folderManagerBody: 'teamfolder-beheerder (gecontroleerd in de body)',
 		user: 'elke ingelogde gebruiker',
 		admin: 'admin',
 	},

@@ -10,9 +10,10 @@ in 14 controllers.
 175 routes.
 
 - **admin**: 12
-- **admin (gecontroleerd in de body)**: 24
+- **admin (gecontroleerd in de body)**: 22
 - **anoniem**: 17
-- **elke ingelogde gebruiker**: 122
+- **teamfolder-beheerder (gecontroleerd in de body)**: 6
+- **elke ingelogde gebruiker**: 118
 
 | Verb | URL | Handler | Vereist | CSRF |
 |---|---|---|---|---|
@@ -90,12 +91,12 @@ in 14 controllers.
 | POST | `/api/settings/publication` | `settingsApi#setPublicationSettings` | admin (gecontroleerd in de body) | vereist |
 | GET | `/api/settings/public-share-people` | `settingsApi#getPublicSharePeopleSetting` | elke ingelogde gebruiker | vrijgesteld |
 | POST | `/api/settings/public-share-people` | `settingsApi#setPublicSharePeopleSetting` | admin (gecontroleerd in de body) | vereist |
-| GET | `/api/export/languages` | `export#getExportableLanguages` | elke ingelogde gebruiker | vrijgesteld |
-| GET | `/api/export/language/{language}` | `export#exportLanguage` | elke ingelogde gebruiker | vrijgesteld |
-| GET | `/api/export/language/{language}/zip` | `export#exportLanguageZip` | elke ingelogde gebruiker | vrijgesteld |
-| GET | `/api/export/page/{uniqueId}` | `export#exportPage` | elke ingelogde gebruiker | vrijgesteld |
-| POST | `/api/import/zip` | `importApi#import_zip` | admin (gecontroleerd in de body) | vereist |
-| POST | `/api/import/confluence/html` | `importApi#import_confluence_html` | admin (gecontroleerd in de body) | vereist |
+| GET | `/api/export/languages` | `export#getExportableLanguages` | teamfolder-beheerder (gecontroleerd in de body) | vereist |
+| GET | `/api/export/language/{language}` | `export#exportLanguage` | teamfolder-beheerder (gecontroleerd in de body) | vereist |
+| GET | `/api/export/language/{language}/zip` | `export#exportLanguageZip` | teamfolder-beheerder (gecontroleerd in de body) | vereist |
+| GET | `/api/export/page/{uniqueId}` | `export#exportPage` | teamfolder-beheerder (gecontroleerd in de body) | vereist |
+| POST | `/api/import/zip` | `importApi#import_zip` | teamfolder-beheerder (gecontroleerd in de body) | vereist |
+| POST | `/api/import/confluence/html` | `importApi#import_confluence_html` | teamfolder-beheerder (gecontroleerd in de body) | vereist |
 | GET | `/api/pages/{pageId}/comments` | `comment#getComments` | elke ingelogde gebruiker | vrijgesteld |
 | POST | `/api/pages/{pageId}/comments` | `comment#createComment` | elke ingelogde gebruiker | vereist |
 | PUT | `/api/comments/{commentId}` | `comment#updateComment` | elke ingelogde gebruiker | vereist |
