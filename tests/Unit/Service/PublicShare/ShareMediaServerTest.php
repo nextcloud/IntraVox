@@ -113,4 +113,44 @@ class ShareMediaServerTest extends TestCase {
         $node->method('getName')->willReturn($name);
         return $node;
     }
+
+    private function fileReporting(string $mime, string $name): \OCP\Files\File {
+        $file = $this->createMock(\OCP\Files\File::class);
+        $file->method('getMimeType')->willReturn($mime);
+        $file->method('getName')->willReturn($name);
+        $file->method('fopen')->willReturn(fopen('php://memory', 'rb'));
+        return $file;
+    }
+
+    private function disposition(?\OCP\AppFramework\Http\StreamResponse $r): string {
+        return $r->getHeaders()['Content-Disposition'] ?? '';
+    }
+
+    /**
+     * IV-08: with the _resources allowlist relaxed (enforceAllowlist=false), a
+     * text/html or raw SVG file must be served as an attachment with nosniff, so
+     * it cannot execute under the Nextcloud origin.
+     */
+    public function testRelaxedAllowlistServesHtmlAndSvgAsAttachment(): void {
+        foreach (['text/html', 'image/svg+xml'] as $mime) {
+            $response = $this->server->stream($this->fileReporting($mime, 'x'), null, false);
+            $this->assertNotNull($response);
+            $this->assertStringStartsWith('attachment;', $this->disposition($response), "$mime must be a download");
+            $this->assertSame('nosniff', $response->getHeaders()['X-Content-Type-Options'] ?? null);
+        }
+    }
+
+    public function testRelaxedAllowlistServesFontsAndCssInline(): void {
+        foreach (['font/woff2', 'text/css', 'application/pdf'] as $mime) {
+            $response = $this->server->stream($this->fileReporting($mime, 'x'), null, false);
+            $this->assertNotNull($response);
+            $this->assertStringStartsWith('inline;', $this->disposition($response), "$mime may render inline");
+        }
+    }
+
+    public function testImagesAreServedInline(): void {
+        $response = $this->server->stream($this->fileReporting('image/png', 'x.png'), null, true);
+        $this->assertNotNull($response);
+        $this->assertStringStartsWith('inline;', $this->disposition($response));
+    }
 }
