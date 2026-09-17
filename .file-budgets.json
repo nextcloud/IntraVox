@@ -33,7 +33,7 @@
     "lib/Controller/PeopleController.php": 429,
     "lib/Controller/PhotoStoryController.php": 675,
     "lib/Controller/PreviewController.php": 308,
-    "lib/Controller/PublicShareController.php": 1201,
+    "lib/Controller/PublicShareController.php": 1227,
     "lib/Controller/RendersAppShell.php": 70,
     "lib/Controller/RequiresPagePermission.php": 95,
     "lib/Controller/SettingsApiController.php": 354,
