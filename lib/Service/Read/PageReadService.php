@@ -128,7 +128,10 @@ final class PageReadService {
         }
 
         if ($result === null) {
-            throw new \Exception('Page not found');
+            // Typed so controllers can map it to 404 instead of a broad-catch
+            // 500. PageNotFoundException extends \RuntimeException, so existing
+            // catch (\Exception) arms still catch it — this is additive (IV-11).
+            throw new \OCA\IntraVox\Exception\PageNotFoundException('Page not found');
         }
 
         $content = $result['file']->getContent();
