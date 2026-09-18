@@ -143,4 +143,51 @@ class PublicShareFeedSelectorTest extends TestCase {
 
         $this->assertSame(Http::STATUS_OK, $response->getStatus());
     }
+
+    /**
+     * IV-03b: an EMPTY selector the share publishes must be refused, not skipped.
+     * Skipping it would drop the filter and let the connector run its broad
+     * default query (e.g. Jira: all projects) with the app credentials.
+     */
+    public function testEmptyPublishedSelectorIsRefused(): void {
+        $this->publish([
+            'connectionId' => ['conn-jira'],
+            'jiraProject' => ['PUB'],
+        ]);
+        $this->feedReader->expects($this->never())->method('fetchFeed');
+
+        $request = $this->requestWith([
+            'sourceType' => 'jira',
+            'connectionId' => 'conn-jira',
+            'jiraProject' => '', // empty → previously skipped → broad default query
+        ]);
+
+        $response = $this->controller($request)->getFeedByShare('sometoken12345');
+
+        $this->assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
+    }
+
+    /**
+     * A selector the share does NOT publish stays unconstrained: an empty value
+     * is fine and the feed is fetched (no over-restriction).
+     */
+    public function testEmptyUnpublishedSelectorIsAllowed(): void {
+        $this->publish([
+            'connectionId' => ['conn-jira'],
+            // jiraProject intentionally NOT published → unconstrained
+        ]);
+        $this->feedReader->expects($this->once())
+            ->method('fetchFeed')
+            ->willReturn(['items' => []]);
+
+        $request = $this->requestWith([
+            'sourceType' => 'jira',
+            'connectionId' => 'conn-jira',
+            'jiraProject' => '',
+        ]);
+
+        $response = $this->controller($request)->getFeedByShare('sometoken12345');
+
+        $this->assertSame(Http::STATUS_OK, $response->getStatus());
+    }
 }

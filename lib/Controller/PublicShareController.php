@@ -827,11 +827,21 @@ class PublicShareController extends Controller {
             // Each non-empty selector must match a value this share actually
             // publishes on a feed widget.
             foreach (['contentType', 'listId', 'jiraProject', 'courseId', 'moodleForumId'] as $selector) {
-                if (($config[$selector] ?? '') === '') {
+                $allowedSelector = $this->publicShareService->allowedWidgetValues($share, 'feed', $selector);
+                $requested = $config[$selector] ?? '';
+
+                // IV-03b: an EMPTY selector cannot simply be skipped. When the share
+                // publishes a value for this selector, an empty request would drop
+                // that filter and fall through to the connector's broad default query
+                // (e.g. Jira: all projects; OpenProject: all work packages) under the
+                // app credentials — data the share never published. So when the share
+                // constrains this selector, the request must name one of its values;
+                // an empty (or non-matching) value is refused. A selector the share
+                // does not publish at all stays unconstrained (empty is fine).
+                if (empty($allowedSelector)) {
                     continue;
                 }
-                $allowedSelector = $this->publicShareService->allowedWidgetValues($share, 'feed', $selector);
-                if (!in_array($config[$selector], $allowedSelector, true)) {
+                if (!in_array($requested, $allowedSelector, true)) {
                     $this->logger->warning('IntraVox: share requested a feed selector it does not publish', [
                         'token' => substr($token, 0, 8) . '...',
                         'selector' => $selector,
