@@ -104,7 +104,7 @@ class AnalyticsControllerTest extends TestCase {
             'dailyStats' => []
         ];
 
-        $this->pageExistsFn = fn(string $id): bool => true;
+        $this->getPageFn = fn(string $id) => ['uniqueId' => $id, 'permissions' => ['canRead' => true]];
 
         $this->analyticsService->method('getPageStats')
             ->with($pageId, 30)
@@ -117,7 +117,7 @@ class AnalyticsControllerTest extends TestCase {
     }
 
     public function testGetPageStatsReturnsNotFoundForInvalidPage(): void {
-        $this->pageExistsFn = fn(string $id): bool => false;
+        $this->getPageFn = function (string $id) { throw new \OCA\IntraVox\Exception\PageNotFoundException('nope'); };
 
         $response = $this->controller->getPageStats('invalid-page');
 
@@ -125,10 +125,32 @@ class AnalyticsControllerTest extends TestCase {
         $this->assertArrayHasKey('error', $response->getData());
     }
 
+    /**
+     * IV-10: a page that exists but the user cannot read must be 403, not the
+     * stats — otherwise view counts of ACL-restricted pages leak.
+     */
+    public function testGetPageStatsDeniedForUnreadablePage(): void {
+        $this->getPageFn = fn(string $id) => ['uniqueId' => $id, 'permissions' => ['canRead' => false]];
+        $this->analyticsService->expects($this->never())->method('getPageStats');
+
+        $response = $this->controller->getPageStats('page-secret');
+
+        $this->assertEquals(Http::STATUS_FORBIDDEN, $response->getStatus());
+    }
+
+    public function testTrackViewDeniedForUnreadablePage(): void {
+        $this->getPageFn = fn(string $id) => ['uniqueId' => $id, 'permissions' => ['canRead' => false]];
+        $this->analyticsService->expects($this->never())->method('trackPageView');
+
+        $response = $this->controller->trackView('page-secret');
+
+        $this->assertEquals(Http::STATUS_FORBIDDEN, $response->getStatus());
+    }
+
     public function testGetPageStatsLimitsDaysParameter(): void {
         $pageId = 'page-123';
 
-        $this->pageExistsFn = fn(string $id): bool => true;
+        $this->getPageFn = fn(string $id) => ['uniqueId' => $id, 'permissions' => ['canRead' => true]];
 
         // Test max limit (365)
         $this->analyticsService->expects($this->once())
@@ -140,7 +162,7 @@ class AnalyticsControllerTest extends TestCase {
     }
 
     public function testGetPageStatsReturnsErrorOnException(): void {
-        $this->pageExistsFn = fn(string $id): bool => true;
+        $this->getPageFn = fn(string $id) => ['uniqueId' => $id, 'permissions' => ['canRead' => true]];
         $this->analyticsService->method('getPageStats')
             ->willThrowException(new \Exception('Database error'));
 
@@ -341,7 +363,7 @@ class AnalyticsControllerTest extends TestCase {
     public function testTrackViewSuccessful(): void {
         $pageId = 'page-123';
 
-        $this->pageExistsFn = fn(string $id): bool => true;
+        $this->getPageFn = fn(string $id) => ['uniqueId' => $id, 'permissions' => ['canRead' => true]];
 
         $this->analyticsService->method('trackPageView')
             ->with($pageId)
@@ -354,7 +376,7 @@ class AnalyticsControllerTest extends TestCase {
     }
 
     public function testTrackViewReturnsNotFoundForInvalidPage(): void {
-        $this->pageExistsFn = fn(string $id): bool => false;
+        $this->getPageFn = function (string $id) { throw new \OCA\IntraVox\Exception\PageNotFoundException('nope'); };
 
         $response = $this->controller->trackView('invalid-page');
 
@@ -362,7 +384,7 @@ class AnalyticsControllerTest extends TestCase {
     }
 
     public function testTrackViewReturnsErrorOnException(): void {
-        $this->pageExistsFn = fn(string $id): bool => true;
+        $this->getPageFn = fn(string $id) => ['uniqueId' => $id, 'permissions' => ['canRead' => true]];
         $this->analyticsService->method('trackPageView')
             ->willThrowException(new \Exception('Tracking failed'));
 
@@ -372,7 +394,7 @@ class AnalyticsControllerTest extends TestCase {
     }
 
     public function testTrackViewReturnsFalseWhenDisabled(): void {
-        $this->pageExistsFn = fn(string $id): bool => true;
+        $this->getPageFn = fn(string $id) => ['uniqueId' => $id, 'permissions' => ['canRead' => true]];
         $this->analyticsService->method('trackPageView')->willReturn(false);
 
         $response = $this->controller->trackView('page-123');

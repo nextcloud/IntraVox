@@ -27,6 +27,7 @@ use Psr\Log\LoggerInterface;
 class AnalyticsController extends Controller {
     use ChecksAdminAccess;
     use ApiErrorTrait;
+    use RequiresPagePermission;
 
     private const APP_ID = 'intravox';
 
@@ -50,6 +51,26 @@ class AnalyticsController extends Controller {
         return $this->logger;
     }
 
+    protected function getPageReadService(): \OCA\IntraVox\Service\Read\PageReadService {
+        return $this->pageRead;
+    }
+
+    /**
+     * Resolve a page and require the current user may READ it. Returns a
+     * DataResponse (404 when absent, 403 when denied) that the caller must
+     * return, or null when access is granted. Existence alone is not enough:
+     * checking only pageExistsByUniqueId let a user read/inflate the view
+     * counts of ACL-restricted pages they cannot see (IV-10).
+     */
+    private function denyUnlessReadablePage(string $pageId): ?DataResponse {
+        try {
+            $page = $this->pageRead->getPage($pageId);
+        } catch (\Exception $e) {
+            return $this->notFoundResponse('Page not found');
+        }
+        return $this->denyUnlessReadable($page);
+    }
+
 
     /**
      * Get statistics for a specific page
@@ -63,9 +84,9 @@ class AnalyticsController extends Controller {
     #[NoCSRFRequired]
     public function getPageStats(string $pageId, int $days = 30): DataResponse {
         try {
-            // Verify page exists and user has access
-            if (!$this->pageRead->pageExistsByUniqueId($pageId)) {
-                return $this->notFoundResponse('Page not found');
+            // Require READ permission, not mere existence (IV-10).
+            if (($denied = $this->denyUnlessReadablePage($pageId)) !== null) {
+                return $denied;
             }
 
             // Limit days to reasonable range
@@ -235,9 +256,10 @@ class AnalyticsController extends Controller {
     #[NoAdminRequired]
     public function trackView(string $pageId): DataResponse {
         try {
-            // Verify page exists
-            if (!$this->pageRead->pageExistsByUniqueId($pageId)) {
-                return $this->notFoundResponse('Page not found');
+            // Require READ permission, not mere existence (IV-10): a user who
+            // cannot see the page must not be able to inflate its view count.
+            if (($denied = $this->denyUnlessReadablePage($pageId)) !== null) {
+                return $denied;
             }
 
             $tracked = $this->analyticsService->trackPageView($pageId);
