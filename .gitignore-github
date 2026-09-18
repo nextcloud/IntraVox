@@ -5,6 +5,11 @@ deploy.sh
 create-release.sh
 push-to-github.sh
 
+# Forgejo Actions workflows: GitHub runs .github/workflows/ instead, and these
+# reference internal infra (Windmill token names, the voxcloud.nl deploy
+# endpoints, dev-server hostnames) that has no place on the public mirror.
+.forgejo/
+
 # Interne release- en werkdocumentatie: bevat deploy-targets, klant-hostnames
 # en werkafspraken die niet in de publieke repo horen.
 RELEASE_CHECKLIST.md

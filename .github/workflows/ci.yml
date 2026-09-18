@@ -7,7 +7,7 @@
 #
 # Deliberately minimal, because a gate that is slow or flaky gets ignored:
 #   - unit tests only. The integration suite needs a real Nextcloud + groupfolders
-#     and runs via scripts/run-integration-tests.sh inside the nc-dev container.
+#     and runs via scripts/run-integration-tests.sh inside a dev container.
 #   - `php -l` over lib/ and tests/, which catches a parse error in a file no test
 #     happens to load (most of lib/ has no direct coverage yet).
 #   - the prebuild guards that need no node_modules and no build.
@@ -24,10 +24,9 @@
 name: CI
 
 on:
-  # Deliberately narrower than the Forgejo copy, which runs on every branch.
-  # This mirror only receives main and release tags — day-to-day branches live
-  # on forgejo.voxcloud.nl and are gated there. Widening this to every push
-  # would spend Actions minutes re-running what Forgejo already ran, on
+  # This mirror only receives main and release tags — day-to-day branches are
+  # developed and gated elsewhere. Widening this to every push would spend
+  # Actions minutes re-running what has already been gated upstream, on
   # branches that are never pushed here in the first place.
   push:
     branches: [main]

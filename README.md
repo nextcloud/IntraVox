@@ -392,7 +392,7 @@ For Photo Story widgets pointing at folders with **hundreds or thousands of phot
       ```
       Schedule incremental scans via NC's built-in cron. The scanner picks up new uploads automatically.
 
-   2. **MetaVox custom fields** (optional). MetaVox adds people, subjects, custom location-string, custom country labels — things NC core doesn't track. Photo Story uses these *in addition to* NC core data. If you want these enrichments, use the Python toolset in `Hetzner/scripts/metavox-exif/` in this repository. It writes to MetaVox via the OCS API and is designed to run from a server-side cron job.
+   2. **MetaVox custom fields** (optional). MetaVox adds people, subjects, custom location-string, custom country labels — things NC core doesn't track. Photo Story uses these *in addition to* NC core data. If you want these enrichments, a server-side Python toolset can write them to MetaVox via the OCS API, designed to run from a cron job.
 
    You don't need MetaVox for the core experience. NC core alone gives you date, GPS, camera, and image dimensions for every scanned photo.
 

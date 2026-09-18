@@ -1248,7 +1248,7 @@ Major release. Introduces two new widgets — **Photo Story** for photo gallerie
 ### Performance
 
 - **Paged enumeration** via `oc_filecache` for all primary widget modes — no more full-tree `getDirectoryListing()` on large libraries. Hard caps (5000 cross-folder, 20k filtered, 200k count) prevent OOM on massive folders.
-- **Federated detection** is one preloaded SQL query per request, O(1) lookups per file. The previous `IMountManager::findIn('/')` per-file approach (cause of the 2026-05-27 saturation incident on nc-dev) is gone.
+- **Federated detection** is one preloaded SQL query per request, O(1) lookups per file. The previous `IMountManager::findIn('/')` per-file approach, which did not scale on large libraries, is gone.
 - **`clusters`, `highlights` and `on-this-day` endpoints** now go through `listPhotosPaged` with sane caps instead of the unpaged legacy path that risked the same blast radius as the federated-detect outage.
 - **`filterFileIdsByScope` collapsed** from `chunks × scopes` SQL roundtrips to one ORed `WHERE` per chunk — at filtered-MetaVox-page scale this drops ~400 queries per page to ~40.
 - **`extractGroupfolderId`** memoised per node within a request.
