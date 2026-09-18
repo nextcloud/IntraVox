@@ -5,6 +5,7 @@ namespace OCA\IntraVox\Tests\Unit\Controller;
 
 use OCA\IntraVox\Controller\FeedReaderController;
 use OCA\IntraVox\Service\FeedReaderService;
+use OCA\IntraVox\Service\PermissionService;
 use OCP\AppFramework\Http;
 use OCP\IGroupManager;
 use OCP\IRequest;
@@ -26,19 +27,22 @@ class FeedReaderAdminGateTest extends TestCase {
     private IGroupManager $groupManager;
     private IRequest $request;
     private IUserSession $userSession;
+    private PermissionService $permissionService;
 
     /**
      * Build the controller. The IUserSession is passed so this test survives the
      * Phase-2 migration that adds it to the constructor; the current constructor
      * signature is matched via a variadic tail so both shapes work.
      */
-    private function makeController(?string $userId, bool $isAdmin, ?FeedReaderService $service = null): FeedReaderController {
+    private function makeController(?string $userId, bool $isAdmin, ?FeedReaderService $service = null, bool $hasAccess = true): FeedReaderController {
         $service = $service ?? $this->createMock(FeedReaderService::class);
         $this->groupManager = $this->createMock(IGroupManager::class);
         $this->groupManager->method('isAdmin')->willReturn($isAdmin);
         $this->request = $this->createMock(IRequest::class);
         $this->request->method('getParam')->willReturn([]);
         $this->userSession = $this->createMock(IUserSession::class);
+        $this->permissionService = $this->createMock(PermissionService::class);
+        $this->permissionService->method('hasAccess')->willReturn($hasAccess);
         if ($userId !== null) {
             $user = $this->createMock(IUser::class);
             $user->method('getUID')->willReturn($userId);
@@ -68,6 +72,7 @@ class FeedReaderAdminGateTest extends TestCase {
                 $name === IGroupManager::class => $this->groupManager,
                 $name === LoggerInterface::class => $this->createMock(LoggerInterface::class),
                 $name === IUserSession::class => $this->userSession,
+                $name === PermissionService::class => $this->permissionService,
                 $p->getName() === 'userId' => $userId,
                 default => $p->isOptional() ? $p->getDefaultValue() : null,
             };
@@ -97,5 +102,33 @@ class FeedReaderAdminGateTest extends TestCase {
 
         $this->assertSame(Http::STATUS_OK, $res->getStatus());
         $this->assertSame(['status' => 'ok'], $res->getData());
+    }
+
+    // IV-14: the connector helpers use stored credentials, so they need an
+    // IntraVox-access gate (not just authentication).
+
+    public function testConnectorHelperAnonymousGets401(): void {
+        $res = $this->makeController(userId: null, isAdmin: false)->getJiraProjects('conn');
+        $this->assertSame(Http::STATUS_UNAUTHORIZED, $res->getStatus());
+    }
+
+    public function testConnectorHelperWithoutIntraVoxAccessGets403(): void {
+        $service = $this->createMock(FeedReaderService::class);
+        $service->expects($this->never())->method('getJiraProjects');
+
+        $res = $this->makeController(userId: 'outsider', isAdmin: false, service: $service, hasAccess: false)
+            ->getJiraProjects('conn');
+
+        $this->assertSame(Http::STATUS_FORBIDDEN, $res->getStatus());
+    }
+
+    public function testConnectorHelperWithIntraVoxAccessReachesTheService(): void {
+        $service = $this->createMock(FeedReaderService::class);
+        $service->expects($this->once())->method('getJiraProjects')->willReturn(['projects' => []]);
+
+        $res = $this->makeController(userId: 'member', isAdmin: false, service: $service, hasAccess: true)
+            ->getJiraProjects('conn');
+
+        $this->assertSame(Http::STATUS_OK, $res->getStatus());
     }
 }

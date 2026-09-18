@@ -29,9 +29,28 @@ class FeedReaderController extends Controller {
         private IGroupManager $groupManager,
         private LoggerInterface $logger,
         private IUserSession $userSession,
+        private \OCA\IntraVox\Service\PermissionService $permissionService,
         private ?string $userId = null,
     ) {
         parent::__construct($appName, $request);
+    }
+
+    /**
+     * The connector helpers below use a stored connection's credentials to query
+     * the external service. IV-12 gated the feed-TOKEN endpoints on IntraVox
+     * access but these were left open, so any Nextcloud account — including one
+     * with no IntraVox access at all — could drive an admin-configured Jira /
+     * SharePoint / Moodle connection. Require IntraVox access here too: 401 for
+     * an anonymous caller, 403 for a logged-in user without access.
+     */
+    private function denyUnlessIntraVoxAccess(): ?DataResponse {
+        if ($this->userId === null) {
+            return new DataResponse(['error' => 'Authentication required'], Http::STATUS_UNAUTHORIZED);
+        }
+        if (!$this->permissionService->hasAccess($this->userId)) {
+            return new DataResponse(['error' => 'Access denied'], Http::STATUS_FORBIDDEN);
+        }
+        return null;
     }
 
     /**
@@ -157,11 +176,9 @@ class FeedReaderController extends Controller {
     #[NoAdminRequired]
     #[NoCSRFRequired]
     public function getCourses(string $connectionId): DataResponse {
-        if ($this->userId === null) {
-            return new DataResponse(
-                ['error' => 'Authentication required'],
-                Http::STATUS_UNAUTHORIZED
-            );
+        $denied = $this->denyUnlessIntraVoxAccess();
+        if ($denied !== null) {
+            return $denied;
         }
 
         try {
@@ -185,11 +202,9 @@ class FeedReaderController extends Controller {
     #[NoAdminRequired]
     #[NoCSRFRequired]
     public function getSharePointLists(string $connectionId): DataResponse {
-        if ($this->userId === null) {
-            return new DataResponse(
-                ['error' => 'Authentication required'],
-                Http::STATUS_UNAUTHORIZED
-            );
+        $denied = $this->denyUnlessIntraVoxAccess();
+        if ($denied !== null) {
+            return $denied;
         }
 
         try {
@@ -214,11 +229,9 @@ class FeedReaderController extends Controller {
     #[NoAdminRequired]
     #[NoCSRFRequired]
     public function getJiraProjects(string $connectionId): DataResponse {
-        if ($this->userId === null) {
-            return new DataResponse(
-                ['error' => 'Authentication required'],
-                Http::STATUS_UNAUTHORIZED
-            );
+        $denied = $this->denyUnlessIntraVoxAccess();
+        if ($denied !== null) {
+            return $denied;
         }
 
         try {
@@ -242,11 +255,9 @@ class FeedReaderController extends Controller {
     #[NoAdminRequired]
     #[NoCSRFRequired]
     public function getMoodleForums(string $connectionId): DataResponse {
-        if ($this->userId === null) {
-            return new DataResponse(
-                ['error' => 'Authentication required'],
-                Http::STATUS_UNAUTHORIZED
-            );
+        $denied = $this->denyUnlessIntraVoxAccess();
+        if ($denied !== null) {
+            return $denied;
         }
 
         $courseId = $this->request->getParam('courseId', '');
