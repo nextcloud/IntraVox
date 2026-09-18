@@ -357,6 +357,20 @@ class DataResponse extends Response {
 
 class JSONResponse extends DataResponse {}
 
+class DataDisplayResponse extends Response {
+    private string $data;
+
+    public function __construct(string $data = '', int $status = 200, array $headers = []) {
+        $this->data = $data;
+        $this->status = $status;
+        $this->headers = $headers;
+    }
+
+    public function render(): string {
+        return $this->data;
+    }
+}
+
 class StreamResponse extends Response {
     public function __construct(string $filePath) {
         parent::__construct();

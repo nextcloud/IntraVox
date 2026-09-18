@@ -23,7 +23,7 @@
     "lib/Controller/ImportApiController.php": 287,
     "lib/Controller/LanguageController.php": 314,
     "lib/Controller/LicenseController.php": 234,
-    "lib/Controller/LmsOAuthController.php": 403,
+    "lib/Controller/LmsOAuthController.php": 417,
     "lib/Controller/MediaApiController.php": 374,
     "lib/Controller/NavigationController.php": 182,
     "lib/Controller/OrphanedDataController.php": 194,
