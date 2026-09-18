@@ -362,14 +362,25 @@ class PublicShareController extends Controller {
 
             $language = $scope->language;
             $relPath = $scope->scopePath;
-
-            // Build full tree via system context (no user session needed)
-            $tree = $this->systemFileService->getPageTree($language);
-
-            // Extract subtree matching the share scope
-            // scopePath is the full relative path like "nl/afdeling/hr"
             $scopePath = $relPath;
-            $filteredTree = $this->treeShaper->extractSubtreeByScope($tree, $scopePath);
+
+            // Build the tree from the SHARE OWNER'S node, not the system view of
+            // the whole groupfolder (IV-02). getDirectoryListing() on the owner's
+            // node already omits any subtree a GroupFolders ACL hides from the
+            // sharer, so a folder share can no longer republish pages the sharer
+            // cannot see. The node IS the shared subtree, so no path-slice is
+            // needed; a scope-node that cannot be read falls through to an empty
+            // tree below.
+            $shareNode = $share->getNode();
+            if ($shareNode instanceof \OCP\Files\Folder) {
+                $filteredTree = $this->systemFileService->getPageTreeForShareNode($shareNode, $language);
+            } else {
+                // A single-file share (a page's own folder is shared as a node):
+                // fall back to the system tree sliced by scope. This path carries
+                // the pre-IV-02 behaviour for the rare non-folder share.
+                $tree = $this->systemFileService->getPageTree($language);
+                $filteredTree = $this->treeShaper->extractSubtreeByScope($tree, $scopePath);
+            }
 
             // An empty result for a non-root scope means the shared node was
             // not found in the tree — a moved or deleted page. Worth knowing
@@ -456,7 +467,9 @@ class PublicShareController extends Controller {
                 $token,
                 $limit,
                 $sortBy,
-                $sortOrder
+                $sortOrder,
+                // IV-02b: traverse the owner's ACL-filtered view, not the system view.
+                $share->getShareOwner()
             );
 
             // READER-GATE: SystemFileService drops manual drafts, but it has no

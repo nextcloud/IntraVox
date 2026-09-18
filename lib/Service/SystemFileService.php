@@ -412,6 +412,74 @@ class SystemFileService {
     }
 
     /**
+     * Build the page tree for a public share by walking the SHARE OWNER'S node,
+     * not the admin/system view of the whole groupfolder (IV-02).
+     *
+     * getPageTree() resolves the groupfolder through SetupService in a system or
+     * IntraVox-Admin context, so its tree contains pages the sharer is ACL-denied
+     * on; slicing that by path prefix then republishes them through a folder
+     * share. $shareNode is the shared folder as the OWNER sees it, so a
+     * GroupFolders ACL that hides a subtree from the owner also hides it here —
+     * getDirectoryListing() never returns a folder the owner may not read.
+     *
+     * Paths are made relative to the groupfolder root (…/IntraVox) so the nodes
+     * line up with the share scope path and the existing tree consumers, exactly
+     * as getPageTree() produces them.
+     *
+     * @param \OCP\Files\Folder $shareNode the share's node (owner's view)
+     * @return array<int, array<string, mixed>>
+     */
+    /**
+     * The IntraVox folder as the share OWNER sees it (ACL applied), for news
+     * traversal (IV-02b). Returns null when the owner is unknown or the folder
+     * cannot be resolved in their view, so the caller falls back to the system
+     * view unchanged. Fails closed on any error.
+     */
+    private function newsRootForShareOwner(?string $ownerId): ?Folder {
+        if ($ownerId === null || $ownerId === '') {
+            return null;
+        }
+        try {
+            $userFolder = $this->rootFolder->getUserFolder($ownerId);
+            $node = $userFolder->get('IntraVox');
+            return $node instanceof Folder ? $node : null;
+        } catch (\Throwable $e) {
+            $this->logger->debug('[SystemFileService] newsRootForShareOwner failed, using system view', [
+                'error' => $e->getMessage(),
+            ]);
+            return null;
+        }
+    }
+
+    public function getPageTreeForShareNode(\OCP\Files\Folder $shareNode, string $language): array {
+        if (!$this->languageService->isLanguageEnabled($language)) {
+            $language = self::FALLBACK_LANGUAGE;
+        }
+
+        try {
+            // basePath is the groupfolder root: the share node's own path with
+            // everything from the language segment onward removed, so relative
+            // paths read "<lang>/…" just like the system tree.
+            $nodePath = rtrim($shareNode->getPath(), '/');
+            $marker = '/' . $language;
+            $pos = strpos($nodePath, $marker);
+            // Fall back to the node's own path when the language segment is not in
+            // it (root-of-language share); the recursion still lists correctly.
+            $basePath = $pos !== false ? substr($nodePath, 0, $pos) : $nodePath;
+
+            $tree = [];
+            $this->buildPageTreeRecursive($shareNode, $tree, $language, $basePath);
+            return $tree;
+        } catch (\Exception $e) {
+            $this->logger->error('[SystemFileService] Error building share page tree', [
+                'language' => $language,
+                'error' => $e->getMessage(),
+            ]);
+            return [];
+        }
+    }
+
+    /**
      * Recursively build the page tree from folder structure.
      */
     private function buildPageTreeRecursive($folder, array &$tree, string $language, string $basePath): void {
@@ -514,14 +582,19 @@ class SystemFileService {
         string $shareToken,
         int $limit = 5,
         string $sortBy = 'modified',
-        string $sortOrder = 'desc'
+        string $sortOrder = 'desc',
+        ?string $ownerId = null
     ): array {
         if (!$this->languageService->isLanguageEnabled($language)) {
             $language = self::FALLBACK_LANGUAGE;
         }
 
         try {
-            $groupFolder = $this->setupService->getSharedFolder();
+            // IV-02b: traverse the SHARE OWNER's ACL-filtered view when we know who
+            // owns the share, so getDirectoryListing() below never returns pages an
+            // ACL rule hides from the sharer. Without an owner (legacy callers) this
+            // falls back to the system view — unchanged behaviour for those paths.
+            $groupFolder = $this->newsRootForShareOwner($ownerId) ?? $this->setupService->getSharedFolder();
             if ($groupFolder === null) {
                 $this->logger->error('[SystemFileService] Could not access IntraVox groupfolder for news');
                 return ['items' => [], 'total' => 0];
