@@ -114,7 +114,21 @@ class PageTemplateService {
     /**
      * Full content of one template, or null when absent/invalid.
      */
+    /**
+     * A template id is a plain folder-name slug. Rejecting anything else stops
+     * it from escaping the _templates folder: the raw id reaches Folder::get()
+     * and Folder::delete(), so '.' (URL-encoded %2e) resolved to the _templates
+     * folder itself and a DELETE wiped every template in the language (IV-09).
+     * '' / '.' / '..' / any '/' are refused.
+     */
+    private function isValidTemplateId(string $templateId): bool {
+        return $templateId !== '' && (bool)preg_match('/^[a-zA-Z0-9_-]+$/', $templateId);
+    }
+
     public function getTemplate(Folder $languageFolder, string $templateId): ?array {
+        if (!$this->isValidTemplateId($templateId)) {
+            return null;
+        }
         $templatesFolder = $this->templatesFolder($languageFolder);
         if ($templatesFolder === null) {
             return null;
@@ -155,6 +169,9 @@ class PageTemplateService {
      */
     public function deleteTemplate(Folder $languageFolder, string $templateId): array {
         try {
+            if (!$this->isValidTemplateId($templateId)) {
+                return ['success' => false, 'error' => 'Template not found'];
+            }
             $templatesFolder = $this->templatesFolder($languageFolder);
             if ($templatesFolder === null) {
                 return ['success' => false, 'error' => 'Templates folder not accessible'];
@@ -201,6 +218,9 @@ class PageTemplateService {
      * @return array{0:string, 1:Folder, 2:Folder} [finalId, templateFolder, mediaFolder]
      */
     public function newTemplateFolder(Folder $languageFolder, string $desiredId): array {
+        if (!$this->isValidTemplateId($desiredId)) {
+            throw new \InvalidArgumentException('Invalid template id');
+        }
         if (!$languageFolder->nodeExists('_templates')) {
             $languageFolder->newFolder('_templates');
         }

@@ -154,7 +154,7 @@
     "lib/Service/Structure/PageStructureService.php": 286,
     "lib/Service/SystemFileService.php": 847,
     "lib/Service/TelemetryService.php": 333,
-    "lib/Service/Template/PageTemplateService.php": 222,
+    "lib/Service/Template/PageTemplateService.php": 242,
     "lib/Service/Template/TemplateMetadataExtractor.php": 95,
     "lib/Service/Translation/TranslationGroupService.php": 362,
     "lib/Service/Translation/TranslationQueryService.php": 288,

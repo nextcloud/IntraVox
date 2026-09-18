@@ -113,6 +113,35 @@ class PageTemplateServiceTest extends TestCase {
         );
     }
 
+    /**
+     * IV-09: a traversal id like '.' (or '..', '', or one containing '/') must be
+     * refused before it reaches the filesystem — '.' resolved to the _templates
+     * folder itself and DELETE wiped every template in the language.
+     */
+    public function testDeleteTemplateRefusesTraversalIds(): void {
+        // The _templates folder must NEVER be deleted; fail the test if it is.
+        $templates = $this->makeFolder('_templates', []);
+        $templates->expects($this->never())->method('delete');
+        $lang = $this->makeFolder('en', ['_templates' => $templates]);
+
+        foreach (['.', '..', '', 'a/b', '../other'] as $bad) {
+            $this->assertSame(
+                ['success' => false, 'error' => 'Template not found'],
+                $this->svc()->deleteTemplate($lang, $bad),
+                "traversal id '$bad' must be refused"
+            );
+        }
+    }
+
+    public function testGetTemplateRefusesTraversalIds(): void {
+        $lang = $this->makeFolder('en', [
+            '_templates' => $this->makeFolder('_templates', []),
+        ]);
+        foreach (['.', '..', '', 'a/b'] as $bad) {
+            $this->assertNull($this->svc()->getTemplate($lang, $bad), "traversal id '$bad' must be refused");
+        }
+    }
+
     public function testCanCreateFollowsTemplatesFolderWhenPresent(): void {
         $templates = $this->makeFolder('_templates', []);
         $templates->method('isCreatable')->willReturn(false);
