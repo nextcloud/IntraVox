@@ -16,7 +16,7 @@
     "lib/Controller/DemoDataController.php": 150,
     "lib/Controller/ExportController.php": 128,
     "lib/Controller/FeedController.php": 357,
-    "lib/Controller/FeedReaderController.php": 310,
+    "lib/Controller/FeedReaderController.php": 321,
     "lib/Controller/FileStoryController.php": 356,
     "lib/Controller/FooterController.php": 110,
     "lib/Controller/HasConditionalResponse.php": 72,
