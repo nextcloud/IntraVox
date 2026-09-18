@@ -581,12 +581,11 @@ class PageMediaService {
         // Create stream response
         $response = new \OCP\AppFramework\Http\StreamResponse($file->fopen('rb'));
         $response->addHeader('Content-Type', $mimeType);
-        // IV-08b: uploads through this app sanitise SVG, but a raster-safe inline
-        // disposition must not be handed to an SVG that reached _media another way
-        // (e.g. WebDAV), because SVG renders as an active document and would be a
-        // stored-XSS vector. Serve SVG as a download; everything else on the
-        // media allowlist is raster/video and safe inline. nosniff stops a
-        // mislabelled file from being reinterpreted as something scriptable.
+        // Uploads through this app sanitise SVG, but a file may reach _media another
+        // way (e.g. WebDAV), and SVG renders as an active document. Serve SVG as a
+        // download rather than inline; everything else on the media allowlist is
+        // raster/video and safe inline. nosniff stops a mislabelled file from being
+        // reinterpreted as something scriptable.
         $isSvg = $mimeType === 'image/svg+xml';
         $disposition = $isSvg ? 'attachment' : 'inline';
         $response->addHeader('Content-Disposition', $disposition . '; filename="' . $file->getName() . '"');

@@ -6,21 +6,56 @@ IntraVox is a Nextcloud intranet page builder.
 
 ## [Unreleased]
 
-## [3.0.1] - 2026-09-17 — Export and import ask who you are
+## [3.0.0] - 2026-09-16 — The page engine, taken apart, and hardened
+
+A structural release: the page engine was taken apart, and almost nothing about
+using IntraVox changes. The version is 3.0.0 because the internals moved
+wholesale, not because the app does anything new.
+
+Alongside the refactor, IntraVox went through a full security review, and this
+release includes the resulting hardening across access control, sharing, media
+handling, import and the feed and directory integrations. The details below are
+kept deliberately general.
+
+Two reported behaviours *do* change, both of them things that were wrong:
+Nextcloud admins are no longer forced back into "IntraVox Admins" on every
+update (#113), and feed items without a link no longer behave like broken ones
+(#114). Everything else should look and work exactly as 2.7.1 did.
 
 ### Security
 
-- **Export no longer hands the whole intranet to any logged-in account.**
-  All four export endpoints were annotated `#[NoAdminRequired]` with no
-  permission check in the body, and `ExportService` reads the Team folder
-  through a system context rather than the caller's ACL-filtered view. A
-  penetration test confirmed it live: an account with no IntraVox rights at
-  all downloaded the complete site — every page, every language, drafts and
-  ACL-restricted pages included, with comments. They were also exempt from
-  CSRF, so a link on another site could trigger the download on behalf of
-  whoever clicked it. Export now requires administering the Team folder
-  IntraVox lives in, and is CSRF-protected like every other state-changing
-  route.
+A security review led to a set of hardening changes. None require any action
+when upgrading, and none change how content is stored. In summary:
+
+- **Access control is enforced consistently on every endpoint.** Reading,
+  editing, locking, analytics, template management, page comments and the news
+  feed all check the caller's permissions on the specific page or resource, and
+  respect Team folder Advanced Permissions (ACLs) and a page's publication state
+  (draft, scheduled or expired). Export and import now require administering the
+  Team folder IntraVox lives in, rather than being available to any account.
+
+- **Public shares only expose what the sharer can see.** Every share endpoint —
+  the page tree, page and media content, news and navigation — is served through
+  the share owner's own ACL-filtered view, so a folder share never republishes
+  pages or files an ACL hides from the person who shared it. Share widgets that
+  read from a configured connection are limited to the data the share actually
+  publishes.
+
+- **Uploaded and imported media are handled safely.** Files served to the
+  browser use the correct content type and disposition, SVGs are sanitised, and
+  ZIP imports apply the same file-type restrictions and sanitisation as a normal
+  upload. Template, media and share identifiers are validated to keep file
+  access within IntraVox's own folders.
+
+- **Integrations require IntraVox access and do not leak internals.** The feed
+  and people/directory endpoints require IntraVox access, the OAuth callback is
+  bound to the session that started it, the outbound image proxy stays restricted
+  to signed, external addresses, and error responses no longer expose internal
+  details. Server-side identifiers for new pages are always assigned by the
+  server.
+
+These were found during our own review before release; there is no indication of
+any of them having been exploited.
 
 ### Changed
 
@@ -30,25 +65,14 @@ IntraVox is a Nextcloud intranet page builder.
   matters is who administers *that folder* — which Nextcloud already answers
   through the Team folder's "Manage advanced permissions". A delegated manager
   can now export and import without being a server administrator, continuing
-  where 3.0.0 left off when it stopped forcing Nextcloud admins into "IntraVox
-  Admins" ([#113](https://github.com/nextcloud/IntraVox/issues/113)):
-  managing knowledge and administering a server stay different jobs.
+  where the "IntraVox Admins" change below leaves off
+  ([#113](https://github.com/nextcloud/IntraVox/issues/113)): managing knowledge
+  and administering a server stay different jobs.
 
   Nextcloud admins keep access, so nothing is taken away from an existing
   installation. Note that this is an API-level change: the export and import
   screens still live in the Nextcloud admin settings, so a delegated manager
   reaches them through the API rather than that page for now.
-
-## [3.0.0] - 2026-09-16 — The page engine, taken apart
-
-A structural release: the page engine was taken apart, and almost nothing about
-using IntraVox changes. The version is 3.0.0 because the internals moved
-wholesale, not because the app does anything new.
-
-Two reported behaviours *do* change, both of them things that were wrong:
-Nextcloud admins are no longer forced back into "IntraVox Admins" on every
-update (#113), and feed items without a link no longer behave like broken ones
-(#114). Everything else should look and work exactly as 2.7.1 did.
 
 ### Fixed
 

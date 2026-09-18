@@ -244,11 +244,10 @@ class FeedReaderService {
                 'items' => [],
                 'source' => '',
                 'cached' => false,
-                // IV-18: the raw exception text leaks the OutboundUrlValidator's
-                // distinct messages ("Could not resolve the host" vs "private or
-                // reserved IP"), turning this endpoint into a split-horizon DNS /
-                // internal-connectivity oracle. Keep the detail in the log above;
-                // return a fixed generic string to the caller.
+                // Return a fixed generic string rather than the raw exception text:
+                // the underlying validator's distinct messages would otherwise reveal
+                // whether a host resolves and how, so the detail stays in the log
+                // above only.
                 'error' => 'Failed to fetch feed',
             ];
         }

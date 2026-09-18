@@ -413,7 +413,7 @@ class SystemFileService {
 
     /**
      * Build the page tree for a public share by walking the SHARE OWNER'S node,
-     * not the admin/system view of the whole groupfolder (IV-02).
+     * not the admin/system view of the whole groupfolder.
      *
      * getPageTree() resolves the groupfolder through SetupService in a system or
      * IntraVox-Admin context, so its tree contains pages the sharer is ACL-denied
@@ -431,7 +431,7 @@ class SystemFileService {
      */
     /**
      * The IntraVox folder as the share OWNER sees it (ACL applied), for news
-     * traversal (IV-02b). Returns null when the owner is unknown or the folder
+     * traversal. Returns null when the owner is unknown or the folder
      * cannot be resolved in their view, so the caller falls back to the system
      * view unchanged. Fails closed on any error.
      */
@@ -590,7 +590,7 @@ class SystemFileService {
         }
 
         try {
-            // IV-02b: traverse the SHARE OWNER's ACL-filtered view when we know who
+            // Traverse the SHARE OWNER's ACL-filtered view when we know who
             // owns the share, so getDirectoryListing() below never returns pages an
             // ACL rule hides from the sharer. Without an owner (legacy callers) this
             // falls back to the system view — unchanged behaviour for those paths.

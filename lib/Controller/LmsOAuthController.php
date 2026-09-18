@@ -191,10 +191,10 @@ class LmsOAuthController extends Controller {
 
             // The state is HMAC-signed and single-use, but it is bound to the
             // user who STARTED the flow — not to the session that FINISHES it.
-            // Without this check an attacker could start a flow, hand the authUrl
-            // to a victim, and have the victim's LMS token saved under the
-            // attacker's account (OAuth account-linking CSRF). Refuse unless the
-            // session user is the one the state was issued for.
+            // The session that finishes the flow must be the one it was started
+            // for, otherwise a token could be linked to the wrong account
+            // (OAuth account-linking CSRF). Refuse unless the session user matches
+            // the user the state was issued for.
             if ($this->userId === null || $tokens['userId'] !== $this->userId) {
                 $this->logger->warning('[LmsOAuthController] OAuth state user does not match session user', [
                     'stateUser' => $tokens['userId'],

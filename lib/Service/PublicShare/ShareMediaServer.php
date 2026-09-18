@@ -52,7 +52,7 @@ final class ShareMediaServer {
      * media allowlist: fonts, stylesheets and PDFs. Deliberately excludes
      * text/html, image/svg+xml-as-document and anything script-bearing — those
      * are still served, but as a download (Content-Disposition: attachment) so
-     * they cannot execute under the Nextcloud origin (IV-08). SVG stays on the
+     * they cannot execute under the Nextcloud origin. SVG stays on the
      * media allowlist because uploads through the app are sanitised; a raw SVG
      * dropped into _resources via WebDAV is not on this inline list.
      */
@@ -158,12 +158,12 @@ final class ShareMediaServer {
         // raster/video and safe inline — EXCEPT SVG. The upload path sanitises
         // SVG, but WebDAV can drop an unsanitised SVG straight into _media,
         // bypassing that sanitiser, and SVG renders as an active document. So SVG
-        // is served as a download here too, never inline (IV-08b).
+        // is served as a download here too, never inline.
         //
         // On the relaxed path (the _resources library, which WebDAV can write to
         // directly, bypassing the sanitiser) fonts/css/pdf and raster images may
         // render inline, but text/html and SVG are served as a download so an
-        // unsanitised script cannot execute under our origin (IV-08).
+        // unsanitised script cannot execute under our origin.
         if ($enforceAllowlist) {
             $inline = $mimeType !== 'image/svg+xml'; // already passed isServableMedia() above
         } else {

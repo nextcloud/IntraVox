@@ -47,7 +47,7 @@ class CommentController extends Controller {
      * Whether the caller may read/comment on this page.
      *
      * Existence via pageExistsByUniqueId is already ACL-correct (it walks the
-     * caller's own view, so an ACL-hidden page is not found). IV-16 adds the
+     * caller's own view, so an ACL-hidden page is not found). This adds the
      * publication gate the page API enforces but this path skipped: a draft,
      * scheduled or expired page is hidden from readers, so a read-only user must
      * not read or post comments on it. An editor (canWrite) still can — they see

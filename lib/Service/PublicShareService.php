@@ -885,7 +885,7 @@ class PublicShareService {
                 return ['valid' => false, 'reason' => 'out_of_scope'];
             }
 
-            // IV-02b: being inside the shared PATH is not the same as being visible
+            // Being inside the shared PATH is not the same as being visible
             // to the sharer. The scope check above uses the GroupFolder STORAGE
             // filecache (a system view that ignores per-user ACL), so a page in an
             // ACL-denied subtree of the share still matches the prefix. Re-resolve
@@ -941,7 +941,7 @@ class PublicShareService {
 
     /**
      * Whether the share OWNER can read the file with the given id, in their own
-     * ACL-filtered view (IV-02b).
+     * ACL-filtered view.
      *
      * getById() on the owner's user folder returns nothing when a GroupFolders
      * Advanced-Permissions rule hides the file from them — the same signal the

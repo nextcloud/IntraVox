@@ -118,7 +118,7 @@ class PageTemplateService {
      * A template id is a plain folder-name slug. Rejecting anything else stops
      * it from escaping the _templates folder: the raw id reaches Folder::get()
      * and Folder::delete(), so '.' (URL-encoded %2e) resolved to the _templates
-     * folder itself and a DELETE wiped every template in the language (IV-09).
+     * folder itself and a DELETE wiped every template in the language.
      * '' / '.' / '..' / any '/' are refused.
      */
     private function isValidTemplateId(string $templateId): bool {

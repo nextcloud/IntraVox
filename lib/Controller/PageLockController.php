@@ -59,7 +59,7 @@ class PageLockController extends Controller {
 	 * Read companion of denyUnlessMayLock: refuse a caller who cannot even READ
 	 * the page. getLock returns the holder's userId/displayName, so without this
 	 * any authenticated user could learn who is editing a page they have no
-	 * access to (IV-07b). Any resolution failure is a clean 403, never a 500.
+	 * access to. Any resolution failure is a clean 403, never a 500.
 	 */
 	private function denyUnlessMayReadLock(string $pageId): ?DataResponse {
 		try {
@@ -100,8 +100,7 @@ class PageLockController extends Controller {
 		}
 
 		// A lock is an edit primitive: only a user who may write the page may
-		// take it. Without this check any authenticated user — even one with no
-		// IntraVox access — could lock any page and block its editors (IV-07).
+		// take it, so the write check runs before the lock is acquired.
 		$denied = $this->denyUnlessMayLock($pageId);
 		if ($denied !== null) {
 			return $denied;

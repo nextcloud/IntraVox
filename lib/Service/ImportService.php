@@ -137,10 +137,10 @@ class ImportService {
             $this->logger->info(self::LOG_PREFIX . ' Confluence import detected', ['pages' => count($pages)]);
         }
 
-        // IV-20: the language comes straight from the imported file and is used to
-        // build folder paths (getLanguageFolder / nodeExists). An unvalidated value
-        // could traverse or create junk language folders, so it must be a plain
-        // language code — the same shape the rest of the app enforces.
+        // The language comes straight from the imported file and is used to build
+        // folder paths (getLanguageFolder / nodeExists), so it must be a plain
+        // language code — the same shape the rest of the app enforces — rather
+        // than trusted as-is.
         $language = $exportData['language'] ?? 'nl';
         if (!is_string($language) || !preg_match('/^[a-z]{2,3}$/', $language)) {
             throw new InvalidImportException(
@@ -830,7 +830,7 @@ class ImportService {
 
         if (isset($content['description']) && is_string($content['description'])) {
             // Plain text in the template picker, so strip markup rather than
-            // trusting it: this is the one preserved field an attacker controls.
+            // trusting it: this is the one preserved field taken from import input.
             $sanitized['description'] = mb_substr(
                 strip_tags($content['description']),
                 0,
@@ -937,11 +937,10 @@ class ImportService {
                     $relativePath = substr($item->getPathname(), strlen($tempDir) + 1);
 
                     try {
-                        // IV-20: the import writes straight into _media/_resources,
-                        // bypassing the upload allowlist and SVG sanitiser that the
-                        // normal upload path applies. A crafted ZIP could plant an
-                        // executable/script file or an unsanitised SVG. Refuse the
-                        // dangerous types and sanitise SVG content before writing.
+                        // The import writes into _media/_resources, so apply the same
+                        // safeguards as a normal upload: refuse executable/active types
+                        // and sanitise SVG content before writing, rather than trusting
+                        // the archive's contents.
                         $fileName = $item->getFilename();
                         $content = $this->safeMediaContent($item->getPathname(), $fileName);
                         if ($content === null) {
@@ -985,7 +984,7 @@ class ImportService {
     /**
      * File extensions that must never be written into _media/_resources by an
      * import — server-executable or active-document types that would be a
-     * code-execution or stored-XSS vector once served. Everything else (images,
+     * unsafe to serve. Everything else (images,
      * video, fonts, css, pdf, and the SVG we sanitise below) is allowed, so a
      * legitimate export round-trips.
      */
@@ -997,9 +996,9 @@ class ImportService {
 
     /**
      * The content to write for an imported media/resource file, or null when the
-     * file must be skipped (IV-20). Refuses forbidden extensions and sanitises
-     * SVG content the same way the upload path does, so a crafted ZIP cannot
-     * plant a script or an unsanitised SVG.
+     * file must be skipped. Refuses forbidden extensions and sanitises
+     * SVG content the same way the upload path does, so imported files get the
+     * same safeguards as uploaded ones.
      */
     private function safeMediaContent(string $sourcePath, string $fileName): ?string {
         $ext = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));

@@ -60,13 +60,12 @@ class PeopleController extends Controller {
     }
 
     /**
-     * The People widget surfaces the staff directory, so its endpoints must be
-     * limited to users with IntraVox access. Without this, any Nextcloud account
-     * (including one with no IntraVox access) could enumerate every user and
-     * group here — UserService::searchUsers goes straight to IUserManager and
-     * does not honour NC's share-enumeration restrictions (IV-People). Returns a
-     * 403 to deny; null when access is allowed (or the gate cannot be evaluated,
-     * which only happens in a unit context where the services are not injected).
+     * The People widget surfaces the staff directory, so its endpoints are limited
+     * to users with IntraVox access. UserService::searchUsers goes straight to
+     * IUserManager and does not apply NC's share-enumeration restrictions, so this
+     * gate is what keeps directory data to members. Returns a 403 to deny; null
+     * when access is allowed (or the gate cannot be evaluated, which only happens
+     * in a unit context where the services are not injected).
      */
     private function denyUnlessIntraVoxAccess(): ?DataResponse {
         if ($this->permissionService === null || $this->userSession === null) {

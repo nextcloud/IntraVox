@@ -369,9 +369,10 @@ class ApiController extends Controller {
         try {
             $data = $this->request->getParams();
 
-            // IV-06: identity fields are minted server-side, never taken from an
-            // HTTP caller (a client uniqueId let an editor hijack another page's
-            // id). Import/translation flows call the service directly, untouched.
+            // Identity fields are minted server-side, never taken from an HTTP
+            // caller, so a client-supplied uniqueId cannot re-point a new page at
+            // another page's identity. Import/translation flows call the service
+            // directly, untouched.
             unset($data['uniqueId'], $data['translationGroup']);
 
             // Extract parentPath from request if provided
@@ -606,12 +607,11 @@ class ApiController extends Controller {
             $sortOrder = $this->request->getParam('sortOrder', 'desc');
             $filterPublished = $this->request->getParam('filterPublished', 'false') === 'true';
 
-            // IV-19: filterPublished is a client hint, so a read-only user could
-            // simply omit it and receive draft, scheduled and expired pages the
-            // page API hides from them. Only a user who may edit (write at the
-            // root) is allowed to see unpublished news — the editor preview. For
-            // everyone else the published-only filter is forced on, regardless of
-            // what the client asked.
+            // filterPublished is a client hint, so it cannot be trusted to hide
+            // draft/scheduled/expired pages from readers. Only a user who may edit
+            // (write at the root) may see unpublished news — the editor preview;
+            // for everyone else the published-only filter is forced on, regardless
+            // of what the client asked.
             if (!$this->permissionService->canWrite('')) {
                 $filterPublished = true;
             }
@@ -662,9 +662,8 @@ class ApiController extends Controller {
      */
     // Every search reads and json_decodes every page file in the language --
     // searchPages() calls listPagesWithContent() and scores the lot, then keeps
-    // the top 20. The RESULTS were capped; the WORK was not, and this was the one
-    // anonymous-adjacent amplifier left: any logged-in user could drive a full
-    // content scan as fast as they could send requests.
+    // the top 20. The RESULTS were capped; the WORK was not, so a search could
+    // drive a full content scan regardless of how few results it returned.
     //
     // A scan cap would be the wrong instrument. listPages() has no ORDER BY, so
     // stopping halfway means the best match is missed at random rather than

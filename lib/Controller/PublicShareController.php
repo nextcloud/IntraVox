@@ -365,7 +365,7 @@ class PublicShareController extends Controller {
             $scopePath = $relPath;
 
             // Build the tree from the SHARE OWNER'S node, not the system view of
-            // the whole groupfolder (IV-02). getDirectoryListing() on the owner's
+            // the whole groupfolder. getDirectoryListing() on the owner's
             // node already omits any subtree a GroupFolders ACL hides from the
             // sharer, so a folder share can no longer republish pages the sharer
             // cannot see. The node IS the shared subtree, so no path-slice is
@@ -377,7 +377,7 @@ class PublicShareController extends Controller {
             } else {
                 // A single-file share (a page's own folder is shared as a node):
                 // fall back to the system tree sliced by scope. This path carries
-                // the pre-IV-02 behaviour for the rare non-folder share.
+                // the previous behaviour for the rare non-folder share.
                 $tree = $this->systemFileService->getPageTree($language);
                 $filteredTree = $this->treeShaper->extractSubtreeByScope($tree, $scopePath);
             }
@@ -468,7 +468,7 @@ class PublicShareController extends Controller {
                 $limit,
                 $sortBy,
                 $sortOrder,
-                // IV-02b: traverse the owner's ACL-filtered view, not the system view.
+                // Traverse the owner's ACL-filtered view, not the system view.
                 $share->getShareOwner()
             );
 
@@ -836,21 +836,18 @@ class PublicShareController extends Controller {
             // WHICH data the connection's credentials return. buildConfigFromRequest
             // only format-checks them, so an anonymous holder of any share token
             // could pin a published connectionId and then swap in e.g. an arbitrary
-            // SharePoint listId, reading data the share never published (IV-03).
+            // SharePoint listId, reading data the share never published.
             // Each non-empty selector must match a value this share actually
             // publishes on a feed widget.
             foreach (['contentType', 'listId', 'jiraProject', 'courseId', 'moodleForumId'] as $selector) {
                 $allowedSelector = $this->publicShareService->allowedWidgetValues($share, 'feed', $selector);
                 $requested = $config[$selector] ?? '';
 
-                // IV-03b: an EMPTY selector cannot simply be skipped. When the share
-                // publishes a value for this selector, an empty request would drop
-                // that filter and fall through to the connector's broad default query
-                // (e.g. Jira: all projects; OpenProject: all work packages) under the
-                // app credentials — data the share never published. So when the share
-                // constrains this selector, the request must name one of its values;
-                // an empty (or non-matching) value is refused. A selector the share
-                // does not publish at all stays unconstrained (empty is fine).
+                // An empty selector cannot simply be skipped. When the share publishes
+                // a value for this selector, the request must name one of those values;
+                // an empty or non-matching value is refused, so it cannot fall through
+                // to the connector's broader default query. A selector the share does
+                // not publish at all stays unconstrained (empty is fine).
                 if (empty($allowedSelector)) {
                     continue;
                 }

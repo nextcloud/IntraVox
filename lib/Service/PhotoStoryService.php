@@ -475,14 +475,12 @@ class PhotoStoryService {
 			$slicePrimitives = array_slice($slicePrimitives, 0, $pageSize);
 		}
 
-		// IV-15: ACL guard. fetchMediaPageAcrossScopes() restricts by
-		// storage+path-prefix on oc_filecache (cheap, structural), but inside a
-		// groupfolder NC supports per-sub-path ACLs. Without this, a user with
-		// read on the folder root but an ACL deny on a subfolder could enumerate
-		// that subtree's file metadata here — the metadata/default branch skipped
-		// the very check the MetaVox branch does. Drop files the user cannot
-		// actually read (page-sized getById, so bounded) before hydration. An
-		// empty result flows through the rest of this method unchanged.
+		// Per-file ACL guard. The scope query restricts by storage + path prefix
+		// on the file cache (cheap, structural), but inside a groupfolder Nextcloud
+		// enforces per-sub-path ACLs, which that query does not. Re-check each file
+		// against the caller's own view (page-sized getById, so bounded) so only
+		// files the user may read are hydrated. The MetaVox branch already does this.
+		// An empty result flows through the rest of this method unchanged.
 		$slicePrimitives = $this->filterReadableByUser($userFolder, $slicePrimitives);
 
 		$sliceIds = array_map(fn(array $r) => $r['file_id'], $slicePrimitives);
@@ -1190,7 +1188,7 @@ class PhotoStoryService {
 	 *
 	 * Keep only the slice rows the user can actually read, by resolving each
 	 * file id through the user's own folder (ACL-aware). Mirrors the per-file
-	 * getById() guard the MetaVox branch already performs (IV-15). Bounded to
+	 * getById() guard the MetaVox branch already performs. Bounded to
 	 * the page-sized slice. A single bad id never breaks the page; on an
 	 * unexpected error for a row it is dropped (fail closed), since this is the
 	 * only ACL check on the default listing branch.

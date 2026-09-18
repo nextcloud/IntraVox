@@ -313,7 +313,7 @@ class MediaApiController extends Controller {
             // _resources may hold arbitrary files placed via WebDAV (bypassing
             // the upload allowlist/sanitiser). Only render safe types inline;
             // serve anything else (notably text/html and raw SVG) as a download
-            // with nosniff so it cannot execute under the Nextcloud origin (IV-08).
+            // with nosniff so it cannot execute under the Nextcloud origin.
             $inlineSafe = str_starts_with($mimeType, 'image/')
                 || str_starts_with($mimeType, 'video/')
                 || str_starts_with($mimeType, 'font/')

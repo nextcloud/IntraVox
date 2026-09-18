@@ -164,7 +164,7 @@ class FeedController extends Controller {
         // A page's _media folder can hold arbitrary files placed via WebDAV
         // (bypassing the upload allowlist/sanitiser). Only render images and
         // video inline; serve anything else (text/html, raw SVG) as a download
-        // with nosniff so it cannot execute under the Nextcloud origin (IV-08).
+        // with nosniff so it cannot execute under the Nextcloud origin.
         $mimeType = $media['mimeType'];
         $inlineSafe = (str_starts_with($mimeType, 'image/') || str_starts_with($mimeType, 'video/'))
             && $mimeType !== 'image/svg+xml';
@@ -312,7 +312,7 @@ class FeedController extends Controller {
 
     /**
      * The token endpoints answered any logged-in account, including users with
-     * no IntraVox access at all (IV-12). Require IntraVox access so managing a
+     * no IntraVox access at all. Require IntraVox access so managing a
      * personal feed token is consistent with the rest of the app. Returns the
      * refusal to return, or null when access is granted.
      */

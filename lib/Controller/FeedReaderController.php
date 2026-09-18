@@ -37,11 +37,9 @@ class FeedReaderController extends Controller {
 
     /**
      * The connector helpers below use a stored connection's credentials to query
-     * the external service. IV-12 gated the feed-TOKEN endpoints on IntraVox
-     * access but these were left open, so any Nextcloud account — including one
-     * with no IntraVox access at all — could drive an admin-configured Jira /
-     * SharePoint / Moodle connection. Require IntraVox access here too: 401 for
-     * an anonymous caller, 403 for a logged-in user without access.
+     * the external service, so — like the feed-token endpoints — they require
+     * IntraVox access rather than mere authentication: 401 for an anonymous
+     * caller, 403 for a logged-in user without access.
      */
     private function denyUnlessIntraVoxAccess(): ?DataResponse {
         if ($this->userId === null) {

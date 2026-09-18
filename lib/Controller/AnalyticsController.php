@@ -60,7 +60,7 @@ class AnalyticsController extends Controller {
      * DataResponse (404 when absent, 403 when denied) that the caller must
      * return, or null when access is granted. Existence alone is not enough:
      * checking only pageExistsByUniqueId let a user read/inflate the view
-     * counts of ACL-restricted pages they cannot see (IV-10).
+     * counts of ACL-restricted pages they cannot see.
      */
     private function denyUnlessReadablePage(string $pageId): ?DataResponse {
         try {
@@ -84,7 +84,7 @@ class AnalyticsController extends Controller {
     #[NoCSRFRequired]
     public function getPageStats(string $pageId, int $days = 30): DataResponse {
         try {
-            // Require READ permission, not mere existence (IV-10).
+            // Require READ permission, not mere existence.
             if (($denied = $this->denyUnlessReadablePage($pageId)) !== null) {
                 return $denied;
             }
@@ -256,7 +256,7 @@ class AnalyticsController extends Controller {
     #[NoAdminRequired]
     public function trackView(string $pageId): DataResponse {
         try {
-            // Require READ permission, not mere existence (IV-10): a user who
+            // Require READ permission, not mere existence: a user who
             // cannot see the page must not be able to inflate its view count.
             if (($denied = $this->denyUnlessReadablePage($pageId)) !== null) {
                 return $denied;
