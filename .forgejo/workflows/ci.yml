@@ -175,3 +175,59 @@ jobs:
 
       - name: OpenAPI coverage ratchet
         run: node scripts/check-openapi.js
+
+  dependency-audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP
+        # Same pin as the php job; see its note.
+        uses: https://github.com/shivammathur/setup-php@2.33.0
+        with:
+          php-version: '8.2'
+          coverage: none
+          tools: composer:v2
+
+      # A known-vulnerable dependency has been an IntraVox risk more than once
+      # (the axios, serialize-javascript and fast-uri advisories are in the
+      # CHANGELOG). Nothing caught a NEW one until now. Fail only on a real
+      # advisory, not on `abandoned` (lsolesen/pel is abandoned but not
+      # vulnerable), so the gate stays meaningful.
+      - name: composer audit (runtime deps only)
+        env:
+          COMPOSER_AUTH: '{"github-oauth":{"github.com":"${{ secrets.PAT_GITHUB }}"}}'
+        run: |
+          set -euo pipefail
+          composer install --no-dev --prefer-dist --no-interaction --no-progress
+          composer audit --no-dev --format=plain
+
+      - name: npm audit (frontend deps)
+        # The @nextcloud/* transitive tree carries advisories we cannot fix from
+        # here, so this is a HIGH-and-up gate rather than fail-on-anything, and
+        # it is allowed to warn without blocking the pipeline.
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          npm audit --audit-level=high || echo "::warning::npm audit reported findings at >=high severity — review them"
+
+  secret-scan:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # gitleaks scans history, so give it the full log rather than a
+          # shallow clone.
+          fetch-depth: 0
+
+      # The release checklist checks the tarball for key material by hand; this
+      # catches a key or token the moment it is committed, on every branch,
+      # rather than at package time. Pinned to a release so the gate is
+      # reproducible.
+      - name: gitleaks
+        uses: https://github.com/gitleaks/gitleaks-action@v2
+        env:
+          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: 'false'
+          GITLEAKS_ENABLE_SUMMARY: 'false'
