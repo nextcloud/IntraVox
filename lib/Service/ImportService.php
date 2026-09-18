@@ -34,7 +34,8 @@ class ImportService {
         private PageIndexService $pageIndexService,
         private PageShapeSanitizer $shapeSanitizer,
         private SafeZipExtractor $zipExtractor,
-        private ImportNavigationBuilder $navigationBuilder
+        private ImportNavigationBuilder $navigationBuilder,
+        private \OCA\IntraVox\Service\Sanitize\MediaSanitizer $mediaSanitizer
     ) {}
 
     /**
@@ -136,7 +137,17 @@ class ImportService {
             $this->logger->info(self::LOG_PREFIX . ' Confluence import detected', ['pages' => count($pages)]);
         }
 
+        // IV-20: the language comes straight from the imported file and is used to
+        // build folder paths (getLanguageFolder / nodeExists). An unvalidated value
+        // could traverse or create junk language folders, so it must be a plain
+        // language code — the same shape the rest of the app enforces.
         $language = $exportData['language'] ?? 'nl';
+        if (!is_string($language) || !preg_match('/^[a-z]{2,3}$/', $language)) {
+            throw new InvalidImportException(
+                InvalidImportException::CODE_INVALID_JSON,
+                'Invalid language code in import file.'
+            );
+        }
 
         // Check for MetaVox data
         $hasMetaVoxData = isset($exportData['metavox']);
@@ -926,21 +937,34 @@ class ImportService {
                     $relativePath = substr($item->getPathname(), strlen($tempDir) + 1);
 
                     try {
+                        // IV-20: the import writes straight into _media/_resources,
+                        // bypassing the upload allowlist and SVG sanitiser that the
+                        // normal upload path applies. A crafted ZIP could plant an
+                        // executable/script file or an unsanitised SVG. Refuse the
+                        // dangerous types and sanitise SVG content before writing.
+                        $fileName = $item->getFilename();
+                        $content = $this->safeMediaContent($item->getPathname(), $fileName);
+                        if ($content === null) {
+                            $this->logger->warning('Import skipped a disallowed media file', [
+                                'file' => $relativePath,
+                            ]);
+                            continue;
+                        }
+
                         // Ensure folder path exists (including nested folders in _resources)
                         $targetFolder = $this->ensureFolderPath($intraVoxFolder, dirname($relativePath));
 
                         // Copy file
-                        $fileName = $item->getFilename();
                         $fileExists = $targetFolder->nodeExists($fileName);
 
                         if (!$fileExists) {
                             // File doesn't exist, create new
-                            $targetFolder->newFile($fileName, file_get_contents($item->getPathname()));
+                            $targetFolder->newFile($fileName, $content);
                             $count++;
                         } elseif ($overwrite) {
                             // File exists but overwrite is enabled
                             $existingFile = $targetFolder->get($fileName);
-                            $existingFile->putContent(file_get_contents($item->getPathname()));
+                            $existingFile->putContent($content);
                             $count++;
                         }
                         // If file exists and overwrite is disabled, skip silently
@@ -956,6 +980,48 @@ class ImportService {
         }
 
         return $count;
+    }
+
+    /**
+     * File extensions that must never be written into _media/_resources by an
+     * import — server-executable or active-document types that would be a
+     * code-execution or stored-XSS vector once served. Everything else (images,
+     * video, fonts, css, pdf, and the SVG we sanitise below) is allowed, so a
+     * legitimate export round-trips.
+     */
+    private const IMPORT_FORBIDDEN_EXTENSIONS = [
+        'php', 'phtml', 'php3', 'php4', 'php5', 'phar', 'pht',
+        'html', 'htm', 'xhtml', 'shtml', 'js', 'mjs', 'jsp', 'asp', 'aspx',
+        'exe', 'sh', 'bat', 'cmd', 'com', 'cgi', 'pl', 'py',
+    ];
+
+    /**
+     * The content to write for an imported media/resource file, or null when the
+     * file must be skipped (IV-20). Refuses forbidden extensions and sanitises
+     * SVG content the same way the upload path does, so a crafted ZIP cannot
+     * plant a script or an unsanitised SVG.
+     */
+    private function safeMediaContent(string $sourcePath, string $fileName): ?string {
+        $ext = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+        if ($ext === '' || in_array($ext, self::IMPORT_FORBIDDEN_EXTENSIONS, true)) {
+            return null;
+        }
+
+        $content = file_get_contents($sourcePath);
+        if ($content === false) {
+            return null;
+        }
+
+        if ($ext === 'svg' || $ext === 'svgz') {
+            try {
+                return $this->mediaSanitizer->sanitizeSVG($content);
+            } catch (\Throwable $e) {
+                // A malformed / unsanitisable SVG is dropped, not written raw.
+                return null;
+            }
+        }
+
+        return $content;
     }
 
     /**

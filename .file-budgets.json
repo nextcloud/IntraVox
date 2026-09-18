@@ -87,7 +87,7 @@
     "lib/Service/Import/SafeZipExtractor.php": 216,
     "lib/Service/Import/TempDir.php": 36,
     "lib/Service/Import/ZipUploadValidator.php": 79,
-    "lib/Service/ImportService.php": 1508,
+    "lib/Service/ImportService.php": 1574,
     "lib/Service/Language/LanguageResolver.php": 74,
     "lib/Service/Language/LanguageStatusService.php": 180,
     "lib/Service/LanguageHomepageService.php": 200,
