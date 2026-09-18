@@ -175,7 +175,7 @@ class PageTemplateCompositionTest extends TestCase {
         $templates->method('getTemplate')->willReturn([
             'uniqueId' => 'template-abc', 'title' => 'Blank', 'isTemplate' => true,
             'description' => 'desc', 'createdBy' => 'someone', 'sourcePageId' => 'page-old',
-            'status' => 'published', 'layout' => ['rows' => []],
+            'translationGroup' => 'tg-victim', 'status' => 'published', 'layout' => ['rows' => []],
         ]);
 
         $seen = null;
@@ -201,6 +201,9 @@ class PageTemplateCompositionTest extends TestCase {
         $this->assertArrayNotHasKey('description', $seen);
         $this->assertArrayNotHasKey('createdBy', $seen);
         $this->assertArrayNotHasKey('sourcePageId', $seen);
+        // IV-06b: a fresh page must not inherit a translationGroup — that would
+        // attach it to another page's translation set.
+        $this->assertArrayNotHasKey('translationGroup', $seen);
     }
 
     public function testCreateFromTemplateReturnsErrorArrayForAnUnknownTemplate(): void {

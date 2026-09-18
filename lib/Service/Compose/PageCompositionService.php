@@ -293,6 +293,14 @@ class PageCompositionService {
             unset($pageData['createdBy']);
             unset($pageData['sourcePageId']);
 
+            // IV-06b: a brand-new page is not a translation of anything. Inheriting
+            // translationGroup from the template (or the page it was saved from)
+            // would silently attach this page to another page's translation set —
+            // the same identity concern IV-06 closed on createPage. A real
+            // translation is created through the translation flow, which sets the
+            // group deliberately and with its own permission check.
+            unset($pageData['translationGroup']);
+
             // New pages from templates always start as draft
             $pageData['status'] = 'draft';
 

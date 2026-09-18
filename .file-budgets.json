@@ -49,7 +49,7 @@
     "lib/Service/Cache/PageCacheService.php": 215,
     "lib/Service/CalendarService.php": 221,
     "lib/Service/CommentService.php": 739,
-    "lib/Service/Compose/PageCompositionService.php": 485,
+    "lib/Service/Compose/PageCompositionService.php": 493,
     "lib/Service/DemoDataService.php": 1080,
     "lib/Service/EngagementSettingsService.php": 183,
     "lib/Service/ExportService.php": 1006,
