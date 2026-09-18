@@ -31,7 +31,8 @@ class CommentController extends Controller {
         private PageReadService $pageRead,
         private IUserSession $userSession,
         private IGroupManager $groupManager,
-        private LoggerInterface $logger
+        private LoggerInterface $logger,
+        private ?\OCA\IntraVox\Service\Publication\PublicationStateService $publicationState = null
     ) {
         parent::__construct($appName, $request);
     }
@@ -43,10 +44,36 @@ class CommentController extends Controller {
 
 
     /**
-     * Check if page exists and user has read access
+     * Whether the caller may read/comment on this page.
+     *
+     * Existence via pageExistsByUniqueId is already ACL-correct (it walks the
+     * caller's own view, so an ACL-hidden page is not found). IV-16 adds the
+     * publication gate the page API enforces but this path skipped: a draft,
+     * scheduled or expired page is hidden from readers, so a read-only user must
+     * not read or post comments on it. An editor (canWrite) still can — they see
+     * the page in the editor, and pre-publication review comments are the point.
      */
     private function checkPageAccess(string $pageId): bool {
-        return $this->pageRead->pageExistsByUniqueId($pageId);
+        // No publication service (legacy/unit construction) → keep the prior
+        // existence-only behaviour rather than fail the whole comment surface.
+        if ($this->publicationState === null) {
+            return $this->pageRead->pageExistsByUniqueId($pageId);
+        }
+
+        try {
+            $page = $this->pageRead->getPage($pageId);
+        } catch (\Exception $e) {
+            return false; // not found / no access in the caller's view
+        }
+
+        if (!($page['permissions']['canRead'] ?? false)) {
+            return false;
+        }
+        if (!$this->publicationState->isHiddenFromReaders($page)) {
+            return true; // published — any reader may comment
+        }
+        // Hidden from readers: only someone who may edit the page may see it.
+        return (bool)($page['permissions']['canWrite'] ?? false);
     }
 
     /**
