@@ -160,3 +160,50 @@ jobs:
 
       - name: OpenAPI coverage ratchet
         run: node scripts/check-openapi.js
+
+  dependency-audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+          tools: composer:v2
+
+      # A known-vulnerable dependency has been an IntraVox risk more than once
+      # (the axios, serialize-javascript and fast-uri advisories are in the
+      # CHANGELOG). Fail only on a real advisory, not on `abandoned`
+      # (lsolesen/pel is abandoned but not vulnerable).
+      - name: composer audit (runtime deps only)
+        run: |
+          set -euo pipefail
+          composer install --no-dev --prefer-dist --no-interaction --no-progress
+          composer audit --no-dev --format=plain
+
+      - name: npm audit (frontend deps)
+        # The @nextcloud/* transitive tree carries advisories we cannot fix from
+        # here, so this is a HIGH-and-up gate rather than fail-on-anything.
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          npm audit --audit-level=high || echo "::warning::npm audit reported findings at >=high severity — review them"
+
+  secret-scan:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Catches a key or token the moment it is committed, complementing the
+      # release checklist's by-hand tarball check.
+      - name: gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: 'false'
+          GITLEAKS_ENABLE_SUMMARY: 'false'
