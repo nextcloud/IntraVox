@@ -155,6 +155,48 @@ class PageTemplateServiceTest extends TestCase {
         $this->assertTrue($this->svc()->canCreateTemplates($langWithout), 'language folder decides otherwise');
     }
 
+    public function testCanDeleteTemplateFollowsTheTemplateFolderPermission(): void {
+        // Deletable template folder -> allowed.
+        $deletable = $this->makeFolder('onboarding', []);
+        $deletable->method('isDeletable')->willReturn(true);
+        $templates = $this->makeFolder('_templates', ['onboarding' => $deletable]);
+        $lang = $this->makeFolder('en', ['_templates' => $templates]);
+        $this->assertTrue(
+            $this->svc()->canDeleteTemplate($lang, 'onboarding'),
+            'delete is allowed when the template folder is deletable'
+        );
+
+        // Same template but ACL revoked delete -> refused (the whole point of IV-13).
+        $locked = $this->makeFolder('onboarding', []);
+        $locked->method('isDeletable')->willReturn(false);
+        $templatesLocked = $this->makeFolder('_templates', ['onboarding' => $locked]);
+        $langLocked = $this->makeFolder('en', ['_templates' => $templatesLocked]);
+        $this->assertFalse(
+            $this->svc()->canDeleteTemplate($langLocked, 'onboarding'),
+            'delete is refused when the template folder is not deletable'
+        );
+    }
+
+    public function testCanDeleteTemplateRefusesMissingAndTraversalIds(): void {
+        $templates = $this->makeFolder('_templates', []);
+        $lang = $this->makeFolder('en', ['_templates' => $templates]);
+
+        $this->assertFalse(
+            $this->svc()->canDeleteTemplate($lang, 'does-not-exist'),
+            'a template that is not present cannot be deleted'
+        );
+        foreach (['.', '..', '', 'a/b', '../other'] as $bad) {
+            $this->assertFalse(
+                $this->svc()->canDeleteTemplate($lang, $bad),
+                "traversal id '$bad' must be refused by the delete gate"
+            );
+        }
+
+        // No _templates folder at all -> refused, never "unset, so allow".
+        $langWithout = $this->makeFolder('en', []);
+        $this->assertFalse($this->svc()->canDeleteTemplate($langWithout, 'onboarding'));
+    }
+
     public function testNewTemplateFolderSuffixesOnCollision(): void {
         $mediaFolder = $this->makeFolder('_media', []);
         $reserved = $this->makeFolder('onboarding-2', []);
