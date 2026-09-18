@@ -56,12 +56,32 @@ class PageLockController extends Controller {
 	}
 
 	/**
+	 * Read companion of denyUnlessMayLock: refuse a caller who cannot even READ
+	 * the page. getLock returns the holder's userId/displayName, so without this
+	 * any authenticated user could learn who is editing a page they have no
+	 * access to (IV-07b). Any resolution failure is a clean 403, never a 500.
+	 */
+	private function denyUnlessMayReadLock(string $pageId): ?DataResponse {
+		try {
+			$page = $this->getPageReadService()->getPage($pageId);
+		} catch (\Exception $e) {
+			return new DataResponse(['error' => 'Permission denied'], Http::STATUS_FORBIDDEN);
+		}
+		return $this->denyUnlessReadable($page, 'Permission denied');
+	}
+
+	/**
 	 * Get the current lock status for a page.
 	 *
 	 */
 	#[NoAdminRequired]
 	#[NoCSRFRequired]
 	public function getLock(string $pageId): DataResponse {
+		$denied = $this->denyUnlessMayReadLock($pageId);
+		if ($denied !== null) {
+			return $denied;
+		}
+
 		$lock = $this->lockService->getLock($pageId);
 		return new DataResponse(['lock' => $lock]);
 	}

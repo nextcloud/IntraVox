@@ -106,4 +106,40 @@ class PageLockPermissionTest extends TestCase {
         $this->assertEquals(Http::STATUS_FORBIDDEN, $response->getStatus());
         $this->assertSame(['error' => 'Permission denied'], $response->getData());
     }
+
+    // IV-07b: getLock returns the holder's identity, so it needs a READ gate.
+
+    public function testGetLockDeniedWithoutReadPermission(): void {
+        $this->getPageFn = fn(string $id) => ['permissions' => ['canRead' => false]];
+        $this->lockService = $this->createMock(PageLockService::class);
+        $this->lockService->expects($this->never())->method('getLock');
+
+        $response = $this->buildController()->getLock('page-victim');
+
+        $this->assertEquals(Http::STATUS_FORBIDDEN, $response->getStatus());
+    }
+
+    public function testGetLockReturns403WhenPageCannotBeResolved(): void {
+        $this->getPageFn = function (string $id) {
+            throw new \Exception('IntraVox folder not found.');
+        };
+        $this->lockService = $this->createMock(PageLockService::class);
+        $this->lockService->expects($this->never())->method('getLock');
+
+        $response = $this->buildController()->getLock('page-x');
+
+        $this->assertEquals(Http::STATUS_FORBIDDEN, $response->getStatus());
+    }
+
+    public function testGetLockAllowedWithReadPermission(): void {
+        $this->getPageFn = fn(string $id) => ['permissions' => ['canRead' => true]];
+        $this->lockService = $this->createMock(PageLockService::class);
+        $this->lockService->expects($this->once())
+            ->method('getLock')
+            ->willReturn(null);
+
+        $response = $this->buildController()->getLock('page-mine');
+
+        $this->assertEquals(Http::STATUS_OK, $response->getStatus());
+    }
 }
