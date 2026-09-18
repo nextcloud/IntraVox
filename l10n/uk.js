@@ -300,6 +300,7 @@ OC.L10N.register(
     "Advanced" : "Додатково",
     "Unlink" : "Роз'єднати зв'язок.",
     "No users found" : "Не знайдено користувачів",
+    "Go to Administration settings" : "Перейти до налаштувань адміністратора",
     "Domain" : "Домен",
     "Size:" : "Розмір:",
     "Full width" : "У повну ширину",
