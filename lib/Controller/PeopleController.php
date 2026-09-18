@@ -53,8 +53,31 @@ class PeopleController extends Controller {
         private ?IActivityManager $activityManager = null,
         private ?IURLGenerator $urlGenerator = null,
         private ?IConfig $config = null,
+        private ?\OCA\IntraVox\Service\PermissionService $permissionService = null,
+        private ?\OCP\IUserSession $userSession = null,
     ) {
         parent::__construct($appName, $request);
+    }
+
+    /**
+     * The People widget surfaces the staff directory, so its endpoints must be
+     * limited to users with IntraVox access. Without this, any Nextcloud account
+     * (including one with no IntraVox access) could enumerate every user and
+     * group here — UserService::searchUsers goes straight to IUserManager and
+     * does not honour NC's share-enumeration restrictions (IV-People). Returns a
+     * 403 to deny; null when access is allowed (or the gate cannot be evaluated,
+     * which only happens in a unit context where the services are not injected).
+     */
+    private function denyUnlessIntraVoxAccess(): ?DataResponse {
+        if ($this->permissionService === null || $this->userSession === null) {
+            return null;
+        }
+        $user = $this->userSession->getUser();
+        $userId = $user?->getUID();
+        if (!$this->permissionService->hasAccess($userId)) {
+            return new DataResponse(['error' => 'Access denied'], Http::STATUS_FORBIDDEN);
+        }
+        return null;
     }
 
     /**
@@ -69,6 +92,10 @@ class PeopleController extends Controller {
     #[NoCSRFRequired]
     public function searchUsers(string $query = '', int $limit = 20): DataResponse {
         try {
+            $denied = $this->denyUnlessIntraVoxAccess();
+            if ($denied !== null) {
+                return $denied;
+            }
             if (strlen($query) < 2) {
                 return new DataResponse([
                     'users' => [],
@@ -103,6 +130,10 @@ class PeopleController extends Controller {
     #[NoAdminRequired]
     public function getUsers(array $userIds = []): DataResponse {
         try {
+            $denied = $this->denyUnlessIntraVoxAccess();
+            if ($denied !== null) {
+                return $denied;
+            }
             if (empty($userIds)) {
                 return new DataResponse([
                     'users' => []
@@ -138,6 +169,10 @@ class PeopleController extends Controller {
     #[NoCSRFRequired]
     public function getGroups(): DataResponse {
         try {
+            $denied = $this->denyUnlessIntraVoxAccess();
+            if ($denied !== null) {
+                return $denied;
+            }
             $groups = $this->userService->getGroups();
 
             return new DataResponse([
@@ -164,6 +199,10 @@ class PeopleController extends Controller {
     #[NoCSRFRequired]
     public function getUserFields(): DataResponse {
         try {
+            $denied = $this->denyUnlessIntraVoxAccess();
+            if ($denied !== null) {
+                return $denied;
+            }
             $fields = $this->userService->getAvailableFields();
 
             return new DataResponse([
@@ -210,6 +249,10 @@ class PeopleController extends Controller {
         int $facetLimit = FacetCalculator::DEFAULT_FACET_LIMIT
     ): DataResponse {
         try {
+            $denied = $this->denyUnlessIntraVoxAccess();
+            if ($denied !== null) {
+                return $denied;
+            }
             $users = [];
             $total = 0;
             $hasMore = false;
@@ -326,6 +369,10 @@ class PeopleController extends Controller {
     #[NoCSRFRequired]
     public function facetPreflight(): DataResponse {
         try {
+            $denied = $this->denyUnlessIntraVoxAccess();
+            if ($denied !== null) {
+                return $denied;
+            }
             $stats = $this->userService->facetPreflight();
             return new DataResponse($stats);
         } catch (\Exception $e) {
