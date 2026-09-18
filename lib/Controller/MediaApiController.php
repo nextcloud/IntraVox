@@ -301,7 +301,8 @@ class MediaApiController extends Controller {
                 return new DataResponse(['error' => 'Media not found'], Http::STATUS_NOT_FOUND);
             }
 
-            // Set appropriate content type
+            // Content-sniff the actual bytes (not the claimed type) so the
+            // Content-Type we set matches what the file really is.
             $finfo = finfo_open(FILEINFO_MIME_TYPE);
             $mimeType = $finfo->buffer($file->getContent());
             finfo_close($finfo);
@@ -309,9 +310,25 @@ class MediaApiController extends Controller {
             // Get just the filename for Content-Disposition (not the full path)
             $displayName = basename($safePath);
 
+            // _resources may hold arbitrary files placed via WebDAV (bypassing
+            // the upload allowlist/sanitiser). Only render safe types inline;
+            // serve anything else (notably text/html and raw SVG) as a download
+            // with nosniff so it cannot execute under the Nextcloud origin (IV-08).
+            $inlineSafe = str_starts_with($mimeType, 'image/')
+                || str_starts_with($mimeType, 'video/')
+                || str_starts_with($mimeType, 'font/')
+                || in_array($mimeType, ['text/css', 'application/pdf'], true);
+            // An inline SVG is only safe if it is genuinely a sanitised asset;
+            // treat SVG served from _resources as a download to be certain.
+            if ($mimeType === 'image/svg+xml') {
+                $inlineSafe = false;
+            }
+            $disposition = $inlineSafe ? 'inline' : 'attachment';
+
             $response = new StreamResponse($file->fopen('rb'));
             $response->addHeader('Content-Type', $mimeType);
-            $response->addHeader('Content-Disposition', 'inline; filename="' . $displayName . '"');
+            $response->addHeader('Content-Disposition', $disposition . '; filename="' . $displayName . '"');
+            $response->addHeader('X-Content-Type-Options', 'nosniff');
             $response->addHeader('Cache-Control', 'public, max-age=31536000'); // 1 year cache
 
             return $response;
