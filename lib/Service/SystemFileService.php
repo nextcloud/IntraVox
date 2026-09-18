@@ -429,6 +429,28 @@ class SystemFileService {
      * @param \OCP\Files\Folder $shareNode the share's node (owner's view)
      * @return array<int, array<string, mixed>>
      */
+    /**
+     * The IntraVox folder as the share OWNER sees it (ACL applied), for news
+     * traversal (IV-02b). Returns null when the owner is unknown or the folder
+     * cannot be resolved in their view, so the caller falls back to the system
+     * view unchanged. Fails closed on any error.
+     */
+    private function newsRootForShareOwner(?string $ownerId): ?Folder {
+        if ($ownerId === null || $ownerId === '') {
+            return null;
+        }
+        try {
+            $userFolder = $this->rootFolder->getUserFolder($ownerId);
+            $node = $userFolder->get('IntraVox');
+            return $node instanceof Folder ? $node : null;
+        } catch (\Throwable $e) {
+            $this->logger->debug('[SystemFileService] newsRootForShareOwner failed, using system view', [
+                'error' => $e->getMessage(),
+            ]);
+            return null;
+        }
+    }
+
     public function getPageTreeForShareNode(\OCP\Files\Folder $shareNode, string $language): array {
         if (!$this->languageService->isLanguageEnabled($language)) {
             $language = self::FALLBACK_LANGUAGE;
@@ -560,14 +582,19 @@ class SystemFileService {
         string $shareToken,
         int $limit = 5,
         string $sortBy = 'modified',
-        string $sortOrder = 'desc'
+        string $sortOrder = 'desc',
+        ?string $ownerId = null
     ): array {
         if (!$this->languageService->isLanguageEnabled($language)) {
             $language = self::FALLBACK_LANGUAGE;
         }
 
         try {
-            $groupFolder = $this->setupService->getSharedFolder();
+            // IV-02b: traverse the SHARE OWNER's ACL-filtered view when we know who
+            // owns the share, so getDirectoryListing() below never returns pages an
+            // ACL rule hides from the sharer. Without an owner (legacy callers) this
+            // falls back to the system view — unchanged behaviour for those paths.
+            $groupFolder = $this->newsRootForShareOwner($ownerId) ?? $this->setupService->getSharedFolder();
             if ($groupFolder === null) {
                 $this->logger->error('[SystemFileService] Could not access IntraVox groupfolder for news');
                 return ['items' => [], 'total' => 0];

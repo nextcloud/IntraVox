@@ -467,7 +467,9 @@ class PublicShareController extends Controller {
                 $token,
                 $limit,
                 $sortBy,
-                $sortOrder
+                $sortOrder,
+                // IV-02b: traverse the owner's ACL-filtered view, not the system view.
+                $share->getShareOwner()
             );
 
             // READER-GATE: SystemFileService drops manual drafts, but it has no
