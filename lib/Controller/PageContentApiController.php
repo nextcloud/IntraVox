@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace OCA\IntraVox\Controller;
 
+use OCA\IntraVox\Exception\PageNotFoundException;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -77,6 +78,11 @@ class PageContentApiController extends Controller {
             $versions = $this->versionDomain->getPageVersions($pageId);
             $this->logger->info('[ApiController::getPageVersions] Got ' . count($versions) . ' versions');
             return new DataResponse($versions);
+        } catch (PageNotFoundException $e) {
+            return new DataResponse(
+                ['error' => 'Page not found'],
+                Http::STATUS_NOT_FOUND
+            );
         } catch (\Exception $e) {
             $this->logger->error('[ApiController::getPageVersions] Error: ' . $e->getMessage());
             return new DataResponse(
@@ -98,6 +104,11 @@ class PageContentApiController extends Controller {
 
             $page = $this->versionDomain->restorePageVersion($pageId, (int)$timestamp);
             return new DataResponse($page);
+        } catch (PageNotFoundException $e) {
+            return new DataResponse(
+                ['error' => 'Page not found'],
+                Http::STATUS_NOT_FOUND
+            );
         } catch (\Exception $e) {
             return new DataResponse(
                 ['error' => $e->getMessage()],
@@ -119,6 +130,11 @@ class PageContentApiController extends Controller {
             $label = $this->request->getParam('label');
             $this->versionDomain->updateVersionLabel($pageId, (int)$timestamp, $label);
             return new DataResponse(['success' => true]);
+        } catch (PageNotFoundException $e) {
+            return new DataResponse(
+                ['error' => 'Page not found'],
+                Http::STATUS_NOT_FOUND
+            );
         } catch (\Exception $e) {
             return new DataResponse(
                 ['error' => $e->getMessage()],
@@ -141,6 +157,11 @@ class PageContentApiController extends Controller {
 
             $content = $this->versionDomain->getVersionContent($pageId, (int)$timestamp);
             return new DataResponse($content);
+        } catch (PageNotFoundException $e) {
+            return new DataResponse(
+                ['error' => 'Page not found'],
+                Http::STATUS_NOT_FOUND
+            );
         } catch (\Exception $e) {
             return new DataResponse(
                 ['error' => $e->getMessage()],
@@ -163,6 +184,11 @@ class PageContentApiController extends Controller {
 
             $content = $this->versionDomain->getCurrentPageContent($pageId);
             return new DataResponse($content);
+        } catch (PageNotFoundException $e) {
+            return new DataResponse(
+                ['error' => 'Page not found'],
+                Http::STATUS_NOT_FOUND
+            );
         } catch (\Exception $e) {
             return new DataResponse(
                 ['error' => $e->getMessage()],
@@ -185,6 +211,11 @@ class PageContentApiController extends Controller {
 
             $metadata = $this->pageMetadata->getPageMetadata($pageId);
             return new DataResponse($metadata);
+        } catch (PageNotFoundException $e) {
+            return new DataResponse(
+                ['error' => 'Page not found'],
+                Http::STATUS_NOT_FOUND
+            );
         } catch (\Exception $e) {
             return new DataResponse(
                 ['error' => $e->getMessage()],
@@ -206,6 +237,11 @@ class PageContentApiController extends Controller {
             $metadata = $this->request->getParams();
             $updated = $this->pageMetadata->updatePageMetadata($pageId, $metadata);
             return new DataResponse($updated);
+        } catch (PageNotFoundException $e) {
+            return new DataResponse(
+                ['error' => 'Page not found'],
+                Http::STATUS_NOT_FOUND
+            );
         } catch (\Exception $e) {
             return new DataResponse(
                 ['error' => $e->getMessage()],
