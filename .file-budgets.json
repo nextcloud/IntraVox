@@ -29,7 +29,7 @@
     "lib/Controller/OrphanedDataController.php": 194,
     "lib/Controller/PageContentApiController.php": 332,
     "lib/Controller/PageController.php": 408,
-    "lib/Controller/PageLockController.php": 129,
+    "lib/Controller/PageLockController.php": 189,
     "lib/Controller/PeopleController.php": 429,
     "lib/Controller/PhotoStoryController.php": 675,
     "lib/Controller/PreviewController.php": 308,
