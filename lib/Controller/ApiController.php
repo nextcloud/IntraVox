@@ -606,6 +606,16 @@ class ApiController extends Controller {
             $sortOrder = $this->request->getParam('sortOrder', 'desc');
             $filterPublished = $this->request->getParam('filterPublished', 'false') === 'true';
 
+            // IV-19: filterPublished is a client hint, so a read-only user could
+            // simply omit it and receive draft, scheduled and expired pages the
+            // page API hides from them. Only a user who may edit (write at the
+            // root) is allowed to see unpublished news — the editor preview. For
+            // everyone else the published-only filter is forced on, regardless of
+            // what the client asked.
+            if (!$this->permissionService->canWrite('')) {
+                $filterPublished = true;
+            }
+
             // Parse filters JSON
             $filters = json_decode($filtersJson, true) ?? [];
 

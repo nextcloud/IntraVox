@@ -61,6 +61,52 @@ class CommentControllerTest extends TestCase {
         );
     }
 
+    /**
+     * Build the controller with a publication gate active and a fixed page.
+     * $hidden = the page is draft/scheduled/expired; $canWrite = the caller may edit.
+     */
+    private function withPublicationPage(bool $hidden, bool $canWrite): void {
+        $publication = $this->createMock(\OCA\IntraVox\Service\Publication\PublicationStateService::class);
+        $publication->method('isHiddenFromReaders')->willReturn($hidden);
+
+        $page = ['uniqueId' => 'page-123', 'permissions' => ['canRead' => true, 'canWrite' => $canWrite]];
+
+        $this->controller = new CommentController(
+            'intravox',
+            $this->request,
+            $this->commentService,
+            $this->fakePageReadReturning($page),
+            $this->userSession,
+            $this->groupManager,
+            $this->logger,
+            $publication
+        );
+    }
+
+    // IV-16: comments honour publication status, not just existence.
+
+    public function testHiddenPageDeniesCommentsForReadOnlyUser(): void {
+        $this->withPublicationPage(hidden: true, canWrite: false);
+        $response = $this->controller->getComments('page-123');
+        $this->assertEquals(Http::STATUS_NOT_FOUND, $response->getStatus());
+    }
+
+    public function testHiddenPageAllowsCommentsForAnEditor(): void {
+        $this->withPublicationPage(hidden: true, canWrite: true);
+        $this->commentService->method('getComments')->willReturn([]);
+        $this->commentService->method('getCommentCount')->willReturn(0);
+        $response = $this->controller->getComments('page-123');
+        $this->assertEquals(Http::STATUS_OK, $response->getStatus());
+    }
+
+    public function testPublishedPageAllowsCommentsForReadOnlyUser(): void {
+        $this->withPublicationPage(hidden: false, canWrite: false);
+        $this->commentService->method('getComments')->willReturn([]);
+        $this->commentService->method('getCommentCount')->willReturn(0);
+        $response = $this->controller->getComments('page-123');
+        $this->assertEquals(Http::STATUS_OK, $response->getStatus());
+    }
+
     // ==========================================
     // getComments Tests
     // ==========================================
