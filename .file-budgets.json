@@ -131,7 +131,7 @@
     "lib/Service/PhotoStory/NCFilesMetadataReader.php": 163,
     "lib/Service/PhotoStory/PhotoQueryBuilder.php": 637,
     "lib/Service/PhotoStory/PhotoTimelineBuilder.php": 528,
-    "lib/Service/PhotoStoryService.php": 2238,
+    "lib/Service/PhotoStoryService.php": 2277,
     "lib/Service/PublicShare/ShareBreadcrumbBuilder.php": 272,
     "lib/Service/PublicShare/ShareMediaServer.php": 195,
     "lib/Service/PublicShare/ShareTreeShaper.php": 100,
