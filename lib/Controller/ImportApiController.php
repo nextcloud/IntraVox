@@ -6,21 +6,22 @@ namespace OCA\IntraVox\Controller;
 use OCA\IntraVox\Service\Import\ConfluenceHtmlImportOrchestrator;
 use OCA\IntraVox\Service\Import\ZipUploadValidator;
 use OCA\IntraVox\Service\ImportService;
+use OCA\IntraVox\Service\PermissionService;
 use OCA\IntraVox\Service\Read\PageReadService;
 use OCP\AppFramework\Controller;
+use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
-use OCP\IGroupManager;
 use OCP\IRequest;
-use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
 
 /**
  * Importing content into IntraVox: an IntraVox export ZIP, or a Confluence HTML
  * export.
  *
- * Split out of ApiController (PR-A). Both endpoints are admin-only, checked in
- * the body rather than by attribute, and both accept an uploaded file — which is
+ * Split out of ApiController (PR-A). Both endpoints require administering the
+ * IntraVox team folder, checked in the body rather than by attribute (see
+ * PermissionService::canImport()), and both accept an uploaded file — which is
  * why validateParentPageId() travels with them: it is the IDOR guard on the
  * parent page an import is grafted onto, and importConfluenceHtml is its only
  * caller.
@@ -31,7 +32,6 @@ use Psr\Log\LoggerInterface;
  */
 class ImportApiController extends Controller {
     use ApiErrorTrait;
-    use ChecksAdminAccess;
 
     public function __construct(
         string $appName,
@@ -40,8 +40,7 @@ class ImportApiController extends Controller {
         private ImportService $importService,
         private ZipUploadValidator $zipUploads,
         private ConfluenceHtmlImportOrchestrator $confluenceImport,
-        private IGroupManager $groupManager,
-        private IUserSession $userSession,
+        private PermissionService $permissionService,
         private LoggerInterface $logger,
     ) {
         parent::__construct($appName, $request);
@@ -108,16 +107,22 @@ class ImportApiController extends Controller {
         ];
     }
     /**
-     * Import from uploaded ZIP file
-     * Admin only
+     * Import from uploaded ZIP file.
+     *
+     * #[NoAdminRequired] lifts the framework's Nextcloud-admin requirement so
+     * that canImport() below becomes the actual gate: administering the
+     * IntraVox team folder, which a delegated manager can do without being a
+     * Nextcloud admin. Without the attribute the framework rejects that caller
+     * first and the check never runs.
      *
      * @return JSONResponse
      */
+    #[NoAdminRequired]
     public function importZip(): JSONResponse {
-        // Security: Only admins can import
-        if (!$this->isAdmin()) {
+        // Security: only an administrator of the IntraVox team folder may import.
+        if (!$this->permissionService->canImport()) {
             return new JSONResponse(
-                ['error' => 'Admin access required'],
+                ['error' => 'Permission denied'],
                 Http::STATUS_FORBIDDEN
             );
         }
@@ -190,11 +195,12 @@ class ImportApiController extends Controller {
      *
      * @return JSONResponse
      */
+    #[NoAdminRequired]
     public function importConfluenceHtml(): JSONResponse {
-        // Security: Only admins can import
-        if (!$this->isAdmin()) {
+        // Security: only an administrator of the IntraVox team folder may import.
+        if (!$this->permissionService->canImport()) {
             return new JSONResponse(
-                ['error' => 'Admin access required'],
+                ['error' => 'Permission denied'],
                 Http::STATUS_FORBIDDEN
             );
         }

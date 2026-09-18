@@ -4,22 +4,29 @@ declare(strict_types=1);
 namespace OCA\IntraVox\Controller;
 
 use OCA\IntraVox\Service\ExportService;
+use OCA\IntraVox\Service\PermissionService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
-use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\DataDownloadResponse;
 use OCP\IRequest;
 
 /**
- * Controller for exporting IntraVox pages and content
+ * Controller for exporting IntraVox pages and content.
+ *
+ * Every method here reads the IntraVox group folder through a system context
+ * rather than the caller's ACL-filtered view, so it can hand out pages the
+ * caller cannot otherwise reach. That makes the gate below the only thing
+ * standing between a logged-in account and the whole intranet: it is not
+ * defence in depth, it is the defence. See canExport().
  */
 class ExportController extends Controller {
     public function __construct(
         string $appName,
         IRequest $request,
-        private ExportService $exportService
+        private ExportService $exportService,
+        private PermissionService $permissionService
     ) {
         parent::__construct($appName, $request);
     }
@@ -30,8 +37,11 @@ class ExportController extends Controller {
      * @return JSONResponse
      */
     #[NoAdminRequired]
-    #[NoCSRFRequired]
     public function getExportableLanguages(): JSONResponse {
+        if (!$this->permissionService->canExport()) {
+            return new JSONResponse(['error' => 'Permission denied'], Http::STATUS_FORBIDDEN);
+        }
+
         $languages = $this->exportService->getExportableLanguages();
         return new JSONResponse($languages);
     }
@@ -40,11 +50,14 @@ class ExportController extends Controller {
      * Export all pages for a language as JSON download
      *
      * @param string $language Language code
-     * @return DataDownloadResponse
+     * @return DataDownloadResponse|JSONResponse
      */
     #[NoAdminRequired]
-    #[NoCSRFRequired]
-    public function exportLanguage(string $language): DataDownloadResponse {
+    public function exportLanguage(string $language): DataDownloadResponse|JSONResponse {
+        if (!$this->permissionService->canExport()) {
+            return new JSONResponse(['error' => 'Permission denied'], Http::STATUS_FORBIDDEN);
+        }
+
         $includeComments = $this->request->getParam('includeComments', '1') === '1';
 
         $data = $this->exportService->exportLanguage($language, $includeComments);
@@ -61,8 +74,11 @@ class ExportController extends Controller {
      * @return DataDownloadResponse|JSONResponse
      */
     #[NoAdminRequired]
-    #[NoCSRFRequired]
     public function exportPage(string $uniqueId): DataDownloadResponse|JSONResponse {
+        if (!$this->permissionService->canExport()) {
+            return new JSONResponse(['error' => 'Permission denied'], Http::STATUS_FORBIDDEN);
+        }
+
         $includeComments = $this->request->getParam('includeComments', '1') === '1';
 
         $data = $this->exportService->exportPage($uniqueId, $includeComments);
@@ -85,8 +101,11 @@ class ExportController extends Controller {
      * @return DataDownloadResponse|JSONResponse
      */
     #[NoAdminRequired]
-    #[NoCSRFRequired]
     public function exportLanguageZip(string $language): DataDownloadResponse|JSONResponse {
+        if (!$this->permissionService->canExport()) {
+            return new JSONResponse(['error' => 'Permission denied'], Http::STATUS_FORBIDDEN);
+        }
+
         try {
             $includeComments = $this->request->getParam('includeComments', '1') === '1';
 

@@ -158,6 +158,45 @@ class GroupFoldersGateway {
 		return false;
 	}
 
+	/**
+	 * Whether $user may manage the advanced permissions of a folder -- the
+	 * groupfolders notion of "administrator of this team folder".
+	 *
+	 * This is the authorisation behind export and import. Those act on the
+	 * folder as a whole rather than on one page, so the per-path ACL that
+	 * guards /api/pages/* has nothing to say about them; the question is who
+	 * administers the container, and groupfolders already answers it.
+	 *
+	 * With $excludeAdmins false (the default, and what IntraVox passes today)
+	 * upstream lets three kinds of caller through: a Nextcloud admin, a
+	 * groupfolders sub-admin -- someone whose group was granted the Team
+	 * folders settings page via AuthorizedGroupMapper -- and anyone in the
+	 * folder's own manager mappings. Only the third is "manager of this
+	 * folder" in the narrow sense; the first two are deliberate, because
+	 * taking export away from existing installations would be a regression,
+	 * not a fix. Passing true drops the first two, which is the switch issue
+	 * #113 will want once NC admin and IntraVox admin are decoupled.
+	 *
+	 * Fails closed: no groupfolders app, or any error reaching it, means no.
+	 */
+	public function canManageAcl(int $folderId, \OCP\IUser $user, bool $excludeAdmins = false): bool {
+		if (!$this->isAvailable()) {
+			return false;
+		}
+
+		try {
+			return (bool)$this->folderManager()->canManageACL($folderId, $user, $excludeAdmins);
+		} catch (\Throwable $e) {
+			$this->logger->error('[GroupFoldersGateway] canManageACL() failed', [
+				'folderId' => $folderId,
+				'user' => $user->getUID(),
+				'error' => $e->getMessage(),
+			]);
+
+			return false;
+		}
+	}
+
 	public function getFolder(int $folderId): mixed {
 		if (!$this->isAvailable()) {
 			return null;
