@@ -154,16 +154,18 @@ final class ShareMediaServer {
 
         // Whether this type may be rendered INLINE.
         //
-        // On the enforced-allowlist path (page media) the file came through the
-        // upload allowlist + SVG sanitiser, so every servable media type — SVG
-        // included — is safe inline.
+        // On the enforced-allowlist path (page media) every servable type is
+        // raster/video and safe inline — EXCEPT SVG. The upload path sanitises
+        // SVG, but WebDAV can drop an unsanitised SVG straight into _media,
+        // bypassing that sanitiser, and SVG renders as an active document. So SVG
+        // is served as a download here too, never inline (IV-08b).
         //
         // On the relaxed path (the _resources library, which WebDAV can write to
         // directly, bypassing the sanitiser) fonts/css/pdf and raster images may
         // render inline, but text/html and SVG are served as a download so an
         // unsanitised script cannot execute under our origin (IV-08).
         if ($enforceAllowlist) {
-            $inline = true; // already passed isServableMedia() above
+            $inline = $mimeType !== 'image/svg+xml'; // already passed isServableMedia() above
         } else {
             $inline = (str_starts_with($mimeType, 'image/') && $mimeType !== 'image/svg+xml')
                 || str_starts_with($mimeType, self::VIDEO_PREFIX)

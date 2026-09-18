@@ -153,4 +153,15 @@ class ShareMediaServerTest extends TestCase {
         $this->assertNotNull($response);
         $this->assertStringStartsWith('inline;', $this->disposition($response));
     }
+
+    /**
+     * IV-08b: even on the enforced page-media path, SVG is served as a download.
+     * The upload path sanitises SVG, but WebDAV can drop an unsanitised SVG into
+     * _media, and SVG renders as an active document — so it must never go inline.
+     */
+    public function testEnforcedAllowlistServesSvgAsAttachment(): void {
+        $response = $this->server->stream($this->fileReporting('image/svg+xml', 'logo.svg'), null, true);
+        $this->assertNotNull($response);
+        $this->assertStringStartsWith('attachment;', $this->disposition($response), 'page-media SVG must be a download');
+    }
 }
