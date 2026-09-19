@@ -6,6 +6,17 @@ IntraVox is a Nextcloud intranet page builder.
 
 ## [Unreleased]
 
+### Fixed
+
+- **The details sidebar no longer reports "Page not found" on a cold load.**
+  If the sidebar was remembered as open, it mounted before the page had loaded
+  and asked the server for `/api/pages/undefined/metadata`, whose 404 body was
+  shown as though the page itself were missing. The properties had in fact
+  loaded correctly a moment later: the failing request started first but
+  finished last, so its error overwrote the good result. Both the properties
+  and the version history now wait for a real page and ignore a response that
+  a newer request has already superseded.
+
 ## [3.0.0] - 2026-09-16 — The page engine, taken apart, and hardened
 
 A structural release: the page engine was taken apart, and almost nothing about

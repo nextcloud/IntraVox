@@ -67,6 +67,7 @@ step "version sync" node scripts/sync-version.js --check
 step "import consistency" npm run --silent lint:imports
 step "l10n source strings" npm run --silent lint:l10n
 step "facet serialization" npm run --silent lint:facets
+step "sidebar load guards" npm run --silent lint:sidebar-guards
 step "line endings" npm run --silent lint:eol
 step "file budgets" npm run --silent lint:budgets
 step "security markers" npm run --silent lint:security

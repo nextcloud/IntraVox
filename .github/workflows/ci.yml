@@ -145,6 +145,9 @@ jobs:
       - name: Facet serialization
         run: node scripts/check-facet-serialization.js
 
+      - name: Sidebar load guards
+        run: node scripts/check-sidebar-load-guards.js
+
       - name: Line endings
         run: node scripts/check-eol-consistency.js
 
