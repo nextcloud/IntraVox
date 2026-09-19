@@ -305,6 +305,74 @@ class MediaSanitizerTest extends TestCase {
         }
     }
 
+    // ---------- validateImageFile: display metadata (dimensions + colour) ----------
+
+    public function testValidateImageReturnsDimensions(): void {
+        if (!function_exists('imagejpeg')) {
+            $this->markTestSkipped('GD not available');
+        }
+        $tmp = $this->writeSolidJpeg(300, 200, 20, 40, 60);
+        try {
+            $meta = $this->sanitizer->validateImageFile($tmp, 'image/jpeg');
+            $this->assertSame(300, $meta['width']);
+            $this->assertSame(200, $meta['height']);
+        } finally {
+            unlink($tmp);
+        }
+    }
+
+    public function testValidateImageReturnsDominantColourOfASolidImage(): void {
+        if (!function_exists('imagejpeg')) {
+            $this->markTestSkipped('GD not available');
+        }
+        // A solid colour must average back to (near) itself. JPEG is lossy, so
+        // allow a small per-channel tolerance rather than asserting exact hex.
+        $tmp = $this->writeSolidJpeg(64, 64, 200, 100, 50);
+        try {
+            $meta = $this->sanitizer->validateImageFile($tmp, 'image/jpeg');
+            $this->assertNotNull($meta['dominantColor']);
+            $this->assertMatchesRegularExpression('/^#[0-9a-f]{6}$/', $meta['dominantColor']);
+            [$r, $g, $b] = sscanf($meta['dominantColor'], '#%02x%02x%02x');
+            $this->assertEqualsWithDelta(200, $r, 12, 'red channel');
+            $this->assertEqualsWithDelta(100, $g, 12, 'green channel');
+            $this->assertEqualsWithDelta(50, $b, 12, 'blue channel');
+        } finally {
+            unlink($tmp);
+        }
+    }
+
+    public function testValidateImageCorrectsExifOrientationForRotatedPhotos(): void {
+        if (!function_exists('imagejpeg') || !function_exists('exif_read_data')) {
+            $this->markTestSkipped('GD or EXIF not available');
+        }
+        // A landscape 400x200 sensor image flagged orientation=6 (rotate 90° CW)
+        // DISPLAYS as 200x400 portrait. The reserved box must match the display,
+        // not the raw sensor dims, or the aspect-ratio is 90° wrong.
+        $tmp = $this->writeSolidJpeg(400, 200, 10, 10, 10, 6);
+        try {
+            $meta = $this->sanitizer->validateImageFile($tmp, 'image/jpeg');
+            $this->assertSame(200, $meta['width'], 'width/height swapped for orientation 6');
+            $this->assertSame(400, $meta['height']);
+        } finally {
+            unlink($tmp);
+        }
+    }
+
+    public function testValidateImageStillReturnsDimensionsWhenColourIsSkipped(): void {
+        // A PNG (no EXIF path) with a tiny valid raster still yields dimensions;
+        // dominantColor is best-effort and may be present, but width/height are
+        // always there — that is what the layout-shift fix depends on.
+        $tmp = $this->writeRealPng();
+        try {
+            $meta = $this->sanitizer->validateImageFile($tmp, 'image/png');
+            $this->assertSame(1, $meta['width']);
+            $this->assertSame(1, $meta['height']);
+            $this->assertArrayHasKey('dominantColor', $meta);
+        } finally {
+            unlink($tmp);
+        }
+    }
+
     /**
      * Write a minimal but valid 1x1 transparent PNG to a temp file.
      */
@@ -316,5 +384,42 @@ class MediaSanitizerTest extends TestCase {
         );
         file_put_contents($tmp, $png);
         return $tmp;
+    }
+
+    /**
+     * A solid-colour JPEG of the given size, optionally with an EXIF Orientation
+     * tag, for the dimension/colour/orientation tests.
+     */
+    private function writeSolidJpeg(int $w, int $h, int $r, int $g, int $b, ?int $orientation = null): string {
+        $tmp = tempnam(sys_get_temp_dir(), 'iv-jpg-') . '.jpg';
+        $img = imagecreatetruecolor($w, $h);
+        imagefilledrectangle($img, 0, 0, $w - 1, $h - 1, imagecolorallocate($img, $r, $g, $b));
+        imagejpeg($img, $tmp, 92);
+        imagedestroy($img);
+        if ($orientation !== null) {
+            $this->injectExifOrientation($tmp, $orientation);
+        }
+        return $tmp;
+    }
+
+    /**
+     * Splice a minimal EXIF APP1 segment carrying only an Orientation tag into a
+     * JPEG right after SOI, so exif_read_data() reports the given orientation.
+     * Keeps the test self-contained (no image with baked-in EXIF committed).
+     */
+    private function injectExifOrientation(string $file, int $orientation): void {
+        $jpeg = file_get_contents($file);
+        // TIFF header (little-endian) + 1 IFD entry: tag 0x0112 (Orientation),
+        // type 3 (SHORT), count 1, value = $orientation, then next-IFD = 0.
+        $tiff = "II\x2a\x00\x08\x00\x00\x00"
+            . "\x01\x00"                                   // 1 IFD entry
+            . "\x12\x01\x03\x00\x01\x00\x00\x00"           // tag 0x0112, SHORT, count 1
+            . pack('v', $orientation) . "\x00\x00"          // value (2 bytes) + pad
+            . "\x00\x00\x00\x00";                            // next IFD offset = 0
+        $exif = "Exif\x00\x00" . $tiff;
+        $app1 = "\xFF\xE1" . pack('n', strlen($exif) + 2) . $exif;
+        // Insert APP1 immediately after the SOI marker (first 2 bytes 0xFFD8).
+        $spliced = substr($jpeg, 0, 2) . $app1 . substr($jpeg, 2);
+        file_put_contents($file, $spliced);
     }
 }

@@ -183,6 +183,49 @@ class WidgetSanitizerSpecTest extends TestCase {
 		$this->assertStringNotContainsString('javascript:', $result['linkUrl']);
 	}
 
+	/**
+	 * The measured display metadata (naturalWidth/naturalHeight/bgColor) must
+	 * SURVIVE sanitization — the sanitizer is an allowlist, so an unlisted field
+	 * is silently dropped and the whole no-layout-shift feature would then break
+	 * the moment a page is saved. This pins it against that silent regression.
+	 */
+	public function testImageKeepsMeasuredDisplayMetadata(): void {
+		$result = $this->sanitizer->sanitizeWidget([
+			'type' => 'image',
+			'src' => 'photo.jpg',
+			'naturalWidth' => 1200,
+			'naturalHeight' => 797,
+			'bgColor' => '#8A6D4F',
+		]);
+
+		$this->assertSame(1200, $result['naturalWidth']);
+		$this->assertSame(797, $result['naturalHeight']);
+		$this->assertSame('#8a6d4f', $result['bgColor'], 'hex is lower-cased, kept');
+	}
+
+	public function testImageDropsNonPositiveOrGarbageDimensions(): void {
+		$result = $this->sanitizer->sanitizeWidget([
+			'type' => 'image',
+			'src' => 'photo.jpg',
+			'naturalWidth' => 0,
+			'naturalHeight' => -5,
+		]);
+
+		$this->assertArrayNotHasKey('naturalWidth', $result, '0 is dropped, not stored');
+		$this->assertArrayNotHasKey('naturalHeight', $result, 'negative is dropped');
+	}
+
+	public function testImageRejectsANonHexBgColorSoItCannotInjectCss(): void {
+		$result = $this->sanitizer->sanitizeWidget([
+			'type' => 'image',
+			'src' => 'photo.jpg',
+			// A CSS-injection attempt via the placeholder colour must be refused.
+			'bgColor' => 'red; background-image: url(javascript:alert(1))',
+		]);
+
+		$this->assertArrayNotHasKey('bgColor', $result, 'only #rrggbb survives');
+	}
+
 	public function testLinksClampsColumnsAndRefusesUnknownLayout(): void {
 		$result = $this->sanitizer->sanitizeWidget([
 			'type' => 'links',

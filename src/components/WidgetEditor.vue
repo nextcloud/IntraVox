@@ -664,9 +664,27 @@ export default {
       this.showMediaPicker = true;
     },
     handleMediaSelect(selection) {
-      // selection = { filename, folder }
+      // selection = { filename, folder, meta? }
       this.localWidget.src = selection.filename;
       this.localWidget.mediaFolder = selection.folder;
+
+      // Store the measured display metadata so the page reserves the image's
+      // space and shows a dominant-colour placeholder (no late pop-in / shift).
+      // These are the file's real pixel dimensions — distinct from `width`,
+      // which is the editor's manual layout choice below. We always clear the
+      // previous values first so switching to a file WITHOUT meta (an existing
+      // library pick, or a re-selected video) never carries a stale ratio/colour.
+      delete this.localWidget.naturalWidth;
+      delete this.localWidget.naturalHeight;
+      delete this.localWidget.bgColor;
+      const meta = selection.meta;
+      if (this.mediaPickerType === 'image' && meta && meta.width > 0 && meta.height > 0) {
+        this.localWidget.naturalWidth = meta.width;
+        this.localWidget.naturalHeight = meta.height;
+        if (meta.dominantColor) {
+          this.localWidget.bgColor = meta.dominantColor;
+        }
+      }
 
       // For video widgets, ensure provider is set to 'local'
       if (this.mediaPickerType === 'video') {
