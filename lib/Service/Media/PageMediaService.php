@@ -266,10 +266,12 @@ class PageMediaService {
      * against the allow-list, the size ceilings, the polyglot check on raster
      * images and the SVG sanitize pass with its own smaller ceiling.
      *
-     * Returns the bytes to write, so callers never re-read the temp file.
+     * Returns the bytes to write, so callers never re-read the temp file. For
+     * raster images it also carries the display metadata harvested by the same
+     * polyglot check (dimensions + dominant colour); null for video/SVG.
      *
      * @param array $file $_FILES-shaped upload array
-     * @return array{content: string, mimeType: string}
+     * @return array{content: string, mimeType: string, imageMeta: ?array{width:int,height:int,dominantColor:?string}}
      * @throws \InvalidArgumentException on any rejected upload
      */
     public function validateUpload(array $file): array {
@@ -289,9 +291,13 @@ class PageMediaService {
             throw new \InvalidArgumentException('File too large. Maximum size is 50MB.');
         }
 
-        // Additional validation for image files (prevents polyglot attacks)
+        // Additional validation for image files (prevents polyglot attacks).
+        // The same header read also yields the display metadata (dimensions +
+        // dominant colour) that lets the frontend reserve layout space and show
+        // an instant placeholder — no separate decode pass.
+        $imageMeta = null;
         if (in_array($mimeType, ['image/jpeg', 'image/png', 'image/gif', 'image/webp'])) {
-            $this->mediaSanitizer->validateImageFile($file['tmp_name'], $mimeType);
+            $imageMeta = $this->mediaSanitizer->validateImageFile($file['tmp_name'], $mimeType);
         }
 
         // SVG files get special treatment: smaller size limit + sanitization
@@ -305,7 +311,7 @@ class PageMediaService {
             $content = file_get_contents($file['tmp_name']);
         }
 
-        return ['content' => $content, 'mimeType' => $mimeType];
+        return ['content' => $content, 'mimeType' => $mimeType, 'imageMeta' => $imageMeta];
     }
 
     /**

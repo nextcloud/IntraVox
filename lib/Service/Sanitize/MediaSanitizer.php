@@ -170,14 +170,36 @@ final class MediaSanitizer {
     }
 
     /**
-     * Verify a file actually decodes as the image type its MIME claims.
-     * Defends against polyglot uploads (e.g. an HTML file masquerading
-     * with an image/jpeg extension+MIME).
-     *
-     * @throws \InvalidArgumentException when the file fails to decode or
-     *         the decoded format does not match the declared MIME
+     * Above this pixel count we skip the dominant-colour decode: imagecreate-
+     * fromstring() loads the whole raster into RAM (~w*h*4 bytes), so a 24MP
+     * image is already ~96MB. The metadata is a nicety, never worth OOMing a
+     * worker — above the cap the caller still gets width/height (from the cheap
+     * getimagesize header read) and simply no colour.
      */
-    public function validateImageFile(string $tmpFile, string $detectedMime): void {
+    private const MAX_COLOUR_DECODE_PIXELS = 24_000_000;
+
+    /**
+     * Verify a file actually decodes as the image type its MIME claims, and
+     * return the display metadata a caller can use to reserve layout space and
+     * show a placeholder (issue: late image pop-in / layout shift).
+     *
+     * Defends against polyglot uploads (e.g. an HTML file masquerading with an
+     * image/jpeg extension+MIME) exactly as before — the validation throw is
+     * unchanged. The return is additive: the same getimagesize() call that does
+     * the polyglot check already knows the pixel dimensions, so harvesting them
+     * (plus a one-pixel dominant colour) is nearly free.
+     *
+     * @return array{width:int,height:int,dominantColor:?string} LOGICAL width/
+     *   height (already corrected for EXIF orientation, so a rotated phone photo
+     *   reports the dimensions it will actually display at, not the raw sensor
+     *   dimensions — a raw-dimension aspect-ratio would reserve a 90°-wrong box
+     *   and make the shift WORSE). dominantColor is an '#rrggbb' average, or null
+     *   when it cannot be computed cheaply (too large, or decode unsupported).
+     *
+     * @throws \InvalidArgumentException when the file fails to decode or the
+     *         decoded format does not match the declared MIME
+     */
+    public function validateImageFile(string $tmpFile, string $detectedMime): array {
         $imageInfo = @getimagesize($tmpFile);
         if ($imageInfo === false) {
             throw new \InvalidArgumentException('File appears to be an invalid or corrupted image');
@@ -199,6 +221,77 @@ final class MediaSanitizer {
             throw new \InvalidArgumentException(
                 'Image file appears to be corrupted or has incorrect extension'
             );
+        }
+
+        [$rawWidth, $rawHeight] = [(int)$imageInfo[0], (int)$imageInfo[1]];
+
+        // EXIF orientation: 5–8 swap the axes (the sensor stored it landscape,
+        // the camera flags "display rotated 90°"). Only JPEG carries EXIF here.
+        $swap = false;
+        if ($imageInfo[2] === IMAGETYPE_JPEG && function_exists('exif_read_data')) {
+            $exif = @exif_read_data($tmpFile);
+            $orientation = is_array($exif) ? (int)($exif['Orientation'] ?? 0) : 0;
+            $swap = in_array($orientation, [5, 6, 7, 8], true);
+        }
+        $width = $swap ? $rawHeight : $rawWidth;
+        $height = $swap ? $rawWidth : $rawHeight;
+
+        return [
+            'width' => $width,
+            'height' => $height,
+            'dominantColor' => $this->dominantColor($tmpFile, $rawWidth, $rawHeight),
+        ];
+    }
+
+    /**
+     * The average colour of an image as '#rrggbb', for a placeholder box that
+     * shows instantly while the full image loads. Computed by asking GD to
+     * downscale the whole image to a single 1×1 pixel — the cheapest possible
+     * average. Returns null (no placeholder, the box falls back to a neutral
+     * skeleton) rather than risking anything: above the megapixel cap, when GD
+     * is absent, or on any decode failure.
+     */
+    private function dominantColor(string $tmpFile, int $rawWidth, int $rawHeight): ?string {
+        if ($rawWidth <= 0 || $rawHeight <= 0) {
+            return null;
+        }
+        if ($rawWidth * $rawHeight > self::MAX_COLOUR_DECODE_PIXELS) {
+            return null; // too large to decode safely just for a nicety
+        }
+        if (!function_exists('imagecreatefromstring') || !function_exists('imagescale')) {
+            return null; // GD not available
+        }
+
+        $src = null;
+        $one = null;
+        try {
+            $data = @file_get_contents($tmpFile);
+            if ($data === false) {
+                return null;
+            }
+            $src = @imagecreatefromstring($data);
+            if ($src === false) {
+                return null;
+            }
+            // Downscale to 1×1: GD averages the pixels for us.
+            $one = @imagescale($src, 1, 1);
+            if ($one === false) {
+                return null;
+            }
+            $rgb = imagecolorat($one, 0, 0);
+            $r = ($rgb >> 16) & 0xFF;
+            $g = ($rgb >> 8) & 0xFF;
+            $b = $rgb & 0xFF;
+            return sprintf('#%02x%02x%02x', $r, $g, $b);
+        } catch (\Throwable $e) {
+            return null;
+        } finally {
+            if ($src instanceof \GdImage) {
+                imagedestroy($src);
+            }
+            if ($one instanceof \GdImage) {
+                imagedestroy($one);
+            }
         }
     }
 }

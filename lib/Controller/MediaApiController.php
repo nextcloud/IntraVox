@@ -96,8 +96,14 @@ class MediaApiController extends Controller {
                 throw new \InvalidArgumentException('File upload failed - tmp_name is empty. Upload error: ' . ($file['error'] ?? 'unknown'));
             }
 
-            $filename = $this->mediaOrchestrator->uploadMedia($pageId, $file);
-            return new DataResponse(['filename' => $filename], Http::STATUS_CREATED);
+            $result = $this->mediaOrchestrator->uploadMedia($pageId, $file);
+            // 'meta' (dimensions + dominant colour) is additive: older clients
+            // read only 'filename' and are unaffected; the editor uses 'meta' to
+            // reserve layout space + show a placeholder (no more image pop-in).
+            return new DataResponse([
+                'filename' => $result['filename'],
+                'meta' => $result['imageMeta'],
+            ], Http::STATUS_CREATED);
         } catch (PageNotFoundException $e) {
             $this->logger->warning('[uploadMedia] PageNotFoundException: ' . $e->getMessage(), [
                 'pageId' => $pageId,

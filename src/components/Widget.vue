@@ -52,6 +52,8 @@
           :alt="widget.alt"
           :style="getImageStyle()"
           loading="lazy"
+          decoding="async"
+          @load="onImageLoaded"
         />
       </a>
       <!-- Image without link -->
@@ -61,6 +63,8 @@
         :alt="widget.alt"
         :style="getImageStyle()"
         loading="lazy"
+        decoding="async"
+        @load="onImageLoaded"
       />
       <div v-else class="placeholder">
         <span>{{ t('intravox', 'No image selected') }}</span>
@@ -265,7 +269,10 @@ export default {
       localContent: this.widget.content || '',
       localVideoError: null,
       isCompactMode: false,
-      resizeObserver: null
+      resizeObserver: null,
+      // Whether the real image pixels have painted; until then the box shows the
+      // dominant-colour placeholder (see getImageStyle / onImageLoaded).
+      imageLoaded: false
     };
   },
   mounted() {
@@ -290,6 +297,18 @@ export default {
       // Inline parsen: een kop is één regel tekst. Met de blockparser werd
       // "1. Titel" een genummerde lijst en verdween het cijfer uit de kop.
       return markdownToInlineHtml(this.widget.content || '');
+    },
+    imageAspectRatio() {
+      // The measured natural dimensions (captured at upload). Used to reserve
+      // the image's box before it loads. Returns a CSS aspect-ratio string
+      // ("300 / 200") or null when the dims are absent (older content) — in
+      // which case nothing is reserved and the image behaves exactly as before.
+      const w = Number(this.widget.naturalWidth);
+      const h = Number(this.widget.naturalHeight);
+      if (Number.isFinite(w) && Number.isFinite(h) && w > 0 && h > 0) {
+        return `${w} / ${h}`;
+      }
+      return null;
     },
     hasImageLink() {
       // Check if image has a valid link configured
@@ -391,6 +410,11 @@ export default {
   watch: {
     'widget.content'(newValue) {
       this.localContent = newValue || '';
+    },
+    'widget.src'() {
+      // A different image starts loading again: re-arm the placeholder so the
+      // dominant colour shows until the new pixels paint.
+      this.imageLoaded = false;
     },
     localContent(newValue) {
       // Emit update immediately when content changes (not just on blur)
@@ -514,7 +538,30 @@ export default {
         style.objectPosition = `center ${position}`;
       }
 
+      // Reserve the image's space BEFORE the bytes arrive (no layout shift).
+      // naturalWidth/naturalHeight are the measured pixel dimensions captured at
+      // upload — distinct from `width` above, which is the editor's manual
+      // layout choice in px. Only the custom-width branch needs the explicit
+      // ratio (its height is `auto` → 0 until load); the full-width branch is
+      // already height-bounded by maxHeight + cover, so we leave its crop alone.
+      if (this.widget.width && this.imageAspectRatio) {
+        style.aspectRatio = this.imageAspectRatio;
+        style.height = 'auto';
+      }
+
+      // Instant placeholder: the box shows the image's dominant colour until the
+      // pixels load, then fades to them (see onImageLoaded). bgColor is the
+      // upload-captured average; absent → a neutral skeleton tone.
+      if (!this.imageLoaded) {
+        style.backgroundColor = this.widget.bgColor || 'var(--color-background-dark, #e9e9e9)';
+      }
+
       return style;
+    },
+    onImageLoaded() {
+      // Once the real pixels are painted, drop the placeholder colour so it
+      // cannot bleed through a transparent PNG.
+      this.imageLoaded = true;
     },
     getDividerStyle() {
       const style = {};
@@ -974,6 +1021,15 @@ export default {
   border-radius: var(--border-radius-container-large);
   display: block;
   object-fit: contain;
+  /* The dominant-colour placeholder (set inline via getImageStyle) fades out as
+     the real pixels paint, rather than snapping — a calmer load. */
+  transition: background-color 300ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .widget-image img {
+    transition: none;
+  }
 }
 
 .widget-image .placeholder {

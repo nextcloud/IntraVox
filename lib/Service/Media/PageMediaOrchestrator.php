@@ -62,10 +62,16 @@ final class PageMediaOrchestrator {
     /**
      * Upload media (image or video) for a specific page.
      */
+    /**
+     * @return array{filename:string,imageMeta:?array{width:int,height:int,dominantColor:?string}}
+     *   the stored filename plus, for raster images, the display metadata the
+     *   editor writes into the widget so the page reserves layout space and
+     *   shows an instant placeholder. imageMeta is null for video/SVG.
+     */
     public function uploadMedia(
         string $pageId,
         array $file
-    ): string {
+    ): array {
         // Order matters and is preserved from before the split: the $_FILES
         // shape check runs first, then the id is sanitized (it can reject an
         // id too), then the rest of the upload validation.
@@ -101,7 +107,7 @@ final class PageMediaOrchestrator {
         // image widgets that just got their src bumped.
         $this->cacheInvalidator->invalidate($pageId);
 
-        return $filename;
+        return ['filename' => $filename, 'imageMeta' => $validated['imageMeta'] ?? null];
     }
 
     /**

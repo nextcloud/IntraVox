@@ -511,9 +511,14 @@ export default {
       if (this.selectedFile) {
         await this.performUpload()
       } else if (this.selectedMedia) {
+        // Picking an EXISTING library file: no upload response, so no measured
+        // metadata. It degrades cleanly — the widget keeps working, just without
+        // the reserve-space/placeholder benefit until that file is re-uploaded
+        // (or a future media-listing carries dimensions). Shape stays consistent.
         this.$emit('select', {
           filename: this.selectedMedia.path || this.selectedMedia.name, // Use path for subfolders
-          folder: this.selectedMedia.folder
+          folder: this.selectedMedia.folder,
+          meta: this.selectedMedia.meta || null
         })
       }
     },
@@ -561,10 +566,13 @@ export default {
           }
         )
 
-        // Upload successful, emit select event
+        // Upload successful, emit select event. `meta` (dimensions + dominant
+        // colour) is present for raster images so the editor can reserve layout
+        // space + set a placeholder; null/absent for video/SVG or older servers.
         this.$emit('select', {
           filename: response.data.filename,
-          folder: this.uploadTarget
+          folder: this.uploadTarget,
+          meta: response.data.meta || null
         })
 
       } catch (error) {

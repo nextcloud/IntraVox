@@ -318,6 +318,27 @@ final class PageShapeSanitizer {
                 if (isset($widget['width'])) {
                     $sanitized['width'] = $this->sanitizeText((string)($widget['width'] ?? ''));
                 }
+                // Measured display metadata (issue: late image pop-in / layout
+                // shift). naturalWidth/naturalHeight are the file's real pixel
+                // dimensions captured at upload — used to reserve the image's box
+                // via CSS aspect-ratio; distinct from `width` above, the editor's
+                // manual layout choice. Coerced to positive ints (0/garbage → the
+                // field is dropped, so the frontend simply reserves nothing).
+                foreach (['naturalWidth', 'naturalHeight'] as $dimKey) {
+                    if (isset($widget[$dimKey])) {
+                        $dim = (int)$widget[$dimKey];
+                        if ($dim > 0) {
+                            $sanitized[$dimKey] = $dim;
+                        }
+                    }
+                }
+                // bgColor is the dominant-colour placeholder, rendered as an inline
+                // background-color. Strictly validated to an #rrggbb hex so it can
+                // never carry arbitrary CSS into the style attribute.
+                if (isset($widget['bgColor']) && is_string($widget['bgColor'])
+                    && preg_match('/^#[0-9a-fA-F]{6}$/', $widget['bgColor'])) {
+                    $sanitized['bgColor'] = strtolower($widget['bgColor']);
+                }
                 if (isset($widget['objectFit'])) {
                     $allowedFits = ['cover', 'contain', 'fill', 'none', 'scale-down'];
                     $sanitized['objectFit'] = in_array($widget['objectFit'], $allowedFits) ? $widget['objectFit'] : 'cover';
