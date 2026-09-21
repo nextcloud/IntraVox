@@ -58,7 +58,7 @@
     "lib/Service/Feed/FeedImageProxy.php": 116,
     "lib/Service/Feed/FeedResponseReader.php": 191,
     "lib/Service/Feed/FeedTokenResolver.php": 261,
-    "lib/Service/FeedReaderService.php": 2269,
+    "lib/Service/FeedReaderService.php": 2279,
     "lib/Service/FeedService.php": 719,
     "lib/Service/FeedTokenService.php": 165,
     "lib/Service/Filter/FacetCalculator.php": 345,
