@@ -13,6 +13,7 @@ use OCP\Share\IShare;
 use OCP\Security\IHasher;
 use OCP\Share\Exceptions\ShareNotFound;
 use Psr\Log\LoggerInterface;
+use OCA\IntraVox\Service\Locator\PageLocator;
 use OCA\IntraVox\Service\Path\PagePathHelper;
 
 /**
@@ -36,6 +37,13 @@ class PublicShareService {
     private PermissionService $permissionService;
     private IHasher $hasher;
 
+    /**
+     * Nullable so an instance can be built without the index — unit tests do
+     * exactly that, and findPageFileInfo() then takes the filesystem walk,
+     * which is the same route a stale or failing index already falls back to.
+     */
+    private ?PageLocator $pageLocator;
+
     public function __construct(
         IShareManager $shareManager,
         IRootFolder $rootFolder,
@@ -44,8 +52,10 @@ class PublicShareService {
         IConfig $config,
         LoggerInterface $logger,
         PermissionService $permissionService,
-        IHasher $hasher
+        IHasher $hasher,
+        ?PageLocator $pageLocator = null
     ) {
+        $this->pageLocator = $pageLocator;
         $this->shareManager = $shareManager;
         $this->rootFolder = $rootFolder;
         $this->db = $db;
@@ -983,7 +993,24 @@ class PublicShareService {
             }
 
             $langFolder = $folder->get($language);
-            $result = $this->searchForPageFile($langFolder, $uniqueId);
+
+            // Index first, walk as fallback. searchForPageFile() reads and
+            // decodes every page in the language tree until one matches (62.7ms
+            // four levels deep); locateViaIndex() is one query and verifies the
+            // uniqueId it finds, so a stale index falls through rather than
+            // serving another page. @see ShareInfoIndexFallbackTest
+            $result = null;
+            if ($this->pageLocator !== null && $langFolder instanceof \OCP\Files\Folder) {
+                $viaIndex = $this->pageLocator->locateViaIndex(fn() => $folder, $uniqueId, $langFolder);
+                $data = isset($viaIndex['file'])
+                    ? json_decode($viaIndex['file']->getContent(), true)
+                    : null;
+                if (is_array($data)) {
+                    $result = ['file' => $viaIndex['file'], 'data' => $data];
+                }
+            }
+
+            $result ??= $this->searchForPageFile($langFolder, $uniqueId);
 
             if ($result !== null) {
                 return [
