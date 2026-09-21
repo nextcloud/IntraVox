@@ -135,7 +135,7 @@
     "lib/Service/PublicShare/ShareBreadcrumbBuilder.php": 272,
     "lib/Service/PublicShare/ShareMediaServer.php": 195,
     "lib/Service/PublicShare/ShareTreeShaper.php": 100,
-    "lib/Service/PublicShareService.php": 1699,
+    "lib/Service/PublicShareService.php": 1726,
     "lib/Service/Publication/MetaVoxGateway.php": 239,
     "lib/Service/Publication/PublicationStateService.php": 244,
     "lib/Service/PublicationSettingsService.php": 108,
