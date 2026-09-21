@@ -587,7 +587,7 @@ export default {
 /* Same size and rhythm as .news-widget-title and .people-widget-title, so a
    page that mixes widget types keeps one heading level visually. */
 .feed-widget-title {
-  margin: 0 0 16px 0;
+  margin: 0 0 8px 0;
   font-size: 18px;
   font-weight: 600;
   color: var(--color-main-text);
@@ -609,7 +609,7 @@ export default {
   margin-top: 8px;
   padding-top: 8px;
   border-top: 1px solid var(--color-border);
-  font-size: 12px;
+  font-size: var(--font-size-small, 13px);
   color: var(--color-text-maxcontrast);
 }
 
@@ -659,9 +659,9 @@ export default {
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 8px;
-  padding-bottom: 8px;
+  padding-bottom: 4px;
   border-bottom: 1px solid var(--color-border);
-  font-size: 12px;
+  font-size: var(--font-size-small, 13px);
   color: var(--color-text-maxcontrast);
 }
 
@@ -674,12 +674,17 @@ export default {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 4px 8px;
+  /* The small clickable area, not the default 34px: this sits beside an 18px
+     line of text in a dense header, and the standard size built a button
+     taller than the row it lives in — 49px for one line, which pushed the
+     first item 73px below the widget title. 24px still meets WCAG 2.2. */
+  min-height: var(--clickable-area-small, 24px);
+  padding: 2px 8px;
   background: transparent;
   border: none;
   border-radius: var(--border-radius);
   color: var(--color-text-maxcontrast);
-  font-size: 12px;
+  font-size: var(--font-size-small, 13px);
   cursor: pointer;
 }
 

@@ -447,7 +447,9 @@ export default {
   display: flex;
   align-items: center;
   gap: 12px;
-  font-size: 12px;
+  /* Nextcloud's smallest size. 12px was below anything a theme or an
+     accessibility setting can reach. */
+  font-size: var(--font-size-small, 13px);
   color: var(--color-text-maxcontrast);
   flex-wrap: wrap;
 }
@@ -497,11 +499,11 @@ export default {
   }
 
   .feed-item-title {
-    font-size: 13px;
+    font-size: var(--default-font-size, 15px);
   }
 
   .feed-item-meta {
-    font-size: 11px;
+    font-size: var(--font-size-small, 13px);
     gap: 8px;
   }
 
@@ -518,11 +520,11 @@ export default {
   }
 
   .feed-item-title {
-    font-size: 12px;
+    font-size: var(--default-font-size, 15px);
   }
 
   .feed-item-meta {
-    font-size: 10px;
+    font-size: var(--font-size-small, 13px);
   }
 }
 
