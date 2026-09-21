@@ -1,5 +1,19 @@
 <template>
   <div class="feed-widget-editor">
+    <!-- Widget title. First field, matching the news, people and calendar
+         editors: it names the block on the page, so it comes before the
+         question of where the content comes from. -->
+    <div class="form-group">
+      <label for="feed-widget-title">{{ t('intravox', 'Widget title (optional)') }}</label>
+      <input
+        id="feed-widget-title"
+        v-model="localWidget.title"
+        type="text"
+        :placeholder="t('intravox', 'e.g. Latest news')"
+        @input="debouncedEmitUpdate"
+      />
+    </div>
+
     <!-- Source type selection -->
     <div class="form-group">
       <label for="feed-source-type">{{ t('intravox', 'Source type') }}</label>
@@ -249,10 +263,23 @@
       />
     </div>
 
-    <!-- Display options -->
+    <!-- Display options.
+         Grouped outside-in: first the widget frame, then what each item shows,
+         then what a click does. The flat list mixed those three, so "show
+         source" (per item) sat next to "open links in new tab" (behaviour). -->
     <div class="form-group">
       <label>{{ t('intravox', 'Display options') }}</label>
+
       <div class="checkbox-group">
+        <span class="checkbox-group-heading">{{ t('intravox', 'Widget') }}</span>
+        <label class="checkbox-label">
+          <input type="checkbox" v-model="localWidget.showTitle" @change="emitUpdate" />
+          {{ t('intravox', 'Show title') }}
+        </label>
+      </div>
+
+      <div class="checkbox-group">
+        <span class="checkbox-group-heading">{{ t('intravox', 'Per item') }}</span>
         <label class="checkbox-label">
           <input type="checkbox" v-model="localWidget.showImage" @change="emitUpdate" />
           {{ t('intravox', 'Show image') }}
@@ -269,6 +296,10 @@
           <input type="checkbox" v-model="localWidget.showSource" @change="emitUpdate" />
           {{ t('intravox', 'Show source') }}
         </label>
+      </div>
+
+      <div class="checkbox-group">
+        <span class="checkbox-group-heading">{{ t('intravox', 'Links') }}</span>
         <label class="checkbox-label">
           <input type="checkbox" v-model="localWidget.openInNewTab" @change="emitUpdate" />
           {{ t('intravox', 'Open links in new tab') }}
@@ -476,6 +507,10 @@ export default {
         layout: 'list',
         columns: 3,
         limit: 5,
+        // Defaults to on, and an existing widget without the key reads as on
+        // (`showTitle !== false`): until now the title was stored but never
+        // rendered, so a widget that has one should start showing it.
+        showTitle: true,
         showImage: true,
         showDate: true,
         showExcerpt: true,
@@ -846,6 +881,19 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 6px;
+}
+
+/* Space between the three groups; the first sits right under its label. */
+.checkbox-group + .checkbox-group {
+  margin-top: 12px;
+}
+
+.checkbox-group-heading {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--color-text-maxcontrast);
 }
 
 .checkbox-label {

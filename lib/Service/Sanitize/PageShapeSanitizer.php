@@ -937,6 +937,9 @@ final class PageShapeSanitizer {
                 $sanitized['limit'] = max(1, min((int) ($widget['limit'] ?? 5), 20));
 
                 // Display options
+                // showTitle defaults to true so a widget saved before this
+                // option existed keeps showing the title it already has.
+                $sanitized['showTitle'] = (bool) ($widget['showTitle'] ?? true);
                 $sanitized['showImage'] = (bool) ($widget['showImage'] ?? true);
                 $sanitized['showDate'] = (bool) ($widget['showDate'] ?? true);
                 $sanitized['showExcerpt'] = (bool) ($widget['showExcerpt'] ?? true);
