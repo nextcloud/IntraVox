@@ -72,6 +72,26 @@ final class FeedResponseReader {
     }
 
     /**
+     * Strip a UTF-8 BOM and leading whitespace before the XML declaration.
+     *
+     * Both make the document invalid per the XML spec, so libxml rejects the
+     * whole feed — but they are common in the wild. A single blank line after a
+     * closing PHP tag in a WordPress theme or plugin prepends a newline to every
+     * feed that site serves, and the site owner never notices: browsers and most
+     * feed readers tolerate it. Without this the widget reports "Could not load
+     * feed" for a feed that demonstrably has items.
+     *
+     * Measured on vn.nl/feed (Vrij Nederland): 106 KB of valid RSS behind one
+     * leading space, parsing as false before and 10 items after.
+     *
+     * Only the prologue is touched. A body that is genuinely not XML — an HTML
+     * error page, say — still fails to parse, which is what should happen.
+     */
+    public function stripXmlPrologueNoise(string $body): string {
+        return preg_replace('/^(?:\xEF\xBB\xBF|[\s\x00])+(?=<)/', '', $body) ?? $body;
+    }
+
+    /**
      * Plain-text summary of a feed item's HTML body.
      *
      * Not to be confused with News\NewsContentExtractor::getExcerpt(), which

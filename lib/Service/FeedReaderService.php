@@ -566,6 +566,10 @@ class FeedReaderService {
         if (strlen($body) > self::MAX_RESPONSE_SIZE) {
             throw new \RuntimeException('Feed response too large');
         }
+        // A BOM or a stray newline before the XML declaration makes libxml reject
+        // an otherwise valid feed; see FeedResponseReader::stripXmlPrologueNoise().
+        $body = $this->responses->stripXmlPrologueNoise($body);
+
         $xml = @simplexml_load_string($body, 'SimpleXMLElement', LIBXML_NOCDATA | LIBXML_NONET);
         if ($xml === false) {
             throw new \RuntimeException('Failed to parse feed XML');
