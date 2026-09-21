@@ -15,9 +15,10 @@
     "ws": "^7.5.11"
   },
   "scripts": {
-    "prebuild": "node scripts/sync-version.js --check && node scripts/check-import-consistency.js && node scripts/check-l10n-sync.js && node scripts/check-facet-serialization.js && node scripts/check-eol-consistency.js && node scripts/check-file-budgets.js && node scripts/check-security-markers.js && node scripts/generate-route-table.js --check && node scripts/check-openapi.js",
+    "prebuild": "node scripts/sync-version.js --check && node scripts/check-import-consistency.js && node scripts/check-l10n-sync.js && node scripts/check-facet-serialization.js && node scripts/check-sidebar-load-guards.js && node scripts/check-eol-consistency.js && node scripts/check-file-budgets.js && node scripts/check-security-markers.js && node scripts/generate-route-table.js --check && node scripts/check-openapi.js",
     "lint:imports": "node scripts/check-import-consistency.js",
     "lint:facets": "node scripts/check-facet-serialization.js",
+    "lint:sidebar-guards": "node scripts/check-sidebar-load-guards.js",
     "lint:l10n": "node scripts/check-l10n-sync.js",
     "lint:eol": "node scripts/check-eol-consistency.js",
     "lint:budgets": "node scripts/check-file-budgets.js",

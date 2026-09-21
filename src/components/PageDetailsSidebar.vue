@@ -416,6 +416,11 @@ export default {
       }
     }
   },
+  created() {
+    // Not in data(): bookkeeping for overlapping requests, not render state.
+    this._metadataToken = 0;
+    this._versionsToken = 0;
+  },
   mounted() {
     if (this.isOpen) {
       // Only load metadata at mount (details tab is default)
@@ -550,12 +555,20 @@ export default {
       this.activeTab = newTabId;
     },
     async loadVersions() {
+      // Same two hazards as loadMetadata(), reachable when the versions tab is
+      // the remembered initialTab.
+      if (!this.pageId) {
+        return;
+      }
+
+      const token = ++this._versionsToken;
       this.loadingVersions = true;
       this.versionError = null;
 
       try {
         const url = generateUrl(`/apps/intravox/api/pages/${this.pageId}/versions`);
         const response = await axios.get(url);
+        if (token !== this._versionsToken) return;
 
         // API response structure: { currentVersion: {...}, versions: [...] }
         if (response.data && typeof response.data === 'object' && 'versions' in response.data) {
@@ -567,10 +580,13 @@ export default {
           this.currentVersion = null;
         }
       } catch (error) {
+        if (token !== this._versionsToken) return;
         console.error('Failed to load versions:', error);
         this.versionError = error.response?.data?.error || this.t('intravox', 'Failed to load version history');
       } finally {
-        this.loadingVersions = false;
+        if (token === this._versionsToken) {
+          this.loadingVersions = false;
+        }
       }
     },
     confirmRestoreVersion(timestamp) {
@@ -623,18 +639,33 @@ export default {
       }
     },
     async loadMetadata() {
+      // Mounted behind v-show, so we exist before currentPage resolves: without
+      // this, a remembered-open sidebar fetched /api/pages/undefined/metadata
+      // and showed its 404 body ("Page not found") as the user's page.
+      if (!this.pageId) {
+        return;
+      }
+
+      // mounted() and the pageId watcher can overlap and finish out of order,
+      // so only the newest load may write. Measured timings and the regression
+      // itself live in scripts/check-sidebar-load-guards.js.
+      const token = ++this._metadataToken;
       this.loadingMetadata = true;
       this.metadataError = null;
 
       try {
         const url = generateUrl(`/apps/intravox/api/pages/${this.pageId}/metadata`);
         const response = await axios.get(url);
+        if (token !== this._metadataToken) return;
         this.metadata = response.data;
       } catch (error) {
+        if (token !== this._metadataToken) return;
         console.error('Failed to load metadata:', error);
         this.metadataError = error.response?.data?.error || this.t('intravox', 'Failed to load properties');
       } finally {
-        this.loadingMetadata = false;
+        if (token === this._metadataToken) {
+          this.loadingMetadata = false;
+        }
       }
     },
     formatBytes(bytes) {
