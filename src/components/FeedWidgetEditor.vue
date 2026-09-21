@@ -8,7 +8,6 @@
         id="feed-widget-title"
         :value.sync="localWidget.title"
         :label="t('intravox', 'Widget title (optional)')"
-        :placeholder="t('intravox', 'e.g. Latest news')"
         @update:value="debouncedEmitUpdate"
       />
       <span class="field-hint">{{ t('intravox', 'Left empty, the name from the feed is suggested once. Your own wording always wins.') }}</span>
@@ -33,7 +32,6 @@
         :value.sync="localWidget.feedUrl"
         :label="t('intravox', 'Feed URL')"
         type="url"
-        placeholder="https://example.com/feed.xml"
         @update:value="debouncedEmitUpdate"
       />
     </div>
@@ -210,20 +208,25 @@
     <!-- Layout options -->
     <div class="form-group">
       <label for="feed-layout">{{ t('intravox', 'Layout') }}</label>
-      <select id="feed-layout" v-model="localWidget.layout" @change="emitUpdate">
-        <option value="list">{{ t('intravox', 'List') }}</option>
-        <option value="grid">{{ t('intravox', 'Grid') }}</option>
-      </select>
+      <NcSelect
+        input-id="feed-layout"
+        v-model="layoutOption"
+        :options="layoutOptions"
+        :clearable="false"
+        label="label"
+      />
     </div>
 
     <!-- Grid columns -->
     <div v-if="localWidget.layout === 'grid'" class="form-group">
       <label for="feed-columns">{{ t('intravox', 'Columns') }}</label>
-      <select id="feed-columns" v-model.number="localWidget.columns" @change="emitUpdate">
-        <option :value="2">2</option>
-        <option :value="3">3</option>
-        <option :value="4">4</option>
-      </select>
+      <NcSelect
+        input-id="feed-columns"
+        v-model="columnsOption"
+        :options="columnsOptions"
+        :clearable="false"
+        label="label"
+      />
     </div>
 
     <!-- Sort -->
@@ -468,6 +471,35 @@ export default {
         if (!optie) return;
         this.localWidget.sourceType = optie.id;
         this.onSourceTypeChange();
+      },
+    },
+    layoutOptions() {
+      return [
+        { id: 'list', label: this.t('intravox', 'List') },
+        { id: 'grid', label: this.t('intravox', 'Grid') },
+      ];
+    },
+    layoutOption: {
+      get() {
+        return this.layoutOptions.find(o => o.id === this.localWidget.layout) || this.layoutOptions[0];
+      },
+      set(optie) {
+        if (!optie) return;
+        this.localWidget.layout = optie.id;
+        this.emitUpdate();
+      },
+    },
+    columnsOptions() {
+      return [2, 3, 4].map(n => ({ id: n, label: String(n) }));
+    },
+    columnsOption: {
+      get() {
+        return this.columnsOptions.find(o => o.id === this.localWidget.columns) || this.columnsOptions[1];
+      },
+      set(optie) {
+        if (!optie) return;
+        this.localWidget.columns = optie.id;
+        this.emitUpdate();
       },
     },
     sortByOptions() {
