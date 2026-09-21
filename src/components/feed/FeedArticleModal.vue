@@ -6,31 +6,32 @@
   >
     <div class="feed-article">
       <!--
-        The link out appears twice, and both are earned. Measured over 50
-        articles: the median runs to three screens, half need three or more,
-        and the longest was twenty-eight. A link only at the end is unreachable
-        without scrolling past the whole piece in half the cases — which is
-        exactly when a reader has decided they want the original.
+        The source line sits above the title, not beside it. As a flex sibling
+        it took a column of its own: measured at 630px modal width, an 85px
+        link cost the headline 101px over the full height of the header. A
+        headline is the widest thing on the page and should get that width.
 
-        The one at the top is quiet (an icon with a label); the one at the
-        bottom is the natural end of reading.
+        The link out still appears twice — measured over 50 articles the median
+        runs to three screens and half need three or more, so one only at the
+        end is unreachable without scrolling past the whole piece. Here it is
+        part of the dateline a reader scans anyway.
       -->
       <header class="feed-article-header">
-        <div class="feed-article-heading">
-          <h2 class="feed-article-title">{{ item.title }}</h2>
+        <p class="feed-article-dateline">
           <a
             v-if="item.url"
             :href="item.url"
             target="_blank"
             rel="noopener noreferrer"
             class="feed-article-source-top"
-            :title="t('intravox', 'Read on the website')"
           >
-            <OpenInNew :size="16" />
-            <span>{{ t('intravox', 'Website') }}</span>
+            {{ feedSource || item.source || t('intravox', 'Website') }}
+            <OpenInNew :size="13" />
           </a>
-        </div>
-        <p v-if="meta" class="feed-article-meta">{{ meta }}</p>
+          <span v-if="item.url && meta" class="feed-article-dot">·</span>
+          <span v-if="meta">{{ meta }}</span>
+        </p>
+        <h2 class="feed-article-title">{{ item.title }}</h2>
       </header>
 
       <div v-if="loading" class="feed-article-state" role="status">
@@ -95,6 +96,16 @@ export default {
       type: String,
       default: '',
     },
+    /**
+     * The feed's name, for the dateline.
+     *
+     * RSS puts this on the channel, not on each item, so the widget reads it
+     * once and passes it down — item.source is empty for most feeds.
+     */
+    feedSource: {
+      type: String,
+      default: '',
+    },
   },
   emits: ['close'],
   data() {
@@ -112,9 +123,6 @@ export default {
       }
       if (this.item.date) {
         delen.push(new Date(this.item.date).toLocaleDateString());
-      }
-      if (this.item.source) {
-        delen.push(this.item.source);
       }
       return delen.join(' · ');
     },
@@ -172,60 +180,71 @@ export default {
 </script>
 
 <style scoped>
+/*
+ * Styled to read as an article, not as a text field.
+ *
+ * Everything here is a Nextcloud theme variable rather than a fixed colour, so
+ * the modal follows the instance's theme and dark mode without a second set of
+ * rules. What is not themed is the measure and the rhythm: those belong to
+ * reading, and the defaults of a UI component are tuned for forms.
+ */
 .feed-article {
-  padding: 24px;
-  /* Bounded so a long piece scrolls inside the modal rather than pushing the
-     footer with the source link out of reach. */
+  /* Centred with a generous measure: the container is as wide as the screen
+     allows, the text is as wide as is comfortable to read. */
+  max-width: 68ch;
+  margin: 0 auto;
+  padding: 32px 24px 24px;
   max-height: 80vh;
   overflow-y: auto;
+  color: var(--color-main-text);
 }
 
 .feed-article-header {
-  margin-bottom: 16px;
+  margin-bottom: 24px;
 }
 
-.feed-article-heading {
+/*
+ * Source and date above the title, the way a newspaper sets a dateline. Small
+ * and quiet: it orients the reader before the headline, then gets out of the
+ * way.
+ */
+.feed-article-dateline {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 8px 0;
+  font-size: 13px;
+  color: var(--color-text-maxcontrast);
 }
 
-/* Quiet by design: the reader came here to read, not to leave. */
 .feed-article-source-top {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  flex-shrink: 0;
-  margin-top: 4px;
-  padding: 4px 8px;
-  border-radius: var(--border-radius);
-  color: var(--color-text-maxcontrast);
-  font-size: 13px;
+  color: var(--color-primary-element);
+  font-weight: 500;
   text-decoration: none;
 }
 
 .feed-article-source-top:hover,
 .feed-article-source-top:focus-visible {
-  background: var(--color-background-hover);
-  color: var(--color-primary-element);
+  text-decoration: underline;
 }
 
-@media (max-width: 600px) {
-  /* The label costs width a phone does not have; the icon still says it. */
-  .feed-article-source-top span { display: none; }
+.feed-article-dot {
+  opacity: 0.6;
 }
 
 .feed-article-title {
-  margin: 0 0 4px 0;
-  font-size: 24px;
-  line-height: 1.3;
-}
-
-.feed-article-meta {
   margin: 0;
-  color: var(--color-text-maxcontrast);
-  font-size: 14px;
+  /* Larger and tighter than a UI heading: this is the one thing on screen
+     that should look like a headline. */
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  color: var(--color-main-text);
 }
 
 .feed-article-state {
@@ -233,76 +252,161 @@ export default {
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  padding: 40px 0;
+  padding: 48px 0;
   color: var(--color-text-maxcontrast);
 }
 
 .feed-article-body {
-  /* Measured for reading rather than for the container: a modal on a wide
-     screen would otherwise run to 60+ characters per line. */
-  max-width: 70ch;
-  line-height: 1.6;
+  /* 17px rather than the 14px a UI uses: a paragraph read start to finish
+     wants a larger type size than a label glanced at. */
+  font-size: 17px;
+  line-height: 1.7;
 }
 
 .feed-article-body :deep(p) {
-  margin: 0 0 1em 0;
+  margin: 0 0 1.1em 0;
+}
+
+/* The opening paragraph carries the piece; a standfirst weight says so. */
+.feed-article-body :deep(p:first-of-type) {
+  font-size: 19px;
+  line-height: 1.6;
+  color: var(--color-main-text);
 }
 
 .feed-article-body :deep(h1),
 .feed-article-body :deep(h2),
-.feed-article-body :deep(h3) {
-  margin: 1.5em 0 0.5em;
+.feed-article-body :deep(h3),
+.feed-article-body :deep(h4) {
+  margin: 1.8em 0 0.5em;
+  font-weight: 600;
   line-height: 1.3;
 }
 
+.feed-article-body :deep(h1),
+.feed-article-body :deep(h2) { font-size: 21px; }
+.feed-article-body :deep(h3),
+.feed-article-body :deep(h4) { font-size: 18px; }
+
 .feed-article-body :deep(a) {
   color: var(--color-primary-element);
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
+.feed-article-body :deep(ul),
+.feed-article-body :deep(ol) {
+  margin: 0 0 1.1em 0;
+  padding-inline-start: 1.4em;
+}
+
+.feed-article-body :deep(li) {
+  margin-bottom: 0.4em;
+}
+
+/* A pull quote, not an indented block of code. */
 .feed-article-body :deep(blockquote) {
-  margin: 1em 0;
-  padding-left: 1em;
-  border-left: 3px solid var(--color-border);
+  margin: 1.5em 0;
+  padding: 4px 0 4px 20px;
+  border-inline-start: 3px solid var(--color-primary-element);
+  font-size: 18px;
+  font-style: italic;
   color: var(--color-text-maxcontrast);
+}
+
+.feed-article-body :deep(blockquote p:last-child) {
+  margin-bottom: 0;
 }
 
 .feed-article-body :deep(pre) {
   overflow-x: auto;
-  padding: 12px;
+  margin: 1.2em 0;
+  padding: 14px 16px;
+  background: var(--color-background-dark);
+  border-radius: var(--border-radius-large);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.feed-article-body :deep(code) {
+  padding: 2px 5px;
   background: var(--color-background-dark);
   border-radius: var(--border-radius);
+  font-size: 0.9em;
+}
+
+.feed-article-body :deep(pre code) {
+  padding: 0;
+  background: none;
 }
 
 .feed-article-body :deep(table) {
   display: block;
   overflow-x: auto;
   max-width: 100%;
+  margin: 1.2em 0;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+
+.feed-article-body :deep(th),
+.feed-article-body :deep(td) {
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  text-align: start;
+}
+
+.feed-article-body :deep(th) {
+  background: var(--color-background-hover);
+  font-weight: 600;
+}
+
+.feed-article-body :deep(hr) {
+  margin: 2em 0;
+  border: none;
+  border-top: 1px solid var(--color-border);
 }
 
 .feed-article-footer {
-  margin-top: 24px;
-  padding-top: 16px;
+  margin-top: 32px;
+  padding-top: 20px;
   border-top: 1px solid var(--color-border);
 }
 
 .feed-article-source-link {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  color: var(--color-primary-element);
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--color-primary-element);
+  border-radius: var(--border-radius-pill, 100px);
+  color: var(--color-primary-element-text);
   font-weight: 500;
+  text-decoration: none;
+}
+
+.feed-article-source-link:hover,
+.feed-article-source-link:focus-visible {
+  background: var(--color-primary-element-hover, var(--color-primary-element));
+  opacity: 0.9;
 }
 
 @media (max-width: 600px) {
   .feed-article {
-    padding: 16px;
-    /* Taller on a phone: the modal is nearly full-screen there, and the
-       browser chrome already eats the rest. */
+    padding: 20px 16px 16px;
     max-height: 88vh;
   }
 
   .feed-article-title {
-    font-size: 20px;
+    font-size: 22px;
+  }
+
+  .feed-article-body {
+    font-size: 16px;
+  }
+
+  .feed-article-body :deep(p:first-of-type) {
+    font-size: 17px;
   }
 }
 </style>

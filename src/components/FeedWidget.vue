@@ -65,6 +65,7 @@
       :item="openItem"
       :widget="widget"
       :share-token="shareToken"
+      :feed-source="feedSource"
       @close="openItem = null"
     />
   </div>
@@ -118,6 +119,7 @@ export default {
       feedImage: null,
       openItem: null,
       fetchedAt: null,
+      feedSource: '',
       isStale: false,
       refreshing: false,
       nu: Date.now(),
@@ -328,6 +330,9 @@ export default {
           // The server reports when it fetched; without it the widget would be
           // guessing from its own mount time, which says nothing about the data.
           this.fetchedAt = response.data.fetchedAt || null;
+          // The feed's own name. RSS carries it once per channel rather than
+          // per item, so the widget holds it and hands it to the reader.
+          this.feedSource = response.data.source || '';
           this.isStale = response.data.stale === true;
           this.nu = Date.now();
         }
