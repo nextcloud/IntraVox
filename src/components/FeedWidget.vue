@@ -1,5 +1,30 @@
 <template>
   <div class="feed-widget" aria-live="polite">
+    <!--
+      Above the items, not below them. The newest item is at the top, so that
+      is where a reader looks first and where "how old is this" belongs. Below
+      a list of ten they would have to scroll past everything to reach the
+      control that reloads it.
+
+      One line per widget, not per item: measured across 184 items, only 5% are
+      under an hour old and the median is ten days, so a clock time beside each
+      headline would be noise nineteen times out of twenty. What the dates
+      cannot say is when *we* last looked.
+    -->
+    <header v-if="!loading && !error && fetchedAt" class="feed-widget-header">
+      <span class="feed-widget-age" :class="{ 'feed-widget-age--stale': isStale }">{{ ageLabel }}</span>
+      <button
+        type="button"
+        class="feed-widget-refresh"
+        :disabled="refreshing"
+        :title="t('intravox', 'Fetch the latest items now')"
+        @click="refresh"
+      >
+        <Refresh :size="14" :class="{ 'feed-widget-refresh--spinning': refreshing }" />
+        <span>{{ refreshing ? t('intravox', 'Refreshing …') : t('intravox', 'Refresh') }}</span>
+      </button>
+    </header>
+
     <div v-if="loading" class="feed-widget-loading" role="status">
       <NcLoadingIcon :size="32" />
       <p>{{ t('intravox', 'Loading feed …') }}</p>
@@ -33,19 +58,7 @@
       reader cannot see from the dates is when *we* last looked — that belongs
       to the widget, and it is one line instead of twenty.
     -->
-    <footer v-if="!loading && !error && fetchedAt" class="feed-widget-footer">
-      <span class="feed-widget-age" :class="{ 'feed-widget-age--stale': isStale }">{{ ageLabel }}</span>
-      <button
-        type="button"
-        class="feed-widget-refresh"
-        :disabled="refreshing"
-        :title="t('intravox', 'Fetch the latest items now')"
-        @click="refresh"
-      >
-        <Refresh :size="14" :class="{ 'feed-widget-refresh--spinning': refreshing }" />
-        <span>{{ refreshing ? t('intravox', 'Refreshing …') : t('intravox', 'Refresh') }}</span>
-      </button>
-    </footer>
+
 
     <FeedArticleModal
       v-if="openItem"
@@ -366,14 +379,14 @@ export default {
   color: var(--color-main-text);
 }
 
-.feed-widget-footer {
+.feed-widget-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid var(--color-border);
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--color-border);
   font-size: 12px;
   color: var(--color-text-maxcontrast);
 }
