@@ -54,26 +54,26 @@
       the rule rather than the exception.
     -->
     <!--
-      The tooltip sits on a wrapping span, not on the icon component:
-      vue-material-design-icons takes `title` as a prop and renders it as a
-      <title> inside the SVG, which is not a hover tooltip. Measured — the
-      attribute came back null on the element.
+      No corner icons at all.
+
+      The "opens here" marker went first: a badge on nearly every item marks
+      nothing — measured over 559 items, 82% carry an article, and 55 of 57
+      feeds are all-or-nothing, so a reader sees one behaviour per feed. The
+      left border says it without taking width from the headline.
+
+      The external-link icon followed for a plainer reason: a news item linking
+      to its source is the expectation, so the icon confirmed what nobody
+      doubted. Both were positioned over the content and overlapped the title —
+      61 of 61 items at 900px for the first, 17 of 17 for the second, since
+      -webkit-line-clamp truncates without regard for padding. Removing them
+      gives the headline its full width back on exactly the screens that have
+      least of it.
     -->
-    <span
-      v-if="item.hasArticle"
-      class="feed-item-article-icon"
-      :title="t('intravox', 'Opens here, without leaving the page')"
-    >
-      <TextBoxOutline :size="16" />
-    </span>
-    <OpenInNew v-else-if="openInNewTab" :size="14" class="feed-item-external-icon" />
   </component>
 </template>
 
 <script>
 import CalendarBlank from 'vue-material-design-icons/CalendarBlank.vue';
-import OpenInNew from 'vue-material-design-icons/OpenInNew.vue';
-import TextBoxOutline from 'vue-material-design-icons/TextBoxOutline.vue';
 import { translate } from '@nextcloud/l10n';
 import FileWord from 'vue-material-design-icons/FileWord.vue';
 import FileExcel from 'vue-material-design-icons/FileExcel.vue';
@@ -127,8 +127,6 @@ export default {
   name: 'FeedItem',
   components: {
     CalendarBlank,
-    OpenInNew,
-    TextBoxOutline,
     FileWord, FileExcel, FilePowerpoint, FilePdfBox, FileImage, FileVideo, FileDocument,
     BugOutline, BookOpenPageVariant, MicrosoftSharepoint, ClipboardText, SchoolOutline, RssBox, ViewDashboard,
   },
@@ -475,62 +473,11 @@ export default {
   display: none;
 }
 
-.feed-item-external-icon {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  color: var(--color-text-maxcontrast);
-  opacity: 0;
-  transition: opacity 0.2s;
-}
 
-/*
- * The article marker, unlike the external-link icon, is always visible.
- *
- * That difference is the point: the link icon only confirms on hover what a
- * link already does, while this one tells you *before* you click that the item
- * behaves differently — it opens here instead of sending you to the site. An
- * affordance you can only discover by hovering is no affordance on a phone,
- * where there is no hover at all.
- */
-/*
- * An item that opens in place gets a left edge in the primary colour.
- *
- * The hover state alone would not do: on a touch screen there is none, and the
- * reader deserves to know which of two behaviours a tap will produce before
- * they tap. The border is 3px and only on the inline-start edge, so it reads as
- * a marker rather than as a selected state.
- */
-.feed-item--has-article {
-  border-inline-start: 3px solid var(--color-primary-element);
-}
 
-.feed-item--has-article:hover {
-  background: var(--color-primary-element-light);
-}
 
-.feed-item-article-icon {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  color: var(--color-primary-element);
-  opacity: 0.65;
-  transition: opacity 0.2s, transform 0.2s;
-}
 
-.feed-item:hover .feed-item-article-icon {
-  opacity: 1;
-  transform: scale(1.12);
-}
 
-/* On a coloured band the primary colour disappears; use the paired text tone. */
-.feed-item--bg-dark .feed-item-article-icon {
-  color: var(--color-primary-element-text);
-}
-
-.feed-item:hover .feed-item-external-icon {
-  opacity: 1;
-}
 
 /* Container query: medium width (250-400px) — compact mode */
 @container (max-width: 400px) {
