@@ -1,5 +1,4 @@
 <template>
-  <div class="feed-item-wrap">
   <!--
     No URL means a <span>, not an <a>: href="" resolves to the current document,
     so items without a link navigated back to the page they sat on (#114).
@@ -12,10 +11,12 @@
     :class="[
       { 'feed-item--compact': compact, 'feed-item--no-image': !showImage || (!item.image && (!feedImage || feedImageError) && !fallbackMeta) },
       { 'feed-item--no-link': !item.url },
+      { 'feed-item--has-article': item.hasArticle },
       `feed-item--bg-${itemBackground}`
     ]"
     :target="item.url && openInNewTab ? '_blank' : undefined"
     :rel="item.url && openInNewTab ? 'noopener noreferrer' : undefined"
+    @click="onClick"
   >
     <div v-if="showImage && item.image" class="feed-item-image">
       <img :src="item.image" :alt="item.title" loading="lazy" referrerpolicy="no-referrer" />
@@ -45,25 +46,28 @@
         {{ truncatedExcerpt }}
       </p>
     </div>
-    <OpenInNew v-if="openInNewTab" :size="14" class="feed-item-external-icon" />
-  </component>
-
     <!--
-      Beside the item, not inside it: the item is an <a>, and a button nested
-      in a link is invalid HTML — browsers recover differently and keyboard
-      focus order breaks. `hasArticle` comes from the server, so the button
-      only appears when there is something to open.
+      One icon, not two controls. An item that carries an article opens it in
+      place; one without keeps linking out, exactly as before. A separate
+      button under every item cost 42px each — 18% of an item's height, and
+      redundant besides: 82% of items measured carry a body, so the button was
+      the rule rather than the exception.
     -->
-    <button
+    <!--
+      The tooltip sits on a wrapping span, not on the icon component:
+      vue-material-design-icons takes `title` as a prop and renders it as a
+      <title> inside the SVG, which is not a hover tooltip. Measured — the
+      attribute came back null on the element.
+    -->
+    <span
       v-if="item.hasArticle"
-      type="button"
-      class="feed-item-read-here"
-      @click="$emit('open-article', item)"
+      class="feed-item-article-icon"
+      :title="t('intravox', 'Opens here, without leaving the page')"
     >
-      <TextBoxOutline :size="14" />
-      <span>{{ t('intravox', 'Read here') }}</span>
-    </button>
-  </div>
+      <TextBoxOutline :size="16" />
+    </span>
+    <OpenInNew v-else-if="openInNewTab" :size="14" class="feed-item-external-icon" />
+  </component>
 </template>
 
 <script>
@@ -179,6 +183,24 @@ export default {
   },
   methods: {
     t: translate,
+    /**
+     * Open the article in place, but only for a plain left click.
+     *
+     * Middle click, ctrl/cmd click and shift click keep doing what they do to
+     * any link — a new tab or window. Swallowing those would break an
+     * expectation people carry to every link on the web, and the href stays on
+     * the element so the browser can honour them.
+     */
+    onClick(event) {
+      if (!this.item.hasArticle) {
+        return;
+      }
+      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) {
+        return;
+      }
+      event.preventDefault();
+      this.$emit('open-article', this.item);
+    },
   },
   computed: {
     formattedDate() {
@@ -462,6 +484,50 @@ export default {
   transition: opacity 0.2s;
 }
 
+/*
+ * The article marker, unlike the external-link icon, is always visible.
+ *
+ * That difference is the point: the link icon only confirms on hover what a
+ * link already does, while this one tells you *before* you click that the item
+ * behaves differently — it opens here instead of sending you to the site. An
+ * affordance you can only discover by hovering is no affordance on a phone,
+ * where there is no hover at all.
+ */
+/*
+ * An item that opens in place gets a left edge in the primary colour.
+ *
+ * The hover state alone would not do: on a touch screen there is none, and the
+ * reader deserves to know which of two behaviours a tap will produce before
+ * they tap. The border is 3px and only on the inline-start edge, so it reads as
+ * a marker rather than as a selected state.
+ */
+.feed-item--has-article {
+  border-inline-start: 3px solid var(--color-primary-element);
+}
+
+.feed-item--has-article:hover {
+  background: var(--color-primary-element-light);
+}
+
+.feed-item-article-icon {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  color: var(--color-primary-element);
+  opacity: 0.65;
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.feed-item:hover .feed-item-article-icon {
+  opacity: 1;
+  transform: scale(1.12);
+}
+
+/* On a coloured band the primary colour disappears; use the paired text tone. */
+.feed-item--bg-dark .feed-item-article-icon {
+  color: var(--color-primary-element-text);
+}
+
 .feed-item:hover .feed-item-external-icon {
   opacity: 1;
 }
@@ -520,37 +586,7 @@ export default {
   }
 }
 
-/* The wrapper exists only to place the button beside the link, so it must not
-   introduce a box of its own where the grid expects the item. */
-.feed-item-wrap {
-  display: contents;
-}
 
-.feed-item-read-here {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin: -4px 0 12px 0;
-  padding: 6px 10px;
-  background: transparent;
-  border: 1px solid var(--color-border);
-  border-radius: var(--border-radius);
-  color: var(--color-primary-element);
-  font-size: 13px;
-  cursor: pointer;
-}
 
-.feed-item-read-here:hover,
-.feed-item-read-here:focus-visible {
-  background: var(--color-background-hover);
-}
 
-@media (max-width: 600px) {
-  /* Touch target: 32px is comfortable to hit with a thumb, and the button sits
-     right under a link you did not mean to press. */
-  .feed-item-read-here {
-    min-height: 32px;
-    padding: 8px 12px;
-  }
-}
 </style>

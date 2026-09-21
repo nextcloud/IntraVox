@@ -1,6 +1,6 @@
 {
     "count": 1386,
-    "sha256": "ae1c953de8b680af0067adaf69ddb109c9740b5b3c27683fbf72a15c6727ccc2",
+    "sha256": "c540fa89c353ef0dfa9af56ccf94475541ac203c60ae3b067ad91979835cdd65",
     "strings": [
         "— Not configured —",
         "… and {n} more",
@@ -866,6 +866,7 @@
         "Open sharing settings",
         "Open this translation",
         "Open work packages",
+        "Opens here, without leaving the page",
         "Operator",
         "optional",
         "Optional cap on the total number of documents paged through. Leave blank for all.",
@@ -995,7 +996,6 @@
         "Questions?",
         "React",
         "Reactions & comments",
-        "Read here",
         "Read it in {language}",
         "Read on the website",
         "read-only",
