@@ -184,6 +184,9 @@ export default {
       nu: Date.now(),
       loading: true,
       error: null,
+      // Height of one rendered item, measured from a full page. Used to
+      // reserve space so the pager does not move between pages.
+      itemHeight: 0,
       // Which display page is on screen. Reset whenever the item list is
       // replaced — staying on page 3 of a feed that just shrank to one page
       // would show an empty widget.
@@ -221,6 +224,20 @@ export default {
       }
       const start = this.page * this.pageSize;
       return this.items.slice(start, start + this.pageSize);
+    },
+    /**
+     * Reserve the height of a full page while paging.
+     *
+     * Only when there is more than one page, and only as a minimum — a page
+     * that needs more room still gets it. Measured from the rendered list
+     * rather than hardcoded, because an item's height depends on the layout,
+     * the excerpt length and whether images are shown.
+     */
+    listStyle() {
+      if (this.pageSize === 0 || this.totalPages <= 1 || !this.itemHeight) {
+        return {};
+      }
+      return { minHeight: `${Math.round(this.itemHeight * this.pageSize)}px` };
     },
     /**
      * "1-5 of 20" rather than "page 1 of 4": the range answers both "where am
@@ -320,6 +337,8 @@ export default {
      */
     items() {
       this.page = 0;
+      this.itemHeight = 0;
+      this.measureItemHeight();
     },
   },
   mounted() {
@@ -369,6 +388,29 @@ export default {
      * Move one display page. Bounded here rather than in the template so the
      * disabled buttons and the clamp cannot disagree.
      */
+    /**
+     * Measure one item, once, from a page that is full.
+     *
+     * A short last page would give a too-small average, so this only records a
+     * measurement taken while a full page is on screen. Called after the list
+     * renders rather than on mount, because the items arrive asynchronously.
+     */
+    measureItemHeight() {
+      if (this.pageSize === 0 || this.itemHeight) {
+        return;
+      }
+      this.$nextTick(() => {
+        const items = this.$el?.querySelectorAll('.feed-item');
+        if (!items || items.length < this.pageSize) {
+          return;
+        }
+        const totaal = [...items].reduce((som, el) => som + el.getBoundingClientRect().height, 0);
+        // The gap between items counts too: the reserved box holds both.
+        const lijst = items[0].parentElement;
+        const gap = lijst ? parseFloat(getComputedStyle(lijst).rowGap || '0') || 0 : 0;
+        this.itemHeight = totaal / items.length + gap;
+      });
+    },
     turnPage(delta) {
       const next = this.page + delta;
       if (next < 0 || next >= this.totalPages) {
