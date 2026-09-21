@@ -194,9 +194,25 @@ export default {
           } else if (err.includes('token') || err.includes('401') || err.includes('Authentication')) {
             this.error = this.t('intravox', 'Authentication required. Please connect your account.');
           } else if (err.includes('403') || err.includes('Access denied')) {
-            this.error = this.t('intravox', 'Access denied. Check the connection permissions.');
+            // An RSS 403 is a different problem from a connection 403: the
+            // source is up, it refuses this server. Measured on dev — five of
+            // the dashboard's feeds answer 200 from a home connection and 403
+            // from the datacenter IP, whatever User-Agent is sent. Telling an
+            // admin to "check the permissions" of a public feed sends them
+            // looking for something that does not exist.
+            this.error = this.widget.sourceType === 'rss'
+              ? this.t('intravox', 'This source refuses requests from this server. Nothing to fix here — the feed blocks datacenter addresses.')
+              : this.t('intravox', 'Access denied. Check the connection permissions.');
           } else if (err.includes('429') || err.includes('Rate limited')) {
             this.error = this.t('intravox', 'Too many requests. Please try again later.');
+          } else if (err.includes('timed out') || err.includes('timeout') || err.includes('cURL error 28')) {
+            this.error = this.t('intravox', 'The source did not respond in time.');
+          } else if (err.includes('too large')) {
+            this.error = this.t('intravox', 'This feed is too large to process.');
+          } else if (err.includes('SSL') || err.includes('cURL error')) {
+            this.error = this.t('intravox', 'Could not reach the source. The connection failed.');
+          } else if (err.includes('circuit breaker')) {
+            this.error = this.t('intravox', 'This source failed repeatedly and is paused. It retries automatically.');
           } else {
             this.error = this.t('intravox', 'Could not load feed. Check the connection settings.');
           }

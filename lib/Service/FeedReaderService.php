@@ -25,8 +25,46 @@ use Psr\Log\LoggerInterface;
  * All sources are normalized to a common FeedItem format.
  */
 class FeedReaderService {
+    /** How long a cached feed counts as fresh. */
     private const CACHE_TTL = 900; // 15 minutes
-    private const HTTP_TIMEOUT = 5;
+
+    /**
+     * How long a cached feed may still be served after it goes stale.
+     *
+     * Stale-while-revalidate. Without it, the moment an entry expires every
+     * reader arriving at that page queues behind one fetch: measured, a waiting
+     * request polls Redis every 100 ms for up to 5 s, so 999 concurrent readers
+     * meant ~5,000 extra Redis reads and 999 PHP workers blocked for ~450 ms
+     * each. Apache here allows 150 (MaxRequestWorkers), so the pool is gone and
+     * the whole instance stalls — including pages with no feeds on them.
+     *
+     * With it, a stale entry is returned immediately (0.03 ms) and exactly one
+     * request refreshes it. Readers see content up to an hour old only when the
+     * source has been unreachable that long, which beats seeing an error.
+     */
+    private const CACHE_STALE_TTL = 3600; // 1 hour
+
+    /**
+     * How long one refresh may run before another caller may try again.
+     *
+     * Comfortably above HTTP_TIMEOUT so a slow source does not invite a second
+     * fetch while the first is still in flight.
+     */
+    private const REFRESH_LOCK_TTL = 30;
+    /**
+     * Seconds to wait on an external source.
+     *
+     * Raised from 5 to 8 after measuring the dashboard's own feeds from the
+     * server: newscientist.nl needed 3.3 s and amsterdamcentraal.nl 4.2 s, so
+     * both sat close enough to a 5 s ceiling to fail intermittently — which is
+     * why "could not load" appeared to move between feeds rather than sticking
+     * to one.
+     *
+     * The cost of a higher ceiling is bounded elsewhere: the circuit breaker
+     * takes a source out after three failures, and stale-while-revalidate means
+     * a slow fetch no longer holds up readers.
+     */
+    private const HTTP_TIMEOUT = 8;
 
     /** The RSS content module, where a feed puts the article itself. */
     private const NS_CONTENT = 'http://purl.org/rss/1.0/modules/content/';
@@ -128,16 +166,34 @@ class FeedReaderService {
         $limit = min(max($limit, 1), self::MAX_ITEMS);
         $cacheKey = $this->buildCacheKey($sourceType, $config, $userId);
 
-        // Try cache first
+        // Try cache first.
+        //
+        // An entry lives for CACHE_STALE_TTL but counts as fresh only for
+        // CACHE_TTL. Past that it is still served — immediately — and one
+        // request goes on to refresh it. Blocking readers behind a refetch is
+        // what takes an instance down when a busy page's entry expires; see
+        // CACHE_STALE_TTL.
         if ($this->cache !== null) {
             $cached = $this->cache->get($cacheKey);
             if ($cached !== null) {
                 $decoded = json_decode($cached, true);
                 if ($decoded !== null) {
-                    $decoded['items'] = $this->filterAndSortItems($decoded['items'], $sortBy, $sortOrder, $filterKeyword);
-                    $decoded['items'] = array_slice($decoded['items'], 0, $limit);
-                    $decoded['cached'] = true;
-                    return $decoded;
+                    $leeftijd = time() - (int)($decoded['fetchedAt'] ?? 0);
+                    $vers = $leeftijd <= self::CACHE_TTL;
+
+                    // Stale: hand back what we have, unless we are the one
+                    // request that gets to refresh it. tryAcquireRefreshLock()
+                    // lets exactly one through per stale window.
+                    if ($vers || !$this->tryAcquireRefreshLock($cacheKey)) {
+                        $decoded['items'] = $this->filterAndSortItems($decoded['items'], $sortBy, $sortOrder, $filterKeyword);
+                        $decoded['items'] = array_slice($decoded['items'], 0, $limit);
+                        $decoded['cached'] = true;
+                        $decoded['stale'] = !$vers;
+                        return $decoded;
+                    }
+                    // We hold the refresh lock: fall through and fetch. The
+                    // stale copy stays in place until the new one replaces it,
+                    // so a failed refresh costs nobody their content.
                 }
             }
         }
@@ -227,7 +283,10 @@ class FeedReaderService {
 
             // Cache the full unfiltered result
             if ($this->cache !== null) {
-                $this->cache->set($cacheKey, json_encode($result), self::CACHE_TTL);
+                // Stored with the stale ceiling; freshness is decided on read
+                // from fetchedAt, not by letting the entry vanish.
+                $result['fetchedAt'] = time();
+                $this->cache->set($cacheKey, json_encode($result), self::CACHE_STALE_TTL);
                 $this->cache->remove($lockKey);
                 $this->cache->remove($circuitKey); // Reset circuit breaker on success
             }
@@ -2298,6 +2357,41 @@ class FeedReaderService {
             return '';
         }
         return $path;
+    }
+
+    /**
+     * Claim the right to refresh one stale entry, for one caller.
+     *
+     * Everyone else keeps the stale copy and returns straight away, so a
+     * refresh never becomes a queue. The lock expires on its own, which means a
+     * caller that dies mid-fetch only delays the next refresh by that window
+     * rather than freezing the feed until someone clears a key by hand.
+     *
+     * Not atomic in the compare-and-set sense — ICache has no such primitive
+     * across every backend. Two callers slipping through at the same instant
+     * costs one extra HTTP request, which is the cheap side of this trade; the
+     * expensive side would be a thousand of them.
+     */
+    private function tryAcquireRefreshLock(string $cacheKey): bool {
+        if ($this->cache === null) {
+            return true;
+        }
+
+        $key = 'refresh_' . $cacheKey;
+        $bestaand = $this->cache->get($key);
+        if ($bestaand !== null) {
+            return false;
+        }
+
+        $mine = bin2hex(random_bytes(8));
+        $this->cache->set($key, $mine, self::REFRESH_LOCK_TTL);
+
+        // Read back: two callers can pass the check above in the same instant,
+        // and only the one whose value survived may refresh. Same shape as the
+        // singleflight lock above, for the same reason.
+        $gewonnen = $this->cache->get($key);
+
+        return $gewonnen === $mine;
     }
 
     private function buildCacheKey(string $sourceType, array $config, ?string $userId = null): string {
