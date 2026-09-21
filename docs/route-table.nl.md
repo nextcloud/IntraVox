@@ -7,13 +7,13 @@ Wat elk endpoint van zijn aanroeper verlangt. Opnieuw genereren met
 in de autorisatie hier als diff zichtbaar wordt in plaats van verstopt te raken
 in 14 controllers.
 
-177 routes.
+179 routes.
 
 - **admin**: 12
 - **admin (gecontroleerd in de body)**: 22
-- **anoniem**: 18
+- **anoniem**: 19
 - **teamfolder-beheerder (gecontroleerd in de body)**: 6
-- **elke ingelogde gebruiker**: 119
+- **elke ingelogde gebruiker**: 120
 
 | Verb | URL | Handler | Vereist | CSRF |
 |---|---|---|---|---|
@@ -147,6 +147,7 @@ in 14 controllers.
 | GET | `/api/feed/preview` | `feedReader#getPreview` | elke ingelogde gebruiker | vereist |
 | GET | `/api/feed/image` | `feedReader#proxyImage` | elke ingelogde gebruiker | vrijgesteld |
 | GET | `/api/feed/article` | `feedReader#getArticle` | elke ingelogde gebruiker | vrijgesteld |
+| POST | `/api/feed/batch` | `feedReader#getFeedBatch` | elke ingelogde gebruiker | vrijgesteld |
 | GET | `/api/feed/courses/{connectionId}` | `feedReader#getCourses` | elke ingelogde gebruiker | vrijgesteld |
 | GET | `/api/feed/sharepoint-lists/{connectionId}` | `feedReader#getSharePointLists` | elke ingelogde gebruiker | vrijgesteld |
 | GET | `/api/feed/jira-projects/{connectionId}` | `feedReader#getJiraProjects` | elke ingelogde gebruiker | vrijgesteld |
@@ -176,6 +177,7 @@ in 14 controllers.
 | GET | `/api/share/{token}/feed/external` | `publicShare#getFeedByShare` | anoniem | vrijgesteld |
 | GET | `/api/share/{token}/feed/image` | `publicShare#proxyImageByShare` | anoniem | vrijgesteld |
 | GET | `/api/share/{token}/feed/article` | `publicShare#getArticleByShare` | anoniem | vrijgesteld |
+| POST | `/api/share/{token}/feed/batch` | `publicShare#getFeedBatchByShare` | anoniem | vrijgesteld |
 | GET | `/api/health` | `api#health` | anoniem | vrijgesteld |
 | GET | `/api/photo-story/photos` | `photoStory#photos` | elke ingelogde gebruiker | vrijgesteld |
 | GET | `/api/photo-story/clusters` | `photoStory#clusters` | elke ingelogde gebruiker | vrijgesteld |

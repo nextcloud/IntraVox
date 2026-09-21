@@ -884,7 +884,8 @@ class PublicShareController extends Controller {
             }
 
             [$sortBy, $sortOrder, $filterKeyword] = $this->parseSortAndFilter();
-            $result = $this->feedReaderService->fetchFeed($sourceType, $config, $limit, null, $sortBy, $sortOrder, $filterKeyword);
+            $force = $this->request->getParam('refresh', '') === '1';
+            $result = $this->feedReaderService->fetchFeed($sourceType, $config, $limit, null, $sortBy, $sortOrder, $filterKeyword, $force);
 
             return new DataResponse($result);
         } catch (\Exception $e) {
@@ -897,6 +898,32 @@ class PublicShareController extends Controller {
                 Http::STATUS_INTERNAL_SERVER_ERROR
             );
         }
+    }
+
+    /**
+     * Several of this share's feeds in one request.
+     *
+     * The rate limit is per IP, so a page with five widgets used to cost five
+     * of an anonymous visitor's sixty per minute. Behind one office NAT a
+     * thousand readers share that budget — twelve page views and the rest see
+     * 429. One request per page is what makes that survivable.
+     *
+     * Every entry passes the same selector allowlist as a single request; the
+     * guard is handed to the batch handler rather than reimplemented.
+     */
+    #[PublicPage]
+    #[NoCSRFRequired]
+    #[AnonRateLimit(limit: 30, period: 60)]
+    public function getFeedBatchByShare(string $token): DataResponse {
+        $share = $this->openShare($token, fn() => $this->widgetShareDenied());
+        if ($share instanceof Response) {
+            return $this->asDataResponse($share);
+        }
+
+        return $this->handleFetchFeedBatch(
+            null,
+            fn(array $config) => $this->refuseUnpublishedFeedSelectors($share, $token, $config)
+        );
     }
 
     /**

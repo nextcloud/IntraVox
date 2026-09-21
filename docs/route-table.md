@@ -6,13 +6,13 @@ What each endpoint demands of its caller. Regenerate with `npm run route-table`;
 CI fails when this file is stale, so a change in authorization shows up here as a
 diff rather than staying buried in 14 controllers.
 
-177 routes.
+179 routes.
 
 - **admin**: 12
 - **admin (checked in body)**: 22
-- **anonymous**: 18
+- **anonymous**: 19
 - **team folder admin (checked in body)**: 6
-- **any logged-in user**: 119
+- **any logged-in user**: 120
 
 | Verb | URL | Handler | Requires | CSRF |
 |---|---|---|---|---|
@@ -146,6 +146,7 @@ diff rather than staying buried in 14 controllers.
 | GET | `/api/feed/preview` | `feedReader#getPreview` | any logged-in user | required |
 | GET | `/api/feed/image` | `feedReader#proxyImage` | any logged-in user | exempt |
 | GET | `/api/feed/article` | `feedReader#getArticle` | any logged-in user | exempt |
+| POST | `/api/feed/batch` | `feedReader#getFeedBatch` | any logged-in user | exempt |
 | GET | `/api/feed/courses/{connectionId}` | `feedReader#getCourses` | any logged-in user | exempt |
 | GET | `/api/feed/sharepoint-lists/{connectionId}` | `feedReader#getSharePointLists` | any logged-in user | exempt |
 | GET | `/api/feed/jira-projects/{connectionId}` | `feedReader#getJiraProjects` | any logged-in user | exempt |
@@ -175,6 +176,7 @@ diff rather than staying buried in 14 controllers.
 | GET | `/api/share/{token}/feed/external` | `publicShare#getFeedByShare` | anonymous | exempt |
 | GET | `/api/share/{token}/feed/image` | `publicShare#proxyImageByShare` | anonymous | exempt |
 | GET | `/api/share/{token}/feed/article` | `publicShare#getArticleByShare` | anonymous | exempt |
+| POST | `/api/share/{token}/feed/batch` | `publicShare#getFeedBatchByShare` | anonymous | exempt |
 | GET | `/api/health` | `api#health` | anonymous | exempt |
 | GET | `/api/photo-story/photos` | `photoStory#photos` | any logged-in user | exempt |
 | GET | `/api/photo-story/clusters` | `photoStory#clusters` | any logged-in user | exempt |

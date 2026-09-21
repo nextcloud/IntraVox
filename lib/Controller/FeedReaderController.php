@@ -75,7 +75,11 @@ class FeedReaderController extends Controller {
             $config = $this->buildConfigFromRequest($sourceType);
 
             [$sortBy, $sortOrder, $filterKeyword] = $this->parseSortAndFilter();
-            $result = $this->feedReaderService->fetchFeed($sourceType, $config, $limit, $this->userId, $sortBy, $sortOrder, $filterKeyword);
+            // A reader pressing refresh means "now", so the freshness window is
+            // skipped. The refresh lock still applies, so a page full of widgets
+            // cannot turn one click into a stampede.
+            $force = $this->request->getParam('refresh', '') === '1';
+            $result = $this->feedReaderService->fetchFeed($sourceType, $config, $limit, $this->userId, $sortBy, $sortOrder, $filterKeyword, $force);
 
             return new DataResponse($result);
         } catch (\Exception $e) {
@@ -129,6 +133,27 @@ class FeedReaderController extends Controller {
     #[NoCSRFRequired]
     public function proxyImage(): DataDownloadResponse|DataResponse {
         return $this->handleProxyImage();
+    }
+
+    /**
+     * Several feeds in one request, so a page costs one round trip.
+     *
+     * Rate-limited per batch rather than per feed: that is the point. A page
+     * with five widgets counted five times against the limit before, and the
+     * limit is per IP — which is what an intranet behind one outgoing address
+     * runs into.
+     *
+     * @return DataResponse
+     */
+    #[UserRateLimit(limit: 30, period: 60)]
+    #[NoAdminRequired]
+    #[NoCSRFRequired]
+    public function getFeedBatch(): DataResponse {
+        if ($this->userId === null) {
+            return new DataResponse(['error' => 'Authentication required'], Http::STATUS_UNAUTHORIZED);
+        }
+
+        return $this->handleFetchFeedBatch($this->userId);
     }
 
     /**

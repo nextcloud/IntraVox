@@ -39,6 +39,9 @@ class PublicEndpointInventoryTest extends TestCase {
 			// selector allowlist as the list it came from.
 			'getArticleByShare',
 			'getEventsByShare',
+			// Several of this share's feeds in one request, each entry through
+			// the same selector allowlist as a single fetch.
+			'getFeedBatchByShare',
 			'getFeedByShare',
 			'getMediaByShare',
 			'getNavigationByShare',

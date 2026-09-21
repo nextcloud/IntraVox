@@ -1703,6 +1703,7 @@ a `#[UserRateLimit]` in code is missing here or carries a different number.
 | `GET /api/feed/external` | `getFeed` | 30 / minute |
 | `GET /api/feed/preview` | `getPreview` | 30 / minute |
 | `GET /api/feed/article` | `getArticle` | 60 / minute |
+| `POST /api/feed/batch` | `getFeedBatch` | 30 / minute |
 | `POST /api/analytics/track/{pageId}` | `trackView` | 60 / minute |
 | `GET /api/preview` | `fetch` | 600 / minute |
 | `POST /api/preview/warmup` | `warmup` | 60 / minute |

@@ -1710,6 +1710,68 @@
         }
       }
     },
+    "/api/feed/batch": {
+      "post": {
+        "operationId": "get-feed-batch",
+        "summary": "Fetch several feeds in one request",
+        "description": "A page carries one feed widget per block and each used to fetch on its own, so a page cost one round trip per widget and counted that often against the rate limit. Each entry is validated exactly as a single request is.\n\nAt most 20 feeds per request. Rate limited to 30 requests per minute per user.",
+        "tags": [
+          "Feeds"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "feeds"
+                ],
+                "properties": {
+                  "feeds": {
+                    "type": "object",
+                    "maxProperties": 20,
+                    "description": "Feed specifications keyed by a caller-chosen slot id. Each value takes the same selectors a single fetch does (sourceType, url or connectionId, plus the source-specific filters), with limit, sortBy, sortOrder and filterKeyword.",
+                    "additionalProperties": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "One result per slot, keyed as sent. A feed that failed carries its own error and does not fail the others.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "feeds": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing feeds, or more than 20."
+          },
+          "401": {
+            "description": "Not logged in."
+          },
+          "429": {
+            "description": "Rate limit exceeded."
+          }
+        }
+      }
+    },
     "/api/feed/config": {
       "put": {
         "operationId": "update-feed-config",
@@ -8222,6 +8284,80 @@
         "security": [
           {}
         ]
+      }
+    },
+    "/api/share/{token}/feed/batch": {
+      "post": {
+        "operationId": "get-feed-batch-by-share",
+        "summary": "Fetch several of a share's feeds in one request",
+        "description": "As /api/feed/batch, for an anonymous visitor. The rate limit is per IP address, so a page with five widgets used to cost five of a visitor's sixty per minute — behind one office NAT that is twelve page views for everyone together.\n\nEach entry passes the same selector allowlist as the single-feed endpoint; one the share does not publish is refused in its own slot.",
+        "tags": [
+          "Feeds",
+          "Public Share"
+        ],
+        "security": [
+          {}
+        ],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Nextcloud share token."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "feeds"
+                ],
+                "properties": {
+                  "feeds": {
+                    "type": "object",
+                    "maxProperties": 20,
+                    "description": "Feed specifications keyed by a caller-chosen slot id. Each value takes the same selectors a single fetch does (sourceType, url or connectionId, plus the source-specific filters), with limit, sortBy, sortOrder and filterKeyword.",
+                    "additionalProperties": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "One result per slot, keyed as sent. A feed that failed carries its own error and does not fail the others.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "feeds": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing feeds, or more than 20."
+          },
+          "429": {
+            "description": "Rate limit exceeded."
+          }
+        }
       }
     },
     "/api/share/{token}/feed/external": {

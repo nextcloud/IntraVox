@@ -161,7 +161,7 @@ class FeedReaderService {
      * @param string $sortOrder Sort order: 'desc' (default), 'asc'
      * @param string $filterKeyword Filter items by keyword in title/excerpt (case-insensitive)
      */
-    public function fetchFeed(string $sourceType, array $config, int $limit = 5, ?string $userId = null, string $sortBy = 'date', string $sortOrder = 'desc', string $filterKeyword = ''): array {
+    public function fetchFeed(string $sourceType, array $config, int $limit = 5, ?string $userId = null, string $sortBy = 'date', string $sortOrder = 'desc', string $filterKeyword = '', bool $forceRefresh = false): array {
         $this->acceptLanguage = $this->buildAcceptLanguage($userId);
         $limit = min(max($limit, 1), self::MAX_ITEMS);
         $cacheKey = $this->buildCacheKey($sourceType, $config, $userId);
@@ -173,7 +173,7 @@ class FeedReaderService {
         // request goes on to refresh it. Blocking readers behind a refetch is
         // what takes an instance down when a busy page's entry expires; see
         // CACHE_STALE_TTL.
-        if ($this->cache !== null) {
+        if ($this->cache !== null && !$forceRefresh) {
             $cached = $this->cache->get($cacheKey);
             if ($cached !== null) {
                 $decoded = json_decode($cached, true);
