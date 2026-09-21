@@ -358,7 +358,7 @@ class FeedService {
                     $html .= $this->markdownToHtml($widget['content']);
                 } elseif ($type === 'heading' && !empty($widget['content'])) {
                     $level = $widget['level'] ?? 2;
-                    $html .= '<h' . $level . '>' . htmlspecialchars($widget['content']) . '</h' . $level . '>';
+                    $html .= '<h' . $level . '>' . $this->escapeOnce($widget['content']) . '</h' . $level . '>';
                 }
             }
         }
@@ -388,26 +388,26 @@ class FeedService {
             // Checkbox list item: - [ ] item or - [x] item
             if (preg_match('/^[-*]\s+\[([xX ])\]\s*(.+)$/', $trimmed, $m)) {
                 $check = strtolower($m[1]) === 'x' ? "\u{2611}" : "\u{2610}";
-                $html .= '<p>' . $check . ' ' . $this->inlineMarkdown(htmlspecialchars($m[2])) . '</p>';
+                $html .= '<p>' . $check . ' ' . $this->inlineMarkdown($this->escapeOnce($m[2])) . '</p>';
                 continue;
             }
 
             // Unordered list item: - item or * item
             if (preg_match('/^[-*]\s+(.+)$/', $trimmed, $m)) {
                 $olCounter = 0;
-                $html .= '<p>' . "\u{2022}" . ' ' . $this->inlineMarkdown(htmlspecialchars($m[1])) . '</p>';
+                $html .= '<p>' . "\u{2022}" . ' ' . $this->inlineMarkdown($this->escapeOnce($m[1])) . '</p>';
                 continue;
             }
 
             // Ordered list item: 1. item
             if (preg_match('/^\d+\.\s+(.+)$/', $trimmed, $m)) {
                 $olCounter++;
-                $html .= '<p>' . $olCounter . '. ' . $this->inlineMarkdown(htmlspecialchars($m[1])) . '</p>';
+                $html .= '<p>' . $olCounter . '. ' . $this->inlineMarkdown($this->escapeOnce($m[1])) . '</p>';
                 continue;
             }
 
             $olCounter = 0;
-            $html .= '<p>' . $this->inlineMarkdown(htmlspecialchars($trimmed)) . '</p>';
+            $html .= '<p>' . $this->inlineMarkdown($this->escapeOnce($trimmed)) . '</p>';
         }
 
         return $html;
@@ -416,6 +416,29 @@ class FeedService {
     /**
      * Apply inline markdown formatting (bold, italic) to already-escaped HTML text.
      */
+    /**
+     * Encode for HTML exactly once.
+     *
+     * Page content is stored as markdown, and that markdown may already hold
+     * entities — an editor that typed "&" can leave "&amp;" behind. Running
+     * htmlspecialchars() over that produced "&amp;amp;", which the feed carried
+     * verbatim into the CDATA and every reader then rendered as literal
+     * "&amp;". Measured on the onboarding page: the stored source reads
+     * "Feedback &amp; vragen", the feed shipped "Feedback &amp;amp; vragen".
+     *
+     * Decoding first is what makes the encode idempotent. Recursive, because
+     * a value can have been through this more than once historically.
+     */
+    private function escapeOnce(string $text): string {
+        $prev = null;
+        while ($prev !== $text) {
+            $prev = $text;
+            $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        }
+
+        return htmlspecialchars($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    }
+
     private function inlineMarkdown(string $text): string {
         // Bold: **text** or __text__
         $text = preg_replace('/\*\*(.+?)\*\*/', '<strong>$1</strong>', $text);

@@ -786,30 +786,16 @@ class PublicShareController extends Controller {
         }
     }
 
-    #[PublicPage]
-    #[NoCSRFRequired]
-    #[AnonRateLimit(limit: 30, period: 60)]
-    public function getFeedByShare(string $token): DataResponse {
-        try {
-            $share = $this->openShare($token, fn() => $this->widgetShareDenied());
-            if ($share instanceof Response) {
-                return $this->asDataResponse($share);
-            }
-
-            // Anonymous visitors cannot reach /apps/intravox/api/feed/image
-            // (#[NoAdminRequired]), so the item images must be signed for the
-            // share route instead. Set before fetching: the URLs are generated
-            // during the fetch, not afterwards.
-            $this->feedImageProxy->setShareToken($token);
-
-            $sourceType = $this->request->getParam('sourceType', 'rss');
-            $limit = (int)$this->request->getParam('limit', 5);
-
-            $config = $this->buildConfigFromRequest($sourceType);
-            // SHARE-CFG: connectionId selects a STORED connection, credentials and
-            // all, and the fetch runs server-side with them. Taking it from the
-            // query string let anyone holding any share token drive any configured
-            // connection. It may only name what this share actually publishes.
+    /**
+     * Refuse a feed request naming anything this share does not publish.
+     *
+     * Extracted so the article endpoint enforces the identical rule. Two
+     * copies of this would drift, and the half that drifted would be the one
+     * anonymous visitors reach.
+     *
+     * Returns null when the request is allowed.
+     */
+    private function refuseUnpublishedFeedSelectors(mixed $share, string $token, array $config): ?DataResponse {
             if (($config['connectionId'] ?? '') !== '') {
                 $allowed = $this->publicShareService->allowedWidgetValues($share, 'feed', 'connectionId');
                 if (!in_array($config['connectionId'], $allowed, true)) {
@@ -871,8 +857,42 @@ class PublicShareController extends Controller {
                 }
             }
 
+
+        return null;
+    }
+
+    #[PublicPage]
+    #[NoCSRFRequired]
+    #[AnonRateLimit(limit: 30, period: 60)]
+    public function getFeedByShare(string $token): DataResponse {
+        try {
+            $share = $this->openShare($token, fn() => $this->widgetShareDenied());
+            if ($share instanceof Response) {
+                return $this->asDataResponse($share);
+            }
+
+            // Sign image URLs for the share route. /apps/intravox/api/feed/image
+            // is #[NoAdminRequired], so an anonymous visitor gets a 401 for every
+            // picture and sees alt text. Set BEFORE the fetch: the URLs are
+            // generated while parsing, not afterwards.
+            $this->feedImageProxy->setShareToken($token);
+
+            $sourceType = $this->request->getParam('sourceType', 'rss');
+            $limit = (int)$this->request->getParam('limit', 5);
+
+            $config = $this->buildConfigFromRequest($sourceType);
+            // SHARE-CFG: connectionId selects a STORED connection, credentials and
+            // all, and the fetch runs server-side with them. Taking it from the
+            // query string let anyone holding any share token drive any configured
+            // connection. It may only name what this share actually publishes.
+            $geweigerd = $this->refuseUnpublishedFeedSelectors($share, $token, $config);
+            if ($geweigerd !== null) {
+                return $geweigerd;
+            }
+
             [$sortBy, $sortOrder, $filterKeyword] = $this->parseSortAndFilter();
-            $result = $this->feedReaderService->fetchFeed($sourceType, $config, $limit, null, $sortBy, $sortOrder, $filterKeyword);
+            $force = $this->request->getParam('refresh', '') === '1';
+            $result = $this->feedReaderService->fetchFeed($sourceType, $config, $limit, null, $sortBy, $sortOrder, $filterKeyword, $force);
 
             return new DataResponse($result);
         } catch (\Exception $e) {
@@ -885,6 +905,75 @@ class PublicShareController extends Controller {
                 Http::STATUS_INTERNAL_SERVER_ERROR
             );
         }
+    }
+
+    /**
+     * Several of this share's feeds in one request.
+     *
+     * The rate limit is per IP, so a page with five widgets used to cost five
+     * of an anonymous visitor's sixty per minute. Behind one office NAT a
+     * thousand readers share that budget — twelve page views and the rest see
+     * 429. One request per page is what makes that survivable.
+     *
+     * Every entry passes the same selector allowlist as a single request; the
+     * guard is handed to the batch handler rather than reimplemented.
+     */
+    #[PublicPage]
+    #[NoCSRFRequired]
+    #[AnonRateLimit(limit: 30, period: 60)]
+    public function getFeedBatchByShare(string $token): DataResponse {
+        $share = $this->openShare($token, fn() => $this->widgetShareDenied());
+        if ($share instanceof Response) {
+            return $this->asDataResponse($share);
+        }
+
+        // Same reason as the single-feed route: every image in every slot of
+        // this batch is signed during the fetch below.
+        $this->feedImageProxy->setShareToken($token);
+
+        return $this->handleFetchFeedBatch(
+            null,
+            fn(array $config) => $this->refuseUnpublishedFeedSelectors($share, $token, $config)
+        );
+    }
+
+    /**
+     * The article body behind one item of a feed this share publishes.
+     *
+     * The case the whole feature exists for: an anonymous reader on a shared
+     * page has no account anywhere, so following the link means meeting a
+     * cookie wall. Reading the piece in place avoids that.
+     *
+     * Guarded exactly as the list is — same selectors, same refusals — because
+     * an article endpoint that skipped those checks would be a way to read
+     * feeds the share never published.
+     */
+    #[PublicPage]
+    #[NoCSRFRequired]
+    #[AnonRateLimit(limit: 60, period: 60)]
+    public function getArticleByShare(string $token): DataResponse {
+        $share = $this->openShare($token, fn() => $this->widgetShareDenied());
+        if ($share instanceof Response) {
+            return $this->asDataResponse($share);
+        }
+
+        // Not for images — an article body has none, the sanitizer strips them.
+        // It is the cache key: FeedReaderService derives it from the proxy's
+        // share context, so without this the lookup would address the
+        // logged-in entry and miss.
+        $this->feedImageProxy->setShareToken($token);
+
+        $sourceType = (string)$this->request->getParam('sourceType', 'rss');
+        $config = $this->buildConfigFromRequest($sourceType);
+
+        $geweigerd = $this->refuseUnpublishedFeedSelectors($share, $token, $config);
+        if ($geweigerd !== null) {
+            return $geweigerd;
+        }
+
+        // userId null: a share is read anonymously, and the cache key must say
+        // so — this is what keeps a share out of a logged-in reader's entries.
+        return $this->handleFetchArticle(null);
     }
 
     #[PublicPage]

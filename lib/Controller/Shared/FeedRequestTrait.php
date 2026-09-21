@@ -40,39 +40,52 @@ trait FeedRequestTrait {
     }
 
     private function buildConfigFromRequest(string $sourceType): array {
+        return $this->buildConfig($sourceType, fn(string $naam) => $this->request->getParam($naam, ''));
+    }
+
+    /**
+     * Validate one feed's selectors, whatever they were read from.
+     *
+     * Split out so the batch endpoint validates each entry through the same
+     * code as a single request. A second copy of these patterns would drift,
+     * and the copy that drifted would be the one an anonymous visitor reaches.
+     *
+     * @param callable(string):string $lees names a parameter, returns its raw value
+     */
+    private function buildConfig(string $sourceType, callable $lees): array {
         $config = [];
 
         if ($sourceType === 'rss') {
-            $config['url'] = $this->request->getParam('url', '');
+            $config['url'] = $lees('url');
         } else {
-            $config['connectionId'] = $this->request->getParam('connectionId', '');
-            $courseId = $this->request->getParam('courseId', '');
+            $config['connectionId'] = $lees('connectionId');
+            $courseId = $lees('courseId');
             // Only allow alphanumeric course IDs (prevents parameter injection)
             if (!empty($courseId) && !preg_match('/^[a-zA-Z0-9_-]{1,64}$/', $courseId)) {
                 $courseId = '';
             }
             $config['courseId'] = $courseId;
 
-            $contentType = $this->request->getParam('contentType', '');
+            $contentType = $lees('contentType');
             // Whitelist allowed content types to prevent injection
             if (!in_array($contentType, ['', 'news', 'my-courses', 'courses', 'assignments', 'deadlines', 'pages', 'documents', 'list', 'open', 'overdue', 'milestones', 'recently-updated', 'bugs', 'recent', 'created-recent'], true)) {
                 $contentType = '';
             }
             $config['contentType'] = $contentType;
 
-            $jiraProject = $this->request->getParam('jiraProject', '');
+            $jiraProject = $lees('jiraProject');
             if (!empty($jiraProject) && !preg_match('/^[A-Z][A-Z0-9_]{1,20}$/', $jiraProject)) {
                 $jiraProject = '';
             }
             $config['jiraProject'] = $jiraProject;
 
-            $moodleForumId = $this->request->getParam('moodleForumId', '');
+            $moodleForumId = $lees('moodleForumId');
             if (!empty($moodleForumId) && !preg_match('/^[0-9]{1,10}$/', $moodleForumId)) {
                 $moodleForumId = '';
             }
             $config['moodleForumId'] = $moodleForumId;
 
-            $listId = $this->request->getParam('listId', '');
+            $listId = $lees('listId');
             // Only allow GUID-format list IDs
             if (!empty($listId) && !preg_match('/^[a-zA-Z0-9-]{1,64}$/', $listId)) {
                 $listId = '';
@@ -89,6 +102,119 @@ trait FeedRequestTrait {
      * The signature is what makes this not an open proxy: an unsigned or
      * mis-signed url is refused before any outbound request is made.
      */
+    /**
+     * One article body, for the reader who opened it.
+     *
+     * Lives in the trait so the logged-in route and the share route answer
+     * identically — a public share is the case this matters most for, since an
+     * anonymous visitor has no other way past a cookie wall.
+     *
+     * `sourceType` and the config are re-read from the request rather than
+     * trusted from the client as a cache key: buildConfigFromRequest() is the
+     * same validation the list went through, and on a share the caller has
+     * already checked the feed is one that share publishes.
+     */
+    private function handleFetchArticle(?string $userId): DataResponse {
+        $itemId = (string)$this->request->getParam('itemId', '');
+        if ($itemId === '') {
+            return new DataResponse(['error' => 'Missing itemId'], Http::STATUS_BAD_REQUEST);
+        }
+
+        $sourceType = (string)$this->request->getParam('sourceType', 'rss');
+        $config = $this->buildConfigFromRequest($sourceType);
+
+        $html = $this->feedReaderService->fetchArticle($sourceType, $config, $itemId, $userId);
+        if ($html === null) {
+            // Not an error: the entry expires with the feed it came from, and
+            // an item may simply carry no body. The client links out instead.
+            return new DataResponse(['content' => null], Http::STATUS_NOT_FOUND);
+        }
+
+        $response = new DataResponse(['content' => $html]);
+        // Private: the body may come from a personalised LMS feed, and a shared
+        // proxy must not hand one reader's article to another.
+        $response->addHeader('Cache-Control', 'private, max-age=300');
+        return $response;
+    }
+
+    /**
+     * Ceiling on feeds in one batch.
+     *
+     * A page with more feed widgets than this still works — the client sends a
+     * second batch. The limit exists so one request cannot ask the server to
+     * make an unbounded number of outbound fetches.
+     */
+    private const MAX_BATCH_FEEDS = 20;
+
+    /**
+     * Several feeds in one request.
+     *
+     * A page carries one feed widget per block, and each used to fetch on its
+     * own: measured on the rss page, three widgets produced nine requests
+     * (re-renders included). At five widgets a reader spends five round trips
+     * before the page settles, and every one of them counts against the
+     * per-IP rate limit — which is what a thousand readers behind one office
+     * NAT run into after a dozen page views.
+     *
+     * Each entry is validated through buildConfig(), the same code a single
+     * request uses. A failure in one feed is reported in that feed's slot and
+     * never fails the batch: one unreachable source must not blank a page.
+     *
+     * @param callable(array):?DataResponse $bewaker optional per-feed guard
+     */
+    private function handleFetchFeedBatch(?string $userId, ?callable $bewaker = null): DataResponse {
+        $rauw = $this->request->getParam('feeds', null);
+        if (is_string($rauw)) {
+            $rauw = json_decode($rauw, true);
+        }
+        if (!is_array($rauw) || $rauw === []) {
+            return new DataResponse(['error' => 'Missing feeds'], Http::STATUS_BAD_REQUEST);
+        }
+        if (count($rauw) > self::MAX_BATCH_FEEDS) {
+            return new DataResponse(
+                ['error' => 'Too many feeds in one request (max ' . self::MAX_BATCH_FEEDS . ')'],
+                Http::STATUS_BAD_REQUEST
+            );
+        }
+
+        $uit = [];
+        foreach ($rauw as $index => $spec) {
+            $sleutel = is_string($index) ? $index : (string)$index;
+            if (!is_array($spec)) {
+                $uit[$sleutel] = ['items' => [], 'error' => 'Invalid feed specification'];
+                continue;
+            }
+
+            $sourceType = (string)($spec['sourceType'] ?? 'rss');
+            $config = $this->buildConfig($sourceType, static fn(string $naam) => (string)($spec[$naam] ?? ''));
+
+            if ($bewaker !== null) {
+                $geweigerd = $bewaker($config);
+                if ($geweigerd !== null) {
+                    $uit[$sleutel] = ['items' => [], 'error' => 'Not published by this share'];
+                    continue;
+                }
+            }
+
+            $limit = (int)($spec['limit'] ?? 5);
+            $sortBy = in_array($spec['sortBy'] ?? 'date', ['date', 'title'], true) ? (string)$spec['sortBy'] : 'date';
+            $sortOrder = in_array($spec['sortOrder'] ?? 'desc', ['asc', 'desc'], true) ? (string)$spec['sortOrder'] : 'desc';
+            $filter = mb_substr(trim((string)($spec['filterKeyword'] ?? '')), 0, 100);
+
+            try {
+                $uit[$sleutel] = $this->feedReaderService->fetchFeed(
+                    $sourceType, $config, $limit, $userId, $sortBy, $sortOrder, $filter
+                );
+            } catch (\Exception $e) {
+                // Logged, not returned: the message can name internal hosts.
+                $this->logger->warning('IntraVox: batch feed failed', ['error' => $e->getMessage()]);
+                $uit[$sleutel] = ['items' => [], 'error' => 'Failed to fetch feed'];
+            }
+        }
+
+        return new DataResponse(['feeds' => $uit]);
+    }
+
     private function handleProxyImage(): DataDownloadResponse|DataResponse {
         $url = $this->request->getParam('url', '');
         $sig = $this->request->getParam('sig', '');

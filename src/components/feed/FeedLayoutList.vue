@@ -12,6 +12,7 @@
       :open-in-new-tab="widget.openInNewTab !== false"
       :item-background="itemBackgroundMode"
       :feed-image="feedImage"
+      @open-article="$emit('open-article', $event)"
     />
   </div>
 </template>
@@ -25,6 +26,7 @@ export default {
   components: {
     FeedItem,
   },
+  emits: ['open-article'],
   props: {
     items: {
       type: Array,

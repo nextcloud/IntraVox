@@ -183,6 +183,8 @@ return [
         ['name' => 'feedReader#getFeed', 'url' => '/api/feed/external', 'verb' => 'GET'],
         ['name' => 'feedReader#getPreview', 'url' => '/api/feed/preview', 'verb' => 'GET'],
         ['name' => 'feedReader#proxyImage', 'url' => '/api/feed/image', 'verb' => 'GET'],
+        ['name' => 'feedReader#getArticle', 'url' => '/api/feed/article', 'verb' => 'GET'],
+        ['name' => 'feedReader#getFeedBatch', 'url' => '/api/feed/batch', 'verb' => 'POST'],
         ['name' => 'feedReader#getCourses', 'url' => '/api/feed/courses/{connectionId}', 'verb' => 'GET'],
         ['name' => 'feedReader#getSharePointLists', 'url' => '/api/feed/sharepoint-lists/{connectionId}', 'verb' => 'GET'],
         ['name' => 'feedReader#getJiraProjects', 'url' => '/api/feed/jira-projects/{connectionId}', 'verb' => 'GET'],
@@ -219,6 +221,8 @@ return [
         ['name' => 'publicShare#getEventsByShare', 'url' => '/api/share/{token}/calendar/events', 'verb' => 'GET'],
         ['name' => 'publicShare#getFeedByShare', 'url' => '/api/share/{token}/feed/external', 'verb' => 'GET'],
         ['name' => 'publicShare#proxyImageByShare', 'url' => '/api/share/{token}/feed/image', 'verb' => 'GET'],
+        ['name' => 'publicShare#getArticleByShare', 'url' => '/api/share/{token}/feed/article', 'verb' => 'GET'],
+        ['name' => 'publicShare#getFeedBatchByShare', 'url' => '/api/share/{token}/feed/batch', 'verb' => 'POST'],
 
         // Health check (for monitoring/orchestration)
         ['name' => 'api#health', 'url' => '/api/health', 'verb' => 'GET'],

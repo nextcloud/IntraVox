@@ -13,6 +13,7 @@
       :item-background="itemBackgroundMode"
       :feed-image="feedImage"
       :compact="true"
+      @open-article="$emit('open-article', $event)"
     />
   </div>
 </template>
@@ -26,6 +27,7 @@ export default {
   components: {
     FeedItem,
   },
+  emits: ['open-article'],
   props: {
     items: {
       type: Array,
