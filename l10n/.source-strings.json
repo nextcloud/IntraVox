@@ -1,6 +1,6 @@
 {
-    "count": 1381,
-    "sha256": "59dd9ab49a2bf7c8f5a4d406df10fa8c4fc76f58f69ab08045d54f497337a9b6",
+    "count": 1383,
+    "sha256": "ac19a42c214566aeda8a85a4c5413ab4f4177f154e1f941699d0d41c104510c2",
     "strings": [
         "— Not configured —",
         "… and {n} more",
@@ -376,6 +376,7 @@
         "e.g. Canvas University",
         "e.g. IVOX-XXXX-XXXX-XXXX-XXXX",
         "e.g., latest news",
+        "e.g., Nextcloud blog",
         "e.g., our team",
         "e.g., upcoming events",
         "Edit",
@@ -1146,6 +1147,7 @@
         "Showing first {n} documents. Use filters or a more specific folder.",
         "Showing first {n} photos. Use filters or a more specific folder to narrow the selection.",
         "Showing results from the first {cap} accounts. Counts may be incomplete — add a group filter in the widget settings for exact numbers.",
+        "Shown above the items. Name the source when several feeds sit side by side.",
         "Simple",
         "Size",
         "Size:",

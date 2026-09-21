@@ -68,3 +68,41 @@ export function isLightBackground(color) {
 export function getEffectiveBackgroundColor(widgetBg, rowBg) {
   return widgetBg || rowBg || '';
 }
+
+/**
+ * The foreground colour a widget title needs on a given background.
+ *
+ * Nextcloud ships a matching --color-*-text for every tint listed above; the
+ * mapping is that pairing and nothing more. An unknown background (including
+ * the default, '') returns null, which means "inherit" — the stylesheet's own
+ * --color-main-text then applies, so a caller can bind the result and let the
+ * CSS decide when there is nothing to override.
+ *
+ * @param {string} backgroundColor - The effective background, from getEffectiveBackgroundColor
+ * @returns {string|null} - A CSS colour value, or null to inherit
+ */
+export function titleColorFor(backgroundColor) {
+  const pairings = {
+    'var(--color-primary-element)': 'var(--color-primary-element-text)',
+    'var(--color-primary)': 'var(--color-primary-element-text)',
+    'var(--color-primary-element-light)': 'var(--color-primary-element-light-text)',
+    'var(--color-error)': 'var(--color-error-text)',
+    'var(--color-warning)': 'var(--color-warning-text)',
+    'var(--color-success)': 'var(--color-success-text)',
+    'var(--color-background-dark)': 'var(--color-main-text)',
+    'var(--color-background-hover)': 'var(--color-main-text)',
+  };
+  return pairings[backgroundColor] || null;
+}
+
+/**
+ * The same pairing as an inline style object, ready to bind to :style.
+ *
+ * @param {string} widgetBg - Widget's own backgroundColor
+ * @param {string} rowBg - The row's backgroundColor
+ * @returns {object} - { color } or {} when the background needs no override
+ */
+export function titleStyleFor(widgetBg, rowBg) {
+  const color = titleColorFor(getEffectiveBackgroundColor(widgetBg, rowBg));
+  return color ? { color } : {};
+}

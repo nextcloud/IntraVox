@@ -1,5 +1,18 @@
 <template>
   <div class="feed-widget-editor">
+    <!-- Widget title -->
+    <div class="form-group">
+      <label for="feed-widget-title">{{ t('intravox', 'Widget title (optional)') }}</label>
+      <input
+        id="feed-widget-title"
+        v-model="localWidget.title"
+        type="text"
+        :placeholder="t('intravox', 'e.g., Nextcloud blog')"
+        @input="debouncedEmitUpdate"
+      />
+      <span class="field-hint">{{ t('intravox', 'Shown above the items. Name the source when several feeds sit side by side.') }}</span>
+    </div>
+
     <!-- Source type selection -->
     <div class="form-group">
       <label for="feed-source-type">{{ t('intravox', 'Source type') }}</label>
