@@ -27,6 +27,9 @@ class FeedReaderService {
     private const CACHE_TTL = 900; // 15 minutes
     private const HTTP_TIMEOUT = 5;
 
+    /** The RSS content module, where a feed puts the article itself. */
+    private const NS_CONTENT = 'http://purl.org/rss/1.0/modules/content/';
+
     private ?FeedTokenResolver $tokenResolver = null;
     private const MAX_ITEMS = 50;
     /**
@@ -628,7 +631,14 @@ class FeedReaderService {
     }
 
     private function normalizeRssItem(\SimpleXMLElement $item): array {
-        $content = (string)($item->description ?? '');
+        // content:encoded holds the article, description only a teaser, so the
+        // first wins — 384 bytes against 12,577 on nextcloud.com/feed. Atom
+        // already read content before summary; this brings RSS in line, and
+        // gives extractImageFromHtml() the article body to look in.
+        // Matched by URI: children('content', true) resolves the prefix, which
+        // a feed is free to choose. See RssContentSelectionTest.
+        $encoded = (string)($item->children(self::NS_CONTENT)->encoded ?? '');
+        $content = $encoded !== '' ? $encoded : (string)($item->description ?? '');
 
         // Try to extract image from content or enclosure
         $image = null;
