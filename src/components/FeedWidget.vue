@@ -1,5 +1,11 @@
 <template>
   <div class="feed-widget" aria-live="polite">
+    <!--
+      Outside the loading/error/empty branches on purpose: a feed that is
+      still loading or failed to load needs its name most of all. Inside,
+      a broken feed would render as an anonymous error box, and on a page
+      with several feeds side by side you could not tell which one broke.
+    -->
     <h3 v-if="widget.title && widget.showTitle !== false" class="feed-widget-title" :style="titleStyle">
       {{ widget.title }}
     </h3>
@@ -40,6 +46,7 @@ import AlertCircle from 'vue-material-design-icons/AlertCircle.vue';
 import RssBox from 'vue-material-design-icons/RssBox.vue';
 import FeedLayoutList from './feed/FeedLayoutList.vue';
 import FeedLayoutGrid from './feed/FeedLayoutGrid.vue';
+import { titleStyleFor } from '../utils/colorUtils.js';
 
 export default {
   name: 'FeedWidget',
@@ -107,6 +114,9 @@ export default {
         grid: FeedLayoutGrid,
       };
       return layouts[this.widget.layout] || FeedLayoutList;
+    },
+    titleStyle() {
+      return titleStyleFor(this.widget.backgroundColor, this.rowBackgroundColor);
     },
   },
   watch: {
@@ -243,12 +253,16 @@ export default {
   overflow: hidden;
 }
 
-/* Matches .news-widget-title so a feed and a news widget on the same row line up. */
+/* Same size and rhythm as .news-widget-title and .people-widget-title, so a
+   page that mixes widget types keeps one heading level visually. */
 .feed-widget-title {
   margin: 0 0 16px 0;
   font-size: 18px;
   font-weight: 600;
   color: var(--color-main-text);
+  /* A long feed name must not widen the column it sits in; the widget itself
+     is min-width:0 for the same reason. */
+  overflow-wrap: anywhere;
 }
 
 .feed-widget-loading,
