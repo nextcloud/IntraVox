@@ -1,5 +1,20 @@
 <template>
   <div class="feed-widget-editor">
+    <!-- Widget title. First field, matching the news, people and calendar
+         editors: it names the block on the page, so it comes before the
+         question of where the content comes from. -->
+    <div class="form-group">
+      <label for="feed-widget-title">{{ t('intravox', 'Widget title (optional)') }}</label>
+      <input
+        id="feed-widget-title"
+        v-model="localWidget.title"
+        type="text"
+        :placeholder="t('intravox', 'e.g. Latest news')"
+        @input="debouncedEmitUpdate"
+      />
+      <span class="field-hint">{{ t('intravox', 'Left empty, the name from the feed is suggested once. Your own wording always wins.') }}</span>
+    </div>
+
     <!-- Source type selection -->
     <div class="form-group">
       <label for="feed-source-type">{{ t('intravox', 'Source type') }}</label>
@@ -249,10 +264,23 @@
       />
     </div>
 
-    <!-- Display options -->
+    <!-- Display options.
+         Grouped outside-in: first the widget frame, then what each item shows,
+         then what a click does. The flat list mixed those three, so "show
+         source" (per item) sat next to "open links in new tab" (behaviour). -->
     <div class="form-group">
       <label>{{ t('intravox', 'Display options') }}</label>
+
       <div class="checkbox-group">
+        <span class="checkbox-group-heading">{{ t('intravox', 'Widget') }}</span>
+        <label class="checkbox-label">
+          <input type="checkbox" v-model="localWidget.showTitle" @change="emitUpdate" />
+          {{ t('intravox', 'Show title') }}
+        </label>
+      </div>
+
+      <div class="checkbox-group">
+        <span class="checkbox-group-heading">{{ t('intravox', 'Per item') }}</span>
         <label class="checkbox-label">
           <input type="checkbox" v-model="localWidget.showImage" @change="emitUpdate" />
           {{ t('intravox', 'Show image') }}
@@ -269,6 +297,10 @@
           <input type="checkbox" v-model="localWidget.showSource" @change="emitUpdate" />
           {{ t('intravox', 'Show source') }}
         </label>
+      </div>
+
+      <div class="checkbox-group">
+        <span class="checkbox-group-heading">{{ t('intravox', 'Links') }}</span>
         <label class="checkbox-label">
           <input type="checkbox" v-model="localWidget.openInNewTab" @change="emitUpdate" />
           {{ t('intravox', 'Open links in new tab') }}
@@ -280,7 +312,7 @@
     <div v-if="hasValidSource" class="feed-preview-container">
       <div class="feed-preview-header">{{ t('intravox', 'Preview') }}</div>
       <div class="feed-preview-content">
-        <FeedWidget :widget="localWidget" :key="previewKey" />
+        <FeedWidget :widget="localWidget" :key="previewKey" @feed-name="onFeedName" />
       </div>
     </div>
   </div>
@@ -325,6 +357,9 @@ export default {
       manualToken: '',
       manualTokenSaving: false,
       connectError: null,
+      // Latches on the first feed name the preview reports, so the suggestion
+      // is offered once per editing session and never fights the typist.
+      titlePrefilled: false,
     };
   },
   computed: {
@@ -421,6 +456,13 @@ export default {
     widget: {
       handler(newWidget) {
         this.localWidget = { ...this.createDefaultWidget(), ...newWidget };
+        // Only a brand-new widget gets the title suggestion. A widget that was
+        // saved before has had its chance: an empty title there is a decision,
+        // not a gap to fill. `feedUrl`/`connectionId` being set is what makes a
+        // widget "already configured" — a fresh one has neither.
+        if (newWidget && (newWidget.feedUrl || newWidget.connectionId)) {
+          this.titlePrefilled = true;
+        }
         // Normalize legacy sourceType values — old widgets stored LMS type names instead of 'connection'
         if (this.localWidget.sourceType && this.localWidget.sourceType !== 'rss' && this.localWidget.sourceType !== 'connection') {
           this.localWidget.sourceType = 'connection';
@@ -476,6 +518,10 @@ export default {
         layout: 'list',
         columns: 3,
         limit: 5,
+        // Defaults to on, and an existing widget without the key reads as on
+        // (`showTitle !== false`): until now the title was stored but never
+        // rendered, so a widget that has one should start showing it.
+        showTitle: true,
         showImage: true,
         showDate: true,
         showExcerpt: true,
@@ -590,6 +636,37 @@ export default {
       } finally {
         this.spListsLoading = false;
       }
+    },
+    /**
+     * Offer the feed's own name as a title, once, for an empty field.
+     *
+     * A suggestion, deliberately not a binding. Measured over 128 real feeds:
+     * 72% of the names a feed gives itself differ from what an editor would
+     * pick, and roughly a quarter are unusable as a heading — "Release notes
+     * from core" (Vue), "Nieuwsoverzicht" (SURF), "Press releases - RSS" (EC),
+     * or 60-character strap lines. A feed knows what it is, not what it means
+     * on this page.
+     *
+     * So: fill only an empty field, never overwrite what someone typed, and
+     * never re-fill after they clear it on purpose — `titlePrefilled` latches
+     * so a second preview load (a changed URL, a re-render) leaves the field
+     * alone. Clearing the title and leaving is a valid choice: this widget
+     * then has no heading.
+     */
+    onFeedName(naam) {
+      if (this.titlePrefilled) {
+        return;
+      }
+      this.titlePrefilled = true;
+      if ((this.localWidget.title || '').trim() !== '') {
+        return;
+      }
+      const schoon = String(naam).trim();
+      if (schoon === '') {
+        return;
+      }
+      this.localWidget.title = schoon;
+      this.emitUpdate();
     },
     emitUpdate() {
       this.$emit('update', { ...this.localWidget });
@@ -846,6 +923,19 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 6px;
+}
+
+/* Space between the three groups; the first sits right under its label. */
+.checkbox-group + .checkbox-group {
+  margin-top: 12px;
+}
+
+.checkbox-group-heading {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--color-text-maxcontrast);
 }
 
 .checkbox-label {

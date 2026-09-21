@@ -109,4 +109,92 @@ class FeedImageProxyTest extends TestCase {
         $this->assertNull($this->proxy->proxyImageUrl('javascript:alert(1)'));
         $this->assertNotNull($this->proxy->proxyImageUrl('https://example.com/a.png'));
     }
+
+    /**
+     * The bug this guards: `/apps/intravox/api/feed/image` is #[NoAdminRequired],
+     * so an anonymous visitor on a shared page got a 401 for every image and saw
+     * alt text instead of pictures — while the items themselves loaded, because
+     * those already went through the share route.
+     */
+    public function testShareContextSignsForThePublicRoute(): void {
+        $url = 'https://example.com/plaatje.png';
+
+        $this->assertStringContainsString(
+            '/apps/intravox/api/feed/image?',
+            $this->proxy->signImageUrl($url),
+            'without a share context the app route is correct'
+        );
+
+        $this->proxy->setShareToken('PbPqtPRBF3Wdkfm');
+        $this->assertStringContainsString(
+            '/apps/intravox/api/share/PbPqtPRBF3Wdkfm/feed/image?',
+            $this->proxy->signImageUrl($url),
+            'on a share the URL must point at the #[PublicPage] route'
+        );
+    }
+
+    /** Both routes verify the same HMAC; only reachability differs. */
+    public function testTheSignatureIsTheSameOnBothRoutes(): void {
+        $url = 'https://example.com/plaatje.png';
+
+        parse_str(parse_url($this->proxy->signImageUrl($url), PHP_URL_QUERY) ?: '', $app);
+        $this->proxy->setShareToken('tok123');
+        parse_str(parse_url($this->proxy->signImageUrl($url), PHP_URL_QUERY) ?: '', $share);
+
+        $this->assertSame($app['sig'] ?? 'a', $share['sig'] ?? 'b');
+        $this->assertTrue($this->proxy->verifyImageSignature($url, $share['sig'] ?? ''));
+    }
+
+    /** An empty token is no token — it must not produce `/share//feed/image`. */
+    public function testAnEmptyTokenFallsBackToTheAppRoute(): void {
+        $this->proxy->setShareToken('');
+        $this->assertStringContainsString('/apps/intravox/api/feed/image?', $this->proxy->signImageUrl('https://example.com/a.png'));
+
+        $this->proxy->setShareToken('tok');
+        $this->proxy->setShareToken(null);
+        $this->assertStringContainsString('/apps/intravox/api/feed/image?', $this->proxy->signImageUrl('https://example.com/a.png'));
+    }
+
+    /** A token with URL-unsafe characters must not break out of the path. */
+    public function testTheTokenIsEncodedIntoThePath(): void {
+        $this->proxy->setShareToken('a/b?c');
+        $this->assertStringContainsString('/api/share/a%2Fb%3Fc/feed/image?', $this->proxy->signImageUrl('https://example.com/a.png'));
+    }
+
+    /**
+     * The share context is per-request state on a service the DI container
+     * shares. Apache/mod_php builds a fresh container per request so it cannot
+     * survive one, but the guarantee the code relies on is narrower and worth
+     * pinning: setting a token must never be irreversible.
+     *
+     * If this ever regresses, a logged-in reader would be handed URLs carrying
+     * someone else's share token — which is a working link to a page they may
+     * not be entitled to see.
+     */
+    public function testTheShareContextCanAlwaysBeCleared(): void {
+        $url = 'https://example.com/a.png';
+
+        $this->proxy->setShareToken('geheim-token');
+        $this->assertStringContainsString('/api/share/geheim-token/', $this->proxy->signImageUrl($url));
+
+        $this->proxy->setShareToken(null);
+        $this->assertStringNotContainsString('/api/share/', $this->proxy->signImageUrl($url),
+            'a cleared context must not keep signing for the share route');
+        $this->assertNull($this->proxy->getShareToken());
+    }
+
+    /**
+     * The token ends up in a URL the browser requests. It must not be able to
+     * carry a query string or fragment into the path and change which endpoint
+     * is addressed.
+     */
+    public function testATokenCannotAlterTheRoute(): void {
+        foreach (['../../admin', 'a?b=c', 'a#frag', 'a/b'] as $vies) {
+            $this->proxy->setShareToken($vies);
+            $pad = parse_url($this->proxy->signImageUrl('https://example.com/a.png'), PHP_URL_PATH);
+            $this->assertStringEndsWith('/feed/image', $pad,
+                "token {$vies} must not change the endpoint");
+            $this->assertStringContainsString('/apps/intravox/api/share/', $pad);
+        }
+    }
 }

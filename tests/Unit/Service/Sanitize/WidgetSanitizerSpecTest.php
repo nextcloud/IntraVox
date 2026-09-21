@@ -313,6 +313,26 @@ class WidgetSanitizerSpecTest extends TestCase {
 		$this->assertArrayNotHasKey('apiToken', $result, 'a stored widget must never carry credentials');
 	}
 
+	/**
+	 * showTitle was added after feed widgets were already in the wild. A stored
+	 * widget has no such key, and defaulting it to false would silently hide a
+	 * title the editor had been saving all along.
+	 */
+	public function testFeedShowTitleDefaultsToTrueForWidgetsSavedBeforeTheOption(): void {
+		$zonderSleutel = $this->sanitizer->sanitizeWidget([
+			'type' => 'feed',
+			'title' => 'Laatste nieuws',
+		]);
+		$this->assertTrue($zonderSleutel['showTitle']);
+
+		$uit = $this->sanitizer->sanitizeWidget([
+			'type' => 'feed',
+			'title' => 'Laatste nieuws',
+			'showTitle' => false,
+		]);
+		$this->assertFalse($uit['showTitle'], 'an explicit false must survive the sanitizer');
+	}
+
 	public function testPhotoStoryKeepsOnlyItsConfig(): void {
 		$result = $this->sanitizer->sanitizeWidget([
 			'type' => 'photo-story',

@@ -1,5 +1,9 @@
 <template>
   <div class="feed-widget" aria-live="polite">
+    <h3 v-if="widget.title && widget.showTitle !== false" class="feed-widget-title" :style="titleStyle">
+      {{ widget.title }}
+    </h3>
+
     <div v-if="loading" class="feed-widget-loading" role="status">
       <NcLoadingIcon :size="32" />
       <p>{{ t('intravox', 'Loading feed …') }}</p>
@@ -46,6 +50,7 @@ export default {
     FeedLayoutList,
     FeedLayoutGrid,
   },
+  emits: ['feed-name'],
   props: {
     widget: {
       type: Object,
@@ -73,6 +78,29 @@ export default {
     };
   },
   computed: {
+    /**
+     * Title colour that survives a coloured row.
+     *
+     * Same mapping as NewsWidget/PeopleWidget/CalendarWidget: on a primary or
+     * otherwise dark band the default text colour disappears, so the paired
+     * *-text variable is used instead. Kept identical to those three on purpose
+     * — a feed title on a primary row should not read differently from a news
+     * title on the same row.
+     */
+    titleStyle() {
+      const bgColor = this.widget.backgroundColor || this.rowBackgroundColor || '';
+      const colorMappings = {
+        'var(--color-primary-element)': 'var(--color-primary-element-text)',
+        'var(--color-primary-element-light)': 'var(--color-primary-element-light-text)',
+        'var(--color-error)': 'var(--color-error-text)',
+        'var(--color-warning)': 'var(--color-warning-text)',
+        'var(--color-success)': 'var(--color-success-text)',
+        'var(--color-background-dark)': 'var(--color-main-text)',
+        'var(--color-background-hover)': 'var(--color-main-text)',
+      };
+      const textColor = colorMappings[bgColor];
+      return textColor ? { color: textColor } : {};
+    },
     layoutComponent() {
       const layouts = {
         list: FeedLayoutList,
@@ -190,6 +218,11 @@ export default {
         } else {
           this.items = response.data.items || [];
           this.feedImage = response.data.feedImage || null;
+          // The feed's own <channel><title>. Only the editor listens, to offer
+          // it as a suggestion for an empty widget title; the viewer ignores it.
+          if (response.data.source) {
+            this.$emit('feed-name', response.data.source);
+          }
         }
       } catch (err) {
         this.error = this.t('intravox', 'Could not load feed. The external system may be unavailable.');
@@ -208,6 +241,14 @@ export default {
   width: 100%;
   min-width: 0;
   overflow: hidden;
+}
+
+/* Matches .news-widget-title so a feed and a news widget on the same row line up. */
+.feed-widget-title {
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-main-text);
 }
 
 .feed-widget-loading,

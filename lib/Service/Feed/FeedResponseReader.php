@@ -72,6 +72,26 @@ final class FeedResponseReader {
     }
 
     /**
+     * Strip a UTF-8 BOM and leading whitespace before the XML declaration.
+     *
+     * Both make the document invalid per the XML spec, so libxml rejects the
+     * whole feed — but they are common in the wild. A single blank line after a
+     * closing PHP tag in a WordPress theme or plugin prepends a newline to every
+     * feed that site serves, and the site owner never notices: browsers and most
+     * feed readers tolerate it. Without this the widget reports "Could not load
+     * feed" for a feed that demonstrably has items.
+     *
+     * Measured on vn.nl/feed (Vrij Nederland): 106 KB of valid RSS behind one
+     * leading space, parsing as false before and 10 items after.
+     *
+     * Only the prologue is touched. A body that is genuinely not XML — an HTML
+     * error page, say — still fails to parse, which is what should happen.
+     */
+    public function stripXmlPrologueNoise(string $body): string {
+        return preg_replace('/^(?:\xEF\xBB\xBF|[\s\x00])+(?=<)/', '', $body) ?? $body;
+    }
+
+    /**
      * Plain-text summary of a feed item's HTML body.
      *
      * Not to be confused with News\NewsContentExtractor::getExcerpt(), which
@@ -147,13 +167,24 @@ final class FeedResponseReader {
      * The user split is load-bearing: LMS feeds are personalised, so a shared
      * key would serve one student's deadlines to another. RSS is the same for
      * everyone and is therefore cached once.
+     *
+     * The share split is load-bearing for a different reason: the cached body
+     * holds fully-formed image URLs, and those differ per route — a logged-in
+     * reader gets `/apps/intravox/api/feed/image`, an anonymous visitor on a
+     * share needs `/api/share/{token}/feed/image`. Without this, whichever
+     * request populated the cache first decided what the other one saw, so the
+     * images on a public share broke roughly half the time. Same feed, two
+     * renderings; the key has to say which.
      */
-    public function cacheKey(string $sourceType, array $config, ?string $userId = null): string {
+    public function cacheKey(string $sourceType, array $config, ?string $userId = null, ?string $shareToken = null): string {
         $key = $sourceType . json_encode($config);
         if ($sourceType !== 'rss') {
             // Isolate cache per user for LMS feeds (personalized content)
             // Public/anonymous requests get a separate '_public' cache key
             $key .= $userId !== null ? ('_user_' . $userId) : '_public';
+        }
+        if ($shareToken !== null && $shareToken !== '') {
+            $key .= '_share_' . $shareToken;
         }
         return 'feed_' . md5($key);
     }

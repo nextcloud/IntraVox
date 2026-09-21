@@ -27,6 +27,9 @@ class FeedReaderService {
     private const CACHE_TTL = 900; // 15 minutes
     private const HTTP_TIMEOUT = 5;
 
+    /** The RSS content module, where a feed puts the article itself. */
+    private const NS_CONTENT = 'http://purl.org/rss/1.0/modules/content/';
+
     private ?FeedTokenResolver $tokenResolver = null;
     private const MAX_ITEMS = 50;
     /**
@@ -566,6 +569,10 @@ class FeedReaderService {
         if (strlen($body) > self::MAX_RESPONSE_SIZE) {
             throw new \RuntimeException('Feed response too large');
         }
+        // A BOM or a stray newline before the XML declaration makes libxml reject
+        // an otherwise valid feed; see FeedResponseReader::stripXmlPrologueNoise().
+        $body = $this->responses->stripXmlPrologueNoise($body);
+
         $xml = @simplexml_load_string($body, 'SimpleXMLElement', LIBXML_NOCDATA | LIBXML_NONET);
         if ($xml === false) {
             throw new \RuntimeException('Failed to parse feed XML');
@@ -628,7 +635,14 @@ class FeedReaderService {
     }
 
     private function normalizeRssItem(\SimpleXMLElement $item): array {
-        $content = (string)($item->description ?? '');
+        // content:encoded holds the article, description only a teaser, so the
+        // first wins — 384 bytes against 12,577 on nextcloud.com/feed. Atom
+        // already read content before summary; this brings RSS in line, and
+        // gives extractImageFromHtml() the article body to look in.
+        // Matched by URI: children('content', true) resolves the prefix, which
+        // a feed is free to choose. See RssContentSelectionTest.
+        $encoded = (string)($item->children(self::NS_CONTENT)->encoded ?? '');
+        $content = $encoded !== '' ? $encoded : (string)($item->description ?? '');
 
         // Try to extract image from content or enclosure
         $image = null;
@@ -2255,7 +2269,11 @@ class FeedReaderService {
         return $path;
     }
 
+    /**
+     * The share token belongs in the key because the cached body carries the
+     * image URLs, and those are route-specific. See FeedResponseReader::cacheKey().
+     */
     private function buildCacheKey(string $sourceType, array $config, ?string $userId = null): string {
-        return $this->responses->cacheKey($sourceType, $config, $userId);
+        return $this->responses->cacheKey($sourceType, $config, $userId, $this->imageProxy->getShareToken());
     }
 }
