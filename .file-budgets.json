@@ -226,7 +226,7 @@
     "src/components/Widget.vue": 1403,
     "src/components/WidgetEditor.vue": 1290,
     "src/components/WidgetPicker.vue": 211,
-    "src/components/feed/FeedArticleModal.vue": 412,
+    "src/components/feed/FeedArticleModal.vue": 426,
     "src/components/feed/FeedItem.vue": 539,
     "src/components/feed/FeedLayoutGrid.vue": 95,
     "src/components/feed/FeedLayoutList.vue": 72,

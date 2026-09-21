@@ -376,7 +376,21 @@ export default {
   border-top: 1px solid var(--color-border);
 }
 
+/*
+ * The action sits at the trailing edge, per the design system.
+ *
+ * NcDialog sets `justify-content: end` on .dialog__actions, and WidgetEditor
+ * and LinksEditor both use `flex-end` in their .modal-footer. This modal draws
+ * its own footer because the body is article HTML rather than a form, so the
+ * alignment has to be repeated here rather than inherited — it was left at the
+ * start edge, which is where it disagreed with everything else in the app.
+ *
+ * `end`, not `right`: the whole component is written with logical properties
+ * so an RTL instance mirrors it along with the rest of the interface.
+ */
 .feed-article-footer {
+  display: flex;
+  justify-content: flex-end;
   margin-top: 32px;
   padding-top: 20px;
   border-top: 1px solid var(--color-border);
