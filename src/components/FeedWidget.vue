@@ -60,8 +60,17 @@
     -->
 
 
+    <!--
+      Keyed on the item, so opening a second article remounts rather than
+      reuses. The modal fetches in mounted(); without the key Vue kept the
+      first instance alive when openItem changed, and the second article you
+      opened showed the first one's state with no request made at all. Only
+      visible once every item began opening here — before that the modal was
+      usually closed in between.
+    -->
     <FeedArticleModal
       v-if="openItem"
+      :key="openItem.id || openItem.url"
       :item="openItem"
       :widget="widget"
       :share-token="shareToken"

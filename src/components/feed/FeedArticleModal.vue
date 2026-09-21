@@ -53,7 +53,32 @@
         suggest the stored copy might be unsafe, which is the wrong thing to
         imply about a cache other code also reads.
       -->
-      <article v-else class="feed-article-body" v-html="content"></article>
+      <article v-else-if="content" class="feed-article-body" v-html="content"></article>
+
+      <!--
+        No full text: show the feed's own summary rather than a failure.
+
+        Roughly a fifth of items carry no content:encoded at all, and for those
+        this is not an error — it is everything the publisher chose to syndicate.
+        Saying so plainly, and putting the summary in the same place the article
+        would have been, keeps every item opening the same way. The alternative
+        was to let those items jump straight to the website, which made the two
+        behaviours indistinguishable until you clicked.
+
+        Interpolation, not v-html: excerpt arrives as plain text with entities
+        already decoded (FeedResponseReader::excerpt strips tags), so rendering
+        it as HTML would re-interpret a stray < or & from the summary as markup.
+      -->
+      <div v-else-if="item.excerpt" class="feed-article-body feed-article-summary">
+        <p>{{ item.excerpt }}</p>
+        <p class="feed-article-summary-note">
+          {{ t('intravox', 'This feed only provides a summary. Read the full article on the website.') }}
+        </p>
+      </div>
+
+      <div v-else class="feed-article-state">
+        <p>{{ t('intravox', 'This feed provides no article text. Read it on the website instead.') }}</p>
+      </div>
 
       <footer class="feed-article-footer">
         <a
@@ -162,16 +187,18 @@ export default {
       try {
         const response = await axios.get(url);
         this.content = response.data.content || '';
-        if (!this.content) {
-          this.error = this.t('intravox', 'This article is no longer available. Open it on the website instead.');
-        }
+        // No error when there is nothing: an empty body falls through to the
+        // summary, which for a feed that never carried full text is the
+        // ordinary outcome rather than a failure.
       } catch (err) {
-        // A 404 is ordinary: the cache entry expires with the feed it came
-        // from, so a page left open past the TTL lands here. Say what to do
-        // rather than report a failure.
-        this.error = err?.response?.status === 404
-          ? this.t('intravox', 'This article is no longer available. Open it on the website instead.')
-          : this.t('intravox', 'Could not load this article.');
+        // A 404 is ordinary twice over: the cache entry expires with the feed
+        // it came from, and a feed without content:encoded never stored one.
+        // Either way the summary below is the right thing to show, so only a
+        // real transport failure becomes an error — and then only if there is
+        // no summary to fall back on.
+        if (err?.response?.status !== 404 && !this.item.excerpt) {
+          this.error = this.t('intravox', 'Could not load this article.');
+        }
       } finally {
         this.loading = false;
       }
@@ -283,6 +310,20 @@ export default {
 
 .feed-article-body :deep(p) {
   margin: 0 0 1.1em 0;
+}
+
+/*
+ * The summary reads as the article's opening, not as a warning box. The note
+ * under it explains why it stops there, in the same quiet grey as the dateline
+ * — a reader who wanted the rest has the button right below it.
+ */
+.feed-article-summary p {
+  margin: 0 0 1.1em 0;
+}
+
+.feed-article-summary-note {
+  color: var(--color-text-maxcontrast);
+  font-size: 14px;
 }
 
 .feed-article-body :deep(h1),
