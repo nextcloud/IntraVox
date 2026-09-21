@@ -178,4 +178,85 @@ class FeedResponseReaderTest extends TestCase {
             $this->reader->cacheKey('rss', ['url' => 'https://b.example/f.xml'])
         );
     }
+
+    /**
+     * The bug this guards: libxml rejects a document whose prologue has a BOM
+     * or leading whitespace, so one blank line in a WordPress theme took a whole
+     * feed offline with "Could not load feed" while the feed had items.
+     *
+     * @dataProvider prologueNoiseProvider
+     */
+    public function testFeedsWithPrologueNoiseBecomeParseable(string $label, string $prefix): void {
+        $feed = '<?xml version="1.0"?><rss><channel><item><title>a</title></item></channel></rss>';
+
+        $this->assertFalse(
+            @simplexml_load_string($prefix . $feed),
+            "$label should be unparseable without the fix, otherwise this test proves nothing"
+        );
+        $this->assertNotFalse(
+            @simplexml_load_string($this->reader->stripXmlPrologueNoise($prefix . $feed)),
+            "$label should parse after stripping the prologue noise"
+        );
+    }
+
+    public static function prologueNoiseProvider(): array {
+        return [
+            'leading newline'      => ['a leading newline', "\n"],
+            'leading space'        => ['a leading space', ' '],
+            'space, tab, newline'  => ['mixed whitespace', " \t\n"],
+            'BOM then whitespace'  => ['a BOM followed by whitespace', "\xEF\xBB\xBF\n  "],
+        ];
+    }
+
+    /** A clean feed must come through byte for byte. */
+    public function testValidXmlIsLeftAlone(): void {
+        $feed = '<?xml version="1.0"?><rss><channel><item><title>a</title></item></channel></rss>';
+
+        $this->assertSame($feed, $this->reader->stripXmlPrologueNoise($feed));
+    }
+
+    /**
+     * The fix must not turn "this is not a feed" into a silent pass: an HTML
+     * error page served with status 200 should still fail to parse.
+     */
+    public function testHtmlErrorPagesStillFailToParse(): void {
+        $html = "\n<!doctype html><html><body>Not a feed</body></html>";
+
+        $this->assertFalse(
+            @simplexml_load_string($this->reader->stripXmlPrologueNoise($html))
+        );
+    }
+
+    /**
+     * The cached body holds fully-formed image URLs, and those are
+     * route-specific: a logged-in reader needs /apps/intravox/api/feed/image,
+     * an anonymous visitor on a share needs /api/share/{token}/feed/image.
+     * Sharing one cache entry meant whichever request arrived first decided
+     * what the other one saw — so the images on a public share broke about
+     * half the time, which is the worst kind of broken to debug.
+     */
+    public function testAShareGetsItsOwnCacheEntry(): void {
+        $config = ['url' => 'https://example.com/feed.xml'];
+
+        $ingelogd = $this->reader->cacheKey('rss', $config, 'alice');
+        $share = $this->reader->cacheKey('rss', $config, null, 'tok123');
+
+        $this->assertNotSame($ingelogd, $share, 'a share must not read the logged-in entry');
+        $this->assertSame($share, $this->reader->cacheKey('rss', $config, null, 'tok123'), 'same share, same entry');
+        $this->assertNotSame($share, $this->reader->cacheKey('rss', $config, null, 'tok456'), 'two shares are two entries');
+    }
+
+    /** No token is the old behaviour, unchanged. */
+    public function testWithoutAShareTheKeyIsUnchanged(): void {
+        $config = ['url' => 'https://example.com/feed.xml'];
+
+        $this->assertSame(
+            $this->reader->cacheKey('rss', $config, 'alice'),
+            $this->reader->cacheKey('rss', $config, 'alice', null)
+        );
+        $this->assertSame(
+            $this->reader->cacheKey('rss', $config, 'alice'),
+            $this->reader->cacheKey('rss', $config, 'alice', '')
+        );
+    }
 }

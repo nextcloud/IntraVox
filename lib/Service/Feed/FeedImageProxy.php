@@ -21,6 +21,10 @@ use OCP\IConfig;
  *  - Verification therefore accepts yesterday's signature too. Without that,
  *    every image on a page open across midnight breaks until reload.
  *
+ * The signature is independent of which route serves the image: the two
+ * endpoints differ only in who may reach them, not in what they verify. See
+ * setShareToken().
+ *
  * hash_equals(), not ===, because comparing a signature byte by byte with
  * early exit leaks its content through timing.
  */
@@ -28,6 +32,32 @@ class FeedImageProxy {
     public function __construct(
         private IConfig $config,
     ) {
+    }
+
+    /** Share token to sign image URLs for, when rendering a public share. */
+    private ?string $shareToken = null;
+
+    /**
+     * Point generated URLs at the public share route instead of the app route.
+     *
+     * `/apps/intravox/api/feed/image` is #[NoAdminRequired] — reachable only by
+     * a logged-in user. An anonymous visitor on a shared page therefore got a
+     * 401 for every image and saw alt text where the pictures should be, while
+     * the items themselves loaded fine (those already went through the share
+     * route). The share endpoint `/api/share/{token}/feed/image` is
+     * #[PublicPage] and verifies the same HMAC, so only the path differs.
+     *
+     * Set per request by the share controller before the feed is fetched, and
+     * never on the logged-in path — a token here would hand out share URLs to
+     * users who are reading the page normally.
+     */
+    public function setShareToken(?string $token): void {
+        $this->shareToken = ($token !== null && $token !== '') ? $token : null;
+    }
+
+    /** The share context, so the feed cache key can reflect it. */
+    public function getShareToken(): ?string {
+        return $this->shareToken;
     }
 
     /**
@@ -49,7 +79,11 @@ class FeedImageProxy {
         $day = (string)intdiv(time(), 86400);
         $sig = hash_hmac('sha256', $imageUrl . '|' . $day, $this->getImageProxySecret());
         $webRoot = $this->webRoot();
-        return $webRoot . '/apps/intravox/api/feed/image?url=' . urlencode($imageUrl) . '&sig=' . $sig;
+        // Same signature either way; only the route differs in who may reach it.
+        $path = $this->shareToken !== null
+            ? '/apps/intravox/api/share/' . rawurlencode($this->shareToken) . '/feed/image'
+            : '/apps/intravox/api/feed/image';
+        return $webRoot . $path . '?url=' . urlencode($imageUrl) . '&sig=' . $sig;
     }
     /**
      * Verify the HMAC signature on a proxied image URL.

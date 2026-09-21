@@ -82,6 +82,7 @@ class PublicShareFeedSelectorTest extends TestCase {
             new PagePathHelper(),
             new ShareMediaServer(),
             $this->createMock(\OCA\IntraVox\Service\Publication\PublicationStateService::class),
+            $this->createMock(\OCA\IntraVox\Service\Feed\FeedImageProxy::class),
         );
     }
 

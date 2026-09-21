@@ -85,6 +85,7 @@ class PublicShareController extends Controller {
         private PagePathHelper $pathHelper,
         private ShareMediaServer $mediaServer,
         private \OCA\IntraVox\Service\Publication\PublicationStateService $publicationState,
+        private \OCA\IntraVox\Service\Feed\FeedImageProxy $feedImageProxy,
     ) {
         parent::__construct($appName, $request);
     }
@@ -870,6 +871,12 @@ class PublicShareController extends Controller {
                 return $this->asDataResponse($share);
             }
 
+            // Sign image URLs for the share route. /apps/intravox/api/feed/image
+            // is #[NoAdminRequired], so an anonymous visitor gets a 401 for every
+            // picture and sees alt text. Set BEFORE the fetch: the URLs are
+            // generated while parsing, not afterwards.
+            $this->feedImageProxy->setShareToken($token);
+
             $sourceType = $this->request->getParam('sourceType', 'rss');
             $limit = (int)$this->request->getParam('limit', 5);
 
@@ -920,6 +927,10 @@ class PublicShareController extends Controller {
             return $this->asDataResponse($share);
         }
 
+        // Same reason as the single-feed route: every image in every slot of
+        // this batch is signed during the fetch below.
+        $this->feedImageProxy->setShareToken($token);
+
         return $this->handleFetchFeedBatch(
             null,
             fn(array $config) => $this->refuseUnpublishedFeedSelectors($share, $token, $config)
@@ -945,6 +956,12 @@ class PublicShareController extends Controller {
         if ($share instanceof Response) {
             return $this->asDataResponse($share);
         }
+
+        // Not for images — an article body has none, the sanitizer strips them.
+        // It is the cache key: FeedReaderService derives it from the proxy's
+        // share context, so without this the lookup would address the
+        // logged-in entry and miss.
+        $this->feedImageProxy->setShareToken($token);
 
         $sourceType = (string)$this->request->getParam('sourceType', 'rss');
         $config = $this->buildConfigFromRequest($sourceType);

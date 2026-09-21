@@ -2394,7 +2394,11 @@ class FeedReaderService {
         return $gewonnen === $mine;
     }
 
+    /**
+     * The share token belongs in the key because the cached body carries the
+     * image URLs, and those are route-specific. See FeedResponseReader::cacheKey().
+     */
     private function buildCacheKey(string $sourceType, array $config, ?string $userId = null): string {
-        return $this->responses->cacheKey($sourceType, $config, $userId);
+        return $this->responses->cacheKey($sourceType, $config, $userId, $this->imageProxy->getShareToken());
     }
 }
