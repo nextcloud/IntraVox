@@ -4,13 +4,12 @@
          editors: it names the block on the page, so it comes before the
          question of where the content comes from. -->
     <div class="form-group">
-      <label for="feed-widget-title">{{ t('intravox', 'Widget title (optional)') }}</label>
-      <input
+      <NcTextField
         id="feed-widget-title"
-        v-model="localWidget.title"
-        type="text"
+        :value.sync="localWidget.title"
+        :label="t('intravox', 'Widget title (optional)')"
         :placeholder="t('intravox', 'e.g. Latest news')"
-        @input="debouncedEmitUpdate"
+        @update:value="debouncedEmitUpdate"
       />
       <span class="field-hint">{{ t('intravox', 'Left empty, the name from the feed is suggested once. Your own wording always wins.') }}</span>
     </div>
@@ -18,21 +17,24 @@
     <!-- Source type selection -->
     <div class="form-group">
       <label for="feed-source-type">{{ t('intravox', 'Source type') }}</label>
-      <select id="feed-source-type" v-model="localWidget.sourceType" @change="onSourceTypeChange">
-        <option value="rss">{{ t('intravox', 'RSS/Atom feed') }}</option>
-        <option v-if="availableConnections.length > 0 || localWidget.sourceType === 'connection'" value="connection">{{ t('intravox', 'Connection') }}</option>
-      </select>
+      <NcSelect
+        input-id="feed-source-type"
+        v-model="sourceTypeOption"
+        :options="sourceTypeOptions"
+        :clearable="false"
+        label="label"
+      />
     </div>
 
     <!-- RSS URL input -->
     <div v-if="localWidget.sourceType === 'rss'" class="form-group">
-      <label for="feed-url">{{ t('intravox', 'Feed URL') }}</label>
-      <input
+      <NcTextField
         id="feed-url"
-        v-model="localWidget.feedUrl"
+        :value.sync="localWidget.feedUrl"
+        :label="t('intravox', 'Feed URL')"
         type="url"
         placeholder="https://example.com/feed.xml"
-        @input="debouncedEmitUpdate"
+        @update:value="debouncedEmitUpdate"
       />
     </div>
 
@@ -227,14 +229,46 @@
     <!-- Sort -->
     <div class="form-group">
       <label for="feed-sort-by">{{ t('intravox', 'Sort by') }}</label>
+      <!--
+        Select and direction on one row, matching the photo-story editor: the
+        two belong to one decision, and a full-width dropdown above a stack of
+        radios reads as two unrelated settings.
+
+        A radio pair rather than a toggle button, because Nextcloud's guidance
+        is that a dropdown or toggle "should not be used for a small number of
+        mutually exclusive options". The old toggle also hid the alternative —
+        it showed "Newest first" and you had to press it to find out what else
+        there was.
+      -->
       <div class="sort-row">
-        <select id="feed-sort-by" v-model="localWidget.sortBy" @change="emitUpdate">
-          <option value="date">{{ t('intravox', 'Date') }}</option>
-          <option value="title">{{ t('intravox', 'Title') }}</option>
-        </select>
-        <button type="button" class="sort-order-toggle" :title="sortOrderLabel" @click="toggleSortOrder">
-          {{ sortOrderLabel }}
-        </button>
+        <NcSelect
+          input-id="feed-sort-by"
+          v-model="sortByOption"
+          :options="sortByOptions"
+          :clearable="false"
+          label="label"
+          class="sort-by-select"
+        />
+        <div class="sort-order-choice" role="group" :aria-label="t('intravox', 'Sort order')">
+          <NcCheckboxRadioSwitch
+            :model-value="localWidget.sortOrder"
+            value="desc"
+            name="feed-sort-order"
+            type="radio"
+            @update:model-value="setSortOrder"
+          >
+            {{ sortOrderLabels.desc }}
+          </NcCheckboxRadioSwitch>
+          <NcCheckboxRadioSwitch
+            :model-value="localWidget.sortOrder"
+            value="asc"
+            name="feed-sort-order"
+            type="radio"
+            @update:model-value="setSortOrder"
+          >
+            {{ sortOrderLabels.asc }}
+          </NcCheckboxRadioSwitch>
+        </div>
       </div>
     </div>
 
@@ -299,38 +333,32 @@
 
       <div class="checkbox-group">
         <span class="checkbox-group-heading">{{ t('intravox', 'Widget') }}</span>
-        <label class="checkbox-label">
-          <input type="checkbox" v-model="localWidget.showTitle" @change="emitUpdate" />
+        <NcCheckboxRadioSwitch :model-value="localWidget.showTitle" @update:model-value="v => { localWidget.showTitle = v; emitUpdate(); }">
           {{ t('intravox', 'Show title') }}
-        </label>
+        </NcCheckboxRadioSwitch>
       </div>
 
       <div class="checkbox-group">
         <span class="checkbox-group-heading">{{ t('intravox', 'Per item') }}</span>
-        <label class="checkbox-label">
-          <input type="checkbox" v-model="localWidget.showImage" @change="emitUpdate" />
+        <NcCheckboxRadioSwitch :model-value="localWidget.showImage" @update:model-value="v => { localWidget.showImage = v; emitUpdate(); }">
           {{ t('intravox', 'Show image') }}
-        </label>
-        <label class="checkbox-label">
-          <input type="checkbox" v-model="localWidget.showDate" @change="emitUpdate" />
+        </NcCheckboxRadioSwitch>
+        <NcCheckboxRadioSwitch :model-value="localWidget.showDate" @update:model-value="v => { localWidget.showDate = v; emitUpdate(); }">
           {{ t('intravox', 'Show date') }}
-        </label>
-        <label class="checkbox-label">
-          <input type="checkbox" v-model="localWidget.showExcerpt" @change="emitUpdate" />
+        </NcCheckboxRadioSwitch>
+        <NcCheckboxRadioSwitch :model-value="localWidget.showExcerpt" @update:model-value="v => { localWidget.showExcerpt = v; emitUpdate(); }">
           {{ t('intravox', 'Show excerpt') }}
-        </label>
-        <label class="checkbox-label">
-          <input type="checkbox" v-model="localWidget.showSource" @change="emitUpdate" />
+        </NcCheckboxRadioSwitch>
+        <NcCheckboxRadioSwitch :model-value="localWidget.showSource" @update:model-value="v => { localWidget.showSource = v; emitUpdate(); }">
           {{ t('intravox', 'Show source') }}
-        </label>
+        </NcCheckboxRadioSwitch>
       </div>
 
       <div class="checkbox-group">
         <span class="checkbox-group-heading">{{ t('intravox', 'Links') }}</span>
-        <label class="checkbox-label">
-          <input type="checkbox" v-model="localWidget.openInNewTab" @change="emitUpdate" />
+        <NcCheckboxRadioSwitch :model-value="localWidget.openInNewTab" @update:model-value="v => { localWidget.openInNewTab = v; emitUpdate(); }">
           {{ t('intravox', 'Open links in new tab') }}
-        </label>
+        </NcCheckboxRadioSwitch>
       </div>
     </div>
 
@@ -345,6 +373,7 @@
 </template>
 
 <script>
+import { NcTextField, NcSelect, NcCheckboxRadioSwitch } from '@nextcloud/vue';
 import { defineAsyncComponent } from 'vue';
 import axios from '@nextcloud/axios';
 import { translate } from '@nextcloud/l10n';
@@ -353,6 +382,9 @@ import { generateUrl } from '@nextcloud/router';
 export default {
   name: 'FeedWidgetEditor',
   components: {
+    NcTextField,
+    NcSelect,
+    NcCheckboxRadioSwitch,
     // Async to match Widget.vue's strategy.
     FeedWidget: defineAsyncComponent(() => import('./FeedWidget.vue')),
   },
@@ -406,6 +438,53 @@ export default {
         this.localWidget.listId,
         this.localWidget.moodleForumId,
       ].join('-');
+    },
+    /**
+     * Labels for the two sort directions, which depend on what is being
+     * sorted: for a date "newest/oldest" is meaningful where "descending" is
+     * jargon, and for a title the reader wants to see A-Z.
+     */
+    sortOrderLabels() {
+      if (this.localWidget.sortBy === 'title') {
+        return { asc: 'A \u2192 Z', desc: 'Z \u2192 A' };
+      }
+      return {
+        desc: this.t('intravox', 'Newest first'),
+        asc: this.t('intravox', 'Oldest first'),
+      };
+    },
+    sourceTypeOptions() {
+      const opties = [{ id: 'rss', label: this.t('intravox', 'RSS/Atom feed') }];
+      if (this.availableConnections.length > 0 || this.localWidget.sourceType === 'connection') {
+        opties.push({ id: 'connection', label: this.t('intravox', 'Connection') });
+      }
+      return opties;
+    },
+    sourceTypeOption: {
+      get() {
+        return this.sourceTypeOptions.find(o => o.id === this.localWidget.sourceType) || this.sourceTypeOptions[0];
+      },
+      set(optie) {
+        if (!optie) return;
+        this.localWidget.sourceType = optie.id;
+        this.onSourceTypeChange();
+      },
+    },
+    sortByOptions() {
+      return [
+        { id: 'date', label: this.t('intravox', 'Date') },
+        { id: 'title', label: this.t('intravox', 'Title') },
+      ];
+    },
+    sortByOption: {
+      get() {
+        return this.sortByOptions.find(o => o.id === this.localWidget.sortBy) || this.sortByOptions[0];
+      },
+      set(optie) {
+        if (!optie) return;
+        this.localWidget.sortBy = optie.id;
+        this.emitUpdate();
+      },
     },
     sortOrderLabel() {
       if (this.localWidget.sortBy === 'title') {
@@ -701,6 +780,10 @@ export default {
     emitUpdate() {
       this.$emit('update', { ...this.localWidget });
     },
+    setSortOrder(waarde) {
+      this.localWidget.sortOrder = waarde;
+      this.emitUpdate();
+    },
     toggleSortOrder() {
       this.localWidget.sortOrder = this.localWidget.sortOrder === 'desc' ? 'asc' : 'desc';
       this.emitUpdate();
@@ -877,14 +960,34 @@ export default {
   box-sizing: border-box;
 }
 
+/* Same shape as the photo-story editor's .ps-sort-row: the field and its
+   direction are one decision and belong on one line. */
 .sort-row {
   display: flex;
-  gap: 8px;
-  align-items: center;
+  gap: 12px;
+  align-items: flex-start;
+  flex-wrap: wrap;
 }
 
-.sort-row select {
+.sort-by-select {
   flex: 1;
+  min-width: 200px;
+  max-width: 280px;
+}
+
+.sort-order-choice {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/*
+ * A dropdown is as wide as its content needs, not as wide as the dialog.
+ * NcSelect stretches to its container by default, which in a 860px modal
+ * makes a two-option list span the full width and read as a text field.
+ */
+.feed-widget-editor :deep(.v-select) {
+  max-width: 280px;
 }
 
 .sort-order-toggle {

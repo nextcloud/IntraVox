@@ -1,6 +1,6 @@
 {
-    "count": 1409,
-    "sha256": "a288a263ad69aa287001663c5e5a4be634f47468a504189a9423ea68868a230d",
+    "count": 1410,
+    "sha256": "e8fee642600d04001e7a77b19c6f60ccc3851920f7d41aa698f1803f4363fe80",
     "strings": [
         "— Not configured —",
         "… and {n} more",
@@ -1174,6 +1174,7 @@
         "Social links (X/Bluesky/Fediverse)",
         "Sort by",
         "Sort comments",
+        "Sort order",
         "Sorting on a MetaVox field reorders within each loaded page (best-effort across infinite scroll).",
         "Source",
         "Source folder",
