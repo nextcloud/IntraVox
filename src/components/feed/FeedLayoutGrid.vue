@@ -26,6 +26,7 @@ export default {
   components: {
     FeedItem,
   },
+  emits: ['open-article'],
   props: {
     items: {
       type: Array,

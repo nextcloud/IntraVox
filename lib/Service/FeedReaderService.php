@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace OCA\IntraVox\Service;
 
 use OCA\IntraVox\AppInfo\Application;
+use OCA\IntraVox\Service\Feed\FeedArticleStore;
 use OCA\IntraVox\Service\Feed\FeedImageProxy;
 use OCA\IntraVox\Service\Feed\FeedResponseReader;
 use OCA\IntraVox\Service\Feed\FeedTokenResolver;
@@ -100,6 +101,7 @@ class FeedReaderService {
         private MediaSanitizer $mediaSanitizer,
         private FeedResponseReader $responses,
         private FeedImageProxy $imageProxy,
+        private FeedArticleStore $articleStore,
         private ?OidcTokenBridge $oidcTokenBridge = null,
     ) {
         if ($this->cacheFactory->isAvailable()) {
@@ -215,6 +217,13 @@ class FeedReaderService {
                 $item['fileType'] = $item['fileType'] ?? $this->detectFileType($item['title'] ?? '');
             }
             unset($item);
+
+            // Move the article bodies into their own cache entries and out of
+            // the list, before the list is cached. Order matters: putAll()
+            // strips `contentHtml` and sets `hasArticle`, so doing this after
+            // the set() below would cache the bodies twice — once per item and
+            // once inside the list.
+            $result['items'] = $this->articleStore->putAll($cacheKey, $result['items']);
 
             // Cache the full unfiltered result
             if ($this->cache !== null) {
@@ -362,6 +371,24 @@ class FeedReaderService {
      *
      * @return array{courses: array<array{id: string, name: string}>}
      */
+    /**
+     * The article body behind one item of a feed.
+     *
+     * Takes the same arguments that produced the list, so the caller cannot
+     * reach an article belonging to a feed it did not ask for: the cache key is
+     * derived here, from this feed and this user, exactly as it was on the way
+     * in. Passing the key itself would let a caller name someone else's.
+     *
+     * Null when there is nothing to show — the entry expired with its feed, or
+     * the item never carried a body. Callers render the link instead.
+     */
+    public function fetchArticle(string $sourceType, array $config, string $itemId, ?string $userId = null): ?string {
+        return $this->articleStore->get(
+            $this->buildCacheKey($sourceType, $config, $userId),
+            $itemId
+        );
+    }
+
     public function getCourses(string $connectionId, ?string $userId): array {
         $connection = $this->getConnection($connectionId);
         if ($connection === null) {
@@ -665,6 +692,10 @@ class FeedReaderService {
             'title' => (string)($item->title ?? ''),
             'url' => (string)($item->link ?? ''),
             'excerpt' => $this->sanitizeExcerpt($content),
+            // The article as the feed sent it. Stripped from the list and
+            // moved into its own cache entry by FeedArticleStore::putAll();
+            // it is here only because this is where the text is parsed.
+            'contentHtml' => $content,
             'image' => $this->imageProxy->proxyImageUrl($image),
             'date' => $this->parseDate((string)($item->pubDate ?? '')),
             'source' => '',
@@ -694,6 +725,10 @@ class FeedReaderService {
             'title' => (string)($entry->title ?? ''),
             'url' => $url,
             'excerpt' => $this->sanitizeExcerpt($content),
+            // The article as the feed sent it. Stripped from the list and
+            // moved into its own cache entry by FeedArticleStore::putAll();
+            // it is here only because this is where the text is parsed.
+            'contentHtml' => $content,
             'image' => $this->imageProxy->proxyImageUrl($image),
             'date' => $this->parseDate((string)($entry->updated ?? $entry->published ?? '')),
             'source' => '',

@@ -23,6 +23,15 @@
       :widget="widget"
       :feed-image="feedImage"
       :row-background-color="rowBackgroundColor"
+      @open-article="openArticle"
+    />
+
+    <FeedArticleModal
+      v-if="openItem"
+      :item="openItem"
+      :widget="widget"
+      :share-token="shareToken"
+      @close="openItem = null"
     />
   </div>
 </template>
@@ -36,6 +45,7 @@ import AlertCircle from 'vue-material-design-icons/AlertCircle.vue';
 import RssBox from 'vue-material-design-icons/RssBox.vue';
 import FeedLayoutList from './feed/FeedLayoutList.vue';
 import FeedLayoutGrid from './feed/FeedLayoutGrid.vue';
+import FeedArticleModal from './feed/FeedArticleModal.vue';
 
 export default {
   name: 'FeedWidget',
@@ -45,6 +55,7 @@ export default {
     RssBox,
     FeedLayoutList,
     FeedLayoutGrid,
+    FeedArticleModal,
   },
   props: {
     widget: {
@@ -68,6 +79,7 @@ export default {
     return {
       items: [],
       feedImage: null,
+      openItem: null,
       loading: true,
       error: null,
     };
@@ -104,6 +116,9 @@ export default {
     clearInterval(this._refreshInterval);
   },
   methods: {
+    openArticle(item) {
+      this.openItem = item;
+    },
     t(app, text, vars) {
       return translate(app, text, vars);
     },

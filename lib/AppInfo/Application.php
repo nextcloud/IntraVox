@@ -187,6 +187,22 @@ class Application extends App implements IBootstrap {
             );
         });
 
+        // Register FeedArticleStore
+        //
+        // Explicit rather than autowired: the constructor asks for an ICache,
+        // and autowiring resolves that to the file-backed one, which throws
+        // "user not logged in" — fatal exactly where this matters most, on a
+        // public share. The store must share the distributed cache the feed
+        // list uses, so an article and the item pointing at it expire together.
+        $context->registerService(\OCA\IntraVox\Service\Feed\FeedArticleStore::class, function ($c) {
+            $cacheFactory = $c->get(\OCP\ICacheFactory::class);
+
+            return new \OCA\IntraVox\Service\Feed\FeedArticleStore(
+                $c->get(\OCA\IntraVox\Service\Sanitize\HtmlSanitizer::class),
+                $cacheFactory->isAvailable() ? $cacheFactory->createDistributed('intravox-feeds') : null
+            );
+        });
+
         // Register SystemFileService
         $context->registerService(\OCA\IntraVox\Service\SystemFileService::class, function ($c) {
             return new \OCA\IntraVox\Service\SystemFileService(

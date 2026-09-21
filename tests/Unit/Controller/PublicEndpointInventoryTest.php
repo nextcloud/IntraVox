@@ -35,6 +35,9 @@ class PublicEndpointInventoryTest extends TestCase {
 	 */
 	private const EXPECTED = [
 		'PublicShareController' => [
+			// Reads one article body from the feed cache, guarded by the same
+			// selector allowlist as the list it came from.
+			'getArticleByShare',
 			'getEventsByShare',
 			'getFeedByShare',
 			'getMediaByShare',

@@ -1,4 +1,5 @@
 <template>
+  <div class="feed-item-wrap">
   <!--
     No URL means a <span>, not an <a>: href="" resolves to the current document,
     so items without a link navigated back to the page they sat on (#114).
@@ -46,11 +47,30 @@
     </div>
     <OpenInNew v-if="openInNewTab" :size="14" class="feed-item-external-icon" />
   </component>
+
+    <!--
+      Beside the item, not inside it: the item is an <a>, and a button nested
+      in a link is invalid HTML — browsers recover differently and keyboard
+      focus order breaks. `hasArticle` comes from the server, so the button
+      only appears when there is something to open.
+    -->
+    <button
+      v-if="item.hasArticle"
+      type="button"
+      class="feed-item-read-here"
+      @click="$emit('open-article', item)"
+    >
+      <TextBoxOutline :size="14" />
+      <span>{{ t('intravox', 'Read here') }}</span>
+    </button>
+  </div>
 </template>
 
 <script>
 import CalendarBlank from 'vue-material-design-icons/CalendarBlank.vue';
 import OpenInNew from 'vue-material-design-icons/OpenInNew.vue';
+import TextBoxOutline from 'vue-material-design-icons/TextBoxOutline.vue';
+import { translate } from '@nextcloud/l10n';
 import FileWord from 'vue-material-design-icons/FileWord.vue';
 import FileExcel from 'vue-material-design-icons/FileExcel.vue';
 import FilePowerpoint from 'vue-material-design-icons/FilePowerpoint.vue';
@@ -104,9 +124,11 @@ export default {
   components: {
     CalendarBlank,
     OpenInNew,
+    TextBoxOutline,
     FileWord, FileExcel, FilePowerpoint, FilePdfBox, FileImage, FileVideo, FileDocument,
     BugOutline, BookOpenPageVariant, MicrosoftSharepoint, ClipboardText, SchoolOutline, RssBox, ViewDashboard,
   },
+  emits: ['open-article'],
   data() {
     return {
       feedImageError: false,
@@ -154,6 +176,9 @@ export default {
       default: 'default',
       validator: (value) => ['default', 'transparent', 'white', 'dark'].includes(value),
     },
+  },
+  methods: {
+    t: translate,
   },
   computed: {
     formattedDate() {
@@ -492,6 +517,40 @@ export default {
   .feed-item-image {
     width: 100%;
     height: 160px;
+  }
+}
+
+/* The wrapper exists only to place the button beside the link, so it must not
+   introduce a box of its own where the grid expects the item. */
+.feed-item-wrap {
+  display: contents;
+}
+
+.feed-item-read-here {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: -4px 0 12px 0;
+  padding: 6px 10px;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  color: var(--color-primary-element);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.feed-item-read-here:hover,
+.feed-item-read-here:focus-visible {
+  background: var(--color-background-hover);
+}
+
+@media (max-width: 600px) {
+  /* Touch target: 32px is comfortable to hit with a thumb, and the button sits
+     right under a link you did not mean to press. */
+  .feed-item-read-here {
+    min-height: 32px;
+    padding: 8px 12px;
   }
 }
 </style>

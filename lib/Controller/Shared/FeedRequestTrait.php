@@ -89,6 +89,41 @@ trait FeedRequestTrait {
      * The signature is what makes this not an open proxy: an unsigned or
      * mis-signed url is refused before any outbound request is made.
      */
+    /**
+     * One article body, for the reader who opened it.
+     *
+     * Lives in the trait so the logged-in route and the share route answer
+     * identically — a public share is the case this matters most for, since an
+     * anonymous visitor has no other way past a cookie wall.
+     *
+     * `sourceType` and the config are re-read from the request rather than
+     * trusted from the client as a cache key: buildConfigFromRequest() is the
+     * same validation the list went through, and on a share the caller has
+     * already checked the feed is one that share publishes.
+     */
+    private function handleFetchArticle(?string $userId): DataResponse {
+        $itemId = (string)$this->request->getParam('itemId', '');
+        if ($itemId === '') {
+            return new DataResponse(['error' => 'Missing itemId'], Http::STATUS_BAD_REQUEST);
+        }
+
+        $sourceType = (string)$this->request->getParam('sourceType', 'rss');
+        $config = $this->buildConfigFromRequest($sourceType);
+
+        $html = $this->feedReaderService->fetchArticle($sourceType, $config, $itemId, $userId);
+        if ($html === null) {
+            // Not an error: the entry expires with the feed it came from, and
+            // an item may simply carry no body. The client links out instead.
+            return new DataResponse(['content' => null], Http::STATUS_NOT_FOUND);
+        }
+
+        $response = new DataResponse(['content' => $html]);
+        // Private: the body may come from a personalised LMS feed, and a shared
+        // proxy must not hand one reader's article to another.
+        $response->addHeader('Cache-Control', 'private, max-age=300');
+        return $response;
+    }
+
     private function handleProxyImage(): DataDownloadResponse|DataResponse {
         $url = $this->request->getParam('url', '');
         $sig = $this->request->getParam('sig', '');

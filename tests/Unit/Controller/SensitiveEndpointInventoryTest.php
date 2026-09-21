@@ -55,6 +55,7 @@ class SensitiveEndpointInventoryTest extends TestCase {
 			'updateConfig',    // gated: denyUnlessIntraVoxAccess
 		],
 		'FeedReaderController' => [
+			'getArticle',        // reads the cache entry its own config addresses
 			'getConnections',    // names only to non-admins by design (FEED-CRED)
 			'getCourses',        // gated: denyUnlessIntraVoxAccess
 			'getFeed',           // caller's own config, no stored credential

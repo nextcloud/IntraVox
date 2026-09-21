@@ -132,6 +132,26 @@ class FeedReaderController extends Controller {
     }
 
     /**
+     * The article body behind one feed item, for reading it in place.
+     *
+     * Rate-limited like the other feed reads: it serves from cache, so the
+     * limit is about enumeration rather than load — an item id is guessable
+     * only by having seen the list it came from.
+     *
+     * @return DataResponse
+     */
+    #[UserRateLimit(limit: 60, period: 60)]
+    #[NoAdminRequired]
+    #[NoCSRFRequired]
+    public function getArticle(): DataResponse {
+        if ($this->userId === null) {
+            return new DataResponse(['error' => 'Authentication required'], Http::STATUS_UNAUTHORIZED);
+        }
+
+        return $this->handleFetchArticle($this->userId);
+    }
+
+    /**
      * Get configured LMS connections (without tokens).
      *
      *

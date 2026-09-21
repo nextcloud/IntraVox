@@ -785,24 +785,16 @@ class PublicShareController extends Controller {
         }
     }
 
-    #[PublicPage]
-    #[NoCSRFRequired]
-    #[AnonRateLimit(limit: 30, period: 60)]
-    public function getFeedByShare(string $token): DataResponse {
-        try {
-            $share = $this->openShare($token, fn() => $this->widgetShareDenied());
-            if ($share instanceof Response) {
-                return $this->asDataResponse($share);
-            }
-
-            $sourceType = $this->request->getParam('sourceType', 'rss');
-            $limit = (int)$this->request->getParam('limit', 5);
-
-            $config = $this->buildConfigFromRequest($sourceType);
-            // SHARE-CFG: connectionId selects a STORED connection, credentials and
-            // all, and the fetch runs server-side with them. Taking it from the
-            // query string let anyone holding any share token drive any configured
-            // connection. It may only name what this share actually publishes.
+    /**
+     * Refuse a feed request naming anything this share does not publish.
+     *
+     * Extracted so the article endpoint enforces the identical rule. Two
+     * copies of this would drift, and the half that drifted would be the one
+     * anonymous visitors reach.
+     *
+     * Returns null when the request is allowed.
+     */
+    private function refuseUnpublishedFeedSelectors(mixed $share, string $token, array $config): ?DataResponse {
             if (($config['connectionId'] ?? '') !== '') {
                 $allowed = $this->publicShareService->allowedWidgetValues($share, 'feed', 'connectionId');
                 if (!in_array($config['connectionId'], $allowed, true)) {
@@ -864,6 +856,33 @@ class PublicShareController extends Controller {
                 }
             }
 
+
+        return null;
+    }
+
+    #[PublicPage]
+    #[NoCSRFRequired]
+    #[AnonRateLimit(limit: 30, period: 60)]
+    public function getFeedByShare(string $token): DataResponse {
+        try {
+            $share = $this->openShare($token, fn() => $this->widgetShareDenied());
+            if ($share instanceof Response) {
+                return $this->asDataResponse($share);
+            }
+
+            $sourceType = $this->request->getParam('sourceType', 'rss');
+            $limit = (int)$this->request->getParam('limit', 5);
+
+            $config = $this->buildConfigFromRequest($sourceType);
+            // SHARE-CFG: connectionId selects a STORED connection, credentials and
+            // all, and the fetch runs server-side with them. Taking it from the
+            // query string let anyone holding any share token drive any configured
+            // connection. It may only name what this share actually publishes.
+            $geweigerd = $this->refuseUnpublishedFeedSelectors($share, $token, $config);
+            if ($geweigerd !== null) {
+                return $geweigerd;
+            }
+
             [$sortBy, $sortOrder, $filterKeyword] = $this->parseSortAndFilter();
             $result = $this->feedReaderService->fetchFeed($sourceType, $config, $limit, null, $sortBy, $sortOrder, $filterKeyword);
 
@@ -878,6 +897,39 @@ class PublicShareController extends Controller {
                 Http::STATUS_INTERNAL_SERVER_ERROR
             );
         }
+    }
+
+    /**
+     * The article body behind one item of a feed this share publishes.
+     *
+     * The case the whole feature exists for: an anonymous reader on a shared
+     * page has no account anywhere, so following the link means meeting a
+     * cookie wall. Reading the piece in place avoids that.
+     *
+     * Guarded exactly as the list is — same selectors, same refusals — because
+     * an article endpoint that skipped those checks would be a way to read
+     * feeds the share never published.
+     */
+    #[PublicPage]
+    #[NoCSRFRequired]
+    #[AnonRateLimit(limit: 60, period: 60)]
+    public function getArticleByShare(string $token): DataResponse {
+        $share = $this->openShare($token, fn() => $this->widgetShareDenied());
+        if ($share instanceof Response) {
+            return $this->asDataResponse($share);
+        }
+
+        $sourceType = (string)$this->request->getParam('sourceType', 'rss');
+        $config = $this->buildConfigFromRequest($sourceType);
+
+        $geweigerd = $this->refuseUnpublishedFeedSelectors($share, $token, $config);
+        if ($geweigerd !== null) {
+            return $geweigerd;
+        }
+
+        // userId null: a share is read anonymously, and the cache key must say
+        // so — this is what keeps a share out of a logged-in reader's entries.
+        return $this->handleFetchArticle(null);
     }
 
     #[PublicPage]
