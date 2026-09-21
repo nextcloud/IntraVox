@@ -34,9 +34,19 @@ final class HtmlSanitizer {
         // Strip everything except the safe whitelist.
         $cleaned = strip_tags($html, self::ALLOWED_TAGS);
 
-        // Remove event handlers and javascript: URIs that survived strip_tags.
+        // Remove event handlers and script-bearing URIs that survived strip_tags.
         $cleaned = preg_replace('/on\w+\s*=\s*["\']?[^"\']*["\']?/i', '', $cleaned);
-        $cleaned = preg_replace('/javascript:/i', '', $cleaned);
+
+        // All three execute, and only the first was covered. vbscript: still
+        // runs in engines that accept it, and data:text/html renders an
+        // attacker's document under this origin — same-origin, so it reads
+        // whatever the page can. Found by a feed-sanitizer test that asserted
+        // the whole family rather than the one scheme we happened to remember.
+        //
+        // \s* between the scheme and the colon: "java script:" and
+        // "vbscript\t:" are parsed as the scheme by browsers that tolerate
+        // whitespace there.
+        $cleaned = preg_replace('/(javascript|vbscript|data)\s*:/i', '', $cleaned);
 
         // Allow only a curated set of CSS properties on inline style attributes,
         // and reject expressions / url() / javascript values.

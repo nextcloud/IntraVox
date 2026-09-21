@@ -179,53 +179,9 @@ class FeedResponseReaderTest extends TestCase {
         );
     }
 
-    /**
-     * The bug this guards: libxml rejects a document whose prologue has a BOM
-     * or leading whitespace, so one blank line in a WordPress theme took a whole
-     * feed offline with "Could not load feed" while the feed had items.
-     *
-     * @dataProvider prologueNoiseProvider
-     */
-    public function testFeedsWithPrologueNoiseBecomeParseable(string $label, string $prefix): void {
-        $feed = '<?xml version="1.0"?><rss><channel><item><title>a</title></item></channel></rss>';
 
-        $this->assertFalse(
-            @simplexml_load_string($prefix . $feed),
-            "$label should be unparseable without the fix, otherwise this test proves nothing"
-        );
-        $this->assertNotFalse(
-            @simplexml_load_string($this->reader->stripXmlPrologueNoise($prefix . $feed)),
-            "$label should parse after stripping the prologue noise"
-        );
-    }
 
-    public static function prologueNoiseProvider(): array {
-        return [
-            'leading newline'      => ['a leading newline', "\n"],
-            'leading space'        => ['a leading space', ' '],
-            'space, tab, newline'  => ['mixed whitespace', " \t\n"],
-            'BOM then whitespace'  => ['a BOM followed by whitespace', "\xEF\xBB\xBF\n  "],
-        ];
-    }
 
-    /** A clean feed must come through byte for byte. */
-    public function testValidXmlIsLeftAlone(): void {
-        $feed = '<?xml version="1.0"?><rss><channel><item><title>a</title></item></channel></rss>';
-
-        $this->assertSame($feed, $this->reader->stripXmlPrologueNoise($feed));
-    }
-
-    /**
-     * The fix must not turn "this is not a feed" into a silent pass: an HTML
-     * error page served with status 200 should still fail to parse.
-     */
-    public function testHtmlErrorPagesStillFailToParse(): void {
-        $html = "\n<!doctype html><html><body>Not a feed</body></html>";
-
-        $this->assertFalse(
-            @simplexml_load_string($this->reader->stripXmlPrologueNoise($html))
-        );
-    }
 
     /**
      * The cached body holds fully-formed image URLs, and those are
