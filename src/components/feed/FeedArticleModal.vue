@@ -2,6 +2,7 @@
   <NcModal
     size="large"
     :name="item.title"
+    class="feed-article-modal"
     @close="$emit('close')"
   >
     <div class="feed-article">
@@ -183,19 +184,34 @@ export default {
 /*
  * Styled to read as an article, not as a text field.
  *
- * Everything here is a Nextcloud theme variable rather than a fixed colour, so
- * the modal follows the instance's theme and dark mode without a second set of
- * rules. What is not themed is the measure and the rhythm: those belong to
- * reading, and the defaults of a UI component are tuned for forms.
+ * Colours, radii and spacing come from Nextcloud theme variables, so the modal
+ * follows the instance theme and dark mode without a second set of rules. What
+ * the theme has no answer for is the measure and the rhythm of running text —
+ * a UI component's defaults are tuned for forms — so those are set here and
+ * nothing else is.
  */
-.feed-article {
-  /* Centred with a generous measure: the container is as wide as the screen
-     allows, the text is as wide as is comfortable to read. */
-  max-width: 68ch;
-  margin: 0 auto;
-  padding: 32px 24px 24px;
-  max-height: 80vh;
+
+/*
+ * Narrow the container, do not centre inside it.
+ *
+ * size="large" gives 900px while the text wants ~68ch. Centring a 642px column
+ * in a 900px box left 258px of empty modal and put the scrollbar an inch away
+ * from the text it scrolls. Sizing the container is also how the rest of the
+ * app does it — see WidgetEditor and LinksEditor.
+ */
+.feed-article-modal :deep(.modal-container) {
+  max-width: 760px;
+}
+
+/* The scroll belongs to the modal's own content box, so the scrollbar runs
+   along the modal edge rather than inside an inner div. */
+.feed-article-modal :deep(.modal-container__content) {
+  max-height: 85vh;
   overflow-y: auto;
+}
+
+.feed-article {
+  padding: 28px 32px 32px;
   color: var(--color-main-text);
 }
 
@@ -238,12 +254,12 @@ export default {
 
 .feed-article-title {
   margin: 0;
-  /* Larger and tighter than a UI heading: this is the one thing on screen
-     that should look like a headline. */
-  font-size: 28px;
-  font-weight: 700;
-  line-height: 1.25;
-  letter-spacing: -0.01em;
+  /* Nextcloud's own h2 scale. It was 28px/700 with tightened tracking, which
+     read well but was an invention — the theme has a heading size and this
+     modal should look like it belongs to the app, not to a newspaper. */
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.3;
   color: var(--color-main-text);
 }
 
@@ -257,21 +273,16 @@ export default {
 }
 
 .feed-article-body {
-  /* 17px rather than the 14px a UI uses: a paragraph read start to finish
-     wants a larger type size than a label glanced at. */
-  font-size: 17px;
+  /* The one place this departs from UI defaults, and the only one worth it: a
+     paragraph read start to finish needs more size and leading than a label
+     glanced at. 16px is Nextcloud's body size; 1.7 is the leading.
+     Everything else — colour, weight, headings — follows the theme. */
+  font-size: 16px;
   line-height: 1.7;
 }
 
 .feed-article-body :deep(p) {
   margin: 0 0 1.1em 0;
-}
-
-/* The opening paragraph carries the piece; a standfirst weight says so. */
-.feed-article-body :deep(p:first-of-type) {
-  font-size: 19px;
-  line-height: 1.6;
-  color: var(--color-main-text);
 }
 
 .feed-article-body :deep(h1),
@@ -284,9 +295,9 @@ export default {
 }
 
 .feed-article-body :deep(h1),
-.feed-article-body :deep(h2) { font-size: 21px; }
+.feed-article-body :deep(h2) { font-size: 18px; }
 .feed-article-body :deep(h3),
-.feed-article-body :deep(h4) { font-size: 18px; }
+.feed-article-body :deep(h4) { font-size: 16px; }
 
 .feed-article-body :deep(a) {
   color: var(--color-primary-element);
@@ -307,10 +318,8 @@ export default {
 /* A pull quote, not an indented block of code. */
 .feed-article-body :deep(blockquote) {
   margin: 1.5em 0;
-  padding: 4px 0 4px 20px;
-  border-inline-start: 3px solid var(--color-primary-element);
-  font-size: 18px;
-  font-style: italic;
+  padding: 4px 0 4px 16px;
+  border-inline-start: 4px solid var(--color-border);
   color: var(--color-text-maxcontrast);
 }
 
@@ -393,20 +402,11 @@ export default {
 
 @media (max-width: 600px) {
   .feed-article {
-    padding: 20px 16px 16px;
-    max-height: 88vh;
+    padding: 20px 16px 24px;
   }
 
   .feed-article-title {
-    font-size: 22px;
-  }
-
-  .feed-article-body {
-    font-size: 16px;
-  }
-
-  .feed-article-body :deep(p:first-of-type) {
-    font-size: 17px;
+    font-size: 18px;
   }
 }
 </style>
