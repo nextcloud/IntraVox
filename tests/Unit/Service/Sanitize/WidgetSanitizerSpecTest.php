@@ -472,4 +472,64 @@ class WidgetSanitizerSpecTest extends TestCase {
 		$this->assertIsArray($result, "$type must survive scalars in array slots");
 		$this->assertSame($type, $result['type']);
 	}
+
+	// ---------- feed display paging ----------
+
+	/**
+	 * pageSize survives the allowlist.
+	 *
+	 * The sanitizer is an allowlist: a field it does not name is dropped, and
+	 * silently — the widget saves, the editor shows the value, and it is gone
+	 * on the next read. That has bitten this project before (language and
+	 * isTemplate on import), so a new config field gets a test on the way in
+	 * rather than a bug report on the way out.
+	 */
+	public function testFeedPageSizeSurvivesSanitizing(): void {
+		$result = $this->sanitizer->sanitizeWidget([
+			'type' => 'feed',
+			'limit' => 20,
+			'pageSize' => 5,
+		]);
+
+		$this->assertSame(5, $result['pageSize']);
+	}
+
+	/**
+	 * Absent means "show everything", which is what every widget saved before
+	 * this option existed must keep doing. 0 is the off switch, not a bug.
+	 */
+	public function testFeedWithoutPageSizeDefaultsToNoPaging(): void {
+		$result = $this->sanitizer->sanitizeWidget(['type' => 'feed']);
+
+		$this->assertSame(0, $result['pageSize']);
+	}
+
+	/**
+	 * The same clamp as limit. A hand-written page JSON can carry anything, and
+	 * a pageSize of 5000 would make the widget render its whole feed in one
+	 * screen — the opposite of what the setting is for.
+	 */
+	public function testFeedPageSizeIsClamped(): void {
+		$hoog = $this->sanitizer->sanitizeWidget(['type' => 'feed', 'pageSize' => 9999]);
+		$this->assertSame(20, $hoog['pageSize'], 'pageSize must not exceed the item cap');
+
+		$laag = $this->sanitizer->sanitizeWidget(['type' => 'feed', 'pageSize' => -5]);
+		$this->assertSame(0, $laag['pageSize'], 'a negative pageSize reads as "no paging"');
+	}
+
+	/**
+	 * Junk in a numeric slot must not fatal, and must not become a page size
+	 * that renders nothing.
+	 */
+	public function testFeedPageSizeSurvivesNonNumericInput(): void {
+		foreach (['abc', [], null, true] as $rommel) {
+			$result = $this->sanitizer->sanitizeWidget([
+				'type' => 'feed',
+				'pageSize' => $rommel,
+			]);
+			$this->assertIsInt($result['pageSize']);
+			$this->assertGreaterThanOrEqual(0, $result['pageSize']);
+			$this->assertLessThanOrEqual(20, $result['pageSize']);
+		}
+	}
 }

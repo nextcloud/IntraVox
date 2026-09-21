@@ -264,6 +264,32 @@
       />
     </div>
 
+    <!--
+      Items per page. Sits right under the total, because the two only make
+      sense together: this one cannot exceed it, and 0 means "show them all".
+
+      A second control rather than a checkbox, because the useful question is
+      not "paginate yes/no" but "how tall may this widget be" — which is the
+      number itself.
+    -->
+    <div class="form-group">
+      <label for="feed-page-size">
+        {{ t('intravox', 'Items per page') }}:
+        {{ localWidget.pageSize > 0 ? localWidget.pageSize : t('intravox', 'all') }}
+      </label>
+      <input
+        id="feed-page-size"
+        v-model.number="localWidget.pageSize"
+        type="range"
+        min="0"
+        :max="localWidget.limit"
+        @input="debouncedEmitUpdate"
+      />
+      <span class="field-hint">
+        {{ t('intravox', 'Show this many at a time, with arrows to page through the rest. Set to 0 to show every item at once.') }}
+      </span>
+    </div>
+
     <!-- Display options.
          Grouped outside-in: first the widget frame, then what each item shows,
          then what a click does. The flat list mixed those three, so "show
@@ -518,6 +544,10 @@ export default {
         layout: 'list',
         columns: 3,
         limit: 5,
+        // 0 = no paging, which is how every widget behaved before this option
+        // existed. An editor opts in by raising it; nothing changes for a page
+        // nobody touches.
+        pageSize: 0,
         // Defaults to on, and an existing widget without the key reads as on
         // (`showTitle !== false`): until now the title was stored but never
         // rendered, so a widget that has one should start showing it.

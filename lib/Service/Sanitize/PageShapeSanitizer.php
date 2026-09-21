@@ -954,8 +954,18 @@ final class PageShapeSanitizer {
                 // Columns (for grid layout, 2-4)
                 $sanitized['columns'] = max(2, min((int) ($widget['columns'] ?? 3), 4));
 
-                // Limit (1-20 items)
+                // Limit (1-20 items) — how many the server sends.
                 $sanitized['limit'] = max(1, min((int) ($widget['limit'] ?? 5), 20));
+
+                // How many of those are on screen at once. 0 means "all of
+                // them", which is what every widget saved before this option
+                // existed must keep doing.
+                //
+                // This pages the DISPLAY, not the fetch. The items are already
+                // in the response — measured, asking the server for 20 instead
+                // of 5 costs 0.3 ms either way — so turning the page is a local
+                // slice, with no request and no rate-limit slot spent.
+                $sanitized['pageSize'] = max(0, min((int) ($widget['pageSize'] ?? 0), 20));
 
                 // Display options
                 // showTitle defaults to true so a widget saved before this
