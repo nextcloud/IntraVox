@@ -5,6 +5,7 @@ namespace OCA\IntraVox\Tests\Unit\Controller;
 
 use OCA\IntraVox\Controller\CommentController;
 use OCA\IntraVox\Service\CommentService;
+use OCA\IntraVox\Service\EngagementSettingsService;
 use OCA\IntraVox\Tests\Mocks\MockGroupManager;
 use OCA\IntraVox\Tests\Mocks\MockUserSession;
 use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageRead;
@@ -27,6 +28,7 @@ class CommentControllerTest extends TestCase {
 
     private CommentController $controller;
     private CommentService $commentService;
+    private EngagementSettingsService $engagementSettings;
     private MockUserSession $userSession;
     private MockGroupManager $groupManager;
     private LoggerInterface $logger;
@@ -36,6 +38,10 @@ class CommentControllerTest extends TestCase {
         parent::setUp();
 
         $this->commentService = $this->createMock(CommentService::class);
+        // Default: the admin allows engagement, so only a page-level
+        // override can switch it off. Tests that need the global kill
+        // switch build their own.
+        $this->engagementSettings = $this->engagementAllowingAll();
         $this->logger = $this->createMock(LoggerInterface::class);
         $this->request = $this->createMock(IRequest::class);
 
@@ -55,9 +61,53 @@ class CommentControllerTest extends TestCase {
             $this->request,
             $this->commentService,
             $this->fakePageReadExisting($exists),
+            $this->engagementSettings,
             $this->userSession,
             $this->groupManager,
             $this->logger
+        );
+    }
+
+    /**
+     * A real EngagementSettingsService over a stubbed IConfig.
+     *
+     * Real, not a mock: the point of these tests is the decision the service
+     * makes about global-versus-page, so mocking it away would test nothing.
+     * $global is what the admin set; every key shares it.
+     */
+    private function engagementWithGlobal(bool $global): EngagementSettingsService {
+        $config = $this->createMock(\OCP\IConfig::class);
+        $config->method('getAppValue')->willReturn($global ? '1' : '0');
+        return new EngagementSettingsService($config);
+    }
+
+    /** The common case: the admin allows engagement app-wide. */
+    private function engagementAllowingAll(): EngagementSettingsService {
+        return $this->engagementWithGlobal(true);
+    }
+
+    /**
+     * Build the controller over a page whose JSON carries $settings, with the
+     * publication gate satisfied — so only the engagement settings can deny.
+     */
+    private function withPageSettings(?array $settings, ?EngagementSettingsService $engagement = null): void {
+        $page = ['uniqueId' => 'page-123', 'permissions' => ['canRead' => true, 'canWrite' => false]];
+        if ($settings !== null) {
+            $page['settings'] = $settings;
+        }
+        $publication = $this->createMock(\OCA\IntraVox\Service\Publication\PublicationStateService::class);
+        $publication->method('isHiddenFromReaders')->willReturn(false);
+
+        $this->controller = new CommentController(
+            'intravox',
+            $this->request,
+            $this->commentService,
+            $this->fakePageReadReturning($page),
+            $engagement ?? $this->engagementSettings,
+            $this->userSession,
+            $this->groupManager,
+            $this->logger,
+            $publication
         );
     }
 
@@ -76,6 +126,7 @@ class CommentControllerTest extends TestCase {
             $this->request,
             $this->commentService,
             $this->fakePageReadReturning($page),
+            $this->engagementSettings,
             $this->userSession,
             $this->groupManager,
             $this->logger,
@@ -461,5 +512,76 @@ class CommentControllerTest extends TestCase {
         $response = $this->controller->deleteComment('comment-from-other-page');
 
         $this->assertEquals(Http::STATUS_NOT_FOUND, $response->getStatus());
+    }
+
+    // A page that switched engagement off must refuse it at the API too, not
+    // only in the viewer. Before this gate, the POST below wrote the comment.
+
+    public function testPageWithCommentsDisabledRefusesNewComment(): void {
+        $this->withPageSettings(['allowComments' => false]);
+        $this->commentService->expects($this->never())->method('createComment');
+
+        $response = $this->controller->createComment('page-123', 'hoi');
+
+        $this->assertEquals(Http::STATUS_FORBIDDEN, $response->getStatus());
+    }
+
+    public function testPageWithCommentsEnabledStillAcceptsComment(): void {
+        $this->withPageSettings(['allowComments' => true]);
+        $this->commentService->expects($this->once())->method('createComment')
+            ->willReturn(['id' => '1']);
+
+        $response = $this->controller->createComment('page-123', 'hoi');
+
+        $this->assertEquals(Http::STATUS_CREATED, $response->getStatus());
+    }
+
+    public function testPageWithoutSettingsInheritsTheGlobalAllow(): void {
+        $this->withPageSettings(null);
+        $this->commentService->expects($this->once())->method('createComment')
+            ->willReturn(['id' => '1']);
+
+        $response = $this->controller->createComment('page-123', 'hoi');
+
+        $this->assertEquals(Http::STATUS_CREATED, $response->getStatus());
+    }
+
+    public function testGlobalKillSwitchRefusesEvenWhenThePageAllows(): void {
+        $this->withPageSettings(['allowComments' => true], $this->engagementWithGlobal(false));
+        $this->commentService->expects($this->never())->method('createComment');
+
+        $response = $this->controller->createComment('page-123', 'hoi');
+
+        $this->assertEquals(Http::STATUS_FORBIDDEN, $response->getStatus());
+    }
+
+    public function testPageWithReactionsDisabledRefusesPageReaction(): void {
+        $this->withPageSettings(['allowReactions' => false]);
+        $this->commentService->expects($this->never())->method('addPageReaction');
+
+        $response = $this->controller->addPageReaction('page-123', '\u{1F44D}');
+
+        $this->assertEquals(Http::STATUS_FORBIDDEN, $response->getStatus());
+    }
+
+    public function testDisablingCommentsAlsoStopsReactionsOnThem(): void {
+        $this->withPageSettings(['allowComments' => false]);
+        $this->commentService->method('getCommentPageId')->willReturn('page-123');
+        $this->commentService->expects($this->never())->method('addCommentReaction');
+
+        $response = $this->controller->addCommentReaction('comment-1', '\u{1F44D}');
+
+        $this->assertEquals(Http::STATUS_FORBIDDEN, $response->getStatus());
+    }
+
+    // Reading is not engagement: a page with comments off still shows the ones
+    // it already has, otherwise switching it off would hide history.
+    public function testDisabledCommentsAreStillReadable(): void {
+        $this->withPageSettings(['allowComments' => false]);
+        $this->commentService->method('getComments')->willReturn([]);
+
+        $response = $this->controller->getComments('page-123');
+
+        $this->assertEquals(Http::STATUS_OK, $response->getStatus());
     }
 }
