@@ -203,6 +203,25 @@ interface ICrypto {
     public function decrypt(string $input, string $password = ''): string;
 }
 
+namespace OCP\Security\CSP;
+
+use OCP\AppFramework\Http\EmptyContentSecurityPolicy;
+use OCP\EventDispatcher\Event;
+
+class AddContentSecurityPolicyEvent extends Event {
+    /** @var list<EmptyContentSecurityPolicy> */
+    private array $policies = [];
+
+    public function addPolicy(EmptyContentSecurityPolicy $policy): void {
+        $this->policies[] = $policy;
+    }
+
+    /** @return list<EmptyContentSecurityPolicy> */
+    public function getPolicies(): array {
+        return $this->policies;
+    }
+}
+
 namespace OCP\EventDispatcher;
 
 abstract class Event {
@@ -426,6 +445,33 @@ class RedirectResponse extends Response {
 
     public function getRedirectUrl(): string {
         return $this->redirectUrl;
+    }
+}
+
+class EmptyContentSecurityPolicy {
+    /** @var list<string> */
+    private array $allowedImageDomains = [];
+    /** @var list<string> */
+    private array $allowedFrameDomains = [];
+
+    public function addAllowedImageDomain(string $domain): self {
+        $this->allowedImageDomains[] = $domain;
+        return $this;
+    }
+
+    public function addAllowedFrameDomain(string $domain): self {
+        $this->allowedFrameDomains[] = $domain;
+        return $this;
+    }
+
+    /** @return list<string> */
+    public function getAllowedImageDomains(): array {
+        return $this->allowedImageDomains;
+    }
+
+    /** @return list<string> */
+    public function getAllowedFrameDomains(): array {
+        return $this->allowedFrameDomains;
     }
 }
 

@@ -6,6 +6,24 @@ IntraVox is a Nextcloud intranet page builder.
 
 ## [Unreleased]
 
+### Fixed
+
+- **Photo Story day maps now show their basemap.** The map rendered as a grey
+  rectangle with the photo markers correctly placed on it, because Nextcloud's
+  default Content-Security-Policy (`img-src 'self' data: blob:`) blocks tiles
+  from a third-party tile server and IntraVox never declared one. The tiles
+  only ever appeared where the *photos* app happened to be enabled, and even
+  then its policy allows `https://*.tile.openstreetmap.org` — a wildcard that
+  does not match the bare `tile.openstreetmap.org` host IntraVox requests. The
+  app now declares the origin of its own configured tile server
+  (`photostory.tiles.url`), so self-hosted tile servers keep working too.
+
+- **The photo lightbox's mini-map is no longer an empty frame.** Same cause,
+  different directive: the location pill opens an openstreetmap.org embed in an
+  iframe, which `frame-src` blocked. That host is not the tile server and is
+  deliberately kept out of the admin video-embed whitelist, so that emptying
+  that whitelist keeps meaning "no video embeds".
+
 ## [3.0.0] - 2026-09-16 — The page engine, taken apart, and hardened
 
 A structural release: the page engine was taken apart, and almost nothing about

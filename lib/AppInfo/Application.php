@@ -11,6 +11,7 @@ use OCA\IntraVox\Command\DebugShareCommand;
 use OCA\IntraVox\Listener\CacheCleanupListener;
 use OCA\IntraVox\Listener\CommentsEntityListener;
 use OCA\IntraVox\Listener\GroupMembershipChangedListener;
+use OCA\IntraVox\Listener\MapTilesCSPListener;
 use OCA\IntraVox\Listener\UserDeletedListener;
 use OCA\IntraVox\Search\PageSearchProvider;
 use OCA\IntraVox\Search\UserSearchProvider;
@@ -22,6 +23,7 @@ use OCP\Comments\CommentsEntityEvent;
 use OCP\Files\Cache\CacheEntryRemovedEvent;
 use OCP\Group\Events\UserAddedEvent;
 use OCP\Group\Events\UserRemovedEvent;
+use OCP\Security\CSP\AddContentSecurityPolicyEvent;
 use OCP\User\Events\UserDeletedEvent;
 
 class Application extends App implements IBootstrap {
@@ -72,6 +74,13 @@ class Application extends App implements IBootstrap {
         $context->registerEventListener(
             UserRemovedEvent::class,
             GroupMembershipChangedListener::class
+        );
+
+        // Photo Story basemap: core's default img-src blocks third-party tile
+        // servers, which leaves the day-map a grey box with correct markers.
+        $context->registerEventListener(
+            AddContentSecurityPolicyEvent::class,
+            MapTilesCSPListener::class
         );
 
 
