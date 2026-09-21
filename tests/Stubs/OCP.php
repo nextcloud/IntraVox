@@ -631,13 +631,23 @@ abstract class SimpleMigrationStep {
 
 namespace OCP\Share;
 
-interface IManager {}
+interface IManager {
+    // Only the methods IntraVox actually calls, mirroring the real OCP signatures
+    // so unit tests exercise the same contract. getSharesBy is what the share-info
+    // walk now uses instead of raw SQL (see PublicShareService::getSharesForNode).
+    public function getShareByToken(string $token);
+    public function getSharesBy($userId, $shareType, $path = null, $reshares = false, $limit = 50, $offset = 0);
+}
 
 interface IShare {
+    // Mirrors the real OCP value; IntraVox filters shares to link type.
+    public const TYPE_LINK = 3;
+
     public function getToken(): ?string;
     public function getNode();
     public function getShareType(): int;
     public function getPermissions(): int;
+    public function getPassword(): ?string;
 }
 
 namespace OCP\Accounts;

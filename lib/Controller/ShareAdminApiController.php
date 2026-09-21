@@ -74,7 +74,12 @@ class ShareAdminApiController extends Controller {
             $user = $this->userSession->getUser();
             $userId = $user ? $user->getUID() : null;
 
-            // Get share info from PublicShareService
+            // The share walk resolves each ancestor through Nextcloud's own share
+            // manager (getSharesBy), which is fast enough to run per request — no
+            // cache, and therefore no window in which a revoked link is still
+            // reported as live. The read check above runs first, so a user without
+            // access never reaches the walk; the answer's filesUrl is resolved
+            // through this same caller's mount.
             $shareInfo = $this->publicShareService->getShareInfoForPage($uniqueId, $language, $userId);
 
             return new JSONResponse($shareInfo);
