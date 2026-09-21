@@ -160,4 +160,41 @@ class FeedImageProxyTest extends TestCase {
         $this->proxy->setShareToken('a/b?c');
         $this->assertStringContainsString('/api/share/a%2Fb%3Fc/feed/image?', $this->proxy->signImageUrl('https://example.com/a.png'));
     }
+
+    /**
+     * The share context is per-request state on a service the DI container
+     * shares. Apache/mod_php builds a fresh container per request so it cannot
+     * survive one, but the guarantee the code relies on is narrower and worth
+     * pinning: setting a token must never be irreversible.
+     *
+     * If this ever regresses, a logged-in reader would be handed URLs carrying
+     * someone else's share token — which is a working link to a page they may
+     * not be entitled to see.
+     */
+    public function testTheShareContextCanAlwaysBeCleared(): void {
+        $url = 'https://example.com/a.png';
+
+        $this->proxy->setShareToken('geheim-token');
+        $this->assertStringContainsString('/api/share/geheim-token/', $this->proxy->signImageUrl($url));
+
+        $this->proxy->setShareToken(null);
+        $this->assertStringNotContainsString('/api/share/', $this->proxy->signImageUrl($url),
+            'a cleared context must not keep signing for the share route');
+        $this->assertNull($this->proxy->getShareToken());
+    }
+
+    /**
+     * The token ends up in a URL the browser requests. It must not be able to
+     * carry a query string or fragment into the path and change which endpoint
+     * is addressed.
+     */
+    public function testATokenCannotAlterTheRoute(): void {
+        foreach (['../../admin', 'a?b=c', 'a#frag', 'a/b'] as $vies) {
+            $this->proxy->setShareToken($vies);
+            $pad = parse_url($this->proxy->signImageUrl('https://example.com/a.png'), PHP_URL_PATH);
+            $this->assertStringEndsWith('/feed/image', $pad,
+                "token {$vies} must not change the endpoint");
+            $this->assertStringContainsString('/apps/intravox/api/share/', $pad);
+        }
+    }
 }
