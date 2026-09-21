@@ -167,13 +167,24 @@ final class FeedResponseReader {
      * The user split is load-bearing: LMS feeds are personalised, so a shared
      * key would serve one student's deadlines to another. RSS is the same for
      * everyone and is therefore cached once.
+     *
+     * The share split is load-bearing for a different reason: the cached body
+     * holds fully-formed image URLs, and those differ per route — a logged-in
+     * reader gets `/apps/intravox/api/feed/image`, an anonymous visitor on a
+     * share needs `/api/share/{token}/feed/image`. Without this, whichever
+     * request populated the cache first decided what the other one saw, so the
+     * images on a public share broke roughly half the time. Same feed, two
+     * renderings; the key has to say which.
      */
-    public function cacheKey(string $sourceType, array $config, ?string $userId = null): string {
+    public function cacheKey(string $sourceType, array $config, ?string $userId = null, ?string $shareToken = null): string {
         $key = $sourceType . json_encode($config);
         if ($sourceType !== 'rss') {
             // Isolate cache per user for LMS feeds (personalized content)
             // Public/anonymous requests get a separate '_public' cache key
             $key .= $userId !== null ? ('_user_' . $userId) : '_public';
+        }
+        if ($shareToken !== null && $shareToken !== '') {
+            $key .= '_share_' . $shareToken;
         }
         return 'feed_' . md5($key);
     }

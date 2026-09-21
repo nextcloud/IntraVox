@@ -226,4 +226,37 @@ class FeedResponseReaderTest extends TestCase {
             @simplexml_load_string($this->reader->stripXmlPrologueNoise($html))
         );
     }
+
+    /**
+     * The cached body holds fully-formed image URLs, and those are
+     * route-specific: a logged-in reader needs /apps/intravox/api/feed/image,
+     * an anonymous visitor on a share needs /api/share/{token}/feed/image.
+     * Sharing one cache entry meant whichever request arrived first decided
+     * what the other one saw — so the images on a public share broke about
+     * half the time, which is the worst kind of broken to debug.
+     */
+    public function testAShareGetsItsOwnCacheEntry(): void {
+        $config = ['url' => 'https://example.com/feed.xml'];
+
+        $ingelogd = $this->reader->cacheKey('rss', $config, 'alice');
+        $share = $this->reader->cacheKey('rss', $config, null, 'tok123');
+
+        $this->assertNotSame($ingelogd, $share, 'a share must not read the logged-in entry');
+        $this->assertSame($share, $this->reader->cacheKey('rss', $config, null, 'tok123'), 'same share, same entry');
+        $this->assertNotSame($share, $this->reader->cacheKey('rss', $config, null, 'tok456'), 'two shares are two entries');
+    }
+
+    /** No token is the old behaviour, unchanged. */
+    public function testWithoutAShareTheKeyIsUnchanged(): void {
+        $config = ['url' => 'https://example.com/feed.xml'];
+
+        $this->assertSame(
+            $this->reader->cacheKey('rss', $config, 'alice'),
+            $this->reader->cacheKey('rss', $config, 'alice', null)
+        );
+        $this->assertSame(
+            $this->reader->cacheKey('rss', $config, 'alice'),
+            $this->reader->cacheKey('rss', $config, 'alice', '')
+        );
+    }
 }

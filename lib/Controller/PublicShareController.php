@@ -85,6 +85,7 @@ class PublicShareController extends Controller {
         private PagePathHelper $pathHelper,
         private ShareMediaServer $mediaServer,
         private \OCA\IntraVox\Service\Publication\PublicationStateService $publicationState,
+        private \OCA\IntraVox\Service\Feed\FeedImageProxy $feedImageProxy,
     ) {
         parent::__construct($appName, $request);
     }
@@ -794,6 +795,12 @@ class PublicShareController extends Controller {
             if ($share instanceof Response) {
                 return $this->asDataResponse($share);
             }
+
+            // Anonymous visitors cannot reach /apps/intravox/api/feed/image
+            // (#[NoAdminRequired]), so the item images must be signed for the
+            // share route instead. Set before fetching: the URLs are generated
+            // during the fetch, not afterwards.
+            $this->feedImageProxy->setShareToken($token);
 
             $sourceType = $this->request->getParam('sourceType', 'rss');
             $limit = (int)$this->request->getParam('limit', 5);
