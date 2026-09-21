@@ -6,7 +6,65 @@ IntraVox is a Nextcloud intranet page builder.
 
 ## [Unreleased]
 
+### Added
+
+- **A feed widget can now page its items instead of showing them all.** A new
+  "Items per page" setting shows a few at a time with arrows to reach the rest;
+  0, the default, keeps the old behaviour of showing everything, so nothing
+  changes for a page nobody touches. On a page of ten feed widgets set to 5 of
+  20, a widget went from 2048px tall to 625px and the page from 200 rendered
+  items to 50, with all 20 still reachable.
+
+  This pages the *display*, not the fetch. The items are already parsed and
+  cached server-side — measured, asking for 20 instead of 5 costs 0.3 ms either
+  way — so turning the page is an array slice: no request, no spinner, and no
+  rate-limit slot spent. `tests/Integration/FeedLimitBenchmarkTest.php` records
+  the measurement and fails if that ever stops being true.
+
+- **A benchmark for what a feed widget's item limit costs.** Run with
+  `INTRAVOX_BENCH_FEED=1`; it prints the table above and asserts the shape of
+  the finding rather than a timing threshold.
+
+### Changed
+
+- **The feed widget editor uses Nextcloud's own controls.** It was built from
+  raw `<select>` and `<input>` elements — 13 of each, no `@nextcloud/vue`
+  components at all — so it looked like a form from a different application.
+  Title, feed URL, source type, layout, columns, sort field and the display
+  options are now `NcTextField`, `NcSelect` and `NcCheckboxRadioSwitch`.
+
+  Sort order was a toggle button showing only its current value; you had to
+  press it to discover the alternative. It is a radio pair beside the sort
+  field now, following Nextcloud's guidance that a dropdown "should not be used
+  for a small number of mutually exclusive options".
+
+  The nine selects behind the *connection* source type (Moodle, Jira,
+  SharePoint, OpenProject) are unchanged: they carry dynamic option lists and
+  handlers with side effects that cannot be verified without a live connection.
+
+- **Feed text follows the Nextcloud type scale.** The widget used 12px
+  supporting text and 10px on mobile, below the platform's smallest size and
+  out of reach of any theme or accessibility setting. Metadata is now
+  `--font-size-small` (13px) and item headlines `--default-font-size` (15px).
+
 ### Fixed
+
+- **The feed widget's title sat too far from its first item.** 73px of it, most
+  spent on a header holding one line of text: the refresh control inherited the
+  default 34px clickable area, so a 49px button row grew around an 18px line.
+  It uses `--clickable-area-small` now, which still meets the WCAG 2.2 target
+  size. Title to first item: 51px.
+
+- **On a phone the photo had become the item.** The feed item stacked and the
+  image went full width at 160px tall — 68% of the item against 38px of
+  headline, so the picture read as the content and the headline as its caption.
+  Mobile keeps the row layout now, with a 96x72 thumbnail: the item shrank from
+  236px to 98px and four fit where one and a half did.
+
+- **Paging a feed widget moved the buttons under your finger.** A shorter last
+  page let the widget collapse, pulling the pager up as you reached for it. The
+  list reserves the height of a full page while paging, so the control stays
+  put.
 
 - **Photo Story day maps now show their basemap.** The map rendered as a grey
   rectangle with the photo markers correctly placed on it, because Nextcloud's
