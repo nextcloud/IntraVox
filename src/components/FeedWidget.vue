@@ -50,6 +50,7 @@ export default {
     FeedLayoutList,
     FeedLayoutGrid,
   },
+  emits: ['feed-name'],
   props: {
     widget: {
       type: Object,
@@ -217,6 +218,11 @@ export default {
         } else {
           this.items = response.data.items || [];
           this.feedImage = response.data.feedImage || null;
+          // The feed's own <channel><title>. Only the editor listens, to offer
+          // it as a suggestion for an empty widget title; the viewer ignores it.
+          if (response.data.source) {
+            this.$emit('feed-name', response.data.source);
+          }
         }
       } catch (err) {
         this.error = this.t('intravox', 'Could not load feed. The external system may be unavailable.');

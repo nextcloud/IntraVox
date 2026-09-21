@@ -1,6 +1,6 @@
 {
-    "count": 1385,
-    "sha256": "66be3bc7559b24fdcf8d66cebcbad2b256f730b7ebcf8aff19f49ca154225cbc",
+    "count": 1386,
+    "sha256": "09c6721ff6d53ef4f082e24fa4a3eee86ae80dab49ec5fff77edbe33eb23adcf",
     "strings": [
         "— Not configured —",
         "… and {n} more",
@@ -662,6 +662,7 @@
         "Learn more",
         "Leave blank to search MetaVox-tagged photos across all folders — requires at least one filter below.",
         "Left column",
+        "Left empty, the name from the feed is suggested once. Your own wording always wins.",
         "Let visitors filter these results",
         "Level:",
         "Light",
