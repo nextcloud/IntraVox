@@ -37,7 +37,7 @@
     "lib/Controller/RendersAppShell.php": 70,
     "lib/Controller/RequiresPagePermission.php": 95,
     "lib/Controller/SettingsApiController.php": 354,
-    "lib/Controller/ShareAdminApiController.php": 112,
+    "lib/Controller/ShareAdminApiController.php": 122,
     "lib/Controller/Shared/CalendarRequestTrait.php": 41,
     "lib/Controller/Shared/FeedRequestTrait.php": 135,
     "lib/Controller/Shared/SharePathTrait.php": 159,

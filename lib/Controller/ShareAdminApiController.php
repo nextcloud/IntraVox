@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace OCA\IntraVox\Controller;
 
+use OCA\IntraVox\Service\Cache\ShareInfoCache;
 use OCA\IntraVox\Service\Read\PageReadService;
 use OCA\IntraVox\Service\PublicShareService;
 use OCP\AppFramework\Controller;
@@ -37,6 +38,7 @@ class ShareAdminApiController extends Controller {
         IRequest $request,
         private PageReadService $pageRead,
         private PublicShareService $publicShareService,
+        private ShareInfoCache $shareInfoCache,
         private IGroupManager $groupManager,
         private IUserSession $userSession,
         private LoggerInterface $logger,
@@ -74,8 +76,16 @@ class ShareAdminApiController extends Controller {
             $user = $this->userSession->getUser();
             $userId = $user ? $user->getUID() : null;
 
-            // Get share info from PublicShareService
-            $shareInfo = $this->publicShareService->getShareInfoForPage($uniqueId, $language, $userId);
+            // Cached per page, language and user. The read check above runs
+            // first and is not cached, so a user without access never reaches
+            // this — and the user is part of the key because the answer's
+            // filesUrl is resolved through the caller's own mount.
+            $shareInfo = $this->shareInfoCache->remember(
+                $uniqueId,
+                $language,
+                $userId,
+                fn (): array => $this->publicShareService->getShareInfoForPage($uniqueId, $language, $userId),
+            );
 
             return new JSONResponse($shareInfo);
         } catch (\Exception $e) {
