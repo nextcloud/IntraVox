@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace OCA\IntraVox\Controller;
 
 use OCA\IntraVox\Service\CommentService;
+use OCA\IntraVox\Service\EngagementSettingsService;
 use OCA\IntraVox\Service\Read\PageReadService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -29,6 +30,7 @@ class CommentController extends Controller {
         IRequest $request,
         private CommentService $commentService,
         private PageReadService $pageRead,
+        private EngagementSettingsService $engagementSettings,
         private IUserSession $userSession,
         private IGroupManager $groupManager,
         private LoggerInterface $logger,
@@ -74,6 +76,65 @@ class CommentController extends Controller {
         }
         // Hidden from readers: only someone who may edit the page may see it.
         return (bool)($page['permissions']['canWrite'] ?? false);
+    }
+
+    /**
+     * The page's own engagement settings, or null when they cannot be read.
+     *
+     * Null means "no page-level opinion", which is what
+     * EngagementSettingsService already treats as "inherit the global
+     * setting" — so a page that fails to load here falls back to the
+     * admin's choice rather than silently allowing what the page forbade.
+     */
+    private function pageEngagementSettings(string $pageId): ?array {
+        try {
+            $page = $this->pageRead->getPage($pageId);
+        } catch (\Exception $e) {
+            return null;
+        }
+        return isset($page['settings']) && is_array($page['settings'])
+            ? $page['settings']
+            : null;
+    }
+
+    /**
+     * Whether writing engagement is allowed on this page.
+     *
+     * The viewer hides these controls when a page turns them off, but hiding
+     * a button is not a rule: until these checks existed, anyone who could
+     * read a page could POST to it directly and write a comment the page had
+     * disabled. The decision itself lives in EngagementSettingsService, which
+     * weighs the global setting against the page-level override; these are
+     * only the places that ask it.
+     *
+     * Three named methods rather than one with a $kind argument: the compiler
+     * then rejects a caller that asks the wrong question, and there is no
+     * string to mistype.
+     */
+    private function mayComment(string $pageId): bool {
+        return $this->engagementSettings->areCommentsAllowedForPage(
+            $this->pageEngagementSettings($pageId)
+        );
+    }
+
+    private function mayReactToPage(string $pageId): bool {
+        return $this->engagementSettings->areReactionsAllowedForPage(
+            $this->pageEngagementSettings($pageId)
+        );
+    }
+
+    private function mayReactToComment(string $pageId): bool {
+        return $this->engagementSettings->areCommentReactionsAllowedForPage(
+            $this->pageEngagementSettings($pageId)
+        );
+    }
+
+    /** The response for engagement the page or the admin has switched off. */
+    private function engagementDisabled(string $what): DataResponse {
+        return new DataResponse(
+            ['error' => $what . ' are disabled for this page'],
+            Http::STATUS_FORBIDDEN
+        );
     }
 
     /**
@@ -140,6 +201,10 @@ class CommentController extends Controller {
                     ['error' => 'Page not found'],
                     Http::STATUS_NOT_FOUND
                 );
+            }
+
+            if (!$this->mayComment($pageId)) {
+                return $this->engagementDisabled('Comments');
             }
 
             if (empty(trim($message))) {
@@ -326,6 +391,10 @@ class CommentController extends Controller {
                 );
             }
 
+            if (!$this->mayReactToPage($pageId)) {
+                return $this->engagementDisabled('Reactions');
+            }
+
             $reactions = $this->commentService->addPageReaction($pageId, $emoji);
 
             return new DataResponse($reactions);
@@ -419,6 +488,13 @@ class CommentController extends Controller {
                     ['error' => 'Comment not found or access denied'],
                     Http::STATUS_NOT_FOUND
                 );
+            }
+
+            // The page owning this comment decides, so resolve it first: the
+            // route only carries the comment id.
+            $pageId = $this->commentService->getCommentPageId($commentId);
+            if ($pageId !== null && !$this->mayReactToComment($pageId)) {
+                return $this->engagementDisabled('Comment reactions');
             }
 
             $reactions = $this->commentService->addCommentReaction($commentId, $emoji);

@@ -180,4 +180,35 @@ class EngagementSettingsService {
         // Default: inherit from global (which is true if we got here)
         return true;
     }
+
+    /**
+     * Check if reactions on comments are allowed for a specific page
+     * Takes into account both global settings and page-level overrides
+     *
+     * A page that allows no comments allows no reactions on them either:
+     * there is nothing left to react to, and a page that reopens comments
+     * should not silently reopen reactions it never spoke about.
+     *
+     * @param array|null $pageSettings Page-level settings (from page JSON)
+     * @return bool Whether reactions on comments are allowed
+     */
+    public function areCommentReactionsAllowedForPage(?array $pageSettings = null): bool {
+        // Check global setting first
+        if (!$this->getAllowCommentReactions()) {
+            return false;
+        }
+
+        // No comments on this page → no reactions on them.
+        if (!$this->areCommentsAllowedForPage($pageSettings)) {
+            return false;
+        }
+
+        // If page has explicit setting, use it
+        if ($pageSettings !== null && isset($pageSettings['allowCommentReactions'])) {
+            return (bool)$pageSettings['allowCommentReactions'];
+        }
+
+        // Default: inherit from global (which is true if we got here)
+        return true;
+    }
 }
