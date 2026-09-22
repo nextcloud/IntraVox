@@ -9624,17 +9624,7 @@
         "servers": [
           {
             "url": "https://{nextcloud_host}/ocs/v2.php/apps/intravox",
-            "description": "External API mount. Same handler, same bare JSON — no OCS envelope.",
-            "variables": {
-              "nextcloud_host": {
-                "default": "localhost",
-                "description": "Nextcloud server hostname"
-              }
-            }
-          },
-          {
-            "url": "https://{nextcloud_host}/apps/intravox",
-            "description": "App mount. Also serves these operations.",
+            "description": "External API mount. These operations are registered only in the ocs block of appinfo/routes.php; the app mount returns 404 for them.",
             "variables": {
               "nextcloud_host": {
                 "default": "localhost",
@@ -9726,17 +9716,7 @@
         "servers": [
           {
             "url": "https://{nextcloud_host}/ocs/v2.php/apps/intravox",
-            "description": "External API mount. Same handler, same bare JSON — no OCS envelope.",
-            "variables": {
-              "nextcloud_host": {
-                "default": "localhost",
-                "description": "Nextcloud server hostname"
-              }
-            }
-          },
-          {
-            "url": "https://{nextcloud_host}/apps/intravox",
-            "description": "App mount. Also serves these operations.",
+            "description": "External API mount. These operations are registered only in the ocs block of appinfo/routes.php; the app mount returns 404 for them.",
             "variables": {
               "nextcloud_host": {
                 "default": "localhost",
@@ -9851,17 +9831,7 @@
         "servers": [
           {
             "url": "https://{nextcloud_host}/ocs/v2.php/apps/intravox",
-            "description": "External API mount. Same handler, same bare JSON — no OCS envelope.",
-            "variables": {
-              "nextcloud_host": {
-                "default": "localhost",
-                "description": "Nextcloud server hostname"
-              }
-            }
-          },
-          {
-            "url": "https://{nextcloud_host}/apps/intravox",
-            "description": "App mount. Also serves these operations.",
+            "description": "External API mount. These operations are registered only in the ocs block of appinfo/routes.php; the app mount returns 404 for them.",
             "variables": {
               "nextcloud_host": {
                 "default": "localhost",
@@ -9983,17 +9953,7 @@
         "servers": [
           {
             "url": "https://{nextcloud_host}/ocs/v2.php/apps/intravox",
-            "description": "External API mount. Same handler, same bare JSON — no OCS envelope.",
-            "variables": {
-              "nextcloud_host": {
-                "default": "localhost",
-                "description": "Nextcloud server hostname"
-              }
-            }
-          },
-          {
-            "url": "https://{nextcloud_host}/apps/intravox",
-            "description": "App mount. Also serves these operations.",
+            "description": "External API mount. These operations are registered only in the ocs block of appinfo/routes.php; the app mount returns 404 for them.",
             "variables": {
               "nextcloud_host": {
                 "default": "localhost",
@@ -10060,17 +10020,7 @@
         "servers": [
           {
             "url": "https://{nextcloud_host}/ocs/v2.php/apps/intravox",
-            "description": "External API mount. Same handler, same bare JSON — no OCS envelope.",
-            "variables": {
-              "nextcloud_host": {
-                "default": "localhost",
-                "description": "Nextcloud server hostname"
-              }
-            }
-          },
-          {
-            "url": "https://{nextcloud_host}/apps/intravox",
-            "description": "App mount. Also serves these operations.",
+            "description": "External API mount. These operations are registered only in the ocs block of appinfo/routes.php; the app mount returns 404 for them.",
             "variables": {
               "nextcloud_host": {
                 "default": "localhost",
@@ -10149,17 +10099,7 @@
         "servers": [
           {
             "url": "https://{nextcloud_host}/ocs/v2.php/apps/intravox",
-            "description": "External API mount. Same handler, same bare JSON — no OCS envelope.",
-            "variables": {
-              "nextcloud_host": {
-                "default": "localhost",
-                "description": "Nextcloud server hostname"
-              }
-            }
-          },
-          {
-            "url": "https://{nextcloud_host}/apps/intravox",
-            "description": "App mount. Also serves these operations.",
+            "description": "External API mount. These operations are registered only in the ocs block of appinfo/routes.php; the app mount returns 404 for them.",
             "variables": {
               "nextcloud_host": {
                 "default": "localhost",
@@ -10253,17 +10193,7 @@
         "servers": [
           {
             "url": "https://{nextcloud_host}/ocs/v2.php/apps/intravox",
-            "description": "External API mount. Same handler, same bare JSON — no OCS envelope.",
-            "variables": {
-              "nextcloud_host": {
-                "default": "localhost",
-                "description": "Nextcloud server hostname"
-              }
-            }
-          },
-          {
-            "url": "https://{nextcloud_host}/apps/intravox",
-            "description": "App mount. Also serves these operations.",
+            "description": "External API mount. These operations are registered only in the ocs block of appinfo/routes.php; the app mount returns 404 for them.",
             "variables": {
               "nextcloud_host": {
                 "default": "localhost",
@@ -10343,17 +10273,7 @@
         "servers": [
           {
             "url": "https://{nextcloud_host}/ocs/v2.php/apps/intravox",
-            "description": "External API mount. Same handler, same bare JSON — no OCS envelope.",
-            "variables": {
-              "nextcloud_host": {
-                "default": "localhost",
-                "description": "Nextcloud server hostname"
-              }
-            }
-          },
-          {
-            "url": "https://{nextcloud_host}/apps/intravox",
-            "description": "App mount. Also serves these operations.",
+            "description": "External API mount. These operations are registered only in the ocs block of appinfo/routes.php; the app mount returns 404 for them.",
             "variables": {
               "nextcloud_host": {
                 "default": "localhost",
