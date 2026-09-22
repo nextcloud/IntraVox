@@ -8,6 +8,27 @@ IntraVox is a Nextcloud intranet page builder.
 
 ### Fixed
 
+- **Permissions ignored Teams.** A team folder granted to a Team (circle), or a
+  per-folder rule set on one, was invisible to IntraVox: it derived permissions
+  by matching the user's *groups* against the folder's group list, and a circle
+  grant carries no group id. Measured on a live install — a user with read and
+  write on two folders in Files was told by IntraVox she had no access at all.
+  The same blind spot on the rule layer meant a restriction set on a Team was
+  silently not applied.
+
+  The folder-level grant now comes from groupfolders'
+  `getFolderPermissionsForUser()`, which merges group and circle memberships,
+  and the rule layer queries both mapping types.
+
+- **Conflicting rules on one path depended on row order.** Rules were folded
+  onto the result one at a time, so with two rules on the same file the last
+  one out of the database won and a deny could erase an allow. They are now
+  merged first — masks OR'd, permissions OR'd — and applied once, which is what
+  groupfolders does and documents as "allow overwrites deny".
+
+  `scripts/acl-mapping-matrix.php` reproduces both, comparing IntraVox against
+  Files and against groupfolders' own ACL code for groups and for circles.
+
 - **Photo Story day maps now show their basemap.** The map rendered as a grey
   rectangle with the photo markers correctly placed on it, because Nextcloud's
   default Content-Security-Policy (`img-src 'self' data: blob:`) blocks tiles

@@ -261,6 +261,41 @@ class GroupFoldersGateway {
 	}
 
 	/**
+	 * A user's permission on one groupfolder, as groupfolders itself computes it.
+	 *
+	 * This is the folder-level grant — what the team folder gives before any
+	 * per-path ACL rule narrows it. IntraVox used to derive it by walking
+	 * getUserGroupIds() and matching each id against the folder's group list,
+	 * which misses everything that is not a group: a folder granted to a Team
+	 * (circle) resolved to 0, and the user was told they had no access to an
+	 * intranet they can read and write in Files.
+	 *
+	 * getFolderPermissionsForUser() has no such blind spot — it merges
+	 * getFoldersForGroups() with getFoldersFromCircleMemberships() and ORs the
+	 * permissions — so IntraVox now answers with the number the rest of
+	 * Nextcloud is using.
+	 *
+	 * Returns 0 when groupfolders is unavailable or the lookup fails, which is
+	 * the fail-closed answer: no folder, no permission.
+	 */
+	public function folderPermissionsForUser(\OCP\IUser $user, int $folderId): int {
+		if (!$this->isAvailable()) {
+			return 0;
+		}
+
+		try {
+			return $this->folderManager()->getFolderPermissionsForUser($user, $folderId);
+		} catch (\Throwable $e) {
+			$this->logger->error('[GroupFoldersGateway] getFolderPermissionsForUser() failed', [
+				'folderId' => $folderId,
+				'error' => $e->getMessage(),
+			]);
+
+			return 0;
+		}
+	}
+
+	/**
 	 * Forget what we resolved. Setup creates folders inside a request that may
 	 * already have memoised their absence.
 	 */
@@ -285,6 +320,54 @@ class GroupFoldersGateway {
 	 */
 	public function folderManager(): object {
 		return \OC::$server->get(\OCA\GroupFolders\Folder\FolderManager::class);
+	}
+
+	/**
+	 * The ACL mapping ids that apply to a user — groups AND circles (Teams) —
+	 * exactly as groupfolders' own ACL engine sees them.
+	 *
+	 * This is what decides which group_folders_acl rows apply to the user. We ask
+	 * groupfolders' UserMappingManager rather than reading the circles tables by
+	 * hand, for two reasons that a raw circles_member query misses:
+	 *
+	 *  - it is the SAME manager the ACL mount uses, registered as a shared
+	 *    singleton, and it memoises its answer per user for the request. The mount
+	 *    provider warms that cache before IntraVox' permission check runs, so this
+	 *    call is a memory hit (measured ~0.001ms) rather than the federated-session
+	 *    cost people reach for raw SQL to avoid — the raw circles_member query
+	 *    measured ~0.19ms, slower AND out of step with the engine;
+	 *  - it resolves circles through the Circles API, so a Circles schema change
+	 *    cannot silently break it.
+	 *
+	 * Returns group ids only (the historical behaviour) when groupfolders or its
+	 * mapping manager is unavailable — never fails the permission check.
+	 *
+	 * @param string[] $fallbackGroupIds group ids to return when the mapping
+	 *        manager cannot be reached
+	 * @return string[] mapping ids (group + circle), for an `IN` over mapping_id
+	 */
+	public function mappingIdsForUser(\OCP\IUser $user, array $fallbackGroupIds): array {
+		if (!$this->isAvailable()) {
+			return $fallbackGroupIds;
+		}
+
+		try {
+			$manager = \OC::$server->get(\OCA\GroupFolders\ACL\UserMapping\IUserMappingManager::class);
+			$ids = [];
+			foreach ($manager->getMappingsForUser($user) as $mapping) {
+				// group + circle rules are keyed by the mapping id; a 'user'
+				// mapping is the uid itself, harmless to include in the IN.
+				$ids[] = $mapping->getId();
+			}
+
+			return $ids;
+		} catch (\Throwable $e) {
+			$this->logger->error('[GroupFoldersGateway] getMappingsForUser() failed, falling back to groups only', [
+				'error' => $e->getMessage(),
+			]);
+
+			return $fallbackGroupIds;
+		}
 	}
 
 	/** @return iterable<int|string,mixed> */
