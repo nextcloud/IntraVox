@@ -349,7 +349,10 @@ class PermissionService {
      * The circles (Teams) this user belongs to, as ACL mapping ids.
      *
      * An ACL rule can be set on a circle just as well as on a group, so the
-     * user's memberships decide whether such a rule applies to them.
+     * user's memberships decide whether such a rule applies to them. This
+     * REPLACES nothing: group ids still come from getUserGroupIds(), because a
+     * rule stored against a group uses the group's own id, not the id of the
+     * circle that wraps it. The two lists are added together, not swapped.
      *
      * Asked of the circles app rather than read from circles_member directly.
      * The table is not the same answer: a user has a row there for their own
@@ -485,6 +488,13 @@ class PermissionService {
                 // Rule::mergeRules() ORs the masks and ORs the permissions,
                 // documented there as "allow overwrites deny" — and that is
                 // what this now does before applying once.
+                // Both lists, because an ACL rule keys on whichever id the
+                // administrator picked and the two are different id spaces. A
+                // group appears twice in Nextcloud: as its own id ('G-A'),
+                // which is what a mapping_type='group' rule stores, and again
+                // as a circle wrapping that group ('H3Szwss…'), which is what
+                // a rule set through the Teams UI stores. Neither list is a
+                // superset of the other, so both are passed.
                 $mappingIds = array_merge($userGroups, $circleIds);
                 $mask = 0;
                 $permissions = 0;
