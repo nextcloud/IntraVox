@@ -447,7 +447,9 @@ export default {
   display: flex;
   align-items: center;
   gap: 12px;
-  font-size: 12px;
+  /* Nextcloud's smallest size. 12px was below anything a theme or an
+     accessibility setting can reach. */
+  font-size: var(--font-size-small, 13px);
   color: var(--color-text-maxcontrast);
   flex-wrap: wrap;
 }
@@ -497,11 +499,11 @@ export default {
   }
 
   .feed-item-title {
-    font-size: 13px;
+    font-size: var(--default-font-size, 15px);
   }
 
   .feed-item-meta {
-    font-size: 11px;
+    font-size: var(--font-size-small, 13px);
     gap: 8px;
   }
 
@@ -518,23 +520,48 @@ export default {
   }
 
   .feed-item-title {
-    font-size: 12px;
+    font-size: var(--default-font-size, 15px);
   }
 
   .feed-item-meta {
-    font-size: 10px;
+    font-size: var(--font-size-small, 13px);
   }
 }
 
 @media (max-width: 600px) {
+  /*
+   * Stays a row, unlike before.
+   *
+   * Stacking made the image full-width at 160px tall, which measured at 68%
+   * of the item against 38px of headline: the photo became the item and the
+   * headline its caption. In a feed the words are the content — the picture is
+   * there to help you recognise the story, not to be the story.
+   *
+   * Keeping the row also keeps five items scannable in one screen, which is
+   * the point of a feed widget on a phone.
+   */
   .feed-item {
-    flex-direction: column;
+    flex-direction: row;
     gap: 12px;
   }
 
-  .feed-item-image {
-    width: 100%;
-    height: 160px;
+  /*
+   * Slightly smaller than the desktop thumbnail (120x80), because the column
+   * is narrower and the headline needs the width more than the image does.
+   * Fixed rather than a percentage so every row lines up, whether or not an
+   * item has a picture.
+   */
+  .feed-item-image,
+  .feed-item-feed-icon,
+  .feed-item-fallback {
+    flex-shrink: 0;
+    width: 96px;
+    height: 72px;
+  }
+
+  /* min-width:0 lets a long headline wrap instead of pushing the image out. */
+  .feed-item-content {
+    min-width: 0;
   }
 }
 

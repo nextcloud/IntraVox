@@ -53,7 +53,7 @@
     <component
       v-else
       :is="layoutComponent"
-      :items="items"
+      :items="visibleItems"
       :widget="widget"
       :feed-image="feedImage"
       :row-background-color="rowBackgroundColor"
@@ -61,12 +61,49 @@
     />
 
     <!--
-      One line per widget, not per item. Measured across 184 items: only 5%
-      are under an hour old and the median is ten days, so a clock time beside
-      each headline would be noise on nineteen items out of twenty. What a
-      reader cannot see from the dates is when *we* last looked — that belongs
-      to the widget, and it is one line instead of twenty.
+      Below the items, because it pages what sits above it — unlike the
+      refresh control, which reloads the newest item and therefore belongs at
+      the top.
+
+      This pages the DISPLAY only. Every item is already in hand; turning the
+      page is an array slice, so there is no request, no spinner and no
+      rate-limit slot. That is why the buttons are plain arrows rather than a
+      "load more" that implies waiting.
     -->
+    <nav
+      v-if="!loading && !error && totalPages > 1"
+      class="feed-widget-pager"
+      :aria-label="t('intravox', 'Feed pages')"
+    >
+      <button
+        type="button"
+        class="feed-widget-pager-button"
+        :disabled="page === 0"
+        :aria-label="t('intravox', 'Previous items')"
+        @click="turnPage(-1)"
+      >
+        <ChevronLeft :size="18" />
+      </button>
+
+      <!--
+        The range, not the page number: "1-5 of 20" answers "how much is
+        there" and "where am I" at once, where "page 1 of 4" only answers the
+        second. n() because it carries a count.
+      -->
+      <span class="feed-widget-pager-count" aria-live="polite">
+        {{ rangeLabel }}
+      </span>
+
+      <button
+        type="button"
+        class="feed-widget-pager-button"
+        :disabled="page >= totalPages - 1"
+        :aria-label="t('intravox', 'Next items')"
+        @click="turnPage(1)"
+      >
+        <ChevronRight :size="18" />
+      </button>
+    </nav>
 
 
     <!--
@@ -91,13 +128,15 @@
 
 <script>
 import axios from '@nextcloud/axios';
-import { translate } from '@nextcloud/l10n';
+import { translate, translatePlural } from '@nextcloud/l10n';
 import { generateUrl } from '@nextcloud/router';
 import { fetchFeedBatched } from '../utils/feedBatcher.js';
 import { NcLoadingIcon } from '@nextcloud/vue';
 import AlertCircle from 'vue-material-design-icons/AlertCircle.vue';
 import RssBox from 'vue-material-design-icons/RssBox.vue';
 import Refresh from 'vue-material-design-icons/Refresh.vue';
+import ChevronLeft from 'vue-material-design-icons/ChevronLeft.vue';
+import ChevronRight from 'vue-material-design-icons/ChevronRight.vue';
 import FeedLayoutList from './feed/FeedLayoutList.vue';
 import FeedLayoutGrid from './feed/FeedLayoutGrid.vue';
 import FeedArticleModal from './feed/FeedArticleModal.vue';
@@ -109,6 +148,8 @@ export default {
     AlertCircle,
     RssBox,
     Refresh,
+    ChevronLeft,
+    ChevronRight,
     FeedLayoutList,
     FeedLayoutGrid,
     FeedArticleModal,
@@ -143,9 +184,76 @@ export default {
       nu: Date.now(),
       loading: true,
       error: null,
+      // Height of one rendered item, measured from a full page. Used to
+      // reserve space so the pager does not move between pages.
+      itemHeight: 0,
+      // Which display page is on screen. Reset whenever the item list is
+      // replaced — staying on page 3 of a feed that just shrank to one page
+      // would show an empty widget.
+      page: 0,
     };
   },
   computed: {
+    /**
+     * How many items share one screen. 0 (the default, and what every widget
+     * saved before this option existed has) means "all of them" — the widget
+     * then behaves exactly as it did, with no pager.
+     */
+    pageSize() {
+      const n = Number(this.widget.pageSize) || 0;
+      return n > 0 ? n : 0;
+    },
+    totalPages() {
+      if (this.pageSize === 0) {
+        return 1;
+      }
+      return Math.ceil(this.items.length / this.pageSize) || 1;
+    },
+    /**
+     * The slice on screen.
+     *
+     * Deliberately a computed slice rather than a fetch: the items are already
+     * in the response. Measured at the service layer, asking the server for 20
+     * items instead of 5 costs 0.3 ms either way, so paging the display is
+     * free while paging the fetch would cost a round trip and a rate-limit
+     * slot per turn.
+     */
+    visibleItems() {
+      if (this.pageSize === 0) {
+        return this.items;
+      }
+      const start = this.page * this.pageSize;
+      return this.items.slice(start, start + this.pageSize);
+    },
+    /**
+     * Reserve the height of a full page while paging.
+     *
+     * Only when there is more than one page, and only as a minimum — a page
+     * that needs more room still gets it. Measured from the rendered list
+     * rather than hardcoded, because an item's height depends on the layout,
+     * the excerpt length and whether images are shown.
+     */
+    listStyle() {
+      if (this.pageSize === 0 || this.totalPages <= 1 || !this.itemHeight) {
+        return {};
+      }
+      return { minHeight: `${Math.round(this.itemHeight * this.pageSize)}px` };
+    },
+    /**
+     * "1-5 of 20" rather than "page 1 of 4": the range answers both "where am
+     * I" and "how much is there", and it is the count a reader can act on.
+     */
+    rangeLabel() {
+      const start = this.page * this.pageSize + 1;
+      const end = Math.min(start + this.pageSize - 1, this.items.length);
+      return this.n(
+        'intravox',
+        '{start}-{end} of %n item',
+        '{start}-{end} of %n items',
+        this.items.length,
+        { start, end }
+      );
+    },
     /**
      * Title colour that survives a coloured row.
      *
@@ -218,6 +326,20 @@ export default {
       },
       deep: true,
     },
+    /**
+     * Back to the first page whenever the list is replaced.
+     *
+     * A watcher rather than a reset beside each assignment: items is set in
+     * five places (fetch, refresh, batch, error, empty), and the one that gets
+     * forgotten would leave a reader on page 3 of a feed that now has one
+     * page — an empty widget with no way back except the arrow they cannot
+     * see, because the pager hides itself when there is only one page.
+     */
+    items() {
+      this.page = 0;
+      this.itemHeight = 0;
+      this.measureItemHeight();
+    },
   },
   mounted() {
     // A minute is the finest unit the label shows, so ticking faster would
@@ -258,6 +380,43 @@ export default {
     },
     t(app, text, vars) {
       return translate(app, text, vars);
+    },
+    n(app, singular, plural, count, vars) {
+      return translatePlural(app, singular, plural, count, vars);
+    },
+    /**
+     * Move one display page. Bounded here rather than in the template so the
+     * disabled buttons and the clamp cannot disagree.
+     */
+    /**
+     * Measure one item, once, from a page that is full.
+     *
+     * A short last page would give a too-small average, so this only records a
+     * measurement taken while a full page is on screen. Called after the list
+     * renders rather than on mount, because the items arrive asynchronously.
+     */
+    measureItemHeight() {
+      if (this.pageSize === 0 || this.itemHeight) {
+        return;
+      }
+      this.$nextTick(() => {
+        const items = this.$el?.querySelectorAll('.feed-item');
+        if (!items || items.length < this.pageSize) {
+          return;
+        }
+        const totaal = [...items].reduce((som, el) => som + el.getBoundingClientRect().height, 0);
+        // The gap between items counts too: the reserved box holds both.
+        const lijst = items[0].parentElement;
+        const gap = lijst ? parseFloat(getComputedStyle(lijst).rowGap || '0') || 0 : 0;
+        this.itemHeight = totaal / items.length + gap;
+      });
+    },
+    turnPage(delta) {
+      const next = this.page + delta;
+      if (next < 0 || next >= this.totalPages) {
+        return;
+      }
+      this.page = next;
     },
     async fetchFeed(force = false) {
       this.loading = true;
@@ -428,7 +587,7 @@ export default {
 /* Same size and rhythm as .news-widget-title and .people-widget-title, so a
    page that mixes widget types keeps one heading level visually. */
 .feed-widget-title {
-  margin: 0 0 16px 0;
+  margin: 0 0 8px 0;
   font-size: 18px;
   font-weight: 600;
   color: var(--color-main-text);
@@ -437,15 +596,72 @@ export default {
   overflow-wrap: anywhere;
 }
 
+/*
+ * The pager mirrors the header at the other end of the widget: same type size
+ * and same quiet colour, a rule above instead of below. It reads as a footer
+ * to the list rather than as a second toolbar.
+ */
+.feed-widget-pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--color-border);
+  font-size: var(--font-size-small, 13px);
+  color: var(--color-text-maxcontrast);
+}
+
+.feed-widget-pager-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* The 24px floor from the accessibility rules; --default-clickable-area
+     would be 44px and dwarf a compact widget. */
+  min-width: 24px;
+  min-height: 24px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: var(--border-radius);
+  color: var(--color-text-maxcontrast);
+  cursor: pointer;
+}
+
+.feed-widget-pager-button:hover:not(:disabled) {
+  background: var(--color-background-hover);
+  color: var(--color-main-text);
+}
+
+.feed-widget-pager-button:focus-visible {
+  outline: 2px solid var(--color-primary-element);
+  outline-offset: 2px;
+}
+
+.feed-widget-pager-button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* Fixed-width so the arrows do not shift as the range label changes width —
+   "1-5 of 20" and "16-20 of 20" are different lengths, and a jumping button
+   is a target that moves out from under the pointer. */
+.feed-widget-pager-count {
+  min-width: 11ch;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
 .feed-widget-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 8px;
-  padding-bottom: 8px;
+  padding-bottom: 4px;
   border-bottom: 1px solid var(--color-border);
-  font-size: 12px;
+  font-size: var(--font-size-small, 13px);
   color: var(--color-text-maxcontrast);
 }
 
@@ -458,12 +674,17 @@ export default {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 4px 8px;
+  /* The small clickable area, not the default 34px: this sits beside an 18px
+     line of text in a dense header, and the standard size built a button
+     taller than the row it lives in — 49px for one line, which pushed the
+     first item 73px below the widget title. 24px still meets WCAG 2.2. */
+  min-height: var(--clickable-area-small, 24px);
+  padding: 2px 8px;
   background: transparent;
   border: none;
   border-radius: var(--border-radius);
   color: var(--color-text-maxcontrast);
-  font-size: 12px;
+  font-size: var(--font-size-small, 13px);
   cursor: pointer;
 }
 
