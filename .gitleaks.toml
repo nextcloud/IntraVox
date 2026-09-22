@@ -1,0 +1,52 @@
+# gitleaks configuration.
+#
+# Scope: catch a credential the moment it is committed. The scan runs over the
+# full history, which contains 56 findings that are all documentation
+# placeholders — auditing them once and recording the result here is what makes
+# the job meaningful, because a job that is red for known reasons gets ignored
+# and then cannot report the real thing.
+#
+# Audited 2026-09-22, all 56:
+#
+#   49x curl-auth-user   API docs showing `curl -u "username:app-password"`,
+#                        `"user:app-password"`, `"user:wrong-password"` — the
+#                        literal placeholder text, in nine doc files.
+#    7x generic-api-key  `abc123def456...` (elided sample), `IV-BUS-250-...`
+#                        (sample licence key in the licensing model discussion),
+#                        a `docs/internal/` path, and a synthetic share token
+#                        `kjT8ZMeKxLPTEaT` that schemathesis generated while
+#                        fuzzing. Verified dead: it returns 404 on dev.
+#
+# Nothing here was ever a live credential. The real key, intravox.key, has
+# never been tracked (`git ls-files | grep intravox.key` is empty) and the
+# packaging guard independently asserts no key material reaches a tarball.
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "curl-auth-user"
+description = "curl -u with inline credentials"
+regex = '''curl(.*?)\s-u\s+["']?([\w\-.]+:[\w\-.]+)["']?'''
+[rules.allowlist]
+# The documented placeholder forms. A real credential does not look like this.
+regexes = [
+  '''(?i)(username|user|admin|youruser|<user>):(app-password|app-password-token|wrong-password|<password>|your-app-password)''',
+]
+
+[allowlist]
+description = "Paths and values audited on 2026-09-22"
+paths = [
+  # Fuzzer cache: synthetic values only, and regenerated on every run.
+  '''^\.schemathesis/''',
+]
+regexes = [
+  # Elided sample values in documentation.
+  '''abc123def456\.\.\.''',
+  # Sample licence key in the licensing-model discussion, not issued to anyone.
+  '''IV-BUS-250-a3f8c2d1-k9m2''',
+  # A path fragment, not a key: an OWASP checklist line listing ".key,
+  # docs/internal/" as things to keep out of a release. The generic-api-key
+  # rule matches the word after the comma.
+  '''docs/internal/''',
+]

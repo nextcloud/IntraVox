@@ -187,7 +187,11 @@ jobs:
         run: |
           set -euo pipefail
           composer install --no-dev --prefer-dist --no-interaction --no-progress
-          composer audit --no-dev --format=plain
+          # --abandoned=ignore: this step's contract is "fail on a real
+          # advisory". Without the flag composer audit also exits 2 for an
+          # abandoned package, and lsolesen/pel is abandoned but not vulnerable
+          # — exactly the case the comment above says must not fail the build.
+          composer audit --no-dev --format=plain --abandoned=ignore
 
       - name: npm audit (frontend deps)
         # The @nextcloud/* transitive tree carries advisories we cannot fix from
@@ -207,8 +211,22 @@ jobs:
 
       # Catches a key or token the moment it is committed, complementing the
       # release checklist's by-hand tarball check.
+      #
+      # The gitleaks BINARY (MIT) is used directly rather than
+      # gitleaks/gitleaks-action@v2. Since that action's v2 it refuses to run on
+      # an organisation-owned repository without a paid GITLEAKS_LICENSE secret,
+      # and nextcloud/IntraVox is organisation-owned:
+      #
+      #   [nextcloud] is an organization. License key is required.
+      #
+      # That is a hard failure before any scanning happens, so the job went red
+      # on every push from the day it was added and reported nothing about the
+      # code. The binary has no such restriction and does the actual work.
       - name: gitleaks
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: 'false'
-          GITLEAKS_ENABLE_SUMMARY: 'false'
+        run: |
+          set -euo pipefail
+          VERSION=8.30.1
+          curl -sSfL -o /tmp/gitleaks.tar.gz \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${VERSION}/gitleaks_${VERSION}_linux_x64.tar.gz"
+          tar -xzf /tmp/gitleaks.tar.gz -C /tmp gitleaks
+          /tmp/gitleaks git --no-banner --redact --verbose .
