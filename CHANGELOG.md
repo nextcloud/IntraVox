@@ -29,6 +29,21 @@ IntraVox is a Nextcloud intranet page builder.
 
 ### Fixed
 
+- **`openapi.json` claimed a mount that returns 404.** The eight
+  `/api/v1/pages*` operations each listed two servers: the OCS mount and
+  `/apps/intravox`, the latter described as "App mount. Also serves these
+  operations." It does not — those routes are registered only in the `ocs`
+  block of `appinfo/routes.php`, and the app mount answers 404 for them. A
+  client generated from the document also had no way to tell which of the two
+  bases a write belonged to, which is why `nati.ve` refused the spec outright.
+
+  The false entry is gone; each of the eight now declares the OCS mount alone.
+  Nothing else changes: the top-level server stays the app mount, where the
+  other 142 documented paths genuinely live, and no route is touched. A new
+  assertion in `OcsMountScopeTest` fails if a second mount is ever added back —
+  the existing test only checked that an OCS entry was present, so it passed
+  the whole time the false one was there.
+
 - **A feed widget no longer suggests a title for a new widget.** The editor
   offers the feed's own name for an empty title field, but `FeedWidget` stopped
   emitting that name: the lines were lost resolving a `FeedWidget.vue` conflict

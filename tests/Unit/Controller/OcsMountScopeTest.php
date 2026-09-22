@@ -116,6 +116,48 @@ class OcsMountScopeTest extends TestCase {
     }
 
     /**
+     * An override lists the OCS mount and nothing else.
+     *
+     * The overrides used to carry a second entry for `/apps/intravox`,
+     * described as "App mount. Also serves these operations." That was false:
+     * the eight `/api/v1/pages*` routes live only in the 'ocs' block, so the
+     * app mount 404s them. Measured on dev:
+     *
+     *     /apps/intravox/api/v1/pages          404
+     *     /apps/intravox/api/pages             401   (the app-mount spelling)
+     *     /ocs/v2.php/apps/intravox/api/v1/pages   401
+     *
+     * The sibling test above only asks whether an OCS entry is PRESENT, so it
+     * passed the whole time the second entry was there. Two servers on one
+     * operation also means a generated client has to guess which base to use
+     * for a write, which is what made the document unusable for nati.ve.
+     */
+    public function testAnOcsOverrideListsOnlyTheOcsMount(): void {
+        $spec = json_decode(file_get_contents(__DIR__ . '/../../../openapi.json'), true);
+        $verbs = ['get', 'post', 'put', 'delete', 'patch'];
+
+        $checked = 0;
+        foreach ($spec['paths'] as $path => $item) {
+            foreach ($item as $verb => $op) {
+                if (!in_array($verb, $verbs, true) || !is_array($op) || !isset($op['servers'])) {
+                    continue;
+                }
+                $checked++;
+                $urls = array_column($op['servers'], 'url');
+                $this->assertCount(
+                    1,
+                    $urls,
+                    strtoupper($verb) . ' ' . $path . ' must declare exactly one mount, got: '
+                        . implode(', ', $urls)
+                );
+                $this->assertStringContainsString('/ocs/v2.php/', $urls[0]);
+            }
+        }
+
+        $this->assertSame(8, $checked, 'Expected the eight routes of the ocs block to carry an override');
+    }
+
+    /**
      * /api/health is not on the OCS mount.
      *
      * Called out by name because it is the one that got this wrong: it was
