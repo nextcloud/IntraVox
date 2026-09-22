@@ -158,17 +158,24 @@ class SystemFileService {
      * language root) still gets a menu and footer. That fallback is correct
      * for exactly one situation: the user cannot reach the PARENT FOLDER.
      *
-     * It is wrong for a second situation that used to arrive as the very same
-     * exception: an administrator put an explicit deny on the FILE itself.
+     * It is wrong for two other situations that arrive as the very same
+     * exception. The first: an administrator put an explicit deny on the FILE
+     * itself.
      * Honouring the fallback there serves content the admin just forbade
      * (issue #112) — navigation.json stayed visible, with its page titles,
      * for a user configured to have no access to it at all.
      *
-     * The two are told apart from the USER's view, not the system view: if the
-     * user can list the language folder, they were not shut out at the folder
-     * level, so a file they cannot read there is a deliberate deny and must
-     * stay denied. Only when the language folder itself is unreachable does
-     * the department-only case apply and the fallback stand.
+     * The second: the user has no access to IntraVox at all. "Language folder
+     * unreachable" reads as "limited access" but also covers "no access", and
+     * that user was handed the full navigation tree — titles, department
+     * structure and page ids — for an intranet they are not part of.
+     *
+     * All are told apart from the USER's view, not the system view. No IntraVox
+     * mount means no foothold anywhere, so no fallback. If the user can list
+     * the language folder, they were not shut out at the folder level, so a
+     * file they cannot read there is a deliberate deny and must stay denied.
+     * Only when the mount is present AND the language folder is unreachable
+     * does the department-only case apply and the fallback stand.
      *
      * Fails OPEN on an unexpected error, which preserves the pre-existing
      * behaviour for every case this check was not written for: navigation is
@@ -186,6 +193,31 @@ class SystemFileService {
 
         try {
             $userFolder = $this->rootFolder->getUserFolder($userId);
+
+            // Before asking about the language folder, ask whether this user
+            // has ANY foothold in IntraVox at all.
+            //
+            // The department-only case this fallback exists for is a user who
+            // is inside the groupfolder but cannot read the language ROOT. A
+            // user with no access whatsoever produces the identical
+            // NotFoundException one line down, and used to be handed the same
+            // bypass — so someone with zero permissions received the whole
+            // navigation tree: every page title, the department structure and
+            // the page ids, for an intranet they have no part in.
+            //
+            // The mounted IntraVox folder tells the two apart. A
+            // department-only user sees it (the mount is there; only the
+            // language root is denied); a user outside every IntraVox group
+            // does not see it at all.
+            if (!$userFolder->nodeExists('IntraVox')) {
+                $this->logger->debug('[SystemFileService] Denying system fallback: user has no IntraVox mount', [
+                    'user' => $userId,
+                    'language' => $language,
+                    'filename' => $filename,
+                ]);
+                return false;
+            }
+
             $languageFolder = $userFolder->get('IntraVox/' . $language);
 
             // get() is typed as Node; only a Folder can be asked what it

@@ -42,9 +42,20 @@ class SystemFallbackGateTest extends TestCase {
         );
     }
 
-    /** A root folder whose IntraVox/<lang> lookup behaves as $behaviour dictates. */
-    private function rootFolderWhereLanguageFolder(callable $behaviour): IRootFolder {
+    /**
+     * A root folder whose IntraVox/<lang> lookup behaves as $behaviour dictates.
+     *
+     * $hasMount is what the user's own view says about the IntraVox folder
+     * itself. It defaults to true because every case this helper builds is a
+     * user who IS in IntraVox — a department-only user, or one facing a deny
+     * on a single file. A user with no mount at all is the separate case
+     * below, and it must not be reachable by accident here.
+     */
+    private function rootFolderWhereLanguageFolder(callable $behaviour, bool $hasMount = true): IRootFolder {
         $userFolder = $this->createMock(Folder::class);
+        $userFolder->method('nodeExists')->willReturnCallback(
+            fn(string $path): bool => $path === 'IntraVox' ? $hasMount : false
+        );
         $userFolder->method('get')->willReturnCallback($behaviour);
 
         $rootFolder = $this->createMock(IRootFolder::class);
@@ -95,6 +106,52 @@ class SystemFallbackGateTest extends TestCase {
         $this->assertFalse(
             $this->service($rootFolder)->mayUseSystemFallback('bob', 'nl', 'secrets.json'),
             'the ACL bypass is limited to the shared infrastructure files'
+        );
+    }
+
+    /**
+     * The leak this test exists for: a user with NO access to IntraVox at all.
+     *
+     * "Language folder unreachable" was read as "department-only user", but it
+     * covers a second case that looks identical from inside the try block —
+     * someone who is in no IntraVox group whatsoever. Found on a live install:
+     * a demo user in two unrelated groups, with zero permissions on every path
+     * checked, was served the complete navigation tree by the fallback: seven
+     * top-level items with their titles, the department structure beneath them
+     * and every page id.
+     *
+     * The UI showed her one entry, because filterNavigation() drops what she
+     * cannot read — but the filtering happens after the fetch, so the titles
+     * and ids had already crossed the wire. Content stayed closed; the shape
+     * of the intranet did not.
+     */
+    public function testFallbackIsRefusedWhenTheUserHasNoIntraVoxAtAll(): void {
+        $rootFolder = $this->rootFolderWhereLanguageFolder(
+            fn() => throw new NotFoundException('no access to the language root'),
+            false // no IntraVox mount in this user's view
+        );
+
+        $this->assertFalse(
+            $this->service($rootFolder)->mayUseSystemFallback('rachel', 'nl', 'navigation.json'),
+            'a user outside every IntraVox group has no foothold to fall back on'
+        );
+    }
+
+    /**
+     * The other direction, and the reason the check is `nodeExists` on the
+     * mount rather than something stricter: a department-only user DOES see
+     * the IntraVox folder — only the language root is denied — and must keep
+     * their menu. Removing the fallback for them is the regression this guards.
+     */
+    public function testDepartmentOnlyUserStillGetsTheFallback(): void {
+        $rootFolder = $this->rootFolderWhereLanguageFolder(
+            fn() => throw new NotFoundException('no access to the language root'),
+            true // the mount is there; only the language folder is out of reach
+        );
+
+        $this->assertTrue(
+            $this->service($rootFolder)->mayUseSystemFallback('bob', 'nl', 'navigation.json'),
+            'the department-only user is exactly who the fallback is for'
         );
     }
 
