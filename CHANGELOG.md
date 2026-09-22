@@ -8,194 +8,137 @@ IntraVox is a Nextcloud intranet page builder.
 
 ### Added
 
-- **ESLint now guards the Vue syntax the build cannot.** `npm run build` and
-  the CI gate fail on Vue 2 constructs that Vue 3 accepts and silently ignores,
-  and on duplicate object keys. Both classes shipped this month: a `.sync`
-  binding that made a feed URL save empty, and a second `components:` key that
-  left every Nextcloud component unregistered. Neither is a compile error, so
-  nothing but a person at the screen could see them.
-
-  The rule set is deliberately small — `vue/flat/essential` plus the rules that
-  catch that class. Three rules are off with a reason in the config: they
-  report 22 pre-existing findings that are visible on reading, and a gate that
-  cannot pass on day one gets switched off.
-
-- **The gate now catches a listener bound to an event nobody emits.** For every
-  `@event` a template binds on a component from this repo, the new check proves
-  that component actually emits it. This fails silently by construction: Vue
-  attaches the listener either way, nothing warns, and the feature simply does
-  not happen. It covers lazily registered components too — the pair it was
-  written for is registered with `defineAsyncComponent`.
-
-### Fixed
-
-- **`openapi.json` claimed a mount that returns 404.** The eight
-  `/api/v1/pages*` operations each listed two servers: the OCS mount and
-  `/apps/intravox`, the latter described as "App mount. Also serves these
-  operations." It does not — those routes are registered only in the `ocs`
-  block of `appinfo/routes.php`, and the app mount answers 404 for them. A
-  client generated from the document also had no way to tell which of the two
-  bases a write belonged to, which is why `nati.ve` refused the spec outright.
-
-  The false entry is gone; each of the eight now declares the OCS mount alone.
-  Nothing else changes: the top-level server stays the app mount, where the
-  other 142 documented paths genuinely live, and no route is touched. A new
-  assertion in `OcsMountScopeTest` fails if a second mount is ever added back —
-  the existing test only checked that an OCS entry was present, so it passed
-  the whole time the false one was there.
-
-- **A feed widget no longer suggests a title for a new widget.** The editor
-  offers the feed's own name for an empty title field, but `FeedWidget` stopped
-  emitting that name: the lines were lost resolving a `FeedWidget.vue` conflict
-  when PR #38 was merged, while the editor kept listening. Reported against
-  `video.edu.nl` (channel title `SURF`), but it affected every feed since then.
-  The gate now has a check for this class.
-
-- **A comment's reactions were written straight into a prop.** `CommentItem`
-  assigned `this.comment.reactions`, which worked because the object is shared
-  by reference but made the child the owner of the parent's data. It emits
-  `update` now, which the parent already merges by id. Found by the new lint.
-
-
-### Added
-
-- **A feed widget can now page its items instead of showing them all.** A new
+- **A feed widget can page its items instead of showing them all.** A new
   "Items per page" setting shows a few at a time with arrows to reach the rest;
-  0, the default, keeps the old behaviour of showing everything, so nothing
-  changes for a page nobody touches. On a page of ten feed widgets set to 5 of
-  20, a widget went from 2048px tall to 625px and the page from 200 rendered
-  items to 50, with all 20 still reachable.
+  0, the default, keeps the old behaviour. On a page of ten widgets set to 5 of
+  20, a widget went from 2048px tall to 625px with all 20 still reachable. It
+  pages the *display*, not the fetch — the items are already cached, so turning
+  the page is an array slice: no request, no spinner, no rate-limit slot.
+  `tests/Integration/FeedLimitBenchmarkTest.php` records the measurement
+  (`INTRAVOX_BENCH_FEED=1`) and fails if that stops being true.
 
-  This pages the *display*, not the fetch. The items are already parsed and
-  cached server-side — measured, asking for 20 instead of 5 costs 0.3 ms either
-  way — so turning the page is an array slice: no request, no spinner, and no
-  rate-limit slot spent. `tests/Integration/FeedLimitBenchmarkTest.php` records
-  the measurement and fails if that ever stops being true.
+- **The build fails on Vue syntax that compiles and does nothing.** ESLint now
+  runs in the gate, catching Vue 2 constructs that Vue 3 silently ignores and
+  duplicate object keys — both shipped this month, and neither is a compile
+  error. The rule set is deliberately small; three rules are off with the
+  reason in the config, since a gate that cannot pass on day one gets switched
+  off.
 
-- **A benchmark for what a feed widget's item limit costs.** Run with
-  `INTRAVOX_BENCH_FEED=1`; it prints the table above and asserts the shape of
-  the finding rather than a timing threshold.
+- **The gate catches a listener bound to an event nobody emits.** For every
+  `@event` bound on a component from this repo, the check proves that component
+  emits it — including lazily registered ones. This fails silently by
+  construction: Vue attaches the listener either way and the feature simply
+  does not happen.
 
 ### Changed
 
 - **The feed widget editor uses Nextcloud's own controls.** It was built from
-  raw `<select>` and `<input>` elements — 13 of each, no `@nextcloud/vue`
-  components at all — so it looked like a form from a different application.
-  Title, feed URL, source type, layout, columns, sort field and the display
-  options are now `NcTextField`, `NcSelect` and `NcCheckboxRadioSwitch`.
-
-  Sort order was a toggle button showing only its current value; you had to
-  press it to discover the alternative. It is a radio pair beside the sort
-  field now, following Nextcloud's guidance that a dropdown "should not be used
-  for a small number of mutually exclusive options".
-
-  The nine selects behind the *connection* source type (Moodle, Jira,
-  SharePoint, OpenProject) are unchanged: they carry dynamic option lists and
-  handlers with side effects that cannot be verified without a live connection.
+  13 raw `<select>` and `<input>` elements, so it looked like a form from a
+  different application. Title, feed URL, source type, layout, columns, sort
+  field and the display options are now `NcTextField`, `NcSelect` and
+  `NcCheckboxRadioSwitch`. Sort order became a radio pair rather than a toggle
+  that hid its alternative until pressed. The nine selects behind the
+  *connection* source type are unchanged: they carry dynamic option lists and
+  side effects that cannot be verified without a live connection.
 
 - **Feed text follows the Nextcloud type scale.** The widget used 12px
   supporting text and 10px on mobile, below the platform's smallest size and
   out of reach of any theme or accessibility setting. Metadata is now
-  `--font-size-small` (13px) and item headlines `--default-font-size` (15px).
+  `--font-size-small`, headlines `--default-font-size`.
 
 ### Fixed
 
+- **Permissions ignored Teams.**
+  ([#116](https://github.com/nextcloud/IntraVox/issues/116)) A team folder
+  granted to a Team (circle), or a per-folder rule set on one, was invisible:
+  IntraVox matched the user's *groups* against the folder's group list, and a
+  circle grant carries no group id. Measured on a live install — a user with
+  read and write on two folders in Files was told she had no access at all. The
+  folder grant now comes from groupfolders' `getFolderPermissionsForUser()`,
+  which merges group and circle membership, and the rule layer queries both
+  mapping types.
+
+- **Conflicting rules on one path depended on row order.**
+  ([#116](https://github.com/nextcloud/IntraVox/issues/116)) Rules were folded
+  onto the result one at a time, so with two rules on the same file the last
+  one out of the database won and a deny could erase an allow. They are merged
+  first and applied once, which is what groupfolders does and documents as
+  "allow overwrites deny". `scripts/acl-mapping-matrix.php` reproduces both
+  against Files and against groupfolders' own ACL code.
+
+- **A user with no access to IntraVox was served the whole navigation tree.**
+  Navigation has an ACL-bypassing fallback so a department-only member still
+  gets a menu. Its gate asked whether the language folder was reachable, and
+  "no" covers two very different users. Found on a live install: a user with
+  zero permissions received seven top-level items — titles, the department
+  structure and every page id. The interface showed her one, because the
+  permission filter runs *after* the fetch. Page content stayed closed
+  throughout; the shape of the intranet did not. The fallback now requires an
+  IntraVox mount in the user's own view.
+
 - **A feed widget's URL and title were discarded on save.** The two text fields
-  in the feed editor bound with `:value.sync`, which Vue 3 removed: the field
-  rendered its value but nothing wrote typing back, so the URL looked accepted,
-  saved empty, and the preview had nothing to fetch. Introduced when those
-  fields were converted to `NcTextField`; they use `v-model` now.
+  bound with `:value.sync`, which Vue 3 removed: the field rendered its value
+  but nothing wrote typing back, so the URL looked accepted, saved empty, and
+  the preview had nothing to fetch. They use `v-model` now.
+
+- **A feed widget no longer suggests a title for a new widget.** The editor
+  offers the feed's own name for an empty title field, but `FeedWidget` stopped
+  emitting it — the lines were lost resolving a merge conflict while the editor
+  kept listening. Reported against `video.edu.nl`, but it affected every feed
+  since then.
 
 - **Feed items in a grid were unreadable in a narrow column.** The grid
   declared `container-type` on itself, but a container query only matches
-  against an *ancestor* container — so the query that should have collapsed to
-  fewer columns never fired. In a 433px page column the grid kept three
-  columns: 134px per cell, of which an 80px thumbnail left **16px** for the
-  headline, rendering "Zeker vijf gewonden bij schietpartij…" as "Zeker vijf…".
-  The container now wraps the grid, headlines get two lines instead of one, and
-  below 220px an item stacks so the text has the full cell width.
+  against an *ancestor* — so the query that should have collapsed to fewer
+  columns never fired. In a 433px column an 80px thumbnail left **16px** for
+  the headline. The container now wraps the grid, headlines get two lines, and
+  below 220px an item stacks.
 
-- **Permissions ignored Teams.** A team folder granted to a Team (circle), or a
-  per-folder rule set on one, was invisible to IntraVox: it derived permissions
-  by matching the user's *groups* against the folder's group list, and a circle
-  grant carries no group id. Measured on a live install — a user with read and
-  write on two folders in Files was told by IntraVox she had no access at all.
-  The same blind spot on the rule layer meant a restriction set on a Team was
-  silently not applied.
+- **The feed widget's title sat 73px from its first item.** Most of it went on
+  a header holding one line of text, because the refresh control inherited the
+  default 34px clickable area. It uses `--clickable-area-small` now, which
+  still meets the WCAG 2.2 target size. Title to first item: 51px.
 
-  The folder-level grant now comes from groupfolders'
-  `getFolderPermissionsForUser()`, which merges group and circle memberships,
-  and the rule layer queries both mapping types.
-
-- **Conflicting rules on one path depended on row order.** Rules were folded
-  onto the result one at a time, so with two rules on the same file the last
-  one out of the database won and a deny could erase an allow. They are now
-  merged first — masks OR'd, permissions OR'd — and applied once, which is what
-  groupfolders does and documents as "allow overwrites deny".
-
-  `scripts/acl-mapping-matrix.php` reproduces both, comparing IntraVox against
-  Files and against groupfolders' own ACL code for groups and for circles.
-
-- **A user with no access to IntraVox was served the whole navigation tree.**
-  Navigation has an ACL-bypassing fallback so that a user with department-only
-  access — inside the groupfolder, but denied on the language root — still gets
-  a menu. Its gate asked whether the language folder was reachable, and "no"
-  covers two very different users: the department-only one, and someone in no
-  IntraVox group at all. Both produced the same exception, so both got the
-  bypass.
-
-  Found on a live install: a user with zero permissions on every path received
-  seven top-level navigation items — titles, the department structure beneath
-  them and every page id. The interface showed her one entry, because the
-  permission filter drops what she cannot read, but that filter runs *after*
-  the fetch, so the rest had already crossed the wire. Page content stayed
-  closed throughout; the shape of the intranet did not.
-
-  The gate now requires an IntraVox mount in the user's own view before the
-  fallback may fire. A department-only user has one; a user outside every
-  IntraVox group does not.
-
-- **The feed widget's title sat too far from its first item.** 73px of it, most
-  spent on a header holding one line of text: the refresh control inherited the
-  default 34px clickable area, so a 49px button row grew around an 18px line.
-  It uses `--clickable-area-small` now, which still meets the WCAG 2.2 target
-  size. Title to first item: 51px.
-
-- **On a phone the photo had become the item.** The feed item stacked and the
-  image went full width at 160px tall — 68% of the item against 38px of
-  headline, so the picture read as the content and the headline as its caption.
-  Mobile keeps the row layout now, with a 96x72 thumbnail: the item shrank from
-  236px to 98px and four fit where one and a half did.
+- **On a phone the photo had become the item.** The image went full width at
+  160px tall — 68% of the item against 38px of headline, so the picture read as
+  the content and the headline as its caption. Mobile keeps the row layout with
+  a 96x72 thumbnail: the item shrank from 236px to 98px.
 
 - **Paging a feed widget moved the buttons under your finger.** A shorter last
   page let the widget collapse, pulling the pager up as you reached for it. The
-  list reserves the height of a full page while paging, so the control stays
-  put.
+  list now reserves the height of a full page while paging.
 
-- **Photo Story day maps now show their basemap.** The map rendered as a grey
-  rectangle with the photo markers correctly placed on it, because Nextcloud's
-  default Content-Security-Policy (`img-src 'self' data: blob:`) blocks tiles
-  from a third-party tile server and IntraVox never declared one. The tiles
-  only ever appeared where the *photos* app happened to be enabled, and even
-  then its policy allows `https://*.tile.openstreetmap.org` — a wildcard that
-  does not match the bare `tile.openstreetmap.org` host IntraVox requests. The
-  app now declares the origin of its own configured tile server
-  (`photostory.tiles.url`), so self-hosted tile servers keep working too.
+- **Photo Story day maps show their basemap.** The map rendered as a grey
+  rectangle with markers correctly placed, because Nextcloud's default
+  `img-src` policy blocks third-party tiles and IntraVox never declared one.
+  The app now declares the origin of its own configured tile server, so
+  self-hosted tile servers keep working.
 
 - **The photo lightbox's mini-map is no longer an empty frame.** Same cause,
-  different directive: the location pill opens an openstreetmap.org embed in an
-  iframe, which `frame-src` blocked. That host is not the tile server and is
-  deliberately kept out of the admin video-embed whitelist, so that emptying
-  that whitelist keeps meaning "no video embeds".
+  different directive: the location pill opens an openstreetmap.org embed that
+  `frame-src` blocked. That host is deliberately kept out of the admin
+  video-embed whitelist, so emptying that whitelist keeps meaning "no video
+  embeds".
 
-- **The details sidebar no longer reports "Page not found" on a cold load.**
-  If the sidebar was remembered as open, it mounted before the page had loaded
-  and asked the server for `/api/pages/undefined/metadata`, whose 404 body was
-  shown as though the page itself were missing. The properties had in fact
-  loaded correctly a moment later: the failing request started first but
-  finished last, so its error overwrote the good result. Both the properties
-  and the version history now wait for a real page and ignore a response that
-  a newer request has already superseded.
+- **The details sidebar no longer reports "Page not found" on a cold load.** If
+  remembered as open, it mounted before the page had loaded and asked for
+  `/api/pages/undefined/metadata`, whose 404 was shown as though the page were
+  missing. The properties had loaded correctly a moment later, but the failing
+  request finished last and overwrote the good result. Both loaders now wait
+  for a real page and ignore a superseded response.
+
+- **`openapi.json` claimed a mount that returns 404.** The eight
+  `/api/v1/pages*` operations each listed a second server, `/apps/intravox`,
+  described as also serving them. It does not — those routes live only in the
+  `ocs` block, and the app mount answers 404. A generated client also had no
+  way to tell which base a write belonged to. Each now declares the OCS mount
+  alone; the top-level server stays the app mount, where the other 142 paths
+  genuinely live.
+
+- **A comment's reactions were written straight into a prop.** `CommentItem`
+  assigned `this.comment.reactions`, which worked because the object is shared
+  by reference but made the child the owner of the parent's data. It emits
+  `update` now, which the parent already merges by id.
 
 ## [3.0.0] - 2026-09-16 — The page engine, taken apart, and hardened
 
