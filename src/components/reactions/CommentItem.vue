@@ -231,8 +231,14 @@ export default {
 					this.localUserReactions,
 				)
 				this.localUserReactions = result.userReactions || []
-				// Update comment reactions
-				this.comment.reactions = result.reactions
+				// Up through the parent, not written into the prop.
+				//
+				// Writing this.comment.reactions worked because the object is
+				// shared by reference, but it makes the child the owner of data
+				// the parent holds — and the parent already merges by id
+				// (handleCommentUpdate), including for replies. Flagged by
+				// vue/no-mutating-props.
+				this.$emit('update', { ...this.comment, reactions: result.reactions })
 			} catch (error) {
 				console.error('Failed to toggle reaction:', error)
 			}

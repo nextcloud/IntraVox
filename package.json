@@ -15,7 +15,7 @@
     "ws": "^7.5.11"
   },
   "scripts": {
-    "prebuild": "node scripts/sync-version.js --check && node scripts/check-import-consistency.js && node scripts/check-l10n-sync.js && node scripts/check-facet-serialization.js && node scripts/check-sidebar-load-guards.js && node scripts/check-eol-consistency.js && node scripts/check-file-budgets.js && node scripts/check-security-markers.js && node scripts/generate-route-table.js --check && node scripts/check-openapi.js",
+    "prebuild": "node scripts/sync-version.js --check && node scripts/check-import-consistency.js && eslint src && node scripts/check-l10n-sync.js && node scripts/check-facet-serialization.js && node scripts/check-sidebar-load-guards.js && node scripts/check-eol-consistency.js && node scripts/check-file-budgets.js && node scripts/check-security-markers.js && node scripts/generate-route-table.js --check && node scripts/check-openapi.js",
     "lint:imports": "node scripts/check-import-consistency.js",
     "lint:facets": "node scripts/check-facet-serialization.js",
     "lint:sidebar-guards": "node scripts/check-sidebar-load-guards.js",
@@ -41,7 +41,8 @@
     "pot": "npm run l10n:extract && node scripts/generate-pot.js",
     "l10n:push": "npm run l10n:extract && node scripts/lint-l10n-strings.js && node scripts/generate-pot.js",
     "l10n:generate-js": "node scripts/generate-l10n.js",
-    "release": "./create-release.sh"
+    "release": "./create-release.sh",
+    "lint:vue": "eslint src"
   },
   "dependencies": {
     "@mdi/svg": "^7.4.47",
@@ -85,6 +86,8 @@
   },
   "devDependencies": {
     "css-loader": "^6.8.1",
+    "eslint": "^10.11.0",
+    "eslint-plugin-vue": "^10.11.0",
     "string-replace-loader": "^3.2.0",
     "style-loader": "^3.3.3",
     "webpack": "^5.105.0",

@@ -8,6 +8,28 @@ IntraVox is a Nextcloud intranet page builder.
 
 ### Added
 
+- **ESLint now guards the Vue syntax the build cannot.** `npm run build` and
+  the CI gate fail on Vue 2 constructs that Vue 3 accepts and silently ignores,
+  and on duplicate object keys. Both classes shipped this month: a `.sync`
+  binding that made a feed URL save empty, and a second `components:` key that
+  left every Nextcloud component unregistered. Neither is a compile error, so
+  nothing but a person at the screen could see them.
+
+  The rule set is deliberately small — `vue/flat/essential` plus the rules that
+  catch that class. Three rules are off with a reason in the config: they
+  report 22 pre-existing findings that are visible on reading, and a gate that
+  cannot pass on day one gets switched off.
+
+### Fixed
+
+- **A comment's reactions were written straight into a prop.** `CommentItem`
+  assigned `this.comment.reactions`, which worked because the object is shared
+  by reference but made the child the owner of the parent's data. It emits
+  `update` now, which the parent already merges by id. Found by the new lint.
+
+
+### Added
+
 - **A feed widget can now page its items instead of showing them all.** A new
   "Items per page" setting shows a few at a time with arrows to reach the rest;
   0, the default, keeps the old behaviour of showing everything, so nothing
@@ -48,6 +70,12 @@ IntraVox is a Nextcloud intranet page builder.
   `--font-size-small` (13px) and item headlines `--default-font-size` (15px).
 
 ### Fixed
+
+- **A feed widget's URL and title were discarded on save.** The two text fields
+  in the feed editor bound with `:value.sync`, which Vue 3 removed: the field
+  rendered its value but nothing wrote typing back, so the URL looked accepted,
+  saved empty, and the preview had nothing to fetch. Introduced when those
+  fields were converted to `NcTextField`; they use `v-model` now.
 
 - **Feed items in a grid were unreadable in a narrow column.** The grid
   declared `container-type` on itself, but a container query only matches
