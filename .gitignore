@@ -98,3 +98,8 @@ l10n/.source-count.js
 # Dated screenshot dumps from local sessions. The rest of screenshots/ is
 # tracked on purpose — it is the App Store listing material.
 /screenshots/[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]_*.png
+
+# Schemathesis fuzzer output. Regenerated on every contract-test run, read by
+# nothing, and each file records the dev hostname it was fuzzed against — 65 of
+# them reached the public mirror that way.
+/.schemathesis/
