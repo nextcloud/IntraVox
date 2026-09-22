@@ -37,7 +37,10 @@ regexes = [
 [allowlist]
 description = "Paths and values audited on 2026-09-22"
 paths = [
-  # Fuzzer cache: synthetic values only, and regenerated on every run.
+  # Fuzzer cache. Untracked and gitignored since 2026-09-22, but a history scan
+  # still walks the 65 files that were committed between 26-08 and then, so the
+  # exemption stays. Synthetic values only; credentials were [Filtered] by
+  # schemathesis itself.
   '''^\.schemathesis/''',
 ]
 regexes = [
