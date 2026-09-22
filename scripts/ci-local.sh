@@ -65,9 +65,11 @@ echo
 echo "Frontend guards"
 step "version sync" node scripts/sync-version.js --check
 step "import consistency" npm run --silent lint:imports
+step "vue syntax" npm run --silent lint:vue
 step "l10n source strings" npm run --silent lint:l10n
 step "facet serialization" npm run --silent lint:facets
 step "sidebar load guards" npm run --silent lint:sidebar-guards
+step "emitted events" npm run --silent lint:emitted-events
 step "line endings" npm run --silent lint:eol
 step "file budgets" npm run --silent lint:budgets
 step "security markers" npm run --silent lint:security

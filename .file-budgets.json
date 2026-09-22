@@ -178,7 +178,7 @@
     "src/components/CalendarWidgetEditor.vue": 530,
     "src/components/CollapsibleHint.vue": 100,
     "src/components/FeedSettings.vue": 309,
-    "src/components/FeedWidget.vue": 713,
+    "src/components/FeedWidget.vue": 719,
     "src/components/FeedWidgetEditor.vue": 1246,
     "src/components/FileStoryWidget.vue": 1187,
     "src/components/FileStoryWidgetEditor.vue": 868,
@@ -244,7 +244,7 @@
     "src/components/people/PeopleLayoutGrid.vue": 101,
     "src/components/people/PeopleLayoutList.vue": 70,
     "src/components/people/PersonItem.vue": 839,
-    "src/components/reactions/CommentItem.vue": 379,
+    "src/components/reactions/CommentItem.vue": 385,
     "src/components/reactions/CommentSection.vue": 464,
     "src/components/reactions/ReactionBar.vue": 154,
     "src/components/reactions/ReactionPicker.vue": 105

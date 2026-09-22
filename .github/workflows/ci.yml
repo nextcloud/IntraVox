@@ -137,7 +137,7 @@ jobs:
         with:
           node-version: '20'
 
-      # All seven are pure Node with no dependencies, so they run without an
+      # All eight are pure Node with no dependencies, so they run without an
       # npm install and stay fast. The l10n sync guard has its own workflow.
       - name: Import consistency
         run: node scripts/check-import-consistency.js
@@ -147,6 +147,9 @@ jobs:
 
       - name: Sidebar load guards
         run: node scripts/check-sidebar-load-guards.js
+
+      - name: Emitted events
+        run: node scripts/check-emitted-events.js
 
       - name: Line endings
         run: node scripts/check-eol-consistency.js

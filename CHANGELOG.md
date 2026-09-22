@@ -8,6 +8,42 @@ IntraVox is a Nextcloud intranet page builder.
 
 ### Added
 
+- **ESLint now guards the Vue syntax the build cannot.** `npm run build` and
+  the CI gate fail on Vue 2 constructs that Vue 3 accepts and silently ignores,
+  and on duplicate object keys. Both classes shipped this month: a `.sync`
+  binding that made a feed URL save empty, and a second `components:` key that
+  left every Nextcloud component unregistered. Neither is a compile error, so
+  nothing but a person at the screen could see them.
+
+  The rule set is deliberately small — `vue/flat/essential` plus the rules that
+  catch that class. Three rules are off with a reason in the config: they
+  report 22 pre-existing findings that are visible on reading, and a gate that
+  cannot pass on day one gets switched off.
+
+- **The gate now catches a listener bound to an event nobody emits.** For every
+  `@event` a template binds on a component from this repo, the new check proves
+  that component actually emits it. This fails silently by construction: Vue
+  attaches the listener either way, nothing warns, and the feature simply does
+  not happen. It covers lazily registered components too — the pair it was
+  written for is registered with `defineAsyncComponent`.
+
+### Fixed
+
+- **A feed widget no longer suggests a title for a new widget.** The editor
+  offers the feed's own name for an empty title field, but `FeedWidget` stopped
+  emitting that name: the lines were lost resolving a `FeedWidget.vue` conflict
+  when PR #38 was merged, while the editor kept listening. Reported against
+  `video.edu.nl` (channel title `SURF`), but it affected every feed since then.
+  The gate now has a check for this class.
+
+- **A comment's reactions were written straight into a prop.** `CommentItem`
+  assigned `this.comment.reactions`, which worked because the object is shared
+  by reference but made the child the owner of the parent's data. It emits
+  `update` now, which the parent already merges by id. Found by the new lint.
+
+
+### Added
+
 - **A feed widget can now page its items instead of showing them all.** A new
   "Items per page" setting shows a few at a time with arrows to reach the rest;
   0, the default, keeps the old behaviour of showing everything, so nothing

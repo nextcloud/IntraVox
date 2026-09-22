@@ -154,6 +154,7 @@ export default {
     FeedLayoutGrid,
     FeedArticleModal,
   },
+  emits: ['feed-name'],
   props: {
     widget: {
       type: Object,
@@ -533,6 +534,11 @@ export default {
           // The feed's own name. RSS carries it once per channel rather than
           // per item, so the widget holds it and hands it to the reader.
           this.feedSource = response.data.source || '';
+          // Only the editor listens, to offer the name as a suggestion for an
+          // empty widget title; the viewer ignores it.
+          if (response.data.source) {
+            this.$emit('feed-name', response.data.source);
+          }
           this.isStale = response.data.stale === true;
           this.nu = Date.now();
         }
