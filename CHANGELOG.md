@@ -49,6 +49,12 @@ IntraVox is a Nextcloud intranet page builder.
 
 ### Fixed
 
+- **A feed widget's URL and title were discarded on save.** The two text fields
+  in the feed editor bound with `:value.sync`, which Vue 3 removed: the field
+  rendered its value but nothing wrote typing back, so the URL looked accepted,
+  saved empty, and the preview had nothing to fetch. Introduced when those
+  fields were converted to `NcTextField`; they use `v-model` now.
+
 - **Feed items in a grid were unreadable in a narrow column.** The grid
   declared `container-type` on itself, but a container query only matches
   against an *ancestor* container — so the query that should have collapsed to
