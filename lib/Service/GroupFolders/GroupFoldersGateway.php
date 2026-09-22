@@ -261,6 +261,41 @@ class GroupFoldersGateway {
 	}
 
 	/**
+	 * A user's permission on one groupfolder, as groupfolders itself computes it.
+	 *
+	 * This is the folder-level grant — what the team folder gives before any
+	 * per-path ACL rule narrows it. IntraVox used to derive it by walking
+	 * getUserGroupIds() and matching each id against the folder's group list,
+	 * which misses everything that is not a group: a folder granted to a Team
+	 * (circle) resolved to 0, and the user was told they had no access to an
+	 * intranet they can read and write in Files.
+	 *
+	 * getFolderPermissionsForUser() has no such blind spot — it merges
+	 * getFoldersForGroups() with getFoldersFromCircleMemberships() and ORs the
+	 * permissions — so IntraVox now answers with the number the rest of
+	 * Nextcloud is using.
+	 *
+	 * Returns 0 when groupfolders is unavailable or the lookup fails, which is
+	 * the fail-closed answer: no folder, no permission.
+	 */
+	public function folderPermissionsForUser(\OCP\IUser $user, int $folderId): int {
+		if (!$this->isAvailable()) {
+			return 0;
+		}
+
+		try {
+			return $this->folderManager()->getFolderPermissionsForUser($user, $folderId);
+		} catch (\Throwable $e) {
+			$this->logger->error('[GroupFoldersGateway] getFolderPermissionsForUser() failed', [
+				'folderId' => $folderId,
+				'error' => $e->getMessage(),
+			]);
+
+			return 0;
+		}
+	}
+
+	/**
 	 * Forget what we resolved. Setup creates folders inside a request that may
 	 * already have memoised their absence.
 	 */

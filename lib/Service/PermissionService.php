@@ -11,6 +11,7 @@ use OCP\IUserSession;
 use OCP\IGroupManager;
 use OCP\IConfig;
 use OCP\IUserManager;
+use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\IDBConnection;
 use OCA\IntraVox\Service\GroupFolders\GroupFoldersGateway;
 use OCP\App\IAppManager;
@@ -86,6 +87,9 @@ class PermissionService {
      * @var array<string, int>
      */
     private array $permissionResultCache = [];
+
+    /** @var array<string, array<int, string>> Circle ids per user, per request. */
+    private array $circleIdCache = [];
 
     /**
      * Per-request memo of the groupfolder id, keyed by mount point name.
@@ -300,39 +304,21 @@ class PermissionService {
 
             $userGroups = $this->groupManager->getUserGroupIds($user);
 
-            // Get folder configuration
-            // getFolder() takes one argument. The extra storage id we used to
-            // pass was silently discarded (PHP ignores excess args on userland
-            // methods), so this is not a behaviour change — but it was a call
-            // that only looked correct, and any groupfolders release that adds
-            // a second parameter would have started feeding it our storage id.
-            $folderData = $this->groupFolders->getFolder($folderId);
-
-            // Calculate base permissions from group membership
-            $basePermissions = 0;
-
-            // Get groups that have access to this groupfolder
-            $applicableGroups = [];
-            if (is_object($folderData)) {
-                if (method_exists($folderData, 'getGroups')) {
-                    $applicableGroups = $folderData->getGroups();
-                } elseif (property_exists($folderData, 'groups')) {
-                    $applicableGroups = $folderData->groups;
-                }
-            } elseif (is_array($folderData) && isset($folderData['groups'])) {
-                $applicableGroups = $folderData['groups'];
-            }
-
-            // Check each group the user belongs to
-            foreach ($userGroups as $groupId) {
-                if (isset($applicableGroups[$groupId])) {
-                    $groupPerms = $applicableGroups[$groupId];
-                    // Handle both array and object formats
-                    $permissions = is_array($groupPerms) ? ($groupPerms['permissions'] ?? 0) :
-                                  (is_object($groupPerms) && property_exists($groupPerms, 'permissions') ? $groupPerms->permissions : 0);
-                    $basePermissions |= $permissions;
-                }
-            }
+            // The folder-level grant, from groupfolders rather than rebuilt here.
+            //
+            // This used to walk getUserGroupIds() and match each id against the
+            // folder's group list. That only ever sees GROUPS, and a team folder
+            // can just as well be granted to a Team (circle) — whose row carries
+            // an empty group_id, so nothing matched and the user resolved to 0.
+            // Measured on dev: a user with read+write on en/documentation and
+            // en/news in Files got 0 from IntraVox, because both grants were
+            // circles. See scripts/acl-mapping-matrix.php.
+            //
+            // getFolderPermissionsForUser() merges group memberships with circle
+            // memberships and ORs the permissions, which is also what the Files
+            // mount provider ends up on — so the two now agree by construction
+            // instead of by our copy staying in step.
+            $basePermissions = $this->groupFolders->folderPermissionsForUser($user, $folderId);
 
             // If no base permissions from groups, user has no access
             if ($basePermissions === 0) {
@@ -341,7 +327,7 @@ class PermissionService {
             }
 
             // Now check ACL rules if the ACL system is available
-            $permissions = $this->applyAclRules($folderId, $relativePath, $userId, $userGroups, $basePermissions);
+            $permissions = $this->applyAclRules($folderId, $relativePath, $userId, $userGroups, $this->circleIdsForUser($userId), $basePermissions);
 
             $this->logger->debug("Calculated permissions for {$userId} on {$relativePath}: {$permissions}");
             return $permissions;
@@ -359,7 +345,45 @@ class PermissionService {
      * This method directly queries the ACL database to get the correct permissions,
      * as the __groupfolders storage does not apply ACL rules to getPermissions().
      */
-    private function applyAclRules(int $folderId, string $relativePath, string $userId, array $userGroups, int $basePermissions): int {
+    /**
+     * The circles (Teams) this user belongs to, as ACL mapping ids.
+     *
+     * An ACL rule can be set on a circle just as well as on a group, and a
+     * user's circle memberships are what decides whether such a rule applies
+     * to them. Read straight from the circles tables rather than through
+     * CirclesManager: this runs inside a permission check on every path
+     * segment, and the manager opens a federated session per call.
+     *
+     * Returns an empty list when the circles app is absent or the query fails,
+     * which degrades to the old behaviour — group rules only — rather than
+     * failing the whole permission check.
+     *
+     * @return array<int, string>
+     */
+    private function circleIdsForUser(string $userId): array {
+        if (isset($this->circleIdCache[$userId])) {
+            return $this->circleIdCache[$userId];
+        }
+
+        try {
+            $qb = $this->db->getQueryBuilder();
+            $qb->selectDistinct('circle_id')
+                ->from('circles_member')
+                ->where($qb->expr()->eq('user_id', $qb->createNamedParameter($userId)));
+            $result = $qb->executeQuery();
+            $ids = array_column($result->fetchAll(), 'circle_id');
+            $result->closeCursor();
+        } catch (\Throwable $e) {
+            // circles not installed, or its schema changed: fall back to
+            // group-only rules rather than denying everything.
+            $this->logger->debug('[PermissionService] circle lookup failed: ' . $e->getMessage());
+            $ids = [];
+        }
+
+        return $this->circleIdCache[$userId] = $ids;
+    }
+
+    private function applyAclRules(int $folderId, string $relativePath, string $userId, array $userGroups, array $circleIds, int $basePermissions): int {
         try {
             // Build path segments to check (from least specific to most specific)
             // ACL rules are stored with paths like "files/en/departments/hr"
@@ -427,31 +451,44 @@ class PermissionService {
 
                 $fileId = $fileRow['fileid'];
 
-                // Check ACL rules for this file
-                // First check group rules (user belongs to these groups)
-                foreach ($userGroups as $groupId) {
+                // Every rule on this file that applies to the user, in one query.
+                //
+                // Two things were wrong with fetching per group. It only asked
+                // for mapping_type 'group', so a rule set on a Team (circle)
+                // was invisible — an administrator's restriction that IntraVox
+                // simply did not apply. And it folded each rule onto the
+                // accumulator in turn, so with two rules on the same file the
+                // last one out of the database won: a deny could erase an allow
+                // its own group had just granted, and the answer depended on
+                // row order (issue #116).
+                //
+                // groupfolders merges instead of sequencing —
+                // Rule::mergeRules() ORs the masks and ORs the permissions,
+                // documented there as "allow overwrites deny" — and that is
+                // what this now does before applying once.
+                $mappingIds = array_merge($userGroups, $circleIds);
+                $mask = 0;
+                $permissions = 0;
+
+                if ($mappingIds !== []) {
                     $aclQuery = $db->getQueryBuilder();
-                    $aclQuery->select('mask', 'permissions')
+                    $aclQuery->select('mask', 'permissions', 'mapping_type', 'mapping_id')
                         ->from('group_folders_acl')
                         ->where($aclQuery->expr()->eq('fileid', $aclQuery->createNamedParameter($fileId)))
-                        ->andWhere($aclQuery->expr()->eq('mapping_type', $aclQuery->createNamedParameter('group')))
-                        ->andWhere($aclQuery->expr()->eq('mapping_id', $aclQuery->createNamedParameter($groupId)));
+                        ->andWhere($aclQuery->expr()->in('mapping_type', $aclQuery->createNamedParameter(['group', 'circle'], IQueryBuilder::PARAM_STR_ARRAY)))
+                        ->andWhere($aclQuery->expr()->in('mapping_id', $aclQuery->createNamedParameter($mappingIds, IQueryBuilder::PARAM_STR_ARRAY)));
                     $aclResult = $aclQuery->executeQuery();
-                    $aclRow = $aclResult->fetch();
+                    $aclRows = $aclResult->fetchAll();
                     $aclResult->closeCursor();
 
-                    if ($aclRow) {
-                        $mask = (int)$aclRow['mask'];
-                        $permissions = (int)$aclRow['permissions'];
+                    foreach ($aclRows as $aclRow) {
+                        $mask |= (int)$aclRow['mask'];
+                        $permissions |= (int)$aclRow['permissions'];
+                    }
 
-                        $this->logger->debug("Found ACL rule for group {$groupId} on path {$aclPath}: mask={$mask}, permissions={$permissions}");
-
-                        // Apply the ACL rule: permissions in the ACL override base permissions for the masked bits
-                        // mask indicates which permission bits are controlled by this ACL rule
-                        // permissions indicates the actual permission values
-                        // Clear the masked bits from effective permissions, then OR in the ACL permissions
+                    if ($aclRows !== []) {
+                        $this->logger->debug("Merged " . count($aclRows) . " ACL rule(s) on path {$aclPath}: mask={$mask}, permissions={$permissions}");
                         $effectivePermissions = ($effectivePermissions & ~$mask) | ($permissions & $mask);
-
                         $this->logger->debug("After applying ACL: effectivePermissions={$effectivePermissions}");
                     }
                 }
