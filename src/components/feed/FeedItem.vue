@@ -431,8 +431,41 @@ export default {
 }
 
 .feed-item--compact .feed-item-title {
-  font-size: 13px;
-  -webkit-line-clamp: 1;
+  font-size: var(--font-size-small, 13px);
+  /* Two lines, not one. A headline is what the reader is scanning for; one
+     line turns most of them into an ellipsis. */
+  -webkit-line-clamp: 2;
+}
+
+/*
+ * In a narrow grid cell the row layout stops working.
+ *
+ * Measured at 134px per cell: the 80px thumbnail left 16px for the headline,
+ * so "Zeker vijf gewonden bij schietpartij…" rendered as "Zeker vijf…". The
+ * picture is there to help recognise a story, not to crowd out the words that
+ * identify it.
+ *
+ * Below 220px the item stacks — image on top, full cell width for the text.
+ * A container query, so it responds to the CELL it is in rather than to the
+ * viewport: the same widget is wide in a full-width row and narrow in a
+ * three-column one, and only the cell knows which.
+ */
+@container (max-width: 220px) {
+  .feed-item--compact {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .feed-item--compact .feed-item-image,
+  .feed-item--compact .feed-item-feed-icon,
+  .feed-item--compact .feed-item-fallback {
+    width: 100%;
+    height: 96px;
+  }
+
+  .feed-item--compact .feed-item-title {
+    -webkit-line-clamp: 3;
+  }
 }
 
 .feed-item:hover .feed-item-title {

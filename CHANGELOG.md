@@ -49,6 +49,15 @@ IntraVox is a Nextcloud intranet page builder.
 
 ### Fixed
 
+- **Feed items in a grid were unreadable in a narrow column.** The grid
+  declared `container-type` on itself, but a container query only matches
+  against an *ancestor* container — so the query that should have collapsed to
+  fewer columns never fired. In a 433px page column the grid kept three
+  columns: 134px per cell, of which an 80px thumbnail left **16px** for the
+  headline, rendering "Zeker vijf gewonden bij schietpartij…" as "Zeker vijf…".
+  The container now wraps the grid, headlines get two lines instead of one, and
+  below 220px an item stacks so the text has the full cell width.
+
 - **Permissions ignored Teams.** A team folder granted to a Team (circle), or a
   per-folder rule set on one, was invisible to IntraVox: it derived permissions
   by matching the user's *groups* against the folder's group list, and a circle
