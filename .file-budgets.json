@@ -126,7 +126,7 @@
     "lib/Service/People/ProfileFilterMatcher.php": 238,
     "lib/Service/People/PublicSharePeopleGuard.php": 115,
     "lib/Service/People/ScopeReport.php": 127,
-    "lib/Service/PermissionService.php": 1118,
+    "lib/Service/PermissionService.php": 1137,
     "lib/Service/PhotoStory/ExifReader.php": 373,
     "lib/Service/PhotoStory/GeocodeCache.php": 462,
     "lib/Service/PhotoStory/NCFilesMetadataReader.php": 163,
