@@ -29,6 +29,25 @@ IntraVox is a Nextcloud intranet page builder.
   `scripts/acl-mapping-matrix.php` reproduces both, comparing IntraVox against
   Files and against groupfolders' own ACL code for groups and for circles.
 
+- **A user with no access to IntraVox was served the whole navigation tree.**
+  Navigation has an ACL-bypassing fallback so that a user with department-only
+  access — inside the groupfolder, but denied on the language root — still gets
+  a menu. Its gate asked whether the language folder was reachable, and "no"
+  covers two very different users: the department-only one, and someone in no
+  IntraVox group at all. Both produced the same exception, so both got the
+  bypass.
+
+  Found on a live install: a user with zero permissions on every path received
+  seven top-level navigation items — titles, the department structure beneath
+  them and every page id. The interface showed her one entry, because the
+  permission filter drops what she cannot read, but that filter runs *after*
+  the fetch, so the rest had already crossed the wire. Page content stayed
+  closed throughout; the shape of the intranet did not.
+
+  The gate now requires an IntraVox mount in the user's own view before the
+  fallback may fire. A department-only user has one; a user outside every
+  IntraVox group does not.
+
 - **Photo Story day maps now show their basemap.** The map rendered as a grey
   rectangle with the photo markers correctly placed on it, because Nextcloud's
   default Content-Security-Policy (`img-src 'self' data: blob:`) blocks tiles

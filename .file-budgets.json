@@ -153,7 +153,7 @@
     "lib/Service/Search/PageSearchHelper.php": 118,
     "lib/Service/SetupService.php": 1081,
     "lib/Service/Structure/PageStructureService.php": 286,
-    "lib/Service/SystemFileService.php": 920,
+    "lib/Service/SystemFileService.php": 952,
     "lib/Service/TelemetryService.php": 333,
     "lib/Service/Template/PageTemplateService.php": 271,
     "lib/Service/Template/TemplateMetadataExtractor.php": 95,
