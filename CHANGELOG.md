@@ -20,7 +20,21 @@ IntraVox is a Nextcloud intranet page builder.
   report 22 pre-existing findings that are visible on reading, and a gate that
   cannot pass on day one gets switched off.
 
+- **The gate now catches a listener bound to an event nobody emits.** For every
+  `@event` a template binds on a component from this repo, the new check proves
+  that component actually emits it. This fails silently by construction: Vue
+  attaches the listener either way, nothing warns, and the feature simply does
+  not happen. It covers lazily registered components too — the pair it was
+  written for is registered with `defineAsyncComponent`.
+
 ### Fixed
+
+- **A feed widget no longer suggests a title for a new widget.** The editor
+  offers the feed's own name for an empty title field, but `FeedWidget` stopped
+  emitting that name: the lines were lost resolving a `FeedWidget.vue` conflict
+  when PR #38 was merged, while the editor kept listening. Reported against
+  `video.edu.nl` (channel title `SURF`), but it affected every feed since then.
+  The gate now has a check for this class.
 
 - **A comment's reactions were written straight into a prop.** `CommentItem`
   assigned `this.comment.reactions`, which worked because the object is shared
