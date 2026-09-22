@@ -6,6 +6,8 @@ IntraVox is a Nextcloud intranet page builder.
 
 ## [Unreleased]
 
+## [3.1.0] - 2026-09-22 — Feeds you can read, page and trust the permissions of
+
 ### Added
 
 - **A feed widget can page its items instead of showing them all.** A new

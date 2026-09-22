@@ -248,6 +248,8 @@ OC.L10N.register(
     "Start slideshow" : "Aloita diaesitys",
     "Slideshow speed" : "Diaesityksen nopeus",
     "Normal" : "Normaali",
+    "Previous photo" : "Edellinen kuva",
+    "Next photo" : "Seuraava kuva",
     "Close details" : "Sulje tiedot",
     "Camera" : "Kamera",
     "Failed to load photos" : "Kuvien lataaminen epäonnistui",
