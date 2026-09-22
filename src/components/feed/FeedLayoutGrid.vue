@@ -1,5 +1,6 @@
 <template>
-  <div class="feed-layout-grid" :style="gridStyle">
+  <div class="feed-layout-grid-wrapper">
+    <div class="feed-layout-grid" :style="gridStyle">
     <FeedItem
       v-for="item in items"
       :key="item.id"
@@ -14,7 +15,8 @@
       :feed-image="feedImage"
       :compact="true"
       @open-article="$emit('open-article', $event)"
-    />
+      />
+    </div>
   </div>
 </template>
 
@@ -68,12 +70,25 @@ export default {
 </script>
 
 <style scoped>
+/*
+ * The container is the WRAPPER, not the grid.
+ *
+ * container-type on .feed-layout-grid itself did nothing: a container query
+ * matches against an ANCESTOR container, never the element carrying the
+ * declaration. So @container below never fired, and a 433px-wide grid in a
+ * narrow page column kept the three columns configured for a full-width row —
+ * 134px per cell, of which an 80px thumbnail left 16px for the headline.
+ */
+.feed-layout-grid-wrapper {
+  container-type: inline-size;
+  min-width: 0;
+}
+
 .feed-layout-grid {
   display: grid;
   gap: 16px;
   min-width: 0;
   overflow: hidden;
-  container-type: inline-size;
 }
 
 @container (max-width: 500px) {
