@@ -179,7 +179,7 @@
     "src/components/CollapsibleHint.vue": 100,
     "src/components/FeedSettings.vue": 309,
     "src/components/FeedWidget.vue": 713,
-    "src/components/FeedWidgetEditor.vue": 1241,
+    "src/components/FeedWidgetEditor.vue": 1246,
     "src/components/FileStoryWidget.vue": 1187,
     "src/components/FileStoryWidgetEditor.vue": 868,
     "src/components/Footer.vue": 288,

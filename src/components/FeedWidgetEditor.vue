@@ -4,11 +4,16 @@
          editors: it names the block on the page, so it comes before the
          question of where the content comes from. -->
     <div class="form-group">
+      <!--
+        v-model, not :value.sync. `.sync` was removed in Vue 3: the component
+        renders the value but nothing writes typing back, so the field looked
+        filled and saved empty.
+      -->
       <NcTextField
         id="feed-widget-title"
-        :value.sync="localWidget.title"
+        v-model="localWidget.title"
         :label="t('intravox', 'Widget title (optional)')"
-        @update:value="debouncedEmitUpdate"
+        @update:model-value="debouncedEmitUpdate"
       />
       <span class="field-hint">{{ t('intravox', 'Left empty, the name from the feed is suggested once. Your own wording always wins.') }}</span>
     </div>
@@ -29,10 +34,10 @@
     <div v-if="localWidget.sourceType === 'rss'" class="form-group">
       <NcTextField
         id="feed-url"
-        :value.sync="localWidget.feedUrl"
+        v-model="localWidget.feedUrl"
         :label="t('intravox', 'Feed URL')"
         type="url"
-        @update:value="debouncedEmitUpdate"
+        @update:model-value="debouncedEmitUpdate"
       />
     </div>
 
