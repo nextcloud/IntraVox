@@ -88,9 +88,6 @@ class PermissionService {
      */
     private array $permissionResultCache = [];
 
-    /** @var array<string, array<int, string>> Circle ids per user, per request. */
-    private array $circleIdCache = [];
-
     /**
      * Per-request memo of the groupfolder id, keyed by mount point name.
      * Uses array_key_exists, not isset: a resolved-to-null answer must be
@@ -326,8 +323,12 @@ class PermissionService {
                 return 0;
             }
 
-            // Now check ACL rules if the ACL system is available
-            $permissions = $this->applyAclRules($folderId, $relativePath, $userId, $userGroups, $this->circleIdsForUser($userId), $basePermissions);
+            // Now check ACL rules if the ACL system is available. The ACL mapping
+            // ids (groups AND circles) come from groupfolders' own mapping manager
+            // — the same source and warm per-request cache its ACL engine uses —
+            // with the user's groups as the fallback when it is unavailable.
+            $mappingIds = $this->groupFolders->mappingIdsForUser($user, $userGroups);
+            $permissions = $this->applyAclRules($folderId, $relativePath, $userId, $mappingIds, $basePermissions);
 
             $this->logger->debug("Calculated permissions for {$userId} on {$relativePath}: {$permissions}");
             return $permissions;
@@ -345,67 +346,7 @@ class PermissionService {
      * This method directly queries the ACL database to get the correct permissions,
      * as the __groupfolders storage does not apply ACL rules to getPermissions().
      */
-    /**
-     * The circles (Teams) this user belongs to, as ACL mapping ids.
-     *
-     * An ACL rule can be set on a circle just as well as on a group, so the
-     * user's memberships decide whether such a rule applies to them. This
-     * REPLACES nothing: group ids still come from getUserGroupIds(), because a
-     * rule stored against a group uses the group's own id, not the id of the
-     * circle that wraps it. The two lists are added together, not swapped.
-     *
-     * Asked of the circles app rather than read from circles_member directly.
-     * The table is not the same answer: a user has a row there for their own
-     * single-user identity circle, and membership can also be inherited
-     * through a circle that is itself a member of another. Measured on dev,
-     * the raw query returned five ids where the app reports four — the extra
-     * one being the user's own identity circle, which is not a Team anyone
-     * grants access to. Treating it as one would be a permission decision
-     * based on something that is not a membership.
-     *
-     * It costs 1.4 ms against 0.2 ms for the raw query, and is memoised per
-     * user for the request, so a page view pays it once. That is the right
-     * trade: the cheaper answer was the wrong one.
-     *
-     * Returns an empty list when the circles app is absent or the lookup
-     * fails, which degrades to group-only rules rather than failing the whole
-     * permission check.
-     *
-     * @return array<int, string>
-     */
-    private function circleIdsForUser(string $userId): array {
-        if (isset($this->circleIdCache[$userId])) {
-            return $this->circleIdCache[$userId];
-        }
-
-        $ids = [];
-
-        try {
-            if ($this->appManager->isEnabledForUser('circles')) {
-                /** @var \OCA\Circles\CirclesManager $circles */
-                $circles = \OC::$server->get(\OCA\Circles\CirclesManager::class);
-                $circles->startSession($circles->getLocalFederatedUser($userId));
-
-                $probe = new \OCA\Circles\Model\Probes\CircleProbe();
-                $probe->mustBeMember();
-
-                foreach ($circles->getCircles($probe) as $circle) {
-                    $ids[] = $circle->getSingleId();
-                }
-
-                $circles->stopSession();
-            }
-        } catch (\Throwable $e) {
-            // circles absent, or its API changed: fall back to group-only
-            // rules rather than denying everything.
-            $this->logger->debug('[PermissionService] circle lookup failed: ' . $e->getMessage());
-            $ids = [];
-        }
-
-        return $this->circleIdCache[$userId] = $ids;
-    }
-
-    private function applyAclRules(int $folderId, string $relativePath, string $userId, array $userGroups, array $circleIds, int $basePermissions): int {
+    private function applyAclRules(int $folderId, string $relativePath, string $userId, array $mappingIds, int $basePermissions): int {
         try {
             // Build path segments to check (from least specific to most specific)
             // ACL rules are stored with paths like "files/en/departments/hr"
@@ -484,18 +425,12 @@ class PermissionService {
                 // its own group had just granted, and the answer depended on
                 // row order (issue #116).
                 //
-                // groupfolders merges instead of sequencing —
-                // Rule::mergeRules() ORs the masks and ORs the permissions,
-                // documented there as "allow overwrites deny" — and that is
-                // what this now does before applying once.
-                // Both lists, because an ACL rule keys on whichever id the
-                // administrator picked and the two are different id spaces. A
-                // group appears twice in Nextcloud: as its own id ('G-A'),
-                // which is what a mapping_type='group' rule stores, and again
-                // as a circle wrapping that group ('H3Szwss…'), which is what
-                // a rule set through the Teams UI stores. Neither list is a
-                // superset of the other, so both are passed.
-                $mappingIds = array_merge($userGroups, $circleIds);
+                // $mappingIds carries the user's group AND circle ids, taken from
+                // groupfolders' own UserMappingManager — the exact set its ACL
+                // engine matches rules against. groupfolders merges instead of
+                // sequencing — Rule::mergeRules() ORs the masks and ORs the
+                // permissions, documented there as "allow overwrites deny" — and
+                // that is what this now does before applying once.
                 $mask = 0;
                 $permissions = 0;
 
