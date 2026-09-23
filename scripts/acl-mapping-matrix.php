@@ -218,11 +218,79 @@ function scenario(string $label, string $type, array $ids, \OCP\IDBConnection $d
     return $bad;
 }
 
+/**
+ * The shape the earlier scenarios MISS: conflicting rules at different DEPTHS.
+ *
+ * Scenarios 1 and 2 put both rules on the same file, which is the case 3.1.0
+ * fixed — and which passed while issue #116 was still open, because an
+ * administrator does not set two rules on one folder. They set a right on a
+ * department folder and another on the space above it. There the per-path
+ * results used to be folded onto each other in path order, so the deeper rule
+ * decided the answer and the other group was ignored.
+ *
+ * Note what "agree" means here: Files is still the truth. Whether the allow
+ * survives depends on the instance's `acl-inherit-per-user` setting, so this
+ * does not assert a fixed number — it asserts that IntraVox lands on whatever
+ * Files lands on, under whichever setting this instance has.
+ */
+function depthScenario(string $label, string $type, array $ids, \OCP\IDBConnection $db, array $fileIds, int $storageId, \OCP\IUser $user): int {
+    echo "\n=== {$label} ===\n";
+
+    if (count($ids) !== 2) {
+        echo "  SKIPPED: expected two {$type}s, found " . count($ids) . "\n";
+        return 0;
+    }
+
+    [$first, $second] = array_values($ids);
+    $inherit = \OC::$server->get(\OCP\IAppConfig::class)
+        ->getValueString('groupfolders', 'acl-inherit-per-user', 'false');
+    echo "  groupfolders acl-inherit-per-user = {$inherit}\n";
+
+    foreach ([$first, $second] as $id) {
+        grantOnFolder($db, $type, $id, 31);
+    }
+
+    // Parent (en) denies write to the SECOND entity; the child (en/documentation)
+    // allows it for the FIRST. A user in both should keep the child's allow when
+    // the instance merges per user.
+    $parentId = \OC::$server->get(\OCP\Files\IRootFolder::class)
+        ->get('/__groupfolders/' . FOLDER_ID . '/files/en')->getId();
+
+    setAcl($db, $parentId,                      $type, $second, 3, 1); // deny write high
+    setAcl($db, $fileIds['en/documentation'],   $type, $first,  3, 3); // allow write low
+
+    $bad = 0;
+    printf("  %-18s %-12s %-12s %-12s %-12s %s\n", 'path', 'Files', 'ACLManager', 'FolderMgr', 'IntraVox', 'verdict');
+    foreach (PATHS as $path) {
+        $m = measure($path, $storageId, $user);
+        $agrees = $m['files'] === $m['intravox'];
+        if (!$agrees) { $bad++; }
+        printf("  %-18s %2d (%s%s)      %2d (%s%s)      %2d (%s%s)      %2d (%s%s)      %s\n",
+            $path,
+            $m['files'], readable($m['files']), writable($m['files']),
+            $m['acl'], readable($m['acl']), writable($m['acl']),
+            $m['base'], readable($m['base']), writable($m['base']),
+            $m['intravox'], readable($m['intravox']), writable($m['intravox']),
+            $agrees ? 'agree' : 'DISAGREE'
+        );
+    }
+
+    clearAcl($db, array_merge(array_values($fileIds), [$parentId]));
+    foreach ([$first, $second] as $id) {
+        revokeOnFolder($db, $type, $id);
+    }
+    echo "  cleaned up\n";
+
+    return $bad;
+}
+
 echo "IntraVox vs Nextcloud: permission mapping types\n";
 echo "user=" . TEST_USER . "  folder=" . FOLDER_ID . "  storage={$storageId}\n";
 
 $failures += scenario('SCENARIO 1 — groups (G-A, G-B)', 'group', GROUPS, $db, $fileIds, $storageId, $user);
 $failures += scenario('SCENARIO 2 — circles (GroupA, GroupB)', 'circle', $circleIds, $db, $fileIds, $storageId, $user);
+$failures += depthScenario('SCENARIO 3 — groups, conflicting at different DEPTHS (issue #116)', 'group', GROUPS, $db, $fileIds, $storageId, $user);
+$failures += depthScenario('SCENARIO 4 — circles, conflicting at different DEPTHS', 'circle', $circleIds, $db, $fileIds, $storageId, $user);
 
 echo "\n" . str_repeat('-', 64) . "\n";
 if ($failures === 0) {

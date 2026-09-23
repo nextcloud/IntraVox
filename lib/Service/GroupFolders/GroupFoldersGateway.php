@@ -347,26 +347,92 @@ class GroupFoldersGateway {
 	 * @return string[] mapping ids (group + circle), for an `IN` over mapping_id
 	 */
 	public function mappingIdsForUser(\OCP\IUser $user, array $fallbackGroupIds): array {
+		return array_values(array_unique(array_map(
+			static fn (array $m): string => $m['id'],
+			$this->mappingsForUser($user, $fallbackGroupIds)
+		)));
+	}
+
+	/**
+	 * The same mappings, but keeping the TYPE alongside the id.
+	 *
+	 * The flat id list above is enough to decide WHICH acl rows apply, because
+	 * that query matches on mapping_id. It is not enough to decide how to
+	 * COMBINE them: upstream folds rules per (type, id) down the path before
+	 * merging across mappings, and 'group'/G-A is a different accumulator from
+	 * 'circle'/G-A. Ids are also two id spaces — a circle id is a 31-char hash,
+	 * a group id is whatever the backend calls it — so they cannot simply be
+	 * assumed distinct.
+	 *
+	 * Federated users reach this the same way local ones do: the mapping
+	 * manager returns a 'user' mapping carrying the uid, and for a federated
+	 * account that uid is the full `user@remote` string. Keeping the type means
+	 * that mapping accumulates on its own rather than colliding with a group
+	 * that happens to share the string.
+	 *
+	 * @param string[] $fallbackGroupIds group ids used when the mapping manager
+	 *        cannot be reached; typed as 'group', which is what they are
+	 * @return list<array{type:string,id:string}>
+	 */
+	public function mappingsForUser(\OCP\IUser $user, array $fallbackGroupIds): array {
+		$fallback = static function () use ($fallbackGroupIds): array {
+			$out = [];
+			foreach ($fallbackGroupIds as $gid) {
+				$out[] = ['type' => 'group', 'id' => (string)$gid];
+			}
+
+			return $out;
+		};
+
 		if (!$this->isAvailable()) {
-			return $fallbackGroupIds;
+			return $fallback();
 		}
 
 		try {
 			$manager = \OC::$server->get(\OCA\GroupFolders\ACL\UserMapping\IUserMappingManager::class);
-			$ids = [];
+			$mappings = [];
 			foreach ($manager->getMappingsForUser($user) as $mapping) {
-				// group + circle rules are keyed by the mapping id; a 'user'
-				// mapping is the uid itself, harmless to include in the IN.
-				$ids[] = $mapping->getId();
+				$mappings[] = ['type' => $mapping->getType(), 'id' => $mapping->getId()];
 			}
 
-			return $ids;
+			return $mappings;
 		} catch (\Throwable $e) {
 			$this->logger->error('[GroupFoldersGateway] getMappingsForUser() failed, falling back to groups only', [
 				'error' => $e->getMessage(),
 			]);
 
-			return $fallbackGroupIds;
+			return $fallback();
+		}
+	}
+
+	/**
+	 * Does this instance merge inherited rules PER USER MAPPING?
+	 *
+	 * groupfolders has two ways of combining rules that sit on different levels
+	 * of one path, switched by the `acl-inherit-per-user` app config:
+	 *
+	 *  - false (the default): merge the rules per path, then apply them one
+	 *    path at a time, deepest last. A deny on a subfolder overwrites an
+	 *    allow on its parent even when the two come from different groups.
+	 *  - true: fold each mapping's own rules down the path first, then merge
+	 *    those results with allow overwriting deny. A user who is allowed
+	 *    through one group keeps that right even when another of their groups
+	 *    is denied deeper down.
+	 *
+	 * IntraVox has to ask, because the answer changes the arithmetic and the
+	 * administrator configured it for the whole instance — Files obeys it, so
+	 * an intranet that ignored it would disagree with the file list beside it.
+	 *
+	 * Defaults to false on any error, which is groupfolders' own default.
+	 */
+	public function inheritMergePerUser(): bool {
+		try {
+			return \OC::$server->get(\OCP\IAppConfig::class)
+				->getValueString('groupfolders', 'acl-inherit-per-user', 'false') === 'true';
+		} catch (\Throwable $e) {
+			$this->logger->debug('[GroupFoldersGateway] could not read acl-inherit-per-user: ' . $e->getMessage());
+
+			return false;
 		}
 	}
 

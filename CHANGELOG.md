@@ -6,6 +6,40 @@ IntraVox is a Nextcloud intranet page builder.
 
 ## [Unreleased]
 
+## [3.1.1] - 2026-09-23 — Conflicting group rights, across folder levels
+
+### Fixed
+
+- **Conflicting group rights still cancelled each other out across folder
+  levels.** ([#116](https://github.com/nextcloud/IntraVox/issues/116)) 3.1.0
+  merged rules that sat on the *same* path, but administrators do not write two
+  rules on one folder — they set a right on a department folder and another on
+  the space above it. Those were still folded onto each other in path order, so
+  the deeper rule decided the outcome and one of the user's two groups was
+  ignored, which is exactly what the reporter saw after upgrading.
+
+  groupfolders has two ways of combining inherited rules, switched by the
+  `acl-inherit-per-user` app config. IntraVox implemented only the default one
+  and never read the setting, so on an instance configured to merge per user it
+  disagreed with the file list beside it. It now reads the setting and
+  reproduces both modes: per-mapping (each group's own chain is resolved first,
+  then merged with allow overwriting deny) and per-path (the documented
+  default, where a deeper deny does overwrite). Files stays the truth either
+  way.
+
+  Two further divergences from upstream came out of the same reading. A
+  per-user rule was applied last and allowed to overwrite the group rules;
+  upstream puts the user mapping in the same pool, where allow still beats deny.
+  And rules were matched on the mapping id alone, so a group and a Team sharing
+  an id string were folded into one accumulator — they are two id spaces and are
+  now kept apart, which also keeps a federated `user@remote` uid on its own.
+
+  The rule arithmetic moved to `AclRuleFolder`, where it is a pure function and
+  testable without a Nextcloud instance;
+  `tests/Unit/Service/PermissionAclInheritanceTest.php` pins all ten cases and
+  `scripts/acl-mapping-matrix.php` gained the parent/child scenario whose
+  absence let this ship.
+
 ## [3.1.0] - 2026-09-22 — Feeds you can read, page and trust the permissions of
 
 ### Added
