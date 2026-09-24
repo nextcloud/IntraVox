@@ -133,6 +133,27 @@ class FeedResponseReaderTest extends TestCase {
         $this->assertNull($this->reader->firstImageIn('<p>geen afbeelding</p>'));
     }
 
+    /**
+     * The shape Hugo and WordPress emit. FILTER_VALIDATE_URL refuses it, so
+     * before the scheme was filled in these items reached the widget without a
+     * picture the feed had actually sent. Real source: planet.kde.org.
+     */
+    public function testAProtocolRelativeImageSourceIsUpgradedToHttps(): void {
+        $this->assertSame(
+            'https://dvratil.cz/2026/09/akademy-2026/images/kmail-macos.png',
+            $this->reader->firstImageIn('<img src="//dvratil.cz/2026/09/akademy-2026/images/kmail-macos.png">')
+        );
+    }
+
+    /**
+     * The upgrade fills in a scheme; it does not invent a host. A single slash
+     * is still a path on the publisher's site, and we have no base URL here to
+     * resolve it against, so it stays refused rather than becoming //-anything.
+     */
+    public function testASingleSlashPathIsNotTreatedAsProtocolRelative(): void {
+        $this->assertNull($this->reader->firstImageIn('<img src="/images/a.png">'));
+    }
+
     public function testDatesNormaliseToIso8601(): void {
         $this->assertStringStartsWith('2026-03-05', $this->reader->normaliseDate('2026-03-05T12:00:00Z'));
         $this->assertStringStartsWith('2026-03-05', $this->reader->normaliseDate('5 March 2026'));

@@ -124,6 +124,18 @@ final class FeedResponseReader {
      *
      * The FILTER_VALIDATE_URL check is what stops a relative or javascript:
      * source becoming an image URL the proxy is then asked to sign.
+     *
+     * A protocol-relative source (`//host/path`) is upgraded to https first.
+     * FILTER_VALIDATE_URL rejects it, so without this the image is silently
+     * dropped even though the feed shipped one. Measured on planet.kde.org:
+     * two of 25 items (both from dvratil.cz, a Hugo site) lost their picture
+     * this way while nine others genuinely carry no <img> at all — which is
+     * exactly why it reads as "some items just have no image" rather than as
+     * a bug. Hugo and WordPress both emit this form, so it is not one feed.
+     *
+     * Only the scheme is filled in, and only for `//`. Everything the check
+     * refused before it still refuses: a relative path has no host to borrow
+     * a scheme for, and `javascript:` never matches `//` in the first place.
      */
     public function firstImageIn(string $html): ?string {
         if (empty($html)) {
@@ -131,6 +143,9 @@ final class FeedResponseReader {
         }
         if (preg_match('/<img[^>]+src=["\']([^"\']+)["\']/', $html, $matches)) {
             $src = html_entity_decode($matches[1], ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            if (str_starts_with($src, '//')) {
+                $src = 'https:' . $src;
+            }
             if (filter_var($src, FILTER_VALIDATE_URL)) {
                 return $src;
             }
