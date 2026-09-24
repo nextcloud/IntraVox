@@ -8,7 +8,6 @@ use OCA\IntraVox\Service\CalendarService;
 use OCA\IntraVox\Service\FeedReaderService;
 use OCA\IntraVox\Service\NavigationService;
 use OCA\IntraVox\Service\Path\PagePathHelper;
-use OCA\IntraVox\Service\Read\PageReadService;
 use OCA\IntraVox\Service\PublicShare\ShareBreadcrumbBuilder;
 use OCA\IntraVox\Service\PublicShare\ShareMediaServer;
 use OCA\IntraVox\Service\PublicShare\ShareTreeShaper;
@@ -36,9 +35,6 @@ class PublicShareFeedSelectorTest extends TestCase {
     private PublicShareService $publicShareService;
     private FeedReaderService $feedReader;
 
-    private function unusedPageRead(): PageReadService {
-        return (new \ReflectionClass(PageReadService::class))->newInstanceWithoutConstructor();
-    }
 
     protected function setUp(): void {
         parent::setUp();
@@ -65,7 +61,6 @@ class PublicShareFeedSelectorTest extends TestCase {
         return new PublicShareController(
             'intravox',
             $request,
-            $this->unusedPageRead(),
             $this->createMock(SetupService::class),
             $this->publicShareService,
             $this->createMock(SystemFileService::class),

@@ -19,6 +19,33 @@ IntraVox is a Nextcloud intranet page builder.
 
 ### Fixed
 
+- **A shared page was looked up in the wrong language first, and every public
+  page paid for it.** Opening a page through a share link ran a page read purely
+  to learn its language, but that read resolves through the session user's mount
+  and an anonymous visitor has none, so it failed silently and left the default
+  `en`. The share then searched the English tree first — 581 folders on the
+  instance this was measured on — missed, and swept every remaining language
+  before finding the page. A page id that does not exist cost the same, because
+  a wrong guess has to be disproved the same way. The page index already answers
+  this in one query regardless of language, so it is asked first; the language
+  walks remain as the fallback, so a stale or empty index still resolves exactly
+  as before. Measured on a fresh index: a refused lookup went from 0.75s to
+  0.22s, and a page from 0.15s to 0.12s.
+
+- **A share's widget allowlist re-read every page in the share, once per
+  question.** The guard that checks an anonymous feed request against what the
+  share actually publishes asks one key at a time — connection, feed URL, and
+  four more selectors — and each answer walked the share tree and decoded every
+  page in it again. Three feed widgets on one page meant eighteen walks of up to
+  200 files. The pages are now read once per request, keyed per share so two
+  shares in one request can never answer for each other.
+
+- **A Dutch shared page built its breadcrumb from the English navigation.** The
+  same `en` default reached `ShareBreadcrumbBuilder`, which reads
+  `{language}/navigation.json`. The language the page was actually found in is
+  now reported back by the resolver and used instead, so the home label on a
+  non-English share matches the page being read.
+
 - **58 screenshots were broken in the Dutch documentation.** Every `.nl.md`
   page under `docs/user/`, `docs/admin/` and one under `docs/features/` linked
   its images one directory level too high, at `../screenshots/` instead of

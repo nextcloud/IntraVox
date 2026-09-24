@@ -15,6 +15,8 @@ use OCP\Share\Exceptions\ShareNotFound;
 use Psr\Log\LoggerInterface;
 use OCA\IntraVox\Service\Locator\PageLocator;
 use OCA\IntraVox\Service\Path\PagePathHelper;
+use OCA\IntraVox\Service\PublicShare\SharePageIndexResolver;
+use OCA\IntraVox\Service\PublicShare\SharePageReader;
 
 /**
  * PublicShareService handles detection and validation of NC share links for IntraVox pages.
@@ -44,6 +46,9 @@ class PublicShareService {
      */
     private ?PageLocator $pageLocator;
 
+    private SharePageIndexResolver $indexResolver;
+    private SharePageReader $pageReader;
+
     public function __construct(
         IShareManager $shareManager,
         IRootFolder $rootFolder,
@@ -53,9 +58,15 @@ class PublicShareService {
         LoggerInterface $logger,
         PermissionService $permissionService,
         IHasher $hasher,
-        ?PageLocator $pageLocator = null
+        ?PageLocator $pageLocator = null,
+        ?SharePageIndexResolver $indexResolver = null,
+        ?SharePageReader $pageReader = null
     ) {
         $this->pageLocator = $pageLocator;
+        // Nullable like $pageLocator: unit tests build this service without
+        // one, and "no index" simply means the walk.
+        $this->indexResolver = $indexResolver ?? new SharePageIndexResolver($logger);
+        $this->pageReader = $pageReader ?? new SharePageReader();
         $this->shareManager = $shareManager;
         $this->rootFolder = $rootFolder;
         $this->db = $db;
@@ -437,20 +448,10 @@ class PublicShareService {
         try {
             $node = $share->getNode();
 
-            $files = $node instanceof \OCP\Files\Folder
-                ? $this->collectPageFiles($node)
-                : [$node];
-
-            foreach ($files as $file) {
-                if (!$file instanceof \OCP\Files\File) {
-                    continue;
-                }
-
-                $page = json_decode((string)$file->getContent(), true);
-                if (!is_array($page)) {
-                    continue;
-                }
-
+            // Read once per request, not once per (widgetType, key) pair: the
+            // feed guard asks this six times per feed, and the walk underneath
+            // is the expensive part. @see SharePageReader
+            foreach ($this->pageReader->pagesInside($node) as $page) {
                 foreach (($page['layout']['rows'] ?? []) as $row) {
                     foreach (($row['widgets'] ?? []) as $widget) {
                         if (($widget['type'] ?? null) !== $widgetType) {
@@ -499,22 +500,10 @@ class PublicShareService {
         $sets = [];
 
         try {
-            $node = $share->getNode();
-
-            $files = $node instanceof \OCP\Files\Folder
-                ? $this->collectPageFiles($node)
-                : [$node];
-
-            foreach ($files as $file) {
-                if (!$file instanceof \OCP\Files\File) {
-                    continue;
-                }
-
-                $page = json_decode((string)$file->getContent(), true);
-                if (!is_array($page)) {
-                    continue;
-                }
-
+            // Same per-request read as allowedWidgetValues(): the people guard
+            // asks this once per key too, and the walk underneath is the
+            // expensive part.
+            foreach ($this->pageReader->pagesInside($share->getNode()) as $page) {
                 foreach (($page['layout']['rows'] ?? []) as $row) {
                     foreach (($row['widgets'] ?? []) as $widget) {
                         if (($widget['type'] ?? null) !== $widgetType) {
@@ -590,39 +579,6 @@ class PublicShareService {
     }
 
     /**
-     * The page JSON files inside a shared folder, bounded so a deep tree cannot
-     * turn one anonymous request into a full-tree walk.
-     *
-     * @return list<\OCP\Files\Node>
-     */
-    private function collectPageFiles(\OCP\Files\Folder $folder, int $depth = 0): array {
-        if ($depth > 4) {
-            return [];
-        }
-
-        $files = [];
-        foreach ($folder->getDirectoryListing() as $child) {
-            if (count($files) >= 200) {
-                break;
-            }
-
-            if ($child instanceof \OCP\Files\Folder) {
-                if (str_starts_with($child->getName(), '_')) {
-                    continue; // _media and friends hold no page JSON
-                }
-                $files = array_merge($files, $this->collectPageFiles($child, $depth + 1));
-                continue;
-            }
-
-            if (str_ends_with($child->getName(), '.json')) {
-                $files[] = $child;
-            }
-        }
-
-        return $files;
-    }
-
-    /**
      * Resolve the actual GF storage path for a share.
      *
      * file_target in oc_share is unreliable for GroupFolders (e.g. "/afdeling" instead of "files/nl/afdeling").
@@ -681,10 +637,13 @@ class PublicShareService {
      *
      * @param string $token The NC share token
      * @param string $pageUniqueId The page's unique ID
-     * @param string $language The language folder
-     * @return array Validation result with 'valid', 'share', 'pageData'
+     * @param string|null $language The language to try first, or null for
+     *   "resolve it" — the honest answer for a public link. A wrong guess sends
+     *   the resolver into the wrong language tree first.
+     * @return array Validation result with 'valid', 'share', 'pageData', and on
+     *   success 'language': the language the page was actually found in.
      */
-    public function validateShareAccess(string $token, string $pageUniqueId, string $language, ?string $password = null): array {
+    public function validateShareAccess(string $token, string $pageUniqueId, ?string $language = null, ?string $password = null): array {
         // Check NC-level sharing setting
         $ncAllowsLinks = $this->config->getAppValue('core', 'shareapi_allow_links', 'yes') === 'yes';
         if (!$ncAllowsLinks) {
@@ -743,31 +702,9 @@ class PublicShareService {
                 'shareTarget' => $shareTarget
             ]);
 
-            // Get the page's path (internal GroupFolders path)
-            // First try with the provided language, then try to detect from share target
-            $pageInfo = $this->findPageFileInfo($pageUniqueId, $language);
-
-            // If not found, try to detect language from share target
-            // Share target like "/nl" or "/nl/about" tells us the language
-            if ($pageInfo === null) {
-                $detectedLanguage = $this->detectLanguageFromPath($shareTarget);
-                if ($detectedLanguage !== null && $detectedLanguage !== $language) {
-                    $this->logger->debug('[PublicShareService] validateShareAccess: trying detected language', [
-                        'originalLanguage' => $language,
-                        'detectedLanguage' => $detectedLanguage
-                    ]);
-                    $pageInfo = $this->findPageFileInfo($pageUniqueId, $detectedLanguage);
-                    if ($pageInfo !== null) {
-                        $language = $detectedLanguage;
-                    }
-                }
-            }
-
-            // If still not found, search all available languages
-            if ($pageInfo === null) {
-                $this->logger->debug('[PublicShareService] validateShareAccess: searching all languages');
-                $pageInfo = $this->findPageFileInfoAllLanguages($pageUniqueId);
-            }
+            // Get the page's path (internal GroupFolders path). Index first,
+            // language walks as fallback — see resolveSharePage().
+            $pageInfo = $this->resolveSharePage($pageUniqueId, $language, $shareTarget);
 
             if ($pageInfo === null) {
                 $this->logger->debug('[PublicShareService] validateShareAccess: page not found in any language', [
@@ -776,6 +713,9 @@ class PublicShareService {
                 ]);
                 return ['valid' => false, 'reason' => 'page_not_found'];
             }
+
+            // The language the page was FOUND in, not the one guessed.
+            $language = $pageInfo['language'] ?? $language;
 
             $pagePath = $pageInfo['path'];
 
@@ -933,6 +873,8 @@ class PublicShareService {
                 'pageData' => $pageData,
                 'pagePath' => $pagePath,
                 'pageGfPath' => $pageGfPath,
+                // The caller can no longer derive this — that was the bug.
+                'language' => $language,
             ];
 
         } catch (ShareNotFound $e) {
@@ -979,11 +921,69 @@ class PublicShareService {
     }
 
     /**
+     * Locate the page a share request asks for, without knowing its language.
+     *
+     * A public link names a page, never a language. The index answers that in
+     * one query wherever the page lives; the walks below are the fallback they
+     * always were, in their original order, so an empty or stale index lands on
+     * exactly the same result — only slower. That is what keeps this a
+     * performance change rather than a behaviour change. The index step, and
+     * why it is language-agnostic, lives in {@see SharePageIndexResolver}.
+     * SECURITY: it decides WHICH file reaches the scope check below, never
+     * WHETHER that check runs.
+     *
+     * @param string $uniqueId Page unique ID
+     * @param string|null $language Language to try first, or null when unknown
+     * @param string $shareTarget The share's target path, e.g. "/nl/about"
+     * @return array|null Array with 'path', 'node', 'data', 'language', 'title'
+     */
+    private function resolveSharePage(string $uniqueId, ?string $language, string $shareTarget): ?array {
+        // 1. The index, language-agnostic. One query, no directory listing.
+        $viaIndex = $this->indexResolver->resolve(
+            $this->pageLocator,
+            $this->setupService->getSharedFolder(),
+            $uniqueId,
+            $language,
+        );
+        if ($viaIndex !== null) {
+            return $viaIndex;
+        }
+
+        // 2. The language the caller asked for, when it named one.
+        $pageInfo = $language !== null ? $this->findPageFileInfo($uniqueId, $language) : null;
+
+        // 3. The language named by the share target ("/nl", "/nl/about").
+        if ($pageInfo === null) {
+            $detectedLanguage = $this->detectLanguageFromPath($shareTarget);
+            if ($detectedLanguage !== null && $detectedLanguage !== $language) {
+                $this->logger->debug('[PublicShareService] validateShareAccess: trying detected language', [
+                    'originalLanguage' => $language,
+                    'detectedLanguage' => $detectedLanguage
+                ]);
+                $pageInfo = $this->findPageFileInfo($uniqueId, $detectedLanguage);
+            }
+        }
+
+        // 4. Every language folder in turn.
+        if ($pageInfo === null) {
+            $this->logger->debug('[PublicShareService] validateShareAccess: searching all languages');
+            $pageInfo = $this->findPageFileInfoAllLanguages($uniqueId);
+        }
+
+        return $pageInfo;
+    }
+
+    /**
      * Find page file info by uniqueId.
+     *
+     * Kept language-scoped on purpose: getShareInfoForPage() calls it on the
+     * AUTHENTICATED editor path, where the language is known and correct.
+     * Making this one language-agnostic would change which page an editor's
+     * share-info panel describes when a uniqueId exists in two languages.
      *
      * @param string $uniqueId Page unique ID
      * @param string $language Language folder
-     * @return array|null Array with 'path', 'node', 'data', 'title' or null
+     * @return array|null Array with 'path', 'node', 'data', 'language', 'title' or null
      */
     private function findPageFileInfo(string $uniqueId, string $language): ?array {
         try {

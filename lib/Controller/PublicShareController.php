@@ -11,7 +11,6 @@ use OCA\IntraVox\Service\FeedReaderService;
 use OCA\IntraVox\Service\NavigationService;
 use OCA\IntraVox\Service\People\PeopleQuery;
 use OCA\IntraVox\Service\People\PublicSharePeopleGuard;
-use OCA\IntraVox\Service\Read\PageReadService;
 use OCA\IntraVox\Service\Path\PagePathHelper;
 use OCA\IntraVox\Service\PublicShare\ShareBreadcrumbBuilder;
 use OCA\IntraVox\Service\PublicShare\ShareMediaServer;
@@ -68,7 +67,6 @@ class PublicShareController extends Controller {
     public function __construct(
         string $appName,
         IRequest $request,
-        private PageReadService $pageRead,
         private SetupService $setupService,
         private PublicShareService $publicShareService,
         private SystemFileService $systemFileService,
@@ -114,19 +112,15 @@ class PublicShareController extends Controller {
         }
 
         try {
-            // Determine language from page or use default
-            // First try to get language from existing page data
-            $language = 'en'; // Default
-            try {
-                $existingPage = $this->pageRead->getPage($uniqueId);
-                $language = $existingPage['language'] ?? 'en';
-            } catch (\Exception $e) {
-                // Page not found yet, will be handled by validateShareAccess
-            }
-
-            // Validate share access (password already verified via session)
+            // No language is determined here. A PageReadService::getPage() used
+            // to run first purely to read one, but it resolves through the
+            // SESSION user's mount — a public share has none, so it failed
+            // silently and left 'en', which sent the resolver into the wrong
+            // language tree and cost every public page 2.2s. Null is the honest
+            // answer: nothing in an anonymous request names a language.
+            // @see SharePageIndexResolver
             $sessionPw = $this->getSharePasswordFromSession($token);
-            $validation = $this->publicShareService->validateShareAccess($token, $uniqueId, $language, $sessionPw);
+            $validation = $this->publicShareService->validateShareAccess($token, $uniqueId, null, $sessionPw);
 
             if (!$validation['valid']) {
                 $reason = $validation['reason'] ?? '';
@@ -142,6 +136,11 @@ class PublicShareController extends Controller {
 
             // Get the page data - this comes from validateShareAccess
             $pageData = $validation['pageData'] ?? null;
+
+            // The language the page was ACTUALLY served in. The breadcrumb reads
+            // {language}/navigation.json, so the old 'en' default gave a Dutch
+            // page its home label out of the English navigation.
+            $language = $validation['language'] ?? 'en';
 
             if ($pageData === null) {
                 $this->registerShareBruteForceAttempt();
