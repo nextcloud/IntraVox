@@ -90,6 +90,7 @@ OC.L10N.register(
     "Revoke" : "Отнемане",
     "Regenerate" : "Регенериране",
     "Save settings" : "Запазване на настройките",
+    "Refresh" : "Опресняване",
     "Newest first" : "Първо най-новият",
     "Oldest first" : "Първо най-старият",
     "List" : "Списък",

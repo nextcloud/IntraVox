@@ -27,6 +27,7 @@ OC.L10N.register(
     "This month" : "Mis yma",
     "Next year" : "Blwyddyn nesaf",
     "RSS feed" : "Llif RSS",
+    "Refresh" : "Ail-lwytho",
     "Newest first" : "Diweddaraf gyntaf",
     "Oldest first" : "Hynaf gyntaf",
     "List" : "Rhestr",

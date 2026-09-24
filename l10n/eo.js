@@ -59,6 +59,7 @@ OC.L10N.register(
     "Copy URL" : "Kopii retadreson",
     "Revoke" : "Senvalidigi",
     "Save settings" : "Konservi agordojn",
+    "Refresh" : "Aktualigi",
     "Newest first" : "Pli novaj unue",
     "Oldest first" : "Malpli novaj unue",
     "Date" : "Dato",

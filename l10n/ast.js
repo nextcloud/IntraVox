@@ -75,6 +75,7 @@ OC.L10N.register(
     "All languages" : "Toles llingües",
     "Revoke" : "Revocar",
     "Regenerate" : "Rexenerar",
+    "Refresh" : "Anovar",
     "Newest first" : "Primero lo nuevo",
     "Oldest first" : "Primero lo antiguo",
     "List" : "Llista",

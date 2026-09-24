@@ -43,6 +43,7 @@ OC.L10N.register(
     "RSS feed" : "Lanv RSS",
     "All languages" : "Pep yezh",
     "Revoke" : "Digargañ",
+    "Refresh" : "Freskaat",
     "Newest first" : "An hini nevesañ da gentañ",
     "Oldest first" : "An hini kozhoñ da gentañ",
     "List" : "Roll",

@@ -69,6 +69,7 @@ OC.L10N.register(
     "This week" : "На гэтым тыдні",
     "RSS feed" : "Стужка RSS",
     "All languages" : "Усе мовы",
+    "Refresh" : "Абнавіць",
     "Newest first" : "Спачатку новыя",
     "Oldest first" : "Спачатку старыя",
     "List" : "Спіс",

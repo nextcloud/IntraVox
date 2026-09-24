@@ -451,6 +451,7 @@
     "Too many requests. Please try again later." : "Πάρα πολλά αιτήματα. Παρακαλούμε δοκιμάστε ξανά αργότερα.",
     "Could not load feed. Check the connection settings." : "Αδυναμία φόρτωσης ροής. Ελέγξτε τις ρυθμίσεις σύνδεσης.",
     "Could not load feed. The external system may be unavailable." : "Αδυναμία φόρτωσης ροής. Το εξωτερικό σύστημα ενδέχεται να μην είναι διαθέσιμο.",
+    "Refresh" : "Ανανέωση",
     "No items match your filter." : "Κανένα στοιχείο δεν ταιριάζει με το φίλτρο σας.",
     "No items found" : "Δεν βρέθηκαν στοιχεία",
     "Newest first" : "Νεότερα πρώτα",

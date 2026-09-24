@@ -499,6 +499,7 @@ OC.L10N.register(
     "Too many requests. Please try again later." : "Too many requests. Please try again later.",
     "Could not load feed. Check the connection settings." : "Could not load feed. Check the connection settings.",
     "Could not load feed. The external system may be unavailable." : "Could not load feed. The external system may be unavailable.",
+    "Refresh" : "Refresh",
     "Loading feed …" : "Loading feed …",
     "No items match your filter." : "No items match your filter.",
     "No items found" : "No items found",

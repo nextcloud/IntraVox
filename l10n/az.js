@@ -34,6 +34,7 @@ OC.L10N.register(
     "None" : "Heç bir",
     "Light" : "İşıqlı",
     "read-only" : "yalnız oxumaq üçün",
+    "Refresh" : "Yenilə",
     "Sort by" : "Təyinata görə çeşidləmək ",
     "Open {name}" : "{name} faylını açın",
     "Display" : "Ekran",

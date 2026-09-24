@@ -489,6 +489,7 @@ OC.L10N.register(
     "Too many requests. Please try again later." : "For mange anmodninger. Prøv igen senere.",
     "Could not load feed. Check the connection settings." : "Kunne ikke indlæse feed. Tjek tilslutningsindstillingerne.",
     "Could not load feed. The external system may be unavailable." : "Kunne ikke indlæse feed. Det eksterne system kan være utilgængeligt.",
+    "Refresh" : "Opdatér",
     "Loading feed …" : "Indlæser foder...",
     "No items match your filter." : "Ingen elementer matcher dit filter.",
     "No items found" : "Ingen elementer fundet",
