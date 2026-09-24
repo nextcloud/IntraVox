@@ -482,6 +482,10 @@ export default {
       tocRevision: 0,
       showMoveDialog: false,
       homepageUniqueId: null,
+      // The in-flight content-status request. Null outside the initial load:
+      // the later loadPages() callers run long after it resolved, and
+      // `await null` is a no-op.
+      contentStatusReady: null,
       moveToRoot: false,
       movePageNode: null,
       moveTargetId: null,
@@ -823,14 +827,16 @@ export default {
     }
   },
   async mounted() {
-    // Load content status FIRST so loadPages knows whether the user's language
-    // has content. If it doesn't, we show the fallback notice instead of trying
-    // to select a home page (which would 404 when only other languages exist).
-    await this.loadContentStatus();
+    // Started here, awaited inside loadPages() at the one point that reads it.
+    // Awaiting it up front made navigation, footer and settings — which need
+    // nothing from it — wait a whole round trip, one of the four sequential
+    // waves a page load used to spend.
+    this.contentStatusReady = this.loadContentStatus();
 
     // Load pages, navigation, footer, and settings in parallel
     try {
       await Promise.all([
+        this.contentStatusReady,
         this.loadPages(),
         this.loadNavigation(),
         this.loadFooter(),
@@ -1017,6 +1023,10 @@ export default {
               }
             }
           }
+
+          // Everything below reads content-status: the homepage pointer, and
+          // showLanguageFallback further down. This is where it rejoins.
+          await this.contentStatusReady;
 
           // Fall back to home page if no hash or page not found. Prefer the
           // configured homepage pointer, then the slug/path heuristic.
