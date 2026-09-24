@@ -68,6 +68,7 @@
     "lib/Service/FooterService.php": 241,
     "lib/Service/Format/RelativeTime.php": 38,
     "lib/Service/GroupContextService.php": 88,
+    "lib/Service/GroupFolders/AclRuleFolder.php": 156,
     "lib/Service/GroupFolders/GroupFoldersGateway.php": 468,
     "lib/Service/Homepage/HomepageResolverService.php": 185,
     "lib/Service/HomepageService.php": 167,
