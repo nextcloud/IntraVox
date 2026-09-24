@@ -11,6 +11,7 @@
     :class="[
       { 'feed-item--compact': compact, 'feed-item--no-image': !showImage || (!item.image && (!feedImage || feedImageError) && !fallbackMeta) },
       { 'feed-item--no-link': !item.url },
+      { 'feed-item--wants-excerpt': showExcerpt },
       `feed-item--bg-${itemBackground}`
     ]"
     :target="item.url && openInNewTab ? '_blank' : undefined"
@@ -509,7 +510,8 @@ export default {
   -webkit-box-orient: vertical;
 }
 
-.feed-item--compact .feed-item-excerpt {
+/* Grid is compact by default; "Toon samenvatting" still wins. */
+.feed-item--compact:not(.feed-item--wants-excerpt) .feed-item-excerpt {
   display: none;
 }
 
@@ -540,7 +542,13 @@ export default {
     gap: 8px;
   }
 
-  .feed-item-excerpt {
+  /*
+    A narrow column drops the summary — unless the widget asked for it. A toot
+    has no <title>, so the summary IS the content, and three columns put every
+    item under 400px: the feed showed nothing but a date. Still clamped to two
+    lines by the base rule.
+  */
+  .feed-item:not(.feed-item--wants-excerpt) .feed-item-excerpt {
     display: none;
   }
 }

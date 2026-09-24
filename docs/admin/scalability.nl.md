@@ -13,6 +13,53 @@ IntraVox is ontworpen om te schalen van kleine teams tot grote organisaties. Dit
 | Gelijktijdige gebruikers | Tot 1.000 | Singleflight voorkomt thundering herd op gedeelde resources |
 | Externe feed-bronnen | Onbeperkt | Circuit breaker en background-refresh voorkomen cascade-failures |
 
+### De server dimensioneren
+
+De aantallen hierboven gaan ervan uit dat de server genoeg PHP-workers kan
+draaien voor de lezers die tegelijk binnenkomen. Dat is de instelling die er het
+meest toe doet, en de standaard is afgestemd op een kleine installatie.
+
+Feeds maken een pagina duur, en alleen de *eerste* lezer betaalt. De RSS-cache
+heeft de feed-URL als sleutel, zonder gebruiker erin: één lezer maakt de pagina
+warm en iedereen daarna wordt 15 minuten uit die cache bediend (een uur als de
+bron onbereikbaar is). Gemeten: vijftien gecachte feeds kosten samen **1,6 ms**,
+tegenover ruwweg **160 ms per stuk** als ze opgehaald moeten worden.
+
+Daarom stuurt de client normaal één request per pagina en splitst hij pas als de
+server meldt dat er echt opgehaald moest worden. Een warme pagina kost één
+PHP-worker, een koude pagina kortstondig drie.
+
+| Lezers tegelijk | Workers toestaan | Geheugen voor PHP | Opmerkingen |
+|---|---|---|---|
+| Tot 25 | 30–50 (de standaard 150 is ruim) | 512 MB–1 GB | Eén core volstaat. APCu alleen is genoeg. |
+| 25–150 | 150 (de Apache-standaard) | 2–4 GB | Zet Redis erbij: feed- en paginacache worden dan gedeeld tussen workers in plaats van per proces gedupliceerd. |
+| 150–500 | 300–500 | 8–16 GB | Redis verplicht. Geef de achtergrondtaak ruimte (zie hieronder). |
+| 500–1.000 | 600–1.000 | 16–32 GB | Redis verplicht, en overweeg een tweede appserver achter de loadbalancer. |
+
+Het aantal workers is `MaxRequestWorkers` bij Apache en `pm.max_children` bij
+PHP-FPM. Reken op 30–50 MB geheugen per worker voor IntraVox, en sta nooit meer
+workers toe dan dat geheugen toelaat — een machine die swapt is trager dan een
+machine die wachtrijt.
+
+**Redis is verreweg de nuttigste toevoeging.** Zonder gedeelde cache houdt elke
+PHP-worker zijn eigen kopie, dus honderd workers halen dezelfde feed honderd keer
+op. Mét Redis bedient één fetch ze allemaal. Configureer 'm als zowel
+`memcache.distributed` als `memcache.locking`.
+
+**Laat de achtergrondtaak draaien.** `FeedRefreshJob` ververst geconfigureerde
+feeds elke 10 minuten, vóórdat de cache vervalt, zodat lezers bijna nooit een
+koude fetch veroorzaken. Op een drukke installatie is dat precies wat het koude
+pad zeldzaam houdt. Nextcloud-cron moet dan wel op systeemcron staan, niet op
+AJAX — AJAX-cron draait alleen als iemand een pagina opent, en dat is precies
+het moment waarop je niet wilt ophalen.
+
+**Hoeveel feed-widgets per pagina is redelijk?** Tot twintig is comfortabel.
+Daarboven stuurt de client meer dan één request per paginaweergave, en dat telt
+mee in de limiet van 30 requests per minuut per gebruiker. Een pagina met
+zevenenvijftig widgets werkt, maar kost drie requests elke keer dat iemand 'm
+opent — overweeg 'm op te splitsen in subpagina's, wat lezers meteen iets geeft
+dat te overzien is.
+
 ### Bundle-optimalisatie
 
 De frontend-JavaScript-bundle is gesplitst voor snelle initial-page-loads:
@@ -73,7 +120,9 @@ Pagina-tree-componenten (PageTreeSelect, PageTreeModal) gebruiken progressive re
 
 Externe feed-bronnen zijn beschermd door drie lagen:
 
-1. **Singleflight-lock** — wanneer de cache vervalt, fetcht alleen de eerste request van de externe bron. Gelijktijdige requests wachten (tot 5 seconden) en lezen daarna uit de net-gevulde cache. Voorkomt thundering herd wanneer veel gebruikers tegelijk dezelfde pagina openen.
+1. **Singleflight-lock** — wanneer de cache vervalt, fetcht alleen de eerste request van de externe bron. Een request voor één *losse* feed wacht (tot 5 seconden) en leest daarna uit de net-gevulde cache. Voorkomt thundering herd wanneer veel gebruikers tegelijk dezelfde pagina openen.
+
+   Een *batch*-request wacht niet. Het wachten wordt per feed betaald en de feeds in een batch worden na elkaar opgehaald, dus een pagina met twintig widgets zou anders twintig keer vijf seconden kunnen slapen zonder één externe request te doen. Een batch haalt de feed dan zelf op — sneller, en eerlijker naar de lezer.
 
 2. **Circuit breaker** — na 3 opeenvolgende mislukkingen voor een bron opent de circuit breaker, en volgende requests geven direct een "tijdelijk niet beschikbaar"-melding terug. De circuit reset automatisch na 5 minuten, of direct bij een succesvolle fetch.
 

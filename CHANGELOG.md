@@ -19,6 +19,35 @@ IntraVox is a Nextcloud intranet page builder.
 
 ### Fixed
 
+- **A feed showing only dates, with the summaries switched on.** "Show summary"
+  is a per-widget setting, but a layout rule dropped the summary whenever the
+  column was narrower than 400px — and a three-column row of feeds always is.
+  On most feeds this passed unnoticed, because the headline carried the item.
+  On Mastodon it emptied the widget: a toot has no title, so the summary IS the
+  content, and readers saw a date and nothing else. The width rule now yields to
+  the setting: asked for, it is shown, still clamped to two lines.
+
+- **Feeds on one page load in parallel when that helps, and in one request when
+  it does not.** The server fetches a batch's feeds one after another, so a page
+  of uncached feeds was one long serial queue: 15 of them took 5061ms in a single
+  request against 2380ms split over three. A cached feed, though, costs 0.1ms —
+  fifteen warm ones are 1.6ms and the request around them is the whole cost, so
+  splitting then makes the page slower (65ms against 98ms) and asks three PHP
+  workers to do one worker's job. Warm is the normal case, because the feed cache
+  is shared between all readers: one reader warms a page and everyone after them
+  is served from it. The request size now adapts — one request per page, split
+  only after the server reports it actually had to fetch. Overflow requests also
+  went out one behind the other, each waiting on a fresh 50ms timer; they now go
+  out together, which took 45 widgets from 13806ms to 8787ms.
+
+- **The admin guide says what the capacity numbers need.** `docs/admin/scalability`
+  claimed 10,000 users and 1,000 concurrent readers without saying how to size
+  for them. It now gives worker counts and memory per concurrency band, explains
+  why Redis is the single most valuable addition, why FeedRefreshJob needs system
+  cron rather than AJAX cron, and how many feed widgets per page stays reasonable
+  against the rate limit. The singleflight section also still described a 5s wait
+  that no longer applies to batch requests.
+
 - **58 screenshots were broken in the Dutch documentation.** Every `.nl.md`
   page under `docs/user/`, `docs/admin/` and one under `docs/features/` linked
   its images one directory level too high, at `../screenshots/` instead of
