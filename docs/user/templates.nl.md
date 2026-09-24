@@ -17,16 +17,16 @@ Pagina-templates laten je snel nieuwe pagina's maken met voor-gebouwde layouts e
 2. Klik **+ Nieuwe pagina** in de navigatie
 3. Selecteer een template uit de galerij
 
-![Template-selectie-dialoog](../screenshots/Templates-Select-template.png)
+![Template-selectie-dialoog](../../screenshots/Templates-Select-template.png)
 
 4. Voer een titel in voor je nieuwe pagina
 5. Klik **Aanmaken**
 
-![Nieuwe-pagina-modaal](../screenshots/Templates-New-page.png)
+![Nieuwe-pagina-modaal](../../screenshots/Templates-New-page.png)
 
 De pagina wordt aangemaakt met alle template-content, layout en afbeeldingen gekopieerd naar de nieuwe locatie.
 
-![Pagina aangemaakt vanuit template](../screenshots/Templates-Page-created.png)
+![Pagina aangemaakt vanuit template](../../screenshots/Templates-Page-created.png)
 
 ## Standaard-templates
 

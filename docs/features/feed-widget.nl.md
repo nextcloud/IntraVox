@@ -14,6 +14,7 @@ De Feed-widget toont content uit externe bronnen op je intranet-pagina's. Onders
 - **Jira-content-types** — Alle issues, Open, Recent bijgewerkt, Recent aangemaakt, Bugs — met projectselector
 - **OpenProject-content-types** — Alle work packages, Open, Overdue, Milestones, of Recent bijgewerkt
 - **Twee layouts** — Lijst of grid (2-4 kolommen)
+- **Gepagineerde weergave** — toon een paar items tegelijk met pijlen, zodat lange feeds kort blijven zonder inhoud te verbergen
 - **Gepersonaliseerde content** — gebruikers koppelen hun eigen LMS-account om alleen hun cursussen, deadlines en aankondigingen te zien
 - **OAuth2-integratie** — one-click account-koppeling met Canvas, Moodle en Brightspace via popup-flow
 - **Handmatige token-fallback** — gebruikers plakken een API-token voor Moodle of Brightspace zonder OAuth2-setup
@@ -41,6 +42,14 @@ Het simpelste bron-type. Voer een feed-URL in en de widget haalt de items op.
 De widget detecteert automatisch RSS-2.0- en Atom-feed-formaten. Afbeeldingen worden geëxtraheerd uit feed-enclosures, `media:content`, `media:thumbnail` of inline `<img>`-tags.
 
 ![RSS-feeds vanuit meerdere bronnen in lijst- en grid-layout](../../screenshots/feed-example-rss.png)
+
+De opname hieronder loopt de hele route af op een pagina met live feeds: een
+widget toevoegen, hem op `https://blog.documentfoundation.org/feed/` richten,
+de layout, sorteervolgorde en het aantal items per pagina kiezen, een item lezen
+zonder het intranet te verlaten, en opslaan. De drie kolommen die overblijven
+zijn drie losse feed-widgets, die elk apart verversen.
+
+![Een Feed-widget toevoegen aan een pagina met live RSS-feeds, configureren, een item lezen en opslaan](../../screenshots/rss-feed-demo.gif)
 
 ### Canvas LMS
 
@@ -373,7 +382,7 @@ Beheerders configureren feed-verbindingen in **Beheerinstellingen → Externe fe
 | Instelling | Beschrijving | Default |
 |------------|--------------|---------|
 | **Sorteer op** | Datum of titel | Datum |
-| **Sorteer-volgorde** | Context-afhankelijke toggle: "Nieuwste eerst / Oudste eerst" voor datum, "A → Z / Z → A" voor titel | Nieuwste eerst |
+| **Sorteer-volgorde** | Radio-paar dat beide keuzes tegelijk toont: "Nieuwste eerst / Oudste eerst" voor datum, "A → Z / Z → A" voor titel | Nieuwste eerst |
 | **Filter op trefwoord** | Toon alleen items met dit woord in titel, samenvatting of auteur | *(leeg — geen filter)* |
 
 Sorteren en filteren worden server-side toegepast na caching. De cache slaat alle items op; sort/filter selecteert uit de gecachte set. Dit betekent dat sort/filter-wijzigingen direct zijn (geen re-fetch vanuit externe API).
@@ -407,6 +416,23 @@ Dit vertelt het externe systeem om content in het Nederlands terug te geven indi
 | **Layout** | Lijst of grid | Lijst |
 | **Kolommen** | Aantal grid-kolommen (2-4) | 3 |
 | **Aantal items** | Maximum items om te tonen (1-20) | 5 |
+| **Items per pagina** | Hoeveel van die items samen op één scherm staan; met pijlen blader je door de rest. `0` toont alles in één keer | 0 (alles) |
+
+#### Items per pagina
+
+Een feed die op 20 items staat, is ook 20 items hoog, en een pagina met een
+paar van die widgets scrollt lang door. **Items per pagina** begrenst de hoogte
+in plaats van de inhoud: zet hem op 5 en de widget toont er vijf tegelijk, met
+pijlen en een teller `1-5 van 20` eronder — alle 20 blijven bereikbaar. De
+waarde kan niet hoger dan **Aantal items**, en `0` — de default, en wat elke
+widget draagt die vóór deze optie is opgeslagen — houdt het oude gedrag zonder
+pager.
+
+Bladeren is een weergavekeuze, geen fetch: de items zitten al in de gecachte
+respons, dus een pagina omslaan is een array-slice. Geen request, geen spinner,
+en geen rate-limit-slot per slag. De widget reserveert de hoogte van een volle
+pagina tijdens het bladeren, zodat de pijlen blijven staan in plaats van te
+springen bij een kortere pagina.
 
 ### Weergave-opties
 

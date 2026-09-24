@@ -26,7 +26,7 @@ De export/import-interface gebruikt tabbed-navigatie met drie tabs:
 
 ### Tab 1: Export
 
-![Export-tab in de IntraVox-beheer-instellingen](../screenshots/export.png)
+![Export-tab in de IntraVox-beheer-instellingen](../../screenshots/export.png)
 
 - Exporteer pagina's per taal
 - Optie om comments mee te nemen
@@ -42,7 +42,7 @@ De export/import-interface gebruikt tabbed-navigatie met drie tabs:
 
 ### Tab 3: Import
 
-![Import-tab in de IntraVox-beheer-instellingen](../screenshots/import.png)
+![Import-tab in de IntraVox-beheer-instellingen](../../screenshots/import.png)
 
 - Importeer IntraVox-ZIP-bestanden
 - Upload eerder geëxporteerde ZIP

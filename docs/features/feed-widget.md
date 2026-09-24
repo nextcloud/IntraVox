@@ -14,6 +14,7 @@ The Feed Widget displays content from external sources on your intranet pages. I
 - **Jira content types** — All issues, Open, Recently updated, Recently created, Bugs — with project selector
 - **OpenProject content types** — All work packages, Open, Overdue, Milestones, or Recently updated
 - **Two layouts** — List or Grid view (2-4 columns)
+- **Paged display** — Show a few items at a time with arrows, keeping tall feeds short without hiding content
 - **Personalized content** — Users connect their own LMS account to see only their courses, deadlines, and announcements
 - **OAuth2 integration** — One-click account linking with Canvas, Moodle, and Brightspace via popup flow
 - **Manual token fallback** — Users can paste an API token for Moodle or Brightspace without requiring OAuth2 setup
@@ -41,6 +42,14 @@ The simplest source type. Enter a feed URL and the widget fetches and displays t
 The widget automatically detects RSS 2.0 and Atom feed formats. Images are extracted from feed enclosures, `media:content`, `media:thumbnail`, or inline `<img>` tags.
 
 ![RSS feeds from multiple sources displayed in list and grid layouts](../../screenshots/feed-example-rss.png)
+
+The recording below walks the whole round trip on a page of live feeds: adding a
+widget, pointing it at `https://blog.documentfoundation.org/feed/`, choosing the
+layout, sort order and how many items a page shows, reading an item without
+leaving the intranet, and saving. The three columns that remain are three
+separate feed widgets, each refreshing on its own.
+
+![Adding a Feed widget to a page of live RSS feeds, configuring it, reading an item and saving](../../screenshots/rss-feed-demo.gif)
 
 ### Canvas LMS
 
@@ -369,7 +378,7 @@ Administrators configure feed connections in **Admin Settings → External Feeds
 | Setting | Description | Default |
 |---------|-------------|---------|
 | **Sort by** | Date or Title | Date |
-| **Sort order** | Context-dependent toggle: "Newest first / Oldest first" for date, "A → Z / Z → A" for title | Newest first |
+| **Sort order** | A radio pair showing both choices at once: "Newest first / Oldest first" for date, "A → Z / Z → A" for title | Newest first |
 | **Filter by keyword** | Only show items containing this word in title, excerpt, or author | *(empty — no filter)* |
 
 Sorting and filtering are applied server-side after caching. The cache stores all items; sort/filter selects from the cached set. This means changing sort/filter is instant (no re-fetch from external API).
@@ -403,6 +412,21 @@ This tells the external system to return content in Dutch if available, with Eng
 | **Layout** | List or Grid | List |
 | **Columns** | Number of grid columns (2-4) | 3 |
 | **Number of items** | Maximum items to display (1-20) | 5 |
+| **Items per page** | How many of those items share one screen; arrows page through the rest. `0` shows every item at once | 0 (all) |
+
+#### Items per page
+
+A feed set to 20 items is 20 items tall, and a page of several such widgets
+scrolls for a long time. **Items per page** caps the height instead of the
+content: set it to 5 and the widget shows five at a time with arrows and a
+`1-5 of 20` counter underneath, all 20 still reachable. It cannot exceed
+**Number of items**, and `0` — the default, and what every widget saved before
+this option existed carries — keeps the old behaviour with no pager at all.
+
+Paging is a display choice, not a fetch: the items are already in the cached
+response, so turning the page is an array slice. No request, no spinner, and no
+rate-limit slot per turn. The widget reserves the height of a full page while
+paging, so the arrows stay put instead of jumping when a shorter page comes up.
 
 ### Display Options
 

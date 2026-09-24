@@ -44,7 +44,7 @@ GroupFolder: IntraVox/
 
 Versie-geschiedenis is beschikbaar via de **Versies**-tab in de pagina-zijbalk:
 
-![Versie-zijbalk met versie-geschiedenis](../screenshots/Versioning-1.png)
+![Versie-zijbalk met versie-geschiedenis](../../screenshots/Versioning-1.png)
 
 *De Versies-tab toont de huidige versie bovenaan, gevolgd door de versie-geschiedenis. Elke versie toont auteur, relatieve tijd ("1 sec. geleden", "27 min. geleden") en bestandsgrootte.*
 
@@ -52,7 +52,7 @@ Versie-geschiedenis is beschikbaar via de **Versies**-tab in de pagina-zijbalk:
 
 Klik op een versie in de lijst om de inhoud te bekijken:
 
-![Een versie selecteren en bekijken](../screenshots/Versioning-2.png)
+![Een versie selecteren en bekijken](../../screenshots/Versioning-2.png)
 
 *Selecteer je een oudere versie, dan toont de pagina-content die versie. De titel in de header geeft aan welke versie je bekijkt.*
 
@@ -60,7 +60,7 @@ Klik op een versie in de lijst om de inhoud te bekijken:
 
 Klik op de **herstel-knop** (↺) naast een versie om hem terug te zetten:
 
-![Versie hersteld met success-melding](../screenshots/Versioning-3.png)
+![Versie hersteld met success-melding](../../screenshots/Versioning-3.png)
 
 *Na herstellen verschijnt een success-melding. De herstelde versie wordt "Huidige versie" en de vorige huidige versie wordt automatisch in de versie-geschiedenis opgeslagen.*
 

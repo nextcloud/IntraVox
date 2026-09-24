@@ -261,7 +261,7 @@ Of via Nextcloud-beheer → Logging.
 
 IntraVox kan periodiek anonieme gebruiks-statistieken versturen om de app te helpen verbeteren. Dit is opt-in en kan worden in-/uitgeschakeld via **Instellingen → IntraVox**.
 
-![Anonieme gebruiks-statistieken-paneel](../screenshots/Statistics.png)
+![Anonieme gebruiks-statistieken-paneel](../../screenshots/Statistics.png)
 
 *Schakel **Deel anonieme gebruiksstatistieken** in of uit om telemetrie te activeren. Het paneel toont wanneer het laatste rapport is verstuurd.*
 

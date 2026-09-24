@@ -172,7 +172,7 @@ Elke verbinding heeft een **actief/inactief-toggle** in de verbindings-header. G
 
 Aan/uit-toggle wordt direct opgeslagen — geen aparte **Verbindingen opslaan**-klik nodig.
 
-![Een Canvas-verbinding uitschakelen en de resulterende melding op de pagina](../screenshots/feed-disable-feed.png)
+![Een Canvas-verbinding uitschakelen en de resulterende melding op de pagina](../../screenshots/feed-disable-feed.png)
 
 ### Verbindingen exporteren en importeren
 
@@ -310,7 +310,7 @@ Dit is de meest naadloze ervaring voor eind-gebruikers, maar vereist gedeelde SS
 
 ## Demo-data-tab
 
-![Demo-data-tab in de IntraVox-beheer-instellingen](../screenshots/admin-demodata.png)
+![Demo-data-tab in de IntraVox-beheer-instellingen](../../screenshots/admin-demodata.png)
 
 *Per-taal demo-content: installeer, herinstalleer, of clean-start een complete demo-intranet in een van de ondersteunde talen.*
 

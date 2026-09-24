@@ -15,7 +15,7 @@ Engagement-features laten je:
 - Reageren op comments van anderen
 - Reageren op comments met emoji's
 
-![Engagement op een pagina](../screenshots/Engagement.png)
+![Engagement op een pagina](../../screenshots/Engagement.png)
 
 *Voorbeeld van reacties en comments op een IntraVox-pagina*
 

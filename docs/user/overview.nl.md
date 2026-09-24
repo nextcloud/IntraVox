@@ -39,7 +39,7 @@ De hoofdnavigatie verschijnt bovenaan elke pagina:
 - **Dropdowns**: hover of klik op items met pijlen voor submenu's
 - **Megamenu**: sommige intranetten gebruiken een groot dropdown met alle opties
 
-![Megamenu-navigatie](../screenshots/megamenu.png)
+![Megamenu-navigatie](../../screenshots/megamenu.png)
 
 *Megamenu toont alle navigatie-opties in één oogopslag*
 
@@ -183,7 +183,7 @@ Als je beheerder de [MetaVox](https://apps.nextcloud.com/apps/metavox)-app heeft
 
 IntraVox kan een persoonlijke RSS-feed genereren zodat je pagina-updates kunt volgen in je RSS-reader (Nextcloud News, Feedly, etc.).
 
-![RSS-feed menu-optie](../screenshots/rss-settings1.png)
+![RSS-feed menu-optie](../../screenshots/rss-settings1.png)
 
 *Toegang tot RSS-feed via het pagina-menu (drie puntjes)*
 
@@ -196,7 +196,7 @@ IntraVox kan een persoonlijke RSS-feed genereren zodat je pagina-updates kunt vo
    - **Max items**: 10, 20, 30 of 50
 4. Klik **Genereer feed-URL**
 
-![RSS-feed instellingen-dialoog](../screenshots/rss-settings2.png)
+![RSS-feed instellingen-dialoog](../../screenshots/rss-settings2.png)
 
 ### Je feed gebruiken
 
@@ -205,7 +205,7 @@ IntraVox kan een persoonlijke RSS-feed genereren zodat je pagina-updates kunt vo
 3. Voeg een nieuwe feed toe en plak de URL
 4. Je reader toont IntraVox-pagina-updates met titels, content-previews en afbeeldingen
 
-![RSS-feed in Nextcloud News](../screenshots/rss-result.png)
+![RSS-feed in Nextcloud News](../../screenshots/rss-result.png)
 
 ### Feed-features
 
@@ -229,7 +229,7 @@ Je feed-URL bevat een persoonlijk token. Iedereen met deze link kan je feed leze
 
 Als je beheerder publieke link-deling heeft uitgeschakeld, zijn RSS-feeds niet beschikbaar. Het instellingen-dialoog toont een foutmelding.
 
-![RSS-feed uitgeschakeld](../screenshots/rss-disabled.png)
+![RSS-feed uitgeschakeld](../../screenshots/rss-disabled.png)
 
 ## Mobiel gebruik
 

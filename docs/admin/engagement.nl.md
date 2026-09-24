@@ -19,7 +19,7 @@ IntraVox biedt twee controle-niveaus voor engagement-features:
 1. **Globale instellingen** — master-schakelaars voor het hele intranet (alleen beheerder)
 2. **Pagina-instellingen** — per-pagina-overrides (editors met schrijfrechten)
 
-![Admin engagement-instellingen](../screenshots/Engagement-Adminsettings.png)
+![Admin engagement-instellingen](../../screenshots/Engagement-Adminsettings.png)
 
 *De Engagement-tab in IntraVox-beheer-instellingen*
 
@@ -79,7 +79,7 @@ Editors met schrijfrechten op een pagina kunnen engagement-features voor specifi
 3. Klik op de **Instellingen**-knop (tandwiel) in de toolbar
 4. Vind de **Engagement**-sectie
 
-![Pagina engagement-instellingen](../screenshots/Engagement-Pagesettings.png)
+![Pagina engagement-instellingen](../../screenshots/Engagement-Pagesettings.png)
 
 *Pagina-specifieke engagement-instellingen in de Pagina-instellingen-modaal*
 

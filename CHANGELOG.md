@@ -6,6 +6,26 @@ IntraVox is a Nextcloud intranet page builder.
 
 ## [Unreleased]
 
+### Changed
+
+- **The feed widget documentation shows the widget working, and documents the
+  option 3.1.0 added.** A recording walks the round trip on a page of live RSS
+  feeds — adding a widget, pointing it at a feed URL, setting layout, sort order
+  and items per page, reading an item in place, saving — and "Items per page"
+  is written up where it was missing entirely: what it caps, why it cannot
+  exceed the item count, and that paging slices the cached response rather than
+  fetching. The sort-order row still described the toggle that 3.1.0 replaced
+  with a radio pair.
+
+### Fixed
+
+- **58 screenshots were broken in the Dutch documentation.** Every `.nl.md`
+  page under `docs/user/`, `docs/admin/` and one under `docs/features/` linked
+  its images one directory level too high, at `../screenshots/` instead of
+  `../../screenshots/` — a path that does not exist — so the Dutch pages
+  rendered with broken images throughout while their English counterparts were
+  correct. All 234 local image links in the documentation now resolve.
+
 ## [3.1.1] - 2026-09-24 — Conflicting group rights, across folder levels
 
 ### Changed

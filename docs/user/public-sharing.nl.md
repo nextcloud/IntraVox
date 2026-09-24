@@ -12,7 +12,7 @@ Publiek delen laat je IntraVox-pagina's toegankelijk maken zonder login. Bezoeke
 
 IntraVox gebruikt het ingebouwde share-link-systeem van Nextcloud. Je maakt een share-link in de Files-app op de IntraVox-folder, en IntraVox detecteert die automatisch en maakt de content beschikbaar.
 
-![Publiek delen — share-dialoog en publieke pagina-view](../screenshots/Public-ShareLink.png)
+![Publiek delen — share-dialoog en publieke pagina-view](../../screenshots/Public-ShareLink.png)
 
 *Links: de share-dialoog toont welke pagina's zijn meegenomen. Rechts: de publieke view die bezoekers zien.*
 
@@ -26,13 +26,13 @@ Publiek delen vereist één Nextcloud-instelling:
 
 Als deze instelling uit staat, toont IntraVox een waarschuwing wanneer je op de share-knop klikt:
 
-![Delen niet toegestaan — waarschuwingsdialoog](../screenshots/Public-SharingNotAllowed.png)
+![Delen niet toegestaan — waarschuwingsdialoog](../../screenshots/Public-SharingNotAllowed.png)
 
 *Wanneer link-delen door de beheerder is uitgeschakeld, toont IntraVox een waarschuwing met een link naar de Delen-instellingen.*
 
 Als link-delen uit staat terwijl er al share-links bestaan, werken die links niet meer en zien bezoekers een 404:
 
-![Uitschakelen van delen resulteert in 404](../screenshots/Public-DisableSharing.png)
+![Uitschakelen van delen resulteert in 404](../../screenshots/Public-DisableSharing.png)
 
 *Links: de Nextcloud-admin-instelling. Rechts: bestaande share-links geven 404 wanneer ze uit staan.*
 
@@ -58,7 +58,7 @@ Navigeer naar **Files → IntraVox** (je GroupFolder) en zoek de folder of pagin
 
 Ga terug naar IntraVox en open een pagina binnen het gedeelde scope. De share-knop rechtsboven verschijnt nu in de thema-kleur, wat aangeeft dat de pagina publiek gedeeld is.
 
-![Share-knop actief — publieke-link-dialoog](../screenshots/Public-SharingAllowed-link.png)
+![Share-knop actief — publieke-link-dialoog](../../screenshots/Public-SharingAllowed-link.png)
 
 *De share-knop (uitgelicht) toont de thema-kleur wanneer een share-link bestaat. Klik om het Publieke-link-dialoog te zien met "Kopieer publieke link"-knop en een lijst van meegenomen pagina's.*
 
@@ -66,7 +66,7 @@ Ga terug naar IntraVox en open een pagina binnen het gedeelde scope. De share-kn
 
 Klik **"Share beheren in Files"** onderaan het Publieke-link-dialoog om de Files-app te openen waar je instellingen kunt aanpassen zoals wachtwoord, vervaldatum, of de share helemaal kunt verwijderen.
 
-![Shares beheren — van IntraVox naar Files](../screenshots/Public-ManageShare.png)
+![Shares beheren — van IntraVox naar Files](../../screenshots/Public-ManageShare.png)
 
 *Klik "Share beheren in Files" in IntraVox (links) om de share-settings in de Files-app te openen (rechts).*
 
@@ -146,7 +146,7 @@ Wijs het eigen (sub)domein naar dezelfde Nextcloud-backend en laat de reverse pr
 
 Stel je een wachtwoord in op een share-link in de Files-app, dan respecteert IntraVox dat volledig. Zowel het share-dialoog als de bezoeker-experience reflecteren de wachtwoord-eis.
 
-![Wachtwoord-beschermde share — Files-setup en bezoekers-challenge](../screenshots/Public-PasswordProtected.png)
+![Wachtwoord-beschermde share — Files-setup en bezoekers-challenge](../../screenshots/Public-PasswordProtected.png)
 
 *Links: een wachtwoord instellen bij het maken van een share-link in de Files-app. Rechts: het wachtwoord-scherm dat bezoekers zien voor toegang tot de content.*
 
@@ -154,7 +154,7 @@ Stel je een wachtwoord in op een share-link in de Files-app, dan respecteert Int
 
 Wanneer een share-link een wachtwoord heeft, toont het Publieke-link-dialoog in IntraVox een **"Wachtwoord-beschermd"**-badge tussen de scope-indicator en de kopieer-knop. Zo weten editors dat bezoekers een wachtwoord moeten invoeren.
 
-![Wachtwoord-beschermd-badge in het Publieke-link-dialoog](../screenshots/Public-PasswordProtected2.png)
+![Wachtwoord-beschermd-badge in het Publieke-link-dialoog](../../screenshots/Public-PasswordProtected2.png)
 
 *De gele **"Wachtwoord-beschermd"**-melding staat direct boven de **Kopieer publieke link**-knop, met een hint om het wachtwoord in Files te beheren.*
 
@@ -188,7 +188,7 @@ Bij verlopen sessie (bv. de bezoeker komt later terug) moet het wachtwoord opnie
 
 Als geen share-link bestaat voor een pagina, verschijnt de share-knop in een gedempte kleur. Klikken opent een dialoog dat uitlegt hoe een share-link te maken:
 
-![Geen share-link — begeleidings-dialoog](../screenshots/Public-SharingAllowed-nolink.png)
+![Geen share-link — begeleidings-dialoog](../../screenshots/Public-SharingAllowed-nolink.png)
 
 *Wanneer geen share-link bestaat, toont IntraVox begeleiding met een directe link naar de Files-app.*
 

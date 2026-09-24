@@ -2,7 +2,7 @@
 
 De calendar-widget toont aankomende (of voorbije) afspraken uit Nextcloud-kalenders en externe ICS-feeds op je intranet-pagina's. Events worden weergegeven met gekleurde datum-badges, ondersteunen terugkerende afspraken, en de layout past zich automatisch aan de beschikbare ruimte aan.
 
-![Calendar-widget](../screenshots/calendarwidget-intro.gif)
+![Calendar-widget](../../screenshots/calendarwidget-intro.gif)
 
 *Calendar-widget met gekleurde datum-badges, responsieve meerkoloms layout en achtergrond-thema's*
 
@@ -180,19 +180,19 @@ Tekst-kleuren passen zich automatisch aan voor goed contrast op elke achtergrond
 
 ## Screenshots
 
-![Calendar-widget-layout](../screenshots/Calendarwidget-layout.png)
+![Calendar-widget-layout](../../screenshots/Calendarwidget-layout.png)
 
 *2-koloms layout in hoofd-content met getimede en hele-dag-events*
 
-![Calendar-widget-sidebar](../screenshots/Calendarwidget-sidebar.png)
+![Calendar-widget-sidebar](../../screenshots/Calendarwidget-sidebar.png)
 
 *Compacte 1-koloms layout in zij-kolom*
 
-![Calendar-widget-editor](../screenshots/Calendarwidget-editor.png)
+![Calendar-widget-editor](../../screenshots/Calendarwidget-editor.png)
 
 *Widget-editor met kalender-selectie en datum-bereik-opties*
 
-![Calendar-widget 3-koloms](../screenshots/Calendarwidget-primary.png)
+![Calendar-widget 3-koloms](../../screenshots/Calendarwidget-primary.png)
 
 *Responsieve 3-koloms grid in een full-width rij*
 

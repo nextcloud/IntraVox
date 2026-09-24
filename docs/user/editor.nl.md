@@ -49,7 +49,7 @@ Om content te bewerken heb je nodig:
 
 De Opslaan- en Annuleren-knoppen blijven vast bovenaan de pagina tijdens scrollen, ook op lange pagina's.
 
-![Sticky save-toolbar](../screenshots/page-stickysave.gif)
+![Sticky save-toolbar](../../screenshots/page-stickysave.gif)
 
 *De toolbar blijft zichtbaar bovenaan tijdens het scrollen door een lange pagina in edit-modus*
 
@@ -70,7 +70,7 @@ Wanneer je een pagina begint te bewerken, lockt IntraVox hem automatisch om te v
 
 Pagina's hebben een status: **Concept** of **Gepubliceerd**. Dit bepaalt wie de pagina kan zien.
 
-![Concept- en gepubliceerd-status in edit-modus](../screenshots/page-draft-published.png)
+![Concept- en gepubliceerd-status in edit-modus](../../screenshots/page-draft-published.png)
 
 *In edit-modus staat de Concept/Gepubliceerd-knop in de toolbar. Klik om te wisselen.*
 
@@ -179,7 +179,7 @@ Pagina's kunnen ook een **header-rij** (full-width banner bovenaan) en optionele
 
 Rijen kunnen inklapbaar worden gemaakt, zodat gebruikers content-secties kunnen uit- en inklappen. Handig voor FAQ-pagina's, lange content, of optionele details.
 
-![Instellingen voor inklapbare sectie in edit-modus](../screenshots/row-collapsible.png)
+![Instellingen voor inklapbare sectie in edit-modus](../../screenshots/row-collapsible.png)
 
 *Edit-modus: activeer "Inklapbare sectie", stel een sectie-titel in, en vink optioneel "Standaard ingeklapt" aan*
 
@@ -190,7 +190,7 @@ Rijen kunnen inklapbaar worden gemaakt, zodat gebruikers content-secties kunnen 
 3. Voer een **Sectie-titel** in (verschijnt als klikbare header)
 4. Vink optioneel **Standaard ingeklapt** aan om content bij page-load te verbergen
 
-![Inklapbare sectie in view-modus — uitgeklapt (links) en ingeklapt (rechts)](../screenshots/row-collapsible-details.png)
+![Inklapbare sectie in view-modus — uitgeklapt (links) en ingeklapt (rechts)](../../screenshots/row-collapsible-details.png)
 
 *View-modus: gebruikers klikken op de pijl om de sectie open/dicht te toggelen*
 
@@ -202,11 +202,11 @@ Rijen kunnen inklapbaar worden gemaakt, zodat gebruikers content-secties kunnen 
 
 **Praktijkvoorbeeld — FAQ-pagina met meerdere inklapbare secties:**
 
-![Inklapbare secties in een gepubliceerde pagina](../screenshots/Collapsible-sections.png)
+![Inklapbare secties in een gepubliceerde pagina](../../screenshots/Collapsible-sections.png)
 
 *Typische FAQ-pagina: de eerste sectie is uitgeklapt met inhoud, de rest blijven ingeklapt tot ze worden aangeklikt.*
 
-![Meerdere inklapbare rijen in de editor](../screenshots/Collapsible-sectionsSettings.png)
+![Meerdere inklapbare rijen in de editor](../../screenshots/Collapsible-sectionsSettings.png)
 
 *Edit-modus: stack meerdere inklapbare rijen. Elk heeft eigen titel en "Standaard ingeklapt"-instelling.*
 
@@ -214,7 +214,7 @@ Rijen kunnen inklapbaar worden gemaakt, zodat gebruikers content-secties kunnen 
 
 Je kunt een complete rij dupliceren, inclusief alle kolommen en widgets.
 
-![Dupliceer-knop in rij-controls](../screenshots/row-copy.png)
+![Dupliceer-knop in rij-controls](../../screenshots/row-copy.png)
 
 *Klik op het kopieer-icoon in de rij-controls om de rij te dupliceren*
 
@@ -256,7 +256,7 @@ In te schakelen via pagina-instellingen.
 
 Widgets zijn de bouwblokken van pagina-content.
 
-![Beschikbare widgets](../screenshots/widgets.png)
+![Beschikbare widgets](../../screenshots/widgets.png)
 
 *Het widget-palet toont alle beschikbare widget-typen*
 
@@ -302,11 +302,11 @@ Rich-text content met opmaak.
 
 Heb je placeholder-tekst nodig tijdens ontwerpen? Typ een speciaal commando op een lege regel en druk **Enter** voor dummy-content — geïnspireerd op Microsoft Word's `=rand()`.
 
-![Dummy-tekst-generator — Flauwe grappen](../screenshots/dadjokes.gif)
+![Dummy-tekst-generator — Flauwe grappen](../../screenshots/dadjokes.gif)
 
 *Flauwe grappen met rijke opmaak: koppen, genummerde lijsten, vet voor de setup en cursief voor de clou*
 
-![Dummy-tekst-generator — Lorem Ipsum](../screenshots/lorem-demo.gif)
+![Dummy-tekst-generator — Lorem Ipsum](../../screenshots/lorem-demo.gif)
 
 *Lorem Ipsum-showcase: koppen, paragrafen, blockquotes, lijsten, tabellen en inline-marks*
 
@@ -393,7 +393,7 @@ Foto's, diagrammen en graphics met optionele klikbare links.
 
 Embed video's van externe platforms of upload lokale video's.
 
-![Video-widget-editor met platform-detectie](../screenshots/videowidget.png)
+![Video-widget-editor met platform-detectie](../../screenshots/videowidget.png)
 
 *Plak een YouTube/Vimeo/PeerTube-URL en IntraVox detecteert het platform automatisch. Schakel naar **Lokaal bestand** voor een MP4-upload.*
 
@@ -412,7 +412,7 @@ Embed video's van externe platforms of upload lokale video's.
 - Autoplay: video automatisch starten (gedempt)
 - Loop: herhaal video bij einde
 
-![Video-widget gerenderd op een gepubliceerde pagina](../screenshots/videowidgethomepage.png)
+![Video-widget gerenderd op een gepubliceerde pagina](../../screenshots/videowidgethomepage.png)
 
 *Een YouTube-embed naast andere widgets op een gepubliceerde homepage.*
 
@@ -420,7 +420,7 @@ Embed video's van externe platforms of upload lokale video's.
 
 Heeft de beheerder het video-platform niet op de whitelist staan? Dan toont het widget een waarschuwings-placeholder in plaats van de player:
 
-![Geblokkeerd video-domein-placeholder](../screenshots/videowidgetblocked.png)
+![Geblokkeerd video-domein-placeholder](../../screenshots/videowidgetblocked.png)
 
 Vraag je beheerder het platform aan te zetten via **Instellingen → IntraVox → Video Services**.
 
@@ -590,11 +590,11 @@ Voor uitgebreide documentatie: zie [Calendar-widget](../features/calendar-widget
 
 **Bestaande afbeelding selecteren — drie tabs:**
 
-![Selecteren uit de pagina's eigen media-folder](../screenshots/Page-media.png)
+![Selecteren uit de pagina's eigen media-folder](../../screenshots/Page-media.png)
 
 *De afbeelding-picker heeft drie tabs: **Upload** voor nieuwe bestanden, **Pagina-media** voor afbeeldingen in de `_media/`-folder van de huidige pagina, en **Gedeelde bibliotheek** voor site-brede assets.*
 
-![Gedeelde-bibliotheek-tab met site-brede assets](../screenshots/Shared-library.png)
+![Gedeelde-bibliotheek-tab met site-brede assets](../../screenshots/Shared-library.png)
 
 *De **Gedeelde bibliotheek** bewaart herbruikbare assets zoals achtergronden, iconen en logo's die beschikbaar moeten zijn op alle pagina's.*
 
@@ -654,7 +654,7 @@ Of het paneel open staat, en welke van de twee tabs je het laatst gebruikte, wor
 
 Zet je **Structuur beheren** aan (beschikbaar waar je bewerkrechten hebt), dan wordt elke rij van de tab **Pagina's** een set knoppen om de echte pagina's te ordenen — dit is iets anders dan **Navigatie bewerken**, dat alleen de links in de navigatiebalk en hun volgorde wijzigt.
 
-![Paginastructuur in beheer-modus, met knoppen per rij en de twee toelichtingsbanners](../screenshots/PageStructure-edit.png)
+![Paginastructuur in beheer-modus, met knoppen per rij en de twee toelichtingsbanners](../../screenshots/PageStructure-edit.png)
 
 *Beheer-modus: elke pagina heeft knoppen voor hernoemen, verplaatsen, herordenen, als-startpagina-instellen, kopiëren en verwijderen. De huidige startpagina (badge "Home") kan niet verplaatst of verwijderd worden.*
 

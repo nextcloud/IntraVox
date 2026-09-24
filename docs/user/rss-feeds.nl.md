@@ -2,7 +2,7 @@
 
 IntraVox biedt een persoonlijke RSS-feed per gebruiker, zodat ze intranet-pagina-updates kunnen volgen in elke RSS-reader.
 
-![RSS-feed in Nextcloud News](../screenshots/rss-result.png)
+![RSS-feed in Nextcloud News](../../screenshots/rss-result.png)
 
 *IntraVox-feed in Nextcloud News met pagina-inhoud en afbeeldingen*
 
@@ -21,14 +21,14 @@ IntraVox biedt een persoonlijke RSS-feed per gebruiker, zodat ze intranet-pagina
 2. Klik op het drie-puntjes-menu (⋯) rechtsboven
 3. Kies **RSS-feed**
 
-![RSS-feed menu-optie](../screenshots/rss-settings1.png)
+![RSS-feed menu-optie](../../screenshots/rss-settings1.png)
 
 4. Kies je voorkeur-instellingen:
    - **Feed-scope**: "Mijn taal" of "Alle talen"
    - **Maximum items**: 10, 20, 30 of 50
 5. Klik **Genereer feed-URL**
 
-![RSS-feed-instellingen](../screenshots/rss-settings2.png)
+![RSS-feed-instellingen](../../screenshots/rss-settings2.png)
 
 6. Kopieer de URL en voeg toe aan je RSS-reader
 
@@ -111,7 +111,7 @@ Als deze instelling uit staat:
 - Bestaande feed-URLs geven 404
 - Het feed-instellingen-dialoog toont een duidelijke foutmelding
 
-![RSS-feed uitgeschakeld](../screenshots/rss-disabled.png)
+![RSS-feed uitgeschakeld](../../screenshots/rss-disabled.png)
 
 *Wanneer link-delen door de beheerder is uitgeschakeld, toont het feed-instellingen-dialoog een foutmelding*
 
