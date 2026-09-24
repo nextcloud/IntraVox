@@ -1,6 +1,6 @@
 <template>
   <NcModal @close="$emit('close')"
-           :name="t('intravox', 'Edit widget')"
+           :name="editorName"
            size="large"
            class="widget-editor-modal">
     <div class="widget-editor-content">
@@ -548,6 +548,32 @@ export default {
   },
   computed: {
     /**
+     * The widget's own title when it has one, else the kind of widget.
+     * "Edit widget" said nothing on a page of fifteen feeds.
+     */
+    editorName() {
+      const eigen = (this.localWidget.title || '').trim();
+      if (eigen !== '') {
+        return eigen;
+      }
+      const soorten = {
+        text: this.t('intravox', 'Text'),
+        heading: this.t('intravox', 'Heading'),
+        image: this.t('intravox', 'Image'),
+        video: this.t('intravox', 'Video'),
+        links: this.t('intravox', 'Links'),
+        news: this.t('intravox', 'News'),
+        people: this.t('intravox', 'People'),
+        calendar: this.t('intravox', 'Calendar'),
+        feed: this.t('intravox', 'Feed'),
+        'photo-story': this.t('intravox', 'Photo story'),
+        'file-story': this.t('intravox', 'File story'),
+      };
+      // Falls back to the generic name rather than inventing a new source
+      // string: the type name alone already says what is open.
+      return soorten[this.localWidget.type] || this.t('intravox', 'Edit widget');
+    },
+    /**
      * Check if the current video URL is blocked by the whitelist
      */
     isVideoBlocked() {
@@ -998,10 +1024,19 @@ export default {
   padding: 0;
 }
 
+/*
+  Clear the modal's own header. NcModal draws the name and close button in a
+  .modal-header that is position:absolute, top:0, z-index:10001 — it floats OVER
+  the content. The rules above strip every padding so the text editor can run
+  edge to edge, which also removed the space that header sat in: the first field
+  of every editor landed underneath it, close button on top of the title input.
+  Reserved here, once, rather than as top padding in each editor.
+*/
 .widget-editor-content {
   padding: 0;
   width: 100%;
   margin: 0;
+  padding-top: var(--header-height, 50px);
 }
 
 .form-group {

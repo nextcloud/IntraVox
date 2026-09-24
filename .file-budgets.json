@@ -225,7 +225,7 @@
     "src/components/UserSelect.vue": 381,
     "src/components/WelcomeScreen.vue": 234,
     "src/components/Widget.vue": 1459,
-    "src/components/WidgetEditor.vue": 1308,
+    "src/components/WidgetEditor.vue": 1343,
     "src/components/WidgetPicker.vue": 211,
     "src/components/feed/FeedArticleModal.vue": 467,
     "src/components/feed/FeedItem.vue": 612,

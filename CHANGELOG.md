@@ -19,6 +19,19 @@ IntraVox is a Nextcloud intranet page builder.
 
 ### Fixed
 
+- **The close button sat on top of the first field in every widget editor.** The
+  editor modal strips its own padding so the text editor can run edge to edge,
+  but that also removed the space the modal's header floats in — it is
+  absolutely positioned over the content, not above it. The first field of every
+  editor therefore started underneath it, which on the feed editor put the close
+  button across the widget title input. The header's height is now reserved
+  once, for all editors.
+
+- **The widget editor says which widget is open.** The header read "Edit widget"
+  whatever you had clicked, which says nothing on a page of fifteen feeds. It
+  now shows the widget's own title, falling back to the kind of widget when it
+  has none.
+
 - **A feed showing only dates, with the summaries switched on.** "Show summary"
   is a per-widget setting, but a layout rule dropped the summary whenever the
   column was narrower than 400px — and a three-column row of feeds always is.
