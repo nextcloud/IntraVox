@@ -6,7 +6,15 @@ IntraVox is a Nextcloud intranet page builder.
 
 ## [Unreleased]
 
-## [3.1.1] - 2026-09-23 — Conflicting group rights, across folder levels
+## [3.1.1] - 2026-09-24 — Conflicting group rights, across folder levels
+
+### Changed
+
+- **Dutch, French and Spanish are complete again.** The 28 feed strings that
+  shipped untranslated in 3.1.0 are translated, along with the older gaps
+  Spanish still carried (the translation feature, the subscription notices):
+  137 strings in total, all three languages now at 1409/1409. German reached
+  100% through the community in the same window.
 
 ### Fixed
 
