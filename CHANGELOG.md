@@ -19,6 +19,93 @@ IntraVox is a Nextcloud intranet page builder.
 
 ### Fixed
 
+- **The feed editor's form was running the modal's full 1200px.** The 900px
+  measure was set on the host modal's `.form-group`, but Vue's scoped styles bind
+  a rule to the component that declares it — so the rule carried the parent's
+  scope id and the editor's own fields carried a different one. It never applied.
+  The measure now sits on the editor itself, where it reaches every field.
+
+- **One label pattern instead of two.** Widget title and feed URL used
+  `NcTextField`'s floating label; the other fourteen fields put the label above
+  the control. Side by side in one column, two of sixteen labels animated on
+  click and fourteen did not. They now all sit above, which is also what the
+  other six widget editors do — and it removes an off-grid 6px margin that the
+  floating variant ships and `label-outside` drops.
+
+- **The sliders no longer rename themselves while you drag.** "Number of items"
+  had the value baked into its `<label>`, which is the control's accessible name:
+  every step renamed the slider, so a screen reader announced the name again on
+  top of the value it already reports. The number moved to an `<output>` beside
+  the track — announced once, as a value — with reserved width and tabular digits
+  so nothing shifts while dragging. It also stops the label being a sentence
+  glued together from a string and a number, which a translator cannot reorder.
+
+- **Helper text is no longer italic**, and the section heading lines up with the
+  fields it introduces. Small, low-contrast *and* italic was three reductions
+  stacked on the least legible text in the form; the heading was indented 20px
+  further than every field below it. The form now names both its halves —
+  "Source" and "Display" — where the first heading used to appear halfway down.
+
+- **The widget editor had a band of dead space down its right side.** The modal
+  is 1200px wide so the text editor and media pickers have room, but the feed
+  editor capped every dropdown at 280px — a rule written for an 860px dialog and
+  left behind when the modal grew. Raw inputs in the same form were full width,
+  so a 280px dropdown sat beside a 1160px text field, and the connection and
+  SharePoint pickers were squeezed even though they hold long names. The form now
+  carries the measure instead, at the 900px Nextcloud uses for its own settings
+  sections, and the dropdowns that pick from a fixed short list — source type,
+  layout, columns, sort by — size to their content rather than stretching:
+  "Date" does not need 900px to be read. Pickers whose options are user data keep
+  the full width. The same stale cap is removed from the photo-story and
+  file-story editors.
+
+- **The feed editor reads the same in dark mode, and its smallest text is
+  legible.** Error messages used `--color-error`, which is the pale *background*
+  tint of the error trio rather than its text colour, so a failed connection
+  showed near-invisible text — worst in dark mode, where the tint is built to sit
+  under text rather than be it. Three `var(--color-x, fallback)` constructs had
+  the same hazard: a fallback is a light-mode value that renders wrong in dark
+  mode precisely when it is used. Every hardcoded font size in the editor now
+  comes from a variable, so it follows the reader's settings; the hints and
+  status text were 12px, below the smallest size Nextcloud has.
+
+- **Section headings are in sentence case, and the form says where its second
+  half starts.** "WIDGET / PER ITEM / LINKS" and the preview header were ALL
+  CAPS, which the writing guide rules out and which costs width the columns do
+  not have. The bare `<hr>` between "where the content comes from" and "how it is
+  shown" is now a named heading, so both halves are labelled instead of merely
+  separated.
+
+- **The feed editor's display options and item counts are laid out in columns.**
+  Six toggles in three groups were one tall stack, and the two item counts were
+  four more rows below them, which pushed the live preview off the screen. Both
+  now use the width the form already has: the toggle groups sit side by side,
+  and "number of items" and "items per page" share a row — they only make sense
+  together anyway, since the second cannot exceed the first. Both collapse back
+  to a single column on a narrow screen. The group headings also move off a
+  hardcoded 12px, which no accessibility setting can reach, onto the 13px
+  `--font-size-small`.
+
+- **"Newest first / oldest first" no longer floats beside a block of white.** The
+  two directions were stacked vertically next to a one-line dropdown, so the row
+  grew to the height of the taller half. They now sit side by side and wrap only
+  when the column is genuinely narrow. Applies to the feed, photo-story and
+  file-story editors, which share the pattern.
+
+- **The widget editor is a dialog, like every other form in Nextcloud.** It was
+  built on `NcModal`, whose title is a 16px `<div>` positioned outside the panel
+  — which is why the widget's name appeared to float over the app's search bar,
+  and why the form needed padding reserved for a header that was never part of
+  it. Nextcloud's own Files settings, the same shape as this, is a dialog: the
+  title is an `<h2>` at 21px inside the panel, and the component places the
+  action buttons. Switching to `NcDialog` gives all seven widget types the same
+  frame, puts the title in the document outline where a screen reader can find
+  it, and removes the hand-built button row the guidelines warn drifts between
+  apps. The title names the kind of widget — "Feed", "Calendar", "People" — not
+  its content: a feed editor headed "Free Software Foundation Europe" named the
+  source rather than the thing being edited, and the widget's own title is the
+  first field inside, where it can be changed.
+
 - **The close button sat on top of the first field in every widget editor.** The
   editor modal strips its own padding so the text editor can run edge to edge,
   but that also removed the space the modal's header floats in — it is

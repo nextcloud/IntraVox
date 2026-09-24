@@ -1,8 +1,19 @@
 <template>
-  <NcModal @close="$emit('close')"
-           :name="editorName"
-           size="large"
-           class="widget-editor-modal">
+  <!--
+    NcDialog, not NcModal. The guidelines put forms on NcDialog and reserve
+    NcModal for "content that does not fit a dialog"; Nextcloud's own Files
+    settings — the same shape as this, a settings form in a popup — is a dialog,
+    and renders its title as an <h2 class="dialog__name"> at 21px inside the
+    panel. NcModal's title is a 16px div that floats OUTSIDE the panel, over the
+    app header, which is why the widget name appeared to hover over the search
+    bar. NcDialog also places the action buttons, so the hand-built .modal-footer
+    below — the thing the guidelines warn drifts between apps — is gone.
+  -->
+  <NcDialog @closing="$emit('close')"
+            :open="true"
+            :name="editorName"
+            size="large"
+            class="widget-editor-modal">
     <div class="widget-editor-content">
         <!-- Text Widget -->
         <div v-if="localWidget.type === 'text'" class="form-group full-width-editor">
@@ -402,18 +413,20 @@
           </div>
         </div>
 
-      <div class="modal-footer">
-        <NcButton @click="$emit('close')" type="secondary">
-          {{ t('intravox', 'Cancel') }}
-        </NcButton>
-        <NcButton
-          @click="save"
-          type="primary"
-          :disabled="isUploading || (localWidget.type === 'video' && !canSaveVideo)">
-          {{ t('intravox', 'Save') }}
-        </NcButton>
-      </div>
     </div>
+
+    <!-- NcDialog owns the order and the focus handling. -->
+    <template #actions>
+      <NcButton variant="tertiary" @click="$emit('close')">
+        {{ t('intravox', 'Cancel') }}
+      </NcButton>
+      <NcButton
+        variant="primary"
+        :disabled="isUploading || (localWidget.type === 'video' && !canSaveVideo)"
+        @click="save">
+        {{ t('intravox', 'Save') }}
+      </NcButton>
+    </template>
 
     <!-- Media Picker Dialog -->
     <MediaPicker
@@ -425,7 +438,7 @@
       @close="showMediaPicker = false"
       @select="handleMediaSelect"
     />
-  </NcModal>
+  </NcDialog>
 </template>
 
 <script>
@@ -433,7 +446,7 @@ import axios from '@nextcloud/axios';
 import { generateUrl } from '@nextcloud/router';
 import { translate } from '@nextcloud/l10n';
 import { encodeMediaPath } from '../utils/mediaUrl.js';
-import { NcButton, NcModal } from '@nextcloud/vue';
+import { NcButton, NcDialog } from '@nextcloud/vue';
 import PageTreeSelect from './PageTreeSelect.vue';
 import MediaPicker from './MediaPicker.vue';
 import NewsWidgetEditor from './NewsWidgetEditor.vue';
@@ -457,7 +470,7 @@ export default {
   name: 'WidgetEditor',
   components: {
     NcButton,
-    NcModal,
+    NcDialog,
     // Async to match Widget.vue's strategy.
     InlineTextEditor: defineAsyncComponent(() => import('./InlineTextEditor.vue')),
     PageTreeSelect,
@@ -548,14 +561,17 @@ export default {
   },
   computed: {
     /**
-     * The widget's own title when it has one, else the kind of widget.
-     * "Edit widget" said nothing on a page of fifteen feeds.
+     * What KIND of widget is open — never its content.
+     *
+     * This briefly showed the widget's own title, which on a feed meant the
+     * dialog was headed "Free Software Foundation Europe": the name of the
+     * source, not of the thing being edited. A title bar says where you are,
+     * and the answer is "a feed widget", not what that widget happens to point
+     * at today. Every other dialog in the app names the thing or the action —
+     * "Page settings", "Edit links", "Public link" — and the widget's own title
+     * is the first field inside, where it is editable rather than decorative.
      */
     editorName() {
-      const eigen = (this.localWidget.title || '').trim();
-      if (eigen !== '') {
-        return eigen;
-      }
       const soorten = {
         text: this.t('intravox', 'Text'),
         heading: this.t('intravox', 'Heading'),
@@ -1005,43 +1021,48 @@ export default {
 </script>
 
 <style scoped>
-/* Make modal wider for better editing experience */
-.widget-editor-modal :deep(.modal-container) {
-  max-width: 1200px !important;
+/*
+  Wider than a dialog's default, because the inline text editor and the media
+  pickers need the room. NcDialog exposes the panel as .dialog__modal.
+*/
+.widget-editor-modal :deep(.dialog__modal) {
+  max-width: 1200px;
 }
 
-/* Remove all padding from modal content wrapper */
-:deep(.modal-wrapper--large .modal-container) {
+/*
+  Let the text editor run edge to edge. NcDialog pads its content, which is right
+  for a form but wrong for a full-bleed editor, so the padding moves from the
+  container onto the form groups below — where the 900px measure already lives.
+
+  No header reservation any more: NcDialog renders its title as an <h2> inside
+  the panel, in the flow, so nothing floats over the first field. That was the
+  whole reason the old NcModal needed a padding-top here.
+*/
+.widget-editor-modal :deep(.dialog__content) {
   padding: 0;
 }
 
-:deep(.modal-wrapper .modal-container .modal-container__content) {
-  padding: 0;
+.widget-editor-content {
+  width: 100%;
   margin: 0;
-}
-
-:deep(.modal-container > *) {
   padding: 0;
 }
 
 /*
-  Clear the modal's own header. NcModal draws the name and close button in a
-  .modal-header that is position:absolute, top:0, z-index:10001 — it floats OVER
-  the content. The rules above strip every padding so the text editor can run
-  edge to edge, which also removed the space that header sat in: the first field
-  of every editor landed underneath it, close button on top of the title input.
-  Reserved here, once, rather than as top padding in each editor.
-*/
-.widget-editor-content {
-  padding: 0;
-  width: 100%;
-  margin: 0;
-  padding-top: var(--header-height, 50px);
-}
+  The form has a reading measure; the dialog does not.
 
+  The dialog is 1200px so the inline text editor and the media pickers have
+  room, but a column of labelled fields that wide is hard to scan. Nextcloud
+  solves this the same way in its own settings — NcSettingsSection is
+  `width: min(900px, ...)` — so the measure goes on the form, not on each
+  control. 900px matches that.
+
+  The full-bleed editors below are unaffected: they are not .form-group.
+*/
 .form-group {
   margin-bottom: 20px;
   padding: 0 20px;
+  max-width: 900px;
 }
 
 .full-width-editor {
@@ -1209,15 +1230,6 @@ export default {
   border-radius: var(--border-radius);
   font-size: 13px;
   color: var(--color-primary);
-}
-
-.modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  padding: 20px;
-  border-top: 1px solid var(--color-border);
-  margin-top: 0;
 }
 
 /* Text Editor Wrapper - uses InlineTextEditor component */

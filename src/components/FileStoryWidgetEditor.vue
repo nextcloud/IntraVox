@@ -824,16 +824,17 @@ export default {
   flex-wrap: wrap;
 }
 
+/* Sized by its content, not stretched: see the note in FeedWidgetEditor. */
 .fse-sort-by {
-  flex: 1;
-  min-width: 200px;
-  max-width: 280px;
+  flex: 0 1 auto;
 }
 
+/* Side by side, not stacked: see the note in FeedWidgetEditor. */
 .fse-sort-group {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 16px;
 }
 
 .fse-granularity-row,
