@@ -13,6 +13,7 @@ use OCP\IConfig;
 use OCP\IUserManager;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\IDBConnection;
+use OCA\IntraVox\Service\GroupFolders\AclRuleFolder;
 use OCA\IntraVox\Service\GroupFolders\GroupFoldersGateway;
 use OCP\App\IAppManager;
 use OCP\Constants;
@@ -102,6 +103,9 @@ class PermissionService {
     private ?string $cacheDiscriminator = null;
     private GroupFoldersGateway $groupFolders;
 
+    /** The rule arithmetic of issue #116, kept testable on its own. */
+    private AclRuleFolder $aclRuleFolder;
+
     /** Distributed cache TTL for the per-language page path map (5 minutes). */
     private const PAGE_PATH_MAP_TTL = 300;
 
@@ -131,6 +135,7 @@ class PermissionService {
         $this->userId = $userId;
         // Optional: 11 test files build this service without a container.
         $this->groupFolders = $groupFolders ?? new GroupFoldersGateway($appManager, $logger);
+        $this->aclRuleFolder = new AclRuleFolder();
 
         if ($cacheFactory->isAvailable()) {
             $this->distributedCache = $cacheFactory->createDistributed('intravox-permissions');
@@ -327,8 +332,8 @@ class PermissionService {
             // ids (groups AND circles) come from groupfolders' own mapping manager
             // — the same source and warm per-request cache its ACL engine uses —
             // with the user's groups as the fallback when it is unavailable.
-            $mappingIds = $this->groupFolders->mappingIdsForUser($user, $userGroups);
-            $permissions = $this->applyAclRules($folderId, $relativePath, $userId, $mappingIds, $basePermissions);
+            $mappings = $this->groupFolders->mappingsForUser($user, $userGroups);
+            $permissions = $this->applyAclRules($folderId, $relativePath, $userId, $mappings, $basePermissions);
 
             $this->logger->debug("Calculated permissions for {$userId} on {$relativePath}: {$permissions}");
             return $permissions;
@@ -346,7 +351,10 @@ class PermissionService {
      * This method directly queries the ACL database to get the correct permissions,
      * as the __groupfolders storage does not apply ACL rules to getPermissions().
      */
-    private function applyAclRules(int $folderId, string $relativePath, string $userId, array $mappingIds, int $basePermissions): int {
+    /**
+     * @param list<array{type:string,id:string}> $mappings the user's ACL mappings
+     */
+    private function applyAclRules(int $folderId, string $relativePath, string $userId, array $mappings, int $basePermissions): int {
         try {
             // Build path segments to check (from least specific to most specific)
             // ACL rules are stored with paths like "files/en/departments/hr"
@@ -393,8 +401,27 @@ class PermissionService {
             $storageId = $storageRow['numeric_id'];
             $this->logger->debug("Found storage ID {$storageId} for groupfolder {$folderId}");
 
-            // For each path (most specific to least specific), check for ACL rules
-            $effectivePermissions = $basePermissions;
+            // Rules are COLLECTED here and combined afterwards, because how they
+            // combine depends on rules found at other depths. $pathsToCheck is
+            // already ordered parent first, which is the order the fold needs.
+            /** @var array<string, array<string, list<array{mask:int,permissions:int}>>> $rulesByPathAndMapping */
+            $rulesByPathAndMapping = [];
+
+            // (type, id) pairs the user actually holds, as a lookup. The SQL below
+            // matches on mapping_id alone; this is what keeps a group rule from
+            // being credited to a circle whose id happens to be the same string.
+            $heldMappings = [];
+            $mappingIds = [];
+            foreach ($mappings as $mapping) {
+                $heldMappings[$mapping['type'] . '/' . $mapping['id']] = true;
+                $mappingIds[$mapping['id']] = true;
+            }
+            $mappingIds = array_keys($mappingIds);
+
+            // No mappings at all: nothing can match, so the folder grant stands.
+            if ($mappingIds === []) {
+                return $basePermissions;
+            }
 
             foreach ($pathsToCheck as $aclPath) {
                 // Get fileid for this path
@@ -414,72 +441,62 @@ class PermissionService {
 
                 $fileId = $fileRow['fileid'];
 
-                // Every rule on this file that applies to the user, in one query.
+                // Every rule on this file that applies to the user, in one query —
+                // groups, circles (Teams) AND the user's own rule together.
                 //
-                // Two things were wrong with fetching per group. It only asked
-                // for mapping_type 'group', so a rule set on a Team (circle)
-                // was invisible — an administrator's restriction that IntraVox
-                // simply did not apply. And it folded each rule onto the
-                // accumulator in turn, so with two rules on the same file the
-                // last one out of the database won: a deny could erase an allow
-                // its own group had just granted, and the answer depended on
-                // row order (issue #116).
+                // They are NOT applied here. Rules that sit on different levels of
+                // one path have to be combined per mapping before they are merged
+                // (see the fold below), so this loop only collects them, keyed by
+                // path. $mappings carries the user's mapping ids with their types,
+                // taken from groupfolders' own UserMappingManager — the exact set
+                // its ACL engine matches rules against.
                 //
-                // $mappingIds carries the user's group AND circle ids, taken from
-                // groupfolders' own UserMappingManager — the exact set its ACL
-                // engine matches rules against. groupfolders merges instead of
-                // sequencing — Rule::mergeRules() ORs the masks and ORs the
-                // permissions, documented there as "allow overwrites deny" — and
-                // that is what this now does before applying once.
-                $mask = 0;
-                $permissions = 0;
-
-                if ($mappingIds !== []) {
-                    $aclQuery = $db->getQueryBuilder();
-                    $aclQuery->select('mask', 'permissions', 'mapping_type', 'mapping_id')
-                        ->from('group_folders_acl')
-                        ->where($aclQuery->expr()->eq('fileid', $aclQuery->createNamedParameter($fileId)))
-                        ->andWhere($aclQuery->expr()->in('mapping_type', $aclQuery->createNamedParameter(['group', 'circle'], IQueryBuilder::PARAM_STR_ARRAY)))
-                        ->andWhere($aclQuery->expr()->in('mapping_id', $aclQuery->createNamedParameter($mappingIds, IQueryBuilder::PARAM_STR_ARRAY)));
-                    $aclResult = $aclQuery->executeQuery();
-                    $aclRows = $aclResult->fetchAll();
-                    $aclResult->closeCursor();
-
-                    foreach ($aclRows as $aclRow) {
-                        $mask |= (int)$aclRow['mask'];
-                        $permissions |= (int)$aclRow['permissions'];
-                    }
-
-                    if ($aclRows !== []) {
-                        $this->logger->debug("Merged " . count($aclRows) . " ACL rule(s) on path {$aclPath}: mask={$mask}, permissions={$permissions}");
-                        $effectivePermissions = ($effectivePermissions & ~$mask) | ($permissions & $mask);
-                        $this->logger->debug("After applying ACL: effectivePermissions={$effectivePermissions}");
-                    }
-                }
-
-                // Also check user-specific rules
-                $userAclQuery = $db->getQueryBuilder();
-                $userAclQuery->select('mask', 'permissions')
+                // A 'user' rule is deliberately in the same pool as the group and
+                // circle rules rather than applied afterwards as an override.
+                // Upstream has no such precedence: UserMappingManager hands the
+                // user mapping to RuleManager in one flat list with the groups and
+                // circles, and mergeRules() treats them alike. IntraVox applied the
+                // user rule last and let it overwrite, which silently inverted the
+                // documented "allow overwrites deny" whenever an administrator set
+                // a per-user deny next to a group allow.
+                $aclQuery = $db->getQueryBuilder();
+                $aclQuery->select('mask', 'permissions', 'mapping_type', 'mapping_id')
                     ->from('group_folders_acl')
-                    ->where($userAclQuery->expr()->eq('fileid', $userAclQuery->createNamedParameter($fileId)))
-                    ->andWhere($userAclQuery->expr()->eq('mapping_type', $userAclQuery->createNamedParameter('user')))
-                    ->andWhere($userAclQuery->expr()->eq('mapping_id', $userAclQuery->createNamedParameter($userId)));
-                $userAclResult = $userAclQuery->executeQuery();
-                $userAclRow = $userAclResult->fetch();
-                $userAclResult->closeCursor();
+                    ->where($aclQuery->expr()->eq('fileid', $aclQuery->createNamedParameter($fileId)))
+                    ->andWhere($aclQuery->expr()->in('mapping_type', $aclQuery->createNamedParameter(['group', 'circle', 'user'], IQueryBuilder::PARAM_STR_ARRAY)))
+                    ->andWhere($aclQuery->expr()->in('mapping_id', $aclQuery->createNamedParameter($mappingIds, IQueryBuilder::PARAM_STR_ARRAY)));
+                $aclResult = $aclQuery->executeQuery();
+                $aclRows = $aclResult->fetchAll();
+                $aclResult->closeCursor();
 
-                if ($userAclRow) {
-                    $mask = (int)$userAclRow['mask'];
-                    $permissions = (int)$userAclRow['permissions'];
+                foreach ($aclRows as $aclRow) {
+                    // mapping_id is matched in SQL, but the pair (type, id) is what
+                    // identifies a mapping: a circle id and a group id are two id
+                    // spaces and may collide. Only rules for mappings this user
+                    // actually holds are kept — an `IN` over ids alone would let a
+                    // GROUP rule through on a circle id the user has, and vice versa.
+                    $key = $aclRow['mapping_type'] . '/' . $aclRow['mapping_id'];
+                    if (!isset($heldMappings[$key])) {
+                        continue;
+                    }
 
-                    $this->logger->debug("Found user ACL rule for {$userId} on path {$aclPath}: mask={$mask}, permissions={$permissions}");
-
-                    // User rules override group rules
-                    $effectivePermissions = ($effectivePermissions & ~$mask) | ($permissions & $mask);
-
-                    $this->logger->debug("After applying user ACL: effectivePermissions={$effectivePermissions}");
+                    $rulesByPathAndMapping[$aclPath][$key][] = [
+                        'mask' => (int)$aclRow['mask'],
+                        // groupfolders normalises this in Rule::__construct
+                        // ($permissions &= $mask), and the plain OR in the merge is
+                        // only safe because of it: an unmasked bit must never
+                        // contribute a phantom allow.
+                        'permissions' => (int)$aclRow['permissions'] & (int)$aclRow['mask'],
+                    ];
                 }
             }
+
+            $effectivePermissions = $this->aclRuleFolder->fold(
+                $rulesByPathAndMapping,
+                $pathsToCheck,
+                $basePermissions,
+                $this->groupFolders->inheritMergePerUser()
+            );
 
             $this->logger->debug("Final permissions for {$userId} on {$relativePath}: {$effectivePermissions}");
             return $effectivePermissions;
