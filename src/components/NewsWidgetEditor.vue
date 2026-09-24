@@ -683,7 +683,7 @@ export default {
 
 .editor-label {
   font-weight: 600;
-  font-size: 14px;
+  font-size: var(--default-font-size);
   color: var(--color-main-text);
 }
 
@@ -694,7 +694,7 @@ export default {
 
 .editor-hint {
   margin: 0;
-  font-size: 12px;
+  font-size: var(--font-size-small);
   color: var(--color-text-maxcontrast);
 }
 
@@ -703,15 +703,18 @@ export default {
   width: 100%;
   padding: 8px 12px;
   border: 1px solid var(--color-border);
-  border-radius: var(--border-radius);
+  border-radius: var(--border-radius-element);
   background: var(--color-main-background);
-  font-size: 14px;
+  font-size: var(--default-font-size);
 }
 
 .editor-input:focus,
 .editor-select:focus {
   border-color: var(--color-primary);
-  outline: none;
+  /* A border-colour change is not a focus indicator: it cannot meet the
+     3:1 contrast the criterion asks for. Keep a real ring. */
+  outline: 2px solid var(--color-primary-element);
+  outline-offset: 2px;
 }
 
 .color-presets {
@@ -723,9 +726,9 @@ export default {
   flex: 1;
   padding: 8px 12px;
   border: 2px solid var(--color-border);
-  border-radius: var(--border-radius);
+  border-radius: var(--border-radius-element);
   background: var(--color-main-background);
-  font-size: 13px;
+  font-size: var(--font-size-small);
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -752,7 +755,7 @@ export default {
   gap: 4px;
   padding: 12px 8px;
   border: 2px solid var(--color-border);
-  border-radius: var(--border-radius);
+  border-radius: var(--border-radius-element);
   background: var(--color-main-background);
   cursor: pointer;
   transition: all 0.2s;
@@ -768,7 +771,7 @@ export default {
 }
 
 .layout-option span {
-  font-size: 12px;
+  font-size: var(--font-size-small);
   font-weight: 500;
 }
 
@@ -781,7 +784,7 @@ export default {
   width: 40px;
   height: 36px;
   border: 2px solid var(--color-border);
-  border-radius: var(--border-radius);
+  border-radius: var(--border-radius-element);
   background: var(--color-main-background);
   font-weight: 600;
   cursor: pointer;
@@ -829,7 +832,7 @@ export default {
   height: 36px;
   padding: 0;
   border: 1px solid var(--color-border);
-  border-radius: var(--border-radius);
+  border-radius: var(--border-radius-element);
   background: var(--color-main-background);
   cursor: pointer;
 }
@@ -852,8 +855,10 @@ export default {
 }
 
 .checkbox-option input {
-  width: 16px;
-  height: 16px;
+  /* 24px is the WCAG 2.2 target-size floor; 16px only clears it with 24px
+     of space around it, which the row gap does not give. */
+  width: var(--clickable-area-small, 24px);
+  height: var(--clickable-area-small, 24px);
 }
 
 .filters-list {
@@ -889,8 +894,8 @@ export default {
 input.filter-value {
   padding: 6px 8px;
   border: 1px solid var(--color-border);
-  border-radius: var(--border-radius);
-  font-size: 13px;
+  border-radius: var(--border-radius-element);
+  font-size: var(--font-size-small);
 }
 
 /* A row can wrap to two lines once several chips are selected, so the controls
@@ -907,7 +912,7 @@ input.filter-value {
   height: 28px;
   padding: 0;
   border: none;
-  border-radius: var(--border-radius);
+  border-radius: var(--border-radius-element);
   background: transparent;
   color: var(--color-text-maxcontrast);
   cursor: pointer;
@@ -915,23 +920,23 @@ input.filter-value {
 
 .filter-remove:hover {
   background: var(--color-error-hover);
-  color: var(--color-error);
+  color: var(--color-error-text);
 }
 
 .filter-operator-toggle {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 13px;
+  font-size: var(--font-size-small);
   color: var(--color-text-maxcontrast);
 }
 
 .operator-button {
   padding: 4px 12px;
   border: 1px solid var(--color-border);
-  border-radius: var(--border-radius);
+  border-radius: var(--border-radius-element);
   background: var(--color-main-background);
-  font-size: 12px;
+  font-size: var(--font-size-small);
   cursor: pointer;
 }
 
@@ -947,10 +952,10 @@ input.filter-value {
   gap: 6px;
   padding: 8px 12px;
   border: 1px dashed var(--color-border);
-  border-radius: var(--border-radius);
+  border-radius: var(--border-radius-element);
   background: transparent;
   color: var(--color-text-maxcontrast);
-  font-size: 13px;
+  font-size: var(--font-size-small);
   cursor: pointer;
 }
 
@@ -965,9 +970,9 @@ input.filter-value {
   gap: 8px;
   padding: 12px;
   background: var(--color-background-hover);
-  border-radius: var(--border-radius);
+  border-radius: var(--border-radius-element);
   color: var(--color-text-maxcontrast);
-  font-size: 13px;
+  font-size: var(--font-size-small);
 }
 
 /* Publication Filter */
@@ -981,11 +986,11 @@ input.filter-value {
   gap: 8px;
   margin-top: 8px;
   padding: 10px 12px;
-  background: var(--color-warning-light, #fff3cd);
-  border: 1px solid var(--color-warning, #ffc107);
-  border-radius: var(--border-radius);
-  color: var(--color-warning-text, #856404);
-  font-size: 13px;
+  background: var(--color-warning-light);
+  border: 1px solid var(--color-warning);
+  border-radius: var(--border-radius-element);
+  color: var(--color-warning-text);
+  font-size: var(--font-size-small);
 }
 
 .publication-warning .material-design-icon {

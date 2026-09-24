@@ -708,9 +708,8 @@ export default {
   margin: 24px 0 4px;
   padding-bottom: 6px;
   border-bottom: 1px solid var(--color-border);
-  font-size: 12px;
+  font-size: var(--font-size-small);
   font-weight: 600;
-  text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--color-text-maxcontrast);
 }
@@ -726,20 +725,20 @@ export default {
 }
 
 .editor-label {
-  font-size: 13px;
+  font-size: var(--font-size-small);
   font-weight: 600;
 }
 
 .editor-input {
   padding: 6px 10px;
   border: 1px solid var(--color-border);
-  border-radius: var(--border-radius);
+  border-radius: var(--border-radius-element);
   background: var(--color-main-background);
   color: var(--color-main-text);
 }
 
 .editor-hint {
-  font-size: 11px;
+  font-size: var(--font-size-small);
   color: var(--color-text-maxcontrast);
   margin: 0;
 }
@@ -763,10 +762,10 @@ export default {
   gap: 6px;
   padding: 4px 10px;
   margin-top: 8px;
-  border-radius: var(--border-radius);
+  border-radius: var(--border-radius-element);
   background: var(--color-background-hover);
   color: var(--color-text-maxcontrast);
-  font-size: 11px;
+  font-size: var(--font-size-small);
   width: max-content;
 }
 
@@ -800,11 +799,11 @@ export default {
   gap: 6px;
   padding: 12px 8px;
   border: 1px solid var(--color-border);
-  border-radius: var(--border-radius);
+  border-radius: var(--border-radius-element);
   background: var(--color-main-background);
   color: var(--color-main-text);
   cursor: pointer;
-  font-size: 12px;
+  font-size: var(--font-size-small);
   transition: background 0.12s ease, border-color 0.12s ease;
 }
 

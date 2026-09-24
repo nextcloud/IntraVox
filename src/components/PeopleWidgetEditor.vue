@@ -634,28 +634,31 @@ export default {
 .editor-label {
   font-weight: 500;
   color: var(--color-main-text);
-  font-size: 14px;
+  font-size: var(--default-font-size);
 }
 
 .label-hint {
   font-weight: 400;
   color: var(--color-text-maxcontrast);
-  font-size: 12px;
+  font-size: var(--font-size-small);
 }
 
 .editor-input,
 .editor-select {
   padding: 8px 12px;
   border: 1px solid var(--color-border);
-  border-radius: var(--border-radius);
+  border-radius: var(--border-radius-element);
   background: var(--color-main-background);
-  font-size: 14px;
+  font-size: var(--default-font-size);
 }
 
 .editor-input:focus,
 .editor-select:focus {
   border-color: var(--color-primary-element);
-  outline: none;
+  /* A border-colour change is not a focus indicator: it cannot meet the
+     3:1 contrast the criterion asks for. Keep a real ring. */
+  outline: 2px solid var(--color-primary-element);
+  outline-offset: 2px;
 }
 
 /* Color presets */
@@ -667,10 +670,10 @@ export default {
 .color-preset-btn {
   padding: 6px 12px;
   border: 1px solid var(--color-border);
-  border-radius: var(--border-radius);
+  border-radius: var(--border-radius-element);
   background: var(--color-main-background);
   cursor: pointer;
-  font-size: 13px;
+  font-size: var(--font-size-small);
   transition: all 0.15s ease;
 }
 
@@ -697,10 +700,10 @@ export default {
   gap: 6px;
   padding: 12px;
   border: 1px solid var(--color-border);
-  border-radius: var(--border-radius);
+  border-radius: var(--border-radius-element);
   background: var(--color-main-background);
   cursor: pointer;
-  font-size: 13px;
+  font-size: var(--font-size-small);
   transition: all 0.15s ease;
 }
 
@@ -727,7 +730,7 @@ export default {
   gap: 6px;
   padding: 12px 8px;
   border: 1px solid var(--color-border);
-  border-radius: var(--border-radius);
+  border-radius: var(--border-radius-element);
   background: var(--color-main-background);
   cursor: pointer;
   transition: all 0.15s ease;
@@ -743,7 +746,7 @@ export default {
 }
 
 .layout-option span {
-  font-size: 12px;
+  font-size: var(--font-size-small);
   color: var(--color-main-text);
 }
 
@@ -760,10 +763,10 @@ export default {
   align-items: center;
   justify-content: center;
   border: 1px solid var(--color-border);
-  border-radius: var(--border-radius);
+  border-radius: var(--border-radius-element);
   background: var(--color-main-background);
   cursor: pointer;
-  font-size: 14px;
+  font-size: var(--default-font-size);
   font-weight: 500;
   transition: all 0.15s ease;
 }
@@ -810,7 +813,7 @@ export default {
   justify-content: center;
   padding: 8px;
   border: 1px solid var(--color-border);
-  border-radius: var(--border-radius);
+  border-radius: var(--border-radius-element);
   background: var(--color-main-background);
   cursor: pointer;
   transition: all 0.15s ease;
@@ -843,10 +846,10 @@ export default {
 }
 
 .display-group-header {
-  font-size: 11px;
+  font-size: var(--font-size-small);
   font-weight: 600;
   color: var(--color-text-maxcontrast);
-  text-transform: uppercase;
+
   letter-spacing: 0.5px;
   margin-bottom: 4px;
 }
@@ -856,12 +859,14 @@ export default {
   align-items: center;
   gap: 8px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: var(--default-font-size);
 }
 
 .checkbox-option input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
+  /* 24px is the WCAG 2.2 target-size floor; 16px only clears it with 24px
+     of space around it, which the row gap does not give. */
+  width: var(--clickable-area-small, 24px);
+  height: var(--clickable-area-small, 24px);
 }
 
 /* Filters */
@@ -882,24 +887,24 @@ export default {
   flex: 1;
   padding: 6px 8px;
   border: 1px solid var(--color-border);
-  border-radius: var(--border-radius);
-  font-size: 13px;
+  border-radius: var(--border-radius-element);
+  font-size: var(--font-size-small);
 }
 
 .filter-operator {
   width: 120px;
   padding: 6px 8px;
   border: 1px solid var(--color-border);
-  border-radius: var(--border-radius);
-  font-size: 13px;
+  border-radius: var(--border-radius-element);
+  font-size: var(--font-size-small);
 }
 
 .filter-value {
   flex: 1;
   padding: 6px 8px;
   border: 1px solid var(--color-border);
-  border-radius: var(--border-radius);
-  font-size: 13px;
+  border-radius: var(--border-radius-element);
+  font-size: var(--font-size-small);
 }
 
 .filter-value--multi {
@@ -915,12 +920,12 @@ export default {
   background: none;
   color: var(--color-text-maxcontrast);
   cursor: pointer;
-  border-radius: var(--border-radius);
+  border-radius: var(--border-radius-element);
 }
 
 .filter-remove:hover {
   background: var(--color-background-hover);
-  color: var(--color-error);
+  color: var(--color-error-text);
 }
 
 .filter-operator-toggle {
@@ -928,17 +933,17 @@ export default {
   align-items: center;
   gap: 8px;
   margin-top: 8px;
-  font-size: 13px;
+  font-size: var(--font-size-small);
   color: var(--color-text-maxcontrast);
 }
 
 .operator-button {
   padding: 4px 10px;
   border: 1px solid var(--color-border);
-  border-radius: var(--border-radius);
+  border-radius: var(--border-radius-element);
   background: var(--color-main-background);
   cursor: pointer;
-  font-size: 13px;
+  font-size: var(--font-size-small);
 }
 
 .operator-button:hover {
@@ -956,11 +961,11 @@ export default {
   gap: 6px;
   padding: 8px 12px;
   border: 1px dashed var(--color-border);
-  border-radius: var(--border-radius);
+  border-radius: var(--border-radius-element);
   background: transparent;
   color: var(--color-text-maxcontrast);
   cursor: pointer;
-  font-size: 13px;
+  font-size: var(--font-size-small);
   transition: all 0.15s ease;
 }
 

@@ -836,13 +836,13 @@ export default {
 
 .editor-label {
   font-weight: 600;
-  font-size: 14px;
+  font-size: var(--default-font-size);
   color: var(--color-main-text);
 }
 
 .editor-hint {
   margin: 0;
-  font-size: 12px;
+  font-size: var(--font-size-small);
   color: var(--color-text-maxcontrast);
 }
 
@@ -850,10 +850,10 @@ export default {
   width: 100%;
   padding: 8px 12px;
   border: 1px solid var(--color-border);
-  border-radius: var(--border-radius);
+  border-radius: var(--border-radius-element);
   background: var(--color-main-background);
   color: var(--color-main-text);
-  font-size: 14px;
+  font-size: var(--default-font-size);
 }
 
 .editor-input.ps-narrow {
@@ -861,7 +861,10 @@ export default {
 }
 
 .editor-input:focus {
-  outline: none;
+  /* A border-colour change is not a focus indicator: it cannot meet the
+     3:1 contrast the criterion asks for. Keep a real ring. */
+  outline: 2px solid var(--color-primary-element);
+  outline-offset: 2px;
   border-color: var(--color-primary);
 }
 
@@ -881,10 +884,10 @@ export default {
   gap: 6px;
   padding: 4px 10px;
   margin-top: 8px;
-  border-radius: var(--border-radius);
+  border-radius: var(--border-radius-element);
   background: var(--color-background-hover);
   color: var(--color-text-maxcontrast);
-  font-size: 11px;
+  font-size: var(--font-size-small);
   width: max-content;
 }
 
@@ -897,9 +900,8 @@ export default {
   margin: 24px 0 4px;
   padding-bottom: 6px;
   border-bottom: 1px solid var(--color-border);
-  font-size: 12px;
+  font-size: var(--font-size-small);
   font-weight: 600;
-  text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--color-text-maxcontrast);
 }
@@ -921,7 +923,7 @@ export default {
   gap: 4px;
   padding: 12px 8px;
   border: 2px solid var(--color-border);
-  border-radius: var(--border-radius);
+  border-radius: var(--border-radius-element);
   background: var(--color-main-background);
   cursor: pointer;
   transition: all 0.15s;
@@ -943,7 +945,7 @@ export default {
 }
 
 .ps-mode-btn span {
-  font-size: 12px;
+  font-size: var(--font-size-small);
   font-weight: 500;
 }
 
@@ -956,7 +958,7 @@ export default {
   width: 40px;
   height: 36px;
   border: 2px solid var(--color-border);
-  border-radius: var(--border-radius);
+  border-radius: var(--border-radius-element);
   background: var(--color-main-background);
   font-weight: 600;
   cursor: pointer;
@@ -974,15 +976,15 @@ export default {
 .ps-disabled-hint {
   margin-left: 6px;
   color: var(--color-text-maxcontrast);
-  font-size: 11px;
+  font-size: var(--font-size-small);
 }
 
 .ps-no-gps-hint {
   margin-top: 8px;
   padding: 8px 10px;
   background: var(--color-background-hover);
-  border-left: 3px solid var(--color-warning, #ffa500);
-  font-size: 12px;
+  border-left: 3px solid var(--color-warning);
+  font-size: var(--font-size-small);
   color: var(--color-main-text);
   line-height: 1.4;
 }
@@ -1015,7 +1017,7 @@ export default {
 
 .ps-style-hint {
   display: block;
-  font-size: 11px;
+  font-size: var(--font-size-small);
   color: var(--color-text-maxcontrast);
   margin-left: 4px;
   font-weight: 400;
@@ -1050,10 +1052,10 @@ export default {
 .ps-filter-warning {
   margin: 8px 0 0 0;
   padding: 6px 10px;
-  border-radius: var(--border-radius);
-  background: var(--color-warning, #f1c40f);
+  border-radius: var(--border-radius-element);
+  background: var(--color-warning);
   color: var(--color-main-text);
-  font-size: 12px;
+  font-size: var(--font-size-small);
 }
 
 @media (max-width: 600px) {

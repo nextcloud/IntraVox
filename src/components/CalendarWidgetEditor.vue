@@ -317,26 +317,26 @@ export default {
 
 .editor-label {
   font-weight: 600;
-  font-size: 14px;
+  font-size: var(--default-font-size);
   color: var(--color-main-text);
 }
 
 .editor-input {
   padding: 8px 12px;
   border: 1px solid var(--color-border);
-  border-radius: var(--border-radius);
+  border-radius: var(--border-radius-element);
   background: var(--color-main-background);
   color: var(--color-main-text);
-  font-size: 14px;
+  font-size: var(--default-font-size);
 }
 
 .editor-select {
   padding: 8px 12px;
   border: 1px solid var(--color-border);
-  border-radius: var(--border-radius);
+  border-radius: var(--border-radius-element);
   background: var(--color-main-background);
   color: var(--color-main-text);
-  font-size: 14px;
+  font-size: var(--default-font-size);
 }
 
 .color-presets {
@@ -347,11 +347,11 @@ export default {
 .color-preset-btn {
   padding: 6px 12px;
   border: 1px solid var(--color-border);
-  border-radius: var(--border-radius);
+  border-radius: var(--border-radius-element);
   background: var(--color-main-background);
   color: var(--color-main-text);
   cursor: pointer;
-  font-size: 13px;
+  font-size: var(--font-size-small);
 }
 
 .color-preset-btn.active {
@@ -366,14 +366,13 @@ export default {
   gap: 8px;
   padding: 12px;
   color: var(--color-text-maxcontrast);
-  font-size: 13px;
+  font-size: var(--font-size-small);
 }
 
 .calendars-empty {
   padding: 12px;
   color: var(--color-text-maxcontrast);
-  font-size: 13px;
-  font-style: italic;
+  font-size: var(--font-size-small);
 }
 
 .calendar-list {
@@ -390,9 +389,9 @@ export default {
   align-items: center;
   gap: 8px;
   padding: 6px 8px;
-  border-radius: var(--border-radius);
+  border-radius: var(--border-radius-element);
   cursor: pointer;
-  font-size: 14px;
+  font-size: var(--default-font-size);
   transition: background 0.15s;
 }
 
@@ -413,7 +412,7 @@ export default {
 
 .calendar-readonly {
   color: var(--color-text-maxcontrast);
-  font-size: 12px;
+  font-size: var(--font-size-small);
 }
 
 .limit-selector {
@@ -431,7 +430,7 @@ export default {
   min-width: 30px;
   text-align: center;
   font-weight: 600;
-  font-size: 14px;
+  font-size: var(--default-font-size);
   color: var(--color-main-text);
 }
 
@@ -446,12 +445,12 @@ export default {
   align-items: center;
   gap: 8px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: var(--default-font-size);
   color: var(--color-main-text);
 }
 
 .editor-hint {
-  font-size: 12px;
+  font-size: var(--font-size-small);
   color: var(--color-text-maxcontrast);
   margin: 0;
 }
@@ -468,8 +467,8 @@ export default {
   gap: 8px;
   padding: 6px 8px;
   background: var(--color-background-hover);
-  border-radius: var(--border-radius);
-  font-size: 13px;
+  border-radius: var(--border-radius-element);
+  font-size: var(--font-size-small);
 }
 
 .ics-url-text {
@@ -486,8 +485,8 @@ export default {
   color: var(--color-text-maxcontrast);
   cursor: pointer;
   padding: 2px 6px;
-  border-radius: var(--border-radius);
-  font-size: 13px;
+  border-radius: var(--border-radius-element);
+  font-size: var(--font-size-small);
   line-height: 1;
 }
 
@@ -509,11 +508,11 @@ export default {
 .ics-url-add-btn {
   padding: 8px 16px;
   border: 1px solid var(--color-border);
-  border-radius: var(--border-radius);
+  border-radius: var(--border-radius-element);
   background: var(--color-primary-element);
   color: var(--color-primary-element-text);
   cursor: pointer;
-  font-size: 14px;
+  font-size: var(--default-font-size);
   white-space: nowrap;
 }
 
@@ -523,8 +522,8 @@ export default {
 }
 
 .ics-url-error {
-  font-size: 12px;
-  color: var(--color-error);
+  font-size: var(--font-size-small);
+  color: var(--color-error-text);
   margin: 0;
 }
 </style>

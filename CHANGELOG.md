@@ -92,6 +92,17 @@ IntraVox is a Nextcloud intranet page builder.
   when the column is genuinely narrow. Applies to the feed, photo-story and
   file-story editors, which share the pattern.
 
+- **The other five widget editors follow the same rules as the feed editor.**
+  News, people, calendar, photo story and file story carried the same defects
+  that were fixed in the feed editor one at a time: helper text in a size no
+  accessibility setting can reach, `var(--color-x, #hardcoded)` fallbacks that
+  render a light-mode colour exactly when dark mode needs them, ALL-CAPS section
+  headings, and error text using the pale background tint of the error trio
+  rather than its text colour. Two accessibility defects went with them: a
+  focus ring replaced by a 1px border-colour change, which cannot meet the 3:1
+  contrast the criterion asks for, and 16px checkboxes, below the 24px target
+  floor with too little clear space around them to qualify for the exception.
+
 - **The widget editor is a dialog, like every other form in Nextcloud.** It was
   built on `NcModal`, whose title is a 16px `<div>` positioned outside the panel
   — which is why the widget's name appeared to float over the app's search bar,
