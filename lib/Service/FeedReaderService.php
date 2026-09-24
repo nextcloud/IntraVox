@@ -125,6 +125,39 @@ class FeedReaderService {
     private ?ICache $cache = null;
     private string $acceptLanguage = 'en';
 
+    /**
+     * 100ms steps fetchFeed() may sleep waiting for the singleflight lock
+     * holder. 50 = 5s, which is right when one feed IS the request.
+     *
+     * A batch sets it to 0: the wait is paid per feed and the feeds run in
+     * series, so 20 widgets could sleep 20 x 5s without issuing one request —
+     * and blocking contradicts the stale-while-revalidate design above. The
+     * cost is that an uncached feed being fetched right now yields an empty
+     * slot instead of content after 5s; once anything is cached,
+     * CACHE_STALE_TTL covers it and FeedRefreshJob warms it.
+     */
+    private int $singleflightWaitSteps = 50;
+
+    /**
+     * Run $werk with the singleflight wait disabled, then restore it.
+     *
+     * Set and unset around one piece of work rather than left on: this is
+     * instance state on a service shared by every route in the request.
+     *
+     * @template T
+     * @param callable(): T $werk
+     * @return T
+     */
+    public function withoutSingleflightWait(callable $werk) {
+        $vorige = $this->singleflightWaitSteps;
+        $this->singleflightWaitSteps = 0;
+        try {
+            return $werk();
+        } finally {
+            $this->singleflightWaitSteps = $vorige;
+        }
+    }
+
     private const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5 MB
 
     public function __construct(
@@ -231,8 +264,10 @@ class FeedReaderService {
             }
 
             if (!$acquired) {
-                // Another request is fetching — wait for cache to be populated
-                for ($i = 0; $i < 50; $i++) { // max 5 seconds (50 × 100ms)
+                // Another request is fetching. Wait for it to populate the cache
+                // — but only when this feed is the whole request. See
+                // $singleflightWaitSteps for why a batch does not wait.
+                for ($i = 0; $i < $this->singleflightWaitSteps; $i++) {
                     usleep(100_000); // 100ms
                     $cached = $this->cache->get($cacheKey);
                     if ($cached !== null) {

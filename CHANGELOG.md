@@ -6,6 +6,19 @@ IntraVox is a Nextcloud intranet page builder.
 
 ## [Unreleased]
 
+### Fixed
+
+- **A page of feed widgets could hang for a minute and a half without making a
+  single request.** When a feed is not cached and another request is already
+  fetching it, the reader waits for that fetch to finish — up to five seconds.
+  For one feed that is the point of the lock. In a batch it is paid per feed and
+  the feeds are fetched one after another, so twenty widgets could spend twenty
+  times five seconds asleep. It also contradicted the surrounding design, which
+  serves a stale copy precisely so nobody waits behind someone else's refetch.
+  A batch no longer waits: it fetches the feed itself. Measured on dev with five
+  uncached feeds whose locks were held elsewhere: 25.9s to 0.45s. The single-feed
+  routes and the refresh job keep the wait unchanged.
+
 ### Changed
 
 - **The feed widget documentation shows the widget working, and documents the
