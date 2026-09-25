@@ -1,5 +1,12 @@
 <template>
   <div class="feed-widget-editor">
+    <!--
+      Both halves are named. The form used to open with ten unlabelled fields
+      and only name the second half, so the heading outline read
+      "(nothing) … Display" and the first heading appeared halfway down.
+    -->
+    <h4 class="editor-section editor-section--first">{{ t('intravox', 'Source') }}</h4>
+
     <!-- Widget title. First field, matching the news, people and calendar
          editors: it names the block on the page, so it comes before the
          question of where the content comes from. -->
@@ -9,10 +16,12 @@
         renders the value but nothing writes typing back, so the field looked
         filled and saved empty.
       -->
+      <label class="form-label" for="feed-widget-title">{{ t('intravox', 'Widget title (optional)') }}</label>
       <NcTextField
         id="feed-widget-title"
         v-model="localWidget.title"
         :label="t('intravox', 'Widget title (optional)')"
+        label-outside
         @update:model-value="debouncedEmitUpdate"
       />
       <span class="field-hint">{{ t('intravox', 'Left empty, the name from the feed is suggested once. Your own wording always wins.') }}</span>
@@ -22,6 +31,7 @@
     <div class="form-group">
       <label for="feed-source-type">{{ t('intravox', 'Source type') }}</label>
       <NcSelect
+        class="short-choice"
         input-id="feed-source-type"
         v-model="sourceTypeOption"
         :options="sourceTypeOptions"
@@ -32,11 +42,13 @@
 
     <!-- RSS URL input -->
     <div v-if="localWidget.sourceType === 'rss'" class="form-group">
+      <label class="form-label" for="feed-url">{{ t('intravox', 'Feed URL') }}</label>
       <NcTextField
         id="feed-url"
         v-model="localWidget.feedUrl"
         :label="t('intravox', 'Feed URL')"
         type="url"
+        label-outside
         @update:model-value="debouncedEmitUpdate"
       />
     </div>
@@ -179,7 +191,7 @@
           <option value="">{{ t('intravox', 'Select …') }}</option>
           <option v-for="item in spListsForType" :key="item.id" :value="item.id">{{ item.name }}</option>
         </select>
-        <span v-if="spListsError" class="field-hint" style="color: var(--color-error)">{{ spListsError }}</span>
+        <span v-if="spListsError" class="field-error">{{ spListsError }}</span>
       </template>
     </div>
 
@@ -208,12 +220,19 @@
       </template>
     </div>
 
-    <hr class="editor-divider" />
+    <!--
+      The form has two halves: where the content comes from, and how it is
+      shown. They were separated by a bare <hr>, which draws a line without
+      saying what is on either side of it. A named heading does both, and gives
+      the second half somewhere obvious to start reading.
+    -->
+    <h4 class="editor-section">{{ t('intravox', 'Display') }}</h4>
 
     <!-- Layout options -->
     <div class="form-group">
       <label for="feed-layout">{{ t('intravox', 'Layout') }}</label>
       <NcSelect
+        class="short-choice"
         input-id="feed-layout"
         v-model="layoutOption"
         :options="layoutOptions"
@@ -226,6 +245,7 @@
     <div v-if="localWidget.layout === 'grid'" class="form-group">
       <label for="feed-columns">{{ t('intravox', 'Columns') }}</label>
       <NcSelect
+        class="short-choice"
         input-id="feed-columns"
         v-model="columnsOption"
         :options="columnsOptions"
@@ -255,7 +275,7 @@
           :options="sortByOptions"
           :clearable="false"
           label="label"
-          class="sort-by-select"
+          class="sort-by-select short-choice"
         />
         <div class="sort-order-choice" role="group" :aria-label="t('intravox', 'Sort order')">
           <NcCheckboxRadioSwitch
@@ -293,40 +313,56 @@
       <span class="field-hint">{{ t('intravox', 'Only show items containing this word in title, excerpt, or author.') }}</span>
     </div>
 
-    <!-- Limit -->
-    <div class="form-group">
-      <label for="feed-limit">{{ t('intravox', 'Number of items') }}: {{ localWidget.limit }}</label>
-      <input
-        id="feed-limit"
-        v-model.number="localWidget.limit"
-        type="range"
-        min="1"
-        max="20"
-        @input="debouncedEmitUpdate"
-      />
-    </div>
-
     <!--
-      Items per page. Sits right under the total, because the two only make
-      sense together: this one cannot exceed it, and 0 means "show them all".
+      How many items, and how many at a time — side by side, because the two only
+      make sense together: the second cannot exceed the first, and 0 means "show
+      them all". Stacked, they were four rows for one decision.
 
-      A second control rather than a checkbox, because the useful question is
-      not "paginate yes/no" but "how tall may this widget be" — which is the
-      number itself.
+      A second slider rather than a paginate checkbox, because the useful
+      question is not "paginate yes/no" but "how tall may this widget be" —
+      which is the number itself.
     -->
     <div class="form-group">
-      <label for="feed-page-size">
-        {{ t('intravox', 'Items per page') }}:
-        {{ localWidget.pageSize > 0 ? localWidget.pageSize : t('intravox', 'all') }}
-      </label>
-      <input
-        id="feed-page-size"
-        v-model.number="localWidget.pageSize"
-        type="range"
-        min="0"
-        :max="localWidget.limit"
-        @input="debouncedEmitUpdate"
-      />
+      <div class="slider-pair">
+        <!--
+          The value sits beside the slider, not in the label. A <label> is the
+          control's accessible NAME: baking the number into it renamed the
+          slider on every drag step, so a screen reader announced the name again
+          on top of the value it already reports. <output> is a live region by
+          default, so the number is announced once, as a value.
+
+          It also stops the label being a sentence built by concatenation, which
+          a translator cannot reorder.
+        -->
+        <div class="slider-field">
+          <label for="feed-limit">{{ t('intravox', 'Number of items') }}</label>
+          <div class="slider-row">
+            <input
+              id="feed-limit"
+              v-model.number="localWidget.limit"
+              type="range"
+              min="1"
+              max="20"
+              @input="debouncedEmitUpdate"
+            />
+            <output for="feed-limit" class="slider-value">{{ localWidget.limit }}</output>
+          </div>
+        </div>
+        <div class="slider-field">
+          <label for="feed-page-size">{{ t('intravox', 'Items per page') }}</label>
+          <div class="slider-row">
+            <input
+              id="feed-page-size"
+              v-model.number="localWidget.pageSize"
+              type="range"
+              min="0"
+              :max="localWidget.limit"
+              @input="debouncedEmitUpdate"
+            />
+            <output for="feed-page-size" class="slider-value">{{ pageSizeLabel }}</output>
+          </div>
+        </div>
+      </div>
       <span class="field-hint">
         {{ t('intravox', 'Show this many at a time, with arrows to page through the rest. Set to 0 to show every item at once.') }}
       </span>
@@ -339,34 +375,36 @@
     <div class="form-group">
       <label>{{ t('intravox', 'Display options') }}</label>
 
-      <div class="checkbox-group">
-        <span class="checkbox-group-heading">{{ t('intravox', 'Widget') }}</span>
-        <NcCheckboxRadioSwitch :model-value="localWidget.showTitle" @update:model-value="v => { localWidget.showTitle = v; emitUpdate(); }">
-          {{ t('intravox', 'Show title') }}
-        </NcCheckboxRadioSwitch>
-      </div>
+      <div class="checkbox-groups">
+        <div class="checkbox-group">
+          <span class="checkbox-group-heading">{{ t('intravox', 'Widget') }}</span>
+          <NcCheckboxRadioSwitch :model-value="localWidget.showTitle" @update:model-value="v => { localWidget.showTitle = v; emitUpdate(); }">
+            {{ t('intravox', 'Show title') }}
+          </NcCheckboxRadioSwitch>
+        </div>
 
-      <div class="checkbox-group">
-        <span class="checkbox-group-heading">{{ t('intravox', 'Per item') }}</span>
-        <NcCheckboxRadioSwitch :model-value="localWidget.showImage" @update:model-value="v => { localWidget.showImage = v; emitUpdate(); }">
-          {{ t('intravox', 'Show image') }}
-        </NcCheckboxRadioSwitch>
-        <NcCheckboxRadioSwitch :model-value="localWidget.showDate" @update:model-value="v => { localWidget.showDate = v; emitUpdate(); }">
-          {{ t('intravox', 'Show date') }}
-        </NcCheckboxRadioSwitch>
-        <NcCheckboxRadioSwitch :model-value="localWidget.showExcerpt" @update:model-value="v => { localWidget.showExcerpt = v; emitUpdate(); }">
-          {{ t('intravox', 'Show excerpt') }}
-        </NcCheckboxRadioSwitch>
-        <NcCheckboxRadioSwitch :model-value="localWidget.showSource" @update:model-value="v => { localWidget.showSource = v; emitUpdate(); }">
-          {{ t('intravox', 'Show source') }}
-        </NcCheckboxRadioSwitch>
-      </div>
+        <div class="checkbox-group">
+          <span class="checkbox-group-heading">{{ t('intravox', 'Per item') }}</span>
+          <NcCheckboxRadioSwitch :model-value="localWidget.showImage" @update:model-value="v => { localWidget.showImage = v; emitUpdate(); }">
+            {{ t('intravox', 'Show image') }}
+          </NcCheckboxRadioSwitch>
+          <NcCheckboxRadioSwitch :model-value="localWidget.showDate" @update:model-value="v => { localWidget.showDate = v; emitUpdate(); }">
+            {{ t('intravox', 'Show date') }}
+          </NcCheckboxRadioSwitch>
+          <NcCheckboxRadioSwitch :model-value="localWidget.showExcerpt" @update:model-value="v => { localWidget.showExcerpt = v; emitUpdate(); }">
+            {{ t('intravox', 'Show excerpt') }}
+          </NcCheckboxRadioSwitch>
+          <NcCheckboxRadioSwitch :model-value="localWidget.showSource" @update:model-value="v => { localWidget.showSource = v; emitUpdate(); }">
+            {{ t('intravox', 'Show source') }}
+          </NcCheckboxRadioSwitch>
+        </div>
 
-      <div class="checkbox-group">
-        <span class="checkbox-group-heading">{{ t('intravox', 'Links') }}</span>
-        <NcCheckboxRadioSwitch :model-value="localWidget.openInNewTab" @update:model-value="v => { localWidget.openInNewTab = v; emitUpdate(); }">
-          {{ t('intravox', 'Open links in new tab') }}
-        </NcCheckboxRadioSwitch>
+        <div class="checkbox-group">
+          <span class="checkbox-group-heading">{{ t('intravox', 'Links') }}</span>
+          <NcCheckboxRadioSwitch :model-value="localWidget.openInNewTab" @update:model-value="v => { localWidget.openInNewTab = v; emitUpdate(); }">
+            {{ t('intravox', 'Open links in new tab') }}
+          </NcCheckboxRadioSwitch>
+        </div>
       </div>
     </div>
 
@@ -452,6 +490,13 @@ export default {
      * sorted: for a date "newest/oldest" is meaningful where "descending" is
      * jargon, and for a title the reader wants to see A-Z.
      */
+    /* The readout beside the page-size slider. 0 means "no paging", which
+       reads better as a word than as a zero. */
+    pageSizeLabel() {
+      return this.localWidget.pageSize > 0
+        ? String(this.localWidget.pageSize)
+        : this.t('intravox', 'all');
+    },
     sortOrderLabels() {
       if (this.localWidget.sortBy === 'title') {
         return { asc: 'A \u2192 Z', desc: 'Z \u2192 A' };
@@ -558,9 +603,6 @@ export default {
     },
     availableConnections() {
       return this.connections.filter(c => c.active);
-    },
-    connectionsForType() {
-      return this.availableConnections.filter(c => c.type === this.localWidget.sourceType);
     },
     selectedConnection() {
       return this.connections.find(c => c.id === this.localWidget.connectionId) || null;
@@ -679,18 +721,6 @@ export default {
         filterKeyword: '',
       };
     },
-    getSourceTypeLabel(type) {
-      const labels = {
-        moodle: 'Moodle',
-        canvas: 'Canvas',
-        brightspace: 'Brightspace',
-        custom_rest_api: 'REST API (custom)',
-      };
-      return labels[type] || type;
-    },
-    hasConnectionType(type) {
-      return this.availableConnections.some(c => c.type === type);
-    },
     onSourceTypeChange() {
       this.localWidget.feedUrl = '';
       this.localWidget.connectionId = '';
@@ -707,13 +737,6 @@ export default {
         this.connections = response.data.connections || [];
       } catch {
         this.connections = [];
-      }
-    },
-    formatDate(dateString) {
-      try {
-        return new Date(dateString).toLocaleDateString();
-      } catch {
-        return dateString;
       }
     },
     onSharePointContentTypeChange() {
@@ -819,10 +842,6 @@ export default {
     },
     setSortOrder(waarde) {
       this.localWidget.sortOrder = waarde;
-      this.emitUpdate();
-    },
-    toggleSortOrder() {
-      this.localWidget.sortOrder = this.localWidget.sortOrder === 'desc' ? 'asc' : 'desc';
       this.emitUpdate();
     },
     debouncedEmitUpdate() {
@@ -964,11 +983,21 @@ export default {
 </script>
 
 <style scoped>
+/*
+ * The measure lives here, not on the host modal.
+ *
+ * WidgetEditor caps .form-group at 900px, but its <style> is scoped: that rule
+ * carries the PARENT's data-v attribute and these .form-group elements carry
+ * this component's, so it never reached them. Every full-width control was
+ * running the modal's 1200px. The 900px is Nextcloud's own NcSettingsSection
+ * measure; applying it at the root covers every child without a :deep hack.
+ */
 .feed-widget-editor {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  padding: 16px;
+  gap: 24px;
+  padding: 24px 20px;
+  max-width: 900px;
 }
 
 .form-group {
@@ -977,24 +1006,59 @@ export default {
   gap: 4px;
 }
 
-.form-group > label {
+/*
+ * label-outside suppresses NcTextField's own floating label entirely — it has
+ * one render branch, guarded by `!labelOutside`. The caller must then supply
+ * the label, which is what .form-label is. The previous rule here styled
+ * .input-field__label, a class that never renders in this mode, so both
+ * converted fields shipped with no visible label at all.
+ */
+.form-label {
   font-weight: 600;
-  font-size: 14px;
+  font-size: var(--default-font-size);
   color: var(--color-main-text);
 }
 
+.form-group > label {
+  font-weight: 600;
+  font-size: var(--default-font-size);
+  color: var(--color-main-text);
+}
+
+/*
+ * These are raw controls next to Nextcloud ones, so they have to match them or
+ * the column visibly alternates: --default-clickable-area for the height (the
+ * NcSelect/NcTextField height), --border-radius-element for the corners (they
+ * are 8px, these were 4px), and --color-border-maxcontrast because that is what
+ * NcInputField sets its own border to — --color-border left them visibly
+ * fainter than the fields beside them.
+ *
+ * Replacing them with NcSelect/NcTextField is the real fix; this is the part
+ * that can be done without rewriting fourteen controls.
+ */
 .form-group select,
 .form-group input[type="url"],
 .form-group input[type="text"] {
   width: 100%;
   min-width: 0;
-  padding: 8px 12px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--border-radius);
+  height: var(--default-clickable-area);
+  padding-block: 0;
+  padding-inline: 12px;
+  border: 1px solid var(--color-border-maxcontrast);
+  border-radius: var(--border-radius-element);
   background: var(--color-main-background);
   color: var(--color-main-text);
-  font-size: 14px;
+  font-size: var(--default-font-size);
   box-sizing: border-box;
+}
+
+/*
+ * The raw controls fall back to the browser's focus ring, which carries no
+ * contrast guarantee. The NC components bring their own; these need one.
+ */
+.feed-widget-editor :is(select, input, button):focus-visible {
+  outline: 2px solid var(--color-primary-element);
+  outline-offset: 2px;
 }
 
 /* Same shape as the photo-story editor's .ps-sort-row: the field and its
@@ -1006,58 +1070,81 @@ export default {
   flex-wrap: wrap;
 }
 
+/* Sized by its content like the other short choices, not stretched by flex. */
 .sort-by-select {
-  flex: 1;
-  min-width: 200px;
-  max-width: 280px;
-}
-
-.sort-order-choice {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+  flex: 0 1 auto;
 }
 
 /*
- * A dropdown is as wide as its content needs, not as wide as the dialog.
- * NcSelect stretches to its container by default, which in a 860px modal
- * makes a two-option list span the full width and read as a text field.
+ * The two directions sit side by side, not stacked.
+ *
+ * Stacked, they made a two-line column beside a one-line dropdown: the row grew
+ * to the height of the taller half and the dropdown floated against a block of
+ * white. Two short, mutually exclusive labels read fine on one line, and the
+ * row then has one height. They wrap to two lines on a narrow column, which is
+ * what flex-wrap is for.
  */
-.feed-widget-editor :deep(.v-select) {
-  max-width: 280px;
+.sort-order-choice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 16px;
 }
 
-.sort-order-toggle {
-  padding: 6px 12px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--border-radius);
-  background: var(--color-main-background);
-  cursor: pointer;
-  font-size: 13px;
-  white-space: nowrap;
-  flex-shrink: 0;
+/*
+ * A choice from a short list is as wide as its content; a text field is not.
+ *
+ * There used to be a blanket `max-width: 280px` on every NcSelect here, written
+ * for an 860px modal that is now 1200px. It capped the connection and
+ * SharePoint-list pickers too, which hold long names, while raw inputs beside
+ * them were width:100% — a 280px dropdown next to a 1160px field.
+ *
+ * The form now carries the measure (WidgetEditor .form-group, 900px, matching
+ * Nextcloud's own NcSettingsSection). On top of that, the dropdowns that pick
+ * from a fixed short list — source type, layout, columns, sort by — size to
+ * their content rather than stretching: "Date" and "List" do not need 900px to
+ * be read, and a full-width two-option list reads as a text field.
+ *
+ * min-width is NcSelect's own 260px, not a number invented here. Pickers whose
+ * options are user data (connections, courses, lists) are deliberately NOT in
+ * this rule: their content is unpredictable, so they keep the full width.
+ */
+.feed-widget-editor :deep(.v-select.short-choice) {
+  width: fit-content;
+  max-width: 100%;
 }
 
-.sort-order-toggle:hover {
-  background: var(--color-background-hover);
-}
-
+/*
+ * --color-error-text, not --color-error. The latter is the pale BACKGROUND tint
+ * of the error trio, so using it on text gives near-invisible red-on-white —
+ * and in dark mode it is worse, because the tint is built to sit under text
+ * rather than be it.
+ */
 .field-error {
-  color: var(--color-error);
-  font-size: 12px;
-  margin: 2px 0 0;
+  color: var(--color-error-text);
+  font-size: var(--font-size-small);
+  margin-block: 0;
 }
 
+/*
+ * 13px, not 12: --font-size-small is the smallest size Nextcloud has, and it
+ * scales with the user's settings where a hardcoded 12px does not. Combined
+ * with maxcontrast, 12px was the least legible text in the editor.
+ */
+/*
+ * Not italic. Small AND low-contrast is already the pairing the guidelines warn
+ * about; italic is a third reduction on top of two, and Nextcloud does not
+ * italicise helper text anywhere. margin-block: 0 because .form-group's 4px gap
+ * already spaces it — the old 2px made a 6px total, off the 4px grid.
+ */
 .field-hint {
   color: var(--color-text-maxcontrast);
-  font-size: 12px;
-  margin: 2px 0 0;
-  font-style: italic;
+  font-size: var(--font-size-small);
+  margin-block: 0;
 }
 
 .field-hint--warning {
-  color: var(--color-warning-text, var(--color-warning));
-  font-style: normal;
+  color: var(--color-warning-text);
 }
 
 .feed-preview-container {
@@ -1070,11 +1157,9 @@ export default {
 
 .feed-preview-header {
   padding: 8px 12px;
-  font-size: 13px;
+  font-size: var(--font-size-small);
   font-weight: 600;
   color: var(--color-text-maxcontrast);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
   border-bottom: 1px solid var(--color-border);
 }
 
@@ -1083,43 +1168,103 @@ export default {
   overflow-y: auto;
 }
 
-.editor-divider {
-  border: none;
-  border-top: 1px solid var(--color-border);
-  margin: 4px 0;
+/*
+ * Names the second half of the form and separates it at the same time, where a
+ * bare <hr> only did the second. Sentence case and 15px: this is a heading over
+ * a section, not the supporting text the group labels inside it are.
+ */
+/*
+ * Inline margin 0: the root already pads 20px, so the old `margin: … 20px …`
+ * indented the one heading 20px further than every field it introduced — the
+ * single most visible misalignment in the form. The 8px plus the root's 24px
+ * flex gap makes a 32px band above the rule, matching the 32px below it.
+ */
+.editor-section {
+  margin: 8px 0 0;
+  padding-block-start: 32px;
+  border-block-start: 1px solid var(--color-border);
+  font-size: var(--default-font-size);
+  font-weight: 600;
+  color: var(--color-main-text);
+}
+
+/* The first heading has nothing above it to divide. */
+.editor-section--first {
+  margin-block-start: 0;
+  padding-block-start: 0;
+  border-block-start: none;
+}
+
+/*
+ * Six toggles in three named groups, laid out in columns rather than one tall
+ * stack. Each toggle is one short line, so a single column wasted the width the
+ * form already has and pushed the preview below the fold. The groups keep their
+ * headings — they are what makes "show source" (per item) and "open links in a
+ * new tab" (behaviour) legible as different kinds of setting.
+ *
+ * auto-fit rather than a fixed count: on a narrow column it collapses back to
+ * one, without a media query.
+ */
+/*
+ * The two counts share a row. Same auto-fit as the toggle groups, so they drop
+ * under each other on a narrow column without a media query.
+ */
+.slider-pair {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 8px 24px;
+}
+
+.slider-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.slider-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Fill the column instead of the browser's default track width, and follow the
+   theme rather than the browser's accent. */
+.slider-field input[type="range"] {
+  flex: 1;
+  min-width: 0;
+  accent-color: var(--color-primary-element);
+}
+
+/* Reserved width and tabular digits: the number must not shift the slider
+   while you drag it. */
+.slider-value {
+  min-width: 3ch;
+  text-align: end;
+  font-size: var(--default-font-size);
+  color: var(--color-main-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.checkbox-groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px 24px;
+  align-items: start;
 }
 
 .checkbox-group {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
-/* Space between the three groups; the first sits right under its label. */
-.checkbox-group + .checkbox-group {
-  margin-top: 12px;
-}
-
+/* Sentence case, not ALL CAPS: the writing guide is explicit about it, and
+   uppercase also costs the width these three columns do not have. */
 .checkbox-group-heading {
-  font-size: 12px;
+  font-size: var(--font-size-small);
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
   color: var(--color-text-maxcontrast);
-}
-
-.checkbox-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: normal;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-.checkbox-label input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
+  margin-bottom: 4px;
 }
 
 .link-button {
@@ -1127,7 +1272,7 @@ export default {
   border: none;
   color: var(--color-primary-element);
   cursor: pointer;
-  font-size: 12px;
+  font-size: var(--font-size-small);
   padding: 4px 0;
   text-decoration: underline;
 }
@@ -1148,19 +1293,19 @@ export default {
   align-items: center;
   padding: 4px 10px;
   border-radius: var(--border-radius-large);
-  font-size: 12px;
+  font-size: var(--font-size-small);
   font-weight: 600;
 }
 
 .status-badge.connected {
   background: color-mix(in srgb, var(--color-success) 15%, transparent);
-  color: var(--color-success-text, var(--color-success));
+  color: var(--color-success-text);
   border: 1px solid color-mix(in srgb, var(--color-success) 30%, transparent);
 }
 
 .status-badge.disconnected {
   background: color-mix(in srgb, var(--color-warning) 15%, transparent);
-  color: var(--color-warning-text, var(--color-warning));
+  color: var(--color-warning-text);
   border: 1px solid color-mix(in srgb, var(--color-warning) 30%, transparent);
 }
 
@@ -1176,7 +1321,7 @@ export default {
   background: transparent;
   color: var(--color-text-maxcontrast);
   cursor: pointer;
-  font-size: 12px;
+  font-size: var(--font-size-small);
 }
 
 .disconnect-button:hover {
@@ -1196,7 +1341,7 @@ export default {
   background: var(--color-primary-element);
   color: var(--color-primary-element-text);
   cursor: pointer;
-  font-size: 13px;
+  font-size: var(--font-size-small);
 }
 
 .connect-button.secondary {
@@ -1225,7 +1370,7 @@ export default {
   border-radius: var(--border-radius);
   background: var(--color-main-background);
   color: var(--color-main-text);
-  font-size: 13px;
+  font-size: var(--font-size-small);
 }
 
 .manual-token-input button {
@@ -1235,7 +1380,7 @@ export default {
   background: var(--color-primary-element);
   color: var(--color-primary-element-text);
   cursor: pointer;
-  font-size: 13px;
+  font-size: var(--font-size-small);
   white-space: nowrap;
 }
 

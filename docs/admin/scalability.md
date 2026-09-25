@@ -13,6 +13,51 @@ IntraVox is designed to scale from small teams to large organizations. This docu
 | Concurrent users | Up to 1,000 | Singleflight prevents thundering herd on shared resources |
 | External feed sources | Unlimited | Circuit breaker and background refresh prevent cascade failures |
 
+### Sizing the server
+
+The numbers above assume the server can run enough PHP workers for the readers
+arriving at once. That is the setting most worth getting right, and the default
+is tuned for a small instance.
+
+Feeds are what make a page expensive, and only the *first* reader pays. The RSS
+cache is keyed on the feed URL with no user in it, so one reader warms a page and
+everyone after them is served from that cache for 15 minutes (an hour if the
+source is unreachable). Measured: fifteen cached feeds cost **1.6 ms** in total,
+against roughly **160 ms each** when they have to be fetched.
+
+That shape is why the client sends one request per page normally and only splits
+into several when the server reports it actually had to fetch. A warm page costs
+one PHP worker; a cold one briefly costs three.
+
+| Readers at once | Workers to allow | Memory for PHP | Notes |
+|---|---|---|---|
+| Up to 25 | 30–50 (the default 150 is ample) | 512 MB–1 GB | A single core is fine. APCu alone is enough. |
+| 25–150 | 150 (the Apache default) | 2–4 GB | Add Redis: the feed and page caches are then shared between workers instead of duplicated per process. |
+| 150–500 | 300–500 | 8–16 GB | Redis required. Give the background job room to run (see below). |
+| 500–1,000 | 600–1,000 | 16–32 GB | Redis required, and consider a second app server behind the load balancer. |
+
+Worker count is `MaxRequestWorkers` for Apache, `pm.max_children` for PHP-FPM.
+Budget roughly 30–50 MB of memory per worker for IntraVox, and never allow more
+workers than that memory divides into — a machine that swaps is slower than one
+that queues.
+
+**Redis is the single most valuable addition.** Without a distributed cache each
+PHP worker keeps its own copy, so a hundred workers fetch the same feed a hundred
+times. With it, one fetch serves them all. Configure it as both
+`memcache.distributed` and `memcache.locking`.
+
+**Keep the background job running.** `FeedRefreshJob` refreshes configured feeds
+every 10 minutes, before the cache expires, so readers almost never trigger a
+cold fetch. On a busy instance this is what keeps the cold path rare. It needs
+Nextcloud's cron to be on system cron, not AJAX — AJAX cron only runs when
+somebody loads a page, which is exactly when you do not want to be fetching.
+
+**How many feed widgets per page is reasonable?** Up to twenty is comfortable.
+Beyond that the client sends more than one request per page view, which costs
+against the per-user rate limit of 30 requests a minute. A page with fifty-seven
+widgets works, but it is three requests every time somebody opens it — consider
+splitting it into sub-pages, which also gives readers something they can scan.
+
 ### Bundle optimization
 
 The frontend JavaScript bundle is split for fast initial page loads:
@@ -73,7 +118,9 @@ Page tree components (PageTreeSelect, PageTreeModal) use progressive rendering: 
 
 External feed sources are protected by three layers:
 
-1. **Singleflight lock** — When the cache expires, only the first request fetches from the external source. Concurrent requests wait (up to 5 seconds) and then read from the freshly populated cache. This prevents thundering herd when many users view the same page simultaneously.
+1. **Singleflight lock** — When the cache expires, only the first request fetches from the external source. A request for a *single* feed waits (up to 5 seconds) and then reads from the freshly populated cache. This prevents thundering herd when many users view the same page simultaneously.
+
+   A *batch* request does not wait. The wait is paid per feed and the feeds in a batch are fetched one after another, so a page of twenty widgets could otherwise sleep twenty times five seconds without issuing a single outbound request. A batch fetches the feed itself instead, which is both faster and honest to the reader.
 
 2. **Circuit breaker** — After 3 consecutive failures for a source, the circuit breaker opens and subsequent requests return immediately with a "temporarily unavailable" message. The circuit resets automatically after 5 minutes, or immediately when a successful fetch occurs.
 

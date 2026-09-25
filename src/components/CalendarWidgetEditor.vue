@@ -58,24 +58,20 @@
       </div>
 
       <div v-else class="calendar-list">
-        <label
+        <NcCheckboxRadioSwitch
           v-for="calendar in calendars"
           :key="calendar.id"
           class="calendar-option"
-        >
-          <input
-            type="checkbox"
-            :value="calendar.id"
-            v-model="localWidget.calendarIds"
-            @change="emitUpdate"
-          />
+          :value="calendar.id"
+          v-model="localWidget.calendarIds"
+          @update:model-value="emitUpdate">
           <span
-            class="calendar-color-dot"
-            :style="{ backgroundColor: calendar.color }"
+          class="calendar-color-dot"
+          :style="{ backgroundColor: calendar.color }"
           ></span>
           <span class="calendar-name">{{ calendar.displayName }}</span>
           <span v-if="calendar.isReadOnly" class="calendar-readonly">({{ t('intravox', 'read-only') }})</span>
-        </label>
+        </NcCheckboxRadioSwitch>
       </div>
     </div>
 
@@ -160,21 +156,23 @@
     <div class="editor-section">
       <label class="editor-label">{{ t('intravox', 'Display options') }}</label>
       <div class="display-options">
-        <label class="checkbox-option">
-          <input type="checkbox" v-model="localWidget.showTime" @change="emitUpdate" />
-          <span>{{ t('intravox', 'Show time') }}</span>
-        </label>
-        <label class="checkbox-option">
-          <input type="checkbox" v-model="localWidget.showLocation" @change="emitUpdate" />
-          <span>{{ t('intravox', 'Show location') }}</span>
-        </label>
+        <NcCheckboxRadioSwitch
+          v-model="localWidget.showTime"
+          @update:model-value="emitUpdate">
+          {{ t('intravox', 'Show time') }}
+        </NcCheckboxRadioSwitch>
+        <NcCheckboxRadioSwitch
+          v-model="localWidget.showLocation"
+          @update:model-value="emitUpdate">
+          {{ t('intravox', 'Show location') }}
+        </NcCheckboxRadioSwitch>
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import { NcLoadingIcon } from '@nextcloud/vue';
+import { NcCheckboxRadioSwitch, NcLoadingIcon } from '@nextcloud/vue';
 import { generateUrl } from '@nextcloud/router';
 import { translate } from '@nextcloud/l10n';
 import axios from '@nextcloud/axios';
@@ -182,6 +180,7 @@ import axios from '@nextcloud/axios';
 export default {
   name: 'CalendarWidgetEditor',
   components: {
+    NcCheckboxRadioSwitch,
     NcLoadingIcon,
   },
   props: {
@@ -317,26 +316,26 @@ export default {
 
 .editor-label {
   font-weight: 600;
-  font-size: 14px;
+  font-size: var(--default-font-size);
   color: var(--color-main-text);
 }
 
 .editor-input {
   padding: 8px 12px;
   border: 1px solid var(--color-border);
-  border-radius: var(--border-radius);
+  border-radius: var(--border-radius-element);
   background: var(--color-main-background);
   color: var(--color-main-text);
-  font-size: 14px;
+  font-size: var(--default-font-size);
 }
 
 .editor-select {
   padding: 8px 12px;
   border: 1px solid var(--color-border);
-  border-radius: var(--border-radius);
+  border-radius: var(--border-radius-element);
   background: var(--color-main-background);
   color: var(--color-main-text);
-  font-size: 14px;
+  font-size: var(--default-font-size);
 }
 
 .color-presets {
@@ -347,11 +346,11 @@ export default {
 .color-preset-btn {
   padding: 6px 12px;
   border: 1px solid var(--color-border);
-  border-radius: var(--border-radius);
+  border-radius: var(--border-radius-element);
   background: var(--color-main-background);
   color: var(--color-main-text);
   cursor: pointer;
-  font-size: 13px;
+  font-size: var(--font-size-small);
 }
 
 .color-preset-btn.active {
@@ -366,14 +365,13 @@ export default {
   gap: 8px;
   padding: 12px;
   color: var(--color-text-maxcontrast);
-  font-size: 13px;
+  font-size: var(--font-size-small);
 }
 
 .calendars-empty {
   padding: 12px;
   color: var(--color-text-maxcontrast);
-  font-size: 13px;
-  font-style: italic;
+  font-size: var(--font-size-small);
 }
 
 .calendar-list {
@@ -390,9 +388,9 @@ export default {
   align-items: center;
   gap: 8px;
   padding: 6px 8px;
-  border-radius: var(--border-radius);
+  border-radius: var(--border-radius-element);
   cursor: pointer;
-  font-size: 14px;
+  font-size: var(--default-font-size);
   transition: background 0.15s;
 }
 
@@ -413,7 +411,7 @@ export default {
 
 .calendar-readonly {
   color: var(--color-text-maxcontrast);
-  font-size: 12px;
+  font-size: var(--font-size-small);
 }
 
 .limit-selector {
@@ -431,7 +429,7 @@ export default {
   min-width: 30px;
   text-align: center;
   font-weight: 600;
-  font-size: 14px;
+  font-size: var(--default-font-size);
   color: var(--color-main-text);
 }
 
@@ -446,12 +444,12 @@ export default {
   align-items: center;
   gap: 8px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: var(--default-font-size);
   color: var(--color-main-text);
 }
 
 .editor-hint {
-  font-size: 12px;
+  font-size: var(--font-size-small);
   color: var(--color-text-maxcontrast);
   margin: 0;
 }
@@ -468,8 +466,8 @@ export default {
   gap: 8px;
   padding: 6px 8px;
   background: var(--color-background-hover);
-  border-radius: var(--border-radius);
-  font-size: 13px;
+  border-radius: var(--border-radius-element);
+  font-size: var(--font-size-small);
 }
 
 .ics-url-text {
@@ -486,8 +484,8 @@ export default {
   color: var(--color-text-maxcontrast);
   cursor: pointer;
   padding: 2px 6px;
-  border-radius: var(--border-radius);
-  font-size: 13px;
+  border-radius: var(--border-radius-element);
+  font-size: var(--font-size-small);
   line-height: 1;
 }
 
@@ -509,11 +507,11 @@ export default {
 .ics-url-add-btn {
   padding: 8px 16px;
   border: 1px solid var(--color-border);
-  border-radius: var(--border-radius);
+  border-radius: var(--border-radius-element);
   background: var(--color-primary-element);
   color: var(--color-primary-element-text);
   cursor: pointer;
-  font-size: 14px;
+  font-size: var(--default-font-size);
   white-space: nowrap;
 }
 
@@ -523,8 +521,8 @@ export default {
 }
 
 .ics-url-error {
-  font-size: 12px;
-  color: var(--color-error);
+  font-size: var(--font-size-small);
+  color: var(--color-error-text);
   margin: 0;
 }
 </style>

@@ -267,76 +267,91 @@
         <!-- Basic Information -->
         <div class="display-group">
           <span class="display-group-header">{{ t('intravox', 'Basic information') }}</span>
-          <label class="checkbox-option">
-            <input type="checkbox" v-model="localWidget.showFields.avatar" @change="emitUpdate" />
-            <span>{{ t('intravox', 'Avatar') }}</span>
-          </label>
-          <label class="checkbox-option">
-            <input type="checkbox" v-model="localWidget.showFields.displayName" @change="emitUpdate" />
-            <span>{{ t('intravox', 'Name') }}</span>
-          </label>
-          <label class="checkbox-option">
-            <input type="checkbox" v-model="localWidget.showFields.pronouns" @change="emitUpdate" />
-            <span>{{ t('intravox', 'Pronouns') }}</span>
-          </label>
-          <label class="checkbox-option">
-            <input type="checkbox" v-model="localWidget.showFields.role" @change="syncTitleWithRole" />
-            <span>{{ t('intravox', 'Role') }}</span>
-          </label>
-          <label class="checkbox-option">
-            <input type="checkbox" v-model="localWidget.showFields.headline" @change="emitUpdate" />
-            <span>{{ t('intravox', 'Headline') }}</span>
-          </label>
-          <label class="checkbox-option">
-            <input type="checkbox" v-model="localWidget.showFields.department" @change="emitUpdate" />
-            <span>{{ t('intravox', 'Department') }}</span>
-          </label>
+          <NcCheckboxRadioSwitch
+            v-model="localWidget.showFields.avatar"
+            @update:model-value="emitUpdate">
+            {{ t('intravox', 'Avatar') }}
+          </NcCheckboxRadioSwitch>
+          <NcCheckboxRadioSwitch
+            v-model="localWidget.showFields.displayName"
+            @update:model-value="emitUpdate">
+            {{ t('intravox', 'Name') }}
+          </NcCheckboxRadioSwitch>
+          <NcCheckboxRadioSwitch
+            v-model="localWidget.showFields.pronouns"
+            @update:model-value="emitUpdate">
+            {{ t('intravox', 'Pronouns') }}
+          </NcCheckboxRadioSwitch>
+          <NcCheckboxRadioSwitch
+            v-model="localWidget.showFields.role"
+            @update:model-value="syncTitleWithRole">
+            {{ t('intravox', 'Role') }}
+          </NcCheckboxRadioSwitch>
+          <NcCheckboxRadioSwitch
+            v-model="localWidget.showFields.headline"
+            @update:model-value="emitUpdate">
+            {{ t('intravox', 'Headline') }}
+          </NcCheckboxRadioSwitch>
+          <NcCheckboxRadioSwitch
+            v-model="localWidget.showFields.department"
+            @update:model-value="emitUpdate">
+            {{ t('intravox', 'Department') }}
+          </NcCheckboxRadioSwitch>
         </div>
 
         <!-- Contact -->
         <div class="display-group">
           <span class="display-group-header">{{ t('intravox', 'Contact') }}</span>
-          <label class="checkbox-option">
-            <input type="checkbox" v-model="localWidget.showFields.email" @change="emitUpdate" />
-            <span>{{ t('intravox', 'Email') }}</span>
-          </label>
-          <label class="checkbox-option">
-            <input type="checkbox" v-model="localWidget.showFields.phone" @change="emitUpdate" />
-            <span>{{ t('intravox', 'Phone') }}</span>
-          </label>
-          <label class="checkbox-option">
-            <input type="checkbox" v-model="localWidget.showFields.address" @change="emitUpdate" />
-            <span>{{ t('intravox', 'Address') }}</span>
-          </label>
-          <label class="checkbox-option">
-            <input type="checkbox" v-model="localWidget.showFields.website" @change="emitUpdate" />
-            <span>{{ t('intravox', 'Website') }}</span>
-          </label>
-          <label class="checkbox-option">
-            <input type="checkbox" v-model="localWidget.showFields.birthdate" @change="emitUpdate" />
-            <span>{{ t('intravox', 'Date of birth') }}</span>
-          </label>
+          <NcCheckboxRadioSwitch
+            v-model="localWidget.showFields.email"
+            @update:model-value="emitUpdate">
+            {{ t('intravox', 'Email') }}
+          </NcCheckboxRadioSwitch>
+          <NcCheckboxRadioSwitch
+            v-model="localWidget.showFields.phone"
+            @update:model-value="emitUpdate">
+            {{ t('intravox', 'Phone') }}
+          </NcCheckboxRadioSwitch>
+          <NcCheckboxRadioSwitch
+            v-model="localWidget.showFields.address"
+            @update:model-value="emitUpdate">
+            {{ t('intravox', 'Address') }}
+          </NcCheckboxRadioSwitch>
+          <NcCheckboxRadioSwitch
+            v-model="localWidget.showFields.website"
+            @update:model-value="emitUpdate">
+            {{ t('intravox', 'Website') }}
+          </NcCheckboxRadioSwitch>
+          <NcCheckboxRadioSwitch
+            v-model="localWidget.showFields.birthdate"
+            @update:model-value="emitUpdate">
+            {{ t('intravox', 'Date of birth') }}
+          </NcCheckboxRadioSwitch>
         </div>
 
         <!-- Extended -->
         <div class="display-group">
           <span class="display-group-header">{{ t('intravox', 'Extended') }}</span>
-          <label class="checkbox-option">
-            <input type="checkbox" v-model="localWidget.showFields.biography" @change="emitUpdate" />
-            <span>{{ t('intravox', 'Biography') }}</span>
-          </label>
-          <label class="checkbox-option">
-            <input type="checkbox" v-model="localWidget.showFields.socialLinks" @change="emitUpdate" />
-            <span>{{ t('intravox', 'Social links (X/Bluesky/Fediverse)') }}</span>
-          </label>
+          <NcCheckboxRadioSwitch
+            v-model="localWidget.showFields.biography"
+            @update:model-value="emitUpdate">
+            {{ t('intravox', 'Biography') }}
+          </NcCheckboxRadioSwitch>
+          <NcCheckboxRadioSwitch
+            v-model="localWidget.showFields.socialLinks"
+            @update:model-value="emitUpdate">
+            {{ t('intravox', 'Social links (X/Bluesky/Fediverse)') }}
+          </NcCheckboxRadioSwitch>
           <!-- Only offered when the instance actually has custom fields.
                Nextcloud cannot store arbitrary LDAP/OIDC attributes, so on
                most instances this preference is empty and the toggle would
                silently do nothing. -->
-          <label v-if="hasCustomFields" class="checkbox-option">
-            <input type="checkbox" v-model="localWidget.showFields.customFields" @change="emitUpdate" />
-            <span>{{ t('intravox', 'Custom fields (LDAP/OIDC)') }}</span>
-          </label>
+          <NcCheckboxRadioSwitch
+            v-if="hasCustomFields"
+            v-model="localWidget.showFields.customFields"
+            @update:model-value="emitUpdate">
+            {{ t('intravox', 'Custom fields (LDAP/OIDC)') }}
+          </NcCheckboxRadioSwitch>
         </div>
       </div>
     </div>
@@ -355,6 +370,7 @@
 </template>
 
 <script>
+import { NcCheckboxRadioSwitch } from '@nextcloud/vue';
 import { translate } from '@nextcloud/l10n';
 import { generateUrl } from '@nextcloud/router';
 import axios from '@nextcloud/axios';
@@ -373,6 +389,7 @@ import UserSelect from './UserSelect.vue';
 export default {
   name: 'PeopleWidgetEditor',
   components: {
+    NcCheckboxRadioSwitch,
     ViewerFacetEditor,
     AccountMultiplePlus,
     Filter,
@@ -634,28 +651,31 @@ export default {
 .editor-label {
   font-weight: 500;
   color: var(--color-main-text);
-  font-size: 14px;
+  font-size: var(--default-font-size);
 }
 
 .label-hint {
   font-weight: 400;
   color: var(--color-text-maxcontrast);
-  font-size: 12px;
+  font-size: var(--font-size-small);
 }
 
 .editor-input,
 .editor-select {
   padding: 8px 12px;
   border: 1px solid var(--color-border);
-  border-radius: var(--border-radius);
+  border-radius: var(--border-radius-element);
   background: var(--color-main-background);
-  font-size: 14px;
+  font-size: var(--default-font-size);
 }
 
 .editor-input:focus,
 .editor-select:focus {
   border-color: var(--color-primary-element);
-  outline: none;
+  /* A border-colour change is not a focus indicator: it cannot meet the
+     3:1 contrast the criterion asks for. Keep a real ring. */
+  outline: 2px solid var(--color-primary-element);
+  outline-offset: 2px;
 }
 
 /* Color presets */
@@ -667,10 +687,10 @@ export default {
 .color-preset-btn {
   padding: 6px 12px;
   border: 1px solid var(--color-border);
-  border-radius: var(--border-radius);
+  border-radius: var(--border-radius-element);
   background: var(--color-main-background);
   cursor: pointer;
-  font-size: 13px;
+  font-size: var(--font-size-small);
   transition: all 0.15s ease;
 }
 
@@ -697,10 +717,10 @@ export default {
   gap: 6px;
   padding: 12px;
   border: 1px solid var(--color-border);
-  border-radius: var(--border-radius);
+  border-radius: var(--border-radius-element);
   background: var(--color-main-background);
   cursor: pointer;
-  font-size: 13px;
+  font-size: var(--font-size-small);
   transition: all 0.15s ease;
 }
 
@@ -727,7 +747,7 @@ export default {
   gap: 6px;
   padding: 12px 8px;
   border: 1px solid var(--color-border);
-  border-radius: var(--border-radius);
+  border-radius: var(--border-radius-element);
   background: var(--color-main-background);
   cursor: pointer;
   transition: all 0.15s ease;
@@ -743,7 +763,7 @@ export default {
 }
 
 .layout-option span {
-  font-size: 12px;
+  font-size: var(--font-size-small);
   color: var(--color-main-text);
 }
 
@@ -760,10 +780,10 @@ export default {
   align-items: center;
   justify-content: center;
   border: 1px solid var(--color-border);
-  border-radius: var(--border-radius);
+  border-radius: var(--border-radius-element);
   background: var(--color-main-background);
   cursor: pointer;
-  font-size: 14px;
+  font-size: var(--default-font-size);
   font-weight: 500;
   transition: all 0.15s ease;
 }
@@ -810,7 +830,7 @@ export default {
   justify-content: center;
   padding: 8px;
   border: 1px solid var(--color-border);
-  border-radius: var(--border-radius);
+  border-radius: var(--border-radius-element);
   background: var(--color-main-background);
   cursor: pointer;
   transition: all 0.15s ease;
@@ -843,10 +863,10 @@ export default {
 }
 
 .display-group-header {
-  font-size: 11px;
+  font-size: var(--font-size-small);
   font-weight: 600;
   color: var(--color-text-maxcontrast);
-  text-transform: uppercase;
+
   letter-spacing: 0.5px;
   margin-bottom: 4px;
 }
@@ -856,12 +876,7 @@ export default {
   align-items: center;
   gap: 8px;
   cursor: pointer;
-  font-size: 14px;
-}
-
-.checkbox-option input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
+  font-size: var(--default-font-size);
 }
 
 /* Filters */
@@ -882,24 +897,24 @@ export default {
   flex: 1;
   padding: 6px 8px;
   border: 1px solid var(--color-border);
-  border-radius: var(--border-radius);
-  font-size: 13px;
+  border-radius: var(--border-radius-element);
+  font-size: var(--font-size-small);
 }
 
 .filter-operator {
   width: 120px;
   padding: 6px 8px;
   border: 1px solid var(--color-border);
-  border-radius: var(--border-radius);
-  font-size: 13px;
+  border-radius: var(--border-radius-element);
+  font-size: var(--font-size-small);
 }
 
 .filter-value {
   flex: 1;
   padding: 6px 8px;
   border: 1px solid var(--color-border);
-  border-radius: var(--border-radius);
-  font-size: 13px;
+  border-radius: var(--border-radius-element);
+  font-size: var(--font-size-small);
 }
 
 .filter-value--multi {
@@ -915,12 +930,12 @@ export default {
   background: none;
   color: var(--color-text-maxcontrast);
   cursor: pointer;
-  border-radius: var(--border-radius);
+  border-radius: var(--border-radius-element);
 }
 
 .filter-remove:hover {
   background: var(--color-background-hover);
-  color: var(--color-error);
+  color: var(--color-error-text);
 }
 
 .filter-operator-toggle {
@@ -928,17 +943,17 @@ export default {
   align-items: center;
   gap: 8px;
   margin-top: 8px;
-  font-size: 13px;
+  font-size: var(--font-size-small);
   color: var(--color-text-maxcontrast);
 }
 
 .operator-button {
   padding: 4px 10px;
   border: 1px solid var(--color-border);
-  border-radius: var(--border-radius);
+  border-radius: var(--border-radius-element);
   background: var(--color-main-background);
   cursor: pointer;
-  font-size: 13px;
+  font-size: var(--font-size-small);
 }
 
 .operator-button:hover {
@@ -956,11 +971,11 @@ export default {
   gap: 6px;
   padding: 8px 12px;
   border: 1px dashed var(--color-border);
-  border-radius: var(--border-radius);
+  border-radius: var(--border-radius-element);
   background: transparent;
   color: var(--color-text-maxcontrast);
   cursor: pointer;
-  font-size: 13px;
+  font-size: var(--font-size-small);
   transition: all 0.15s ease;
 }
 
