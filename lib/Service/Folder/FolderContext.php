@@ -46,8 +46,9 @@ use OCP\IUserSession;
  * every occ command came to fail with "User not logged in".
  *
  * NEVER owns page lookup for mutation or the #70 permission decision. Its only
- * page-lookup touch is PageLocator::findPageByUniqueId inside the read-only #75
- * real-content probe.
+ * page-lookup touch is inside the read-only #75 real-content probe, where the
+ * homepage pointer resolves via PageLocator::locateViaIndex with
+ * findPageByUniqueId as the fallback — one touch, still read-only.
  */
 final class FolderContext {
     private const DEFAULT_LANGUAGE = 'en';
@@ -330,7 +331,8 @@ final class FolderContext {
      * (configurable homepage). Verbatim from PageService::resolveLanguageHomepageData.
      * Checks, in order: (1) a `homepage.json` pointer -> the designated page's JSON;
      * (2) the legacy loose `home.json`; (3) a normalized `home/home.json` folder page.
-     * Read-only; the only page-lookup touch (findPageByUniqueId) is via PageLocator.
+     * Read-only; the only page-lookup touch (locateViaIndex, falling back to
+     * findPageByUniqueId) is via PageLocator.
      */
     private function resolveLanguageHomepageData(Folder $langFolder): ?array {
         // Serve from the per-scan memo when a content-status scan is in flight.
@@ -379,7 +381,28 @@ final class FolderContext {
                 $ptr = json_decode($pointerFile->getContent(), true);
                 $uid = is_array($ptr) ? ($ptr['homepageUniqueId'] ?? null) : null;
                 if (is_string($uid) && $uid !== '') {
-                    $target = $this->locator->findPageByUniqueId($langFolder, $uid);
+                    // Index first: the walk below reads every page in the
+                    // language tree (302ms on a 429-folder `nl`), and
+                    // effectiveLanguage() probes each candidate language, so
+                    // every authenticated read paid it before doing any work.
+                    //
+                    // The hit must sit INSIDE $langFolder: findByUniqueId()
+                    // treats language as a tie-break, not a filter, and one id
+                    // may exist in two languages — so an unguarded hit could
+                    // resolve where the scoped walk finds nothing, flipping
+                    // hasRealContent(). The guard keeps the fast path a strict
+                    // subset of the walk. locateViaIndex() verifies the uniqueId
+                    // against disk, and a throw is contained here so it can
+                    // never carry the pointer into the home.json fallback below
+                    // — a different page. @see HomepagePointerIndexFallbackTest
+                    try {
+                        $hit = $this->locator->locateViaIndex(fn(): Folder => $this->intraVox(), $uid, $langFolder);
+                    } catch (\Throwable $e) {
+                        $hit = null;
+                    }
+                    $inScope = $hit !== null
+                        && str_starts_with($hit['file']->getPath(), $langFolder->getPath() . '/');
+                    $target = $inScope ? $hit : $this->locator->findPageByUniqueId($langFolder, $uid);
                     if ($target !== null && isset($target['file'])) {
                         $data = json_decode($target['file']->getContent(), true);
                         if (is_array($data) && isset($data['title'])) {

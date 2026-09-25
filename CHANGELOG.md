@@ -6,7 +6,32 @@ IntraVox is a Nextcloud intranet page builder.
 
 ## [Unreleased]
 
+### Fixed
+
+- **Every page request spent 300ms deciding which language to read from.** A
+  language folder can carry a `homepage.json` pointing at the page that serves as
+  its homepage, and resolving that pointer walked the entire language tree —
+  302ms on a tree of 429 folders. It was not paid once but on every authenticated
+  request, because picking the read folder probes each candidate language, and
+  one page load makes eight such requests. The pointer now resolves through the
+  page index, which answers the same question in one query; the walk remains as
+  the fallback, so a stale or empty index still resolves exactly as before. An
+  index hit outside the language folder being probed is refused, because the
+  index treats language as a tie-break rather than a filter — that keeps the fast
+  path a strict subset of what the walk would have found. Measured on dev:
+  resolving the read folder went from 297ms to 17ms, and a cold page read from
+  304ms to 10ms.
+
 ### Changed
+
+- **The app no longer waits for the language check before loading anything
+  else.** Opening a page fetched the language content status first and only then
+  started on pages, navigation, footer and settings — none of which need it. That
+  cost a full round trip before the real work began. The request now starts
+  alongside the others and is awaited at the single point that reads it, just
+  before the page to show is picked, so the ordering that matters is unchanged.
+  Together with the homepage-pointer fix this took a page load's critical path
+  from 1686ms to 846ms on dev.
 
 - **The feed widget documentation shows the widget working, and documents the
   option 3.1.0 added.** A recording walks the round trip on a page of live RSS
