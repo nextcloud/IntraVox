@@ -128,7 +128,7 @@ IntraVox se ejecuta donde ejecutas Nextcloud: tu propio hardware, un proveedor e
 
 **Requisitos:** Nextcloud 32–35, PHP 8.2+ (Nextcloud 35 requiere PHP 8.3), Team folders.
     ]]></description>
-    <version>3.1.1</version>
+    <version>3.1.2</version>
     <licence>agpl</licence>
     <author mail="info@voxcloud.nl" homepage="https://voxcloud.nl">VoxCloud</author>
     <namespace>IntraVox</namespace>
