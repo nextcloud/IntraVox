@@ -21,36 +21,29 @@ IntraVox is a Nextcloud intranet page builder.
 
 ### Fixed
 
-- **Public pages took 2.2 seconds, and the cost grew with every feed widget.**
-  Two separate faults, both on the share path. A shared page was looked up by
-  guessing its language — a read that needs a session user, which an anonymous
-  visitor does not have — so it searched the English tree first, missed, and
-  swept every other language. And the guard that checks a feed request against
-  what the share actually publishes re-walked the share tree and re-decoded
-  every page for each of the seven selectors it asks about, so ten widgets meant
-  roughly seventy walks. The page index now answers the language question in one
-  query, and the pages are read once per request. Measured: a refused lookup
-  0.75s to 0.22s, and a batch of ten feeds 1.2s to 0.1s. The language walk
-  remains as the fallback, so a stale or empty index resolves exactly as before.
+- **Public pages took 2.2 seconds, and got slower with every feed widget on
+  them.** Two faults on the share path. A shared page was looked up by guessing
+  its language, through a read that needs a session user an anonymous visitor
+  does not have, so it searched the wrong tree first and swept the rest. And the
+  guard that checks a feed request against what the share publishes re-read
+  every page in the share for each of the seven selectors it asks about — ten
+  widgets meant roughly seventy walks of the same tree. Both now go through the
+  page index and a per-request read, with the old walk as fallback. A refused
+  lookup went from 0.75s to 0.22s, a batch of ten feeds from 1.2s to 0.1s.
 - **Every authenticated page load spent 300ms deciding which language to read
-  from.** A language folder can point at its homepage, and resolving that
-  pointer walked the whole tree — 302ms on 429 folders, paid on each of the
-  eight requests a page load makes. It resolves through the index now, with the
-  walk as fallback. An index hit outside the language folder being probed is
-  refused, which keeps the fast path a strict subset of the walk. Measured:
-  297ms to 17ms.
+  from.** Resolving a language folder's homepage pointer walked the whole tree —
+  302ms on 429 folders — and a single page load pays it eight times. It resolves
+  through the index now: 297ms to 17ms.
 - **A page of feed widgets could hang for a minute and a half without making a
-  single request.** When another request was already fetching a feed, the reader
-  waited for it — up to five seconds, per feed, in series. Twenty widgets could
-  sleep twenty times five seconds. That also contradicted the surrounding
-  design, which serves a stale copy precisely so nobody waits behind someone
-  else's refetch. A batch no longer waits. Measured: 25.9s to 0.45s. Single-feed
-  routes and the refresh job keep the wait.
+  single request.** A reader waited up to five seconds for whoever was already
+  fetching a feed, per feed, one after another. That contradicted the
+  surrounding design, which serves a stale copy precisely so nobody waits behind
+  someone else's refetch. A batch no longer waits: 25.9s to 0.45s.
 - **A Dutch shared page built its breadcrumb from the English navigation**,
   because the language guess above also decided which `navigation.json` to read.
 - **Feed items showed only a date when the summary was switched on**, and feed
-  images that a site published protocol-relative (`//host/path`) were dropped
-  rather than shown.
+  images published protocol-relative (`//host/path`) were dropped rather than
+  shown.
 
 ### Changed
 
