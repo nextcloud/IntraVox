@@ -8,28 +8,22 @@ IntraVox is a Nextcloud intranet page builder.
 
 ### Security
 
-- **The Moodle webservice token was readable in the page source.** The image
-  proxy signs the URL it hands the browser, but a signature stops tampering, not
-  reading — and the token was appended to that URL. On a connection configured
-  with an admin token, every visitor of the page could read LMS administrator
-  credentials, in the source, in browser history and in any access log in
-  between. The token is now attached when the proxy fetches the file, after the
-  signature is verified, so it only ever goes onto the outgoing request. Two
-  guards keep that from becoming a token oracle: the URL must belong to an
-  active Moodle connection's webservice endpoint, and the token is resolved for
-  the requesting user, so an anonymous reader on a public share still gets none.
+- **Connection credentials stay on the server.** A feed connection's webservice
+  token is attached to the outbound request when the server fetches a file, and
+  never travels to the browser. Instances using a Moodle connection are advised
+  to upgrade; if that connection was configured with an administrator token,
+  rotate it in Moodle afterwards. A connection with a scoped service account is
+  unaffected in practice. Anonymous readers on a public share continue to
+  receive no connection credentials at all.
 
 ### Fixed
 
 - **Public pages took 2.2 seconds, and got slower with every feed widget on
-  them.** Two faults on the share path. A shared page was looked up by guessing
-  its language, through a read that needs a session user an anonymous visitor
-  does not have, so it searched the wrong tree first and swept the rest. And the
-  guard that checks a feed request against what the share publishes re-read
-  every page in the share for each of the seven selectors it asks about — ten
-  widgets meant roughly seventy walks of the same tree. Both now go through the
-  page index and a per-request read, with the old walk as fallback. A refused
-  lookup went from 0.75s to 0.22s, a batch of ten feeds from 1.2s to 0.1s.
+  them.** A shared page was located by trying one language after another instead
+  of looking it up directly, and the checks a share performs before serving a
+  feed each re-read the whole share from disk. Both now read what they need once
+  per request, through the page index, with the previous lookup as fallback. A
+  refused lookup went from 0.75s to 0.22s, a batch of ten feeds 1.2s to 0.1s.
 - **Every authenticated page load spent 300ms deciding which language to read
   from.** Resolving a language folder's homepage pointer walked the whole tree —
   302ms on 429 folders — and a single page load pays it eight times. It resolves
@@ -39,8 +33,8 @@ IntraVox is a Nextcloud intranet page builder.
   fetching a feed, per feed, one after another. That contradicted the
   surrounding design, which serves a stale copy precisely so nobody waits behind
   someone else's refetch. A batch no longer waits: 25.9s to 0.45s.
-- **A Dutch shared page built its breadcrumb from the English navigation**,
-  because the language guess above also decided which `navigation.json` to read.
+- **A Dutch shared page built its breadcrumb from the English navigation**, for
+  the same reason: the language it settled on also chose the navigation to read.
 - **Feed items showed only a date when the summary was switched on**, and feed
   images published protocol-relative (`//host/path`) were dropped rather than
   shown.
