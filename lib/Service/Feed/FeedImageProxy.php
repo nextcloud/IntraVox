@@ -29,9 +29,85 @@ use OCP\IConfig;
  * early exit leaks its content through timing.
  */
 class FeedImageProxy {
+    /** @var null|callable():array<array<string,mixed>> */
+    private $connectionLister = null;
+
+    /** @var null|callable(string,?string):?array<string,mixed> */
+    private $tokenResolver = null;
+
     public function __construct(
         private IConfig $config,
     ) {
+    }
+
+    /**
+     * Wire up the lookups needed to re-attach a Moodle token at fetch time.
+     *
+     * Passed as callables rather than services because FeedReaderService owns
+     * both, and injecting it here would close a dependency cycle. Left unset
+     * (in tests, and on any path that never proxies a Moodle file) the proxy
+     * simply fetches URLs unchanged.
+     *
+     * @param callable():array<array<string,mixed>> $connectionLister
+     * @param callable(string,?string):?array<string,mixed> $tokenResolver
+     */
+    public function setMoodleTokenLookup(callable $connectionLister, callable $tokenResolver): void {
+        $this->connectionLister = $connectionLister;
+        $this->tokenResolver = $tokenResolver;
+    }
+
+    /**
+     * Re-attach the Moodle webservice token when the proxy fetches a file.
+     *
+     * Counterpart to FeedReaderService::moodleFileUrl(), which deliberately
+     * leaves the token out: the URL it produces is signed and handed to the
+     * browser in the `url=` query parameter, so a token in that string would be
+     * readable by every visitor of the page, in the page source, in browser
+     * history and in any access log along the way. For a Moodle connection
+     * configured with an admin webservice token that is a leak of administrator
+     * rights on the LMS (IV-04).
+     *
+     * Adding it here means it only ever goes onto the outgoing request.
+     *
+     * Two guards keep this from becoming a token oracle:
+     *
+     *  - The URL must start with the configured baseUrl of an ACTIVE Moodle
+     *    connection and hit its webservice endpoint. A signed URL for any other
+     *    host is fetched unchanged, so the proxy cannot be steered into sending
+     *    a token somewhere else.
+     *  - The token is resolved through the same path the feed itself uses, with
+     *    the requesting $userId. That keeps the existing rule that an anonymous
+     *    caller (public share) never receives the admin token: the resolver
+     *    returns null and the image is fetched without one.
+     */
+    public function attachMoodleToken(string $url, ?string $userId): string {
+        if ($this->connectionLister === null || $this->tokenResolver === null) {
+            return $url;
+        }
+        if (!str_contains($url, '/webservice/pluginfile.php/')) {
+            return $url;
+        }
+
+        foreach (($this->connectionLister)() as $connection) {
+            if (($connection['type'] ?? '') !== 'moodle' || ($connection['active'] ?? true) === false) {
+                continue;
+            }
+
+            $baseUrl = rtrim((string)($connection['baseUrl'] ?? ''), '/');
+            if ($baseUrl === '' || !str_starts_with($url, $baseUrl . '/')) {
+                continue;
+            }
+
+            $resolved = ($this->tokenResolver)((string)($connection['id'] ?? ''), $userId);
+            $token = (string)($resolved['token'] ?? '');
+            if ($token === '') {
+                return $url;
+            }
+
+            return $url . (str_contains($url, '?') ? '&' : '?') . 'token=' . urlencode($token);
+        }
+
+        return $url;
     }
 
     /** Share token to sign image URLs for, when rendering a public share. */

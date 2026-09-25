@@ -132,7 +132,7 @@ class FeedReaderController extends Controller {
     #[NoAdminRequired]
     #[NoCSRFRequired]
     public function proxyImage(): DataDownloadResponse|DataResponse {
-        return $this->handleProxyImage();
+        return $this->handleProxyImage($this->userId);
     }
 
     /**

@@ -210,7 +210,7 @@ trait FeedRequestTrait {
         return new DataResponse(['feeds' => $uit]);
     }
 
-    private function handleProxyImage(): DataDownloadResponse|DataResponse {
+    private function handleProxyImage(?string $userId = null): DataDownloadResponse|DataResponse {
         $url = $this->request->getParam('url', '');
         $sig = $this->request->getParam('sig', '');
 
@@ -229,7 +229,7 @@ trait FeedRequestTrait {
         }
 
         try {
-            $result = $this->feedReaderService->proxyImage($url);
+            $result = $this->feedReaderService->proxyImage($url, $userId);
 
             $response = new DataDownloadResponse(
                 $result['body'],
