@@ -97,12 +97,6 @@ trait FeedRequestTrait {
     }
 
     /**
-     * Serve an externally hosted image, but only one this backend signed.
-     *
-     * The signature is what makes this not an open proxy: an unsigned or
-     * mis-signed url is refused before any outbound request is made.
-     */
-    /**
      * One article body, for the reader who opened it.
      *
      * Lives in the trait so the logged-in route and the share route answer
@@ -150,11 +144,9 @@ trait FeedRequestTrait {
      * Several feeds in one request.
      *
      * A page carries one feed widget per block, and each used to fetch on its
-     * own: measured on the rss page, three widgets produced nine requests
-     * (re-renders included). At five widgets a reader spends five round trips
-     * before the page settles, and every one of them counts against the
-     * per-IP rate limit — which is what a thousand readers behind one office
-     * NAT run into after a dozen page views.
+     * own: three widgets produced nine requests once re-renders were counted,
+     * and every one counts against the per-IP rate limit — which an office
+     * behind one outgoing address runs out of after a dozen page views.
      *
      * Each entry is validated through buildConfig(), the same code a single
      * request uses. A failure in one feed is reported in that feed's slot and
@@ -202,8 +194,11 @@ trait FeedRequestTrait {
             $filter = mb_substr(trim((string)($spec['filterKeyword'] ?? '')), 0, 100);
 
             try {
-                $uit[$sleutel] = $this->feedReaderService->fetchFeed(
-                    $sourceType, $config, $limit, $userId, $sortBy, $sortOrder, $filter
+                // No singleflight sleep in a batch. @see withoutSingleflightWait
+                $uit[$sleutel] = $this->feedReaderService->withoutSingleflightWait(
+                    fn() => $this->feedReaderService->fetchFeed(
+                        $sourceType, $config, $limit, $userId, $sortBy, $sortOrder, $filter
+                    )
                 );
             } catch (\Exception $e) {
                 // Logged, not returned: the message can name internal hosts.
