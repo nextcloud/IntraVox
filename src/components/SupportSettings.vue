@@ -41,7 +41,6 @@
 						<div class="progress-bar">
 							<div
 								class="progress-fill"
-								:class="{ exceeded: isLangExceeded(lang) }"
 								:style="{ width: getProgressWidth(lang) + '%' }">
 							</div>
 						</div>
@@ -410,16 +409,14 @@ export default {
 			return names[lang] || lang
 		},
 
+		// Relative to the busiest language, not to a limit: IntraVox does not
+		// cap the number of pages. The bar shows how the languages compare.
 		getProgressWidth(lang) {
 			if (!this.licenseStats) return 0
-			const count = this.licenseStats.pageCounts[lang] || 0
-			const limit = this.licenseStats.freeLimit
-			return Math.min((count / limit) * 100, 100)
-		},
-
-		isLangExceeded(lang) {
-			if (!this.licenseStats) return false
-			return (this.licenseStats.pageCounts[lang] || 0) >= this.licenseStats.freeLimit
+			const counts = Object.values(this.licenseStats.pageCounts || {})
+			const busiest = counts.length ? Math.max(...counts) : 0
+			if (busiest === 0) return 0
+			return Math.min(((this.licenseStats.pageCounts[lang] || 0) / busiest) * 100, 100)
 		},
 
 		showMessage(text, type) {
@@ -530,10 +527,6 @@ export default {
 	background: var(--color-primary);
 	border-radius: 4px;
 	transition: width 0.3s ease;
-}
-
-.progress-fill.exceeded {
-	background: var(--color-warning);
 }
 
 .page-count {

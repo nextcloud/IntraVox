@@ -17,7 +17,6 @@ use OCA\IntraVox\Service\Path\PagePathHelper;
  * Service for license management and page counting
  */
 class LicenseService {
-    private const FREE_LIMIT = 50; // Pages per language in free version
     /**
      * Above this many users the interface suggests a support subscription.
      *
@@ -375,125 +374,6 @@ class LicenseService {
     }
 
     /**
-     * Check if user can create more pages for a specific language
-     * @param string|null $language The language to check, or null for overall check
-     */
-    public function checkPageLimit(?string $language = null): array {
-        $licenseKey = $this->getLicenseKey();
-        $pageCounts = $this->getPageCountsPerLanguage();
-        $totalPages = array_sum($pageCounts);
-
-        // Free version check - limit is per language
-        if (empty($licenseKey)) {
-            // Check per language if specified
-            if ($language !== null && isset($pageCounts[$language])) {
-                $currentForLang = $pageCounts[$language];
-                $exceeded = $currentForLang >= self::FREE_LIMIT;
-                return [
-                    'allowed' => !$exceeded,
-                    'current' => $currentForLang,
-                    'max' => self::FREE_LIMIT,
-                    'language' => $language,
-                    'isFree' => true,
-                    'perLanguage' => true,
-                    'reason' => $exceeded ? "Free tier limit of " . self::FREE_LIMIT . " pages per language exceeded for {$language}" : null
-                ];
-            }
-
-            // Check if any language is exceeded
-            $exceededLanguages = [];
-            foreach ($pageCounts as $lang => $count) {
-                if ($count >= self::FREE_LIMIT) {
-                    $exceededLanguages[] = $lang;
-                }
-            }
-
-            return [
-                'allowed' => empty($exceededLanguages),
-                'current' => $totalPages,
-                'currentPerLanguage' => $pageCounts,
-                'max' => self::FREE_LIMIT,
-                'exceededLanguages' => $exceededLanguages,
-                'isFree' => true,
-                'perLanguage' => true,
-                'reason' => !empty($exceededLanguages) ? 'Free tier page limit exceeded for: ' . implode(', ', $exceededLanguages) : null
-            ];
-        }
-
-        try {
-            $client = $this->clientService->newClient();
-            $response = $client->post($this->getApiUrl('/check-page-limit'), [
-                'json' => [
-                    'licenseKey' => $licenseKey,
-                    'instanceUrlHash' => $this->getInstanceUrlHash(),
-                    'language' => $language,
-                    'pageCountsPerLanguage' => $pageCounts
-                ] + $this->hashMigrationPayload(),
-                'timeout' => 10,
-                'headers' => [
-                    'User-Agent' => 'IntraVox/' . $this->getAppVersion(),
-                    'Content-Type' => 'application/json'
-                ],
-            ]);
-
-            $data = json_decode($response->getBody(), true);
-            return [
-                'allowed' => $data['allowed'] ?? false,
-                'current' => $data['current'] ?? $totalPages,
-                'currentPerLanguage' => $pageCounts,
-                'max' => $data['max'] ?? null,
-                'exceededLanguages' => $data['exceededLanguages'] ?? [],
-                'reason' => $data['reason'] ?? null,
-                'perLanguage' => $data['perLanguage'] ?? true,
-                'isFree' => false
-            ];
-        } catch (\Exception $e) {
-            $this->logger->warning('LicenseService: Failed to check page limit', [
-                'error' => $e->getMessage()
-            ]);
-
-            // Fall back to cached limits if available
-            $cachedLimits = $this->config->getAppValue(Application::APP_ID, 'license_limits', '');
-            if (!empty($cachedLimits)) {
-                $limits = json_decode($cachedLimits, true);
-                $maxPagesPerLang = $limits['maxPagesPerLanguage'] ?? $limits['maxPages'] ?? null;
-
-                // Check per language
-                $exceededLanguages = [];
-                if ($maxPagesPerLang !== null) {
-                    foreach ($pageCounts as $lang => $count) {
-                        if ($count >= $maxPagesPerLang) {
-                            $exceededLanguages[] = $lang;
-                        }
-                    }
-                }
-
-                return [
-                    'allowed' => empty($exceededLanguages),
-                    'current' => $totalPages,
-                    'currentPerLanguage' => $pageCounts,
-                    'max' => $maxPagesPerLang,
-                    'exceededLanguages' => $exceededLanguages,
-                    'cached' => true,
-                    'perLanguage' => true,
-                    'isFree' => false
-                ];
-            }
-
-            // If we can't verify, allow creation
-            return [
-                'allowed' => true,
-                'current' => $totalPages,
-                'currentPerLanguage' => $pageCounts,
-                'max' => null,
-                'reason' => 'Could not verify limit',
-                'perLanguage' => true,
-                'isFree' => false
-            ];
-        }
-    }
-
-    /**
      * Get page counts per language
      * @return array ['en' => 45, 'nl' => 32, ...]
      */
@@ -590,13 +470,6 @@ class LicenseService {
     }
 
     /**
-     * Get free tier limit per language
-     */
-    public function getFreeLimit(): int {
-        return self::FREE_LIMIT;
-    }
-
-    /**
      * Get the app version
      */
     private function getAppVersion(): string {
@@ -679,7 +552,6 @@ class LicenseService {
      * Get license statistics for admin panel
      */
     public function getStats(): array {
-        $limits = $this->checkPageLimit();
         $pageCounts = $this->getPageCountsPerLanguage();
         $hasLicense = !empty($this->getLicenseKey());
 
@@ -723,7 +595,6 @@ class LicenseService {
         return [
             'pageCounts' => $pageCounts,
             'totalPages' => $this->getTotalPageCount(),
-            'freeLimit' => self::FREE_LIMIT,
             'supportedLanguages' => $this->languageService->getEnabledLanguages(),
             // For the subscription notice: the same figure a subscription is
             // priced on, every account including disabled ones.
@@ -737,10 +608,6 @@ class LicenseService {
             'licenseReason' => $licenseReason,
             'licenseValidUntil' => $licenseValidUntil,
             'licenseKeyMasked' => $maskedKey,
-            'maxPagesPerLanguage' => $limits['max'] ?? self::FREE_LIMIT,
-            'exceededLanguages' => $limits['exceededLanguages'] ?? [],
-            'pagesExceeded' => !$limits['allowed'],
-            'perLanguage' => true,
         ];
     }
 

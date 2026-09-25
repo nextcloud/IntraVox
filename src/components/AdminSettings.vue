@@ -1566,7 +1566,6 @@ export default {
 			licenseStats: this.initialState.licenseStats || {
 				pageCounts: {},
 				totalPages: 0,
-				freeLimit: 50,
 				supportedLanguages: this.initialState.enabledLanguageCodes || ['nl', 'en', 'de', 'fr'],
 			},
 			// License configuration
