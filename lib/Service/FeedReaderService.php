@@ -178,6 +178,15 @@ class FeedReaderService {
         if ($this->cacheFactory->isAvailable()) {
             $this->cache = $this->cacheFactory->createDistributed('intravox-feeds');
         }
+
+        // The proxy re-attaches the Moodle token server-side when it fetches a
+        // file (IV-04); it needs the connection list and the token resolver,
+        // both of which live here. Passed as callables so the proxy does not
+        // depend back on this service.
+        $this->imageProxy->setMoodleTokenLookup(
+            fn (): array => $this->getConnections(),
+            fn (string $id, ?string $uid): ?array => $this->tokens()->resolveToken($id, $uid),
+        );
     }
 
     /**
@@ -439,17 +448,26 @@ class FeedReaderService {
     }
 
     /**
-     * Convert a Moodle pluginfile URL to a webservice-accessible URL with token.
-     * Moodle's /pluginfile.php requires session auth; /webservice/pluginfile.php accepts a token parameter.
+     * Convert a Moodle pluginfile URL to a webservice-accessible one.
+     *
+     * Moodle's /pluginfile.php requires session auth; /webservice/pluginfile.php
+     * accepts a token instead. That token is NOT appended here: the result is
+     * handed to the image proxy, which signs it and puts the whole URL in a
+     * query parameter that the browser receives. A token in this string would
+     * therefore be readable by every visitor of the page, in the page source,
+     * in browser history and in any intermediate access log — and for a Moodle
+     * connection configured with an admin webservice token, that is a leak of
+     * administrator rights on the LMS.
+     *
+     * The token is attached server-side instead, in {@see attachMoodleToken()},
+     * at the moment the proxy fetches the file. It never leaves the server.
      */
     private function moodleFileUrl(?string $url, string $baseUrl, string $token): ?string {
         if ($url === null) {
             return null;
         }
-        // Replace /pluginfile.php/ with /webservice/pluginfile.php/ and append token
         if (str_contains($url, '/pluginfile.php/')) {
             $url = str_replace('/pluginfile.php/', '/webservice/pluginfile.php/', $url);
-            $url .= (str_contains($url, '?') ? '&' : '?') . 'token=' . $token;
         }
         return $url;
     }
@@ -2305,11 +2323,16 @@ class FeedReaderService {
         'image/x-icon', 'image/avif', 'image/svg+xml',
     ];
 
-    public function proxyImage(string $url): array {
+    public function proxyImage(string $url, ?string $userId = null): array {
         $this->validateUrl($url);
 
+        // Validate the URL the caller signed, then add credentials. Doing it in
+        // this order means the token never appears in a URL the browser holds,
+        // and never influences which host we are allowed to reach.
+        $fetchUrl = $this->imageProxy->attachMoodleToken($url, $userId);
+
         $client = $this->httpClient->newClient();
-        $response = $client->get($url, [
+        $response = $client->get($fetchUrl, [
             'timeout' => self::HTTP_TIMEOUT,
             'headers' => [
                 'Accept' => 'image/jpeg, image/png, image/gif, image/webp, image/avif, image/svg+xml, image/x-icon',
