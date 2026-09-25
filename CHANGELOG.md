@@ -19,6 +19,27 @@ IntraVox is a Nextcloud intranet page builder.
 
 ### Fixed
 
+- **Two fields in the feed editor shipped with no label at all.** They passed
+  `label-outside` to `NcTextField`, which was read as "render the label outside
+  the input". It means the opposite: the component has one label branch, guarded
+  by `!labelOutside`, so the prop suppresses its own label and leaves the caller
+  to supply one — which never happened. The accompanying stylesheet rule styled
+  `.input-field__label`, a class that cannot render in that mode, so nothing
+  showed that anything was missing. Both fields now carry the plain `<label>`
+  above the input that the news, people and calendar editors already use, and
+  the rule targets it.
+- **The photo story and file story editors had no widget title field.** The
+  other four editors open with one; these two started at "Source", so the only
+  way to name the block on the page was to leave it unnamed. Both now open with
+  the same field.
+- **Checkboxes were visibly larger in three editors than in the other three.**
+  News, people and calendar drew their own `<input type="checkbox">` and sized
+  the box to 24px to clear the WCAG 2.2 target-size floor. Nextcloud clears the
+  same floor differently: `NcCheckboxRadioSwitch` keeps the glyph at icon size
+  and makes the surrounding row the target, so a hand-sized box sat beside
+  Nextcloud-sized ones — most visible in the people editor, which had fifteen.
+  All 22 are now the Nextcloud component, and the two overrides are gone.
+
 - **The feed editor's form was running the modal's full 1200px.** The 900px
   measure was set on the host modal's `.form-group`, but Vue's scoped styles bind
   a rule to the component that declares it — so the rule carried the parent's

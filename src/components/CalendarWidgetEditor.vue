@@ -58,24 +58,20 @@
       </div>
 
       <div v-else class="calendar-list">
-        <label
+        <NcCheckboxRadioSwitch
           v-for="calendar in calendars"
           :key="calendar.id"
           class="calendar-option"
-        >
-          <input
-            type="checkbox"
-            :value="calendar.id"
-            v-model="localWidget.calendarIds"
-            @change="emitUpdate"
-          />
+          :value="calendar.id"
+          v-model="localWidget.calendarIds"
+          @update:model-value="emitUpdate">
           <span
-            class="calendar-color-dot"
-            :style="{ backgroundColor: calendar.color }"
+          class="calendar-color-dot"
+          :style="{ backgroundColor: calendar.color }"
           ></span>
           <span class="calendar-name">{{ calendar.displayName }}</span>
           <span v-if="calendar.isReadOnly" class="calendar-readonly">({{ t('intravox', 'read-only') }})</span>
-        </label>
+        </NcCheckboxRadioSwitch>
       </div>
     </div>
 
@@ -160,21 +156,23 @@
     <div class="editor-section">
       <label class="editor-label">{{ t('intravox', 'Display options') }}</label>
       <div class="display-options">
-        <label class="checkbox-option">
-          <input type="checkbox" v-model="localWidget.showTime" @change="emitUpdate" />
-          <span>{{ t('intravox', 'Show time') }}</span>
-        </label>
-        <label class="checkbox-option">
-          <input type="checkbox" v-model="localWidget.showLocation" @change="emitUpdate" />
-          <span>{{ t('intravox', 'Show location') }}</span>
-        </label>
+        <NcCheckboxRadioSwitch
+          v-model="localWidget.showTime"
+          @update:model-value="emitUpdate">
+          {{ t('intravox', 'Show time') }}
+        </NcCheckboxRadioSwitch>
+        <NcCheckboxRadioSwitch
+          v-model="localWidget.showLocation"
+          @update:model-value="emitUpdate">
+          {{ t('intravox', 'Show location') }}
+        </NcCheckboxRadioSwitch>
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import { NcLoadingIcon } from '@nextcloud/vue';
+import { NcCheckboxRadioSwitch, NcLoadingIcon } from '@nextcloud/vue';
 import { generateUrl } from '@nextcloud/router';
 import { translate } from '@nextcloud/l10n';
 import axios from '@nextcloud/axios';
@@ -182,6 +180,7 @@ import axios from '@nextcloud/axios';
 export default {
   name: 'CalendarWidgetEditor',
   components: {
+    NcCheckboxRadioSwitch,
     NcLoadingIcon,
   },
   props: {

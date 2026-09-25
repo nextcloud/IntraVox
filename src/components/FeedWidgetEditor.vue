@@ -16,6 +16,7 @@
         renders the value but nothing writes typing back, so the field looked
         filled and saved empty.
       -->
+      <label class="form-label" for="feed-widget-title">{{ t('intravox', 'Widget title (optional)') }}</label>
       <NcTextField
         id="feed-widget-title"
         v-model="localWidget.title"
@@ -41,6 +42,7 @@
 
     <!-- RSS URL input -->
     <div v-if="localWidget.sourceType === 'rss'" class="form-group">
+      <label class="form-label" for="feed-url">{{ t('intravox', 'Feed URL') }}</label>
       <NcTextField
         id="feed-url"
         v-model="localWidget.feedUrl"
@@ -1005,16 +1007,16 @@ export default {
 }
 
 /*
- * label-outside renders the label inside the component's own scope, so
- * .form-group > label below cannot reach it. Without this the two converted
- * fields would get maxcontrast labels beside fourteen bold ones — trading one
- * inconsistency for another.
+ * label-outside suppresses NcTextField's own floating label entirely — it has
+ * one render branch, guarded by `!labelOutside`. The caller must then supply
+ * the label, which is what .form-label is. The previous rule here styled
+ * .input-field__label, a class that never renders in this mode, so both
+ * converted fields shipped with no visible label at all.
  */
-.feed-widget-editor :deep(.input-field--label-outside .input-field__label) {
+.form-label {
   font-weight: 600;
   font-size: var(--default-font-size);
   color: var(--color-main-text);
-  margin-block-end: 4px;
 }
 
 .form-group > label {

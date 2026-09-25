@@ -1,5 +1,19 @@
 <template>
   <div class="photo-story-editor">
+    <!-- Widget title. First field, matching the news, people, calendar and
+         feed editors: it names the block on the page, so it comes before the
+         question of where the content comes from. -->
+    <div class="editor-section">
+      <label class="editor-label" for="ps-widget-title">{{ t('intravox', 'Widget title (optional)') }}</label>
+      <input
+        id="ps-widget-title"
+        type="text"
+        v-model="localTitle"
+        class="editor-input"
+        @change="emitUpdate"
+      />
+    </div>
+
     <!-- ============ SECTION: SOURCE ============ -->
     <h4 class="ps-section-heading">{{ t('intravox', 'Source') }}</h4>
 
@@ -392,6 +406,7 @@ export default {
   data() {
     return {
       localConfig: this.createDefaultConfig(),
+      localTitle: this.widget.title || '',
       capabilities: null,
       metaVoxAvailable: false,
       mapGloballyEnabled: true,
@@ -813,6 +828,7 @@ export default {
       this.$emit('update', {
         ...this.widget,
         type: 'photo-story',
+        title: this.localTitle,
         config: { ...this.localConfig },
       });
     },

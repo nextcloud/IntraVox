@@ -147,27 +147,32 @@
     <div class="editor-section">
       <label class="editor-label">{{ t('intravox', 'Display options') }}</label>
       <div class="display-options">
-        <label class="checkbox-option">
-          <input type="checkbox" v-model="localWidget.showImage" @change="emitUpdate" />
-          <span>{{ t('intravox', 'Show image') }}</span>
-        </label>
-        <label class="checkbox-option">
-          <input type="checkbox" v-model="localWidget.showDate" @change="emitUpdate" />
-          <span>{{ t('intravox', 'Show date') }}</span>
-        </label>
-        <label class="checkbox-option">
-          <input type="checkbox" v-model="localWidget.showExcerpt" @change="emitUpdate" />
-          <span>{{ t('intravox', 'Show excerpt') }}</span>
-        </label>
+        <NcCheckboxRadioSwitch
+          v-model="localWidget.showImage"
+          @update:model-value="emitUpdate">
+          {{ t('intravox', 'Show image') }}
+        </NcCheckboxRadioSwitch>
+        <NcCheckboxRadioSwitch
+          v-model="localWidget.showDate"
+          @update:model-value="emitUpdate">
+          {{ t('intravox', 'Show date') }}
+        </NcCheckboxRadioSwitch>
+        <NcCheckboxRadioSwitch
+          v-model="localWidget.showExcerpt"
+          @update:model-value="emitUpdate">
+          {{ t('intravox', 'Show excerpt') }}
+        </NcCheckboxRadioSwitch>
       </div>
     </div>
 
     <!-- Publication Filter -->
     <div class="editor-section">
-      <label class="checkbox-option publication-filter-option">
-        <input type="checkbox" v-model="localWidget.filterPublished" @change="emitUpdate" />
-        <span>{{ t('intravox', 'Show only published pages') }}</span>
-      </label>
+      <NcCheckboxRadioSwitch
+        class="checkbox-option publication-filter-option"
+        v-model="localWidget.filterPublished"
+        @update:model-value="emitUpdate">
+        {{ t('intravox', 'Show only published pages') }}
+      </NcCheckboxRadioSwitch>
       <p class="editor-hint">{{ t('intravox', 'Filter pages based on publication and expiration dates configured in admin settings.') }}</p>
 
       <div v-if="localWidget.filterPublished && !metavoxAvailable" class="publication-warning">
@@ -324,11 +329,12 @@ import Close from 'vue-material-design-icons/Close.vue';
 import Information from 'vue-material-design-icons/Information.vue';
 import AlertCircle from 'vue-material-design-icons/AlertCircle.vue';
 import PageTreeSelect from './PageTreeSelect.vue';
-import { NcSelect } from '@nextcloud/vue';
+import { NcCheckboxRadioSwitch, NcSelect } from '@nextcloud/vue';
 
 export default {
   name: 'NewsWidgetEditor',
   components: {
+    NcCheckboxRadioSwitch,
     ViewList,
     ViewGrid,
     ViewCarousel,
@@ -852,13 +858,6 @@ export default {
   align-items: center;
   gap: 8px;
   cursor: pointer;
-}
-
-.checkbox-option input {
-  /* 24px is the WCAG 2.2 target-size floor; 16px only clears it with 24px
-     of space around it, which the row gap does not give. */
-  width: var(--clickable-area-small, 24px);
-  height: var(--clickable-area-small, 24px);
 }
 
 .filters-list {

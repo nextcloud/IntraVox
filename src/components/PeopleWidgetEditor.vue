@@ -267,76 +267,91 @@
         <!-- Basic Information -->
         <div class="display-group">
           <span class="display-group-header">{{ t('intravox', 'Basic information') }}</span>
-          <label class="checkbox-option">
-            <input type="checkbox" v-model="localWidget.showFields.avatar" @change="emitUpdate" />
-            <span>{{ t('intravox', 'Avatar') }}</span>
-          </label>
-          <label class="checkbox-option">
-            <input type="checkbox" v-model="localWidget.showFields.displayName" @change="emitUpdate" />
-            <span>{{ t('intravox', 'Name') }}</span>
-          </label>
-          <label class="checkbox-option">
-            <input type="checkbox" v-model="localWidget.showFields.pronouns" @change="emitUpdate" />
-            <span>{{ t('intravox', 'Pronouns') }}</span>
-          </label>
-          <label class="checkbox-option">
-            <input type="checkbox" v-model="localWidget.showFields.role" @change="syncTitleWithRole" />
-            <span>{{ t('intravox', 'Role') }}</span>
-          </label>
-          <label class="checkbox-option">
-            <input type="checkbox" v-model="localWidget.showFields.headline" @change="emitUpdate" />
-            <span>{{ t('intravox', 'Headline') }}</span>
-          </label>
-          <label class="checkbox-option">
-            <input type="checkbox" v-model="localWidget.showFields.department" @change="emitUpdate" />
-            <span>{{ t('intravox', 'Department') }}</span>
-          </label>
+          <NcCheckboxRadioSwitch
+            v-model="localWidget.showFields.avatar"
+            @update:model-value="emitUpdate">
+            {{ t('intravox', 'Avatar') }}
+          </NcCheckboxRadioSwitch>
+          <NcCheckboxRadioSwitch
+            v-model="localWidget.showFields.displayName"
+            @update:model-value="emitUpdate">
+            {{ t('intravox', 'Name') }}
+          </NcCheckboxRadioSwitch>
+          <NcCheckboxRadioSwitch
+            v-model="localWidget.showFields.pronouns"
+            @update:model-value="emitUpdate">
+            {{ t('intravox', 'Pronouns') }}
+          </NcCheckboxRadioSwitch>
+          <NcCheckboxRadioSwitch
+            v-model="localWidget.showFields.role"
+            @update:model-value="syncTitleWithRole">
+            {{ t('intravox', 'Role') }}
+          </NcCheckboxRadioSwitch>
+          <NcCheckboxRadioSwitch
+            v-model="localWidget.showFields.headline"
+            @update:model-value="emitUpdate">
+            {{ t('intravox', 'Headline') }}
+          </NcCheckboxRadioSwitch>
+          <NcCheckboxRadioSwitch
+            v-model="localWidget.showFields.department"
+            @update:model-value="emitUpdate">
+            {{ t('intravox', 'Department') }}
+          </NcCheckboxRadioSwitch>
         </div>
 
         <!-- Contact -->
         <div class="display-group">
           <span class="display-group-header">{{ t('intravox', 'Contact') }}</span>
-          <label class="checkbox-option">
-            <input type="checkbox" v-model="localWidget.showFields.email" @change="emitUpdate" />
-            <span>{{ t('intravox', 'Email') }}</span>
-          </label>
-          <label class="checkbox-option">
-            <input type="checkbox" v-model="localWidget.showFields.phone" @change="emitUpdate" />
-            <span>{{ t('intravox', 'Phone') }}</span>
-          </label>
-          <label class="checkbox-option">
-            <input type="checkbox" v-model="localWidget.showFields.address" @change="emitUpdate" />
-            <span>{{ t('intravox', 'Address') }}</span>
-          </label>
-          <label class="checkbox-option">
-            <input type="checkbox" v-model="localWidget.showFields.website" @change="emitUpdate" />
-            <span>{{ t('intravox', 'Website') }}</span>
-          </label>
-          <label class="checkbox-option">
-            <input type="checkbox" v-model="localWidget.showFields.birthdate" @change="emitUpdate" />
-            <span>{{ t('intravox', 'Date of birth') }}</span>
-          </label>
+          <NcCheckboxRadioSwitch
+            v-model="localWidget.showFields.email"
+            @update:model-value="emitUpdate">
+            {{ t('intravox', 'Email') }}
+          </NcCheckboxRadioSwitch>
+          <NcCheckboxRadioSwitch
+            v-model="localWidget.showFields.phone"
+            @update:model-value="emitUpdate">
+            {{ t('intravox', 'Phone') }}
+          </NcCheckboxRadioSwitch>
+          <NcCheckboxRadioSwitch
+            v-model="localWidget.showFields.address"
+            @update:model-value="emitUpdate">
+            {{ t('intravox', 'Address') }}
+          </NcCheckboxRadioSwitch>
+          <NcCheckboxRadioSwitch
+            v-model="localWidget.showFields.website"
+            @update:model-value="emitUpdate">
+            {{ t('intravox', 'Website') }}
+          </NcCheckboxRadioSwitch>
+          <NcCheckboxRadioSwitch
+            v-model="localWidget.showFields.birthdate"
+            @update:model-value="emitUpdate">
+            {{ t('intravox', 'Date of birth') }}
+          </NcCheckboxRadioSwitch>
         </div>
 
         <!-- Extended -->
         <div class="display-group">
           <span class="display-group-header">{{ t('intravox', 'Extended') }}</span>
-          <label class="checkbox-option">
-            <input type="checkbox" v-model="localWidget.showFields.biography" @change="emitUpdate" />
-            <span>{{ t('intravox', 'Biography') }}</span>
-          </label>
-          <label class="checkbox-option">
-            <input type="checkbox" v-model="localWidget.showFields.socialLinks" @change="emitUpdate" />
-            <span>{{ t('intravox', 'Social links (X/Bluesky/Fediverse)') }}</span>
-          </label>
+          <NcCheckboxRadioSwitch
+            v-model="localWidget.showFields.biography"
+            @update:model-value="emitUpdate">
+            {{ t('intravox', 'Biography') }}
+          </NcCheckboxRadioSwitch>
+          <NcCheckboxRadioSwitch
+            v-model="localWidget.showFields.socialLinks"
+            @update:model-value="emitUpdate">
+            {{ t('intravox', 'Social links (X/Bluesky/Fediverse)') }}
+          </NcCheckboxRadioSwitch>
           <!-- Only offered when the instance actually has custom fields.
                Nextcloud cannot store arbitrary LDAP/OIDC attributes, so on
                most instances this preference is empty and the toggle would
                silently do nothing. -->
-          <label v-if="hasCustomFields" class="checkbox-option">
-            <input type="checkbox" v-model="localWidget.showFields.customFields" @change="emitUpdate" />
-            <span>{{ t('intravox', 'Custom fields (LDAP/OIDC)') }}</span>
-          </label>
+          <NcCheckboxRadioSwitch
+            v-if="hasCustomFields"
+            v-model="localWidget.showFields.customFields"
+            @update:model-value="emitUpdate">
+            {{ t('intravox', 'Custom fields (LDAP/OIDC)') }}
+          </NcCheckboxRadioSwitch>
         </div>
       </div>
     </div>
@@ -355,6 +370,7 @@
 </template>
 
 <script>
+import { NcCheckboxRadioSwitch } from '@nextcloud/vue';
 import { translate } from '@nextcloud/l10n';
 import { generateUrl } from '@nextcloud/router';
 import axios from '@nextcloud/axios';
@@ -373,6 +389,7 @@ import UserSelect from './UserSelect.vue';
 export default {
   name: 'PeopleWidgetEditor',
   components: {
+    NcCheckboxRadioSwitch,
     ViewerFacetEditor,
     AccountMultiplePlus,
     Filter,
@@ -860,13 +877,6 @@ export default {
   gap: 8px;
   cursor: pointer;
   font-size: var(--default-font-size);
-}
-
-.checkbox-option input[type="checkbox"] {
-  /* 24px is the WCAG 2.2 target-size floor; 16px only clears it with 24px
-     of space around it, which the row gap does not give. */
-  width: var(--clickable-area-small, 24px);
-  height: var(--clickable-area-small, 24px);
 }
 
 /* Filters */
