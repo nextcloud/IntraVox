@@ -123,9 +123,9 @@ Two languages are protected and cannot be removed:
 - **English** — the universal fallback and source language.
 - **The current recommended language** — pick a different recommended language first, then you can remove it.
 
-## License tally impact
+## Page counts per language
 
-The free-tier limit is **50 pages per language**. It's counted per language content folder, so each language has its own 50-page budget. Removing a language moves its pages to the trash, so they no longer count toward any tally; restoring the folder from the trash brings both the pages and their tally back.
+IntraVox does not cap the number of pages. The admin settings show a page count per language so you can see how they compare — the bar is relative to the busiest language, not to a limit. Removing a language moves its pages to the trash, so they drop out of the count; restoring the folder from the trash brings them back.
 
 ## Common scenarios
 

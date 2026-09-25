@@ -123,9 +123,9 @@ Twee talen zijn beschermd en kunnen niet worden verwijderd:
 - **Engels** — de universele fallback en brontaal.
 - **De huidige aanbevolen taal** — kies eerst een andere aanbevolen taal, dan kun je deze verwijderen.
 
-## Effect op de licentietelling
+## Paginatelling per taal
 
-De gratis-tier-limiet is **50 pagina's per taal**. Die telt per inhoudsmap, dus elke taal heeft z'n eigen budget van 50 pagina's. Een taal verwijderen verplaatst de pagina's naar de prullenbak, dus ze tellen niet meer mee; de map herstellen uit de prullenbak brengt zowel de pagina's als hun telling terug.
+IntraVox begrenst het aantal pagina's niet. De beheerinstellingen tonen een telling per taal zodat je ze kunt vergelijken — de balk staat in verhouding tot de drukste taal, niet tot een limiet. Een taal verwijderen verplaatst de pagina's naar de prullenbak, dus ze vallen uit de telling; de map herstellen brengt ze terug.
 
 ## Veelvoorkomende scenario's
 

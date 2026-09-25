@@ -46,12 +46,18 @@ PHP-worker zijn eigen kopie, dus honderd workers halen dezelfde feed honderd kee
 op. Mét Redis bedient één fetch ze allemaal. Configureer 'm als zowel
 `memcache.distributed` als `memcache.locking`.
 
-**Laat de achtergrondtaak draaien.** `FeedRefreshJob` ververst geconfigureerde
-feeds elke 10 minuten, vóórdat de cache vervalt, zodat lezers bijna nooit een
-koude fetch veroorzaken. Op een drukke installatie is dat precies wat het koude
-pad zeldzaam houdt. Nextcloud-cron moet dan wel op systeemcron staan, niet op
-AJAX — AJAX-cron draait alleen als iemand een pagina opent, en dat is precies
-het moment waarop je niet wilt ophalen.
+**Lezers houden de cache zelf warm.** Een entry geldt 15 minuten als vers en
+wordt daarna nog een uur uitgeserveerd, terwijl precies één request 'm op de
+achtergrond ververst. Een feed valt dus pas terug op een blokkerende fetch als
+niemand de pagina een uur lang heeft geopend — hoe drukker de installatie, hoe
+zeldzamer dat is. Hier is geen configuratie voor nodig.
+
+`FeedRefreshJob` ververst *geconfigureerde feed-verbindingen* (de LMS- en
+issue-tracker-koppelingen uit het beheerscherm) elke 10 minuten. Hij verwarmt
+géén RSS-URL's die op een widget zijn ingevuld; die leunen op het mechanisme
+hierboven. Gebruik je verbindingen, dan moet Nextcloud-cron op systeemcron staan
+en niet op AJAX — AJAX-cron draait alleen als iemand een pagina opent, en dat is
+precies het moment waarop je niet wilt ophalen.
 
 **Hoeveel feed-widgets per pagina is redelijk?** Tot twintig is comfortabel.
 Daarboven stuurt de client meer dan één request per paginaweergave, en dat telt
@@ -126,11 +132,13 @@ Externe feed-bronnen zijn beschermd door drie lagen:
 
 2. **Circuit breaker** — na 3 opeenvolgende mislukkingen voor een bron opent de circuit breaker, en volgende requests geven direct een "tijdelijk niet beschikbaar"-melding terug. De circuit reset automatisch na 5 minuten, of direct bij een succesvolle fetch.
 
-3. **Background refresh** — een Nextcloud-background-job (`FeedRefreshJob`) ververst geconfigureerde feed-verbindingen proactief elke 10 minuten, voor de cache verloopt. Gebruikers triggeren bijna nooit een cold fetch.
+3. **Stale-while-revalidate** — een entry is 15 minuten vers en wordt daarna nog een uur geserveerd. Voorbij het verse venster krijgt een lezer de gecachete kopie meteen, terwijl één request 'm op de achtergrond ververst. Niemand wacht achter andermans refetch.
+
+   `FeedRefreshJob` ververst daarnaast geconfigureerde feed-*verbindingen* elke 10 minuten. RSS-URL's op een widget worden niet voorverwarmd; die houden lezers warm volgens de regel hierboven.
 
 Aanvullend:
 
-- HTTP-timeout staat op 5 seconden om PHP-worker-blocking te voorkomen
+- HTTP-timeout is 8 seconden, zodat één onbereikbare bron geen PHP-worker eindeloos vasthoudt
 - Private IP-ranges worden geblokkeerd (SSRF-bescherming)
 - Image-URLs zijn HMAC-ondertekend voor proxy-requests
 - API-responses groter dan 10 MB worden geweigerd vóór parsing om OOM te voorkomen

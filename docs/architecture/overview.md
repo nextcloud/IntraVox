@@ -50,7 +50,7 @@ See the [Feed Widget documentation](../features/feed-widget.md#how-feed-widgets-
 
 | Layer | Technology |
 |-------|------------|
-| Frontend | Vue.js 3, Vue Router, Pinia (state management) |
+| Frontend | Vue.js 3 (Options API), @nextcloud/vue components, TipTap editor |
 | Backend | PHP 8.x, Nextcloud App Framework |
 | Storage | Nextcloud Files API, GroupFolders |
 | Permissions | GroupFolder ACL, Nextcloud Permissions |
@@ -74,23 +74,23 @@ intravox/
 │   ├── *.js               # Compiled translations
 │   └── *.json             # Translation source files
 ├── lib/
-│   ├── Controller/        # API Controllers
-│   │   ├── ApiController.php
-│   │   ├── FooterController.php
-│   │   ├── NavigationController.php
-│   │   └── PageController.php
-│   ├── Service/           # Business Logic
-│   │   ├── FooterService.php
-│   │   ├── NavigationService.php
-│   │   ├── PageService.php
-│   │   ├── PermissionService.php
-│   │   └── SetupService.php
-│   └── AppInfo/
-│       └── Application.php
+│   ├── AppInfo/           # Application.php, service registration
+│   ├── BackgroundJob/     # Cron jobs (cache warmup, feed refresh)
+│   ├── Command/           # occ commands
+│   ├── Controller/        # API controllers, one per resource
+│   ├── Migration/         # Database migrations
+│   ├── Service/           # Business logic, grouped per domain in
+│   │                      # subdirectories (Feed/, Folder/, PublicShare/,
+│   │                      # Read/, Locator/, Permission/, …)
+│   ├── Settings/          # Admin and personal settings sections
+│   └── Share/             # Public share integration
 ├── src/
-│   ├── components/        # Vue components
-│   ├── views/             # Page views
-│   ├── stores/            # Pinia stores
+│   ├── admin/             # Admin settings entry point
+│   ├── components/        # Vue components (widgets, editors, dialogs)
+│   ├── composables/       # Reusable composition functions
+│   ├── mixins/            # Shared component behaviour
+│   ├── services/          # Frontend API clients
+│   ├── utils/             # Helpers (feed batching, formatting)
 │   ├── App.vue            # Root component
 │   └── main.js            # Entry point
 ├── templates/
@@ -315,7 +315,7 @@ IntraVox uses a multi-layer caching strategy and resilience patterns to support 
 - **Circuit breaker** to handle failing external sources gracefully
 - **Background feed refresh** via Nextcloud cron to keep caches warm
 - **Page metadata database index** for fast listing, tree, and search operations
-- **Bundle splitting** (217 KB main + lazy-loaded editor and widgets)
+- **Bundle splitting** (~222 KB main + lazy-loaded editor and widgets)
 - **Progressive rendering** in tree components (50 items per batch)
 
 Rate limiting, audit logging, GDPR user deletion, and a health check endpoint provide enterprise-grade operational security.

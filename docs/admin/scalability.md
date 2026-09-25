@@ -46,11 +46,18 @@ PHP worker keeps its own copy, so a hundred workers fetch the same feed a hundre
 times. With it, one fetch serves them all. Configure it as both
 `memcache.distributed` and `memcache.locking`.
 
-**Keep the background job running.** `FeedRefreshJob` refreshes configured feeds
-every 10 minutes, before the cache expires, so readers almost never trigger a
-cold fetch. On a busy instance this is what keeps the cold path rare. It needs
-Nextcloud's cron to be on system cron, not AJAX — AJAX cron only runs when
-somebody loads a page, which is exactly when you do not want to be fetching.
+**Readers keep the cache warm themselves.** An entry counts as fresh for 15
+minutes and is still served for an hour after that, with exactly one request
+going on to refresh it in the background. A feed therefore only falls back to a
+blocking fetch if nobody opened the page for a full hour — the busier the
+instance, the rarer that is. No configuration is needed for this.
+
+`FeedRefreshJob` refreshes *configured feed connections* (the LMS and
+issue-tracker integrations set up in the admin screen) every 10 minutes. It does
+not pre-warm RSS URLs entered on a widget; those rely on the mechanism above. If
+you use connections, the job needs Nextcloud's cron on system cron rather than
+AJAX — AJAX cron only runs when somebody loads a page, which is exactly when you
+do not want to be fetching.
 
 **How many feed widgets per page is reasonable?** Up to twenty is comfortable.
 Beyond that the client sends more than one request per page view, which costs
@@ -124,10 +131,12 @@ External feed sources are protected by three layers:
 
 2. **Circuit breaker** — After 3 consecutive failures for a source, the circuit breaker opens and subsequent requests return immediately with a "temporarily unavailable" message. The circuit resets automatically after 5 minutes, or immediately when a successful fetch occurs.
 
-3. **Background refresh** — A Nextcloud background job (`FeedRefreshJob`) proactively refreshes configured feed connections every 10 minutes, before the cache expires. This means users almost never trigger a cold fetch.
+3. **Stale-while-revalidate** — An entry is fresh for 15 minutes and served for an hour beyond that. Past the fresh window a reader still gets the cached copy immediately, while one request refreshes it in the background. Nobody waits behind someone else's refetch.
+
+   `FeedRefreshJob` additionally refreshes configured feed *connections* every 10 minutes. RSS URLs configured on a widget are not pre-warmed; they are kept warm by readers under the rule above.
 
 Additionally:
-- HTTP timeout is set to 5 seconds to prevent PHP worker blocking
+- HTTP timeout is 8 seconds, so one unreachable source cannot hold a PHP worker indefinitely
 - Private IP ranges are blocked (SSRF protection)
 - Image URLs are HMAC-signed for proxy requests
 - API responses larger than 10 MB are rejected before parsing to prevent OOM
