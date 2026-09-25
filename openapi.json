@@ -12310,22 +12310,6 @@
           "totalPages": {
             "type": "integer"
           },
-          "freeLimit": {
-            "type": "integer",
-            "description": "Pages per language allowed without a subscription."
-          },
-          "maxPagesPerLanguage": {
-            "type": "integer"
-          },
-          "exceededLanguages": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "pagesExceeded": {
-            "type": "boolean"
-          },
           "perLanguage": {
             "type": "boolean"
           },

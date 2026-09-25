@@ -6,247 +6,81 @@ IntraVox is a Nextcloud intranet page builder.
 
 ## [Unreleased]
 
+### Security
+
+- **The Moodle webservice token was readable in the page source.** The image
+  proxy signs the URL it hands the browser, but a signature stops tampering, not
+  reading — and the token was appended to that URL. On a connection configured
+  with an admin token, every visitor of the page could read LMS administrator
+  credentials, in the source, in browser history and in any access log in
+  between. The token is now attached when the proxy fetches the file, after the
+  signature is verified, so it only ever goes onto the outgoing request. Two
+  guards keep that from becoming a token oracle: the URL must belong to an
+  active Moodle connection's webservice endpoint, and the token is resolved for
+  the requesting user, so an anonymous reader on a public share still gets none.
+
 ### Fixed
 
-- **Every page request spent 300ms deciding which language to read from.** A
-  language folder can carry a `homepage.json` pointing at the page that serves as
-  its homepage, and resolving that pointer walked the entire language tree —
-  302ms on a tree of 429 folders. It was not paid once but on every authenticated
-  request, because picking the read folder probes each candidate language, and
-  one page load makes eight such requests. The pointer now resolves through the
-  page index, which answers the same question in one query; the walk remains as
-  the fallback, so a stale or empty index still resolves exactly as before. An
-  index hit outside the language folder being probed is refused, because the
-  index treats language as a tie-break rather than a filter — that keeps the fast
-  path a strict subset of what the walk would have found. Measured on dev:
-  resolving the read folder went from 297ms to 17ms, and a cold page read from
-  304ms to 10ms.
+- **Public pages took 2.2 seconds, and the cost grew with every feed widget.**
+  Two separate faults, both on the share path. A shared page was looked up by
+  guessing its language — a read that needs a session user, which an anonymous
+  visitor does not have — so it searched the English tree first, missed, and
+  swept every other language. And the guard that checks a feed request against
+  what the share actually publishes re-walked the share tree and re-decoded
+  every page for each of the seven selectors it asks about, so ten widgets meant
+  roughly seventy walks. The page index now answers the language question in one
+  query, and the pages are read once per request. Measured: a refused lookup
+  0.75s to 0.22s, and a batch of ten feeds 1.2s to 0.1s. The language walk
+  remains as the fallback, so a stale or empty index resolves exactly as before.
+- **Every authenticated page load spent 300ms deciding which language to read
+  from.** A language folder can point at its homepage, and resolving that
+  pointer walked the whole tree — 302ms on 429 folders, paid on each of the
+  eight requests a page load makes. It resolves through the index now, with the
+  walk as fallback. An index hit outside the language folder being probed is
+  refused, which keeps the fast path a strict subset of the walk. Measured:
+  297ms to 17ms.
 - **A page of feed widgets could hang for a minute and a half without making a
-  single request.** When a feed is not cached and another request is already
-  fetching it, the reader waits for that fetch to finish — up to five seconds.
-  For one feed that is the point of the lock. In a batch it is paid per feed and
-  the feeds are fetched one after another, so twenty widgets could spend twenty
-  times five seconds asleep. It also contradicted the surrounding design, which
-  serves a stale copy precisely so nobody waits behind someone else's refetch.
-  A batch no longer waits: it fetches the feed itself. Measured on dev with five
-  uncached feeds whose locks were held elsewhere: 25.9s to 0.45s. The single-feed
-  routes and the refresh job keep the wait unchanged.
+  single request.** When another request was already fetching a feed, the reader
+  waited for it — up to five seconds, per feed, in series. Twenty widgets could
+  sleep twenty times five seconds. That also contradicted the surrounding
+  design, which serves a stale copy precisely so nobody waits behind someone
+  else's refetch. A batch no longer waits. Measured: 25.9s to 0.45s. Single-feed
+  routes and the refresh job keep the wait.
+- **A Dutch shared page built its breadcrumb from the English navigation**,
+  because the language guess above also decided which `navigation.json` to read.
+- **Feed items showed only a date when the summary was switched on**, and feed
+  images that a site published protocol-relative (`//host/path`) were dropped
+  rather than shown.
 
 ### Changed
 
+- **The widget editors are Nextcloud dialogs.** All seven were rebuilt against
+  the platform's own form rules: a proper dialog frame with the widget type in
+  the title and the actions in the footer, one label pattern, a 900px reading
+  measure instead of the modal's full 1200px, sentence-case section headings,
+  and no italic helper text. The close button no longer sits on the first field,
+  the sliders no longer rename themselves while you drag, and the layout works
+  in dark mode. Photo story and file story gained the widget title field the
+  other five already had, and the 22 hand-rolled checkboxes are now
+  `NcCheckboxRadioSwitch` — Nextcloud keeps the glyph at icon size and makes the
+  row the target, which is why ours looked oversized beside them.
 - **The app no longer waits for the language check before loading anything
   else.** Opening a page fetched the language content status first and only then
-  started on pages, navigation, footer and settings — none of which need it. That
-  cost a full round trip before the real work began. The request now starts
-  alongside the others and is awaited at the single point that reads it, just
-  before the page to show is picked, so the ordering that matters is unchanged.
-  Together with the homepage-pointer fix this took a page load's critical path
-  from 1686ms to 846ms on dev.
-
-- **The feed widget documentation shows the widget working, and documents the
-  option 3.1.0 added.** A recording walks the round trip on a page of live RSS
-  feeds — adding a widget, pointing it at a feed URL, setting layout, sort order
-  and items per page, reading an item in place, saving — and "Items per page"
-  is written up where it was missing entirely: what it caps, why it cannot
-  exceed the item count, and that paging slices the cached response rather than
-  fetching. The sort-order row still described the toggle that 3.1.0 replaced
-  with a radio pair.
-
-### Fixed
-
-- **A shared page was looked up in the wrong language first, and every public
-  page paid for it.** Opening a page through a share link ran a page read purely
-  to learn its language, but that read resolves through the session user's mount
-  and an anonymous visitor has none, so it failed silently and left the default
-  `en`. The share then searched the English tree first — 581 folders on the
-  instance this was measured on — missed, and swept every remaining language
-  before finding the page. A page id that does not exist cost the same, because
-  a wrong guess has to be disproved the same way. The page index already answers
-  this in one query regardless of language, so it is asked first; the language
-  walks remain as the fallback, so a stale or empty index still resolves exactly
-  as before. Measured on a fresh index: a refused lookup went from 0.75s to
-  0.22s, and a page from 0.15s to 0.12s.
-
-- **A share's widget allowlist re-read every page in the share, once per
-  question.** The guard that checks an anonymous feed request against what the
-  share actually publishes asks one key at a time — connection, feed URL, and
-  four more selectors — and each answer walked the share tree and decoded every
-  page in it again. Three feed widgets on one page meant eighteen walks of up to
-  200 files. The pages are now read once per request, keyed per share so two
-  shares in one request can never answer for each other.
-
-- **A Dutch shared page built its breadcrumb from the English navigation.** The
-  same `en` default reached `ShareBreadcrumbBuilder`, which reads
-  `{language}/navigation.json`. The language the page was actually found in is
-  now reported back by the resolver and used instead, so the home label on a
-  non-English share matches the page being read.
-- **Two fields in the feed editor shipped with no label at all.** They passed
-  `label-outside` to `NcTextField`, which was read as "render the label outside
-  the input". It means the opposite: the component has one label branch, guarded
-  by `!labelOutside`, so the prop suppresses its own label and leaves the caller
-  to supply one — which never happened. The accompanying stylesheet rule styled
-  `.input-field__label`, a class that cannot render in that mode, so nothing
-  showed that anything was missing. Both fields now carry the plain `<label>`
-  above the input that the news, people and calendar editors already use, and
-  the rule targets it.
-- **The photo story and file story editors had no widget title field.** The
-  other four editors open with one; these two started at "Source", so the only
-  way to name the block on the page was to leave it unnamed. Both now open with
-  the same field.
-- **Checkboxes were visibly larger in three editors than in the other three.**
-  News, people and calendar drew their own `<input type="checkbox">` and sized
-  the box to 24px to clear the WCAG 2.2 target-size floor. Nextcloud clears the
-  same floor differently: `NcCheckboxRadioSwitch` keeps the glyph at icon size
-  and makes the surrounding row the target, so a hand-sized box sat beside
-  Nextcloud-sized ones — most visible in the people editor, which had fifteen.
-  All 22 are now the Nextcloud component, and the two overrides are gone.
-
-- **The feed editor's form was running the modal's full 1200px.** The 900px
-  measure was set on the host modal's `.form-group`, but Vue's scoped styles bind
-  a rule to the component that declares it — so the rule carried the parent's
-  scope id and the editor's own fields carried a different one. It never applied.
-  The measure now sits on the editor itself, where it reaches every field.
-
-- **One label pattern instead of two.** Widget title and feed URL used
-  `NcTextField`'s floating label; the other fourteen fields put the label above
-  the control. Side by side in one column, two of sixteen labels animated on
-  click and fourteen did not. They now all sit above, which is also what the
-  other six widget editors do — and it removes an off-grid 6px margin that the
-  floating variant ships and `label-outside` drops.
-
-- **The sliders no longer rename themselves while you drag.** "Number of items"
-  had the value baked into its `<label>`, which is the control's accessible name:
-  every step renamed the slider, so a screen reader announced the name again on
-  top of the value it already reports. The number moved to an `<output>` beside
-  the track — announced once, as a value — with reserved width and tabular digits
-  so nothing shifts while dragging. It also stops the label being a sentence
-  glued together from a string and a number, which a translator cannot reorder.
-
-- **Helper text is no longer italic**, and the section heading lines up with the
-  fields it introduces. Small, low-contrast *and* italic was three reductions
-  stacked on the least legible text in the form; the heading was indented 20px
-  further than every field below it. The form now names both its halves —
-  "Source" and "Display" — where the first heading used to appear halfway down.
-
-- **The widget editor had a band of dead space down its right side.** The modal
-  is 1200px wide so the text editor and media pickers have room, but the feed
-  editor capped every dropdown at 280px — a rule written for an 860px dialog and
-  left behind when the modal grew. Raw inputs in the same form were full width,
-  so a 280px dropdown sat beside a 1160px text field, and the connection and
-  SharePoint pickers were squeezed even though they hold long names. The form now
-  carries the measure instead, at the 900px Nextcloud uses for its own settings
-  sections, and the dropdowns that pick from a fixed short list — source type,
-  layout, columns, sort by — size to their content rather than stretching:
-  "Date" does not need 900px to be read. Pickers whose options are user data keep
-  the full width. The same stale cap is removed from the photo-story and
-  file-story editors.
-
-- **The feed editor reads the same in dark mode, and its smallest text is
-  legible.** Error messages used `--color-error`, which is the pale *background*
-  tint of the error trio rather than its text colour, so a failed connection
-  showed near-invisible text — worst in dark mode, where the tint is built to sit
-  under text rather than be it. Three `var(--color-x, fallback)` constructs had
-  the same hazard: a fallback is a light-mode value that renders wrong in dark
-  mode precisely when it is used. Every hardcoded font size in the editor now
-  comes from a variable, so it follows the reader's settings; the hints and
-  status text were 12px, below the smallest size Nextcloud has.
-
-- **Section headings are in sentence case, and the form says where its second
-  half starts.** "WIDGET / PER ITEM / LINKS" and the preview header were ALL
-  CAPS, which the writing guide rules out and which costs width the columns do
-  not have. The bare `<hr>` between "where the content comes from" and "how it is
-  shown" is now a named heading, so both halves are labelled instead of merely
-  separated.
-
-- **The feed editor's display options and item counts are laid out in columns.**
-  Six toggles in three groups were one tall stack, and the two item counts were
-  four more rows below them, which pushed the live preview off the screen. Both
-  now use the width the form already has: the toggle groups sit side by side,
-  and "number of items" and "items per page" share a row — they only make sense
-  together anyway, since the second cannot exceed the first. Both collapse back
-  to a single column on a narrow screen. The group headings also move off a
-  hardcoded 12px, which no accessibility setting can reach, onto the 13px
-  `--font-size-small`.
-
-- **"Newest first / oldest first" no longer floats beside a block of white.** The
-  two directions were stacked vertically next to a one-line dropdown, so the row
-  grew to the height of the taller half. They now sit side by side and wrap only
-  when the column is genuinely narrow. Applies to the feed, photo-story and
-  file-story editors, which share the pattern.
-
-- **The other five widget editors follow the same rules as the feed editor.**
-  News, people, calendar, photo story and file story carried the same defects
-  that were fixed in the feed editor one at a time: helper text in a size no
-  accessibility setting can reach, `var(--color-x, #hardcoded)` fallbacks that
-  render a light-mode colour exactly when dark mode needs them, ALL-CAPS section
-  headings, and error text using the pale background tint of the error trio
-  rather than its text colour. Two accessibility defects went with them: a
-  focus ring replaced by a 1px border-colour change, which cannot meet the 3:1
-  contrast the criterion asks for, and 16px checkboxes, below the 24px target
-  floor with too little clear space around them to qualify for the exception.
-
-- **The widget editor is a dialog, like every other form in Nextcloud.** It was
-  built on `NcModal`, whose title is a 16px `<div>` positioned outside the panel
-  — which is why the widget's name appeared to float over the app's search bar,
-  and why the form needed padding reserved for a header that was never part of
-  it. Nextcloud's own Files settings, the same shape as this, is a dialog: the
-  title is an `<h2>` at 21px inside the panel, and the component places the
-  action buttons. Switching to `NcDialog` gives all seven widget types the same
-  frame, puts the title in the document outline where a screen reader can find
-  it, and removes the hand-built button row the guidelines warn drifts between
-  apps. The title names the kind of widget — "Feed", "Calendar", "People" — not
-  its content: a feed editor headed "Free Software Foundation Europe" named the
-  source rather than the thing being edited, and the widget's own title is the
-  first field inside, where it can be changed.
-
-- **The close button sat on top of the first field in every widget editor.** The
-  editor modal strips its own padding so the text editor can run edge to edge,
-  but that also removed the space the modal's header floats in — it is
-  absolutely positioned over the content, not above it. The first field of every
-  editor therefore started underneath it, which on the feed editor put the close
-  button across the widget title input. The header's height is now reserved
-  once, for all editors.
-
-- **The widget editor says which widget is open.** The header read "Edit widget"
-  whatever you had clicked, which says nothing on a page of fifteen feeds. It
-  now shows the widget's own title, falling back to the kind of widget when it
-  has none.
-
-- **A feed showing only dates, with the summaries switched on.** "Show summary"
-  is a per-widget setting, but a layout rule dropped the summary whenever the
-  column was narrower than 400px — and a three-column row of feeds always is.
-  On most feeds this passed unnoticed, because the headline carried the item.
-  On Mastodon it emptied the widget: a toot has no title, so the summary IS the
-  content, and readers saw a date and nothing else. The width rule now yields to
-  the setting: asked for, it is shown, still clamped to two lines.
-
-- **Feeds on one page load in parallel when that helps, and in one request when
-  it does not.** The server fetches a batch's feeds one after another, so a page
-  of uncached feeds was one long serial queue: 15 of them took 5061ms in a single
-  request against 2380ms split over three. A cached feed, though, costs 0.1ms —
-  fifteen warm ones are 1.6ms and the request around them is the whole cost, so
-  splitting then makes the page slower (65ms against 98ms) and asks three PHP
-  workers to do one worker's job. Warm is the normal case, because the feed cache
-  is shared between all readers: one reader warms a page and everyone after them
-  is served from it. The request size now adapts — one request per page, split
-  only after the server reports it actually had to fetch. Overflow requests also
-  went out one behind the other, each waiting on a fresh 50ms timer; they now go
-  out together, which took 45 widgets from 13806ms to 8787ms.
-
-- **The admin guide says what the capacity numbers need.** `docs/admin/scalability`
-  claimed 10,000 users and 1,000 concurrent readers without saying how to size
-  for them. It now gives worker counts and memory per concurrency band, explains
-  why Redis is the single most valuable addition, why FeedRefreshJob needs system
-  cron rather than AJAX cron, and how many feed widgets per page stays reasonable
-  against the rate limit. The singleflight section also still described a 5s wait
-  that no longer applies to batch requests.
-
-- **58 screenshots were broken in the Dutch documentation.** Every `.nl.md`
-  page under `docs/user/`, `docs/admin/` and one under `docs/features/` linked
-  its images one directory level too high, at `../screenshots/` instead of
-  `../../screenshots/` — a path that does not exist — so the Dutch pages
-  rendered with broken images throughout while their English counterparts were
-  correct. All 234 local image links in the documentation now resolve.
+  started on pages, navigation, footer and settings, none of which need it. They
+  now start together, and the check is awaited only where it is read.
+- **Feeds on one page load in one request when they are cached, and in parallel
+  chunks when they are not.** A fixed small batch made the common warm case
+  slower (65ms against 98ms) and asked three workers to do one worker's job. The
+  size now adapts to what the server reports about the cache.
+- **The page limit that was never enforced is gone.** `LicenseService` carried a
+  50-page-per-language limit that nothing called and no screen displayed, but it
+  made a blocking call to the licence server on every admin settings render, and
+  it coloured the per-language bar as though an installation had exceeded a cap
+  that does not exist. The bar now scales against the busiest language, which is
+  what that overview compares. The three response fields it fed are removed from
+  the OpenAPI spec as well.
+- **The admin guide says what the capacity numbers need**, and 58 broken
+  screenshots in the Dutch documentation now resolve.
 
 ## [3.1.1] - 2026-09-24 — Conflicting group rights, across folder levels
 
