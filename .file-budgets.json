@@ -57,7 +57,7 @@
     "lib/Service/FederatedPreviewService.php": 273,
     "lib/Service/Feed/FeedArticleStore.php": 176,
     "lib/Service/Feed/FeedImageProxy.php": 192,
-    "lib/Service/Feed/FeedResponseReader.php": 191,
+    "lib/Service/Feed/FeedResponseReader.php": 206,
     "lib/Service/Feed/FeedTokenResolver.php": 261,
     "lib/Service/FeedReaderService.php": 2468,
     "lib/Service/FeedService.php": 742,
