@@ -120,6 +120,7 @@ OC.L10N.register(
     "Project" : "Projekt",
     "Documents" : "Dokumentumok",
     "Display" : "Kiállítás",
+    "Layout" : "Elrendezés",
     "Columns" : "Oszlopok",
     "Sort by" : "Rendezés",
     "Sort order" : "Rendezési sorrend",

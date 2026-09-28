@@ -221,6 +221,7 @@ OC.L10N.register(
     "Off" : "关",
     "optional" : "可选的选项",
     "Page settings" : "页面设置",
+    "New page" : "新建页面",
     "Delete page" : "删除页面",
     "Now" : "现在",
     "Modified" : "修改于",
