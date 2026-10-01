@@ -178,6 +178,7 @@ OC.L10N.register(
     "Alignment" : "對齊",
     "Delete row" : "刪除列",
     "Delete column" : "刪除欄位",
+    "Link text" : "連結文字",
     "Remove link" : "移除連結",
     "Apply" : "套用",
     "Home" : "首頁",

@@ -298,6 +298,7 @@ OC.L10N.register(
     "Total" : "Разом",
     "Subscription key" : "Ключ підписки",
     "Sending …" : "Надсилання ...",
+    "Any personal or sensitive data" : "Будь-які особисті або чутливі дані",
     "Simple" : "Просто",
     "Advanced" : "Додатково",
     "Unlink" : "Роз'єднати зв'язок.",
