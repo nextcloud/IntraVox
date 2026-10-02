@@ -1084,7 +1084,7 @@
     "Map view requires the Leaflet library — not installed." : "Zobrazenie mapy vyžaduje knižnicu Leaflet — nie je nainštalovaná.",
     "Show {count} photos in {location}" : "Zobraziť {count} fotografií v umiestnení {location}",
     "Add a filter to start" : "Pridajte filter a začnite",
-    "No photos taken on this day in previous years" : "V predchádzajúcich rokoch sa v tento deň nefotografovali žiadne fotografie",
+    "No photos taken on this day in previous years" : "V tento deň neboli v predchádzajúcich rokoch vytvorené žiadne fotografie.",
     "No photos found" : "Nenašli sa žiadne fotografie",
     "Failed to load photos" : "Načítanie fotografií zlyhalo",
     "Loading photos" : "Načítavajú sa fotografie",
