@@ -109,6 +109,7 @@ OC.L10N.register(
     "Feed URL" : "Syötteen osoite",
     "Connected" : "Yhdistetty",
     "Disconnect" : "Katkaise yhteys",
+    "Checking …" : "Tarkistetaan …",
     "Overdue" : "Myöhässä",
     "Project" : "Projekti",
     "Documents" : "Asiakirjat",
