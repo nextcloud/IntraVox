@@ -213,6 +213,7 @@ OC.L10N.register(
     "Create" : "Luo",
     "Carousel" : "Karuselli",
     "Select value" : "Valitse arvo",
+    "New page" : "Uusi sivu",
     "Now" : "Nyt",
     "Modified" : "Muokattu",
     "Location" : "Sijainti",
