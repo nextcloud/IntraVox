@@ -353,7 +353,7 @@ OC.L10N.register(
     "Auth method" : "Godkendelsesmetode",
     "Bearer token" : "Bearer-token",
     "API key (custom header)" : "API-nøgle (brugerdefineret header)",
-    "Basic auth" : "Basic-godkendelse",
+    "Basic auth" : "Basic auth",
     "No authentication" : "Ingen godkendelse",
     "API key header name" : "Navn på header til API-nøgle",
     "Response mapping" : "Felttilknytning for svaret",
