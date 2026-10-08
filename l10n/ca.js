@@ -129,6 +129,7 @@ OC.L10N.register(
     "Large" : "Gran",
     "Date modified" : "Data de modificació",
     "Filename" : "Nom del fitxer",
+    "Descending" : "Descendent",
     "Smallest first" : "Més petit primer",
     "Ascending" : "Ascendent",
     "Pick a folder" : "Trieu una carpeta",

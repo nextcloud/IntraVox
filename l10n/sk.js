@@ -1214,7 +1214,7 @@ OC.L10N.register(
     "What we collect" : "Čo zhromažďujeme",
     "Page counts per language (e.g., EN: 45, NL: 32)" : "Stránka counts per jazyk (e.g., EN: 45, NL: 32)",
     "Total user count and active users" : "Total user count active users",
-    "IntraVox, Nextcloud, and PHP version numbers" : "IntraVox, Nextcloud, PHP version numbers",
+    "IntraVox, Nextcloud, and PHP version numbers" : "Čísla verzií IntraVox, Nextcloud a PHP",
     "A unique hash of your instance URL (privacy-friendly identifier)" : "Jedinečný hash adresy URL vašej inštancie (identifikátor rešpektujúci súkromie)",
     "Basic server configuration (database, OS, web server, language, timezone, country)" : "Základná konfigurácia servera (databáza, operačný systém, webový server, jazyk, časové pásmo, krajina)",
     "Whether your Nextcloud has an Extended Support / Enterprise subscription (a single yes/no, sourced from Nextcloud's public API)" : "Či má váš Nextcloud predplatné Extended Support / Enterprise (jediná odpoveď áno/nie získaná z verejného API Nextcloud)",
