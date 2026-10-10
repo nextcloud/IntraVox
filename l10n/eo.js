@@ -123,6 +123,7 @@ OC.L10N.register(
     "Rename" : "Alinomi",
     "Close" : "Malfermi",
     "Done" : "Farita",
+    "Clear search" : "Viŝi serĉon",
     "Show more" : "Montri pli",
     "Group" : "Grupo",
     "Avatar" : "Avataro",
