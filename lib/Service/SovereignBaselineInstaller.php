@@ -12,7 +12,7 @@ use OCP\Files\NotFoundException;
 final class SovereignBaselineInstaller {
     public function __construct(private GroupFoldersGateway $groupFolders) {}
 
-    public function install(Folder $languageFolder, int $folderId, bool $overwrite = false): int {
+    public function install(Folder $languageFolder, int $folderId, bool $overwrite = false, ?array $onlyPaths = null): int {
         $homeId = SovereignBaseline::HOME_ID;
         try {
             $home = $languageFolder->get('home.json');
@@ -23,10 +23,15 @@ final class SovereignBaselineInstaller {
         } catch (NotFoundException $e) {
             // Fresh install uses the canonical id; existing bookmarks keep theirs.
         }
-        $executiveFolder = $this->folder($languageFolder, ['sovereign-excom']);
-        $this->groupFolders->protectExecutiveFolder($folderId, $executiveFolder->getId());
+        if ($onlyPaths === null || in_array('sovereign-excom/sovereign-excom.json', $onlyPaths, true)) {
+            $executiveFolder = $this->folder($languageFolder, ['sovereign-excom']);
+            $this->groupFolders->protectExecutiveFolder($folderId, $executiveFolder->getId());
+        }
         $changed = 0;
         foreach ((new SovereignBaseline())->documents($homeId) as $relative => $data) {
+            if ($onlyPaths !== null && !in_array($relative, $onlyPaths, true)) {
+                continue;
+            }
             $parts = explode('/', $relative);
             $filename = array_pop($parts);
             $folder = $this->folder($languageFolder, $parts);

@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: IntraVox 3.1.2\n"
 "Report-Msgid-Bugs-To: translations@nextcloud.com\n"
-"POT-Creation-Date: 2026-11-17 12:41+0000\n"
+"POT-Creation-Date: 2026-11-17 13:41+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -417,6 +417,9 @@ msgstr ""
 msgid "Application (client) ID"
 msgstr ""
 
+msgid "Application availability could not be confirmed in this session."
+msgstr ""
+
 #. Verb: button -->
 msgid "Apply"
 msgstr ""
@@ -519,9 +522,6 @@ msgid "Autoplay interval (seconds)"
 msgstr ""
 
 msgid "Autoplay when page loads"
-msgstr ""
-
-msgid "Availability unconfirmed"
 msgstr ""
 
 msgid "Available courses"
@@ -832,9 +832,6 @@ msgstr ""
 
 #. Noun: label
 msgid "Comments"
-msgstr ""
-
-msgid "Companies represented"
 msgstr ""
 
 msgid "Configure connections to external systems (LMS, RSS sources). These connections can be used by the Feed widget on any page."
@@ -2830,6 +2827,12 @@ msgstr ""
 msgid "Milestones"
 msgstr ""
 
+msgid "Mirrored ExCom governance"
+msgstr ""
+
+msgid "MIRRORED EXCOM GOVERNANCE:"
+msgstr ""
+
 msgid "Missing template or title"
 msgstr ""
 
@@ -4040,6 +4043,9 @@ msgstr ""
 msgid "Search users …"
 msgstr ""
 
+msgid "Search Vaults, SOPs, Policies & Messages..."
+msgstr ""
+
 #. Noun: fallback title of a collapsible section -->
 msgid "Section"
 msgstr ""
@@ -4650,6 +4656,9 @@ msgid "These pages are both in the same language, so one cannot be a translation
 msgstr ""
 
 msgid "This action cannot be undone."
+msgstr ""
+
+msgid "This application is not available in this session."
 msgstr ""
 
 msgid "This authorization does not belong to your session."

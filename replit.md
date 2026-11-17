@@ -203,7 +203,25 @@ and deletes only its own temporary page. It never reuses the owner's cookies.
   maps, private runtime files and symlinks. Package-guard regression tests also
   verify large archive listings and rejection of forbidden early entries.
 - Brand images are verified original corporate **PNGs**, not native SVGs.
-  Seven unavailable collaboration apps remain truthfully marked **Not enabled**.
+  The context bar uses the SOVEREIGN 365 label without duplicating the native logo.
+  Missing or unauthorized local apps stay disabled, with truthful tooltips rather
+  than visible availability pills or navigation-title suffixes. Browser-mounted
+  apps supplement unknown availability but never override explicit server denial.
+  Tables falls back to Forms when authorized.
+- The final home has eight app cards and six standard/eight executive office
+  cards, consistent one-line subtitles, DST-aware Nassau/Athens clocks, and native
+  Unified Search from the hero, launchpad and keyboard shortcut. Existing home
+  UUID/bookmarks remain intact.
+- `php scripts/replit/seed-sovereign.php --apply --final-ux` refreshes only the
+  home and three managed announcements. Back up those four files privately first.
+  It leaves navigation, office pages, access rules and native branding unchanged.
+  A repeated refresh changed zero documents.
+- Final v1.0 UX verification passed **52 authenticated browser checks** across
+  admin, reader and ExCom accounts. This includes eight app cards, six/eight
+  office cards, whole-card C3 links, native search entry points, navigation
+  tooltips, and readable dropdown/editor/settings controls in both themes.
+  All temporary QA accounts were removed. The six top/middle/bottom screenshots
+  are collected in `generated-artifacts/sovereign-qa/portal-v1-ux-review.html`.
 - Historical initial-setup integration run: **36 tests, 104 assertions,
   2 failures, 3 skips**. One failure expects `User not logged in` while the app
   returns `You are not logged in.`; another assumes existing page fixtures in

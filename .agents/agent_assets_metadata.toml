@@ -1,0 +1,44 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "sxc02VD5SNs4CooU4mefY"
+uri = "file://generated-artifacts/sovereign-qa/portal-v1-ux-review.html"
+type = "html"
+title = "Portal v1.0 UX review"
+description = "Existing visual review for approval; generated evidence remains outside Git."
+logical_id = "b56763db-513a-4a5d-8d94-3999c8cc50e9"
+content_hash = "sha256:6bc5c0cb396cd0e870752019d65b7ed00d3785e18b3d7ee39d639d16d7f978e5"
+size = 1897894
+mtime_ms = 1794923636879
+storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:9e5d8393-94aa-4fb2-9110-700bd770970c/b56763db-513a-4a5d-8d94-3999c8cc50e9/5a717d72-da49-4c61-9faa-f5caf21969b9"
+storage_version_token = "1794924132062488"
+content_type = "text/html"
+
+[[outputs]]
+id = "iKpupafVbgn34wYtlzv7i"
+uri = "file://generated-artifacts/release/portal-v1-gitea-handoff.html"
+type = "html"
+title = "Portal v1.0 release preparation — blocked pending approvals"
+description = "Package checks, SHA-256 hashes, pipeline review, evidence references, and outstanding release prerequisites."
+logical_id = "94a03612-fd12-4dfb-875e-c70be1f805fb"
+content_hash = "sha256:6c6035feb5b5890f19133563abeef9a4ae62d7bb17f94ba430486b82a565ce7c"
+size = 6466
+mtime_ms = 1794924121829
+storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:9e5d8393-94aa-4fb2-9110-700bd770970c/94a03612-fd12-4dfb-875e-c70be1f805fb/5475c5fc-427c-4498-b574-1388c05bd84c"
+storage_version_token = "1794924131517354"
+content_type = "text/html"
+
+[[outputs]]
+id = "8QUMRDTu-QJbfO2nvu12x"
+uri = "file://generated-artifacts/sovereign-qa/verification.json"
+type = "unspecified"
+title = "52-check authenticated verification evidence"
+description = "Existing successful browser verification across admin, reader and ExCom roles, recorded 17 November 2026."
+logical_id = "862f8625-db4e-4cc0-82f6-40ec5296a908"
+content_hash = "sha256:703e3643e1a1e1de0cb5a6fd856814fcbdf8358a4f9d502eaadb96b37f12ec81"
+size = 14673
+mtime_ms = 1794923602835
+storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:9e5d8393-94aa-4fb2-9110-700bd770970c/862f8625-db4e-4cc0-82f6-40ec5296a908/4b14b3c7-4ef4-407f-8146-10426f440548"
+storage_version_token = "1794924132526444"
+content_type = "application/octet-stream"

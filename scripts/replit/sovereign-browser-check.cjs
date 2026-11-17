@@ -7,6 +7,7 @@ const path = require('node:path');
 const { spawn, execFileSync } = require('node:child_process');
 const { randomBytes } = require('node:crypto');
 const assert = require('node:assert/strict');
+const { verifyFinalTheme } = require('./sovereign-ui-checks.cjs');
 
 const root = path.resolve(__dirname, '../..');
 const out = path.join(root, 'generated-artifacts/sovereign-qa');
@@ -138,8 +139,16 @@ async function browser(role, group, port) {
         companies:app.querySelectorAll('.agl-organogram__company').length,
         executives:app.querySelectorAll('.agl-organogram__executive').length,
         columns:app.querySelectorAll('.agl-organogram__column').length,
+        hubLinks:app.querySelectorAll('a.agl-organogram__hub-link').length,
         news:[...app.querySelectorAll('.news-item')].map(e=>e.dataset.aglEntity),
          newsBadges:app.querySelectorAll('.news-item .agl-entity-badge').length,
+        appCards:app.querySelectorAll('.links-widget')[0].querySelectorAll('.link-item').length,
+        officeCards:app.querySelectorAll('.links-widget')[1].querySelectorAll('.link-item').length,
+        emptySubtitles:[...app.querySelectorAll('.link-item')].filter(e=>!e.querySelector('.link-tile-subtitle')?.textContent.trim()).length,
+        hero:!!app.querySelector('.sovereign-hero'),
+        clocks:app.querySelectorAll('.sovereign-hero time').length,
+        duplicateLogo:app.querySelectorAll('.agl-context-bar img').length,
+        unavailablePills:app.querySelectorAll('.link-unavailable').length,
         unavailable:app.querySelectorAll('.link-item[aria-disabled=\"true\"]').length,
         horizontalOverflow:document.documentElement.scrollWidth>innerWidth,
         errors:[...app.querySelectorAll('[role=\"alert\"]')].map(e=>e.textContent.trim())};
@@ -151,6 +160,13 @@ async function browser(role, group, port) {
     assert.equal(state.executives, 4); assert.equal(state.companies, 3); assert.equal(state.columns, 5);
     assert.deepEqual(state.news.sort(), ['all', 'athena-cloud', 'cloud-carib']);
     assert.equal(state.newsBadges, 3);
+    assert.equal(state.appCards, 8);
+    assert.equal(state.hubLinks, 2);
+    assert.equal(state.officeCards, role === 'reader' ? 6 : 8);
+    assert.equal(state.emptySubtitles, 0);
+    assert(state.hero && state.clocks === 2);
+    assert.equal(state.duplicateLogo, 0);
+    assert.equal(state.unavailablePills, 0);
     assert.equal(state.horizontalOverflow, false);
     assert.equal(state.errors.length, 0);
     assert.equal(state.pills.includes('ExCom HoldCo'), role !== 'reader');
@@ -172,13 +188,13 @@ async function browser(role, group, port) {
     }
     if (role !== 'reader') {
       await click('ExCom HoldCo');
-      assert(await evaluate("!![...document.querySelectorAll('.link-item')].find(e=>e.textContent.includes('ExCom Vault'))"));
+      assert(await evaluate("!![...document.querySelectorAll('.link-item')].find(e=>e.textContent.includes('ExCom HoldCo Vault'))"));
       await click('All Authorized');
       const privateStatus = await evaluate("(async()=>{const r=await fetch(OC.generateUrl('/apps/intravox/api/pages/page-sovereign-excom'));return r.status})()");
       assert.equal(privateStatus, 200, 'Authorized executive page accessible');
       record(`${role}: executive content authorized by server`, { status: privateStatus });
     } else {
-      assert.equal(await evaluate("!![...document.querySelectorAll('.link-item')].find(e=>e.textContent.includes('ExCom Vault'))"), false);
+      assert.equal(await evaluate("!![...document.querySelectorAll('.link-item')].find(e=>e.textContent.includes('ExCom HoldCo Vault'))"), false);
       const privateStatus = await evaluate("(async()=>{const r=await fetch(OC.generateUrl('/apps/intravox/api/pages/page-sovereign-excom'));return r.status})()");
       assert([403, 404].includes(privateStatus), 'Restricted page denied by server');
       record('reader: ExCom page rejected by server', { status: privateStatus });
@@ -196,6 +212,7 @@ async function browser(role, group, port) {
       assert.equal(colors.card, mode === 'light' ? 'rgb(255, 255, 255)' : 'rgb(30, 21, 38)');
       record(`${role}: native ${mode} theme and exact active-pill contrast`, colors);
       if (role === 'admin') {
+        await verifyFinalTheme({evaluate,wait,click,cdp,screenshot,reload,base,record,mouseClick},mode);
         await screenshot(`admin-desktop-${mode}`);
         if (mode === 'light') {
           await cdp.send('Emulation.setEmulatedMedia', {features:[{name:'prefers-color-scheme',value:'dark'}]});
@@ -311,6 +328,8 @@ async function browser(role, group, port) {
       assert.equal(saved.settings.allowReactions, null); assert.equal(saved.settings.allowComments, null);
       assert.equal(saved.layout.rows[2].widgets[0].title, 'QA Executive structure');
       assert.equal(saved.layout.rows[2].widgets[0].defaultExpanded, true);
+      assert.equal(saved.layout.rows[1].widgets[1].items[6].fallbackAppId, 'forms');
+      assert.equal(saved.layout.rows[1].widgets[3].items[7].action, 'organogram-matrix');
       record('admin: page settings and organogram configuration survived native Save and reload');
       const deleted = await evaluate(`(async()=>{const r=await fetch(OC.generateUrl(${JSON.stringify(tempUrl)}),{method:'DELETE',headers:{requesttoken:OC.requestToken}});return r.status})()`);
       assert(deleted >= 200 && deleted < 300, 'Temporary page deleted');
