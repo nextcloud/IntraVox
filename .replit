@@ -1,7 +1,61 @@
-modules = ["php-8.2", "nodejs-20", "vue-node-20", "bash", "web"]
+modules = ["php-8.2", "bash", "web", "nodejs-24"]
 
 [nix]
 channel = "stable-25_05"
 
 [agent]
 expertMode = true
+
+[postMerge]
+path = "scripts/replit/post-merge.sh"
+timeoutMs = 300000
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Run IntraVox"
+
+[[workflows.workflow]]
+name = "Run IntraVox"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "bash scripts/replit/start.sh"
+waitForPort = 5000
+
+[workflows.workflow.metadata]
+outputType = "webview"
+
+[[workflows.workflow]]
+name = "app-checks"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "SKIP_INTEGRATION=1 bash scripts/ci-local.sh"
+
+[workflows.workflow.metadata]
+isValidation = true
+
+[[workflows.workflow]]
+name = "nextcloud-smoke"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "bash scripts/replit/check.sh"
+
+[workflows.workflow.metadata]
+isValidation = true
+
+[[ports]]
+localPort = 5000
+externalPort = 80
