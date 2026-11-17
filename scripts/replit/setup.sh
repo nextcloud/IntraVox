@@ -11,7 +11,10 @@ mkdir -p .runtime/downloads generated-artifacts
 if [ ! -f "$NC/version.php" ]; then
     ARCHIVE="nextcloud-${VERSION}.tar.bz2"
     URL="https://download.nextcloud.com/server/releases/$ARCHIVE"
-    curl --fail --location --retry 2 "$URL" -o ".runtime/downloads/$ARCHIVE"
+    # Resume interrupted first-time downloads rather than starting over after a
+    # setup timeout. The checksum below still verifies the complete archive.
+    curl --fail --location --retry 2 --continue-at - --connect-timeout 30 \
+        --max-time 1200 --silent --show-error "$URL" -o ".runtime/downloads/$ARCHIVE"
     curl --fail --location --retry 2 "$URL.sha256" -o ".runtime/downloads/$ARCHIVE.sha256"
     # The upstream checksum file also lists release metadata. Verify only our archive.
     (cd .runtime/downloads; grep " ${ARCHIVE}\$" "$ARCHIVE.sha256" | sha256sum -c -)

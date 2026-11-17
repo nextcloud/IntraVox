@@ -8,7 +8,7 @@ expertMode = true
 
 [postMerge]
 path = "scripts/replit/post-merge.sh"
-timeoutMs = 300000
+timeoutMs = 1500000
 
 [workflows]
 runButton = "Project"
