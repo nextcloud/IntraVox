@@ -16,6 +16,11 @@ replacing Nextcloud's page editor, identity, or access controls.
 | UX approval | Owner-approved, 17 November 2026 |
 | Release readiness | **Blocked**; see [release notes and evidence](docs/releases/portal-v1.0.md) |
 
+**Development handoff:** the owner has approved pushing the candidate to GitHub
+`dev` so downstream developers can run Jenkins, Sonar and CI/CD validation.
+This is not a release approval. Known failures and missing evidence travel with
+the candidate; they block tagging and promotion, not this development transfer.
+
 > Approval of the UX is not approval to bypass engineering gates. This repository
 > does not currently prove a passing full integration gate or a Portal Sonar gate.
 > No push, tag creation, package signing, or production deployment is implied by
@@ -125,6 +130,9 @@ Sovereign development team. This is distinct from the original IntraVox project.
   repeat affected checks when their inputs change; never reuse stale approval.
 - A successful packaging job, accessible login page, or 52 browser checks alone
   is not a passing full release gate.
+- Push an authorized development candidate to `dev` before requiring downstream
+  CI results. Downstream needs that source to test it; require green release
+  gates before tagging or promotion, not before providing the candidate.
 
 See the [end-to-end playbook](docs/engineering/sovereign-development.md) for
 source receipt, build, verification, Jenkins/Sonar boundaries, release transfer,
