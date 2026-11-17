@@ -24,4 +24,13 @@ if bash "$ROOT/scripts/check-package-contents.sh" "$TMP/bad.tar.gz" > "$TMP/bad.
     exit 1
 fi
 grep -q 'phpunit must not ship' "$TMP/bad.log"
-echo "PASS large valid archives accepted; early forbidden entries rejected."
+rm -rf "$APP/vendor/phpunit"
+mkdir -p "$APP/generated-artifacts/sovereign-qa"
+: > "$APP/generated-artifacts/sovereign-qa/private-review.html"
+tar -czf "$TMP/qa-leak.tar.gz" -C "$TMP" intravox
+if bash "$ROOT/scripts/check-package-contents.sh" "$TMP/qa-leak.tar.gz" > "$TMP/qa-leak.log" 2>&1; then
+    echo "Private generated QA artifacts were accepted." >&2
+    exit 1
+fi
+grep -q 'generated-artifacts/ must not ship' "$TMP/qa-leak.log"
+echo "PASS large valid archives accepted; early forbidden entries and generated QA artifacts rejected."

@@ -1,4 +1,5 @@
 const assert = require('node:assert/strict');
+const {verifyGoldMasterDetails} = require('./sovereign-gm-checks.cjs');
 
 function contrast(foreground, background) {
   const luminance = css => {
@@ -25,6 +26,7 @@ async function verifyFinalTheme(ctx, mode) {
     return colors;
   };
   await evaluate("(()=>{let e=document.querySelector('.sovereign-hero');while(e){e.scrollTop=0;e=e.parentElement}window.scrollTo(0,0)})()");
+  await verifyGoldMasterDetails(ctx, mode, 'desktop');
   await screenshot(`admin-top-${mode}`);
   await readable('.sovereign-hero__search');
   await evaluate("document.querySelector('.sovereign-hero__search').click()");
@@ -46,6 +48,8 @@ async function verifyFinalTheme(ctx, mode) {
   assert(await evaluate("document.querySelector('.agl-organogram__companies').innerText.includes('MIRRORED EXCOM GOVERNANCE')"));
   assert(await evaluate("document.querySelector('.agl-organogram__columns').innerText.includes('Inside & Outside Sales')"));
   await screenshot(`admin-bottom-${mode}`);
+  await evaluate("document.querySelector('.intravox-footer').scrollIntoView({behavior:'instant',block:'end'})");
+  await screenshot(`admin-footer-${mode}`);
 
   if (mode === 'light') {
     const destinations = {

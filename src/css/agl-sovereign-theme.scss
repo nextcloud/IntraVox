@@ -31,7 +31,7 @@
   --agl-muted: var(--color-text-maxcontrast);
   --agl-entity-carib: #27645b;
   --agl-entity-athena: #5c4b9b;
-  --agl-entity-excom: #713c61;
+  --agl-entity-excom: #92400e;
   --agl-slate-50: #f8fafc;
   --agl-slate-100: #eff1f5;
   --agl-slate-300: #d4d7df;
@@ -48,6 +48,14 @@
   min-height: 58px;
   padding: 8px clamp(16px, 2.2vw, 32px);
   box-shadow: 0 3px 14px rgb(30 8 36 / 17%);
+}
+
+/* Keep the native Nextcloud header on-brand only while the Portal is mounted.
+   This is a local fallback; persisted instance primary_color remains authoritative. */
+body:has(#intravox-app) #header {
+  --agl-portal-primary: #4B164C;
+  --color-primary-element: var(--agl-portal-primary, #4B164C);
+  background-color: var(--color-primary-element, #4B164C);
 }
 
 #intravox-app .intravox-header h1,
@@ -187,20 +195,39 @@ body[data-color-scheme="dark"] #intravox-app .intravox-nav-bar { background: #1e
 #intravox-app .agl-entity-badge {
   display: inline-flex;
   align-items: center;
-  margin-left: 8px;
-  padding: 2px 7px;
+  width: fit-content;
+  max-width: max-content;
+  align-self: flex-start;
+  margin-top: 6px;
+  padding: 2px 10px;
   border: 1px solid currentColor;
   border-radius: 999px;
   color: var(--agl-accent);
+  background: color-mix(in srgb, var(--agl-accent) 10%, var(--agl-surface));
   font-size: 10px;
   font-weight: 650;
   line-height: 1.35;
   white-space: nowrap;
 }
 
-#intravox-app .agl-entity-badge[data-entity="cloud-carib"] { color: var(--agl-entity-carib); }
-#intravox-app .agl-entity-badge[data-entity="athena-cloud"] { color: var(--agl-entity-athena); }
-#intravox-app .agl-entity-badge[data-entity="excom"] { color: var(--agl-entity-excom); }
+#intravox-app .agl-entity-badge[data-entity="cloud-carib"] {
+  color: var(--agl-entity-carib);
+  border-color: var(--agl-entity-carib);
+  background: color-mix(in srgb, var(--agl-entity-carib) 11%, var(--agl-surface));
+}
+#intravox-app .agl-entity-badge[data-entity="athena-cloud"] {
+  color: var(--agl-entity-athena);
+  border-color: var(--agl-entity-athena);
+  background: color-mix(in srgb, var(--agl-entity-athena) 11%, var(--agl-surface));
+}
+#intravox-app .agl-entity-badge[data-entity="excom"] {
+  color: var(--agl-entity-excom);
+  border-color: #F59E0B;
+  background: color-mix(in srgb, #F59E0B 13%, var(--agl-surface));
+}
+
+/* Link tiles are centered cards; keep their compact badge centered as well. */
+#intravox-app .link-item--tile .agl-entity-badge { align-self: center; }
 
 #intravox-app .agl-organogram {
   padding: 20px;
@@ -441,7 +468,7 @@ body[data-color-scheme="dark"] #intravox-app {
   --agl-accent: #d4b8ed;
   --agl-entity-carib: #9bd7ca;
   --agl-entity-athena: #d4b8ed;
-  --agl-entity-excom: #e4b2d5;
+  --agl-entity-excom: #F59E0B;
 }
 #intravox-app .intravox-nav-bar,
 #intravox-app .agl-organogram,
@@ -465,7 +492,7 @@ body[data-color-scheme="dark"] #intravox-app {
     --agl-accent: #d4b8ed;
     --agl-entity-carib: #9bd7ca;
     --agl-entity-athena: #d4b8ed;
-    --agl-entity-excom: #e4b2d5;
+    --agl-entity-excom: #F59E0B;
   }
 }
 
@@ -503,3 +530,5 @@ html.theme--dark #intravox-app .agl-context-bar__lens[aria-pressed="true"]:not([
     transition-duration: .01ms !important;
   }
 }
+
+#intravox-app .intravox-footer { padding-bottom: 20px; }

@@ -14,3 +14,45 @@ mtime_ms = 1794923636879
 storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:9e5d8393-94aa-4fb2-9110-700bd770970c/b56763db-513a-4a5d-8d94-3999c8cc50e9/26b9780e-3519-4d4b-9506-e14c95314270"
 storage_version_token = "1794923836021407"
 content_type = "text/html"
+
+[[outputs]]
+id = "YH63ydni1fGykhPZHf3Yk"
+uri = "file://generated-artifacts/release/sovereign-developer-handoff-review.html"
+type = "html"
+title = "Sovereign README and downstream engineering handbook"
+description = "Self-contained review of the updated README, six approved UX screenshots, code map, build/release playbook, quality gates and release record."
+logical_id = "fe72562a-2d54-4d4d-80ec-21a2a07a1456"
+content_hash = "sha256:c772f3c23f3804d5221542074ed4b7f9e0a7becb2468716c17ea50c1700865bb"
+size = 639048
+mtime_ms = 1794925265926
+storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:9e5d8393-94aa-4fb2-9110-700bd770970c/fe72562a-2d54-4d4d-80ec-21a2a07a1456/909b3769-e9e8-464c-9e14-d345696a0358"
+storage_version_token = "1794925283874432"
+content_type = "text/html"
+
+[[outputs]]
+id = "N64IZ_CS1JCgspTOnVn88"
+uri = "file://generated-artifacts/sovereign-qa/portal-v1-gm-review.html"
+type = "html"
+title = "Portal v1.0 final-polish candidate review"
+description = "Fresh light/dark desktop/mobile captures, 56 passing authenticated checks, warning-free build and unsigned package fingerprint. Candidate review, not release sign-off."
+logical_id = "b6573656-ecd3-46ce-adf8-12353c68ef0f"
+content_hash = "sha256:1cd3c8ce3cf5739fe5746b3a2c8432b00325ae504525a6d92595afb479956656"
+size = 2169560
+mtime_ms = 1794927735570
+storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:9e5d8393-94aa-4fb2-9110-700bd770970c/b6573656-ecd3-46ce-adf8-12353c68ef0f/e7b93187-6e8e-49ab-a513-b1a043fe04e4"
+storage_version_token = "1794927795915630"
+content_type = "text/html"
+
+[[outputs]]
+id = "6kwY5yNHsowiNAedrIv2l"
+uri = "file://generated-artifacts/sovereign-qa/verification.json"
+type = "unspecified"
+title = "56-check final-polish verification evidence"
+description = "Successful expanded admin/reader/ExCom browser verification including badge, search, header and footer geometry."
+logical_id = "c3d3552c-d97a-4a26-8ab7-b6fa6c118984"
+content_hash = "sha256:d57c3167410ad8b1ecd46c97c9a72db2582a06acc629f9d630e56deac14f5ff5"
+size = 36723
+mtime_ms = 1794927519675
+storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:9e5d8393-94aa-4fb2-9110-700bd770970c/c3d3552c-d97a-4a26-8ab7-b6fa6c118984/b26d154d-434a-431f-87e1-cf3eefb69730"
+storage_version_token = "1794927796555863"
+content_type = "application/octet-stream"

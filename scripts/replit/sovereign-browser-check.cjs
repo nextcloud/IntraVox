@@ -8,6 +8,7 @@ const { spawn, execFileSync } = require('node:child_process');
 const { randomBytes } = require('node:crypto');
 const assert = require('node:assert/strict');
 const { verifyFinalTheme } = require('./sovereign-ui-checks.cjs');
+const { verifyGoldMasterDetails } = require('./sovereign-gm-checks.cjs');
 
 const root = path.resolve(__dirname, '../..');
 const out = path.join(root, 'generated-artifacts/sovereign-qa');
@@ -223,6 +224,7 @@ async function browser(role, group, port) {
         await cdp.send('Emulation.setDeviceMetricsOverride', {width:390,height:844,deviceScaleFactor:1,mobile:true});
         await pause(350);
         assert.equal(await evaluate("document.documentElement.scrollWidth>innerWidth"), false, `${mode} mobile overflow`);
+        await verifyGoldMasterDetails({evaluate, record}, mode, 'mobile');
         await screenshot(`admin-mobile-${mode}`);
         await evaluate("document.querySelector('.agl-organogram').scrollIntoView({behavior:'instant',block:'start'})");
         await wait("(()=>{const r=document.querySelector('.agl-organogram').getBoundingClientRect();return r.height>100&&r.top<innerHeight-50&&r.bottom>300})()", 'mobile organogram scrolled into view');
