@@ -1,2 +1,3 @@
 - [Preview forwarding](preview-forwarding.md) — a healthy local Nextcloud can still show a generic proxy response until its port is explicitly forwarded.
 - [Dependency installation](dependency-installation.md) — installation tools can rewrite lockfile URLs; retain public registry URLs and avoid unrelated dependency updates.
+- [Login diagnostics](login-diagnostics.md) — avoid repeated invalid login probes; shared preview traffic can throttle the owner's login.

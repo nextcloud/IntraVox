@@ -1,4 +1,4 @@
-modules = ["php-8.2", "bash", "web", "nodejs-24"]
+modules = ["php-8.2", "bash", "web", "nodejs-24", "python-base-3.13"]
 
 [nix]
 channel = "stable-25_05"
