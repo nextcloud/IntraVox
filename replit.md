@@ -137,7 +137,8 @@ JavaScript directory and publish its manifest last. Unmanaged app directories
 are never updated. PHP resolves assets through Nextcloud's installed app path,
 not the physical location of symlinked source code.
 
-The root Jenkinsfile builds with `npm ci && npm run build`, then runs
+The root Jenkinsfile first validates Sovereign documentation and runs the
+documentation guard's regression tests, builds with `npm ci && npm run build`, then runs
 `bash scripts/stage-release.sh`. It stages an **unsigned** app and archive under
 the ignored `build/intravox` directory, archives under `build/`, installs only
 production Composer dependencies, and checks excluded paths. Trusted external signing credentials
@@ -151,6 +152,24 @@ bash scripts/replit/check.sh
 NEXTCLOUD_ROOT="$PWD/.runtime/nextcloud" \
   php -d memory_limit=512M vendor/bin/phpunit -c phpunit-integration.xml
 ```
+
+## Documentation and downstream handoff contract
+
+Release quality is measured against the standards of excellence in
+`docs/engineering/release-quality.md`. Keep `README.md` aligned with code in the
+same change: update the change/release record, build instructions, Jenkins and
+Sonar gate coverage, and end-to-end downstream playbooks when their behaviour
+changes. Changed UX requires current, approved documentation screenshots with
+provenance, not the original IntraVox demo imagery.
+
+Replit is the development upstream and the Sovereign developers are downstream
+for this handoff. Confirm requirements, verify implementation and evidence, and
+validate representative authenticated user paths. Do not claim green gates,
+certification, environment coverage or downstream receipt without evidence.
+The README links the code map, playbooks and release record. Run
+`node scripts/check-sovereign-docs.cjs` and
+`node --test scripts/check-sovereign-docs.test.cjs`; both also run in the Jenkins
+pipeline and GitHub CI frontend job when those jobs are triggered.
 
 ## Sovereign baseline provisioning
 

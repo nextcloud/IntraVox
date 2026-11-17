@@ -137,6 +137,11 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Sovereign documentation alignment
+        run: |
+          node scripts/check-sovereign-docs.cjs
+          node --test scripts/check-sovereign-docs.test.cjs
+
       # All eight are pure Node with no dependencies, so they run without an
       # npm install and stay fast. The l10n sync guard has its own workflow.
       - name: Import consistency

@@ -5,6 +5,12 @@ pipeline {
         timestamps()
     }
     stages {
+        stage('Verify handoff documentation') {
+            steps {
+                sh 'node scripts/check-sovereign-docs.cjs'
+                sh 'node --test scripts/check-sovereign-docs.test.cjs'
+            }
+        }
         stage('Build production assets') {
             steps {
                 // Requires compatible Node/npm, PHP 8.2+ and Composer on the agent.
