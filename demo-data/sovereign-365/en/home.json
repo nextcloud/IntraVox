@@ -1,0 +1,262 @@
+{
+    "uniqueId": "page-3429f149-dd7c-492a-8a4a-dab3ff83d511",
+    "title": "Athena Group — Sovereign 365",
+    "status": "published",
+    "hidePageTitleBar": true,
+    "disableSocial": true,
+    "entity": "all",
+    "excomOnly": false,
+    "layout": {
+        "columns": 1,
+        "rows": [
+            {
+                "id": "sovereign-overview",
+                "columns": 1,
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 0,
+                        "content": "Sovereign 365",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 1,
+                        "content": "**Security. Sovereignty. Scale.**\n\nOne executive workspace. Two Command & Control Centres. Shared authority, local sovereignty."
+                    },
+                    {
+                        "type": "news",
+                        "column": 1,
+                        "order": 2,
+                        "title": "Featured announcements",
+                        "sourcePath": "sovereign-news",
+                        "layout": "grid",
+                        "columns": 3,
+                        "limit": 3,
+                        "sortBy": "title",
+                        "sortOrder": "asc",
+                        "showDate": false,
+                        "showImage": false,
+                        "showExcerpt": true,
+                        "excerptLength": 150
+                    }
+                ]
+            },
+            {
+                "id": "sovereign-workspaces",
+                "columns": 2,
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 0,
+                        "content": "Sovereign 365 App Launchpad",
+                        "level": 2
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 1,
+                        "layout": "tiles",
+                        "columns": 2,
+                        "items": [
+                            {
+                                "title": "Team Vaults (1–8)",
+                                "text": "Department libraries & MetaVox • SharePoint alternative",
+                                "url": "/index.php/apps/files/",
+                                "icon": "folder",
+                                "appId": "files",
+                                "entity": "all",
+                                "excomOnly": false,
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Mail",
+                                "text": "Sovereign inbox • Outlook alternative",
+                                "url": "/index.php/apps/mail/",
+                                "icon": "email",
+                                "appId": "mail",
+                                "entity": "all",
+                                "excomOnly": false,
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Calendar & Contacts",
+                                "text": "Shared schedules & directory • Exchange alternative",
+                                "url": "/index.php/apps/calendar/",
+                                "icon": "calendar",
+                                "appId": "calendar",
+                                "entity": "all",
+                                "excomOnly": false,
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Nextcloud Talk",
+                                "text": "Encrypted chat, channels & calls • Teams alternative",
+                                "url": "/index.php/apps/spreed/",
+                                "icon": "chat",
+                                "appId": "spreed",
+                                "entity": "all",
+                                "excomOnly": false,
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Collectives",
+                                "text": "Runbooks, SOPs & team wikis • OneNote alternative",
+                                "url": "/index.php/apps/collectives/",
+                                "icon": "book-open",
+                                "appId": "collectives",
+                                "entity": "all",
+                                "excomOnly": false,
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Deck",
+                                "text": "Kanban project & PMO boards • Planner alternative",
+                                "url": "/index.php/apps/deck/",
+                                "icon": "view-column",
+                                "appId": "deck",
+                                "entity": "all",
+                                "excomOnly": false,
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Tables & Forms",
+                                "text": "Structured trackers & intake surveys • Lists/Forms alternative",
+                                "url": "/index.php/apps/tables/",
+                                "icon": "table-large",
+                                "appId": "tables",
+                                "entity": "all",
+                                "excomOnly": false,
+                                "target": "_self",
+                                "fallbackAppId": "forms",
+                                "fallbackUrl": "/index.php/apps/forms/"
+                            },
+                            {
+                                "title": "Global Search",
+                                "text": "Unified files, pages & messages • Cmd/Ctrl+K",
+                                "url": "#agl-global-search",
+                                "icon": "web",
+                                "action": "global-search",
+                                "entity": "all"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "heading",
+                        "column": 2,
+                        "order": 0,
+                        "content": "Executive Offices & Dual-C3 Hubs",
+                        "level": 2
+                    },
+                    {
+                        "type": "links",
+                        "column": 2,
+                        "order": 1,
+                        "layout": "tiles",
+                        "columns": 2,
+                        "items": [
+                            {
+                                "title": "COO — Commercial & Ops",
+                                "text": "Sales, Marketing, Solutions, PMO/Bids & HR",
+                                "url": "#page-sovereign-commercial",
+                                "uniqueId": "page-sovereign-commercial",
+                                "icon": "briefcase",
+                                "entity": "all",
+                                "excomOnly": false,
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Caribbean — Nassau C3",
+                                "text": "24x7x365 NOC / SOC / EMC & Service Delivery",
+                                "url": "#page-a1000002-0002-4000-8000-000000000021",
+                                "uniqueId": "page-a1000002-0002-4000-8000-000000000021",
+                                "icon": "cloud",
+                                "entity": "cloud-carib",
+                                "excomOnly": false,
+                                "target": "_self"
+                            },
+                            {
+                                "title": "EMEA — Athens C3",
+                                "text": "24x7x365 NOC / SOC / EMC & Sovereign Cloud",
+                                "url": "#page-a1000002-0002-4000-8000-000000000022",
+                                "uniqueId": "page-a1000002-0002-4000-8000-000000000022",
+                                "icon": "cloud",
+                                "entity": "athena-cloud",
+                                "excomOnly": false,
+                                "target": "_self"
+                            },
+                            {
+                                "title": "CFO — Finance & Treasury",
+                                "text": "Accounting, Controller, Treasury & FP&A",
+                                "url": "#page-sovereign-finance",
+                                "uniqueId": "page-sovereign-finance",
+                                "icon": "chart-line",
+                                "entity": "all",
+                                "excomOnly": false,
+                                "target": "_self"
+                            },
+                            {
+                                "title": "CTO — Technology & Product",
+                                "text": "Internal Systems [ISD] & Sovereign Portfolio",
+                                "url": "#page-sovereign-technology",
+                                "uniqueId": "page-sovereign-technology",
+                                "icon": "lightbulb-on",
+                                "entity": "all",
+                                "excomOnly": false,
+                                "target": "_self"
+                            },
+                            {
+                                "title": "CEO — Governance & CISO",
+                                "text": "General Counsel, Contracts, ISO 27001 & NIS2",
+                                "url": "#page-sovereign-governance",
+                                "uniqueId": "page-sovereign-governance",
+                                "icon": "shield-check",
+                                "entity": "all",
+                                "excomOnly": false,
+                                "target": "_self"
+                            },
+                            {
+                                "title": "ExCom HoldCo Vault",
+                                "text": "Restricted HoldCo resolutions & board packs",
+                                "url": "#page-sovereign-excom",
+                                "uniqueId": "page-sovereign-excom",
+                                "icon": "shield-account",
+                                "entity": "excom",
+                                "excomOnly": true,
+                                "target": "_self"
+                            },
+                            {
+                                "title": "Executive Matrix & Directory",
+                                "url": "#organogram-matrix",
+                                "icon": "account-group",
+                                "action": "organogram-matrix",
+                                "entity": "excom",
+                                "excomOnly": true,
+                                "target": "_self",
+                                "text": "Jump to Group Organogram & ExCom charter"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": "sovereign-matrix",
+                "columns": 1,
+                "widgets": [
+                    {
+                        "type": "organogram",
+                        "column": 1,
+                        "order": 0,
+                        "id": "sovereign-governance-matrix",
+                        "title": "Group Governance & Executive Matrix",
+                        "defaultExpanded": true,
+                        "showCompanies": true
+                    }
+                ]
+            }
+        ]
+    }
+}

@@ -1,0 +1,31 @@
+{
+    "uniqueId": "page-sovereign-news-caribbean",
+    "title": "02 — Nassau C3 Operational Readiness & Runbooks",
+    "status": "published",
+    "entity": "cloud-carib",
+    "excomOnly": false,
+    "disableSocial": true,
+    "layout": {
+        "columns": 1,
+        "rows": [
+            {
+                "columns": 1,
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 0,
+                        "content": "02 — Nassau C3 Operational Readiness & Runbooks",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 1,
+                        "content": "24x7x365 Caribbean NOC, SOC, and EMC standard operating procedures, shift handover templates, and escalation paths."
+                    }
+                ]
+            }
+        ]
+    }
+}

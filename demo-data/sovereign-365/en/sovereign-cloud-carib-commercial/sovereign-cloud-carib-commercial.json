@@ -1,0 +1,51 @@
+{
+    "uniqueId": "page-sovereign-cloud-carib-commercial",
+    "title": "Cloud Carib Commercial Hub",
+    "hidePageTitleBar": true,
+    "disableSocial": true,
+    "status": "published",
+    "entity": "cloud-carib",
+    "excomOnly": false,
+    "layout": {
+        "columns": 1,
+        "rows": [
+            {
+                "columns": 1,
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 0,
+                        "content": "Cloud Carib Commercial Hub",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 1,
+                        "content": "**Sovereign 365 workspace baseline**\n\n- Caribbean commercial coordination\n\nPrototype workspace: operational content and evidence are maintained by the responsible office. No live service status is asserted."
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 2,
+                        "columns": 2,
+                        "layout": "tiles",
+                        "items": [
+                            {
+                                "title": "Sovereign 365 Home",
+                                "text": "",
+                                "url": "#page-home-en",
+                                "uniqueId": "page-home-en",
+                                "icon": "home",
+                                "entity": "all",
+                                "excomOnly": false,
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+}

@@ -1,0 +1,287 @@
+{
+    "type": "megamenu",
+    "items": [
+        {
+            "id": "nav-70f8bb9a8a53",
+            "title": "Home",
+            "uniqueId": "page-home-en",
+            "entity": "all",
+            "excomOnly": false,
+            "children": []
+        },
+        {
+            "id": "nav-8c130e7429f4",
+            "title": "Commercial & Ops",
+            "uniqueId": "page-sovereign-commercial",
+            "entity": "all",
+            "excomOnly": false,
+            "children": [
+                {
+                    "id": "nav-c8dd0910553b",
+                    "title": "Office of the COO",
+                    "uniqueId": "page-sovereign-commercial",
+                    "entity": "all",
+                    "excomOnly": false,
+                    "children": [
+                        {
+                            "id": "nav-9539b2d07d72",
+                            "title": "Sales & Marketing",
+                            "uniqueId": "page-sovereign-commercial",
+                            "entity": "all",
+                            "excomOnly": false,
+                            "children": []
+                        },
+                        {
+                            "id": "nav-085d6173abcc",
+                            "title": "Solutions & Sales Ops",
+                            "uniqueId": "page-sovereign-commercial",
+                            "entity": "all",
+                            "excomOnly": false,
+                            "children": []
+                        },
+                        {
+                            "id": "nav-77bd9a59ae90",
+                            "title": "Commercial Delivery PMO / Bids",
+                            "uniqueId": "page-sovereign-commercial",
+                            "entity": "all",
+                            "excomOnly": false,
+                            "children": []
+                        },
+                        {
+                            "id": "nav-edd85082c368",
+                            "title": "Administration & HR",
+                            "uniqueId": "page-sovereign-commercial",
+                            "entity": "all",
+                            "excomOnly": false,
+                            "children": []
+                        }
+                    ]
+                },
+                {
+                    "id": "nav-12cba5c531bd",
+                    "title": "Cloud Carib",
+                    "uniqueId": "page-sovereign-cloud-carib-commercial",
+                    "entity": "cloud-carib",
+                    "excomOnly": false,
+                    "children": []
+                },
+                {
+                    "id": "nav-c9c25d2a912a",
+                    "title": "Athena Cloud",
+                    "uniqueId": "page-sovereign-athena-cloud-commercial",
+                    "entity": "athena-cloud",
+                    "excomOnly": false,
+                    "children": []
+                }
+            ]
+        },
+        {
+            "id": "nav-ceef5e616d95",
+            "title": "Engineering & C3",
+            "uniqueId": "page-sovereign-engineering",
+            "entity": "all",
+            "excomOnly": false,
+            "children": [
+                {
+                    "id": "nav-667234ec80d2",
+                    "title": "Global Matrix",
+                    "uniqueId": "page-sovereign-engineering",
+                    "entity": "all",
+                    "excomOnly": false,
+                    "children": []
+                },
+                {
+                    "id": "nav-94442fb7e286",
+                    "title": "Caribbean — Nassau C3",
+                    "uniqueId": "page-a1000002-0002-4000-8000-000000000021",
+                    "entity": "cloud-carib",
+                    "excomOnly": false,
+                    "children": []
+                },
+                {
+                    "id": "nav-28cca6624783",
+                    "title": "EMEA — Athens C3",
+                    "uniqueId": "page-a1000002-0002-4000-8000-000000000022",
+                    "entity": "athena-cloud",
+                    "excomOnly": false,
+                    "children": []
+                }
+            ]
+        },
+        {
+            "id": "nav-68499730f2ce",
+            "title": "Finance & Treasury",
+            "uniqueId": "page-sovereign-finance",
+            "entity": "all",
+            "excomOnly": false,
+            "children": [
+                {
+                    "id": "nav-b6d435370c69",
+                    "title": "Office of the CFO",
+                    "uniqueId": "page-sovereign-finance",
+                    "entity": "all",
+                    "excomOnly": false,
+                    "children": [
+                        {
+                            "id": "nav-27c14cc27905",
+                            "title": "Accounting / Controller",
+                            "uniqueId": "page-sovereign-finance",
+                            "entity": "all",
+                            "excomOnly": false,
+                            "children": []
+                        },
+                        {
+                            "id": "nav-286378bf777f",
+                            "title": "Treasury",
+                            "uniqueId": "page-sovereign-finance",
+                            "entity": "all",
+                            "excomOnly": false,
+                            "children": []
+                        },
+                        {
+                            "id": "nav-5912e5c190f9",
+                            "title": "FP&A",
+                            "uniqueId": "page-sovereign-finance",
+                            "entity": "all",
+                            "excomOnly": false,
+                            "children": []
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "nav-0d5049ad3f20",
+            "title": "Technology & Product",
+            "uniqueId": "page-sovereign-technology",
+            "entity": "all",
+            "excomOnly": false,
+            "children": [
+                {
+                    "id": "nav-bc37c473b6f0",
+                    "title": "Office of the CTO",
+                    "uniqueId": "page-sovereign-technology",
+                    "entity": "all",
+                    "excomOnly": false,
+                    "children": [
+                        {
+                            "id": "nav-c4b17c3e005a",
+                            "title": "ISD",
+                            "uniqueId": "page-sovereign-technology",
+                            "entity": "all",
+                            "excomOnly": false,
+                            "children": []
+                        },
+                        {
+                            "id": "nav-084a57ac8687",
+                            "title": "Product Portfolio",
+                            "uniqueId": "page-sovereign-technology",
+                            "entity": "all",
+                            "excomOnly": false,
+                            "children": []
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "nav-3245e9a22326",
+            "title": "Governance & Legal",
+            "uniqueId": "page-sovereign-governance",
+            "entity": "all",
+            "excomOnly": false,
+            "children": [
+                {
+                    "id": "nav-59772b20eb38",
+                    "title": "Office of the CEO",
+                    "uniqueId": "page-sovereign-governance",
+                    "entity": "all",
+                    "excomOnly": false,
+                    "children": [
+                        {
+                            "id": "nav-1b3d2817530a",
+                            "title": "General Counsel / Contracts",
+                            "uniqueId": "page-sovereign-governance",
+                            "entity": "all",
+                            "excomOnly": false,
+                            "children": []
+                        },
+                        {
+                            "id": "nav-c812345a0cf7",
+                            "title": "CISO",
+                            "uniqueId": "page-sovereign-governance",
+                            "entity": "all",
+                            "excomOnly": false,
+                            "children": []
+                        },
+                        {
+                            "id": "nav-26d3b94cde3e",
+                            "title": "ISO 27001 / SOC 2 / NIS2",
+                            "uniqueId": "page-sovereign-governance",
+                            "entity": "all",
+                            "excomOnly": false,
+                            "children": []
+                        }
+                    ]
+                },
+                {
+                    "id": "nav-ba3f720c16f6",
+                    "title": "ExCom HoldCo Governance",
+                    "uniqueId": "page-sovereign-excom",
+                    "entity": "excom",
+                    "excomOnly": true,
+                    "children": []
+                }
+            ]
+        },
+        {
+            "id": "sovereign-apps",
+            "title": "Sovereign 365 Apps",
+            "entity": "all",
+            "children": [
+                {
+                    "id": "app-files",
+                    "title": "Team Vaults",
+                    "url": "/index.php/apps/files/",
+                    "appId": "files",
+                    "entity": "all"
+                },
+                {
+                    "id": "app-mail",
+                    "title": "Mail",
+                    "url": "/index.php/apps/mail/",
+                    "appId": "mail",
+                    "entity": "all"
+                },
+                {
+                    "id": "app-calendar",
+                    "title": "Calendar",
+                    "url": "/index.php/apps/calendar/",
+                    "appId": "calendar",
+                    "entity": "all"
+                },
+                {
+                    "id": "app-spreed",
+                    "title": "Talk",
+                    "url": "/index.php/apps/spreed/",
+                    "appId": "spreed",
+                    "entity": "all"
+                },
+                {
+                    "id": "app-collectives",
+                    "title": "Collectives",
+                    "url": "/index.php/apps/collectives/",
+                    "appId": "collectives",
+                    "entity": "all"
+                },
+                {
+                    "id": "app-deck",
+                    "title": "Deck",
+                    "url": "/index.php/apps/deck/",
+                    "appId": "deck",
+                    "entity": "all"
+                }
+            ]
+        }
+    ]
+}

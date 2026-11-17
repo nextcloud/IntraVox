@@ -163,6 +163,7 @@ IntraVox se ejecuta donde ejecutas Nextcloud: tu propio hardware, un proveedor e
         </navigation>
     </navigations>
     <commands>
+        <command>OCA\IntraVox\Command\SyncSovereignPortalCommand</command>
         <command>OCA\IntraVox\Command\SetupCommand</command>
         <command>OCA\IntraVox\Command\MigrateToLanguageStructureCommand</command>
         <command>OCA\IntraVox\Command\CreateLanguageHomepagesCommand</command>
@@ -189,6 +190,7 @@ IntraVox se ejecuta donde ejecutas Nextcloud: tu propio hardware, un proveedor e
     <repair-steps>
         <post-migration>
             <step>OCA\IntraVox\Migration\SetupDemoData</step>
+            <step>OCA\IntraVox\Migration\SyncSovereignPortal</step>
         </post-migration>
     </repair-steps>
 </info>

@@ -43,8 +43,7 @@ translationfiles/*
 # runtime (en.json is absent on the server). Do not add it here.
 l10n/en.json
 
-# Package lock files (use composer.lock for PHP)
-package-lock.json
+# npm ci downstream requires the portable, version-controlled package-lock.json.
 
 # Local development scripts (if any remain)
 *.local.sh

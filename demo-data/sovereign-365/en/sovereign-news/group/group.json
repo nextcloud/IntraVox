@@ -1,0 +1,31 @@
+{
+    "uniqueId": "page-sovereign-news-group",
+    "title": "01 — Sovereign 365 Workspace Cutover Guide",
+    "status": "published",
+    "entity": "all",
+    "excomOnly": false,
+    "disableSocial": true,
+    "layout": {
+        "columns": 1,
+        "rows": [
+            {
+                "columns": 1,
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 0,
+                        "content": "01 — Sovereign 365 Workspace Cutover Guide",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 1,
+                        "content": "Unified single pane of glass replacing legacy Microsoft 365 workflows across Team Vaults, Stalwart Mail, Talk, Collectives, and Deck."
+                    }
+                ]
+            }
+        ]
+    }
+}

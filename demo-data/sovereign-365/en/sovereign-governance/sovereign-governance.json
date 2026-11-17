@@ -1,0 +1,51 @@
+{
+    "uniqueId": "page-sovereign-governance",
+    "title": "Governance & Legal",
+    "hidePageTitleBar": true,
+    "disableSocial": true,
+    "status": "published",
+    "entity": "all",
+    "excomOnly": false,
+    "layout": {
+        "columns": 1,
+        "rows": [
+            {
+                "columns": 1,
+                "widgets": [
+                    {
+                        "type": "heading",
+                        "column": 1,
+                        "order": 0,
+                        "content": "Governance & Legal",
+                        "level": 2
+                    },
+                    {
+                        "type": "text",
+                        "column": 1,
+                        "order": 1,
+                        "content": "**Sovereign 365 workspace baseline**\n\n- General Counsel / Contracts\n- CISO\n- ISO 27001 / SOC 2 / NIS2\n\nPrototype workspace: operational content and evidence are maintained by the responsible office. No live service status is asserted."
+                    },
+                    {
+                        "type": "links",
+                        "column": 1,
+                        "order": 2,
+                        "columns": 2,
+                        "layout": "tiles",
+                        "items": [
+                            {
+                                "title": "Sovereign 365 Home",
+                                "text": "",
+                                "url": "#page-home-en",
+                                "uniqueId": "page-home-en",
+                                "icon": "home",
+                                "entity": "all",
+                                "excomOnly": false,
+                                "target": "_self"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+}

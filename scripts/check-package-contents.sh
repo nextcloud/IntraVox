@@ -95,6 +95,26 @@ echo "Checking $TARBALL (package root: $ROOT)"
 
 echo "App structure:"
 require_exact "appinfo/info.xml"              "app metadata"
+require_exact "lib/Command/SyncSovereignPortalCommand.php" "Gold Master OCC synchronizer"
+require_exact "demo-data/sovereign-365/en/home.json" "Gold Master homepage"
+require_exact "demo-data/sovereign-365/en/navigation.json" "Gold Master navigation"
+require_exact "demo-data/sovereign-365/en/footer.json" "Gold Master footer"
+while IFS= read -r entry; do
+    case "$entry" in
+        "$ROOT/demo-data/sovereign-365/en/"*)
+            case "$entry" in
+                */) continue ;;
+                */about/*|*/departments/*|*/documentation/*|*/_media/*|*.mp4)
+                    fail "Generic upstream demo content in Gold Master bundle: $entry" ;;
+                *.json|*.svg)
+                    content="$(tar -xOzf "$TARBALL" "$entry")"
+                    if grep -Ei '\.replit\.dev|localhost|__groupfolders/1' <<< "$content" >/dev/null; then
+                        fail "Sandbox reference in Gold Master bundle: $entry"
+                    fi ;;
+                *) fail "Unsupported Gold Master bundle file: $entry" ;;
+            esac ;;
+    esac
+done <<< "$LISTING"
 require_exact "lib/AppInfo/Application.php"   "application bootstrap"
 require_exact "js/entrypoints.json"          "webpack entrypoint manifest"
 require_exact "css/intravox-main.css"        "compiled Sovereign theme"

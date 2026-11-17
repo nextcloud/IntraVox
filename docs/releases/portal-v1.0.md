@@ -21,6 +21,12 @@ No tag, signing or deployment is part of the approved push.
 
 ## Change summary
 
+- Gold Master CMS is now shipped under `demo-data/sovereign-365/en/`, with an
+  idempotent OCC synchronizer and a native post-migration install/update hook.
+  See the [deployment and backup contract](../engineering/sovereign-gold-master.md).
+  The current request also authorizes a verified fast-forward GitHub `main`
+  handoff alongside `dev`; it does not authorize production promotion.
+
 - Sovereign identity, compact two-tier context/navigation and native theme support.
 - Homepage hero with Nassau/Athens clocks and Nextcloud Unified Search entry points.
 - Eight app cards, availability-aware disabled states, consistent office cards,

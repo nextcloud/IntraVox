@@ -1,3 +1,13 @@
+# Gold Master CMS delivery
+
+The [Sovereign 365 Gold Master deployment contract](docs/engineering/sovereign-gold-master.md)
+packages the reviewed English portal alongside the application. Native app
+install/update synchronizes content with private backups; same-version downstream
+deployments must run `occ intravox:sync-sovereign-portal --no-interaction` as an
+automated deployment step. The sync preserves file IDs, detects live drift and
+exits cleanly on a second unchanged run. No production deployment is performed
+by this repository's build-only Jenkins job.
+
 # Sovereign 365 Portal
 
 **The Athena Group workspace on Nextcloud, built on IntraVox.**

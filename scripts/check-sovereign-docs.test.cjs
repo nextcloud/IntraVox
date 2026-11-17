@@ -4,7 +4,19 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const { validateDocuments, validateReleaseIdentity, validateScreenshots } = require('./check-sovereign-docs.cjs');
-
+test('Gold Master bundle guard rejects sandbox references and upstream demo media', t => {
+  const { validateBundle } = require('./check-sovereign-bundle.cjs');
+  const { root, write } = fixture(t);
+  const source = require('node:path').resolve(__dirname, '../demo-data/sovereign-365');
+  fs.cpSync(source, require('node:path').join(root, 'demo-data/sovereign-365'), { recursive: true });
+  assert.deepEqual(validateBundle(root), []);
+  write('demo-data/sovereign-365/en/_resources/leak.svg', '<svg>https://example.replit.dev</svg>');
+  assert.ok(validateBundle(root).some(message => message.includes('Sandbox reference')));
+  write('demo-data/sovereign-365/en/about/about.json', '{}');
+  write('demo-data/sovereign-365/en/Demo-video.mp4', 'video');
+  assert.ok(validateBundle(root).some(message => message.includes('Upstream demo path')));
+  assert.ok(validateBundle(root).some(message => message.includes('Unexpected bundle file')));
+});
 function fixture(t) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'sovereign-docs-'));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));

@@ -5,9 +5,14 @@ description: Owner-confirmed source-control destination and mirror boundary.
 
 Replit pushes all changes only to `https://github.com/scott-mackenzie/IntraVox-AGL`, branch `dev`, not directly to Gitea.
 
-**Why:** The owner explicitly corrected the release destination. They described an existing mirror sync from Gitea to GitHub that checks every minute for changes.
+**Why:** The owner explicitly corrected the release destination. Their current
+Gold Master handoff describes the downstream path as GitHub dev → Gitea mirror
+→ Jenkins → Nextcloud 35.
 
-**How to apply:** Use the GitHub `dev` branch for authorized handoffs. Do not infer that a GitHub push updates Gitea, reverse the mirror, or change mirror settings. Confirm the exact release tag separately; a marketing release label does not authorize changing the underlying Nextcloud app version.
+**How to apply:** Use GitHub `dev` for authorized handoffs, and other branches only
+when explicitly requested. Do not claim downstream receipt without evidence,
+reverse the mirror, or change its settings. Confirm the exact release tag
+separately; a marketing label does not authorize changing the Nextcloud app version.
 
 Development handoff and release approval are separate. An authorized development
 candidate can be pushed to `dev` with known failures documented so downstream

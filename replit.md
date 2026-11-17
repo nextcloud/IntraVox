@@ -200,6 +200,15 @@ evidence remains in `generated-artifacts/sovereign-qa/`.
 
 ## Sovereign baseline provisioning
 
+Gold Master CMS delivery is documented in
+`docs/engineering/sovereign-gold-master.md`. The tracked
+`demo-data/sovereign-365/en/` bundle is authoritative for its managed paths.
+`occ intravox:sync-sovereign-portal --no-interaction` uses native Files APIs,
+private appdata snapshots and a live-byte/hash no-op guard. Native app
+install/update calls the same service after setup; same-version file replacement
+must invoke OCC from the downstream deployment job. Never use raw filesystem
+copies into Nextcloud data or a manual `files:scan` as the deployment mechanism.
+
 Fresh English setup uses the Sovereign homepage, office/C3 destinations, tagged
 sample announcements, navigation and compliance-baseline footer. It preserves
 the native page editor and uses Nextcloud's theme selection, not a forced dark

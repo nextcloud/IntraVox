@@ -7,6 +7,7 @@ STAGE="$OUTPUT/intravox"
 VERSION="$(node -p 'require(process.argv[1]).version' "$SOURCE/package.json")"
 
 test -f "$SOURCE/js/entrypoints.json" || { echo "Run npm run build first." >&2; exit 1; }
+node "$SOURCE/scripts/check-sovereign-bundle.cjs"
 mkdir -p "$OUTPUT"
 # Only this disposable staging directory is ever removed, never the source app.
 rm -rf -- "$STAGE"

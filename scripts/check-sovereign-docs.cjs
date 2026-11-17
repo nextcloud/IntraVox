@@ -9,6 +9,7 @@ const documents = [
   'docs/engineering/portal-code-map.md',
   'docs/engineering/sovereign-development.md',
   'docs/engineering/release-quality.md',
+  'docs/engineering/sovereign-gold-master.md',
   'docs/releases/portal-v1.0.md',
   'screenshots/sovereign-portal/README.md',
 ];
@@ -78,7 +79,8 @@ function validateScreenshots(root) {
 
 if (require.main === module) {
   const root = path.resolve(__dirname, '..');
-  const errors = [...validateDocuments(root), ...validateReleaseIdentity(root), ...validateScreenshots(root)];
+  const errors = [...validateDocuments(root), ...validateReleaseIdentity(root), ...validateScreenshots(root),
+    ...require('./check-sovereign-bundle.cjs').validateBundle(root)];
   if (errors.length) {
     console.error(errors.join('\n'));
     process.exitCode = 1;

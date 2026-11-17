@@ -178,6 +178,7 @@ class NotFoundException extends \Exception {}
 namespace OCP\App;
 
 interface IAppManager {
+    public function getAppPath(string $appId): string;
     public function isInstalled(string $appId): bool;
     public function isEnabledForUser(string $appId, $user = null): bool;
     public function getAppVersion(string $appId, bool $useCache = true): string;

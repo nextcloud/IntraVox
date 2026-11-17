@@ -160,6 +160,8 @@
     "lib/Service/SetupService.php": 1074,
     "lib/Service/SovereignBaseline.php": 188,
     "lib/Service/SovereignBaselineInstaller.php": 70,
+    "lib/Service/SovereignBundle.php": 60,
+    "lib/Service/SovereignPortalSync.php": 133,
     "lib/Service/Structure/PageStructureService.php": 287,
     "lib/Service/SystemFileService.php": 952,
     "lib/Service/TelemetryService.php": 333,
