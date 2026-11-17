@@ -31,6 +31,10 @@ foreach ($entrypoints as $entrypoint) {
         $_SERVER['PHP_SELF'] = $path;
         $_SERVER['PATH_INFO'] = substr($path, strlen($prefix));
         chdir($root);
+        if ($path === '/index.php/login') {
+            $diagnoseLogin = require __DIR__ . '/login-diagnostics.php';
+            $diagnoseLogin($root);
+        }
         require $root . $prefix;
         return true;
     }
