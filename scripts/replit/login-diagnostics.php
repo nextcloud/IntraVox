@@ -8,6 +8,9 @@ return static function (string $root): void {
         return;
     }
     try {
+        $initialTokenPresent = isset($_POST['requesttoken']) && is_string($_POST['requesttoken']) && $_POST['requesttoken'] !== '';
+        $userFieldPresent = isset($_POST['user']);
+        $passwordFieldPresent = isset($_POST['password']);
         require_once $root . '/lib/versioncheck.php';
         require_once $root . '/lib/base.php';
         $request = \OCP\Server::get(\OCP\IRequest::class);
@@ -25,6 +28,11 @@ return static function (string $root): void {
             'strict_cookie_received' => ($_COOKIE[$prefix . 'nc_sameSiteCookiestrict'] ?? null) === 'true',
             'lax_cookie_received' => ($_COOKIE[$prefix . 'nc_sameSiteCookielax'] ?? null) === 'true',
             'form_token_received' => is_string($token) && $token !== '',
+            'form_token_received_before_bootstrap' => $initialTokenPresent,
+            'user_field_received' => $userFieldPresent,
+            'password_field_received' => $passwordFieldPresent,
+            'urlencoded_form' => str_starts_with($_SERVER['CONTENT_TYPE'] ?? '', 'application/x-www-form-urlencoded'),
+            'multipart_form' => str_starts_with($_SERVER['CONTENT_TYPE'] ?? '', 'multipart/form-data'),
             'form_token_valid' => $validToken,
             'csrf_check_passed' => $request->passesCSRFCheck(),
             'https_detected' => $request->getServerProtocol() === 'https',

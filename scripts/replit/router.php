@@ -22,6 +22,16 @@ foreach ($segments as $segment) {
     }
 }
 
+if ($path === '/session-check') {
+    $_SERVER['SCRIPT_NAME'] = '/index.php';
+    $_SERVER['SCRIPT_FILENAME'] = $root . '/index.php';
+    $_SERVER['PHP_SELF'] = '/index.php';
+    $_SERVER['PATH_INFO'] = '';
+    chdir($root);
+    require __DIR__ . '/session-check.php';
+    return true;
+}
+
 $entrypoints = ['index.php', 'remote.php', 'public.php', 'status.php', 'ocs/v1.php', 'ocs/v2.php', 'ocs-provider/index.php'];
 foreach ($entrypoints as $entrypoint) {
     $prefix = '/' . $entrypoint;
