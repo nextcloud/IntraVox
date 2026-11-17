@@ -5,7 +5,7 @@
     "license": "AGPL-3.0",
     "require": {
         "php": ">=8.2",
-        "enshrined/svg-sanitize": "^0.22",
+        "enshrined/svg-sanitize": "^1.0",
         "lsolesen/pel": "^0.9.12"
     },
     "require-dev": {
