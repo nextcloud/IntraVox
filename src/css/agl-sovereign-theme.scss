@@ -206,7 +206,7 @@ body[data-color-scheme="dark"] #intravox-app .intravox-nav-bar { background: #1e
   padding: 20px;
   border: 1px solid rgb(75 22 76 / 12%);
   border-radius: var(--agl-card-radius);
-  background: #fff;
+  background: var(--agl-surface, var(--color-main-background));
   box-shadow: 0 6px 20px rgb(39 48 67 / 6%);
 }
 
@@ -239,12 +239,24 @@ body[data-color-scheme="dark"] #intravox-app .intravox-nav-bar { background: #1e
   gap: 7px;
   margin: 0 0 14px;
 }
+#intravox-app .agl-organogram__companies-label {
+  align-self: center;
+  padding: 5px 9px;
+  border: 1px solid var(--agl-entity-excom);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--agl-entity-excom) 12%, var(--agl-surface));
+  color: var(--agl-entity-excom);
+  font-size: 10px;
+  letter-spacing: .07em;
+}
 
 #intravox-app .agl-organogram__company {
-  border: 1px solid var(--color-border);
+  align-self: center;
+  border: 1px solid var(--agl-card-border);
   border-radius: 999px;
   padding: 4px 9px;
-  color: var(--color-text-maxcontrast);
+  background: var(--agl-surface);
+  color: var(--color-main-text);
   font-size: 11px;
 }
 
@@ -316,6 +328,26 @@ body[data-color-scheme="dark"] #intravox-app .intravox-nav-bar { background: #1e
   color: var(--color-primary-element);
   font-size: 13px;
 }
+#intravox-app .agl-organogram__column-link,
+#intravox-app .agl-organogram__group-link {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--agl-accent, var(--color-primary-element));
+  font: inherit;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+#intravox-app .agl-organogram__column-link { font-size: 13px; line-height: 1.35; }
+#intravox-app .agl-organogram__group-link { color: var(--color-main-text); font-size: 12px; }
+#intravox-app .agl-organogram__column-link:hover,
+#intravox-app .agl-organogram__group-link:hover { text-decoration: underline; }
+#intravox-app .agl-organogram__hub-link { display: block; color: inherit; text-decoration: none; }
+#intravox-app .agl-organogram__column-link:focus-visible,
+#intravox-app .agl-organogram__hub-link:focus-visible { outline: 2px solid var(--agl-accent); outline-offset: 3px; }
 
 #intravox-app .agl-organogram__subtitle {
   margin: 0 0 10px;
@@ -329,7 +361,7 @@ body[data-color-scheme="dark"] #intravox-app .intravox-nav-bar { background: #1e
   padding: 9px;
   border: 1px solid rgb(75 22 76 / 12%);
   border-radius: 8px;
-  background: #fff;
+  background: var(--agl-surface);
 }
 
 #intravox-app .link-item,
@@ -342,7 +374,7 @@ body[data-color-scheme="dark"] #intravox-app .intravox-nav-bar { background: #1e
 #intravox-app .news-item--bg-white:hover { border-color: #4b164c; box-shadow: 0 5px 16px rgb(75 22 76 / 10%); }
 
 #intravox-app .agl-organogram__group strong { font-size: 12px; }
-#intravox-app .agl-organogram__group ul { margin: 6px 0 0; padding-left: 16px; color: var(--color-text-maxcontrast); font-size: 11px; }
+#intravox-app .agl-organogram__group ul { margin: 6px 0 0; padding-left: 16px; color: var(--color-main-text); font-size: 11px; }
 #intravox-app .link-item { border-radius: 12px; }
 
 #intravox-app[data-agl-hide-title="true"] .intravox-header { display: none; }
@@ -371,6 +403,26 @@ body[data-color-scheme="dark"] #intravox-app .intravox-nav-bar { background: #1e
 #intravox-app .agl-context-bar__tools .page-title-input:focus { border-color: #f59e0b; }
 
 /* Nextcloud 32 puts enabled-theme markers on body, not necessarily html. */
+#intravox-app .sovereign-hero,
+#intravox-app [data-sovereign-row="sovereign-workspaces"],
+#intravox-app #organogram-matrix {
+  scroll-margin-top: calc(var(--intravox-topbar-height, 107px) + 16px);
+}
+#intravox-app [data-sovereign-row="sovereign-workspaces"] .links-grid { grid-auto-rows: 1fr; }
+#intravox-app [data-sovereign-row="sovereign-workspaces"] .link-item--tile {
+  min-height: 170px;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 12px;
+}
+#intravox-app [data-sovereign-row="sovereign-workspaces"] .link-tile-content { width: 100%; min-width: 0; }
+#intravox-app [data-sovereign-row="sovereign-workspaces"] .link-tile-subtitle {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#intravox-app [data-sovereign-row="sovereign-workspaces"] .link-tile-subtitle p { display: inline; }
 #intravox-app,
 #intravox-app .app-content-wrapper { background: var(--agl-canvas); }
 #intravox-app .widget-organogram,
@@ -400,11 +452,7 @@ body[data-color-scheme="dark"] #intravox-app {
 #intravox-app .news-item--bg-white { background: var(--agl-surface); border-color: var(--agl-card-border); }
 #intravox-app .agl-organogram__column { background: var(--agl-column); border-color: var(--agl-card-border); }
 #intravox-app .link-icon { color: var(--agl-accent); }
-#intravox-app .link-item--unavailable,
-#intravox-app .link-item--unavailable .link-tile-title { color: var(--agl-text); }
-#intravox-app .link-item--unavailable .link-tile-subtitle,
-#intravox-app .link-item--unavailable .link-unavailable,
-#intravox-app .intravox-nav-bar [aria-disabled="true"] { color: var(--agl-muted); }
+#intravox-app .link-item--unavailable { color: var(--color-main-text); }
 
 @media (prefers-color-scheme: dark) {
   /* Follow the OS only when Nextcloud itself selected its default theme. */
@@ -427,10 +475,8 @@ html.theme--dark #intravox-app .agl-context-bar__lens[aria-pressed="true"]:not([
 
 @media (max-width: 1200px) {
   #intravox-app .agl-context-bar__lens { padding-inline: 7px; }
-  #intravox-app .agl-context-bar__logo,
-  #intravox-app .agl-context-bar__brand { display: none; }
 }
-@media (min-width: 761px) and (max-width: 1000px) {
+@media (min-width: 761px) and (max-width: 1200px) {
   #intravox-app .agl-context-bar__launches { display: none; }
 }
 @media (max-width: 760px) {

@@ -41,6 +41,19 @@ class SovereignBaselineTest extends TestCase {
         $this->assertCount(3, $home['layout']['rows']);
         $this->assertSame('organogram', $home['layout']['rows'][2]['widgets'][0]['type']);
         $this->assertSame(3, $home['layout']['rows'][0]['widgets'][2]['columns']);
+        $apps = $home['layout']['rows'][1]['widgets'][1]['items'];
+        $offices = $home['layout']['rows'][1]['widgets'][3]['items'];
+        $this->assertCount(8, $apps);
+        $this->assertCount(8, $offices);
+        $this->assertCount(6, array_filter($offices, static fn(array $item): bool => !$item['excomOnly']));
+        $this->assertSame('Tables & Forms', $apps[6]['title']);
+        $this->assertSame('forms', $apps[6]['fallbackAppId']);
+        $this->assertSame('global-search', $apps[7]['action']);
+        $this->assertSame('organogram-matrix', $offices[7]['action']);
+        $this->assertSame('#organogram-matrix', $offices[7]['url']);
+        foreach ($offices as $office) {
+            $this->assertNotEmpty($office['text']);
+        }
         $ids = array_column($docs, 'uniqueId');
         $walk = function (array $node) use (&$walk, $ids): void {
             if (isset($node['uniqueId'])) {
@@ -60,6 +73,8 @@ class SovereignBaselineTest extends TestCase {
         $this->assertTrue($docs['sovereign-excom/sovereign-excom.json']['excomOnly']);
         foreach (['group' => 'all', 'caribbean' => 'cloud-carib', 'emea' => 'athena-cloud'] as $slug => $entity) {
             $this->assertSame($entity, $docs["sovereign-news/$slug/$slug.json"]['entity']);
+            $this->assertStringNotContainsString('Sample announcement', json_encode($docs["sovereign-news/$slug/$slug.json"]));
+            $this->assertStringNotContainsString('No audit completion', json_encode($docs["sovereign-news/$slug/$slug.json"]));
         }
         $this->assertStringNotContainsString('\\n', json_decode(json_encode($home), true)['layout']['rows'][0]['widgets'][1]['content']);
     }
@@ -110,5 +125,10 @@ class SovereignBaselineTest extends TestCase {
         $this->assertSame($snapshot, $files);
         $this->assertSame('page-existing-home', json_decode($files['en/home.json'], true)['uniqueId']);
         $this->assertSame('{"title":"Keep me"}', $files['en/keep.json']);
+        $files['en/navigation.json'] = '{"items":["owner-edited"]}';
+        $files['en/home.json'] = '{"uniqueId":"page-existing-home","title":"Refresh target"}';
+        $this->assertSame(1, $installer->install($root, 1, true, SovereignBaseline::FINAL_UX_PATHS));
+        $this->assertSame('{"items":["owner-edited"]}', $files['en/navigation.json']);
+        $this->assertSame(0, $installer->install($root, 1, true, SovereignBaseline::FINAL_UX_PATHS));
     }
 }

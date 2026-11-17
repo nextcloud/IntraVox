@@ -13,6 +13,10 @@ final class SovereignBaseline {
     public const ATHENS_ID = 'page-a1000002-0002-4000-8000-000000000022';
     public const COMPLIANCE = 'EU GDPR • NIS2 • ISO/IEC 27001:2022 • ISO/IEC 20000-1 • SOC 2 Type II • CSA STAR';
     public const EXECUTIVE_UIDS = ['scott.mackenzie', 'victor.kovacs', 'alfredo.carrasco', 'stelios.xeroudakis'];
+    public const FINAL_UX_PATHS = [
+        'home.json', 'sovereign-news/group/group.json',
+        'sovereign-news/caribbean/caribbean.json', 'sovereign-news/emea/emea.json',
+    ];
 
     private function widget(string $type, array $data, int $column = 1, int $order = 0): array {
         return ['type' => $type, 'column' => $column, 'order' => $order] + $data;
@@ -34,15 +38,15 @@ final class SovereignBaseline {
 
     public function homePage(string $homeId = self::HOME_ID): array {
         $launchpad = [
-            $this->app('Team Vaults', 'files', 'folder', 'Sovereign files • SharePoint alternative'),
-            $this->app('Mail & Calendar', 'mail', 'email', 'Mail • Outlook alternative'),
-            $this->app('Calendar', 'calendar', 'calendar', 'Shared schedules'),
-            $this->app('Nextcloud Talk', 'spreed', 'chat', 'Conversations • Teams alternative'),
-            $this->app('Collectives', 'collectives', 'book-open', 'Knowledge • OneNote alternative'),
-            $this->app('Deck / Tables / Forms', 'deck', 'view-column', 'Planning • Planner alternative'),
-            $this->app('Tables', 'tables', 'table-large', 'Structured team information'),
-            $this->app('Forms', 'forms', 'form-select', 'Team requests and surveys'),
-            ['title' => 'Global Search', 'text' => 'Search this workspace • Cmd/Ctrl+K',
+            $this->app('Team Vaults (1–8)', 'files', 'folder', 'Department libraries & MetaVox • SharePoint alternative'),
+            $this->app('Mail', 'mail', 'email', 'Sovereign inbox • Outlook alternative'),
+            $this->app('Calendar & Contacts', 'calendar', 'calendar', 'Shared schedules & directory • Exchange alternative'),
+            $this->app('Nextcloud Talk', 'spreed', 'chat', 'Encrypted chat, channels & calls • Teams alternative'),
+            $this->app('Collectives', 'collectives', 'book-open', 'Runbooks, SOPs & team wikis • OneNote alternative'),
+            $this->app('Deck', 'deck', 'view-column', 'Kanban project & PMO boards • Planner alternative'),
+            $this->app('Tables & Forms', 'tables', 'table-large', 'Structured trackers & intake surveys • Lists/Forms alternative')
+                + ['fallbackAppId' => 'forms', 'fallbackUrl' => '/index.php/apps/forms/'],
+            ['title' => 'Global Search', 'text' => 'Unified files, pages & messages • Cmd/Ctrl+K',
                 'url' => '#agl-global-search', 'icon' => 'web', 'action' => 'global-search', 'entity' => 'all'],
         ];
         $offices = [
@@ -52,8 +56,25 @@ final class SovereignBaseline {
             $this->link('CFO — Finance & Treasury', 'page-sovereign-finance', 'chart-line'),
             $this->link('CTO — Technology & Product', 'page-sovereign-technology', 'lightbulb-on'),
             $this->link('CEO — Governance & CISO', 'page-sovereign-governance', 'shield-check'),
-            $this->link('ExCom Vault', 'page-sovereign-excom', 'shield-account', 'excom'),
+            $this->link('ExCom HoldCo Vault', 'page-sovereign-excom', 'shield-account', 'excom'),
+            ['title' => 'Executive Matrix & Directory', 'url' => '#organogram-matrix',
+                'icon' => 'account-group', 'action' => 'organogram-matrix', 'entity' => 'excom',
+                'excomOnly' => true, 'target' => '_self'],
         ];
+        $officeDescriptions = [
+            'Sales, Marketing, Solutions, PMO/Bids & HR',
+            '24x7x365 NOC / SOC / EMC & Service Delivery',
+            '24x7x365 NOC / SOC / EMC & Sovereign Cloud',
+            'Accounting, Controller, Treasury & FP&A',
+            'Internal Systems [ISD] & Sovereign Portfolio',
+            'General Counsel, Contracts, ISO 27001 & NIS2',
+            'Restricted HoldCo resolutions & board packs',
+            'Jump to Group Organogram & ExCom charter',
+        ];
+        foreach ($offices as $index => &$office) {
+            $office['text'] = $officeDescriptions[$index];
+        }
+        unset($office);
         return [
             'uniqueId' => $homeId, 'title' => 'Athena Group — Sovereign 365', 'status' => 'published',
             'hidePageTitleBar' => true, 'disableSocial' => true, 'entity' => 'all', 'excomOnly' => false,
@@ -114,9 +135,9 @@ final class SovereignBaseline {
             ];
         }
         $news = [
-            'group' => ['01 — Group cutover readiness', 'all', 'Sample announcement: review the shared cutover checklist and confirm accountable owners. This is prototype content, not an approved cutover.'],
-            'caribbean' => ['02 — Nassau C3 assurance review', 'cloud-carib', 'Sample announcement: Cloud Carib teams prepare the evidence register for Caribbean assurance review. No audit completion is asserted.'],
-            'emea' => ['03 — Athens C3 audit preparation', 'athena-cloud', 'Sample announcement: Athena Cloud teams coordinate EMEA control-owner evidence for the next review. No certification outcome is asserted.'],
+            'group' => ['01 — Sovereign 365 Workspace Cutover Guide', 'all', 'Unified single pane of glass replacing legacy Microsoft 365 workflows across Team Vaults, Stalwart Mail, Talk, Collectives, and Deck.'],
+            'caribbean' => ['02 — Nassau C3 Operational Readiness & Runbooks', 'cloud-carib', '24x7x365 Caribbean NOC, SOC, and EMC standard operating procedures, shift handover templates, and escalation paths.'],
+            'emea' => ['03 — Athens C3 EMEA Sovereign Cloud Operations', 'athena-cloud', 'European Sovereign Cloud architecture blueprints, VCF 9 & OpenStack runbooks, and NIS2 / ISO 27001 control registries.'],
         ];
         foreach ($news as $slug => [$title, $entity, $body]) {
             $docs["sovereign-news/$slug/$slug.json"] = [

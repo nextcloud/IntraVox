@@ -79,7 +79,7 @@
     <div v-else-if="widget.type === 'organogram' && shareToken" class="placeholder" role="note">
       {{ t('intravox', 'This organizational view is not available in public shares.') }}
     </div>
-    <OrganogramWidget v-else-if="widget.type === 'organogram'" :widget="widget" />
+    <OrganogramWidget v-else-if="widget.type === 'organogram'" :widget="widget" @navigate="$emit('navigate', $event)" />
 
     <div
       v-else-if="widget.type === 'divider'"

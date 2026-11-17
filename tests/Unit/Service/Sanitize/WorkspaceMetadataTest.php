@@ -74,6 +74,9 @@ class WorkspaceMetadataTest extends TestCase {
             ['title' => 'Mail', 'url' => '/index.php/apps/mail/', 'appId' => 'mail'],
             ['title' => 'Search', 'url' => '#agl-global-search', 'action' => 'global-search'],
             ['title' => 'Invalid', 'url' => '/safe', 'action' => 'javascript', 'appId' => 'not-an-app'],
+            ['title' => 'Matrix', 'url' => '#organogram-matrix', 'action' => 'organogram-matrix', 'excomOnly' => true],
+            ['title' => 'Tables & Forms', 'url' => '/index.php/apps/tables/', 'appId' => 'tables',
+                'fallbackAppId' => 'forms', 'fallbackUrl' => 'javascript:alert(1)'],
         ]]]);
         $page += ['disableSocial' => true, 'entity' => 'athena-cloud', 'excomOnly' => false,
             'settings' => ['allowComments' => null, 'allowReactions' => true, 'allowCommentReactions' => false]];
@@ -90,6 +93,10 @@ class WorkspaceMetadataTest extends TestCase {
         $this->assertSame('global-search', $links[1]['action']);
         $this->assertArrayNotHasKey('appId', $links[2]);
         $this->assertArrayNotHasKey('action', $links[2]);
+        $this->assertSame('organogram-matrix', $links[3]['action']);
+        $this->assertTrue($links[3]['excomOnly']);
+        $this->assertSame('forms', $links[4]['fallbackAppId']);
+        $this->assertSame('/index.php/apps/forms/', $links[4]['fallbackUrl']);
     }
 
     public function testMetadataRejectsMalformedValuesWithoutGrantingPermissions(): void {

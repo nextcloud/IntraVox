@@ -13,6 +13,7 @@ pipeline {
         }
         stage('Stage unsigned Nextcloud release') {
             steps {
+                sh 'bash scripts/check-package-contents.test.sh'
                 sh 'bash scripts/stage-release.sh'
             }
         }

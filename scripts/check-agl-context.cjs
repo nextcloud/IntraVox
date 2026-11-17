@@ -129,13 +129,30 @@ const moduleFrom = file => import(`data:text/javascript;base64,${Buffer.from(rea
         assert.equal(viewer({ disableSocial: false }, true, false)[key], false, 'cannot override global prohibition');
         assert.equal(viewer({ settings: { allowComments: null, allowReactions: null } }, true)[key], false);
     }
-    const { markUnavailableApps } = await moduleFrom('src/utils/aglAppAvailability.js');
+    const { markUnavailableApps, appAvailability, resolveLinkAvailability } = await moduleFrom('src/utils/aglAppAvailability.js');
     const apps = [{ title: 'Apps', children: [{ title: 'Files', appId: 'files' }, { title: 'Mail', appId: 'mail' }] }];
     const before = JSON.stringify(apps);
     const marked = markUnavailableApps(apps, { files: true, mail: false });
     assert.equal(marked[0].children[0].unavailable, undefined);
     assert.equal(marked[0].children[1].unavailable, true);
-    assert.match(marked[0].children[1].title, /Not enabled/);
+    assert.equal(marked[0].children[1].title, apps[0].children[1].title);
+    assert.match(marked[0].children[1].availabilityHint, /Availability unconfirmed/);
     assert.equal(JSON.stringify(apps), before, 'availability does not mutate saved navigation');
+    global.window = { OC: { appswebroots: { mail: '/apps/mail', forms: '/apps/forms' } } };
+    assert.equal(appAvailability('mail', {}), true, 'mounted production apps resolve runtime availability');
+    assert.equal(appAvailability('mail', {mail:false}), false, 'browser mounting cannot override a server access denial');
+    assert.equal(appAvailability('calendar', {calendar:true}), true, 'authorized installed apps need not have loaded assets');
+    const fallback = resolveLinkAvailability({appId:'tables',url:'/apps/tables',fallbackAppId:'forms',fallbackUrl:'/apps/forms'}, {tables:false});
+    assert.equal(fallback.available, true);
+    assert.equal(fallback.url, '/apps/forms');
+    delete global.window;
+    const heroSource = fs.readFileSync(path.join(root, 'src/components/SovereignOverviewHero.vue'), 'utf8');
+    const clockBody = heroSource.match(/clockParts\(timeZone\) \{([\s\S]*?)\n    \},/)[1];
+    const clock = new Function('timeZone', clockBody);
+    for (const [date, nassau, athens] of [['2026-01-15T12:00:00Z','EST','EET'],['2026-07-15T12:00:00Z','EDT','EEST']]) {
+        assert.equal(clock.call({now:new Date(date)},'America/Nassau').zone,nassau);
+        assert.equal(clock.call({now:new Date(date)},'Europe/Athens').zone,athens);
+    }
+    assert(heroSource.includes('clearInterval'), 'hero clock timer is cleaned up on unmount');
     console.log('Workspace identity, lens, storage, nesting and organogram checks passed');
 })().catch(error => { console.error(error); process.exitCode = 1; });

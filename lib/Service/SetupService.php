@@ -606,7 +606,7 @@ class SetupService {
     }
 
     /** Explicit administrative provisioning; never invoked by ordinary page reads. */
-    public function installSovereignBaseline(bool $overwrite = false): int {
+    public function installSovereignBaseline(bool $overwrite = false, ?array $onlyPaths = null): int {
         $folderId = $this->groupFolderIdByName(self::GROUPFOLDER_NAME);
         if ($folderId === null) {
             throw new \RuntimeException('IntraVox Team Folder is not configured');
@@ -617,7 +617,7 @@ class SetupService {
         } catch (NotFoundException $e) {
             $language = $root->newFolder('en');
         }
-        return (new SovereignBaselineInstaller($this->groupFolders))->install($language, $folderId, $overwrite);
+        return (new SovereignBaselineInstaller($this->groupFolders))->install($language, $folderId, $overwrite, $onlyPaths);
     }
 
     /**

@@ -373,8 +373,14 @@ final class PageShapeSanitizer {
                         if (in_array($link['appId'] ?? '', ['files', 'mail', 'calendar', 'spreed', 'collectives', 'deck', 'tables', 'forms'], true)) {
                             $sanitizedLink['appId'] = $link['appId'];
                         }
-                        if (($link['action'] ?? '') === 'global-search') {
-                            $sanitizedLink['action'] = 'global-search';
+                        if (in_array($link['action'] ?? '', ['global-search', 'organogram-matrix'], true)) {
+                            $sanitizedLink['action'] = $link['action'];
+                        }
+                        // This fallback is deliberately constrained to the native
+                        // Forms app; caller-supplied external fallback URLs are ignored.
+                        if (($link['fallbackAppId'] ?? '') === 'forms' && ($link['appId'] ?? '') === 'tables') {
+                            $sanitizedLink['fallbackAppId'] = 'forms';
+                            $sanitizedLink['fallbackUrl'] = '/index.php/apps/forms/';
                         }
                         if (isset($link['uniqueId']) && !empty($link['uniqueId'])) {
                             $sanitizedLink['uniqueId'] = $this->sanitizeText($link['uniqueId']);

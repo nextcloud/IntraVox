@@ -20,10 +20,15 @@ define('OC_CONSOLE', 1);
 require $runtime . '/lib/base.php';
 try {
     $service = \OCP\Server::get(\OCA\IntraVox\Service\SetupService::class);
-    $changed = $service->installSovereignBaseline(true);
+    $finalUx = in_array('--final-ux', $argv, true);
+    $changed = $service->installSovereignBaseline(true, $finalUx ? \OCA\IntraVox\Service\SovereignBaseline::FINAL_UX_PATHS : null);
     \OCP\Server::get(\OCA\IntraVox\Service\Cache\PageCacheService::class)->clearExpensive();
     \OCP\Server::get(\OCA\IntraVox\Service\PageIndexService::class)->clearLanguage('en');
     echo "Sovereign baseline: $changed documents changed. Existing unrelated content retained.\n";
+    if ($finalUx) {
+        echo "Final UX refresh updated only the managed home and three announcements; existing navigation, office pages, ACLs and branding retained.\n";
+        return;
+    }
     // Supported Nextcloud image API accepts the original PNG, not a fabricated SVG.
     $images = \OCP\Server::get(\OCA\Theming\ImageManager::class);
     $defaults = \OCP\Server::get(\OCA\Theming\ThemingDefaults::class);

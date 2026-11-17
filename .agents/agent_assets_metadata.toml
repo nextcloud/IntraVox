@@ -1,0 +1,16 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "sxc02VD5SNs4CooU4mefY"
+uri = "file://generated-artifacts/sovereign-qa/portal-v1-ux-review.html"
+type = "html"
+title = "Sovereign 365 Portal v1.0 — UX review"
+description = "Six authenticated screenshots: top, middle and bottom in light and dark themes. Use the full-width toggle to inspect the details."
+logical_id = "b56763db-513a-4a5d-8d94-3999c8cc50e9"
+content_hash = "sha256:6bc5c0cb396cd0e870752019d65b7ed00d3785e18b3d7ee39d639d16d7f978e5"
+size = 1897894
+mtime_ms = 1794923636879
+storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:9e5d8393-94aa-4fb2-9110-700bd770970c/b56763db-513a-4a5d-8d94-3999c8cc50e9/26b9780e-3519-4d4b-9506-e14c95314270"
+storage_version_token = "1794923836021407"
+content_type = "text/html"

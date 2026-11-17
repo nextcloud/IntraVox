@@ -42,6 +42,7 @@
         v-for="(row, rowIndex) in page.layout.rows"
         :key="rowIndex"
         class="page-row"
+        :data-sovereign-row="row.id"
         :class="{ 'collapsible-row': row.collapsible, 'has-background': !!row.backgroundColor }"
         :style="getRowStyle(row)"
       >
@@ -64,6 +65,19 @@
           :class="{ collapsed: row.collapsible && isRowCollapsed(row) }"
           v-show="!row.collapsible || !isRowCollapsed(row)"
         >
+          <SovereignOverviewHero v-if="isSovereignOverview(row)">
+            <Widget
+              v-for="widget in getOverviewHeroWidgets(row)"
+              :key="widget.id || widget.order"
+              :widget="widget"
+              :page-id="page.uniqueId"
+              :anchor-id="anchorIdForWidget(widget)"
+              :editable="false"
+              :row-background-color="row.backgroundColor || ''"
+              :share-token="shareToken"
+              @navigate="$emit('navigate', $event)"
+            />
+          </SovereignOverviewHero>
           <div
             class="page-grid"
             :style="{ gridTemplateColumns: `repeat(${(row.columns || page.layout.columns) ?? 1}, minmax(0, 1fr))` }"
@@ -128,6 +142,7 @@
 
 <script>
 import Widget from './Widget.vue';
+import SovereignOverviewHero from './SovereignOverviewHero.vue';
 import ReactionBar from './reactions/ReactionBar.vue';
 import CommentSection from './reactions/CommentSection.vue';
 import { getPageReactions } from '../services/CommentService.js';
@@ -140,6 +155,7 @@ export default {
   name: 'PageViewer',
   components: {
     Widget,
+    SovereignOverviewHero,
     ReactionBar,
     CommentSection,
     ChevronDown,
@@ -294,8 +310,20 @@ export default {
 
       // Filter widgets by column and sort by order
       return row.widgets
-        .filter(w => w.column === column)
+        .filter(w => w.column === column && !this.isOverviewHeroWidget(row, w))
         .sort((a, b) => a.order - b.order);
+    },
+    isSovereignOverview(row) {
+      // Existing language homes retain their original UUID/bookmarks.
+      return row?.id === 'sovereign-overview';
+    },
+    isOverviewHeroWidget(row, widget) {
+      return this.isSovereignOverview(row) && ['heading', 'text'].includes(widget?.type);
+    },
+    getOverviewHeroWidgets(row) {
+      return (row?.widgets || [])
+        .filter(widget => this.isOverviewHeroWidget(row, widget))
+        .sort((a, b) => (a.order || 0) - (b.order || 0));
     },
     isRowCollapsed(row) {
       // Check if this collapsible row is currently collapsed in view mode

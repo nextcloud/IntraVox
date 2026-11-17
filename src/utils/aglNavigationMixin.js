@@ -16,7 +16,8 @@ export default {
     aglAttrs(item) {
       return { 'data-agl-entity': item.entity || 'all',
         'data-excom-only': item.excomOnly ? 'true' : 'false',
-        'aria-disabled': item.unavailable ? 'true' : undefined };
+        'aria-disabled': item.unavailable ? 'true' : undefined,
+        title: item.unavailable ? item.availabilityHint : undefined };
     },
     getItemUrl(item) {
       if (item.unavailable) return '#';

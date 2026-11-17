@@ -13,6 +13,8 @@
         :data-agl-entity="link.entity || 'all'"
         :data-excom-only="link.excomOnly ? 'true' : 'false'"
         :aria-disabled="isDisabled(link) ? 'true' : undefined"
+        :tabindex="isDisabled(link) ? 0 : undefined"
+        :role="isDisabled(link) ? 'link' : undefined"
         :title="isDisabled(link) ? availabilityLabel(link) : undefined"
         @click="handleLinkClick($event, link)"
       >
@@ -24,13 +26,11 @@
         />
         <span v-if="isTileLayout && link.title && link.text" class="link-tile-content">
           <span class="link-tile-title" v-html="sanitizeHtml(link.title)"></span>
-          <span class="link-tile-subtitle" v-html="sanitizeHtml(link.text)"></span>
+          <span class="link-tile-subtitle" :title="isDisabled(link) ? availabilityLabel(link) : link.text" v-html="sanitizeHtml(link.text)"></span>
           <span v-if="entityBadge(link)" class="agl-entity-badge" :data-entity="badgeEntity(link)">{{ entityBadge(link) }}</span>
-          <span v-if="isDisabled(link)" class="link-unavailable">{{ availabilityLabel(link) }}</span>
         </span>
         <span v-else class="link-text" v-html="sanitizeHtml(link.text || link.title)"></span>
         <span v-if="!(isTileLayout && link.title && link.text) && entityBadge(link)" class="agl-entity-badge" :data-entity="badgeEntity(link)">{{ entityBadge(link) }}</span>
-        <span v-if="isDisabled(link) && !(isTileLayout && link.title && link.text)" class="link-unavailable">{{ availabilityLabel(link) }}</span>
       </a>
     </div>
     <div v-else class="empty-links-placeholder">
@@ -48,6 +48,7 @@ import { loadState } from '@nextcloud/initial-state';
 import { markdownToHtml } from '../utils/markdownSerializer.js';
 import { isDarkBackground, getEffectiveBackgroundColor } from '../utils/colorUtils.js';
 import { isVisibleInAglContext } from '../utils/aglBrandContext.js';
+import { resolveLinkAvailability } from '../utils/aglAppAvailability.js';
 
 import ViewGrid from 'vue-material-design-icons/ViewGrid.vue';
 import Home from 'vue-material-design-icons/Home.vue';
@@ -226,10 +227,15 @@ export default {
   methods: {
     onAglContextChange(event) { this.activeContext = event.detail.context; this.excomEligible = !this.isPublic && event.detail.eligible === true; },
     badgeEntity(link) { return link.excomOnly ? 'excom' : (link.entity || 'all'); },
-    isUnavailable(link) { return !!link.appId && this.appAvailability?.[link.appId] === false; },
-    isUnverified(link) { return !!link.appId && this.appAvailability?.[link.appId] !== true && this.appAvailability?.[link.appId] !== false; },
-    isDisabled(link) { return this.isUnavailable(link) || this.isUnverified(link); },
-    availabilityLabel(link) { return this.isUnavailable(link) ? this.t('intravox', 'Not enabled') : this.t('intravox', 'Availability unconfirmed'); },
+    resolvedAvailability(link) { return resolveLinkAvailability(link, this.appAvailability); },
+    isUnavailable(link) { return !!link.appId && this.resolvedAvailability(link).available === false; },
+    isUnverified(link) { return !!link.appId && this.resolvedAvailability(link).available === null; },
+    isDisabled(link) { return !!link.appId && this.resolvedAvailability(link).available !== true; },
+    availabilityLabel(link) {
+      return this.isUnavailable(link)
+        ? this.t('intravox', 'This application is not available in this session.')
+        : this.t('intravox', 'Application availability could not be confirmed in this session.');
+    },
     entityBadge(link) { return { 'cloud-carib': this.t('intravox', 'Cloud Carib'), 'athena-cloud': this.t('intravox', 'Athena Cloud'), excom: this.t('intravox', 'ExCom') }[this.badgeEntity(link)] || ''; },
     t(app, text, vars) {
       return translate(app, text, vars);
@@ -350,6 +356,8 @@ export default {
       return style;
     },
     getLinkUrl(link) {
+      const resolved = this.resolvedAvailability(link);
+      if (link.appId && resolved.available === true && resolved.url) return resolved.url;
       if (link.uniqueId) {
         return `#${link.uniqueId}`;
       }
@@ -371,6 +379,16 @@ export default {
         event.preventDefault();
         event.stopPropagation();
         this.openGlobalSearch();
+        return;
+      }
+      if (link.action === 'organogram-matrix') {
+        event.preventDefault();
+        event.stopPropagation();
+        const matrix = document.getElementById('organogram-matrix');
+        if (matrix) {
+          matrix.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          matrix.focus({ preventScroll: true });
+        }
         return;
       }
       if (this.isInternalLink(link)) {
@@ -413,8 +431,7 @@ export default {
   cursor: pointer;
 }
 
-.link-item--unavailable { cursor: not-allowed; color: #34263a; background: #f0ebf1; border-color: #776b7b; }
-.link-unavailable { display: inline-flex; align-self: center; padding: 3px 7px; border: 1px solid currentColor; border-radius: 999px; font-size: 10px; font-weight: 700; white-space: nowrap; }
+.link-item--unavailable { cursor: help; }
 
 /* Card shell */
 .link-icon {

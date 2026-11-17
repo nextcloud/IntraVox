@@ -1,8 +1,7 @@
 <template>
   <section class="agl-context-bar" aria-label="Sovereign 365 workspace context">
     <div class="agl-context-bar__workspace">
-      <img class="agl-context-bar__logo" :src="lightLogo" alt="Athena Group" />
-      <span class="agl-context-bar__brand">Sovereign 365 <small>Athena Group executive workspace</small></span>
+      <span class="agl-context-bar__brand">SOVEREIGN 365 <small>Athena Group executive workspace</small></span>
       <span class="agl-context-bar__eyebrow">{{ t('intravox', 'WORKSPACE LENS') }}</span>
       <div class="agl-context-bar__lenses" role="group" :aria-label="t('intravox', 'Workspace lens')">
         <button v-for="lens in visibleLenses" :key="lens.id"
@@ -30,12 +29,11 @@ import { generateOcsUrl } from '@nextcloud/router';
 import { loadState } from '@nextcloud/initial-state';
 import { translate } from '@nextcloud/l10n';
 import { AGL_CONTEXT_KEY, AGL_ENTITIES, isExcomEligible } from '../utils/aglBrandContext.js';
-import lightLogo from '../img/athena-brand/athena-group-horizontal-light.png';
 
 export default {
   name: 'AglBrandContextBar',
   data() {
-    return { lightLogo, context: 'all', storedContext: 'all', identity: null, identityResolved: false };
+    return { context: 'all', storedContext: 'all', identity: null, identityResolved: false };
   },
   emits: ['context-change', 'identity-change'],
   computed: {
