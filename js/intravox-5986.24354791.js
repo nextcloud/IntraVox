@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunknextcloud_intravox=self.webpackChunknextcloud_intravox||[]).push([[5986],{5986(e,a,l){l.r(a),l.d(a,{TableHeader:()=>r.TableHeader,default:()=>d});var r=l(62848),d=r.TableHeader}}]);

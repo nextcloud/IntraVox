@@ -15,6 +15,7 @@
             size="large"
             class="widget-editor-modal">
     <div class="widget-editor-content">
+        <OrganogramEditor v-if="localWidget.type === 'organogram'" :widget="localWidget" @update="Object.assign(localWidget, $event)" />
         <!-- Text Widget -->
         <div v-if="localWidget.type === 'text'" class="form-group full-width-editor">
           <label>{{ t('intravox', 'Text:') }}</label>
@@ -391,7 +392,7 @@
             <p>{{ t('intravox', 'Preview:') }}</p>
             <!-- Blocked video warning - matches Widget.vue styling -->
             <div v-if="isVideoBlocked" class="video-blocked-preview">
-              <div class="blocked-icon">🚫</div>
+              <div class="blocked-icon" aria-hidden="true">!</div>
               <p class="blocked-title">{{ t('intravox', 'Video service not allowed') }}</p>
               <p v-if="localWidget.src" class="blocked-url">
                 <span class="url-label">{{ t('intravox', 'URL:') }}</span>
@@ -468,6 +469,7 @@ import { translate } from '@nextcloud/l10n';
 import { encodeMediaPath } from '../utils/mediaUrl.js';
 import { NcButton, NcDialog } from '@nextcloud/vue';
 import PageTreeSelect from './PageTreeSelect.vue';
+import OrganogramEditor from './OrganogramEditor.vue';
 import MediaPicker from './MediaPicker.vue';
 import NewsWidgetEditor from './NewsWidgetEditor.vue';
 import PeopleWidgetEditor from './PeopleWidgetEditor.vue';
@@ -494,6 +496,7 @@ export default {
     // Async to match Widget.vue's strategy.
     InlineTextEditor: defineAsyncComponent(() => import('./InlineTextEditor.vue')),
     PageTreeSelect,
+    OrganogramEditor,
     MediaPicker,
     NewsWidgetEditor,
     PeopleWidgetEditor,
@@ -602,6 +605,7 @@ export default {
         video: this.t('intravox', 'Video'),
         // TRANSLATORS: Noun: name of the links widget, or a heading
         links: this.t('intravox', 'Links'),
+        organogram: this.t('intravox', 'Organogram'),
         news: this.t('intravox', 'News'),
         people: this.t('intravox', 'People'),
         calendar: this.t('intravox', 'Calendar'),
@@ -610,15 +614,12 @@ export default {
         'photo-story': this.t('intravox', 'Photo story'),
         'file-story': this.t('intravox', 'File story'),
       };
-      // Falls back to the generic name rather than inventing a new source
-      // string: the type name alone already says what is open.
       return soorten[this.localWidget.type] || this.t('intravox', 'Edit widget');
     },
     /**
      * Check if the current video URL is blocked by the whitelist
      */
     isVideoBlocked() {
-      // Only check for embed provider (external URLs)
       if (this.localWidget.type !== 'video' || this.localWidget.provider === 'local') {
         return false;
       }
@@ -628,7 +629,6 @@ export default {
         return false;
       }
 
-      // Empty whitelist means all domains are blocked
       if (this.videoDomainWhitelist.length === 0) {
         return true;
       }
@@ -684,7 +684,6 @@ export default {
         return true;
       }
 
-      // Local videos are always allowed
       if (this.localWidget.provider === 'local') {
         return !!this.localWidget.src;
       }
@@ -719,6 +718,7 @@ export default {
       Object.assign(this.localWidget, updatedWidget);
     },
     save() {
+      if (this.localWidget.type === 'organogram') Object.assign(this.localWidget, { title: this.localWidget.title || 'Athena Group | Executive & Functional Matrix', defaultExpanded: this.localWidget.defaultExpanded !== false, showCompanies: this.localWidget.showCompanies !== false });
       // Ensure video URL is converted before saving (in case user didn't blur input)
       if (this.localWidget.type === 'video' && this.localWidget.provider !== 'local') {
         this.convertVideoUrl();

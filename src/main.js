@@ -1,7 +1,7 @@
-import { createApp } from 'vue';
-import App from './App.vue';
-import PublicPageView from './components/PublicPageView.vue';
+import { createApp, defineAsyncComponent, h } from 'vue';
+import { translate } from '@nextcloud/l10n';
 import { parseFragment } from './utils/headingAnchors.js';
+import './css/agl-sovereign-theme.scss';
 
 // Get the root element
 const rootElement = document.getElementById('app-intravox');
@@ -16,7 +16,8 @@ const pathMatch = window.location.pathname.match(/\/apps\/intravox\/s\/([a-zA-Z0
 const shareToken = rootElement?.dataset?.token || (pathMatch ? pathMatch[1] : null) || urlParams.get('share') || '';
 const isPublic = rootElement?.dataset?.isPublic === 'true' || (shareToken && !document.querySelector('#user-menu'));
 
-let app;
+let rootComponent;
+let rootProps = {};
 
 if (isPublic && shareToken) {
 	// Public page mode - render simplified view (token-based sharing)
@@ -28,17 +29,54 @@ if (isPublic && shareToken) {
 	const pageFromHash = parseFragment(window.location.hash).pageId || '';
 	const pageUniqueId = pageFromQuery || pageFromHash;
 
-	app = createApp(PublicPageView, {
-		token: shareToken,
-		pageUniqueId,
+	rootProps = { token: shareToken, pageUniqueId };
+	rootComponent = defineAsyncComponent({
+		loader: () => import('./components/PublicPageView.vue'),
+		delay: 0,
+		loadingComponent: {
+			render() {
+				return h('div', { class: 'agl-entry-state', role: 'status' }, translate('intravox', 'Loading shared page …'));
+			},
+		},
+		errorComponent: {
+			render() {
+				return h('div', { class: 'agl-entry-state', role: 'alert' }, [
+					h('p', translate('intravox', 'The shared page could not be loaded.')),
+					h('button', { type: 'button', onClick: () => window.location.reload() }, translate('intravox', 'Reload page')),
+				]);
+			},
+		},
+		onError(error, retry, fail, attempts) {
+			if (attempts < 2) retry();
+			else fail(error);
+		},
 	});
 } else {
-	// Normal authenticated mode
-	app = createApp(App);
+	rootComponent = defineAsyncComponent({
+		loader: () => import('./App.vue'),
+		delay: 0,
+		loadingComponent: {
+			render() {
+				return h('div', { class: 'agl-entry-state', role: 'status' }, translate('intravox', 'Loading Sovereign 365 …'));
+			},
+		},
+		errorComponent: {
+			render() {
+				return h('div', { class: 'agl-entry-state', role: 'alert' }, [
+					h('p', translate('intravox', 'Sovereign 365 could not be loaded.')),
+					h('button', { type: 'button', onClick: () => window.location.reload() }, translate('intravox', 'Reload page')),
+				]);
+			},
+		},
+		onError(error, retry, fail, attempts) {
+			if (attempts < 2) retry();
+			else fail(error);
+		},
+	});
 }
 
 // No global $t/$n aliases: such a call works at runtime but is invisible to
 // the Transifex bot, which only extracts t() with the app id as first argument.
 // Components define their own t()/n() helpers; check-l10n-sync.js enforces it.
 
-app.mount('#app-intravox');
+createApp(rootComponent, rootProps).mount('#app-intravox');

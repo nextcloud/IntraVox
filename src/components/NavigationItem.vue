@@ -1,13 +1,11 @@
 <template>
   <div class="navigation-item" :class="`level-${level}`">
     <div class="item-content">
-      <!-- Drag Handle -->
       <!-- TRANSLATORS: Tooltip and screen-reader label of a drag handle -->
       <div class="drag-handle" role="img" :aria-label="t('intravox', 'Drag to reorder')">
         <DragVertical :size="20" />
       </div>
 
-      <!-- Item Details -->
       <div class="item-details">
         <input v-model="localItem.title"
                type="text"
@@ -17,7 +15,6 @@
                @input="emitUpdate" />
 
         <div class="item-link-options">
-          <!-- Link to Page (disabled when URL is set) -->
           <PageTreeSelect
             :model-value="localItem.uniqueId"
             :placeholder="t('intravox', 'Link to page')"
@@ -37,7 +34,6 @@
                    :placeholder="t('intravox', 'Custom URL')"
                    @input="onUrlInput" />
 
-            <!-- Clear URL button -->
             <!-- TRANSLATORS: Screen-reader label of an icon button that empties the URL field, not shown on screen -->
             <button v-if="localItem.url" :aria-label="t('intravox', 'Clear URL')"
                     type="button"
@@ -54,9 +50,9 @@
                       class="target-selector" />
           </div>
         </div>
+        <AglMetadataFields :entity="localItem.entity" :excom-only="localItem.excomOnly" @update:entity="localItem.entity = $event; emitUpdate()" @update:excom-only="localItem.excomOnly = $event; emitUpdate()" />
       </div>
 
-      <!-- Actions -->
       <div class="item-actions">
         <!-- Promote: move item up one level (to parent's level) -->
         <!-- TRANSLATORS: Screen-reader label of an icon button in the navigation editor, not shown on screen -->
@@ -133,6 +129,7 @@ import Close from 'vue-material-design-icons/Close.vue';
 import ChevronLeft from 'vue-material-design-icons/ChevronLeft.vue';
 import ChevronRight from 'vue-material-design-icons/ChevronRight.vue';
 import PageTreeSelect from './PageTreeSelect.vue';
+import AglMetadataFields from './AglMetadataFields.vue';
 
 export default {
   name: 'NavigationItem',
@@ -146,7 +143,8 @@ export default {
     Close,
     ChevronLeft,
     ChevronRight,
-    PageTreeSelect
+    PageTreeSelect,
+    AglMetadataFields
   },
   props: {
     item: {
@@ -177,7 +175,7 @@ export default {
   emits: ['update', 'delete', 'add-child', 'promote', 'demote'],
   data() {
     return {
-      localItem: JSON.parse(JSON.stringify(this.item)),
+      localItem: { ...JSON.parse(JSON.stringify(this.item)), entity: this.item.entity || 'all', excomOnly: this.item.excomOnly === true },
       targetOptions: [
         { value: '_self', label: t('intravox', 'Same tab') },
         { value: '_blank', label: t('intravox', 'New tab') }
@@ -209,7 +207,7 @@ export default {
     item: {
       deep: true,
       handler(newItem) {
-        this.localItem = JSON.parse(JSON.stringify(newItem));
+        this.localItem = { ...JSON.parse(JSON.stringify(newItem)), entity: newItem.entity || 'all', excomOnly: newItem.excomOnly === true };
       }
     }
   },
@@ -317,6 +315,8 @@ export default {
   align-items: center;
   gap: 6px;
 }
+
+.agl-metadata-fields select { max-width: 180px; }
 
 .link-selector {
   flex: 1;

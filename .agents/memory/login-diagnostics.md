@@ -16,3 +16,11 @@ The owner reported that disabling Firefox's "enhanced security" allowed login, a
 **Why:** Refreshing, resetting the login delay, and opening a separate tab had not resolved the failure. Do not treat a successful clean Chromium or HTTP session as proof that this Firefox submission is working.
 
 **How to apply:** If this symptom recurs, check browser protection settings and form-token presence before changing Nextcloud session configuration. Prefer a narrowly scoped site exception over disabling browser protection globally. This is an observed workaround, not a proven application-side fix.
+
+## Embedded Preview session reuse
+
+Storage Access API consent produced intermittent success and a browser `NotAllowedError`. The owner later reported being authenticated inside Preview, but did not identify which browser permission change resolved it. Do not treat consent alone as a proven reliable fix.
+
+**Why:** Firefox can separate embedded storage from a standalone tab even when both load the same development hostname. Refreshing a login form alone does not reconnect those contexts.
+
+**How to apply:** Prefer explicit browser storage-access consent and a fresh same-origin navigation. Distinguish a site exception for the outer replit.com page from one for the standalone app domain. Never copy authentication cookies, bypass Nextcloud authentication, or disable CSRF/SameSite protections. Permission and session lifetime remain browser-controlled; this is not a permanent login guarantee.

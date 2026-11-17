@@ -25,7 +25,9 @@ curl --fail --silent --show-error "$BASE/index.php/apps/intravox/" -o /dev/null
 code="$(curl --silent --show-error -o /dev/null -w '%{http_code}' "$BASE/index.php/apps/intravox/api/pages")"
 [ "$code" = 401 ] || { echo "Expected unauthenticated page access to be rejected; got $code." >&2; exit 1; }
 echo "IntraVox loads; private page content requires sign-in."
-curl --fail --silent --show-error "$BASE/custom_apps/intravox/js/intravox-main.js" -o /dev/null
+ASSET="$(php -r '$m=json_decode(file_get_contents("js/entrypoints.json"),true,512,JSON_THROW_ON_ERROR); foreach ($m["main"] as $a) { if (str_ends_with($a,".js")) { echo $a; break; } }')"
+[ -n "$ASSET" ] || { echo "Build manifest has no main JavaScript asset." >&2; exit 1; }
+curl --fail --silent --show-error "$BASE/custom_apps/intravox/$ASSET" -o /dev/null
 echo "IntraVox JavaScript is served."
 
 for path in \

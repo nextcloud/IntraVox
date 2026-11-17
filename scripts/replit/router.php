@@ -7,6 +7,24 @@ $root = dirname(__DIR__, 2) . '/.runtime/nextcloud';
 $uri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
 $path = is_string($uri) ? rawurldecode($uri) : '';
 $segments = explode('/', $path);
+// Only the exact Replit development host gets the consent helper. A query flag
+// skips this informational page, never Nextcloud authentication or CSRF checks.
+$previewHost = getenv('REPLIT_DEV_DOMAIN') ?: '';
+if ($previewHost !== '' && in_array($_SERVER['HTTP_HOST'] ?? '', [$previewHost, '127.0.0.1:5000', 'localhost:5000'], true)
+    && ($_SERVER['REQUEST_METHOD'] ?? '') === 'GET') {
+    if ($path === '/intravox-preview-storage.js') {
+        header('Content-Type: application/javascript; charset=utf-8');
+        header('Cache-Control: no-store');
+        readfile(__DIR__ . '/preview-storage.js');
+        return true;
+    }
+    if ($path === '/intravox-preview-session'
+        || ($path === '/index.php/login' && ($_SERVER['HTTP_SEC_FETCH_DEST'] ?? '') === 'iframe'
+            && !isset($_GET['preview_storage']))) {
+        require __DIR__ . '/preview-storage.php';
+        return true;
+    }
+}
 $deny = static function (): never {
     http_response_code(404);
     header('Content-Type: text/plain; charset=utf-8');

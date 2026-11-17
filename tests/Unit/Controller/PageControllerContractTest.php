@@ -81,25 +81,12 @@ class PageControllerContractTest extends TestCase {
         );
     }
 
-    public function testEveryRenderPathEmitsTheWebpackAssetTriple(): void {
-        // Since Phase 6 the triple is emitted once, in RendersAppShell; the trait
-        // must load all three bundles (a path that emits only some yields a
-        // half-initialised SPA), and every render path must call it.
-        $this->assertSame(
-            1,
-            substr_count($this->shellTraitSrc, 'intravox-vendors'),
-            'the vendors bundle is emitted exactly once, in the trait'
-        );
-        $this->assertSame(
-            substr_count($this->shellTraitSrc, 'intravox-vendors'),
-            substr_count($this->shellTraitSrc, 'intravox-shared'),
-            'vendors and shared bundles are emitted together in the trait'
-        );
-        $this->assertSame(
-            substr_count($this->shellTraitSrc, 'intravox-shared'),
-            substr_count($this->shellTraitSrc, 'intravox-main'),
-            'shared and main bundles are emitted together in the trait'
-        );
+    public function testEveryRenderPathEmitsTheWebpackManifest(): void {
+        $this->assertStringContainsString("AppAssets::load('main')", $this->shellTraitSrc);
+        $template = file_get_contents(__DIR__ . '/../../../templates/main.php');
+        $admin = file_get_contents(__DIR__ . '/../../../lib/Settings/AdminSettings.php');
+        $this->assertStringContainsString("AppAssets::load('main')", $template);
+        $this->assertStringContainsString("AppAssets::load('admin')", $admin);
 
         // Every render path in PageController pulls the shell in via the trait —
         // no path may hand-roll a partial set of bundles.

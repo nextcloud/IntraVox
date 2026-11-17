@@ -1,8 +1,8 @@
 <template>
   <div class="links-widget" :style="getContainerStyle()">
-    <div v-if="widget.items && widget.items.length > 0" class="links-grid" :style="getGridStyle()">
+    <div v-if="visibleLinks.length > 0" class="links-grid" :style="getGridStyle()">
       <a
-        v-for="(link, index) in widget.items"
+        v-for="(link, index) in visibleLinks"
         :key="link.uniqueId || link.url || `link-${index}`"
         :href="getLinkUrl(link)"
         :target="isInternalLink(link) ? '_self' : '_blank'"
@@ -10,6 +10,8 @@
         class="link-item"
         :class="[getLinkItemClass(link), { 'link-item--tile': isTileLayout }]"
         :style="getLinkStyle(link)"
+        :data-agl-entity="link.entity || 'all'"
+        :data-excom-only="link.excomOnly ? 'true' : 'false'"
         @click="handleLinkClick($event, link)"
       >
         <component
@@ -21,13 +23,15 @@
         <span v-if="isTileLayout && link.title && link.text" class="link-tile-content">
           <span class="link-tile-title" v-html="sanitizeHtml(link.title)"></span>
           <span class="link-tile-subtitle" v-html="sanitizeHtml(link.text)"></span>
+          <span v-if="entityBadge(link)" class="agl-entity-badge" :data-entity="badgeEntity(link)">{{ entityBadge(link) }}</span>
         </span>
         <span v-else class="link-text" v-html="sanitizeHtml(link.text || link.title)"></span>
+        <span v-if="!(isTileLayout && link.title && link.text) && entityBadge(link)" class="agl-entity-badge" :data-entity="badgeEntity(link)">{{ entityBadge(link) }}</span>
       </a>
     </div>
     <div v-else class="empty-links-placeholder">
       <ViewGrid :size="32" />
-      <p>{{ t('intravox', 'No links configured. Click the edit button to add links.') }}</p>
+      <p>{{ widget.items?.length ? t('intravox', 'No links available in this workspace lens.') : t('intravox', 'No links configured. Click the edit button to add links.') }}</p>
     </div>
   </div>
 </template>
@@ -36,8 +40,8 @@
 import { translate } from '@nextcloud/l10n';
 import { markdownToHtml } from '../utils/markdownSerializer.js';
 import { isDarkBackground, getEffectiveBackgroundColor } from '../utils/colorUtils.js';
+import { isVisibleInAglContext } from '../utils/aglBrandContext.js';
 
-// Import common Material Design Icons
 import ViewGrid from 'vue-material-design-icons/ViewGrid.vue';
 import Home from 'vue-material-design-icons/Home.vue';
 import Information from 'vue-material-design-icons/Information.vue';
@@ -178,6 +182,7 @@ export default {
     MessageText
   },
   props: {
+    isPublic: { type: Boolean, default: false },
     widget: {
       type: Object,
       required: true
@@ -188,7 +193,11 @@ export default {
     }
   },
   emits: ['navigate'],
+  data() { return { activeContext: document.documentElement.dataset.aglContext || 'all', excomEligible: false }; },
+  mounted() { this.excomEligible = !this.isPublic && document.documentElement.dataset.aglExcom === 'true'; document.addEventListener('agl:context-change', this.onAglContextChange); },
+  beforeUnmount() { document.removeEventListener('agl:context-change', this.onAglContextChange); },
   computed: {
+    visibleLinks() { return (this.widget.items || []).filter(link => isVisibleInAglContext(link, this.activeContext, this.excomEligible)); },
     effectiveBackgroundColor() {
       return getEffectiveBackgroundColor(this.widget.backgroundColor, this.rowBackgroundColor);
     },
@@ -197,16 +206,17 @@ export default {
     },
   },
   methods: {
+    onAglContextChange(event) { this.activeContext = event.detail.context; this.excomEligible = !this.isPublic && event.detail.eligible === true; },
+    badgeEntity(link) { return link.excomOnly ? 'excom' : (link.entity || 'all'); },
+    entityBadge(link) { return { 'cloud-carib': this.t('intravox', 'Cloud Carib'), 'athena-cloud': this.t('intravox', 'Athena Cloud'), excom: this.t('intravox', 'ExCom') }[this.badgeEntity(link)] || ''; },
     t(app, text, vars) {
       return translate(app, text, vars);
     },
     sanitizeHtml(content) {
       if (!content) return '';
-      // Use the markdown serializer to convert markdown to HTML
       return markdownToHtml(content);
     },
     getLinkItemClass(link) {
-      // Individual link background takes precedence
       const linkBg = link.backgroundColor;
       if (linkBg) {
         if (isDarkBackground(linkBg)) {
@@ -215,15 +225,12 @@ export default {
         return 'link-item--bg-light';
       }
 
-      // No individual link background → blend into container/row background
       const containerBg = this.effectiveBackgroundColor;
 
       if (isDarkBackground(containerBg)) {
-        // Dark container → transparent links with white text
         return 'link-item--bg-on-dark';
       }
 
-      // Default: transparent links that blend into their background
       return 'link-item--bg-transparent';
     },
     getIconComponent(iconName) {
@@ -321,30 +328,24 @@ export default {
       return style;
     },
     getLinkUrl(link) {
-      // If link has a uniqueId (internal page), return hash URL
       if (link.uniqueId) {
         return `#${link.uniqueId}`;
       }
-      // Otherwise return the external URL
       return link.url || '#';
     },
     isInternalLink(link) {
-      // Check if it's an internal navigation link (has uniqueId or URL starts with #)
       if (link.uniqueId) {
         return true;
       }
       return link.url && link.url.startsWith('#') && link.url.length > 1;
     },
     handleLinkClick(event, link) {
-      // If it's an internal link, prevent default and emit navigate event
       if (this.isInternalLink(link)) {
         event.preventDefault();
         event.stopPropagation();
-        // Get the pageId from uniqueId or from URL hash
         const pageId = link.uniqueId || link.url.substring(1);
         this.$emit('navigate', pageId);
       }
-      // For external links, the default behavior (open in new tab) will happen
     }
   }
 };
@@ -362,7 +363,6 @@ export default {
   grid-template-columns: repeat(2, 1fr);
 }
 
-/* Base link-item styles */
 .link-item {
   display: flex;
   align-items: center;
@@ -377,12 +377,13 @@ export default {
   cursor: pointer;
 }
 
+/* Card shell */
 .link-icon {
   flex-shrink: 0;
   color: var(--color-primary-element);
 }
 
-/* Transparent — default: blends into container/row background */
+/* Transparent surface */
 .link-item--bg-transparent {
   background: transparent;
 }
@@ -393,7 +394,7 @@ export default {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
 }
 
-/* On dark container — transparent links with white text/icons */
+/* Inverse surface */
 .link-item--bg-on-dark {
   background: transparent;
   border-color: rgba(255, 255, 255, 0.2);
@@ -415,7 +416,7 @@ export default {
   color: var(--color-primary-element-text);
 }
 
-/* Explicit light background — individual link set to Light */
+/* Light surface */
 .link-item--bg-light {
   background: var(--color-background-hover);
   border-color: var(--color-border);
@@ -432,7 +433,7 @@ export default {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
-/* Explicit dark background — individual link set to Primary */
+/* Accent surface */
 .link-item--bg-dark {
   background: var(--color-primary-element);
   border-color: var(--color-primary-element);
@@ -452,7 +453,7 @@ export default {
   color: var(--color-primary-element-text);
 }
 
-/* Tile layout — centered icon above text */
+/* Tile layout */
 .link-item--tile {
   flex-direction: column;
   text-align: center;
@@ -466,6 +467,7 @@ export default {
   margin-bottom: 4px;
 }
 
+/* Tile copy */
 .link-tile-content {
   display: flex;
   flex-direction: column;
@@ -494,7 +496,6 @@ export default {
   word-break: break-word;
 }
 
-/* Empty placeholder */
 .empty-links-placeholder {
   text-align: center;
   padding: 40px 20px;
@@ -514,7 +515,6 @@ export default {
   font-size: 14px;
 }
 
-/* Mobile responsiveness */
 @media (max-width: 768px) {
   .links-grid {
     grid-template-columns: 1fr !important;

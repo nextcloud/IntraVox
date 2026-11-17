@@ -9,11 +9,11 @@
         <template #icon>
           <Menu :size="20" />
         </template>
-        <template v-for="item in items" :key="getItemKey(item)">
+        <template v-for="item in visibleItems" :key="getItemKey(item)">
           <!-- Top level items with children -->
           <template v-if="item.children && item.children.length > 0">
             <!-- Title navigates, chevron expands -->
-            <NcActionButton @click="handleMobileItemClick(item)">
+            <NcActionButton v-bind="aglAttrs(item)" @click="handleMobileItemClick(item)">
               <template #icon>
                 <span class="mobile-expand-btn" @click.stop="toggleMobileItem(getItemKey(item))">
                   <ChevronRight v-if="!isMobileItemExpanded(getItemKey(item))" :size="20" />
@@ -27,7 +27,7 @@
             <template v-if="isMobileItemExpanded(getItemKey(item))">
               <template v-for="child in item.children" :key="getItemKey(child)">
                 <!-- Level 2 with children -->
-                <NcActionButton v-if="child.children && child.children.length > 0"
+                <NcActionButton v-if="child.children && child.children.length > 0" v-bind="aglAttrs(child)"
                                @click="handleMobileItemClick(child)"
                                class="mobile-nav-level-2">
                   <template #icon>
@@ -40,7 +40,7 @@
                 </NcActionButton>
 
                 <!-- Level 2 without children -->
-                <NcActionButton v-else
+                <NcActionButton v-else v-bind="aglAttrs(child)"
                                @click="handleItemClick(child)"
                                class="mobile-nav-level-2">
                   {{ decodeHtmlEntities(child.title) }}
@@ -50,7 +50,7 @@
                 <template v-if="child.children && child.children.length > 0 && isMobileItemExpanded(getItemKey(child))">
                   <!-- Level 3 with children -->
                   <template v-for="grandchild in child.children" :key="getItemKey(grandchild)">
-                    <NcActionButton v-if="grandchild.children && grandchild.children.length > 0"
+                    <NcActionButton v-if="grandchild.children && grandchild.children.length > 0" v-bind="aglAttrs(grandchild)"
                                    @click="handleMobileItemClick(grandchild)"
                                    class="mobile-nav-level-3">
                       <template #icon>
@@ -63,7 +63,7 @@
                     </NcActionButton>
 
                     <!-- Level 3 without children -->
-                    <NcActionButton v-else
+                    <NcActionButton v-else v-bind="aglAttrs(grandchild)"
                                    @click="handleItemClick(grandchild)"
                                    class="mobile-nav-level-3">
                       {{ decodeHtmlEntities(grandchild.title) }}
@@ -72,7 +72,7 @@
                     <!-- Level 4 items -->
                     <template v-if="grandchild.children && grandchild.children.length > 0 && isMobileItemExpanded(getItemKey(grandchild))">
                       <NcActionButton v-for="greatGrandchild in grandchild.children"
-                                     :key="getItemKey(greatGrandchild)"
+                                      :key="getItemKey(greatGrandchild)" v-bind="aglAttrs(greatGrandchild)"
                                      @click="handleItemClick(greatGrandchild)"
                                      class="mobile-nav-level-4">
                         {{ decodeHtmlEntities(greatGrandchild.title) }}
@@ -84,8 +84,7 @@
             </template>
           </template>
 
-          <!-- Top level items without children -->
-          <NcActionButton v-else @click="handleItemClick(item)">
+          <NcActionButton v-else v-bind="aglAttrs(item)" @click="handleItemClick(item)">
             {{ decodeHtmlEntities(item.title) }}
           </NcActionButton>
         </template>
@@ -94,13 +93,14 @@
 
     <!-- Desktop Navigation - Cascading Dropdown -->
     <div v-if="type === 'dropdown'" class="desktop-nav desktop-dropdown-nav">
-      <template v-for="item in items" :key="getItemKey(item)">
+      <template v-for="item in visibleItems" :key="getItemKey(item)">
         <!-- Top level with children -->
         <div v-if="item.children && item.children.length > 0"
              class="dropdown-item"
+             v-bind="aglAttrs(item)"
              @mouseenter="showDropdown(item, $event)"
              @mouseleave="hideDropdown">
-          <a :href="getItemUrl(item)"
+          <a v-bind="aglAttrs(item)" :href="getItemUrl(item)"
              :target="item.target || '_self'"
              @click.prevent="handleItemClick(item)"
              class="dropdown-trigger"
@@ -119,10 +119,10 @@
               <!-- Level 2 items -->
               <template v-for="child in item.children" :key="getItemKey(child)">
                 <!-- Level 2 with children -->
-                <div v-if="child.children && child.children.length > 0" class="dropdown-section">
+                 <div v-if="child.children && child.children.length > 0" class="dropdown-section" v-bind="aglAttrs(child)">
                   <!-- Section header (Level 2) - clickable to expand/collapse -->
                   <div class="dropdown-section-header-wrapper">
-                    <a v-if="child.uniqueId || child.url"
+                    <a v-if="child.uniqueId || child.url" v-bind="aglAttrs(child)"
                        :href="getItemUrl(child)"
                        :target="child.target || '_self'"
                        @click.prevent="handleItemClick(child)"
@@ -148,6 +148,7 @@
                   <!-- Level 3 items - only show when expanded -->
                   <div v-if="isDropdownSectionExpanded(getItemKey(child))" class="dropdown-section-items">
                     <a v-for="grandchild in child.children"
+                       v-bind="aglAttrs(grandchild)"
                        :key="getItemKey(grandchild)"
                        :href="getItemUrl(grandchild)"
                        :target="grandchild.target || '_self'"
@@ -159,7 +160,7 @@
                 </div>
 
                 <!-- Level 2 without children -->
-                <a v-else
+                <a v-else v-bind="aglAttrs(child)"
                    :href="getItemUrl(child)"
                    :target="child.target || '_self'"
                    @click.prevent="handleItemClick(child)"
@@ -172,7 +173,7 @@
         </div>
 
         <!-- Top level without children - regular link -->
-        <a v-else
+        <a v-else v-bind="aglAttrs(item)"
            :href="getItemUrl(item)"
            :target="item.target || '_self'"
            @click.prevent="handleItemClick(item)"
@@ -184,13 +185,14 @@
 
     <!-- Desktop Navigation - Mega Menu -->
     <div v-else-if="type === 'megamenu'" class="desktop-nav desktop-megamenu-nav">
-      <template v-for="item in items" :key="getItemKey(item)">
+      <template v-for="item in visibleItems" :key="getItemKey(item)">
         <!-- Top level with children -->
         <div v-if="item.children && item.children.length > 0"
              class="megamenu-item"
+             v-bind="aglAttrs(item)"
              @mouseenter="showMegaMenu(item, $event)"
              @mouseleave="hideMegaMenu">
-          <a :href="getItemUrl(item)"
+          <a v-bind="aglAttrs(item)" :href="getItemUrl(item)"
              :target="item.target || '_self'"
              @click.prevent="handleItemClick(item)"
              class="megamenu-trigger"
@@ -208,11 +210,12 @@
                @mouseleave="hideMegaMenu">
             <div class="megamenu-grid">
               <!-- Level 2 columns -->
-              <div v-for="child in item.children"
+               <div v-for="child in item.children"
                    :key="getItemKey(child)"
-                   class="megamenu-column">
+                    class="megamenu-column"
+                    v-bind="aglAttrs(child)">
                 <!-- Column header (Level 2) -->
-                <a v-if="child.uniqueId || child.url"
+                 <a v-if="child.uniqueId || child.url" v-bind="aglAttrs(child)"
                    :href="getItemUrl(child)"
                    :target="child.target || '_self'"
                    @click.prevent="handleItemClick(child)"
@@ -226,7 +229,7 @@
                 <!-- Level 3 items -->
                 <ul v-if="child.children && child.children.length > 0" class="megamenu-list">
                   <li v-for="grandchild in child.children" :key="getItemKey(grandchild)">
-                    <a :href="getItemUrl(grandchild)"
+                     <a v-bind="aglAttrs(grandchild)" :href="getItemUrl(grandchild)"
                        :target="grandchild.target || '_self'"
                        @click.prevent="handleItemClick(grandchild)"
                        class="megamenu-list-item"
@@ -237,7 +240,7 @@
                     <!-- Level 4 items (nested under level 3) -->
                     <ul v-if="grandchild.children && grandchild.children.length > 0" class="megamenu-sublist">
                       <li v-for="greatGrandchild in grandchild.children" :key="getItemKey(greatGrandchild)">
-                        <a :href="getItemUrl(greatGrandchild)"
+                         <a v-bind="aglAttrs(greatGrandchild)" :href="getItemUrl(greatGrandchild)"
                            :target="greatGrandchild.target || '_self'"
                            @click.prevent="handleItemClick(greatGrandchild)"
                            class="megamenu-sublist-item">
@@ -254,6 +257,7 @@
 
         <!-- Top level without children -->
         <a v-else
+           v-bind="aglAttrs(item)"
            :href="getItemUrl(item)"
            :target="item.target || '_self'"
            @click.prevent="handleItemClick(item)"
@@ -271,6 +275,7 @@ import { NcActions, NcActionButton } from '@nextcloud/vue';
 import ChevronDown from 'vue-material-design-icons/ChevronDown.vue';
 import ChevronRight from 'vue-material-design-icons/ChevronRight.vue';
 import Menu from 'vue-material-design-icons/Menu.vue';
+import { filterAglTree } from '../utils/aglBrandContext.js';
 
 export default {
   name: 'Navigation',
@@ -297,6 +302,9 @@ export default {
     }
   },
   emits: ['navigate'],
+  computed: {
+    visibleItems() { return filterAglTree(this.items, document.documentElement.dataset.aglContext || 'all', !this.isPublic && document.documentElement.dataset.aglExcom === 'true'); },
+  },
   data() {
     return {
       // Mobile menu state
@@ -321,6 +329,7 @@ export default {
     window.removeEventListener('scroll', this.updateDropdownPosition, true);
   },
   methods: {
+    aglAttrs(item) { return { 'data-agl-entity': item.entity || 'all', 'data-excom-only': item.excomOnly ? 'true' : 'false' }; },
     t(app, text, vars) {
       return translate(app, text, vars);
     },
@@ -467,8 +476,6 @@ export default {
   padding: 0 16px;
 }
 
-/* Page Tree Button */
-/* Mobile Navigation */
 .mobile-nav {
   display: none;
 }
@@ -530,7 +537,6 @@ export default {
   font-weight: 300 !important;
 }
 
-/* Mobile expand button - larger clickable area */
 .mobile-expand-btn {
   display: flex;
   align-items: center;
@@ -550,12 +556,10 @@ export default {
   background-color: var(--color-primary-element-light);
 }
 
-/* Hover effects for mobile items */
 .mobile-nav :deep(.action-button):hover {
   background-color: var(--color-background-hover) !important;
 }
 
-/* Desktop Navigation */
 .desktop-nav {
   display: flex;
   align-items: center;
@@ -567,7 +571,6 @@ export default {
   -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
 }
 
-/* Scrollbar styling for desktop navigation */
 .desktop-nav::-webkit-scrollbar {
   height: 4px;
 }
@@ -585,7 +588,6 @@ export default {
   background: var(--color-text-maxcontrast);
 }
 
-/* Dropdown Navigation */
 .desktop-dropdown-nav {
   gap: 0;
 }
@@ -781,7 +783,6 @@ a.dropdown-section-header:active,
   background-color: var(--color-primary-element-light);
 }
 
-/* Mega Menu Navigation */
 .desktop-megamenu-nav {
   gap: 0;
 }
@@ -936,7 +937,6 @@ a.megamenu-column-header:active {
   color: var(--color-primary-element);
 }
 
-/* Responsive - Show mobile menu on smaller screens */
 @media (max-width: 768px) {
   .mobile-nav {
     display: block;

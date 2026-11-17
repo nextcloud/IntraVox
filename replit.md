@@ -57,6 +57,21 @@ Then open Preview in a new tab and log in as **admin** with that password.
 IntraVox is the default app, and the initial administrator belongs to
 **IntraVox Admins**.
 
+For the embedded Preview, the development login route offers **Use existing
+sign-in in Preview**. This requests browser-mediated storage access rather than
+copying authentication cookies. If access is granted, it opens a fresh
+Nextcloud page using the existing session. **Sign in inside Preview** instead
+opens the normal Nextcloud login without requesting cross-context access.
+The helper can also be opened at `/intravox-preview-session`.
+
+Firefox may require an explicit cookie exception for the development app
+hostname under **Settings → Privacy & Security → Cookies and Site Data →
+Manage Exceptions**. An exception on a standalone app tab is distinct from one
+for the outer Replit page. A browser `NotAllowedError` can also result from the
+embedding frame's policy; app code cannot override that policy. Do not copy
+cookies, disable CSRF checks, or claim that a permission request guarantees
+authenticated Preview access.
+
 To add sample pages later, use **Administration settings → IntraVox** to install
 a demo language, or run the app's existing command:
 
@@ -104,21 +119,27 @@ or replacing `.runtime`. Do not run these scripts against a production instance.
 
 The imported app already includes release bundles in `js/`; local setup leaves
 those tracked files untouched. PHP/source changes are used directly through
-source symlinks. Rebuild the frontend for the running local app with:
+source symlinks. Rebuild the frontend and refresh the running local app with:
 
 ```bash
-npm run build -- --output-path "$PWD/.runtime/nextcloud/custom_apps/intravox/js"
+npm run build
 ```
 
-For repeated frontend edits, use `npm run watch -- --output-path` with that same
-absolute path. Plain `npm run build` still updates the repository's original
-`js/` release bundles, for the original release workflow.
+Production JavaScript and the ordered entrypoint manifest are emitted to `js/`;
+the Sass theme is extracted to `css/intravox-main.css`. PHP loads the manifest
+for both the reader and administration entrypoints, so chunk names must not be
+hardcoded in templates. Do not override only webpack's output path: the
+extracted CSS uses the sibling `css/` directory.
+Successful builds automatically refresh the marked, managed local app's
+JavaScript directory and publish its manifest last. Unmanaged app directories
+are never updated. PHP resolves assets through Nextcloud's installed app path,
+not the physical location of symlinked source code.
 
-To verify a production build without changing tracked release bundles:
-
-```bash
-npm run build -- --output-path "$PWD/generated-artifacts/intravox-js"
-```
+The root Jenkinsfile builds with `npm ci && npm run build`, then runs
+`bash scripts/stage-release.sh`. It stages an **unsigned** app and archive under
+the ignored `generated-artifacts/release/`, installs only production Composer
+dependencies, and checks excluded paths. Trusted external signing credentials
+are required for a later `occ integrity:sign-app`; none are stored here.
 
 Checks performed during setup:
 
@@ -130,7 +151,8 @@ NEXTCLOUD_ROOT="$PWD/.runtime/nextcloud" \
 ```
 
 - Existing PHP syntax, unit tests, PHPStan, and all frontend guards **passed**.
-- Production webpack build **passed**, with existing bundle-size warnings.
+- The Sovereign production build retains webpack's default size warnings;
+  component-level imports and lazy roots keep unused library code out.
 - Nextcloud login page was visually checked. HTTP checks confirm that private
   page APIs require sign-in and private files, source, and traversal paths return
   404. IntraVox's public HTML shell remains available for its share-link feature.

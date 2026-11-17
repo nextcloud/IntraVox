@@ -80,7 +80,6 @@ export default {
         },
         {
           type: 'divider',
-          // TRANSLATORS: Noun: name of a widget, a horizontal line
           name: this.t('intravox', 'Divider'),
           icon: 'minus',
           description: this.t('intravox', 'Add a horizontal line')
@@ -91,6 +90,7 @@ export default {
           icon: 'view-grid',
           description: this.t('intravox', 'Add a grid of links with icons')
         },
+        { type: 'organogram', name: this.t('intravox', 'Organogram'), icon: 'account-group', description: this.t('intravox', 'Show the executive and functional matrix') },
         {
           type: 'video',
           name: this.t('intravox', 'Video'),

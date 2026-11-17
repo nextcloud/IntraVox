@@ -31,7 +31,7 @@ fi
 
 # The package root is the single top-level directory inside the tarball.
 LISTING=$(tar -tzf "$TARBALL")
-ROOT=$(printf '%s\n' "$LISTING" | head -1 | cut -d/ -f1)
+ROOT="${LISTING%%/*}"
 
 if [ -z "$ROOT" ]; then
     echo "✗ Could not determine package root in $TARBALL" >&2
@@ -95,6 +95,8 @@ echo "Checking $TARBALL (package root: $ROOT)"
 echo "App structure:"
 require_exact "appinfo/info.xml"              "app metadata"
 require_exact "lib/AppInfo/Application.php"   "application bootstrap"
+require_exact "js/entrypoints.json"          "webpack entrypoint manifest"
+require_exact "css/intravox-main.css"        "compiled Sovereign theme"
 
 echo "Composer dependencies:"
 require_exact "vendor/autoload.php"                          "composer autoloader"
@@ -112,6 +114,18 @@ echo "Build tooling (must be absent):"
 # run-integration-tests.sh carry the dev server's hostname, IP and SSH user as
 # defaults, and this tarball goes to the public App Store.
 forbid_prefix "scripts/" "build scripts"
+for path in .git/ node_modules/ .runtime/ .local/ .agents/ attached_assets/ \
+    generated-artifacts/ tests/ src/ coverage/; do
+    forbid_prefix "$path" "development-only $path"
+done
+for path in .replit Jenkinsfile .env; do
+    forbid_prefix "$path" "local configuration $path"
+done
+if tar -tvzf "$TARBALL" | grep -q '^l'; then
+    fail "symlinks must not ship"
+else
+    pass "no symlinks"
+fi
 
 echo "Infrastructure details (must be absent):"
 # Belt and braces: even if something else drags a file in, the dev host must

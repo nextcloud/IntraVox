@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunknextcloud_intravox=self.webpackChunknextcloud_intravox||[]).push([[7409],{57409(e,l,a){a.r(l),a.d(l,{TableCell:()=>t.TableCell,default:()=>u});var t=a(62848),u=t.TableCell}}]);

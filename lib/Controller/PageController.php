@@ -25,6 +25,7 @@ use Psr\Log\LoggerInterface;
 
 class PageController extends Controller {
     use RendersAppShell;
+    use ProvidesWorkspaceIdentity;
 
     public function __construct(
         string $appName,
@@ -38,7 +39,8 @@ class PageController extends Controller {
         private ISession $session,
         private IURLGenerator $urlGenerator,
         private \OCP\AppFramework\Services\IInitialState $initialState,
-        private \OCP\App\IAppManager $appManager
+        private \OCP\App\IAppManager $appManager,
+        private ?\OCP\IGroupManager $groupManager = null
     ) {
         parent::__construct($appName, $request);
     }
@@ -46,13 +48,10 @@ class PageController extends Controller {
     /**
      * Initial state every render of the app template needs.
      *
-     * This controller renders the template from five entry points (index,
-     * show, showByUniqueId, shareAccess, shareAuthenticate), and state set in
-     * only one of them is state the app does not have when reached by any
-     * other route — which is exactly how the MetaVox tab went missing on a
-     * direct page URL. Call this before every TemplateResponse.
+     * All five render entry points need the same state, including deep links.
      */
     private function provideAppInitialState(): void {
+        $this->provideWorkspaceIdentity();
         // isEnabledForUser() needs a user; for an anonymous share visitor there
         // is none, and MetaVox editing is not offered on public shares anyway.
         $user = $this->userSession->getUser();

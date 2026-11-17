@@ -4,7 +4,6 @@
            size="large"
            class="links-editor-modal">
     <div class="links-editor-content">
-      <!-- Container Settings -->
       <div class="form-section">
         <h3>{{ t('intravox', 'Container settings') }}</h3>
 
@@ -72,7 +71,6 @@
         </div>
       </div>
 
-      <!-- Links List -->
       <div class="form-section">
         <div class="section-header">
           <h3>{{ t('intravox', 'Links') }}</h3>
@@ -153,6 +151,8 @@
                     </div>
                   </div>
                 </div>
+                <!-- Audience metadata travels with the link record on save. -->
+                <AglMetadataFields :entity="link.entity" :excom-only="link.excomOnly" @update:entity="link.entity = $event" @update:excom-only="link.excomOnly = $event" />
 
                 <div class="form-row">
                   <div class="form-group flex-1">
@@ -255,8 +255,8 @@ import ViewGrid from 'vue-material-design-icons/ViewGrid.vue';
 import DragVertical from 'vue-material-design-icons/DragVertical.vue';
 import PageTreeSelect from './PageTreeSelect.vue';
 import draggable from 'vuedraggable';
+import AglMetadataFields from './AglMetadataFields.vue';
 
-// Import all available icons
 import Home from 'vue-material-design-icons/Home.vue';
 import Information from 'vue-material-design-icons/Information.vue';
 import Email from 'vue-material-design-icons/Email.vue';
@@ -325,6 +325,7 @@ export default {
     DragVertical,
     PageTreeSelect,
     draggable,
+    AglMetadataFields,
     Home,
     Information,
     Email,
@@ -507,23 +508,19 @@ export default {
     }
   },
   mounted() {
-    // Ensure items array exists
     if (!this.localWidget.items) {
       this.localWidget.items = [];
     }
-    // Set default columns if not set
     if (!this.localWidget.columns) {
       this.localWidget.columns = 2;
     }
-    // Set default layout if not set
     if (!this.localWidget.layout) {
       this.localWidget.layout = 'list';
     }
-    // Initialize iconObject for each link from the icon string value
-    // Also ensure text field exists (fallback from title for backwards compatibility)
     if (this.localWidget.items) {
       this.localWidget.items.forEach((link, index) => {
-        // Ensure each item has an id for drag-and-drop
+        link.entity = link.entity || 'all';
+        link.excomOnly = link.excomOnly === true;
         if (!link.id) {
           link.id = Date.now() + index + Math.random().toString(36).substr(2, 9);
         }
@@ -625,7 +622,9 @@ export default {
         uniqueId: null,
         icon: 'open-in-new',
         iconObject: this.iconOptions.find(opt => opt.value === 'open-in-new'),
-        backgroundColor: null
+        backgroundColor: null,
+        entity: 'all',
+        excomOnly: false
       });
     },
     updatePageLink(index, page) {
@@ -679,6 +678,7 @@ export default {
 .links-editor-modal :deep(.modal-container) {
   max-width: 900px !important;
 }
+
 
 .links-editor-content {
   padding: 20px;

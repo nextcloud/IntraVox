@@ -1,0 +1,12 @@
+{
+  "main": [
+    "js/intravox-7606.js",
+    "js/intravox-2054.js",
+    "js/intravox-3022.js",
+    "css/intravox-main.css",
+    "js/intravox-main.js"
+  ],
+  "admin": [
+    "js/intravox-admin.js"
+  ]
+}

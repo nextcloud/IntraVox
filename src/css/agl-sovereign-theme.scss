@@ -1,0 +1,365 @@
+#app-intravox .agl-entry-state {
+  max-width: 720px;
+  margin: 12vh auto;
+  padding: 24px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-main-background);
+  color: var(--color-main-text);
+}
+#app-intravox .agl-entry-state button {
+  border: 0;
+  border-radius: 999px;
+  background: #7e22ce;
+  color: #fff;
+  padding: 8px 14px;
+  cursor: pointer;
+}
+
+/* Sovereign 365: restrained executive workspace, using Nextcloud's native type. */
+#intravox-app {
+  --agl-plum-900: #1e0824;
+  --agl-plum-800: #2e0d36;
+  --agl-plum-700: #4b164c;
+  --agl-accent: #7e22ce;
+  --agl-slate-50: #f7f7fa;
+  --agl-slate-100: #eff0f4;
+  --agl-slate-300: #d4d7df;
+  --agl-slate-600: #596273;
+  --agl-slate-800: #273043;
+  --agl-card-radius: 12px;
+  color: var(--color-main-text);
+}
+
+#intravox-app .intravox-header {
+  background: linear-gradient(105deg, #1e0824 0%, #2e0d36 56%, #4b164c 100%);
+  color: #fff;
+  border: 0;
+  min-height: 58px;
+  padding: 8px clamp(16px, 2.2vw, 32px);
+  box-shadow: 0 3px 14px rgb(30 8 36 / 17%);
+}
+
+#intravox-app .intravox-header h1,
+#intravox-app .intravox-header .page-title-input {
+  color: #fff;
+}
+
+#intravox-app .intravox-header .header-right {
+  gap: 8px;
+}
+
+#intravox-app .intravox-nav-bar {
+  background: color-mix(in srgb, var(--color-main-background) 95%, #7e22ce 5%);
+  border-bottom: 1px solid var(--color-border);
+}
+
+#intravox-app .intravox-header button:focus-visible,
+#intravox-app .agl-context-bar button:focus-visible,
+#intravox-app .agl-context-bar a:focus-visible,
+#intravox-app .agl-organogram button:focus-visible {
+  outline: 3px solid #c4a0f2;
+  outline-offset: 2px;
+}
+
+#intravox-app .agl-context-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px clamp(16px, 2.2vw, 32px);
+  background: var(--color-main-background);
+  border-bottom: 1px solid var(--color-border);
+}
+
+#intravox-app .agl-context-bar__workspace,
+#intravox-app .agl-context-bar__lenses,
+#intravox-app .agl-context-bar__launches {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#intravox-app .agl-context-bar__eyebrow {
+  color: var(--color-text-maxcontrast);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  white-space: nowrap;
+}
+#intravox-app .agl-context-bar__brand {
+  color: var(--color-main-text);
+  font-size: 13px;
+  font-weight: 750;
+  letter-spacing: -.02em;
+  white-space: nowrap;
+}
+#intravox-app .agl-context-bar__brand small {
+  display: block;
+  margin-top: 2px;
+  color: var(--color-text-maxcontrast);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+}
+
+#intravox-app .agl-context-bar__lens,
+#intravox-app .agl-context-bar__launch {
+  min-height: 32px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-main-background);
+  color: var(--color-main-text);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 12px;
+  text-decoration: none;
+  transition: background-color .16s ease, border-color .16s ease, transform .16s ease;
+}
+
+#intravox-app .agl-context-bar__lens:hover,
+#intravox-app .agl-context-bar__launch:hover {
+  border-color: #a979d2;
+  transform: translateY(-1px);
+}
+
+#intravox-app .agl-context-bar__lens[aria-pressed="true"] {
+  border-color: var(--agl-accent);
+  background: color-mix(in srgb, #7e22ce 11%, var(--color-main-background));
+  color: #5b168f;
+}
+
+#intravox-app .agl-context-bar__launch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#intravox-app .agl-context-bar__pulse {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #16885a;
+  box-shadow: 0 0 0 3px rgb(22 136 90 / 12%);
+  animation: agl-pulse 2.2s ease-in-out infinite;
+}
+@keyframes agl-pulse { 50% { transform: scale(.72); opacity: .58; } }
+
+#intravox-app .agl-entity-badge {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 8px;
+  padding: 2px 7px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  color: #6e348a;
+  font-size: 10px;
+  font-weight: 650;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+
+#intravox-app .agl-entity-badge[data-entity="cloud-carib"] { color: #27645b; }
+#intravox-app .agl-entity-badge[data-entity="athena-cloud"] { color: #5c4b9b; }
+#intravox-app .agl-entity-badge[data-entity="excom"] { color: #713c61; }
+
+#intravox-app .agl-organogram {
+  padding: 20px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--agl-card-radius);
+  background: var(--color-main-background);
+  box-shadow: 0 6px 20px rgb(39 48 67 / 6%);
+}
+
+#intravox-app .agl-organogram__heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+#intravox-app .agl-organogram__heading h2 {
+  margin: 0;
+  font-size: 20px;
+  letter-spacing: -.02em;
+}
+
+#intravox-app .agl-organogram__eyebrow {
+  margin: 0 0 5px;
+  color: var(--color-text-maxcontrast);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+#intravox-app .agl-organogram__companies {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin: 0 0 14px;
+}
+
+#intravox-app .agl-organogram__company {
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 4px 9px;
+  color: var(--color-text-maxcontrast);
+  font-size: 11px;
+}
+
+#intravox-app .agl-organogram__executives {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  padding: 14px;
+  border-radius: 10px;
+  background: linear-gradient(110deg, #1e0824, #4b164c);
+  color: #fff;
+}
+
+#intravox-app .agl-organogram__executive {
+  min-width: 0;
+  padding: 9px 10px;
+  border-left: 2px solid #b884e2;
+  border-top: 0;
+  border-right: 0;
+  border-bottom: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: transform .16s ease, opacity .16s ease;
+}
+#intravox-app .agl-organogram__executive:hover { transform: translateY(-2px); }
+#intravox-app .agl-organogram__executive[aria-pressed="true"] { background: rgb(255 255 255 / 10%); }
+
+#intravox-app .agl-organogram__executive strong,
+#intravox-app .agl-organogram__executive span {
+  display: block;
+}
+
+#intravox-app .agl-organogram__executive strong { font-size: 13px; }
+#intravox-app .agl-organogram__executive span { margin-top: 4px; color: #e8dced; font-size: 11px; }
+
+#intravox-app .agl-organogram__toggle {
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-main-background);
+  color: var(--color-main-text);
+  padding: 7px 12px;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+#intravox-app .agl-organogram__columns {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(190px, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+  overflow-x: auto;
+  padding-bottom: 5px;
+}
+
+#intravox-app .agl-organogram__column {
+  min-width: 190px;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-background-hover);
+}
+
+#intravox-app .agl-organogram__column h3 {
+  margin: 0 0 5px;
+  color: var(--color-primary-element);
+  font-size: 13px;
+}
+
+#intravox-app .agl-organogram__subtitle {
+  margin: 0 0 10px;
+  color: var(--color-text-maxcontrast);
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+#intravox-app .agl-organogram__group {
+  margin-top: 8px;
+  padding: 9px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-main-background);
+}
+
+#intravox-app .agl-organogram__group strong { font-size: 12px; }
+#intravox-app .agl-organogram__group ul { margin: 6px 0 0; padding-left: 16px; color: var(--color-text-maxcontrast); font-size: 11px; }
+#intravox-app .link-item { border-radius: 12px; }
+
+#intravox-app[data-agl-hide-title="true"] .intravox-header {
+  min-height: 0;
+  padding-top: 7px;
+  padding-bottom: 7px;
+}
+#intravox-app[data-agl-hide-title="true"]:not([data-agl-editing="true"]) .header-left,
+#intravox-app[data-agl-hide-title="true"]:not([data-agl-editing="true"]) .breadcrumb-row {
+  display: none !important;
+}
+#intravox-app[data-agl-hide-title="true"] .intravox-header {
+  justify-content: flex-end;
+}
+#intravox-app[data-agl-hide-title="true"] .header-right {
+  margin-left: auto;
+}
+
+/* The reader's navigation and action pill share one row, not a title banner. */
+#intravox-app[data-agl-hide-title="true"]:not([data-agl-editing="true"]) {
+  .intravox-topbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    background: var(--color-main-background);
+  }
+  .intravox-nav-bar { order: 1; flex: 1 1 26rem; min-width: 0; }
+  .intravox-header {
+    order: 2;
+    flex: 0 1 auto;
+    background: transparent;
+    color: var(--color-main-text);
+    box-shadow: none;
+  }
+  .header-right { flex-wrap: wrap; }
+  .agl-context-bar { order: 3; flex: 1 0 100%; box-sizing: border-box; }
+}
+
+html[data-theme-dark] #intravox-app .agl-context-bar__lens[aria-pressed="true"] { color: #ead8f7; }
+html[data-theme-dark] #intravox-app .agl-entity-badge[data-entity="cloud-carib"] { color: #9bd7ca; }
+html[data-theme-dark] #intravox-app .agl-entity-badge[data-entity="athena-cloud"] { color: #d4b8ed; }
+html[data-theme-dark] #intravox-app .agl-entity-badge[data-entity="excom"] { color: #e4b2d5; }
+
+@media (max-width: 760px) {
+  #intravox-app .agl-context-bar { align-items: flex-start; flex-direction: column; }
+  #intravox-app .agl-context-bar__workspace { align-items: flex-start; flex-direction: column; }
+  #intravox-app .agl-context-bar__lenses { flex-wrap: wrap; }
+  #intravox-app .agl-context-bar__launches { width: 100%; }
+  #intravox-app .agl-context-bar__launch { flex: 1; justify-content: center; }
+  #intravox-app .agl-organogram { padding: 14px; }
+  #intravox-app .agl-organogram__heading { flex-direction: column; }
+  #intravox-app .agl-organogram__executives { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  #intravox-app .agl-organogram__columns { grid-template-columns: 1fr; overflow: visible; }
+  #intravox-app .agl-organogram__column { min-width: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #intravox-app *,
+  #intravox-app *::before,
+  #intravox-app *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}

@@ -1,17 +1,12 @@
 <template>
-  <div id="intravox-app">
+  <div id="intravox-app" :data-agl-hide-title="hidePageTitleBar ? 'true' : 'false'" :data-agl-editing="isEditMode ? 'true' : 'false'">
     <a href="#intravox-main-content" class="skip-link">{{ t('intravox', 'Skip to main content') }}</a>
 
-    <!-- Sticky topbar wraps header + navigation so navigating between pages
-         doesn't require scrolling all the way back up on long pages.
-         Hidden when the language-fallback notice is showing — it is a
-         full-screen, self-contained state with no page to act on. -->
     <div v-if="!showLanguageFallback" class="intravox-topbar" ref="topbar">
 
-    <!-- Header with page title and actions -->
     <header class="intravox-header">
       <div class="header-left">
-        <h1 v-if="!isEditMode">{{ currentPage?.title || 'IntraVox' }}</h1>
+        <h1 v-if="!isEditMode">{{ currentPage?.title || 'Sovereign 365' }}</h1>
         <input
           v-else
           v-model="editableTitle"
@@ -23,9 +18,8 @@
       </div>
 
       <div class="header-right">
-        <!-- Publication status indicator (visible to editors in view mode).
-             Readers never reach draft/scheduled/expired pages, so this badge is
-             only ever seen by users with write access. -->
+        <AglPageTools v-if="hidePageTitleBar && !isEditMode && currentPage" :structure-open="showPageTree" :details-open="showDetailsSidebar"
+          @toggle-structure="setPageTreeOpen(!showPageTree)" @toggle-details="setDetailsSidebarOpen(!showDetailsSidebar)" />
         <span v-if="!isEditMode && publishStatusBadge"
               class="draft-badge"
               :class="publishStatusBadge.class"
@@ -140,10 +134,11 @@
 
     <!-- Navigation -->
     <div class="intravox-nav-bar">
-      <Navigation :items="navigation.items"
+      <Navigation :items="filteredNavigation.items"
                   :type="navigation.type"
                   @navigate="navigateToItem" />
     </div>
+    <AglBrandContextBar v-if="!isEditMode" @context-change="aglContext = $event" @identity-change="aglExcom = $event.eligible" />
 
     </div><!-- /.intravox-topbar -->
 
@@ -396,8 +391,11 @@ import Footer from './components/Footer.vue';
 import PageActionsMenu from './components/PageActionsMenu.vue';
 import Breadcrumb from './components/Breadcrumb.vue';
 import ShareButton from './components/ShareButton.vue';
+import AglBrandContextBar from './components/AglBrandContextBar.vue';
+import AglPageTools from './components/AglPageTools.vue';
 import CacheService from './services/CacheService.js';
 import { isSectionAnchor, scrollToHashAnchor, parseFragment } from './utils/headingAnchors.js';
+import { filterAglTree } from './utils/aglBrandContext.js';
 
 // Lazy-loaded components (only loaded when needed)
 // This reduces initial bundle size and improves first load performance
@@ -460,7 +458,7 @@ export default {
     LanguageFallbackNotice,
     PageSettingsModal,
     SaveAsTemplateModal,
-    ShareButton,
+    ShareButton, AglBrandContextBar, AglPageTools,
     FeedSettings
   },
   data() {
@@ -514,7 +512,7 @@ export default {
         type: 'dropdown',
         items: []
       },
-      canEditNavigation: false,
+      canEditNavigation: false, aglContext: 'all', aglExcom: false,
       showNavigationEditor: false,
       currentLanguage: document.documentElement.lang || 'en',
       // Language content status (drives the landing-page fallback notice).
@@ -546,6 +544,8 @@ export default {
     };
   },
   computed: {
+    hidePageTitleBar() { return this.isCurrentPageHome || this.currentPage?.hidePageTitleBar === true; },
+    filteredNavigation() { return { ...this.navigation, items: filterAglTree(this.navigation.items, this.aglContext, this.aglExcom) }; },
     /**
      * Publication-status badge for the current page (view mode, editors only).
      * Uses the backend's effectivePublishState (draft | scheduled | expired |

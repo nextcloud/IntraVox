@@ -1,0 +1,5549 @@
+# IntraVox translation template.
+# Copyright (C) 2026 VoxCloud
+# This file is distributed under the AGPL-3.0 license.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: IntraVox 3.1.2\n"
+"Report-Msgid-Bugs-To: translations@nextcloud.com\n"
+"POT-Creation-Date: 2026-11-17 10:48+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "— Not configured —"
+msgstr ""
+
+#. End of a shortened list; {n} is the number of items not shown
+msgid "… and {n} more"
+msgstr ""
+
+#. %s is a folder name in the page path
+msgid "\"%s\" exists but is not a folder."
+msgstr ""
+
+msgid "(has child pages)"
+msgstr ""
+
+msgid "(no value)"
+msgstr ""
+
+#. Shown after a form label to say the field may be left empty -->
+msgid "(optional)"
+msgstr ""
+
+#. Placeholder of a password field that already has a saved value
+msgid "(unchanged)"
+msgstr ""
+
+#. Tooltip of a reaction; {count} is a number of people, {emoji} is the
+#. emoji
+msgid "{count} people reacted with {emoji}"
+msgstr ""
+
+#. {displayName} is the name of the person who holds the edit lock
+msgid "{displayName} is editing this page"
+msgstr ""
+
+#. Warning in the page editor; {n} is the chosen number of columns, {rec}
+#. the recommended maximum
+msgid "{n} columns may be too narrow with side columns. Consider {rec} or fewer."
+msgstr ""
+
+#. Warning in the page editor; {n} is the chosen number of columns, {rec}
+#. the recommended maximum
+msgid "{n} columns may be too narrow. Consider {rec} or fewer."
+msgstr ""
+
+#. {service} is the name of a video platform, e.g. "YouTube (standard)"
+msgid "{service} has tracking concerns. Consider privacy-friendly alternatives."
+msgstr ""
+
+#. {service} is the name of a video platform, e.g. "Vimeo"
+msgid "{service} is already available in the predefined services above"
+msgstr ""
+
+#. Placeholder of the video URL field; the two placeholders are example
+#. URLs, keep their order natural -->
+msgid "{youtubeExample} or {vimeoExample}"
+msgstr ""
+
+#. %s is the name of the user who is editing the page
+msgid "%s is editing this page"
+msgstr ""
+
+#. %s is a video platform's domain name, e.g. www.youtube.com
+msgid "%s: commercial platform. Consider privacy-friendly alternatives such as PeerTube."
+msgstr ""
+
+#. %s is a video platform's domain name, e.g. www.dailymotion.com
+msgid "%s: this platform has significant tracking and privacy concerns. Consider using PeerTube instead."
+msgstr ""
+
+msgid "+ Add connection"
+msgstr ""
+
+msgid "+ Add filter field"
+msgstr ""
+
+msgid "+ Add header"
+msgstr ""
+
+msgid "A → Z"
+msgstr ""
+
+msgid "A backup of the current version will be created before restoring. Do you want to continue?"
+msgstr ""
+
+msgid "A file name is required."
+msgstr ""
+
+#. {filename} is the name of the uploaded file, e.g. "logo.png" -->
+msgid "A file with the name \"{filename}\" already exists."
+msgstr ""
+
+msgid "A file with this name already exists."
+msgstr ""
+
+msgid "A network error occurred while loading the video."
+msgstr ""
+
+msgid "A page cannot be a translation of itself"
+msgstr ""
+
+msgid "A page needs an ID and a title."
+msgstr ""
+
+msgid "A PHP extension stopped the upload."
+msgstr ""
+
+msgid "A public share link is usually created to hand someone a set of documents. If the page also contains a People widget, sharing those documents publishes a staff directory — names and photos — to anyone holding the link, without the people on that list having agreed to it."
+msgstr ""
+
+msgid "A side panel suits a full-width page; place it above the results in a narrow column."
+msgstr ""
+
+msgid "A subscription includes: guaranteed Nextcloud compatibility, email support, priority bug fixes, and active development."
+msgstr ""
+
+msgid "A token is required."
+msgstr ""
+
+msgid "A unique hash of your instance URL (privacy-friendly identifier)"
+msgstr ""
+
+msgid "A version of this page already exists in that language."
+msgstr ""
+
+#. Title of a collapsible help text in the navigation editor -->
+msgid "About editing navigation"
+msgstr ""
+
+#. Title of a collapsible help text in the page structure dialog -->
+msgid "About the page structure"
+msgstr ""
+
+msgid "Above the results"
+msgstr ""
+
+#. Noun: color style option (the accent color) of the Links widget
+msgid "Accent"
+msgstr ""
+
+msgid "Access denied"
+msgstr ""
+
+msgid "Access denied. Check the connection permissions."
+msgstr ""
+
+#. Noun: name of an icon in the icon picker of the Links widget
+msgid "Account"
+msgstr ""
+
+#. Column header, keep short
+msgid "Action"
+msgstr ""
+
+#. Column header, keep short
+msgid "Actions"
+msgstr ""
+
+msgid "Activating …"
+msgstr ""
+
+#. Adjective: screen-reader state of an enabled feed connection switch, not
+#. shown on screen
+msgid "Active"
+msgstr ""
+
+#. Verb: button
+msgid "Add"
+msgstr ""
+
+msgid "Add a filter to start"
+msgstr ""
+
+msgid "Add a grid of links with icons"
+msgstr ""
+
+msgid "Add a group filter above to scope this widget to one or more groups. Counts then become exact, and the widget loads faster."
+msgstr ""
+
+msgid "Add a heading"
+msgstr ""
+
+msgid "Add a horizontal line"
+msgstr ""
+
+msgid "Add a language"
+msgstr ""
+
+msgid "Add a PeerTube or local video"
+msgstr ""
+
+msgid "Add an image"
+msgstr ""
+
+msgid "Add column"
+msgstr ""
+
+msgid "Add column left"
+msgstr ""
+
+msgid "Add column right"
+msgstr ""
+
+msgid "Add filter"
+msgstr ""
+
+msgid "Add ICS calendar URLs (e.g. from Moodle, Canvas, Brightspace). Visible to all page visitors."
+msgstr ""
+
+msgid "Add item"
+msgstr ""
+
+msgid "Add language"
+msgstr ""
+
+#. Screen-reader label of an icon button in the page editor, not shown on
+#. screen -->
+msgid "Add left column"
+msgstr ""
+
+msgid "Add link"
+msgstr ""
+
+#. Screen-reader label of the emoji button on a comment, not shown on
+#. screen
+msgid "Add reaction"
+msgstr ""
+
+#. Screen-reader label of an icon button in the page editor, not shown on
+#. screen -->
+msgid "Add right column"
+msgstr ""
+
+msgid "Add row"
+msgstr ""
+
+msgid "Add row above"
+msgstr ""
+
+msgid "Add row below"
+msgstr ""
+
+#. Screen-reader label of an icon button in the navigation editor, not
+#. shown on screen -->
+msgid "Add sub-item"
+msgstr ""
+
+msgid "Add text to your page"
+msgstr ""
+
+msgid "Add widget"
+msgstr ""
+
+msgid "Added to navigation"
+msgstr ""
+
+#. Noun: profile field (postal address)
+msgid "Address"
+msgstr ""
+
+#. Noun: name of an icon (a shield) in the icon picker of the Links widget
+msgid "Admin"
+msgstr ""
+
+msgid "Admin token only (shared)"
+msgstr ""
+
+#. Adjective: complexity level of a page template
+msgid "Advanced"
+msgstr ""
+
+msgid "Advanced options"
+msgstr ""
+
+msgid "After installing demo data, refresh this page to see your new intranet."
+msgstr ""
+
+#. Noun: name of an icon in the icon picker of the Links widget
+msgid "AI/Robot"
+msgstr ""
+
+msgid "Align center"
+msgstr ""
+
+msgid "Align left"
+msgstr ""
+
+msgid "Align right"
+msgstr ""
+
+#. Noun: section heading in the text editor's overflow menu -->
+msgid "Alignment"
+msgstr ""
+
+#. Lowercase, used inside a sentence: all items
+msgid "all"
+msgstr ""
+
+#. Placeholder of an empty filter value that means no restriction
+msgid "All"
+msgstr ""
+
+msgid "All / shared"
+msgstr ""
+
+msgid "All Authorized"
+msgstr ""
+
+msgid "All comments and reactions"
+msgstr ""
+
+msgid "All connections already exist. Nothing to import."
+msgstr ""
+
+msgid "All courses"
+msgstr ""
+
+msgid "All day"
+msgstr ""
+
+msgid "All forums"
+msgstr ""
+
+msgid "All issues"
+msgstr ""
+
+msgid "All languages"
+msgstr ""
+
+msgid "All pages"
+msgstr ""
+
+msgid "All pages and subpages"
+msgstr ""
+
+msgid "All projects"
+msgstr ""
+
+msgid "All uploaded media files"
+msgstr ""
+
+msgid "All work packages"
+msgstr ""
+
+msgid "Allow comments on pages"
+msgstr ""
+
+msgid "Allow comments on this page"
+msgstr ""
+
+msgid "Allow reactions on comments"
+msgstr ""
+
+msgid "Allow reactions on pages"
+msgstr ""
+
+msgid "Allow reactions on this page"
+msgstr ""
+
+msgid "Already exists"
+msgstr ""
+
+msgid "Already in every language"
+msgstr ""
+
+msgid "Also rename the page's folder"
+msgstr ""
+
+msgid "Alt text:"
+msgstr ""
+
+msgid "An unknown error occurred while playing the video."
+msgstr ""
+
+#. Noun: name of an icon in the icon picker of the Links widget
+msgid "Analytics"
+msgstr ""
+
+#. Noun: name of an icon in the icon picker of the Links widget
+msgid "Announcement"
+msgstr ""
+
+msgid "Anonymous usage statistics"
+msgstr ""
+
+msgid "Any changes you made to the demo pages will be lost. This action cannot be undone."
+msgstr ""
+
+msgid "Any personal or sensitive data"
+msgstr ""
+
+msgid "API key (custom header)"
+msgstr ""
+
+msgid "API key header name"
+msgstr ""
+
+msgid "API token"
+msgstr ""
+
+msgid "Application (client) ID"
+msgstr ""
+
+#. Verb: button -->
+msgid "Apply"
+msgstr ""
+
+#. Noun: name of an icon in the icon picker of the Links widget
+msgid "Appointment"
+msgstr ""
+
+#. {count} is an estimated number of pages in an orphaned data folder
+msgid "Approximately {count} pages"
+msgstr ""
+
+#. Noun: name of an icon in the icon picker of the Links widget
+msgid "Apps"
+msgstr ""
+
+msgid "April"
+msgstr ""
+
+#. Icon name in the link-icon picker (archive box symbol). Noun, not the
+#. verb "to archive".
+msgid "Archive"
+msgstr ""
+
+msgid "Are you sure you want to delete this comment?"
+msgstr ""
+
+msgid "Are you sure you want to delete this page?"
+msgstr ""
+
+msgid "Are you sure you want to delete this row?"
+msgstr ""
+
+msgid "Are you sure you want to delete this widget?"
+msgstr ""
+
+msgid "Are you sure you want to remove the header row?"
+msgstr ""
+
+msgid "Are you sure you want to remove this column?"
+msgstr ""
+
+#. {displayName} is the name of the person who is editing the page
+msgid "Are you sure you want to unlock this page? {displayName} may lose unsaved changes."
+msgstr ""
+
+#. Sort order (A to Z, oldest first)
+msgid "Ascending"
+msgstr ""
+
+#. Noun: content type of a learning-platform feed (course assignments)
+msgid "Assignments"
+msgstr ""
+
+msgid "Athena Cloud"
+msgstr ""
+
+msgid "ATHENA GROUP · LEADERSHIP & DELIVERY"
+msgstr ""
+
+msgid "Athens C3"
+msgstr ""
+
+msgid "Atlassian account email"
+msgstr ""
+
+msgid "August"
+msgstr ""
+
+msgid "Auth method"
+msgstr ""
+
+#. Noun: section heading in the connection settings
+msgid "Authentication"
+msgstr ""
+
+msgid "Authentication required"
+msgstr ""
+
+msgid "Authentication required. Please connect your account."
+msgstr ""
+
+msgid "Author (optional)"
+msgstr ""
+
+msgid "Author field"
+msgstr ""
+
+msgid "Authorization was denied or failed."
+msgstr ""
+
+#. Automatic width: option in the table width menu, keep short -->
+msgid "Auto"
+msgstr ""
+
+msgid "Automatically curated — best photos are picked using EXIF metadata (people, subjects, location, file size) and duplicates from photo bursts are collapsed."
+msgstr ""
+
+msgid "Autoplay interval (seconds)"
+msgstr ""
+
+msgid "Autoplay when page loads"
+msgstr ""
+
+msgid "Available courses"
+msgstr ""
+
+#. Noun: profile picture; checkbox label in the People widget settings -->
+msgid "Avatar"
+msgstr ""
+
+msgid "Azure AD/Entra ID tenant ID. Found in Azure Portal → App registrations."
+msgstr ""
+
+msgid "Background color"
+msgstr ""
+
+msgid "Background color:"
+msgstr ""
+
+msgid "Base URL"
+msgstr ""
+
+msgid "Basic auth"
+msgstr ""
+
+msgid "Basic information"
+msgstr ""
+
+msgid "Basic server configuration (database, OS, web server, language, timezone, country)"
+msgstr ""
+
+msgid "Bearer token"
+msgstr ""
+
+msgid "Beside the results"
+msgstr ""
+
+#. Suggested photo story title, %s is a year, e.g. "Best of 2025"
+msgid "Best of %s"
+msgstr ""
+
+#. Noun: profile field
+msgid "Biography"
+msgstr ""
+
+msgid "Blank page"
+msgstr ""
+
+#. Noun: text editor formatting option (quotation block) -->
+msgid "Blockquote"
+msgstr ""
+
+#. Tooltip and screen-reader label of the bold button in the text editor;
+#. keep the keyboard shortcut -->
+msgid "Bold (Ctrl+B)"
+msgstr ""
+
+msgid "Both (OAuth2 with admin fallback)"
+msgstr ""
+
+#. Position option (below), button in the image settings -->
+msgid "Bottom"
+msgstr ""
+
+#. Screen-reader name of the breadcrumb navigation, not shown on screen -->
+msgid "Breadcrumb"
+msgstr ""
+
+msgid "Browse …"
+msgstr ""
+
+msgid "Browse media …"
+msgstr ""
+
+#. Noun: issue type filter for an issue-tracker feed
+msgid "Bugs"
+msgstr ""
+
+msgid "Bullet list"
+msgstr ""
+
+#. Noun: name of an icon in the icon picker of the Links widget
+msgid "Business"
+msgstr ""
+
+#. Noun: name of the calendar icon and widget
+msgid "Calendar"
+msgstr ""
+
+#. Noun: label of a list of calendars
+msgid "Calendars"
+msgstr ""
+
+#. Noun: camera model in the photo details
+msgid "Camera"
+msgstr ""
+
+#. Verb: button that closes without saving -->
+msgid "Cancel"
+msgstr ""
+
+#. Screen-reader label of the icon button that leaves edit mode, not shown
+#. on screen -->
+msgid "Cancel editing"
+msgstr ""
+
+msgid "Cannot delete home page"
+msgstr ""
+
+msgid "Cannot move a page into itself or its descendant"
+msgstr ""
+
+msgid "Cap the total number of documents. Leave blank to load everything via infinite scroll."
+msgstr ""
+
+#. Noun: layout option (people shown as cards)
+msgid "Cards"
+msgstr ""
+
+#. Noun: layout option, a rotating slider
+msgid "Carousel"
+msgstr ""
+
+msgid "Category (file type)"
+msgstr ""
+
+#. Position option (centered), button in the image settings -->
+msgid "Center"
+msgstr ""
+
+msgid "Change your language"
+msgstr ""
+
+msgid "Changes canceled"
+msgstr ""
+
+msgid "Changes here move and rename the actual pages and their folders. This is different from \"Edit navigation\", which only changes the links in the navigation bar."
+msgstr ""
+
+#. Icon name in the link-icon picker (speech-bubble symbol). Noun, not the
+#. verb "to chat".
+msgid "Chat"
+msgstr ""
+
+#. Filter value for a checkbox field: the box is ticked
+msgid "Checked"
+msgstr ""
+
+msgid "Checking …"
+msgstr ""
+
+msgid "Checking capabilities …"
+msgstr ""
+
+msgid "Choose a language …"
+msgstr ""
+
+msgid "Choose a page …"
+msgstr ""
+
+msgid "Choose a template and enter a page title."
+msgstr ""
+
+msgid "Choose which part of the image is visible when cropped"
+msgstr ""
+
+msgid "Chronological — documents grouped by date with sticky headers. Granularity (day/month/year) configurable below."
+msgstr ""
+
+msgid "Chronological — photos grouped by day with sticky date headers."
+msgstr ""
+
+#. Name of a photo-gallery layout style — a clean grid of equal-sized tiles
+#. grouped by day (the default).
+msgid "Clean grid"
+msgstr ""
+
+msgid "Clean start"
+msgstr ""
+
+msgid "Clean start completed"
+msgstr ""
+
+msgid "Clean start failed"
+msgstr ""
+
+#. %s is the technical reason, usually in English
+msgid "Cleanup failed: %s"
+msgstr ""
+
+#. Verb: button that resets all filters
+msgid "Clear"
+msgstr ""
+
+msgid "Clear all"
+msgstr ""
+
+#. Screen-reader label of the icon button that empties the search field,
+#. not shown on screen -->
+msgid "Clear search"
+msgstr ""
+
+msgid "Clear selection"
+msgstr ""
+
+#. Screen-reader label of an icon button that empties the URL field, not
+#. shown on screen -->
+msgid "Clear URL"
+msgstr ""
+
+msgid "Click here"
+msgstr ""
+
+msgid "Click on the image to navigate to this page"
+msgstr ""
+
+msgid "Click on the image to open this URL"
+msgstr ""
+
+msgid "Click on the image to open this URL in a new tab"
+msgstr ""
+
+msgid "Click to select a Confluence HTML export (ZIP), or drag and drop"
+msgstr ""
+
+msgid "Click to select a video, or drag and drop"
+msgstr ""
+
+msgid "Click to select an image, or drag and drop"
+msgstr ""
+
+msgid "Client ID"
+msgstr ""
+
+msgid "Client ID from LMS"
+msgstr ""
+
+msgid "Client secret"
+msgstr ""
+
+msgid "Client secret from LMS"
+msgstr ""
+
+msgid "Client secret value"
+msgstr ""
+
+#. Verb: tooltip and screen-reader label of the close (X) button of a
+#. dialog -->
+msgid "Close"
+msgstr ""
+
+#. Tooltip and screen-reader label of the button that closes the photo
+#. details panel
+msgid "Close details"
+msgstr ""
+
+#. Tooltip and screen-reader label of the button that closes the
+#. full-screen photo viewer (lightbox)
+msgid "Close lightbox"
+msgstr ""
+
+#. Tooltip and screen-reader label of the button that closes the map in the
+#. photo viewer
+msgid "Close map"
+msgstr ""
+
+#. Noun: name of an icon in the icon picker of the Links widget
+msgid "Cloud"
+msgstr ""
+
+msgid "Cloud Carib"
+msgstr ""
+
+msgid "Cloud locations"
+msgstr ""
+
+msgid "Cluster documents by category or MetaVox field (author, project, status, …)."
+msgstr ""
+
+#. Noun: name of an icon in the icon picker of the Links widget
+msgid "Code"
+msgstr ""
+
+#. Verb: screen-reader label of the arrow button that folds a section, not
+#. shown on screen
+msgid "Collapse"
+msgstr ""
+
+msgid "Collapse matrix"
+msgstr ""
+
+msgid "Collapsed by default"
+msgstr ""
+
+msgid "Collapses RAW+JPG pairs from RAW-capable cameras"
+msgstr ""
+
+msgid "Collapsible section"
+msgstr ""
+
+#. Label above a column in the page editor; {column} is its number, e.g. 2
+#. -->
+msgid "Column {column}"
+msgstr ""
+
+#. Noun: label of a column-count setting
+msgid "Columns"
+msgstr ""
+
+#. Noun: label
+msgid "Comments"
+msgstr ""
+
+msgid "Companies represented"
+msgstr ""
+
+msgid "Configure connections to external systems (LMS, RSS sources). These connections can be used by the Feed widget on any page."
+msgstr ""
+
+msgid "Configure how users can interact with pages through reactions and comments."
+msgstr ""
+
+msgid "Configure MetaVox fields used for publication date filtering in the News widget."
+msgstr ""
+
+msgid "Configure settings"
+msgstr ""
+
+msgid "Configure which video platforms can be embedded in pages. Toggle services on or off."
+msgstr ""
+
+#. Status badge of a connection: credentials are set, keep short
+msgid "Configured"
+msgstr ""
+
+#. Product name (Atlassian Confluence); tab label
+msgid "Confluence"
+msgstr ""
+
+msgid "Confluence HTML export imported"
+msgstr ""
+
+msgid "Confluence import failed. Please check the export format and try again."
+msgstr ""
+
+msgid "Connect your account"
+msgstr ""
+
+#. Status badge, keep short: the account is linked
+msgid "Connected"
+msgstr ""
+
+#. Status badge, keep short: the account is linked through single sign-on
+#. (SSO)
+msgid "Connected via SSO"
+msgstr ""
+
+msgid "Connected. This window will close."
+msgstr ""
+
+msgid "Connecting …"
+msgstr ""
+
+#. Noun: label of the feed connection field
+msgid "Connection"
+msgstr ""
+
+msgid "Connection failed. Please try again."
+msgstr ""
+
+msgid "Connection failed. This window will close."
+msgstr ""
+
+msgid "Connection no longer exists. Please reconfigure this widget."
+msgstr ""
+
+#. Result of a connection test, e.g. "Connection OK — 12 items"; %n is the
+#. number of items the source returned
+msgid "Connection OK"
+msgstr ""
+
+#. Noun: group heading of contact fields in the People widget settings -->
+msgid "Contact"
+msgstr ""
+
+#. Noun: name of an icon in the icon picker of the Links widget
+msgid "Contacts"
+msgstr ""
+
+#. Noun: page width option, the content stays in a fixed-width container
+msgid "Container"
+msgstr ""
+
+msgid "Container settings"
+msgstr ""
+
+#. Filter operator, lowercase, as in "Title contains …"
+msgid "contains"
+msgstr ""
+
+msgid "contains all"
+msgstr ""
+
+#. {languages} is a comma-separated list of language codes, e.g. "en, nl"
+msgid "Contains IntraVox data for {languages}"
+msgstr ""
+
+#. Column header, keep short
+msgid "Content"
+msgstr ""
+
+msgid "Content is available in:"
+msgstr ""
+
+msgid "Content type"
+msgstr ""
+
+msgid "Copy link to this section"
+msgstr ""
+
+msgid "Copy page"
+msgstr ""
+
+msgid "Copy public link"
+msgstr ""
+
+#. Screen-reader label of an icon button, not shown on screen
+msgid "Copy URL"
+msgstr ""
+
+msgid "Could not copy automatically. Please copy the selected URL."
+msgstr ""
+
+#. {error} is the technical reason, usually in English
+msgid "Could not copy page: {error}"
+msgstr ""
+
+#. {error} is the technical reason, usually in English
+msgid "Could not create page from template: {error}"
+msgstr ""
+
+#. {error} is the reason reported by the server
+msgid "Could not create page: {error}"
+msgstr ""
+
+msgid "Could not create the translation"
+msgstr ""
+
+#. {error} is the technical reason, usually in English
+msgid "Could not delete page: {error}"
+msgstr ""
+
+msgid "Could not link the translation"
+msgstr ""
+
+msgid "Could not load feed. Check the connection settings."
+msgstr ""
+
+msgid "Could not load feed. The external system may be unavailable."
+msgstr ""
+
+msgid "Could not load metadata"
+msgstr ""
+
+#. {error} is the technical reason, usually in English
+msgid "Could not load page structure: {error}"
+msgstr ""
+
+#. {error} is the technical reason, usually in English
+msgid "Could not load page: {error}"
+msgstr ""
+
+#. {error} is the technical reason, usually in English
+msgid "Could not load pages: {error}"
+msgstr ""
+
+msgid "Could not load people"
+msgstr ""
+
+msgid "Could not load this article."
+msgstr ""
+
+#. {error} is the technical reason, usually in English
+msgid "Could not load version: {error}"
+msgstr ""
+
+#. {error} is the reason reported by the server
+msgid "Could not move page: {error}"
+msgstr ""
+
+msgid "Could not reach the license server, so the IntraVox subscription status could not be confirmed."
+msgstr ""
+
+msgid "Could not reach the source. The connection failed."
+msgstr ""
+
+msgid "Could not reach the telemetry server. Please try again later."
+msgstr ""
+
+msgid "Could not read the source page"
+msgstr ""
+
+#. {error} is the technical reason, usually in English
+msgid "Could not save footer: {error}"
+msgstr ""
+
+msgid "Could not save metadata"
+msgstr ""
+
+#. {error} is the technical reason, usually in English
+msgid "Could not save navigation: {error}"
+msgstr ""
+
+#. {error} is the technical reason, usually in English
+msgid "Could not save page order: {error}"
+msgstr ""
+
+#. {error} is the technical reason, usually in English
+msgid "Could not save page settings: {error}"
+msgstr ""
+
+#. {error} is the reason reported by the server
+msgid "Could not save page: {error}"
+msgstr ""
+
+#. {error} is the technical reason, usually in English
+msgid "Could not set homepage: {error}"
+msgstr ""
+
+#. {error} is the technical reason, usually in English
+msgid "Could not start editing: {error}"
+msgstr ""
+
+msgid "Could not unlink the translation"
+msgstr ""
+
+#. {error} is the technical reason, usually in English
+msgid "Could not unlock page: {error}"
+msgstr ""
+
+msgid "Course (optional)"
+msgstr ""
+
+msgid "Course ID (connect your account to see a list)"
+msgstr ""
+
+#. Verb: button -->
+msgid "Create"
+msgstr ""
+
+msgid "Create a reusable template from this page"
+msgstr ""
+
+msgid "Create content"
+msgstr ""
+
+msgid "Create new page"
+msgstr ""
+
+msgid "Create templates by saving existing pages as templates"
+msgstr ""
+
+msgid "Create this page in another language"
+msgstr ""
+
+#. Column header: creation date, keep short
+msgid "Created"
+msgstr ""
+
+msgid "Credentials missing"
+msgstr ""
+
+msgid "Cross-folder mode (empty source folder) requires at least one filter"
+msgstr ""
+
+msgid "Ctrl+Enter to send"
+msgstr ""
+
+#. Badge on the page that is open now, keep short -->
+msgid "Current"
+msgstr ""
+
+msgid "Current version"
+msgstr ""
+
+#. Label before the current value of a field -->
+msgid "Current:"
+msgstr ""
+
+#. Connection type for a self-configured REST API, next to Moodle, Jira,
+#. Confluence and others
+msgid "Custom"
+msgstr ""
+
+msgid "Custom fields (LDAP/OIDC)"
+msgstr ""
+
+msgid "Custom request headers"
+msgstr ""
+
+msgid "Custom servers"
+msgstr ""
+
+msgid "Custom URL"
+msgstr ""
+
+#. Screen-reader label of the input for adding a video server, not shown on
+#. screen
+msgid "Custom video domain"
+msgstr ""
+
+msgid "Custom width (pixels):"
+msgstr ""
+
+msgid "Customize video domains, upload limits, and other settings for your organization."
+msgstr ""
+
+#. Noun: name of an icon in the icon picker of the Links widget
+msgid "Dashboard"
+msgstr ""
+
+msgid "Data or results or leave empty for root array"
+msgstr ""
+
+#. Noun: sort or display field
+msgid "Date"
+msgstr ""
+
+msgid "Date field"
+msgstr ""
+
+msgid "Date modified"
+msgstr ""
+
+msgid "Date of birth"
+msgstr ""
+
+msgid "Date range"
+msgstr ""
+
+msgid "Date taken"
+msgstr ""
+
+#. Placeholder of a number-of-days input -->
+msgid "Days"
+msgstr ""
+
+msgid "Debug information"
+msgstr ""
+
+msgid "December"
+msgstr ""
+
+#. Noun: color style option (the standard look) of the Links widget
+msgid "Default"
+msgstr ""
+
+msgid "Default (transparent)"
+msgstr ""
+
+#. Placeholder text shown in an empty input. {label} is the field's own
+#. name, so it reads e.g. "Default: Department" — it means "leave this
+#. empty and that name is used". Not a heading.
+msgid "Default: {label}"
+msgstr ""
+
+#. Verb: button
+msgid "Delete"
+msgstr ""
+
+#. The word the admin must type to confirm deleting all content of a
+#. language; one short word in capitals
+msgid "DELETE"
+msgstr ""
+
+msgid "Delete all & start fresh"
+msgstr ""
+
+msgid "Delete column"
+msgstr ""
+
+#. Screen-reader label of an icon button in the navigation editor, not
+#. shown on screen -->
+msgid "Delete item"
+msgstr ""
+
+msgid "Delete orphaned data"
+msgstr ""
+
+msgid "Delete page"
+msgstr ""
+
+msgid "Delete permanently"
+msgstr ""
+
+msgid "Delete row"
+msgstr ""
+
+msgid "Delete table"
+msgstr ""
+
+msgid "Delete widget"
+msgstr ""
+
+msgid "Deleting …"
+msgstr ""
+
+msgid "Deletion failed"
+msgstr ""
+
+msgid "Demo content"
+msgstr ""
+
+msgid "Demo data installed"
+msgstr ""
+
+#. %s is a language code, e.g. "de"
+msgid "Demo data not found for language: %s"
+msgstr ""
+
+#. Screen-reader label of an icon button in the navigation editor, not
+#. shown on screen -->
+msgid "Demote (make child of item above)"
+msgstr ""
+
+#. Noun: profile or page metadata field
+msgid "Department"
+msgstr ""
+
+#. Sort order (Z to A, newest first)
+msgid "Descending"
+msgstr ""
+
+msgid "Describe what this template is for"
+msgstr ""
+
+#. Form label of the template description -->
+msgid "Description"
+msgstr ""
+
+msgid "Description of the image …"
+msgstr ""
+
+#. Icon name in the link-icon picker (palette symbol). Noun, not the verb
+#. "to design".
+msgid "Design"
+msgstr ""
+
+#. Noun: name of the sidebar tab with page details
+msgid "Details"
+msgstr ""
+
+msgid "Detect and manage orphaned data from previous IntraVox installations."
+msgstr ""
+
+#. Label before the name of a detected video platform -->
+msgid "Detected:"
+msgstr ""
+
+#. Option of an on/off setting
+msgid "Disabled"
+msgstr ""
+
+msgid "Disabled by administrator"
+msgstr ""
+
+msgid "Disabled for this page"
+msgstr ""
+
+msgid "Disabled globally"
+msgstr ""
+
+#. Verb: button that unlinks the account
+msgid "Disconnect"
+msgstr ""
+
+#. Screen-reader label of the close button on a notice banner, not shown on
+#. screen
+msgid "Dismiss banner"
+msgstr ""
+
+#. Noun: section heading for display settings
+msgid "Display"
+msgstr ""
+
+msgid "Display options"
+msgstr ""
+
+msgid "Divider"
+msgstr ""
+
+#. Noun: name of an icon in the icon picker of the Links widget
+msgid "Document"
+msgstr ""
+
+msgid "Document library"
+msgstr ""
+
+#. Screen-reader name of the pagination of the documents widget, not shown
+#. on screen
+msgid "Document pages"
+msgstr ""
+
+msgid "Documentation on GitHub"
+msgstr ""
+
+#. Noun: content type of a SharePoint feed (document library)
+msgid "Documents"
+msgstr ""
+
+msgid "Documents per page"
+msgstr ""
+
+msgid "does not contain"
+msgstr ""
+
+msgid "does not equal"
+msgstr ""
+
+#. Noun: label before a domain name, e.g. www.example.com -->
+msgid "Domain"
+msgstr ""
+
+msgid "Domain added. Do not forget to save your settings."
+msgstr ""
+
+msgid "Domain contains invalid characters. Only letters, numbers, dots and hyphens are allowed."
+msgstr ""
+
+msgid "Domains for embedding videos"
+msgstr ""
+
+#. Button: "Manage structure" enters manage mode, "Done" leaves it -->
+msgid "Done"
+msgstr ""
+
+#. Noun: name of an icon in the icon picker of the Links widget
+msgid "Download"
+msgstr ""
+
+msgid "Download export"
+msgstr ""
+
+#. Export progress; {percent} is a number from 0 to 100
+msgid "Downloading … {percent}%"
+msgstr ""
+
+#. Export progress when the total size is unknown; {size} is the downloaded
+#. amount, e.g. 12.50
+msgid "Downloading … {size} MB"
+msgstr ""
+
+#. Noun: publication status of a page, keep short
+msgid "Draft"
+msgstr ""
+
+#. Screen-reader label of the status button of a draft page, not shown on
+#. screen
+msgid "Draft — click to publish"
+msgstr ""
+
+#. Tooltip and screen-reader label of a drag handle -->
+msgid "Drag to reorder"
+msgstr ""
+
+#. Screen-reader label of the drag handle of a page row, not shown on
+#. screen -->
+msgid "Drag to reorder row"
+msgstr ""
+
+#. Icon name in the link-icon picker (pencil/drawing symbol). Noun, not the
+#. verb "to draw": drawing/sketching.
+msgid "Draw"
+msgstr ""
+
+#. Group heading in the documents widget when files are grouped by type
+#. (drawings)
+msgid "Drawings"
+msgstr ""
+
+msgid "Dropdown (Cascading)"
+msgstr ""
+
+#. Screen-reader label of an icon button in the page editor, not shown on
+#. screen -->
+msgid "Duplicate row"
+msgstr ""
+
+#. Screen-reader label of an icon button in the page editor, not shown on
+#. screen -->
+msgid "Duplicate widget"
+msgstr ""
+
+msgid "e.g. announcement, update"
+msgstr ""
+
+msgid "e.g. Canvas University"
+msgstr ""
+
+msgid "e.g. IVOX-XXXX-XXXX-XXXX-XXXX"
+msgstr ""
+
+msgid "e.g., latest news"
+msgstr ""
+
+msgid "e.g., our team"
+msgstr ""
+
+msgid "e.g., upcoming events"
+msgstr ""
+
+#. Verb: menu item
+msgid "Edit"
+msgstr ""
+
+msgid "Edit footer"
+msgstr ""
+
+msgid "Edit links"
+msgstr ""
+
+msgid "Edit navigation"
+msgstr ""
+
+msgid "Edit page"
+msgstr ""
+
+#. Screen-reader label of the edit button, not shown on screen -->
+msgid "Edit this page"
+msgstr ""
+
+msgid "Edit widget"
+msgstr ""
+
+#. Lowercase, shown in brackets after an edited comment
+msgid "edited"
+msgstr ""
+
+#. Noun: name of an icon in the icon picker of the Links widget
+msgid "Education"
+msgstr ""
+
+#. Adjective: category of a video platform
+msgid "Educational"
+msgstr ""
+
+#. Noun: e-mail address field or icon
+msgid "Email"
+msgstr ""
+
+#. Adjective: shown in brackets for a language without pages
+msgid "Empty"
+msgstr ""
+
+msgid "Empty folder"
+msgstr ""
+
+msgid "Enable if this system uses the same identity provider as Nextcloud (e.g. SURFconext, Keycloak, Azure AD)."
+msgstr ""
+
+msgid "Endpoint path"
+msgstr ""
+
+#. Noun: settings tab for reactions and comments
+msgid "Engagement"
+msgstr ""
+
+msgid "Engagement settings saved"
+msgstr ""
+
+msgid "Enter a name for the template."
+msgstr ""
+
+msgid "Enter a new title for the page"
+msgstr ""
+
+msgid "Enter a title for the new page"
+msgstr ""
+
+msgid "Enter a video URL above to see a preview."
+msgstr ""
+
+#. Placeholder of the empty API token field
+msgid "Enter API token"
+msgstr ""
+
+msgid "Enter course ID"
+msgstr ""
+
+msgid "Enter footer content …"
+msgstr ""
+
+msgid "Enter ID manually"
+msgstr ""
+
+msgid "Enter page title"
+msgstr ""
+
+msgid "Enter template name"
+msgstr ""
+
+msgid "Enter text …"
+msgstr ""
+
+msgid "Enter token manually"
+msgstr ""
+
+msgid "Enter your heading …"
+msgstr ""
+
+msgid "Entity"
+msgstr ""
+
+#. Hint for the "Clean grid" photo layout style — every photo is the same
+#. size, grouped by day. This is the default style.
+msgid "Equal-sized tiles, grouped by day (default)"
+msgstr ""
+
+#. Filter operator, lowercase, as in "Status equals …"
+msgid "equals"
+msgstr ""
+
+msgid "Excerpt field"
+msgstr ""
+
+msgid "ExCom"
+msgstr ""
+
+msgid "ExCom HoldCo"
+msgstr ""
+
+msgid "ExCom only"
+msgstr ""
+
+msgid "Executable files not allowed"
+msgstr ""
+
+msgid "Executive Committee"
+msgstr ""
+
+#. Verb: screen-reader label of the arrow button that unfolds a section,
+#. not shown on screen
+msgid "Expand"
+msgstr ""
+
+msgid "Expand matrix"
+msgstr ""
+
+msgid "Expanded by default"
+msgstr ""
+
+msgid "Expiration date field"
+msgstr ""
+
+#. Publication status of a page whose end date has passed, keep short
+msgid "Expired"
+msgstr ""
+
+#. Column header: expiration date, keep short
+msgid "Expires"
+msgstr ""
+
+#. Noun: tab or button for exporting pages
+msgid "Export"
+msgstr ""
+
+msgid "Export completed"
+msgstr ""
+
+msgid "Export completed. Download should start automatically."
+msgstr ""
+
+msgid "Export downloaded"
+msgstr ""
+
+msgid "Export in progress"
+msgstr ""
+
+msgid "Export pages"
+msgstr ""
+
+msgid "Export your Confluence space as HTML (Space Tools → Content Tools → Export) and upload it here."
+msgstr ""
+
+msgid "Export your IntraVox pages for backup or migration."
+msgstr ""
+
+msgid "Exporting …"
+msgstr ""
+
+#. Adjective: group heading of extra profile fields -->
+msgid "Extended"
+msgstr ""
+
+msgid "External feed connections"
+msgstr ""
+
+msgid "External feeds"
+msgstr ""
+
+msgid "External ICS feeds"
+msgstr ""
+
+msgid "External link"
+msgstr ""
+
+msgid "External URL"
+msgstr ""
+
+msgid "Extra HTTP headers sent with every request. E.g. OCS-APIRequest: true for Nextcloud APIs."
+msgstr ""
+
+msgid "Failed to add language."
+msgstr ""
+
+msgid "Failed to add page to navigation"
+msgstr ""
+
+msgid "Failed to copy link"
+msgstr ""
+
+msgid "Failed to create page from template"
+msgstr ""
+
+#. %s is the technical reason reported by the server
+msgid "Failed to create the page file: %s"
+msgstr ""
+
+#. %s is the technical reason reported by the server
+msgid "Failed to create the page folder: %s"
+msgstr ""
+
+msgid "Failed to create the target folder."
+msgstr ""
+
+msgid "Failed to disconnect"
+msgstr ""
+
+msgid "Failed to download the demo data manifest."
+msgstr ""
+
+#. {error} is the technical reason, usually in English
+msgid "Failed to export: {error}"
+msgstr ""
+
+#. %s is the technical reason reported by the server
+msgid "Failed to find the page: %s"
+msgstr ""
+
+msgid "Failed to generate feed URL"
+msgstr ""
+
+#. %s is the technical reason, usually in English
+msgid "Failed to import demo data: %s"
+msgstr ""
+
+msgid "Failed to install demo data"
+msgstr ""
+
+msgid "Failed to load documents"
+msgstr ""
+
+msgid "Failed to load events"
+msgstr ""
+
+msgid "Failed to load feed settings"
+msgstr ""
+
+msgid "Failed to load map"
+msgstr ""
+
+msgid "Failed to load news"
+msgstr ""
+
+msgid "Failed to load people"
+msgstr ""
+
+msgid "Failed to load photos"
+msgstr ""
+
+msgid "Failed to load properties"
+msgstr ""
+
+msgid "Failed to load share links"
+msgstr ""
+
+msgid "Failed to load SharePoint lists"
+msgstr ""
+
+msgid "Failed to load version history"
+msgstr ""
+
+#. {error} is the technical reason why the selected file could not be read
+msgid "Failed to parse file: {error}"
+msgstr ""
+
+#. %s is the technical reason, usually in English
+msgid "Failed to perform clean start: %s"
+msgstr ""
+
+#. %s is the technical reason reported by the server
+msgid "Failed to read the existing page: %s"
+msgstr ""
+
+msgid "Failed to regenerate feed URL"
+msgstr ""
+
+msgid "Failed to remove language."
+msgstr ""
+
+msgid "Failed to remove subscription key"
+msgstr ""
+
+#. {error} is the reason reported by the server
+msgid "Failed to rename page: {error}"
+msgstr ""
+
+#. {error} is the reason reported by the server, e.g. "Version not found"
+msgid "Failed to restore version: {error}"
+msgstr ""
+
+msgid "Failed to revoke feed URL"
+msgstr ""
+
+msgid "Failed to save engagement settings"
+msgstr ""
+
+msgid "Failed to save feed connections"
+msgstr ""
+
+msgid "Failed to save feed settings"
+msgstr ""
+
+msgid "Failed to save publication settings"
+msgstr ""
+
+msgid "Failed to save recommended language."
+msgstr ""
+
+msgid "Failed to save subscription key"
+msgstr ""
+
+msgid "Failed to save template"
+msgstr ""
+
+#. %s is the technical reason reported by the server
+msgid "Failed to save the page: %s"
+msgstr ""
+
+msgid "Failed to save token"
+msgstr ""
+
+msgid "Failed to save video domains"
+msgstr ""
+
+#. {error} is the technical reason, usually in English
+msgid "Failed to save: {error}"
+msgstr ""
+
+msgid "Failed to scan for orphaned data"
+msgstr ""
+
+msgid "Failed to send report"
+msgstr ""
+
+#. {error} is the message returned by the telemetry server
+msgid "Failed to send report: {error}"
+msgstr ""
+
+#. %s is the technical reason, usually in English
+msgid "Failed to set up IntraVox: %s"
+msgstr ""
+
+msgid "Failed to start connection"
+msgstr ""
+
+msgid "Failed to update telemetry settings"
+msgstr ""
+
+#. {error} is the reason reported by the server
+msgid "Failed to update version label: {error}"
+msgstr ""
+
+#. Slideshow speed option
+msgid "Fast"
+msgstr ""
+
+#. Icon name in the link-icon picker (star symbol). Noun, not the verb "to
+#. favorite".
+msgid "Favorite"
+msgstr ""
+
+msgid "February"
+msgstr ""
+
+msgid "Federated share — MetaVox metadata is not available because the source lives on another Nextcloud instance. Files are shown with name, date and file type only."
+msgstr ""
+
+#. Noun: name of the widget that shows an external news feed
+msgid "Feed"
+msgstr ""
+
+msgid "Feed connections saved"
+msgstr ""
+
+#. Screen-reader name of the pagination of the feed widget, not shown on
+#. screen
+msgid "Feed pages"
+msgstr ""
+
+msgid "Feed scope"
+msgstr ""
+
+msgid "Feed settings saved"
+msgstr ""
+
+msgid "Feed URL"
+msgstr ""
+
+msgid "Feed URL copied to clipboard"
+msgstr ""
+
+msgid "Feed URL generated"
+msgstr ""
+
+msgid "Feed URL regenerated. The old URL no longer works."
+msgstr ""
+
+msgid "Feed URL revoked"
+msgstr ""
+
+#. Tooltip of the refresh button of the feed widget
+msgid "Fetch the latest items now"
+msgstr ""
+
+#. Placeholder of a field dropdown in a filter row
+msgid "Field"
+msgstr ""
+
+#. Noun: file name in the photo details
+msgid "File"
+msgstr ""
+
+msgid "File already exists"
+msgstr ""
+
+msgid "File appears to be an invalid or corrupted image"
+msgstr ""
+
+#. %1$s is a file extension, %2$s the list of allowed ones
+msgid "File extension not allowed: %1$s. Allowed: %2$s"
+msgstr ""
+
+msgid "File size"
+msgstr ""
+
+msgid "File story"
+msgstr ""
+
+msgid "File too large. Maximum size is 50 MB."
+msgstr ""
+
+#. Noun: sort field
+msgid "Filename"
+msgstr ""
+
+msgid "Filter by attributes"
+msgstr ""
+
+msgid "Filter by keyword (optional)"
+msgstr ""
+
+#. Screen-reader label of the field dropdown in a filter row, not shown on
+#. screen -->
+msgid "Filter field"
+msgstr ""
+
+#. Screen-reader label of the operator dropdown (is, contains, …) in a
+#. filter row, not shown on screen -->
+msgid "Filter operator"
+msgstr ""
+
+msgid "Filter options …"
+msgstr ""
+
+#. Screen-reader label of a list of filter options, not shown on screen;
+#. {facet} is the filter's name, e.g. "Department"
+msgid "Filter options in {facet}"
+msgstr ""
+
+msgid "Filter pages based on publication and expiration dates configured in admin settings."
+msgstr ""
+
+#. Screen-reader label of the value input in a filter row, not shown on
+#. screen -->
+msgid "Filter value"
+msgstr ""
+
+msgid "Filter values"
+msgstr ""
+
+msgid "Filterable fields"
+msgstr ""
+
+#. Noun: label or heading
+msgid "Filters"
+msgstr ""
+
+#. Button that opens the visitor filters; {count} is the number of active
+#. filters
+msgid "Filters ({count})"
+msgstr ""
+
+msgid "Filters are not shown on public share links, because the filter values would list your organization structure to anyone with the link."
+msgstr ""
+
+msgid "Flat sortable list — no grouping."
+msgstr ""
+
+#. Screen-reader label of a hidden input that keeps keyboard focus inside
+#. the navigation editor (an accessibility focus trap); not shown on screen
+#. -->
+msgid "Focus trap"
+msgstr ""
+
+#. Noun: folder icon or label
+msgid "Folder"
+msgstr ""
+
+msgid "Folder ID"
+msgstr ""
+
+msgid "Folder not found"
+msgstr ""
+
+msgid "Folder path"
+msgstr ""
+
+#. Noun: name of an icon in the icon picker of the Links widget
+msgid "Folders"
+msgstr ""
+
+msgid "Footer content"
+msgstr ""
+
+msgid "Footer saved"
+msgstr ""
+
+#. Screen-reader label of the footer text editor, not shown on screen -->
+msgid "Footer text"
+msgstr ""
+
+msgid "For demo languages, you can reinstall the example content any time from the table below."
+msgstr ""
+
+#. Noun: name of an icon in the icon picker of the Links widget
+msgid "Form"
+msgstr ""
+
+#. Noun: label of the export file format choice
+msgid "Format"
+msgstr ""
+
+#. Group heading in the documents widget when files are grouped by type
+#. (form files)
+msgid "Forms"
+msgstr ""
+
+#. Noun: name of an icon in the icon picker of the Links widget
+msgid "Forum"
+msgstr ""
+
+msgid "Forum (optional)"
+msgstr ""
+
+msgid "From template"
+msgstr ""
+
+msgid "Full intranet"
+msgstr ""
+
+msgid "Full width"
+msgstr ""
+
+#. Group label in a dropdown of date ranges (upcoming)
+msgid "Future"
+msgstr ""
+
+msgid "Generate a personal RSS feed URL to follow IntraVox updates in your favorite RSS reader. The feed only shows pages you have access to."
+msgstr ""
+
+msgid "Generate feed URL"
+msgstr ""
+
+msgid "Get started quickly with example pages in multiple languages (Dutch, English, German, French)."
+msgstr ""
+
+#. Noun: name of an icon in the icon picker of the Links widget
+msgid "Globe"
+msgstr ""
+
+msgid "Glossy editorial (serif)"
+msgstr ""
+
+msgid "Go to Administration settings"
+msgstr ""
+
+msgid "Go to maintenance"
+msgstr ""
+
+#. Screen-reader label of a dot button in a news carousel, not shown on
+#. screen; {number} is the slide number -->
+msgid "Go to slide {number}"
+msgstr ""
+
+#. Noun: category of a video platform
+msgid "Government"
+msgstr ""
+
+#. Noun: layout option
+msgid "Grid"
+msgstr ""
+
+msgid "Grid columns:"
+msgstr ""
+
+#. Noun: a Nextcloud group; filter field
+msgid "Group"
+msgstr ""
+
+msgid "Group by"
+msgstr ""
+
+msgid "Group by date"
+msgstr ""
+
+#. Layout option: items grouped by a field
+msgid "Grouped"
+msgstr ""
+
+msgid "H1 - Largest"
+msgstr ""
+
+#. Heading level 2; keep as is unless your language uses another
+#. abbreviation -->
+msgid "H2"
+msgstr ""
+
+#. Heading level 3; keep as is unless your language uses another
+#. abbreviation -->
+msgid "H3"
+msgstr ""
+
+#. Heading level 4; keep as is unless your language uses another
+#. abbreviation -->
+msgid "H4"
+msgstr ""
+
+#. Heading level 5; keep as is unless your language uses another
+#. abbreviation -->
+msgid "H5"
+msgstr ""
+
+msgid "H6 - Smallest"
+msgstr ""
+
+msgid "Header name"
+msgstr ""
+
+msgid "Header row"
+msgstr ""
+
+#. Noun: text style (heading) in the text editor
+msgid "Heading"
+msgstr ""
+
+#. Label of the heading text field -->
+msgid "Heading:"
+msgstr ""
+
+#. Noun: profile field (a short professional headline)
+msgid "Headline"
+msgstr ""
+
+msgid "Height will automatically adjust to maintain aspect ratio"
+msgstr ""
+
+#. Icon name in the link-icon picker (question-mark symbol). Noun.
+msgid "Help"
+msgstr ""
+
+msgid "Help circle"
+msgstr ""
+
+msgid "Help improve IntraVox by sharing anonymous usage statistics."
+msgstr ""
+
+msgid "Hidden files not allowed"
+msgstr ""
+
+msgid "Hidden from readers in IntraVox"
+msgstr ""
+
+msgid "Hidden from readers in IntraVox until the publish date"
+msgstr ""
+
+msgid "Hide page title and breadcrumb"
+msgstr ""
+
+msgid "Hide RAW when JPG/HEIC exists"
+msgstr ""
+
+#. Noun: display mode of the photo widget (a selection of the best photos)
+msgid "Highlights"
+msgstr ""
+
+#. Noun: home icon or the home page
+msgid "Home"
+msgstr ""
+
+msgid "Homepage only"
+msgstr ""
+
+msgid "Homepage updated"
+msgstr ""
+
+msgid "How does this work?"
+msgstr ""
+
+#. Label of the icon picker
+msgid "Icon:"
+msgstr ""
+
+#. Noun: name of an icon in the icon picker of the Links widget
+msgid "Idea"
+msgstr ""
+
+msgid "If you can see files in the Files app but not here, the file index may be out of sync. Ask an administrator to run \"occ files:scan\" for this folder."
+msgstr ""
+
+msgid "If you can see photos in the Files app but not here, the file index may be out of sync. Ask an administrator to run \"occ files:scan\" for this folder."
+msgstr ""
+
+#. Noun: name of the image widget
+msgid "Image"
+msgstr ""
+
+msgid "Image field"
+msgstr ""
+
+msgid "Image file appears to be corrupted or has incorrect extension"
+msgstr ""
+
+#. Label of the image field -->
+msgid "Image:"
+msgstr ""
+
+#. Noun: tab or button for importing pages
+msgid "Import"
+msgstr ""
+
+msgid "Import comments and reactions"
+msgstr ""
+
+msgid "Import completed"
+msgstr ""
+
+msgid "Import connections"
+msgstr ""
+
+msgid "Import failed"
+msgstr ""
+
+#. {error} is a translated reason, or the server's reason in English
+msgid "Import failed: {error}"
+msgstr ""
+
+msgid "Import failed. Please check the ZIP file format and try again."
+msgstr ""
+
+msgid "Import from ZIP"
+msgstr ""
+
+msgid "Import HTML export"
+msgstr ""
+
+msgid "Import in progress"
+msgstr ""
+
+msgid "Import location"
+msgstr ""
+
+msgid "Import pages and media from an IntraVox ZIP export file."
+msgstr ""
+
+msgid "Import pages from Confluence by uploading an HTML export ZIP file."
+msgstr ""
+
+#. Noun: settings tab, keep short
+msgid "Import/export"
+msgstr ""
+
+msgid "Importing …"
+msgstr ""
+
+#. Lowercase, shown in brackets after the name of a disabled connection
+msgid "inactive"
+msgstr ""
+
+#. Adjective: screen-reader state of a disabled feed connection switch, not
+#. shown on screen
+msgid "Inactive"
+msgstr ""
+
+msgid "Include comments and reactions"
+msgstr ""
+
+msgid "Includes these pages:"
+msgstr ""
+
+msgid "Incorrect password. Please try again."
+msgstr ""
+
+msgid "Infinite scroll"
+msgstr ""
+
+#. Noun: name of an icon in the icon picker of the Links widget
+msgid "Info"
+msgstr ""
+
+#. Noun: name of an icon in the icon picker of the Links widget
+msgid "Information"
+msgstr ""
+
+msgid "Insert link"
+msgstr ""
+
+msgid "Insert row"
+msgstr ""
+
+msgid "Insert table"
+msgstr ""
+
+#. Verb: button that installs demo content
+msgid "Install"
+msgstr ""
+
+msgid "Install demo content to quickly set up your intranet with example pages, navigation, and images. Bundled demo content is available in the languages listed below."
+msgstr ""
+
+msgid "Install demo data"
+msgstr ""
+
+msgid "Install MetaVox for advanced filtering options"
+msgstr ""
+
+#. Status of demo content, keep short
+msgid "Installed"
+msgstr ""
+
+#. Status of the install button while it runs
+msgid "Installing …"
+msgstr ""
+
+msgid "Internal page"
+msgstr ""
+
+msgid "Intranet languages"
+msgstr ""
+
+#. Product name, shown as a section in the Administration settings; keep it
+#. unless your script needs a transliteration
+msgid "IntraVox"
+msgstr ""
+
+msgid "IntraVox folder not found. Please check that you have access to the IntraVox Team folder."
+msgstr ""
+
+msgid "IntraVox is free and open source (AGPL-3.0). All features work without a subscription. If IntraVox is valuable to your organization, a subscription supports active development and gives you guaranteed Nextcloud compatibility and email support."
+msgstr ""
+
+msgid "IntraVox is not yet configured. To get started, you can install demo data or create your own pages."
+msgstr ""
+
+msgid "IntraVox page"
+msgstr ""
+
+msgid "IntraVox page activity"
+msgstr ""
+
+msgid "IntraVox pages"
+msgstr ""
+
+#. {reason} is the reason returned by the license server, usually in
+#. English
+msgid "IntraVox subscription key was refused: {reason}"
+msgstr ""
+
+msgid "IntraVox, Nextcloud, and PHP version numbers"
+msgstr ""
+
+msgid "Invalid callback parameters."
+msgstr ""
+
+msgid "Invalid display mode"
+msgstr ""
+
+msgid "Invalid domain: TLD must be at least 2 characters (e.g., .com, .org, .nl)"
+msgstr ""
+
+msgid "Invalid file type. Allowed: JPEG, PNG, GIF, WebP, SVG, MP4, WebM, OGG"
+msgstr ""
+
+msgid "Invalid file: expected an array of connections"
+msgstr ""
+
+#. %s is the language code that was sent, e.g. "xx-yy"
+msgid "Invalid language code: %s"
+msgstr ""
+
+#. %1$s is the mode that was sent; "merge" and "replace" are fixed values,
+#. do not translate them
+msgid "Invalid mode: %1$s. Use %2$s or %3$s."
+msgstr ""
+
+msgid "Invalid page ID"
+msgstr ""
+
+msgid "Invalid page title"
+msgstr ""
+
+msgid "Invalid path segment"
+msgstr ""
+
+msgid "Invalid Unicode sequence in path"
+msgstr ""
+
+msgid "Invalid URL"
+msgstr ""
+
+msgid "Invalid URL format. Please enter a valid URL (e.g., https://video.example.org)"
+msgstr ""
+
+msgid "is after"
+msgstr ""
+
+msgid "is any of"
+msgstr ""
+
+msgid "is before"
+msgstr ""
+
+msgid "is empty"
+msgstr ""
+
+msgid "is false"
+msgstr ""
+
+msgid "is greater or equal"
+msgstr ""
+
+msgid "is greater than"
+msgstr ""
+
+msgid "is less or equal"
+msgstr ""
+
+msgid "is less than"
+msgstr ""
+
+msgid "is none of"
+msgstr ""
+
+msgid "is not empty"
+msgstr ""
+
+msgid "is one of"
+msgstr ""
+
+msgid "is today"
+msgstr ""
+
+msgid "is true"
+msgstr ""
+
+msgid "is within next X days"
+msgstr ""
+
+#. Tooltip and screen-reader label of the italic button in the text editor;
+#. keep the keyboard shortcut -->
+msgid "Italic (Ctrl+I)"
+msgstr ""
+
+msgid "Item title"
+msgstr ""
+
+msgid "Items path"
+msgstr ""
+
+msgid "Items per page"
+msgstr ""
+
+#. Month names, used in photo timeline labels such as "May 2026"
+msgid "January"
+msgstr ""
+
+msgid "JSON (pages only)"
+msgstr ""
+
+msgid "July"
+msgstr ""
+
+#. Tooltip of a year button in the photo timeline; {year} is a year, e.g.
+#. 2025
+msgid "Jump to {year}"
+msgstr ""
+
+#. Screen-reader name of the year list next to the photo timeline, not
+#. shown on screen
+msgid "Jump to year"
+msgstr ""
+
+#. Month name
+msgid "June"
+msgstr ""
+
+msgid "just now"
+msgstr ""
+
+#. Noun: name of an icon (a task board) in the icon picker of the Links
+#. widget
+msgid "Kanban"
+msgstr ""
+
+msgid "Knowledge base"
+msgstr ""
+
+#. Screen-reader label of the input where an editor renames a filter, not
+#. shown on screen
+msgid "Label shown to visitors"
+msgstr ""
+
+#. Noun: label or column header
+msgid "Language"
+msgstr ""
+
+msgid "Language added."
+msgstr ""
+
+#. %s is a language code, e.g. "de"
+msgid "Language folder \"%s\" was not found in the orphaned data."
+msgstr ""
+
+#. %s is a language code, e.g. "de"
+msgid "Language not enabled: %s. Enable it in the Administration settings first."
+msgstr ""
+
+msgid "Language removed."
+msgstr ""
+
+msgid "Language to recover"
+msgstr ""
+
+#. Noun: settings tab and heading
+msgid "Languages"
+msgstr ""
+
+msgid "Languages with content:"
+msgstr ""
+
+#. Size option
+msgid "Large"
+msgstr ""
+
+msgid "Largest first"
+msgstr ""
+
+#. {date} is a formatted date and time
+msgid "Last accessed: {date}"
+msgstr ""
+
+msgid "Last modified"
+msgstr ""
+
+msgid "Last report sent"
+msgstr ""
+
+#. Icon name in the link-icon picker (rocket symbol). Noun, not the verb
+#. "to launch": a launch/lift-off.
+msgid "Launch"
+msgstr ""
+
+#. Noun: label of a layout choice
+msgid "Layout"
+msgstr ""
+
+msgid "Layout mode"
+msgstr ""
+
+#. Label of a layout choice
+msgid "Layout:"
+msgstr ""
+
+msgid "Learn more"
+msgstr ""
+
+msgid "Leave blank to search MetaVox-tagged photos across all folders — requires at least one filter below."
+msgstr ""
+
+msgid "Left column"
+msgstr ""
+
+msgid "Left empty, the name from the feed is suggested once. Your own wording always wins."
+msgstr ""
+
+msgid "Let visitors filter these results"
+msgstr ""
+
+#. Label of the heading-level choice -->
+msgid "Level:"
+msgstr ""
+
+#. Color style option (a light background)
+msgid "Light"
+msgstr ""
+
+msgid "Light background"
+msgstr ""
+
+#. Icon name in the link-icon picker (heart symbol). Noun, not the verb "to
+#. like": the name of the reaction/symbol.
+msgid "Like"
+msgstr ""
+
+#. Noun: link insertion in the text editor -->
+msgid "Link"
+msgstr ""
+
+msgid "Link an existing page as a translation"
+msgstr ""
+
+msgid "Link background:"
+msgstr ""
+
+msgid "Link copied to clipboard"
+msgstr ""
+
+msgid "Link text"
+msgstr ""
+
+#. Label of the text field of a link
+msgid "Link text:"
+msgstr ""
+
+msgid "Link to page"
+msgstr ""
+
+msgid "Link to:"
+msgstr ""
+
+#. Label of a link field -->
+msgid "Link:"
+msgstr ""
+
+msgid "Linked pages stay separate: each language keeps its own content and layout. Linking only tells readers where else this page exists."
+msgstr ""
+
+#. Noun: name of the links widget, or a heading
+msgid "Links"
+msgstr ""
+
+#. Noun: layout option or a SharePoint list
+msgid "List"
+msgstr ""
+
+msgid "List items"
+msgstr ""
+
+#. Screen-reader text of a loading spinner, not shown on screen
+msgid "Loading"
+msgstr ""
+
+msgid "Loading …"
+msgstr ""
+
+msgid "Loading article …"
+msgstr ""
+
+msgid "Loading calendars …"
+msgstr ""
+
+msgid "Loading courses …"
+msgstr ""
+
+#. Screen-reader text of a loading spinner, not shown on screen
+msgid "Loading documents"
+msgstr ""
+
+msgid "Loading events …"
+msgstr ""
+
+msgid "Loading feed …"
+msgstr ""
+
+msgid "Loading map …"
+msgstr ""
+
+msgid "Loading media …"
+msgstr ""
+
+msgid "Loading metadata …"
+msgstr ""
+
+msgid "Loading MetaVox fields …"
+msgstr ""
+
+msgid "Loading more …"
+msgstr ""
+
+msgid "Loading more photos …"
+msgstr ""
+
+msgid "Loading news …"
+msgstr ""
+
+msgid "Loading page structure …"
+msgstr ""
+
+#. Screen-reader text of a loading spinner, not shown on screen
+msgid "Loading photos"
+msgstr ""
+
+msgid "Loading properties …"
+msgstr ""
+
+msgid "Loading shared media …"
+msgstr ""
+
+msgid "Loading shares …"
+msgstr ""
+
+msgid "Loading templates …"
+msgstr ""
+
+msgid "Loading translations …"
+msgstr ""
+
+msgid "Loading versions …"
+msgstr ""
+
+msgid "Local file"
+msgstr ""
+
+#. Noun: place; label or display field -->
+msgid "Location"
+msgstr ""
+
+#. Accessible title of the embedded map in the photo viewer, not shown on
+#. screen
+msgid "Location map"
+msgstr ""
+
+msgid "Long lists"
+msgstr ""
+
+msgid "Loop video"
+msgstr ""
+
+#. Name of a photo-gallery layout style (not to be translated literally as
+#. the magazine publication); an editorial, glossy look.
+msgid "Magazine"
+msgstr ""
+
+#. Noun: settings tab
+msgid "Maintenance"
+msgstr ""
+
+msgid "Manage intranet languages"
+msgstr ""
+
+msgid "Manage share in Files"
+msgstr ""
+
+#. Button: "Manage structure" enters manage mode, "Done" leaves it -->
+msgid "Manage structure"
+msgstr ""
+
+#. Noun: name of an icon in the icon picker of the Links widget
+msgid "Manager"
+msgstr ""
+
+msgid "Manual selection"
+msgstr ""
+
+msgid "Map JSON fields from the API response to feed items. Use dot notation for nested fields (e.g. data.items, author.name)."
+msgstr ""
+
+msgid "Map unavailable"
+msgstr ""
+
+msgid "Map view requires the Leaflet library — not installed."
+msgstr ""
+
+msgid "March"
+msgstr ""
+
+msgid "Masonry grid — all photos in a continuous wall, no date grouping."
+msgstr ""
+
+msgid "Match all filters"
+msgstr ""
+
+msgid "Match any filter"
+msgstr ""
+
+msgid "mave.io (EU video)"
+msgstr ""
+
+msgid "Maximum documents"
+msgstr ""
+
+msgid "Maximum items"
+msgstr ""
+
+msgid "Maximum people to show"
+msgstr ""
+
+msgid "Maximum photos"
+msgstr ""
+
+#. The month of May, not the verb
+msgid "May"
+msgstr ""
+
+#. Screen-reader name of the tabs that choose where media comes from, not
+#. shown on screen -->
+msgid "Media source"
+msgstr ""
+
+#. Size option
+msgid "Medium"
+msgstr ""
+
+msgid "Mega menu"
+msgstr ""
+
+msgid "Merge (keep existing, add missing)"
+msgstr ""
+
+#. Icon name in the link-icon picker (message symbol). Noun, not the verb
+#. "to message".
+msgid "Message"
+msgstr ""
+
+msgid "Metadata saved"
+msgstr ""
+
+#. Product name, do not translate
+msgid "MetaVox"
+msgstr ""
+
+msgid "MetaVox filters"
+msgstr ""
+
+msgid "MetaVox is not available. Install and enable MetaVox to use publication date filtering."
+msgstr ""
+
+msgid "MetaVox is required for publication filtering but is not available."
+msgstr ""
+
+#. Tooltip of a cloud icon; MetaVox is an app name and a federated share
+#. comes from another Nextcloud server
+msgid "MetaVox metadata is not available from a federated share"
+msgstr ""
+
+msgid "MetaVox not available — basic file metadata only"
+msgstr ""
+
+msgid "MetaVox: basic EXIF only"
+msgstr ""
+
+msgid "MetaVox: rich metadata available"
+msgstr ""
+
+msgid "Migration completed"
+msgstr ""
+
+#. %s is the technical reason, usually in English
+msgid "Migration failed: %s"
+msgstr ""
+
+#. Noun: content type of a project feed
+msgid "Milestones"
+msgstr ""
+
+msgid "Missing template or title"
+msgstr ""
+
+#. Label of the last-modified date -->
+msgid "Modified"
+msgstr ""
+
+#. Tooltip and screen-reader label of the overflow (…) button in the text
+#. editor toolbar -->
+msgid "More options"
+msgstr ""
+
+#. Tooltip and screen-reader label of an arrow button in the page structure
+#. -->
+msgid "Move down"
+msgstr ""
+
+msgid "Move page"
+msgstr ""
+
+msgid "Move this page to:"
+msgstr ""
+
+#. Tooltip and screen-reader label of a button in the page structure -->
+msgid "Move to another page"
+msgstr ""
+
+msgid "Move to the top level"
+msgstr ""
+
+#. Tooltip and screen-reader label of an arrow button in the page structure
+#. -->
+msgid "Move up"
+msgstr ""
+
+#. Adjective: video option, no sound -->
+msgid "Muted"
+msgstr ""
+
+msgid "My language"
+msgstr ""
+
+#. Noun: label or field
+msgid "Name"
+msgstr ""
+
+msgid "Name shown to visitors"
+msgstr ""
+
+msgid "Nassau C3"
+msgstr ""
+
+msgid "Navigation items"
+msgstr ""
+
+msgid "Navigation saved"
+msgstr ""
+
+msgid "Navigation structure"
+msgstr ""
+
+msgid "Navigation structure is invalid. Please reload the page."
+msgstr ""
+
+msgid "Navigation type:"
+msgstr ""
+
+#. Shown when a share link has no expiration date
+msgid "Never"
+msgstr ""
+
+msgid "New connection"
+msgstr ""
+
+msgid "New heading"
+msgstr ""
+
+msgid "New item"
+msgstr ""
+
+msgid "New page"
+msgstr ""
+
+msgid "New tab"
+msgstr ""
+
+msgid "Newest first"
+msgstr ""
+
+#. Noun: news icon, widget or label
+msgid "News"
+msgstr ""
+
+#. Screen-reader name of a rotating news slider, not shown on screen
+msgid "News carousel"
+msgstr ""
+
+msgid "News posts"
+msgstr ""
+
+#. Noun: content type of a learning-platform feed
+msgid "News/Announcements"
+msgstr ""
+
+msgid "Next 2 weeks"
+msgstr ""
+
+msgid "Next 3 months"
+msgstr ""
+
+msgid "Next 6 months"
+msgstr ""
+
+#. Screen-reader label of the forward arrow of the feed widget, not shown
+#. on screen
+msgid "Next items"
+msgstr ""
+
+#. Tooltip and screen-reader label of the forward arrow of the documents
+#. widget
+msgid "Next page"
+msgstr ""
+
+#. Tooltip and screen-reader label of the forward arrow of the photo viewer
+msgid "Next photo"
+msgstr ""
+
+#. Screen-reader label of the forward arrow of a news slider, not shown on
+#. screen -->
+msgid "Next slide"
+msgstr ""
+
+msgid "Next year"
+msgstr ""
+
+msgid "Nextcloud Enterprise subscription detected on this instance. IntraVox subscriptions are sold through Nextcloud — contact your Nextcloud account manager or sales@nextcloud.com."
+msgstr ""
+
+msgid "No active public share links found. Share links can be created in the Files app on IntraVox folders or pages."
+msgstr ""
+
+msgid "No API token configured — showing public data only."
+msgstr ""
+
+msgid "No authentication"
+msgstr ""
+
+msgid "No calendar selected"
+msgstr ""
+
+msgid "No calendars available"
+msgstr ""
+
+msgid "No comments yet. Be the first to comment."
+msgstr ""
+
+msgid "No connections configured. Ask an administrator to add one in IntraVox settings."
+msgstr ""
+
+msgid "No content in your language yet"
+msgstr ""
+
+msgid "No date fields found in MetaVox. Create date fields in MetaVox first and assign them to the IntraVox Team folder."
+msgstr ""
+
+msgid "No date in EXIF"
+msgstr ""
+
+msgid "No documents match the current filters"
+msgstr ""
+
+msgid "No documents to show."
+msgstr ""
+
+msgid "No export.json found in the ZIP. Make sure you uploaded an IntraVox export (Settings → Export), not a Nextcloud Files backup or a different app's archive."
+msgstr ""
+
+msgid "No fields available to filter on."
+msgstr ""
+
+msgid "No file was uploaded, or the upload failed."
+msgstr ""
+
+msgid "No file was uploaded."
+msgstr ""
+
+msgid "No filters available"
+msgstr ""
+
+msgid "No filters. Click \"Add filter\" to filter by author, project, status or any other MetaVox field."
+msgstr ""
+
+msgid "No filters. Click \"Add filter\" to filter by date, location, people, or subject."
+msgstr ""
+
+msgid "No folder selected"
+msgstr ""
+
+msgid "No GPS data found in this folder. Map features are disabled. Run the MetaVox EXIF backfill to enable maps for photos with embedded GPS."
+msgstr ""
+
+msgid "No HTTPS"
+msgstr ""
+
+msgid "No image selected"
+msgstr ""
+
+msgid "No items found"
+msgstr ""
+
+msgid "No items match your filter."
+msgstr ""
+
+msgid "No link"
+msgstr ""
+
+msgid "No links available in this workspace lens."
+msgstr ""
+
+msgid "No links configured. Click the edit button to add links."
+msgstr ""
+
+msgid "No links yet. Click \"Add link\" to get started."
+msgstr ""
+
+msgid "No location data"
+msgstr ""
+
+msgid "No matching options"
+msgstr ""
+
+msgid "No media files in this page yet"
+msgstr ""
+
+msgid "No media in shared library yet"
+msgstr ""
+
+msgid "No metadata fields are configured for this folder."
+msgstr ""
+
+msgid "No navigation items yet. Click \"Add Item\" to create one."
+msgstr ""
+
+msgid "No news items found"
+msgstr ""
+
+msgid "No one matches the selected filters"
+msgstr ""
+
+msgid "No orphaned data found"
+msgstr ""
+
+msgid "No orphaned Team folder data found. Your installation is clean."
+msgstr ""
+
+msgid "No page specified."
+msgstr ""
+
+msgid "No page to save"
+msgstr ""
+
+msgid "No pages available"
+msgstr ""
+
+msgid "No pages available to link"
+msgstr ""
+
+msgid "No pages found"
+msgstr ""
+
+msgid "No pages found."
+msgstr ""
+
+msgid "No people found"
+msgstr ""
+
+msgid "No photos found"
+msgstr ""
+
+msgid "No photos taken on this day in previous years"
+msgstr ""
+
+msgid "No published content is available in any language yet."
+msgstr ""
+
+msgid "No templates available"
+msgstr ""
+
+msgid "No upcoming events"
+msgstr ""
+
+msgid "No users found"
+msgstr ""
+
+msgid "No users match the current filters"
+msgstr ""
+
+msgid "No users selected"
+msgstr ""
+
+msgid "No valid pages found. Pages might be missing UID."
+msgstr ""
+
+msgid "No versions available"
+msgstr ""
+
+msgid "No video selected"
+msgstr ""
+
+msgid "Non-IntraVox data"
+msgstr ""
+
+#. Option meaning no selection
+msgid "None"
+msgstr ""
+
+msgid "None yet"
+msgstr ""
+
+#. Slideshow speed option
+msgid "Normal"
+msgstr ""
+
+msgid "Not available"
+msgstr ""
+
+msgid "Not connected"
+msgstr ""
+
+msgid "Not installed"
+msgstr ""
+
+msgid "November"
+msgstr ""
+
+#. Shown as the time of the current version
+msgid "Now"
+msgstr ""
+
+msgid "Null bytes not allowed in path"
+msgstr ""
+
+msgid "Number of documents shown per page. Older documents stay reachable via the page buttons."
+msgstr ""
+
+msgid "Number of events"
+msgstr ""
+
+msgid "Number of items"
+msgstr ""
+
+msgid "Number of photos shown per page. Older photos stay reachable via the page buttons."
+msgstr ""
+
+msgid "Numbered list"
+msgstr ""
+
+msgid "OAuth2 (per-user, personalized)"
+msgstr ""
+
+msgid "OAuth2 Client ID"
+msgstr ""
+
+msgid "OAuth2 client secret"
+msgstr ""
+
+msgid "OAuth2 credentials are not configured for this connection."
+msgstr ""
+
+msgid "October"
+msgstr ""
+
+#. Shown when the autoplay interval is zero -->
+msgid "Off"
+msgstr ""
+
+msgid "OIDC auto-connect (zero-click SSO)"
+msgstr ""
+
+msgid "Old links that use the folder name will stop working. Links that use the page ID keep working."
+msgstr ""
+
+msgid "Oldest first"
+msgstr ""
+
+msgid "On this day"
+msgstr ""
+
+msgid "On this page"
+msgstr ""
+
+msgid "Only HTTPS URLs are allowed for security reasons"
+msgstr ""
+
+msgid "Only HTTPS URLs are allowed for security reasons. Please use https://"
+msgstr ""
+
+msgid "Only root-level pages can be the homepage"
+msgstr ""
+
+msgid "Only secure HTTPS servers can be added. The URL will be validated before adding."
+msgstr ""
+
+msgid "Only show items containing this word in title, excerpt, or author."
+msgstr ""
+
+msgid "Only ZIP files produced by IntraVox (Settings → Export) are accepted. Nextcloud Files backups, cloudron backups, or other apps' archives will not work — they do not contain the export.json IntraVox needs."
+msgstr ""
+
+#. Screen-reader label of a document in a list, not shown on screen; {name}
+#. is the file name
+msgid "Open {name}"
+msgstr ""
+
+msgid "Open a page first"
+msgstr ""
+
+msgid "Open in Files"
+msgstr ""
+
+msgid "Open in new tab"
+msgstr ""
+
+msgid "Open issues"
+msgstr ""
+
+msgid "Open links in new tab"
+msgstr ""
+
+#. Screen-reader label of a photo tile, not shown on screen; {name} is the
+#. file name
+msgid "Open photo {name}"
+msgstr ""
+
+msgid "Open sharing settings"
+msgstr ""
+
+#. Tooltip of a button next to a language version of the page
+msgid "Open this translation"
+msgstr ""
+
+msgid "Open work packages"
+msgstr ""
+
+#. Placeholder of the comparison dropdown (equals, contains, …) in a filter
+#. row
+msgid "Operator"
+msgstr ""
+
+#. Lowercase, shown in brackets after a form label -->
+msgid "optional"
+msgstr ""
+
+msgid "Optional cap on the total number of documents paged through. Leave blank for all."
+msgstr ""
+
+msgid "Optional cap on the total number of photos, applied in both modes. Leave blank for all."
+msgstr ""
+
+#. Separator between two alternatives
+msgid "or"
+msgstr ""
+
+#. Noun: sort order label
+msgid "Order"
+msgstr ""
+
+#. Noun: name of an icon (an office building) in the icon picker of the
+#. Links widget
+msgid "Organization"
+msgstr ""
+
+msgid "Organogram"
+msgstr ""
+
+#. {space} is a formatted file size, e.g. "1.2 GB"
+msgid "Orphaned data deleted ({space} freed)"
+msgstr ""
+
+msgid "Orphaned Team folder data"
+msgstr ""
+
+#. Group heading in the documents widget when files are grouped by type
+#. (anything else)
+msgid "Other"
+msgstr ""
+
+#. Filter option for overdue items
+msgid "Overdue"
+msgstr ""
+
+msgid "Override global engagement settings for this page."
+msgstr ""
+
+msgid "Overview of all active Nextcloud share links on IntraVox content."
+msgstr ""
+
+#. Verb: button that replaces an existing file -->
+msgid "Overwrite"
+msgstr ""
+
+msgid "Overwrite existing pages"
+msgstr ""
+
+#. Noun: page width option, full page width
+msgid "Page"
+msgstr ""
+
+#. Pagination; {current} and {total} are page numbers
+msgid "Page {current} of {total}"
+msgstr ""
+
+msgid "Page and folder renamed"
+msgstr ""
+
+msgid "Page buttons"
+msgstr ""
+
+msgid "Page buttons apply to List and Tiles layouts. Timeline and Grouped layouts always use infinite scroll."
+msgstr ""
+
+msgid "Page buttons apply to the single-folder Timeline and Grid layouts. Other layouts always use infinite scroll."
+msgstr ""
+
+msgid "Page content or titles"
+msgstr ""
+
+msgid "Page copied"
+msgstr ""
+
+msgid "Page counts per language (e.g., EN: 45, NL: 32)"
+msgstr ""
+
+msgid "Page created"
+msgstr ""
+
+msgid "Page created from template"
+msgstr ""
+
+#. Screen-reader name of the tabs in the new page dialog, not shown on
+#. screen -->
+msgid "Page creation mode"
+msgstr ""
+
+msgid "Page deleted"
+msgstr ""
+
+msgid "Page details and history"
+msgstr ""
+
+msgid "Page media"
+msgstr ""
+
+msgid "Page moved"
+msgstr ""
+
+msgid "Page not available"
+msgstr ""
+
+msgid "Page not found"
+msgstr ""
+
+msgid "Page not found or not accessible via this share link"
+msgstr ""
+
+#. %s is the ID of the page that was requested
+msgid "Page not found: %s"
+msgstr ""
+
+msgid "Page reactions"
+msgstr ""
+
+msgid "Page renamed"
+msgstr ""
+
+msgid "Page saved"
+msgstr ""
+
+msgid "Page settings"
+msgstr ""
+
+msgid "Page settings saved"
+msgstr ""
+
+msgid "Page structure"
+msgstr ""
+
+#. Screen-reader name of the view tabs in the page structure dialog, not
+#. shown on screen -->
+msgid "Page structure views"
+msgstr ""
+
+msgid "Page title"
+msgstr ""
+
+msgid "Page tools"
+msgstr ""
+
+msgid "Page unlocked"
+msgstr ""
+
+#. Noun: view tab -->
+msgid "Pages"
+msgstr ""
+
+msgid "Pages will be hidden after this date."
+msgstr ""
+
+msgid "Pages will only be shown on or after this date."
+msgstr ""
+
+msgid "Panel position"
+msgstr ""
+
+#. Noun: text style (normal paragraph) in the text editor
+msgid "Paragraph"
+msgstr ""
+
+msgid "Parent page not found"
+msgstr ""
+
+#. Noun: label or placeholder
+msgid "Password"
+msgstr ""
+
+msgid "Password protected"
+msgstr ""
+
+msgid "Password required"
+msgstr ""
+
+#. Group label in a dropdown of date ranges (already happened)
+msgid "Past"
+msgstr ""
+
+msgid "Past 3 months"
+msgstr ""
+
+msgid "Past its expiration date, so hidden from readers in IntraVox"
+msgstr ""
+
+msgid "Past month"
+msgstr ""
+
+msgid "Past week"
+msgstr ""
+
+msgid "Paste a video URL from YouTube, Vimeo, PeerTube or other supported platforms."
+msgstr ""
+
+msgid "Paste your API token here"
+msgstr ""
+
+#. Column header, keep short
+msgid "Path"
+msgstr ""
+
+msgid "Path appended to the base URL."
+msgstr ""
+
+msgid "Path traversal not allowed"
+msgstr ""
+
+#. Tooltip and screen-reader label of the slideshow button while the
+#. slideshow plays
+msgid "Pause slideshow"
+msgstr ""
+
+#. Group heading in the documents widget when files are grouped by type
+#. (PDF files)
+msgid "PDF"
+msgstr ""
+
+#. Noun: people icon, widget or label
+msgid "People"
+msgstr ""
+
+msgid "People can add emoji reactions to comments"
+msgstr ""
+
+msgid "People can add emoji reactions to pages"
+msgstr ""
+
+msgid "People can post comments on pages"
+msgstr ""
+
+msgid "People on public share links"
+msgstr ""
+
+msgid "People widgets are hidden on public share links. The rest of the page is shared normally."
+msgstr ""
+
+msgid "People widgets now render for anonymous visitors. Profile fields your users marked as private or internal stay hidden, but names and photos are visible to anyone with the link."
+msgstr ""
+
+msgid "Per day"
+msgstr ""
+
+msgid "Per day works for daily reports/notes; per month suits monthly newsletters and quarterly contracts; per year is for archives."
+msgstr ""
+
+msgid "Per item"
+msgstr ""
+
+msgid "Per month"
+msgstr ""
+
+msgid "Per year"
+msgstr ""
+
+msgid "Permission denied"
+msgstr ""
+
+#. Noun: phone number field or icon
+msgid "Phone"
+msgstr ""
+
+#. Noun: screen-reader text of the photo viewer
+msgid "Photo"
+msgstr ""
+
+#. Alternative text of a photo in the lightbox when it has no location; {n}
+#. and {total} are numbers
+msgid "Photo {n} of {total}"
+msgstr ""
+
+#. Screen-reader name of the pagination of the photo widget, not shown on
+#. screen
+msgid "Photo pages"
+msgstr ""
+
+msgid "Photo story"
+msgstr ""
+
+#. Noun: name of an icon in the icon picker of the Links widget
+msgid "Photos"
+msgstr ""
+
+msgid "Photos per page"
+msgstr ""
+
+msgid "Photos taken on this same date in earlier years."
+msgstr ""
+
+msgid "Pick a folder"
+msgstr ""
+
+msgid "Pick a folder, or use \"/\" for your entire drive."
+msgstr ""
+
+msgid "Pick a folder. Documents are streamed directly from this location."
+msgstr ""
+
+msgid "Pick a photo folder"
+msgstr ""
+
+msgid "Pick what to cluster files under. \"Category\" groups by file type (PDF/Spreadsheets/etc); other options come from MetaVox fields."
+msgstr ""
+
+msgid "Pick which fields appear next to the filename. The filename + file-type icon are always shown."
+msgstr ""
+
+msgid "Playback options:"
+msgstr ""
+
+msgid "Please contact your administrator if you need access to this video service."
+msgstr ""
+
+msgid "Please drop a video file (MP4, WebM or Ogg)."
+msgstr ""
+
+msgid "Please drop a ZIP file (Confluence HTML export)."
+msgstr ""
+
+msgid "Please drop an image file (JPEG, PNG, GIF, WebP or SVG)."
+msgstr ""
+
+msgid "Please enter a subscription key"
+msgstr ""
+
+msgid "Please enter a valid domain name (e.g., video.example.org)"
+msgstr ""
+
+msgid "Please enter a valid HTTPS URL"
+msgstr ""
+
+msgid "Please keep this page open until the export completes."
+msgstr ""
+
+msgid "Please keep this page open until the import completes."
+msgstr ""
+
+msgid "Please rename the file and try again"
+msgstr ""
+
+#. Noun: name of an icon (a puzzle piece) in the icon picker of the Links
+#. widget
+msgid "Plugin"
+msgstr ""
+
+#. Icon name in the link-icon picker (bar-chart symbol). Noun: a
+#. survey/vote, not the verb "to poll".
+msgid "Poll"
+msgstr ""
+
+msgid "Pop-up blocked. Please allow pop-ups for this site."
+msgstr ""
+
+msgid "Preparing export …"
+msgstr ""
+
+#. Group heading in the documents widget when files are grouped by type
+msgid "Presentations"
+msgstr ""
+
+#. Noun: heading of a preview
+msgid "Preview"
+msgstr ""
+
+#. Label above a preview -->
+msgid "Preview:"
+msgstr ""
+
+#. Screen-reader label of the back arrow of the feed widget, not shown on
+#. screen
+msgid "Previous items"
+msgstr ""
+
+#. Tooltip and screen-reader label of the back arrow of the documents
+#. widget
+msgid "Previous page"
+msgstr ""
+
+#. Tooltip and screen-reader label of the back arrow of the photo viewer
+msgid "Previous photo"
+msgstr ""
+
+#. Screen-reader label of the back arrow of a news slider, not shown on
+#. screen -->
+msgid "Previous slide"
+msgstr ""
+
+msgid "Pricing details"
+msgstr ""
+
+#. Color style option (the theme's primary color)
+msgid "Primary"
+msgstr ""
+
+msgid "Primary light"
+msgstr ""
+
+msgid "Privacy warnings:"
+msgstr ""
+
+#. Category heading of video platforms without tracking
+msgid "Privacy-friendly"
+msgstr ""
+
+msgid "Processing import on server …"
+msgstr ""
+
+#. Noun: label of the project field
+msgid "Project"
+msgstr ""
+
+#. Screen-reader label of an icon button in the navigation editor, not
+#. shown on screen -->
+msgid "Promote (move up one level)"
+msgstr ""
+
+#. Noun: profile field, e.g. "she/her"
+msgid "Pronouns"
+msgstr ""
+
+msgid "Public link"
+msgstr ""
+
+msgid "Public link sharing is disabled by the administrator."
+msgstr ""
+
+msgid "Public share links"
+msgstr ""
+
+#. Noun: settings tab for publication dates
+msgid "Publication"
+msgstr ""
+
+msgid "Publication date fields"
+msgstr ""
+
+msgid "Publication date fields have not been configured in admin settings."
+msgstr ""
+
+#. Tooltip; "Publish on" is the label of a date field in the page settings
+#. -->
+msgid "Publication is controlled by the Publish on date. Clear the date to switch manually."
+msgstr ""
+
+msgid "Publication settings saved"
+msgstr ""
+
+msgid "Publish date field"
+msgstr ""
+
+#. Publication status of a page, keep short
+msgid "Published"
+msgstr ""
+
+#. Screen-reader label of the status button of a published page, not shown
+#. on screen
+msgid "Published — click to unpublish"
+msgstr ""
+
+#. Short heading before contact details
+msgid "Questions?"
+msgstr ""
+
+#. Verb: button that adds an emoji reaction
+msgid "React"
+msgstr ""
+
+msgid "Reactions & comments"
+msgstr ""
+
+#. Link to the same page in another language; {language} is a language
+#. name, e.g. "Deutsch"
+msgid "Read it in {language}"
+msgstr ""
+
+msgid "Read on the website"
+msgstr ""
+
+#. Lowercase, shown in brackets after a calendar that cannot be edited
+msgid "read-only"
+msgstr ""
+
+msgid "Recently created (7 days)"
+msgstr ""
+
+msgid "Recently updated"
+msgstr ""
+
+msgid "Recently updated (7 days)"
+msgstr ""
+
+#. Badge after the recommended language, keep short
+msgid "Recommended"
+msgstr ""
+
+msgid "Recommended language"
+msgstr ""
+
+msgid "Recommended language saved."
+msgstr ""
+
+#. Verb: button that restores orphaned data
+msgid "Recover"
+msgstr ""
+
+#. {id} is the numeric ID of a leftover Team folder
+msgid "Recover data from orphaned folder #{id} to your active IntraVox installation."
+msgstr ""
+
+msgid "Recover orphaned data"
+msgstr ""
+
+msgid "Recovering …"
+msgstr ""
+
+msgid "Recovery failed"
+msgstr ""
+
+msgid "Recovery mode"
+msgstr ""
+
+msgid "Redirect URI:"
+msgstr ""
+
+#. Verb: label of the feed refresh button
+msgid "Refresh"
+msgstr ""
+
+#. Label of the feed refresh button while it is busy
+msgid "Refreshing …"
+msgstr ""
+
+#. Verb: button that creates a new feed URL
+msgid "Regenerate"
+msgstr ""
+
+#. Verb: button that reinstalls demo content
+msgid "Reinstall"
+msgstr ""
+
+msgid "Reinstall demo data"
+msgstr ""
+
+#. Status of the reinstall button while it runs
+msgid "Reinstalling …"
+msgstr ""
+
+#. Verb: button
+msgid "Remove"
+msgstr ""
+
+#. {name} is the name of a feed connection
+msgid "Remove \"{name}\"? This cannot be undone after saving."
+msgstr ""
+
+#. Confirmation title; {language} is a language name, e.g. "Deutsch"
+msgid "Remove all {language} content from your intranet?"
+msgstr ""
+
+msgid "Remove column"
+msgstr ""
+
+msgid "Remove connection"
+msgstr ""
+
+#. Tooltip and screen-reader label of the X button next to a selected file
+#. -->
+msgid "Remove file"
+msgstr ""
+
+#. Tooltip of the X button of a filter row
+msgid "Remove filter"
+msgstr ""
+
+#. Tooltip of the remove button on an active filter; {label} is the filter
+#. value, e.g. "Sales"
+msgid "Remove filter {label}"
+msgstr ""
+
+msgid "Remove header row"
+msgstr ""
+
+msgid "Remove language"
+msgstr ""
+
+msgid "Remove link"
+msgstr ""
+
+msgid "Remove subscription key"
+msgstr ""
+
+msgid "Removing …"
+msgstr ""
+
+#. Verb: button
+msgid "Rename"
+msgstr ""
+
+msgid "Rename page"
+msgstr ""
+
+msgid "Replace (overwrite existing content)"
+msgstr ""
+
+#. Verb: button
+msgid "Reply"
+msgstr ""
+
+#. Above the comment box; {name} is the name of the person being replied to
+msgid "Replying to {name}"
+msgstr ""
+
+msgid "Report sent"
+msgstr ""
+
+#. Tooltip of a disabled display-mode button in the photo widget settings
+msgid "Requires metadata not available in this folder"
+msgstr ""
+
+msgid "Resetting …"
+msgstr ""
+
+msgid "Response mapping"
+msgstr ""
+
+#. Verb: button that restores the selected version
+msgid "Restore"
+msgstr ""
+
+#. Tooltip and screen-reader label of the restore button in the version
+#. history -->
+msgid "Restore this version"
+msgstr ""
+
+msgid "Restore version"
+msgstr ""
+
+#. Verb: button
+msgid "Retry"
+msgstr ""
+
+#. Verb: button that disables a feed URL
+msgid "Revoke"
+msgstr ""
+
+msgid "Right column"
+msgstr ""
+
+#. Icon name in the link-icon picker (rocket taking off). Noun phrase.
+msgid "Rocket launch"
+msgstr ""
+
+#. Noun: profile field (job role)
+msgid "Role"
+msgstr ""
+
+msgid "Row columns:"
+msgstr ""
+
+msgid "RSS feed"
+msgstr ""
+
+msgid "RSS feeds are disabled. The administrator has turned off public link sharing in the Nextcloud Sharing settings."
+msgstr ""
+
+msgid "RSS/Atom feed"
+msgstr ""
+
+msgid "Same tab"
+msgstr ""
+
+#. Verb: button -->
+msgid "Save"
+msgstr ""
+
+msgid "Save & activate"
+msgstr ""
+
+msgid "Save as template"
+msgstr ""
+
+#. Screen-reader label of the save button in edit mode, not shown on screen
+#. -->
+msgid "Save changes"
+msgstr ""
+
+msgid "Save connections"
+msgstr ""
+
+msgid "Save connections first to test"
+msgstr ""
+
+msgid "Save engagement settings"
+msgstr ""
+
+msgid "Save navigation"
+msgstr ""
+
+msgid "Save publication settings"
+msgstr ""
+
+msgid "Save settings"
+msgstr ""
+
+msgid "Save template"
+msgstr ""
+
+msgid "Save token"
+msgstr ""
+
+msgid "Save video settings"
+msgstr ""
+
+msgid "Saving …"
+msgstr ""
+
+msgid "Saving …"
+msgstr ""
+
+msgid "Scan for orphaned data"
+msgstr ""
+
+msgid "Scanning …"
+msgstr ""
+
+#. Publication status of a page with a future start date, keep short
+msgid "Scheduled"
+msgstr ""
+
+#. Column header: what a share link covers, keep short
+msgid "Scope"
+msgstr ""
+
+#. Screen-reader label of the search field of the people filter, not shown
+#. on screen
+msgid "Search by name"
+msgstr ""
+
+msgid "Search by name …"
+msgstr ""
+
+#. Screen-reader label of the search field of the page picker, not shown on
+#. screen -->
+msgid "Search pages"
+msgstr ""
+
+msgid "Search pages …"
+msgstr ""
+
+msgid "Search users …"
+msgstr ""
+
+#. Noun: fallback title of a collapsible section -->
+msgid "Section"
+msgstr ""
+
+msgid "Section link copied"
+msgstr ""
+
+#. Screen-reader label of the title input of a collapsible section, not
+#. shown on screen -->
+msgid "Section title"
+msgstr ""
+
+msgid "Section title …"
+msgstr ""
+
+#. Noun: name of an icon in the icon picker of the Links widget
+msgid "Security"
+msgstr ""
+
+#. Verb: button
+msgid "Select"
+msgstr ""
+
+msgid "Select …"
+msgstr ""
+
+msgid "Select a connection …"
+msgstr ""
+
+msgid "Select a destination page"
+msgstr ""
+
+msgid "Select a folder to use \"On this day\"."
+msgstr ""
+
+msgid "Select a folder."
+msgstr ""
+
+msgid "Select a language …"
+msgstr ""
+
+msgid "Select a language."
+msgstr ""
+
+msgid "Select a page …"
+msgstr ""
+
+msgid "Select a page or folder to show content from, including all subpages"
+msgstr ""
+
+msgid "Select a page to move."
+msgstr ""
+
+msgid "Select an icon"
+msgstr ""
+
+msgid "Select field"
+msgstr ""
+
+msgid "Select from list"
+msgstr ""
+
+msgid "Select group"
+msgstr ""
+
+#. Title of the media picker dialog when choosing an image
+msgid "Select image"
+msgstr ""
+
+#. Screen-reader label of the file input of the media picker for images,
+#. not shown on screen
+msgid "Select image file"
+msgstr ""
+
+msgid "Select language"
+msgstr ""
+
+msgid "Select media"
+msgstr ""
+
+msgid "Select navigation type"
+msgstr ""
+
+msgid "Select one or more calendars in the widget editor"
+msgstr ""
+
+msgid "Select page"
+msgstr ""
+
+msgid "Select page:"
+msgstr ""
+
+msgid "Select parent page (leave empty for language root)"
+msgstr ""
+
+msgid "Select people"
+msgstr ""
+
+msgid "Select people in edit mode"
+msgstr ""
+
+msgid "Select the language where pages will be imported"
+msgstr ""
+
+msgid "Select the MetaVox date fields used for publication filtering. The News widget will use these fields to filter pages based on their publication period."
+msgstr ""
+
+msgid "Select the page to link."
+msgstr ""
+
+msgid "Select value"
+msgstr ""
+
+#. Title of the media picker dialog when choosing a video
+msgid "Select video"
+msgstr ""
+
+#. Screen-reader label of the file input of the media picker for videos,
+#. not shown on screen
+msgid "Select video file"
+msgstr ""
+
+msgid "Select where to place imported pages. Leave empty to import at language root level."
+msgstr ""
+
+msgid "Select ZIP file"
+msgstr ""
+
+msgid "Selected: {name} — {role}"
+msgstr ""
+
+msgid "Selection mode"
+msgstr ""
+
+#. Verb: button
+msgid "Send"
+msgstr ""
+
+msgid "Send report now"
+msgstr ""
+
+msgid "Sending …"
+msgstr ""
+
+msgid "September"
+msgstr ""
+
+#. Tooltip and screen-reader label of a house button in the page structure
+#. -->
+msgid "Set as homepage"
+msgstr ""
+
+msgid "Set to 0 to disable autoplay"
+msgstr ""
+
+msgid "Set your language under Personal settings to see the intranet in a language that has content."
+msgstr ""
+
+#. Noun: name of an icon in the icon picker of the Links widget
+msgid "Settings"
+msgstr ""
+
+msgid "Setup failed: An unexpected error occurred while setting up the IntraVox Team folder. Please check the Nextcloud logs for details."
+msgstr ""
+
+msgid "Setup failed: Could not access the IntraVox Team folder. Please check file system permissions."
+msgstr ""
+
+msgid "Setup failed: Could not create the IntraVox Team folder."
+msgstr ""
+
+msgid "Setup failed: Could not create the IntraVox Team folder. Please check if the Team Folders app is working correctly."
+msgstr ""
+
+msgid "Setup failed: The Team Folders app is not installed or enabled. Please install and enable the Team Folders app in Nextcloud first."
+msgstr ""
+
+msgid "Share anonymous usage statistics"
+msgstr ""
+
+#. Tooltip of the translation coverage badge; Transifex is the translation
+#. platform
+msgid "Share of the IntraVox interface translated into this language via Transifex. This rises as translators contribute."
+msgstr ""
+
+msgid "Share this page"
+msgstr ""
+
+msgid "Shared library"
+msgstr ""
+
+msgid "SharePoint site URL"
+msgstr ""
+
+#. Noun: settings tab
+msgid "Sharing"
+msgstr ""
+
+msgid "Short description"
+msgstr ""
+
+#. Screen-reader label of a map marker, not shown on screen; {count} is a
+#. number of photos, {location} a place name
+msgid "Show {count} photos in {location}"
+msgstr ""
+
+msgid "Show a search box"
+msgstr ""
+
+#. Button that expands a filter list; {count} is the number of options
+msgid "Show all ({count})"
+msgstr ""
+
+msgid "Show captions"
+msgstr ""
+
+msgid "Show columns"
+msgstr ""
+
+msgid "Show companies"
+msgstr ""
+
+msgid "Show daily mini-map"
+msgstr ""
+
+msgid "Show date"
+msgstr ""
+
+msgid "Show documents from a folder with timeline, list, or grouped layouts"
+msgstr ""
+
+msgid "Show events from shared calendars"
+msgstr ""
+
+msgid "Show excerpt"
+msgstr ""
+
+msgid "Show image"
+msgstr ""
+
+#. Tooltip and screen-reader label of a button in the photo viewer; Files
+#. is the Nextcloud Files app
+msgid "Show in Files"
+msgstr ""
+
+msgid "Show items from an external feed or LMS"
+msgstr ""
+
+msgid "Show location"
+msgstr ""
+
+msgid "Show more"
+msgstr ""
+
+msgid "Show news from a folder"
+msgstr ""
+
+msgid "Show only published pages"
+msgstr ""
+
+msgid "Show overview map"
+msgstr ""
+
+msgid "Show People widgets on public share links"
+msgstr ""
+
+msgid "Show photos from a folder with rich layouts"
+msgstr ""
+
+msgid "Show results"
+msgstr ""
+
+msgid "Show source"
+msgstr ""
+
+msgid "Show team members or people"
+msgstr ""
+
+msgid "Show the executive and functional matrix"
+msgstr ""
+
+msgid "Show this many at a time, with arrows to page through the rest. Set to 0 to show every item at once."
+msgstr ""
+
+msgid "Show time"
+msgstr ""
+
+msgid "Show title"
+msgstr ""
+
+msgid "Show users matching these criteria"
+msgstr ""
+
+#. {shown} and {total} are numbers of people in the People widget -->
+msgid "Showing {shown} of {total} people"
+msgstr ""
+
+#. {n} is the maximum number of documents the widget loads
+msgid "Showing first {n} documents. Use filters or a more specific folder."
+msgstr ""
+
+#. {n} is the maximum number of photos the widget loads
+msgid "Showing first {n} photos. Use filters or a more specific folder to narrow the selection."
+msgstr ""
+
+#. {cap} is the maximum number of accounts the People widget scans, e.g.
+#. 2000
+msgid "Showing results from the first {cap} accounts. Counts may be incomplete — add a group filter in the widget settings for exact numbers."
+msgstr ""
+
+#. Adjective: complexity level of a page template
+msgid "Simple"
+msgstr ""
+
+#. Noun: column header or file size label
+msgid "Size"
+msgstr ""
+
+#. Label of the size choice -->
+msgid "Size:"
+msgstr ""
+
+msgid "Skip to main content"
+msgstr ""
+
+msgid "Slideshow speed"
+msgstr ""
+
+#. Slideshow speed option
+msgid "Slow"
+msgstr ""
+
+#. Size option
+msgid "Small"
+msgstr ""
+
+msgid "Smallest first"
+msgstr ""
+
+msgid "Social links (X/Bluesky/Fediverse)"
+msgstr ""
+
+#. Stands in for {displayName} when the name of the user holding the page
+#. lock is unknown
+msgid "Someone"
+msgstr ""
+
+msgid "Sort by"
+msgstr ""
+
+#. Screen-reader label of the sort dropdown above the comments, not shown
+#. on screen
+msgid "Sort comments"
+msgstr ""
+
+#. Screen-reader name of the ascending/descending choice in the feed
+#. settings, not shown on screen
+msgid "Sort order"
+msgstr ""
+
+msgid "Sorting on a MetaVox field reorders within each loaded page (best-effort across infinite scroll)."
+msgstr ""
+
+#. Noun: section heading (where the content comes from)
+msgid "Source"
+msgstr ""
+
+msgid "Source folder"
+msgstr ""
+
+msgid "Source location"
+msgstr ""
+
+msgid "Source type"
+msgstr ""
+
+#. {path} is the page or folder the news widget reads from -->
+msgid "Source: {path}"
+msgstr ""
+
+#. Group heading in the documents widget when files are grouped by type
+msgid "Spreadsheets"
+msgstr ""
+
+msgid "Start building your intranet with pages, navigation, and multimedia content."
+msgstr ""
+
+msgid "Start import"
+msgstr ""
+
+msgid "Start recovery"
+msgstr ""
+
+#. Tooltip and screen-reader label of the slideshow button while it is
+#. stopped
+msgid "Start slideshow"
+msgstr ""
+
+#. Column header, keep short
+msgid "Status"
+msgstr ""
+
+#. Noun: text editor formatting option -->
+msgid "Strikethrough"
+msgstr ""
+
+#. Noun: photo keywords in the photo details
+msgid "Subjects"
+msgstr ""
+
+msgid "Subscription activated!"
+msgstr ""
+
+msgid "Subscription active — thank you for supporting IntraVox!"
+msgstr ""
+
+msgid "Subscription key"
+msgstr ""
+
+msgid "Subscription key is invalid or expired."
+msgstr ""
+
+msgid "Subscription key removed."
+msgstr ""
+
+#. {reason} is the reason returned by the license server, usually in
+#. English
+msgid "Subscription key saved but validation failed: {reason}"
+msgstr ""
+
+#. Label of the second text field of a link in the tiles layout
+msgid "Subtitle:"
+msgstr ""
+
+#. Icon name in the link-icon picker (lifebuoy symbol). Noun: help desk /
+#. assistance, not the verb "to support".
+msgid "Support"
+msgstr ""
+
+msgid "Support IntraVox"
+msgstr ""
+
+msgid "SVG file too large. Maximum size is 1 MB."
+msgstr ""
+
+#. Noun: table insertion in the text editor
+msgid "Table"
+msgstr ""
+
+msgid "Target language"
+msgstr ""
+
+#. %s is the ID of the page chosen as the new parent
+msgid "Target parent page not found: %s"
+msgstr ""
+
+#. Noun: name of an icon in the icon picker of the Links widget
+msgid "Tasks"
+msgstr ""
+
+#. Noun: name of an icon in the icon picker of the Links widget
+msgid "Team"
+msgstr ""
+
+msgid "Template name"
+msgstr ""
+
+msgid "Template not found"
+msgstr ""
+
+#. {name} is the title of the new template
+msgid "Template saved: {name}"
+msgstr ""
+
+msgid "Tenant ID"
+msgstr ""
+
+msgid "Test connection"
+msgstr ""
+
+msgid "Testing …"
+msgstr ""
+
+#. Noun: text widget or a generic text field
+msgid "Text"
+msgstr ""
+
+#. Tooltip and screen-reader label of the alignment button in the text
+#. editor toolbar -->
+msgid "Text alignment"
+msgstr ""
+
+#. Screen-reader label of a text widget's editor, not shown on screen -->
+msgid "Text block"
+msgstr ""
+
+#. Group heading in the documents widget when files are grouped by type
+msgid "Text documents"
+msgstr ""
+
+#. Label of the link text field -->
+msgid "Text:"
+msgstr ""
+
+msgid "Thank you for helping improve IntraVox."
+msgstr ""
+
+msgid "That group already has a version in that language."
+msgstr ""
+
+msgid "That language has no content folder yet. Add the language in the Administration settings first."
+msgstr ""
+
+msgid "That page could not be found. Showing the home page instead."
+msgstr ""
+
+#. %s is a language code, e.g. "de"
+msgid "The content folder for language %s is not a folder."
+msgstr ""
+
+msgid "The content is copied as a starting point and saved as a draft. From then on both pages are independent — translating one never changes the other."
+msgstr ""
+
+#. export.json is a file name, keep it; {detail} is the technical parser
+#. message
+msgid "The export.json file is not valid JSON: {detail}"
+msgstr ""
+
+#. %s is the PHP setting name upload_max_filesize
+msgid "The file is larger than the server allows (%s)."
+msgstr ""
+
+msgid "The file is larger than the upload form allows."
+msgstr ""
+
+msgid "The file name contains invalid characters."
+msgstr ""
+
+msgid "The file was only partially uploaded."
+msgstr ""
+
+msgid "The filters are too large to process."
+msgstr ""
+
+msgid "The full URL of your SharePoint site. Found in your browser address bar."
+msgstr ""
+
+msgid "The home page cannot be moved"
+msgstr ""
+
+msgid "The IntraVox Team folder will be created automatically when you install demo data."
+msgstr ""
+
+#. %s is the technical reason reported by the server
+msgid "The page could not be validated: %s"
+msgstr ""
+
+msgid "The page data could not be read."
+msgstr ""
+
+msgid "The page was renamed, but its folder could not be renamed."
+msgstr ""
+
+msgid "The page you are looking for does not exist or is no longer publicly accessible."
+msgstr ""
+
+msgid "The parent page must be in the language you import into"
+msgstr ""
+
+msgid "The restored version does not contain valid page data."
+msgstr ""
+
+msgid "The server could not write the file to disk."
+msgstr ""
+
+msgid "The server has no temporary folder for uploads."
+msgstr ""
+
+msgid "The source did not respond in time."
+msgstr ""
+
+msgid "The source folder is not orphaned, or it does not exist."
+msgstr ""
+
+#. {error} is the message returned by the telemetry server
+msgid "The telemetry server returned an error: {error}"
+msgstr ""
+
+msgid "The upload could not be opened as a ZIP archive."
+msgstr ""
+
+msgid "The upload failed for an unknown reason."
+msgstr ""
+
+msgid "The upload is incomplete."
+msgstr ""
+
+msgid "The video file is corrupted or uses an unsupported format."
+msgstr ""
+
+msgid "The video format is not supported by your browser."
+msgstr ""
+
+msgid "These pages are both in the same language, so one cannot be a translation of the other."
+msgstr ""
+
+msgid "This action cannot be undone."
+msgstr ""
+
+msgid "This authorization does not belong to your session."
+msgstr ""
+
+msgid "This changes the links in the navigation bar and their order only. It does not move or rename the actual pages. To organize pages, use \"Page structure\"."
+msgstr ""
+
+msgid "This connection"
+msgstr ""
+
+msgid "This connection does not support OAuth2."
+msgstr ""
+
+msgid "This connection is currently disabled by an administrator."
+msgstr ""
+
+#. {count} is a number of pages; Files is the Nextcloud Files app
+msgid "This deletes {count} page(s) and their media in this language. The folder is moved to the trash, so it can be restored from Files."
+msgstr ""
+
+msgid "This domain is already in the list"
+msgstr ""
+
+msgid "This feed is too large to process."
+msgstr ""
+
+msgid "This feed only provides a summary. Read the full article on the website."
+msgstr ""
+
+msgid "This feed provides no article text. Read it on the website instead."
+msgstr ""
+
+msgid "This folder does not exist."
+msgstr ""
+
+msgid "This folder is not orphaned, or it does not exist."
+msgstr ""
+
+#. {total} and {cap} are numbers of accounts; "~12" shows how an
+#. approximate count looks, keep the tilde
+msgid "This instance has {total} accounts, more than the {cap} this widget scans. Filter counts will be approximate and shown as \"~12\"."
+msgstr ""
+
+#. {language} is a language name, e.g. "Deutsch"
+msgid "This intranet has no pages in {language} yet."
+msgstr ""
+
+msgid "This IntraVox subscription key has been deactivated. Contact us to reactivate it."
+msgstr ""
+
+msgid "This IntraVox subscription key is already registered to another Nextcloud instance. Contact us if this server replaces that one."
+msgstr ""
+
+msgid "This IntraVox subscription key is not known to the license server. Check it for typos."
+msgstr ""
+
+msgid "This IntraVox subscription key is not valid yet."
+msgstr ""
+
+msgid "This is a visibility filter, not a permission. The page file keeps the folder's normal access rights, so anyone who can read the folder can still open it via Files, WebDAV, search or a sync client. Do not rely on it for confidential content."
+msgstr ""
+
+msgid "This is the last row on the page. Deleting it leaves the page empty — you can add a new row afterwards."
+msgstr ""
+
+#. Tooltip of a greyed-out level in the page structure -->
+msgid "This level has no page in this language yet"
+msgstr ""
+
+#. {language} is a language name, e.g. "Deutsch"
+msgid "This link shares all {language} pages"
+msgstr ""
+
+msgid "This link shares only this page"
+msgstr ""
+
+#. {section} is the title of a page and everything below it
+msgid "This link shares the \"{section}\" section"
+msgstr ""
+
+msgid "This month"
+msgstr ""
+
+msgid "This name cannot be used for a template."
+msgstr ""
+
+msgid "This organizational view is not available in public shares."
+msgstr ""
+
+msgid "This page also exists in:"
+msgstr ""
+
+msgid "This page has expired: its expiration date has passed, so it is hidden from readers. Change or clear the expiration date to make it visible again."
+msgstr ""
+
+msgid "This page has no headings."
+msgstr ""
+
+msgid "This page is a draft: hidden from readers everywhere in IntraVox until you publish it."
+msgstr ""
+
+msgid "This page is already in that language."
+msgstr ""
+
+#. Tooltip; {language} is a language name, e.g. "Deutsch"
+msgid "This page is in {language}, not your own language. Editing it saves back to {language}."
+msgstr ""
+
+#. {language} is a language name, e.g. "Deutsch"
+msgid "This page is in {language}."
+msgstr ""
+
+#. %1$s and %2$s are language names, e.g. "This page is in English and
+#. cannot be moved into the Deutsch structure."
+msgid "This page is in %1$s and cannot be moved into the %2$s structure. Pages stay in the language they were written in."
+msgstr ""
+
+msgid "This page is not available or the share link has expired."
+msgstr ""
+
+msgid "This page is not linked to a version in another language yet."
+msgstr ""
+
+msgid "This page is not shared publicly"
+msgstr ""
+
+msgid "This page is scheduled: it has a publish date in the future, so it stays hidden from readers until that moment and then appears automatically. The publish date overrides the Draft/Published button — clear the date to switch manually again."
+msgstr ""
+
+#. Tooltip of the share button when a public link exists
+msgid "This page is shared via a public link"
+msgstr ""
+
+msgid "This page is the homepage. Set another page as the homepage first."
+msgstr ""
+
+msgid "This page was changed by someone else while you were editing it. Reload the page to get the latest version before saving again."
+msgstr ""
+
+msgid "This shared page is password protected. Enter the password to continue."
+msgstr ""
+
+msgid "This shows all your actual pages. Use \"Manage structure\" to move, reorder, copy or delete them. Only top-level pages can be set as the homepage; to make a subpage the homepage, move it to the top level first. To change the links in the navigation bar and their order, use \"Edit navigation\"."
+msgstr ""
+
+msgid "This source failed repeatedly and is paused. It retries automatically."
+msgstr ""
+
+msgid "This source refuses requests from this server. Nothing to fix here — the feed blocks datacenter addresses."
+msgstr ""
+
+msgid "This storage does not support version labels."
+msgstr ""
+
+msgid "This SVG file cannot be used: it could not be made safe."
+msgstr ""
+
+msgid "This URL contains a personal token. Anyone with this link can read your feed. Do not share it publicly."
+msgstr ""
+
+msgid "This URL has already been added"
+msgstr ""
+
+msgid "This week"
+msgstr ""
+
+#. {fields} is a comma-separated list of profile field names
+msgid "This widget already filters on {fields}. Visitors cannot widen that, so those fields would only show empty options and are not offered here."
+msgstr ""
+
+msgid "This widget already has a group filter, so its own results are scoped — but the group is larger than the scan limit."
+msgstr ""
+
+#. {language} is a language name, e.g. "Nederlands"
+msgid "This will delete all existing demo content for {language} and replace it with fresh demo data."
+msgstr ""
+
+#. Followed by a list; {language} is a language name, e.g. "Nederlands"
+msgid "This will delete data for {language}:"
+msgstr ""
+
+msgid "Thumbnail (optional)"
+msgstr ""
+
+msgid "Tile size"
+msgstr ""
+
+msgid "Tile title"
+msgstr ""
+
+#. Noun: layout option
+msgid "Tiles"
+msgstr ""
+
+#. Noun: layout option
+msgid "Timeline"
+msgstr ""
+
+msgid "Timeline only"
+msgstr ""
+
+#. Noun: title field or sort option
+msgid "Title"
+msgstr ""
+
+msgid "Title (optional):"
+msgstr ""
+
+msgid "Title field"
+msgstr ""
+
+#. Label of the title field
+msgid "Title:"
+msgstr ""
+
+msgid "To enable anonymous access to IntraVox pages, an administrator must first enable \"Allow users to share via link and emails\" in the Nextcloud Sharing settings."
+msgstr ""
+
+msgid "To make this page accessible without login, create a public share link in the Files app."
+msgstr ""
+
+#. Date label of a calendar event
+msgid "Today"
+msgstr ""
+
+#. Screen-reader label of a clickable connection row that expands its
+#. settings, not shown on screen
+msgid "Toggle connection details"
+msgstr ""
+
+#. Tooltip and screen-reader label of the info button of the photo viewer
+msgid "Toggle info panel"
+msgstr ""
+
+#. Screen-reader label of the map button of the photo viewer, not shown on
+#. screen
+msgid "Toggle location map"
+msgstr ""
+
+msgid "Token missing"
+msgstr ""
+
+msgid "Token validation failed. Please check that the token is correct and has the required permissions."
+msgstr ""
+
+msgid "Tokens and secrets are not included in the export. You will need to enter them after importing."
+msgstr ""
+
+#. Date label of a calendar event
+msgid "Tomorrow"
+msgstr ""
+
+msgid "Too many requests. Please try again later."
+msgstr ""
+
+#. Position option (above), button in the image settings -->
+msgid "Top"
+msgstr ""
+
+#. Noun: label before a total number of pages
+msgid "Total"
+msgstr ""
+
+msgid "Total user count and active users"
+msgstr ""
+
+msgid "Tracking concerns"
+msgstr ""
+
+msgid "Translation created as a draft"
+msgstr ""
+
+msgid "Translation linked"
+msgstr ""
+
+msgid "Translation unlinked"
+msgstr ""
+
+#. Noun: name of the sidebar tab
+msgid "Translations"
+msgstr ""
+
+#. Hint for the "Travelogue" style. A "timeline rail" is a vertical
+#. timeline strip running alongside the photos, marking chronological
+#. order.
+msgid "Travel diary with timeline rail"
+msgstr ""
+
+#. Name of a photo-gallery layout style — a travel-diary look.
+msgid "Travelogue"
+msgstr ""
+
+#. Noun: label of the connection type
+msgid "Type"
+msgstr ""
+
+#. {word} is the confirmation word the admin must type, e.g. "DELETE"
+msgid "Type {word} to confirm:"
+msgstr ""
+
+#. Small badge after a language name: how much of the IntraVox interface is
+#. translated; {percent} is a number, keep it short
+msgid "UI {percent}%"
+msgstr ""
+
+#. Unique ID: label of the page's technical identifier, abbreviation -->
+msgid "UID"
+msgstr ""
+
+#. Status of demo content that cannot be installed, keep short
+msgid "Unavailable"
+msgstr ""
+
+#. Tooltip and screen-reader label of the underline button in the text
+#. editor; keep the keyboard shortcut -->
+msgid "Underline (Ctrl+U)"
+msgstr ""
+
+msgid "Unknown error"
+msgstr ""
+
+#. Placeholder of an input for a MetaVox field this version does not know;
+#. {type} is a technical field type
+msgid "Unknown field type: {type}"
+msgstr ""
+
+msgid "Unknown platform"
+msgstr ""
+
+#. {type} is a technical widget type name -->
+msgid "Unknown widget type: {type}"
+msgstr ""
+
+#. Verb: button that removes a translation link
+msgid "Unlink"
+msgstr ""
+
+#. Tooltip of a button next to a language version of the page
+msgid "Unlink this translation"
+msgstr ""
+
+#. Verb: button that releases the edit lock of a page
+msgid "Unlock"
+msgstr ""
+
+#. {version} is the version number written in the export file
+msgid "Unsupported export version: {version}. Please re-export from a recent IntraVox install."
+msgstr ""
+
+#. %s is a language code, e.g. "de"
+msgid "Unsupported language: %s"
+msgstr ""
+
+#. Fallback title of a page without a title -->
+msgid "Untitled"
+msgstr ""
+
+msgid "Untitled page"
+msgstr ""
+
+msgid "Upcoming (30 days)"
+msgstr ""
+
+msgid "Upcoming deadlines"
+msgstr ""
+
+#. Short age of a feed, keep it short; {n} is a number of days
+msgid "Updated {n} d ago"
+msgstr ""
+
+#. Short age of a feed, keep it short; {n} is a number of hours
+msgid "Updated {n} h ago"
+msgstr ""
+
+#. Short age of a feed, keep it short; {n} is a number of minutes
+msgid "Updated {n} min ago"
+msgstr ""
+
+msgid "Updated just now"
+msgstr ""
+
+#. Verb: button or tab
+msgid "Upload"
+msgstr ""
+
+#. {error} is the reason reported by the server
+msgid "Upload failed: {error}"
+msgstr ""
+
+msgid "Upload files to see them here"
+msgstr ""
+
+msgid "Upload to shared library to see files here"
+msgstr ""
+
+msgid "Uploading …"
+msgstr ""
+
+#. Import progress; {percent} is a number from 0 to 100
+msgid "Uploading … {percent}%"
+msgstr ""
+
+#. Import progress when the total size is unknown; {size} is the uploaded
+#. amount, e.g. 12.50
+msgid "Uploading … {size} MB"
+msgstr ""
+
+msgid "Uploading ZIP file …"
+msgstr ""
+
+msgid "URL field"
+msgstr ""
+
+#. Label before a web address -->
+msgid "URL:"
+msgstr ""
+
+msgid "Use different name"
+msgstr ""
+
+msgid "Use global setting"
+msgstr ""
+
+msgid "User authentication"
+msgstr ""
+
+msgid "User names or email addresses"
+msgstr ""
+
+msgid "Using global setting (enabled)"
+msgstr ""
+
+msgid "Validating …"
+msgstr ""
+
+#. Placeholder of a value input
+msgid "Value"
+msgstr ""
+
+#. Noun: fallback name of a page version -->
+msgid "Version"
+msgstr ""
+
+msgid "Version history"
+msgstr ""
+
+msgid "Version history is not available on this server."
+msgstr ""
+
+msgid "Version label updated"
+msgstr ""
+
+msgid "Version not found"
+msgstr ""
+
+msgid "Version restored"
+msgstr ""
+
+#. Noun: name of the sidebar tab -->
+msgid "Versions"
+msgstr ""
+
+msgid "Versions are created automatically when you save changes"
+msgstr ""
+
+msgid "Vertical position:"
+msgstr ""
+
+#. Noun: video widget or fallback title of an embedded video
+msgid "Video"
+msgstr ""
+
+msgid "Video cannot be played"
+msgstr ""
+
+msgid "Video domains saved"
+msgstr ""
+
+msgid "Video platform"
+msgstr ""
+
+msgid "Video playback was aborted."
+msgstr ""
+
+msgid "Video plays without sound (required for autoplay in most browsers)"
+msgstr ""
+
+msgid "Video service not allowed"
+msgstr ""
+
+msgid "Video services"
+msgstr ""
+
+msgid "Video source:"
+msgstr ""
+
+msgid "Video URL"
+msgstr ""
+
+msgid "Video URL:"
+msgstr ""
+
+msgid "Video will restart when finished"
+msgstr ""
+
+msgid "Video will start automatically (muted for browser compatibility)"
+msgstr ""
+
+#. Label of the video field -->
+msgid "Video:"
+msgstr ""
+
+msgid "video.example.org (HTTPS required)"
+msgstr ""
+
+msgid "View larger map"
+msgstr ""
+
+msgid "Visit support"
+msgstr ""
+
+#. Tooltip of a link icon next to a video service
+msgid "Visit website"
+msgstr ""
+
+msgid "Visitor filters"
+msgstr ""
+
+msgid "Visitors can only VIEW this content. Editing via this link is not possible, even if the Files share allows it."
+msgstr ""
+
+msgid "Visitors must enter a password to access this link. Manage in Files."
+msgstr ""
+
+#. Hint under the "Let visitors filter these results" toggle. "the
+#. selection above" = the group/field filters the admin set higher up in
+#. this same widget editor; visitors can narrow within that, never escape
+#. it.
+msgid "Visitors pick from these fields themselves. They can only narrow the selection above further — never widen it."
+msgstr ""
+
+msgid "Visual grid — each document rendered as a tile with first-page preview thumbnail. Best for browsable document libraries."
+msgstr ""
+
+msgid "Visual style"
+msgstr ""
+
+msgid "Warning: This action will permanently delete all content."
+msgstr ""
+
+msgid "Warning: This will overwrite all existing content for the selected language."
+msgstr ""
+
+msgid "Warning: This will permanently delete all data."
+msgstr ""
+
+msgid "We collect: page counts per language, user counts, version info (IntraVox, Nextcloud, PHP), and basic server configuration. No personal data or page content is shared."
+msgstr ""
+
+#. Noun: website field or icon
+msgid "Website"
+msgstr ""
+
+msgid "Welcome to IntraVox"
+msgstr ""
+
+msgid "What we collect"
+msgstr ""
+
+msgid "What we never collect"
+msgstr ""
+
+msgid "What would you like to do?"
+msgstr ""
+
+msgid "When the Team Folders app is reinstalled, previous data may become orphaned. This tool helps you recover or clean up that data."
+msgstr ""
+
+msgid "Whether your Nextcloud has an Extended Support / Enterprise subscription (a single yes/no, sourced from Nextcloud's public API)"
+msgstr ""
+
+#. Group heading in the documents widget when files are grouped by type
+#. (whiteboard drawings)
+msgid "Whiteboards"
+msgstr ""
+
+#. Noun: heading of the widget display options
+msgid "Widget"
+msgstr ""
+
+msgid "Widget title (optional)"
+msgstr ""
+
+#. Noun: section heading in the text editor's overflow menu -->
+msgid "Width"
+msgstr ""
+
+msgid "Width in pixels"
+msgstr ""
+
+msgid "Workspace lens"
+msgstr ""
+
+msgid "WORKSPACE LENS"
+msgstr ""
+
+#. Screen-reader label of the comment box, not shown on screen
+msgid "Write a comment"
+msgstr ""
+
+msgid "Write a comment …"
+msgstr ""
+
+#. Screen-reader label of the reply box, not shown on screen
+msgid "Write a reply"
+msgstr ""
+
+msgid "Write a reply …"
+msgstr ""
+
+#. Placeholder of a year input
+msgid "Year"
+msgstr ""
+
+msgid "year is"
+msgstr ""
+
+#. Tooltip of a reaction; {count} is a number of other people, {emoji} is
+#. the emoji
+msgid "You and {count} others reacted with {emoji}"
+msgstr ""
+
+#. Followed by a list; {id} is the numeric ID of a leftover Team folder
+msgid "You are about to delete orphaned folder #{id}:"
+msgstr ""
+
+msgid "You are not logged in."
+msgstr ""
+
+#. Activity stream entry; %s is the page title
+msgid "You commented on \"%s\""
+msgstr ""
+
+#. Activity stream entry; %s is the page title
+msgid "You created page \"%s\""
+msgstr ""
+
+#. Activity stream entry; %s is the page title
+msgid "You deleted page \"%s\""
+msgstr ""
+
+msgid "You do not have access to this folder"
+msgstr ""
+
+msgid "You do not have access to this widget"
+msgstr ""
+
+msgid "You do not have permission to add media to this page"
+msgstr ""
+
+msgid "You do not have permission to add pages under this parent page"
+msgstr ""
+
+msgid "You do not have permission to create a page here"
+msgstr ""
+
+msgid "You do not have permission to create a page in that language"
+msgstr ""
+
+msgid "You do not have permission to create templates"
+msgstr ""
+
+msgid "You do not have permission to edit this page"
+msgstr ""
+
+msgid "You do not have permission to move a page here"
+msgstr ""
+
+msgid "You do not have permission to move this page"
+msgstr ""
+
+msgid "You do not have permission to restore this page"
+msgstr ""
+
+msgid "You need edit permission on both pages to link them"
+msgstr ""
+
+#. Activity stream entry; %s is the page title
+msgid "You reacted to \"%s\""
+msgstr ""
+
+#. Activity stream entry; %s is the page title
+msgid "You updated page \"%s\""
+msgstr ""
+
+#. Activity stream entry; %s is the page title
+msgid "You viewed \"%s\""
+msgstr ""
+
+msgid "You will get a fresh empty homepage and empty navigation."
+msgstr ""
+
+msgid "Your actual server URL"
+msgstr ""
+
+msgid "Your browser does not support HTML5 video."
+msgstr ""
+
+msgid "Your edit lock has expired. Please save your work."
+msgstr ""
+
+msgid "Your feed URL"
+msgstr ""
+
+msgid "Your installation"
+msgstr ""
+
+msgid "Your intranet can hold content in any language Nextcloud supports. A language becomes active as soon as it has a homepage. Users see content in their own Nextcloud language; if there is none, they are shown the recommended language below."
+msgstr ""
+
+#. {date} is a formatted date
+msgid "Your IntraVox subscription expired on {date}. Renew it to keep receiving support."
+msgstr ""
+
+msgid "Your IntraVox subscription has expired. Renew it to keep receiving support."
+msgstr ""
+
+msgid "Your IntraVox subscription key needs attention."
+msgstr ""
+
+msgid "YouTube (privacy mode)"
+msgstr ""
+
+msgid "YouTube (standard)"
+msgstr ""
+
+msgid "Z → A"
+msgstr ""
+
+msgid "ZIP (with media files)"
+msgstr ""
+
+#. Feed pagination, e.g. "11-20 of 57 items"; {start} and {end} are
+#. positions, %n is the total number of items
+msgid "{start}-{end} of %n item"
+msgid_plural "{start}-{end} of %n items"
+msgstr[0] ""
+msgstr[1] ""
+
+#. Option in the column-count dropdown of the Links widget; %n is the
+#. number of columns
+msgid "%n column"
+msgid_plural "%n columns"
+msgstr[0] ""
+msgstr[1] ""
+
+#. Part of the import summary; %n is the number of imported comments
+msgid "%n comment"
+msgid_plural "%n comments"
+msgstr[0] ""
+msgstr[1] ""
+
+#. Age of a comment; %n is a number of days
+msgid "%n day ago"
+msgid_plural "%n days ago"
+msgstr[0] ""
+msgstr[1] ""
+
+#. Added to the demo import result; %n is the number of files that already
+#. existed
+msgid "%n existing file skipped."
+msgid_plural "%n existing files skipped."
+msgstr[0] ""
+msgstr[1] ""
+
+#. Age of a comment; %n is a number of hours
+msgid "%n hour ago"
+msgid_plural "%n hours ago"
+msgstr[0] ""
+msgstr[1] ""
+
+#. Result of a connection test, e.g. "Connection OK — 12 items"; %n is the
+#. number of items the source returned
+msgid "%n item"
+msgid_plural "%n items"
+msgstr[0] ""
+msgstr[1] ""
+
+#. Added to the demo import result; %n is the number of failed files and
+#. folders
+msgid "%n item could not be imported."
+msgid_plural "%n items could not be imported."
+msgstr[0] ""
+msgstr[1] ""
+
+#. Part of the import summary; %n is the number of imported media files
+msgid "%n media file"
+msgid_plural "%n media files"
+msgstr[0] ""
+msgstr[1] ""
+
+#. Age of a comment; %n is a number of minutes
+msgid "%n minute ago"
+msgid_plural "%n minutes ago"
+msgstr[0] ""
+msgstr[1] ""
+
+#. Import preview; %n is the number of feed connections that do not exist
+#. yet
+msgid "%n new connection will be added."
+msgid_plural "%n new connections will be added."
+msgstr[0] ""
+msgstr[1] ""
+
+#. Number of pages in a language, shown in brackets after the language name
+msgid "%n page"
+msgid_plural "%n pages"
+msgstr[0] ""
+msgstr[1] ""
+
+#. Shown before creating a translation; %n counts the parent pages that
+#. have no version in the target language
+msgid "%n parent page does not exist in this language yet — the new page will appear in the same place, with a non-clickable level until you translate that too."
+msgid_plural "%n parent pages do not exist in this language yet — the new page will appear in the same place, with non-clickable levels until you translate those too."
+msgstr[0] ""
+msgstr[1] ""
+
+#. %n is the maximum number of page levels allowed
+msgid "Cannot create child page: maximum nesting depth of %n level would be exceeded"
+msgid_plural "Cannot create child page: maximum nesting depth of %n levels would be exceeded"
+msgstr[0] ""
+msgstr[1] ""
+
+#. Notification after recovering orphaned data; %n is the number of files
+#. copied
+msgid "Data recovered: %n file migrated"
+msgid_plural "Data recovered: %n files migrated"
+msgstr[0] ""
+msgstr[1] ""
+
+#. First sentence of the demo import result; %n is the number of imported
+#. files and folders
+msgid "Demo data imported: %n item."
+msgid_plural "Demo data imported: %n items."
+msgstr[0] ""
+msgstr[1] ""
+
+#. {field} is a technical field name in the export file, {version} an
+#. IntraVox version number
+msgid "Export is incomplete: %n page is missing {field}. Please re-export with IntraVox {version} or higher."
+msgid_plural "Export is incomplete: %n pages are missing {field}. Please re-export with IntraVox {version} or higher."
+msgstr[0] ""
+msgstr[1] ""
+
+#. Notification; %n is the number of feed connections written to the export
+#. file
+msgid "Exported %n connection"
+msgid_plural "Exported %n connections"
+msgstr[0] ""
+msgstr[1] ""
+
+#. Import preview, followed by a list; %n is the number of feed connections
+#. in the selected file
+msgid "Found %n connection in file:"
+msgid_plural "Found %n connections in file:"
+msgstr[0] ""
+msgstr[1] ""
+
+#. %n is the number of leftover IntraVox data folders found on the server
+msgid "Found %n orphaned data folder from a previous installation."
+msgid_plural "Found %n orphaned data folders from a previous installation."
+msgstr[0] ""
+msgstr[1] ""
+
+#. Notification after a scan; %n is the number of leftover IntraVox data
+#. folders
+msgid "Found %n orphaned folder"
+msgid_plural "Found %n orphaned folders"
+msgstr[0] ""
+msgstr[1] ""
+
+#. Button; %n is the number of feed connections that will be imported
+msgid "Import %n connection"
+msgid_plural "Import %n connections"
+msgstr[0] ""
+msgstr[1] ""
+
+#. %n is the number of imported feed connections; each connection needs its
+#. own API token
+msgid "Imported %n connection. Enter API tokens and save."
+msgid_plural "Imported %n connections. Enter API tokens and save."
+msgstr[0] ""
+msgstr[1] ""
+
+#. Result of a Confluence import; %n is the number of pages created -->
+msgid "Imported %n page"
+msgid_plural "Imported %n pages"
+msgstr[0] ""
+msgstr[1] ""
+
+#. %n is the number of accounts on this server; {email} is the Nextcloud
+#. sales e-mail address
+msgid "IntraVox is running for %n account here and keeps working in full without a subscription. If your organization gets value from it, a subscription is much appreciated — it funds the maintenance. Sold through Nextcloud: contact your account manager or {email}."
+msgid_plural "IntraVox is running for %n accounts here and keeps working in full without a subscription. If your organization gets value from it, a subscription is much appreciated — it funds the maintenance. Sold through Nextcloud: contact your account manager or {email}."
+msgstr[0] ""
+msgstr[1] ""
+
+#. %n is the number of files that could not be copied
+msgid "Migration completed with %n error"
+msgid_plural "Migration completed with %n errors"
+msgstr[0] ""
+msgstr[1] ""
+
+#. Button at the end of a long list of child pages; %n is the number of
+#. pages not yet shown. Both forms are the same in English -->
+msgid "Show %n more …"
+msgid_plural "Show %n more …"
+msgstr[0] ""
+msgstr[1] ""

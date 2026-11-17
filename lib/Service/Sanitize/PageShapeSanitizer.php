@@ -28,7 +28,7 @@ use Psr\Log\LoggerInterface;
  *   auditable place instead of spread across the write path.
  */
 final class PageShapeSanitizer {
-    private const ALLOWED_WIDGET_TYPES = ['text', 'heading', 'image', 'links', 'divider', 'video', 'news', 'people', 'calendar', 'feed', 'photo-story', 'file-story'];
+    private const ALLOWED_WIDGET_TYPES = ['text', 'heading', 'image', 'links', 'divider', 'video', 'news', 'people', 'calendar', 'feed', 'photo-story', 'file-story', 'organogram'];
     private const MAX_COLUMNS = 5;
 
     /**
@@ -84,7 +84,9 @@ final class PageShapeSanitizer {
             ]
         ];
 
-        // Preserve uniqueId if provided (for internal references)
+        if (is_bool($data['hidePageTitleBar'] ?? null)) {
+            $sanitized['hidePageTitleBar'] = $data['hidePageTitleBar'];
+        }
         if (isset($data['uniqueId'])) {
             $sanitized['uniqueId'] = $data['uniqueId'];
         }
@@ -371,20 +373,16 @@ final class PageShapeSanitizer {
                 $sanitized['items'] = [];
                 if (isset($widget['items']) && is_array($widget['items'])) {
                     foreach ($widget['items'] as $link) {
-                        $sanitizedLink = [];
-                        // Preserve title if present
+                        $sanitizedLink = WorkspaceMetadata::item($link);
                         if (isset($link['title'])) {
                             $sanitizedLink['title'] = $this->sanitizeText($link['title']);
                         }
-                        // Use sanitizeHtml for link text to allow HTML entities and formatting
                         $sanitizedLink['text'] = $this->htmlSanitizer->sanitize($link['text'] ?? '');
                         $sanitizedLink['url'] = $this->urlSanitizer->sanitize($link['url'] ?? '');
                         $sanitizedLink['icon'] = $this->sanitizeText($link['icon'] ?? '');
-                        // Preserve uniqueId for internal page links
                         if (isset($link['uniqueId']) && !empty($link['uniqueId'])) {
                             $sanitizedLink['uniqueId'] = $this->sanitizeText($link['uniqueId']);
                         }
-                        // Preserve target attribute
                         if (isset($link['target'])) {
                             $allowedTargets = ['_self', '_blank'];
                             $sanitizedLink['target'] = in_array($link['target'], $allowedTargets) ? $link['target'] : '_self';
@@ -405,8 +403,9 @@ final class PageShapeSanitizer {
                 }
                 break;
 
+            case 'organogram':
+                return array_merge($sanitized, WorkspaceMetadata::organogram($widget));
             case 'divider':
-                // Preserve divider styling properties
                 if (isset($widget['style'])) {
                     $allowedStyles = ['solid', 'dashed', 'dotted'];
                     $sanitized['style'] = in_array($widget['style'], $allowedStyles) ? $widget['style'] : 'solid';

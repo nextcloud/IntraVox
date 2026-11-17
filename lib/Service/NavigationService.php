@@ -263,7 +263,7 @@ class NavigationService {
             // Use uniqueId consistently (support legacy pageId for backwards compatibility)
             $uniqueId = $item['uniqueId'] ?? $item['pageId'] ?? null;
 
-            $validatedItem = [
+            $validatedItem = \OCA\IntraVox\Service\Sanitize\WorkspaceMetadata::item($item) + [
                 'id' => $item['id'] ?? uniqid('nav_'),
                 'title' => $item['title'] ?? '',
                 'uniqueId' => $uniqueId,
@@ -272,7 +272,6 @@ class NavigationService {
                 'children' => []
             ];
 
-            // Recursively validate children
             if (isset($item['children']) && is_array($item['children']) && $level < 3) {
                 $validatedItem['children'] = $this->validateNavigationItems($item['children'], $level + 1);
             }

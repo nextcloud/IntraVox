@@ -23,16 +23,10 @@ use OCP\Util;
 trait RendersAppShell {
 
     /**
-     * Load the three webpack bundles the SPA needs, in order:
-     * vendors (node_modules) -> shared (code used by main+admin) -> main. All
-     * three must load or the main entry's runtime never fires its mount (blank
-     * page, no error). Plus the main stylesheet.
+     * The manifest keeps PHP in sync with webpack's split entrypoints.
      */
     protected function emitAppShellAssets(): void {
-        Util::addScript('intravox', 'intravox-vendors');
-        Util::addScript('intravox', 'intravox-shared');
-        Util::addScript('intravox', 'intravox-main');
-        Util::addStyle('intravox', 'main');
+        \OCA\IntraVox\Service\AppAssets::load('main');
     }
 
     /**

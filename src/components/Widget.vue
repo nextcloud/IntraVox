@@ -1,6 +1,5 @@
 <template>
   <div class="widget" :class="`widget-${widget.type}`" :style="textColorStyle">
-    <!-- Text Widget with Inline Editing -->
     <div v-if="widget.type === 'text'" class="widget-text">
       <!-- TRANSLATORS: Screen-reader label of a text widget's editor, not shown on screen -->
       <InlineTextEditor :aria-label="t('intravox', 'Text block')"
@@ -15,7 +14,6 @@
       <div v-else ref="textBody" v-html="sanitizeHtml(widget.content || '')"></div>
     </div>
 
-    <!-- Heading Widget -->
     <component
       v-else-if="widget.type === 'heading'"
       :is="`h${widget.level}`"
@@ -36,7 +34,6 @@
       </a>
     </component>
 
-    <!-- Image Widget -->
     <div v-else-if="widget.type === 'image'" class="widget-image">
       <!-- Image with link -->
       <a
@@ -71,22 +68,25 @@
       </div>
     </div>
 
-    <!-- Links Widget (Grid of Links) -->
     <LinksWidget
       v-else-if="widget.type === 'links'"
       :widget="widget"
       :row-background-color="rowBackgroundColor"
+      :is-public="!!shareToken"
       @navigate="$emit('navigate', $event)"
     />
 
-    <!-- Divider Widget -->
+    <div v-else-if="widget.type === 'organogram' && shareToken" class="placeholder" role="note">
+      {{ t('intravox', 'This organizational view is not available in public shares.') }}
+    </div>
+    <OrganogramWidget v-else-if="widget.type === 'organogram'" :widget="widget" />
+
     <div
       v-else-if="widget.type === 'divider'"
       class="widget-divider"
       :style="getDividerStyle()"
     ></div>
 
-    <!-- News Widget -->
     <NewsWidget
       v-else-if="widget.type === 'news'"
       :widget="widget"
@@ -96,7 +96,6 @@
       @navigate="$emit('navigate', $event)"
     />
 
-    <!-- People Widget -->
     <PeopleWidget
       v-else-if="widget.type === 'people'"
       :widget="widget"
@@ -141,7 +140,7 @@
     <div v-else-if="widget.type === 'video'" class="widget-video">
       <!-- Blocked Video - domain not in whitelist -->
       <div v-if="widget.blocked" class="video-blocked">
-        <div class="video-blocked-icon">🚫</div>
+        <div class="video-blocked-icon" aria-hidden="true">!</div>
         <p class="video-blocked-title">{{ t('intravox', 'Video service not allowed') }}</p>
         <p v-if="widget.originalSrc" class="video-blocked-url">
           <span class="url-label">{{ t('intravox', 'URL:') }}</span>
@@ -229,6 +228,7 @@ export default {
   components: {
     InlineTextEditor: defineAsyncComponent(() => import('./InlineTextEditor.vue')),
     LinksWidget: defineAsyncComponent(() => import('./LinksWidget.vue')),
+    OrganogramWidget: defineAsyncComponent(() => import('./OrganogramWidget.vue')),
     NewsWidget: defineAsyncComponent(() => import('./NewsWidget.vue')),
     PeopleWidget: defineAsyncComponent(() => import('./PeopleWidget.vue')),
     CalendarWidget: defineAsyncComponent(() => import('./CalendarWidget.vue')),

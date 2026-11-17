@@ -1,5 +1,6 @@
 <template>
   <div class="page-editor-wrapper">
+    <label class="agl-page-title-setting"><input type="checkbox" :checked="localPage.hidePageTitleBar === true" @change="setHidePageTitleBar($event.target.checked)" />{{ t('intravox', 'Hide page title and breadcrumb') }}</label>
     <!-- Header Row (spans full width above everything) -->
     <div v-if="hasHeaderRow" class="header-row-editor" :class="{ 'dark-bg': isDarkBackground(getHeaderRowBgColor()) }" :style="getHeaderRowStyle()">
       <div class="header-row-header">
@@ -636,6 +637,8 @@ export default {
   },
   // Note: Deep watcher removed for performance - updates are emitted explicitly in syncAllZones()
   methods: {
+    // Keep the page option in the same update object as its layout.
+    setHidePageTitleBar(value) { this.localPage.hidePageTitleBar = value === true; this.$emit('update', this.localPage); },
     t(app, text, vars) {
       return translate(app, text, vars);
     },
@@ -695,7 +698,7 @@ export default {
     },
     needsEditButton(widgetType) {
       // Show edit button for widgets that aren't inline-editable
-      return ['image', 'link', 'links', 'heading', 'video', 'news', 'people', 'calendar', 'feed', 'photo-story', 'file-story'].includes(widgetType);
+      return ['image', 'link', 'links', 'heading', 'video', 'news', 'people', 'calendar', 'feed', 'photo-story', 'file-story', 'organogram'].includes(widgetType);
     },
     initializeWidgetIds() {
       // Collect ALL widgets from all zones for duplicate detection
@@ -1048,8 +1051,7 @@ export default {
 
         this.showWidgetPicker = false;
 
-        // Open editor modal for widgets that need configuration
-        if (widgetType === 'image' || widgetType === 'links' || widgetType === 'heading' || widgetType === 'video' || widgetType === 'news' || widgetType === 'people' || widgetType === 'calendar' || widgetType === 'feed') {
+        if (this.needsEditButton(widgetType)) {
           this.editHeaderRowWidget(newWidget);
         }
 
@@ -1066,8 +1068,7 @@ export default {
 
         this.showWidgetPicker = false;
 
-        // Open editor modal for widgets that need configuration
-        if (widgetType === 'image' || widgetType === 'links' || widgetType === 'heading' || widgetType === 'video' || widgetType === 'news' || widgetType === 'people' || widgetType === 'calendar' || widgetType === 'feed') {
+        if (this.needsEditButton(widgetType)) {
           this.editSideColumnWidget(newWidget, side);
         }
 
@@ -1094,8 +1095,7 @@ export default {
 
       this.showWidgetPicker = false;
 
-      // Open editor modal for widgets that need configuration
-      if (widgetType === 'image' || widgetType === 'links' || widgetType === 'heading' || widgetType === 'video' || widgetType === 'news' || widgetType === 'people' || widgetType === 'calendar' || widgetType === 'feed') {
+      if (this.needsEditButton(widgetType)) {
         this.editWidget(newWidget, rowIndex);
       }
 
@@ -1130,6 +1130,7 @@ export default {
           widget.columns = 2;
           widget.backgroundColor = null;
           break;
+        case 'organogram': Object.assign(widget, { title: 'Athena Group | Executive & Functional Matrix', defaultExpanded: true, showCompanies: true }); break;
         case 'video':
           widget.provider = 'embed';
           widget.src = '';
@@ -1139,7 +1140,6 @@ export default {
           widget.muted = false;
           break;
         case 'divider':
-          // No additional properties needed for divider
           break;
         case 'news':
           widget.title = '';

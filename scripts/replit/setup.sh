@@ -48,9 +48,10 @@ for entry in appinfo lib templates css img l10n demo-data vendor; do
         exit 1
     fi
 done
-# Serve current dependencies (including security updates), not stale release
-# bundles, while keeping all generated output out of the source checkout.
-npm run build -- --output-path "$APP/js"
+# Compile the release paths, including extracted CSS, then refresh the runtime.
+# Changing webpack output-path alone would put CSS beside the wrong directory.
+npm run build
+cp -a js/. "$APP/js/"
 cp scripts/replit/nextcloud.config.php "$NC/config/replit.config.php"
 
 # Complete installation before exposing any HTTP listener. The initial random

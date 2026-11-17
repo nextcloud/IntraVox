@@ -1,7 +1,5 @@
 <?php
-script('intravox', 'intravox-vendors');
-script('intravox', 'intravox-main');
-style('intravox', 'main');
+\OCA\IntraVox\Service\AppAssets::load('main');
 
 // Add Open Graph meta tags if page data is available
 if (isset($_['pageData']) && $_['pageData']) {
