@@ -84,9 +84,7 @@ final class PageShapeSanitizer {
             ]
         ];
 
-        if (is_bool($data['hidePageTitleBar'] ?? null)) {
-            $sanitized['hidePageTitleBar'] = $data['hidePageTitleBar'];
-        }
+        $sanitized += WorkspaceMetadata::page($data);
         if (isset($data['uniqueId'])) {
             $sanitized['uniqueId'] = $data['uniqueId'];
         }
@@ -141,14 +139,6 @@ final class PageShapeSanitizer {
             $sanitized['sourceUrl'] = $data['sourceUrl'];
         }
 
-        // Preserve settings object (engagement settings for comments/reactions)
-        if (isset($data['settings']) && is_array($data['settings'])) {
-            $sanitized['settings'] = [
-                'allowReactions' => isset($data['settings']['allowReactions']) ? (bool)$data['settings']['allowReactions'] : true,
-                'allowComments' => isset($data['settings']['allowComments']) ? (bool)$data['settings']['allowComments'] : true,
-                'allowCommentReactions' => isset($data['settings']['allowCommentReactions']) ? (bool)$data['settings']['allowCommentReactions'] : true,
-            ];
-        }
 
         // Preserve page status (draft/published). Default to "published" for backward compatibility.
         if (isset($data['status']) && in_array($data['status'], ['draft', 'published'], true)) {
@@ -380,6 +370,12 @@ final class PageShapeSanitizer {
                         $sanitizedLink['text'] = $this->htmlSanitizer->sanitize($link['text'] ?? '');
                         $sanitizedLink['url'] = $this->urlSanitizer->sanitize($link['url'] ?? '');
                         $sanitizedLink['icon'] = $this->sanitizeText($link['icon'] ?? '');
+                        if (in_array($link['appId'] ?? '', ['files', 'mail', 'calendar', 'spreed', 'collectives', 'deck', 'tables', 'forms'], true)) {
+                            $sanitizedLink['appId'] = $link['appId'];
+                        }
+                        if (($link['action'] ?? '') === 'global-search') {
+                            $sanitizedLink['action'] = 'global-search';
+                        }
                         if (isset($link['uniqueId']) && !empty($link['uniqueId'])) {
                             $sanitizedLink['uniqueId'] = $this->sanitizeText($link['uniqueId']);
                         }

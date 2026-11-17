@@ -4,14 +4,16 @@
       <a
         v-for="(link, index) in visibleLinks"
         :key="link.uniqueId || link.url || `link-${index}`"
-        :href="getLinkUrl(link)"
+        :href="isDisabled(link) ? undefined : getLinkUrl(link)"
         :target="isInternalLink(link) ? '_self' : '_blank'"
         :rel="isInternalLink(link) ? '' : 'noopener noreferrer'"
         class="link-item"
-        :class="[getLinkItemClass(link), { 'link-item--tile': isTileLayout }]"
+        :class="[getLinkItemClass(link), { 'link-item--tile': isTileLayout, 'link-item--unavailable': isDisabled(link) }]"
         :style="getLinkStyle(link)"
         :data-agl-entity="link.entity || 'all'"
         :data-excom-only="link.excomOnly ? 'true' : 'false'"
+        :aria-disabled="isDisabled(link) ? 'true' : undefined"
+        :title="isDisabled(link) ? availabilityLabel(link) : undefined"
         @click="handleLinkClick($event, link)"
       >
         <component
@@ -24,9 +26,11 @@
           <span class="link-tile-title" v-html="sanitizeHtml(link.title)"></span>
           <span class="link-tile-subtitle" v-html="sanitizeHtml(link.text)"></span>
           <span v-if="entityBadge(link)" class="agl-entity-badge" :data-entity="badgeEntity(link)">{{ entityBadge(link) }}</span>
+          <span v-if="isDisabled(link)" class="link-unavailable">{{ availabilityLabel(link) }}</span>
         </span>
         <span v-else class="link-text" v-html="sanitizeHtml(link.text || link.title)"></span>
         <span v-if="!(isTileLayout && link.title && link.text) && entityBadge(link)" class="agl-entity-badge" :data-entity="badgeEntity(link)">{{ entityBadge(link) }}</span>
+        <span v-if="isDisabled(link) && !(isTileLayout && link.title && link.text)" class="link-unavailable">{{ availabilityLabel(link) }}</span>
       </a>
     </div>
     <div v-else class="empty-links-placeholder">
@@ -37,7 +41,10 @@
 </template>
 
 <script>
+import { openNativeSearch } from '../utils/aglGlobalSearch.js';
+import { showError } from '@nextcloud/dialogs';
 import { translate } from '@nextcloud/l10n';
+import { loadState } from '@nextcloud/initial-state';
 import { markdownToHtml } from '../utils/markdownSerializer.js';
 import { isDarkBackground, getEffectiveBackgroundColor } from '../utils/colorUtils.js';
 import { isVisibleInAglContext } from '../utils/aglBrandContext.js';
@@ -193,9 +200,20 @@ export default {
     }
   },
   emits: ['navigate'],
-  data() { return { activeContext: document.documentElement.dataset.aglContext || 'all', excomEligible: false }; },
-  mounted() { this.excomEligible = !this.isPublic && document.documentElement.dataset.aglExcom === 'true'; document.addEventListener('agl:context-change', this.onAglContextChange); },
-  beforeUnmount() { document.removeEventListener('agl:context-change', this.onAglContextChange); },
+  data() {
+    return {
+      activeContext: document.documentElement.dataset.aglContext || 'all',
+      excomEligible: false,
+      appAvailability: loadState('intravox', 'appAvailability', {}),
+    };
+  },
+  mounted() {
+    this.excomEligible = !this.isPublic && document.documentElement.dataset.aglExcom === 'true';
+    document.addEventListener('agl:context-change', this.onAglContextChange);
+  },
+  beforeUnmount() {
+    document.removeEventListener('agl:context-change', this.onAglContextChange);
+  },
   computed: {
     visibleLinks() { return (this.widget.items || []).filter(link => isVisibleInAglContext(link, this.activeContext, this.excomEligible)); },
     effectiveBackgroundColor() {
@@ -208,6 +226,10 @@ export default {
   methods: {
     onAglContextChange(event) { this.activeContext = event.detail.context; this.excomEligible = !this.isPublic && event.detail.eligible === true; },
     badgeEntity(link) { return link.excomOnly ? 'excom' : (link.entity || 'all'); },
+    isUnavailable(link) { return !!link.appId && this.appAvailability?.[link.appId] === false; },
+    isUnverified(link) { return !!link.appId && this.appAvailability?.[link.appId] !== true && this.appAvailability?.[link.appId] !== false; },
+    isDisabled(link) { return this.isUnavailable(link) || this.isUnverified(link); },
+    availabilityLabel(link) { return this.isUnavailable(link) ? this.t('intravox', 'Not enabled') : this.t('intravox', 'Availability unconfirmed'); },
     entityBadge(link) { return { 'cloud-carib': this.t('intravox', 'Cloud Carib'), 'athena-cloud': this.t('intravox', 'Athena Cloud'), excom: this.t('intravox', 'ExCom') }[this.badgeEntity(link)] || ''; },
     t(app, text, vars) {
       return translate(app, text, vars);
@@ -340,12 +362,26 @@ export default {
       return link.url && link.url.startsWith('#') && link.url.length > 1;
     },
     handleLinkClick(event, link) {
+      if (this.isDisabled(link)) {
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
+      if (link.action === 'global-search') {
+        event.preventDefault();
+        event.stopPropagation();
+        this.openGlobalSearch();
+        return;
+      }
       if (this.isInternalLink(link)) {
         event.preventDefault();
         event.stopPropagation();
         const pageId = link.uniqueId || link.url.substring(1);
         this.$emit('navigate', pageId);
       }
+    },
+    openGlobalSearch() {
+      if (!openNativeSearch()) showError(this.t('intravox', 'Global search is unavailable in this session.'));
     }
   }
 };
@@ -376,6 +412,9 @@ export default {
   transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
   cursor: pointer;
 }
+
+.link-item--unavailable { cursor: not-allowed; color: #34263a; background: #f0ebf1; border-color: #776b7b; }
+.link-unavailable { display: inline-flex; align-self: center; padding: 3px 7px; border: 1px solid currentColor; border-radius: 999px; font-size: 10px; font-weight: 700; white-space: nowrap; }
 
 /* Card shell */
 .link-icon {

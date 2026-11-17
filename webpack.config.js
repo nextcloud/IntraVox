@@ -65,6 +65,12 @@ module.exports = {
     module: {
         rules: [
             {
+                test: /\.(png|jpe?g|webp)$/i,
+                include: path.resolve(__dirname, 'src/img'),
+                type: 'asset/resource',
+                generator: { filename: 'intravox-brand-[name].[contenthash:8][ext]' },
+            },
+            {
                 test: /[\\/]@nextcloud[\\/]dialogs[\\/]dist[\\/]chunks[\\/]index-[\w-]+\.mjs$/,
                 loader: path.resolve(__dirname, 'scripts/dialog-locale-chunks-loader.cjs'),
             },

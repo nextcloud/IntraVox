@@ -92,7 +92,9 @@ class PageLocator {
             $homeFile = $folder->get('home.json');
             $content = $homeFile->getContent();
             $data = json_decode($content, true);
-            if ($data && isset($data['uniqueId']) && $data['uniqueId'] === $uniqueId) {
+            if ($data && isset($data['uniqueId'])
+                && ($data['uniqueId'] === $uniqueId
+                    || ($uniqueId === 'page-home-en' && $folder->getPath() === $languageFolder->getPath()))) {
                 return ['file' => $homeFile, 'folder' => $folder, 'isHome' => true];
             }
         } catch (NotFoundException $e) {

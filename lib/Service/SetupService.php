@@ -22,7 +22,6 @@ class SetupService {
     private const ADMIN_GROUP = 'IntraVox Admins';
     private const EDITOR_GROUP = 'IntraVox Editors';
     private const USER_GROUP = 'IntraVox Users';
-    private const DEFAULT_LANGUAGE = 'en';
     private const APP_ID = 'intravox';
 
     /**
@@ -539,6 +538,14 @@ class SetupService {
      * Create default homepage via Nextcloud Files API
      */
     private function createDefaultHomePageViaAPI($folder, string $lang): void {
+        if ($lang === 'en') {
+            $folderId = $this->groupFolderIdByName(self::GROUPFOLDER_NAME);
+            if ($folderId === null) {
+                throw new \RuntimeException('Cannot provision Sovereign baseline without its Team Folder');
+            }
+            (new SovereignBaselineInstaller($this->groupFolders))->install($folder, $folderId);
+            return;
+        }
         $content = $this->getDefaultHomePageContent($lang);
 
         // Create file via Nextcloud Files API to ensure filecache is updated
@@ -551,6 +558,9 @@ class SetupService {
      * Get default homepage content for a specific language
      */
     private function getDefaultHomePageContent(string $lang): array {
+        if ($lang === 'en') {
+            return (new SovereignBaseline())->homePage();
+        }
         $translations = [
             'nl' => [
                 'title' => 'Welkom bij IntraVox',
@@ -558,13 +568,6 @@ class SetupService {
                 'intro' => 'Dit is je organisatie intranet. Deze folder is een groupfolder waar admins standaard toegang toe hebben. Je kunt via Groepsmappen beheer andere groepen toegang geven.',
                 'getting_started' => 'Aan de slag',
                 'instructions' => '1. Klik op "Bewerken" om deze pagina aan te passen\n2. Klik op "+ Nieuwe Pagina" om meer pagina\'s toe te voegen\n3. Gebruik widgets om content toe te voegen\n4. Sleep widgets om je layout aan te passen\n\nDeze folder is niet gekoppeld aan een gebruikersaccount maar is een echte systeemfolder!'
-            ],
-            'en' => [
-                'title' => 'Welcome to IntraVox',
-                'heading' => 'Welcome to IntraVox',
-                'intro' => 'This is your organization intranet. This folder is a group folder where admins have access by default. You can grant access to other groups via Group folders management.',
-                'getting_started' => 'Getting Started',
-                'instructions' => '1. Click "Edit" to modify this page\n2. Click "+ New Page" to add more pages\n3. Use widgets to add content\n4. Drag widgets to adjust your layout\n\nThis folder is not linked to a user account but is a real system folder!'
             ],
             'de' => [
                 'title' => 'Willkommen bei IntraVox',
@@ -582,49 +585,39 @@ class SetupService {
             ]
         ];
 
-        $t = $translations[$lang] ?? $translations[self::DEFAULT_LANGUAGE];
+        if (!isset($translations[$lang])) {
+            return (new SovereignBaseline())->homePage();
+        }
+        $t = $translations[$lang];
+        $t['instructions'] = str_replace('\\n', "\n", $t['instructions']);
 
         return [
             'id' => 'home',
             'title' => $t['title'],
-            'layout' => [
-                'columns' => 2,
-                'rows' => [
-                    [
-                        'widgets' => [
-                            [
-                                'type' => 'heading',
-                                'content' => $t['heading'],
-                                'level' => 1,
-                                'column' => 1,
-                                'order' => 1
-                            ],
-                            [
-                                'type' => 'text',
-                                'content' => $t['intro'],
-                                'column' => 1,
-                                'order' => 2
-                            ],
-                            [
-                                'type' => 'heading',
-                                'content' => $t['getting_started'],
-                                'level' => 2,
-                                'column' => 2,
-                                'order' => 1
-                            ],
-                            [
-                                'type' => 'text',
-                                'content' => $t['instructions'],
-                                'column' => 2,
-                                'order' => 2
-                            ]
-                        ]
-                    ]
-                ]
-            ],
+            'layout' => ['columns' => 2, 'rows' => [['widgets' => [
+                ['type' => 'heading', 'content' => $t['heading'], 'level' => 1, 'column' => 1, 'order' => 1],
+                ['type' => 'text', 'content' => $t['intro'], 'column' => 1, 'order' => 2],
+                ['type' => 'heading', 'content' => $t['getting_started'], 'level' => 2, 'column' => 2, 'order' => 1],
+                ['type' => 'text', 'content' => $t['instructions'], 'column' => 2, 'order' => 2],
+            ]]]],
             'created' => time(),
             'modified' => time()
         ];
+    }
+
+    /** Explicit administrative provisioning; never invoked by ordinary page reads. */
+    public function installSovereignBaseline(bool $overwrite = false): int {
+        $folderId = $this->groupFolderIdByName(self::GROUPFOLDER_NAME);
+        if ($folderId === null) {
+            throw new \RuntimeException('IntraVox Team Folder is not configured');
+        }
+        $root = $this->getSharedFolderByName(self::GROUPFOLDER_NAME);
+        try {
+            $language = $root->get('en');
+        } catch (NotFoundException $e) {
+            $language = $root->newFolder('en');
+        }
+        return (new SovereignBaselineInstaller($this->groupFolders))->install($language, $folderId, $overwrite);
     }
 
     /**

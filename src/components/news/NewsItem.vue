@@ -1,6 +1,7 @@
 <template>
   <a
     :href="itemUrl"
+    :data-agl-entity="item.entity || 'all'" :data-excom-only="item.excomOnly === true ? 'true' : 'false'"
     class="news-item"
     :class="[
       { 'news-item--compact': compact, 'news-item--no-image': !showImage || !item.imagePath },
@@ -13,6 +14,7 @@
     </div>
     <div class="news-item-content">
       <h4 class="news-item-title">{{ item.title }}</h4>
+        <span v-if="entityLabel" class="agl-entity-badge" :data-entity="badgeEntity">{{ entityLabel }}</span>
       <div v-if="showDate" class="news-item-date">
         <CalendarBlank :size="14" />
         <span>{{ item.modifiedFormatted }}</span>
@@ -27,6 +29,7 @@
 <script>
 import { generateUrl } from '@nextcloud/router';
 import CalendarBlank from 'vue-material-design-icons/CalendarBlank.vue';
+import { translate } from '@nextcloud/l10n';
 
 export default {
   name: 'NewsItem',
@@ -66,6 +69,17 @@ export default {
   },
   emits: ['navigate'],
   computed: {
+    badgeEntity() {
+      return this.item.excomOnly ? 'excom' : (this.item.entity || 'all');
+    },
+    entityLabel() {
+      return {
+        all: translate('intravox', 'All Authorized'),
+        'cloud-carib': translate('intravox', 'Cloud Carib'),
+        'athena-cloud': translate('intravox', 'Athena Cloud'),
+        excom: translate('intravox', 'ExCom'),
+      }[this.badgeEntity] || '';
+    },
     itemUrl() {
       return `#${this.item.uniqueId}`;
     },

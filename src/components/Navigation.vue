@@ -275,10 +275,11 @@ import { NcActions, NcActionButton } from '@nextcloud/vue';
 import ChevronDown from 'vue-material-design-icons/ChevronDown.vue';
 import ChevronRight from 'vue-material-design-icons/ChevronRight.vue';
 import Menu from 'vue-material-design-icons/Menu.vue';
-import { filterAglTree } from '../utils/aglBrandContext.js';
+import aglNavigationMixin from '../utils/aglNavigationMixin.js';
 
 export default {
   name: 'Navigation',
+  mixins: [aglNavigationMixin],
   components: {
     NcActions,
     NcActionButton,
@@ -302,9 +303,6 @@ export default {
     }
   },
   emits: ['navigate'],
-  computed: {
-    visibleItems() { return filterAglTree(this.items, document.documentElement.dataset.aglContext || 'all', !this.isPublic && document.documentElement.dataset.aglExcom === 'true'); },
-  },
   data() {
     return {
       // Mobile menu state
@@ -329,7 +327,6 @@ export default {
     window.removeEventListener('scroll', this.updateDropdownPosition, true);
   },
   methods: {
-    aglAttrs(item) { return { 'data-agl-entity': item.entity || 'all', 'data-excom-only': item.excomOnly ? 'true' : 'false' }; },
     t(app, text, vars) {
       return translate(app, text, vars);
     },
@@ -342,29 +339,6 @@ export default {
       const textarea = document.createElement('textarea');
       textarea.innerHTML = text;
       return textarea.value;
-    },
-    getItemUrl(item) {
-      if (item.url) {
-        return item.url;
-      }
-      if (item.uniqueId) {
-        return `#${item.uniqueId}`;
-      }
-      return '#';
-    },
-    handleItemClick(item) {
-      this.$emit('navigate', item);
-      this.hideDropdown();
-      this.hideMegaMenu();
-    },
-    handleMobileItemClick(item) {
-      // Only navigate if item has a link (uniqueId or url)
-      if (item.uniqueId || item.url) {
-        this.$emit('navigate', item);
-      } else {
-        // If no link, toggle expand instead
-        this.toggleMobileItem(this.getItemKey(item));
-      }
     },
     // Dropdown methods
     showDropdown(item, event) {

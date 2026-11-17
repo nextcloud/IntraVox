@@ -10,7 +10,6 @@
 			<!-- Engagement Section -->
 			<div class="settings-section">
 				<h3 class="settings-section-header">
-					<span class="settings-icon">💬</span>
 					{{ t('intravox', 'Engagement') }}
 				</h3>
 				<p class="settings-section-desc">
@@ -24,7 +23,7 @@
 						<NcSelect
 							v-if="globalSettings.allowPageReactions"
 							v-model="localSettings.allowReactions"
-							:options="disableOnlyOptions"
+							:options="triStateOptions"
 							:clearable="true"
 							:searchable="false"
 							:autofocus="false"
@@ -45,7 +44,7 @@
 						<NcSelect
 							v-if="globalSettings.allowComments"
 							v-model="localSettings.allowComments"
-							:options="disableOnlyOptions"
+							:options="triStateOptions"
 							:clearable="true"
 							:searchable="false"
 							:autofocus="false"
@@ -66,7 +65,7 @@
 						<NcSelect
 							v-if="globalSettings.allowCommentReactions"
 							v-model="localSettings.allowCommentReactions"
-							:options="disableOnlyOptions"
+							:options="triStateOptions"
 							:clearable="true"
 							:searchable="false"
 							:autofocus="false"
@@ -78,6 +77,20 @@
 						</span>
 					</div>
 					<span class="setting-status">{{ getStatusText(localSettings.allowCommentReactions, 'commentReactions') }}</span>
+				</div>
+				<div class="setting-item">
+					<div class="setting-header">
+						<span class="setting-label">{{ t('intravox', 'Social features') }}</span>
+						<NcSelect v-model="localSettings.disableSocial" :options="socialPolicyOptions" :clearable="true"
+							:searchable="false" :autofocus="false" :placeholder="t('intravox', 'Inherit page default')" class="tri-state-select" />
+					</div>
+					<span class="setting-status">{{ t('intravox', 'Disable reactions and comments for this page, enable them, or inherit the page default.') }}</span>
+				</div>
+				<div class="setting-item">
+					<label class="setting-label setting-checkbox">
+						<input v-model="localSettings.hidePageTitleBar" type="checkbox" />
+						{{ t('intravox', 'Use compact hub header (hide page title bar)') }}
+					</label>
 				</div>
 			</div>
 		</div>
@@ -133,16 +146,24 @@ export default {
 				allowReactions: null,
 				allowComments: null,
 				allowCommentReactions: null,
+				disableSocial: null,
+				hidePageTitleBar: false,
 			},
 		}
 	},
 	computed: {
 		// Only allow disabling per page when globally enabled
 		// Cannot enable something that is globally disabled
-		disableOnlyOptions() {
+		triStateOptions() {
 			return [
-				// TRANSLATORS: Option of an on/off setting
+				{ value: true, label: t('intravox', 'Enabled') },
 				{ value: false, label: t('intravox', 'Disabled') },
+			]
+		},
+		socialPolicyOptions() {
+			return [
+				{ value: false, label: t('intravox', 'Enabled') },
+				{ value: true, label: t('intravox', 'Disabled') },
 			]
 		},
 		// Check if comments are effectively enabled for this page
@@ -171,6 +192,8 @@ export default {
 		this.localSettings.allowReactions = this.mapToOption(this.settings?.allowReactions)
 		this.localSettings.allowComments = this.mapToOption(this.settings?.allowComments)
 		this.localSettings.allowCommentReactions = this.mapToOption(this.settings?.allowCommentReactions)
+		this.localSettings.disableSocial = this.mapToOption(this.settings?.disableSocial, this.socialPolicyOptions)
+		this.localSettings.hidePageTitleBar = this.settings?.hidePageTitleBar === true
 	},
 	mounted() {
 		// Remove focus from any element after modal opens
@@ -184,16 +207,12 @@ export default {
 		t(app, key, vars = {}) {
 			return t(app, key, vars)
 		},
-		mapToOption(value) {
+		mapToOption(value, options = this.triStateOptions) {
 			// null = no override, return null (will show placeholder)
 			if (value === null || value === undefined) {
 				return null
 			}
-			// Only false (disabled) is a valid page-level override
-			// true is not valid because you can't enable something globally disabled
-			if (value === false) {
-				return this.disableOnlyOptions.find(opt => opt.value === false)
-			}
+			if (value === false || value === true) return options.find(opt => opt.value === value)
 			return null
 		},
 		getStatusText(option, type) {
@@ -215,6 +234,7 @@ export default {
 			if (value === false) {
 				return this.t('intravox', 'Disabled for this page')
 			}
+			if (value === true) return this.t('intravox', 'Enabled for this page')
 			// null = inherit from global (which is enabled if we got here)
 			return this.t('intravox', 'Using global setting (enabled)')
 		},
@@ -223,6 +243,8 @@ export default {
 				allowReactions: this.localSettings.allowReactions?.value ?? null,
 				allowComments: this.localSettings.allowComments?.value ?? null,
 				allowCommentReactions: this.localSettings.allowCommentReactions?.value ?? null,
+				disableSocial: this.localSettings.disableSocial?.value ?? null,
+				hidePageTitleBar: this.localSettings.hidePageTitleBar,
 			})
 		},
 	},
@@ -254,9 +276,7 @@ export default {
 	font-weight: 600;
 }
 
-.settings-icon {
-	font-size: 20px;
-}
+.setting-checkbox { display: flex; align-items: center; gap: 10px; }
 
 .settings-section-desc {
 	margin: 0 0 16px 0;

@@ -3,3 +3,4 @@
 - [Login diagnostics](login-diagnostics.md) — avoid repeated invalid login probes; shared preview traffic can throttle the owner's login.
 - [Nextcloud bundle sizes](webpack-size-guards.md) — keep default size guards and all locales; avoid broad component barrels with unused stylesheet side effects.
 - [Athena brand reference](athena-brand-reference.md) — use the working www corporate site and verified original logos; do not assume assets are unavailable.
+- [Runtime dependencies](nextcloud-runtime-dependencies.md) — isolate development OCP dependencies from Nextcloud; symlinked source must resolve the installed app's production vendor tree.

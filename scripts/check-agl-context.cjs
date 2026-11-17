@@ -4,11 +4,16 @@ const path = require('node:path');
 const vm = require('node:vm');
 const root = path.resolve(__dirname, '..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
+assert.equal((read('src/App.vue').match(/<Teleport\b[^>]*\bdefer\b/g) || []).length, 2,
+  'Toolbar Teleports must wait until their in-app targets are attached');
 const moduleFrom = file => import(`data:text/javascript;base64,${Buffer.from(read(file)).toString('base64')}`);
 
 (async () => {
     const helpers = await moduleFrom('src/utils/aglBrandContext.js');
     const { isExcomEligible, filterAglTree, isVisibleInAglContext } = helpers;
+    const executiveUids = read('lib/Service/SovereignBaseline.php').match(/EXECUTIVE_UIDS = \[([^\]]+)\]/)[1];
+    assert.deepEqual([...executiveUids.matchAll(/'([^']+)'/g)].map(match => match[1]), [...helpers.AGL_EXCOM_UIDS],
+      'Native executive ACLs and client eligibility must use the same approved identities');
     for (const uid of ['scott.mackenzie', 'victor.kovacs', 'alfredo.carrasco', 'stelios.xeroudakis']) {
         assert.equal(isExcomEligible({ uid, groups: [] }), true, uid);
     }
@@ -46,6 +51,7 @@ const moduleFrom = file => import(`data:text/javascript;base64,${Buffer.from(rea
         const events = [];
         const sandbox = {
             module: { exports: {} }, ...helpers,
+            lightLogo: '/original-white-athena-logo.png',
             translate: (app, text) => text,
             loadState: () => initial ?? null,
             axios: { get: async () => {
@@ -100,5 +106,36 @@ const moduleFrom = file => import(`data:text/javascript;base64,${Buffer.from(rea
     assert.equal(AGL_ORGANOGRAM.companies.length, 3);
     assert.equal(createOrganogramWidget().type, 'organogram');
     assert.equal(createOrganogramWidget().defaultExpanded, true);
+    const acorn = require('acorn');
+    const viewerScript = read('src/components/PageViewer.vue').split('<script>')[1].split('</script>')[0];
+    const exported = acorn.parse(viewerScript, { ecmaVersion: 'latest', sourceType: 'module' })
+        .body.find(n => n.type === 'ExportDefaultDeclaration').declaration;
+    const computedNode = exported.properties.find(n => n.key.name === 'computed').value;
+    const socialComputed = vm.runInNewContext(`(${viewerScript.slice(computedNode.start, computedNode.end)})`);
+    function viewer(page, hubPage = false, globalEnabled = true) {
+        const view = { page, hubPage, engagementSettings: { allowPageReactions: globalEnabled, allowComments: globalEnabled } };
+        for (const [name, getter] of Object.entries(socialComputed)) {
+            Object.defineProperty(view, name, { get: getter.bind(view) });
+        }
+        return view;
+    }
+    for (const key of ['showReactions', 'showComments']) {
+        assert.equal(viewer({})[key], true, 'ordinary page retains global default');
+        assert.equal(viewer({}, true)[key], false, 'home defaults to no social');
+        assert.equal(viewer({ hidePageTitleBar: true })[key], false, 'hub defaults to no social');
+        assert.equal(viewer({ hidePageTitleBar: true, settings: { allowComments: true, allowReactions: true } })[key], true);
+        assert.equal(viewer({ disableSocial: true, settings: { allowComments: true, allowReactions: true } })[key], false);
+        assert.equal(viewer({ disableSocial: false }, true)[key], true);
+        assert.equal(viewer({ disableSocial: false }, true, false)[key], false, 'cannot override global prohibition');
+        assert.equal(viewer({ settings: { allowComments: null, allowReactions: null } }, true)[key], false);
+    }
+    const { markUnavailableApps } = await moduleFrom('src/utils/aglAppAvailability.js');
+    const apps = [{ title: 'Apps', children: [{ title: 'Files', appId: 'files' }, { title: 'Mail', appId: 'mail' }] }];
+    const before = JSON.stringify(apps);
+    const marked = markUnavailableApps(apps, { files: true, mail: false });
+    assert.equal(marked[0].children[0].unavailable, undefined);
+    assert.equal(marked[0].children[1].unavailable, true);
+    assert.match(marked[0].children[1].title, /Not enabled/);
+    assert.equal(JSON.stringify(apps), before, 'availability does not mutate saved navigation');
     console.log('Workspace identity, lens, storage, nesting and organogram checks passed');
 })().catch(error => { console.error(error); process.exitCode = 1; });

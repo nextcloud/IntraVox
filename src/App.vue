@@ -1,24 +1,23 @@
 <template>
   <div id="intravox-app" :data-agl-hide-title="hidePageTitleBar ? 'true' : 'false'" :data-agl-editing="isEditMode ? 'true' : 'false'">
     <a href="#intravox-main-content" class="skip-link">{{ t('intravox', 'Skip to main content') }}</a>
-
+    <AglGlobalSearchShortcut />
     <div v-if="!showLanguageFallback" class="intravox-topbar" ref="topbar">
-
     <header class="intravox-header">
-      <div class="header-left">
+      <div class="header-title-host"></div>
+      <div class="header-actions-host"></div>
+    </header>
+    <!-- Targets belong to this subtree; defer until it is attached to the document. -->
+    <Teleport defer :to="hidePageTitleBar ? '.agl-context-bar__tools' : '.header-title-host'">
+      <div v-if="!hidePageTitleBar || isEditMode" class="header-title-content">
         <h1 v-if="!isEditMode">{{ currentPage?.title || 'Sovereign 365' }}</h1>
-        <input
-          v-else
-          v-model="editableTitle"
-          type="text"
-          class="page-title-input"
-          :placeholder="t('intravox', 'Page title')"
-          :aria-label="t('intravox', 'Page title')"
-        />
+        <input v-else v-model="editableTitle" type="text" class="page-title-input"
+          :placeholder="t('intravox', 'Page title')" :aria-label="t('intravox', 'Page title')" />
       </div>
-
+    </Teleport>
+    <Teleport defer :to="hidePageTitleBar ? '.agl-context-bar__tools' : '.header-actions-host'">
       <div class="header-right">
-        <AglPageTools v-if="hidePageTitleBar && !isEditMode && currentPage" :structure-open="showPageTree" :details-open="showDetailsSidebar"
+        <AglPageTools v-if="hidePageTitleBar && currentPage" :structure-open="showPageTree" :details-open="showDetailsSidebar"
           @toggle-structure="setPageTreeOpen(!showPageTree)" @toggle-details="setDetailsSidebarOpen(!showDetailsSidebar)" />
         <span v-if="!isEditMode && publishStatusBadge"
               class="draft-badge"
@@ -26,7 +25,6 @@
               :title="publishStatusBadge.tooltip">
           {{ publishStatusBadge.label }}
         </span>
-
         <!-- Content-language indicator. Shown in BOTH view and edit mode, but
              only when the page is NOT in the viewer's own language — an
              exception marker, not a permanent status field. -->
@@ -35,13 +33,11 @@
               :title="pageLanguageBadge.tooltip">
           {{ pageLanguageBadge.label }}
         </span>
-
         <!-- Share Button (only visible when NC share exists) -->
         <ShareButton v-if="!isEditMode && currentPage?.uniqueId"
                      :page-unique-id="currentPage.uniqueId"
                      :page-title="currentPage.title"
-                     :language="currentLanguage" />
-
+                      :language="currentLanguage" />
         <!-- Lock indicator (when another user is editing this page) -->
         <span v-if="!isEditMode && pageLock" class="page-lock-indicator">
           {{ t('intravox', '{displayName} is editing this page', { displayName: pageLock.displayName }) }}
@@ -52,7 +48,6 @@
             {{ t('intravox', 'Unlock') }}
           </NcButton>
         </span>
-
         <!-- Edit Page Button (only visible when user has edit permissions for this page) -->
         <!-- TRANSLATORS: Screen-reader label of the edit button, not shown on screen -->
         <NcButton v-if="!isEditMode && canEditCurrentPage" :aria-label="t('intravox', 'Edit this page')"
@@ -64,7 +59,6 @@
           </template>
           {{ t('intravox', 'Edit page') }}
         </NcButton>
-
         <!-- Page Actions Menu (3-dot menu) -->
         <PageActionsMenu v-if="!isEditMode"
                          :is-edit-mode="isEditMode"
@@ -83,8 +77,7 @@
                          @metavox="openSidebarTab('metavox-tab')"
                          @translate-page="openSidebarTab('translations-tab')"
                          @version-history="openSidebarTab('versions-tab')"
-                         @delete-page="deleteCurrentPage" />
-
+                          @delete-page="deleteCurrentPage" />
         <!-- Edit Mode Actions (Save/Cancel) -->
         <template v-else>
           <!-- When a Publish-on / Expire-on date governs, the manual toggle is
@@ -130,22 +123,18 @@
           </NcButton>
         </template>
       </div>
-    </header>
-
+    </Teleport>
     <!-- Navigation -->
     <div class="intravox-nav-bar">
       <Navigation :items="filteredNavigation.items"
                   :type="navigation.type"
                   @navigate="navigateToItem" />
     </div>
-    <AglBrandContextBar v-if="!isEditMode" @context-change="aglContext = $event" @identity-change="aglExcom = $event.eligible" />
-
+    <AglBrandContextBar @context-change="aglContext = $event" @identity-change="aglExcom = $event.eligible" />
     </div><!-- /.intravox-topbar -->
-
     <!-- Main content area with sidebar -->
     <div class="app-content-wrapper"
          :style="{ '--intravox-topbar-height': topbarHeight + 'px' }">
-
       <!-- Page structure panel: inhoudsopgave links van de content. Blijft
            open tijdens navigeren tot de gebruiker hem sluit. -->
       <PageTreeModal
@@ -171,10 +160,8 @@
       <div v-if="loading" class="loading" role="status" aria-live="polite">
         {{ t('intravox', 'Loading …') }}
       </div>
-
       <!-- Welcome screen when no pages exist (first install) -->
       <WelcomeScreen v-else-if="showWelcomeScreen" />
-
       <!-- Language fallback: user's language has no content, another does -->
       <LanguageFallbackNotice v-else-if="showLanguageFallback"
                               :own-language="languageContentStatus.language"
@@ -238,6 +225,7 @@
           v-if="!isEditMode && displayPage"
           :page="displayPage"
           :engagement-settings="globalEngagementSettings"
+          :hub-page="isCurrentPageHome || hidePageTitleBar"
           @navigate="selectPage"
           @rows-changed="tocRevision++"
         />
@@ -335,7 +323,7 @@
     <PageSettingsModal
       v-if="showPageSettingsModal"
       :page-unique-id="currentPage?.uniqueId"
-      :settings="currentPage?.settings || {}"
+      :settings="{ ...(currentPage?.settings || {}), hidePageTitleBar: currentPage?.hidePageTitleBar !== undefined ? currentPage.hidePageTitleBar : currentPage?.settings?.hidePageTitleBar, disableSocial: currentPage?.disableSocial !== undefined ? currentPage.disableSocial : currentPage?.settings?.disableSocial }"
       :global-settings="globalEngagementSettings"
       @close="showPageSettingsModal = false"
       @save="handlePageSettingsSave"
@@ -393,6 +381,7 @@ import Breadcrumb from './components/Breadcrumb.vue';
 import ShareButton from './components/ShareButton.vue';
 import AglBrandContextBar from './components/AglBrandContextBar.vue';
 import AglPageTools from './components/AglPageTools.vue';
+import AglGlobalSearchShortcut from './components/AglGlobalSearchShortcut.vue';
 import CacheService from './services/CacheService.js';
 import { isSectionAnchor, scrollToHashAnchor, parseFragment } from './utils/headingAnchors.js';
 import { filterAglTree } from './utils/aglBrandContext.js';
@@ -458,7 +447,7 @@ export default {
     LanguageFallbackNotice,
     PageSettingsModal,
     SaveAsTemplateModal,
-    ShareButton, AglBrandContextBar, AglPageTools,
+    ShareButton, AglBrandContextBar, AglPageTools, AglGlobalSearchShortcut,
     FeedSettings
   },
   data() {
@@ -544,7 +533,13 @@ export default {
     };
   },
   computed: {
-    hidePageTitleBar() { return this.isCurrentPageHome || this.currentPage?.hidePageTitleBar === true; },
+    hidePageTitleBar() {
+      const setting = this.currentPage?.hidePageTitleBar !== undefined
+        ? this.currentPage.hidePageTitleBar
+        : this.currentPage?.settings?.hidePageTitleBar;
+      if (setting === true || setting === false) return setting;
+      return this.isCurrentPageHome;
+    },
     filteredNavigation() { return { ...this.navigation, items: filterAglTree(this.navigation.items, this.aglContext, this.aglExcom) }; },
     /**
      * Publication-status badge for the current page (view mode, editors only).
@@ -2342,6 +2337,9 @@ export default {
       this.currentPage.settings.allowReactions = settings.allowReactions;
       this.currentPage.settings.allowComments = settings.allowComments;
       this.currentPage.settings.allowCommentReactions = settings.allowCommentReactions;
+      this.currentPage.settings.disableSocial = settings.disableSocial;
+      this.currentPage.hidePageTitleBar = settings.hidePageTitleBar;
+      this.currentPage.disableSocial = settings.disableSocial;
 
       try {
         await this.savePage();
@@ -2361,7 +2359,7 @@ export default {
   width: 100%;
   max-width: 100vw;
   min-height: 100vh;
-  background: var(--color-main-background);
+  background: var(--agl-canvas, var(--color-main-background));
   overflow-x: clip;
   box-sizing: border-box;
 }

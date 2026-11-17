@@ -55,6 +55,12 @@ class PageController extends Controller {
         // isEnabledForUser() needs a user; for an anonymous share visitor there
         // is none, and MetaVox editing is not offered on public shares anyway.
         $user = $this->userSession->getUser();
+        $availability = [];
+        foreach (['files', 'mail', 'calendar', 'spreed', 'collectives', 'deck', 'tables', 'forms'] as $appId) {
+            $availability[$appId] = $user !== null
+                && $this->appManager->isEnabledForUser($appId, $user);
+        }
+        $this->initialState->provideInitialState('appAvailability', $availability);
 
         $this->initialState->provideInitialState(
             'metaVoxAvailable',

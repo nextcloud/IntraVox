@@ -21,7 +21,7 @@
       <pre v-if="errorDetails" class="error-details">{{ errorDetails }}</pre>
     </div>
 
-    <div v-else-if="items.length === 0" class="news-empty">
+    <div v-else-if="visibleItems.length === 0" class="news-empty">
       <Newspaper :size="32" />
       <p>{{ t('intravox', 'No news items found') }}</p>
       <!-- TRANSLATORS: {path} is the page or folder the news widget reads from -->
@@ -31,7 +31,7 @@
     <component
       v-else
       :is="layoutComponent"
-      :items="items"
+      :items="visibleItems"
       :widget="widget"
       :row-background-color="effectiveBackgroundColor"
       @navigate="handleNavigate"
@@ -44,6 +44,7 @@ import { NcLoadingIcon } from '@nextcloud/vue';
 import { generateUrl } from '@nextcloud/router';
 import { translate } from '@nextcloud/l10n';
 import axios from '@nextcloud/axios';
+import { isVisibleInAglContext } from '../utils/aglBrandContext.js';
 import AlertCircle from 'vue-material-design-icons/AlertCircle.vue';
 import Newspaper from 'vue-material-design-icons/Newspaper.vue';
 import NewsLayoutList from './news/NewsLayoutList.vue';
@@ -86,6 +87,8 @@ export default {
   data() {
     return {
       items: [],
+    activeContext: document.documentElement.dataset.aglContext || 'all',
+    excomEligible: document.documentElement.dataset.aglExcom === 'true',
       loading: true,
       error: null,
       errorDetails: null,
@@ -93,6 +96,9 @@ export default {
     };
   },
   computed: {
+    visibleItems() {
+      return this.items.filter(item => isVisibleInAglContext(item, this.activeContext, this.excomEligible));
+    },
     layoutComponent() {
       const layouts = {
         list: NewsLayoutList,
@@ -164,6 +170,7 @@ export default {
     },
   },
   mounted() {
+    document.addEventListener('agl:context-change', this.onAglContextChange);
     // Defer initial fetch to avoid blocking main thread during page render
     if (typeof requestIdleCallback === 'function') {
       requestIdleCallback(() => this.fetchNews());
@@ -173,10 +180,15 @@ export default {
   },
   beforeUnmount() {
     clearTimeout(this._debounceTimer);
+    document.removeEventListener('agl:context-change', this.onAglContextChange);
   },
   methods: {
     t(app, text, vars) {
       return translate(app, text, vars);
+    },
+    onAglContextChange(event) {
+      this.activeContext = event.detail?.context || 'all';
+      this.excomEligible = event.detail?.eligible === true;
     },
     async fetchNews() {
       this.loading = true;

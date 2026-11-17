@@ -26,13 +26,16 @@ final class AppAssets {
         Util::addStyle('intravox', 'main');
     }
 
-    private static function entries(): array {
+    public static function appPath(): string {
         // Resolve the installed app, not a symlinked source directory. During
         // development the installed bundle may intentionally be a separate copy.
-        $root = class_exists(\OC::class, false)
+        return class_exists(\OC::class, false)
             ? \OCP\Server::get(\OCP\App\IAppManager::class)->getAppPath('intravox')
             : dirname(__DIR__, 2);
-        $file = $root . '/js/entrypoints.json';
+    }
+
+    private static function entries(): array {
+        $file = self::appPath() . '/js/entrypoints.json';
         if (!is_file($file)) {
             throw new \RuntimeException('IntraVox asset manifest is missing. Run npm run build.');
         }

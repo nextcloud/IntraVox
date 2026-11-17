@@ -1,11 +1,13 @@
 <template>
   <section class="agl-context-bar" aria-label="Sovereign 365 workspace context">
     <div class="agl-context-bar__workspace">
-      <span class="agl-context-bar__brand">Sovereign 365 <small>Athena Group</small></span>
+      <img class="agl-context-bar__logo" :src="lightLogo" alt="Athena Group" />
+      <span class="agl-context-bar__brand">Sovereign 365 <small>Athena Group executive workspace</small></span>
       <span class="agl-context-bar__eyebrow">{{ t('intravox', 'WORKSPACE LENS') }}</span>
       <div class="agl-context-bar__lenses" role="group" :aria-label="t('intravox', 'Workspace lens')">
         <button v-for="lens in visibleLenses" :key="lens.id"
                 class="agl-context-bar__lens" type="button"
+                :data-lens="lens.id"
                 :aria-pressed="context === lens.id ? 'true' : 'false'"
                 @click="selectContext(lens.id)">{{ lens.label }}</button>
       </div>
@@ -18,6 +20,7 @@
         <span class="agl-context-bar__pulse" aria-hidden="true"></span>{{ t('intravox', 'Athens C3') }}
       </a>
     </nav>
+    <div class="agl-context-bar__tools" aria-live="polite"></div>
   </section>
 </template>
 
@@ -27,13 +30,14 @@ import { generateOcsUrl } from '@nextcloud/router';
 import { loadState } from '@nextcloud/initial-state';
 import { translate } from '@nextcloud/l10n';
 import { AGL_CONTEXT_KEY, AGL_ENTITIES, isExcomEligible } from '../utils/aglBrandContext.js';
+import lightLogo from '../img/athena-brand/athena-group-horizontal-light.png';
 
 export default {
   name: 'AglBrandContextBar',
-  emits: ['context-change', 'identity-change'],
   data() {
-    return { context: 'all', storedContext: 'all', identity: null, identityResolved: false };
+    return { lightLogo, context: 'all', storedContext: 'all', identity: null, identityResolved: false };
   },
+  emits: ['context-change', 'identity-change'],
   computed: {
     eligible() {
       return this.identityResolved && isExcomEligible(this.identity);

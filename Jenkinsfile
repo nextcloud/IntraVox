@@ -20,7 +20,7 @@ pipeline {
         // staged app. Certificates and private keys must never enter this repo.
         stage('Archive unsigned release') {
             steps {
-                archiveArtifacts artifacts: 'generated-artifacts/release/*.tar.gz', fingerprint: true
+                archiveArtifacts artifacts: 'build/*.tar.gz', fingerprint: true
             }
         }
     }

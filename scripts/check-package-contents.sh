@@ -64,7 +64,8 @@ pass() {
 
 # require_exact <path-inside-package> <description>
 require_exact() {
-    if printf '%s\n' "$LISTING" | grep -qx "${ROOT}/$1"; then
+    # A pipe + grep -q can SIGPIPE printf on large listings under pipefail.
+    if grep -Fqx "${ROOT}/$1" <<< "$LISTING"; then
         pass "$2"
     else
         fail "missing $2 (${ROOT}/$1)"
@@ -73,7 +74,7 @@ require_exact() {
 
 # require_prefix <path-prefix-inside-package> <description>
 require_prefix() {
-    if printf '%s\n' "$LISTING" | grep -q "^${ROOT}/$1"; then
+    if grep -q "^${ROOT}/$1" <<< "$LISTING"; then
         pass "$2"
     else
         fail "missing $2 (${ROOT}/$1...)"
@@ -82,9 +83,9 @@ require_prefix() {
 
 # forbid_prefix <path-prefix-inside-package> <description>
 forbid_prefix() {
-    if printf '%s\n' "$LISTING" | grep -q "^${ROOT}/$1"; then
+    if grep -q "^${ROOT}/$1" <<< "$LISTING"; then
         fail "$2 must not ship (${ROOT}/$1...)"
-        printf '%s\n' "$LISTING" | grep "^${ROOT}/$1" | head -3 | sed 's/^/      /' >&2
+        grep -m3 "^${ROOT}/$1" <<< "$LISTING" | sed 's/^/      /' >&2
     else
         pass "no $2"
     fi
@@ -107,6 +108,8 @@ echo "Dev dependencies (must be absent):"
 forbid_prefix "vendor/phpunit/"  "phpunit"
 forbid_prefix "vendor/mockery/"  "mockery"
 forbid_prefix "vendor/bin/"      "vendor binaries"
+forbid_prefix "vendor/nextcloud/ocp/" "development OCP stubs"
+forbid_prefix "vendor/phpstan/" "static-analysis tooling"
 
 echo "Build tooling (must be absent):"
 # scripts/ is build-time only -- nothing under lib/, appinfo/ or templates/
@@ -121,10 +124,16 @@ done
 for path in .replit Jenkinsfile .env; do
     forbid_prefix "$path" "local configuration $path"
 done
-if tar -tvzf "$TARBALL" | grep -q '^l'; then
+VERBOSE_LISTING=$(tar -tvzf "$TARBALL")
+if grep -q '^l' <<< "$VERBOSE_LISTING"; then
     fail "symlinks must not ship"
 else
     pass "no symlinks"
+fi
+if grep -qE '\.map$' <<< "$LISTING"; then
+    fail "source maps must not ship"
+else
+    pass "no source maps"
 fi
 
 echo "Infrastructure details (must be absent):"
@@ -142,9 +151,9 @@ else
 fi
 
 echo "Secrets (must be absent):"
-if printf '%s\n' "$LISTING" | grep -qE "\.(key|pem|csr|crt)$"; then
+if grep -qE "\.(key|pem|csr|crt)$" <<< "$LISTING"; then
     fail "key/certificate material present in tarball"
-    printf '%s\n' "$LISTING" | grep -E "\.(key|pem|csr|crt)$" | head -3 | sed 's/^/      /' >&2
+    grep -m3 -E "\.(key|pem|csr|crt)$" <<< "$LISTING" | sed 's/^/      /' >&2
 else
     pass "no key/certificate material"
 fi

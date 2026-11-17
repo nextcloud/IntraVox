@@ -40,7 +40,7 @@ if [ -e "$APP" ] && [ ! -f "$APP/.replit-managed" ]; then
 fi
 mkdir -p "$APP/js"
 touch "$APP/.replit-managed"
-for entry in appinfo lib templates css img l10n demo-data vendor; do
+for entry in appinfo lib templates css img l10n demo-data; do
     if [ ! -e "$APP/$entry" ]; then
         ln -s "$ROOT/$entry" "$APP/$entry"
     elif [ "$(readlink -f "$APP/$entry")" != "$ROOT/$entry" ]; then
@@ -48,6 +48,14 @@ for entry in appinfo lib templates css img l10n demo-data vendor; do
         exit 1
     fi
 done
+# Keep app production dependencies isolated from development-only OCP/Sabre
+# packages, which must never override the host Nextcloud dependency versions.
+if [ -L "$APP/vendor" ]; then
+    [ "$(readlink -f "$APP/vendor")" = "$ROOT/vendor" ] || { echo "Unmanaged vendor symlink." >&2; exit 1; }
+    unlink "$APP/vendor"
+fi
+cp composer.json composer.lock "$APP/"
+composer install --working-dir="$APP" --no-dev --prefer-dist --no-interaction --no-progress
 # Compile the release paths, including extracted CSS, then refresh the runtime.
 # Changing webpack output-path alone would put CSS beside the wrong directory.
 npm run build

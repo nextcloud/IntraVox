@@ -107,7 +107,9 @@ Local-only files:
   ignored frontend bundles built from the locked dependencies during setup.
 - `.runtime/data/`: SQLite database and user/Team folder files, outside the
   web document root.
-- `node_modules/`, `vendor/`: app dependencies.
+- `node_modules/`, `vendor/`: development dependencies. The managed Nextcloud
+  app has a separate production-only Composer install; never link its vendor
+  directory to the development tree (OCP test dependencies conflict with DAV).
 - `generated-artifacts/`: optional local build output and check reports.
 
 Runtime/data and generated reports are excluded from Git and deployment uploads.
@@ -137,8 +139,8 @@ not the physical location of symlinked source code.
 
 The root Jenkinsfile builds with `npm ci && npm run build`, then runs
 `bash scripts/stage-release.sh`. It stages an **unsigned** app and archive under
-the ignored `generated-artifacts/release/`, installs only production Composer
-dependencies, and checks excluded paths. Trusted external signing credentials
+the ignored `build/intravox` directory, archives under `build/`, installs only
+production Composer dependencies, and checks excluded paths. Trusted external signing credentials
 are required for a later `occ integrity:sign-app`; none are stored here.
 
 Checks performed during setup:
@@ -150,20 +152,64 @@ NEXTCLOUD_ROOT="$PWD/.runtime/nextcloud" \
   php -d memory_limit=512M vendor/bin/phpunit -c phpunit-integration.xml
 ```
 
+## Sovereign baseline provisioning
+
+Fresh English setup uses the Sovereign homepage, office/C3 destinations, tagged
+sample announcements, navigation and compliance-baseline footer. It preserves
+the native page editor and uses Nextcloud's theme selection, not a forced dark
+theme. Announcements are clearly prototype samples, not audit or certification
+claims. The official white PNG and original source URLs are retained under
+`src/img/athena-brand`; no original corporate SVG was verified.
+
+To replace the managed English baseline on an existing **local** install, first
+snapshot its current English Team Folder and theming settings privately under
+`.runtime/backups/athena-baseline-<timestamp>/`. Then explicitly run:
+
+```bash
+php -d memory_limit=512M scripts/replit/seed-sovereign.php --apply
+php -d memory_limit=512M .runtime/nextcloud/occ groupfolders:scan 1 --path en
+```
+
+This deliberately replaces the managed Sovereign documents, not unrelated
+content. It retains the existing homepage identity/bookmarks, refreshes scoped
+caches, and configures local branding through Nextcloud's theming APIs. It is
+not run automatically on startup. Keep a fresh backup before every replacement.
+The executive subfolder has real Team Folder ACLs: ordinary portal groups are
+denied; global admins, ExCom members and existing approved executive identities
+are allowed. An empty ExCom group is created when missing, without enrolling
+any existing user or changing root grants.
+
+`node scripts/replit/sovereign-browser-check.cjs` runs native Chromium checks with
+temporary admin/reader/ExCom accounts and real sign-in forms. Credentials remain
+in memory; users/profiles are removed in `finally`. Reports and screenshots stay
+in ignored `generated-artifacts/sovereign-qa/`. The settings round-trip creates
+and deletes only its own temporary page. It never reuses the owner's cookies.
+
 - Existing PHP syntax, unit tests, PHPStan, and all frontend guards **passed**.
-- The Sovereign production build retains webpack's default size warnings;
-  component-level imports and lazy roots keep unused library code out.
+- The Sovereign production build completed with **zero warnings**, retaining
+  webpack's default size guards and all locale chunks.
 - Nextcloud login page was visually checked. HTTP checks confirm that private
   page APIs require sign-in and private files, source, and traversal paths return
   404. IntraVox's public HTML shell remains available for its share-link feature.
-- The signed-in UI has **not** been visually verified; the password is left
-  for the owner to set privately.
-- The real Nextcloud integration suite ran: **36 tests, 104 assertions,
+- Real authenticated Chromium checks **passed for admin, reader and ExCom**
+  accounts: compact desktop/Preview layouts, mobile overflow, entity-filtered
+  news, native light/dark/system themes, C3 destinations, interactive structure,
+  Global Search and Ctrl+K, native editor/Cancel, settings Save/reload and
+  temporary-page create/edit/delete. Native ACLs returned private content only
+  to eligible accounts. No owner password or session was used.
+- Scoped English Team Folder scan and HTTP runtime/security smoke checks passed.
+  The unsigned `build/intravox` folder and release archive passed content checks,
+  including production dependencies and absence of development tooling, source
+  maps, private runtime files and symlinks. Package-guard regression tests also
+  verify large archive listings and rejection of forbidden early entries.
+- Brand images are verified original corporate **PNGs**, not native SVGs.
+  Seven unavailable collaboration apps remain truthfully marked **Not enabled**.
+- Historical initial-setup integration run: **36 tests, 104 assertions,
   2 failures, 3 skips**. One failure expects `User not logged in` while the app
   returns `You are not logged in.`; another assumes existing page fixtures in
-  the otherwise empty local intranet. These are reported, not hidden or changed
-  as part of runtime setup. The original SSH/container test runner is not needed
-  for the local command above.
+  the then-empty local intranet. That legacy suite was not rerun against the
+  now-populated owner dataset. The current unit/static gate used
+  `SKIP_INTEGRATION=1`; authenticated runtime browser checks were run separately.
 
 For manual development background-job processing:
 

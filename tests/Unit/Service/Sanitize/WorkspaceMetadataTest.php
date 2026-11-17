@@ -69,6 +69,29 @@ class WorkspaceMetadataTest extends TestCase {
         $this->assertFalse($items[2]['excomOnly']);
     }
 
+    public function testPortalSettingsAndLaunchActionsSurviveRepeatedSaves(): void {
+        $page = $this->page([['type' => 'links', 'items' => [
+            ['title' => 'Mail', 'url' => '/index.php/apps/mail/', 'appId' => 'mail'],
+            ['title' => 'Search', 'url' => '#agl-global-search', 'action' => 'global-search'],
+            ['title' => 'Invalid', 'url' => '/safe', 'action' => 'javascript', 'appId' => 'not-an-app'],
+        ]]]);
+        $page += ['disableSocial' => true, 'entity' => 'athena-cloud', 'excomOnly' => false,
+            'settings' => ['allowComments' => null, 'allowReactions' => true, 'allowCommentReactions' => false]];
+        for ($i = 0; $i < 2; $i++) {
+            $page = $this->sanitizer()->validateAndSanitizePage($page);
+        }
+        $this->assertTrue($page['disableSocial']);
+        $this->assertSame('athena-cloud', $page['entity']);
+        $this->assertNull($page['settings']['allowComments']);
+        $this->assertTrue($page['settings']['allowReactions']);
+        $this->assertFalse($page['settings']['allowCommentReactions']);
+        $links = $page['layout']['rows'][0]['widgets'][0]['items'];
+        $this->assertSame('mail', $links[0]['appId']);
+        $this->assertSame('global-search', $links[1]['action']);
+        $this->assertArrayNotHasKey('appId', $links[2]);
+        $this->assertArrayNotHasKey('action', $links[2]);
+    }
+
     public function testMetadataRejectsMalformedValuesWithoutGrantingPermissions(): void {
         $this->assertSame(['entity' => 'all', 'excomOnly' => false],
             WorkspaceMetadata::item(['entity' => ['excom'], 'excomOnly' => 'true']));

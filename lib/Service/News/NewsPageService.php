@@ -114,6 +114,7 @@ class NewsPageService {
 
                     $pages[] = [
                         'uniqueId' => $data['uniqueId'],
+                        ...\OCA\IntraVox\Service\Sanitize\WorkspaceMetadata::item($data),
                         'title' => $data['title'],
                         // Needed by the publication gate: without it every item
                         // looked "published" and drafts leaked into News lists.
@@ -182,6 +183,7 @@ class NewsPageService {
 
             return [
                 'uniqueId' => $data['uniqueId'],
+                ...\OCA\IntraVox\Service\Sanitize\WorkspaceMetadata::item($data),
                 'title' => $data['title'],
                 'status' => $data['status'] ?? 'published',
                 'excerpt' => $excerpt,

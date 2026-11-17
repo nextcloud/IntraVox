@@ -166,6 +166,10 @@ export default {
     isPublic: {
       type: Boolean,
       default: false
+    },
+    hubPage: {
+      type: Boolean,
+      default: false
     }
   },
   emits: ['navigate', 'rows-changed'],
@@ -177,6 +181,21 @@ export default {
     };
   },
   computed: {
+    isHubPage() {
+      return this.hubPage || this.page?.hidePageTitleBar === true;
+    },
+    socialExplicitlyDisabled() {
+      const value = Object.prototype.hasOwnProperty.call(this.page || {}, 'disableSocial')
+        ? this.page.disableSocial
+        : this.page?.settings?.disableSocial;
+      return value === true;
+    },
+    socialExplicitlyEnabled() {
+      const value = Object.prototype.hasOwnProperty.call(this.page || {}, 'disableSocial')
+        ? this.page.disableSocial
+        : this.page?.settings?.disableSocial;
+      return value === false;
+    },
     hasHeaderRow() {
       return this.page?.layout?.headerRow?.enabled &&
              this.page.layout.headerRow.widgets?.length > 0;
@@ -220,7 +239,7 @@ export default {
      */
     showReactions() {
       // Global setting off = no reactions anywhere
-      if (!this.engagementSettings.allowPageReactions) {
+      if (!this.engagementSettings.allowPageReactions || this.socialExplicitlyDisabled) {
         return false;
       }
       // Check page-level override
@@ -228,7 +247,7 @@ export default {
       if (pageSetting === false) {
         return false;
       }
-      // Default: show reactions
+      if ((this.isHubPage || this.page?.path?.toLowerCase().endsWith('/home.json')) && pageSetting !== true && !this.socialExplicitlyEnabled) return false;
       return true;
     },
     /**
@@ -237,7 +256,7 @@ export default {
      */
     showComments() {
       // Global setting off = no comments anywhere
-      if (!this.engagementSettings.allowComments) {
+      if (!this.engagementSettings.allowComments || this.socialExplicitlyDisabled) {
         return false;
       }
       // Check page-level override
@@ -245,7 +264,7 @@ export default {
       if (pageSetting === false) {
         return false;
       }
-      // Default: show comments
+      if ((this.isHubPage || this.page?.path?.toLowerCase().endsWith('/home.json')) && pageSetting !== true && !this.socialExplicitlyEnabled) return false;
       return true;
     },
     /**

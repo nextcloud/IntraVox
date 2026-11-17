@@ -271,6 +271,9 @@ class NavigationService {
                 'target' => in_array($item['target'] ?? '', ['_blank', '_self']) ? $item['target'] : null,
                 'children' => []
             ];
+            if (in_array($item['appId'] ?? '', ['files', 'mail', 'calendar', 'spreed', 'collectives', 'deck', 'tables', 'forms'], true)) {
+                $validatedItem['appId'] = $item['appId'];
+            }
 
             if (isset($item['children']) && is_array($item['children']) && $level < 3) {
                 $validatedItem['children'] = $this->validateNavigationItems($item['children'], $level + 1);

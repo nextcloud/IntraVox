@@ -214,6 +214,44 @@ class GroupFoldersGateway {
 		}
 	}
 
+/**
+ * Protect a newly provisioned executive subfolder before writing its content.
+ * Existing root grants are not changed; only approved executive identities enter.
+ */
+public function protectExecutiveFolder(int $folderId, int $fileId): void {
+    $manager = $this->folderManager();
+    $folder = $manager->getFolder($folderId);
+    if ($folder === null) {
+        throw new \RuntimeException('Cannot resolve executive folder access mappings');
+    }
+    $ruleClass = '\\OCA\\GroupFolders\\ACL\\Rule';
+    $mappingClass = '\\OCA\\GroupFolders\\ACL\\UserMapping\\UserMapping';
+    $ruleManagerClass = '\\OCA\\GroupFolders\\ACL\\RuleManager';
+    if (!class_exists($ruleClass) || !class_exists($mappingClass) || !class_exists($ruleManagerClass)) {
+        throw new \RuntimeException('Supported Team Folder ACL API is required for executive content');
+    }
+    $rules = \OCP\Server::get($ruleManagerClass);
+    foreach ($folder->groups as $id => $mapping) {
+        $type = $mapping['type'] ?? 'group';
+        $allowed = $type === 'group' && in_array($id, ['admin', 'ExCom'], true);
+        $rules->saveRule(new $ruleClass(new $mappingClass($type, $id), $fileId, 31, $allowed ? 31 : 0));
+    }
+    // ExCom membership does not itself grant the Team Folder root. Members who
+    // already have the ordinary portal grant can enter this one restricted area.
+    $groups = \OCP\Server::get(\OCP\IGroupManager::class);
+    if (!$groups->groupExists('ExCom')) {
+        $groups->createGroup('ExCom');
+    }
+    $rules->saveRule(new $ruleClass(new $mappingClass('group', 'ExCom'), $fileId, 31, 31));
+    $users = \OCP\Server::get(\OCP\IUserManager::class);
+    foreach (\OCA\IntraVox\Service\SovereignBaseline::EXECUTIVE_UIDS as $uid) {
+        if ($users->userExists($uid)) {
+            $rules->saveRule(new $ruleClass(new $mappingClass('user', $uid), $fileId, 31, 31));
+        }
+    }
+    $manager->setFolderACL($folderId, true);
+}
+
 	/**
 	 * The ids of every groupfolder on the instance.
 	 *

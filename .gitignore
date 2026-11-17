@@ -59,6 +59,7 @@ check-*.sh
 # ...but the packaging guard is part of the release contract and must be
 # reviewable and runnable in CI, so it is tracked deliberately.
 !scripts/check-package-contents.sh
+!scripts/check-package-contents.test.sh
 
 # Code signing certificates (private keys must never be committed!)
 *.key
@@ -107,3 +108,4 @@ l10n/.source-count.js
 # Replit-only Nextcloud runtime, private config and local SQLite/files
 /.runtime/
 /generated-artifacts/
+/build/

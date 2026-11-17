@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: IntraVox 3.1.2\n"
 "Report-Msgid-Bugs-To: translations@nextcloud.com\n"
-"POT-Creation-Date: 2026-11-17 10:48+0000\n"
+"POT-Creation-Date: 2026-11-17 12:41+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -519,6 +519,9 @@ msgid "Autoplay interval (seconds)"
 msgstr ""
 
 msgid "Autoplay when page loads"
+msgstr ""
+
+msgid "Availability unconfirmed"
 msgstr ""
 
 msgid "Available courses"
@@ -1277,7 +1280,9 @@ msgstr ""
 msgid "Detected:"
 msgstr ""
 
-#. Option of an on/off setting
+msgid "Disable reactions and comments for this page, enable them, or inherit the page default."
+msgstr ""
+
 msgid "Disabled"
 msgstr ""
 
@@ -1476,6 +1481,12 @@ msgid "Empty folder"
 msgstr ""
 
 msgid "Enable if this system uses the same identity provider as Nextcloud (e.g. SURFconext, Keycloak, Azure AD)."
+msgstr ""
+
+msgid "Enabled"
+msgstr ""
+
+msgid "Enabled for this page"
 msgstr ""
 
 msgid "Endpoint path"
@@ -2015,6 +2026,9 @@ msgstr ""
 msgid "Get started quickly with example pages in multiple languages (Dutch, English, German, French)."
 msgstr ""
 
+msgid "Global search is unavailable in this session."
+msgstr ""
+
 #. Noun: name of an icon in the icon picker of the Links widget
 msgid "Globe"
 msgstr ""
@@ -2250,6 +2264,9 @@ msgstr ""
 
 #. Noun: name of an icon in the icon picker of the Links widget
 msgid "Information"
+msgstr ""
+
+msgid "Inherit page default"
 msgstr ""
 
 msgid "Insert link"
@@ -3140,6 +3157,9 @@ msgid "Not available"
 msgstr ""
 
 msgid "Not connected"
+msgstr ""
+
+msgid "Not enabled"
 msgstr ""
 
 msgid "Not installed"
@@ -4359,6 +4379,9 @@ msgstr ""
 msgid "Smallest first"
 msgstr ""
 
+msgid "Social features"
+msgstr ""
+
 msgid "Social links (X/Bluesky/Fediverse)"
 msgstr ""
 
@@ -5043,6 +5066,9 @@ msgstr ""
 
 #. Label before a web address -->
 msgid "URL:"
+msgstr ""
+
+msgid "Use compact hub header (hide page title bar)"
 msgstr ""
 
 msgid "Use different name"

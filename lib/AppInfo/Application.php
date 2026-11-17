@@ -33,7 +33,7 @@ class Application extends App implements IBootstrap {
         parent::__construct(self::APP_ID, $urlParams);
 
         // Load composer autoloader for dependencies (e.g., SVG sanitizer)
-        $autoloadPath = __DIR__ . '/../../vendor/autoload.php';
+        $autoloadPath = \OCA\IntraVox\Service\AppAssets::appPath() . '/vendor/autoload.php';
         if (file_exists($autoloadPath)) {
             require_once $autoloadPath;
         }

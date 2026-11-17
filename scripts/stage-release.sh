@@ -2,7 +2,7 @@
 # Build a credential-free, unsigned Nextcloud package from a positive allowlist.
 set -euo pipefail
 SOURCE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-OUTPUT="$SOURCE/generated-artifacts/release"
+OUTPUT="$SOURCE/build"
 STAGE="$OUTPUT/intravox"
 VERSION="$(node -p 'require(process.argv[1]).version' "$SOURCE/package.json")"
 

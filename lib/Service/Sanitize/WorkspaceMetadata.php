@@ -22,4 +22,23 @@ final class WorkspaceMetadata {
             'showCompanies' => ($widget['showCompanies'] ?? true) === true,
         ];
     }
+
+    public static function page(array $page): array {
+        $metadata = [];
+        foreach (['hidePageTitleBar', 'disableSocial'] as $key) {
+            if (is_bool($page[$key] ?? null)) {
+                $metadata[$key] = $page[$key];
+            }
+        }
+        if (isset($page['entity']) || isset($page['excomOnly'])) {
+            $metadata += self::item($page);
+        }
+        if (isset($page['settings']) && is_array($page['settings'])) {
+            $metadata['settings'] = [];
+            foreach (['allowReactions', 'allowComments', 'allowCommentReactions'] as $key) {
+                $metadata['settings'][$key] = is_bool($page['settings'][$key] ?? null) ? $page['settings'][$key] : null;
+            }
+        }
+        return $metadata;
+    }
 }
