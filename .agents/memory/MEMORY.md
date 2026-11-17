@@ -5,3 +5,4 @@
 - [Athena brand reference](athena-brand-reference.md) — use the working www corporate site and verified original logos; do not assume assets are unavailable.
 - [Runtime dependencies](nextcloud-runtime-dependencies.md) — isolate development OCP dependencies from Nextcloud; symlinked source must resolve the installed app's production vendor tree.
 - [Production workspace](sovereign-production-workspace.md) — the user's existing production Nextcloud has the collaboration apps enabled; local sandbox availability differs.
+- [Release destination](release-destination.md) — Replit pushes only to the GitHub dev branch; leave the existing Gitea/GitHub mirror untouched.
