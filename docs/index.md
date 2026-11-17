@@ -2,9 +2,9 @@
 
 Welcome to the IntraVox documentation. IntraVox is a Nextcloud app that turns Nextcloud Files into a SharePoint-like intranet platform — drag-and-drop page editor, widgets, multi-language content, native Nextcloud sharing, versioning, and ACL.
 
-![Approved Sovereign 365 Portal homepage](../screenshots/sovereign-portal/home-light.webp)
+![Sovereign 365 Portal final-polish candidate homepage](../screenshots/sovereign-portal/home-light.webp)
 
-*The approved Sovereign Portal UX. The feature guides below also retain historical IntraVox examples.*
+*The refined Sovereign Portal candidate. The feature guides below also retain historical IntraVox examples.*
 
 ## Sovereign development and release handoff
 

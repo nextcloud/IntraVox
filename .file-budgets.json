@@ -233,6 +233,7 @@
     "src/components/SaveAsTemplateModal.vue": 203,
     "src/components/ShareButton.vue": 143,
     "src/components/ShareDialog.vue": 278,
+    "src/components/SovereignOverviewHero.vue": 156,
     "src/components/SupportSettings.vue": 705,
     "src/components/TemplatePreviewCard.vue": 363,
     "src/components/TranslationsPanel.vue": 452,

@@ -22,9 +22,9 @@ skipped is **not passed**, and a failure blocks release until resolved and rerun
 | Documentation alignment | Current README, screenshots, code map, changes, build/playbook and limitations; local references valid | Documentation validator and its regression tests in Jenkins and GitHub's frontend job; also runnable locally. Content accuracy and visuals still need human review. |
 | Version/asset contract | Matching 3.1.2 package/app metadata and valid built manifest | Prebuild version check; package content guard; do not hardcode hashed filenames |
 | PHP correctness | Syntax, unit tests and PHPStan green | `scripts/ci-local.sh`; GitHub CI PHP job on PHP 8.2 |
-| Frontend correctness | All prebuild checks pass; no unjustified size/ratchet increases | `npm run build` prebuild and local guards; current file-budget baseline failure blocks candidate |
+| Frontend correctness | All prebuild checks pass; no unjustified size/ratchet increases | `npm run build` prebuild and local guards; the hero's first baseline is now recorded with no previously committed budget increased |
 | Full integration | Executed tests against isolated real Nextcloud + group folders; no failures; skips explicitly reviewed | Not in Jenkins or GitHub CI; current local invocation fatals before tests run |
-| Authenticated UX | Role and theme matrix, settings persistence, create/edit/delete, mobile overflow, search, authorized/denied access | Browser runner; existing candidate has 52 passing records, not a substitute for integration |
+| Authenticated UX | Role and theme matrix, settings persistence, create/edit/delete, mobile overflow, search, authorized/denied access | Browser runner; original approved evidence has 52 records; final-polish suite adds four theme/viewport geometry checks, not a substitute for integration |
 | Package safety | Production-only dependencies, expected root/metadata/assets, excluded dev/private material, no symlinks | Staging + package guard + regression tests; existing candidate passed |
 | Supply-chain checks | Locked dependency review, secret scan, audit findings disposition | GitHub CI includes secret scan and Composer audit; npm audit is advisory/non-blocking there |
 | Sonar | Trusted Portal-specific analysis for the same SHA; successful server-side Quality Gate | No repository configuration, scanner stage, supplied threshold policy, or verified result |
@@ -41,7 +41,11 @@ The [Jenkinsfile](../../Jenkinsfile) currently:
 2. Runs `npm ci && npm run build`, including the package's prebuild guards.
 3. Runs `bash scripts/check-package-contents.test.sh`.
 4. Runs `bash scripts/stage-release.sh`.
-5. Archives `build/*.tar.gz` with Jenkins fingerprints.
+5. Archives `build/*.tar.gz` with Jenkins fingerprints and an explicit
+   `**/generated-artifacts/**` archive exclusion. There is no `rsync` staging
+   step; the positive staging allowlist and archive-content guard prevent QA
+   files from entering a tarball. Regression tests explicitly reject a package
+   containing `generated-artifacts/sovereign-qa/private-review.html`.
 
 It does **not** install the root development Composer tree, run PHP unit tests,
 PHPStan, full integration, authenticated browser checks, dependency/secret

@@ -1,9 +1,11 @@
-# Approved Portal documentation screenshots
+# Portal documentation screenshots
 
-These six WebP images are curated documentation assets from the approved
-17 November 2026 authenticated QA session. They replace the original IntraVox
-demo imagery in this fork's README. Original feature-guide screenshots elsewhere
-remain historical IntraVox examples, not current Sovereign UX evidence.
+These six WebP images are curated documentation assets from the
+17 November 2026 authenticated final-polish QA session, following the owner's
+four targeted refinement requests to the previously approved UX. They replace
+the original IntraVox demo imagery in this fork's README. Final candidate
+validation is not final owner sign-off. Original feature-guide screenshots
+elsewhere remain historical IntraVox examples, not current Sovereign UX evidence.
 
 | Documentation asset | Original capture under `generated-artifacts/sovereign-qa/` | View |
 | --- | --- | --- |
@@ -39,5 +41,7 @@ owner sessions, private datasets or generated release archives.
 7. Visually inspect the images and README rendering; obtain renewed UX approval
    for changed UX. Passing link checks alone does not validate image content.
 
-The existing images show the previously approved UX; a documentation-only refresh
-does not imply new browser verification. See the [release record](../../docs/releases/portal-v1.0.md).
+The current images show the refined candidate from the expanded browser suite.
+Original approved 52-check JSON and review HTML are preserved privately under
+`generated-artifacts/sovereign-qa-approved/`; the new report is separate.
+See the [release record](../../docs/releases/portal-v1.0.md).

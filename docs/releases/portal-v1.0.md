@@ -33,6 +33,14 @@ No tag, signing or deployment is part of the approved push.
 - Unsigned allowlisted packaging and package-guard regression checks.
 - Sovereign README, approved UX screenshots, code map, downstream build/release
   playbook and explicit Jenkins/Sonar enforcement boundaries.
+- Requested final polish: content-sized tinted entity badges, left-grouped hero
+  search icon/label with a right-aligned shortcut, persistent local Athena plum
+  header with Portal-scoped CSS fallback, and 20px footer bottom padding.
+- First hero size baseline recorded without increasing existing committed
+  budgets; explicit Jenkins archive exclusion and regression coverage for QA
+  artifact leakage. No fictitious `rsync` or signing stage was introduced.
+- App metadata remains 3.1.2: 3.1.0 would be a downgrade, and
+  `version-1.0.0` is a Git tag, not a compatible Nextcloud app-version change.
 
 Detailed implementation entry points are in the [code map](../engineering/portal-code-map.md).
 This is a summary, not a claim that disabled companion apps are absent in the
@@ -44,14 +52,17 @@ These files are **private handoff attachments**, intentionally ignored by Git:
 
 | Evidence | Recorded result / location |
 | --- | --- |
-| Authenticated browser checks | `generated-artifacts/sovereign-qa/verification.json`; `passed: true`, 52 records across admin/reader/ExCom, 2026-11-17T13:53:22.767Z |
-| UX review | `generated-artifacts/sovereign-qa/portal-v1-ux-review.html`; owner-approved |
-| Unsigned package | `build/intravox-3.1.2.tar.gz`; package guard passed; no signature or symlinks; inspected non-vendor contents matched source at preparation time |
-| Latest unit/static check | `generated-artifacts/release/portal-v1-unit-static.log`; failed `file budgets` for the hero's missing baseline |
+| Original authenticated browser checks | `generated-artifacts/sovereign-qa-approved/verification.json`; `passed: true`, 52 records across admin/reader/ExCom, 2026-11-17T13:53:22.767Z |
+| Original UX review | `generated-artifacts/sovereign-qa-approved/portal-v1-ux-review.html`; owner-approved base UX |
+| Final-polish browser checks | `generated-artifacts/sovereign-qa/verification.json`; **56 passing records**, admin/reader/ExCom, 2026-11-17T14:58:39.676Z; includes four geometry/theme/viewport checks |
+| Final-polish UX review | `generated-artifacts/sovereign-qa/portal-v1-gm-review.html`; candidate for final review, not release sign-off |
+| Unsigned package | `build/intravox-3.1.2.tar.gz`; rebuilt for final polish; latest checksum in the current review |
+| Latest unit/static check | `generated-artifacts/release/portal-v1-gm-unit-static.log`; **passed**, original hero-baseline blocker resolved; integration explicitly skipped |
+| Final-polish build | `generated-artifacts/release/portal-v1-gm-build.log`; production webpack build passed with **zero warnings** |
 | Latest integration attempt | `generated-artifacts/release/portal-v1-integration.log`; duplicate Composer autoloader fatal before tests ran |
 | Expanded preparation report | `generated-artifacts/release/portal-v1-gitea-handoff.html`; historical filename retained after destination correction to GitHub `dev` |
 
-SHA-256 of the inspected candidate package:
+SHA-256 of the earlier, pre-polish candidate package (not the rebuilt archive):
 `d6e510aa81e94e60de2171a9bbac445e994383a169c9a9f843fce831885fc794`
 
 SHA-256 of the existing 52-check JSON:
@@ -60,14 +71,21 @@ SHA-256 of the existing 52-check JSON:
 SHA-256 of the approved UX HTML:
 `6bc5c0cb396cd0e870752019d65b7ed00d3785e18b3d7ee39d639d16d7f978e5`
 
-These are historical candidate fingerprints, not a reproducible-build or final
-tag attestation. The earlier QA evidence was not bound to a committed source SHA.
+SHA-256 of the rebuilt final-polish unsigned package:
+`5d25a52dce136368de1e7929b9d45de18467bc3c982e0c3e9634e8c2e6c28a09`
+
+SHA-256 of the final-polish 56-check JSON:
+`d57c3167410ad8b1ecd46c97c9a72db2582a06acc629f9d630e56deac14f5ff5`
+
+These fingerprints distinguish the original approved evidence from the current
+polished candidate; they are not a reproducible-build or final-tag attestation.
+The earlier QA evidence was not bound to a committed source SHA.
 Bind the final candidate to its reviewed source SHA and repeat affected checks
 before release; refresh hashes if any artifact changes.
 
 ## Open release conditions
 
-- Resolve the file-budget baseline issue without weakening the ratchet.
+- Retain the resolved hero baseline without weakening the size ratchet.
 - Resolve development/runtime autoloader isolation and execute the full real
   integration suite. Historical assertion/fixture failures remain unproven until
   a complete run succeeds; a startup fatal cannot close them.

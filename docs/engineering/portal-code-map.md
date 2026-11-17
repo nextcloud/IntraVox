@@ -24,6 +24,7 @@ and [API reference](../../openapi.json) for the underlying application.
 | Persisted shape | [PageShapeSanitizer.php](../../lib/Service/Sanitize/PageShapeSanitizer.php) | Accept only supported page/widget metadata; preserve sanitisation boundaries |
 | Runtime setup | [setup.sh](../../scripts/replit/setup.sh) | Managed local runtime only; production dependencies separate from dev tools |
 | Release packaging | [stage-release.sh](../../scripts/stage-release.sh) | Positive content allowlist, production vendor tree, unsigned package |
+| Final-polish regression checks | [sovereign-gm-checks.cjs](../../scripts/replit/sovereign-gm-checks.cjs) | Actual badge/search bounds, plum header and footer clearance in desktop/mobile light/dark |
 
 ## Data and security invariants
 

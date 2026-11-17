@@ -16,8 +16,8 @@
         </div>
       </div>
       <button class="sovereign-hero__search" type="button" @click="openSearch">
-        <Magnify :size="19" aria-hidden="true" />
-        <span>{{ t('intravox', 'Search Vaults, SOPs, Policies & Messages...') }}</span>
+        <Magnify class="sovereign-hero__search-icon" :size="19" aria-hidden="true" />
+        <span class="sovereign-hero__search-label">{{ t('intravox', 'Search Vaults, SOPs, Policies & Messages...') }}</span>
         <kbd>⌘K / Ctrl+K</kbd>
       </button>
     </div>
@@ -86,7 +86,7 @@ export default {
   box-shadow: 0 8px 24px rgb(39 25 47 / 6%);
 }
 .sovereign-hero__copy { min-width: 0; }
-.sovereign-hero__tools { display: grid; gap: 13px; min-width: 0; }
+.sovereign-hero__tools { display: grid; grid-template-columns: minmax(0, 1fr); gap: 13px; min-width: 0; }
 .sovereign-hero__clocks {
   display: flex;
   align-items: stretch;
@@ -117,6 +117,7 @@ export default {
   align-items: center;
   gap: 10px;
   width: 100%;
+  min-width: 0;
   min-height: 48px;
   padding: 9px 13px;
   border: 1px solid var(--agl-card-border, var(--color-border));
@@ -129,10 +130,18 @@ export default {
   transition: transform .16s ease, border-color .16s ease;
 }
 .sovereign-hero__search:hover { transform: translateY(-1px); border-color: var(--agl-accent, var(--color-primary-element)); }
-.sovereign-hero__search svg { flex: 0 0 auto; color: var(--agl-accent, var(--color-primary-element)); }
-.sovereign-hero__search span { flex: 1; min-width: 0; font-size: 13px; }
+.sovereign-hero__search-icon { flex: 0 0 19px; color: var(--agl-accent, var(--color-primary-element)); }
+.sovereign-hero__search-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .sovereign-hero__search kbd {
   flex: 0 0 auto;
+  margin-left: auto;
   padding: 3px 6px;
   border: 1px solid var(--color-border);
   border-radius: 5px;
@@ -141,7 +150,7 @@ export default {
   white-space: nowrap;
 }
 @media (max-width: 760px) {
-  .sovereign-hero { grid-template-columns: 1fr; gap: 18px; }
-  .sovereign-hero__search { flex-wrap: wrap; }
+  .sovereign-hero { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+  .sovereign-hero__search { flex-wrap: nowrap; }
 }
 </style>

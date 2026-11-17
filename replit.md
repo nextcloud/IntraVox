@@ -171,6 +171,17 @@ The README links the code map, playbooks and release record. Run
 `node --test scripts/check-sovereign-docs.test.cjs`; both also run in the Jenkins
 pipeline and GitHub CI frontend job when those jobs are triggered.
 
+The final-polish candidate keeps app version 3.1.2, uses compact entity badges
+with amber ExCom borders/tints, corrects the hero icon wrapper and narrow-screen
+grid sizing, keeps the native top bar at #4B164C, and adds 20px footer padding.
+`scripts/replit/sovereign-gm-checks.cjs` extends the authenticated suite with
+desktop/mobile light/dark geometry checks, including bounds inside the hero
+itself (document-level overflow checks alone miss clipped inner grids).
+The local primary colour is persisted through the supported theming command;
+no production theming was changed. Original approved 52-check evidence is kept
+under ignored `generated-artifacts/sovereign-qa-approved/`; fresh candidate
+evidence remains in `generated-artifacts/sovereign-qa/`.
+
 ## Sovereign baseline provisioning
 
 Fresh English setup uses the Sovereign homepage, office/C3 destinations, tagged

@@ -13,7 +13,7 @@ replacing Nextcloud's page editor, identity, or access controls.
 | Approved release tag | `version-1.0.0` — reserved for the release after gates pass |
 | Nextcloud app ID / version | `intravox` / **3.1.2** — not a Portal marketing version |
 | Replit development handoff | [scott-mackenzie/IntraVox-AGL](https://github.com/scott-mackenzie/IntraVox-AGL), branch **`dev`** |
-| UX approval | Owner-approved, 17 November 2026 |
+| UX approval | Base UX approved, 17 November 2026; requested final-polish candidate presented for review |
 | Release readiness | **Blocked**; see [release notes and evidence](docs/releases/portal-v1.0.md) |
 
 **Development handoff:** the owner has approved pushing the candidate to GitHub
@@ -26,7 +26,7 @@ the candidate; they block tagging and promotion, not this development transfer.
 > No push, tag creation, package signing, or production deployment is implied by
 > this documentation.
 
-## The approved Portal experience
+## The refined Portal experience
 
 ![Sovereign 365 homepage in native light theme](screenshots/sovereign-portal/home-light.webp)
 
@@ -60,8 +60,10 @@ The native editor retains Save, Cancel, layout, and widget controls.
 Page settings retain native persistence and per-page controls.
 </details>
 
-These are curated, compressed copies of the approved authenticated QA captures,
-not mockups or a fresh test run. See [screenshot provenance](screenshots/sovereign-portal/README.md).
+These are curated, compressed copies of authenticated QA captures of the
+requested final-polish candidate, not mockups. The new checks cover compact
+entity badges, search alignment, the plum header and footer clearance.
+See [screenshot provenance](screenshots/sovereign-portal/README.md).
 Raw QA reports, runtime data, and release archives stay outside Git.
 
 ## Start here
@@ -93,8 +95,9 @@ bash scripts/check-package-contents.sh build/intravox-3.1.2.tar.gz
 **Stop at the first failure.** The commands above are a sequence to run
 interactively, not a fail-fast shell script. Integration is deliberately not
 claimed by `SKIP_INTEGRATION=1`: [run and record it separately](docs/engineering/sovereign-development.md).
-The current file-budget failure blocks `npm run build` through its prebuild checks.
-Do not raise budgets, remove locales, or disable guards to obtain a green badge.
+The hero component's missing first size baseline has been recorded without
+increasing any previously committed budget. Do not raise budgets, remove locales,
+or disable guards to obtain a green badge.
 
 The installable output is **unsigned** `build/intravox-3.1.2.tar.gz`, rooted at
 `intravox/`, with production-only Composer dependencies. Signing is a separate,
