@@ -5,6 +5,11 @@
 **Status: preparation only; release blocked.** This record distinguishes the
 approved UX from unfulfilled engineering gates. It does not announce a release.
 
+**Development transfer approved:** the owner authorized pushing the code and
+documentation to GitHub `dev` so downstream can run Jenkins, Sonar and CI/CD
+testing. That development handoff is not blocked by missing downstream results.
+No tag, signing or deployment is part of the approved push.
+
 ## Identity and approval
 
 - Portal label: **v1.0**; owner-confirmed tag: **`version-1.0.0`**.
@@ -67,8 +72,10 @@ before release; refresh hashes if any artifact changes.
   integration suite. Historical assertion/fixture failures remain unproven until
   a complete run succeeds; a startup fatal cannot close them.
 - Obtain the Portal-specific Jenkins and Sonar evidence described in the gate matrix.
-- Confirm authorized write access, inspect remote refs and source differences,
-  then transfer only to the confirmed GitHub `dev` branch after gates pass.
+- Transfer the authorized development candidate to GitHub `dev`, verify its
+  remote SHA and let downstream execute Jenkins/Sonar/CI/CD checks against it.
+  Keep known failures visible; hold release tagging and promotion until required
+  gates pass.
 - Create `version-1.0.0` only on the reviewed release commit, with no conflicting
   remote tag, and reconcile downstream receipt independently of mirror timing.
 
@@ -82,6 +89,7 @@ automation gaps. This document does not silently waive them.
 - [ ] Unit/static/prebuild, full integration, package and authenticated UX gates green.
 - [ ] Portal-specific Sonar Quality Gate and trusted Jenkins results recorded.
 - [ ] Private evidence bundle and exact unsigned package checksum transferred.
-- [ ] Authorized GitHub `dev` update and `version-1.0.0` tag verified.
+- [ ] Authorized GitHub `dev` development handoff SHA verified.
+- [ ] After required gates pass, `version-1.0.0` release tag separately authorized and verified.
 - [ ] Downstream confirms the received SHA/tag and independently verifies checksums.
 - [ ] Separate operator approval exists before any signing or deployment.

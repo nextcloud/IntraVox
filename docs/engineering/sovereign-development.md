@@ -171,21 +171,32 @@ exist outside it, but no verified Portal project key, endpoint, quality profile
 or result was supplied. The downstream owner must provide and verify them.
 Do not reuse another Athena project's Sonar results or invent a passing badge.
 
-## 7. Transfer and reconcile
+## 7. Transfer for downstream testing, then reconcile release readiness
 
-Before an authorized non-force push/tag operation, verify:
+The owner approved the development push to GitHub `dev` for downstream testing.
+This transfer must precede downstream Jenkins/Sonar validation. Do not require
+results from an environment that has not yet received the source.
 
-- Reviewed source SHA, UX approval, full gate results and package checksum match.
+Before the authorized non-force **development push**, verify:
+
+- Record the candidate source SHA, UX approval and known local gate failures.
 - README, code map, release notes, build/gate instructions and screenshots match
   the actual change. Run the documentation validator.
-- Destination is GitHub `dev`, tag is exactly `version-1.0.0`, and no conflicting
-  remote tag exists. Preserve app version 3.1.2.
+- Destination is GitHub `dev`; do not create a release tag during this testing
+  handoff. Preserve app version 3.1.2.
 - Raw evidence and build outputs are not staged. Check both `git status --short`
   and the staged diff; never use a blanket staging command for release handoff.
 
-After the authorized transfer, downstream records the received commit and tag,
-checks the tag resolves to the intended commit, verifies the package checksum,
-and confirms its own CI gate results. A mirror's polling interval is not proof.
+After transfer, compare the GitHub remote branch SHA to the candidate SHA.
+Downstream independently records the received commit and runs Jenkins, Sonar
+and CI/CD builds in its development/test environment. A mirror's polling interval
+is not proof of receipt, and a push is not approval of downstream deployment.
+Return failures against that exact SHA and iterate through `dev` commits.
+
+Only after required gates pass, reconcile the final reviewed source SHA,
+package checksum and approval record, check that no conflicting remote tag
+exists, and perform a separately authorized `version-1.0.0` tag/release operation.
+Downstream then checks the tag resolves to the intended commit.
 
 Send these private attachments separately, not as commits:
 
