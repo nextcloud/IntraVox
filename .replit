@@ -1,0 +1,7 @@
+modules = ["php-8.2", "nodejs-20", "vue-node-20", "bash", "web"]
+
+[nix]
+channel = "stable-25_05"
+
+[agent]
+expertMode = true
