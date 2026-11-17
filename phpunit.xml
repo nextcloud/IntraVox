@@ -2,6 +2,7 @@
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.0/phpunit.xsd"
          bootstrap="tests/bootstrap.php"
+         defaultTestSuite="Unit"
          colors="true"
          cacheDirectory=".phpunit.cache"
          executionOrder="depends,defects"
@@ -11,18 +12,6 @@
     <testsuites>
         <testsuite name="Unit">
             <directory>./tests/Unit</directory>
-        </testsuite>
-        <!--
-          Integration runs against a REAL Nextcloud + groupfolders and therefore
-          needs its own bootstrap (the default one loads OCP stubs, which is the
-          opposite of what these tests are for). PHPUnit has one bootstrap per
-          config file, so the suite is driven by phpunit-integration.xml via
-          scripts/run-integration-tests.sh. This entry is kept so the directory
-          is still discoverable. Running it from THIS config will not work:
-          the stub bootstrap is loaded and the tests skip themselves.
-        -->
-        <testsuite name="Integration">
-            <directory>./tests/Integration</directory>
         </testsuite>
         <!--
           Benchmarks are measurements, not pass/fail tests, and they print a
@@ -50,7 +39,4 @@
             <directory>./lib/Migration</directory>
         </exclude>
     </source>
-    <php>
-        <env name="NEXTCLOUD_ROOT" value="/var/www/nextcloud"/>
-    </php>
 </phpunit>

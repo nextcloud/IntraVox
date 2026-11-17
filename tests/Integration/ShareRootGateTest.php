@@ -72,21 +72,13 @@ class ShareRootGateTest extends IntegrationTestCase {
 	 * Using it here would test the opposite of what this asserts.
 	 */
 	public function testShareInsideTheFolderIsAccepted(): void {
-		$folder = $this->setupService()->getSharedFolder();
-		if (!$folder instanceof Folder) {
-			$this->markTestSkipped('no IntraVox groupfolder on this instance');
-		}
-
-		// The share must be created by someone who actually has the folder
-		// mounted; the throwaway test user is not a member of the real one.
-		$owner = $folder->getOwner()?->getUID();
-		if ($owner === null) {
-			$this->markTestSkipped('cannot determine the IntraVox folder owner');
-		}
+$this->actingAs('integration-admin', function (): void {
+$folder = $this->rootFolder()->getUserFolder('integration-admin')->get('IntraVox');
+$this->assertInstanceOf(Folder::class, $folder);
 
 		$file = $folder->newFile('share-gate-inside.txt', 'x');
 
-		$share = $this->linkShare($file, $owner);
+$share = $this->linkShare($file, 'integration-admin');
 
 		try {
 			$resolved = $this->shareService()->resolveIntraVoxLinkShare($share->getToken());
@@ -97,6 +89,7 @@ class ShareRootGateTest extends IntegrationTestCase {
 			$this->shareManager()->deleteShare($share);
 			$file->delete();
 		}
+});
 	}
 
 	/**

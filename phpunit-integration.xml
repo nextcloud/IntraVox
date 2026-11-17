@@ -5,7 +5,7 @@
   Kept separate from phpunit.xml because a PHPUnit config has exactly one
   bootstrap, and these tests need the opposite of the unit bootstrap: the real
   server instead of OCP stubs. Run via scripts/run-integration-tests.sh, which
-  executes it inside the nc-dev container.
+  creates a disposable local Nextcloud and refuses the owner's dataset.
 -->
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.0/phpunit.xsd"
@@ -14,10 +14,14 @@
          cacheDirectory=".phpunit.cache"
          beStrictAboutOutputDuringTests="false"
          failOnRisky="true"
+         failOnSkipped="true"
+         failOnIncomplete="true"
+         failOnEmptyTestSuite="true"
          failOnWarning="true">
     <testsuites>
         <testsuite name="Integration">
             <directory>./tests/Integration</directory>
+            <exclude>./tests/Integration/FeedLimitBenchmarkTest.php</exclude>
         </testsuite>
     </testsuites>
 </phpunit>

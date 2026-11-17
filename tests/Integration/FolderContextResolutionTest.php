@@ -216,7 +216,7 @@ class FolderContextResolutionTest extends IntegrationTestCase {
         $userSession->setUser(null);
         try {
             $this->expectException(\Exception::class);
-            $this->expectExceptionMessage('User not logged in');
+            $this->expectExceptionMessage('You are not logged in.');
             $this->folderContext()->intraVox();
         } finally {
             $userSession->setUser($previous);

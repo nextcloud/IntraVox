@@ -42,9 +42,8 @@ class AclCacheDiscriminatorTest extends IntegrationTestCase {
      * getCacheDiscriminator() resolves the groupfolder called 'IntraVox' by
      * name — it is not parameterised — so the suite's own throwaway folder
      * cannot stand in here. These tests therefore toggle Advanced Permissions
-     * on the REAL IntraVox folder and put the original setting back in a
-     * finally block. They only flip the ACL flag; no rule is ever written, and
-     * no content is read or changed.
+     * on the disposable install's IntraVox fixture and put the original setting
+     * back in a finally block. Never run these against an owner's install.
      */
     private static ?int $intraVoxFolderId = null;
     private static ?bool $aclWasEnabled = null;

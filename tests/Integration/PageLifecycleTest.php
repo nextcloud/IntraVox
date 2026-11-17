@@ -3,21 +3,9 @@ declare(strict_types=1);
 
 namespace OCA\IntraVox\Tests\Integration;
 
-use OCP\IUserManager;
-use OCP\IUserSession;
-
 /**
- * The page write path, end to end, against the real IntraVox groupfolder.
- *
- * Unlike the other classes here this one cannot use a throwaway groupfolder:
- * PageService::getIntraVoxFolder() hardcodes the name 'IntraVox' — that
- * hardcoding IS the single-site assumption the multi-site seam (P2) replaces.
- * So the test does the next safest thing: it creates its own page with a
- * unique id, exercises create → read → update → delete on it, and removes it
- * again. It never modifies a page it did not create.
- *
- * This is the suite's most important class for P2: the seam has to leave every
- * assertion here byte-identical.
+ * The real page write path against the disposable IntraVox fixture.
+ * The runner provisions a known writer; never discover or impersonate owners.
  */
 class PageLifecycleTest extends IntegrationTestCase {
 
@@ -29,13 +17,7 @@ class PageLifecycleTest extends IntegrationTestCase {
     protected function setUp(): void {
         parent::setUp();
 
-        $uid = $this->resolveWritingUser();
-        if ($uid === null) {
-            $this->markTestSkipped(
-                'No user with write access to the IntraVox groupfolder on this instance.'
-            );
-        }
-        $this->actingUser = $uid;
+        $this->actingUser = 'integration-admin';
     }
 
     protected function tearDown(): void {
@@ -50,33 +32,6 @@ class PageLifecycleTest extends IntegrationTestCase {
         }
         $this->createdPageIds = [];
         parent::tearDown();
-    }
-
-    /**
-     * Find a user who can actually write to IntraVox. Deliberately does not
-     * assume a fixed username, so the suite is portable between instances.
-     */
-    private function resolveWritingUser(): ?string {
-        $userManager = self::server()->get(IUserManager::class);
-        $candidates = [];
-        $userManager->callForSeenUsers(function ($user) use (&$candidates) {
-            $candidates[] = $user->getUID();
-        });
-
-        foreach ($candidates as $uid) {
-            try {
-                $writable = $this->actingAs($uid, function () use ($uid) {
-                    $folder = $this->rootFolder()->getUserFolder($uid)->get('IntraVox');
-                    return $folder->isCreatable();
-                });
-                if ($writable) {
-                    return $uid;
-                }
-            } catch (\Throwable $e) {
-                continue;
-            }
-        }
-        return null;
     }
 
     private function uniqueSlug(): string {
@@ -165,6 +120,9 @@ class PageLifecycleTest extends IntegrationTestCase {
         $pages = $this->actingAs($this->actingUser, fn() => $this->pageLister()->listAll());
 
         $this->assertNotEmpty($pages, 'the instance must have pages for this to mean anything');
+        $this->assertContains('Disposable release fixture', array_column($pages, 'title'));
+        $this->assertNotContains('excluded-_templates', array_column($pages, 'uniqueId'));
+        $this->assertNotContains('excluded-_resources', array_column($pages, 'uniqueId'));
 
         foreach ($pages as $page) {
             $path = $page['path'] ?? '';

@@ -11,7 +11,7 @@
 #      that path IS a Folder.
 #   2. the file-budget ratchet then tripped on the nine lines the fix added.
 #
-# It also runs the Integration suite when the dev server is reachable, because
+# It also runs the Integration suite in a disposable local Nextcloud, because
 # the unit suite alone cannot answer "does this work on a real install" -- the
 # PageService split passed 1302 unit tests while shipping an app with no pages.
 #
@@ -22,8 +22,8 @@
 #   --fix  re-record the file-budget ratchet if it is the only thing failing
 # Env:
 #   SKIP_INTEGRATION=1  skip the integration suite (reported, never silent)
-#   INTRAVOX_DEV_SSH    user@host of the dev server; unset means the
-#                       integration step is skipped (and says so)
+# Missing local runtime/dependencies fail the full gate. Integration is only
+# skipped when explicitly requested with SKIP_INTEGRATION=1.
 
 set -uo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
@@ -85,17 +85,13 @@ echo "Integration (real Nextcloud + groupfolders)"
 # IntraVox groupfolder. tests/Integration/GroupFolderResolutionTest.php exists
 # precisely to catch that, and it was never run.
 #
-# It needs a live server, so it cannot be a hard gate on a laptop with no SSH
-# access. It IS a hard gate whenever the server is reachable, and skipping is
-# reported loudly rather than silently passing.
+# Each run creates a new local install from provisioned Nextcloud code. It
+# never connects to SSH, deploys, or opens the owner's configured database.
 if [ "${SKIP_INTEGRATION:-0}" = "1" ]; then
   printf '  %-34s%bskipped%b (SKIP_INTEGRATION=1)\n' "integration suite" "$YELLOW" "$NC"
   SKIPPED_INTEGRATION=1
-elif ssh -o ConnectTimeout=8 -o BatchMode=yes "${INTRAVOX_DEV_SSH:-}" true >/dev/null 2>&1; then
-  step "integration suite" ./scripts/run-integration-tests.sh --no-deploy
 else
-  printf '  %-34s%bskipped%b (dev server unreachable)\n' "integration suite" "$YELLOW" "$NC"
-  SKIPPED_INTEGRATION=1
+  step "integration suite" bash scripts/run-integration-tests.sh
 fi
 
 echo

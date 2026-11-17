@@ -24,10 +24,10 @@ use PHPUnit\Framework\TestCase;
  * OCP away. So the code path that decides *where the intranet lives* had zero
  * automated coverage until this suite.
  *
- * Isolation: each test class creates its OWN throwaway groupfolder and removes
- * it again in tearDownAfterClass. Nothing here reads or writes the real
- * IntraVox content, so the suite is safe to run repeatedly, and a crash leaves
- * at worst one stray folder named with the TEST_PREFIX below.
+ * Isolation: the bootstrap and this base require the runner's disposable
+ * Nextcloud. Each class also creates and removes its own throwaway groupfolder.
+ * Tests of the fixed-name IntraVox mount use only the sandbox's seeded content.
+ * The runner removes the entire database and filesystem even on test failure.
  */
 abstract class IntegrationTestCase extends TestCase {
     /**
@@ -44,6 +44,7 @@ abstract class IntegrationTestCase extends TestCase {
 
     public static function setUpBeforeClass(): void {
         parent::setUpBeforeClass();
+        requireDisposableNextcloud();
 
         if (!self::isNextcloudBootstrapped()) {
             // Loudly, not silently: running this suite from the default

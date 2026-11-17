@@ -147,11 +147,27 @@ are required for a later `occ integrity:sign-app`; none are stored here.
 Checks performed during setup:
 
 ```bash
-SKIP_INTEGRATION=1 bash scripts/ci-local.sh
+bash scripts/ci-local.sh
 bash scripts/replit/check.sh
-NEXTCLOUD_ROOT="$PWD/.runtime/nextcloud" \
-  php -d memory_limit=512M vendor/bin/phpunit -c phpunit-integration.xml
+bash scripts/run-integration-tests.sh
 ```
+
+The full gate requires the local runtime and dependencies described above.
+Integration creates a unique `.runtime/integration-*` install with its own
+SQLite database, random-password administrator, Team folders and explicit page,
+template and resource fixtures. It copies server **code only**, never owner
+configuration or data. The sandbox is removed on success, failure or handled
+interruption. A per-run marker and database-path guard reject direct runs against
+the owner's instance before Nextcloud boots. There is no SSH/deploy step.
+The installed app's production vendor is copied separately; development PHPUnit
+is loaded behind Nextcloud's host autoloaders and never overlaid on the app.
+The three third-party, live-network feed measurements are benchmarks, not release
+checks, and are excluded from the gate. Opt in explicitly with:
+`INTRAVOX_BENCH_FEED=1 bash scripts/run-integration-tests.sh tests/Integration/FeedLimitBenchmarkTest.php`.
+`phpunit.xml` defaults to Unit only; integration has its own strict configuration
+where skipped tests fail. `composer test:integration` runs the disposable runner.
+For a deliberately partial unit/static check, use `SKIP_INTEGRATION=1`; a missing
+runtime without that explicit opt-out fails rather than reporting a green gate.
 
 ## Documentation and downstream handoff contract
 
@@ -252,12 +268,15 @@ and deletes only its own temporary page. It never reuses the owner's cookies.
   tooltips, and readable dropdown/editor/settings controls in both themes.
   All temporary QA accounts were removed. The six top/middle/bottom screenshots
   are collected in `generated-artifacts/sovereign-qa/portal-v1-ux-review.html`.
-- Historical initial-setup integration run: **36 tests, 104 assertions,
-  2 failures, 3 skips**. One failure expects `User not logged in` while the app
-  returns `You are not logged in.`; another assumes existing page fixtures in
-  the then-empty local intranet. That legacy suite was not rerun against the
-  now-populated owner dataset. The current unit/static gate used
-  `SKIP_INTEGRATION=1`; authenticated runtime browser checks were run separately.
+- The historical integration failures were repaired using disposable fixtures,
+  the current authentication message and an explicit fixture writer. The suite
+  is never run against the populated owner dataset; authenticated runtime
+  browser checks remain a separate check with temporary role accounts.
+  The repaired gate passed PHP syntax/unit/static analysis and all frontend
+  guards, including real integration tests. The isolated suite also passed in
+  randomized order; host OCP/Sabre and production-only app dependency checks
+  are included. All 52 authenticated admin/reader/ExCom browser checks and the
+  runtime/security smoke checks passed again.
 
 For manual development background-job processing:
 

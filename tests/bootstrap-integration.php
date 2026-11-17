@@ -10,7 +10,8 @@ declare(strict_types=1);
  * itself and must run inside the server (see scripts/run-integration-tests.sh).
  */
 
-$ncRoot = getenv('NEXTCLOUD_ROOT') ?: '/var/www/html';
+require_once __DIR__ . '/../scripts/integration/guard.php';
+$ncRoot = requireDisposableNextcloud();
 $base = $ncRoot . '/lib/base.php';
 
 if (!file_exists($base)) {
@@ -23,10 +24,14 @@ if (!file_exists($base)) {
     exit(1);
 }
 
+// PHPUnit lives in dev vendor; Nextcloud and app code use their own loaders.
+// Unregister dev during server boot, then append it behind the host loaders.
+$devLoader = require __DIR__ . '/../vendor/autoload.php';
+$devLoader->unregister();
 require_once $base;
 
 // The app's own classes are autoloaded by Nextcloud once the app is enabled,
 // but the test classes are not part of the app namespace map.
-require_once __DIR__ . '/../vendor/autoload.php';
+$devLoader->register(false);
 
 \OC_App::loadApp('intravox');
