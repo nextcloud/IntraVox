@@ -42,3 +42,17 @@ mtime_ms = 1794923602835
 storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:9e5d8393-94aa-4fb2-9110-700bd770970c/862f8625-db4e-4cc0-82f6-40ec5296a908/4b14b3c7-4ef4-407f-8146-10426f440548"
 storage_version_token = "1794924132526444"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "YH63ydni1fGykhPZHf3Yk"
+uri = "file://generated-artifacts/release/sovereign-developer-handoff-review.html"
+type = "html"
+title = "Sovereign README and downstream engineering handbook"
+description = "Self-contained review of the updated README, six approved UX screenshots, code map, build/release playbook, quality gates and release record."
+logical_id = "fe72562a-2d54-4d4d-80ec-21a2a07a1456"
+content_hash = "sha256:c772f3c23f3804d5221542074ed4b7f9e0a7becb2468716c17ea50c1700865bb"
+size = 639048
+mtime_ms = 1794925265926
+storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:9e5d8393-94aa-4fb2-9110-700bd770970c/fe72562a-2d54-4d4d-80ec-21a2a07a1456/909b3769-e9e8-464c-9e14-d345696a0358"
+storage_version_token = "1794925283874432"
+content_type = "text/html"
