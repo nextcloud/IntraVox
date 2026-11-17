@@ -19,14 +19,14 @@ content_type = "text/html"
 id = "iKpupafVbgn34wYtlzv7i"
 uri = "file://generated-artifacts/release/portal-v1-gitea-handoff.html"
 type = "html"
-title = "Portal v1.0 release preparation — blocked pending approvals"
-description = "Package checks, SHA-256 hashes, pipeline review, evidence references, and outstanding release prerequisites."
+title = "Updated Portal v1.0 release handoff"
+description = "Records UX approval, GitHub dev destination, version-1.0.0 tag, package checks, and the two current release-gate failures."
 logical_id = "94a03612-fd12-4dfb-875e-c70be1f805fb"
-content_hash = "sha256:6c6035feb5b5890f19133563abeef9a4ae62d7bb17f94ba430486b82a565ce7c"
-size = 6466
-mtime_ms = 1794924121829
-storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:9e5d8393-94aa-4fb2-9110-700bd770970c/94a03612-fd12-4dfb-875e-c70be1f805fb/5475c5fc-427c-4498-b574-1388c05bd84c"
-storage_version_token = "1794924131517354"
+content_hash = "sha256:cc40689805ee7e13ab5d0ed6f78a344ea8a1039a8d052682fa2e1944a58295b0"
+size = 7799
+mtime_ms = 1794924442333
+storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:9e5d8393-94aa-4fb2-9110-700bd770970c/94a03612-fd12-4dfb-875e-c70be1f805fb/586964de-324c-4571-9521-944c9418c034"
+storage_version_token = "1794924469240500"
 content_type = "text/html"
 
 [[outputs]]
