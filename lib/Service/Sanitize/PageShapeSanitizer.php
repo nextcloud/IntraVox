@@ -975,10 +975,17 @@ final class PageShapeSanitizer {
                 $sanitized['showTitle'] = (bool) ($widget['showTitle'] ?? true);
                 $sanitized['showImage'] = (bool) ($widget['showImage'] ?? true);
                 $sanitized['showDate'] = (bool) ($widget['showDate'] ?? true);
+                // 'datetime' adds the time of day. Absent means 'date', which
+                // is what every widget saved before this option showed.
+                $sanitized['dateFormat'] = ($widget['dateFormat'] ?? 'date') === 'datetime' ? 'datetime' : 'date';
                 $sanitized['showExcerpt'] = (bool) ($widget['showExcerpt'] ?? true);
                 $sanitized['showSource'] = (bool) ($widget['showSource'] ?? false);
                 $sanitized['excerptLength'] = max(50, min((int) ($widget['excerptLength'] ?? 150), 500));
                 $sanitized['openInNewTab'] = (bool) ($widget['openInNewTab'] ?? true);
+                // What a click on a connection item does. Absent means
+                // 'preview': every widget saved before this option existed
+                // opened the popup, and must keep doing so.
+                $sanitized['itemClick'] = ($widget['itemClick'] ?? 'preview') === 'source' ? 'source' : 'preview';
 
                 // Sort and filter
                 $sanitized['sortBy'] = in_array($widget['sortBy'] ?? 'date', ['date', 'title'], true) ? ($widget['sortBy'] ?? 'date') : 'date';

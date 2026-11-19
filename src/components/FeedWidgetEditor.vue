@@ -410,6 +410,13 @@
           <NcCheckboxRadioSwitch :model-value="localWidget.showDate" @update:model-value="v => { localWidget.showDate = v; emitUpdate(); }">
             {{ t('intravox', 'Show date') }}
           </NcCheckboxRadioSwitch>
+          <!-- Items whose source gives only a day still show just the date. -->
+          <NcCheckboxRadioSwitch
+            v-if="localWidget.showDate"
+            :model-value="localWidget.dateFormat === 'datetime'"
+            @update:model-value="v => { localWidget.dateFormat = v ? 'datetime' : 'date'; emitUpdate(); }">
+            {{ t('intravox', 'Include time') }}
+          </NcCheckboxRadioSwitch>
           <NcCheckboxRadioSwitch :model-value="localWidget.showExcerpt" @update:model-value="v => { localWidget.showExcerpt = v; emitUpdate(); }">
             {{ t('intravox', 'Show excerpt') }}
           </NcCheckboxRadioSwitch>
@@ -422,6 +429,13 @@
           <span class="checkbox-group-heading">{{ t('intravox', 'Links') }}</span>
           <NcCheckboxRadioSwitch :model-value="localWidget.openInNewTab" @update:model-value="v => { localWidget.openInNewTab = v; emitUpdate(); }">
             {{ t('intravox', 'Open links in new tab') }}
+          </NcCheckboxRadioSwitch>
+          <!-- RSS always opens the popup: it carries the article to show. -->
+          <NcCheckboxRadioSwitch
+            v-if="localWidget.sourceType !== 'rss'"
+            :model-value="localWidget.itemClick === 'source'"
+            @update:model-value="v => { localWidget.itemClick = v ? 'source' : 'preview'; emitUpdate(); }">
+            {{ t('intravox', 'Go straight to the source instead of a preview') }}
           </NcCheckboxRadioSwitch>
         </div>
       </div>
@@ -738,10 +752,17 @@ export default {
         showTitle: true,
         showImage: true,
         showDate: true,
+        // 'date' is also what a widget without the key shows, so merging
+        // this under an existing widget changes nothing.
+        dateFormat: 'date',
         showExcerpt: true,
         showSource: false,
         excerptLength: 150,
         openInNewTab: true,
+        // itemClick is deliberately absent. These defaults are merged under
+        // every widget the editor opens, so a value here would flip an
+        // existing widget to it on its next save. New widgets get 'source'
+        // from PageEditor; a widget without the key reads as 'preview'.
         sortBy: 'date',
         sortOrder: 'desc',
         filterKeyword: '',

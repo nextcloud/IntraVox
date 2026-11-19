@@ -103,6 +103,7 @@ import { generateUrl } from '@nextcloud/router';
 import { NcModal, NcLoadingIcon } from '@nextcloud/vue';
 import AlertCircle from 'vue-material-design-icons/AlertCircle.vue';
 import OpenInNew from 'vue-material-design-icons/OpenInNew.vue';
+import { formatFeedDate } from '../../utils/feedDate.js';
 
 export default {
   name: 'FeedArticleModal',
@@ -148,7 +149,8 @@ export default {
         delen.push(this.item.author);
       }
       if (this.item.date) {
-        delen.push(new Date(this.item.date).toLocaleDateString());
+        delen.push(formatFeedDate(this.item, this.widget.dateFormat,
+          { year: 'numeric', month: 'numeric', day: 'numeric' }));
       }
       return delen.join(' · ');
     },

@@ -75,6 +75,7 @@
 <script>
 import CalendarBlank from 'vue-material-design-icons/CalendarBlank.vue';
 import { translate } from '@nextcloud/l10n';
+import { formatFeedDate } from '../../utils/feedDate.js';
 import FileWord from 'vue-material-design-icons/FileWord.vue';
 import FileExcel from 'vue-material-design-icons/FileExcel.vue';
 import FilePowerpoint from 'vue-material-design-icons/FilePowerpoint.vue';
@@ -153,6 +154,11 @@ export default {
       type: Boolean,
       default: true,
     },
+    // 'date' or 'datetime'; see formatFeedDate for items without a time.
+    dateFormat: {
+      type: String,
+      default: 'date',
+    },
     showExcerpt: {
       type: Boolean,
       default: true,
@@ -172,6 +178,12 @@ export default {
     openInNewTab: {
       type: Boolean,
       default: true,
+    },
+    // Connection items go straight to their URL instead of the popup.
+    // Ignored for RSS, which has an article to show.
+    followLink: {
+      type: Boolean,
+      default: false,
     },
     itemBackground: {
       type: String,
@@ -197,9 +209,20 @@ export default {
      * any link — a new tab or window. Swallowing those would break an
      * expectation people carry to every link on the web, and the href stays on
      * the element so the browser can honour them.
+     *
+     * Connection items (Talk, Jira, a custom REST API, …) can follow their
+     * link instead, when the widget says so (followLink). Only RSS carries a
+     * body to open, so for them the popup can only repeat the excerpt and put
+     * the real destination one click further away. It is a widget setting
+     * rather than a fixed rule because some readers do want to skim a Jira
+     * description without leaving the page — and because widgets saved before
+     * the setting existed opened the popup, and must keep doing so.
      */
     onClick(event) {
       if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) {
+        return;
+      }
+      if (this.followLink && this.item.url && this.item.connectionType && this.item.connectionType !== 'rss') {
         return;
       }
       event.preventDefault();
@@ -208,18 +231,7 @@ export default {
   },
   computed: {
     formattedDate() {
-      if (!this.item.date) return '';
-      try {
-        const date = new Date(this.item.date);
-        const locale = document.documentElement.lang || undefined;
-        return date.toLocaleDateString(locale, {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric',
-        });
-      } catch {
-        return this.item.date;
-      }
+      return formatFeedDate(this.item, this.dateFormat);
     },
     fallbackMeta() {
       if (this.item.image) return null;

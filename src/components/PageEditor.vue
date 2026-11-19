@@ -1205,6 +1205,9 @@ export default {
           widget.showSource = false;
           widget.excerptLength = 150;
           widget.openInNewTab = true;
+          // New widgets only. A widget saved before this setting existed has
+          // no key and reads as 'preview', which is what it always did.
+          widget.itemClick = 'source';
           break;
       }
 
