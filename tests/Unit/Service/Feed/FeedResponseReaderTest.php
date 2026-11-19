@@ -175,6 +175,20 @@ class FeedResponseReaderTest extends TestCase {
         $this->assertStringStartsNotWith('1970', $this->reader->normaliseDate('2024'));
     }
 
+    /**
+     * A widget showing the time must only do so when the source gave one:
+     * a date-only value becomes midnight UTC and a missing one becomes "now",
+     * and neither is a clock time worth printing.
+     */
+    public function testOnlyARealTimeOfDayCountsAsHavingATime(): void {
+        foreach (['2026-11-06T12:15:00Z', '2026-11-06T00:00:00+01:00', 'Fri, 06 Nov 2026 12:15:00 +0000', '1757500000'] as $input) {
+            $this->assertTrue($this->reader->dateHasTime($input), "'$input' carries a time");
+        }
+        foreach (['', '2026-11-06', '6 November 2026', '2024', 'volstrekte onzin'] as $input) {
+            $this->assertFalse($this->reader->dateHasTime($input), "'$input' carries no time");
+        }
+    }
+
     /** An unparseable date must not make the item disappear. */
     public function testAnUnparseableDateFallsBackToNowRatherThanFailing(): void {
         foreach (['', 'volstrekte onzin'] as $input) {

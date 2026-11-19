@@ -454,6 +454,7 @@ paging, so the arrows stay put instead of jumping when a shorter page comes up.
 |---------|-------------|---------|
 | **Show image** | Display item thumbnail or extracted image | Enabled |
 | **Show date** | Display publication date | Enabled |
+| **Include time** | Show the time of day next to the date, e.g. for Talk messages. Items whose source gives only a date (or no date) still show just the date | Disabled |
 | **Show excerpt** | Display text excerpt | Enabled |
 | **Show source** | Display the source/feed name | Disabled |
 | **Open links in new tab** | Links open in a new browser tab | Enabled |

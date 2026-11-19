@@ -815,7 +815,7 @@ class FeedReaderService {
             // it is here only because this is where the text is parsed.
             'contentHtml' => $content,
             'image' => $this->imageProxy->proxyImageUrl($image),
-            'date' => $this->parseDate((string)($item->pubDate ?? '')),
+            ...$this->dateFields((string)($item->pubDate ?? '')),
             'source' => '',
             'author' => (string)($item->author ?? $item->children('dc', true)->creator ?? ''),
         ];
@@ -848,7 +848,7 @@ class FeedReaderService {
             // it is here only because this is where the text is parsed.
             'contentHtml' => $content,
             'image' => $this->imageProxy->proxyImageUrl($image),
-            'date' => $this->parseDate((string)($entry->updated ?? $entry->published ?? '')),
+            ...$this->dateFields((string)($entry->updated ?? $entry->published ?? '')),
             'source' => '',
             'author' => (string)($entry->author->name ?? ''),
         ];
@@ -929,7 +929,7 @@ class FeedReaderService {
                         'url' => $baseUrl . '/course/view.php?id=' . $course['id'],
                         'excerpt' => $this->sanitizeExcerpt($course['summary'] ?? ''),
                         'image' => $this->imageProxy->proxyImageUrl($this->moodleFileUrl($image, $baseUrl, $token)),
-                        'date' => date('c', $course['timemodified'] ?? time()),
+                        ...$this->dateFields((string) ($course['timemodified'] ?? '')),
                         'source' => $connection['name'] ?? 'Moodle',
                         'author' => null,
                     ];
@@ -980,7 +980,7 @@ class FeedReaderService {
                 'url' => $baseUrl . '/course/view.php?id=' . $courseId,
                 'excerpt' => $course['shortname'] ?? '',
                 'image' => $this->imageProxy->proxyImageUrl($this->moodleFileUrl($course['overviewfiles'][0]['fileurl'] ?? $course['courseimage'] ?? null, $baseUrl, $token)),
-                'date' => isset($course['startdate']) ? date('c', $course['startdate']) : date('c'),
+                ...$this->dateFields((string) ($course['startdate'] ?? '')),
                 'source' => $connection['name'] ?? 'Moodle',
                 'author' => null,
             ];
@@ -1017,7 +1017,7 @@ class FeedReaderService {
                 'url' => $event['url'] ?? ($baseUrl . '/calendar/view.php?id=' . $eventId),
                 'excerpt' => $this->sanitizeExcerpt($event['description'] ?? ''),
                 'image' => null,
-                'date' => isset($event['timestart']) ? date('c', $event['timestart']) : date('c'),
+                ...$this->dateFields((string) ($event['timestart'] ?? '')),
                 'source' => $event['course']['fullname'] ?? $connection['name'] ?? 'Moodle',
                 'author' => null,
             ];
@@ -1058,9 +1058,9 @@ class FeedReaderService {
                     'url' => $baseUrl . '/mod/assign/view.php?id=' . ($assignment['cmid'] ?? $assignment['id'] ?? ''),
                     'excerpt' => $this->sanitizeExcerpt($assignment['intro'] ?? ''),
                     'image' => null,
-                    'date' => isset($assignment['duedate']) && $assignment['duedate'] > 0
-                        ? date('c', $assignment['duedate'])
-                        : (isset($assignment['timemodified']) ? date('c', $assignment['timemodified']) : date('c')),
+                    ...$this->dateFields((string) (isset($assignment['duedate']) && $assignment['duedate'] > 0
+                        ? $assignment['duedate']
+                        : ($assignment['timemodified'] ?? ''))),
                     'source' => $courseName ?: ($connection['name'] ?? 'Moodle'),
                     'author' => null,
                 ];
@@ -1095,7 +1095,7 @@ class FeedReaderService {
                 'url' => $baseUrl . '/mod/forum/discuss.php?d=' . $discussion['discussion'],
                 'excerpt' => $this->sanitizeExcerpt($discussion['message'] ?? ''),
                 'image' => $this->imageProxy->proxyImageUrl($this->extractImageFromHtml($discussion['message'] ?? '')),
-                'date' => date('c', $discussion['timemodified'] ?? $discussion['created'] ?? time()),
+                ...$this->dateFields((string) ($discussion['timemodified'] ?? $discussion['created'] ?? '')),
                 'source' => $discussion['forum'] ?? 'Moodle',
                 'author' => ($discussion['userfullname'] ?? null),
             ];
@@ -1190,7 +1190,7 @@ class FeedReaderService {
                 'url' => $announcement['html_url'] ?? '',
                 'excerpt' => $this->sanitizeExcerpt($announcement['message'] ?? ''),
                 'image' => $this->imageProxy->proxyImageUrl($this->extractImageFromHtml($announcement['message'] ?? '')),
-                'date' => $announcement['posted_at'] ?? $announcement['created_at'] ?? date('c'),
+                ...$this->dateFields((string) ($announcement['posted_at'] ?? $announcement['created_at'] ?? '')),
                 'source' => $connection['name'] ?? 'Canvas',
                 'author' => $announcement['author']['display_name'] ?? null,
             ];
@@ -1235,7 +1235,7 @@ class FeedReaderService {
                 'url' => $baseUrl . '/courses/' . $courseId,
                 'excerpt' => $course['course_code'] ?? '',
                 'image' => $this->imageProxy->proxyImageUrl($course['image_download_url'] ?? null),
-                'date' => $course['created_at'] ?? date('c'),
+                ...$this->dateFields((string) ($course['created_at'] ?? '')),
                 'source' => $connection['name'] ?? 'Canvas',
                 'author' => null,
             ];
@@ -1303,7 +1303,7 @@ class FeedReaderService {
                 'url' => $event['html_url'] ?? '',
                 'excerpt' => $this->sanitizeExcerpt($event['description'] ?? ''),
                 'image' => null,
-                'date' => $event['end_at'] ?? $event['start_at'] ?? date('c'),
+                ...$this->dateFields((string) ($event['end_at'] ?? $event['start_at'] ?? '')),
                 'source' => $connection['name'] ?? 'Canvas',
                 'author' => null,
             ];
@@ -1391,7 +1391,7 @@ class FeedReaderService {
                 'url' => $baseUrl . '/d2l/le/news/' . ($orgUnitId ?? '') . '/' . ($newsItem['Id'] ?? ''),
                 'excerpt' => $this->sanitizeExcerpt($newsItem['Body']['Html'] ?? $newsItem['Body']['Text'] ?? ''),
                 'image' => $this->imageProxy->proxyImageUrl($this->extractImageFromHtml($newsItem['Body']['Html'] ?? '')),
-                'date' => $newsItem['StartDate'] ?? $newsItem['CreatedDate'] ?? date('c'),
+                ...$this->dateFields((string) ($newsItem['StartDate'] ?? $newsItem['CreatedDate'] ?? '')),
                 'source' => $connection['name'] ?? 'Brightspace',
                 'author' => null,
             ];
@@ -1438,7 +1438,7 @@ class FeedReaderService {
                 'url' => $baseUrl . '/d2l/home/' . $orgUnitId,
                 'excerpt' => $orgUnit['Code'] ?? '',
                 'image' => null,
-                'date' => $enrollment['Access']['StartDate'] ?? date('c'),
+                ...$this->dateFields((string) ($enrollment['Access']['StartDate'] ?? '')),
                 'source' => $connection['name'] ?? 'Brightspace',
                 'author' => null,
             ];
@@ -1485,7 +1485,7 @@ class FeedReaderService {
                 'url' => $baseUrl . '/d2l/le/calendar/' . ($event['OrgUnitId'] ?? ''),
                 'excerpt' => $this->sanitizeExcerpt($event['Description'] ?? ''),
                 'image' => null,
-                'date' => $event['EndDateTime'] ?? $event['StartDateTime'] ?? date('c'),
+                ...$this->dateFields((string) ($event['EndDateTime'] ?? $event['StartDateTime'] ?? '')),
                 'source' => $connection['name'] ?? 'Brightspace',
                 'author' => null,
             ];
@@ -1566,7 +1566,7 @@ class FeedReaderService {
                 'url' => $page['webUrl'] ?? '',
                 'excerpt' => $this->sanitizeExcerpt($page['description'] ?? ''),
                 'image' => $this->imageProxy->proxyImageUrl($page['thumbnailWebUrl'] ?? null),
-                'date' => $this->parseDate($page['lastModifiedDateTime'] ?? ''),
+                ...$this->dateFields($page['lastModifiedDateTime'] ?? ''),
                 'source' => $sourceName,
                 'author' => $page['lastModifiedBy']['user']['displayName'] ?? null,
             ];
@@ -1635,7 +1635,7 @@ class FeedReaderService {
                 'url' => $itemUrl,
                 'excerpt' => $this->sanitizeExcerpt($fields['Body'] ?? $fields['_ExtendedDescription'] ?? ''),
                 'image' => null,
-                'date' => $this->parseDate($item['lastModifiedDateTime'] ?? $fields['Modified'] ?? ''),
+                ...$this->dateFields($item['lastModifiedDateTime'] ?? $fields['Modified'] ?? ''),
                 'source' => $sourceName,
                 'author' => $item['lastModifiedBy']['user']['displayName'] ?? null,
             ];
@@ -2033,7 +2033,7 @@ class FeedReaderService {
                 'url' => (string) $url,
                 'excerpt' => $this->sanitizeExcerpt(is_string($excerpt) ? $excerpt : ''),
                 'image' => $this->imageProxy->proxyImageUrl(is_string($image) ? $image : null),
-                'date' => $this->parseDate((string) $date),
+                ...$this->dateFields((string) $date),
                 'source' => $sourceName,
                 'author' => is_string($author) ? $author : null,
             ];
@@ -2387,8 +2387,20 @@ class FeedReaderService {
         return $this->responses->firstImageIn($html);
     }
 
-    private function parseDate(string $dateString): string {
-        return $this->responses->normaliseDate($dateString);
+    /**
+     * The item's date, plus whether the source gave a time of day.
+     *
+     * A widget can show the time as well as the date, and needs to know
+     * which items have one: a date-only value is normalised to midnight UTC
+     * and a missing one to "now", and neither is a clock time to print.
+     *
+     * @return array{date: string, dateHasTime: bool}
+     */
+    private function dateFields(string $dateString): array {
+        return [
+            'date' => $this->responses->normaliseDate($dateString),
+            'dateHasTime' => $this->responses->dateHasTime($dateString),
+        ];
     }
 
     /**

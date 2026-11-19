@@ -410,6 +410,13 @@
           <NcCheckboxRadioSwitch :model-value="localWidget.showDate" @update:model-value="v => { localWidget.showDate = v; emitUpdate(); }">
             {{ t('intravox', 'Show date') }}
           </NcCheckboxRadioSwitch>
+          <!-- Items whose source gives only a day still show just the date. -->
+          <NcCheckboxRadioSwitch
+            v-if="localWidget.showDate"
+            :model-value="localWidget.dateFormat === 'datetime'"
+            @update:model-value="v => { localWidget.dateFormat = v ? 'datetime' : 'date'; emitUpdate(); }">
+            {{ t('intravox', 'Include time') }}
+          </NcCheckboxRadioSwitch>
           <NcCheckboxRadioSwitch :model-value="localWidget.showExcerpt" @update:model-value="v => { localWidget.showExcerpt = v; emitUpdate(); }">
             {{ t('intravox', 'Show excerpt') }}
           </NcCheckboxRadioSwitch>
@@ -745,6 +752,9 @@ export default {
         showTitle: true,
         showImage: true,
         showDate: true,
+        // 'date' is also what a widget without the key shows, so merging
+        // this under an existing widget changes nothing.
+        dateFormat: 'date',
         showExcerpt: true,
         showSource: false,
         excerptLength: 150,

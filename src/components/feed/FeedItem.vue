@@ -75,6 +75,7 @@
 <script>
 import CalendarBlank from 'vue-material-design-icons/CalendarBlank.vue';
 import { translate } from '@nextcloud/l10n';
+import { formatFeedDate } from '../../utils/feedDate.js';
 import FileWord from 'vue-material-design-icons/FileWord.vue';
 import FileExcel from 'vue-material-design-icons/FileExcel.vue';
 import FilePowerpoint from 'vue-material-design-icons/FilePowerpoint.vue';
@@ -153,6 +154,11 @@ export default {
       type: Boolean,
       default: true,
     },
+    // 'date' or 'datetime'; see formatFeedDate for items without a time.
+    dateFormat: {
+      type: String,
+      default: 'date',
+    },
     showExcerpt: {
       type: Boolean,
       default: true,
@@ -225,18 +231,7 @@ export default {
   },
   computed: {
     formattedDate() {
-      if (!this.item.date) return '';
-      try {
-        const date = new Date(this.item.date);
-        const locale = document.documentElement.lang || undefined;
-        return date.toLocaleDateString(locale, {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric',
-        });
-      } catch {
-        return this.item.date;
-      }
+      return formatFeedDate(this.item, this.dateFormat);
     },
     fallbackMeta() {
       if (this.item.image) return null;

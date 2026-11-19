@@ -975,6 +975,9 @@ final class PageShapeSanitizer {
                 $sanitized['showTitle'] = (bool) ($widget['showTitle'] ?? true);
                 $sanitized['showImage'] = (bool) ($widget['showImage'] ?? true);
                 $sanitized['showDate'] = (bool) ($widget['showDate'] ?? true);
+                // 'datetime' adds the time of day. Absent means 'date', which
+                // is what every widget saved before this option showed.
+                $sanitized['dateFormat'] = ($widget['dateFormat'] ?? 'date') === 'datetime' ? 'datetime' : 'date';
                 $sanitized['showExcerpt'] = (bool) ($widget['showExcerpt'] ?? true);
                 $sanitized['showSource'] = (bool) ($widget['showSource'] ?? false);
                 $sanitized['excerptLength'] = max(50, min((int) ($widget['excerptLength'] ?? 150), 500));

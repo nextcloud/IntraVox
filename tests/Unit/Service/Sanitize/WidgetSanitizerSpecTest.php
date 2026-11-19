@@ -395,6 +395,24 @@ class WidgetSanitizerSpecTest extends TestCase {
 		}
 	}
 
+	/**
+	 * dateFormat came after feed widgets were in use, all showing the date
+	 * alone: a widget without the key must keep doing so, and an explicit
+	 * 'datetime' must not be dropped on save.
+	 */
+	public function testFeedDateFormatDefaultsToDateAndKeepsDatetime(): void {
+		$zonderSleutel = $this->sanitizer->sanitizeWidget(['type' => 'feed']);
+		$this->assertSame('date', $zonderSleutel['dateFormat']);
+
+		$metTijd = $this->sanitizer->sanitizeWidget(['type' => 'feed', 'dateFormat' => 'datetime']);
+		$this->assertSame('datetime', $metTijd['dateFormat'], 'an explicit choice must survive the allowlist');
+
+		foreach (['evil', '', null, true, []] as $rommel) {
+			$result = $this->sanitizer->sanitizeWidget(['type' => 'feed', 'dateFormat' => $rommel]);
+			$this->assertSame('date', $result['dateFormat']);
+		}
+	}
+
 	public function testPhotoStoryKeepsOnlyItsConfig(): void {
 		$result = $this->sanitizer->sanitizeWidget([
 			'type' => 'photo-story',

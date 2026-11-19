@@ -6,6 +6,7 @@
       :item="item"
       :show-image="widget.showImage !== false"
       :show-date="widget.showDate !== false"
+      :date-format="widget.dateFormat || 'date'"
       :show-excerpt="widget.showExcerpt !== false"
       :show-source="widget.showSource || false"
       :excerpt-length="widget.excerptLength || 150"

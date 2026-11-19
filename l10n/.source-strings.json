@@ -1,6 +1,6 @@
 {
-    "count": 1573,
-    "sha256": "a455f8dcd31185c5cf4c47b5c3bc886d57bf6a3dfc8eb09e303e3003e4e5b99f",
+    "count": 1574,
+    "sha256": "48c070a0ca61310142ad21bab4dfae809ef5519b7362d8ac892efbe9c1327616",
     "strings": [
         "— Not configured —",
         "… and {n} more",
@@ -654,6 +654,7 @@
         "inactive",
         "Inactive",
         "Include comments and reactions",
+        "Include time",
         "Includes these pages:",
         "Incorrect password. Please try again.",
         "Infinite scroll",

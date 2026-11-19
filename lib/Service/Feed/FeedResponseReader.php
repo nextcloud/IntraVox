@@ -186,6 +186,34 @@ final class FeedResponseReader {
     }
 
     /**
+     * Whether the source gave a time of day, not just a day.
+     *
+     * normaliseDate() always yields a full datetime, so its output cannot
+     * answer this: "2026-11-06" becomes midnight UTC,
+     * and a missing or unparseable date becomes "now", to the second. A
+     * widget set to show the time would present both as real clock times.
+     * This reads the raw value instead, following the same branches.
+     */
+    public function dateHasTime(string $dateString): bool {
+        $dateString = trim($dateString);
+        if ($dateString === '') {
+            return false;
+        }
+        if (preg_match('/^\d{9,11}$/', $dateString) === 1) {
+            return true;
+        }
+        // A bare year: DateTime reads "2024" as the clock time 20:24 today.
+        if (preg_match('/^\d{1,4}$/', $dateString) === 1) {
+            return false;
+        }
+        if (strtotime($dateString) === false) {
+            return false;
+        }
+        // date_parse() reports hour as false when the string names no time.
+        return date_parse($dateString)['hour'] !== false;
+    }
+
+    /**
      * Resolve a dot-notation path in a JSON array.
      * E.g., "data.items" resolves $data['data']['items'].
      * E.g., "author.name" resolves $item['author']['name'].
